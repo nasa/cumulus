@@ -105,9 +105,9 @@ async function put({ params: { id }, body }, res) {
 
   const providerModel = new Provider();
 
-  return (!(await providerModel.exists(id))) ?
-    res.boom.notFound(`Provider with ID '${id}' not found`) :
-    providerModel.create(body)
+  return (!(await providerModel.exists(id)))
+    ? res.boom.notFound(`Provider with ID '${id}' not found`)
+    : providerModel.create(body)
       .then(async (record) => {
         if (inTestMode()) {
           await addToLocalES(record, indexProvider);

@@ -31,9 +31,9 @@ const createCloudwatchEventMessage = ({
       }
     }
   });
-  const detail = (status === 'SUCCEEDED' ?
-    { status, output: message } :
-    { status, input: message });
+  const detail = (status === 'SUCCEEDED'
+    ? { status, output: message }
+    : { status, input: message });
   return { source, detail };
 };
 
@@ -52,9 +52,9 @@ const createCloudwatchPackagedEventMessage = ({
       Key: 'stubbedKey'
     }
   });
-  const detail = (status === 'SUCCEEDED' ?
-    { status, output: message } :
-    { status, input: message });
+  const detail = (status === 'SUCCEEDED'
+    ? { status, output: message }
+    : { status, input: message });
   return { source, detail };
 };
 

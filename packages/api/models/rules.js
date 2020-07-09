@@ -570,8 +570,8 @@ class Rule extends Manager {
     const rules = rulesQueryResultsForSourceArn.Items || [];
     if (rules.length === 0) {
       throw new Error(
-        `No rules found that matched any/all of source ARN ${sourceArn} and ` +
-        `collection { name: ${name}, version: ${version} }`
+        `No rules found that matched any/all of source ARN ${sourceArn} and `
+        + `collection { name: ${name}, version: ${version} }`
       );
     }
     return rules;

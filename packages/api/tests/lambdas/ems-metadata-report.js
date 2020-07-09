@@ -116,15 +116,15 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
   t.truthy(exists);
 
   const expectedRecords = [
-    'A2_SI25_NRT|&|NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS V0|&|' +
-    '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1',
+    'A2_SI25_NRT|&|NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS V0|&|'
+    + '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1',
 
-    'MUR-JPL-L4-GLOB-v4.1|&|PODAAC-GHGMR-4FJ04|&|' +
-    '4|&|Oceans|&|Jet Propulsion Laboratory|&|testEmsProvider|&|' +
-    'NOAA-18;Coriolis;TERRA;AQUA|&|AVHRR-3;WindSat;MODIS;AMSR-E,MODIS|&|E|&|1',
+    'MUR-JPL-L4-GLOB-v4.1|&|PODAAC-GHGMR-4FJ04|&|'
+    + '4|&|Oceans|&|Jet Propulsion Laboratory|&|testEmsProvider|&|'
+    + 'NOAA-18;Coriolis;TERRA;AQUA|&|AVHRR-3;WindSat;MODIS;AMSR-E,MODIS|&|E|&|1',
 
-    'MYD13Q1|&|MODIS/Aqua Vegetation Indices 16-Day L3 Global 250m SIN Grid V006|&|' +
-    '3|&|BIOSPHERE|&|NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS|&|testEmsProvider|&|AQUA|&|MODIS|&|E|&|1'
+    'MYD13Q1|&|MODIS/Aqua Vegetation Indices 16-Day L3 Global 250m SIN Grid V006|&|'
+    + '3|&|BIOSPHERE|&|NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS|&|testEmsProvider|&|AQUA|&|MODIS|&|E|&|1'
   ];
   // check the number of records for each report
   const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
@@ -145,8 +145,8 @@ test.serial('generateReport creates flat file for one collection which is in bot
   t.truthy(exists);
 
   const expectedRecords = [
-    'A2_SI25_NRT|&|NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS V0|&|' +
-    '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1'
+    'A2_SI25_NRT|&|NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS V0|&|'
+    + '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1'
   ];
   // check the number of records for each report
   const s3Object = await getS3Object(parsed.Bucket, parsed.Key);

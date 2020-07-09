@@ -99,15 +99,15 @@ module.exports.collection = {
     },
     granuleId: {
       title: 'GranuleId Validation Regex',
-      description: 'The regular expression used to validate the granule ID ' +
-        'extracted from filenames according to the `granuleIdExtraction`',
+      description: 'The regular expression used to validate the granule ID '
+        + 'extracted from filenames according to the `granuleIdExtraction`',
       type: 'string'
     },
     granuleIdExtraction: {
       title: 'GranuleId Extraction Regex',
-      description: 'The regular expression used to extract the granule ID from filenames. ' +
-        'The first capturing group extracted from the filename by the regex' +
-        'will be used as the granule ID.',
+      description: 'The regular expression used to extract the granule ID from filenames. '
+        + 'The first capturing group extracted from the filename by the regex'
+        + 'will be used as the granule ID.',
       type: 'string'
     },
     reportToEms: {
@@ -118,18 +118,18 @@ module.exports.collection = {
     },
     sampleFileName: {
       title: 'Sample Filename',
-      description: 'Is used to validate to test granule ID ' +
-        'validation and extraction regexes against',
+      description: 'Is used to validate to test granule ID '
+        + 'validation and extraction regexes against',
       type: 'string'
     },
     ignoreFilesConfigForDiscovery: {
       title: 'Ignore Files Configuration During Discovery',
-      description: "When true, ignore this collection's files config list for" +
-        ' determining which files to ingest for a granule, and ingest all of' +
-        ' them.  When false, ingest only files that match a regex in one of' +
-        " this collection's files config list.  When this property is" +
-        ' specified on a task, it overrides the value set on a collection.' +
-        ' Defaults to false.',
+      description: "When true, ignore this collection's files config list for"
+        + ' determining which files to ingest for a granule, and ingest all of'
+        + ' them.  When false, ingest only files that match a regex in one of'
+        + " this collection's files config list.  When this property is"
+        + ' specified on a task, it overrides the value set on a collection.'
+        + ' Defaults to false.',
       type: 'boolean'
     },
     files: {
@@ -156,8 +156,8 @@ module.exports.collection = {
           },
           url_path: {
             title: 'Url Path',
-            description: 'Folder used to save the granule in the bucket. ' +
-              'Defaults to the collection url_path',
+            description: 'Folder used to save the granule in the bucket. '
+              + 'Defaults to the collection url_path',
             type: 'string'
           },
           type: {

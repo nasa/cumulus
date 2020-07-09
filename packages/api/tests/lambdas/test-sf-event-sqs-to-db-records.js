@@ -232,8 +232,8 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
 
   const executionName = randomString();
   cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/' +
-    `details/arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+  const executionArn = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/'
+    + `details/arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
   const pdr = {
     name: randomString(),

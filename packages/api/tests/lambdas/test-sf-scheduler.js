@@ -43,8 +43,8 @@ const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 
 class FakeCollection {
   async get(item) {
-    if (item.name !== fakeCollection.name ||
-        item.version !== fakeCollection.version) {
+    if (item.name !== fakeCollection.name
+        || item.version !== fakeCollection.version) {
       throw new Error('Collection could not be found');
     }
     return fakeCollection;

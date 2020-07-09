@@ -124,9 +124,9 @@ async function fetchLambdaFunction(codeUrl) {
     {
       maxTimeout: 10000,
       onFailedAttempt: (err) => {
-        const message = (err.attemptsLeft > 0) ?
-          `Failed to download lambda function (will retry): ${err}` :
-          `Failed to download lambda function (will not retry): ${err}`;
+        const message = (err.attemptsLeft > 0)
+          ? `Failed to download lambda function (will retry): ${err}`
+          : `Failed to download lambda function (will not retry): ${err}`;
         logger.error(message);
       }
     }

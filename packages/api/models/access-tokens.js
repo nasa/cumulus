@@ -56,9 +56,9 @@ class AccessToken extends Manager {
    * @see Manager#create
    */
   create(item) {
-    const record = item.expirationTime ?
-      item :
-      {
+    const record = item.expirationTime
+      ? item
+      : {
         ...item,
         expirationTime: this._getDefaultExpirationTime()
       };

@@ -28,9 +28,9 @@ const { decrementQueueSemaphore } = require('../lib/SemaphoreUtils');
  * @returns {boolean} True if workflow execution semaphore should be decremented
  */
 const isDecrementEvent = (event, executionMessage) =>
-  isSfExecutionEvent(event) &&
-  isTerminalSfStatus(getSfEventStatus(event)) &&
-  hasQueueAndExecutionLimit(executionMessage);
+  isSfExecutionEvent(event)
+  && isTerminalSfStatus(getSfEventStatus(event))
+  && hasQueueAndExecutionLimit(executionMessage);
 
 /**
  * Handle Cloudwatch event and decrement semaphore, if necessary.

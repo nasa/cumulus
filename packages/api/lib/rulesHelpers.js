@@ -9,10 +9,12 @@ const Rule = require('../models/rules');
 const filterRulesbyCollection = (rules, collection = {}) => rules.filter(
   (rule) => {
     // Match as much collection info as we found in the message
-    const nameMatch = collection.name ?
-      get(rule, 'collection.name') === collection.name : true;
-    const versionMatch = collection.version ?
-      get(rule, 'collection.version') === collection.version : true;
+    const nameMatch = collection.name
+      ? get(rule, 'collection.name') === collection.name
+      : true;
+    const versionMatch = collection.version
+      ? get(rule, 'collection.version') === collection.version
+      : true;
     return nameMatch && versionMatch;
   }
 );
@@ -49,8 +51,9 @@ function lookupCollectionInEvent(eventObject) {
  */
 async function queueMessageForRule(rule, eventObject, eventSource) {
   const collectionInNotification = lookupCollectionInEvent(eventObject);
-  const collection = (collectionInNotification.name && collectionInNotification.version) ?
-    collectionInNotification : rule.collection;
+  const collection = (collectionInNotification.name && collectionInNotification.version)
+    ? collectionInNotification
+    : rule.collection;
   const item = {
     workflow: rule.workflow,
     provider: rule.provider,

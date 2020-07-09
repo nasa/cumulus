@@ -336,8 +336,9 @@ class Granule extends Manager {
     const processingTimeInfo = {};
     if (startDate) {
       processingTimeInfo.processingStartDateTime = startDate.toISOString();
-      processingTimeInfo.processingEndDateTime = stopDate ?
-        stopDate.toISOString() : new Date().toISOString();
+      processingTimeInfo.processingEndDateTime = stopDate
+        ? stopDate.toISOString()
+        : new Date().toISOString();
     }
 
     const now = Date.now();

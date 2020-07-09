@@ -308,8 +308,8 @@ test('/token endpoint without a token query parameter redirects to saml/login.',
 test('/token endpoint without proper context headers returns expectation failed.', async (t) => {
   const expectedError = {
     error: 'Expectation Failed',
-    message: ('Could not retrieve necessary information from express request object. ' +
-              'Incorrect relayState or stageName information in express request.'),
+    message: ('Could not retrieve necessary information from express request object. '
+              + 'Incorrect relayState or stageName information in express request.'),
     statusCode: 417
   };
 
