@@ -82,7 +82,7 @@
       "type": "boolean"
     },
     "httpRequestTimeout": {
-      "description": "Timeout (in seconds) for retreival by HTTP/HTTPS provider",
+      "description": "Timeout (in seconds) for retrieval by HTTP/HTTPS provider",
       "default": 300,
       "type": "integer"
     },

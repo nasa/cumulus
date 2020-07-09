@@ -148,7 +148,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2032**
-  - Updated @cumulus/ingest/HttpProviderClient to utilze a configuration key
+  - Updated @cumulus/ingest/HttpProviderClient to utilize a configuration key
     `httpRequestTimeout` to set the default timeout for discovery HTTP/HTTPS
     requests, and updates the default for the provider to 5 minutes (300 seconds).
   - Updated the DiscoverGranules and DiscoverPDRs tasks to utilize the updated

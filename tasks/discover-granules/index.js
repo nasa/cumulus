@@ -248,7 +248,7 @@ const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
 };
 
 /**
- * Discovers granules. See scqhemas/input.json and schemas/config.json for
+ * Discovers granules. See schemas/input.json and schemas/config.json for
  * detailed event description.
  *
  * @param {Object} event - Lambda event object
