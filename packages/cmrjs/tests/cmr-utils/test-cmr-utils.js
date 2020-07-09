@@ -176,8 +176,8 @@ test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specifie
   t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
 });
 
-test('constructOnlineAccessUrls throws error if URL type is distribution and distribution endpoint is missing', (t) => {
-  t.throws(() => cmrUtil.constructOnlineAccessUrls({
+test('constructOnlineAccessUrls throws error if URL type is distribution and distribution endpoint is missing', async (t) => {
+  await t.throwsAsync(cmrUtil.constructOnlineAccessUrls({
     distEndpoint: {},
     cmrGranuleUrlType: 'distribution'
   }));
