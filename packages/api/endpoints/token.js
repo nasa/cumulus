@@ -234,9 +234,9 @@ function buildEarthdataLoginProviderFromEnv() {
 }
 
 function buildOAuth2ProviderFromEnv() {
-  return process.env.OAUTH_PROVIDER === 'google'
-    ? buildGoogleOAuth2ProviderFromEnv()
-    : buildEarthdataLoginProviderFromEnv();
+  return process.env.OAUTH_PROVIDER === 'google' ?
+    buildGoogleOAuth2ProviderFromEnv() :
+    buildEarthdataLoginProviderFromEnv();
 }
 
 /**

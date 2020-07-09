@@ -29,7 +29,7 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
 async function list(req, res) {
   const collection = new Collection(
     { queryStringParameters: req.query },
-    null,
+    undefined,
     process.env.ES_INDEX
   );
   const result = await collection.query();
@@ -48,7 +48,7 @@ async function list(req, res) {
 async function activeList(req, res) {
   const collection = new Collection(
     { queryStringParameters: req.query },
-    null,
+    undefined,
     process.env.ES_INDEX
   );
   const result = await collection.queryCollectionsWithActiveGranules();
@@ -112,9 +112,9 @@ async function post(req, res) {
     }
   } catch (error) {
     if (
-      isBadRequestError(error)
-      || error instanceof InvalidRegexError
-      || error instanceof UnmatchedRegexError
+      isBadRequestError(error) ||
+      error instanceof InvalidRegexError ||
+      error instanceof UnmatchedRegexError
     ) {
       return res.boom.badRequest(error.message);
     }
@@ -132,22 +132,22 @@ async function post(req, res) {
  */
 async function put({ params: { name, version }, body }, res) {
   if (name !== body.name || version !== body.version) {
-    return res.boom.badRequest('Expected collection name and version to be'
-      + ` '${name}' and '${version}', respectively, but found '${body.name}'`
-      + ` and '${body.version}' in payload`);
+    return res.boom.badRequest('Expected collection name and version to be' +
+      ` '${name}' and '${version}', respectively, but found '${body.name}'` +
+      ` and '${body.version}' in payload`);
   }
 
   const collectionModel = new models.Collection();
 
-  return (!(await collectionModel.exists(name, version)))
-    ? res.boom.notFound(`Collection '${name}' version '${version}' not found`)
-    : collectionModel.create(body)
-      .then((record) => (
-        inTestMode()
-          ? addToLocalES(record, indexCollection).then(() => record)
-          : record
-      ))
-      .then((record) => res.send(record));
+  return (!(await collectionModel.exists(name, version))) ?
+    res.boom.notFound(`Collection '${name}' version '${version}' not found`) :
+    collectionModel.create(body)
+      .then(async (record) => {
+        if (inTestMode()) {
+          await addToLocalES(record, indexCollection);
+        }
+        return res.send(record);
+      });
 }
 
 /**

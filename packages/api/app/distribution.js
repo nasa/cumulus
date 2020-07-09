@@ -33,8 +33,8 @@ morgan.token('error_obj', (req, res) => {
 });
 morgan.format(
   'combined',
-  '[:date[clf]] ":method :url HTTP/:http-version"'
-  + ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
+  '[:date[clf]] ":method :url HTTP/:http-version"' +
+  ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
 );
 
 // Config
@@ -58,7 +58,7 @@ distributionApp.use((err, req, res, _next) => {
   return res.boom.badImplementation('Something broke!');
 });
 
-const server = awsServerlessExpress.createServer(distributionApp, null);
+const server = awsServerlessExpress.createServer(distributionApp);
 
 module.exports = {
   distributionApp,
