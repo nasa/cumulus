@@ -21,8 +21,8 @@
     "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
-    "test:ava": "../../node_modules/.bin/ava",
-    "test": "../../node_modules/.bin/nyc npm run test:ava",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/webpack --progress -w"
   },
   "ava": {

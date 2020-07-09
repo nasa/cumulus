@@ -22,8 +22,9 @@
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "python-lint": "for x in lambdas/*; do cd $x && npm run python-lint && cd -; done",
     "redeploy-test": "../node_modules/.bin/jasmine spec/standalone/redeployment/*.js",
-    "test": "../node_modules/.bin/nyc npm run test:ava && for x in lambdas/*; do cd $x && npm run test && cd -; done",
-    "test:ava": "../node_modules/.bin/ava"
+    "test": "npm run test:ava && for x in lambdas/*; do cd $x && npm test && cd -; done",
+    "test:ava": "../node_modules/.bin/ava",
+    "test:coverage": "../node_modules/.bin/nyc npm run test:ava"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

@@ -73,7 +73,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
     Key: sourceKey
   });
 
-  await multipartCopyObject({
+  const { etag } = await multipartCopyObject({
     sourceBucket,
     sourceKey,
     destinationBucket,
@@ -86,6 +86,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
   });
 
   t.is(sourceChecksum, destinationChecksum, 'Source and destination checksums do not match');
+  t.truthy(etag, 'Missing etag in copy response');
 });
 
 test("multipartCopyObject() sets the object's ACL", async (t) => {
