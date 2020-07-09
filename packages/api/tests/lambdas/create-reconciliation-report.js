@@ -23,6 +23,7 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const { Search } = require('../../es/search');
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles
@@ -95,28 +96,6 @@ function storeFilesToS3(files) {
 }
 
 /**
- * Convert a file object into a granule
- * @param {Object} file - object with bucket, key and granuleId keys
- * @returns {Object} - granule object for Elasticsearch indexing
- */
-function fileToGranuleDoc(file) {
-  const { bucket, key, granuleId } = file;
-  return fakeGranuleFactoryV2({ granuleId, files: [{ bucket, key }] });
-}
-
-/**
- * Index files to ES for testing
- *
- * @param {Array<Object>} files - list of file objects with bucket, key and granuleId
- */
-async function storeFilesToES(files) {
-  const granuleDocs = files.map(fileToGranuleDoc);
-  await Promise.all(
-    granuleDocs.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
-  );
-}
-
-/**
  * Index collections to ES for testing
  *
  * @param {Array<Object>} collections - list of collection objects
@@ -170,6 +149,7 @@ test.beforeEach(async (t) => {
 
   await new models.Collection().createTable();
   await new models.Granule().createTable();
+  await GranuleFilesCache.createCacheTable();
   await new models.ReconciliationReport().createTable();
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
@@ -189,6 +169,7 @@ test.afterEach.always(async (t) => {
       t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
       new models.Collection().deleteTable(),
       new models.Granule().deleteTable(),
+      GranuleFilesCache.deleteCacheTable(),
       new models.ReconciliationReport().deleteTable()
     ])
   );
@@ -231,7 +212,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
-  t.is(filesInCumulus.onlyInElasticsearch.length, 0);
+  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
@@ -260,10 +241,10 @@ test.serial('A valid reconciliation report is generated when everything is in sy
     granuleId: randomId('granuleId')
   }));
 
-  // Store the files to S3 and Elasticsearch
+  // Store the files to S3 and DynamoDB
   await Promise.all([
     storeFilesToS3(files),
-    storeFilesToES(files),
+    GranuleFilesCache.batchUpdate({ puts: files })
   ]);
 
   // Create collections that are in sync
@@ -297,7 +278,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   t.is(report.error, null);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
-  t.is(filesInCumulus.onlyInElasticsearch.length, 0);
+  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
   t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
@@ -332,7 +313,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
 
   // Store the files to S3 and Elasticsearch
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
-  await storeFilesToES(matchingFiles);
+  await GranuleFilesCache.batchUpdate({ puts: matchingFiles });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -352,15 +333,15 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
 
-  t.is(filesInCumulus.onlyInElasticsearch.length, 0);
+  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
   t.true(createStartTime <= createEndTime);
 });
 
-test.serial('A valid reconciliation report is generated when there are extra Elasticsearch objects', async (t) => {
-  const dataBuckets = range(2).map(() => randomId('bucket'));
+test.serial('A valid reconciliation report is generated when there are extra DynamoDB objects', async (t) => {
+  const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
       .then(() => t.context.bucketsToCleanup.push(bucket))));
@@ -390,9 +371,11 @@ test.serial('A valid reconciliation report is generated when there are extra Ela
     granuleId: randomString()
   };
 
-  // Store the files to S3 and Elasticsearch
+  // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles);
-  await storeFilesToES(matchingFiles.concat([extraDbFile1, extraDbFile2]));
+  await GranuleFilesCache.batchUpdate({
+    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
+  });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -409,26 +392,20 @@ test.serial('A valid reconciliation report is generated when there are extra Ela
   t.is(filesInCumulus.okCount, matchingFiles.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
 
-  t.is(filesInCumulus.onlyInElasticsearch.length, 2);
-  t.truthy(
-    filesInCumulus.onlyInElasticsearch.find(
-      (f) => f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-        && f.granuleId === extraDbFile1.granuleId
-    )
-  );
-  t.truthy(
-    filesInCumulus.onlyInElasticsearch.find(
-      (f) => f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-        && f.granuleId === extraDbFile2.granuleId
-    )
-  );
+  t.is(filesInCumulus.onlyInDynamoDb.length, 2);
+  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
+    && f.granuleId === extraDbFile1.granuleId));
+  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
+    && f.granuleId === extraDbFile2.granuleId));
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
   t.true(createStartTime <= createEndTime);
 });
 
-test.serial('A valid reconciliation report is generated when there are both extra Elasticsearch and extra S3 files', async (t) => {
+test.serial('A valid reconciliation report is generated when there are both extra DynamoDB and extra S3 files', async (t) => {
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -461,9 +438,11 @@ test.serial('A valid reconciliation report is generated when there are both extr
     granuleId: randomString()
   };
 
-  // Store the files to S3 and Elasticsearch
+  // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
-  await storeFilesToES(matchingFiles.concat([extraDbFile1, extraDbFile2]));
+  await GranuleFilesCache.batchUpdate({
+    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
+  });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -483,19 +462,13 @@ test.serial('A valid reconciliation report is generated when there are both extr
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
 
-  t.is(filesInCumulus.onlyInElasticsearch.length, 2);
-  t.truthy(
-    filesInCumulus.onlyInElasticsearch.find(
-      (f) => f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-        && f.granuleId === extraDbFile1.granuleId
-    )
-  );
-  t.truthy(
-    filesInCumulus.onlyInElasticsearch.find(
-      (f) => f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-        && f.granuleId === extraDbFile2.granuleId
-    )
-  );
+  t.is(filesInCumulus.onlyInDynamoDb.length, 2);
+  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
+    && f.granuleId === extraDbFile1.granuleId));
+  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
+    && f.granuleId === extraDbFile2.granuleId));
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
