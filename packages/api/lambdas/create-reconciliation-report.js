@@ -40,6 +40,8 @@ async function createReconciliationReportForBucket(Bucket) {
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInElasticsearch = [];
+  const S3Errors = [];
+  const ESErrors = [];
 
   let [nextS3Object, nextESItem] = await Promise.all([s3ObjectsQueue.peek(), esFilesLister.peek()]);
   while (nextS3Object && nextESItem) {
@@ -47,30 +49,36 @@ async function createReconciliationReportForBucket(Bucket) {
     let nextESUri;
     try {
       nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
+    } catch (error) {
+      log.error(error);
+      log.error(`Bad S3 Object: ${JSON.stringify(nextS3Object)}`);
+      S3Errors.push(nextS3Object);
+    }
+    try {
       nextESUri = buildS3Uri(Bucket, nextESItem.key);
     } catch (error) {
       log.error(error);
-      log.info(`bad ES Record? ${JSON.stringify(nextESItem)}`);
-      log.info(`bad S3 Record? ${JSON.stringify(nextS3Object)}`);
-      nextESUri = buildS3Uri(getBucket(nextESItem), getKey(nextESItem));
-      log.info(`Fellback to getBucket, getKey: ${nextESUri}`);
+      log.error(`Bad ES Record: ${JSON.stringify(nextS3Object)}`);
+      ESErrors.push(nextESItem);
     }
-    if (nextS3Uri < nextESUri) {
-      // Found an item that is only in S3 and not in Elasticsearch
-      onlyInS3.push(nextS3Uri);
-      s3ObjectsQueue.shift();
-    } else if (nextS3Uri > nextESUri) {
-      // Found an item that is only in Elasticsearch and not in S3
-      const esItem = await esFilesLister.shift(); // eslint-disable-line no-await-in-loop
-      onlyInElasticsearch.push({
-        uri: buildS3Uri(Bucket, esItem.key),
-        granuleId: esItem.granuleId
-      });
-    } else {
-      // Found an item that is in both S3 and Elasticsearch
-      okCount += 1;
-      s3ObjectsQueue.shift();
-      esFilesLister.shift();
+    if (nextS3Uri && nextESItem) {
+      if (nextS3Uri < nextESUri) {
+        // Found an item that is only in S3 and not in Elasticsearch
+        onlyInS3.push(nextS3Uri);
+        s3ObjectsQueue.shift();
+      } else if (nextS3Uri > nextESUri) {
+        // Found an item that is only in Elasticsearch and not in S3
+        const esItem = await esFilesLister.shift(); // eslint-disable-line no-await-in-loop
+        onlyInElasticsearch.push({
+          uri: buildS3Uri(Bucket, esItem.key),
+          granuleId: esItem.granuleId
+        });
+      } else {
+        // Found an item that is in both S3 and Elasticsearch
+        okCount += 1;
+        s3ObjectsQueue.shift();
+        esFilesLister.shift();
+      }
     }
 
     [nextS3Object, nextESItem] = await Promise.all([s3ObjectsQueue.peek(), esFilesLister.peek()]); // eslint-disable-line max-len, no-await-in-loop
@@ -94,7 +102,9 @@ async function createReconciliationReportForBucket(Bucket) {
   return {
     okCount,
     onlyInS3,
-    onlyInElasticsearch
+    onlyInElasticsearch,
+    S3Errors,
+    ESErrors
   };
 }
 
@@ -470,7 +480,9 @@ async function createReconciliationReport(params) {
   const filesInCumulus = {
     okCount: 0,
     onlyInS3: [],
-    onlyInElasticsearch: []
+    onlyInElasticsearch: [],
+    S3Errors: [],
+    ESErrors: []
   };
 
   const reportFormatCumulusCmr = {
@@ -498,7 +510,7 @@ async function createReconciliationReport(params) {
     Body: JSON.stringify(report)
   }).promise();
 
-  // Create a report for each bucket
+  // Create ar eport for each bucket
   const promisedBucketReports = dataBuckets.map(
     (bucket) => createReconciliationReportForBucket(bucket)
   );
@@ -511,6 +523,8 @@ async function createReconciliationReport(params) {
     report.filesInCumulus.onlyInElasticsearch = report.filesInCumulus.onlyInElasticsearch.concat(
       bucketReport.onlyInElasticsearch
     );
+    report.filesInCumulus.S3Errors = report.filesInCumulus.S3Errors.concat(bucketReport.S3Errors);
+    report.filesInCumulus.ESErrors = report.filesInCumulus.ESErrors.concat(bucketReport.ESErrors);
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
