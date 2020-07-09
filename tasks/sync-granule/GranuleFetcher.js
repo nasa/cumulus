@@ -20,7 +20,7 @@ const addChecksumToFile = async (providerClient, dataFile, checksumFile) => {
   const checksumType = checksumFile.name.split('.').pop();
   const checksum = (await fetchTextFile(
     providerClient,
-    path.join(checksumFile.path, checksumFile.name)
+    S3.s3Join(checksumFile.path, checksumFile.name)
   )).split(' ').shift();
 
   return { ...dataFile, checksum, checksumType };
@@ -325,8 +325,8 @@ class GranuleFetcher {
   async ingestFile(file, destinationBucket, duplicateHandling) {
     const fileRemotePath = path.join(file.path, file.name);
     // place files in the <collectionId> subdirectory
-    const stagingPath = path.join(this.fileStagingDir, this.collectionId);
-    const destinationKey = path.join(stagingPath, file.name);
+    const stagingPath = S3.s3Join(this.fileStagingDir, this.collectionId);
+    const destinationKey = S3.s3Join(stagingPath, file.name);
 
     // the staged file expected
     const stagedFile = {
