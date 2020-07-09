@@ -26,7 +26,7 @@ const {
  * Get the CMR JSON metadata from the cmrLink
  *
  * @param {string} cmrLink - link to concept in CMR
- * @returns {Object} - metadata as a JS object, null if not
+ * @returns {Object} - metadata as a JS object, undefined if not
  * found
  */
 async function getMetadata(cmrLink) {
@@ -34,7 +34,7 @@ async function getMetadata(cmrLink) {
   const response = await got.get(cmrLink);
 
   if (response.statusCode !== 200) {
-    return null;
+    return undefined;
   }
 
   const body = JSON.parse(response.body);
@@ -57,7 +57,7 @@ async function getFullMetadata(cmrLink) {
   const response = await got.get(xmlLink);
 
   if (response.statusCode !== 200) {
-    return null;
+    return undefined;
   }
 
   const xmlObject = await new Promise((resolve, reject) => {
