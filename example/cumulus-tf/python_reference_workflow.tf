@@ -47,66 +47,11 @@ module "python_reference_workflow" {
   system_bucket   = var.system_bucket
   tags            = local.tags
 
-  state_machine_definition = <<JSON
-{
-  "Comment": "Runs Python reference task and activity",
-  "StartAt": "Reference Task",
-  "States": {
-    "Reference Task": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-              "configData": { "key1": "injectedData" }
-          },
-          "ReplaceConfig": {
-            "MaxSize": 1,
-            "Path": "$.payload",
-            "TargetPath": "$.payload"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${aws_lambda_function.python_reference_task.arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "Reference Activity"
-    },
-    "Reference Activity": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "MaxSize": 1,
-            "Path": "$.payload",
-            "TargetPath": "$.payload"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${aws_sfn_activity.ecs_task_python_processing_service.id}",
-      "TimeoutSeconds": 60,
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "States.Timeout"
-          ],
-          "MaxAttempts": 1
-        }
-      ],
-      "End": true
+  state_machine_definition = templatefile(
+    "${path.module}/python_reference_workflow.asl.json",
+    {
+      python_reference_task_arn: aws_lambda_function.python_reference_task.arn,
+      python_processing_service_id: aws_sfn_activity.ecs_task_python_processing_service.id
     }
-  }
-}
-JSON
+  )
 }
