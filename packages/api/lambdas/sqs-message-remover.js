@@ -30,12 +30,12 @@ function isSqsQueueUpdateNeeded(event) {
   const eventStatus = getSfEventStatus(event);
   const eventMessage = getSfEventMessageObject(event, 'input', '{}');
 
-  if (!isSfExecutionEvent(event)
-    || !isTerminalSfStatus(eventStatus)
-    || get(eventMessage, 'meta.eventSource.type') !== 'sqs'
-    || get(eventMessage, 'meta.eventSource.deleteCompletedMessage', false) !== true
-    || get(eventMessage, 'meta.eventSource.workflow_name') === null
-    || get(eventMessage, 'meta.eventSource.workflow_name') !== get(eventMessage, 'meta.workflow_name')) {
+  if (!isSfExecutionEvent(event) ||
+    !isTerminalSfStatus(eventStatus) ||
+    get(eventMessage, 'meta.eventSource.type') !== 'sqs' ||
+    get(eventMessage, 'meta.eventSource.deleteCompletedMessage', false) !== true ||
+    get(eventMessage, 'meta.eventSource.workflow_name') === null ||
+    get(eventMessage, 'meta.eventSource.workflow_name') !== get(eventMessage, 'meta.workflow_name')) {
     return false;
   }
 

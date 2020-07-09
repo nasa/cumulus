@@ -35,8 +35,8 @@ class DistributionEvent {
    *   `false` otherwise
    */
   static isDistributionEvent(s3ServerLogLine) {
-    return s3ServerLogLine.includes('REST.GET.OBJECT')
-      && s3ServerLogLine.includes('A-userid');
+    return s3ServerLogLine.includes('REST.GET.OBJECT') &&
+      s3ServerLogLine.includes('A-userid');
   }
 
   /**
@@ -85,9 +85,9 @@ class DistributionEvent {
    * @returns {string} an IP address
    */
   get remoteIP() {
-    return this.rawLine.includes('A-sourceip')
-      ? this.getRequestQueryParamValue('A-sourceip')
-      : this.rawLine.split(']')[1].trim().split(' ')[0];
+    return this.rawLine.includes('A-sourceip') ?
+      this.getRequestQueryParamValue('A-sourceip') :
+      this.rawLine.split(']')[1].trim().split(' ')[0];
   }
 
   /**
