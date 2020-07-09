@@ -7,100 +7,12 @@ module "discover_granules_workflow" {
   system_bucket   = var.system_bucket
   tags            = local.tags
 
-  state_machine_definition = <<JSON
-{
-  "Comment": "Discovers new Granules from a given provider",
-  "StartAt": "DiscoverGranules",
-  "TimeoutSeconds": 18000,
-  "States": {
-    "DiscoverGranules": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "provider": "{$.meta.provider}",
-            "provider_path": "{$.meta.provider_path}",
-            "collection": "{$.meta.collection}",
-            "buckets": "{$.meta.buckets}",
-            "stack": "{$.meta.stack}",
-            "duplicateGranuleHandling": "{$.meta.collection.duplicateHandling}"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.discover_granules_task.task_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "Next": "QueueGranules"
-    },
-    "QueueGranules": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "queueUrl": "{$.meta.queues.startSF}",
-            "provider": "{$.meta.provider}",
-            "internalBucket": "{$.meta.buckets.internal.name}",
-            "stackName": "{$.meta.stack}",
-            "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.queue_granules_task.task_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "End": true
-    },
-    "WorkflowFailed": {
-      "Type": "Fail",
-      "Cause": "Workflow failed"
+  state_machine_definition = templatefile(
+    "${path.module}/discover_granules_workflow.asl.json",
+    {
+      ingest_granule_workflow_name: module.ingest_granule_workflow.name,
+      discover_granules_task_arn: module.cumulus.discover_granules_task.task_arn,
+      queue_granules_task_arn: module.cumulus.queue_granules_task.task_arn
     }
-  }
-}
-JSON
+  )
 }

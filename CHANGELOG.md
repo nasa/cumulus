@@ -102,6 +102,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1977**
   - Moved bulk granule deletion endpoint from `/bulkDelete` to
     `/granules/bulkDelete`
+- **CUMULUS-1991**
+  - Updated CMR metadata generation to use "Download file.hdf" (where `file.hdf` is the filename of the given resource) as the resource description instead of "File to download"
+  - CMR metadata updates now respect changes to resource descriptions (previously only changes to resource URLs were respected)
+
+### MIGRATION STEPS
+
+- Due to an issue with the AWS API Gateway and how the Thin Egress App Cloudformation template applies updates, you may need to redeploy your
+  `thin-egress-app-EgressGateway` manually as a one time migration step.    If your deployment fails with an
+  error similar to:
+
+  ```bash
+  Error: Lambda function (<stack>-tf-TeaCache) returned error: ({"errorType":"HTTPError","errorMessage":"Response code 404 (Not Found)"})
+  ```
+
+  Then follow the [AWS
+  instructions](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+  to `Redeploy a REST API to a stage` for your egress API and re-run `terraform
+  apply`.
 
 ### Added
 
@@ -189,10 +207,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     defaults to "unlimited"
 - **CUMULUS-1997**
   - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+- **CUMULUS-1991**
+  - `@cumulus/cmrjs/src/cmr-utils/constructOnlineAccessUrls()` now throws an error if `cmrGranuleUrlType = "distribution"` and no distribution endpoint argument is provided
 - **CUMULUS-2011**
   - Reconciliation reports are now generated within an AsyncOperation
 - **CUMULUS-2016**
   - Upgrade TEA to version 79
+
+### Fixed
+
+- **CUMULUS-1991**
+  - Added missing `DISTRIBUTION_ENDPOINT` environment variable for API lambdas. This environment variable is required for API requests to move granules.
 
 ### Deprecated
 
@@ -201,8 +226,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
-
-### Deprecated
 
 - **CUMULUS-1930**
   - `@cumulus/common/log.convertLogLevel()`

@@ -44,6 +44,20 @@ function getS3UrlOfFile(file) {
   throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
 }
 
+function getFilename(file) {
+  if (file.fileName) return file.fileName;
+  if (file.name) return file.name;
+  if (file.filename) return path.basename(file.filename);
+  if (file.filepath) return path.basename(file.filepath);
+  if (file.key) return path.basename(file.key);
+  return undefined;
+}
+
+function getFileDescription(file) {
+  const filename = getFilename(file);
+  return filename ? `Download ${filename}` : 'File to download';
+}
+
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
@@ -317,10 +331,11 @@ async function constructOnlineAccessUrl({
   if (distributionApiBuckets.includes(bucketType)) {
     const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
     if (fileUrl) {
+      const fileDescription = getFileDescription(file);
       return {
         URL: fileUrl,
-        URLDescription: 'File to download', // used by ECHO10
-        Description: 'File to download', // used by UMMG
+        URLDescription: fileDescription, // used by ECHO10
+        Description: fileDescription, // used by UMMG
         Type: mapCNMTypeToCMRType(file.type) // used by UMMG
       };
     }
@@ -347,6 +362,10 @@ async function constructOnlineAccessUrls({
   cmrGranuleUrlType = 'distribution',
   distributionBucketMap
 }) {
+  if (cmrGranuleUrlType === 'distribution' && !distEndpoint) {
+    throw new Error('cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
+  }
+
   const urlListPromises = files.map((file) => constructOnlineAccessUrl({
     file,
     distEndpoint,
@@ -443,8 +462,8 @@ function mergeURLs(original, updated = [], removed = []) {
   const removedBasenames = removed.map((url) => path.basename(url.URL));
 
   const unchangedOriginals = original.filter(
-    (url) => !newURLBasenames.includes(path.basename(url.URL))
-      && !removedBasenames.includes(path.basename(url.URL))
+    (url) => !newURLBasenames.includes(path.basename(url.URL)) &&
+      !removedBasenames.includes(path.basename(url.URL))
   );
 
   const updatedWithMergedOriginals = updated.map((url) => {
@@ -454,7 +473,21 @@ function mergeURLs(original, updated = [], removed = []) {
     if (matchedOriginal.length === 1) {
       // merge original urlObject into the updated urlObject,
       // preferring all metadata from original except the new url.URL
-      return { ...url, ...matchedOriginal[0], ...{ URL: url.URL } };
+      // and description
+      const updatedMetadata = {
+        URL: url.URL
+      };
+      if (url.Description) {
+        updatedMetadata.Description = url.Description;
+      }
+      if (url.URLDescription) {
+        updatedMetadata.URLDescription = url.URLDescription;
+      }
+      return {
+        ...url,
+        ...matchedOriginal[0],
+        ...updatedMetadata
+      };
     }
     return url;
   });
@@ -543,8 +576,8 @@ async function getCmrSettings(cmrConfig = {}) {
   };
 
   if (oauthProvider === 'launchpad') {
-    const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
-      || process.env.launchpad_passphrase_secret_name;
+    const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName ||
+      process.env.launchpad_passphrase_secret_name;
     const passphrase = await getSecretString(
       launchpadPassphraseSecretName
     );
@@ -563,8 +596,8 @@ async function getCmrSettings(cmrConfig = {}) {
     };
   }
 
-  const passwordSecretName = cmrConfig.passwordSecretName
-    || process.env.cmr_password_secret_name;
+  const passwordSecretName = cmrConfig.passwordSecretName ||
+    process.env.cmr_password_secret_name;
   const password = await getSecretString(
     passwordSecretName
   );
@@ -830,9 +863,12 @@ async function getGranuleTemporalInfo(granule) {
 
 module.exports = {
   constructOnlineAccessUrl,
+  constructOnlineAccessUrls,
   generateEcho10XMLString,
   generateFileUrl,
   getCmrSettings,
+  getFileDescription,
+  getFilename,
   getGranuleTemporalInfo,
   granulesToCmrFileObjects,
   isCMRFile,

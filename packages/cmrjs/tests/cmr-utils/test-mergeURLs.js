@@ -46,6 +46,26 @@ test('Replaces an updated URL.', (t) => {
   t.deepEqual(expected.sort(sortByURL), actual.sort(sortByURL));
 });
 
+test('Replaces an updated description.', (t) => {
+  const originalURLs = [
+    {
+      URL: 'https://path/to/metadata.cmr.xml',
+      URLDescription: 'File to download'
+    }
+  ];
+  const newURLs = [
+    {
+      URL: 's3://path/to/metadata.cmr.xml',
+      URLDescription: 'Download metadata.cmr.xml'
+    }
+  ];
+  const expected = [...newURLs];
+
+  const actual = mergeURLs(originalURLs, newURLs);
+
+  t.deepEqual(expected.sort(sortByURL), actual.sort(sortByURL));
+});
+
 test('Removes a file made private.', (t) => {
   const originalURLs = [
     {
@@ -105,7 +125,7 @@ test('Replaces an updated URL, but does not overwrite existing metadata fields.'
   const newURLs = [
     {
       URL: 's3://expected/to/change/path/to/metadata.cmr.xml',
-      URLDescription: 'UPDATED METADATA TO BE IGNORED'
+      MimeType: 'UPDATED METADATA TO BE IGNORED'
     }
   ];
   const expected = [
@@ -125,20 +145,23 @@ test('Replaces an updated URL and adds new metadata, but does not overwrite exis
   const originalURLs = [
     {
       URL: 'https://original/path/to/metadata.cmr.xml',
-      URLDescription: 'File to download'
+      URLDescription: 'File to download',
+      MimeType: 'text/xml'
     }
   ];
   const newURLs = [
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
-      URLDescription: 'UPDATED METADATA TO BE IGNORED',
-      Type: 'expected to add: GET DATA'
+      URLDescription: 'File to download',
+      Type: 'expected to add: GET DATA',
+      MimeType: 'UPDATED METADATA: IGNORE'
     }
   ];
   const expected = [
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
+      MimeType: 'text/xml',
       Type: 'expected to add: GET DATA'
     }
   ];
@@ -152,7 +175,7 @@ test('Does Complicated merging', (t) => {
   const originalURLs = [
     {
       URL: 'https://replaced/path/to/data.hdf',
-      URLDescription: 'keep description: File to download',
+      URLDescription: 'File to download',
       MimeType: 'keeps mimetype: application/x-hdfeos'
     },
     {
@@ -178,7 +201,7 @@ test('Does Complicated merging', (t) => {
     },
     {
       URL: 's3://new/path/to/data.hdf',
-      URLDescription: 'File to download',
+      URLDescription: 'Updated description',
       Type: 'adds type when missing: GET DATA'
     }
   ];
@@ -191,7 +214,7 @@ test('Does Complicated merging', (t) => {
   const expected = [
     {
       URL: 's3://new/path/to/data.hdf',
-      URLDescription: 'keep description: File to download',
+      URLDescription: 'Updated description',
       MimeType: 'keeps mimetype: application/x-hdfeos',
       Type: 'adds type when missing: GET DATA'
     },
