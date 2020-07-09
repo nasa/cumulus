@@ -267,6 +267,13 @@ test.serial('returns no links when cmrGranuleUrlType is none', async (t) => {
   t.deepEqual(actual, []);
 });
 
+test('constructOnlineAccessUrls throws error if URL type is distribution and distribution endpoint is missing', async (t) => {
+  await t.throwsAsync(constructOnlineAccessUrls({
+    distEndpoint: {},
+    cmrGranuleUrlType: 'distribution'
+  }));
+});
+
 test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async (t) => {
   const movedFiles = [
     {
