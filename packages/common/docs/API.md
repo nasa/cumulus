@@ -18,13 +18,13 @@ A collection of utilities for working with URLs
 
 **Example**  
 ```js
-const { buildURL } = require('@cumulus/common/URLUtils');
+const { buildURL } from '@cumulus/common/URLUtils');
 
 buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
 ```
-<a name="exp_module_URLUtils--buildURL"></a>
+<a name="exp_module_URLUtils--exports.buildURL"></a>
 
-### buildURL(params) ⇒ <code>string</code> ⏏
+### exports.buildURL(params) ⇒ <code>string</code> ⏏
 Build a URL
 
 **Kind**: Exported function  

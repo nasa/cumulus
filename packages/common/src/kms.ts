@@ -1,14 +1,11 @@
-'use strict';
-
-const AWS = require('aws-sdk');
-const { createErrorType } = require('@cumulus/errors');
+import AWS from 'aws-sdk';
+import { createErrorType } from '@cumulus/errors';
+import { deprecate } from './util';
 
 const KMSDecryptionFailed = createErrorType('KMSDecryptionFailed');
-const { deprecate } = require('./util');
 
-// eslint-disable-next-line node/no-unsupported-features/es-syntax, import/prefer-default-export
 export class KMS {
-  static async encrypt(text, kmsId) {
+  static async encrypt(text: string, kmsId: string) {
     deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.encrypt');
 
     const params = {
@@ -17,11 +14,16 @@ export class KMS {
     };
 
     const kms = new AWS.KMS();
-    const r = await kms.encrypt(params).promise();
-    return r.CiphertextBlob.toString('base64');
+    const { CiphertextBlob } = await kms.encrypt(params).promise();
+
+    if (!CiphertextBlob) {
+      throw new Error('Encryption failed, undefined CiphertextBlob returned');
+    }
+
+    return CiphertextBlob.toString('base64');
   }
 
-  static async decrypt(text) {
+  static async decrypt(text: string) {
     deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.decryptBase64String');
 
     const params = {
@@ -30,8 +32,13 @@ export class KMS {
 
     const kms = new AWS.KMS();
     try {
-      const r = await kms.decrypt(params).promise();
-      return r.Plaintext.toString();
+      const { Plaintext } = await kms.decrypt(params).promise();
+
+      if (!Plaintext) {
+        throw new Error('Decryption failed, undefined Plaintext returned');
+      }
+
+      return Plaintext.toString();
     } catch (error) {
       if (error.toString().includes('InvalidCiphertextException')) {
         throw new KMSDecryptionFailed(
@@ -42,7 +49,3 @@ export class KMS {
     }
   }
 }
-
-module.exports = {
-  KMS
-};
