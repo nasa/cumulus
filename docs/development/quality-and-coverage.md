@@ -10,8 +10,7 @@ repository. To create an html report, run `nyc report --reporter html` and open
 the `index.html` file in the coverage folder.
 
 To run code coverage on an individual package during development, run
-`npm run test-coverage`. This will output the coverage in the terminal. An html
-report can be created using `nyc report --reporter html` as described above.
+`npm run test`. This will output the coverage in the terminal.
 
 ## Code quality checking
 

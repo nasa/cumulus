@@ -1,4 +1,5 @@
-/tests/
 /dist/tests/
-/tsconfig.json
+/nyc.config.js
 /templates/
+/tests/
+/tsconfig.json

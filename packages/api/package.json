@@ -10,20 +10,20 @@
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
-    "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/nyc npm test",
+    "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
     "build": "../../node_modules/.bin/webpack",
-    "watch": "../../node_modules/.bin/webpack --progress -w",
-    "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
-    "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
-    "serve-remote": "cumulus-api serve",
-    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve-dist",
-    "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve-dist",
-    "serve-dist-remote": "cumulus-api serve-dist",
-    "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run build && npm run link-api-bin && npm run build-lambda-zips",
-    "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done"
+    "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
+    "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve-dist",
+    "serve-dist-remote": "cumulus-api serve-dist",
+    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve-dist",
+    "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
+    "serve-remote": "cumulus-api serve",
+    "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "watch": "../../node_modules/.bin/webpack --progress -w"
   },
   "ava": {
     "files": [
@@ -34,11 +34,6 @@
     "fail-fast": true,
     "verbose": true,
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "tests"
-    ]
   },
   "publishConfig": {
     "access": "public"
@@ -66,7 +61,7 @@
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.0.1",
     "ajv": "^5.2.2",
-    "aws-elasticsearch-connector": "^8.2.0",
+    "aws-elasticsearch-connector": "8.2.0",
     "aws-sdk": "^2.585.0",
     "aws-serverless-express": "^3.3.5",
     "body-parser": "^1.18.3",
