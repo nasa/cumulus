@@ -1,0 +1,29 @@
+{
+  "Comment": "Tests Retries and Fail",
+  "StartAt": "HelloWorld",
+  "States": {
+    "HelloWorld": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "fail": true
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "End": true
+    }
+  }
+}

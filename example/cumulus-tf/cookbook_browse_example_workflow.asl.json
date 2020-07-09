@@ -1,0 +1,222 @@
+{
+  "StartAt": "SyncGranule",
+  "States": {
+    "SyncGranule": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "stack": "{$.meta.stack}",
+            "downloadBucket": "{$.cumulus_meta.system_bucket}",
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "pdr": "{$.meta.pdr}",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                },
+                {
+                  "source": "{$.process}",
+                  "destination": "{$.meta.process}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${sync_granule_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "ProcessingStep"
+    },
+    "ProcessingStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "collection": "{$.meta.collection}",
+            "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
+            "additionalUrls": "{$.meta.additionalUrls}",
+            "generateFakeBrowse": true,
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$.files}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${fake_processing_task_arn}",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Next": "FilesToGranulesStep"
+    },
+    "FilesToGranulesStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "inputGranules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${files_to_granules_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "MoveGranuleStep"
+    },
+    "MoveGranuleStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "collection": "{$.meta.collection}",
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${move_granules_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "CmrStep"
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "input_granules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "End": true
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "Cause": "Workflow failed"
+    }
+  }
+}
