@@ -193,7 +193,7 @@ class DistributionEvent {
     if (isNil(this.productInfo)) {
       const granuleId = await GranuleFilesCache.getGranuleId(this.bucket, this.key);
 
-      if (granuleId === null) {
+      if (granuleId === undefined) {
         this.productInfo = {};
       } else {
         const granule = await (new Granule()).getRecord({ granuleId });
