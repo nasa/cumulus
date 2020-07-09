@@ -336,9 +336,8 @@ class Granule extends Manager {
     const processingTimeInfo = {};
     if (startDate) {
       processingTimeInfo.processingStartDateTime = startDate.toISOString();
-      processingTimeInfo.processingEndDateTime = stopDate
-        ? stopDate.toISOString()
-        : new Date().toISOString();
+      processingTimeInfo.processingEndDateTime = stopDate ?
+        stopDate.toISOString() : new Date().toISOString();
     }
 
     const now = Date.now();
@@ -408,13 +407,13 @@ class Granule extends Manager {
     const params = {
       TableName: this.tableName,
       ExpressionAttributeNames:
-        {
-          '#granuleId': 'granuleId',
-          '#collectionId': 'collectionId',
-          '#beginningDateTime': 'beginningDateTime',
-          '#endingDateTime': 'endingDateTime',
-          '#createdAt': 'createdAt'
-        },
+      {
+        '#granuleId': 'granuleId',
+        '#collectionId': 'collectionId',
+        '#beginningDateTime': 'beginningDateTime',
+        '#endingDateTime': 'endingDateTime',
+        '#createdAt': 'createdAt'
+      },
       ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime'
     };
 
