@@ -20,7 +20,6 @@ const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { ESFileQueue } = require('../es/esFileQueue');
-const { getBucket, getKey } = require('../lib/FileUtils');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
