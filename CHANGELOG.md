@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `sns-event.getSnsEventMessageObject()` now returns `undefined` if it could
     not be parsed. It previously returned `null`.
   - The `aws` module has been removed.
+  - The `BucketsConfig.buckets` property is now read-only and private
   - The `test-utils.validateConfig()` function now resolves to `undefined`
     rather than `true`.
   - The `test-utils.validateInput()` function now resolves to `undefined` rather

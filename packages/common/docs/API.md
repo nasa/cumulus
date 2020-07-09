@@ -18,7 +18,7 @@ A collection of utilities for working with URLs
 
 **Example**  
 ```js
-const { buildURL } from '@cumulus/common/URLUtils');
+const { buildURL } = require('@cumulus/common/URLUtils');
 
 buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
 ```

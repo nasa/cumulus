@@ -3,7 +3,7 @@
  * @module URLUtils
  *
  * @example
- * const { buildURL } from '@cumulus/common/URLUtils');
+ * const { buildURL } = require('@cumulus/common/URLUtils');
  *
  * buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
  */
