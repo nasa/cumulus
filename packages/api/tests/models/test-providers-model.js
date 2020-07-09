@@ -162,23 +162,6 @@ test('Providers.create() allows creation of a provider without a globalConnectio
   t.is(fetchedProvider.globalConnectionLimit, undefined);
 });
 
-test('Providers.create() alows creation of a provider with a httpConfiguration object', async (t) => {
-  const { providersModel } = t.context;
-
-  const provider = fakeProviderFactory({
-    httpConfiguration: {
-      httpRequestTimeout: 0
-    }
-  });
-  await providersModel.create(provider);
-
-  const fetchedProvider = await providersModel.get({ id: provider.id });
-
-  t.deepEqual(fetchedProvider.httpConfiguration, {
-    httpRequestTimeout: 0
-  });
-});
-
 test('Providers.update() throws a ValidationError if an invalid host is used', async (t) => {
   const { providersModel } = t.context;
 

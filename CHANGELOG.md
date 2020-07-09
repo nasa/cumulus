@@ -103,11 +103,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2032**
-  - Updates the HTTP/HTTPS providers to allow for configuration of a
-    `httpConfiguration.httpRequestTimeout` value that changes the default
-    timeout configuration for the request.    The default has been adjusted from
-    10 seconds to 5 minutes (300 seconds) in the model schema as well as the
-    provider code.
+  - Updated @cumulus/ingest/HttpProviderClient to utilze a configuration key
+    `httpRequestTimeout` to set the default timeout for discovery HTTP/HTTPS
+    requests, and updates the default for the provider to 5 minutes (300 seconds).
+  - Updated the DiscoverGranules and DiscoverPDRs tasks to utilize the updated
+    configuration value if set via workflow config, and updates the default for
+    these tasks to 5 minutes (300 seconds).
 
 - **CUMULUS-1861**
   - Updates Rule objects to no longer require a collection.

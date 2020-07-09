@@ -11,11 +11,13 @@ const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
  *
  * @param {Object} providerConfig - the connection config for the provider
  * @param {bool} useList - flag to tell ftp server to use 'LIST' instead of 'STAT'
+ * @param {number} httpRequestTimeout - seconds for http provider to wait
+ *                                      before timing out
  * @param {*} path - the provider path to search
  * @returns {Array<Object>} a list of discovered file objects
  */
-const listFiles = (providerConfig, useList, path) =>
-  buildProviderClient({ ...providerConfig, useList }).list(path);
+const listFiles = (providerConfig, useList, httpRequestTimeout = 300, path) =>
+  buildProviderClient({ ...providerConfig, useList, httpRequestTimeout }).list(path);
 
 const isPdrFile = ({ name }) => name.toUpperCase().endsWith('.PDR');
 
@@ -35,6 +37,7 @@ const discoverPdrs = async ({ config }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
+    config.httpRequestTimeout,
     config.provider_path
   );
 

@@ -256,9 +256,7 @@ test.serial('list succeeds if server wait time is unexpectedly slow', async (t) 
     protocol: 'http',
     host: 'localhost',
     port: 3030,
-    httpConfiguration: {
-      httpRequestTimeout: 1005
-    }
+    httpRequestTimeout: 1005
   });
 
   nock('http://localhost:3030')
@@ -281,9 +279,7 @@ test.serial('list fails if client wait time is set less than the response delay'
     protocol: 'http',
     host: 'testhost',
     port: 3030,
-    httpConfiguration: {
-      httpRequestTimeout: 1
-    }
+    httpRequestTimeout: 1
   });
 
   nock('http://testhost:3030')

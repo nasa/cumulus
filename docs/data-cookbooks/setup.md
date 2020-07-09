@@ -66,11 +66,6 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 |password|`${password}`|No|Password for acccess to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 
-**Note:** The above optional attributes are not shown in the example provided,
-and this example does not show all possible options.  See the
-[schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js)
-for up-to-date documentation of all available options.
-
 ## Rules
 
 Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by either events in [Kinesis](data-cookbooks/cnm-workflow.md), SNS messages or SQS messages. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (specifically the object assigned to `module.exports.rule`). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).

@@ -81,6 +81,11 @@
       "default": false,
       "type": "boolean"
     },
+    "httpRequestTimeout": {
+      "description": "Timeout (in seconds) for retreival by HTTP/HTTPS provider",
+      "default": 300,
+      "type": "integer"
+    },
     "duplicateGranuleHandling": {
       "description": "flag to set DiscoverGranules duplicate handling behavior",
       "default": "replace",

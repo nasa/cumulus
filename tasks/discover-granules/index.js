@@ -24,11 +24,13 @@ const logger = () => new Logger({
  *
  * @param {Object} providerConfig - the connection config for the provider
  * @param {bool} useList - flag to tell ftp server to use 'LIST' instead of 'STAT'
+ * @param {number} httpRequestTimeout - seconds for http provider to wait
+ *                                      before timing out
  * @param {string} path - the provider path to search
  * @returns {Array<Object>} a list of discovered file objects
  */
-const listFiles = (providerConfig, useList, path) =>
-  buildProviderClient({ ...providerConfig, useList }).list(path);
+const listFiles = (providerConfig, useList, httpRequestTimeout = 300, path) =>
+  buildProviderClient({ ...providerConfig, useList, httpRequestTimeout }).list(path);
 
 /**
  * Given a regular expression and a file containing a name, extract the granule
@@ -246,7 +248,7 @@ const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
 };
 
 /**
- * Discovers granules. See schemas/input.json and schemas/config.json for
+ * Discovers granules. See scqhemas/input.json and schemas/config.json for
  * detailed event description.
  *
  * @param {Object} event - Lambda event object
@@ -257,6 +259,7 @@ const discoverGranules = async ({ config }) => {
   const discoveredFiles = await listFiles(
     config.provider,
     config.useList,
+    config.httpRequestTimeout,
     config.provider_path
   );
 
