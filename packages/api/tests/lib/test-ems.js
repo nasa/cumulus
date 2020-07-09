@@ -67,7 +67,7 @@ test.serial('retrievePrivateKey retrieves private key in an alternate location',
 
   t.is(privateKey, 'alternate-private-key');
 
-  process.env.ems_privateKey = null;
+  delete process.env.ems_privateKey;
   await Promise.all([
     s3().deleteObject({ Bucket: process.env.system_bucket, Key: privateKeyPath }).promise(),
     s3().deleteObject({ Bucket: process.env.system_bucket, Key: alternatePrivateKeyPath }).promise()
