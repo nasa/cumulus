@@ -2,6 +2,12 @@
   "name": "@cumulus/message",
   "version": "1.24.0",
   "description": "Utilities for building and parsing Cumulus messages",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
   "keywords": [
     "GIBS",
     "CUMULUS",
@@ -19,9 +25,12 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build-docs": "../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs ./*.js > docs/API.md",
+    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/docs-API.hbs ./dist/*.js > docs/API.md",
+    "clean": "rm -rf dist",
+    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test"
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "tsc": "../../node_modules/.bin/tsc"
   },
   "ava": {
     "files": [
