@@ -208,7 +208,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
@@ -275,7 +275,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   const filesInCumulus = report.filesInCumulus;
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
@@ -326,7 +326,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
@@ -388,17 +388,17 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-    && f.granuleId === extraDbFile1.granuleId));
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key) &&
+    f.granuleId === extraDbFile1.granuleId));
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-    && f.granuleId === extraDbFile2.granuleId));
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key) &&
+    f.granuleId === extraDbFile2.granuleId));
 
   const reportStartTime = moment(report.reportStartTime);
   const reportEndTime = moment(report.reportEndTime);
@@ -455,7 +455,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
@@ -464,11 +464,11 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-    && f.granuleId === extraDbFile1.granuleId));
+    f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key) &&
+    f.granuleId === extraDbFile1.granuleId));
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
-    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-    && f.granuleId === extraDbFile2.granuleId));
+    f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key) &&
+    f.granuleId === extraDbFile2.granuleId));
 
   const reportStartTime = moment(report.reportStartTime);
   const reportEndTime = moment(report.reportEndTime);
@@ -527,7 +527,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const report = await fetchCompletedReport(reportRecord);
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
 
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 2);

@@ -250,7 +250,7 @@ test('buildLaunchpadJwt throws with unauthorized user.', async (t) => {
 });
 
 test('/saml/auth with bad metadata returns Bad Request.', async (t) => {
-  const callback = sandbox.fake.yields('post_assert callsback with Error', null);
+  const callback = sandbox.fake.yields('post_assert callsback with Error', undefined);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
   sandbox.replace(saml2, 'ServiceProvider', mockExample.ServiceProvider);
@@ -265,7 +265,7 @@ test('/saml/auth with bad metadata returns Bad Request.', async (t) => {
 });
 
 test('/saml/auth with good metadata returns redirect.', async (t) => {
-  const callback = sandbox.fake.yields(null, t.context.successfulSamlResponse);
+  const callback = sandbox.fake.yields(undefined, t.context.successfulSamlResponse);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
   sandbox.replace(saml2, 'ServiceProvider', mockExample.ServiceProvider);
@@ -308,8 +308,8 @@ test('/token endpoint without a token query parameter redirects to saml/login.',
 test('/token endpoint without proper context headers returns expectation failed.', async (t) => {
   const expectedError = {
     error: 'Expectation Failed',
-    message: ('Could not retrieve necessary information from express request object. '
-              + 'Incorrect relayState or stageName information in express request.'),
+    message: ('Could not retrieve necessary information from express request object. ' +
+              'Incorrect relayState or stageName information in express request.'),
     statusCode: 417
   };
 

@@ -72,7 +72,7 @@ const buildDynamoStreamRecord = ({
   return record;
 };
 
-const buildCollectionRecord = ({ type, oldCollection = null, newCollection = null }) => {
+const buildCollectionRecord = ({ type, oldCollection, newCollection }) => {
   let keys;
   if (type === 'REMOVE') {
     keys = {
@@ -95,7 +95,7 @@ const buildCollectionRecord = ({ type, oldCollection = null, newCollection = nul
   });
 };
 
-const buildExecutionRecord = ({ type, oldExecution = null, newExecution = null }) => {
+const buildExecutionRecord = ({ type, oldExecution, newExecution }) => {
   const arn = type === 'REMOVE' ? oldExecution.arn : newExecution.arn;
 
   return buildDynamoStreamRecord({
@@ -107,7 +107,7 @@ const buildExecutionRecord = ({ type, oldExecution = null, newExecution = null }
   });
 };
 
-const buildGranuleRecord = ({ type, oldGranule = null, newGranule = null }) => {
+const buildGranuleRecord = ({ type, oldGranule, newGranule }) => {
   const granuleId = type === 'REMOVE' ? oldGranule.granuleId : newGranule.granuleId;
 
   return buildDynamoStreamRecord({
@@ -188,7 +188,7 @@ test('getParentId() returns correct ID for granule record', (t) => {
 });
 
 test('getParentId() returns null for non-granule record', (t) => {
-  t.is(getParentId('collection', {}), null);
+  t.is(getParentId('collection', {}), undefined);
 });
 
 test('getTableName() returns undefined for invalid input', (t) => {
