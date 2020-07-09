@@ -64,8 +64,8 @@ function parsePayload(payload) {
     const entryParts = payload.message.trim().split('\t');
     // cumulus log message
     const messageStartIndex = entryParts.findIndex((e) => e.startsWith('{'));
-    if (entryParts.length >= 3 && messageStartIndex
-    && entryParts[entryParts.length - 1].endsWith('}')) {
+    if (entryParts.length >= 3 && messageStartIndex &&
+        entryParts[entryParts.length - 1].endsWith('}')) {
       record = JSON.parse(entryParts.slice(messageStartIndex).join('\t'));
       record.RequestId = entryParts[1];
     } else { // other logs e.g. cumulus-ecs-task

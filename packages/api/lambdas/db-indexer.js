@@ -113,7 +113,7 @@ function getParentId(type, record) {
   if (type === 'granule') {
     return record.collectionId;
   }
-  return null;
+  return undefined;
 }
 
 /**
@@ -200,9 +200,9 @@ async function indexRecords(records) {
     records,
     (record) => indexRecord(esClient, record).catch(log.error),
     {
-      concurrency: process.env.ES_CONCURRENCY
-        ? Number.parseInt(process.env.ES_CONCURRENCY, 10)
-        : 3
+      concurrency: process.env.ES_CONCURRENCY ?
+        Number.parseInt(process.env.ES_CONCURRENCY, 10) :
+        3
     }
   );
 }

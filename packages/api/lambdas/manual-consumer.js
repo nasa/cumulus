@@ -252,8 +252,8 @@ async function handler(event) {
     return processStream(event.kinesisStream, event.kinesisStreamCreationTimestamp);
   }
 
-  const errMsg = 'Manual consumer could not determine expected operation'
-  + ` from event ${JSON.stringify(event)}`;
+  const errMsg = 'Manual consumer could not determine expected operation' +
+    ` from event ${JSON.stringify(event)}`;
   log.fatal(errMsg);
   return errMsg;
 }
