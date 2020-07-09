@@ -186,10 +186,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     defaults to "unlimited"
 - **CUMULUS-1997**
   - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+- **CUMULUS-1991**
+  - `@cumulus/cmrjs/src/cmr-utils/constructOnlineAccessUrls()` now throws an error if `cmrGranuleUrlType = "distribution"` and no distribution endpoint argument is provided
 - **CUMULUS-2011**
   - Reconciliation reports are now generated within an AsyncOperation
 - **CUMULUS-2016**
   - Upgrade TEA to version 79
+
+### Fixed
+
+- **CUMULUS-1991**
+  - Added missing `DISTRIBUTION_ENDPOINT` environment variable for API lambdas. This environment variable is required for API requests to move granules.
 
 ### Deprecated
 
@@ -198,8 +205,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
-
-### Deprecated
 
 - **CUMULUS-1930**
   - `@cumulus/common/log.convertLogLevel()`
