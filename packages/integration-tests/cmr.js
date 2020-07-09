@@ -76,7 +76,7 @@ const sampleEcho10Granule = {
     OnlineAccessURLs: [{
       OnlineAccessURL: {
         URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
-        URLDescription: 'File to download'
+        URLDescription: 'Download MYD13Q1.A2017297.h19v10.006.2017313221202.hdf'
       }
     }],
     Orderable: 'true',
@@ -295,7 +295,7 @@ async function getOnlineResourcesECHO10(cmrLink) {
  *   CMR URL path to concept, i.e. what is returned from post to cmr task
  * @returns {Array<Object>} Array of link objects in the format
  * { URL: "https://example.com/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A0794505._4kqJd.006.9457902462263.hdf",
-    Description: "File to download",
+    Description: "Download MOD09GQ.A0794505._4kqJd.006.9457902462263.hdf",
     Type: "GET DATA" }
  */
 async function getOnlineResourcesUMMG(cmrLink) {

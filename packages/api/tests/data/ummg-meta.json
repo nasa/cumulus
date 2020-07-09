@@ -3,12 +3,12 @@
     {
       "URL": "https://8n7ovu33kh.execute-api.us-west-2.amazonaws.com/dev/podaac-dev-cumulus-protected/L0A_RAD_RAW_product_0017-of-0020.h5",
       "Type": "GET DATA",
-      "Description": "File to download"
+      "Description": "Download L0A_RAD_RAW_product_0017-of-0020.h5"
     },
     {
       "URL": "https://podaac-dev-cumulus-public.s3.amazonaws.com/L0A_RAD_RAW_product_0017-of-0020.cmr.xml",
       "Type": "GET DATA",
-      "Description": "File to download"
+      "Description": "Download L0A_RAD_RAW_product_0017-of-0020.cmr.xml"
     }
   ],
   "SpatialExtent": {

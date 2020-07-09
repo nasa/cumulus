@@ -176,15 +176,15 @@
     <OnlineAccessURLs>
         <OnlineAccessURL>
             <URL>https://3tu0izwxuc.execute-api.us-east-1.amazonaws.com/dev/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf</URL>
-            <URLDescription>File to download</URLDescription>
+            <URLDescription>Download MOD09GQ.A2016358.h13v04.006.2016360104606.hdf</URLDescription>
         </OnlineAccessURL>
         <OnlineAccessURL>
             <URL>http://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg</URL>
-            <URLDescription>File to download</URLDescription>
+            <URLDescription>Download MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg</URLDescription>
         </OnlineAccessURL>
         <OnlineAccessURL>
             <URL>http://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml</URL>
-            <URLDescription>File to download</URLDescription>
+            <URLDescription>Download MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml</URLDescription>
         </OnlineAccessURL>
     </OnlineAccessURLs>
     <Orderable>true</Orderable>
