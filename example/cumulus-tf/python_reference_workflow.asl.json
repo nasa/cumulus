@@ -1,0 +1,60 @@
+{
+  "Comment": "Runs Python reference task and activity",
+  "StartAt": "Reference Task",
+  "States": {
+    "Reference Task": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+              "configData": { "key1": "injectedData" }
+          },
+          "ReplaceConfig": {
+            "MaxSize": 1,
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${python_reference_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Reference Activity"
+    },
+    "Reference Activity": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "MaxSize": 1,
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${python_processing_service_id}",
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "End": true
+    }
+  }
+}

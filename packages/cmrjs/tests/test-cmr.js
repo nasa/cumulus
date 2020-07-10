@@ -73,7 +73,7 @@ test.serial('get CMR metadata, fail', async (t) => {
 
   try {
     const response = await getMetadata('fakeLink');
-    t.is(response, null);
+    t.is(response, undefined);
   } finally {
     stub.restore();
   }

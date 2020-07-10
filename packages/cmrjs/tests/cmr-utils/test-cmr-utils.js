@@ -1,4 +1,5 @@
 const test = require('ava');
+const path = require('path');
 const rewire = require('rewire');
 const proxyquire = require('proxyquire').noPreserveCache();
 const fs = require('fs-extra');
@@ -74,7 +75,7 @@ test.before(async (t) => {
   t.context.launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken')
     .callsFake((config) => Promise.resolve(`${config.passphrase}-${config.api}-${config.certificate}`));
 
-  const bucketsJson = await readJsonFixture('./tests/fixtures/buckets.json');
+  const bucketsJson = await readJsonFixture(path.join(__dirname, '../fixtures/buckets.json'));
 
   t.context.bucketTypes = Object.values(bucketsJson)
     .reduce(
@@ -237,9 +238,14 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   const { bucketTypes, distributionBucketMap } = t.context;
 
   const uploadEchoSpy = sinon.spy(() => Promise.resolve);
-  const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
+  const cmrXml = await fs.readFile(
+    path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
+    'utf8'
+  );
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
-  const filesObject = await readJsonFixture('./tests/fixtures/filesObjectFixture.json');
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/filesObjectFixture.json')
+  );
 
   const distEndpoint = 'https://distendpoint.com';
 
@@ -256,14 +262,14 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf`,
-      URLDescription: 'File to download'
+      URLDescription: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf'
     }
   ];
   const onlineResourcesExpected = [
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json`,
       Type: 'EXTENDED METADATA',
-      Description: 'File to download'
+      Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json'
     },
     {
       URL: `${distEndpoint}/s3credentials`,
@@ -274,7 +280,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   const AssociatedBrowseExpected = [
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg`,
-      Description: 'File to download'
+      Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg'
     }
   ];
   let actual;
@@ -302,9 +308,14 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 
   const uploadEchoSpy = sinon.spy(() => Promise.resolve);
 
-  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json'),
+    'utf8'
+  );
   const cmrMetadata = JSON.parse(cmrJSON);
-  const filesObject = await readJsonFixture('./tests/fixtures/UMMGFilesObjectFixture.json');
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
 
   const distEndpoint = 'https://distendpoint.com';
 
@@ -320,17 +331,17 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf`,
-      Description: 'File to download',
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
       Type: 'GET DATA'
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg`,
-      Description: 'File to download',
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
       Type: 'GET RELATED VISUALIZATION'
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json`,
-      Description: 'File to download',
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
       Type: 'EXTENDED METADATA'
     },
     {
@@ -601,4 +612,52 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
       ForceDeleteWithoutRecovery: true
     }).promise();
   }
+});
+
+test('getFilename returns correct value', (t) => {
+  t.is(
+    cmrUtil.getFilename({ fileName: 'foo.txt' }),
+    'foo.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ name: 'foo2.txt' }),
+    'foo2.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ filename: '/path/to/foo3.txt' }),
+    'foo3.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ filepath: '/path/to/foo4.txt' }),
+    'foo4.txt'
+  );
+
+  t.is(
+    cmrUtil.getFilename({ key: '/path/to/foo5.txt' }),
+    'foo5.txt'
+  );
+});
+
+test('getFilename returns undefined if file name cannot be determined', (t) => {
+  t.is(
+    cmrUtil.getFilename({}),
+    undefined
+  );
+});
+
+test('getFileDescription returns correct description', (t) => {
+  t.is(
+    cmrUtil.getFileDescription({ fileName: 'foo.txt' }),
+    'Download foo.txt'
+  );
+});
+
+test('getFileDescription returns fallback if file name cannot be determined', (t) => {
+  t.is(
+    cmrUtil.getFileDescription({}),
+    'File to download'
+  );
 });
