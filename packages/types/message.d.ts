@@ -17,3 +17,19 @@ export interface CumulusMessage {
   meta: Meta
   payload: object
 }
+
+interface CMAReplaceConfig {
+  Bucket: string
+  Key: string
+  TargetPath?: string
+}
+
+interface CMAInnerEvent {
+  event?: CumulusMessage
+}
+
+export interface CMAEventMessage {
+  replace?: CMAReplaceConfig
+  cma?: CMAInnerEvent
+  event?: CumulusMessage
+}

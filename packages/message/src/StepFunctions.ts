@@ -8,9 +8,10 @@
  * const StepFunctions = require('@cumulus/message/StepFunctions');
  */
 
-const { JSONPath } = require('jsonpath-plus');
-const s3Utils = require('@cumulus/aws-client/S3');
-const Logger = require('@cumulus/logger');
+import { JSONPath } from 'jsonpath-plus';
+import * as s3Utils from '@cumulus/aws-client/S3';
+import Logger from '@cumulus/logger';
+import { Message } from '@cumulus/types';
 
 const log = new Logger({
   sender: '@cumulus/message/StepFunctions'
@@ -20,14 +21,16 @@ const log = new Logger({
  * Given a Step Function event, replace specified key in event with contents
  * of S3 remote message
  *
- * @param {Object} event - Source event
+ * @param {Message.CMAEventMessage} event - Source event
  * @returns {Promise<Object>} Updated event with target path replaced by remote message
  * @throws {Error} if target path cannot be found on source event
  *
  * @async
  * @alias module:StepFunctions
  */
-const pullStepFunctionEvent = async (event) => {
+export const pullStepFunctionEvent = async (
+  event: Message.CMAEventMessage
+): Promise<object> => {
   if (!event.replace) return event;
 
   const remoteMsg = await s3Utils.getJsonS3Object(
@@ -58,14 +61,17 @@ const pullStepFunctionEvent = async (event) => {
  * Parse step message with CMA keys and replace specified key in event with contents
  * of S3 remote message
  *
- * @param {Object} stepMessage - Message for the step
+ * @param {Message.CMAEventMessage} stepMessage - Message for the step
  * @param {string} stepName - Name of the step
  * @returns {Promise<Object>} Parsed and updated event with target path replaced by remote message
  *
  * @async
  * @alias module:StepFunctions
  */
-const parseStepMessage = async (stepMessage, stepName) => {
+export const parseStepMessage = async (
+  stepMessage: Message.CMAEventMessage,
+  stepName: string
+): Promise<object> => {
   let parsedStepMessage = stepMessage;
   if (stepMessage.cma) {
     parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
@@ -79,9 +85,4 @@ const parseStepMessage = async (stepMessage, stepName) => {
     parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
   }
   return parsedStepMessage;
-};
-
-module.exports = {
-  pullStepFunctionEvent,
-  parseStepMessage
 };
