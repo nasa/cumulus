@@ -22,15 +22,19 @@ const logger = () => new Logger({
 /**
  * Fetch a list of files from the provider
  *
- * @param {Object} providerConfig - the connection config for the provider
- * @param {bool} useList - flag to tell ftp server to use 'LIST' instead of 'STAT'
- * @param {number} httpRequestTimeout - seconds for http provider to wait
- *                                      before timing out
- * @param {string} path - the provider path to search
- * @returns {Array<Object>} a list of discovered file objects
+ * @param {Object} params
+ * @param {Object} params.providerConfig     - the connection config for the provider
+ * @param {bool}   params.useList            - flag to tell ftp server to use
+ *                                             'LIST' instead  of 'STAT'
+ * @param {number} params.httpRequestTimeout - seconds for http provider to wait
+ *                                              before timing out
+ * @param {string} params.path               - the provider path to search
+ * @returns {Array<Object>}                  -  a list of discovered file objects
  */
-const listFiles = (providerConfig, useList, httpRequestTimeout = 300, path) =>
-  buildProviderClient({ ...providerConfig, useList, httpRequestTimeout }).list(path);
+const listFiles = (params) => {
+  const { providerConfig, useList, httpRequestTimeout = 300, path } = params;
+  return buildProviderClient({ ...providerConfig, useList, httpRequestTimeout }).list(path);
+};
 
 /**
  * Given a regular expression and a file containing a name, extract the granule
@@ -256,12 +260,12 @@ const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
  *    is passed to the next task in the workflow
  */
 const discoverGranules = async ({ config }) => {
-  const discoveredFiles = await listFiles(
-    config.provider,
-    config.useList,
-    config.httpRequestTimeout,
-    config.provider_path
-  );
+  const discoveredFiles = await listFiles({
+    providerConfig: config.provider,
+    useList: config.useList,
+    httpRequestTimeout: config.httpRequestTimeout,
+    path: config.provider_path
+  });
 
   let filesByGranuleId = groupFilesByGranuleId(
     config.collection.granuleIdExtraction,
