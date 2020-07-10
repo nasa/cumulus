@@ -7,6 +7,7 @@
     "CUMULUS",
     "NASA"
   ],
+  "types": "./index.d.ts",
   "engines": {
     "node": ">=12.18.0"
   },
