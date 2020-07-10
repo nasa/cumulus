@@ -9,28 +9,49 @@
  * const Build = require('@cumulus/message/Build');
  */
 
-const merge = require('lodash/merge');
+import merge from 'lodash/merge';
+import {
+  CumulusMessage,
+  CumulusMeta,
+  MessageTemplate,
+  Meta,
+  Workflow
+} from './types';
+
 const uuidv4 = require('uuid/v4');
 
-const createExecutionName = () => uuidv4();
+/**
+ * Generate an execution name.
+ *
+ * @returns {string}
+ * @private
+ */
+const createExecutionName = (): string => uuidv4();
 
 /**
  * Build base message.cumulus_meta for a queued execution.
  *
  * @param {Object} params
  * @param {string} params.queueName - An SQS queue name
- * @param {Object} params.parentExecutionArn - Parent execution ARN
- * @returns {Object}
+ * @param {string} params.stateMachine - State machine name
+ * @param {string} [params.asyncOperationId] - Async operation ID
+ * @param {string} [params.parentExecutionArn] - Parent execution ARN
+ * @returns {CumulusMeta}
  *
  * @private
  */
 const buildCumulusMeta = ({
-  asyncOperationId,
-  parentExecutionArn,
   queueName,
-  stateMachine
-}) => {
-  const cumulusMeta = {
+  stateMachine,
+  asyncOperationId,
+  parentExecutionArn
+}: {
+  queueName?: string
+  stateMachine: string,
+  asyncOperationId?: string,
+  parentExecutionArn?: string
+}): CumulusMeta => {
+  const cumulusMeta: CumulusMeta = {
     execution_name: createExecutionName(),
     queueName,
     state_machine: stateMachine
@@ -44,18 +65,23 @@ const buildCumulusMeta = ({
  * Build base message.meta for a queued execution.
  *
  * @param {Object} params
- * @param {string} params.queueName - An SQS queue name
- * @param {Object} params.parentExecutionArn - Parent execution ARN
- * @returns {Object}
+ * @param {string} params.workflowName - Workflow name
+ * @param {Object} [params.collection] - A collection object
+ * @param {Object} [params.provider] - A provider object
+ * @returns {Meta}
  *
  * @private
  */
 const buildMeta = ({
+  workflowName,
   collection,
-  provider,
-  workflowName
-}) => {
-  const meta = {
+  provider
+}: {
+  workflowName: string
+  collection?: object
+  provider?: object
+}): Meta => {
+  const meta: Meta = {
     workflow_name: workflowName
   };
   if (collection) {
@@ -85,7 +111,7 @@ const buildMeta = ({
  *
  * @alias module:Build
  */
-function buildQueueMessageFromTemplate({
+export const buildQueueMessageFromTemplate = ({
   provider,
   collection,
   parentExecutionArn,
@@ -96,15 +122,26 @@ function buildQueueMessageFromTemplate({
   workflow,
   customCumulusMeta = {},
   customMeta = {}
-}) {
-  const cumulusMeta = buildCumulusMeta({
+}: {
+  provider: object,
+  collection: object
+  parentExecutionArn: string,
+  messageTemplate: MessageTemplate,
+  payload: object
+  workflow: Workflow,
+  queueName?: string,
+  asyncOperationId?: string,
+  customCumulusMeta?: object
+  customMeta?: object
+}): CumulusMessage => {
+  const cumulusMeta: CumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
     queueName,
     stateMachine: workflow.arn
   });
 
-  const meta = buildMeta({
+  const meta: Meta = buildMeta({
     collection,
     provider,
     workflowName: workflow.name
@@ -118,8 +155,4 @@ function buildQueueMessageFromTemplate({
   };
 
   return message;
-}
-
-module.exports = {
-  buildQueueMessageFromTemplate
 };
