@@ -1,6 +1,7 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const path = require('path');
 const get = require('lodash/get');
 const isNumber = require('lodash/isNumber');
 const isString = require('lodash/isString');
@@ -196,7 +197,7 @@ const parsePdr = async ({ config, input }) => {
 
   const rawPdr = await fetchTextFile(
     providerClient,
-    S3.s3Join(input.pdr.path, input.pdr.name)
+    path.join(input.pdr.path, input.pdr.name)
   );
 
   const pdrDocument = buildPdrDocument(rawPdr);

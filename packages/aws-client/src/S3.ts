@@ -494,7 +494,7 @@ export const downloadS3Files = (
   const n = s3Objs.length;
   log.info(`Starting download of ${n} keys to ${dir}`);
   const promiseDownload = (s3Obj: AWS.S3.GetObjectRequest) => {
-    const filename = s3Join(dir, path.basename(s3Obj.Key));
+    const filename = path.join(dir, path.basename(s3Obj.Key));
     const file = fs.createWriteStream(filename);
     const opts = Object.assign(s3Obj, s3opts);
     return new Promise((resolve, reject) => {

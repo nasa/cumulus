@@ -247,7 +247,7 @@ test('downloadS3File resolves filepath if key is found', async (t) => {
   await awsServices.s3().putObject({ Bucket, Key: Key, Body: Body }).promise();
 
   const params = { Bucket, Key: Key };
-  const filepath = await downloadS3File(params, s3Join(tmpdir(), 'example'));
+  const filepath = await downloadS3File(params, path.join(tmpdir(), 'example'));
 
   const result = await new Promise((resolve, reject) => {
     fs.readFile(filepath, 'utf-8', (err, data) => {

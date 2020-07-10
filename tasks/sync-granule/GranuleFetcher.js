@@ -20,7 +20,7 @@ const addChecksumToFile = async (providerClient, dataFile, checksumFile) => {
   const checksumType = checksumFile.name.split('.').pop();
   const checksum = (await fetchTextFile(
     providerClient,
-    S3.s3Join(checksumFile.path, checksumFile.name)
+    path.join(checksumFile.path, checksumFile.name)
   )).split(' ').shift();
 
   return { ...dataFile, checksum, checksumType };
