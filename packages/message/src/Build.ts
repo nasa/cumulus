@@ -10,11 +10,10 @@
  */
 
 import merge from 'lodash/merge';
+import { Message } from '@cumulus/types';
+
 import {
-  CumulusMessage,
-  CumulusMeta,
   MessageTemplate,
-  Meta,
   Workflow
 } from './types';
 
@@ -50,8 +49,8 @@ const buildCumulusMeta = ({
   stateMachine: string,
   asyncOperationId?: string,
   parentExecutionArn?: string
-}): CumulusMeta => {
-  const cumulusMeta: CumulusMeta = {
+}): Message.CumulusMeta => {
+  const cumulusMeta: Message.CumulusMeta = {
     execution_name: createExecutionName(),
     queueName,
     state_machine: stateMachine
@@ -80,8 +79,8 @@ const buildMeta = ({
   workflowName: string
   collection?: object
   provider?: object
-}): Meta => {
-  const meta: Meta = {
+}): Message.Meta => {
+  const meta: Message.Meta = {
     workflow_name: workflowName
   };
   if (collection) {
@@ -134,15 +133,15 @@ export const buildQueueMessageFromTemplate = ({
   asyncOperationId?: string,
   customCumulusMeta?: object
   customMeta?: object
-}): CumulusMessage => {
-  const cumulusMeta: CumulusMeta = buildCumulusMeta({
+}): Message.CumulusMessage => {
+  const cumulusMeta: Message.CumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
     queueName,
     stateMachine: workflow.arn
   });
 
-  const meta: Meta = buildMeta({
+  const meta: Message.Meta = buildMeta({
     collection,
     provider,
     workflowName: workflow.name
