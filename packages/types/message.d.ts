@@ -16,6 +16,7 @@ export interface CumulusMessage {
   cumulus_meta: CumulusMeta
   meta: Meta
   payload: object
+  replace?: CMAReplaceConfig
 }
 
 interface CMAReplaceConfig {
