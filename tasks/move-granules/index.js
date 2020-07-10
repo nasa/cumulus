@@ -11,6 +11,7 @@ const {
   buildS3Uri,
   getJsonS3Object,
   moveObject,
+  s3Join,
   s3ObjectExists,
   waitForObjectToExist
 } = require('@cumulus/aws-client/S3');
@@ -100,7 +101,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
         cmrMetadata
       });
       const bucketName = bucketsConfig.nameByKey(match[0].bucket);
-      const filepath = path.join(urlPath, file.name);
+      const filepath = s3Join(urlPath, file.name);
 
       updatedFiles.push({
         ...file, // keeps old info like "name" and "fileStagingDir"
@@ -108,7 +109,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
         ...{
           bucket: bucketName,
           filepath,
-          filename: `s3://${path.join(bucketName, filepath)}`,
+          filename: `s3://${s3Join(bucketName, filepath)}`,
           url_path: URLPathTemplate
         }
       });
