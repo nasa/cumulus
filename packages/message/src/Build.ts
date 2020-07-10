@@ -100,14 +100,15 @@ const buildMeta = ({
  * @param {Object} params.provider - A provider object
  * @param {Object} params.collection - A collection object
  * @param {string} params.parentExecutionArn - ARN for parent execution
- * @param {string} params.queueName - SQS queue name
  * @param {Object} params.messageTemplate - Message template for the workflow
  * @param {Object} params.payload - Payload for the workflow
  * @param {Object} params.workflow - workflow name & arn object
- * @param {Object} params.customCumulusMeta - Custom data for message.cumulus_meta
- * @param {Object} params.customMeta - Custom data for message.meta
+ * @param {string} [params.queueName] - SQS queue name
+ * @param {string} [params.asyncOperationId] - Async operation ID
+ * @param {Object} [params.customCumulusMeta] - Custom data for message.cumulus_meta
+ * @param {Object} [params.customMeta] - Custom data for message.meta
  *
- * @returns {Object} An SQS message object
+ * @returns {CumulusMessage} A Cumulus message object
  *
  * @alias module:Build
  */
