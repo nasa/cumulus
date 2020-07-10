@@ -102,6 +102,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2058**
+  - Added `lambda_processing_role_name` as an output from the `cumulus` module
+    to provide the processing role name
 - **CUMULUS-1417**
   - Added a `checksumFor` property to collection `files` config. Set this
     property on a checksum file's definition matching the `regex` of the target
