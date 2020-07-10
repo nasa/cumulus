@@ -2,12 +2,6 @@
   "name": "@cumulus/message",
   "version": "1.24.0",
   "description": "Utilities for building and parsing Cumulus messages",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts"
-  ],
   "keywords": [
     "GIBS",
     "CUMULUS",
