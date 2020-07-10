@@ -10,8 +10,9 @@
  * const Executions = require('@cumulus/message/Executions');
  */
 
-const get = require('lodash/get');
-const isString = require('lodash/isString');
+import get from 'lodash/get';
+import isString from 'lodash/isString';
+import { Message } from '@cumulus/types';
 
 /**
  * Build execution ARN from a state machine ARN and execution name
@@ -22,7 +23,10 @@ const isString = require('lodash/isString');
  *
  * @alias module:Executions
  */
-const buildExecutionArn = (stateMachineArn, executionName) => {
+export const buildExecutionArn = (
+  stateMachineArn: string,
+  executionName: string
+): string | null => {
   if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
     return `${sfArn}:${executionName}`;
@@ -38,11 +42,11 @@ const buildExecutionArn = (stateMachineArn, executionName) => {
  *
  * @alias module:Executions
  */
-function getExecutionUrlFromArn(executionArn) {
+export const getExecutionUrlFromArn = (executionArn: string): string => {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   return `https://console.aws.amazon.com/states/home?region=${region}`
          + `#/executions/details/${executionArn}`;
-}
+};
 
 /**
  * Get state machine ARN from an execution ARN
@@ -52,7 +56,9 @@ function getExecutionUrlFromArn(executionArn) {
  *
  * @alias module:Executions
  */
-const getStateMachineArnFromExecutionArn = (executionArn) => {
+export const getStateMachineArnFromExecutionArn = (
+  executionArn: string
+): string | null => {
   if (executionArn) {
     return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
@@ -62,12 +68,15 @@ const getStateMachineArnFromExecutionArn = (executionArn) => {
 /**
  * Get the execution name from a workflow message.
  *
- * @param {Object} message - A workflow message object
+ * @param {Message.CumulusMessage} message - A workflow message object
  * @returns {string} An execution name
+ * @throws {Error} if there is no execution name
  *
  * @alias module:Executions
  */
-const getMessageExecutionName = (message) => {
+export const getMessageExecutionName = (
+  message: Message.CumulusMessage
+): string => {
   const executionName = get(message, 'cumulus_meta.execution_name');
   if (!isString(executionName)) {
     throw new Error('cumulus_meta.execution_name not set in message');
@@ -78,12 +87,15 @@ const getMessageExecutionName = (message) => {
 /**
  * Get the state machine ARN from a workflow message.
  *
- * @param {Object} message - A workflow message object
+ * @param {Message.CumulusMessage} message - A workflow message object
  * @returns {string} A state machine ARN
+ * @throws {Error} if there is not state machine ARN
  *
  * @alias module:Executions
  */
-const getMessageStateMachineArn = (message) => {
+export const getMessageStateMachineArn = (
+  message: Message.CumulusMessage
+): string => {
   const stateMachineArn = get(message, 'cumulus_meta.state_machine');
   if (!isString(stateMachineArn)) {
     throw new Error('cumulus_meta.state_machine not set in message');
@@ -94,12 +106,14 @@ const getMessageStateMachineArn = (message) => {
 /**
  * Get the execution ARN from a workflow message.
  *
- * @param {Object} message - A workflow message object
+ * @param {Message.CumulusMessage} message - A workflow message object
  * @returns {null|string} A state machine execution ARN
  *
  * @alias module:Executions
  */
-const getMessageExecutionArn = (message) => {
+export const getMessageExecutionArn = (
+  message: Message.CumulusMessage
+): null | string => {
   try {
     return buildExecutionArn(
       getMessageStateMachineArn(message),
@@ -108,13 +122,4 @@ const getMessageExecutionArn = (message) => {
   } catch (error) {
     return null;
   }
-};
-
-module.exports = {
-  buildExecutionArn,
-  getExecutionUrlFromArn,
-  getStateMachineArnFromExecutionArn,
-  getMessageExecutionArn,
-  getMessageExecutionName,
-  getMessageStateMachineArn
 };
