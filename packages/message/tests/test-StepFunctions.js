@@ -1,11 +1,10 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
 const sinon = require('sinon');
 
 const s3Utils = require('@cumulus/aws-client/S3');
-const StepFunctions = rewire('../StepFunctions');
+const StepFunctions = require('../StepFunctions');
 
 test('pullStepFunctionEvent returns original message if message does not contain an event.replace key ', async (t) => {
   const event = {
@@ -47,15 +46,13 @@ test.serial('pullStepFunctionEvent replaces message key specified by replace.Tar
     }
   };
 
-  const stub = sinon.stub(s3Utils, 'getS3Object').resolves({
-    Body: JSON.stringify({ someKey: 'some data' })
-  });
-  try {
-    const message = await StepFunctions.pullStepFunctionEvent(event);
-    t.deepEqual(message, expectedMessage);
-  } finally {
-    stub.restore();
-  }
+  const stub = sinon.stub(s3Utils, 'getJsonS3Object').resolves(
+    { someKey: 'some data' }
+  );
+  t.teardown(() => stub.restore());
+
+  const message = await StepFunctions.pullStepFunctionEvent(event);
+  t.deepEqual(message, expectedMessage);
 });
 
 test.serial('pullStepFunctionEvent replaces entire message with S3 message object if replace.TargetPath is not specified', async (t) => {
@@ -80,14 +77,11 @@ test.serial('pullStepFunctionEvent replaces entire message with S3 message objec
     }
   };
 
-  const stub = sinon.stub(s3Utils, 'getS3Object').resolves({ Body: JSON.stringify(fullMessage) });
+  const stub = sinon.stub(s3Utils, 'getJsonS3Object').resolves(fullMessage);
+  t.teardown(() => stub.restore());
 
-  try {
-    const message = await StepFunctions.pullStepFunctionEvent(event);
-    t.deepEqual(message, fullMessage);
-  } finally {
-    stub.restore();
-  }
+  const message = await StepFunctions.pullStepFunctionEvent(event);
+  t.deepEqual(message, fullMessage);
 });
 
 test.serial('pullStepFunctionEvent throws error if replace.TargetPath cannot be found in the source message', async (t) => {
@@ -103,13 +97,10 @@ test.serial('pullStepFunctionEvent throws error if replace.TargetPath cannot be 
     }
   };
 
-  const stub = sinon.stub(s3Utils, 'getS3Object').resolves({ Body: JSON.stringify({}) });
+  const stub = sinon.stub(s3Utils, 'getS3Object').resolves({});
+  t.teardown(() => stub.restore());
 
-  try {
-    await t.throwsAsync(StepFunctions.pullStepFunctionEvent(event));
-  } finally {
-    stub.restore();
-  }
+  await t.throwsAsync(StepFunctions.pullStepFunctionEvent(event));
 });
 
 test('StepFunctions.parseStepMessage parses message correctly', async (t) => {
@@ -144,7 +135,7 @@ test.serial('StepFunctions.parseStepMessage returns correct output if input mess
         replace: {
           Bucket: 'somebucket',
           Key: 'somekey',
-          TargetPath: '$.payload'
+          TargetPath: '$'
         }
       }
     }
@@ -159,14 +150,10 @@ test.serial('StepFunctions.parseStepMessage returns correct output if input mess
     }
   };
 
-  const pullSfEventMock = StepFunctions.__set__(
-    'pullStepFunctionEvent',
-    async () => fullRemoteMessage
-  );
+  const stub = sinon.stub(s3Utils, 'getJsonS3Object');
+  stub.withArgs('somebucket', 'somekey')
+    .resolves(fullRemoteMessage);
+  t.teardown(() => stub.restore());
 
-  try {
-    t.deepEqual(await StepFunctions.parseStepMessage(event), fullRemoteMessage);
-  } finally {
-    pullSfEventMock();
-  }
+  t.deepEqual(await StepFunctions.parseStepMessage(event), fullRemoteMessage);
 });
