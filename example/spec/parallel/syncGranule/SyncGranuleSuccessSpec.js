@@ -1,6 +1,5 @@
 const fs = require('fs');
 const difference = require('lodash/difference');
-const path = require('path');
 const {
   buildAndExecuteWorkflow,
   addProviders,
@@ -16,6 +15,7 @@ const { Execution, Granule } = require('@cumulus/api/models');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
+  s3Join,
   s3ObjectExists,
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
@@ -176,8 +176,8 @@ describe('The Sync Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       files = lambdaOutput.payload.granules[0].files;
-      key1 = path.join(files[0].fileStagingDir, files[0].name);
-      key2 = path.join(files[1].fileStagingDir, files[1].name);
+      key1 = s3Join(files[0].fileStagingDir, files[0].name);
+      key2 = s3Join(files[1].fileStagingDir, files[1].name);
 
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),

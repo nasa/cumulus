@@ -135,6 +135,10 @@ output "lambda_processing_role_arn" {
   value = aws_iam_role.lambda_processing.arn
 }
 
+output "lambda_processing_role_name" {
+  value = aws_iam_role.lambda_processing.name
+}
+
 output "scaling_role_arn" {
   value = module.ingest.scaling_role_arn
 }
