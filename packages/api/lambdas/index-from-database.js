@@ -8,6 +8,14 @@ const log = require('@cumulus/common/log');
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 
+/**
+ * Return specified request concurrency to be used with [p-limit](https://github.com/sindresorhus/p-limit)
+ *
+ * Note: 0 is not an allowed return value
+ *
+ * @param {Object} event - Incoming Lambda event
+ * @returns {number}
+ */
 const getEsRequestConcurrency = (event) => {
   const concurrency = event.esRequestConcurrency || process.env.ES_CONCURRENCY;
   return concurrency ? Number.parseInt(concurrency, 10) : 10;

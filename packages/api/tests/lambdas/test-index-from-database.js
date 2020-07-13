@@ -156,6 +156,12 @@ test('getEsRequestConcurrency correctly returns 10 when nothing is specified', (
   t.is(indexFromDatabase.getEsRequestConcurrency({}), 10);
 });
 
+test('getEsRequestConcurrency correctly returns default of 10 when 0 is specified', (t) => {
+  t.is(indexFromDatabase.getEsRequestConcurrency({
+    esRequestConcurrency: 0
+  }), 10);
+});
+
 test('No error is thrown if nothing is in the database', async (t) => {
   const { esAlias } = t.context;
 
