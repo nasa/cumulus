@@ -36,7 +36,7 @@ async function copyEsToDynamoDB(Cls, index = 'cumulus', type, concurrency = 1, p
   const chunkedRecords = chunk(records, 25); // divide results into chunks of 25
 
   // add them to dynamoDB
-  await Promise.all(chunkedRecords.map((c) => conc(() => record.batchWrite(null, c))));
+  await Promise.all(chunkedRecords.map((c) => conc(() => record.batchWrite(undefined, c))));
 
   if (records.length === limit) {
     await copyEsToDynamoDB(Cls, index, type, concurrency, page + 1);

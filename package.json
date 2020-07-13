@@ -12,6 +12,7 @@
     "eslint": "eslint --ext .js --ext .ts .",
     "remove-locks": "lerna exec 'rm -f package-lock.json'",
     "install-locks": "lerna exec --no-sort -- npm i --package-lock-only --no-audit",
+    "install-python-deps": "lerna run install-python-deps --concurrency 1",
     "lint": "npm run lint-package-json && npm run eslint && lerna run python-lint && npm run lint-md",
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "lint-package-json": "npmPkgJsonLint .",

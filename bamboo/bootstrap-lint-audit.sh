@@ -15,5 +15,5 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull
 fi
 
 npm install --ignore-scripts --no-package-lock
-./node_modules/.bin/lerna run install-python-deps
+npm run install-python-deps
 ln -s /dev/stdout ./lerna-debug.log
