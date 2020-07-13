@@ -44,7 +44,7 @@ class Importer extends Transform {
     this.promises.push(this.limit(() => {
       readline.cursorTo(process.stdout, 0);
       process.stdout.write(`Processing ${this.count} records\n`);
-      return this.model.batchWrite(null, data);
+      return this.model.batchWrite(undefined, data);
     }));
     callback();
   }

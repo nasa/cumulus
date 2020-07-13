@@ -112,7 +112,7 @@ async function generateDistributionReport(params) {
   log.info(`generateDistributionReport for access records between ${reportStartTime.format()} and ${reportEndTime.format()}`);
 
   // A few utility functions that we'll be using below
-  const eventTimeFilter = (event) => event.time.isBetween(reportStartTime, reportEndTime, null, '[)');
+  const eventTimeFilter = (event) => event.time.isBetween(reportStartTime, reportEndTime, undefined, '[)');
   const sortByTime = (eventA, eventB) => (eventA.time.isBefore(eventB.time) ? -1 : 1);
   // most s3 server access log records are delivered within a few hours of the time
   // that they are recorded
@@ -243,7 +243,6 @@ exports.generateAndStoreReportsForEachDay = generateAndStoreReportsForEachDay;
  * @returns {Promise} resolves when the report has been generated and stored
  */
 function handler(event, context, cb) {
-  // eslint-disable-next-line no-param-reassign
   context.callbackWaitsForEmptyEventLoop = false;
   // 24-hour period ending past midnight
   let endTime = moment.utc().startOf('day').format();
