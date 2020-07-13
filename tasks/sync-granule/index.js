@@ -1,11 +1,11 @@
 'use strict';
 
-const path = require('path');
 const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/errors');
 const lock = require('@cumulus/ingest/lock');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
+const { s3Join } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const GranuleFetcher = require('./GranuleFetcher');
 
@@ -86,7 +86,7 @@ exports.syncGranule = function syncGranule(event) {
   const duplicateHandling = duplicateHandlingType(event);
 
   // use stack and collection names to suffix fileStagingDir
-  const fileStagingDir = path.join(
+  const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
     stack
   );
