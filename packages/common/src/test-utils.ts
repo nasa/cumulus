@@ -94,7 +94,7 @@ async function validateJSON(
  *
  * @param {Object} t - an ava test
  * @param {Object} data - the object to be validated
- * @returns {Promise<boolean>} - whether the object is valid or not
+ * @returns {Promise<undefined>}
  */
 export async function validateInput(t: ExecutionContext, data: unknown) {
   await validateJSON(t, './schemas/input.json', data);
@@ -107,7 +107,7 @@ export async function validateInput(t: ExecutionContext, data: unknown) {
  *
  * @param {Object} t - an ava test
  * @param {Object} data - the object to be validated
- * @returns {Promise<boolean>} - whether the object is valid or not
+ * @returns {Promise<undefined>}
  */
 export async function validateConfig(t: ExecutionContext, data: unknown) {
   await validateJSON(t, './schemas/config.json', data);
@@ -120,7 +120,7 @@ export async function validateConfig(t: ExecutionContext, data: unknown) {
  *
  * @param {Object} t - an ava test
  * @param {Object} data - the object to be validated
- * @returns {Promise<boolean>} - whether the object is valid or not
+ * @returns {Promise<undefined>}
  */
 export async function validateOutput(t: ExecutionContext, data: unknown) {
   await validateJSON(t, './schemas/output.json', data);
