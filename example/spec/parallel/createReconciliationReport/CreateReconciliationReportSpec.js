@@ -245,12 +245,12 @@ describe('When there are granule differences and granule reconciliation is run',
     report = JSON.parse(response.body);
   });
 
-  it('generates a report showing cumulus files that are in S3 but not in the Elasticsearch table', () => {
+  it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
     const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
     expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
   });
 
-  it('generates a report showing cumulus files that are in the Elasticsearch table but not in S3', () => {
+  it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
     const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
     const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
     expect(extraDbUris).toContain(extraFileUri);
@@ -356,7 +356,6 @@ describe('When there are granule differences and granule reconciliation is run',
       granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId })
     ]);
 
-    granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: extraFileInDb.granuleId });
     // need to add the cmr granule back to the table, so the granule can be removed from api
     await granuleModel.create(cmrGranule);
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
