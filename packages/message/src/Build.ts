@@ -80,7 +80,7 @@ const buildMeta = ({
   collection?: object
   provider?: object
 }): Message.Meta => {
-  const meta: Message.Meta = {
+  const meta:Message.Meta = {
     workflow_name: workflowName
   };
   if (collection) {

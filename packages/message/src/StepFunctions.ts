@@ -21,7 +21,7 @@ const log = new Logger({
  * Given a Step Function event, replace specified key in event with contents
  * of S3 remote message
  *
- * @param {Message.CMAEventMessage} event - Source event
+ * @param {Message.CumulusRemoteMessage} event - Source event
  * @returns {Promise<Object>} Updated event with target path replaced by remote message
  * @throws {Error} if target path cannot be found on source event
  *
@@ -29,8 +29,10 @@ const log = new Logger({
  * @alias module:StepFunctions
  */
 export const pullStepFunctionEvent = async (
-  event: Message.CMAEventMessage
-): Promise<object> => {
+  event: {
+    replace?: Message.ReplaceConfig
+  }
+): Promise<unknown> => {
   if (!event.replace) return event;
 
   const remoteMsg = await s3Utils.getJsonS3Object(
@@ -61,28 +63,39 @@ export const pullStepFunctionEvent = async (
  * Parse step message with CMA keys and replace specified key in event with contents
  * of S3 remote message
  *
- * @param {Message.CMAEventMessage} stepMessage - Message for the step
+ * @param {CMAMessage} stepMessage - Message for the step
  * @param {string} stepName - Name of the step
  * @returns {Promise<Object>} Parsed and updated event with target path replaced by remote message
  *
  * @async
  * @alias module:StepFunctions
  */
+
+type CMAMessage = {
+  cma?: {
+    event?: object
+  }
+  replace?: Message.ReplaceConfig
+};
+
 export const parseStepMessage = async (
-  stepMessage: Message.CMAEventMessage,
+  stepMessage: CMAMessage,
   stepName: string
-): Promise<object> => {
-  let parsedStepMessage = stepMessage;
+) => {
+  let flattenedMsg;
   if (stepMessage.cma) {
-    parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
-    delete parsedStepMessage.cma;
-    delete parsedStepMessage.event;
+    const x = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
+    delete x.cma;
+    delete x.event;
+    flattenedMsg = x;
+  } else {
+    flattenedMsg = stepMessage;
   }
 
-  if (parsedStepMessage.replace) {
+  if (flattenedMsg.replace) {
     // Message was too large and output was written to S3
-    log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedStepMessage.replace)}`);
-    parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
+    log.info(`Retrieving ${stepName} output from ${JSON.stringify(flattenedMsg.replace)}`);
+    flattenedMsg = await pullStepFunctionEvent(flattenedMsg);
   }
-  return parsedStepMessage;
+  return <Message.CumulusMessage>flattenedMsg;
 };

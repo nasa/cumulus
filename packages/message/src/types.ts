@@ -1,9 +1,15 @@
-export interface MessageTemplate {
+export type MessageTemplate = {
   cumulus_meta: object
   meta: object
 }
 
-export interface Workflow {
+export type Workflow = {
   arn: string
   name: string
 }
+
+export type QueueMessageMeta = {
+  workflow_name: string
+  collection?: object
+  provider?: object
+};
