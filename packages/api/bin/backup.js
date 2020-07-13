@@ -3,7 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const Dyno = require('@mapbox/dyno');
-const { inTestMode, getLocalstackEndpoint } = require('@cumulus/common/test-utils');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 const stream = require('stream');
 
 /**
