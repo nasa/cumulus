@@ -5,10 +5,10 @@ const get = require('lodash/get');
 const Stats = require('../es/stats');
 
 /**
- * filter approved types
+ * Map requested stats types to supported types
  *
  * @param {Object} req - express request object
- * @returns {Object} returns the type and index as an object
+ * @returns {string|undefined} returns the type of stats
  */
 function getType(req) {
   const supportedTypes = {

@@ -162,7 +162,7 @@ const prepareSamlProviders = async () => {
 
   const idpOptions = {
     sso_login_url: process.env.IDP_LOGIN,
-    sso_logout_url: undefined,
+    sso_logout_url: null,
     certificates: LaunchpadX509Certificate
   };
 

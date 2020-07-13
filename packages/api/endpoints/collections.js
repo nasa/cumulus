@@ -139,15 +139,19 @@ async function put({ params: { name, version }, body }, res) {
 
   const collectionModel = new models.Collection();
 
-  return (!(await collectionModel.exists(name, version)))
-    ? res.boom.notFound(`Collection '${name}' version '${version}' not found`)
-    : collectionModel.create(body)
-      .then(async (record) => {
-        if (inTestMode()) {
-          await addToLocalES(record, indexCollection);
-        }
-        return res.send(record);
-      });
+  if (!(await collectionModel.exists(name, version))) {
+    return res.boom.notFound(
+      `Collection '${name}' version '${version}' not found`
+    );
+  }
+
+  const record = await collectionModel.create(body);
+
+  if (inTestMode()) {
+    await addToLocalES(record, indexCollection);
+  }
+
+  return res.send(record);
 }
 
 /**
