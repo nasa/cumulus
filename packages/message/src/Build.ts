@@ -14,6 +14,7 @@ import { Message } from '@cumulus/types';
 
 import {
   MessageTemplate,
+  QueueMessageMeta,
   Workflow
 } from './types';
 
@@ -79,8 +80,8 @@ const buildMeta = ({
   workflowName: string
   collection?: object
   provider?: object
-}): Message.Meta => {
-  const meta:Message.Meta = {
+}): QueueMessageMeta => {
+  const meta:QueueMessageMeta = {
     workflow_name: workflowName
   };
   if (collection) {
@@ -141,7 +142,7 @@ export const buildQueueMessageFromTemplate = ({
     stateMachine: workflow.arn
   });
 
-  const meta: Message.Meta = buildMeta({
+  const meta: QueueMessageMeta = buildMeta({
     collection,
     provider,
     workflowName: workflow.name
