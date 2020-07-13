@@ -162,7 +162,6 @@ const prepareSamlProviders = async () => {
 
   const idpOptions = {
     sso_login_url: process.env.IDP_LOGIN,
-    sso_logout_url: null,
     certificates: LaunchpadX509Certificate
   };
 
@@ -189,7 +188,7 @@ const login = async (req, res) => {
     idp,
     { relay_state: relayState },
     (err, loginUrl) => {
-      if (err != null) {
+      if (err) {
         return res.boom.badRequest('Could not create login request url.', err);
       }
       return res.redirect(loginUrl);
@@ -210,8 +209,8 @@ const login = async (req, res) => {
  */
 const auth = async (req, res) => {
   const { idp, sp } = await prepareSamlProviders();
-  sp.post_assert(idp, { request_body: req.body }, (err, samlResponse) => {
-    if (err != null) {
+  sp.post_assert(idp, { request_body: req.body }, async (err, samlResponse) => {
+    if (err) {
       log.debug(`launchpadSaml.auth post assert error ${err}`);
       if (err.message && err.message.startsWith('SAML Assertion signature check failed!')) {
         return downloadLaunchpadPublicMetadata(launchpadMetadataS3Uri())
@@ -220,13 +219,13 @@ const auth = async (req, res) => {
       return res.boom.badRequest(`SAML post assert error ${err}`, err);
     }
 
-    return buildLaunchpadJwt(samlResponse)
-      .then((LaunchpadJwtToken) => {
-        const Location = `${req.body.RelayState}/?token=${LaunchpadJwtToken}`;
-        return res.redirect(Location);
-      })
-      .catch((error) =>
-        res.boom.badRequest(`Could not build JWT from SAML response ${error}`, error));
+    try {
+      const LaunchpadJwtToken = await buildLaunchpadJwt(samlResponse);
+      const Location = `${req.body.RelayState}/?token=${LaunchpadJwtToken}`;
+      return res.redirect(Location);
+    } catch (error) {
+      return res.boom.badRequest(`Could not build JWT from SAML response ${error}`, error);
+    }
   });
 };
 

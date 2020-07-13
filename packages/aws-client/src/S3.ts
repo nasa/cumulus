@@ -48,7 +48,7 @@ const buildDeprecationMessage = (
 const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
 
 /**
- * Join strings into an S3 key without a leading slash or double slashes
+ * Join strings into an S3 key without a leading slash
  *
  * @param {...string|Array<string>} args - the strings to join
  * @returns {string} the full S3 key
@@ -576,8 +576,7 @@ export const uploadS3Files = (
       filename = file;
 
       if (typeof keyPath === 'string') {
-        // FIXME Should not be using path.join here, since that could be a backslash
-        key = path.join(keyPath, path.basename(file));
+        key = s3Join(keyPath, path.basename(file));
       } else {
         key = keyPath(file);
       }

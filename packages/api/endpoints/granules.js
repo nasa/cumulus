@@ -213,8 +213,9 @@ function validateBulkGranulesRequest(req, res, next) {
 
   if (payload.query
     && !(process.env.METRICS_ES_HOST
-    && process.env.METRICS_ES_USER
-    && process.env.METRICS_ES_PASS)) {
+        && process.env.METRICS_ES_USER
+        && process.env.METRICS_ES_PASS)
+  ) {
     return res.boom.badRequest('ELK Metrics stack not configured');
   }
 

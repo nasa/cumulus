@@ -70,5 +70,5 @@ test('getSnsEventMessageObject() returns null for non-JSON string message', (t) 
     }
   });
 
-  t.is(returnedObject, null);
+  t.is(returnedObject, undefined);
 });

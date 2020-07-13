@@ -58,7 +58,7 @@ distributionApp.use((err, req, res, _next) => {
   return res.boom.badImplementation('Something broke!');
 });
 
-const server = awsServerlessExpress.createServer(distributionApp, null);
+const server = awsServerlessExpress.createServer(distributionApp);
 
 module.exports = {
   distributionApp,

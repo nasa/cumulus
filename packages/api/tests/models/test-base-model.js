@@ -121,7 +121,7 @@ test('Manager._buildDocClientUpdateParams() returns null for an empty item', (t)
   t.is(manager._buildDocClientUpdateParams({
     item: {},
     itemKey: {}
-  }), null);
+  }), undefined);
 });
 
 test('Manager._buildDocClientUpdateParams() does not try to update the key fields', (t) => {
