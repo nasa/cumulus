@@ -1,8 +1,8 @@
 'use strict';
 
 const fs = require('fs');
-const path = require('path');
 const { s3 } = require('@cumulus/aws-client/services');
+const { s3Join } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -216,7 +216,7 @@ describe('When the Sync Granule workflow is configured', () => {
         const file = inputPayload.granules[0].files[0];
         fileUpdated = file.name;
         const updateParams = {
-          Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
+          Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content
         };
 
         await s3().putObject(updateParams).promise();
@@ -272,7 +272,7 @@ describe('When the Sync Granule workflow is configured', () => {
         const file = inputPayload.granules[0].files[0];
         updatedFileName = file.name;
         const updateParams = {
-          Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
+          Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content
         };
 
         await s3().putObject(updateParams).promise();

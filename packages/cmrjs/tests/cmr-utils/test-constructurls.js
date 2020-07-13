@@ -1,7 +1,6 @@
 const test = require('ava');
 const rewire = require('rewire');
 
-const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { randomId } = require('@cumulus/common/test-utils');
 const omit = require('lodash/omit');
 
@@ -23,7 +22,13 @@ test.beforeEach((t) => {
     protected: { name: randomId('protected'), type: 'protected' },
     public: { name: randomId('public'), type: 'public' }
   };
-  t.context.buckets = new BucketsConfig(t.context.bucketConfig);
+
+  t.context.bucketTypes = Object.values(t.context.bucketConfig)
+    .reduce(
+      (acc, { name, type }) => ({ ...acc, [name]: type }),
+      {}
+    );
+
   t.context.distributionBucketMap = {
     [t.context.bucketConfig.protected.name]: t.context.bucketConfig.protected.name,
     [t.context.bucketConfig.public.name]: t.context.bucketConfig.public.name
@@ -52,8 +57,8 @@ test('returns correct url for protected data', async (t) => {
   const expected = [
     {
       URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
-      Description: 'File to download',
-      URLDescription: 'File to download',
+      Description: 'Download protected-file.hdf',
+      URLDescription: 'Download protected-file.hdf',
       Type: 'GET DATA'
     }
   ];
@@ -61,7 +66,7 @@ test('returns correct url for protected data', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -79,8 +84,8 @@ test('Returns correct url object for public data.', async (t) => {
   const expected = [
     {
       URL: `${distEndpoint}/${publicBucketName}/some/path/browse_image.jpg`,
-      Description: 'File to download',
-      URLDescription: 'File to download',
+      Description: 'Download browse_image.jpg',
+      URLDescription: 'Download browse_image.jpg',
       Type: 'GET DATA'
     }
   ];
@@ -88,7 +93,7 @@ test('Returns correct url object for public data.', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -106,7 +111,7 @@ test('Returns empty list for private data.', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -135,14 +140,14 @@ test('returns an array of correct url objects given a list of moved files.', asy
   const expected = [
     {
       URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
-      Description: 'File to download',
-      URLDescription: 'File to download',
+      Description: 'Download protected.hdf',
+      URLDescription: 'Download protected.hdf',
       Type: 'GET DATA'
     },
     {
       URL: `${distEndpoint}/${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
-      Description: 'File to download',
-      URLDescription: 'File to download',
+      Description: 'Download publicfile.jpg',
+      URLDescription: 'Download publicfile.jpg',
       Type: 'GET RELATED VISUALIZATION'
     }
   ];
@@ -150,7 +155,7 @@ test('returns an array of correct url objects given a list of moved files.', asy
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -176,12 +181,12 @@ test('constructRelatedUrls returns expected array when called with file list', a
   const expected = [
     {
       URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
-      Description: 'File to download',
+      Description: 'Download protected.hdf',
       Type: 'GET DATA'
     },
     {
       URL: `${distEndpoint}/${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
-      Description: 'File to download',
+      Description: 'Download publicfile.jpg',
       Type: 'GET DATA'
     },
     omit(s3CredentialsEndpointObject, 'URLDescription')
@@ -190,7 +195,7 @@ test('constructRelatedUrls returns expected array when called with file list', a
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -204,7 +209,7 @@ test('constructRelatedUrls returns expected array when called with an empty file
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketsTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap
   });
 
@@ -224,8 +229,8 @@ test.serial('returns correct links with s3 cmrGranuleUrlType', async (t) => {
   const expected = [
     {
       URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
-      Description: 'File to download',
-      URLDescription: 'File to download',
+      Description: 'Download publicfile.jpg',
+      URLDescription: 'Download publicfile.jpg',
       Type: 'GET RELATED VISUALIZATION'
     }
   ];
@@ -233,7 +238,7 @@ test.serial('returns correct links with s3 cmrGranuleUrlType', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 's3',
     distributionBucketMap: t.context.distributionBucketMap
   });
@@ -254,12 +259,19 @@ test.serial('returns no links when cmrGranuleUrlType is none', async (t) => {
   const actual = await constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 'none',
     distributionBucketMap: t.context.distributionBucketMap
   });
 
   t.deepEqual(actual, []);
+});
+
+test('constructOnlineAccessUrls throws error if URL type is distribution and distribution endpoint is missing', async (t) => {
+  await t.throwsAsync(constructOnlineAccessUrls({
+    distEndpoint: {},
+    cmrGranuleUrlType: 'distribution'
+  }));
 });
 
 test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async (t) => {
@@ -275,7 +287,7 @@ test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async 
   const expected = [
     {
       URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
-      Description: 'File to download',
+      Description: 'Download publicfile.jpg',
       Type: 'GET RELATED VISUALIZATION'
     },
     omit(s3CredentialsEndpointObject, 'URLDescription')
@@ -284,7 +296,7 @@ test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async 
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 's3',
     distributionBucketMap: t.context.distributionBucketMap
   });
@@ -305,7 +317,7 @@ test('constructRelatedUrls returns just s3 credentials url when cmrGranuleUrlTyp
   const actual = await constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
-    buckets: t.context.buckets,
+    bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 'none',
     distributionBucketMap: t.context.distributionBucketMap
   });

@@ -8,16 +8,11 @@
   },
   "scripts": {
     "test": "../../node_modules/.bin/ava",
-    "test-coverage": "../../node_modules/.bin/ npm test"
+    "test:coverage": "../../node_modules/.bin/nyc npm test"
   },
   "ava": {
     "serial": true,
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "test"
-    ]
   },
   "publishConfig": {
     "access": "public"

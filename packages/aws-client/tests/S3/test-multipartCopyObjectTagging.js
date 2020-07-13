@@ -62,7 +62,9 @@ test.beforeEach((t) => {
     }
   });
 
-  stubS3MultipartUploads.completeMultipartUpload = sinon.fake.resolves();
+  stubS3MultipartUploads.completeMultipartUpload = sinon.fake.resolves({
+    etag: 'etag-complete'
+  });
 });
 
 test.after.always(async (t) => {

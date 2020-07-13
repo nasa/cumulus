@@ -8,21 +8,15 @@
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 2 --template templates/API.hbs CMR.js CMRSearchConceptQueue.js > API.md",
     "clean": "rm -f ./*.js ./*.d.ts",
-    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
     "prepare": "npm run tsc",
-    "test-coverage": "../../node_modules/.bin/nyc npm test",
     "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
     "fail-fast": true,
     "timeout": "15m"
-  },
-  "nyc": {
-    "exclude": [
-      "tests"
-    ]
   },
   "keywords": [
     "CUMULUS"

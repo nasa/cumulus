@@ -7,56 +7,10 @@ module "publish_granule_workflow" {
   system_bucket   = var.system_bucket
   tags            = local.tags
 
-  state_machine_definition = <<JSON
-{
-  "Comment": "Publish Granule",
-  "StartAt": "CmrStep",
-  "States": {
-    "CmrStep": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "bucket": "{$.meta.buckets.internal.name}",
-            "stack": "{$.meta.stack}",
-            "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.post_to_cmr_task.task_arn}",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "WorkflowFailed",
-          "ResultPath": "$.exception"
-        }
-      ],
-      "Retry": [
-        {
-          "BackoffRate": 2,
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6
-        }
-      ],
-      "End": true
-    },
-    "WorkflowFailed": {
-      "Cause": "Workflow failed",
-      "Type": "Fail"
+  state_machine_definition = templatefile(
+    "${path.module}/publish_granule_workflow.asl.json",
+    {
+      post_to_cmr_task_arn: module.cumulus.post_to_cmr_task.task_arn
     }
-  }
-}
-JSON
+  )
 }

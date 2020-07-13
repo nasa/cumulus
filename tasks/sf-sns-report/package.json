@@ -18,15 +18,11 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
     "build-lambda-zips": "(cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
-    "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
-    "package": "npm run build && npm run build-lambda-zips"
-  },
-  "nyc": {
-    "exclude": [
-      "tests"
-    ]
+    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
+    "package": "npm run build && npm run build-lambda-zips",
+    "test:coverage": "../../node_modules/.bin/nyc true",
+    "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

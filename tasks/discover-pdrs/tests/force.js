@@ -6,7 +6,7 @@ const os = require('os');
 const fs = require('fs-extra');
 
 const { s3 } = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket, uploadS3Files } = require('@cumulus/aws-client/S3');
+const { s3Join, recursivelyDeleteS3Bucket, uploadS3Files } = require('@cumulus/aws-client/S3');
 const {
   randomString,
   validateConfig,
@@ -58,7 +58,7 @@ test('test pdr discovery with force=false', async (t) => {
       return pdrFileName;
     });
 
-    await uploadS3Files(files, event.config.bucket, path.join(event.config.stack, 'pdrs'));
+    await uploadS3Files(files, event.config.bucket, s3Join(event.config.stack, 'pdrs'));
 
     // do it again and we should not find a pdr
     const output2 = await discoverPdrs(event);
@@ -111,7 +111,7 @@ test('test pdr discovery with force=true', async (t) => {
       return pdrFileName;
     });
 
-    await uploadS3Files(files, event.config.bucket, path.join(event.config.stack, 'pdrs'));
+    await uploadS3Files(files, event.config.bucket, s3Join(event.config.stack, 'pdrs'));
 
     // do it again and we should find all pdrs
     const output2 = await discoverPdrs(event);

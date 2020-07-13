@@ -48,7 +48,7 @@ const buildDeprecationMessage = (
 const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
 
 /**
- * Join strings into an S3 key without a leading slash or double slashes
+ * Join strings into an S3 key without a leading slash
  *
  * @param {...string|Array<string>} args - the strings to join
  * @returns {string} the full S3 key
@@ -576,8 +576,7 @@ export const uploadS3Files = (
       filename = file;
 
       if (typeof keyPath === 'string') {
-        // FIXME Should not be using path.join here, since that could be a backslash
-        key = path.join(keyPath, path.basename(file));
+        key = s3Join(keyPath, path.basename(file));
       } else {
         key = keyPath(file);
       }
@@ -895,7 +894,8 @@ const uploadPartCopy = async (
  * @param {string} params.destinationKey
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
- * @returns {Promise<undefined>}
+ * @returns {Promise.<{ etag: string }>} object containing the ETag of the
+ *    destination object
  */
 export const multipartCopyObject = async (
   params: {
@@ -958,7 +958,7 @@ export const multipartCopyObject = async (
     );
 
     // Let S3 know that the multi-part upload (copy) is completed
-    await S3MultipartUploads.completeMultipartUpload({
+    const { ETag: etag } = await S3MultipartUploads.completeMultipartUpload({
       UploadId: uploadId,
       Bucket: destinationBucket,
       Key: destinationKey,
@@ -966,6 +966,8 @@ export const multipartCopyObject = async (
         Parts: uploadPartCopyResponses
       }
     });
+
+    return { etag };
   } catch (error) {
     // If anything went wrong, make sure that the multi-part upload (copy)
     // is aborted.
