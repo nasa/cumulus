@@ -408,13 +408,13 @@ class Granule extends Manager {
     const params = {
       TableName: this.tableName,
       ExpressionAttributeNames:
-        {
-          '#granuleId': 'granuleId',
-          '#collectionId': 'collectionId',
-          '#beginningDateTime': 'beginningDateTime',
-          '#endingDateTime': 'endingDateTime',
-          '#createdAt': 'createdAt'
-        },
+      {
+        '#granuleId': 'granuleId',
+        '#collectionId': 'collectionId',
+        '#beginningDateTime': 'beginningDateTime',
+        '#endingDateTime': 'endingDateTime',
+        '#createdAt': 'createdAt'
+      },
       ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime'
     };
 

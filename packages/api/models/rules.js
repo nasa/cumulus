@@ -140,9 +140,8 @@ class Rule extends Manager {
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
 
-    const stateChanged = (updates.state && updates.state !== original.state);
-    const valueUpdated = (updates.rule
-      && updates.rule.value !== original.rule.value);
+    const stateChanged = updates.state && updates.state !== original.state;
+    const valueUpdated = updates.rule && updates.rule.value !== original.rule.value;
 
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 

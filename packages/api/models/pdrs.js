@@ -52,7 +52,7 @@ class Pdr extends Manager {
    * Generate a PDR record.
    *
    * @param {Object} message - A workflow execution message
-   * @returns {Object|null} - A PDR record, or null if `message.payload.pdr` is
+   * @returns {Object|undefined} - A PDR record, or null if `message.payload.pdr` is
    *   not set
    */
   generatePdrRecord(message) {
@@ -60,7 +60,7 @@ class Pdr extends Manager {
 
     if (!pdr) { // We got a message with no PDR (OK)
       log.info('No PDRs to process on the message');
-      return null;
+      return undefined;
     }
 
     if (!pdr.name) { // We got a message with a PDR but no name to identify it (Not OK)
@@ -116,7 +116,7 @@ class Pdr extends Manager {
    */
   async storePdrFromCumulusMessage(cumulusMessage) {
     const pdrRecord = this.generatePdrRecord(cumulusMessage);
-    if (!pdrRecord) return null;
+    if (!pdrRecord) return undefined;
     const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
     if (pdrRecord.status === 'running') {
       updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
@@ -126,7 +126,7 @@ class Pdr extends Manager {
         if (error.name && error.name.includes('ConditionalCheckFailedException')) {
           const executionArn = getMessageExecutionArn(cumulusMessage);
           log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
-          return null;
+          return undefined;
         }
         throw error;
       }
