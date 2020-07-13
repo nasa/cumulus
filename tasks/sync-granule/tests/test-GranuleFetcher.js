@@ -161,7 +161,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
     path: randomString(),
     name: 'test.txt'
   };
-  const key = path.join(file.path, file.name);
+  const key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString() };
   await S3.s3PutObject(params);
 
@@ -195,7 +195,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     name: 'test.txt'
   };
 
-  const Key = path.join(file.path, file.name);
+  const Key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: 'test' };
   await S3.s3PutObject(params);
 
@@ -213,7 +213,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   // first attempt to ingest the file.
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
 
-  const destFileKey = path.join(fileStagingDir, testGranule.collectionId, file.name);
+  const destFileKey = S3.s3Join(fileStagingDir, testGranule.collectionId, file.name);
 
   await t.throwsAsync(
     () => testGranule.ingestFile(file, destBucket, duplicateHandling),
@@ -231,7 +231,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
     path: randomString(),
     name: 'test.txt'
   };
-  const key = path.join(file.path, file.name);
+  const key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
   await S3.s3PutObject(params);
 
@@ -266,7 +266,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
     path: randomString(),
     name: 'test.txt'
   };
-  const key = path.join(file.path, file.name);
+  const key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
   await S3.s3PutObject(params);
 
@@ -304,7 +304,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     checksum: 'badchecksum'
   };
 
-  const Key = path.join(file.path, file.name);
+  const Key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: randomString(30) };
   await S3.s3PutObject(params);
 
@@ -317,7 +317,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     duplicateHandling
   });
 
-  const stagingPath = path.join(testGranule.fileStagingDir, testGranule.collectionId);
+  const stagingPath = S3.s3Join(testGranule.fileStagingDir, testGranule.collectionId);
   // This test needs to use a unique bucket for each test (or remove the object
   // added to the destination bucket). Otherwise, it will throw an error on the
   // first attempt to ingest the file.
@@ -340,7 +340,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
     size: 123456789
   };
 
-  const Key = path.join(file.path, file.name);
+  const Key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: randomString(30) };
   await S3.s3PutObject(params);
 
@@ -378,7 +378,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
     size: content.length
   };
 
-  const Key = path.join(file.path, file.name);
+  const Key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key, Body: content };
   await S3.s3PutObject(params);
 
@@ -489,7 +489,7 @@ test('addChecksumsToFiles adds checksums correctly if checksumFor is defined', a
   const files = [dataFile, checksumFile];
 
   const fakeChecksum = 'abcd1234';
-  const Key = path.join(checksumFile.name);
+  const Key = S3.s3Join(checksumFile.name);
   const params = { Bucket: internalBucket, Key, Body: fakeChecksum };
   await S3.s3PutObject(params);
 
@@ -537,7 +537,7 @@ test('addChecksumsToFiles falls back to dataFileExt.checksumExt assumption if ch
   const files = [dataFile, checksumFile];
 
   const fakeChecksum = 'abcd1234';
-  const Key = path.join(checksumFile.name);
+  const Key = S3.s3Join(checksumFile.name);
   const params = { Bucket: internalBucket, Key, Body: fakeChecksum };
   await S3.s3PutObject(params);
 
