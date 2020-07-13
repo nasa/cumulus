@@ -178,7 +178,7 @@ const getGranuleId = async (bucket, key) => {
     Key: { bucket, key }
   }).promise();
 
-  return getResponse.Item ? getResponse.Item.granuleId : null;
+  return getResponse.Item ? getResponse.Item.granuleId : undefined;
 };
 
 /**

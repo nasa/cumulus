@@ -64,7 +64,7 @@ test.serial('Stats does not return a collection if the collection has no active 
   const collection = fakeCollectionFactory();
   await indexer.indexCollection(esClient, collection, t.context.esAlias);
 
-  const stats = new Stats({}, null, process.env.ES_INDEX);
+  const stats = new Stats({}, undefined, process.env.ES_INDEX);
   const queryResult = await stats.query();
 
   t.is(queryResult.collections.value, 0);
@@ -74,7 +74,7 @@ test.serial('Stats returns one granule when a granule is indexed', async (t) => 
   const granule = fakeGranuleFactoryV2();
   await indexer.indexGranule(esClient, granule, t.context.esAlias);
 
-  const stats = new Stats({}, null, process.env.ES_INDEX);
+  const stats = new Stats({}, undefined, process.env.ES_INDEX);
   const queryResult = await stats.query();
 
   t.is(queryResult.granules.value, 1);
@@ -88,7 +88,7 @@ test.serial('Stats returns correct granule errors', async (t) => {
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias)
   ]);
 
-  const stats = new Stats({}, null, process.env.ES_INDEX);
+  const stats = new Stats({}, undefined, process.env.ES_INDEX);
   const queryResult = await stats.query();
 
   t.is(queryResult.granules.value, 4);
@@ -96,7 +96,7 @@ test.serial('Stats returns correct granule errors', async (t) => {
 });
 
 test.serial('Count returns 0 if there are no granules', async (t) => {
-  const stats = new Stats({}, null, process.env.ES_INDEX);
+  const stats = new Stats({}, undefined, process.env.ES_INDEX);
   const countResult = await stats.count();
 
   t.is(countResult.meta.count, 0);

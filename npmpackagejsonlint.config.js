@@ -70,7 +70,7 @@ module.exports = {
         //     'keywords',
         //     'homepage',
         //     'bugs',
-        'license',
+        'license'
         //     'author',
         // //     'contributors',
         //     'files',

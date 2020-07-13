@@ -87,8 +87,8 @@ test.beforeEach(async (t) => {
   t.context.collectionModel = new models.Collection();
   await t.context.collectionModel.createTable();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
-  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => null);
-  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => null);
+  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
+  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => undefined);
 
   await addTestCollections();
 });
