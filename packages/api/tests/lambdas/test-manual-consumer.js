@@ -240,7 +240,7 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShard
       promise: () => {
         const response = {
           Shards: [{}],
-          NextToken: recurred ? null : '123456'
+          NextToken: recurred ? undefined : '123456'
         };
         recurred = true;
         return Promise.resolve(response);

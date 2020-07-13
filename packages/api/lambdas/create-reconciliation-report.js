@@ -132,8 +132,8 @@ async function reconciliationReportForCollections() {
   let collectionsOnlyInCumulus = [];
   let collectionsOnlyInCmr = [];
 
-  let nextDbCollectionId = (dbCollectionIds.length !== 0) ? dbCollectionIds[0] : null;
-  let nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : null;
+  let nextDbCollectionId = dbCollectionIds[0];
+  let nextCmrCollectionId = cmrCollectionIds[0];
 
   while (nextDbCollectionId && nextCmrCollectionId) {
     if (nextDbCollectionId < nextCmrCollectionId) {
@@ -151,8 +151,8 @@ async function reconciliationReportForCollections() {
       cmrCollectionIds.shift();
     }
 
-    nextDbCollectionId = (dbCollectionIds.length !== 0) ? dbCollectionIds[0] : null;
-    nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : null;
+    nextDbCollectionId = (dbCollectionIds.length !== 0) ? dbCollectionIds[0] : undefined;
+    nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : undefined;
   }
 
   // Add any remaining database items to the report
@@ -200,7 +200,7 @@ async function reconciliationReportForGranuleFiles(params) {
   const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
     // only check URL types for downloading granule files and related data (such as documents)
     if (cmrGetDataTypes.includes(relatedUrl.Type)
-      || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
+        || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
       const urlFileName = relatedUrl.URL.split('/').pop();
 
       // filename in both cumulus and CMR
@@ -254,7 +254,7 @@ async function reconciliationReportForGranuleFiles(params) {
   Object.keys(granuleFiles).forEach((fileName) => {
     // private file only in database, it's ok
     if (bucketsConfig.key(granuleFiles[fileName].bucket)
-      && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
+        && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
       okCount += 1;
     } else {
       onlyInCumulus.push({
