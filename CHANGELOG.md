@@ -102,8 +102,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2058**
+  - Added `lambda_processing_role_name` as an output from the `cumulus` module
+    to provide the processing role name
 - **CUMULUS-1417**
-  - Added a `checksumFor` property to collection `files` config. Set this property on a checksum file's definition matching the `regex` of the target file. More details in the ['Data Cookbooks Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup) documentation.
+  - Added a `checksumFor` property to collection `files` config. Set this
+    property on a checksum file's definition matching the `regex` of the target
+    file.  More details in the ['Data Cookbooks
+    Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup)
+    documentation.
   - Added `checksumFor` validation to collections model.
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
