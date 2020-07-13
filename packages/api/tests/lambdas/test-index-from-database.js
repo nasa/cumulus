@@ -146,7 +146,7 @@ test('getEsRequestConcurrency respects concurrency value in payload', (t) => {
   }), 5);
 });
 
-test.serial('getEsRequestConcurrency respects ES_CONCURRENCY', (t) => {
+test.serial('getEsRequestConcurrency respects ES_CONCURRENCY environment variable', (t) => {
   process.env.ES_CONCURRENCY = 35;
   t.is(indexFromDatabase.getEsRequestConcurrency({}), 35);
   delete process.env.ES_CONCURRENCY;
@@ -156,10 +156,58 @@ test('getEsRequestConcurrency correctly returns 10 when nothing is specified', (
   t.is(indexFromDatabase.getEsRequestConcurrency({}), 10);
 });
 
-test('getEsRequestConcurrency correctly returns default of 10 when 0 is specified', (t) => {
-  t.is(indexFromDatabase.getEsRequestConcurrency({
-    esRequestConcurrency: 0
-  }), 10);
+test.serial('getEsRequestConcurrency throws an error when -1 is specified', (t) => {
+  t.throws(
+    () => indexFromDatabase.getEsRequestConcurrency({
+      esRequestConcurrency: -1
+    }),
+    { instanceOf: TypeError }
+  );
+
+  process.env.ES_CONCURRENCY = -1;
+  t.teardown(() => {
+    delete process.env.ES_CONCURRENCY;
+  });
+  t.throws(
+    () => indexFromDatabase.getEsRequestConcurrency({}),
+    { instanceOf: TypeError }
+  );
+});
+
+test.serial('getEsRequestConcurrency throws an error when "asdf" is specified', (t) => {
+  t.throws(
+    () => indexFromDatabase.getEsRequestConcurrency({
+      esRequestConcurrency: 'asdf'
+    }),
+    { instanceOf: TypeError }
+  );
+
+  process.env.ES_CONCURRENCY = 'asdf';
+  t.teardown(() => {
+    delete process.env.ES_CONCURRENCY;
+  });
+  t.throws(
+    () => indexFromDatabase.getEsRequestConcurrency({}),
+    { instanceOf: TypeError }
+  );
+});
+
+test.serial('getEsRequestConcurrency throws an error when 0 is specified', (t) => {
+  t.throws(
+    () => indexFromDatabase.getEsRequestConcurrency({
+      esRequestConcurrency: 0
+    }),
+    { instanceOf: TypeError }
+  );
+
+  process.env.ES_CONCURRENCY = 0;
+  t.teardown(() => {
+    delete process.env.ES_CONCURRENCY;
+  });
+  t.throws(
+    () => indexFromDatabase.getEsRequestConcurrency({}),
+    { instanceOf: TypeError }
+  );
 });
 
 test('No error is thrown if nothing is in the database', async (t) => {

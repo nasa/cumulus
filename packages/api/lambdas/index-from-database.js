@@ -1,5 +1,6 @@
 'use strict';
 
+const isNil = require('lodash/isNil');
 const pLimit = require('p-limit');
 
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -9,16 +10,37 @@ const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 
 /**
- * Return specified request concurrency to be used with [p-limit](https://github.com/sindresorhus/p-limit)
+ * Return specified concurrency for ES requests.
  *
- * Note: 0 is not an allowed return value
+ * Returned value is used with [p-limit](https://github.com/sindresorhus/p-limit), which
+ * does not accept 0.
  *
  * @param {Object} event - Incoming Lambda event
- * @returns {number}
+ * @returns {number} - Specified request concurrency. Defaults to 10.
+ * @throws {TypeError}
  */
 const getEsRequestConcurrency = (event) => {
-  const concurrency = event.esRequestConcurrency || process.env.ES_CONCURRENCY;
-  return concurrency ? Number.parseInt(concurrency, 10) : 10;
+  if (!isNil(event.esRequestConcurrency)) {
+    const parsedValue = Number.parseInt(event.esRequestConcurrency, 10);
+
+    if (Number.isInteger(parsedValue) && parsedValue > 0) {
+      return parsedValue;
+    }
+
+    throw new TypeError('event.esRequestConcurrency must be an integer greater than 0');
+  }
+
+  if (!isNil(process.env.ES_CONCURRENCY)) {
+    const parsedValue = Number.parseInt(process.env.ES_CONCURRENCY, 10);
+
+    if (Number.isInteger(parsedValue) && parsedValue > 0) {
+      return parsedValue;
+    }
+
+    throw new TypeError('The ES_CONCURRENCY environment variable must be an integer greater than 0');
+  }
+
+  return 10;
 };
 
 async function indexModel({
