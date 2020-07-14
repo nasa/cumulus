@@ -507,7 +507,7 @@ async function createReconciliationReport(params) {
     Body: JSON.stringify(report)
   }).promise();
 
-  // Create ar eport for each bucket
+  // Create a report for each bucket
   const promisedBucketReports = dataBuckets.map(
     (bucket) => createReconciliationReportForBucket(bucket)
   );
