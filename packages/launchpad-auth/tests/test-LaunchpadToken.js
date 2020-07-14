@@ -73,7 +73,7 @@ test.afterEach((t) => {
   nock.cleanAll();
 });
 
-test.serial('LaunchpadToken.requestToken returns token', async (t) => {
+test.serial.only('LaunchpadToken.requestToken returns token', async (t) => {
   nock('https://www.example.com:12345')
     .get('/api/gettoken')
     .reply(200, JSON.stringify(getTokenResponse));

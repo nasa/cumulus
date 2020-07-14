@@ -1,8 +1,9 @@
 'use strict';
 
-import https from 'https';
 import path from 'path';
 import { URL } from 'url';
+import AWS from 'aws-sdk';
+import got from 'got';
 
 import Logger from '@cumulus/logger';
 import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
@@ -59,7 +60,7 @@ class LaunchpadToken {
    * @returns {Promise<Buffer>} - an object with the pfx
    * @private
    */
-  async _retrieveCertificate() {
+  async _retrieveCertificate(): Promise<AWS.S3.Body|undefined> {
     const bucket = getEnvVar('system_bucket');
     const stackName = getEnvVar('stackName');
 
@@ -83,7 +84,7 @@ class LaunchpadToken {
   /**
    * Get a token from Launchpad
    *
-   * @returns {Promise.<Object>} - the Launchpad gettoken response object
+   * @returns {Promise<Object>} - the Launchpad gettoken response object
    */
   async requestToken() {
     log.debug('LaunchpadToken.requestToken');
@@ -94,22 +95,23 @@ class LaunchpadToken {
       hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
       path: path.join(launchpadUrl.pathname, 'gettoken'),
-      method: 'GET',
       pfx,
-      passphrase: this.passphrase
+      https: {
+        passphrase: this.passphrase
+      }
     };
 
-    const responseBody = await this._submitRequest(options);
-    return JSON.parse(responseBody);
+    const responseBody = await got(options);
+    return JSON.parse(responseBody.toString());
   }
 
   /**
    * Validate a Launchpad token
    *
    * @param {string} token - the Launchpad token for validation
-   * @returns {Promise.<Object>} - the Launchpad validate token response object
+   * @returns {Promise<Object>} - the Launchpad validate token response object
    */
-  async validateToken(token) {
+  async validateToken(token: string) {
     log.debug('LaunchpadToken.validateToken');
     const pfx = await this._retrieveCertificate();
     const launchpadUrl = new URL(this.api);
@@ -119,48 +121,19 @@ class LaunchpadToken {
       hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
       path: path.join(launchpadUrl.pathname, 'validate'),
-      method: 'POST',
+      body: data,
       pfx,
-      passphrase: this.passphrase,
+      https: {
+        passphrase: this.passphrase
+      },
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': data.length
+        'Content-Length': data.length.toString()
       }
     };
 
-    const responseBody = await this._submitRequest(options, data);
-    return JSON.parse(responseBody);
-  }
-
-  /**
-   * Submit HTTPS request
-   *
-   * @param {Object} options - the Launchpad token for validation
-   * @param {string} data - the request body
-   * @returns {Promise.<string>} - the response body
-   * @private
-   */
-  _submitRequest(options, data) {
-    return new Promise((resolve, reject) => {
-      let responseBody = '';
-
-      const req = https.request(options, (res) => {
-        if (res.statusCode !== 200) {
-          reject(new Error(`launchpad request failed with statusCode ${res.statusCode} ${res.statusMessage}`));
-        }
-
-        res.on('data', (d) => {
-          responseBody += d;
-        });
-
-        res.on('end', () => resolve(responseBody));
-      });
-
-      req.on('error', (e) => reject(e));
-
-      if (data) req.write(data);
-      req.end();
-    });
+    const responseBody = await got.post(options);
+    return JSON.parse(responseBody.toString());
   }
 }
 
