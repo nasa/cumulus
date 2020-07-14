@@ -6,18 +6,28 @@
  * @module launchpad-auth
  */
 
-const pick = require('lodash/pick');
-const {
+import pick from 'lodash/pick';
+import {
   getS3Object,
   s3Join,
   s3ObjectExists,
   s3PutObject
-} = require('@cumulus/aws-client/S3');
-const Logger = require('@cumulus/logger');
+} from '@cumulus/aws-client/S3';
+import Logger from '@cumulus/logger';
+
+import { LaunchpadTokenParams } from './types';
 
 const LaunchpadToken = require('./LaunchpadToken');
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth' });
+
+interface ValidateTokenResult {
+  status: string
+  message?: string
+  session_maxtimeout?: number
+  session_starttime?: number
+  owner_auid?: string
+}
 
 /**
  * Get S3 location of the Launchpad token
@@ -40,23 +50,28 @@ function launchpadTokenBucketKey() {
 /**
  * Retrieve Launchpad token from S3
  *
- * @returns {Promise.<string>} - the Launchpad token, null if token doesn't exist or invalid
+ * @returns {Promise<string|undefined>}
+ *   the Launchpad token, undefined if token doesn't exist or invalid
  *
  * @async
  * @private
  */
-async function getValidLaunchpadTokenFromS3() {
+async function getValidLaunchpadTokenFromS3(): Promise<string|undefined> {
   const s3location = launchpadTokenBucketKey();
   const keyExists = await s3ObjectExists(s3location);
 
-  let token = null;
+  let token;
   if (keyExists) {
     const s3object = await getS3Object(s3location.Bucket, s3location.Key);
-    const launchpadToken = JSON.parse(s3object.Body.toString());
+    if (s3object && s3object.Body) {
+      const launchpadToken = JSON.parse(s3object.Body.toString());
 
-    // check if token is still valid
-    if (Date.now() / 1000 < launchpadToken.session_maxtimeout + launchpadToken.session_starttime) {
-      token = launchpadToken.sm_token;
+      // check if token is still valid
+      if (
+        Date.now() / 1000 < launchpadToken.session_maxtimeout + launchpadToken.session_starttime
+      ) {
+        token = launchpadToken.sm_token;
+      }
     }
   }
 
@@ -71,12 +86,12 @@ async function getValidLaunchpadTokenFromS3() {
  * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
  * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
  *
- * @returns {Promise.<string>} - the Launchpad token
+ * @returns {Promise<string>} - the Launchpad token
  *
  * @async
  * @alias module:launchpad-auth
  */
-async function getLaunchpadToken(params) {
+async function getLaunchpadToken(params: LaunchpadTokenParams) {
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {
@@ -107,9 +122,9 @@ async function getLaunchpadToken(params) {
  * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
  * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
  * @param {string} token - the token to be validated
- * @param {string} userGroup - the cumulus user group that a valid user should belong to
+ * @param {string} [userGroup] - the cumulus user group that a valid user should belong to
  *
- * @returns {Promise.<Object>} - the validate result object with
+ * @returns {Promise<ValidateTokenResult>} - the validate result object with
  * { status: 'success or failed', message: 'reason for failure',
  * session_maxtimeout: number second, session_starttime: number millisecond,
  * owner_auid: string}
@@ -117,16 +132,20 @@ async function getLaunchpadToken(params) {
  * @async
  * @alias module:launchpad-auth
  */
-async function validateLaunchpadToken(params, token, userGroup) {
+async function validateLaunchpadToken(
+  params: LaunchpadTokenParams,
+  token: string,
+  userGroup?: string
+) {
   log.debug('validateLaunchpadToken validating launchpad token');
   const launchpad = new LaunchpadToken(params);
   const response = await launchpad.validateToken(token);
-  let result = { status: response.status };
+  let result: ValidateTokenResult = { status: response.status };
 
   if (response.status === 'success') {
     // check if user is in the given group
     if (userGroup && userGroup.toUpperCase() !== 'N/A'
-    && response.owner_groups.filter((group) => group.includes(userGroup)).length === 0) {
+       && response.owner_groups.filter((group: string) => group.includes(userGroup)).length === 0) {
       result.status = 'failed';
       result.message = 'User not authorized';
     }
