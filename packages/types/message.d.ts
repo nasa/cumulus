@@ -16,13 +16,13 @@ export type CumulusMessage = {
   cumulus_meta: CumulusMeta
   meta: object
   payload: unknown
-  exception?: object
+  exception?: unknown
 };
 
 export type CumulusRemoteMessage = {
   cumulus_meta: CumulusMeta
   meta?: object
   payload?: unknown
-  exception?: object
+  exception?: unknown
   replace: ReplaceConfig
 };
