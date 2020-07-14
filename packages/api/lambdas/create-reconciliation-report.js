@@ -303,7 +303,7 @@ async function reconciliationReportForGranules(params) {
     format: 'umm_json'
   });
 
-  const esGranulesIterator = new ESCollectionGranuleQueue({ collectionId }, 'granule', process.env.ES_INDEX);
+  const esGranulesIterator = new ESCollectionGranuleQueue({ collectionId }, process.env.ES_INDEX);
 
   const granulesReport = {
     okCount: 0,
