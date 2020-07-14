@@ -29,11 +29,11 @@ test('getGranuleId() returns the correct granuleId if the file exists in the tab
   t.is(fetchedGranuleId, granuleId);
 });
 
-test('getGranuleId() returns null if the file does not exist in the table', async (t) => {
+test('getGranuleId() returns undefined if the file does not exist in the table', async (t) => {
   const bucket = randomString();
   const key = randomString();
 
   const fetchedGranuleId = await GranuleFilesCache.getGranuleId(bucket, key);
 
-  t.is(fetchedGranuleId, null);
+  t.is(fetchedGranuleId, undefined);
 });

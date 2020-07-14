@@ -29,7 +29,7 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
 async function list(req, res) {
   const collection = new Collection(
     { queryStringParameters: req.query },
-    null,
+    undefined,
     process.env.ES_INDEX
   );
   const result = await collection.query();
@@ -48,7 +48,7 @@ async function list(req, res) {
 async function activeList(req, res) {
   const collection = new Collection(
     { queryStringParameters: req.query },
-    null,
+    undefined,
     process.env.ES_INDEX
   );
   const result = await collection.queryCollectionsWithActiveGranules();
@@ -139,15 +139,19 @@ async function put({ params: { name, version }, body }, res) {
 
   const collectionModel = new models.Collection();
 
-  return (!(await collectionModel.exists(name, version)))
-    ? res.boom.notFound(`Collection '${name}' version '${version}' not found`)
-    : collectionModel.create(body)
-      .then((record) => (
-        inTestMode()
-          ? addToLocalES(record, indexCollection).then(() => record)
-          : record
-      ))
-      .then((record) => res.send(record));
+  if (!(await collectionModel.exists(name, version))) {
+    return res.boom.notFound(
+      `Collection '${name}' version '${version}' not found`
+    );
+  }
+
+  const record = await collectionModel.create(body);
+
+  if (inTestMode()) {
+    await addToLocalES(record, indexCollection);
+  }
+
+  return res.send(record);
 }
 
 /**

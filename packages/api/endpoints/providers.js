@@ -105,15 +105,19 @@ async function put({ params: { id }, body }, res) {
 
   const providerModel = new Provider();
 
-  return (!(await providerModel.exists(id)))
-    ? res.boom.notFound(`Provider with ID '${id}' not found`)
-    : providerModel.create(body)
-      .then((record) => (
-        inTestMode()
-          ? addToLocalES(record, indexProvider).then(() => record)
-          : record
-      ))
-      .then((record) => res.send(record));
+  if (!(await providerModel.exists(id))) {
+    return res.boom.notFound(
+      `Provider with ID '${id}' not found`
+    );
+  }
+
+  const record = await providerModel.create(body);
+
+  if (inTestMode()) {
+    await addToLocalES(record, indexProvider);
+  }
+
+  return res.send(record);
 }
 
 /**
