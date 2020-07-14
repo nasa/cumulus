@@ -1,6 +1,6 @@
 # @cumulus/types
 
-Types for working with Cumulus data structures
+TypeScript definitions for working with Cumulus data structures
 
 ## Usage
 
