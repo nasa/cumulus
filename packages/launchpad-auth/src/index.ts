@@ -17,7 +17,7 @@ import Logger from '@cumulus/logger';
 
 import { LaunchpadTokenParams } from './types';
 
-const LaunchpadToken = require('./LaunchpadToken');
+import LaunchpadToken from './LaunchpadToken';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 

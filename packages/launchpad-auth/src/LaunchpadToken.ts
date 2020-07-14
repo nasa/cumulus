@@ -1,12 +1,25 @@
 'use strict';
 
-const https = require('https');
-const path = require('path');
-const { URL } = require('url');
-const Logger = require('@cumulus/logger');
-const { getS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
+import https from 'https';
+import path from 'path';
+import { URL } from 'url';
+
+import Logger from '@cumulus/logger';
+import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
+
+import { LaunchpadTokenParams } from './types';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth/LaunchpadToken' });
+
+const getEnvVar = (name:string) => {
+  const envVar = process.env[name];
+  if (!envVar) {
+    throw Promise.reject(
+      new Error(`must set environment variables process.env.${name}`)
+    );
+  }
+  return envVar;
+};
 
 /**
  * @class
@@ -24,13 +37,17 @@ const log = new Logger({ sender: '@cumulus/launchpad-auth/LaunchpadToken' });
  * @alias LaunchpadToken
  */
 class LaunchpadToken {
+  private readonly api: string;
+  private readonly passphrase: string;
+  private readonly certificate: string;
+
   /**
   * @param {Object} params
   * @param {string} params.api - the Launchpad token service api endpoint
   * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
   * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
   */
-  constructor(params) {
+  constructor(params: LaunchpadTokenParams) {
     this.api = params.api;
     this.passphrase = params.passphrase;
     this.certificate = params.certificate;
@@ -43,15 +60,10 @@ class LaunchpadToken {
    * @private
    */
   async _retrieveCertificate() {
-    if (!(process.env.stackName || process.env.system_bucket)) {
-      throw Promise.reject(
-        new Error('must set environment variables process.env.stackName and process.env.system_bucket')
-      );
-    }
-    const bucket = process.env.system_bucket;
-    const stackName = process.env.stackName;
-    // we are assuming that the specified certificate file is in the S3 crypto directory
+    const bucket = getEnvVar('system_bucket');
+    const stackName = getEnvVar('stackName');
 
+    // we are assuming that the specified certificate file is in the S3 crypto directory
     const cryptKey = `${stackName}/crypto/${this.certificate}`;
 
     const keyExists = await s3ObjectExists(
@@ -152,4 +164,4 @@ class LaunchpadToken {
   }
 }
 
-module.exports = LaunchpadToken;
+export = LaunchpadToken;
