@@ -28,7 +28,7 @@ async function enableStream(tableName) {
   );
 }
 
-async function createTable(tableName, hash, range = null, attributes = null, indexes = null) {
+async function createTable(tableName, hash, range, attributes, indexes) {
   const params = {
     TableName: tableName,
     AttributeDefinitions: [{
@@ -88,7 +88,7 @@ async function deleteTable(tableName) {
  * The manager class handles basic operations on a given DynamoDb table
  */
 class Manager {
-  static recordIsValid(item, schema = null, removeAdditional = false) {
+  static recordIsValid(item, schema, removeAdditional = false) {
     if (!schema) {
       throw new Error('schema is not defined');
     }
@@ -228,7 +228,7 @@ class Manager {
     });
   }
 
-  async batchGet(items, attributes = null) {
+  async batchGet(items, attributes) {
     const params = {
       RequestItems: {
         [this.tableName]: {
@@ -471,7 +471,7 @@ class Manager {
       }
     });
 
-    if (setUpdateExpressions.length === 0) return null;
+    if (setUpdateExpressions.length === 0) return undefined;
 
     return {
       TableName: this.tableName,

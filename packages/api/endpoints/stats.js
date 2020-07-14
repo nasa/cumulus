@@ -5,10 +5,10 @@ const get = require('lodash/get');
 const Stats = require('../es/stats');
 
 /**
- * filter approved types
+ * Map requested stats types to supported types
  *
  * @param {Object} req - express request object
- * @returns {Object} returns the type and index as an object
+ * @returns {string|undefined} returns the type of stats
  */
 function getType(req) {
   const supportedTypes = {
@@ -20,7 +20,7 @@ function getType(req) {
     executions: 'execution'
   };
 
-  const typeRequested = get(req, 'params.type', null) || get(req, 'query.type', null);
+  const typeRequested = get(req, 'params.type') || get(req, 'query.type');
   const type = get(supportedTypes, typeRequested);
 
   return type;
@@ -43,7 +43,7 @@ async function summary(req, res) {
   ), 10);
   params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', Date.now()), 10);
 
-  const stats = new Stats({ queryStringParameters: params }, null, process.env.ES_INDEX);
+  const stats = new Stats({ queryStringParameters: params }, undefined, process.env.ES_INDEX);
   const r = await stats.query();
   return res.send(r);
 }

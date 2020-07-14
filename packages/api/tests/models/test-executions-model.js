@@ -18,8 +18,7 @@ test.beforeEach(async (t) => {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: t.context.executionName,
-      workflow_start_time: 123,
-      workflow_stop_time: null
+      workflow_start_time: 123
     },
     meta: {
       status: 'running',

@@ -33,7 +33,8 @@ exports.bucketsPrefixes = bucketsPrefixes;
 const discipline = (collection) => {
   let scienceKeywords = get(collection, 'ScienceKeywords.ScienceKeyword', []);
   scienceKeywords = (Array.isArray(scienceKeywords))
-    ? scienceKeywords : [scienceKeywords];
+    ? scienceKeywords
+    : [scienceKeywords];
 
   return scienceKeywords
     .map((scienceKeyword) => scienceKeyword.TopicKeyword)
@@ -191,8 +192,12 @@ async function getCollectionsForEms(startTime, endTime) {
   // collections exist in both CMR and Cumulus
   const emsCollections = [];
 
-  let nextDbCollectionId = (dbCollections.length !== 0) ? dbCollections[0].collectionId : null;
-  let nextCmrCollectionId = (cmrCollections.length !== 0) ? cmrCollections[0].collectionId : null;
+  let nextDbCollectionId = (dbCollections.length !== 0)
+    ? dbCollections[0].collectionId
+    : undefined;
+  let nextCmrCollectionId = (cmrCollections.length !== 0)
+    ? cmrCollections[0].collectionId
+    : undefined;
 
   while (nextDbCollectionId && nextCmrCollectionId) {
     if (nextDbCollectionId < nextCmrCollectionId) {
@@ -210,14 +215,18 @@ async function getCollectionsForEms(startTime, endTime) {
       }
     }
 
-    nextDbCollectionId = (dbCollections.length !== 0) ? dbCollections[0].collectionId : null;
-    nextCmrCollectionId = (cmrCollections.length !== 0) ? cmrCollections[0].collectionId : null;
+    nextDbCollectionId = (dbCollections.length !== 0)
+      ? dbCollections[0].collectionId
+      : undefined;
+    nextCmrCollectionId = (cmrCollections.length !== 0)
+      ? cmrCollections[0].collectionId
+      : undefined;
   }
 
   // only the collections updated in CMR or CUMULUS within the time range are included
   const lastUpdateFilter = (collection) =>
-    (moment.utc(collection.lastUpdate).isBetween(startTime, endTime, null, '[)')
-    || moment.utc(collection.dbLastUpdate).isBetween(startTime, endTime, null, '[)'));
+    (moment.utc(collection.lastUpdate).isBetween(startTime, endTime, undefined, '[)')
+    || moment.utc(collection.dbLastUpdate).isBetween(startTime, endTime, undefined, '[)'));
 
   return emsCollections.filter(lastUpdateFilter);
 }
@@ -286,7 +295,6 @@ async function cleanup() {
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 function handler(event, context, callback) {
-  // eslint-disable-next-line no-param-reassign
   context.callbackWaitsForEmptyEventLoop = false;
 
   // increase the limit of search result from CMR.searchCollections/searchGranules

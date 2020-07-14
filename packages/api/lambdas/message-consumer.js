@@ -57,27 +57,26 @@ async function publishRecordToFallbackTopic(record) {
  * @returns {(res|error)} - result of publishing to topic, or original error if publish fails.
  * @throws {Error} - throws the original error if no special handling requested.
  */
-function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) {
+async function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) {
   if (!isKinesisRetry) {
     if (fromSNS) {
       log.error('Failed SNS message:');
       log.error(JSON.stringify(record));
       throw error;
     }
-    return publishRecordToFallbackTopic(record)
-      .then((res) => {
-        log.debug('sns result:', res);
-        return res;
-      })
-      .catch((snsError) => {
-        // We couldn't publish the record to the fallback Topic, so we will log
-        // and throw the original error.  Kinesis polling will pick up this
-        // record again and retry.
-        log.error(`Failed to publish record to fallback topic: ${record}`);
-        log.error(`original error: ${error}`);
-        log.error(`subsequent error: ${snsError}`);
-        throw error;
-      });
+    try {
+      const result = await publishRecordToFallbackTopic(record);
+      log.debug('sns result:', result);
+      return result;
+    } catch (snsError) {
+      // We couldn't publish the record to the fallback Topic, so we will log
+      // and throw the original error.  Kinesis polling will pick up this
+      // record again and retry.
+      log.error(`Failed to publish record to fallback topic: ${record}`);
+      log.error(`original error: ${error}`);
+      log.error(`subsequent error: ${snsError}`);
+      throw error;
+    }
   }
   throw error;
 }

@@ -37,7 +37,7 @@ export class ThrottlingException extends Error {
   }
 }
 
-interface ErrorWithOptionalCode extends Error {
+export interface ErrorWithOptionalCode extends Error {
   code?: string;
 }
 

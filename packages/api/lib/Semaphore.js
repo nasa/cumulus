@@ -61,7 +61,7 @@ class Semaphore {
   }
 
   async checkout(key, count, max, fn) {
-    let result = null;
+    let result;
     log.info(`Incrementing ${key} by ${count}`);
     await this.add(key, count, max);
     try {
