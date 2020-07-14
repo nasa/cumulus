@@ -137,6 +137,7 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
 
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
+  let beforeAllFailed = false;
   let cmrGranule;
   let collectionId;
   let config;
@@ -157,65 +158,71 @@ describe('When there are granule differences and granule reconciliation is run',
   let report;
 
   beforeAll(async () => {
-    collectionId = constructCollectionId(collection.name, collection.version);
+    try {
+      collectionId = constructCollectionId(collection.name, collection.version);
 
-    config = await loadConfig();
+      config = await loadConfig();
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      granuleModel = new Granule();
 
-    process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
-    process.env.CMR_ENVIRONMENT = 'UAT';
+      process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
+      process.env.CMR_ENVIRONMENT = 'UAT';
 
-    // Find a protected bucket
-    protectedBucket = await findProtectedBucket(config.bucket, config.stackName);
+      // Find a protected bucket
+      protectedBucket = await findProtectedBucket(config.bucket, config.stackName);
 
-    // Write an extra S3 object to the protected bucket
-    extraS3Object = { Bucket: protectedBucket, Key: randomString() };
-    await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
+      // Write an extra S3 object to the protected bucket
+      extraS3Object = { Bucket: protectedBucket, Key: randomString() };
+      await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
 
-    // Write an extra file to the DynamoDB Files table
-    extraFileInDb = {
-      bucket: protectedBucket,
-      key: randomString(),
-      granuleId: randomString()
-    };
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-    await GranuleFilesCache.put(extraFileInDb);
+      // Write an extra file to the DynamoDB Files table
+      extraFileInDb = {
+        bucket: protectedBucket,
+        key: randomString(),
+        granuleId: randomString()
+      };
+      process.env.FilesTable = `${config.stackName}-FilesTable`;
+      await GranuleFilesCache.put(extraFileInDb);
 
-    // Write an extra collection to the Collections table
-    extraCumulusCollection = {
-      name: { S: randomString() },
-      version: { S: randomString() }
-    };
+      // Write an extra collection to the Collections table
+      extraCumulusCollection = {
+        name: { S: randomString() },
+        version: { S: randomString() }
+      };
 
-    await dynamodb().putItem({
-      TableName: collectionsTableName(config.stackName),
-      Item: extraCumulusCollection
-    }).promise();
+      await dynamodb().putItem({
+        TableName: collectionsTableName(config.stackName),
+        Item: extraCumulusCollection
+      }).promise();
 
-    const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
-    testSuffix = createTestSuffix(testId);
-    testDataFolder = createTestDataPath(testId);
+      const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
+      testSuffix = createTestSuffix(testId);
+      testDataFolder = createTestDataPath(testId);
 
-    await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      await setupCollectionAndTestData(config, testSuffix, testDataFolder);
 
-    [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
-      ingestAndPublishGranule(config, testSuffix, testDataFolder),
-      ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-      ingestGranuleToCMR(config, testSuffix, testDataFolder)
-    ]);
+      [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
+        ingestAndPublishGranule(config, testSuffix, testDataFolder),
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
+        ingestGranuleToCMR(config, testSuffix, testDataFolder)
+      ]);
 
-    // update one of the granule files in database so that that file won't match with CMR
-    granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
-      granuleId: publishedGranuleId
-    });
+      // update one of the granule files in database so that that file won't match with CMR
+      granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: publishedGranuleId
+      });
 
-    ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
+      ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
+    } catch (error) {
+      beforeAllFailed = true;
+      throw error;
+    }
   });
 
   it('generates an async operation through the Cumulus API', async () => {
+    if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
     const response = await reconciliationReportsApi.createReconciliationReport({
       prefix: config.stackName
     });
@@ -288,7 +295,7 @@ describe('When there are granule differences and granule reconciliation is run',
   it('generates a report showing granules that are in the CMR but not in Cumulus', () => {
     const cmrGranuleIds = report.granulesInCumulusCmr.onlyInCmr.map((gran) => gran.GranuleUR);
     expect(cmrGranuleIds.length).toBeGreaterThanOrEqual(1);
-    expect(cmrGranuleIds).toContain(cmrGranule.granuleId);
+    expect(cmrGranuleIds).toContain(cmrGranule.granuleId); // Broken here. Could be that the ES index hasn't updated after the file is deleted?
     expect(cmrGranuleIds).not.toContain(dbGranuleId);
     expect(cmrGranuleIds).not.toContain(publishedGranuleId);
   });
