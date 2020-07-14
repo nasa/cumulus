@@ -19,7 +19,6 @@ const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
-const get = require('lodash/get');
 
 const { lookupMimeType, decrypt } = require('./util');
 
