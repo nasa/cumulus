@@ -1,28 +1,30 @@
-export type CumulusMeta = {
+type CumulusException = 'None' | object;
+
+export interface CumulusMeta {
   execution_name: string
   queueName?: string
   state_machine: string
   parentExecutionArn?: string
   asyncOperationId?: string
-};
+}
 
-export type ReplaceConfig = {
+export interface ReplaceConfig {
   Bucket: string
   Key: string
   TargetPath?: string
-};
+}
 
-export type CumulusMessage = {
+export interface CumulusMessage {
   cumulus_meta: CumulusMeta
   meta: object
   payload: unknown
-  exception?: unknown
-};
+  exception?: CumulusException
+}
 
-export type CumulusRemoteMessage = {
+export interface CumulusRemoteMessage {
   cumulus_meta: CumulusMeta
   meta?: object
   payload?: unknown
-  exception?: unknown
+  exception?: CumulusException
   replace: ReplaceConfig
-};
+}
