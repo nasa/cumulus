@@ -134,12 +134,10 @@ export const omit = (objectIn, keys) => {
  * isOdd(2); // => false
  * isOdd(3); // => true
  */
-// @ts-ignore
-export const negate = (predicate) => {
+export const negate = <T extends (...args: any[]) => boolean>(predicate: T) => {
   deprecate('@cumulus/common/util.negate()', '1.23.2');
 
-  // @ts-ignore
-  return (...args) => !predicate.apply(this, args);
+  return (...args: Parameters<typeof predicate>) => !predicate(...args);
 };
 
 /**
@@ -199,8 +197,7 @@ export const isNil = (x: unknown) => {
  *
  * @alias module:util
  */
-// @ts-ignore
-export const renameProperty = (from, to, obj) => {
+export const renameProperty = <T>(from: keyof T, to: string, obj: T) => {
   deprecate('@cumulus/common/util.renameProperty()', '1.23.2');
   const newObj = { ...obj, [to]: obj[from] };
   delete newObj[from];
@@ -247,8 +244,10 @@ export const lookupMimeType = (key: string) => {
  * @alias module:util
  * @kind function
  */
-export const isOneOf = curry((collection: unknown[], val: unknown) =>
-  collection.includes(val));
+export const isOneOf = curry(
+  (collection: unknown[], val: unknown) => collection.includes(val),
+  2
+);
 
 /**
  * Pass a value through a pipeline of functions and return the result

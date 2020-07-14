@@ -253,7 +253,7 @@ async function handler(event) {
   }
 
   const errMsg = 'Manual consumer could not determine expected operation'
-  + ` from event ${JSON.stringify(event)}`;
+    + ` from event ${JSON.stringify(event)}`;
   log.fatal(errMsg);
   return errMsg;
 }

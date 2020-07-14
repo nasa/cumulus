@@ -1,10 +1,10 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const path = require('path');
 const get = require('lodash/get');
 const isNumber = require('lodash/isNumber');
 const isString = require('lodash/isString');
-const path = require('path');
 const S3 = require('@cumulus/aws-client/S3');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
@@ -211,7 +211,7 @@ const parsePdr = async ({ config, input }) => {
 
   await S3.s3PutObject({
     Bucket: config.bucket,
-    Key: path.join(config.stack, 'pdrs', input.pdr.name),
+    Key: S3.s3Join(config.stack, 'pdrs', input.pdr.name),
     Body: rawPdr
   });
 

@@ -27,7 +27,7 @@ async function populateDynamoDB(granuleModel, limit) {
   const granules = range(limit).map(() => fakeGranuleFactoryV2({ published: false }));
 
   const chunkedGranules = chunk(granules, 25);
-  await Promise.all(chunkedGranules.map((c) => granuleModel.batchWrite(null, c)));
+  await Promise.all(chunkedGranules.map((c) => granuleModel.batchWrite(undefined, c)));
 
   return granules.map((granule) => granule.granuleId);
 }
@@ -52,7 +52,7 @@ test.serial('backup and restore Granules table', async (t) => {
 
   const granuleIds = await populateDynamoDB(gModel, limit);
 
-  const resp = await gModel.scan(null, null, 0, 'COUNT');
+  const resp = await gModel.scan(undefined, undefined, 0, 'COUNT');
   t.is(resp.Count, limit);
 
   await backup(granulesTableName, 'us-east-1', tempFolder);
@@ -66,7 +66,7 @@ test.serial('backup and restore Granules table', async (t) => {
   await restore(tempBackupFile, granulesTableName, 1);
 
   // verify records are the same
-  const scanResponse = await gModel.scan(null, 'granuleId', 0, 'SPECIFIC_ATTRIBUTES');
+  const scanResponse = await gModel.scan(undefined, 'granuleId', 0, 'SPECIFIC_ATTRIBUTES');
   t.is(scanResponse.Count, limit);
   t.deepEqual(scanResponse.Items.map((i) => i.granuleId).sort(), granuleIds.sort());
 
@@ -79,7 +79,7 @@ test.serial('backup and restore Granules to a new table', async (t) => {
 
   const granuleIds = await populateDynamoDB(gModel, limit);
 
-  const resp = await gModel.scan(null, null, 0, 'COUNT');
+  const resp = await gModel.scan(undefined, undefined, 0, 'COUNT');
   t.is(resp.Count, limit);
 
   await backup(granulesTableName, 'us-east-1', tempFolder);
@@ -94,7 +94,7 @@ test.serial('backup and restore Granules to a new table', async (t) => {
   await restore(tempBackupFile, process.env.GranulesTable, 1);
 
   // verify records are the same
-  const scanResponse = await alternateGranuleModel.scan(null, 'granuleId', 0, 'SPECIFIC_ATTRIBUTES');
+  const scanResponse = await alternateGranuleModel.scan(undefined, 'granuleId', 0, 'SPECIFIC_ATTRIBUTES');
   t.is(scanResponse.Count, limit);
   t.deepEqual(scanResponse.Items.map((i) => i.granuleId).sort(), granuleIds.sort());
 

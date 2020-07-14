@@ -6,7 +6,7 @@ const GoogleOAuth2 = require('../../lib/GoogleOAuth2');
 
 test('The GoogleOAuth2 constructor throws a TypeError if googleOAuth2Client is not specified', (t) => {
   const err = t.throws(() => {
-    new GoogleOAuth2(null, {});
+    new GoogleOAuth2(undefined, {});
   },
   { instanceOf: TypeError });
 
@@ -15,7 +15,7 @@ test('The GoogleOAuth2 constructor throws a TypeError if googleOAuth2Client is n
 
 test('The GoogleOAuth2 constructor throws a TypeError if googlePlusPeopleClient is not specified', (t) => {
   const err = t.throws(() => {
-    new GoogleOAuth2({}, null);
+    new GoogleOAuth2({}, undefined);
   },
   { instanceOf: TypeError });
 
@@ -104,8 +104,7 @@ test('GoogleOAuth2.getAccessToken() properly reqeusts a token from the googleOAu
 
       return getTokenResponse;
     },
-
-    setCredentials: () => null
+    setCredentials: () => undefined
   };
 
   const mockGooglePlusPeopleClient = {
@@ -160,7 +159,7 @@ test('GoogleOAuth2.getAccessToken() properly requests user info from the googleP
 
   const mockGoogleOAuth2Client = {
     getToken: async () => getTokenResponse,
-    setCredentials: () => null
+    setCredentials: () => undefined
   };
 
   const mockGooglePlusPeopleClient = {
@@ -196,7 +195,7 @@ test('GoogleOAuth2.getAccessToken() returns token information for a valid author
 
   const mockGoogleOAuth2Client = {
     getToken: async () => getTokenResponse,
-    setCredentials: () => null
+    setCredentials: () => undefined
   };
 
   const mockGooglePlusPeopleClient = {

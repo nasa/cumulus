@@ -272,8 +272,8 @@ test.serial('An SNS Fallback retry, should throw an error if message is invalid 
   };
   const snsEvent = wrapKinesisRecordInSnsEvent(kinesisEvent.Records[0]);
 
-  await t.throws(
-    () => handler(snsEvent, {}, testCallback),
+  await t.throwsAsync(
+    handler(snsEvent, {}, testCallback),
     { message: 'Unexpected end of JSON input' }
   );
 });

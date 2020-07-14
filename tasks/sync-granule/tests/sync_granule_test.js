@@ -8,6 +8,7 @@ const {
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
+  s3Join,
   promiseS3Upload,
   headObject,
   parseS3Uri,
@@ -544,7 +545,7 @@ async function duplicateHandlingErrorTest(t) {
   } catch (error) {
     const collection = t.context.event.config.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
-    const granuleFileKey = path.join(
+    const granuleFileKey = s3Join(
       t.context.event.config.fileStagingDir,
       t.context.event.config.stack,
       collectionId,

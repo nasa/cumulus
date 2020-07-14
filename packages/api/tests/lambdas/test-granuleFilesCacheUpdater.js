@@ -128,7 +128,7 @@ test('A granule modify event can remove files from the granule files cache', asy
     granuleId
   );
 
-  t.is(await GranuleFilesCache.getGranuleId(file2.bucket, file2.key), null);
+  t.is(await GranuleFilesCache.getGranuleId(file2.bucket, file2.key), undefined);
 });
 
 test("A granule delete remove event removes the granule's files from the cache", async (t) => {
@@ -157,5 +157,5 @@ test("A granule delete remove event removes the granule's files from the cache",
 
   await handler(event);
 
-  t.is(await GranuleFilesCache.getGranuleId(file.bucket, file.key), null);
+  t.is(await GranuleFilesCache.getGranuleId(file.bucket, file.key), undefined);
 });
