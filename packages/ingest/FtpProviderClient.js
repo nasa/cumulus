@@ -25,6 +25,14 @@ class FtpProviderClient {
     }
   }
 
+  async connect() {
+    return undefined;
+  }
+
+  async end() {
+    return undefined;
+  }
+
   async getUsername() {
     if (!this.plaintextUsername) {
       this.plaintextUsername = await decrypt(this.providerConfig.username);

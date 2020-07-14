@@ -21,6 +21,8 @@ test.before(async (t) => {
     password: 'password'
   });
 
+  await t.context.sftpClient.connect();
+
   t.context.s3Bucket = randomString();
   await S3.createBucket(t.context.s3Bucket);
 });
@@ -38,14 +40,18 @@ test('SftpClient supports password authentication', async (t) => {
     password: 'password'
   });
 
+  let files;
   try {
-    const files = await sftpClient.list('/');
-    const fileNames = files.map((f) => f.name);
+    await sftpClient.connect();
 
-    t.true(fileNames.includes('index.html'));
+    files = await sftpClient.list('/');
   } finally {
     await sftpClient.end();
   }
+
+  const fileNames = files.map((f) => f.name);
+
+  t.true(fileNames.includes('index.html'));
 });
 
 test('SftpClient supports ssh keypair authentication', async (t) => {
@@ -61,7 +67,14 @@ test('SftpClient supports ssh keypair authentication', async (t) => {
     privateKey
   });
 
-  const files = await sftpClient.list('/');
+  let files;
+  try {
+    await sftpClient.connect();
+    files = await sftpClient.list('/');
+  } finally {
+    await sftpClient.end();
+  }
+
   const fileNames = files.map((f) => f.name);
 
   t.true(fileNames.includes('index.html'));

@@ -12,6 +12,14 @@ class S3ProviderClient {
     this.bucket = bucket;
   }
 
+  async connect() {
+    return undefined;
+  }
+
+  async end() {
+    return undefined;
+  }
+
   /**
    * Download a remote file to disk
    *

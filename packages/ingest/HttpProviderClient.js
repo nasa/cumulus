@@ -46,6 +46,14 @@ class HttpProviderClient {
     });
   }
 
+  async connect() {
+    return undefined;
+  }
+
+  async end() {
+    return undefined;
+  }
+
   async setUpGotOptions() {
     if (this.encrypted === true) {
       this.username = await decrypt(this.providerConfig.username);

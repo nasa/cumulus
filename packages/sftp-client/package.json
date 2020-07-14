@@ -33,7 +33,7 @@
     "@cumulus/common": "1.24.0",
     "lodash": "^4.17.15",
     "mime-types": "^2.1.27",
-    "ssh2": "^0.8.7"
+    "ssh2-sftp-client": "^5.2.1"
   },
   "devDependencies": {
     "@cumulus/checksum": "1.24.0",
