@@ -28,7 +28,6 @@ const validateHost = (host) => {
 
   throw new TypeError(`provider.host is not a valid hostname or IP: ${host}`);
 };
-const HTTP_REQUEST_TIMEOUT_SECONDS = 5 * 60; // Timeout for simplecrawler's headers response
 
 class HttpProviderClient {
   constructor(providerConfig) {
@@ -36,8 +35,7 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
-    this.httpListTimeout = get(providerConfig,
-      'httpListTimeout', HTTP_REQUEST_TIMEOUT_SECONDS);
+    this.httpListTimeout = get(providerConfig, 'httpListTimeout');
     this.gotOptions = {};
     this.certificateUri = providerConfig.certificateUri;
     if (providerConfig.username && !providerConfig.password) {
@@ -106,7 +104,9 @@ class HttpProviderClient {
     if (this.protocol === 'https' && this.certificate !== undefined) {
       c.httpsAgent = new https.Agent({ ca: this.certificate });
     }
-    c.timeout = this.httpListTimeout * 1000;
+    if (this.httpListTimeout) {
+      c.timeout = this.httpListTimeout * 1000;
+    }
     c.interval = 0;
     c.maxConcurrency = 10;
     c.respectRobotsTxt = false;
