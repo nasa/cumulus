@@ -35,7 +35,7 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
-    this.httpListTimeout = get(providerConfig, 'httpListTimeout');
+    this.httpListTimeout = providerConfig.httpListTimeout;
     this.gotOptions = {};
     this.certificateUri = providerConfig.certificateUri;
     if (providerConfig.username && !providerConfig.password) {
