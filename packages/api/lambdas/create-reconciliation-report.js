@@ -478,9 +478,7 @@ async function createReconciliationReport(params) {
   const filesInCumulus = {
     okCount: 0,
     onlyInS3: [],
-    onlyInDynamoDb: [],
-    S3Errors: [],
-    ESErrors: []
+    onlyInDynamoDb: []
   };
 
   const reportFormatCumulusCmr = {
@@ -521,8 +519,6 @@ async function createReconciliationReport(params) {
     report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
       bucketReport.onlyInDynamoDb
     );
-    report.filesInCumulus.S3Errors = report.filesInCumulus.S3Errors.concat(bucketReport.S3Errors);
-    report.filesInCumulus.ESErrors = report.filesInCumulus.ESErrors.concat(bucketReport.ESErrors);
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
