@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/types",
   "version": "1.24.0",
-  "description": "Types for working with Cumulus data structures",
+  "description": "TypeScript definitions for working with Cumulus data structures",
   "keywords": [
     "GIBS",
     "CUMULUS",
@@ -11,13 +11,11 @@
   "engines": {
     "node": ">=12.18.0"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/types",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/types#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "packages/types"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
