@@ -106,8 +106,8 @@ module.exports.collection = {
     granuleIdExtraction: {
       title: 'GranuleId Extraction Regex',
       description: 'The regular expression used to extract the granule ID from filenames. '
-      + 'The first capturing group extracted from the filename by the regex'
-      + 'will be used as the granule ID.',
+        + 'The first capturing group extracted from the filename by the regex'
+        + 'will be used as the granule ID.',
       type: 'string'
     },
     reportToEms: {

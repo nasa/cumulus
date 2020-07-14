@@ -2,7 +2,6 @@
 
 const get = require('lodash/get');
 const moment = require('moment');
-const path = require('path');
 const {
   s3Join,
   listS3ObjectsV2,
@@ -152,13 +151,13 @@ async function submitReports(reports) {
     // eslint-disable-next-line no-await-in-loop
     await sftpClient.syncFromS3(
       { Bucket: parsed.Bucket, Key: parsed.Key },
-      path.join(process.env.ems_path || '', fileName).replace(/^\/+/g, '')
+      s3Join(process.env.ems_path || '', fileName).replace(/^\/+/g, '')
     );
     log.debug(`EMS report ${fileName} is sent`);
 
     // copy to sent folder, the file is also in original location so that a .rev file
     // can be generated
-    const newKey = path.join(keyfields.join('/'), 'sent', fileName);
+    const newKey = s3Join(keyfields.join('/'), 'sent', fileName);
 
     // eslint-disable-next-line no-await-in-loop
     await s3CopyObject({

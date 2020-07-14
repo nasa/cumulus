@@ -57,10 +57,10 @@ const createPdrMessage = ({
   }
 });
 
-test('generatePdrRecord() returns null if message.payload.pdr is not set', (t) => {
+test('generatePdrRecord() returns undefined if message.payload.pdr is not set', (t) => {
   const pdrRecord = pdrsModel.generatePdrRecord({});
 
-  t.is(pdrRecord, null);
+  t.is(pdrRecord, undefined);
 });
 
 test('generatePdrRecord() throws error if message.payload.pdr.name is not set', (t) => {
@@ -204,11 +204,11 @@ test('generatePdrRecord() sets PDR properties when included', async (t) => {
   t.is(record.PANmessage, PANmessage);
 });
 
-test('storePdrFromCumulusMessage returns null if there is no pdr on the message', async (t) => {
+test('storePdrFromCumulusMessage returns undefined if there is no pdr on the message', async (t) => {
   const msg = createPdrMessage({});
 
   const output = await pdrsModel.storePdrFromCumulusMessage(msg);
-  t.is(output, null);
+  t.is(output, undefined);
 });
 
 test(

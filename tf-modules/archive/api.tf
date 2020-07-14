@@ -10,6 +10,7 @@ locals {
       BulkOperationLambda          = aws_lambda_function.bulk_operation.arn
       CMR_ENVIRONMENT              = var.cmr_environment
       CollectionsTable             = var.dynamo_tables.collections.name
+      DISTRIBUTION_ENDPOINT        = var.distribution_url
       EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID          = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD    = var.urs_client_password

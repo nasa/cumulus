@@ -107,13 +107,13 @@ function getRecordId(type, record) {
  *
  * @param {string} type - type of record to index
  * @param {Object} record - the record to be indexed
- * @returns {string} record ID
+ * @returns {string|undefined} record ID
  */
 function getParentId(type, record) {
   if (type === 'granule') {
     return record.collectionId;
   }
-  return null;
+  return undefined;
 }
 
 /**

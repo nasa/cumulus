@@ -7,7 +7,7 @@ const { isNil } = require('@cumulus/common/util');
 const Provider = require('../models/providers');
 
 const getDecryptedField = async (provider, field) => {
-  if (isNil(provider[field])) return null;
+  if (isNil(provider[field])) return undefined;
   if (provider.encrypted === false) return provider[field];
 
   return KMS.decryptBase64String(provider[field])

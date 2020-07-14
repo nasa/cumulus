@@ -376,7 +376,6 @@ async function cleanup() {
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 function handler(event, context, callback) {
-  // eslint-disable-next-line no-param-reassign
   context.callbackWaitsForEmptyEventLoop = false;
   // 24-hour period ending past midnight
   let endTime = moment.utc().startOf('day').format();

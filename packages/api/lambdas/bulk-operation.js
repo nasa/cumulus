@@ -26,8 +26,8 @@ async function getGranuleIdsForPayload(payload) {
     log.info('No granule ids detected. Searching for granules in Elasticsearch.');
 
     if (!process.env.METRICS_ES_HOST
-      || !process.env.METRICS_ES_USER
-      || !process.env.METRICS_ES_PASS) {
+        || !process.env.METRICS_ES_USER
+        || !process.env.METRICS_ES_PASS) {
       throw new Error('ELK Metrics stack not configured');
     }
 

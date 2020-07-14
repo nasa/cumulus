@@ -6,10 +6,10 @@
  * @module launchpad-auth
  */
 
-const path = require('path');
 const pick = require('lodash/pick');
 const {
   getS3Object,
+  s3Join,
   s3ObjectExists,
   s3PutObject
 } = require('@cumulus/aws-client/S3');
@@ -33,7 +33,7 @@ function launchpadTokenBucketKey() {
 
   return {
     Bucket: process.env.system_bucket,
-    Key: path.join(process.env.stackName, 'launchpad/token.json')
+    Key: s3Join(process.env.stackName, 'launchpad/token.json')
   };
 }
 

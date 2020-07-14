@@ -47,6 +47,31 @@ async function createIndex(esClient, indexName) {
 }
 
 /**
+ * Determine if log message parts come from a Cumulus log.
+ *
+ * @param {Array<string>} messageParts - Array of message parts
+ * @param {number} messageStartIndex - Start index of log message in message string
+ * @returns {boolean}
+ */
+const isCumulusLogMessage = (messageParts, messageStartIndex) =>
+  messageParts.length >= 3
+  && messageStartIndex
+  && messageParts[messageParts.length - 1].endsWith('}');
+
+/**
+ * Parse Cumulus log from message parts
+ *
+ * @param {Array<string>} messageParts - Array of message parts
+ * @param {number} messageStartIndex - Start index of log message in message string
+ * @returns {Object} - Cumulus log record
+ */
+const parseCumulusLogMessage = (messageParts, messageStartIndex) => {
+  const record = JSON.parse(messageParts.slice(messageStartIndex).join('\t'));
+  record.RequestId = messageParts[1];
+  return record;
+};
+
+/**
  * Parses a StepFunction log payload  and returns a es logsrecord object
  *
  * @param {Object} payload - Stepfunction log payload
@@ -64,10 +89,8 @@ function parsePayload(payload) {
     const entryParts = payload.message.trim().split('\t');
     // cumulus log message
     const messageStartIndex = entryParts.findIndex((e) => e.startsWith('{'));
-    if (entryParts.length >= 3 && messageStartIndex
-    && entryParts[entryParts.length - 1].endsWith('}')) {
-      record = JSON.parse(entryParts.slice(messageStartIndex).join('\t'));
-      record.RequestId = entryParts[1];
+    if (isCumulusLogMessage(entryParts, messageStartIndex)) {
+      record = parseCumulusLogMessage(entryParts, messageStartIndex);
     } else { // other logs e.g. cumulus-ecs-task
       record = JSON.parse(payload.message);
     }

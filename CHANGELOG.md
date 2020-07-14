@@ -7,7 +7,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
-
+- Changes to the `@cumulus/common` package
+  - `cloudwatch-event.getSfEventMessageObject()` now returns `undefined` if the
+    message could not be found or could not be parsed. It previously returned
+    `null`.
+  - `S3KeyPairProvider.decrypt()` now throws an exception if the bucket
+    containing the key cannot be determined.
+  - `S3KeyPairProvider.decrypt()` now throws an exception if the stack cannot be
+    determined.
+  - `S3KeyPairProvider.encrypt()` now throws an exception if the bucket
+    containing the key cannot be determined.
+  - `S3KeyPairProvider.encrypt()` now throws an exception if the stack cannot be
+    determined.
+  - `sns-event.getSnsEventMessageObject()` now returns `undefined` if it could
+    not be parsed. It previously returned `null`.
+  - The `aws` module has been removed.
+  - The `BucketsConfig.buckets` property is now read-only and private
+  - The `test-utils.validateConfig()` function now resolves to `undefined`
+    rather than `true`.
+  - The `test-utils.validateInput()` function now resolves to `undefined` rather
+    than `true`.
+  - The `test-utils.validateOutput()` function now resolves to `undefined`
+    rather than `true`.
+  - The static `S3KeyPairProvider.retrieveKey()` function has been removed.
 - Changes to the `@cumulus/cmrjs` package
   - `@cumulus/cmrjs.constructOnlineAccessUrl()` and
     `@cumulus/cmrjs/cmr-utils.constructOnlineAccessUrl()` previously took a
@@ -81,6 +103,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1977**
   - Moved bulk granule deletion endpoint from `/bulkDelete` to
     `/granules/bulkDelete`
+- **CUMULUS-1991**
+  - Updated CMR metadata generation to use "Download file.hdf" (where `file.hdf` is the filename of the given resource) as the resource description instead of "File to download"
+  - CMR metadata updates now respect changes to resource descriptions (previously only changes to resource URLs were respected)
 
 ### MIGRATION STEPS
 
@@ -99,6 +124,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2058**
+  - Added `lambda_processing_role_name` as an output from the `cumulus` module
+    to provide the processing role name
 - **CUMULUS-1417**
   - Added a `checksumFor` property to collection `files` config. Set this
     property on a checksum file's definition matching the `regex` of the target
@@ -195,10 +223,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     defaults to "unlimited"
 - **CUMULUS-1997**
   - Added optional `launchpad` configuration to `@cumulus/hyrax-metadata-updates` task config schema.
+- **CUMULUS-1991**
+  - `@cumulus/cmrjs/src/cmr-utils/constructOnlineAccessUrls()` now throws an error if `cmrGranuleUrlType = "distribution"` and no distribution endpoint argument is provided
 - **CUMULUS-2011**
   - Reconciliation reports are now generated within an AsyncOperation
 - **CUMULUS-2016**
   - Upgrade TEA to version 79
+
+### Fixed
+
+- **CUMULUS-1991**
+  - Added missing `DISTRIBUTION_ENDPOINT` environment variable for API lambdas. This environment variable is required for API requests to move granules.
 
 ### Deprecated
 
@@ -207,8 +242,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
-
-### Deprecated
 
 - **CUMULUS-1930**
   - `@cumulus/common/log.convertLogLevel()`
@@ -311,6 +344,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The deprecated `@cumulus/common/string.replace` functon has been removed
 - The deprecated `@cumulus/common/string.toLower` functon has been removed
 - The deprecated `@cumulus/common/string.toUpper` functon has been removed
+- The deprecated `@cumulus/common/testUtils.getLocalstackEndpoint` function has been removed
 - The deprecated `@cumulus/common/util.setErrorStack` function has been removed
 - The `@cumulus/common/util.uuid` function has been removed
 - The deprecated `@cumulus/common/workflows.getWorkflowArn` function has been

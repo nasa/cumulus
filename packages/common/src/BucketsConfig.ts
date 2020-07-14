@@ -1,22 +1,24 @@
-'use strict';
+import { createErrorType } from '@cumulus/errors';
+import { BucketsConfigObject, BucketType } from './types';
 
-const { createErrorType } = require('@cumulus/errors');
 const BucketsConfigError = createErrorType('BucketsConfigError');
 
 /**
  * Class representing cumulus bucket configuration.
  */
 class BucketsConfig {
-  constructor(bucketsJsonObject) {
+  private readonly buckets: BucketsConfigObject;
+
+  constructor(bucketsJsonObject: BucketsConfigObject) {
     this.buckets = bucketsJsonObject;
   }
 
   /**
-   * returns key into this.buckets who's object has `name` bucketName
+   * returns key into this.buckets whose object has `name` bucketName
    * @param {string} bucketName
-   * @returns {string} desired bucket's key value.
+   * @returns {string|undefined} desired bucket's key value.
    */
-  key(bucketName) {
+  key(bucketName: string) {
     return Object.keys(this.buckets)
       .find((bucketKey) => bucketName === this.buckets[bucketKey].name);
   }
@@ -26,7 +28,7 @@ class BucketsConfig {
    * @param {string} bucketName
    * @returns {string} matching bucket's type
    */
-  type(bucketName) {
+  type(bucketName: string) {
     const key = this.key(bucketName);
     if (!key) {
       throw new BucketsConfigError(`bucketName ${bucketName} not found in config ${JSON.stringify(this.buckets)}`);
@@ -39,7 +41,7 @@ class BucketsConfig {
    * @param {string} bucketName
    * @returns {Object} bucket object
    */
-  bucket(bucketName) {
+  bucket(bucketName: string) {
     const key = this.key(bucketName);
     if (!key) {
       throw new BucketsConfigError(`bucketName ${bucketName} not found in config ${JSON.stringify(this.buckets)}`);
@@ -52,7 +54,7 @@ class BucketsConfig {
    * @param {string} bucketName
    * @returns {boolean} truthyness of this bucket existing in the configuration
    */
-  exists(bucketName) {
+  exists(bucketName: string) {
     return this.key(bucketName) !== undefined;
   }
 
@@ -61,7 +63,7 @@ class BucketsConfig {
    * @param {string} configKey
    * @returns {boolean} truthyness of this key existing in the configuration
    */
-  keyExists(configKey) {
+  keyExists(configKey: string) {
     return Object.keys(this.buckets).includes(configKey);
   }
 
@@ -70,7 +72,7 @@ class BucketsConfig {
    * @param {string} configKey
    * @returns {string} name of bucket at key.
    */
-  nameByKey(configKey) {
+  nameByKey(configKey: string) {
     return this.buckets[configKey].name;
   }
 
@@ -80,14 +82,11 @@ class BucketsConfig {
    * @param {string/Array} types - types of buckets to return
    * @returns {Array<Object>} - array of buckets that are of desired types
    */
-  bucketsOfType(types) {
-    const checkTypes = [].concat(types);
-    return Object.keys(this.buckets).map((key) => {
-      if (checkTypes.includes(this.buckets[key].type)) {
-        return this.buckets[key];
-      }
-      return undefined;
-    }).filter((valid) => valid);
+  bucketsOfType(types: BucketType | BucketType[]) {
+    const checkTypes = typeof types === 'string' ? [types] : types;
+
+    return Object.values(this.buckets)
+      .filter(({ type }) => checkTypes.includes(type));
   }
 
   /** @returns {Array} list of private buckets */
@@ -116,4 +115,4 @@ class BucketsConfig {
   }
 }
 
-module.exports = BucketsConfig;
+export = BucketsConfig;

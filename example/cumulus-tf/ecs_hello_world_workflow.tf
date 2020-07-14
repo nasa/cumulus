@@ -48,36 +48,11 @@ module "ecs_hello_world_workflow" {
   system_bucket   = var.system_bucket
   tags            = local.tags
 
-  state_machine_definition = <<JSON
-{
-  "Comment": "Returns Hello World",
-  "StartAt": "EcsTaskHelloWorld",
-  "States": {
-    "EcsTaskHelloWorld": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "buckets": "{$.meta.buckets}",
-            "provider": "{$.meta.provider}",
-            "collection": "{$.meta.collection}"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${aws_sfn_activity.ecs_task_hello_world.id}",
-      "TimeoutSeconds": 60,
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "States.Timeout"
-          ],
-          "MaxAttempts": 1
-        }
-      ],
-      "End": true
+
+  state_machine_definition = templatefile(
+    "${path.module}/ecs_hello_world_workflow.asl.json",
+    {
+      ecs_task_hello_world_activity_id: aws_sfn_activity.ecs_task_hello_world.id
     }
-  }
-}
-JSON
+  )
 }
