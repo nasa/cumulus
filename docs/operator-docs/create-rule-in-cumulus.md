@@ -8,14 +8,22 @@ hide_title: true
 
 Once the above files are in place and the entries created in CMR and Cumulus, we are ready to begin ingesting data. Depending on the type of ingestion (FTP/Kinesis, etc) the values below will change, but for the most part they are all similar. Rules tell Cumulus how to associate providers and collections, and when/how to start processing a workflow.
 
+## Steps
+
 1. Go To Rules Page
 
-* Go to the Cumulus dashboard, click on `Rules` in the navigation
-* Click `Add Rule`
+* Go to the Cumulus dashboard, click on `Rules` in the navigation.
+* Click `Add Rule`.
+
+![Screenshot of Rules page](assets/cd_rules_page.png)
 
 2. Complete Form
 
-* Fill out the template form. The following fields are
+* Fill out the template form. 
+
+![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule_form_blank.png)
+
+The following fields are:
   * Name: Create a descriptive, unique name.
   * Workflow Name: Maps to one of the workflows defined in the deployment. They can be listed from the dashboard under the `Workflows` page. This is either DiscoverGranules (FTP) or IngestKinesis (kinesis ingest).
   * Provider ID: The provider that you have created or selected from.
@@ -35,3 +43,14 @@ Once the above files are in place and the entries created in CMR and Cumulus, we
     * Disabled: Does not run.
 
 > **Note:** If the state field is left blank, it defaults to `false`.
+
+## Examples
+
+* A rule form with completed required fields:
+
+![Screenshot of a completed rule form](assets/cd_add_rule_filled.png)
+
+* A successfully added Rule:
+
+![Screenshot of created rule](assets/cd_add_rule_overview.png)
+

@@ -22,9 +22,11 @@ hide_title: true
 
   * Cut and paste the collection in the template between the `{}` lines.
 
-  ![Screenshot of a Collection template for adding a new collection](assets/cd_collection.png)
+  ![Screenshot of a Collection template filled in](assets/cd_add_collection_filled.png)
 
   * Click `Save` to create the new collection.
+
+  ![Screenshot of a Collection template for adding a new collection](assets/cd_add_collection_overview.png)
   
 * Go to the `Rules` page and then click on `Add Rule`.
 
@@ -32,9 +34,11 @@ hide_title: true
 
   * Fill out the template form. If you need details on the fields and how to complete a rule form go to [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
 
-  ![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule.png)
+  ![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule_form_blank.png)
 
   * Click `Save` to create the new rule.
+
+  ![Screenshot of created rule](assets/cd_add_rule_overview.png)
 
 3. Bulk Ingest Granules
 
@@ -68,6 +72,8 @@ hide_title: true
 * Go to the `Collections` page.
 * Click on `Reingest` and a modal will pop up for your confirmation.
 
+![Screenshot of the Reingest modal workflow](assets/cd_reingest_granule_modal.png)
+
 ## Multiple Failed Granules
 
 1. Delete from CMR
@@ -80,6 +86,10 @@ hide_title: true
 * Click on `Failed Granules`.
 * Select multiple granules.
 
+![Screenshot of selected multiple granules](assets/cd_reingest_bulk.png)
+
 3. Bulk Re-ingest Granules
 
 * Click on `Reingest` and a modal will pop up for your confirmation.
+
+![Screenshot of Bulk Reingest modal workflow](assets/cd_reingest_modal_bulk.png)
