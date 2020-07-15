@@ -2,22 +2,22 @@
 
 import path from 'path';
 import { URL } from 'url';
-import AWS from 'aws-sdk';
 import got from 'got';
 
 import Logger from '@cumulus/logger';
 import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
 
-import { LaunchpadTokenParams } from './types';
+import {
+  LaunchpadTokenParams,
+  LaunchpadTokenResponse
+} from './types';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth/LaunchpadToken' });
 
 const getEnvVar = (name:string) => {
   const envVar = process.env[name];
   if (!envVar) {
-    throw Promise.reject(
-      new Error(`must set environment variables process.env.${name}`)
-    );
+    throw new Error(`must set environment variables process.env.${name}`);
   }
   return envVar;
 };
@@ -60,7 +60,7 @@ class LaunchpadToken {
    * @returns {Promise<Buffer>} - an object with the pfx
    * @private
    */
-  async _retrieveCertificate(): Promise<AWS.S3.Body|undefined> {
+  async _retrieveCertificate() {
     const bucket = getEnvVar('system_bucket');
     const stackName = getEnvVar('stackName');
 
@@ -72,11 +72,11 @@ class LaunchpadToken {
     );
 
     if (!keyExists) {
-      return Promise.reject(new Error(`${this.certificate} does not exist in S3 crypto directory: ${cryptKey}`));
+      throw new Error(`${this.certificate} does not exist in S3 crypto directory: ${cryptKey}`);
     }
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
-    const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`)).Body;
+    const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`)).Body?.toString();
 
     return pfx;
   }
@@ -102,7 +102,7 @@ class LaunchpadToken {
     };
 
     const responseBody = await got(options);
-    return JSON.parse(responseBody.toString());
+    return <LaunchpadTokenResponse>JSON.parse(responseBody.toString());
   }
 
   /**

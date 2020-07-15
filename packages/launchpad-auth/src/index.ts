@@ -15,7 +15,11 @@ import {
 } from '@cumulus/aws-client/S3';
 import Logger from '@cumulus/logger';
 
-import { LaunchpadTokenParams } from './types';
+import {
+  LaunchpadTokenObject,
+  LaunchpadTokenParams,
+  LaunchpadTokenResponse
+} from './types';
 
 import LaunchpadToken from './LaunchpadToken';
 
@@ -32,7 +36,7 @@ interface ValidateTokenResult {
 /**
  * Get S3 location of the Launchpad token
  *
- * @returns {Promise.<Object.<string, string>>} - S3 Bucket and Key where Launchpad token is stored
+ * @returns {Promise<Object<string, string>>} - S3 Bucket and Key where Launchpad token is stored
  *
  * @private
  */
@@ -56,7 +60,7 @@ function launchpadTokenBucketKey() {
  * @async
  * @private
  */
-async function getValidLaunchpadTokenFromS3(): Promise<string|undefined> {
+async function getValidLaunchpadTokenFromS3() {
   const s3location = launchpadTokenBucketKey();
   const keyExists = await s3ObjectExists(s3location);
 
@@ -64,7 +68,7 @@ async function getValidLaunchpadTokenFromS3(): Promise<string|undefined> {
   if (keyExists) {
     const s3object = await getS3Object(s3location.Bucket, s3location.Key);
     if (s3object && s3object.Body) {
-      const launchpadToken = JSON.parse(s3object.Body.toString());
+      const launchpadToken = <LaunchpadTokenObject>JSON.parse(s3object.Body.toString());
 
       // check if token is still valid
       if (

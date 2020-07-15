@@ -3,3 +3,12 @@ export interface LaunchpadTokenParams {
   passphrase: string
   certificate: string
 }
+
+export interface LaunchpadTokenResponse {
+  session_maxtimeout: number
+  sm_token: string
+}
+
+export interface LaunchpadTokenObject extends LaunchpadTokenResponse {
+  session_starttime: number
+}
