@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
+- Changes to the `@cumulus/cumulus-api` package
+  - The `CumulusApiClientError` class must now be imported using
+    `const { CumulusApiClientError } = require('@cumulus/cumulus-api/CumulusApiClientError')`
 - Changes to the `@cumulus/common` package
   - `cloudwatch-event.getSfEventMessageObject()` now returns `undefined` if the
     message could not be found or could not be parsed. It previously returned

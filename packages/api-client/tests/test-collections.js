@@ -1,8 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
-const collectionsRewire = rewire('../collections');
+const collectionsApi = require('../collections');
 
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
@@ -10,7 +9,7 @@ test.before(async (t) => {
   t.context.collectionVersion = 1;
 });
 
-test.serial('deleteCollection calls the callback with the expected object', async (t) => {
+test('deleteCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -23,20 +22,16 @@ test.serial('deleteCollection calls the callback with the expected object', asyn
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-  let revertCallback;
-  try {
-    revertCallback = collectionsRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(collectionsRewire.deleteCollection({
-      prefix: t.context.testPrefix,
-      collectionName: t.context.collectionName,
-      collectionVersion: t.context.collectionVersion
-    }));
-  } finally {
-    revertCallback();
-  }
+
+  await t.notThrowsAsync(collectionsApi.deleteCollection({
+    callback,
+    prefix: t.context.testPrefix,
+    collectionName: t.context.collectionName,
+    collectionVersion: t.context.collectionVersion
+  }));
 });
 
-test.serial('createCollection calls the callback with the expected object', async (t) => {
+test('createCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -51,19 +46,14 @@ test.serial('createCollection calls the callback with the expected object', asyn
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-  let revertCallback;
-  try {
-    revertCallback = collectionsRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(collectionsRewire.createCollection({
-      prefix: t.context.testPrefix,
-      collectionName: t.context.collectionName
-    }));
-  } finally {
-    revertCallback();
-  }
+  await t.notThrowsAsync(collectionsApi.createCollection({
+    callback,
+    prefix: t.context.testPrefix,
+    collectionName: t.context.collectionName
+  }));
 });
 
-test.serial('getCollection calls the callback with the expected object and returns the parsed response', async (t) => {
+test('getCollection calls the callback with the expected object and returns the parsed response', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -78,21 +68,17 @@ test.serial('getCollection calls the callback with the expected object and retur
     return { body: '{ "foo": "bar" }' };
   };
 
-  let revertCallback;
-  try {
-    revertCallback = collectionsRewire.__set__('invokeApi', callback);
-    const result = await collectionsRewire.getCollection({
-      prefix: t.context.testPrefix,
-      collectionName: t.context.collectionName,
-      collectionVersion: t.context.collectionVersion
-    });
-    t.deepEqual(result, { foo: 'bar' });
-  } finally {
-    revertCallback();
-  }
+  const result = await collectionsApi.getCollection({
+    callback,
+    prefix: t.context.testPrefix,
+    collectionName: t.context.collectionName,
+    collectionVersion: t.context.collectionVersion
+  });
+
+  t.deepEqual(result, { foo: 'bar' });
 });
 
-test.serial('getCollections calls the callback with the expected object and returns the parsed response', async (t) => {
+test('getCollections calls the callback with the expected object and returns the parsed response', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -107,14 +93,10 @@ test.serial('getCollections calls the callback with the expected object and retu
     return { foo: 'bar' };
   };
 
-  let revertCallback;
-  try {
-    revertCallback = collectionsRewire.__set__('invokeApi', callback);
-    const result = await collectionsRewire.getCollections({
-      prefix: t.context.testPrefix
-    });
-    t.deepEqual(result, { foo: 'bar' });
-  } finally {
-    revertCallback();
-  }
+  const result = await collectionsApi.getCollections({
+    callback,
+    prefix: t.context.testPrefix
+  });
+
+  t.deepEqual(result, { foo: 'bar' });
 });

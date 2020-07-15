@@ -1,6 +1,6 @@
-'use strict';
-
-const { invokeApi } = require('./cumulusApiClient');
+import type { RuleRecord } from '@cumulus/types/api/rules';
+import { invokeApi } from './cumulusApiClient';
+import type { InvokeApiFunction } from './types';
 
 /**
  * Post a rule to the rules API
@@ -14,18 +14,26 @@ const { invokeApi } = require('./cumulusApiClient');
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-const postRule = async ({ prefix, rule, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'POST',
-    resource: '/{proxy+}',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    path: '/rules',
-    body: JSON.stringify(rule)
-  }
-});
+export const postRule = async (params: {
+  prefix: string,
+  rule: unknown,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, rule, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      path: '/rules',
+      body: JSON.stringify(rule)
+    }
+  });
+};
 
 /**
  * Update a rule in the rules API
@@ -39,20 +47,32 @@ const postRule = async ({ prefix, rule, callback = invokeApi }) => callback({
  *                                       to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}          - promise that resolves to the output of the API lambda
  */
-const updateRule = async ({
-  prefix, ruleName, updateParams, callback = invokeApi
-}) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'PUT',
-    resource: '/{proxy+}',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    path: `/rules/${ruleName}`,
-    body: JSON.stringify(updateParams)
-  }
-});
+export const updateRule = async (params: {
+  prefix: string,
+  ruleName: string,
+  updateParams: Partial<RuleRecord> | { action: 'rerun' },
+  callback?: InvokeApiFunction
+}) => {
+  const {
+    prefix,
+    ruleName,
+    updateParams,
+    callback = invokeApi
+  } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      path: `/rules/${ruleName}`,
+      body: JSON.stringify(updateParams)
+    }
+  });
+};
 
 /**
  * Get a list of rules from the API
@@ -64,15 +84,23 @@ const updateRule = async ({
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-const listRules = async ({ prefix, query = {}, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: '/rules',
-    queryStringParameters: query
-  }
-});
+export const listRules = async (params: {
+  prefix: string,
+  query: { [key: string]: string },
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, query = {}, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/rules',
+      queryStringParameters: query
+    }
+  });
+};
 
 /**
  * Get a rule definition from the API
@@ -85,14 +113,22 @@ const listRules = async ({ prefix, query = {}, callback = invokeApi }) => callba
  * @returns {Promise<Object>}      - promise that resolves to the output of the
  *                                   API lambda
  */
-const getRule = async ({ prefix, ruleName, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: `/rules/${ruleName}`
-  }
-});
+export const getRule = async (params: {
+  prefix: string,
+  ruleName: string,
+  callback: InvokeApiFunction
+}) => {
+  const { prefix, ruleName, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/rules/${ruleName}`
+    }
+  });
+};
 
 /**
  * Delete a rule via the API
@@ -104,14 +140,22 @@ const getRule = async ({ prefix, ruleName, callback = invokeApi }) => callback({
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-const deleteRule = async ({ prefix, ruleName, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'DELETE',
-    resource: '/{proxy+}',
-    path: `/rules/${ruleName}`
-  }
-});
+export const deleteRule = async (params: {
+  prefix: string,
+  ruleName: string,
+  callback: InvokeApiFunction
+}) => {
+  const { prefix, ruleName, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/rules/${ruleName}`
+    }
+  });
+};
 
 /**
  * Rerun a rule via the API.
@@ -125,25 +169,21 @@ const deleteRule = async ({ prefix, ruleName, callback = invokeApi }) => callbac
  * @returns {Promise<Object>} - promise that resolves to the output of the API
  *    lambda
  */
-async function rerunRule({
-  prefix, ruleName, updateParams = {}, callback = invokeApi
+export async function rerunRule(params: {
+  prefix: string,
+  ruleName: string,
+  callback: InvokeApiFunction
 }) {
+  const {
+    prefix,
+    ruleName,
+    callback = invokeApi
+  } = params;
+
   return updateRule({
     prefix,
     ruleName,
-    updateParams: {
-      ...updateParams,
-      action: 'rerun'
-    },
+    updateParams: { action: 'rerun' },
     callback
   });
 }
-
-module.exports = {
-  postRule,
-  updateRule,
-  deleteRule,
-  getRule,
-  listRules,
-  rerunRule
-};

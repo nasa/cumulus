@@ -1,6 +1,5 @@
-'use strict';
-
-const { invokeApi } = require('./cumulusApiClient');
+import { invokeApi } from './cumulusApiClient';
+import type { InvokeApiFunction } from './types';
 
 /**
  * Create a provider via the API
@@ -12,16 +11,24 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                     that takes a prefix / user payload
  * @returns {Promise<Object>}        - promise that resolves to the output of the callback
  */
-const createProvider = ({ prefix, provider, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'POST',
-    resource: '/{proxy+}',
-    headers: { 'Content-Type': 'application/json' },
-    path: '/providers',
-    body: JSON.stringify(provider)
-  }
-});
+export const createProvider = (params: {
+  prefix: string,
+  provider: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, provider, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: '/providers',
+      body: JSON.stringify(provider)
+    }
+  });
+};
 
 /**
  * Delete a provider from the Cumulus API
@@ -35,14 +42,22 @@ const createProvider = ({ prefix, provider, callback = invokeApi }) => callback(
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the callback
  */
-const deleteProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'DELETE',
-    resource: '/{proxy+}',
-    path: `/providers/${providerId}`
-  }
-});
+export const deleteProvider = (params: {
+  prefix: string,
+  providerId: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, providerId, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/providers/${providerId}`
+    }
+  });
+};
 
 /**
  * Fetch a provider from the Cumulus API
@@ -56,14 +71,22 @@ const deleteProvider = ({ prefix, providerId, callback = invokeApi }) => callbac
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-const getProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: `/providers/${providerId}`
-  }
-});
+export const getProvider = (params: {
+  prefix: string,
+  providerId: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, providerId, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/providers/${providerId}`
+    }
+  });
+};
 
 /**
  * Fetch a list of providers from the Cumulus API
@@ -72,18 +95,18 @@ const getProvider = ({ prefix, providerId, callback = invokeApi }) => callback({
  * @param {string} params.prefix - the prefix configured for the stack
  * @returns {Promise<Object>} - the list of providers fetched by the API
  */
-const getProviders = async ({ prefix, callback = invokeApi }) => callback({
-  prefix: prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: '/providers'
-  }
-});
+export const getProviders = (params: {
+  prefix: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, callback = invokeApi } = params;
 
-module.exports = {
-  createProvider,
-  deleteProvider,
-  getProvider,
-  getProviders
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/providers'
+    }
+  });
 };

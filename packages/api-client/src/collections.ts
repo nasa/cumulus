@@ -1,6 +1,6 @@
-'use strict';
-
-const { invokeApi } = require('./cumulusApiClient');
+import type { CollectionRecord } from '@cumulus/types/api/collections';
+import { invokeApi } from './cumulusApiClient';
+import type { InvokeApiFunction } from './types';
 
 /**
  * POST /collections
@@ -13,16 +13,24 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                     to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}          - the response from the callback
  */
-const createCollection = async ({ prefix, collection, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'POST',
-    resource: '/{proxy+}',
-    headers: { 'Content-Type': 'application/json' },
-    path: '/collections',
-    body: JSON.stringify(collection)
-  }
-});
+export const createCollection = async (params: {
+  prefix: string,
+  collection: Partial<CollectionRecord>,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, collection, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: '/collections',
+      body: JSON.stringify(collection)
+    }
+  });
+};
 
 /**
  * DELETE /collections/{collectionName}/{collectionVersion}
@@ -36,16 +44,28 @@ const createCollection = async ({ prefix, collection, callback = invokeApi }) =>
  *                                            to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}                 - the response from the callback
  */
-const deleteCollection = async ({
-  prefix, collectionName, collectionVersion, callback = invokeApi
-}) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'DELETE',
-    resource: '/{proxy+}',
-    path: `/collections/${collectionName}/${collectionVersion}`
-  }
-});
+export const deleteCollection = async (params: {
+  prefix: string,
+  collectionName: string,
+  collectionVersion: string,
+  callback?: InvokeApiFunction
+}) => {
+  const {
+    prefix,
+    collectionName,
+    collectionVersion,
+    callback = invokeApi
+  } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/collections/${collectionName}/${collectionVersion}`
+    }
+  });
+};
 
 /**
  * Get a collection from Cumulus via the API lambda
@@ -60,9 +80,19 @@ const deleteCollection = async ({
  *                                              to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}                 - the response from the callback
  */
-const getCollection = async ({
-  prefix, collectionName, collectionVersion, callback = invokeApi
-}) => {
+export const getCollection = async (params: {
+  prefix: string,
+  collectionName: string,
+  collectionVersion: string,
+  callback?: InvokeApiFunction
+}): Promise<unknown> => {
+  const {
+    prefix,
+    collectionName,
+    collectionVersion,
+    callback = invokeApi
+  } = params;
+
   const returnedCollection = await callback({
     prefix,
     payload: {
@@ -71,7 +101,8 @@ const getCollection = async ({
       path: `/collections/${collectionName}/${collectionVersion}`
     }
   });
-  return JSON.parse(returnedCollection.body);
+
+  return <CollectionRecord>JSON.parse(returnedCollection.body);
 };
 
 /**
@@ -85,20 +116,18 @@ const getCollection = async ({
  *                                              to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}                 - the response from the callback
  */
-const getCollections = async ({
-  prefix, callback = invokeApi
-}) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: '/collections/'
-  }
-});
+export const getCollections = async (params: {
+  prefix: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, callback = invokeApi } = params;
 
-module.exports = {
-  createCollection,
-  deleteCollection,
-  getCollection,
-  getCollections
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/collections/'
+    }
+  });
 };

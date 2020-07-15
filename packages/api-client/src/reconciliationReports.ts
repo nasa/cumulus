@@ -1,6 +1,5 @@
-'use strict';
-
-const { invokeApi } = require('./cumulusApiClient');
+import { invokeApi } from './cumulusApiClient';
+import type { InvokeApiFunction } from './types';
 
 /**
  * GET /reconciliationReports/{name}
@@ -14,14 +13,22 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                      api lambda
  * @returns {Promise<Object>}         - the report fetched by the API
  */
-const getReconciliationReport = async ({ prefix, name, callback = invokeApi }) => callback({
-  prefix: prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: `/reconciliationReports/${name}`
-  }
-});
+export const getReconciliationReport = async (params: {
+  prefix: string,
+  name: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, name, callback = invokeApi } = params;
+
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/reconciliationReports/${name}`
+    }
+  });
+};
 
 /**
  * Delete a reconciliation report from Cumulus via the API lambda
@@ -36,14 +43,22 @@ const getReconciliationReport = async ({ prefix, name, callback = invokeApi }) =
  *                                      api lambda
  * @returns {Promise<Object>}         - the delete confirmation from the API
  */
-const deleteReconciliationReport = async ({ prefix, name, callback = invokeApi }) => callback({
-  prefix: prefix,
-  payload: {
-    httpMethod: 'DELETE',
-    resource: '/{proxy+}',
-    path: `/reconciliationReports/${name}`
-  }
-});
+export const deleteReconciliationReport = async (params: {
+  prefix: string,
+  name: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, name, callback = invokeApi } = params;
+
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/reconciliationReports/${name}`
+    }
+  });
+};
 
 /**
  * Post a request to the reconciliationReports API
@@ -57,7 +72,13 @@ const deleteReconciliationReport = async ({ prefix, name, callback = invokeApi }
  *                                   to cumulusApiClient.invokeApifunction to invoke the api lambda
  * @returns {Promise<Object>}        - promise that resolves to the output of the API lambda
  */
-async function createReconciliationReport({ prefix, request, callback = invokeApi }) {
+export async function createReconciliationReport(params: {
+  prefix: string,
+  request: unknown,
+  callback?: InvokeApiFunction
+}) {
+  const { prefix, request, callback = invokeApi } = params;
+
   return callback({
     prefix: prefix,
     payload: {
@@ -71,9 +92,3 @@ async function createReconciliationReport({ prefix, request, callback = invokeAp
     }
   });
 }
-
-module.exports = {
-  getReconciliationReport,
-  deleteReconciliationReport,
-  createReconciliationReport
-};

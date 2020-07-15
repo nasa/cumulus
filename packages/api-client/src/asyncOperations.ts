@@ -1,6 +1,5 @@
-'use strict';
-
-const { invokeApi } = require('./cumulusApiClient');
+import { invokeApi } from './cumulusApiClient';
+import type { InvokeApiFunction } from './types';
 
 /**
  * Get /asyncOperations/{asyncOperationId}
@@ -13,15 +12,19 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                     to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}          - the response from the callback
  */
-const getAsyncOperation = async ({ prefix, asyncOperationId, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: `/asyncOperations/${asyncOperationId}`
-  }
-});
+export const getAsyncOperation = async (params: {
+  prefix: string,
+  asyncOperationId: string,
+  callback?: InvokeApiFunction
+}) => {
+  const { prefix, asyncOperationId, callback = invokeApi } = params;
 
-module.exports = {
-  getAsyncOperation
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/asyncOperations/${asyncOperationId}`
+    }
+  });
 };
