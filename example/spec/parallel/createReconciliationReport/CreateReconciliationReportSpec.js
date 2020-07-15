@@ -30,7 +30,11 @@ const {
   createTestDataPath,
   createTestSuffix
 } = require('../../helpers/testUtils');
-const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const {
+  setupTestGranuleForIngest,
+  waitForGranuleRecordsInList,
+  waitForGranuleRecordsNotInList
+} = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
@@ -103,6 +107,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 // ingest a granule to CMR and remove it from database
 // return granule object retrieved from database
 async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
+  const ingestTime = Date.now() - 1000 * 30;
   const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, true);
 
   const response = await granulesApiTestUtils.getGranule({
@@ -110,8 +115,9 @@ async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
     granuleId
   });
   const granule = JSON.parse(response.body);
-
+  await waitForGranuleRecordsInList(config.stackName, [granuleId]);
   await (new Granule()).delete({ granuleId });
+  await waitForGranuleRecordsNotInList(config.stackName, [granuleId], { sort_by: 'timestamp', timestamp__from: ingestTime });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   return granule;
 }
@@ -295,7 +301,7 @@ describe('When there are granule differences and granule reconciliation is run',
   it('generates a report showing granules that are in the CMR but not in Cumulus', () => {
     const cmrGranuleIds = report.granulesInCumulusCmr.onlyInCmr.map((gran) => gran.GranuleUR);
     expect(cmrGranuleIds.length).toBeGreaterThanOrEqual(1);
-    expect(cmrGranuleIds).toContain(cmrGranule.granuleId); // Broken here. Could be that the ES index hasn't updated after the file is deleted?
+    expect(cmrGranuleIds).toContain(cmrGranule.granuleId);
     expect(cmrGranuleIds).not.toContain(dbGranuleId);
     expect(cmrGranuleIds).not.toContain(publishedGranuleId);
   });

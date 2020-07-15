@@ -165,17 +165,18 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
   ])(fileContents);
 };
 
-const waitForGranuleRecordInList = async (stackName, granuleId) => pWaitFor(
+const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIsIncluded = true, additionalQueryParams = {}) => pWaitFor(
   async () => {
     const resp = await listGranules({
       prefix: stackName,
       query: {
         fields: 'granuleId',
-        granuleId
+        granuleId,
+        ...additionalQueryParams
       }
     });
     const ids = JSON.parse(resp.body).results.map((g) => g.granuleId);
-    return ids.includes(granuleId);
+    return granuleIsIncluded ? ids.includes(granuleId): !ids.includes(granuleId);
   },
   {
     interval: 3000,
@@ -183,8 +184,18 @@ const waitForGranuleRecordInList = async (stackName, granuleId) => pWaitFor(
   }
 );
 
-const waitForGranuleRecordsInList = async (stackName, granuleIds) => Promise.all(
-  granuleIds.map((id) => waitForGranuleRecordInList(stackName, id))
+const waitForGranuleRecordNotInList = async (stackName, granuleId, additionalQueryParams = {}) =>
+  waitForGranuleRecordInOrNotInList(stackName, granuleId, 'false', additionalQueryParams);
+
+const waitForGranuleRecordsNotInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
+  granuleIds.map((id) => waitForGranuleRecordNotInList(stackName, id, additionalQueryParams))
+);
+
+const waitForGranuleRecordInList = async (stackName, granuleId, additionalQueryParams = {}) =>
+  waitForGranuleRecordInOrNotInList(stackName, granuleId, 'true', additionalQueryParams);
+
+const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
+  granuleIds.map((id) => waitForGranuleRecordInList(stackName, id, additionalQueryParams))
 );
 
 module.exports = {
@@ -192,5 +203,6 @@ module.exports = {
   addUrlPathToGranuleFiles,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
-  waitForGranuleRecordsInList
+  waitForGranuleRecordsInList,
+  waitForGranuleRecordsNotInList
 };
