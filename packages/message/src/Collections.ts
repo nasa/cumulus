@@ -22,7 +22,7 @@ import { Message } from '@cumulus/types';
  *
  * @alias module:Collections
  */
-export const constructCollectionId = (name:string, version:string): string =>
+export const constructCollectionId = (name: string, version: string): string =>
   `${name}___${version}`;
 
 /**

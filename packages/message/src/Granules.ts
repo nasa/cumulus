@@ -22,4 +22,4 @@ import { Message } from '@cumulus/types';
  */
 export const getMessageGranules = (
   message: Message.CumulusMessage
-): Array<object> | undefined => get(message, 'payload.granules');
+): unknown[] | undefined => get(message, 'payload.granules');

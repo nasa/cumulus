@@ -31,7 +31,7 @@ const createExecutionName = () => uuidv4();
  * Build base message.cumulus_meta for a queued execution.
  *
  * @param {Object} params
- * @param {string} params.queueName - An SQS queue name
+ * @param {string} [params.queueName] - An SQS queue name
  * @param {string} params.stateMachine - State machine name
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {string} [params.parentExecutionArn] - Parent execution ARN
@@ -49,7 +49,7 @@ const buildCumulusMeta = ({
   stateMachine: string,
   asyncOperationId?: string,
   parentExecutionArn?: string
-}): Message.CumulusMeta => {
+}) => {
   const cumulusMeta: Message.CumulusMeta = {
     execution_name: createExecutionName(),
     queueName,
@@ -79,8 +79,8 @@ const buildMeta = ({
   workflowName: string
   collection?: object
   provider?: object
-}): QueueMessageMeta => {
-  const meta:QueueMessageMeta = {
+}) => {
+  const meta: QueueMessageMeta = {
     workflow_name: workflowName
   };
   if (collection) {
@@ -134,14 +134,14 @@ export const buildQueueMessageFromTemplate = ({
   customCumulusMeta?: object
   customMeta?: object
 }): Message.CumulusMessage => {
-  const cumulusMeta: Message.CumulusMeta = buildCumulusMeta({
+  const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
     queueName,
     stateMachine: workflow.arn
   });
 
-  const meta: QueueMessageMeta = buildMeta({
+  const meta = buildMeta({
     collection,
     provider,
     workflowName: workflow.name

@@ -26,7 +26,7 @@ import { Message } from '@cumulus/types';
 export const buildExecutionArn = (
   stateMachineArn: string,
   executionName: string
-): string | null => {
+) => {
   if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
     return `${sfArn}:${executionName}`;
@@ -42,7 +42,7 @@ export const buildExecutionArn = (
  *
  * @alias module:Executions
  */
-export const getExecutionUrlFromArn = (executionArn: string): string => {
+export const getExecutionUrlFromArn = (executionArn: string) => {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   return `https://console.aws.amazon.com/states/home?region=${region}`
          + `#/executions/details/${executionArn}`;
@@ -58,7 +58,7 @@ export const getExecutionUrlFromArn = (executionArn: string): string => {
  */
 export const getStateMachineArnFromExecutionArn = (
   executionArn: string
-): string | null => {
+) => {
   if (executionArn) {
     return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
@@ -76,7 +76,7 @@ export const getStateMachineArnFromExecutionArn = (
  */
 export const getMessageExecutionName = (
   message: Message.CumulusMessage
-): string => {
+) => {
   const executionName = get(message, 'cumulus_meta.execution_name');
   if (!isString(executionName)) {
     throw new Error('cumulus_meta.execution_name not set in message');
@@ -95,7 +95,7 @@ export const getMessageExecutionName = (
  */
 export const getMessageStateMachineArn = (
   message: Message.CumulusMessage
-): string => {
+) => {
   const stateMachineArn = get(message, 'cumulus_meta.state_machine');
   if (!isString(stateMachineArn)) {
     throw new Error('cumulus_meta.state_machine not set in message');
@@ -113,7 +113,7 @@ export const getMessageStateMachineArn = (
  */
 export const getMessageExecutionArn = (
   message: Message.CumulusMessage
-): null | string => {
+) => {
   try {
     return buildExecutionArn(
       getMessageStateMachineArn(message),
