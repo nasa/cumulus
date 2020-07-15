@@ -11,6 +11,7 @@
 
 import merge from 'lodash/merge';
 import { Message } from '@cumulus/types';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   MessageTemplate,
@@ -18,15 +19,13 @@ import {
   Workflow
 } from './types';
 
-const uuidv4 = require('uuid/v4');
-
 /**
  * Generate an execution name.
  *
  * @returns {string}
  * @private
  */
-const createExecutionName = (): string => uuidv4();
+const createExecutionName = () => uuidv4();
 
 /**
  * Build base message.cumulus_meta for a queued execution.
