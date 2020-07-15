@@ -48,7 +48,7 @@
     "lodash": "^4.17.15",
     "mime-types": "^2.1.22",
     "moment": "2.24.0",
-    "simplecrawler": "^1.1.4",
+    "simplecrawler": "^1.1.9",
     "tough-cookie": "^4.0.0"
   },
   "devDependencies": {
