@@ -1,6 +1,6 @@
-import type { ExecutionRecord } from '@cumulus/types/api/executions';
+import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { invokeApi } from './cumulusApiClient';
-import type { InvokeApiFunction } from './types';
+import { InvokeApiFunction } from './types';
 
 /**
  * Fetch an execution from the Cumulus API

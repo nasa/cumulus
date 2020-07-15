@@ -1,6 +1,6 @@
-import type { RuleRecord } from '@cumulus/types/api/rules';
+import { NewRuleRecord, PartialRuleRecord } from '@cumulus/types/api/rules';
 import { invokeApi } from './cumulusApiClient';
-import type { InvokeApiFunction } from './types';
+import { InvokeApiFunction } from './types';
 
 /**
  * Post a rule to the rules API
@@ -16,7 +16,7 @@ import type { InvokeApiFunction } from './types';
  */
 export const postRule = async (params: {
   prefix: string,
-  rule: unknown,
+  rule: NewRuleRecord,
   callback?: InvokeApiFunction
 }) => {
   const { prefix, rule, callback = invokeApi } = params;
@@ -50,7 +50,7 @@ export const postRule = async (params: {
 export const updateRule = async (params: {
   prefix: string,
   ruleName: string,
-  updateParams: Partial<RuleRecord> | { action: 'rerun' },
+  updateParams: PartialRuleRecord | { action: 'rerun' },
   callback?: InvokeApiFunction
 }) => {
   const {

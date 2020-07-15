@@ -1,5 +1,5 @@
 import { invokeApi } from './cumulusApiClient';
-import type { InvokeApiFunction } from './types';
+import { InvokeApiFunction } from './types';
 
 /**
  * Fetch a workflow from the Cumulus API

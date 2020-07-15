@@ -1,5 +1,5 @@
 import { invokeApi } from './cumulusApiClient';
-import type { InvokeApiFunction } from './types';
+import { InvokeApiFunction } from './types';
 
 /**
  * Get /asyncOperations/{asyncOperationId}

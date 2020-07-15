@@ -1,6 +1,6 @@
 export type ExecutionRecordStatus = 'completed' | 'failed' | 'running' | 'unknown';
 
-export type ExecutionRecord = {
+export interface ExecutionRecord {
   arn: string,
   createdAt: number,
   name: string
@@ -16,5 +16,5 @@ export type ExecutionRecord = {
   tasks?: unknown,
   timestamp?: number,
   type?: string,
-  updatedAt?: number
-};
+  updatedAt: number
+}

@@ -1,8 +1,8 @@
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
-import type { GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
 import { invokeApi } from './cumulusApiClient';
-import type { InvokeApiFunction } from './types';
+import { InvokeApiFunction } from './types';
 
 const logger = new Logger({ sender: '@api-client/granules' });
 

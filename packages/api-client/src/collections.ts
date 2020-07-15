@@ -1,6 +1,9 @@
-import type { CollectionRecord } from '@cumulus/types/api/collections';
+import {
+  CollectionRecord,
+  NewCollectionRecord
+} from '@cumulus/types/api/collections';
 import { invokeApi } from './cumulusApiClient';
-import type { InvokeApiFunction } from './types';
+import { InvokeApiFunction } from './types';
 
 /**
  * POST /collections
@@ -15,7 +18,7 @@ import type { InvokeApiFunction } from './types';
  */
 export const createCollection = async (params: {
   prefix: string,
-  collection: Partial<CollectionRecord>,
+  collection: NewCollectionRecord,
   callback?: InvokeApiFunction
 }) => {
   const { prefix, collection, callback = invokeApi } = params;
@@ -85,7 +88,7 @@ export const getCollection = async (params: {
   collectionName: string,
   collectionVersion: string,
   callback?: InvokeApiFunction
-}): Promise<unknown> => {
+}) => {
   const {
     prefix,
     collectionName,
