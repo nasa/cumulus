@@ -19,6 +19,7 @@ const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
+
 const { lookupMimeType, decrypt } = require('./util');
 
 const validateHost = (host) => {
@@ -33,6 +34,7 @@ class HttpProviderClient {
     this.protocol = providerConfig.protocol;
     this.host = providerConfig.host;
     this.port = providerConfig.port;
+    this.httpListTimeout = providerConfig.httpListTimeout;
     this.gotOptions = {};
     this.certificateUri = providerConfig.certificateUri;
     if (providerConfig.username && !providerConfig.password) {
@@ -101,7 +103,9 @@ class HttpProviderClient {
     if (this.protocol === 'https' && this.certificate !== undefined) {
       c.httpsAgent = new https.Agent({ ca: this.certificate });
     }
-    c.timeout = 2000;
+    if (this.httpListTimeout) {
+      c.timeout = this.httpListTimeout * 1000;
+    }
     c.interval = 0;
     c.maxConcurrency = 10;
     c.respectRobotsTxt = false;
