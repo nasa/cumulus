@@ -18,7 +18,6 @@ const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr
 
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESSearchQueue } = require('../es/esSearchQueue');
-const { Search } = require('../es/search');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');

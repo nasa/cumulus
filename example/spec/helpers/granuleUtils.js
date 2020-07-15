@@ -176,7 +176,7 @@ const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIs
       }
     });
     const ids = JSON.parse(resp.body).results.map((g) => g.granuleId);
-    return granuleIsIncluded ? ids.includes(granuleId): !ids.includes(granuleId);
+    return granuleIsIncluded ? ids.includes(granuleId) : !ids.includes(granuleId);
   },
   {
     interval: 3000,
