@@ -583,22 +583,10 @@ async function processRequest(params) {
   return reconciliationReportModel.get({ name: reportRecord.name });
 }
 
-/**
- * forces a refresh of ES indices before using them for reconciliation reports
- */
-async function refreshIndices() {
-  const esClient = await Search.es();
-  return esClient.indices.refresh();
-}
-
 async function handler(event) {
   // increase the limit of search result from CMR.searchCollections/searchGranules
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
-
-  // TODO [MHS, 2021-07-14] just see if this is the source of the problem.  Not
-  // sure yet how I would force it for testing, or if this is a good idea.
-  await refreshIndices();
 
   return processRequest({
     systemBucket: event.systemBucket || process.env.system_bucket,
