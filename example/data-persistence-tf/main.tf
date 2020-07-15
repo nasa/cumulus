@@ -36,7 +36,7 @@ variable "elasticsearch_config" {
     domain_name    = "es"
     instance_count = 1
     instance_type  = "t2.small.elasticsearch"
-    version        = "5.3"
+    version        = "5.6"
     volume_size    = 10
   }
 }
