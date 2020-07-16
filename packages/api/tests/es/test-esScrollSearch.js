@@ -32,12 +32,12 @@ test.serial(
   async (t) => {
     const inputEsScrollSize = process.env.ES_SCROLL_SIZE;
     const testScrollSize = 4;
-    const numGrans = 25;
+    const numGranules = 25;
 
     process.env.ES_SCROLL_SIZE = testScrollSize;
 
     try {
-      const granules = granuleFactory(numGrans);
+      const granules = granuleFactory(numGranules);
       await loadGranules(granules, t);
       const esScrollSearch = new ESScrollSearch(
         {},
@@ -58,7 +58,7 @@ test.serial(
         calls += 1;
       } while (results.length > 0);
       /* eslint-enable no-await-in-loop */
-      t.is(allResults.length, numGrans);
+      t.is(allResults.length, numGranules);
       t.true(spy.called);
       t.is(spy.getCalls().length, calls);
     } catch (error) {

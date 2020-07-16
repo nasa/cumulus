@@ -59,20 +59,20 @@ test.serial(
 test.serial(
   'esFileQueue.shift() returns the next item and removes it from the queue.',
   async (t) => {
-    let grans = await granuleFactory(2, { bucket: randomId('bucket2') });
-    await loadGranules(grans, t);
+    let granules = await granuleFactory(2, { bucket: randomId('bucket2') });
+    await loadGranules(granules, t);
 
-    grans = grans.sort(sortByFileKey);
+    granules = granules.sort(sortByFileKey);
     const expected0 = {
-      granuleId: grans[0].granuleId,
-      ...grans[0].files[0]
+      granuleId: granules[0].granuleId,
+      ...granules[0].files[0]
     };
     const expected1 = {
-      granuleId: grans[1].granuleId,
-      ...grans[1].files[0]
+      granuleId: granules[1].granuleId,
+      ...granules[1].files[0]
     };
 
-    const bucket = grans[0].files[0].bucket;
+    const bucket = granules[0].files[0].bucket;
 
     const sq = new ESFileQueue({ bucket });
 
@@ -88,12 +88,12 @@ test.serial('esFileQueue can handle paging.', async (t) => {
   const pageLengh = 3;
   process.env.ES_SCROLL_SIZE = pageLengh;
   const numGrans = 13;
-  let grans = await granuleFactory(numGrans, { bucket: randomId('bucket2') });
-  await loadGranules(grans, t);
+  let granules = await granuleFactory(numGrans, { bucket: randomId('bucket2') });
+  await loadGranules(granules, t);
 
-  grans = grans.sort(sortByFileKey);
+  granules = granules.sort(sortByFileKey);
 
-  const bucket = grans[0].files[0].bucket;
+  const bucket = granules[0].files[0].bucket;
 
   const sq = new ESFileQueue({ bucket });
   const spiedSq = sinon.spy(sq, 'fetchItems');

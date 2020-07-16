@@ -72,8 +72,8 @@ test.serial(
 test.serial('esSearchQueue handles paging.', async (t) => {
   const pageLengh = 3;
   process.env.ES_SCROLL_SIZE = pageLengh;
-  const numGrans = 13;
-  const granules = granuleFactory(numGrans);
+  const numGranules = 13;
+  const granules = granuleFactory(numGranules);
   await loadGranules(granules, t);
 
   const sq = new ESSearchQueue({}, 'granule');
@@ -89,7 +89,7 @@ test.serial('esSearchQueue handles paging.', async (t) => {
   }
   /* eslint-enable no-await-in-loop */
 
-  t.true(spiedSq.getCalls().length >= numGrans / pageLengh);
-  t.is(fetched.length, numGrans);
+  t.true(spiedSq.getCalls().length >= numGranules / pageLengh);
+  t.is(fetched.length, numGranules);
   delete process.env.ES_SCROLL_SIZE;
 });
