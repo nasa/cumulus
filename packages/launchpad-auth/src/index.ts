@@ -22,6 +22,7 @@ import {
 } from './types';
 
 import LaunchpadToken from './LaunchpadToken';
+import { getEnvVar } from './utils';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 
@@ -33,13 +34,11 @@ const log = new Logger({ sender: '@cumulus/launchpad-auth' });
  * @private
  */
 function launchpadTokenBucketKey() {
-  if (!(process.env.stackName && process.env.system_bucket)) {
-    throw new Error('must set environment variables process.env.stackName and process.env.system_bucket');
-  }
-
+  const bucket = getEnvVar('system_bucket');
+  const stackName = getEnvVar('stackName');
   return {
-    Bucket: process.env.system_bucket,
-    Key: s3Join(process.env.stackName, 'launchpad/token.json')
+    Bucket: bucket,
+    Key: s3Join(stackName, 'launchpad/token.json')
   };
 }
 
@@ -139,7 +138,7 @@ async function validateLaunchpadToken(
   log.debug('validateLaunchpadToken validating launchpad token');
   const launchpad = new LaunchpadToken(params);
   const response = await launchpad.validateToken(token);
-  let result = { status: response.status };
+  let result: ValidateTokenResult = { status: response.status };
 
   if (response.status === 'success') {
     // check if user is in the given group
