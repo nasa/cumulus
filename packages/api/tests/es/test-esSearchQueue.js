@@ -34,9 +34,9 @@ test.serial(
     const grans = granuleFactory(10);
     await loadGranules(grans, t);
 
-    const expected = grans[0];
+    const expected = grans[9];
 
-    const sq = new ESSearchQueue({ order: 'asc' }, 'granule');
+    const sq = new ESSearchQueue({}, 'granule');
 
     const peeked = await sq.peek();
     expected.timestamp = peeked.timestamp;
@@ -51,10 +51,10 @@ test.serial(
     const grans = granuleFactory(2);
     await loadGranules(grans, t);
 
-    const firstExpected = grans[0];
-    const secondExpected = grans[1];
+    const firstExpected = grans[1];
+    const secondExpected = grans[0];
 
-    const sq = new ESSearchQueue({ order: 'asc' }, 'granule');
+    const sq = new ESSearchQueue({}, 'granule');
     let peeked = await sq.peek();
     firstExpected.timestamp = peeked.timestamp;
 
@@ -69,14 +69,14 @@ test.serial(
   }
 );
 
-test.serial('esFileQueue can handle paging.', async (t) => {
+test.serial('esSearchQueue handles paging.', async (t) => {
   const pageLengh = 3;
   process.env.ES_SCROLL_SIZE = pageLengh;
   const numGrans = 13;
   const grans = granuleFactory(numGrans);
   await loadGranules(grans, t);
 
-  const sq = new ESSearchQueue({ order: 'asc' }, 'granule');
+  const sq = new ESSearchQueue({}, 'granule');
   const spiedSq = sinon.spy(sq, '_fetchItems');
 
   const fetched = [];
