@@ -22,7 +22,7 @@ import { Message } from '@cumulus/types';
  *
  * @alias module:Collections
  */
-export const constructCollectionId = (name: string, version: string): string =>
+export const constructCollectionId = (name: string, version: string) =>
   `${name}___${version}`;
 
 /**
@@ -37,7 +37,7 @@ export const constructCollectionId = (name: string, version: string): string =>
  */
 export const getCollectionIdFromMessage = (
   message: Message.CumulusMessage
-): string | undefined => {
+) => {
   const collectionName = get(message, 'meta.collection.name');
   const collectionVersion = get(message, 'meta.collection.version');
   if (!collectionName || !collectionVersion) {

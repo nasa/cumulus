@@ -25,7 +25,7 @@ import { Message } from '@cumulus/types';
 export const getQueueNameByUrl = (
   message: Message.CumulusMessage,
   queueUrl: string
-): string | undefined => {
+) => {
   const queues = get(message, 'meta.queues', {});
   return findKey(queues, (value) => value === queueUrl);
 };
@@ -39,7 +39,7 @@ export const getQueueNameByUrl = (
  *
  * @alias module:Queue
  */
-export const getQueueName = (message: Message.CumulusMessage): string => {
+export const getQueueName = (message: Message.CumulusMessage) => {
   const queueName = get(message, 'cumulus_meta.queueName');
   if (isNil(queueName)) {
     throw new Error('cumulus_meta.queueName not set in message');
@@ -60,7 +60,7 @@ export const getQueueName = (message: Message.CumulusMessage): string => {
 export const getMaximumExecutions = (
   message: Message.CumulusMessage,
   queueName: string
-): number => {
+) => {
   const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);
   if (isNil(maxExecutions)) {
     throw new Error(`Could not determine maximum executions for queue ${queueName}`);
@@ -76,7 +76,7 @@ export const getMaximumExecutions = (
  *
  * @alias module:Queue
  */
-export const hasQueueAndExecutionLimit = (message: Message.CumulusMessage): boolean => {
+export const hasQueueAndExecutionLimit = (message: Message.CumulusMessage) => {
   try {
     const queueName = getQueueName(message);
     getMaximumExecutions(message, queueName);

@@ -70,32 +70,24 @@ export const pullStepFunctionEvent = async (
  * @async
  * @alias module:StepFunctions
  */
-
-type CMAMessage = {
-  cma?: {
-    event?: object
-  }
-  replace?: Message.ReplaceConfig
-};
-
 export const parseStepMessage = async (
-  stepMessage: CMAMessage,
+  stepMessage: Message.CMAMessage,
   stepName: string
 ) => {
-  let flattenedMsg;
+  let parsedMessage;
   if (stepMessage.cma) {
-    const x = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
-    delete x.cma;
-    delete x.event;
-    flattenedMsg = x;
+    const flattenedMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
+    delete flattenedMessage.cma;
+    delete flattenedMessage.event;
+    parsedMessage = flattenedMessage;
   } else {
-    flattenedMsg = stepMessage;
+    parsedMessage = stepMessage;
   }
 
-  if (flattenedMsg.replace) {
+  if (parsedMessage.replace) {
     // Message was too large and output was written to S3
-    log.info(`Retrieving ${stepName} output from ${JSON.stringify(flattenedMsg.replace)}`);
-    flattenedMsg = await pullStepFunctionEvent(flattenedMsg);
+    log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedMessage.replace)}`);
+    parsedMessage = await pullStepFunctionEvent(parsedMessage);
   }
-  return <Message.CumulusMessage>flattenedMsg;
+  return <Message.CumulusMessage>parsedMessage;
 };
