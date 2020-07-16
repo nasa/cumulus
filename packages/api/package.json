@@ -28,8 +28,8 @@
   "ava": {
     "files": [
       "tests/**/*.js",
-      "!tests/serial/**/*.js",
-      "!tests/endpoints/fixtures/**/*.js"
+      "!tests/endpoints/fixtures/**/*.js",
+      "!tests/es/helpers/**/*.js"
     ],
     "fail-fast": true,
     "verbose": true,
