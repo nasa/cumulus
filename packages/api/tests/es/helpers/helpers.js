@@ -1,6 +1,7 @@
 'use strict';
 
 const range = require('lodash/range');
+const pEachSeries = require('p-each-series');
 const { randomId } = require('@cumulus/common/test-utils');
 const { fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const indexer = require('../../../es/indexer');
@@ -15,10 +16,9 @@ const granuleFactory = (number = 1, opts) =>
   });
 
 const loadGranules = async (granules, t) => {
-  await Promise.all(
-    granules.map((g) =>
-      indexer.indexGranule(t.context.esClient, g, t.context.esAlias))
-  );
+  const loadGranule = async (granule) =>
+    indexer.indexGranule(t.context.esClient, granule, t.context.esAlias);
+  await pEachSeries(granules, loadGranule);
 };
 
 module.exports = {
