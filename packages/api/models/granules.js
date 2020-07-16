@@ -413,9 +413,12 @@ class Granule extends Manager {
         '#collectionId': 'collectionId',
         '#beginningDateTime': 'beginningDateTime',
         '#endingDateTime': 'endingDateTime',
-        '#createdAt': 'createdAt'
+        '#createdAt': 'createdAt',
+        '#status': 'status',
+        '#updatedAt': 'updatedAt',
+        '#published': 'published'
       },
-      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime'
+      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published'
     };
 
     return new GranuleSearchQueue(params);

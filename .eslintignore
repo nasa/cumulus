@@ -22,3 +22,5 @@ website/**
 /packages/common/*.js
 /packages/launchpad-auth/*.d.ts
 /packages/launchpad-auth/*.js
+/packages/message/*.d.ts
+/packages/message/*.js
