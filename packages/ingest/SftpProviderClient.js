@@ -42,9 +42,9 @@ class SftpProviderClient {
 
   async end() {
     if (this.connected) {
-      this.connected = false;
-
       await this.privateSftpClient.end();
+
+      this.connected = false;
     }
   }
 
