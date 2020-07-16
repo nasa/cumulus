@@ -172,6 +172,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Created the `add-missing-file-checksums` workflow task
   - Added `@cumulus/aws-client/S3.calculateObjectHash()` function
   - Added `@cumulus/aws-client/S3.getObjectReadStream()` function
+- **CUMULUS-1887**
+  - Add additional fields to the granule CSV download file
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
     support partial matching of the keywords

@@ -126,14 +126,16 @@ test('GET returns a cvs file of all granules', async (t) => {
 
   const lines = response.text.split('\n');
   t.is(response.status, 200);
-  t.is(lines[0], '"granuleUr","collectionId","createdAt","startDateTime","endDateTime"');
+  t.is(lines[0], '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published"');
   fakeGranules.forEach((g) => {
     const line = lines.filter((l) => l.includes(g.granuleId))[0];
-    const createdDate = new Date(g.createdAt);
     t.true(line.includes(g.granuleId));
     t.true(line.includes(g.collectionId));
     t.true(line.includes(g.beginningDateTime));
     t.true(line.includes(g.endingDateTime));
-    t.true(line.includes(createdDate.toISOString()));
+    t.true(line.includes(new Date(g.createdAt).toISOString()));
+    t.true(line.includes(g.status));
+    t.true(line.includes(new Date(g.updatedAt).toISOString()));
+    t.true(line.includes(g.published));
   });
 });
