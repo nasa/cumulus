@@ -37,8 +37,8 @@ test.serial(
     process.env.ES_SCROLL_SIZE = testScrollSize;
 
     try {
-      const grans = granuleFactory(numGrans);
-      await loadGranules(grans, t);
+      const granules = granuleFactory(numGrans);
+      await loadGranules(granules, t);
       const esScrollSearch = new ESScrollSearch(
         {},
         'granule',

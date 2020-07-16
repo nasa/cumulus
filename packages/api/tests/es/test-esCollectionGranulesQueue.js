@@ -4,7 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const { ESSearchQueue } = require('../../es/esSearchQueue');
+const { ESCollectionGranuleQueue } = require('../../es/esCollectionGranuleQueue');
 const { Search } = require('../../es/search');
 const { granuleFactory, loadGranules } = require('./helpers/helpers');
 
@@ -28,15 +28,20 @@ test.afterEach.always(async (t) => {
   await t.context.esClient.indices.delete({ index: t.context.esIndex });
 });
 
+const sortByGranuleId = (a, b) => (a.granuleId < b.granuleId ? -1 : 1);
+
 test.serial(
-  'esSearchQueue.peek() returns the next item, but does not remove it from the queue.',
+  'esCollectionGranuleQueue.peek() returns the first item, but does not remove it from the queue.',
   async (t) => {
     const granules = granuleFactory(10);
     await loadGranules(granules, t);
 
-    const expected = granules[9];
+    // expect the first out to be sorted.
+    granules.sort(sortByGranuleId);
+    const expected = granules[0];
+    const collectionId = granules[0].collectionId;
 
-    const sq = new ESSearchQueue({}, 'granule');
+    const sq = new ESCollectionGranuleQueue({ collectionId });
 
     const peeked = await sq.peek();
     expected.timestamp = peeked.timestamp;
@@ -46,15 +51,18 @@ test.serial(
 );
 
 test.serial(
-  'esSearchQueue.shift() returns the next item and removes it from the queue and returns undefined when empty.',
+  'esCollectionGranuleQueue.shift() returns the next item and removes it from the queue and returns undefined when empty.',
   async (t) => {
     const granules = granuleFactory(2);
     await loadGranules(granules, t);
+    const collectionId = granules[0].collectionId;
 
-    const firstExpected = granules[1];
-    const secondExpected = granules[0];
+    // expect them to be sorted.
+    granules.sort(sortByGranuleId);
+    const firstExpected = granules[0];
+    const secondExpected = granules[1];
 
-    const sq = new ESSearchQueue({}, 'granule');
+    const sq = new ESCollectionGranuleQueue({ collectionId });
     let peeked = await sq.peek();
     firstExpected.timestamp = peeked.timestamp;
 
@@ -69,27 +77,28 @@ test.serial(
   }
 );
 
-test.serial('esSearchQueue handles paging.', async (t) => {
-  const pageLengh = 3;
-  process.env.ES_SCROLL_SIZE = pageLengh;
-  const numGrans = 13;
-  const granules = granuleFactory(numGrans);
-  await loadGranules(granules, t);
+test.serial(
+  'esCollectionGranuleQueue returns the granules sorted by granuleId.',
+  async (t) => {
+    const granules = granuleFactory(20);
+    await loadGranules(granules, t);
+    const collectionId = granules[0].collectionId;
 
-  const sq = new ESSearchQueue({}, 'granule');
-  const spiedSq = sinon.spy(sq, '_fetchItems');
+    granules.sort(sortByGranuleId);
+    const sq = new ESCollectionGranuleQueue({ collectionId });
 
-  const fetched = [];
+    const fetched = [];
 
-  t.false(t.context.esClientSpy.called);
+    /* eslint-disable no-await-in-loop */
+    while (await sq.peek()) {
+      fetched.push(await sq.shift());
+    }
+    /* eslint-enable no-await-in-loop */
 
-  /* eslint-disable no-await-in-loop */
-  while (await sq.peek()) {
-    fetched.push(await sq.shift());
+    t.is(fetched.length, 20);
+    t.deepEqual(
+      granules.map((g) => g.granuleId),
+      fetched.map((f) => f.granuleId)
+    );
   }
-  /* eslint-enable no-await-in-loop */
-
-  t.true(spiedSq.getCalls().length >= numGrans / pageLengh);
-  t.is(fetched.length, numGrans);
-  delete process.env.ES_SCROLL_SIZE;
-});
+);

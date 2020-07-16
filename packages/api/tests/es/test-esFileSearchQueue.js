@@ -37,16 +37,16 @@ const byBucketName = (bucket) => (granule) =>
 test.serial(
   'esFileQueue.peek() returns the next item, but does not remove it from the queue.',
   async (t) => {
-    let grans = granuleFactory(2);
-    await loadGranules(grans, t);
+    let granules = granuleFactory(2);
+    await loadGranules(granules, t);
 
-    const targetBucket = grans[0].files[0].bucket;
+    const targetBucket = granules[0].files[0].bucket;
 
-    grans = grans.filter(byBucketName(targetBucket)).sort(sortByFileKey);
+    granules = granules.filter(byBucketName(targetBucket)).sort(sortByFileKey);
 
     const expected = {
-      granuleId: grans[0].granuleId,
-      ...grans[0].files[0]
+      granuleId: granules[0].granuleId,
+      ...granules[0].files[0]
     };
 
     const sq = new ESFileQueue({ bucket: targetBucket });
