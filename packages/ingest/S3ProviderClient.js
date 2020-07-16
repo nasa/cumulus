@@ -5,19 +5,14 @@ const log = require('@cumulus/common/log');
 const errors = require('@cumulus/errors');
 const isString = require('lodash/isString');
 const { basename, dirname } = require('path');
+const {
+  emptyProviderConnectEndMixin
+} = require('./emptyProviderConnectEndMixin');
 
 class S3ProviderClient {
   constructor({ bucket } = {}) {
     if (!isString(bucket)) throw new TypeError('bucket is required');
     this.bucket = bucket;
-  }
-
-  async connect() {
-    return undefined;
-  }
-
-  async end() {
-    return undefined;
   }
 
   /**
@@ -98,5 +93,10 @@ class S3ProviderClient {
     }
   }
 }
+
+Object.assign(
+  S3ProviderClient.prototype,
+  emptyProviderConnectEndMixin
+);
 
 module.exports = S3ProviderClient;

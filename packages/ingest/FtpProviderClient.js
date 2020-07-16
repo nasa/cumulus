@@ -9,6 +9,9 @@ const S3 = require('@cumulus/aws-client/S3');
 const isNil = require('lodash/isNil');
 const recursion = require('./recursion');
 const { lookupMimeType, decrypt } = require('./util');
+const {
+  emptyProviderConnectEndMixin
+} = require('./emptyProviderConnectEndMixin');
 
 class FtpProviderClient {
   // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP
@@ -23,14 +26,6 @@ class FtpProviderClient {
       this.plaintextUsername = get(providerConfig, 'username', 'anonymous');
       this.plaintextPassword = get(providerConfig, 'password', 'password');
     }
-  }
-
-  async connect() {
-    return undefined;
-  }
-
-  async end() {
-    return undefined;
   }
 
   async getUsername() {
@@ -204,5 +199,10 @@ class FtpProviderClient {
     }
   }
 }
+
+Object.assign(
+  FtpProviderClient.prototype,
+  emptyProviderConnectEndMixin
+);
 
 module.exports = FtpProviderClient;

@@ -73,13 +73,10 @@ test('SftpProviderClient supports plaintext usernames and passwords', async (t) 
     encrypted: false
   });
 
-  let files;
-  try {
-    await sftpProviderClient.connect();
-    files = await sftpProviderClient.list('/');
-  } finally {
-    await sftpProviderClient.end();
-  }
+  await sftpProviderClient.connect();
+  t.teardown(() => sftpProviderClient.end());
+
+  const files = await sftpProviderClient.list('/');
 
   t.true(files.map((f) => f.name).includes('index.html'));
 });
@@ -93,13 +90,10 @@ test('SftpProviderClient supports S3-keypair-encrypted usernames and passwords',
     encrypted: true
   });
 
-  let files;
-  try {
-    await sftpProviderClient.connect();
-    files = await sftpProviderClient.list('/');
-  } finally {
-    await sftpProviderClient.end();
-  }
+  await sftpProviderClient.connect();
+  t.teardown(() => sftpProviderClient.end());
+
+  const files = await sftpProviderClient.list('/');
 
   t.true(files.map((f) => f.name).includes('index.html'));
 });
@@ -113,13 +107,10 @@ test('SftpClient supports KMS-encrypted usernames and passwords', async (t) => {
     encrypted: true
   });
 
-  let files;
-  try {
-    await sftpProviderClient.connect();
-    files = await sftpProviderClient.list('/');
-  } finally {
-    await sftpProviderClient.end();
-  }
+  await sftpProviderClient.connect();
+  t.teardown(() => sftpProviderClient.end());
+
+  const files = await sftpProviderClient.list('/');
 
   t.true(files.map((f) => f.name).includes('index.html'));
 });
@@ -132,13 +123,10 @@ test('SftpClient supports unencrypted private keys', async (t) => {
     privateKey: 'ssh_client_rsa_key'
   });
 
-  let files;
-  try {
-    await sftpProviderClient.connect();
-    files = await sftpProviderClient.list('/');
-  } finally {
-    await sftpProviderClient.end();
-  }
+  await sftpProviderClient.connect();
+  t.teardown(() => sftpProviderClient.end());
+
+  const files = await sftpProviderClient.list('/');
 
   t.true(files.map((f) => f.name).includes('index.html'));
 });
@@ -165,13 +153,10 @@ test('SftpClient supports KMS-encrypted private keys', async (t) => {
     privateKey
   });
 
-  let files;
-  try {
-    await sftpProviderClient.connect();
-    files = await sftpProviderClient.list('/');
-  } finally {
-    await sftpProviderClient.end();
-  }
+  await sftpProviderClient.connect();
+  t.teardown(() => sftpProviderClient.end());
+
+  const files = await sftpProviderClient.list('/');
 
   t.true(files.map((f) => f.name).includes('index.html'));
 });

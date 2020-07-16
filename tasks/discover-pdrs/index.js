@@ -16,7 +16,7 @@ const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
  *   instead of 'STAT'
  * @param {number} [params.httpRequestTimeout=300] - seconds for http provider
  * to wait before timing out
- * @param {*} params.path - the provider path to search
+ * @param {string} params.path - the provider path to search
  * @returns {Array<Object>} a list of discovered file objects
  */
 const listFiles = async (params) => {

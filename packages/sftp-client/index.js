@@ -34,9 +34,9 @@ class SftpClient {
 
   async end() {
     if (this.connected) {
-      this.connected = false;
-
       await this.sftpClient.end();
+
+      this.connected = false;
     }
   }
 
