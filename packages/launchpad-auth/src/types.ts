@@ -4,12 +4,8 @@ export interface LaunchpadTokenParams {
   certificate: string
 }
 
-export interface TokenResponse {
+export interface GetTokenResponse {
   session_maxtimeout: number
-  status: string
-}
-
-export interface GetTokenResponse extends TokenResponse {
   sm_token: string
 }
 
@@ -17,13 +13,18 @@ export interface TokenObject extends GetTokenResponse {
   session_starttime: number
 }
 
-export interface ValidateTokenResponse extends TokenResponse {
+export interface ValidateTokenResponse {
+  status: string
+  session_maxtimeout: number
   session_starttime: number
   owner_auid: string
   owner_groups: string[]
 }
 
-export interface ValidateTokenResult extends Partial<Omit<ValidateTokenResponse, 'owner_groups'>> {
+export interface ValidateTokenResult {
   status: string
   message?: string
+  session_maxtimeout?: number
+  session_starttime?: number
+  owner_auid?: string
 }
