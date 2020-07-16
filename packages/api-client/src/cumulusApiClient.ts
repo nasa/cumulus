@@ -45,8 +45,7 @@ export function invokeApi(params: types.InvokeApiFunctionParams) {
     {
       retries: 3,
       maxTimeout: 10000,
-      onFailedAttempt: (error) =>
-        logger.error(`API invoke error: ${error.message}. Retrying.`),
+      onFailedAttempt: (e) => logger.error(`API invoke error: ${e.message}.`),
       ...pRetryOptions
     }
   );
