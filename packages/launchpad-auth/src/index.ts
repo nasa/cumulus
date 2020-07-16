@@ -16,22 +16,14 @@ import {
 import Logger from '@cumulus/logger';
 
 import {
-  LaunchpadTokenObject,
   LaunchpadTokenParams,
-  LaunchpadTokenResponse
+  TokenObject,
+  ValidateTokenResult
 } from './types';
 
 import LaunchpadToken from './LaunchpadToken';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth' });
-
-interface ValidateTokenResult {
-  status: string
-  message?: string
-  session_maxtimeout?: number
-  session_starttime?: number
-  owner_auid?: string
-}
 
 /**
  * Get S3 location of the Launchpad token
@@ -68,7 +60,7 @@ async function getValidLaunchpadTokenFromS3() {
   if (keyExists) {
     const s3object = await getS3Object(s3location.Bucket, s3location.Key);
     if (s3object && s3object.Body) {
-      const launchpadToken = <LaunchpadTokenObject>JSON.parse(s3object.Body.toString());
+      const launchpadToken = <TokenObject>JSON.parse(s3object.Body.toString());
 
       // check if token is still valid
       if (
@@ -101,10 +93,13 @@ async function getLaunchpadToken(params: LaunchpadTokenParams) {
   if (!token) {
     log.debug('getLaunchpadToken requesting launchpad token');
     const launchpad = new LaunchpadToken(params);
-    const tokenObject = await launchpad.requestToken();
-
+    const tokenResponse = await launchpad.requestToken();
     // add session_starttime to token object, assume token is generated 60s ago
-    tokenObject.session_starttime = (Date.now() / 1000 - 60);
+    const tokenObject:TokenObject = {
+      ...tokenResponse,
+      session_starttime: (Date.now() / 1000 - 60)
+    };
+
     const s3location = launchpadTokenBucketKey();
     await s3PutObject({
       Bucket: s3location.Bucket,
@@ -144,7 +139,7 @@ async function validateLaunchpadToken(
   log.debug('validateLaunchpadToken validating launchpad token');
   const launchpad = new LaunchpadToken(params);
   const response = await launchpad.validateToken(token);
-  let result: ValidateTokenResult = { status: response.status };
+  let result = { status: response.status };
 
   if (response.status === 'success') {
     // check if user is in the given group

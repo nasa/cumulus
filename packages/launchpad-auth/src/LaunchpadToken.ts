@@ -9,7 +9,8 @@ import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
 
 import {
   LaunchpadTokenParams,
-  LaunchpadTokenResponse
+  GetTokenResponse,
+  ValidateTokenResponse
 } from './types';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth/LaunchpadToken' });
@@ -17,7 +18,7 @@ const log = new Logger({ sender: '@cumulus/launchpad-auth/LaunchpadToken' });
 const getEnvVar = (name:string) => {
   const envVar = process.env[name];
   if (!envVar) {
-    throw new Error(`must set environment variables process.env.${name}`);
+    throw new Error(`must set environment variable process.env.${name}`);
   }
   return envVar;
 };
@@ -102,7 +103,7 @@ class LaunchpadToken {
     };
 
     const responseBody = await got(options);
-    return <LaunchpadTokenResponse>JSON.parse(responseBody.toString());
+    return <GetTokenResponse>JSON.parse(responseBody.toString());
   }
 
   /**
@@ -133,7 +134,7 @@ class LaunchpadToken {
     };
 
     const responseBody = await got.post(options);
-    return JSON.parse(responseBody.toString());
+    return <ValidateTokenResponse>JSON.parse(responseBody.toString());
   }
 }
 
