@@ -18,24 +18,21 @@ async function list(req, res) {
 
   const granulesArray = [];
   while (nextGranule) {
-    const granuleUr = nextGranule.granuleId;
-    const collectionId = nextGranule.collectionId;
-    const createDate = new Date(nextGranule.createdAt);
-    const startDate = nextGranule.beginningDateTime || '';
-    const endDate = nextGranule.endingDateTime || '';
-
     granulesArray.push({
-      granuleUr: granuleUr,
-      collectionId: collectionId,
-      createdAt: createDate.toISOString(),
-      startDateTime: startDate,
-      endDateTime: endDate
+      granuleUr: nextGranule.granuleId,
+      collectionId: nextGranule.collectionId,
+      createdAt: new Date(nextGranule.createdAt).toISOString(),
+      startDateTime: nextGranule.beginningDateTime || '',
+      endDateTime: nextGranule.endingDateTime || '',
+      status: nextGranule.status,
+      updatedAt: new Date(nextGranule.updatedAt).toISOString(),
+      published: nextGranule.published
     });
     await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
     nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
   }
 
-  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime'];
+  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime', 'status', 'updatedAt', 'published'];
   const parser = new Parser({ fields });
   const csv = parser.parse(granulesArray);
 
