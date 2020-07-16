@@ -39,7 +39,7 @@ const createExecutionName = () => uuidv4();
  *
  * @private
  */
-const buildCumulusMeta = ({
+export const buildCumulusMeta = ({
   queueName,
   stateMachine,
   asyncOperationId,
