@@ -1,6 +1,5 @@
 'use strict';
 
-import path from 'path';
 import { URL } from 'url';
 import got from 'got';
 
@@ -86,17 +85,16 @@ class LaunchpadToken {
     const launchpadUrl = new URL(this.api);
 
     const options = {
-      hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
-      path: path.join(launchpadUrl.pathname, 'gettoken'),
+      prefixUrl: this.api,
       pfx,
       https: {
         passphrase: this.passphrase
       }
     };
 
-    const responseBody = await got(options);
-    return <GetTokenResponse>JSON.parse(responseBody.toString());
+    const response = await got.get('gettoken', options).json();
+    return <GetTokenResponse>response;
   }
 
   /**
@@ -112,9 +110,8 @@ class LaunchpadToken {
 
     const data = JSON.stringify({ token });
     const options = {
-      hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
-      path: path.join(launchpadUrl.pathname, 'validate'),
+      prefixUrl: this.api,
       body: data,
       pfx,
       https: {
@@ -126,8 +123,8 @@ class LaunchpadToken {
       }
     };
 
-    const responseBody = await got.post(options);
-    return <ValidateTokenResponse>JSON.parse(responseBody.toString());
+    const response = await got.post('validate', options).json();
+    return <ValidateTokenResponse>response;
   }
 }
 
