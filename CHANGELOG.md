@@ -142,7 +142,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1417**
   - Added a `checksumFor` property to collection `files` config. Set this
     property on a checksum file's definition matching the `regex` of the target
-    file.  More details in the ['Data Cookbooks
+    file. More details in the ['Data Cookbooks
     Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup)
     documentation.
   - Added `checksumFor` validation to collections model.
@@ -186,6 +186,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     support partial matching of the keywords
 
 ### Changed
+
+- **CUMULUS-2032**
+  - Updated @cumulus/ingest/HttpProviderClient to utilize a configuration key
+    `httpListTimeout` to set the default timeout for discovery HTTP/HTTPS
+    requests, and updates the default for the provider to 5 minutes (300 seconds).
+  - Updated the DiscoverGranules and DiscoverPDRs tasks to utilize the updated
+    configuration value if set via workflow config, and updates the default for
+    these tasks to 5 minutes (300 seconds).
 
 - **CUMULUS-176**
   - The API will now respond with a 400 status code when a request body contains
