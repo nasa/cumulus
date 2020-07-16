@@ -19,8 +19,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   the server when `download`, `unlink`, `syncToS3`, `syncFromS3`, and `list` are
   called. You must explicitly call `connect` before calling one of those
   methods.
-- Instances of `@cumulus/sftp-client/SftpClient` must now be explicitly closed
-  by calling `.end()`
 - Changes to the `@cumulus/common` package
   - `cloudwatch-event.getSfEventMessageObject()` now returns `undefined` if the
     message could not be found or could not be parsed. It previously returned
