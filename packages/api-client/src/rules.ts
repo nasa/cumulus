@@ -1,6 +1,6 @@
 import { NewRuleRecord, PartialRuleRecord } from '@cumulus/types/api/rules';
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * Post a rule to the rules API
@@ -18,7 +18,7 @@ export const postRule = async (params: {
   prefix: string,
   rule: NewRuleRecord,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, rule, callback = invokeApi } = params;
 
   return callback({
@@ -52,7 +52,7 @@ export const updateRule = async (params: {
   ruleName: string,
   updateParams: PartialRuleRecord | { action: 'rerun' },
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     ruleName,
@@ -88,7 +88,7 @@ export const listRules = async (params: {
   prefix: string,
   query: { [key: string]: string },
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query = {}, callback = invokeApi } = params;
 
   return callback({
@@ -117,7 +117,7 @@ export const getRule = async (params: {
   prefix: string,
   ruleName: string,
   callback: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, ruleName, callback = invokeApi } = params;
 
   return callback({
@@ -144,7 +144,7 @@ export const deleteRule = async (params: {
   prefix: string,
   ruleName: string,
   callback: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, ruleName, callback = invokeApi } = params;
 
   return callback({
@@ -173,7 +173,7 @@ export async function rerunRule(params: {
   prefix: string,
   ruleName: string,
   callback: InvokeApiFunction
-}) {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> {
   const {
     prefix,
     ruleName,

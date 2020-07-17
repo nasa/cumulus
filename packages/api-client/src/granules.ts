@@ -2,7 +2,7 @@ import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 import { GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 const logger = new Logger({ sender: '@api-client/granules' });
 
@@ -22,7 +22,7 @@ export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
   return callback({
@@ -112,7 +112,7 @@ export const reingestGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
   return callback({
@@ -146,7 +146,7 @@ export const removeFromCMR = async (params: {
   prefix: string,
   granuleId: GranuleId,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
   return callback({
@@ -182,7 +182,7 @@ export const applyWorkflow = async (params: {
   granuleId: GranuleId,
   workflow: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
@@ -221,7 +221,7 @@ export const deleteGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
   return callback({
@@ -253,7 +253,7 @@ export const moveGranule = async (params: {
   granuleId: GranuleId,
   destinations: unknown[],
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
@@ -291,7 +291,7 @@ export const removePublishedGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
   // pre-delete: Remove the granule from CMR
@@ -314,7 +314,7 @@ export const listGranules = async (params: {
   prefix: string,
   query?: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
 
   return callback({
@@ -343,7 +343,7 @@ export const bulkDeleteGranules = async (params: {
   prefix: string,
   body: unknown,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
 
   return callback({

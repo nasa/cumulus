@@ -1,5 +1,5 @@
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * Create a provider via the API
@@ -15,7 +15,7 @@ export const createProvider = (params: {
   prefix: string,
   provider: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, provider, callback = invokeApi } = params;
 
   return callback({
@@ -46,7 +46,7 @@ export const deleteProvider = (params: {
   prefix: string,
   providerId: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, providerId, callback = invokeApi } = params;
 
   return callback({
@@ -75,7 +75,7 @@ export const getProvider = (params: {
   prefix: string,
   providerId: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, providerId, callback = invokeApi } = params;
 
   return callback({
@@ -98,7 +98,7 @@ export const getProvider = (params: {
 export const getProviders = (params: {
   prefix: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, callback = invokeApi } = params;
 
   return callback({

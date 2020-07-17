@@ -1,5 +1,5 @@
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { InvokeApiFunction, ApiGatewayLambdaHttpProxyResponse } from './types';
 
 /**
  * Get /asyncOperations/{asyncOperationId}
@@ -16,7 +16,7 @@ export const getAsyncOperation = async (params: {
   prefix: string,
   asyncOperationId: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, asyncOperationId, callback = invokeApi } = params;
 
   return callback({

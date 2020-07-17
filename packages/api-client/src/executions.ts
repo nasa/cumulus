@@ -1,6 +1,6 @@
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * Fetch an execution from the Cumulus API
@@ -17,7 +17,7 @@ export const getExecution = async (params: {
   prefix: string,
   arn: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ExecutionRecord> => {
   const { prefix, arn, callback = invokeApi } = params;
 
   const response = await callback({
@@ -29,7 +29,7 @@ export const getExecution = async (params: {
     }
   });
 
-  return <ExecutionRecord>JSON.parse(response.body);
+  return JSON.parse(response.body);
 };
 
 /**
@@ -45,7 +45,7 @@ export const getExecution = async (params: {
 export const getExecutions = async (params: {
   prefix: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, callback = invokeApi } = params;
 
   return callback({
@@ -73,7 +73,7 @@ export const getExecutionStatus = async (params: {
   prefix: string,
   arn: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, arn, callback = invokeApi } = params;
 
   return callback({

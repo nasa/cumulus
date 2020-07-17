@@ -18,7 +18,9 @@ const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
  * @returns {Promise<Object|undefined>} - Returns promise that resolves to the
  *   output payload from the API lambda
  */
-export function invokeApi(params: types.InvokeApiFunctionParams) {
+export function invokeApi(
+  params: types.InvokeApiFunctionParams
+): Promise<types.ApiGatewayLambdaHttpProxyResponse> {
   const { prefix, payload, pRetryOptions = {} } = params;
 
   return pRetry(
@@ -40,7 +42,7 @@ export function invokeApi(params: types.InvokeApiFunctionParams) {
         );
       }
 
-      return <types.ApiGatewayLambdaHttpProxyResponse>parsedPayload;
+      return parsedPayload;
     },
     {
       retries: 3,

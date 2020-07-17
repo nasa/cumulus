@@ -1,5 +1,5 @@
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * Fetch a workflow from the Cumulus API
@@ -17,7 +17,7 @@ export const getWorkflow = (params: {
   prefix: string,
   workflowName: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, workflowName, callback = invokeApi } = params;
 
   return callback({
@@ -40,7 +40,7 @@ export const getWorkflow = (params: {
 export const getWorkflows = (params: {
   prefix: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, callback = invokeApi } = params;
 
   return callback({

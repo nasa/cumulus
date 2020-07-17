@@ -3,7 +3,7 @@ import {
   NewCollectionRecord
 } from '@cumulus/types/api/collections';
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * POST /collections
@@ -20,7 +20,7 @@ export const createCollection = async (params: {
   prefix: string,
   collection: NewCollectionRecord,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, collection, callback = invokeApi } = params;
 
   return callback({
@@ -52,7 +52,7 @@ export const deleteCollection = async (params: {
   collectionName: string,
   collectionVersion: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     collectionName,
@@ -88,7 +88,7 @@ export const getCollection = async (params: {
   collectionName: string,
   collectionVersion: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<CollectionRecord> => {
   const {
     prefix,
     collectionName,
@@ -105,7 +105,7 @@ export const getCollection = async (params: {
     }
   });
 
-  return <CollectionRecord>JSON.parse(returnedCollection.body);
+  return JSON.parse(returnedCollection.body);
 };
 
 /**
@@ -122,7 +122,7 @@ export const getCollection = async (params: {
 export const getCollections = async (params: {
   prefix: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, callback = invokeApi } = params;
 
   return callback({

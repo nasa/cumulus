@@ -1,6 +1,6 @@
 import { lambda } from '@cumulus/aws-client/services';
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction as emsApi } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 export type EmsReportType = 'distribution' | 'ingest' | 'metadata';
 
@@ -48,8 +48,8 @@ export async function getLambdaEmsSettings(
 export async function createEmsReports(params: {
   prefix: string,
   request: CreateEmsReportsRequest,
-  callback?: emsApi
-}) {
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> {
   const { prefix, request, callback = invokeApi } = params;
 
   return callback({

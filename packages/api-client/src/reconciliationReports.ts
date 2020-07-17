@@ -1,5 +1,5 @@
 import { invokeApi } from './cumulusApiClient';
-import { InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * GET /reconciliationReports/{name}
@@ -17,7 +17,7 @@ export const getReconciliationReport = async (params: {
   prefix: string,
   name: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, name, callback = invokeApi } = params;
 
   return callback({
@@ -47,7 +47,7 @@ export const deleteReconciliationReport = async (params: {
   prefix: string,
   name: string,
   callback?: InvokeApiFunction
-}) => {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, name, callback = invokeApi } = params;
 
   return callback({
@@ -76,7 +76,7 @@ export async function createReconciliationReport(params: {
   prefix: string,
   request: unknown,
   callback?: InvokeApiFunction
-}) {
+}): Promise<ApiGatewayLambdaHttpProxyResponse> {
   const { prefix, request, callback = invokeApi } = params;
 
   return callback({
