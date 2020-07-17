@@ -13,7 +13,9 @@ hide_title: true
 2. Add a Collection
 
 * Open another tab in your browser and go to your Earthdata Git repository URL or where your collection data files are located. If you do not have collection data stored, you can manually configure your collections as well.
-> **Tip**: A list of collection config params can be accessed [here] (https://nasa.github.io/cumulus/docs/data-cookbooks/setup#collections)
+
+> **Tip**: A list of collection config params can be accessed [here](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#collections)
+
 * Open the collection configuration .json file that you will copy to the Cumulus dashboard.
 * In the Cumulus dashboard, add a new collection with an attached rule.
 * Go to the `Collections` page and then click on `Add Collection`.
