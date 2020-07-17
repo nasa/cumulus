@@ -20,3 +20,5 @@ website/**
 /packages/cmrjs/*.js
 /packages/common/*.d.ts
 /packages/common/*.js
+/packages/message/*.d.ts
+/packages/message/*.js
