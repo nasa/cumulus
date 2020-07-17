@@ -47,6 +47,14 @@ export const getQueueName = (message: Message.CumulusMessage) => {
   return queueName;
 };
 
+export const getQueueArn = (message: Message.CumulusMessage) => {
+  const queueName = get(message, 'cumulus_meta.queueArn');
+  if (isNil(queueName)) {
+    throw new Error('cumulus_meta.queueArn not set in message');
+  }
+  return queueName;
+};
+
 /**
  * Get the maximum executions for a queue.
  *
