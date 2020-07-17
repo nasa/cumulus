@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
-const SftpClient = require('@cumulus/sftp-client');
+const { SftpClient } = require('@cumulus/sftp-client');
 const { Collection } = require('../models');
 
 /**

@@ -1,15 +1,41 @@
-'use strict';
+import get from 'lodash/get';
+import * as log from '@cumulus/common/log';
+import mime from 'mime-types';
+import path from 'path';
+import { s3 } from '@cumulus/aws-client/services';
+import * as S3 from '@cumulus/aws-client/S3';
+import Client from 'ssh2-sftp-client';
+import { ConnectConfig } from 'ssh2';
 
-const get = require('lodash/get');
-const log = require('@cumulus/common/log');
-const mime = require('mime-types');
-const path = require('path');
-const { s3 } = require('@cumulus/aws-client/services');
-const S3 = require('@cumulus/aws-client/S3');
-const Client = require('ssh2-sftp-client');
+export interface SftpClientConfig {
+  host: string,
+  port?: number,
+  username?: string,
+  password?: string,
+  privateKey?: string
+}
 
-class SftpClient {
-  constructor(config) {
+export interface SyncToS3Response {
+  s3uri: string,
+  etag: string
+}
+
+export interface ListItem {
+  name: string,
+  path: string,
+  type: string,
+  size: number,
+  time: number
+}
+
+export type ListResponse = ListItem[];
+
+export class SftpClient {
+  private readonly sftpClient: Client;
+  private connected: boolean;
+  private readonly clientOptions: ConnectConfig;
+
+  constructor(config: SftpClientConfig) {
     this.connected = false;
 
     this.clientOptions = {
@@ -24,7 +50,7 @@ class SftpClient {
     this.sftpClient = new Client();
   }
 
-  async connect() {
+  async connect(): Promise<void> {
     if (this.connected) return;
 
     await this.sftpClient.connect(this.clientOptions);
@@ -32,7 +58,7 @@ class SftpClient {
     this.connected = true;
   }
 
-  async end() {
+  async end(): Promise<void> {
     if (this.connected) {
       await this.sftpClient.end();
 
@@ -41,7 +67,7 @@ class SftpClient {
   }
 
   /* @private */
-  get sftp() {
+  private get sftp(): Client {
     if (!this.connected) {
       throw new Error('Client not connected');
     }
@@ -56,7 +82,11 @@ class SftpClient {
    * @returns {string} - remote url
    * @private
    */
-  buildRemoteUrl(remotePath) {
+  buildRemoteUrl(remotePath: string): string {
+    if (!this.clientOptions.host) {
+      throw new Error('host is not set');
+    }
+
     return `sftp://${path.join(this.clientOptions.host, '/', remotePath)}`;
   }
 
@@ -67,7 +97,7 @@ class SftpClient {
    * @param {string} localPath - the full local destination file path
    * @returns {Promise<string>} - the local path that the file was saved to
    */
-  async download(remotePath, localPath) {
+  async download(remotePath: string, localPath: string): Promise<void> {
     const remoteUrl = this.buildRemoteUrl(remotePath);
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
@@ -77,7 +107,7 @@ class SftpClient {
     log.info(`Finished downloading ${remoteUrl} to ${localPath}`);
   }
 
-  async unlink(remotePath) {
+  async unlink(remotePath: string): Promise<void> {
     await this.sftp.delete(remotePath);
   }
 
@@ -90,7 +120,11 @@ class SftpClient {
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
-  async syncToS3(remotePath, bucket, key) {
+  async syncToS3(
+    remotePath: string,
+    bucket: string,
+    key: string
+  ): Promise<SyncToS3Response> {
     const remoteUrl = this.buildRemoteUrl(remotePath);
 
     const s3uri = S3.buildS3Uri(bucket, key);
@@ -100,6 +134,7 @@ class SftpClient {
     // TODO Issue PR against ssh2-sftp-client to allow for getting a
     // readable stream back, rather than having to access the underlying
     // sftp object.
+    // @ts-expect-error
     const sftpReadStream = this.sftp.sftp.createReadStream(remotePath);
 
     const result = await S3.promiseS3Upload({
@@ -120,7 +155,7 @@ class SftpClient {
    * @param {string} remotePath - the remote path to be listed
    * @returns {Promise<Array<Object>>} list of file objects
    */
-  async list(remotePath) {
+  async list(remotePath: string): Promise<ListResponse> {
     const remoteFiles = await this.sftp.list(remotePath);
 
     return remoteFiles.map((remoteFile) => ({
@@ -141,7 +176,10 @@ class SftpClient {
    * @param {string} remotePath - the full remote destination file path
    * @returns {Promise}
    */
-  async syncFromS3(s3object, remotePath) {
+  async syncFromS3(
+    s3object: {Bucket: string, Key: string},
+    remotePath: string
+  ): Promise<void> {
     const s3uri = S3.buildS3Uri(s3object.Bucket, s3object.Key);
     const remoteUrl = this.buildRemoteUrl(remotePath);
 
@@ -159,4 +197,4 @@ class SftpClient {
   }
 }
 
-module.exports = SftpClient;
+export default SftpClient;
