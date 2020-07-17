@@ -158,7 +158,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       ExecutionsTable = var.dynamo_tables.executions.name
       GranulesTable   = var.dynamo_tables.granules.name
       PdrsTable       = var.dynamo_tables.pdrs.name
-      DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.url
+      DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
     }
   }
 
