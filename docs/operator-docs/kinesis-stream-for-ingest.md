@@ -7,7 +7,7 @@ hide_title: true
 # Setup Kinesis Stream & CNM Message
 
 > **Note**: Keep in mind that you should only have to set this up once. This should be created via the SDS or from a cloud formation template. Kinesis pricing is based on the shard value and not on amount of kinesis usage.
-
+<!-- markdownlint-disable MD029 -->
 1. Create a Kinesis Stream
 
 * In your AWS console, go to the `Kinesis` service and click `Create Data Stream`.
@@ -22,6 +22,6 @@ hide_title: true
 * Refer to [Create Rule in Cumulus](../operator-docs/create-rule-in-cumulus).
 
 3. Send a message
-
+<!-- markdownlint-enable MD029 -->
 * Send a message that makes your schema using python or by your command line.
 * The `streamName` and `Collection` must match the `kinesisArn+collection` defined in the rule that you have created in [Step 2](../operator-docs/create-rule-in-cumulus).

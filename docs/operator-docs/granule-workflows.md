@@ -7,7 +7,7 @@ hide_title: true
 # Granule Workflows
 
 ## Ingest Kinesis
-
+<!-- markdownlint-disable MD029 -->
 1. Copy your AWS Long Term Access Key.
 
 2. Add a Collection
@@ -91,7 +91,7 @@ hide_title: true
 ![Screenshot of selected multiple granules](assets/cd_reingest_bulk.png)
 
 3. Bulk Re-ingest Granules
-
+<!-- markdownlint-enable MD029 -->
 * Click on `Reingest` and a modal will pop up for your confirmation.
 
 ![Screenshot of Bulk Reingest modal workflow](assets/cd_reingest_modal_bulk.png)
