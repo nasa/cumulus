@@ -7,8 +7,11 @@ hide_title: true
 # Granule Workflows
 
 ## Ingest Kinesis
-<!-- markdownlint-disable MD029 -->
+
+### Setup for Ingest
+
 1. Copy your AWS Long Term Access Key.
+<!-- markdownlint-disable MD029 -->
 
 2. Add a Collection
 
@@ -41,6 +44,8 @@ hide_title: true
   * Click `Save` to create the new rule.
 
   ![Screenshot of created rule](assets/cd_add_rule_overview.png)
+
+* Now your setup is ready to ingest via Kinesis. Go here to see how to run a [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest).
 
 3. Bulk Ingest Granules
 
@@ -91,7 +96,8 @@ hide_title: true
 ![Screenshot of selected multiple granules](assets/cd_reingest_bulk.png)
 
 3. Bulk Re-ingest Granules
-<!-- markdownlint-enable MD029 -->
+
 * Click on `Reingest` and a modal will pop up for your confirmation.
 
 ![Screenshot of Bulk Reingest modal workflow](assets/cd_reingest_modal_bulk.png)
+<!-- markdownlint-enable MD029 -->
