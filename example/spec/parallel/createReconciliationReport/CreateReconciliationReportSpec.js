@@ -227,8 +227,11 @@ describe('When there are granule differences and granule reconciliation is run',
     }
   });
 
-  it('generates an async operation through the Cumulus API', async () => {
+  it('prepares the test suite successfully', async () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
+  });
+
+  it('generates an async operation through the Cumulus API', async () => {
     const response = await reconciliationReportsApi.createReconciliationReport({
       prefix: config.stackName
     });
