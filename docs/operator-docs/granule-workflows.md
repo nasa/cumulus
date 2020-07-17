@@ -65,7 +65,8 @@ hide_title: true
 
 ## Failed Granule
 
-1. Delete from CMR 
+1. Delete from CMR
+
 > **Note**: Each location or DAAC has different procedures for deleting a granule from CMR.
 
 2. Select Failed Granule
@@ -83,6 +84,7 @@ hide_title: true
 ## Multiple Failed Granules
 
 1. Delete from CMR
+
 > **Note**: Each location or DAAC has different procedures for deleting multiple granules from CMR.
 
 2. Select Failed Granules
