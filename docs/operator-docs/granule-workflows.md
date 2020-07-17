@@ -10,10 +10,9 @@ hide_title: true
 
 ### Setup for Ingest
 
-1. Copy your AWS Long Term Access Key.
 <!-- markdownlint-disable MD029 -->
 
-2. Add a Collection
+1. Add a Collection
 
 * Open another tab in your browser and go to your Earthdata Git repository URL or where your collection data files are located. If you do not have collection data stored, you can manually configure your collections as well.
 
@@ -47,7 +46,7 @@ hide_title: true
 
 * Now your setup is ready to ingest via Kinesis. Go here to see how to run a [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest).
 
-3. Bulk Ingest Granules
+2. Bulk Ingest Granules
 
 * Go to the 'Collections' page
 
