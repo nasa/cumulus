@@ -7,7 +7,7 @@ const S3 = require('@cumulus/aws-client/S3');
 const test = require('ava');
 const { promisify } = require('util');
 const { randomString } = require('@cumulus/common/test-utils');
-const SftpClient = require('..');
+const { SftpClient } = require('..');
 
 const readFile = promisify(fs.readFile);
 const stat = promisify(fs.stat);

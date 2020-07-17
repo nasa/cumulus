@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
+- The `@cumulus/sftp-client/SftpClient` class must now be imported using
+  `const { SftpClient } = require('@cumulus/sftp-client');`
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly connect
   when `download`, `list`, or `sync` are called. You must call `connect` on the
   provider client before issuing one of those calls. Failure to do so will
