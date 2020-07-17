@@ -8,19 +8,18 @@
  * const Granules = require('@cumulus/message/Granules');
  */
 
-const get = require('lodash/get');
+import get from 'lodash/get';
+import { Message } from '@cumulus/types';
 
 /**
  * Get granules from execution message.
  *
- * @param {Object} message - An execution message
+ * @param {Message.CumulusMessage} message - An execution message
  * @returns {Array<Object>|undefined} An array of granule objects, or
  *   undefined if `message.payload.granules` is not set
  *
  * @alias module:Granules
  */
-const getMessageGranules = (message) => get(message, 'payload.granules');
-
-module.exports = {
-  getMessageGranules
-};
+export const getMessageGranules = (
+  message: Message.CumulusMessage
+): unknown[] | undefined => get(message, 'payload.granules');
