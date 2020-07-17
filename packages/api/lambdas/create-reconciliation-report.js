@@ -55,6 +55,7 @@ async function createReconciliationReportForBucket(Bucket) {
   const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
 
   let okCount = 0;
+  const okFiles = [];
   const onlyInS3 = [];
   const onlyInDynamoDb = [];
 
@@ -77,6 +78,7 @@ async function createReconciliationReportForBucket(Bucket) {
     } else {
       // Found an item that is in both S3 and DynamoDB
       okCount += 1;
+      okFiles.push(nextS3Uri);
       s3ObjectsQueue.shift();
       dynamoDbFilesLister.shift();
     }
@@ -101,6 +103,7 @@ async function createReconciliationReportForBucket(Bucket) {
 
   return {
     okCount,
+    okFiles,
     onlyInS3,
     onlyInDynamoDb
   };
@@ -187,6 +190,7 @@ async function reconciliationReportForCollections() {
 async function reconciliationReportForGranuleFiles(params) {
   const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap } = params;
   let okCount = 0;
+  const okFiles = [];
   const onlyInCumulus = [];
   const onlyInCmr = [];
 
@@ -230,8 +234,10 @@ async function reconciliationReportForGranuleFiles(params) {
 
         if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
           okCount += 1;
+          okFiles.push(distributionAccessUrl);
         } else if (s3AccessUrl && relatedUrl.URL === s3AccessUrl.URL) {
           okCount += 1;
+          okFiles.push(s3AccessUrl);
         } else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
           // ignore any URL which is not for getting data
           // some files should not be in CMR such as private files
@@ -270,7 +276,7 @@ async function reconciliationReportForGranuleFiles(params) {
       });
     }
   });
-  return { okCount, onlyInCumulus, onlyInCmr };
+  return { okCount, okFiles, onlyInCumulus, onlyInCmr };
 }
 // export for testing
 exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFiles;
@@ -306,12 +312,14 @@ async function reconciliationReportForGranules(params) {
 
   const granulesReport = {
     okCount: 0,
+    okGranules: [],
     onlyInCumulus: [],
     onlyInCmr: []
   };
 
   const filesReport = {
     okCount: 0,
+    okFiles: [],
     onlyInCumulus: [],
     onlyInCmr: []
   };
@@ -345,6 +353,8 @@ async function reconciliationReportForGranules(params) {
         collectionId: collectionId,
         files: nextDbItem.files
       };
+      granulesReport.okGranules.push(granuleInDb);
+
       const granuleInCmr = {
         GranuleUR: nextCmrGranuleId,
         ShortName: nextCmrItem.umm.CollectionReference.ShortName,
@@ -360,6 +370,7 @@ async function reconciliationReportForGranules(params) {
         granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
       });
       filesReport.okCount += fileReport.okCount;
+      filesReport.okFiles = filesReport.okFiles.concat(fileReport.okFiles);
       filesReport.onlyInCumulus = filesReport.onlyInCumulus.concat(fileReport.onlyInCumulus);
       filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
     }
@@ -408,6 +419,7 @@ async function reconciliationReportForCumulusCMR(params) {
   const collectionReport = await reconciliationReportForCollections();
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
+    okCollections: collectionReport.okCollections,
     onlyInCumulus: collectionReport.onlyInCumulus,
     onlyInCmr: collectionReport.onlyInCmr
   };
@@ -422,6 +434,9 @@ async function reconciliationReportForCumulusCMR(params) {
 
   granulesInCumulusCmr.okCount = granuleAndFilesReports
     .reduce((accumulator, currentValue) => accumulator + currentValue.granulesReport.okCount, 0);
+  granulesInCumulusCmr.okGranules = granuleAndFilesReports.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue.granulesReport.okGranules), []
+  );
   granulesInCumulusCmr.onlyInCumulus = granuleAndFilesReports.reduce(
     (accumulator, currentValue) => accumulator.concat(currentValue.granulesReport.onlyInCumulus), []
   );
@@ -431,6 +446,9 @@ async function reconciliationReportForCumulusCMR(params) {
 
   filesInCumulusCmr.okCount = granuleAndFilesReports
     .reduce((accumulator, currentValue) => accumulator + currentValue.filesReport.okCount, 0);
+  filesInCumulusCmr.okFiles = granuleAndFilesReports.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue.filesReport.okFiles), []
+  );
   filesInCumulusCmr.onlyInCumulus = granuleAndFilesReports.reduce(
     (accumulator, currentValue) => accumulator.concat(currentValue.filesReport.onlyInCumulus), []
   );
@@ -477,12 +495,14 @@ async function createReconciliationReport(params) {
   // Write an initial report to S3
   const filesInCumulus = {
     okCount: 0,
+    okFiles: [],
     onlyInS3: [],
     onlyInDynamoDb: []
   };
 
   const reportFormatCumulusCmr = {
     okCount: 0,
+    okFiles: [],
     onlyInCumulus: [],
     onlyInCmr: []
   };
@@ -515,6 +535,7 @@ async function createReconciliationReport(params) {
   // compare CUMULUS internal holdings in s3 and database
   bucketReports.forEach((bucketReport) => {
     report.filesInCumulus.okCount += bucketReport.okCount;
+    report.filesInCumulus.okFiles = report.filesInCumulus.okFiles.concat(bucketReport.okFiles);
     report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
     report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
       bucketReport.onlyInDynamoDb
