@@ -8,9 +8,10 @@
  * const StepFunctions = require('@cumulus/message/StepFunctions');
  */
 
-const { JSONPath } = require('jsonpath-plus');
-const s3Utils = require('@cumulus/aws-client/S3');
-const Logger = require('@cumulus/logger');
+import { JSONPath } from 'jsonpath-plus';
+import * as s3Utils from '@cumulus/aws-client/S3';
+import Logger from '@cumulus/logger';
+import { Message } from '@cumulus/types';
 
 const log = new Logger({
   sender: '@cumulus/message/StepFunctions'
@@ -20,14 +21,18 @@ const log = new Logger({
  * Given a Step Function event, replace specified key in event with contents
  * of S3 remote message
  *
- * @param {Object} event - Source event
+ * @param {Message.CumulusRemoteMessage} event - Source event
  * @returns {Promise<Object>} Updated event with target path replaced by remote message
  * @throws {Error} if target path cannot be found on source event
  *
  * @async
  * @alias module:StepFunctions
  */
-const pullStepFunctionEvent = async (event) => {
+export const pullStepFunctionEvent = async (
+  event: {
+    replace?: Message.ReplaceConfig
+  }
+): Promise<unknown> => {
   if (!event.replace) return event;
 
   const remoteMsg = await s3Utils.getJsonS3Object(
@@ -58,30 +63,31 @@ const pullStepFunctionEvent = async (event) => {
  * Parse step message with CMA keys and replace specified key in event with contents
  * of S3 remote message
  *
- * @param {Object} stepMessage - Message for the step
+ * @param {CMAMessage} stepMessage - Message for the step
  * @param {string} stepName - Name of the step
  * @returns {Promise<Object>} Parsed and updated event with target path replaced by remote message
  *
  * @async
  * @alias module:StepFunctions
  */
-const parseStepMessage = async (stepMessage, stepName) => {
-  let parsedStepMessage = stepMessage;
+export const parseStepMessage = async (
+  stepMessage: Message.CMAMessage,
+  stepName: string
+) => {
+  let parsedMessage;
   if (stepMessage.cma) {
-    parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
-    delete parsedStepMessage.cma;
-    delete parsedStepMessage.event;
+    const flattenedMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
+    delete flattenedMessage.cma;
+    delete flattenedMessage.event;
+    parsedMessage = flattenedMessage;
+  } else {
+    parsedMessage = stepMessage;
   }
 
-  if (parsedStepMessage.replace) {
+  if (parsedMessage.replace) {
     // Message was too large and output was written to S3
-    log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedStepMessage.replace)}`);
-    parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
+    log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedMessage.replace)}`);
+    parsedMessage = await pullStepFunctionEvent(parsedMessage);
   }
-  return parsedStepMessage;
-};
-
-module.exports = {
-  pullStepFunctionEvent,
-  parseStepMessage
+  return <Message.CumulusMessage>parsedMessage;
 };
