@@ -9,28 +9,48 @@
  * const Build = require('@cumulus/message/Build');
  */
 
-const merge = require('lodash/merge');
-const uuidv4 = require('uuid/v4');
+import merge from 'lodash/merge';
+import { Message } from '@cumulus/types';
+import { v4 as uuidv4 } from 'uuid';
 
+import {
+  MessageTemplate,
+  QueueMessageMeta,
+  Workflow
+} from './types';
+
+/**
+ * Generate an execution name.
+ *
+ * @returns {string}
+ * @private
+ */
 const createExecutionName = () => uuidv4();
 
 /**
  * Build base message.cumulus_meta for a queued execution.
  *
  * @param {Object} params
- * @param {string} params.queueName - An SQS queue name
- * @param {Object} params.parentExecutionArn - Parent execution ARN
- * @returns {Object}
+ * @param {string} [params.queueName] - An SQS queue name
+ * @param {string} params.stateMachine - State machine name
+ * @param {string} [params.asyncOperationId] - Async operation ID
+ * @param {string} [params.parentExecutionArn] - Parent execution ARN
+ * @returns {CumulusMeta}
  *
  * @private
  */
-const buildCumulusMeta = ({
-  asyncOperationId,
-  parentExecutionArn,
+export const buildCumulusMeta = ({
   queueName,
-  stateMachine
+  stateMachine,
+  asyncOperationId,
+  parentExecutionArn
+}: {
+  queueName?: string
+  stateMachine: string,
+  asyncOperationId?: string,
+  parentExecutionArn?: string
 }) => {
-  const cumulusMeta = {
+  const cumulusMeta: Message.CumulusMeta = {
     execution_name: createExecutionName(),
     queueName,
     state_machine: stateMachine
@@ -44,18 +64,23 @@ const buildCumulusMeta = ({
  * Build base message.meta for a queued execution.
  *
  * @param {Object} params
- * @param {string} params.queueName - An SQS queue name
- * @param {Object} params.parentExecutionArn - Parent execution ARN
- * @returns {Object}
+ * @param {string} params.workflowName - Workflow name
+ * @param {Object} [params.collection] - A collection object
+ * @param {Object} [params.provider] - A provider object
+ * @returns {Meta}
  *
  * @private
  */
 const buildMeta = ({
+  workflowName,
   collection,
-  provider,
-  workflowName
+  provider
+}: {
+  workflowName: string
+  collection?: object
+  provider?: object
 }) => {
-  const meta = {
+  const meta: QueueMessageMeta = {
     workflow_name: workflowName
   };
   if (collection) {
@@ -74,18 +99,19 @@ const buildMeta = ({
  * @param {Object} params.provider - A provider object
  * @param {Object} params.collection - A collection object
  * @param {string} params.parentExecutionArn - ARN for parent execution
- * @param {string} params.queueName - SQS queue name
  * @param {Object} params.messageTemplate - Message template for the workflow
  * @param {Object} params.payload - Payload for the workflow
  * @param {Object} params.workflow - workflow name & arn object
- * @param {Object} params.customCumulusMeta - Custom data for message.cumulus_meta
- * @param {Object} params.customMeta - Custom data for message.meta
+ * @param {string} [params.queueName] - SQS queue name
+ * @param {string} [params.asyncOperationId] - Async operation ID
+ * @param {Object} [params.customCumulusMeta] - Custom data for message.cumulus_meta
+ * @param {Object} [params.customMeta] - Custom data for message.meta
  *
- * @returns {Object} An SQS message object
+ * @returns {CumulusMessage} A Cumulus message object
  *
  * @alias module:Build
  */
-function buildQueueMessageFromTemplate({
+export const buildQueueMessageFromTemplate = ({
   provider,
   collection,
   parentExecutionArn,
@@ -96,7 +122,18 @@ function buildQueueMessageFromTemplate({
   workflow,
   customCumulusMeta = {},
   customMeta = {}
-}) {
+}: {
+  provider: object,
+  collection: object
+  parentExecutionArn: string,
+  messageTemplate: MessageTemplate,
+  payload: object
+  workflow: Workflow,
+  queueName?: string,
+  asyncOperationId?: string,
+  customCumulusMeta?: object
+  customMeta?: object
+}): Message.CumulusMessage => {
   const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
@@ -118,8 +155,4 @@ function buildQueueMessageFromTemplate({
   };
 
   return message;
-}
-
-module.exports = {
-  buildQueueMessageFromTemplate
 };

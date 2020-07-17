@@ -2,17 +2,19 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const rewire = require('rewire');
-
-const buildUtils = rewire('../Build');
-const {
-  buildQueueMessageFromTemplate
-} = buildUtils;
-
-const buildCumulusMeta = buildUtils.__get__('buildCumulusMeta');
+const proxyquire = require('proxyquire');
 
 const fakeId = cryptoRandomString({ length: 10 });
-buildUtils.__set__('uuidv4', () => fakeId);
+const buildUtils = proxyquire('../Build', {
+  uuid: {
+    v4: () => fakeId
+  }
+});
+
+const {
+  buildCumulusMeta,
+  buildQueueMessageFromTemplate
+} = buildUtils;
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
