@@ -28,3 +28,10 @@ export interface CumulusRemoteMessage {
   exception?: CumulusException
   replace: ReplaceConfig
 }
+
+export interface CMAMessage {
+  cma?: {
+    event?: object
+  }
+  replace?: ReplaceConfig
+}
