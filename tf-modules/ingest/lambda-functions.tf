@@ -176,10 +176,11 @@ resource "aws_lambda_function" "schedule_sf" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      stackName        = var.prefix
+      CMR_ENVIRONMENT          = var.cmr_environment
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      stackName                = var.prefix
+      defaultSchedulerQueueArn = aws_sqs_queue.start_sf.id
     }
   }
   tags = var.tags
