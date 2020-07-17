@@ -2,7 +2,7 @@ type CumulusException = 'None' | object;
 
 export interface CumulusMeta {
   execution_name: string
-  queueName?: string
+  queueArn?: string
   state_machine: string
   parentExecutionArn?: string
   asyncOperationId?: string

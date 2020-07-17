@@ -14,7 +14,7 @@ import isNil from 'lodash/isNil';
 import { Message } from '@cumulus/types';
 
 /**
- * Get queue name by URL from execution message.
+ * Get queue ARN by URL from execution message.
  *
  * @param {Message.CumulusMessage} message - An execution message
  * @param {string} queueUrl - An SQS queue URL
@@ -22,7 +22,7 @@ import { Message } from '@cumulus/types';
  *
  * @alias module:Queue
  */
-export const getQueueNameByUrl = (
+export const getQueueArnByUrl = (
   message: Message.CumulusMessage,
   queueUrl: string
 ) => {
@@ -59,7 +59,7 @@ export const getQueueArn = (message: Message.CumulusMessage) => {
  * Get the maximum executions for a queue.
  *
  * @param {Message.CumulusMessage} message - A workflow message object
- * @param {string} queueName - A queue name
+ * @param {string} queueArn - A queue ARN
  * @returns {number} Count of the maximum executions for the queue
  * @throws {Error} if no maximum executions can be found
  *
@@ -67,11 +67,11 @@ export const getQueueArn = (message: Message.CumulusMessage) => {
  */
 export const getMaximumExecutions = (
   message: Message.CumulusMessage,
-  queueName: string
+  queueArn: string
 ) => {
-  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);
+  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueArn}`);
   if (isNil(maxExecutions)) {
-    throw new Error(`Could not determine maximum executions for queue ${queueName}`);
+    throw new Error(`Could not determine maximum executions for queue ${queueArn}`);
   }
   return maxExecutions;
 };

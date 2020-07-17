@@ -1,6 +1,6 @@
 # Required
 
-variable "background_queue_name" {
+variable "background_queue_arn" {
   type = string
 }
 
