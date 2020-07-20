@@ -82,7 +82,7 @@ class GranuleFetcher {
       );
     }
 
-    this.providerClient = buildProviderClient(provider);
+    this.provider = provider;
   }
 
   /**
@@ -219,11 +219,22 @@ class GranuleFetcher {
         return acc;
       }, {});
 
-    return Promise.all(
-      files.map((file) => addChecksumToFile(
-        this.providerClient, file, checksumFileOf[file.name]
-      ))
-    );
+    const providerClient = buildProviderClient(this.provider);
+
+    let filesToReturn;
+    try {
+      await providerClient.connect();
+
+      filesToReturn = await Promise.all(
+        files.map((file) => addChecksumToFile(
+          providerClient, file, checksumFileOf[file.name]
+        ))
+      );
+    } finally {
+      await providerClient.end();
+    }
+
+    return filesToReturn;
   }
 
   /**
@@ -234,7 +245,6 @@ class GranuleFetcher {
    * @param {Object} file - an object containing a "name" property
    * @returns {Object} the file with a bucket property set
    * @throws {Error} if the file didn't have a matching config
-   * @private
    */
   addBucketToFile(file) {
     const fileConfig = this.findCollectionFileConfigForFile(file);
@@ -336,8 +346,6 @@ class GranuleFetcher {
       url_path: this.getUrlPath(file),
       bucket: destinationBucket
     };
-    // bind arguments to sync function
-    const syncFileFunction = this.providerClient.sync.bind(this.providerClient, fileRemotePath);
 
     const s3ObjAlreadyExists = await S3.s3ObjectExists(
       { Bucket: destinationBucket, Key: destinationKey }
@@ -345,23 +353,37 @@ class GranuleFetcher {
     log.debug(`file ${destinationKey} exists in ${destinationBucket}: ${s3ObjAlreadyExists}`);
 
     let versionedFiles = [];
-    if (s3ObjAlreadyExists) {
-      stagedFile.duplicate_found = true;
-      const stagedFileKey = `${destinationKey}.${uuidv4()}`;
-      // returns renamed files for 'version', otherwise empty array
-      versionedFiles = await handleDuplicateFile({
-        source: { Bucket: destinationBucket, Key: stagedFileKey },
-        target: { Bucket: destinationBucket, Key: destinationKey },
-        duplicateHandling,
-        checksumFunction: this.verifyFile.bind(this, file),
-        syncFileFunction
-      });
-    } else {
-      log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
-      await syncFileFunction(destinationBucket, destinationKey);
-      // Verify file integrity
-      log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);
-      await this.verifyFile(file, destinationBucket, destinationKey);
+
+    const providerClient = buildProviderClient(this.provider);
+    try {
+      await providerClient.connect();
+
+      // bind arguments to sync function
+      const syncFileFunction = providerClient.sync.bind(
+        providerClient,
+        fileRemotePath
+      );
+
+      if (s3ObjAlreadyExists) {
+        stagedFile.duplicate_found = true;
+        const stagedFileKey = `${destinationKey}.${uuidv4()}`;
+        // returns renamed files for 'version', otherwise empty array
+        versionedFiles = await handleDuplicateFile({
+          source: { Bucket: destinationBucket, Key: stagedFileKey },
+          target: { Bucket: destinationBucket, Key: destinationKey },
+          duplicateHandling,
+          checksumFunction: this.verifyFile.bind(this, file),
+          syncFileFunction
+        });
+      } else {
+        log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
+        await syncFileFunction(destinationBucket, destinationKey);
+        // Verify file integrity
+        log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);
+        await this.verifyFile(file, destinationBucket, destinationKey);
+      }
+    } finally {
+      await providerClient.end();
     }
 
     // Set final file size

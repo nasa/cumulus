@@ -44,7 +44,8 @@ const fetchTextFile = async (providerClient, remotePath) => {
     await providerClient.download(remotePath, localPath);
     return await fs.readFile(localPath, 'utf8');
   } finally {
-    await fs.unlink(localPath);
+    // eslint-disable-next-line lodash/prefer-noop
+    await fs.unlink(localPath).catch(() => {});
   }
 };
 
