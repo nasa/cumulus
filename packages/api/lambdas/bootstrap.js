@@ -11,7 +11,8 @@ const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { Search, defaultIndexAlias } = require('../es/search');
+const { Search } = require('../es/search');
+const { getAliasByType } = require('../es/types');
 const { createIndex } = require('../es/indexer');
 const mappings = require('../models/mappings.json');
 const { IndexExistsError } = require('../lib/errors');
@@ -60,8 +61,11 @@ async function findMissingMappings(esClient, index, newMappings) {
  * @param {string} alias - alias name for the index, defaults to 'cumulus'
  * @returns {Promise} undefined
  */
-async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIndexAlias) {
+async function bootstrapElasticSearch(host, index = 'cumulus', aliasOverride = undefined) {
   if (!host) return;
+
+  // LAUREN TODO
+  const alias = aliasOverride || getAliasByType(undefined);
 
   const esClient = await Search.es(host);
 

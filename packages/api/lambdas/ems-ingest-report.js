@@ -19,13 +19,14 @@ const {
   submitReports
 } = require('../lib/ems');
 const { deconstructCollectionId } = require('../lib/utils');
-const { Search, defaultIndexAlias } = require('../es/search');
+const { Search } = require('../es/search');
+const { getAliasByType } = require('../es/types');
 
 /**
  * This module provides functionalities to generate EMS reports.
  * The following environment variables are used:
  * process.env.ES_SCROLL_SIZE: default to defaultESScrollSize
- * process.env.ES_INDEX: set for testing purpose, default to defaultIndexAlias
+ * process.env.ES_INDEX: set for testing purpose, default to default alias
  * process.env.ems_provider: default to 'cumulus', the provider used for sending reports to EMS
  * process.env.ems_submitReport: default to 'false', indicates if the reports will be sent to EMS
  * process.env.ems_host: EMS host
@@ -254,7 +255,7 @@ async function generateReport(reportType, startTime, endTime, collections) {
   const esClient = await Search.es();
   const type = (reportType !== 'delete') ? 'granule' : 'deletedgranule';
 
-  const esIndex = process.env.ES_INDEX || defaultIndexAlias;
+  const esIndex = process.env.ES_INDEX || getAliasByType(type);
   const searchQuery = buildSearchQuery(esIndex, type, startTime, endTime);
   let response = await esClient.search(searchQuery)
     .then((searchResponse) => searchResponse.body);

@@ -13,13 +13,12 @@ const elasticsearch = require('@elastic/elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
 const aggs = require('./aggregations');
+const { getAliasByType } = require('./types');
 
 const logDetails = {
   file: 'lib/es/search.js',
   type: 'apigateway'
 };
-
-const defaultIndexAlias = 'cumulus-alias';
 
 const getCredentials = () =>
   new Promise((resolve, reject) => aws.config.getCredentials((err) => {
@@ -101,7 +100,7 @@ class BaseSearch {
     return new elasticsearch.Client(await esConfig(host, metrics));
   }
 
-  constructor(event, type = null, index, metrics = false) {
+  constructor(event, type, index = undefined, metrics = false) {
     let params = {};
     const logLimit = 10;
 
@@ -127,7 +126,7 @@ class BaseSearch {
 
     this.frm = (page - 1) * this.size;
     this.page = Number.parseInt((params.skip) ? params.skip : page, 10);
-    this.index = index || defaultIndexAlias;
+    this.index = index || getAliasByType(type);
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';
@@ -348,6 +347,5 @@ class Search extends BaseSearch {}
 module.exports = {
   BaseSearch,
   Search,
-  defaultIndexAlias,
   getLocalEsHost
 };

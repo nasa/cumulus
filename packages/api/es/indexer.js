@@ -18,7 +18,8 @@ const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 
 const { convertLogLevel } = require('./logUtils');
-const { Search, defaultIndexAlias } = require('./search');
+const { Search } = require('./search');
+const { getAliasByType } = require('./types');
 const { Granule } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const mappings = require('../models/mappings.json');
@@ -121,11 +122,13 @@ function parsePayload(payload) {
  * @param  {string} type     - Elasticsearch type (default: granule)
  * @returns {Promise} Elasticsearch response
  */
-async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'logs') {
+async function indexLog(esClient, payloads, index = undefined, type = 'logs') {
   const body = [];
 
+  const alias = index || getAliasByType(type);
+
   payloads.forEach((payload) => {
-    body.push({ index: { _index: index, _type: type, _id: payload.id } });
+    body.push({ index: { _index: alias, _type: type, _id: payload.id } });
     const parsedPayload = parsePayload(payload);
     body.push(parsedPayload);
   });
@@ -149,13 +152,15 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
 async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
   if (!doc) throw new Error('Nothing to update. Make sure doc argument has a value');
 
+  const alias = index || getAliasByType(type);
+
   const body = cloneDeep(doc);
   body.timestamp = Date.now();
 
   const params = {
     body,
     id,
-    index,
+    index: alias,
     type,
     refresh: inTestMode()
   };
@@ -178,7 +183,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @returns {Promise} elasticsearch update response
  */
-function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'execution') {
+function indexExecution(esClient, payload, index = undefined, type = 'execution') {
   return genericRecordUpdate(esClient, payload.arn, payload, index, type);
 }
 
@@ -191,7 +196,7 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
  * @param  {string} type     - Elasticsearch type (default: asyncOperation)
  * @returns {Promise} elasticsearch update response
  */
-function indexAsyncOperation(esClient, payload, index = defaultIndexAlias, type = 'asyncOperation') {
+function indexAsyncOperation(esClient, payload, index = undefined, type = 'asyncOperation') {
   return genericRecordUpdate(esClient, payload.id, payload, index, type);
 }
 
@@ -204,7 +209,7 @@ function indexAsyncOperation(esClient, payload, index = defaultIndexAlias, type 
  * @param  {string} type     - Elasticsearch type (default: collection)
  * @returns {Promise} Elasticsearch response
  */
-function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
+function indexCollection(esClient, meta, index = undefined, type = 'collection') {
   const collectionId = constructCollectionId(meta.name, meta.version);
   return genericRecordUpdate(esClient, collectionId, meta, index, type);
 }
@@ -218,7 +223,7 @@ function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'coll
  * @param  {string} type     - Elasticsearch type (default: provider)
  * @returns {Promise} Elasticsearch response
  */
-function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'provider') {
+function indexProvider(esClient, payload, index = undefined, type = 'provider') {
   return genericRecordUpdate(esClient, payload.id, payload, index, type);
 }
 
@@ -231,7 +236,7 @@ function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'pro
  * @param  {string} type     - Elasticsearch type (default: reconciliationReport)
  * @returns {Promise} Elasticsearch response
  */
-function indexReconciliationReport(esClient, payload, index = defaultIndexAlias, type = 'reconciliationReport') {
+function indexReconciliationReport(esClient, payload, index = undefined, type = 'reconciliationReport') {
   return genericRecordUpdate(esClient, payload.name, payload, index, type);
 }
 
@@ -245,7 +250,7 @@ function indexReconciliationReport(esClient, payload, index = defaultIndexAlias,
  * @returns {Promise} Elasticsearch response
  */
 
-function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') {
+function indexRule(esClient, payload, index = undefined, type = 'rule') {
   return genericRecordUpdate(esClient, payload.name, payload, index, type);
 }
 
@@ -258,7 +263,7 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
  * @param  {string} type     - Elasticsearch type (default: granule)
  * @returns {Promise} Elasticsearch response
  */
-async function indexGranule(esClient, payload, index = defaultIndexAlias, type = 'granule') {
+async function indexGranule(esClient, payload, index = undefined, type = 'granule') {
   // If the granule exists in 'deletedgranule', delete it first before inserting the granule
   // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
   const delGranParams = {
@@ -289,7 +294,7 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
  * @param  {string} type     - Elasticsearch type (default: pdr)
  * @returns {Promise} Elasticsearch response
  */
-async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
+async function indexPdr(esClient, payload, index = undefined, type = 'pdr') {
   return genericRecordUpdate(
     esClient,
     payload.pdrName,
@@ -316,11 +321,13 @@ async function deleteRecord({
   id,
   type,
   parent,
-  index = defaultIndexAlias,
+  index = undefined,
   ignore
 }) {
+  const alias = index || getAliasByType(type);
+
   const params = {
-    index,
+    index: alias,
     type,
     id,
     refresh: inTestMode()

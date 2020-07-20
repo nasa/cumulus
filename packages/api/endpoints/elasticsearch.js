@@ -7,8 +7,9 @@ const log = require('@cumulus/common/log');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { AsyncOperation } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
-const { defaultIndexAlias, Search } = require('../es/search');
+const { Search } = require('../es/search');
 const { createIndex } = require('../es/indexer');
+const { getAliasByType } = require('../es/types');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -53,7 +54,9 @@ async function createEsSnapshot(req, res) {
 async function reindex(req, res) {
   let sourceIndex = req.body.sourceIndex;
   let destIndex = req.body.destIndex;
-  const aliasName = req.body.aliasName || defaultIndexAlias;
+
+  // LAUREN TO DO
+  const aliasName = req.body.aliasName || getAliasByType(undefined);
 
   const esClient = await Search.es();
 
@@ -95,6 +98,7 @@ async function reindex(req, res) {
       return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
     }
 
+    log.error(JSON.stringify(error));
     return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
   }
 
@@ -135,7 +139,9 @@ async function reindexStatus(req, res) {
 
 async function changeIndex(req, res) {
   const deleteSource = req.body.deleteSource;
-  const aliasName = req.body.aliasName || defaultIndexAlias;
+
+  // LAUREN TO DO
+  const aliasName = req.body.aliasName || getAliasByType(undefined);
   const currentIndex = req.body.currentIndex;
   const newIndex = req.body.newIndex;
 
@@ -241,7 +247,9 @@ async function indexFromDatabase(req, res) {
 
 async function getCurrentIndex(req, res) {
   const esClient = await Search.es();
-  const alias = req.params.alias || defaultIndexAlias;
+
+  // LAUREN TO DO
+  const alias = req.params.alias || getAliasByType(undefined);
 
   const aliasIndices = await esClient.indices.getAlias({ name: alias })
     .then((response) => response.body);
