@@ -47,6 +47,15 @@ export const getQueueName = (message: Message.CumulusMessage) => {
   return queueName;
 };
 
+/**
+ * Get the queue ARN from a workflow message.
+ *
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {string} A queue ARN
+ * @throws {Error} if no queue name in the message
+ *
+ * @alias module:Queue
+ */
 export const getQueueArn = (message: Message.CumulusMessage) => {
   const queueName = get(message, 'cumulus_meta.queueArn');
   if (isNil(queueName)) {
@@ -86,8 +95,8 @@ export const getMaximumExecutions = (
  */
 export const hasQueueAndExecutionLimit = (message: Message.CumulusMessage) => {
   try {
-    const queueName = getQueueName(message);
-    getMaximumExecutions(message, queueName);
+    const queueArn = getQueueArn(message);
+    getMaximumExecutions(message, queueArn);
   } catch (error) {
     return false;
   }
