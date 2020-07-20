@@ -21,6 +21,9 @@ const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
 
 const { lookupMimeType, decrypt } = require('./util');
+const {
+  emptyProviderConnectEndMixin
+} = require('./emptyProviderConnectEndMixin');
 
 const validateHost = (host) => {
   if (isValidHostname(host) || isIp(host)) return;
@@ -244,5 +247,10 @@ class HttpProviderClient {
     return { s3uri, etag };
   }
 }
+
+Object.assign(
+  HttpProviderClient.prototype,
+  emptyProviderConnectEndMixin
+);
 
 module.exports = HttpProviderClient;
