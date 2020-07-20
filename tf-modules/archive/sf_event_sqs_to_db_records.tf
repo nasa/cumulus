@@ -13,7 +13,7 @@ resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
 
 data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   statement {
-    actions   = ["dynamodb:UpdateItem"]
+    actions = ["dynamodb:UpdateItem"]
     resources = [
       var.dynamo_tables.executions.arn,
       var.dynamo_tables.granules.arn,
@@ -30,7 +30,7 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
-    actions = ["s3:GetObject"]
+    actions   = ["s3:GetObject"]
     resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 
@@ -99,20 +99,20 @@ resource "aws_iam_role_policy" "sf_event_sqs_to_db_records_lambda_role_policy" {
 }
 
 resource "aws_sqs_queue" "sf_event_sqs_to_db_records_input_queue" {
-  name = "${var.prefix}-sfEventSqsToDbRecordsInputQueue"
+  name                       = "${var.prefix}-sfEventSqsToDbRecordsInputQueue"
   receive_wait_time_seconds  = 20
   visibility_timeout_seconds = (local.sf_event_sqs_lambda_timeout * 6)
-  redrive_policy             = jsonencode(
+  redrive_policy = jsonencode(
     {
       deadLetterTargetArn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
       maxReceiveCount     = 10
   })
-  tags                       = var.tags
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "sf_event_sqs_send_message_policy" {
   statement {
-    actions = ["sqs:sendMessage"]
+    actions   = ["sqs:sendMessage"]
     resources = [aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn]
     principals {
       type        = "Service"
@@ -123,7 +123,7 @@ data "aws_iam_policy_document" "sf_event_sqs_send_message_policy" {
 
 resource "aws_sqs_queue_policy" "sf_event_sqs_to_db_records_input_queue_policy" {
   queue_url = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.id
-  policy = data.aws_iam_policy_document.sf_event_sqs_send_message_policy.json
+  policy    = data.aws_iam_policy_document.sf_event_sqs_send_message_policy.json
 }
 
 resource "aws_lambda_event_source_mapping" "sf_event_sqs_to_db_records_mapping" {
@@ -137,10 +137,6 @@ resource "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {
   message_retention_seconds  = 1209600
   visibility_timeout_seconds = 60
   tags                       = var.tags
-}
-
-data "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {
-  name = "${var.prefix}-sfEventSqsToDbRecordsDeadLetterQueue"
 }
 
 resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
@@ -159,10 +155,10 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
   environment {
     variables = {
-      ExecutionsTable      = var.dynamo_tables.executions.name
-      GranulesTable        = var.dynamo_tables.granules.name
-      PdrsTable            = var.dynamo_tables.pdrs.name
-      DeadLetterQueue      = data.aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.url
+      ExecutionsTable = var.dynamo_tables.executions.name
+      GranulesTable   = var.dynamo_tables.granules.name
+      PdrsTable       = var.dynamo_tables.pdrs.name
+      DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
     }
   }
 

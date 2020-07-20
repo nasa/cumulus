@@ -18,7 +18,7 @@
     "lint-package-json": "npmPkgJsonLint .",
     "test": "lerna run --concurrency 1 test",
     "test:ci": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test",
-    "test:coverage": "rm -rf .nyc_output coverage && env NYC_CLEAN=false NYC_SILENT=true lerna run --concurrency 1 test && nyc report --reporter=text --reporter=html",
+    "test:coverage": "rm -rf .nyc_output coverage && env NYC_CLEAN=false NYC_SILENT=true lerna run --concurrency 1 test:coverage && nyc report --reporter=text --reporter=html",
     "tsc": "lerna run tsc",
     "package": "lerna run package",
     "bootstrap": "lerna bootstrap --no-ci --force-local && npm run package",

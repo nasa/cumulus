@@ -5,7 +5,7 @@ const KMS = require('@cumulus/aws-client/KMS');
 const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
-const SftpClient = require('@cumulus/sftp-client');
+const { SftpClient } = require('@cumulus/sftp-client');
 const isNil = require('lodash/isNil');
 const recursion = require('./recursion');
 const { decrypt } = require('./util');
@@ -19,12 +19,41 @@ class SftpProviderClient {
       this.plaintextPassword = providerConfig.password;
       this.plaintextPrivateKey = providerConfig.plaintextProviderKey;
     }
+
+    this.connected = false;
+    this.privateSftpClient = undefined;
   }
 
+  async connect() {
+    if (this.connected) return;
+
+    this.privateSftpClient = new SftpClient({
+      host: this.host,
+      port: get(this.providerConfig, 'port', 22),
+      username: await this.getUsername(),
+      password: await this.getPassword(),
+      privateKey: await this.getPrivateKey()
+    });
+
+    await this.privateSftpClient.connect(this.clientOptions);
+
+    this.connected = true;
+  }
+
+  async end() {
+    if (this.connected) {
+      await this.privateSftpClient.end();
+
+      this.connected = false;
+    }
+  }
+
+  /* @private */
   get host() {
     return this.providerConfig.host;
   }
 
+  /* @private */
   async getUsername() {
     if (isNil(this.providerConfig.username)) return undefined;
 
@@ -35,6 +64,7 @@ class SftpProviderClient {
     return this.plaintextUsername;
   }
 
+  /* @private */
   async getPassword() {
     if (isNil(this.providerConfig.password)) return undefined;
 
@@ -45,6 +75,7 @@ class SftpProviderClient {
     return this.plaintextPassword;
   }
 
+  /* @private */
   async getPrivateKey() {
     if (isNil(this.providerConfig.privateKey)) return undefined;
 
@@ -67,17 +98,13 @@ class SftpProviderClient {
     return this.plaintextProviderKey;
   }
 
-  async getSftpClient() {
-    if (isNil(this.sftpClientInstance)) {
-      this.sftpClientInstance = new SftpClient({
-        host: this.host,
-        port: get(this.providerConfig, 'port', 22),
-        username: await this.getUsername(),
-        password: await this.getPassword(),
-        privateKey: await this.getPrivateKey()
-      });
+  /* @private */
+  getSftpClient() {
+    if (!this.connected) {
+      throw new Error('Client not connected');
     }
-    return this.sftpClientInstance;
+
+    return this.privateSftpClient;
   }
 
   /**
@@ -88,8 +115,7 @@ class SftpProviderClient {
    * @returns {Promise<string>} the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    const sftpClient = await this.getSftpClient();
-    return sftpClient.download(remotePath, localPath);
+    return this.getSftpClient().download(remotePath, localPath);
   }
 
   /**
@@ -97,22 +123,16 @@ class SftpProviderClient {
    *
    * @param {string} path - the path to list
    * @returns {Promise}
-   * @private
    */
   async list(path) {
-    const sftpClient = await this.getSftpClient();
+    const sftpClient = this.getSftpClient();
+    const listFn = sftpClient.list.bind(sftpClient);
+    const files = await recursion(listFn, path);
+    log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
 
-    try {
-      const listFn = sftpClient.list.bind(sftpClient);
-      const files = await recursion(listFn, path);
-      log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
-
-      // Type 'type' field is required to support recursive file listing, but
-      // should not be part of the returned result.
-      return files.map((file) => omit(file, 'type'));
-    } finally {
-      sftpClient.end();
-    }
+    // Type 'type' field is required to support recursive file listing, but
+    // should not be part of the returned result.
+    return files.map((file) => omit(file, 'type'));
   }
 
   /**
@@ -125,8 +145,7 @@ class SftpProviderClient {
    *    the S3 URI and ETag of the destination file
    */
   async sync(remotePath, bucket, key) {
-    const sftpClient = await this.getSftpClient();
-    return sftpClient.syncToS3(remotePath, bucket, key);
+    return this.getSftpClient().syncToS3(remotePath, bucket, key);
   }
 }
 
