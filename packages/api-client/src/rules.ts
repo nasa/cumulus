@@ -50,7 +50,7 @@ export const postRule = async (params: {
 export const updateRule = async (params: {
   prefix: string,
   ruleName: string,
-  updateParams: PartialRuleRecord | { action: 'rerun' },
+  updateParams: PartialRuleRecord & { action?: 'rerun' },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
@@ -172,18 +172,23 @@ export const deleteRule = async (params: {
 export async function rerunRule(params: {
   prefix: string,
   ruleName: string,
+  updateParams?: PartialRuleRecord,
   callback: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> {
   const {
     prefix,
     ruleName,
+    updateParams = {},
     callback = invokeApi
   } = params;
 
   return updateRule({
     prefix,
     ruleName,
-    updateParams: { action: 'rerun' },
+    updateParams: {
+      ...updateParams,
+      action: 'rerun'
+    },
     callback
   });
 }
