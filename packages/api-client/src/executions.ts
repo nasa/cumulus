@@ -1,6 +1,6 @@
-'use strict';
-
-const { invokeApi } = require('./cumulusApiClient');
+import { ExecutionRecord } from '@cumulus/types/api/executions';
+import { invokeApi } from './cumulusApiClient';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * Fetch an execution from the Cumulus API
@@ -13,16 +13,23 @@ const { invokeApi } = require('./cumulusApiClient');
  *                                     to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}        - the execution fetched by the API
  */
-const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
-  const result = await callback({
+export const getExecution = async (params: {
+  prefix: string,
+  arn: string,
+  callback?: InvokeApiFunction
+}): Promise<ExecutionRecord> => {
+  const { prefix, arn, callback = invokeApi } = params;
+
+  const response = await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/executions/${arn}`
     }
-  }).then(({ body }) => JSON.parse(body));
-  return result;
+  });
+
+  return JSON.parse(response.body);
 };
 
 /**
@@ -35,14 +42,21 @@ const getExecution = async ({ prefix, arn, callback = invokeApi }) => {
  *                                     to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}        - the execution list fetched by the API
  */
-const getExecutions = async ({ prefix, callback = invokeApi }) => callback({
-  prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: '/executions'
-  }
-});
+export const getExecutions = async (params: {
+  prefix: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/executions'
+    }
+  });
+};
 
 /**
  * get execution status from the Cumulus API
@@ -55,17 +69,19 @@ const getExecutions = async ({ prefix, callback = invokeApi }) => callback({
  *                                     to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}        - the execution status fetched by the API
  */
-const getExecutionStatus = async ({ prefix, arn, callback = invokeApi }) => callback({
-  prefix: prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: `/executions/status/${arn}`
-  }
-});
+export const getExecutionStatus = async (params: {
+  prefix: string,
+  arn: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, arn, callback = invokeApi } = params;
 
-module.exports = {
-  getExecution,
-  getExecutions,
-  getExecutionStatus
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/executions/status/${arn}`
+    }
+  });
 };
