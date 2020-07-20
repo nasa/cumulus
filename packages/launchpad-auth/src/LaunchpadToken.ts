@@ -50,10 +50,10 @@ class LaunchpadToken {
   /**
    * Retrieve Launchpad credentials
    *
-   * @returns {Promise<Buffer>} - an object with the pfx
+   * @returns {Promise<string | undefined>} - an object with the pfx
    * @private
    */
-  async _retrieveCertificate() {
+  async _retrieveCertificate(): Promise<string | undefined> {
     const bucket = getEnvVar('system_bucket');
     const stackName = getEnvVar('stackName');
 
@@ -79,7 +79,7 @@ class LaunchpadToken {
    *
    * @returns {Promise<Object>} - the Launchpad gettoken response object
    */
-  async requestToken() {
+  async requestToken(): Promise<GetTokenResponse> {
     log.debug('LaunchpadToken.requestToken');
     const pfx = await this._retrieveCertificate();
     const launchpadUrl = new URL(this.api);
@@ -103,7 +103,7 @@ class LaunchpadToken {
    * @param {string} token - the Launchpad token for validation
    * @returns {Promise<Object>} - the Launchpad validate token response object
    */
-  async validateToken(token: string) {
+  async validateToken(token: string): Promise<ValidateTokenResponse> {
     log.debug('LaunchpadToken.validateToken');
     const pfx = await this._retrieveCertificate();
     const launchpadUrl = new URL(this.api);

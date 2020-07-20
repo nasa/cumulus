@@ -33,7 +33,10 @@ const log = new Logger({ sender: '@cumulus/launchpad-auth' });
  *
  * @private
  */
-function launchpadTokenBucketKey() {
+function launchpadTokenBucketKey(): {
+  Bucket: string,
+  Key: string
+} {
   const bucket = getEnvVar('system_bucket');
   const stackName = getEnvVar('stackName');
   return {
@@ -51,7 +54,7 @@ function launchpadTokenBucketKey() {
  * @async
  * @private
  */
-async function getValidLaunchpadTokenFromS3() {
+async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
   const s3location = launchpadTokenBucketKey();
   const keyExists = await s3ObjectExists(s3location);
 
@@ -86,7 +89,7 @@ async function getValidLaunchpadTokenFromS3() {
  * @async
  * @alias module:launchpad-auth
  */
-async function getLaunchpadToken(params: LaunchpadTokenParams) {
+async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> {
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {
@@ -134,7 +137,7 @@ async function validateLaunchpadToken(
   params: LaunchpadTokenParams,
   token: string,
   userGroup?: string
-) {
+): Promise<ValidateTokenResult> {
   log.debug('validateLaunchpadToken validating launchpad token');
   const launchpad = new LaunchpadToken(params);
   const response = await launchpad.validateToken(token);
