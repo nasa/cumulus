@@ -1,5 +1,3 @@
-'use strict';
-
 import { URL } from 'url';
 import got from 'got';
 
@@ -53,7 +51,7 @@ class LaunchpadToken {
    * @returns {Promise<string | undefined>} - an object with the pfx
    * @private
    */
-  async _retrieveCertificate(): Promise<string | undefined> {
+  async retrieveCertificate(): Promise<string | undefined> {
     const bucket = getEnvVar('system_bucket');
     const stackName = getEnvVar('stackName');
 
@@ -81,7 +79,7 @@ class LaunchpadToken {
    */
   async requestToken(): Promise<GetTokenResponse> {
     log.debug('LaunchpadToken.requestToken');
-    const pfx = await this._retrieveCertificate();
+    const pfx = await this.retrieveCertificate();
     const launchpadUrl = new URL(this.api);
 
     const options = {
@@ -105,7 +103,7 @@ class LaunchpadToken {
    */
   async validateToken(token: string): Promise<ValidateTokenResponse> {
     log.debug('LaunchpadToken.validateToken');
-    const pfx = await this._retrieveCertificate();
+    const pfx = await this.retrieveCertificate();
     const launchpadUrl = new URL(this.api);
 
     const data = JSON.stringify({ token });

@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Utility functions for generating and validating Launchpad tokens
  *
@@ -61,12 +59,16 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
   let token;
   if (keyExists) {
     const s3object = await getS3Object(s3location.Bucket, s3location.Key);
-    if (s3object && s3object.Body) {
+    if (s3object?.Body) {
       const launchpadToken = <TokenObject>JSON.parse(s3object.Body.toString());
+      const now = Date.now();
+      const tokenExpirationInMs = (
+        launchpadToken.session_maxtimeout + launchpadToken.session_starttime
+      ) * 1000;
 
       // check if token is still valid
       if (
-        Date.now() / 1000 < launchpadToken.session_maxtimeout + launchpadToken.session_starttime
+        now < tokenExpirationInMs
       ) {
         token = launchpadToken.sm_token;
       }
@@ -97,9 +99,9 @@ async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> 
     const launchpad = new LaunchpadToken(params);
     const tokenResponse = await launchpad.requestToken();
     // add session_starttime to token object, assume token is generated 60s ago
-    const tokenObject:TokenObject = {
+    const tokenObject: TokenObject = {
       ...tokenResponse,
-      session_starttime: (Date.now() / 1000 - 60)
+      session_starttime: (Date.now() / 1000) - 60
     };
 
     const s3location = launchpadTokenBucketKey();
