@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
+- Changes to the `@cumulus/cumulus-api` package
+  - The `CumulusApiClientError` class must now be imported using
+    `const { CumulusApiClientError } = require('@cumulus/cumulus-api/CumulusApiClientError')`
 - The `@cumulus/sftp-client/SftpClient` class must now be imported using
   `const { SftpClient } = require('@cumulus/sftp-client');`
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly connect

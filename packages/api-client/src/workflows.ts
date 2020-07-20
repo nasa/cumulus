@@ -1,6 +1,5 @@
-'use strict';
-
-const { invokeApi } = require('./cumulusApiClient');
+import { invokeApi } from './cumulusApiClient';
+import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * Fetch a workflow from the Cumulus API
@@ -14,8 +13,14 @@ const { invokeApi } = require('./cumulusApiClient');
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-const getWorkflow = ({ prefix, workflowName, callback = invokeApi }) =>
-  callback({
+export const getWorkflow = (params: {
+  prefix: string,
+  workflowName: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, workflowName, callback = invokeApi } = params;
+
+  return callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -23,6 +28,7 @@ const getWorkflow = ({ prefix, workflowName, callback = invokeApi }) =>
       path: `/workflows/${workflowName}`
     }
   });
+};
 
 /**
  * Fetch a list of workflows from the Cumulus API
@@ -31,16 +37,18 @@ const getWorkflow = ({ prefix, workflowName, callback = invokeApi }) =>
  * @param {string} params.prefix - the prefix configured for the stack
  * @returns {Promise<Object>} - the list of workflows fetched by the API
  */
-const getWorkflows = async ({ prefix, callback = invokeApi }) => callback({
-  prefix: prefix,
-  payload: {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    path: '/workflows'
-  }
-});
+export const getWorkflows = (params: {
+  prefix: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, callback = invokeApi } = params;
 
-module.exports = {
-  getWorkflow,
-  getWorkflows
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/workflows'
+    }
+  });
 };
