@@ -57,6 +57,7 @@ locals {
       state_machine           = null
       execution_name          = null
       workflow_start_time     = null
+      queueExecutionLimits  = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
     }
     meta = {
       workflow_name  = null
@@ -82,7 +83,6 @@ locals {
       collection            = {}
       provider              = {}
       template              = "s3://${var.system_bucket}/${local.message_template_key}"
-      queueExecutionLimits  = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
     }
     payload   = {}
     exception = null
