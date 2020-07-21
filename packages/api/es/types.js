@@ -4,25 +4,37 @@ const get = require('lodash/get');
 
 const fullMappings = require('../models/mappings.json');
 
-const collectionMappings = require('./mappings/collection.json');
+// const collectionMappings = require('./mappings/collection.json');
 const ruleMappings = require('./mappings/rule.json');
 
-const typeAliases = [];
-typeAliases.collection = 'cumulus-collection-alias';
-typeAliases.rule = 'cumulus-rule-alias';
-
 const typeMappings = [];
-typeMappings.collection = collectionMappings;
+// typeMappings.collection = collectionMappings;
 typeMappings.rule = ruleMappings;
 
 const defaultIndexAlias = 'cumulus-alias';
 
-function getAliasByType(type) {
+function getEsTypes() {
+  return Object.keys(typeMappings);
+}
+
+function isValidEsType(type) {
+  return getEsTypes().includes(type);
+}
+
+function getAliasByType(type, aliasOverride = undefined) {
   if (process.env.MULTI_INDICES) {
-    return get(typeAliases, type, defaultIndexAlias);
+    if (isValidEsType(type)) {
+      if (aliasOverride) {
+        return `${aliasOverride}-type`;
+      }
+
+      return `cumulus-${type}-alias`;
+    }
+
+    // LAUREN TO DO - throw error
   }
 
-  return defaultIndexAlias;
+  return aliasOverride || defaultIndexAlias;
 }
 
 function getMappingsByType(type) {
@@ -33,7 +45,8 @@ function getMappingsByType(type) {
   return fullMappings;
 }
 
-module.exports = [
+module.exports = {
   getAliasByType,
+  getEsTypes,
   getMappingsByType
-];
+};
