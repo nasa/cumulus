@@ -20,27 +20,21 @@ const {
 async function sendStartSfMessages({
   numOfMessages,
   queueMaxExecutions,
-  queueArn,
   queueUrl,
   workflowArn,
   payload = {}
 }) {
   const message = {
     cumulus_meta: {
-      queueArn,
+      queueUrl,
       state_machine: workflowArn
-    },
-    meta: {
-      queues: {
-        [queueArn]: queueUrl
-      }
     },
     payload
   };
 
   if (queueMaxExecutions) {
-    message.meta.queueExecutionLimits = {
-      [queueArn]: queueMaxExecutions
+    message.cumulus_meta.queueExecutionLimits = {
+      [queueUrl]: queueMaxExecutions
     };
   }
 
@@ -275,7 +269,6 @@ describe('the sf-starter lambda function', () => {
   });
 
   describe('when provided a queue with a maximum number of executions', () => {
-    let maxQueueArn;
     let maxQueueUrl;
     let messagesConsumed;
     let ruleName;
@@ -296,12 +289,6 @@ describe('the sf-starter lambda function', () => {
         QueueName: maxQueueName
       }).promise();
       maxQueueUrl = QueueUrl;
-
-      const { Attributes } = await sqs().getQueueAttributes({
-        AttributeNames: ['QueueArn'],
-        QueueUrl: maxQueueUrl
-      }).promise();
-      maxQueueArn = Attributes.QueueArn;
 
       const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
       waitPassSfArn = stateMachineArn;
@@ -325,7 +312,6 @@ describe('the sf-starter lambda function', () => {
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
         queueMaxExecutions,
-        queueArn: maxQueueArn,
         queueUrl: maxQueueUrl,
         workflowArn: waitPassSfArn
       });
@@ -347,7 +333,7 @@ describe('the sf-starter lambda function', () => {
         dynamodbDocClient().delete({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
-            key: maxQueueArn
+            key: maxQueueUrl
           }
         }).promise()
       ]);
@@ -388,7 +374,7 @@ describe('the sf-starter lambda function', () => {
         const semItem = await dynamodbDocClient().get({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
-            key: maxQueueArn
+            key: maxQueueUrl
           }
         }).promise();
         expect(semItem.Item.semvalue).toBe(0);
