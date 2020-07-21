@@ -18,7 +18,7 @@ import { Message } from '@cumulus/types';
 import { CumulusQueueMessage } from './types';
 
 /**
- * Get queue ARN by URL from execution message.
+ * Get queue name by URL from execution message.
  *
  * @param {Message.CumulusMessage} message - An execution message
  * @param {string} queueUrl - An SQS queue URL
@@ -26,11 +26,10 @@ import { CumulusQueueMessage } from './types';
  *
  * @alias module:Queue
  */
-export const getQueueArnByUrl = (
+export const getQueueNameByUrl = (
   message: Message.CumulusMessage,
   queueUrl: string
 ) => {
-  util.deprecate('@cumulus/message/Queue.getQueueArnByUrl', '1.24.0');
   const queues = get(message, 'meta.queues', {});
   return findKey(queues, (value) => value === queueUrl);
 };
@@ -84,7 +83,7 @@ export const getMaximumExecutions = (
   message: CumulusQueueMessage,
   queueUrl: string
 ): number => {
-  const maxExecutions = message.cumulus_meta?.queueExecutionLimits?.[queueUrl];
+  const maxExecutions = message.cumulus_meta.queueExecutionLimits?.[queueUrl];
   if (isNil(maxExecutions)) {
     throw new Error(`Could not determine maximum executions for queue ${queueUrl}`);
   }
