@@ -15,6 +15,8 @@ import isNil from 'lodash/isNil';
 import * as util from '@cumulus/common/util';
 import { Message } from '@cumulus/types';
 
+import { CumulusQueueMessage } from './types';
+
 /**
  * Get queue ARN by URL from execution message.
  *
@@ -54,14 +56,14 @@ export const getQueueName = (message: Message.CumulusMessage) => {
 /**
  * Get the queue URL from a workflow message.
  *
- * @param {Message.CumulusMessage} message - A workflow message object
+ * @param {CumulusQueueMessage} message - A workflow message object
  * @returns {string} A queue URL
  * @throws {Error} if no queue URL in the message
  *
  * @alias module:Queue
  */
-export const getQueueUrl = (message: Message.CumulusMessage) => {
-  const queueUrl = get(message, 'cumulus_meta.queueUrl');
+export const getQueueUrl = (message: CumulusQueueMessage): string => {
+  const queueUrl = message.cumulus_meta?.queueUrl;
   if (isNil(queueUrl)) {
     throw new Error('cumulus_meta.queueUrl not set in message');
   }
@@ -71,7 +73,7 @@ export const getQueueUrl = (message: Message.CumulusMessage) => {
 /**
  * Get the maximum executions for a queue.
  *
- * @param {Message.CumulusMessage} message - A workflow message object
+ * @param {CumulusQueueMessage} message - A workflow message object
  * @param {string} queueUrl - A queue URL
  * @returns {number} Count of the maximum executions for the queue
  * @throws {Error} if no maximum executions can be found
@@ -79,10 +81,10 @@ export const getQueueUrl = (message: Message.CumulusMessage) => {
  * @alias module:Queue
  */
 export const getMaximumExecutions = (
-  message: Message.CumulusMessage,
+  message: CumulusQueueMessage,
   queueUrl: string
-) => {
-  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueUrl}`);
+): number => {
+  const maxExecutions = message.cumulus_meta?.queueExecutionLimits?.[queueUrl];
   if (isNil(maxExecutions)) {
     throw new Error(`Could not determine maximum executions for queue ${queueUrl}`);
   }
@@ -92,12 +94,14 @@ export const getMaximumExecutions = (
 /**
  * Determine if there is a queue and queue execution limit in the message.
  *
- * @param {Message.CumulusMessage} message - A workflow message object
+ * @param {CumulusQueueMessage} message - A workflow message object
  * @returns {boolean} True if there is a queue and execution limit.
  *
  * @alias module:Queue
  */
-export const hasQueueAndExecutionLimit = (message: Message.CumulusMessage) => {
+export const hasQueueAndExecutionLimit = (
+  message: CumulusQueueMessage
+): boolean => {
   try {
     const queueUrl = getQueueUrl(message);
     getMaximumExecutions(message, queueUrl);

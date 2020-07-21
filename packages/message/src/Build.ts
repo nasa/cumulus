@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
   MessageTemplate,
+  CumulusQueueMessage,
   QueueMessageMeta,
   Workflow
 } from './types';
@@ -25,7 +26,7 @@ import {
  * @returns {string}
  * @private
  */
-const createExecutionName = () => uuidv4();
+const createExecutionName = (): string => uuidv4();
 
 /**
  * Build base message.cumulus_meta for a queued execution.
@@ -35,7 +36,7 @@ const createExecutionName = () => uuidv4();
  * @param {string} params.stateMachine - State machine name
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {string} [params.parentExecutionArn] - Parent execution ARN
- * @returns {CumulusMeta}
+ * @returns {Message.CumulusMeta}
  *
  * @private
  */
@@ -49,7 +50,7 @@ export const buildCumulusMeta = ({
   stateMachine: string,
   asyncOperationId?: string,
   parentExecutionArn?: string
-}) => {
+}): Message.CumulusMeta => {
   const cumulusMeta: Message.CumulusMeta = {
     execution_name: createExecutionName(),
     queueUrl,
@@ -79,7 +80,7 @@ const buildMeta = ({
   workflowName: string
   collection?: object
   provider?: object
-}) => {
+}): QueueMessageMeta => {
   const meta: QueueMessageMeta = {
     workflow_name: workflowName
   };
@@ -107,7 +108,7 @@ const buildMeta = ({
  * @param {Object} [params.customCumulusMeta] - Custom data for message.cumulus_meta
  * @param {Object} [params.customMeta] - Custom data for message.meta
  *
- * @returns {CumulusMessage} A Cumulus message object
+ * @returns {CumulusQueueMessage} A Cumulus message object
  *
  * @alias module:Build
  */
@@ -133,7 +134,7 @@ export const buildQueueMessageFromTemplate = ({
   asyncOperationId?: string,
   customCumulusMeta?: object
   customMeta?: object
-}): Message.CumulusMessage => {
+}): CumulusQueueMessage => {
   const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
