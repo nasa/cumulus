@@ -51,7 +51,7 @@ class LaunchpadToken {
    * @returns {Promise<string | undefined>} - an object with the pfx
    * @private
    */
-  async retrieveCertificate(): Promise<string | undefined> {
+  private async retrieveCertificate(): Promise<string | undefined> {
     const bucket = getEnvVar('system_bucket');
     const stackName = getEnvVar('stackName');
 

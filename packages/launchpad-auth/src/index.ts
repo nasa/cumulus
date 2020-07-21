@@ -67,9 +67,7 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
       ) * 1000;
 
       // check if token is still valid
-      if (
-        now < tokenExpirationInMs
-      ) {
+      if (now < tokenExpirationInMs) {
         token = launchpadToken.sm_token;
       }
     }
