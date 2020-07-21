@@ -255,7 +255,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added missing `DISTRIBUTION_ENDPOINT` environment variable for API lambdas. This environment variable is required for API requests to move granules.
 
 - **CUMULUS-1961**
-  - Fixed granules query params not getting sent to API in granule list operation in `@cumulus/api-client`
+  - Fixed granules and executions query params not getting sent to API in granule list operation in `@cumulus/api-client`
 
 ### Deprecated
 
