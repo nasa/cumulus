@@ -115,11 +115,8 @@ async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
     granuleId
   });
   const granule = JSON.parse(response.body);
-  console.log(`waiting for ${granuleId} to appear in granule list.`);
   await waitForGranuleRecordsInList(config.stackName, [granuleId]);
-  console.log(`Granule Id found: ${granuleId} in granule list.`);
   await (new Granule()).delete({ granuleId });
-  console.log(`Waiting for GranuleId NOT found in list ${granuleId}`);
   await waitForGranuleRecordsNotInList(config.stackName, [granuleId], { sort_by: 'timestamp', timestamp__from: ingestTime });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   return granule;
@@ -141,23 +138,12 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
     return updatedFile;
   });
   await (new Granule()).update({ granuleId: granuleId }, { files: updatedFiles });
-  //
   return { originalGranuleFile, updatedGranuleFile };
 }
-
-jasmine.getEnv().addReporter({
-  specStarted: (result) => {
-    jasmine.currentTest = result;
-  },
-  specDone: (result) => {
-    jasmine.currentTest = result;
-  }
-});
 
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
   let beforeAllFailed = false;
-  let someSepcFailed = false;
   let cmrGranule;
   let collectionId;
   let config;
@@ -237,8 +223,6 @@ describe('When there are granule differences and granule reconciliation is run',
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
     } catch (error) {
       beforeAllFailed = true;
-      console.log('beforeAllFailure log:');
-      console.error(error);
       throw error;
     }
   });
@@ -350,65 +334,50 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('deletes a reconciliation report through the Cumulus API', async () => {
-    // Don't delete the reportif we failed.
-    if (!(someSepcFailed || beforeAllFailed)) {
-      await reconciliationReportsApi.deleteReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name
-      });
+    await reconciliationReportsApi.deleteReconciliationReport({
+      prefix: config.stackName,
+      name: reportRecord.name
+    });
 
-      const parsed = parseS3Uri(reportRecord.location);
-      const exists = await fileExists(parsed.Bucket, parsed.Key);
-      expect(exists).toBeFalse();
+    const parsed = parseS3Uri(reportRecord.location);
+    const exists = await fileExists(parsed.Bucket, parsed.Key);
+    expect(exists).toBeFalse();
 
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name
-      });
+    const response = await reconciliationReportsApi.getReconciliationReport({
+      prefix: config.stackName,
+      name: reportRecord.name
+    });
 
-      expect(response.statusCode).toBe(404);
-      expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
-    }
-  });
-
-  afterEach(() => {
-    if (jasmine.currentTest.failedExpectations.length > 0) {
-      console.log('This test failed:', jasmine.currentTest.description);
-      someSepcFailed = true;
-    }
+    expect(response.statusCode).toBe(404);
+    expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
   });
 
   afterAll(async () => {
-    // TODO [MHS, 2020-07-20] hack to save database when a test fails.
-    if (!(someSepcFailed || beforeAllFailed)) {
-      console.log(`update granule files back ${publishedGranuleId}`);
-      await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
+    console.log(`update granule files back ${publishedGranuleId}`);
+    await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
 
-      await Promise.all([
-        s3().deleteObject(extraS3Object).promise(),
-        GranuleFilesCache.del(extraFileInDb),
-        dynamodb().deleteItem({
-          TableName: collectionsTableName(config.stackName),
-          Key: {
-            name: extraCumulusCollection.name,
-            version: extraCumulusCollection.version
-          }
-        }).promise(),
-        deleteFolder(config.bucket, testDataFolder),
-        cleanupCollections(config.stackName, config.bucket, collectionsDir),
-        cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-        granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId })
-      ]);
+    await Promise.all([
+      s3().deleteObject(extraS3Object).promise(),
+      GranuleFilesCache.del(extraFileInDb),
+      dynamodb().deleteItem({
+        TableName: collectionsTableName(config.stackName),
+        Key: {
+          name: extraCumulusCollection.name,
+          version: extraCumulusCollection.version
+        }
+      }).promise(),
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId })
+    ]);
 
-      // need to add the cmr granule back to the table, so the granule can be removed from api
-      await granuleModel.create(cmrGranule);
-      await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
-      await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
+    // need to add the cmr granule back to the table, so the granule can be removed from api
+    await granuleModel.create(cmrGranule);
+    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
+    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
 
-      await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
-      await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
-    } else {
-      console.log('the tests failed, leaving all the files in place.');
-    }
+    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
+    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });
 });
