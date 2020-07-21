@@ -50,7 +50,7 @@
             "FullMessage": true
           },
           "task_config": {
-            "queueUrl": "{$.meta.queues.startSF}",
+            "queueUrl": "${start_sf_queue_url}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
             "internalBucket": "{$.meta.buckets.internal.name}",
