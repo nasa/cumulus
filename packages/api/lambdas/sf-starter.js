@@ -51,7 +51,9 @@ function dispatch(message) {
 async function incrementAndDispatch(queueMessage) {
   const workflowMessage = JSON.parse(get(queueMessage, 'Body', '{}'));
 
+  console.log('workflowMessage', workflowMessage);
   const queueUrl = getQueueUrl(workflowMessage);
+  console.log('queueUrl', queueUrl);
   const maxExecutions = getMaximumExecutions(workflowMessage, queueUrl);
 
   await incrementQueueSemaphore(queueUrl, maxExecutions);
