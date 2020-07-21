@@ -19,18 +19,19 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 
 const { convertLogLevel } = require('./logUtils');
 const { Search } = require('./search');
-const { getAliasByType } = require('./types');
+const { getAliasByType, getMappingsByType } = require('./types');
 const { Granule } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
-const mappings = require('../models/mappings.json');
 
-async function createIndex(esClient, indexName) {
+async function createIndex(esClient, type, indexName) {
   const indexExists = await esClient.indices.exists({ index: indexName })
     .then((response) => response.body);
 
   if (indexExists) {
     throw new IndexExistsError(`Index ${indexName} exists and cannot be created.`);
   }
+
+  const mappings = getMappingsByType(type);
 
   await esClient.indices.create({
     index: indexName,
