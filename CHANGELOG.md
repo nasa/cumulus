@@ -7,6 +7,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
+- Changes to the `@cumulus/cumulus-api` package
+  - The `CumulusApiClientError` class must now be imported using
+    `const { CumulusApiClientError } = require('@cumulus/cumulus-api/CumulusApiClientError')`
+- The `@cumulus/sftp-client/SftpClient` class must now be imported using
+  `const { SftpClient } = require('@cumulus/sftp-client');`
+- Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly connect
+  when `download`, `list`, or `sync` are called. You must call `connect` on the
+  provider client before issuing one of those calls. Failure to do so will
+  result in a "Client not connected" exception being thrown.
+- Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly
+  disconnect from the SFTP server when `list` is called.
+- Instances of `@cumulus/sftp-client/SftpClient` must now be expclicitly closed
+  by calling `.end()`
+- Instances of `@cumulus/sftp-client/SftpClient` no longer implicitly connect to
+  the server when `download`, `unlink`, `syncToS3`, `syncFromS3`, and `list` are
+  called. You must explicitly call `connect` before calling one of those
+  methods.
 - Changes to the `@cumulus/common` package
   - `cloudwatch-event.getSfEventMessageObject()` now returns `undefined` if the
     message could not be found or could not be parsed. It previously returned
@@ -169,6 +186,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Created the `add-missing-file-checksums` workflow task
   - Added `@cumulus/aws-client/S3.calculateObjectHash()` function
   - Added `@cumulus/aws-client/S3.getObjectReadStream()` function
+- **CUMULUS-1887**
+  - Add additional fields to the granule CSV download file
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
     support partial matching of the keywords

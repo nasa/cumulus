@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
-const SftpClient = require('@cumulus/sftp-client');
+const { SftpClient } = require('@cumulus/sftp-client');
 const { Collection } = require('../models');
 
 /**
@@ -143,36 +143,41 @@ async function submitReports(reports) {
   const reportsSent = [];
   const sftpClient = new SftpClient(sshConfig);
 
-  // submit files one by one using the same connection
-  for (let i = 0; i < reports.length; i += 1) {
-    const parsed = parseS3Uri(reports[i].file);
-    const keyfields = parsed.Key.split('/');
-    const fileName = keyfields.pop();
-    // eslint-disable-next-line no-await-in-loop
-    await sftpClient.syncFromS3(
-      { Bucket: parsed.Bucket, Key: parsed.Key },
-      s3Join(process.env.ems_path || '', fileName).replace(/^\/+/g, '')
-    );
-    log.debug(`EMS report ${fileName} is sent`);
+  try {
+    await sftpClient.connect();
 
-    // copy to sent folder, the file is also in original location so that a .rev file
-    // can be generated
-    const newKey = s3Join(keyfields.join('/'), 'sent', fileName);
+    // submit files one by one using the same connection
+    for (let i = 0; i < reports.length; i += 1) {
+      const parsed = parseS3Uri(reports[i].file);
+      const keyfields = parsed.Key.split('/');
+      const fileName = keyfields.pop();
+      // eslint-disable-next-line no-await-in-loop
+      await sftpClient.syncFromS3(
+        { Bucket: parsed.Bucket, Key: parsed.Key },
+        s3Join(process.env.ems_path || '', fileName).replace(/^\/+/g, '')
+      );
+      log.debug(`EMS report ${fileName} is sent`);
 
-    // eslint-disable-next-line no-await-in-loop
-    await s3CopyObject({
-      CopySource: `${parsed.Bucket}/${parsed.Key}`,
-      Bucket: parsed.Bucket,
-      Key: newKey
-    });
+      // copy to sent folder, the file is also in original location so that a .rev file
+      // can be generated
+      const newKey = s3Join(keyfields.join('/'), 'sent', fileName);
 
-    reportsSent.push({
-      reportType: reports[i].reportType,
-      file: buildS3Uri(parsed.Bucket, newKey)
-    });
+      // eslint-disable-next-line no-await-in-loop
+      await s3CopyObject({
+        CopySource: `${parsed.Bucket}/${parsed.Key}`,
+        Bucket: parsed.Bucket,
+        Key: newKey
+      });
+
+      reportsSent.push({
+        reportType: reports[i].reportType,
+        file: buildS3Uri(parsed.Bucket, newKey)
+      });
+    }
+  } finally {
+    await sftpClient.end();
   }
 
-  await sftpClient.end();
   return reportsSent;
 }
 
