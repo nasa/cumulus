@@ -180,7 +180,7 @@ resource "aws_lambda_function" "schedule_sf" {
       CollectionsTable         = var.dynamo_tables.collections.name
       ProvidersTable           = var.dynamo_tables.providers.name
       stackName                = var.prefix
-      defaultSchedulerQueueArn = aws_sqs_queue.start_sf.id
+      defaultSchedulerQueueUrl = aws_sqs_queue.start_sf.id
     }
   }
   tags = var.tags

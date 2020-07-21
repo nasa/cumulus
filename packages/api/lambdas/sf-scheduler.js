@@ -36,7 +36,7 @@ async function handleScheduleEvent(event) {
   ]);
 
   const messageTemplate = get(event, 'template');
-  const queueArn = get(event, 'queueArn', process.env.defaultSchedulerQueueArn);
+  const queueUrl = get(event, 'queueUrl', process.env.defaultSchedulerQueueUrl);
   const workflowDefinition = get(event, 'definition');
   const workflow = {
     name: workflowDefinition.name,
@@ -47,7 +47,7 @@ async function handleScheduleEvent(event) {
     collection,
     messageTemplate,
     provider,
-    queueArn,
+    queueUrl,
     asyncOperationId: get(event, 'asyncOperationId'),
     customCumulusMeta: get(event, 'cumulus_meta', {}),
     customMeta: get(event, 'meta', {}),
@@ -55,7 +55,7 @@ async function handleScheduleEvent(event) {
     workflow
   });
 
-  return SQS.sendSQSMessage(message.meta.queues[queueArn], message);
+  return SQS.sendSQSMessage(queueUrl, message);
 }
 
 module.exports = {

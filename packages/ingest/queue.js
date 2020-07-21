@@ -5,7 +5,6 @@ const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
-const { getQueueArnByUrl } = require('@cumulus/message/Queue');
 
 const {
   getWorkflowFileKey,
@@ -41,7 +40,6 @@ async function enqueueParsePdrMessage({
     systemBucket,
     getWorkflowFileKey(stack, parsePdrWorkflow)
   );
-  const queueArn = getQueueArnByUrl(messageTemplate, queueUrl);
   const payload = { pdr };
   const workflow = {
     name: parsePdrWorkflow,
@@ -54,7 +52,7 @@ async function enqueueParsePdrMessage({
     parentExecutionArn,
     payload,
     provider,
-    queueArn,
+    queueUrl,
     workflow
   });
 
@@ -100,7 +98,6 @@ async function enqueueGranuleIngestMessage({
     systemBucket,
     getWorkflowFileKey(stack, granuleIngestWorkflow)
   );
-  const queueArn = getQueueArnByUrl(messageTemplate, queueUrl);
 
   const payload = {
     granules: [
@@ -119,7 +116,7 @@ async function enqueueGranuleIngestMessage({
     parentExecutionArn,
     payload,
     provider,
-    queueArn,
+    queueUrl,
     workflow
   });
 

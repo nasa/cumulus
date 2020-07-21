@@ -82,7 +82,7 @@ module "archive" {
   non_complete_execution_payload_timeout_disable = var.non_complete_execution_payload_timeout_disable
   non_complete_execution_payload_timeout = var.non_complete_execution_payload_timeout
 
-  background_queue_arn = module.ingest.background_queue_arn
+  background_queue_url = module.ingest.background_queue_url
 
   distribution_api_id = module.distribution.rest_api_id
   distribution_url    = module.distribution.distribution_url

@@ -216,7 +216,7 @@ class Rule extends Manager {
       meta: get(item, 'meta', {}),
       cumulus_meta: get(item, 'cumulus_meta', {}),
       payload: get(item, 'payload', {}),
-      queueArn: item.queueArn,
+      queueUrl: item.queueUrl,
       asyncOperationId: item.asyncOperationId
     };
   }
