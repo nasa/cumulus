@@ -185,14 +185,14 @@ const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIs
 );
 
 const waitForGranuleRecordNotInList = async (stackName, granuleId, additionalQueryParams = {}) =>
-  waitForGranuleRecordInOrNotInList(stackName, granuleId, 'false', additionalQueryParams);
+  waitForGranuleRecordInOrNotInList(stackName, granuleId, false, additionalQueryParams);
 
 const waitForGranuleRecordsNotInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
   granuleIds.map((id) => waitForGranuleRecordNotInList(stackName, id, additionalQueryParams))
 );
 
 const waitForGranuleRecordInList = async (stackName, granuleId, additionalQueryParams = {}) =>
-  waitForGranuleRecordInOrNotInList(stackName, granuleId, 'true', additionalQueryParams);
+  waitForGranuleRecordInOrNotInList(stackName, granuleId, true, additionalQueryParams);
 
 const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
   granuleIds.map((id) => waitForGranuleRecordInList(stackName, id, additionalQueryParams))
