@@ -137,3 +137,7 @@ output "scaling_role_arn" {
 output "background_queue_url" {
   value = aws_sqs_queue.background_processing.id
 }
+
+output "start_sf_queue_url" {
+  value = aws_sqs_queue.start_sf.id
+}
