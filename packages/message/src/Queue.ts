@@ -30,6 +30,7 @@ export const getQueueNameByUrl = (
   message: Message.CumulusMessage,
   queueUrl: string
 ) => {
+  util.deprecate('@cumulus/message/Queue.getQueueNameByUrl', '1.24.0');
   const queues = get(message, 'meta.queues', {});
   return findKey(queues, (value) => value === queueUrl);
 };
