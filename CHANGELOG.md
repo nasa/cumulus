@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
+
 - The `@cumulus/sftp-client/SftpClient` class must now be imported using
   `const { SftpClient } = require('@cumulus/sftp-client');`
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly connect
@@ -120,6 +121,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1991**
   - Updated CMR metadata generation to use "Download file.hdf" (where `file.hdf` is the filename of the given resource) as the resource description instead of "File to download"
   - CMR metadata updates now respect changes to resource descriptions (previously only changes to resource URLs were respected)
+- **CUMULUS-2099**
+  - `meta.queues` has been removed from Cumulus messages.
+  - `@cumulus/message/Build.buildQueueMessageFromTemplate` no longer takes `params.queueName` as a parameter. It has been replaced by `params.queueUrl`, which should be an SQS queue URL.
+  - `@cumulus/message/Queue.getMaximumExecutions` no longer takes `queueName` as a parameter. It has been replaced by `queueUrl`, which should be an SQS queue URL.
 
 ### MIGRATION STEPS
 
@@ -135,6 +140,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   instructions](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
   to `Redeploy a REST API to a stage` for your egress API and re-run `terraform
   apply`.
+- **CUMULUS-2099**
+  - All references to `meta.queues` in workflow configuration must be replaced with references to queue URLs from Terraform resources. See the updated [data cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/about-cookbooks) or example [Discover Granules workflow configuration](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json).
+  - The steps for configuring queued execution throttling have changed. See the [updated documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
 
 ### Added
 
@@ -188,6 +196,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
     support partial matching of the keywords
+- **CUMULUS-2099**
+  - `@cumulus/message/Queue.getQueueUrl` to get the queue URL specified in a Cumulus workflow message, if any.
 
 ### Changed
 
@@ -258,6 +268,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
+- `@cumulus/message/Queue.getQueueNameByUrl()`
+- `@cumulus/message/Queue.getQueueName()`
 
 - **CUMULUS-1930**
   - `@cumulus/common/log.convertLogLevel()`

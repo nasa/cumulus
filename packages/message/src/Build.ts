@@ -32,7 +32,7 @@ const createExecutionName = (): string => uuidv4();
  * Build base message.cumulus_meta for a queued execution.
  *
  * @param {Object} params
- * @param {string} [params.queueArn] - An SQS queue name
+ * @param {string} [params.queueUrl] - An SQS queue URL
  * @param {string} params.stateMachine - State machine name
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {string} [params.parentExecutionArn] - Parent execution ARN
