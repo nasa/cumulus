@@ -7,7 +7,7 @@ const {
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
 const {
-  getQueueArn,
+  getQueueUrl,
   hasQueueAndExecutionLimit
 } = require('@cumulus/message/Queue');
 const stepFunctions = require('@cumulus/message/StepFunctions');
@@ -42,8 +42,8 @@ async function handleSemaphoreDecrementTask(event) {
   if (!eventMessage) eventMessage = getSfEventMessageObject(event, 'input', '{}');
   const executionMessage = await stepFunctions.pullStepFunctionEvent(eventMessage);
   if (isDecrementEvent(event, executionMessage)) {
-    const queueArn = getQueueArn(eventMessage);
-    return decrementQueueSemaphore(queueArn);
+    const queueUrl = getQueueUrl(eventMessage);
+    return decrementQueueSemaphore(queueUrl);
   }
   return 'Not a valid decrement event, no operation performed';
 }

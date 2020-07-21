@@ -48,27 +48,27 @@ export const getQueueName = (message: Message.CumulusMessage) => {
 };
 
 /**
- * Get the queue ARN from a workflow message.
+ * Get the queue URL from a workflow message.
  *
  * @param {Message.CumulusMessage} message - A workflow message object
- * @returns {string} A queue ARN
- * @throws {Error} if no queue name in the message
+ * @returns {string} A queue URL
+ * @throws {Error} if no queue URL in the message
  *
  * @alias module:Queue
  */
-export const getQueueArn = (message: Message.CumulusMessage) => {
-  const queueName = get(message, 'cumulus_meta.queueArn');
-  if (isNil(queueName)) {
-    throw new Error('cumulus_meta.queueArn not set in message');
+export const getQueueUrl = (message: Message.CumulusMessage) => {
+  const queueUrl = get(message, 'cumulus_meta.queueUrl');
+  if (isNil(queueUrl)) {
+    throw new Error('cumulus_meta.queueUrl not set in message');
   }
-  return queueName;
+  return queueUrl;
 };
 
 /**
  * Get the maximum executions for a queue.
  *
  * @param {Message.CumulusMessage} message - A workflow message object
- * @param {string} queueArn - A queue ARN
+ * @param {string} queueUrl - A queue URL
  * @returns {number} Count of the maximum executions for the queue
  * @throws {Error} if no maximum executions can be found
  *
@@ -76,11 +76,11 @@ export const getQueueArn = (message: Message.CumulusMessage) => {
  */
 export const getMaximumExecutions = (
   message: Message.CumulusMessage,
-  queueArn: string
+  queueUrl: string
 ) => {
-  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueArn}`);
+  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueUrl}`);
   if (isNil(maxExecutions)) {
-    throw new Error(`Could not determine maximum executions for queue ${queueArn}`);
+    throw new Error(`Could not determine maximum executions for queue ${queueUrl}`);
   }
   return maxExecutions;
 };
@@ -95,8 +95,8 @@ export const getMaximumExecutions = (
  */
 export const hasQueueAndExecutionLimit = (message: Message.CumulusMessage) => {
   try {
-    const queueArn = getQueueArn(message);
-    getMaximumExecutions(message, queueArn);
+    const queueUrl = getQueueUrl(message);
+    getMaximumExecutions(message, queueUrl);
   } catch (error) {
     return false;
   }
