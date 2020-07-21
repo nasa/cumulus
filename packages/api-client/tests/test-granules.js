@@ -235,7 +235,7 @@ test('listGranules calls the callback with the expected object', async (t) => {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/granules',
-      queryStringParameters: { limit: 50 }
+      queryStringParameters: query
     }
   };
 
