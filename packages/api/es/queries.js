@@ -34,6 +34,23 @@ const build = {
     }
   }),
 
+  sort: (params) => {
+    let sort;
+    const { sort_by: sortBy, order, sort_key: sortKey } = params;
+
+    if (sortBy && order) {
+      sort = [{ [sortBy]: { order: order } }];
+    } else if (sortKey && Array.isArray(sortKey)) {
+      sort = sortKey.map((key) => ({
+        [key.replace(/^[+-]/, '')]: { order: key.startsWith('-') ? 'desc' : 'asc' }
+      }));
+    } else {
+      sort = [{ timestamp: { order: 'desc' } }];
+    }
+
+    return sort;
+  },
+
   prefix: (queries, _prefix, terms) => {
     if (_prefix) {
       let fields = queryFields.slice();
@@ -168,14 +185,9 @@ function selectParams(fields, regex) {
 }
 
 module.exports = function query(params) {
-  const sortBy = params.sort_by || 'timestamp';
-  const order = params.order || 'desc';
-
   const response = {
     query: { match_all: {} },
-    sort: [
-      { [sortBy]: { order: order } }
-    ]
+    sort: build.sort(params)
   };
 
   const queries = {
@@ -194,6 +206,7 @@ module.exports = function query(params) {
       'page',
       'skip',
       'sort_by',
+      'sort_key',
       'order',
       'prefix',
       'infix',
