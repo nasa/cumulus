@@ -312,7 +312,7 @@ export const removePublishedGranule = async (params: {
  */
 export const listGranules = async (params: {
   prefix: string,
-  query?: string,
+  query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
@@ -323,7 +323,7 @@ export const listGranules = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/granules',
-      body: query ? JSON.stringify({ query }) : undefined
+      queryStringParameters: query
     }
   });
 };
