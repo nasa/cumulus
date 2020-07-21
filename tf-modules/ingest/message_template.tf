@@ -43,17 +43,6 @@ resource "aws_iam_role_policy" "lambda_processing_role_get_secrets" {
 }
 
 locals {
-  # default_queues = {
-  #   (aws_sqs_queue.background_processing.arn)         = aws_sqs_queue.background_processing.id
-  #   (aws_sqs_queue.kinesis_failure.arn)               = aws_sqs_queue.kinesis_failure.id
-  #   reporting                                       = var.sf_event_sqs_to_db_records_sqs_queue_url
-  #   (aws_sqs_queue.start_sf.arn)                      = aws_sqs_queue.start_sf.id
-  #   (aws_sqs_queue.schedule_sf_dead_letter_queue.arn) = aws_sqs_queue.schedule_sf_dead_letter_queue.id
-  #   (aws_sqs_queue.trigger_lambda_failure.arn)        = aws_sqs_queue.trigger_lambda_failure.id
-  # }
-  # custom_queues = { for queue in var.custom_queues: queue.id => queue.url }
-  # custom_throttled_queues = { for queue in var.throttled_queues: queue.id => queue.url }
-
   default_queue_execution_limits = {
     (aws_sqs_queue.background_processing.id) = 5
   }
@@ -93,7 +82,6 @@ locals {
       collection            = {}
       provider              = {}
       template              = "s3://${var.system_bucket}/${local.message_template_key}"
-      queues                = merge(local.default_queues, local.custom_queues, local.custom_throttled_queues)
       queueExecutionLimits  = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
     }
     payload   = {}
