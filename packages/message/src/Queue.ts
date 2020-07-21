@@ -11,6 +11,8 @@
 import findKey from 'lodash/findKey';
 import get from 'lodash/get';
 import isNil from 'lodash/isNil';
+
+import * as util from '@cumulus/common/util';
 import { Message } from '@cumulus/types';
 
 /**
@@ -26,6 +28,7 @@ export const getQueueArnByUrl = (
   message: Message.CumulusMessage,
   queueUrl: string
 ) => {
+  util.deprecate('@cumulus/message/Queue.getQueueArnByUrl', '1.24.0');
   const queues = get(message, 'meta.queues', {});
   return findKey(queues, (value) => value === queueUrl);
 };
@@ -40,6 +43,7 @@ export const getQueueArnByUrl = (
  * @alias module:Queue
  */
 export const getQueueName = (message: Message.CumulusMessage) => {
+  util.deprecate('@cumulus/message/Queue.getQueueName', '1.24.0');
   const queueName = get(message, 'cumulus_meta.queueName');
   if (isNil(queueName)) {
     throw new Error('cumulus_meta.queueName not set in message');
