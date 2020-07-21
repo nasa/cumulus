@@ -11,7 +11,7 @@ npm install @cumulus/sftp-client
 ## Usage
 
 ```js
-const SftpClient = require("@cumulus/sftp-client");
+const { SftpClient } = require("@cumulus/sftp-client");
 
 (async () => {
   const sftpClient = new SftpClient({

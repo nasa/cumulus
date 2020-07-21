@@ -1,8 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
-const rulesRewire = rewire('../rules');
+const rulesApi = require('../rules');
 
 test.before(async (t) => {
   t.context.testPrefix = 'unitTestStack';
@@ -26,19 +25,16 @@ test('postRule calls the callback with the expected object', async (t) => {
       body: JSON.stringify(t.context.testRule)
     }
   };
+
   const callback = async (configObject) => {
-    t.deepEqual(expected, configObject);
+    t.deepEqual(configObject, expected);
   };
-  let revertCallback;
-  try {
-    revertCallback = rulesRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(rulesRewire.postRule({
-      prefix: t.context.testPrefix,
-      rule: t.context.testRule
-    }));
-  } finally {
-    revertCallback();
-  }
+
+  await t.notThrowsAsync(rulesApi.postRule({
+    prefix: t.context.testPrefix,
+    rule: t.context.testRule,
+    callback
+  }));
 });
 
 test('updateRule calls the callback with the expected object', async (t) => {
@@ -54,21 +50,17 @@ test('updateRule calls the callback with the expected object', async (t) => {
       body: JSON.stringify(t.context.updateParams)
     }
   };
+
   const callback = async (configObject) => {
-    t.deepEqual(expected, configObject);
+    t.deepEqual(configObject, expected);
   };
 
-  let revertCallback;
-  try {
-    revertCallback = rulesRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(rulesRewire.updateRule({
-      prefix: t.context.testPrefix,
-      ruleName: t.context.testName,
-      updateParams: t.context.updateParams
-    }));
-  } finally {
-    revertCallback();
-  }
+  await t.notThrowsAsync(rulesApi.updateRule({
+    prefix: t.context.testPrefix,
+    ruleName: t.context.testName,
+    updateParams: t.context.updateParams,
+    callback
+  }));
 });
 
 test('listRules calls the callback with the expected object', async (t) => {
@@ -81,19 +73,15 @@ test('listRules calls the callback with the expected object', async (t) => {
       queryStringParameters: {}
     }
   };
+
   const callback = async (configObject) => {
-    t.deepEqual(expected, configObject);
+    t.deepEqual(configObject, expected);
   };
 
-  let revertCallback;
-  try {
-    revertCallback = rulesRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(rulesRewire.listRules({
-      prefix: t.context.testPrefix
-    }));
-  } finally {
-    revertCallback();
-  }
+  await t.notThrowsAsync(rulesApi.listRules({
+    prefix: t.context.testPrefix,
+    callback
+  }));
 });
 
 test('getRule calls the callback with the expected object', async (t) => {
@@ -105,20 +93,16 @@ test('getRule calls the callback with the expected object', async (t) => {
       path: `/rules/${t.context.testName}`
     }
   };
+
   const callback = async (configObject) => {
-    t.deepEqual(expected, configObject);
+    t.deepEqual(configObject, expected);
   };
 
-  let revertCallback;
-  try {
-    revertCallback = rulesRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(rulesRewire.getRule({
-      prefix: t.context.testPrefix,
-      ruleName: t.context.testName
-    }));
-  } finally {
-    revertCallback();
-  }
+  await t.notThrowsAsync(rulesApi.getRule({
+    prefix: t.context.testPrefix,
+    ruleName: t.context.testName,
+    callback
+  }));
 });
 
 test('deleteRule calls the callback with the expected object', async (t) => {
@@ -130,46 +114,36 @@ test('deleteRule calls the callback with the expected object', async (t) => {
       path: `/rules/${t.context.testName}`
     }
   };
+
   const callback = async (configObject) => {
-    t.deepEqual(expected, configObject);
+    t.deepEqual(configObject, expected);
   };
 
-  let revertCallback;
-  try {
-    revertCallback = rulesRewire.__set__('invokeApi', callback);
-    await t.notThrowsAsync(rulesRewire.deleteRule({
-      prefix: t.context.testPrefix,
-      ruleName: t.context.testName
-    }));
-  } finally {
-    revertCallback();
-  }
+  await t.notThrowsAsync(rulesApi.deleteRule({
+    prefix: t.context.testPrefix,
+    ruleName: t.context.testName,
+    callback
+  }));
 });
 
-test.serial('rerunRule calls the updateRule with the expected object', async (t) => {
-  let revertUpdateRule;
-  let revertCallback;
-  try {
-    const expected = {
-      prefix: t.context.testPrefix,
-      ruleName: t.context.testName,
-      updateParams: { action: 'rerun' }
-    };
+test('rerunRule calls the updateRule with the expected object', async (t) => {
+  const expected = {
+    httpMethod: 'PUT',
+    resource: '/{proxy+}',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    path: `/rules/${t.context.testName}`,
+    body: JSON.stringify({ action: 'rerun' })
+  };
 
-    const callback = async (configObject) => {
-      t.deepEqual(expected, configObject);
-    };
+  const callback = async ({ payload }) => {
+    t.deepEqual(payload, expected);
+  };
 
-    revertCallback = rulesRewire.__set__('invokeApi', callback);
-    revertUpdateRule = rulesRewire.__set__('updateRule', async (configObject) => {
-      t.deepEqual({ ...expected, callback }, configObject);
-    });
-    await t.notThrowsAsync(rulesRewire.rerunRule({
-      prefix: t.context.testPrefix,
-      ruleName: t.context.testName
-    }));
-  } finally {
-    revertUpdateRule();
-    revertCallback();
-  }
+  await t.notThrowsAsync(rulesApi.rerunRule({
+    prefix: t.context.testPrefix,
+    ruleName: t.context.testName,
+    callback
+  }));
 });

@@ -195,10 +195,17 @@ const buildPdrDocument = (rawPdr) => {
 const parsePdr = async ({ config, input }) => {
   const providerClient = buildProviderClient(config.provider);
 
-  const rawPdr = await fetchTextFile(
-    providerClient,
-    path.join(input.pdr.path, input.pdr.name)
-  );
+  let rawPdr;
+  try {
+    await providerClient.connect();
+
+    rawPdr = await fetchTextFile(
+      providerClient,
+      path.join(input.pdr.path, input.pdr.name)
+    );
+  } finally {
+    await providerClient.end();
+  }
 
   const pdrDocument = buildPdrDocument(rawPdr);
 
