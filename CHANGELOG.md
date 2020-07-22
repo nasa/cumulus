@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- Changes to the `@cumulus/api-client` package
+  - The `CumulusApiClientError` class must now be imported using
+    `const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError')`
 - The `@cumulus/sftp-client/SftpClient` class must now be imported using
   `const { SftpClient } = require('@cumulus/sftp-client');`
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly connect
@@ -260,6 +263,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1991**
   - Added missing `DISTRIBUTION_ENDPOINT` environment variable for API lambdas. This environment variable is required for API requests to move granules.
+
+- **CUMULUS-1961**
+  - Fixed granules and executions query params not getting sent to API in granule list operation in `@cumulus/api-client`
 
 ### Deprecated
 
