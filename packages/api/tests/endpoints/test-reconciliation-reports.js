@@ -301,7 +301,7 @@ test.serial('create a report starts an async operation', async (t) => {
       lambdaName: process.env.invokeReconcileLambda,
       description: 'Create Inventory Report',
       operationType: 'Reconciliation Report',
-      payload: {},
+      payload: { startTimestamp: undefined, endTimestamp: undefined },
       useLambdaEnvironmentVariables: true
     }));
   } finally {
