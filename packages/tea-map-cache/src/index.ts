@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import AWS from 'aws-sdk';
+import { s3PutObject } from '@cumulus/aws-client/S3';
 import { getTeaBucketPath } from './tea';
 import { bucketMapObject } from './types';
 
@@ -28,7 +28,6 @@ export const handler = async (event: {
     throw new TypeError('process.env.TEA_API must be defined as a string to use this lambda');
   }
 
-  const s3 = new AWS.S3();
   const bucketMapPromises = event.bucketList.map(async (bucket) => ({
     [bucket]: await getTeaBucketPath({ bucket, teaEndPoint })
   }));
@@ -38,11 +37,11 @@ export const handler = async (event: {
     (map, obj) => Object.assign(map, obj), {}
   );
 
-  await s3.putObject({
+  await s3PutObject({
     Bucket: s3Bucket,
     Key: s3Key,
     Body: JSON.stringify(bucketMap)
-  }).promise();
+  });
   console.log(`Wrote bucketmap ${JSON.stringify(bucketMap)} to ${s3Bucket}/${s3Key}`);
   return bucketMap;
 };
