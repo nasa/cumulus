@@ -46,7 +46,7 @@ locals {
   default_queue_execution_limits = {
     (aws_sqs_queue.background_processing.id) = 5
   }
-  custom_queue_execution_limits = { for queue in var.throttled_queues: queue.arn => queue.execution_limit }
+  custom_queue_execution_limits = { for queue in var.throttled_queues: queue.url => queue.execution_limit }
 
   message_template_key = "${var.prefix}/workflow_template.json"
 
