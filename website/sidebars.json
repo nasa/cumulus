@@ -28,6 +28,7 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
+      "deployment/monitoring-readme",
       "deployment/terraform-best-practices",
       "deployment/upgrade-readme",
       "deployment/components",
