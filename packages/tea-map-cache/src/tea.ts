@@ -9,11 +9,11 @@ const log = new Logger({ sender: '@cumulus/tea-map-cache/tea' });
 /**
  * getTeaBucketPath
 
- * @param {Object} params      - parameters
+ * @param {Object} params             - parameters
  * @param {string} params.bucket      - Bucket name to get TEA path mapping
  * @param {string} params.teaEndPoint - TEA API URL
- * @param {number} params.retries     - retries override for pRetry
- * @returns {Promise<string>}  - TEA path for the given bucket
+ * @param {number} [params.retries]   - retries override for pRetry
+ * @returns {Promise<string>}         - TEA path for the given bucket
  */
 export const getTeaBucketPath = async (params: {
   bucket: string,
