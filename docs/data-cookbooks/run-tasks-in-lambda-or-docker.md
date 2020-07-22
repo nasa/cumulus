@@ -52,7 +52,7 @@ The following example is an excerpt from the [Discover Granules workflow](https:
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
             "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}",
-            "queueUrl": "{$.meta.queues.startSF}"
+            "queueUrl": "${module.cumulus.start_sf_queue_url}"
           }
         }
       },
