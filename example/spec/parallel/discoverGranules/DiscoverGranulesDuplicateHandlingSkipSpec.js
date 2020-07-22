@@ -65,6 +65,8 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         Body: 'asdf'
       });
 
+      const ingestTime = Date.now() - 1000 * 30;
+
       // Ingest the existing granule
       ingestGranuleRule = await createOneTimeRule(
         prefix,
@@ -96,6 +98,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === ingestGranuleRule.payload.testExecutionId,
+        { timestamp__from: ingestTime },
         { timeout: 15 }
       );
 
@@ -138,6 +141,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
+        { timestamp__from: ingestTime },
         { timeout: 15 }
       );
 
