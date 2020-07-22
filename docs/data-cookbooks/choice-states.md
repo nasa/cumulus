@@ -30,20 +30,20 @@ Given the above input to the `CheckAgainChoice` state, the workflow would transi
 
 ```json
 "CheckAgainChoice": {
-      "Type": "Choice",
-      "Choices": [
-        {
-          "Variable": "$.meta.isPdrFinished",
-          "BooleanEquals": false,
-          "Next": "PdrStatusReport"
-        },
-        {
-          "Variable": "$.meta.isPdrFinished",
-          "BooleanEquals": true,
-          "Next": "WorkflowSucceeded"
-        }
-      ],
-      "Default": "WorkflowSucceeded"
+  "Type": "Choice",
+  "Choices": [
+    {
+      "Variable": "$.meta.isPdrFinished",
+      "BooleanEquals": false,
+      "Next": "PdrStatusReport"
+    },
+    {
+      "Variable": "$.meta.isPdrFinished",
+      "BooleanEquals": true,
+      "Next": "WorkflowSucceeded"
+    }
+  ],
+  "Default": "WorkflowSucceeded"
 }
 ```
 
