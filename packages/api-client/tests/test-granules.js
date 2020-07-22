@@ -228,14 +228,14 @@ test('moveGranule calls the callback with the expected object', async (t) => {
 });
 
 test('listGranules calls the callback with the expected object', async (t) => {
-  const query = 'testQuery';
+  const query = { limit: 50 };
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/granules',
-      body: JSON.stringify({ query })
+      queryStringParameters: query
     }
   };
 
@@ -258,7 +258,7 @@ test('listGranules calls the callback with the expected object if there is no qu
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/granules',
-      body: undefined
+      queryStringParameters: undefined
     }
   };
 
