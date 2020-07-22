@@ -1,62 +1,75 @@
-'use strict';
-
 /**
  * Utility functions for generating and validating Launchpad tokens
  *
  * @module launchpad-auth
  */
 
-const pick = require('lodash/pick');
-const {
+import pick from 'lodash/pick';
+import {
   getS3Object,
   s3Join,
   s3ObjectExists,
   s3PutObject
-} = require('@cumulus/aws-client/S3');
-const Logger = require('@cumulus/logger');
+} from '@cumulus/aws-client/S3';
+import Logger from '@cumulus/logger';
 
-const LaunchpadToken = require('./LaunchpadToken');
+import {
+  LaunchpadTokenParams,
+  TokenObject,
+  ValidateTokenResult
+} from './types';
+
+import LaunchpadToken from './LaunchpadToken';
+import { getEnvVar } from './utils';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 
 /**
  * Get S3 location of the Launchpad token
  *
- * @returns {Promise.<Object.<string, string>>} - S3 Bucket and Key where Launchpad token is stored
+ * @returns {Promise<Object<string, string>>} - S3 Bucket and Key where Launchpad token is stored
  *
  * @private
  */
-function launchpadTokenBucketKey() {
-  if (!(process.env.stackName && process.env.system_bucket)) {
-    throw new Error('must set environment variables process.env.stackName and process.env.system_bucket');
-  }
-
+function launchpadTokenBucketKey(): {
+  Bucket: string,
+  Key: string
+} {
+  const bucket = getEnvVar('system_bucket');
+  const stackName = getEnvVar('stackName');
   return {
-    Bucket: process.env.system_bucket,
-    Key: s3Join(process.env.stackName, 'launchpad/token.json')
+    Bucket: bucket,
+    Key: s3Join(stackName, 'launchpad/token.json')
   };
 }
 
 /**
  * Retrieve Launchpad token from S3
  *
- * @returns {Promise.<string>} - the Launchpad token, null if token doesn't exist or invalid
+ * @returns {Promise<string|undefined>}
+ *   the Launchpad token, undefined if token doesn't exist or invalid
  *
  * @async
  * @private
  */
-async function getValidLaunchpadTokenFromS3() {
+async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
   const s3location = launchpadTokenBucketKey();
   const keyExists = await s3ObjectExists(s3location);
 
-  let token = null;
+  let token;
   if (keyExists) {
     const s3object = await getS3Object(s3location.Bucket, s3location.Key);
-    const launchpadToken = JSON.parse(s3object.Body.toString());
+    if (s3object?.Body) {
+      const launchpadToken = <TokenObject>JSON.parse(s3object.Body.toString());
+      const now = Date.now();
+      const tokenExpirationInMs = (
+        launchpadToken.session_maxtimeout + launchpadToken.session_starttime
+      ) * 1000;
 
-    // check if token is still valid
-    if (Date.now() / 1000 < launchpadToken.session_maxtimeout + launchpadToken.session_starttime) {
-      token = launchpadToken.sm_token;
+      // check if token is still valid
+      if (now < tokenExpirationInMs) {
+        token = launchpadToken.sm_token;
+      }
     }
   }
 
@@ -71,21 +84,24 @@ async function getValidLaunchpadTokenFromS3() {
  * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
  * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
  *
- * @returns {Promise.<string>} - the Launchpad token
+ * @returns {Promise<string>} - the Launchpad token
  *
  * @async
  * @alias module:launchpad-auth
  */
-async function getLaunchpadToken(params) {
+async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> {
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {
     log.debug('getLaunchpadToken requesting launchpad token');
     const launchpad = new LaunchpadToken(params);
-    const tokenObject = await launchpad.requestToken();
-
+    const tokenResponse = await launchpad.requestToken();
     // add session_starttime to token object, assume token is generated 60s ago
-    tokenObject.session_starttime = (Date.now() / 1000 - 60);
+    const tokenObject: TokenObject = {
+      ...tokenResponse,
+      session_starttime: (Date.now() / 1000) - 60
+    };
+
     const s3location = launchpadTokenBucketKey();
     await s3PutObject({
       Bucket: s3location.Bucket,
@@ -107,9 +123,9 @@ async function getLaunchpadToken(params) {
  * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
  * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
  * @param {string} token - the token to be validated
- * @param {string} userGroup - the cumulus user group that a valid user should belong to
+ * @param {string} [userGroup] - the cumulus user group that a valid user should belong to
  *
- * @returns {Promise.<Object>} - the validate result object with
+ * @returns {Promise<ValidateTokenResult>} - the validate result object with
  * { status: 'success or failed', message: 'reason for failure',
  * session_maxtimeout: number second, session_starttime: number millisecond,
  * owner_auid: string}
@@ -117,16 +133,20 @@ async function getLaunchpadToken(params) {
  * @async
  * @alias module:launchpad-auth
  */
-async function validateLaunchpadToken(params, token, userGroup) {
+async function validateLaunchpadToken(
+  params: LaunchpadTokenParams,
+  token: string,
+  userGroup?: string
+): Promise<ValidateTokenResult> {
   log.debug('validateLaunchpadToken validating launchpad token');
   const launchpad = new LaunchpadToken(params);
   const response = await launchpad.validateToken(token);
-  let result = { status: response.status };
+  let result: ValidateTokenResult = { status: response.status };
 
   if (response.status === 'success') {
     // check if user is in the given group
     if (userGroup && userGroup.toUpperCase() !== 'N/A'
-    && response.owner_groups.filter((group) => group.includes(userGroup)).length === 0) {
+       && response.owner_groups.filter((group: string) => group.includes(userGroup)).length === 0) {
       result.status = 'failed';
       result.message = 'User not authorized';
     }

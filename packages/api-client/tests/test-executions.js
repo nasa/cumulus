@@ -37,7 +37,8 @@ test('getExecutions calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/executions'
+      path: '/executions',
+      queryStringParameters: undefined
     }
   };
 
@@ -47,6 +48,29 @@ test('getExecutions calls the callback with the expected object', async (t) => {
 
   await t.notThrowsAsync(executionsApi.getExecutions({
     prefix: t.context.testPrefix,
+    callback
+  }));
+});
+
+test('getExecutions calls the callback with the expected object with query params', async (t) => {
+  const query = { limit: 50 };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/executions',
+      queryStringParameters: query
+    }
+  };
+
+  const callback = async (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(executionsApi.getExecutions({
+    prefix: t.context.testPrefix,
+    query,
     callback
   }));
 });

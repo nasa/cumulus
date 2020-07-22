@@ -178,17 +178,16 @@ const build = {
 };
 
 function selectParams(fields, regex) {
-  return fields.filter((f) => {
-    const match = f.name.match(regex);
-    if (match) return true;
-    return false;
-  });
+  return fields.filter((f) => f.name.match(regex));
 }
 
 module.exports = function query(params) {
+  const sortParams = params.sortParams || { sort: build.sort(params) };
+  delete params.sortParams;
+
   const response = {
     query: { match_all: {} },
-    sort: build.sort(params)
+    sort: sortParams.sort
   };
 
   const queries = {
@@ -227,12 +226,12 @@ module.exports = function query(params) {
 
   // determine which search strategy should be applied
   // options are term, terms, range, exists and not in
-  const fields = Object.keys(params).map((k) => ({ name: k, value: params[k] }));
+  const fields = Object.entries(params).map(([name, value]) => ({ name, value }));
 
   Object.keys(regexes).forEach((k) => {
     const f = selectParams(fields, regexes[k]);
 
-    if (f) {
+    if (f && f.length > 0) {
       build[k](queries, f, regexes[k]);
     }
   });
