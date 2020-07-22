@@ -190,6 +190,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     protected/public buckets and generate a mapping configuration used
     internally by Core.  This object is also exposed as an output of the Cumulus
     module as `distribution_bucket_map`.
+- **CUMULUS-1961**
+  - Replaces DynamoDB for Elasticsearch for reconciliationReportForCumulusCMR
+    comparisons between Cumulus and CMR.
 - **CUMULUS-1970**
   - Created the `add-missing-file-checksums` workflow task
   - Added `@cumulus/aws-client/S3.calculateObjectHash()` function
