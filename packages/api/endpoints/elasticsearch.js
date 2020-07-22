@@ -92,7 +92,8 @@ async function reindex(req, res) {
   }
 
   try {
-    await createIndex(esClient, destIndex);
+    // LAUREN TO DO
+    await createIndex(esClient, undefined, destIndex);
   } catch (error) {
     if (error instanceof IndexExistsError) {
       return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
@@ -208,7 +209,8 @@ async function indexFromDatabase(req, res) {
 
   const indexName = req.body.indexName || timestampedIndexName();
 
-  await createIndex(esClient, indexName)
+  // LAUREN TO DO
+  await createIndex(esClient, undefined, indexName)
     .catch((error) => {
       if (!(error instanceof IndexExistsError)) throw error;
     });

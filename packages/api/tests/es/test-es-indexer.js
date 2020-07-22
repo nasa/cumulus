@@ -477,7 +477,7 @@ test.serial('indexing a PDR record', async (t) => {
 test.serial('Create new index', async (t) => {
   const newIndex = randomId('esindex');
 
-  await indexer.createIndex(esClient, newIndex);
+  await indexer.createIndex(esClient, 'collection', newIndex);
 
   try {
     const indexExists = await esClient.indices.exists({ index: newIndex })
@@ -492,10 +492,10 @@ test.serial('Create new index', async (t) => {
 test.serial('Create new index - index already exists', async (t) => {
   const newIndex = randomId('esindex');
 
-  await indexer.createIndex(esClient, newIndex);
+  await indexer.createIndex(esClient, 'rule', newIndex);
 
   await t.throwsAsync(
-    () => indexer.createIndex(esClient, newIndex),
+    () => indexer.createIndex(esClient, 'rule', newIndex),
     { instanceOf: IndexExistsError },
     `Index ${newIndex} exists and cannot be created.`
   );
@@ -509,7 +509,7 @@ test.serial('Create new index with number of shards env var set', async (t) => {
   process.env.ES_INDEX_SHARDS = 4;
 
   try {
-    await indexer.createIndex(esClient, newIndex);
+    await indexer.createIndex(esClient, 'collection', newIndex);
 
     const indexSettings = await esClient.indices.get({ index: newIndex })
       .then((response) => response.body);

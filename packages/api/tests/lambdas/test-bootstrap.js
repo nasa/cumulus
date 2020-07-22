@@ -1,10 +1,15 @@
 'use strict';
 
 const test = require('ava');
+const rewire = require('rewire');
+const sinon = require('sinon');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
-const bootstrap = require('../../lambdas/bootstrap');
+const bootstrap = rewire('../../lambdas/bootstrap');
+const bootstrapElasticsearchIndex = bootstrap.__get__('bootstrapElasticsearchIndex');
+const findMissingMappings = bootstrap.__get__('findMissingMappings');
 const { Search } = require('../../es/search');
+const esTypes = require('../../es/types');
 const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
 const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
@@ -27,7 +32,7 @@ test.serial.skip('bootstrap dynamoDb activates pointInTime on a given table', as
   );
 });
 
-test('bootstrap creates index with alias', async (t) => {
+test.serial('bootstrap creates index with alias', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
@@ -65,7 +70,7 @@ test.serial('bootstrap creates index with specified number of shards', async (t)
   }
 });
 
-test('bootstrap adds alias to existing index', async (t) => {
+test.serial('bootstrap adds alias to existing index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -87,7 +92,7 @@ test('bootstrap adds alias to existing index', async (t) => {
   await esClient.indices.delete({ index: indexName });
 });
 
-test('Missing types added to index', async (t) => {
+test.serial('Missing types added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -98,23 +103,28 @@ test('Missing types added to index', async (t) => {
     body: { mappings: mappingsSubset }
   });
 
-  t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
-    ['logs', 'deletedgranule']
-  );
+  const stub = sinon.stub(esTypes, 'getMappingsByType').returns(testMappings);
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
+  try {
+    t.deepEqual(
+      await findMissingMappings(esClient, indexName, 'rule'),
+      ['logs', 'deletedgranule']
+    );
 
-  t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
-    []
-  );
+    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+    esClient = await Search.es();
 
-  await esClient.indices.delete({ index: indexName });
+    t.deepEqual(
+      await findMissingMappings(esClient, indexName, 'rule'),
+      []
+    );
+  } finally {
+    stub.restore();
+    await esClient.indices.delete({ index: indexName });
+  }
 });
 
-test('Missing fields added to index', async (t) => {
+test.serial('Missing fields added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -125,23 +135,28 @@ test('Missing fields added to index', async (t) => {
     body: { mappings: mappingsNoFields }
   });
 
-  t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
-    ['logs', 'execution']
-  );
+  const stub = sinon.stub(esTypes, 'getMappingsByType').returns(testMappings);
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
+  try {
+    t.deepEqual(
+      await findMissingMappings(esClient, indexName, 'rule'),
+      ['logs', 'execution']
+    );
 
-  t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
-    []
-  );
+    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+    esClient = await Search.es();
 
-  await esClient.indices.delete({ index: indexName });
+    t.deepEqual(
+      await findMissingMappings(esClient, indexName, 'rule'),
+      []
+    );
+  } finally {
+    stub.restore();
+    await esClient.indices.delete({ index: indexName });
+  }
 });
 
-test('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
+test.serial('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -162,6 +177,47 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   const { body: index } = await esClient.indices.get({ index: testAlias });
 
   t.falsy(index[testAlias]);
+
+  await esClient.indices.delete({ index: indexName });
+});
+
+test.serial('bootstrap index creates index with alias', async (t) => {
+  const indexName = randomId('esindex');
+  const testAlias = randomId('esalias');
+  try {
+    esClient = await Search.es();
+
+    await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
+
+    t.is((await esClient.indices.exists({ index: indexName })).body, true);
+
+    const alias = await esClient.indices.getAlias({ name: testAlias })
+      .then((response) => response.body);
+
+    t.deepEqual(Object.keys(alias), [indexName]);
+  } finally {
+    await esClient.indices.delete({ index: indexName });
+  }
+});
+
+test.serial('bootstrap index adds alias to existing index', async (t) => {
+  const indexName = randomString();
+  const testAlias = randomString();
+
+  esClient = await Search.es();
+
+  await esClient.indices.create({
+    index: indexName,
+    body: { mappings }
+  });
+
+  esClient = await Search.es();
+  await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
+
+  const alias = await esClient.indices.getAlias({ name: testAlias })
+    .then((response) => response.body);
+
+  t.deepEqual(Object.keys(alias), [indexName]);
 
   await esClient.indices.delete({ index: indexName });
 });
