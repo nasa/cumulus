@@ -49,7 +49,3 @@ export const getTeaBucketPath = async (params: {
     { retries, minTimeout: 1000, maxTimeout: 5000 }
   );
 };
-
-module.exports = {
-  getTeaBucketPath
-};
