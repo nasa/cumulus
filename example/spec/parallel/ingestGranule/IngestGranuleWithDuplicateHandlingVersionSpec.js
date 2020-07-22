@@ -79,6 +79,8 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
 
       granuleId = randomId('granule-id-');
 
+      const ingestTime = Date.now() - 1000 * 30;
+
       // Ingest the granule the first time
       firstIngestGranuleRule = await createOneTimeRule(
         prefix,
@@ -116,6 +118,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === firstIngestGranuleRule.payload.testExecutionId;
         },
+        { timestamp__from: ingestTime },
         { timeout: 15 }
       );
 
@@ -186,6 +189,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === secondIngestGranuleRule.payload.testExecutionId;
         },
+        { timestamp__from: ingestTime },
         { timeout: 15 }
       );
 
