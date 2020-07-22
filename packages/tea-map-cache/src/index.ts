@@ -1,7 +1,9 @@
-/* eslint-disable no-console */
+import Logger from '@cumulus/logger';
 import { s3PutObject } from '@cumulus/aws-client/S3';
 import { getTeaBucketPath } from './tea';
 import { bucketMapObject } from './types';
+
+const log = new Logger({ sender: '@cumulus/tea-map-cache/tea' });
 
 /**
  * Lambda handler that takes a bucketlist and a bucket/key event,
@@ -42,6 +44,6 @@ export const handler = async (event: {
     Key: s3Key,
     Body: JSON.stringify(bucketMap)
   });
-  console.log(`Wrote bucketmap ${JSON.stringify(bucketMap)} to ${s3Bucket}/${s3Key}`);
+  log.info(`Wrote bucketmap ${JSON.stringify(bucketMap)} to ${s3Bucket}/${s3Key}`);
   return bucketMap;
 };
