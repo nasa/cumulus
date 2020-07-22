@@ -14,6 +14,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       CMR_ENVIRONMENT                  = var.cmr_environment
       CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
+      ES_HOST                          = var.elasticsearch_hostname
       FilesTable                       = var.dynamo_tables.files.name
       GranulesTable                    = var.dynamo_tables.granules.name
       ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
@@ -36,9 +37,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
+      security_group_ids = local.lambda_security_group_ids
     }
   }
 }
