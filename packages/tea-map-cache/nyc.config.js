@@ -2,5 +2,6 @@
 
 module.exports = {
   extends: '../../nyc.config.js',
-  include: ['dist']
+  include: ['dist'],
+  'exclude-after-remap': false
 };
