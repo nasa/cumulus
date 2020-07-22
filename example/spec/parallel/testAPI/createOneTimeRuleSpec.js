@@ -11,6 +11,8 @@ const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
+let ingestTime;
+
 describe('Creating a one-time rule via the Cumulus API', () => {
   let beforeAllFailed = false;
   let collection;
@@ -26,6 +28,8 @@ describe('Creating a one-time rule via the Cumulus API', () => {
       collection = await createCollection(prefix);
 
       testExecutionId = randomId('test-execution-');
+
+      ingestTime = Date.now() - 1000 * 30;
 
       rule = await createOneTimeRule(
         prefix,
@@ -64,6 +68,7 @@ describe('Creating a one-time rule via the Cumulus API', () => {
           prefix,
           (execution) =>
             get(execution, 'originalPayload.testExecutionId') === testExecutionId,
+          { timestamp__from: ingestTime },
           { timeout: 30 }
         )
       ).withContext('Could not find started execution').toBeResolved();
