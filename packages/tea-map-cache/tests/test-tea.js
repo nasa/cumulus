@@ -11,8 +11,8 @@ test('getTeaBucketPath returns a mapped bucket path on an expected response from
   });
 
   const actual = await getTeaBucketPath({
-    bucket: undefined,
-    teaEndPoint: undefined
+    bucket: 'notUsedTestValue',
+    teaEndPoint: 'notUsedTestValue'
   });
   t.is('fake-bucket-redirect/path', actual);
 });
@@ -24,8 +24,8 @@ test('getTeaBucketPath throws error if multiple paths are returned', async (t) =
     }
   });
   await t.throwsAsync(() => getTeaBucketPath({
-    bucket: undefined,
-    teaEndPoint: undefined
+    bucket: 'notUsedTestValue',
+    teaEndPoint: 'notUsedTestValue'
   }));
 });
 
