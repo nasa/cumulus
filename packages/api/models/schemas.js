@@ -426,7 +426,7 @@ module.exports.rule = {
       title: 'Optional input payload to be used in onetime and scheduled rules'
     },
     queueUrl: {
-      title: 'Optional queue used to schedule executions for this rule',
+      title: 'Optional queue URL used to schedule executions for this rule',
       type: 'string'
     },
     rule: {
