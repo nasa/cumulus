@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
-const AWS = require('aws-sdk');
-const { getTeaBucketPath } = require('./tea');
+import AWS from 'aws-sdk';
+import { getTeaBucketPath } from './tea';
+import { bucketMapObject } from './types';
 
 /**
  * Lambda handler that takes a bucketlist and a bucket/key event,
@@ -12,16 +13,24 @@ const { getTeaBucketPath } = require('./tea');
  * @param {string} event.s3Key        - Key to write .json tea map cache file to
  * @returns {Promise<Object>}         - A bucketmap object {bucket1: mapping1, bucket2: mapping2}
  */
-async function handler(event) {
+
+export const handler = async (event: {
+  bucketList: string[],
+  s3Bucket: string,
+  s3Key: string
+}): Promise<bucketMapObject> => {
   const { bucketList, s3Bucket, s3Key } = event;
   if (!bucketList || !s3Bucket || !s3Key) {
     throw new Error('A bucketlist and s3 bucket/key must be provided in the event');
   }
+  const teaEndPoint = process.env.TEA_API;
+  if (typeof teaEndPoint !== 'string') {
+    throw new TypeError('process.env.TEA_API must be defined as a string to use this lambda');
+  }
 
   const s3 = new AWS.S3();
-
   const bucketMapPromises = event.bucketList.map(async (bucket) => ({
-    [bucket]: await getTeaBucketPath({ bucket, teaEndPoint: process.env.TEA_API })
+    [bucket]: await getTeaBucketPath({ bucket, teaEndPoint })
   }));
   const bucketMapObjects = await Promise.all(bucketMapPromises);
 
@@ -36,6 +45,4 @@ async function handler(event) {
   }).promise();
   console.log(`Wrote bucketmap ${JSON.stringify(bucketMap)} to ${s3Bucket}/${s3Key}`);
   return bucketMap;
-}
-
-exports.handler = handler;
+};

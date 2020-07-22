@@ -7,7 +7,8 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "package": "rm -Rf ./dist/ && mkdir dist && zip -r -q ./dist/lambda.zip *.js node_modules",
+    "build": "tsc",
+    "package": "npm run build && rm dist/lambda.zip || true && cd dist && zip -r -q ./lambda.zip * && cd .. && zip -r -q ./dist/lambda.zip node_modules",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test"
   },
