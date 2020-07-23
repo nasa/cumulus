@@ -152,7 +152,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     documentation.
   - Added `checksumFor` validation to collections model.
 - **CUMULUS-1886**
-  - Added `multiple sort keys` support to es query builder `@cumulus/api/es/es/queries`
+  - Added `multiple sort keys` support to `@cumulus/api`
 - **CUMULUS-1887**
   - Added additional fields to the granule CSV download file
 - **CUMULUS-1956**
