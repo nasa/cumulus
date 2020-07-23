@@ -111,7 +111,7 @@ output "workflow_config" {
     sf_event_sqs_to_db_records_sqs_queue_arn         = module.archive.sf_event_sqs_to_db_records_sqs_queue_arn
     sf_semaphore_down_lambda_function_arn           = module.ingest.sf_semaphore_down_lambda_function_arn
     state_machine_role_arn                          = module.ingest.step_role_arn
-    sqs_message_remover_lambda_function_arn         = module.ingest.sqs_message_remover_lambda_function_arn
+    sqs_message_remover_lambda_function_arn         = module.sqs_message_remover_lambda.function_arn
   }
 }
 
