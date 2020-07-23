@@ -36,7 +36,6 @@ const build = {
 
   sort: (params) => {
     let sort;
-    console.log(params);
     const { sort_by: sortBy, order, sort_key: sortKey } = params;
 
     if (sortBy && order) {
@@ -48,7 +47,7 @@ const build = {
     } else {
       sort = [{ timestamp: { order: 'desc' } }];
     }
-    console.log(sort);
+
     return sort;
   },
 
