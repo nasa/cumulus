@@ -1,19 +1,30 @@
-const got = require('got');
-const pRetry = require('p-retry');
-const Logger = require('@cumulus/logger');
+import Logger from '@cumulus/logger';
+import pRetry from 'p-retry';
+import got from 'got';
+
+import { bucketMapResponse } from './types';
+
 const log = new Logger({ sender: '@cumulus/tea-map-cache/tea' });
 
 /**
  * getTeaBucketPath
 
- * @param {Object} params      - parameters
+ * @param {Object} params             - parameters
  * @param {string} params.bucket      - Bucket name to get TEA path mapping
  * @param {string} params.teaEndPoint - TEA API URL
- * @param {number} params.retries     - retries override for pRetry
- * @returns {Promise<string>}  - TEA path for the given bucket
+ * @param {number} [params.retries]   - retries override for pRetry
+ * @returns {Promise<string>}         - TEA path for the given bucket
  */
-async function getTeaBucketPath(params = {}) {
-  const { bucket, teaEndPoint, retries = 5 } = params;
+export const getTeaBucketPath = async (params: {
+  bucket: string,
+  teaEndPoint: string,
+  retries?: number
+}): Promise<string> => {
+  const {
+    bucket,
+    teaEndPoint,
+    retries = 5
+  } = params;
   return pRetry(
     async () => {
       let apiResponse;
@@ -28,7 +39,7 @@ async function getTeaBucketPath(params = {}) {
         }
         throw error;
       }
-      const bucketMapList = JSON.parse(apiResponse.body);
+      const bucketMapList = <bucketMapResponse>JSON.parse(apiResponse.body);
       if (bucketMapList.length > 1) {
         throw new pRetry.AbortError(`BucketMap configured with multiple responses from ${bucket},
         this package cannot resolve a distirbution URL as configured for this bucket`);
@@ -37,8 +48,4 @@ async function getTeaBucketPath(params = {}) {
     },
     { retries, minTimeout: 1000, maxTimeout: 5000 }
   );
-}
-
-module.exports = {
-  getTeaBucketPath
 };
