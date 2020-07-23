@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "sqs_message_remover" {
   function_name    = "${var.prefix}-sqsMessageRemover"
-  filename         = "${path.module}/dist/sqsMessageRemover/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/dist/sqsMessageRemover/lambda.zip")
+  filename         = "${path.module}/dist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs12.x"
