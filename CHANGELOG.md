@@ -151,6 +151,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup)
     documentation.
   - Added `checksumFor` validation to collections model.
+- **CUMULUS-1886**
+  - Added `multiple sort keys` support to es query builder `@cumulus/api/es/es/queries`
+- **CUMULUS-1887**
+  - Added additional fields to the granule CSV download file
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
   - The `/s3credentials` endpoint that is deployed as part of distribution now
@@ -189,8 +193,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Created the `add-missing-file-checksums` workflow task
   - Added `@cumulus/aws-client/S3.calculateObjectHash()` function
   - Added `@cumulus/aws-client/S3.getObjectReadStream()` function
-- **CUMULUS-1887**
-  - Add additional fields to the granule CSV download file
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
     support partial matching of the keywords
