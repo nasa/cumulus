@@ -20,30 +20,30 @@ const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
 test('buildCumulusMeta returns expected object', (t) => {
   const stateMachine = randomId('states');
-  const queueName = randomId('queue');
+  const queueUrl = randomId('queue');
   const asyncOperationId = cryptoRandomString({ length: 10 });
 
   let cumulusMeta = buildCumulusMeta({
     stateMachine,
-    queueName
+    queueUrl
   });
 
   t.deepEqual(cumulusMeta, {
     state_machine: stateMachine,
-    queueName,
+    queueUrl,
     execution_name: fakeId
   });
 
   const parentExecutionArn = randomId('parentArn');
   cumulusMeta = buildCumulusMeta({
     stateMachine,
-    queueName,
+    queueUrl,
     parentExecutionArn
   });
 
   t.deepEqual(cumulusMeta, {
     state_machine: stateMachine,
-    queueName,
+    queueUrl,
     parentExecutionArn,
     execution_name: fakeId
   });
@@ -51,7 +51,7 @@ test('buildCumulusMeta returns expected object', (t) => {
   cumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
-    queueName,
+    queueUrl,
     stateMachine
   });
 
@@ -60,7 +60,7 @@ test('buildCumulusMeta returns expected object', (t) => {
     execution_name: fakeId,
     state_machine: stateMachine,
     parentExecutionArn,
-    queueName
+    queueUrl
   });
 });
 
@@ -80,13 +80,13 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
   };
   const provider = randomId('provider');
   const collection = randomId('collection');
-  const queueName = randomId('queue');
+  const queueUrl = randomId('queue');
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
     provider,
     collection,
-    queueName,
+    queueUrl,
     messageTemplate,
     payload,
     workflow
@@ -103,7 +103,7 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
     cumulus_meta: {
       message_source: 'sfn',
       execution_name: fakeId,
-      queueName,
+      queueUrl,
       state_machine: workflow.arn
     },
     payload
@@ -120,7 +120,7 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
   };
   const provider = randomId('provider');
   const collection = randomId('collection');
-  const queueName = randomId('queue');
+  const queueUrl = randomId('queue');
 
   const granules = [{
     granule1: 'granule1'
@@ -133,7 +133,7 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
   const actualMessage = buildQueueMessageFromTemplate({
     provider,
     collection,
-    queueName,
+    queueUrl,
     messageTemplate,
     payload,
     workflow
@@ -147,7 +147,7 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
     },
     cumulus_meta: {
       execution_name: fakeId,
-      queueName,
+      queueUrl,
       state_machine: workflow.arn
     },
     payload: {
@@ -177,13 +177,13 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
     name: randomId('workflow'),
     arn: randomId('arn:aws:states:wf')
   };
-  const queueName = randomId('queue');
+  const queueUrl = randomId('queue');
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
     provider: undefined,
     collection: undefined,
-    queueName,
+    queueUrl,
     messageTemplate,
     payload,
     workflow
@@ -197,7 +197,7 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
     },
     cumulus_meta: {
       execution_name: fakeId,
-      queueName,
+      queueUrl,
       state_machine: workflow.arn
     },
     payload
@@ -219,13 +219,13 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
   };
   const provider = randomId('provider');
   const collection = randomId('collection');
-  const queueName = randomId('queue');
+  const queueUrl = randomId('queue');
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
     provider,
     collection,
-    queueName,
+    queueUrl,
     messageTemplate,
     payload,
     workflow
@@ -239,7 +239,7 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
     },
     cumulus_meta: {
       execution_name: fakeId,
-      queueName,
+      queueUrl,
       state_machine: workflow.arn
     },
     payload
@@ -252,11 +252,11 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
   const messageTemplate = {};
   const provider = randomId('provider');
   const collection = randomId('collection');
-  const queueName = randomId('queue');
+  const queueUrl = randomId('queue');
 
   const customCumulusMeta = {
     foo: 'bar',
-    queueName: 'test', // should get overridden
+    queueUrl: 'test', // should get overridden
     object: {
       key: 'value'
     }
@@ -278,7 +278,7 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
   const actualMessage = buildQueueMessageFromTemplate({
     provider,
     collection,
-    queueName,
+    queueUrl,
     messageTemplate,
     customCumulusMeta,
     customMeta,
@@ -298,7 +298,7 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
     },
     cumulus_meta: {
       execution_name: fakeId,
-      queueName,
+      queueUrl,
       state_machine: workflow.arn,
       foo: 'bar',
       object: {
