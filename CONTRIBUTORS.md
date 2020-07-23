@@ -15,6 +15,7 @@
 * Jason Gilman
 * Jenny Liu
 * Jonathan Kovarik
+* Juanisa McCoy
 * Katherine Kelly
 * Katie Baynes
 * Lauren Frederick
