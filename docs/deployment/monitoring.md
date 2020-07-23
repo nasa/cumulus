@@ -24,7 +24,7 @@ Cumulus sets up CloudWatch log groups for all Core-provided tasks.
 
 #### Monitoring Lambda Functions
 
-Logging for each Lambda Function is performed by writing to Lambda-specific log groups.
+Logging for each Lambda Function is available in Lambda-specific CloudWatch log groups.
 
 #### Monitoring ECS services
 
@@ -42,7 +42,7 @@ AWS has a number of recommendations on system monitoring. Rather than reproduce 
 - [Lambda Monitoring](https://docs.aws.amazon.com/lambda/latest/dg/lambda-monitoring.html)
 - [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/index.html)
 
-## Example: Setting up email notifications
+## Example: Setting up email notifications for CloudWatch logs
 
 Cumulus does not provide out-of-the-box support for email notifications at this time.
 However, setting up email notifications on AWS is fairly straightforward in that the operative components are an [AWS SNS topic and a subscribed email address](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/US_SetupSNS.html).
