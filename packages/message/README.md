@@ -44,13 +44,13 @@ Utility functions for building Cumulus messages
 ```js
 const Build = require('@cumulus/message/Build');
 ```
-<a name="exp_module_Build--buildQueueMessageFromTemplate"></a>
+<a name="exp_module_Build--exports.buildQueueMessageFromTemplate"></a>
 
-#### buildQueueMessageFromTemplate(params) ⇒ <code>Object</code> ⏏
+#### exports.buildQueueMessageFromTemplate(params) ⇒ <code>CumulusMessage</code> ⏏
 Build an SQS message from a workflow template for queueing executions.
 
 **Kind**: Exported function  
-**Returns**: <code>Object</code> - An SQS message object  
+**Returns**: <code>CumulusMessage</code> - A Cumulus message object  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -58,12 +58,13 @@ Build an SQS message from a workflow template for queueing executions.
 | params.provider | <code>Object</code> | A provider object |
 | params.collection | <code>Object</code> | A collection object |
 | params.parentExecutionArn | <code>string</code> | ARN for parent execution |
-| params.queueName | <code>string</code> | SQS queue name |
 | params.messageTemplate | <code>Object</code> | Message template for the workflow |
 | params.payload | <code>Object</code> | Payload for the workflow |
 | params.workflow | <code>Object</code> | workflow name & arn object |
-| params.customCumulusMeta | <code>Object</code> | Custom data for message.cumulus_meta |
-| params.customMeta | <code>Object</code> | Custom data for message.meta |
+| [params.queueName] | <code>string</code> | SQS queue name |
+| [params.asyncOperationId] | <code>string</code> | Async operation ID |
+| [params.customCumulusMeta] | <code>Object</code> | Custom data for message.cumulus_meta |
+| [params.customMeta] | <code>Object</code> | Custom data for message.meta |
 
 <a name="module_Collections"></a>
 
@@ -77,12 +78,12 @@ const Collections = require('@cumulus/message/Collections');
 ```
 
 * [Collections](#module_Collections)
-    * [constructCollectionId(name, version)](#exp_module_Collections--constructCollectionId) ⇒ <code>string</code> ⏏
-    * [getCollectionIdFromMessage(message)](#exp_module_Collections--getCollectionIdFromMessage) ⇒ <code>string</code> \| <code>undefined</code> ⏏
+    * [exports.constructCollectionId(name, version)](#exp_module_Collections--exports.constructCollectionId) ⇒ <code>string</code> ⏏
+    * [exports.getCollectionIdFromMessage(message)](#exp_module_Collections--exports.getCollectionIdFromMessage) ⇒ <code>string</code> \| <code>undefined</code> ⏏
 
-<a name="exp_module_Collections--constructCollectionId"></a>
+<a name="exp_module_Collections--exports.constructCollectionId"></a>
 
-#### constructCollectionId(name, version) ⇒ <code>string</code> ⏏
+#### exports.constructCollectionId(name, version) ⇒ <code>string</code> ⏏
 Returns the collection ID.
 
 **Kind**: Exported function  
@@ -93,9 +94,9 @@ Returns the collection ID.
 | name | <code>string</code> | collection name |
 | version | <code>string</code> | collection version |
 
-<a name="exp_module_Collections--getCollectionIdFromMessage"></a>
+<a name="exp_module_Collections--exports.getCollectionIdFromMessage"></a>
 
-#### getCollectionIdFromMessage(message) ⇒ <code>string</code> \| <code>undefined</code> ⏏
+#### exports.getCollectionIdFromMessage(message) ⇒ <code>string</code> \| <code>undefined</code> ⏏
 Get collection ID from execution message.
 
 **Kind**: Exported function  
@@ -105,7 +106,7 @@ Get collection ID from execution message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | An execution message |
+| message | <code>Message.CumulusMessage</code> | An execution message |
 
 <a name="module_Executions"></a>
 
@@ -119,16 +120,16 @@ const Executions = require('@cumulus/message/Executions');
 ```
 
 * [Executions](#module_Executions)
-    * [buildExecutionArn(stateMachineArn, executionName)](#exp_module_Executions--buildExecutionArn) ⇒ <code>string</code> ⏏
-    * [getExecutionUrlFromArn(executionArn)](#exp_module_Executions--getExecutionUrlFromArn) ⇒ <code>string</code> ⏏
-    * [getStateMachineArnFromExecutionArn(executionArn)](#exp_module_Executions--getStateMachineArnFromExecutionArn) ⇒ <code>string</code> ⏏
-    * [getMessageExecutionName(message)](#exp_module_Executions--getMessageExecutionName) ⇒ <code>string</code> ⏏
-    * [getMessageStateMachineArn(message)](#exp_module_Executions--getMessageStateMachineArn) ⇒ <code>string</code> ⏏
-    * [getMessageExecutionArn(message)](#exp_module_Executions--getMessageExecutionArn) ⇒ <code>null</code> \| <code>string</code> ⏏
+    * [exports.buildExecutionArn(stateMachineArn, executionName)](#exp_module_Executions--exports.buildExecutionArn) ⇒ <code>string</code> ⏏
+    * [exports.getExecutionUrlFromArn(executionArn)](#exp_module_Executions--exports.getExecutionUrlFromArn) ⇒ <code>string</code> ⏏
+    * [exports.getStateMachineArnFromExecutionArn(executionArn)](#exp_module_Executions--exports.getStateMachineArnFromExecutionArn) ⇒ <code>string</code> ⏏
+    * [exports.getMessageExecutionName(message)](#exp_module_Executions--exports.getMessageExecutionName) ⇒ <code>string</code> ⏏
+    * [exports.getMessageStateMachineArn(message)](#exp_module_Executions--exports.getMessageStateMachineArn) ⇒ <code>string</code> ⏏
+    * [exports.getMessageExecutionArn(message)](#exp_module_Executions--exports.getMessageExecutionArn) ⇒ <code>null</code> \| <code>string</code> ⏏
 
-<a name="exp_module_Executions--buildExecutionArn"></a>
+<a name="exp_module_Executions--exports.buildExecutionArn"></a>
 
-#### buildExecutionArn(stateMachineArn, executionName) ⇒ <code>string</code> ⏏
+#### exports.buildExecutionArn(stateMachineArn, executionName) ⇒ <code>string</code> ⏏
 Build execution ARN from a state machine ARN and execution name
 
 **Kind**: Exported function  
@@ -139,9 +140,9 @@ Build execution ARN from a state machine ARN and execution name
 | stateMachineArn | <code>string</code> | state machine ARN |
 | executionName | <code>string</code> | state machine's execution name |
 
-<a name="exp_module_Executions--getExecutionUrlFromArn"></a>
+<a name="exp_module_Executions--exports.getExecutionUrlFromArn"></a>
 
-#### getExecutionUrlFromArn(executionArn) ⇒ <code>string</code> ⏏
+#### exports.getExecutionUrlFromArn(executionArn) ⇒ <code>string</code> ⏏
 Returns execution URL from an execution ARN.
 
 **Kind**: Exported function  
@@ -151,9 +152,9 @@ Returns execution URL from an execution ARN.
 | --- | --- | --- |
 | executionArn | <code>string</code> | an execution ARN |
 
-<a name="exp_module_Executions--getStateMachineArnFromExecutionArn"></a>
+<a name="exp_module_Executions--exports.getStateMachineArnFromExecutionArn"></a>
 
-#### getStateMachineArnFromExecutionArn(executionArn) ⇒ <code>string</code> ⏏
+#### exports.getStateMachineArnFromExecutionArn(executionArn) ⇒ <code>string</code> ⏏
 Get state machine ARN from an execution ARN
 
 **Kind**: Exported function  
@@ -163,33 +164,41 @@ Get state machine ARN from an execution ARN
 | --- | --- | --- |
 | executionArn | <code>string</code> | an execution ARN |
 
-<a name="exp_module_Executions--getMessageExecutionName"></a>
+<a name="exp_module_Executions--exports.getMessageExecutionName"></a>
 
-#### getMessageExecutionName(message) ⇒ <code>string</code> ⏏
+#### exports.getMessageExecutionName(message) ⇒ <code>string</code> ⏏
 Get the execution name from a workflow message.
 
 **Kind**: Exported function  
 **Returns**: <code>string</code> - An execution name  
+**Throws**:
+
+- <code>Error</code> if there is no execution name
+
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | A workflow message object |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
-<a name="exp_module_Executions--getMessageStateMachineArn"></a>
+<a name="exp_module_Executions--exports.getMessageStateMachineArn"></a>
 
-#### getMessageStateMachineArn(message) ⇒ <code>string</code> ⏏
+#### exports.getMessageStateMachineArn(message) ⇒ <code>string</code> ⏏
 Get the state machine ARN from a workflow message.
 
 **Kind**: Exported function  
 **Returns**: <code>string</code> - A state machine ARN  
+**Throws**:
+
+- <code>Error</code> if there is not state machine ARN
+
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | A workflow message object |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
-<a name="exp_module_Executions--getMessageExecutionArn"></a>
+<a name="exp_module_Executions--exports.getMessageExecutionArn"></a>
 
-#### getMessageExecutionArn(message) ⇒ <code>null</code> \| <code>string</code> ⏏
+#### exports.getMessageExecutionArn(message) ⇒ <code>null</code> \| <code>string</code> ⏏
 Get the execution ARN from a workflow message.
 
 **Kind**: Exported function  
@@ -197,7 +206,7 @@ Get the execution ARN from a workflow message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | A workflow message object |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
 <a name="module_Granules"></a>
 
@@ -208,9 +217,9 @@ Utility functions for parsing granule information from a Cumulus message
 ```js
 const Granules = require('@cumulus/message/Granules');
 ```
-<a name="exp_module_Granules--getMessageGranules"></a>
+<a name="exp_module_Granules--exports.getMessageGranules"></a>
 
-#### getMessageGranules(message) ⇒ <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> ⏏
+#### exports.getMessageGranules(message) ⇒ <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> ⏏
 Get granules from execution message.
 
 **Kind**: Exported function  
@@ -219,7 +228,7 @@ Get granules from execution message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | An execution message |
+| message | <code>Message.CumulusMessage</code> | An execution message |
 
 <a name="module_Queue"></a>
 
@@ -232,52 +241,60 @@ const Queue = require('@cumulus/message/Queue');
 ```
 
 * [Queue](#module_Queue)
-    * [getQueueNameByUrl(message, queueUrl)](#exp_module_Queue--getQueueNameByUrl) ⇒ <code>string</code> ⏏
-    * [getQueueName(message)](#exp_module_Queue--getQueueName) ⇒ <code>string</code> ⏏
-    * [getMaximumExecutions(message, queueName)](#exp_module_Queue--getMaximumExecutions) ⇒ <code>number</code> ⏏
-    * [hasQueueAndExecutionLimit(message)](#exp_module_Queue--hasQueueAndExecutionLimit) ⇒ <code>boolean</code> ⏏
+    * [exports.getQueueNameByUrl(message, queueUrl)](#exp_module_Queue--exports.getQueueNameByUrl) ⇒ <code>string</code> \| <code>undefined</code> ⏏
+    * [exports.getQueueName(message)](#exp_module_Queue--exports.getQueueName) ⇒ <code>string</code> ⏏
+    * [exports.getMaximumExecutions(message, queueName)](#exp_module_Queue--exports.getMaximumExecutions) ⇒ <code>number</code> ⏏
+    * [exports.hasQueueAndExecutionLimit(message)](#exp_module_Queue--exports.hasQueueAndExecutionLimit) ⇒ <code>boolean</code> ⏏
 
-<a name="exp_module_Queue--getQueueNameByUrl"></a>
+<a name="exp_module_Queue--exports.getQueueNameByUrl"></a>
 
-#### getQueueNameByUrl(message, queueUrl) ⇒ <code>string</code> ⏏
+#### exports.getQueueNameByUrl(message, queueUrl) ⇒ <code>string</code> \| <code>undefined</code> ⏏
 Get queue name by URL from execution message.
 
 **Kind**: Exported function  
-**Returns**: <code>string</code> - An SQS queue name  
+**Returns**: <code>string</code> \| <code>undefined</code> - An SQS queue name or undefined  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | An execution message |
+| message | <code>Message.CumulusMessage</code> | An execution message |
 | queueUrl | <code>string</code> | An SQS queue URL |
 
-<a name="exp_module_Queue--getQueueName"></a>
+<a name="exp_module_Queue--exports.getQueueName"></a>
 
-#### getQueueName(message) ⇒ <code>string</code> ⏏
+#### exports.getQueueName(message) ⇒ <code>string</code> ⏏
 Get the queue name from a workflow message.
 
 **Kind**: Exported function  
 **Returns**: <code>string</code> - A queue name  
+**Throws**:
+
+- <code>Error</code> if no queue name in the message
+
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | A workflow message object |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
-<a name="exp_module_Queue--getMaximumExecutions"></a>
+<a name="exp_module_Queue--exports.getMaximumExecutions"></a>
 
-#### getMaximumExecutions(message, queueName) ⇒ <code>number</code> ⏏
+#### exports.getMaximumExecutions(message, queueName) ⇒ <code>number</code> ⏏
 Get the maximum executions for a queue.
 
 **Kind**: Exported function  
 **Returns**: <code>number</code> - Count of the maximum executions for the queue  
+**Throws**:
+
+- <code>Error</code> if no maximum executions can be found
+
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | A workflow message object |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 | queueName | <code>string</code> | A queue name |
 
-<a name="exp_module_Queue--hasQueueAndExecutionLimit"></a>
+<a name="exp_module_Queue--exports.hasQueueAndExecutionLimit"></a>
 
-#### hasQueueAndExecutionLimit(message) ⇒ <code>boolean</code> ⏏
+#### exports.hasQueueAndExecutionLimit(message) ⇒ <code>boolean</code> ⏏
 Determine if there is a queue and queue execution limit in the message.
 
 **Kind**: Exported function  
@@ -285,7 +302,7 @@ Determine if there is a queue and queue execution limit in the message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Object</code> | A workflow message object |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
 <a name="module_StepFunctions"></a>
 
@@ -298,12 +315,12 @@ const StepFunctions = require('@cumulus/message/StepFunctions');
 ```
 
 * [StepFunctions](#module_StepFunctions)
-    * [pullStepFunctionEvent(event)](#exp_module_StepFunctions--pullStepFunctionEvent) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-    * [parseStepMessage(stepMessage, stepName)](#exp_module_StepFunctions--parseStepMessage) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+    * [exports.pullStepFunctionEvent(event)](#exp_module_StepFunctions--exports.pullStepFunctionEvent) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+    * [exports.parseStepMessage(stepMessage, stepName)](#exp_module_StepFunctions--exports.parseStepMessage) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 
-<a name="exp_module_StepFunctions--pullStepFunctionEvent"></a>
+<a name="exp_module_StepFunctions--exports.pullStepFunctionEvent"></a>
 
-#### pullStepFunctionEvent(event) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+#### exports.pullStepFunctionEvent(event) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Given a Step Function event, replace specified key in event with contents
 of S3 remote message
 
@@ -316,11 +333,11 @@ of S3 remote message
 
 | Param | Type | Description |
 | --- | --- | --- |
-| event | <code>Object</code> | Source event |
+| event | <code>Message.CumulusRemoteMessage</code> | Source event |
 
-<a name="exp_module_StepFunctions--parseStepMessage"></a>
+<a name="exp_module_StepFunctions--exports.parseStepMessage"></a>
 
-#### parseStepMessage(stepMessage, stepName) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+#### exports.parseStepMessage(stepMessage, stepName) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Parse step message with CMA keys and replace specified key in event with contents
 of S3 remote message
 
@@ -329,7 +346,7 @@ of S3 remote message
 
 | Param | Type | Description |
 | --- | --- | --- |
-| stepMessage | <code>Object</code> | Message for the step |
+| stepMessage | <code>CMAMessage</code> | Message for the step |
 | stepName | <code>string</code> | Name of the step |
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/earthdata-login-client",
-  "version": "1.24.0-alpha.0",
+  "version": "2.0.0",
   "description": "A client for the Earthata Login service API",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/earthdata-login-client#readme",
   "repository": {
@@ -36,10 +36,10 @@
     ],
     "verbose": true,
     "typescript": {
-			"rewritePaths": {
-				"tests/": "dist/tests/"
-			}
-		}
+      "rewritePaths": {
+        "tests/": "dist/tests/"
+      }
+    }
   },
   "dependencies": {
     "got": "^11.2.0"
