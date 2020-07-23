@@ -32,7 +32,7 @@ Each deployed `cumulus_ecs_service` module also includes a CloudWatch log group 
 
 #### Monitoring workflows
 
-For advanced debugging, we also configure dead letter queues on critical system functions. These will allow you to monitor and debug invalid inputs to the functions we use to start workflows, which can be helpful if you find that you are not seeing workflows being started as expected. More information on these can be found in the [dead letter queue documentation](dead_letter_queues.md)
+For advanced debugging, we also configure dead letter queues on critical system functions. These will allow you to monitor and debug invalid inputs to the functions we use to start workflows, which can be helpful if you find that you are not seeing workflows being started as expected. More information on these can be found in the [dead letter queue documentation](features/lambda_dead_letter_queue.md)
 
 ## AWS recommendations
 
