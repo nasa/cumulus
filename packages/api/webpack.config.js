@@ -35,7 +35,6 @@ module.exports = {
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js',
     sqsMessageConsumer: './lambdas/sqs-message-consumer.js',
-    sqsMessageRemover: './lambdas/sqs-message-remover.js',
     verifyProviderSecretsMigration: './lambdas/verifyProviderSecretsMigration.js'
   },
   devtool: 'inline-source-map',
