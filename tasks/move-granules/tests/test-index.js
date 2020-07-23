@@ -14,7 +14,7 @@ const {
   headObject,
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
-const { isCMRFile } = require('@cumulus/cmrjs');
+const { isCMRFile, isCMRFilename } = require('@cumulus/cmrjs');
 const cloneDeep = require('lodash/cloneDeep');
 const set = require('lodash/set');
 const errors = require('@cumulus/errors');
@@ -32,7 +32,7 @@ async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.xml')
+    Body: isCMRFilename(file)
       ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key
   })));
 }
@@ -220,6 +220,18 @@ test.serial('Should move renamed files in staging area to final location.', asyn
   t.true(check);
 });
 
+test.serial('Should add etag to each CMR metadata file', async (t) => {
+  const newPayload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+
+  output.granules[0].files
+    .filter(isCMRFile)
+    .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/));
+});
+
 test.serial('Should add metadata type to CMR granule files.', async (t) => {
   const newPayload = buildPayload(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
@@ -228,7 +240,7 @@ test.serial('Should add metadata type to CMR granule files.', async (t) => {
   const output = await moveGranules(newPayload);
 
   const outputFiles = output.granules[0].files;
-  const cmrOutputFiles = outputFiles.filter((f) => f.filename.includes('.cmr.xml'));
+  const cmrOutputFiles = outputFiles.filter(isCMRFile);
   cmrOutputFiles.forEach((file) => {
     t.is('metadata', file.type);
   });
@@ -255,7 +267,7 @@ test.serial('Should not overwrite CMR file type if already explicitly set', asyn
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
-  const cmrFile = output.granules[0].files.filter((file) => file.filename.includes('.cmr.xml'));
+  const cmrFile = output.granules[0].files.filter(isCMRFile);
   t.is('userSetType', cmrFile[0].type);
 });
 
@@ -467,9 +479,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   extraFiles.forEach((f) => t.true(f.startsWith(`${outputHdfFile}.v`)));
 
   output.granules[0].files.forEach((f) => {
-    if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
+    if (f.filename.startsWith(`${outputHdfFile}.v`) || isCMRFile(f)) {
       t.falsy(f.duplicate_found);
-    } else t.true(f.duplicate_found);
+    } else {
+      t.true(f.duplicate_found);
+    }
   });
 });
 
@@ -517,9 +531,11 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   t.not(currentHdfFileInfo.ContentLength, updatedBody.length);
 
   output.granules[0].files.forEach((f) => {
-    if (f.filename.endsWith('.cmr.xml')) {
+    if (isCMRFile(f)) {
       t.falsy(f.duplicate_found);
-    } else t.true(f.duplicate_found);
+    } else {
+      t.true(f.duplicate_found);
+    }
   });
 });
 
@@ -580,9 +596,11 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   });
 
   output.granules[0].files.forEach((f) => {
-    if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
+    if (f.filename.startsWith(`${outputHdfFile}.v`) || isCMRFile(f)) {
       t.falsy(f.duplicate_found);
-    } else t.true(f.duplicate_found);
+    } else {
+      t.true(f.duplicate_found);
+    }
   });
 }
 
