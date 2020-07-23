@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v2.0.0] 2020-07-23
+
 ### Added
 
 - **CUMULUS-2011**
@@ -66,7 +68,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1687**
   - All asyncOperations now include the fields `description` and `operationType`. `operationType` can be one of the following. [`Bulk Delete`, `Bulk Granules`, `ES Index`, `Kinesis Replay`]
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.23.2...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.0...HEAD
+[v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
+[v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
 [v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
 [v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0
