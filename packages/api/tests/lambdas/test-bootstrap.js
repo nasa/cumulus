@@ -15,6 +15,8 @@ const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
 const mappingsSubset = require('../data/testEsMappingsSubset.json');
 const mappingsNoFields = require('../data/testEsMappingsNoFields.json');
+const collectionMappingsSubset = require('../data/collectionMappingsSubset.json');
+const { getMappingsByType } = require('../../es/types');
 
 let esClient;
 
@@ -32,14 +34,14 @@ test.serial.skip('bootstrap dynamoDb activates pointInTime on a given table', as
   );
 });
 
-test.serial('bootstrap creates index with alias', async (t) => {
+test.serial('bootstrap index creates index with alias', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  try {
-    esClient = await Search.es();
+  esClient = await Search.es();
+  await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
+  try {
     t.is((await esClient.indices.exists({ index: indexName })).body, true);
 
     const alias = await esClient.indices.getAlias({ name: testAlias })
@@ -51,14 +53,14 @@ test.serial('bootstrap creates index with alias', async (t) => {
   }
 });
 
-test.serial('bootstrap creates index with specified number of shards', async (t) => {
+test.serial('bootstrap index creates index with specified number of shards', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
   process.env.ES_INDEX_SHARDS = 4;
   try {
-    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
     esClient = await Search.es();
+    await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
     const indexSettings = await esClient.indices.get({ index: indexName })
       .then((response) => response.body);
@@ -70,7 +72,7 @@ test.serial('bootstrap creates index with specified number of shards', async (t)
   }
 });
 
-test.serial('bootstrap adds alias to existing index', async (t) => {
+test.serial('bootstrap index adds alias to existing index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -81,8 +83,8 @@ test.serial('bootstrap adds alias to existing index', async (t) => {
     body: { mappings }
   });
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
   esClient = await Search.es();
+  await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
   const alias = await esClient.indices.getAlias({ name: testAlias })
     .then((response) => response.body);
@@ -111,8 +113,7 @@ test.serial('Missing types added to index', async (t) => {
       ['logs', 'deletedgranule']
     );
 
-    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-    esClient = await Search.es();
+    await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
     t.deepEqual(
       await findMissingMappings(esClient, indexName, 'rule'),
@@ -143,8 +144,7 @@ test.serial('Missing fields added to index', async (t) => {
       ['logs', 'execution']
     );
 
-    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-    esClient = await Search.es();
+    await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
     t.deepEqual(
       await findMissingMappings(esClient, indexName, 'rule'),
@@ -168,8 +168,7 @@ test.serial('If an index exists with the alias name, it is deleted on bootstrap'
     body: { mappings }
   });
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
+  await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
   // Get the index and make sure `testAlias` is not a key which would mean it's an index
   // If you use indices.exist on testAlias it'll return true because the alias is
@@ -181,14 +180,14 @@ test.serial('If an index exists with the alias name, it is deleted on bootstrap'
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('bootstrap index creates index with alias', async (t) => {
+test.serial('bootstrap creates index with alias', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
+
+  esClient = await Search.es();
+  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+
   try {
-    esClient = await Search.es();
-
-    await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
-
     t.is((await esClient.indices.exists({ index: indexName })).body, true);
 
     const alias = await esClient.indices.getAlias({ name: testAlias })
@@ -200,24 +199,132 @@ test.serial('bootstrap index creates index with alias', async (t) => {
   }
 });
 
-test.serial('bootstrap index adds alias to existing index', async (t) => {
-  const indexName = randomString();
-  const testAlias = randomString();
+test.serial('bootstrap index creates index with alias for multi-indices environment', async (t) => {
+  const indexName = randomId('esindex');
+  const testAlias = randomId('esalias');
+
+  const expectedIndexName = `${indexName}-rule`;
+  const expectedAliasName = `${testAlias}-rule`;
 
   esClient = await Search.es();
 
-  await esClient.indices.create({
-    index: indexName,
-    body: { mappings }
-  });
+  process.env.MULTI_INDICES = true;
+  try {
+    await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
+
+    t.is((await esClient.indices.exists({ index: expectedIndexName })).body, true);
+
+    const alias = await esClient.indices.getAlias({ name: expectedAliasName })
+      .then((response) => response.body);
+
+    t.deepEqual(Object.keys(alias), [expectedIndexName]);
+  } finally {
+    delete process.env.MULTI_INDICES;
+    await esClient.indices.delete({ index: expectedIndexName });
+  }
+});
+
+test.serial('bootstrap creates an index with alias for each ES type in a  multi-indices environment', async (t) => {
+  const indexName = randomId('esindex');
+  const testAlias = randomId('esalias');
 
   esClient = await Search.es();
-  await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
-  const alias = await esClient.indices.getAlias({ name: testAlias })
-    .then((response) => response.body);
+  process.env.MULTI_INDICES = true;
+  const types = esTypes.getEsTypes();
+  try {
+    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
 
-  t.deepEqual(Object.keys(alias), [indexName]);
+    types.forEach(async (type) => {
+      const expectedIndexName = `${indexName}-${type}`;
+      const expectedAliasName = `${testAlias}-${type}`;
 
-  await esClient.indices.delete({ index: indexName });
+      t.is((await esClient.indices.exists({ index: expectedIndexName })).body, true);
+
+      const alias = await esClient.indices.getAlias({ name: expectedAliasName })
+        .then((response) => response.body);
+
+      t.deepEqual(Object.keys(alias), [expectedIndexName]);
+    });
+  } finally {
+    delete process.env.MULTI_INDICES;
+    await Promise.all(types.map((type) => esClient.indices.delete({ index: `${indexName}-${type}` })));
+  }
+});
+
+test.serial('bootstrap creates indexes and aliases for missing es types in a  multi-indices environment', async (t) => {
+  const indexName = randomId('esindex');
+  const testAlias = randomId('esalias');
+
+  esClient = await Search.es();
+
+  process.env.MULTI_INDICES = true;
+
+  const types = ['collection', 'rule'];
+  const stub = sinon.stub(esTypes, 'getEsTypes').returns(types);
+  try {
+    await esClient.indices.create({
+      index: `${indexName}-collection`,
+      body: {
+        mappings: getMappingsByType('collection')
+      }
+    });
+
+    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+
+    types.forEach(async (type) => {
+      const expectedIndexName = `${indexName}-${type}`;
+      const expectedAliasName = `${testAlias}-${type}`;
+
+      t.is((await esClient.indices.exists({ index: expectedIndexName })).body, true);
+
+      const alias = await esClient.indices.getAlias({ name: expectedAliasName })
+        .then((response) => response.body);
+
+      t.deepEqual(Object.keys(alias), [expectedIndexName]);
+    });
+  } finally {
+    stub.restore();
+    delete process.env.MULTI_INDICES;
+    await Promise.all(types.map((type) => esClient.indices.delete({ index: `${indexName}-${type}` })));
+  }
+});
+
+test.only('bootstrap creates missing mappings in a multi-indices environment', async (t) => {
+  const indexName = randomId('esindex');
+  const testAlias = randomId('esalias');
+
+  esClient = await Search.es();
+
+  process.env.MULTI_INDICES = true;
+
+  const types = ['collection'];
+  const stub = sinon.stub(esTypes, 'getEsTypes').returns(types);
+  const collectionIndexName = `${indexName}-collection`;
+  try {
+    await esClient.indices.create({
+      index: collectionIndexName,
+      body: {
+        mappings: collectionMappingsSubset
+      }
+    });
+
+    console.log('done');
+
+    t.deepEqual(
+      await findMissingMappings(esClient, collectionIndexName, 'collection'),
+      ['collection']
+    );
+
+    await bootstrapElasticsearchIndex(esClient, 'collection', testAlias, indexName);
+
+    t.deepEqual(
+      await findMissingMappings(esClient, collectionIndexName, 'collection'),
+      []
+    );
+  } finally {
+    stub.restore();
+    delete process.env.MULTI_INDICES;
+    await esClient.indices.delete({ index: collectionIndexName });
+  }
 });

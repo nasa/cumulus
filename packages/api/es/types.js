@@ -32,7 +32,7 @@ function getAliasByType(type, aliasOverride = undefined) {
         return `${aliasOverride}-${type}`;
       }
 
-      return `cumulus_${type}_alias`;
+      return `cumulus-${type}-alias`;
     }
 
     // LAUREN TO DO - throw error
@@ -52,13 +52,13 @@ function getMappingsByType(type) {
 function getIndexNameForType(indexName, type) {
   if (process.env.MULTI_INDICES) {
     if (indexName) {
-      return `${indexName}_${type}`;
+      return `${indexName}-${type}`;
     }
 
-    return `cumulus_${type}_index`;
+    return `cumulus-${type}-index`;
   }
 
-  return indexName || `cumulus_${type}_index`;
+  return indexName || `cumulus-${type}-index`;
 }
 
 module.exports = {

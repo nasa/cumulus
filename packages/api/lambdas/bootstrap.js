@@ -96,7 +96,6 @@ async function bootstrapElasticsearchIndex(
 
   if (!indexExists) { // the index does not exist so create it
     await createIndex(esClient, type, indexName);
-    log.info(`Created index ${indexName}`);
     await esClient.indices.putAlias({
       index: indexName,
       name: alias

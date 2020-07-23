@@ -1,0 +1,20 @@
+{
+  "collection": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "name": {
+        "type": "keyword"
+      }
+    }
+  }
+}
