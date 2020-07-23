@@ -42,7 +42,7 @@ const siteConfig = {
     { doc: 'cumulus-docs-readme', label: 'Developer Docs' },
     { doc: 'data-cookbooks/about-cookbooks', label: 'Data-Cookbooks' },
     { doc: 'operator-docs/about-operator-docs', label: 'Operator Docs' },
-    { doc: 'team', label: 'Team' },
+    //{ doc: 'team', label: 'Team' }, Looks like team.md was removed in commit #1738
     { search: true }
   ],
 
@@ -88,11 +88,18 @@ const siteConfig = {
   cleanUrl: true,
 
   // Allow docs navigation sections to be collapsed
-  docsSideNavCollapsible: true
+  docsSideNavCollapsible: true,
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
   //   repoUrl: 'https://github.com/facebook/test-site',
+
+  // Add Top of Page button for long content
+  scrollToTop: true,
+  scrollToTopOptions: {
+    zIndex: 100,
+    backgroundColor: '#2276AC',
+  },
 };
 
 module.exports = siteConfig;
