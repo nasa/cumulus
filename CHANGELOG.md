@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v2.0.0] 2020-07-23
+
 ### BREAKING CHANGES
+
 - Changes to the `@cumulus/cumulus-api` package
   - The `CumulusApiClientError` class must now be imported using
     `const { CumulusApiClientError } = require('@cumulus/cumulus-api/CumulusApiClientError')`
@@ -3192,7 +3195,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.23.2...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.0...HEAD
+[v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
+[v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
 [v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
 [v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0
