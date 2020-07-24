@@ -10,7 +10,6 @@ const { createQueue } = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
-  randomId,
   randomNumber,
   randomString,
   validateConfig,
@@ -28,23 +27,16 @@ test.beforeEach(async (t) => {
   t.context.stateMachineArn = randomString();
 
   t.context.stackName = randomString();
-  const queueName = randomId('queue');
-  t.context.queueName = queueName;
-  const queueUrl = await createQueue(randomString());
 
-  t.context.queues = {
-    [queueName]: queueUrl
-  };
+  t.context.queueUrl = await createQueue(randomString());
+
   t.context.queueExecutionLimits = {
-    [queueName]: randomNumber()
+    [t.context.queueUrl]: randomNumber()
   };
   t.context.messageTemplate = {
     cumulus_meta: {
+      queueExecutionLimits: t.context.queueExecutionLimits,
       state_machine: t.context.stateMachineArn
-    },
-    meta: {
-      queues: t.context.queues,
-      queueExecutionLimits: t.context.queueExecutionLimits
     }
   };
   const workflowDefinition = {
@@ -71,7 +63,7 @@ test.beforeEach(async (t) => {
     config: {
       collection: { name: 'collection-name' },
       provider: { name: 'provider-name' },
-      queueUrl,
+      queueUrl: t.context.queueUrl,
       parsePdrWorkflow: t.context.workflow,
       stackName: t.context.stackName,
       internalBucket: t.context.templateBucket
@@ -149,8 +141,7 @@ test.serial('The correct message is enqueued', async (t) => {
   const {
     event,
     queueExecutionLimits,
-    queueName,
-    queues,
+    queueUrl,
     stateMachineArn,
     workflow
   } = t.context;
@@ -200,11 +191,10 @@ test.serial('The correct message is enqueued', async (t) => {
       cumulus_meta: {
         state_machine: stateMachineArn,
         parentExecutionArn: arn,
-        queueName
+        queueUrl,
+        queueExecutionLimits
       },
       meta: {
-        queues,
-        queueExecutionLimits,
         collection: { name: 'collection-name' },
         provider: { name: 'provider-name' },
         workflow_name: workflow
