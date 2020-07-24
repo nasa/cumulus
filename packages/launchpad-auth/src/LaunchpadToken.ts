@@ -48,7 +48,7 @@ class LaunchpadToken {
   /**
    * Retrieve Launchpad credentials
    *
-   * @returns {Promise<string | undefined>} - an object with the pfx
+   * @returns {Promise<S3.GetObjectOutput.Body | undefined>} - body of certificate found on S3
    * @private
    */
   private async retrieveCertificate() {
