@@ -695,6 +695,7 @@ module.exports.execution = {
     'arn',
     'name',
     'status',
-    'createdAt'
+    'createdAt',
+    'updatedAt'
   ]
 };

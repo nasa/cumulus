@@ -51,6 +51,8 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
 
       granuleId = randomId('granule-id-');
 
+      const ingestTime = Date.now() - 1000 * 30;
+
       // Ingest the granule the first time
       ingestGranuleRule = await createOneTimeRule(
         prefix,
@@ -84,6 +86,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === ingestGranuleRule.payload.testExecutionId;
         },
+        { timestamp__from: ingestTime },
         { timeout: 15 }
       );
 

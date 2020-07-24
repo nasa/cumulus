@@ -28,7 +28,7 @@ const EXECUTION_LIST_LIMIT = 50;
  *
  * @alias module:Executions
  */
-const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
+const findExecutionArn = async (prefix, matcher, queryParameters = { }, options = { timeout: 0 }) =>
   pRetry(
     async () => {
       let execution;
@@ -39,7 +39,8 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
           prefix,
           query: {
             limit: EXECUTION_LIST_LIMIT,
-            page: pageNumber
+            page: pageNumber,
+            ...queryParameters
           }
         });
         let executions = JSON.parse(body);
@@ -51,7 +52,8 @@ const findExecutionArn = async (prefix, matcher, options = { timeout: 0 }) =>
             prefix,
             query: {
               limit: EXECUTION_LIST_LIMIT,
-              page: pageNumber += 1
+              page: pageNumber += 1,
+              ...queryParameters
             }
           });
           executions = JSON.parse(response.body);

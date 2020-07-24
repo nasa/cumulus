@@ -67,6 +67,8 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
 
       granuleId = randomId('granule-id-');
 
+      const ingestTime = Date.now() - 1000 * 30;
+
       // Ingest the granule the first time
       const testExecutionId = randomId('test-execution-');
       console.log('testExecutionId:', testExecutionId);
@@ -103,6 +105,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === firstIngestGranuleRule.payload.testExecutionId;
         },
+        { timestamp__from: ingestTime },
         { timeout: 15 }
       );
 
@@ -150,6 +153,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === secondIngestGranuleRule.payload.testExecutionId;
         },
+        { timestamp__from: ingestTime },
         { timeout: 15 }
       );
 

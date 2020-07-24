@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api-client",
-  "version": "1.24.0",
+  "version": "2.0.0",
   "description": "API client for working with the Cumulus archive API",
   "keywords": [
     "GIBS",
@@ -25,7 +25,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
-    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'env NYC_SILENT=true npm test'"
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
     "files": [
@@ -37,8 +37,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "1.24.0",
-    "@cumulus/logger": "1.24.0",
+    "@cumulus/aws-client": "2.0.0",
+    "@cumulus/logger": "2.0.0",
     "p-retry": "^2.0.0"
+  },
+  "devDependencies": {
+    "@cumulus/types": "2.0.0"
   }
 }
