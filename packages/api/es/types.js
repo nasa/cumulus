@@ -5,10 +5,14 @@ const get = require('lodash/get');
 const fullMappings = require('../models/mappings.json');
 
 const collectionMappings = require('./mappings/collection.json');
+const granuleMappings = require('./mappings/granule.json');
+const logMappings = require('./mappings/logs.json');
 const ruleMappings = require('./mappings/rule.json');
 
 const typeMappings = [];
 typeMappings.collection = collectionMappings;
+typeMappings.granule = granuleMappings;
+typeMappings.log = logMappings;
 typeMappings.rule = ruleMappings;
 
 const defaultIndexAlias = 'cumulus-alias';

@@ -290,7 +290,7 @@ test.serial('bootstrap creates indexes and aliases for missing es types in a  mu
   }
 });
 
-test.only('bootstrap creates missing mappings in a multi-indices environment', async (t) => {
+test.serial('bootstrap creates missing mappings in a multi-indices environment', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 

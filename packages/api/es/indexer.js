@@ -38,6 +38,9 @@ async function createIndex(esClient, type, indexName) {
     body: {
       mappings,
       settings: {
+        mapping: {
+          single_type: process.env.MULTI_INDICES
+        },
         index: {
           number_of_shards: process.env.ES_INDEX_SHARDS || 1
         }

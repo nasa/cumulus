@@ -20,6 +20,7 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const { getEsTypes, getIndexNameForType } = require('../../../es/types');
 
 process.env.AccessTokensTable = randomId('accessTokensTable');
 process.env.CollectionsTable = randomId('collectionsTable');
@@ -99,7 +100,8 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
 });
 
 test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {

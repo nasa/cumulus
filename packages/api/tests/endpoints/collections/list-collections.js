@@ -17,6 +17,7 @@ const {
 } = require('../../../lib/testUtils');
 const EsCollection = require('../../../es/collections');
 const { Search } = require('../../../es/search');
+const { getEsTypes, getIndexNameForType } = require('../../../es/types');
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
@@ -64,7 +65,8 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -88,7 +90,7 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial('default returns list of collections', async (t) => {
+test('default returns list of collections', async (t) => {
   const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
 
   const response = await request(app)

@@ -2,7 +2,7 @@
   "collection": {
     "dynamic_templates": [
       {
-        "all_date_fileds": {
+        "all_date_fields": {
           "match": "*At",
           "match_mapping_type": "long",
           "mapping": {
@@ -17,6 +17,9 @@
       },
       "version": {
         "type": "keyword"
+      },
+      "timestamp": {
+        "type": "date"
       }
     }
   }

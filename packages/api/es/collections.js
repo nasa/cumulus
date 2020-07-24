@@ -2,7 +2,8 @@
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
-const { BaseSearch } = require('./search');
+const { BaseSearch, Search } = require('./search');
+const { getAliasByType } = require('./types')
 
 class Collection extends BaseSearch {
   constructor(event, type, index) {
@@ -18,31 +19,20 @@ class Collection extends BaseSearch {
     }
 
     const aggs = await this.client.search({
-      index: this.index,
-      type: this.type,
+      index: getAliasByType('granule', process.env.ES_INDEX),
+      type: 'granule',
       body: {
         query: {
           terms: {
-            _id: ids
+            collectionId: ids
           }
         },
         aggs: {
-          hashes: {
-            terms: {
-              field: '_uid'
-            },
+          collections: {
+            terms: { field: 'collectionId' },
             aggs: {
               stats: {
-                children: {
-                  type: 'granule'
-                },
-                aggs: {
-                  count: {
-                    terms: {
-                      field: 'status'
-                    }
-                  }
-                }
+                terms: { field: 'status' }
               }
             }
           }
@@ -62,15 +52,14 @@ class Collection extends BaseSearch {
         total: 0
       };
 
-      // Can't aggregate on the _id but can on the _uid which is collection#_id
-      const esUid = `collection#${constructCollectionId(updatedRecord.name, updatedRecord.version)}`;
+      const collectionId = constructCollectionId(updatedRecord.name, updatedRecord.version);
 
-      const matchingBucket = aggs.aggregations.hashes.buckets
-        .find((bucket) => bucket.key === esUid);
+      const matchingBucket = aggs.aggregations.collections.buckets
+        .find((bucket) => bucket.key === collectionId);
 
       if (matchingBucket) {
-        updatedRecord.stats.total = matchingBucket.stats.doc_count;
-        matchingBucket.stats.count.buckets.forEach((s) => {
+        updatedRecord.stats.total = matchingBucket.doc_count;
+        matchingBucket.stats.buckets.forEach((s) => {
           updatedRecord.stats[s.key] = s.doc_count;
         });
       }
@@ -91,11 +80,12 @@ class Collection extends BaseSearch {
       this.client = await this.constructor.es();
     }
 
+    const granuleSearch = new Search({ queryStringParameters: this.params }, 'granule', process.env.ES_INDEX);
+
     // granules
-    const searchParams = this._buildSearch();
+    const searchParams = granuleSearch._buildSearch();
     searchParams.size = 0;
     delete searchParams.from;
-    searchParams.type = 'granule';
 
     searchParams.body.aggs = {
       collections: {

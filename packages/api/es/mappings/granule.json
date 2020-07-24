@@ -1,0 +1,50 @@
+{
+  "granule": {
+    "dynamic_templates": [
+      {
+        "all_date_fields": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "_parent": {
+      "type": "collection"
+    },
+    "properties": {
+      "execution": {
+        "type": "keyword"
+      },
+      "granuleId": {
+        "type": "keyword"
+      },
+      "pdrName": {
+        "type": "keyword"
+      },
+      "collectionId": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "provider": {
+        "type": "keyword"
+      },
+      "cmrLink": {
+        "type": "keyword"
+      },
+      "published": {
+        "type": "boolean"
+      },
+      "duration": {
+        "type": "float"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  }
+}
