@@ -1,6 +1,5 @@
 import { URL } from 'url';
-import https from 'https';
-import path from 'path';
+import got from 'got';
 
 import Logger from '@cumulus/logger';
 import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
@@ -52,7 +51,7 @@ class LaunchpadToken {
    * @returns {Promise<string | undefined>} - an object with the pfx
    * @private
    */
-  private async retrieveCertificate(): Promise<string | undefined> {
+  private async retrieveCertificate() {
     const bucket = getEnvVar('system_bucket');
     const stackName = getEnvVar('stackName');
 
@@ -68,7 +67,11 @@ class LaunchpadToken {
     }
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
-    const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`)).Body?.toString();
+
+    const pfxObject = await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`);
+    // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
+    // request header
+    const pfx = pfxObject?.Body;
 
     return pfx;
   }
@@ -84,16 +87,16 @@ class LaunchpadToken {
     const launchpadUrl = new URL(this.api);
 
     const options = {
-      hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
-      path: path.join(launchpadUrl.pathname, 'gettoken'),
-      method: 'GET',
+      prefixUrl: this.api,
       pfx,
-      passphrase: this.passphrase
+      https: {
+        passphrase: this.passphrase
+      }
     };
 
-    const responseBody = await this.submitRequest(options);
-    return <GetTokenResponse>JSON.parse(responseBody);
+    const response = await got.get('gettoken', options).json();
+    return <GetTokenResponse>response;
   }
 
   /**
@@ -109,53 +112,21 @@ class LaunchpadToken {
 
     const data = JSON.stringify({ token });
     const options = {
-      hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
-      path: path.join(launchpadUrl.pathname, 'validate'),
-      method: 'POST',
+      prefixUrl: this.api,
+      body: data,
       pfx,
-      passphrase: this.passphrase,
+      https: {
+        passphrase: this.passphrase
+      },
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': data.length
+        'Content-Length': data.length.toString()
       }
     };
 
-    // const response = await got.post('validate', options).json();
-    // return <ValidateTokenResponse>response;
-    const responseBody = await this.submitRequest(options, data);
-    return <ValidateTokenResponse>JSON.parse(responseBody);
-  }
-
-  /**
-   * Submit HTTPS request
-   *
-   * @param {Object} options - the Launchpad token for validation
-   * @param {string} data - the request body
-   * @returns {Promise<string>} - the response body
-   * @private
-   */
-  private submitRequest(options: object, data?: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      let responseBody = '';
-
-      const req = https.request(options, (res) => {
-        if (res.statusCode !== 200) {
-          reject(new Error(`launchpad request failed with statusCode ${res.statusCode} ${res.statusMessage}`));
-        }
-
-        res.on('data', (d) => {
-          responseBody += d;
-        });
-
-        res.on('end', () => resolve(responseBody));
-      });
-
-      req.on('error', (e) => reject(e));
-
-      if (data) req.write(data);
-      req.end();
-    });
+    const response = await got.post('validate', options).json();
+    return <ValidateTokenResponse>response;
   }
 }
 
