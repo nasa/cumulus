@@ -8,3 +8,5 @@ elasticsearch_config = {
   version        = "5.3"
   volume_size    = 10
 }
+
+cmr_oauth_provider = "launchpad"

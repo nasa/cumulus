@@ -24,6 +24,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2099**
   - `@cumulus/message/Queue.getQueueUrl` to get the queue URL specified in a Cumulus workflow message, if any.
 
+### Fixed
+
+- Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
+
 ## [v2.0.0] 2020-07-23
 
 ### BREAKING CHANGES
