@@ -40,14 +40,22 @@ $ npm install @cumulus/integration-tests
 <a name="module_Collections"></a>
 
 ## Collections
-**Example**
+**Example**  
 ```js
 const Collections = require('@cumulus/integration-test/Collections');
 ```
+
+* [Collections](#module_Collections)
+    * [createCollection(prefix, [overrides])](#exp_module_Collections--createCollection) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+        * [~addCustomUrlPathToCollectionFiles(collection, customFilePath)](#module_Collections--createCollection..addCustomUrlPathToCollectionFiles) ⇒ <code>Array.&lt;Object&gt;</code>
+        * [~buildCollection(params)](#module_Collections--createCollection..buildCollection) ⇒ <code>Object</code>
+        * [~addCollection(stackName, collection)](#module_Collections--createCollection..addCollection) ⇒ <code>Promise.&lt;undefined&gt;</code>
+        * [~addCollections(stackName, bucketName, dataDirectory, [postfix], [customFilePath], [duplicateHandling])](#module_Collections--createCollection..addCollections) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
+
 <a name="exp_module_Collections--createCollection"></a>
 
 ### createCollection(prefix, [overrides]) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Create a collection using the Cumulus API.
+Create a randomized collection using the Cumulus API.
 
 The default collection is very simple. It expects that, for any discovered file, the granule ID
 is everything in the filename before the extension. For example, a file named `gran-1.txt` would
@@ -72,18 +80,78 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
   ]
   ```
 
-**Kind**: Exported function
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | prefix | <code>string</code> | the Cumulus stack name |
 | [overrides] | <code>Object</code> | properties to set on the collection, overriding the defaults |
 
+<a name="module_Collections--createCollection..addCustomUrlPathToCollectionFiles"></a>
+
+#### createCollection~addCustomUrlPathToCollectionFiles(collection, customFilePath) ⇒ <code>Array.&lt;Object&gt;</code>
+Given a Cumulus collection configuration, return a list of the filetype
+configs with their `url_path`s updated.
+
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
+**Returns**: <code>Array.&lt;Object&gt;</code> - a list of collection filetype configs  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| collection | <code>Object</code> | a Cumulus collection |
+| customFilePath | <code>string</code> | path to be added to the end of the url_path |
+
+<a name="module_Collections--createCollection..buildCollection"></a>
+
+#### createCollection~buildCollection(params) ⇒ <code>Object</code>
+Update a collection with a custom file path, duplicate handling, and name
+updated with the postfix.
+
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
+**Returns**: <code>Object</code> - an updated collection  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.collection | <code>Object</code> | a collection configuration |
+| params.customFilePath | <code>string</code> | path to be added to the end of the   url_path |
+| params.duplicateHandling | <code>string</code> | duplicate handling setting |
+| params.postfix | <code>string</code> | a string to be appended to the end of the   name |
+
+<a name="module_Collections--createCollection..addCollection"></a>
+
+#### createCollection~addCollection(stackName, collection) ⇒ <code>Promise.&lt;undefined&gt;</code>
+Add a new collection to Cumulus
+
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| stackName | <code>string</code> | the prefix of the Cumulus stack |
+| collection | <code>Object</code> | a Cumulus collection |
+
+<a name="module_Collections--createCollection..addCollections"></a>
+
+#### createCollection~addCollections(stackName, bucketName, dataDirectory, [postfix], [customFilePath], [duplicateHandling]) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
+Add collections to database
+
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
+**Returns**: <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code> - - collections that were added  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| stackName | <code>string</code> | Cloud formation stack name |
+| bucketName | <code>string</code> | S3 internal bucket name |
+| dataDirectory | <code>string</code> | the directory of collection json files |
+| [postfix] | <code>string</code> | string to append to collection name |
+| [customFilePath] | <code>string</code> |  |
+| [duplicateHandling] | <code>string</code> |  |
+
 <a name="module_Executions"></a>
 
 ## Executions
-**Example**
+**Example**  
 ```js
 const Executions = require('@cumulus/integration-test/Executions');
 ```
@@ -97,8 +165,8 @@ const Executions = require('@cumulus/integration-test/Executions');
 ### findExecutionArn(prefix, matcher, [options]) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
 Find the execution ARN matching the `matcher` function
 
-**Kind**: Exported function
-**Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -112,9 +180,9 @@ Find the execution ARN matching the `matcher` function
 ### getExecutionWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Wait for an execution to have an expected status and return the execution
 
-**Kind**: Exported function
+**Kind**: Exported function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
-endpoint
+endpoint  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -128,7 +196,7 @@ endpoint
 <a name="module_Granules"></a>
 
 ## Granules
-**Example**
+**Example**  
 ```js
 const Granules = require('@cumulus/integration-test/Granules');
 ```
@@ -137,8 +205,8 @@ const Granules = require('@cumulus/integration-test/Granules');
 ### getGranuleWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Wait for a granule to have an expected status and return the granule
 
-**Kind**: Exported function
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -152,7 +220,7 @@ Wait for a granule to have an expected status and return the granule
 <a name="module_Providers"></a>
 
 ## Providers
-**Example**
+**Example**  
 ```js
 const Providers = require('@cumulus/integration-test/Providers');
 ```
@@ -165,9 +233,10 @@ Create a provider using the Cumulus API
 
 - **id**: random string starting with `provider-`
 - **protocol**: `s3`
+- **globalConnectionLimit**: `10`
 
-**Kind**: Exported function
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -177,7 +246,7 @@ Create a provider using the Cumulus API
 <a name="module_Rules"></a>
 
 ## Rules
-**Example**
+**Example**  
 ```js
 const Rules = require('@cumulus/integration-test/Rules');
 ```
@@ -191,8 +260,8 @@ Create a `onetime` rule using the Cumulus API
 - **name**: random string starting with `rule_`
 - **rule**: `{ type: 'onetime' }`
 
-**Kind**: Exported function
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule
+**Kind**: Exported function  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule  
 
 | Param | Type | Description |
 | --- | --- | --- |

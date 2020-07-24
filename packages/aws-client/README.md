@@ -481,7 +481,7 @@ Calculate checksum for S3 Object
 <a name="module_S3.s3Join"></a>
 
 ### S3.s3Join(args) ⇒ <code>string</code>
-Join strings into an S3 key without a leading slash or double slashes
+Join strings into an S3 key without a leading slash
 
 **Kind**: static method of [<code>S3</code>](#module_S3)  
 **Returns**: <code>string</code> - the full S3 key  
