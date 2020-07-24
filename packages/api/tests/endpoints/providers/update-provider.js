@@ -17,6 +17,7 @@ const {
   setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const { getEsTypes, getIndexNameForType } = require('../../../es/types');
 const assertions = require('../../../lib/assertions');
 
 process.env.ProvidersTable = randomString();
@@ -67,7 +68,8 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
   await providerModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
 });
 
 test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {

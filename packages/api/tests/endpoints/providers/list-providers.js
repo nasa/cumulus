@@ -16,6 +16,7 @@ const {
   setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const { getEsTypes, getIndexNameForType } = require('../../../es/types');
 const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
@@ -61,9 +62,9 @@ test.before(async () => {
 test.after.always(() => Promise.all([
   recursivelyDeleteS3Bucket(process.env.system_bucket),
   accessTokenModel.deleteTable(),
-  esClient.indices.delete({ index: esIndex }),
   providerModel.deleteTable()
-]));
+].concat(getEsTypes().map((t) =>
+  esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })))));
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)

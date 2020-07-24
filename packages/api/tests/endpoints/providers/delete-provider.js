@@ -16,6 +16,7 @@ const {
   setAuthorizedOAuthUsers
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const { getEsTypes, getIndexNameForType } = require('../../../es/types');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
@@ -78,7 +79,8 @@ test.beforeEach(async (t) => {
 test.after.always(async () => {
   await providerModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
   await ruleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
