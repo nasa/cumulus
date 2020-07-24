@@ -126,7 +126,7 @@ function parsePayload(payload) {
 async function indexLog(esClient, payloads, index = undefined, type = 'logs') {
   const body = [];
 
-  const alias = index || getAliasByType(type);
+  const alias = getAliasByType(type, index);
 
   payloads.forEach((payload) => {
     body.push({ index: { _index: alias, _type: type, _id: payload.id } });
@@ -153,7 +153,7 @@ async function indexLog(esClient, payloads, index = undefined, type = 'logs') {
 async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
   if (!doc) throw new Error('Nothing to update. Make sure doc argument has a value');
 
-  const alias = index || getAliasByType(type);
+  const alias = getAliasByType(type, index);
 
   const body = cloneDeep(doc);
   body.timestamp = Date.now();
@@ -325,7 +325,7 @@ async function deleteRecord({
   index = undefined,
   ignore
 }) {
-  const alias = index || getAliasByType(type);
+  const alias = getAliasByType(type, index);
 
   const params = {
     index: alias,

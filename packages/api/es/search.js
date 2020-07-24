@@ -126,7 +126,7 @@ class BaseSearch {
 
     this.frm = (page - 1) * this.size;
     this.page = Number.parseInt((params.skip) ? params.skip : page, 10);
-    this.index = index || getAliasByType(type);
+    this.index = getAliasByType(type, index);
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';

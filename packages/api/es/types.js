@@ -33,23 +33,14 @@ function getAliasByType(type, aliasOverride = undefined) {
       }
 
       return `cumulus-${type}-alias`;
-    }
-
     // LAUREN TO DO - throw error
+    }
   }
 
   return aliasOverride || defaultIndexAlias;
 }
 
-function getMappingsByType(type) {
-  if (process.env.MULTI_INDICES) {
-    return get(typeMappings, type, fullMappings);
-  }
-
-  return fullMappings;
-}
-
-function getIndexNameForType(indexName, type) {
+function getIndexNameForType(type, indexName) {
   if (process.env.MULTI_INDICES) {
     if (indexName) {
       return `${indexName}-${type}`;
@@ -59,6 +50,14 @@ function getIndexNameForType(indexName, type) {
   }
 
   return indexName || `cumulus-${type}-index`;
+}
+
+function getMappingsByType(type) {
+  if (process.env.MULTI_INDICES) {
+    return get(typeMappings, type, fullMappings);
+  }
+
+  return fullMappings;
 }
 
 module.exports = {

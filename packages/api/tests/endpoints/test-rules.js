@@ -18,6 +18,7 @@ const {
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
+const { getIndexNameForType } = require('../../es/types');
 const assertions = require('../../lib/assertions');
 
 [
@@ -32,7 +33,7 @@ const assertions = require('../../lib/assertions');
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-const esIndex = randomString();
+const esIndex = randomString();;
 const testRule = fakeRuleFactoryV2();
 
 const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
@@ -72,7 +73,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.indices.delete({ index: getIndexNameForType('rule', esIndex) });
   buildPayloadStub.restore();
 });
 

@@ -60,7 +60,7 @@ async function bootstrapElasticsearchIndex(
 ) {
   const alias = esTypes.getAliasByType(type, aliasOverride);
 
-  let indexName = esTypes.getIndexNameForType(indexOverride, type);
+  let indexName = esTypes.getIndexNameForType(type, indexOverride);
   let indexIsAliased = false;
 
   // If the alias already exists as an index, remove it
