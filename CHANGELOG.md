@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-2099**
+  - `meta.queues` has been removed from Cumulus messages.
+  - `@cumulus/message/Build.buildQueueMessageFromTemplate` no longer takes `params.queueName` as a parameter. It has been replaced by `params.queueUrl`, which should be an SQS queue URL.
+  - `@cumulus/message/Queue.getMaximumExecutions` no longer takes `queueName` as a parameter. It has been replaced by `queueUrl`, which should be an SQS queue URL.
+
+### MIGRATION STEPS
+
+- **CUMULUS-2099**
+  - All references to `meta.queues` in workflow configuration must be replaced with references to queue URLs from Terraform resources. See the updated [data cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/about-cookbooks) or example [Discover Granules workflow configuration](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json).
+  - The steps for configuring queued execution throttling have changed. See the [updated documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
+
+### Added
+
+- **CUMULUS-2099**
+  - `@cumulus/message/Queue.getQueueUrl` to get the queue URL specified in a Cumulus workflow message, if any.
+
+## [v2.0.0] 2020-07-23
+
+### BREAKING CHANGES
+
 - Changes to the `@cumulus/api-client` package
   - The `CumulusApiClientError` class must now be imported using
     `const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError')`
@@ -124,10 +144,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1991**
   - Updated CMR metadata generation to use "Download file.hdf" (where `file.hdf` is the filename of the given resource) as the resource description instead of "File to download"
   - CMR metadata updates now respect changes to resource descriptions (previously only changes to resource URLs were respected)
-- **CUMULUS-2099**
-  - `meta.queues` has been removed from Cumulus messages.
-  - `@cumulus/message/Build.buildQueueMessageFromTemplate` no longer takes `params.queueName` as a parameter. It has been replaced by `params.queueUrl`, which should be an SQS queue URL.
-  - `@cumulus/message/Queue.getMaximumExecutions` no longer takes `queueName` as a parameter. It has been replaced by `queueUrl`, which should be an SQS queue URL.
 
 ### MIGRATION STEPS
 
@@ -143,9 +159,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   instructions](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
   to `Redeploy a REST API to a stage` for your egress API and re-run `terraform
   apply`.
-- **CUMULUS-2099**
-  - All references to `meta.queues` in workflow configuration must be replaced with references to queue URLs from Terraform resources. See the updated [data cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/about-cookbooks) or example [Discover Granules workflow configuration](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json).
-  - The steps for configuring queued execution throttling have changed. See the [updated documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
 
 ### Added
 
@@ -206,8 +219,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2019**
   - Add `infix` search to es query builder `@cumulus/api/es/es/queries` to
     support partial matching of the keywords
-- **CUMULUS-2099**
-  - `@cumulus/message/Queue.getQueueUrl` to get the queue URL specified in a Cumulus workflow message, if any.
 
 ### Changed
 
@@ -3208,7 +3219,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.23.2...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.0...HEAD
+[v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
+[v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
 [v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
 [v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0
