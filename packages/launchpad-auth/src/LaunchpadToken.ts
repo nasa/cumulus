@@ -1,5 +1,6 @@
 import { URL } from 'url';
-import got from 'got';
+import https from 'https';
+import path from 'path';
 
 import Logger from '@cumulus/logger';
 import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
@@ -83,16 +84,16 @@ class LaunchpadToken {
     const launchpadUrl = new URL(this.api);
 
     const options = {
+      hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
-      prefixUrl: this.api,
+      path: path.join(launchpadUrl.pathname, 'gettoken'),
+      method: 'GET',
       pfx,
-      https: {
-        passphrase: this.passphrase
-      }
+      passphrase: this.passphrase
     };
 
-    const response = await got.get('gettoken', options).json();
-    return <GetTokenResponse>response;
+    const responseBody = await this.submitRequest(options);
+    return <GetTokenResponse>JSON.parse(responseBody);
   }
 
   /**
@@ -108,21 +109,53 @@ class LaunchpadToken {
 
     const data = JSON.stringify({ token });
     const options = {
+      hostname: launchpadUrl.hostname,
       port: launchpadUrl.port || 443,
-      prefixUrl: this.api,
-      body: data,
+      path: path.join(launchpadUrl.pathname, 'validate'),
+      method: 'POST',
       pfx,
-      https: {
-        passphrase: this.passphrase
-      },
+      passphrase: this.passphrase,
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': data.length.toString()
+        'Content-Length': data.length
       }
     };
 
-    const response = await got.post('validate', options).json();
-    return <ValidateTokenResponse>response;
+    // const response = await got.post('validate', options).json();
+    // return <ValidateTokenResponse>response;
+    const responseBody = await this.submitRequest(options, data);
+    return <ValidateTokenResponse>JSON.parse(responseBody);
+  }
+
+  /**
+   * Submit HTTPS request
+   *
+   * @param {Object} options - the Launchpad token for validation
+   * @param {string} data - the request body
+   * @returns {Promise<string>} - the response body
+   * @private
+   */
+  private submitRequest(options: object, data?: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let responseBody = '';
+
+      const req = https.request(options, (res) => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`launchpad request failed with statusCode ${res.statusCode} ${res.statusMessage}`));
+        }
+
+        res.on('data', (d) => {
+          responseBody += d;
+        });
+
+        res.on('end', () => resolve(responseBody));
+      });
+
+      req.on('error', (e) => reject(e));
+
+      if (data) req.write(data);
+      req.end();
+    });
   }
 }
 
