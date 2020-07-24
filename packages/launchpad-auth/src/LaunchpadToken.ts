@@ -48,10 +48,10 @@ class LaunchpadToken {
   /**
    * Retrieve Launchpad credentials
    *
-   * @returns {Promise<string | undefined>} - an object with the pfx
+   * @returns {Promise<S3.GetObjectOutput.Body | undefined>} - body of certificate found on S3
    * @private
    */
-  private async retrieveCertificate(): Promise<string | undefined> {
+  private async retrieveCertificate() {
     const bucket = getEnvVar('system_bucket');
     const stackName = getEnvVar('stackName');
 
@@ -67,7 +67,11 @@ class LaunchpadToken {
     }
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
-    const pfx = (await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`)).Body?.toString();
+
+    const pfxObject = await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`);
+    // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
+    // request header
+    const pfx = pfxObject?.Body;
 
     return pfx;
   }
