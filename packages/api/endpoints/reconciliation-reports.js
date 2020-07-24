@@ -22,7 +22,7 @@ const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res) {
+async function listReports(req, res) {
   const search = new Search(
     { queryStringParameters: req.query },
     'reconciliationReport',
@@ -40,7 +40,7 @@ async function list(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function get(req, res) {
+async function getReport(req, res) {
   const name = req.params.name;
   const reconciliationReportModel = new models.ReconciliationReport();
 
@@ -67,7 +67,7 @@ async function get(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+async function deleteReport(req, res) {
   const name = req.params.name;
   const reconciliationReportModel = new models.ReconciliationReport();
   const record = await reconciliationReportModel.get({ name });
@@ -99,7 +99,11 @@ async function del(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function post(req, res) {
+async function createReport(req, res) {
+  const startTimestamp = req.body.startTimestamp || undefined;
+  const endTimestamp = req.body.endTimestamp || undefined;
+  const payload = { startTimestamp, endTimestamp };
+
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -112,16 +116,16 @@ async function post(req, res) {
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Inventory Report',
     operationType: 'Reconciliation Report',
-    payload: {},
+    payload,
     useLambdaEnvironmentVariables: true
   });
 
   return res.status(202).send(asyncOperation);
 }
 
-router.get('/:name', get);
-router.delete('/:name', del);
-router.get('/', list);
-router.post('/', post, asyncOperationEndpointErrorHandler);
+router.get('/:name', getReport);
+router.delete('/:name', deleteReport);
+router.get('/', listReports);
+router.post('/', createReport, asyncOperationEndpointErrorHandler);
 
 module.exports = router;

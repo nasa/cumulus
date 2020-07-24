@@ -5,6 +5,7 @@ const rewire = require('rewire');
 const esSearch = rewire('../../es/search');
 const { Search } = esSearch;
 
+const localEsHost = process.env.LOCAL_ES_HOST;
 test.before(async () => {
   const awsMock = {
     config: {
@@ -16,6 +17,11 @@ test.before(async () => {
   };
   esSearch.__set__('aws', awsMock);
   esSearch.__set__('inTestMode', () => false);
+  delete process.env.LOCAL_ES_HOST;
+});
+
+test.after.always(() => {
+  process.env.LOCAL_ES_HOST = localEsHost;
 });
 
 test('Configured with Metrics host when metrics propety is set', async (t) => {

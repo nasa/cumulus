@@ -28,6 +28,7 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
+      "deployment/monitoring-readme",
       "deployment/terraform-best-practices",
       "deployment/upgrade-readme",
       "deployment/components",
@@ -96,6 +97,12 @@
       "operator-docs/discovery-filtering",
       "operator-docs/rerunning-workflow-executions",
       "operator-docs/replay-kinesis-messages"
+    ],
+    "Common Use Cases": [
+      "operator-docs/common-use-cases",
+      "operator-docs/kinesis-stream-for-ingest",
+      "operator-docs/create-rule-in-cumulus",
+      "operator-docs/granule-workflows"
     ]
   }
 }

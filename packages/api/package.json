@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.24.1-alpha.0",
+  "version": "2.0.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -28,8 +28,8 @@
   "ava": {
     "files": [
       "tests/**/*.js",
-      "!tests/serial/**/*.js",
-      "!tests/endpoints/fixtures/**/*.js"
+      "!tests/endpoints/fixtures/**/*.js",
+      "!tests/es/helpers/**/*.js"
     ],
     "fail-fast": true,
     "verbose": true,
@@ -44,19 +44,19 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "1.24.0",
-    "@cumulus/cmr-client": "1.24.0",
-    "@cumulus/cmrjs": "1.24.0",
-    "@cumulus/collection-config-store": "1.24.0",
-    "@cumulus/common": "1.24.0",
-    "@cumulus/earthdata-login-client": "1.24.0-alpha.0",
-    "@cumulus/errors": "1.24.0",
-    "@cumulus/ingest": "1.24.0",
-    "@cumulus/launchpad-auth": "1.24.0",
-    "@cumulus/logger": "1.24.0",
-    "@cumulus/message": "1.24.0",
-    "@cumulus/pvl": "1.24.0",
-    "@cumulus/sftp-client": "1.24.0",
+    "@cumulus/aws-client": "2.0.0",
+    "@cumulus/cmr-client": "2.0.0",
+    "@cumulus/cmrjs": "2.0.0",
+    "@cumulus/collection-config-store": "2.0.0",
+    "@cumulus/common": "2.0.0",
+    "@cumulus/earthdata-login-client": "2.0.0",
+    "@cumulus/errors": "2.0.0",
+    "@cumulus/ingest": "2.0.0",
+    "@cumulus/launchpad-auth": "2.0.0",
+    "@cumulus/logger": "2.0.0",
+    "@cumulus/message": "2.0.0",
+    "@cumulus/pvl": "2.0.0",
+    "@cumulus/sftp-client": "2.0.0",
     "@elastic/elasticsearch": "^5.6.20",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.0.1",
@@ -83,6 +83,7 @@
     "moment": "2.24.0",
     "morgan": "^1.9.1",
     "nodeify": "^1.0.1",
+    "p-each-series": "^2.1.0",
     "p-limit": "^1.2.0",
     "p-map": "^4.0.0",
     "p-retry": "^2.0.0",
@@ -96,6 +97,6 @@
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "@cumulus/test-data": "1.24.0"
+    "@cumulus/test-data": "2.0.0"
   }
 }

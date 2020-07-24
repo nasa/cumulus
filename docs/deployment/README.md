@@ -411,7 +411,7 @@ Please see our [troubleshooting documentation for any issues with your deploymen
 Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
 
 - git
-- [node 10.16.3](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+- [node 12.18](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 - [npm](https://www.npmjs.com/get-npm)
 - zip
 - AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
