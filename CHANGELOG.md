@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
+
 ## [v2.0.0] 2020-07-23
 
 ### BREAKING CHANGES
