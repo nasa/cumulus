@@ -11,6 +11,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
+const { getEsTypes, getIndexNameForType } = require('../../es/types');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel
@@ -63,7 +64,8 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await asyncOperationModel.deleteTable().catch(noop);
   await accessTokenModel.deleteTable().catch(noop);
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {

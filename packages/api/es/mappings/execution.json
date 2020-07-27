@@ -1,0 +1,41 @@
+{
+  "execution": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "arn": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "keyword"
+      },
+      "execution": {
+        "type": "keyword"
+      },
+      "type": {
+        "type": "keyword"
+      },
+      "collectionId": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "duration": {
+        "type": "float"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "reconciliationReport": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "name": {
+        "type": "keyword"
+      },
+      "type": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "location": {
+        "type": "keyword"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  }
+}

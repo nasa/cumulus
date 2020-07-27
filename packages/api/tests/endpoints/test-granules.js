@@ -28,6 +28,7 @@ const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
+const { getEsTypes, getIndexNameForType } = require('../../es/types');
 const {
   fakeAccessTokenFactory,
   fakeCollectionFactory,
@@ -188,7 +189,8 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,

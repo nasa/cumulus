@@ -4,6 +4,7 @@ const moment = require('moment');
 const omit = require('lodash/omit');
 
 const { BaseSearch } = require('./search');
+const { getAliasByType } = require('./types');
 
 class Stats extends BaseSearch {
   /**
@@ -35,6 +36,7 @@ class Stats extends BaseSearch {
     searchParams.size = 0;
     delete searchParams.from;
     searchParams.type = 'granule';
+    searchParams.index = getAliasByType('granule', process.env.ES_INDEX);
 
     // add aggregation
     // For collections we are getting the distinct collection ids

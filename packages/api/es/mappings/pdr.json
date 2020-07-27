@@ -1,0 +1,69 @@
+{
+  "pdr": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "execution": {
+        "type": "keyword"
+      },
+      "pdrName": {
+        "type": "keyword"
+      },
+      "collectionId": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "provider": {
+        "type": "keyword"
+      },
+      "progress": {
+        "type": "float"
+      },
+      "PANSent": {
+        "type": "boolean"
+      },
+      "PANmessage": {
+        "type": "text"
+      },
+      "address": {
+        "type": "keyword"
+      },
+      "originalUrl": {
+        "type": "keyword"
+      },
+      "duration": {
+        "type": "float"
+      },
+      "stats": {
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "completed": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "processing": {
+            "type": "integer"
+          }
+        }
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  }
+}

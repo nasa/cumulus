@@ -11,6 +11,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const indexer = rewire('../../es/indexer');
 const { Search } = require('../../es/search');
+const { getEsTypes, getIndexNameForType } = require('../../es/types');
 const models = require('../../models');
 const {
   fakeGranuleFactoryV2,
@@ -102,12 +103,12 @@ test.before(async () => {
 
 test.after.always(async () => {
   await Promise.all([
-    esClient.indices.delete({ index: esIndex }),
     collectionModel.deleteTable(),
     granuleModel.deleteTable(),
     await accessTokenModel.deleteTable(),
     s3.recursivelyDeleteS3Bucket(process.env.system_bucket)
-  ]);
+  ].concat(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) }))));
 });
 
 test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {

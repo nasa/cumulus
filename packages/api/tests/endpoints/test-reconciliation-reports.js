@@ -28,6 +28,7 @@ const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
+const { getEsTypes, getIndexNameForType } = require('../../es/types');
 const {
   Search
 } = require('../../es/search');
@@ -121,9 +122,8 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await reconciliationReportModel.deleteTable();
   await asyncOperationsModel.deleteTable();
-  await esClient.indices.delete({
-    index: esIndex
-  });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 

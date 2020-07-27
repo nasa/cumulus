@@ -13,6 +13,7 @@ const {
 } = require('../../lib/testUtils');
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
+const { getEsTypes, getIndexNameForType } = require('../../es/types');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
 const { AccessToken } = require('../../models');
@@ -72,7 +73,8 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
 });
 
 test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
