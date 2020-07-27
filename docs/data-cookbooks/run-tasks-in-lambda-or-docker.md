@@ -39,7 +39,7 @@ This example will use an already-defined workflow from the `cumulus` module that
 
 The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json) containing the step definition for the `QueueGranules` step:
 
-> Note: `ingest_granule_workflow_name` and `queue_granules_task_arn` are interpolated values provided as references to Terraform resources. See the example deployment code for the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
+> Note: `${ingest_granule_workflow_name}` and `${queue_granules_task_arn}` are interpolated values that refer to Terraform resources. See the example deployment code for the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
 
 ```json
   "QueueGranules": {
