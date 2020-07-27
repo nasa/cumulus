@@ -37,7 +37,10 @@
     "files": [
       "tests/**/*.js"
     ],
-    "verbose": true
+    "verbose": true,
+    "nonSemVerExperiments": {
+      "likeAssertion": true
+    }
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

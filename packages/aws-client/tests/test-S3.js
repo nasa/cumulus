@@ -51,17 +51,10 @@ const streamToString = (stream) => {
   });
 };
 
-const stageTestObjectToLocalStack = async (bucket, body) => {
-  const key = randomString();
-
-  await awsServices.s3().putObject({
-    Bucket: bucket,
-    Key: key,
-    Body: body
-  }).promise();
-
-  return key;
-};
+const stageTestObjectToLocalStack = (bucket, body, key = randomString()) =>
+  awsServices.s3().putObject({ Bucket: bucket, Key: key, Body: body })
+    .promise()
+    .then(({ ETag }) => ({ ETag, Key: key }));
 
 test.before(async (t) => {
   t.context.Bucket = randomString();
@@ -76,7 +69,7 @@ test.after.always(async (t) => {
 test('getTextObject() returns the contents of an S3 object', async (t) => {
   const { Bucket } = t.context;
 
-  const Key = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
 
   t.is(await getTextObject(Bucket, Key), 'asdf');
 });
@@ -84,7 +77,7 @@ test('getTextObject() returns the contents of an S3 object', async (t) => {
 test('getJsonS3Object() returns the JSON-parsed contents of an S3 object', async (t) => {
   const { Bucket } = t.context;
 
-  const Key = await stageTestObjectToLocalStack(
+  const { Key } = await stageTestObjectToLocalStack(
     Bucket,
     JSON.stringify({ a: 1 })
   );
@@ -125,10 +118,44 @@ test('putFile() uploads a file to S3', async (t) => {
 test('getS3Object() returns an existing S3 object', async (t) => {
   const { Bucket } = t.context;
 
-  const Key = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
 
   const response = await getS3Object(Bucket, Key);
   t.is(response.Body.toString(), 'asdf');
+});
+
+test('getS3Object() returns correct version of an existing S3 object', async (t) => {
+  const { Bucket } = t.context;
+  const { ETag: etag1, Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const { ETag: etag2 } = await stageTestObjectToLocalStack(Bucket, 'fdsa', Key);
+
+  t.not(etag2, etag1, 'ETags should be different');
+
+  const { ETag, Body } = await getS3Object({ Bucket, Key, IfMatch: etag2 });
+
+  t.like({ ETag, Body: Body.toString() }, { ETag: etag2, Body: 'fdsa' });
+});
+
+test('getS3Object() will retry if the expected version of an existing S3 object does not exist', async (t) => {
+  const { Bucket } = t.context;
+  const { ETag: etag1, Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const { ETag: etag2 } = await stageTestObjectToLocalStack(Bucket, 'fdsa', Key);
+
+  t.not(etag2, etag1, 'ETags should be different');
+
+  const promise = getS3Object({ Bucket, Key, IfMatch: etag1 }, { retries: 5 });
+  await delay(2000).then(stageTestObjectToLocalStack(Bucket, 'asdf', Key));
+  const { ETag, Body } = await promise;
+
+  t.like({ ETag, Body: Body.toString() }, { ETag: etag1, Body: 'asdf' });
+});
+
+test('getS3Object() throws a pre-condition failure if a version of an object does not exist', async (t) => {
+  const { Bucket } = t.context;
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+
+  const error = await t.throwsAsync(getS3Object({ Bucket, Key, IfMatch: '"bad"' }));
+  t.is(error.statusCode, 412);
 });
 
 test('getS3Object() immediately throws an exception if the requested bucket does not exist', async (t) => {
@@ -350,7 +377,7 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
 });
 
 test('getObjectReadStream() returns a readable stream for the requested object', async (t) => {
-  const key = await stageTestObjectToLocalStack(t.context.Bucket, 'asdf');
+  const { Key: key } = await stageTestObjectToLocalStack(t.context.Bucket, 'asdf');
 
   const s3 = awsServices.s3();
 
@@ -362,7 +389,7 @@ test('getObjectReadStream() returns a readable stream for the requested object',
 });
 
 test('getS3ObjectReadStream() returns a readable stream for the requested object', async (t) => {
-  const key = await stageTestObjectToLocalStack(t.context.Bucket, 'asdf');
+  const { Key: key } = await stageTestObjectToLocalStack(t.context.Bucket, 'asdf');
 
   const stream = getS3ObjectReadStream(t.context.Bucket, key);
 

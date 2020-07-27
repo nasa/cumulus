@@ -12,6 +12,8 @@ import pump from 'pump';
 import querystring from 'querystring';
 import { Readable, TransformOptions } from 'stream';
 import { deprecate } from 'util';
+import { S3 } from 'aws-sdk';
+import { PromiseResult } from 'aws-sdk/lib/request';
 
 import {
   generateChecksumFromStream,
@@ -52,6 +54,15 @@ const buildDeprecationMessage = (
 };
 
 const S3_RATE_LIMIT = inTestMode() ? 1 : 20;
+const DEFAULT_RETRY_OPTIONS = Object.freeze({
+  maxTimeout: 10_000,
+  retries: 0
+});
+
+type S3MatchParams = { IfMatch?: string; IfNoneMatch?: string };
+type S3MatchableData = { ETag?: string };
+type S3RequestPromise<D> = Promise<PromiseResult<D, AWS.AWSError>>;
+type S3RequestFunction<P, D> = (params: P) => S3RequestPromise<D>;
 
 /**
  * Join strings into an S3 key without a leading slash
@@ -348,33 +359,184 @@ export const s3PutObjectTagging = improveStackTrace(
 );
 
 /**
-* Get an object from S3
+ * Adds an optional retry options parameter as a second parameter to the
+ * specified S3 request function, returning a new function that behaves like the
+ * specified function, but with retry capabilities.
 *
-* @param {string} Bucket - name of bucket
-* @param {string} Key - key for object (filepath + filename)
-* @param {Object} retryOptions - options to control retry behavior when an
-*   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
-*   By default, retries will not be performed
-* @returns {Promise} returns response from `S3.getObject` as a promise
-**/
-export const getS3Object = improveStackTrace(
-  (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
-    pRetry(
-      async () => {
-        try {
-          return await s3().getObject({ Bucket, Key }).promise();
-        } catch (error) {
-          if (error.code === 'NoSuchKey') throw error;
-          throw new pRetry.AbortError(error);
-        }
-      },
-      {
-        maxTimeout: 10000,
-        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-        ...retryOptions
-      }
+ * NOTE: To limit which errors should cause retrying a request, you may use the
+ * `retryStatusCodes()` function to wrap your function first, and then wrap the
+ * resulting function with `retryable()`.
+ *
+ * @example
+ * const getObject = (params) => s3().getObject(params).promise();
+ * const retryableGetObject = retryable(getObject);
+ * const result = await getObject({ Bucket, Key });
+ * const retryResult = await retryableGetObject({ Bucket, Key }, { retries: 5 });
+ *
+ * @function
+ * @param {S3RequestFunction} s3Fn - the S3 function to wrap
+ * @returns {function} a function that is identical to the specified function,
+ *    but with an additional retry options parameter that adds retry
+ *    capabilities to the function, using overridable defaults defined by
+ *    `DEFAULT_RETRY_OPTIONS`
+ */
+const retryable = <P, D>(s3Fn: S3RequestFunction<P, D>) =>
+  (params: P, options?: pRetry.Options) =>
+    pRetry(() => s3Fn(params), { ...DEFAULT_RETRY_OPTIONS, ...options });
+
+/**
+ * Makes an S3 function retryable _only_ for the specified list of error codes.
+ * Returns a function that wraps an S3 function such that the wrapper behaves
+ * identically to the wrapped S3 function, except that all errors with status
+ * codes matching one of the specified status codes are directly rethrown, while
+ * all other errors are wrapped in a `pRetry.AbortError` before being thrown.
+ *
+ * @example
+ * const abortableGetObject = retryStatusCodes([304, 404, 412])(getObject);
+ * // Throws pRetry.AbortError if getObject throws an error with a `statusCode`
+ * // that is NOT in the list of status codes above.
+ * const result = await abortableGetObject({ Bucket, Key });
+ *
+ * @function
+ * @param {number[]} statusCodes - status codes of errors that should allow for
+ *    retrying a request; all other errors are wrapped in a `pRetry.AbortError`
+ * @returns {function} a function that wraps an S3 function such that all errors
+ *    thrown by the wrapped function that have status codes other than the
+ *    specified status codes are wrapped in `pRetry.AbortError`s (i.e., only
+ *    the specified errors result in retrying the failed request when the
+ *    wrapper function is used in conjunction with `pRetry()`)
+ */
+const retryStatusCodes = (statusCodes: number[]) =>
+  <P, D>(s3Fn: S3RequestFunction<P, D>) =>
+    (params: P) =>
+      s3Fn(params).catch((error) => {
+        if (statusCodes.includes(error.statusCode)) throw error;
+        throw new pRetry.AbortError(error);
+      });
+
+/**
+ * Returns a function that accepts a resolved promise from an S3 function.  The
+ * returned function checks the resolved value against the pre-conditions
+ * specified in `params`, and either returns the resolved value, if the
+ * pre-conditions are met (or none is specified), or throws an error indicating
+ * that a pre-condition failed (the error's `statusCode` is set to `412`).
+ *
+ * NOTE: LocalStack ignores `IfMatch` and `IfNoneMatch` in the `params` object
+ * to S3 methods, so we must simulate 412 (PreconditionFailed) responses
+ * ourselves.  If LocalStack ever supports these pre-conditions, this function
+ * may be removed.
+ *
+ * @example s3().getObject(params).then(checkMatchPreconditions(params))
+ *
+ * @function
+ * @param {S3MatchParams} params - object optionally containing
+ * @returns {function} a function that compares the resolved result of an S3
+ *    request with the specified match parameters, and either returns the result
+ *    if pre-conditions are met (or unspecified), or throws an error (with
+ *    `statusCode` set to `412`) indicating a pre-condition failed
+ */
+const checkMatchPreconditions = (params: S3MatchParams) =>
+  <D>(result: D & S3MatchableData) => {
+    const { IfMatch, IfNoneMatch } = params;
+    const { ETag } = result;
+
+    // We do not need to determine whether or not we're in test mode here
+    // because when we're not in test mode, and there is a precondition failure,
+    // an error would have already been thrown before reaching this function.
+    // The `code`, `message`, and `statusCode` are set to the same values that
+    // AWS sets them to.
+    if ((IfMatch && IfMatch !== ETag) || (IfNoneMatch && IfNoneMatch === ETag)) {
+      throw Object.assign(new Error(), {
+        code: 'PreconditionFailed',
+        message: 'At least one of the pre-conditions you specified did not hold',
+        statusCode: 412
+      });
+    }
+
+    return result;
+  };
+
+/**
+ * Gets an object from S3, optionally retrying on failures (not found, not
+ * modified, or precondition failed).
+ *
+ * @example
+ * const object = await getObject({ Bucket: 'bucket', Key: 'key' });
+ * const object = await getObject({ Bucket: 'bucket', Key: 'key' }, { retries: 3 });
+ *
+ * @function
+ * @param {S3.GetObjectRequest} params - parameters expected by `S3.getObject()`
+ * @param {pRetry.Options} [retryOptions={ maxTimeout: 10_000, retries: 0 }] -
+ *    options to control retry behavior when an object does not exist (by
+ *    default, retries will not be performed)
+ * @returns {Promise} response from `S3.getObject()` as a promise
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getObject-property|S3.getObject}
+ * @see {@link https://github.com/tim-kos/node-retry#retryoperationoptions|retry options}
+ */
+const getObject = improveStackTrace(
+  retryable(
+    retryStatusCodes([304, 404, 412])(
+      (params: S3.GetObjectRequest) =>
+        s3().getObject(params).promise().then(checkMatchPreconditions(params))
     )
+  )
 );
+
+// Support for 2 function signatures for the `getS3Object` function.  The first
+// is to be backwards-compatible with the original signature that takes a bucket
+// and a key as distinct arguments.  The second is to support a full parameters
+// object to pass through directly to S3.getObject() so that we can pass in more
+// than only a bucket and a key.
+type S3GetObject = {
+  (
+    bucket: string,
+    key: string,
+    retryOptions?: pRetry.Options
+  ): S3RequestPromise<S3.GetObjectOutput>;
+  (
+    params: S3.GetObjectRequest,
+    retryOptions?: pRetry.Options
+  ): S3RequestPromise<S3.GetObjectOutput>;
+};
+
+/**
+ * Gets an object from S3, optionally retrying on failures (not found, not
+ * modified, or precondition failed).
+ *
+ * Supports specifying explicit bucket and key string arguments or a parameters
+ * argument (as expected by `S3.getObject()`), and optional retry options, in
+ * either case.
+ *
+ * @example
+ * getS3Object('bucket', 'key')
+ * getS3Object('bucket', 'key', { retries: 4 })
+ * getS3Object({ Bucket: 'bucket', Key: 'key' })
+ * getS3Object({ Bucket: 'bucket', Key: 'key', ...more })
+ * getS3Object({ Bucket: 'bucket', 'key' }, { retries: 3 })
+ *
+ * @function
+ * @param {string|S3.GetObjectRequest} bucketOrParams - name of bucket, or a
+ *    parameters object as expected by `S3.getObject`
+ * @param {string|pRetry.Options} keyOrRetryOptions - key for object
+ *    (filepath + filename), or retry options (see `retryOptions` parameter)
+ * @param {Object} [retryOptions={ maxTimeout: 10_000, retries: 0 }] - options
+ *    to control retry behavior when an object does not exist (by default,
+ *    retries will not be performed)
+ * @returns {Promise} response from `S3.getObject` as a promise
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getObject-property|S3.getObject}
+ * @see {@link https://github.com/tim-kos/node-retry#retryoperationoptions|retry options}
+ */
+export const getS3Object: S3GetObject = (
+  bucketOrParams: string | S3.GetObjectRequest,
+  keyOrRetryOptions?: string | pRetry.Options,
+  retryOptions?: pRetry.Options
+) => {
+  const [params, options] = typeof bucketOrParams === 'string'
+    ? [{ Bucket: bucketOrParams, Key: keyOrRetryOptions as string }, retryOptions]
+    : [bucketOrParams, keyOrRetryOptions as pRetry.Options];
+
+  return getObject(params, options);
+};
 
 /**
  * Fetch the contents of an S3 object
