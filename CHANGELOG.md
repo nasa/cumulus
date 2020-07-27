@@ -6,7 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## Added
+- **CUMULUS-1886**
+  - Added `multiple sort keys` support to `@cumulus/api`
+
+### Fixed
+
+- Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
+
+
+## [v2.0.0] 2020-07-23
+
 ### BREAKING CHANGES
+
 - Changes to the `@cumulus/cumulus-api` package
   - The `CumulusApiClientError` class must now be imported using
     `const { CumulusApiClientError } = require('@cumulus/cumulus-api/CumulusApiClientError')`
@@ -154,7 +166,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup)
     documentation.
   - Added `checksumFor` validation to collections model.
-
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
   - The `/s3credentials` endpoint that is deployed as part of distribution now
@@ -3196,7 +3207,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v1.23.2...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.0...HEAD
+[v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
+[v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
 [v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
 [v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0

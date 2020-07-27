@@ -136,6 +136,7 @@ Query the Earthdata Login API for the UID associated with a token
 | params | <code>Object</code> |  |
 | params.onBehalfOf | <code>string</code> | the Earthdata Login client id of the   app requesting the username |
 | params.token | <code>string</code> | the Earthdata Login token |
+| [params.xRequestId] | <code>string</code> | a string to help identify the request   in the Earthdata Login logs |
 
 
 ## About Cumulus

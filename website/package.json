@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/website",
-  "version": "1.24.0",
+  "version": "2.0.0",
   "description": "The Cumulus website",
   "license": "Apache-2.0",
   "scripts": {
