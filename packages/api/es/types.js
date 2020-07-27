@@ -6,6 +6,7 @@ const fullMappings = require('../models/mappings.json');
 
 const asyncOperationMappings = require('./mappings/asyncOperation.json');
 const collectionMappings = require('./mappings/collection.json');
+const deletedGranuleMappings = require('./mappings/deletedGranule.json');
 const executionMappings = require('./mappings/execution.json');
 const granuleMappings = require('./mappings/granule.json');
 const logMappings = require('./mappings/logs.json');
@@ -17,6 +18,7 @@ const ruleMappings = require('./mappings/rule.json');
 const typeMappings = [];
 typeMappings.asyncOperation = asyncOperationMappings;
 typeMappings.collection = collectionMappings;
+typeMappings.deletedgranule = deletedGranuleMappings;
 typeMappings.execution = executionMappings;
 typeMappings.granule = granuleMappings;
 typeMappings.logs = logMappings;
@@ -40,7 +42,7 @@ function isValidEsType(type) {
 }
 
 function getAliasByType(type, aliasOverride = undefined) {
-  if (process.env.MULTI_INDICES) {
+  if (process.env.MULTI_INDICES === true) {
     if (isValidEsType(type)) {
       if (aliasOverride) {
         return `${aliasOverride}-${type.toLowerCase()}`;
@@ -55,7 +57,7 @@ function getAliasByType(type, aliasOverride = undefined) {
 }
 
 function getIndexNameForType(type, indexName) {
-  if (process.env.MULTI_INDICES) {
+  if (process.env.MULTI_INDICES === true) {
     if (indexName) {
       return `${indexName}-${type.toLowerCase()}`;
     }

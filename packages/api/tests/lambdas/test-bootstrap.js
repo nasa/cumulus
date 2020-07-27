@@ -1,6 +1,6 @@
 'use strict';
 
-const test = require('ava');
+const test = require('ava-env')(require('ava'));
 const rewire = require('rewire');
 const sinon = require('sinon');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -38,6 +38,8 @@ test.serial('bootstrap index creates index with alias', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
+  t.context.env({ MULTI_INDICES: false });
+
   esClient = await Search.es();
   await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
@@ -56,6 +58,8 @@ test.serial('bootstrap index creates index with alias', async (t) => {
 test.serial('bootstrap index creates index with specified number of shards', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
+
+  t.context.env({ MULTI_INDICES: false });
 
   process.env.ES_INDEX_SHARDS = 4;
   try {
@@ -78,6 +82,8 @@ test.serial('bootstrap index adds alias to existing index', async (t) => {
 
   esClient = await Search.es();
 
+  t.context.env({ MULTI_INDICES: false });
+
   await esClient.indices.create({
     index: indexName,
     body: { mappings }
@@ -99,6 +105,8 @@ test.serial('Missing types added to index', async (t) => {
   const testAlias = randomString();
 
   esClient = await Search.es();
+
+  t.context.env({ MULTI_INDICES: false });
 
   await esClient.indices.create({
     index: indexName,
@@ -131,6 +139,8 @@ test.serial('Missing fields added to index', async (t) => {
 
   esClient = await Search.es();
 
+  t.context.env({ MULTI_INDICES: false });
+
   await esClient.indices.create({
     index: indexName,
     body: { mappings: mappingsNoFields }
@@ -162,6 +172,8 @@ test.serial('If an index exists with the alias name, it is deleted on bootstrap'
 
   esClient = await Search.es();
 
+  t.context.env({ MULTI_INDICES: false });
+
   // Create index with name of alias we want to use
   await esClient.indices.create({
     index: testAlias,
@@ -185,6 +197,7 @@ test.serial('bootstrap creates index with alias', async (t) => {
   const testAlias = randomId('esalias');
 
   esClient = await Search.es();
+  t.context.env({ MULTI_INDICES: false });
   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
 
   try {
@@ -208,7 +221,7 @@ test.serial('bootstrap index creates index with alias for multi-indices environm
 
   esClient = await Search.es();
 
-  process.env.MULTI_INDICES = true;
+  t.context.env({ MULTI_INDICES: true });
   try {
     await bootstrapElasticsearchIndex(esClient, 'rule', testAlias, indexName);
 
@@ -219,7 +232,6 @@ test.serial('bootstrap index creates index with alias for multi-indices environm
 
     t.deepEqual(Object.keys(alias), [expectedIndexName]);
   } finally {
-    delete process.env.MULTI_INDICES;
     await esClient.indices.delete({ index: expectedIndexName });
   }
 });
@@ -230,14 +242,14 @@ test.serial('bootstrap creates an index with alias for each ES type in a  multi-
 
   esClient = await Search.es();
 
-  process.env.MULTI_INDICES = true;
+  t.context.env({ MULTI_INDICES: true });
   const types = esTypes.getEsTypes();
   try {
     await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
 
     types.forEach(async (type) => {
-      const expectedIndexName = `${indexName}-${type}`;
-      const expectedAliasName = `${testAlias}-${type}`;
+      const expectedIndexName = `${indexName}-${type.toLowerCase()}`;
+      const expectedAliasName = `${testAlias}-${type.toLowerCase()}`;
 
       t.is((await esClient.indices.exists({ index: expectedIndexName })).body, true);
 
@@ -247,8 +259,7 @@ test.serial('bootstrap creates an index with alias for each ES type in a  multi-
       t.deepEqual(Object.keys(alias), [expectedIndexName]);
     });
   } finally {
-    delete process.env.MULTI_INDICES;
-    await Promise.all(types.map((type) => esClient.indices.delete({ index: `${indexName}-${type}` })));
+    await Promise.all(types.map((type) => esClient.indices.delete({ index: `${indexName}-${type.toLowerCase()}` })));
   }
 });
 
@@ -258,7 +269,7 @@ test.serial('bootstrap creates indexes and aliases for missing es types in a  mu
 
   esClient = await Search.es();
 
-  process.env.MULTI_INDICES = true;
+  t.context.env({ MULTI_INDICES: true });
 
   const types = ['collection', 'rule'];
   const stub = sinon.stub(esTypes, 'getEsTypes').returns(types);
@@ -285,7 +296,6 @@ test.serial('bootstrap creates indexes and aliases for missing es types in a  mu
     });
   } finally {
     stub.restore();
-    delete process.env.MULTI_INDICES;
     await Promise.all(types.map((type) => esClient.indices.delete({ index: `${indexName}-${type}` })));
   }
 });
@@ -296,7 +306,7 @@ test.serial('bootstrap creates missing mappings in a multi-indices environment',
 
   esClient = await Search.es();
 
-  process.env.MULTI_INDICES = true;
+  t.context.env({ MULTI_INDICES: true });
 
   const types = ['collection'];
   const stub = sinon.stub(esTypes, 'getEsTypes').returns(types);
@@ -324,7 +334,6 @@ test.serial('bootstrap creates missing mappings in a multi-indices environment',
     );
   } finally {
     stub.restore();
-    delete process.env.MULTI_INDICES;
     await esClient.indices.delete({ index: collectionIndexName });
   }
 });

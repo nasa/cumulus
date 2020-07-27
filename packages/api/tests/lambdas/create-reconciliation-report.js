@@ -25,6 +25,7 @@ const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const { Search } = require('../../es/search');
+const { getEsTypes, getIndexNameForType } = require('../../es/types');
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles
 } = require('../../lambdas/create-reconciliation-report');
@@ -176,7 +177,8 @@ test.afterEach.always(async (t) => {
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
 });
 
 test.after.always(async () => {

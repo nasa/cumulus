@@ -12,6 +12,7 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const { getEsTypes, getIndexNameForType, getAliasByType } = require('../../es/types');
 const { Search } = require('../../es/search');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 const {
@@ -129,7 +130,7 @@ test.before(async () => {
   }
 
   const granjobs = granules.map((g) => esClient.update({
-    index: esAlias,
+    index: getAliasByType('granule', esAlias),
     type: 'granule',
     id: g.granuleId,
     parent: g.collectionId,
@@ -150,8 +151,9 @@ test.before(async () => {
     if (i % 5 === 4) newgran.collectionId = 'MOD11A1___006';
     deletedgrans.push(newgran);
   }
+
   const deletedgranjobs = deletedgrans.map((g) => esClient.update({
-    index: esAlias,
+    index: getAliasByType('deletedgranule', esAlias),
     type: 'deletedgranule',
     id: g.granuleId,
     parent: g.collectionId,
@@ -162,6 +164,7 @@ test.before(async () => {
   }));
 
   await Promise.all(granjobs.concat(deletedgranjobs));
+
   return esClient.indices.refresh();
 });
 
@@ -179,7 +182,8 @@ test.afterEach.always(async (t) => {
 });
 
 test.after.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((t) =>
+    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
 });
 
 test.serial('generate reports for the previous day', async (t) => {

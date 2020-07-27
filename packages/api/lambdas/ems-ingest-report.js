@@ -255,7 +255,7 @@ async function generateReport(reportType, startTime, endTime, collections) {
   const esClient = await Search.es();
   const type = (reportType !== 'delete') ? 'granule' : 'deletedgranule';
 
-  const esIndex = process.env.ES_INDEX || getAliasByType(type);
+  const esIndex = getAliasByType(type, process.env.ES_INDEX);
   const searchQuery = buildSearchQuery(esIndex, type, startTime, endTime);
   let response = await esClient.search(searchQuery)
     .then((searchResponse) => searchResponse.body);
