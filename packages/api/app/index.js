@@ -58,8 +58,15 @@ app.use((err, _req, res, _next) => {
 
 const server = awsServerlessExpress.createServer(app);
 
-const handler = (event, context) =>
-  awsServerlessExpress.proxy(server, event, context);
+const handler = (event, context) => {
+  // workaround to support multiValueQueryStringParameters
+  // untill this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
+  const modifiedEvent = {
+    ...event,
+    queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters
+  };
+  awsServerlessExpress.proxy(server, modifiedEvent, context);
+};
 
 module.exports = {
   app,

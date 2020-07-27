@@ -153,7 +153,9 @@ class Collection extends BaseSearch {
     const res = await super.query(searchParamsOverride);
 
     // get aggregations for results
-    res.results = await this.addStatsToCollectionResults(res.results);
+    if (res.results) {
+      res.results = await this.addStatsToCollectionResults(res.results);
+    }
 
     return res;
   }
