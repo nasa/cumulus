@@ -65,7 +65,9 @@ If you are not seeing records persist to the database or show up in the Cumulus 
 
 As described above, ingest notifications will automatically be published to the SNS topics on workflow start and completion/failure, so **you should not include a workflow step to publish the initial or final status of your workflows**.
 
-However, if you want to report your ingest status at any point **during a workflow execution**, you can add a workflow step using the `SfSqsReport` Lambda. In the following example from [`cumulus-tf/pase_pdr_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf), the `ParsePdr` workflow is configured to use the `SfSqsReport` Lambda, primarily to update the PDR ingestion status.
+However, if you want to report your ingest status at any point **during a workflow execution**, you can add a workflow step using the `SfSqsReport` Lambda. In the following example from [`cumulus-tf/parse_pdr_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf), the `ParsePdr` workflow is configured to use the `SfSqsReport` Lambda, primarily to update the PDR ingestion status.
+
+> Note: `${sf_sqs_report_task_arn}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`ParsePdr` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf).
 
 ```json
   "PdrStatusReport": {
@@ -84,7 +86,7 @@ However, if you want to report your ingest status at any point **during a workfl
     },
     "ResultPath": null,
     "Type": "Task",
-    "Resource": "${module.cumulus.sf_sqs_report_task.task_arn}",
+    "Resource": "${sf_sqs_report_task_arn}",
     "Retry": [
       {
         "ErrorEquals": [
