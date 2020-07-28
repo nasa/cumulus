@@ -3,7 +3,7 @@
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
 const { BaseSearch, Search } = require('./search');
-const { getAliasByType } = require('./types')
+const { getAliasByType } = require('./types');
 
 class Collection extends BaseSearch {
   constructor(event, type, index) {
