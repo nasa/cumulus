@@ -16,7 +16,7 @@ export const decrypt = async (
  * Return mime-type based on input url or filename
  *
  * @param {string} key
- * @returns {string} mimeType or null
+ * @returns {string|undefined} mimeType or undefined
  */
 export function lookupMimeType(key: string): string | undefined {
   return mime.lookup(key) || undefined;
