@@ -30,6 +30,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
 
+### Deprecated
+
+- `@cumulus/message/Queue.getQueueNameByUrl()`
+- `@cumulus/message/Queue.getQueueName()`
+
 ## [v2.0.0] 2020-07-23
 
 ### BREAKING CHANGES
@@ -297,8 +302,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/common/log.convertLogLevel()`
 - `@cumulus/collection-config-store`
 - `@cumulus/common/util.sleep()`
-- `@cumulus/message/Queue.getQueueNameByUrl()`
-- `@cumulus/message/Queue.getQueueName()`
 
 - **CUMULUS-1930**
   - `@cumulus/common/log.convertLogLevel()`
