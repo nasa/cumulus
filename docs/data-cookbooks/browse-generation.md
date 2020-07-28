@@ -89,7 +89,7 @@ source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-
 
 A few things to note about tasks in the workflow being added:
 
-> Note: In the snippets below, `${post_to_cmr_task_arn}` and `${fake_processing_task_arn}` are an interpolated values referring to Terraform resources. See the example deployment code for the [`CookbookBrowseExample` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf).
+> Note: In the snippets below, `${post_to_cmr_task_arn}` and `${fake_processing_task_arn}` are interpolated values referring to Terraform resources. See the example deployment code for the [`CookbookBrowseExample` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf).
 
 - The CMR step in CookbookBrowseExample:
 
