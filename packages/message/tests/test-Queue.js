@@ -22,7 +22,7 @@ test('getQueueName returns correct queue name', (t) => {
   t.is(getQueueName(message), queueName);
 });
 
-test('getQueueName throws error if cumulus_meta.queueName is not set in message', (t) => {
+test('getQueueName throws an error if cumulus_meta.queueName is not set in message', (t) => {
   const message = {
     cumulus_meta: {}
   };
@@ -39,7 +39,7 @@ test('getQueueUrl returns correct queue URL', (t) => {
   t.is(getQueueUrl(message), queueUrl);
 });
 
-test('getQueueUrl throws error if cumulus_meta.queueUrl is not set in message', (t) => {
+test('getQueueUrl throws an error if cumulus_meta.queueUrl is not set in message', (t) => {
   const message = {
     cumulus_meta: {}
   };
@@ -80,7 +80,7 @@ test('getMaximumExecutions returns correct value', (t) => {
   t.is(maxExecutions, 5);
 });
 
-test('getMaximumExecutions throws error when queue cannot be found', (t) => {
+test('getMaximumExecutions throws an error when queue cannot be found', (t) => {
   const testMessage = {
     cumulus_meta: {
       queueExecutionLimits: {}
