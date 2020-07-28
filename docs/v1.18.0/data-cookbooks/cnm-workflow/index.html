@@ -105,37 +105,37 @@ s are using, however your environment/security policies may require an approach 
 <li>Set the <code>response-endpoint</code> key in the <code>CnmResponse</code> task in the workflow JSON to match the name of the Kinesis response stream you configured in the prerequisites section</li>
 <li>Update the <code>source</code> key to the workflow module to match the Cumulus release associated with your deployment.</li>
 </ul>
-<pre><code class="hljs css language-hcl">module <span class="hljs-string">"cnm_workflow"</span> {
+<pre><code class="hljs css language-hcl"><span class="hljs-built_in">module</span> <span class="hljs-string">"cnm_workflow"</span> {
   source = <span class="hljs-string">"https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip"</span>
 
-  prefix                                = var.prefix
+  prefix                                = <span class="hljs-keyword">var</span>.prefix
   name                                  = <span class="hljs-string">"CNMExampleWorkflow"</span>
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
+  workflow_config                       = <span class="hljs-built_in">module</span>.cumulus.workflow_config
+  system_bucket                         = <span class="hljs-keyword">var</span>.system_bucket
   tags                                  = local.default_tags
 {
-state_machine_definition = &lt;&lt;JSON
+state_machine_definition = &lt;&lt;<span class="hljs-built_in">JSON</span>
   <span class="hljs-string">"CNMExampleWorkflow"</span>: {
     <span class="hljs-string">"Comment"</span>: <span class="hljs-string">"CNMExampleWorkflow"</span>,
     <span class="hljs-string">"StartAt"</span>: <span class="hljs-string">"TranslateMessage"</span>,
     <span class="hljs-string">"States"</span>: {
       <span class="hljs-string">"TranslateMessage"</span>: {
         <span class="hljs-string">"Type"</span>: <span class="hljs-string">"Task"</span>,
-        <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>{aws_lambda_function.cnm_to_cma_task.arn}"</span>,
+        <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"${aws_lambda_function.cnm_to_cma_task.arn}"</span>,
         <span class="hljs-string">"Parameters"</span>: {
           <span class="hljs-string">"cma"</span>: {
-            <span class="hljs-string">"event.<span class="hljs-variable">$</span>"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>"</span>,
+            <span class="hljs-string">"event.$"</span>: <span class="hljs-string">"$"</span>,
             <span class="hljs-string">"task_config"</span>: {
-              <span class="hljs-string">"collection"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.collection}"</span>,
+              <span class="hljs-string">"collection"</span>: <span class="hljs-string">"{$.meta.collection}"</span>,
               <span class="hljs-string">"cumulus_message"</span>: {
                 <span class="hljs-string">"outputs"</span>: [
                   {
-                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.cnm}"</span>,
-                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.cnm}"</span>
+                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{$.cnm}"</span>,
+                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{$.meta.cnm}"</span>
                   },
                   {
-                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>}"</span>,
-                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.payload}"</span>
+                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{$}"</span>,
+                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{$.payload}"</span>
                   }
                 ]
               }
@@ -147,7 +147,7 @@ state_machine_definition = &lt;&lt;JSON
             <span class="hljs-string">"ErrorEquals"</span>: [
               <span class="hljs-string">"States.ALL"</span>
             ],
-            <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>.exception"</span>,
+            <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"$.exception"</span>,
             <span class="hljs-string">"Next"</span>: <span class="hljs-string">"CnmResponse"</span>
           }
         ],
@@ -156,22 +156,22 @@ state_machine_definition = &lt;&lt;JSON
       <span class="hljs-string">"SyncGranule"</span>: {
         <span class="hljs-string">"Parameters"</span>: {
           <span class="hljs-string">"cma"</span>: {
-            <span class="hljs-string">"event.<span class="hljs-variable">$</span>"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>"</span>,
+            <span class="hljs-string">"event.$"</span>: <span class="hljs-string">"$"</span>,
             <span class="hljs-string">"task_config"</span>: {
-              <span class="hljs-string">"provider"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.provider}"</span>,
-              <span class="hljs-string">"buckets"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.buckets}"</span>,
-              <span class="hljs-string">"collection"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.collection}"</span>,
-              <span class="hljs-string">"downloadBucket"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.buckets.private.name}"</span>,
-              <span class="hljs-string">"stack"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.stack}"</span>,
+              <span class="hljs-string">"provider"</span>: <span class="hljs-string">"{$.meta.provider}"</span>,
+              <span class="hljs-string">"buckets"</span>: <span class="hljs-string">"{$.meta.buckets}"</span>,
+              <span class="hljs-string">"collection"</span>: <span class="hljs-string">"{$.meta.collection}"</span>,
+              <span class="hljs-string">"downloadBucket"</span>: <span class="hljs-string">"{$.meta.buckets.private.name}"</span>,
+              <span class="hljs-string">"stack"</span>: <span class="hljs-string">"{$.meta.stack}"</span>,
               <span class="hljs-string">"cumulus_message"</span>: {
                 <span class="hljs-string">"outputs"</span>: [
                   {
-                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.granules}"</span>,
-                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.input_granules}"</span>
+                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{$.granules}"</span>,
+                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{$.meta.input_granules}"</span>
                   },
                   {
-                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>}"</span>,
-                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.payload}"</span>
+                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{$}"</span>,
+                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{$.payload}"</span>
                   }
                 ]
               }
@@ -179,7 +179,7 @@ state_machine_definition = &lt;&lt;JSON
           }
         },
         <span class="hljs-string">"Type"</span>: <span class="hljs-string">"Task"</span>,
-        <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>{module.cumulus.sync_granule_task.task_arn}"</span>,
+        <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"${module.cumulus.sync_granule_task.task_arn}"</span>,
         <span class="hljs-string">"Retry"</span>: [
           {
             <span class="hljs-string">"ErrorEquals"</span>: [
@@ -194,7 +194,7 @@ state_machine_definition = &lt;&lt;JSON
             <span class="hljs-string">"ErrorEquals"</span>: [
               <span class="hljs-string">"States.ALL"</span>
             ],
-            <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>.exception"</span>,
+            <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"$.exception"</span>,
             <span class="hljs-string">"Next"</span>: <span class="hljs-string">"CnmResponse"</span>
           }
         ],
@@ -203,18 +203,18 @@ state_machine_definition = &lt;&lt;JSON
       <span class="hljs-string">"CnmResponse"</span>: {
         <span class="hljs-string">"Parameters"</span>: {
           <span class="hljs-string">"cma"</span>: {
-            <span class="hljs-string">"event.<span class="hljs-variable">$</span>"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>"</span>,
+            <span class="hljs-string">"event.$"</span>: <span class="hljs-string">"$"</span>,
             <span class="hljs-string">"task_config"</span>: {
-              <span class="hljs-string">"OriginalCNM"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.cnm}"</span>,
+              <span class="hljs-string">"OriginalCNM"</span>: <span class="hljs-string">"{$.meta.cnm}"</span>,
               <span class="hljs-string">"response-endpoint"</span>: <span class="hljs-string">"ADD YOUR RESPONSE STREAM NAME HERE"</span>,
               <span class="hljs-string">"region"</span>: <span class="hljs-string">"us-east-1"</span>,
               <span class="hljs-string">"type"</span>: <span class="hljs-string">"kinesis"</span>,
-              <span class="hljs-string">"WorkflowException"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.exception}"</span>,
+              <span class="hljs-string">"WorkflowException"</span>: <span class="hljs-string">"{$.exception}"</span>,
               <span class="hljs-string">"cumulus_message"</span>: {
                 <span class="hljs-string">"outputs"</span>: [
                   {
-                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>}"</span>,
-                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.cnmResponse}"</span>
+                    <span class="hljs-string">"source"</span>: <span class="hljs-string">"{$}"</span>,
+                    <span class="hljs-string">"destination"</span>: <span class="hljs-string">"{$.meta.cnmResponse}"</span>
                   }
                 ]
               }
@@ -222,7 +222,7 @@ state_machine_definition = &lt;&lt;JSON
           }
         },
         <span class="hljs-string">"Type"</span>: <span class="hljs-string">"Task"</span>,
-        <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>{aws_lambda_function.cnm_response_task.arn}"</span>,
+        <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"${aws_lambda_function.cnm_response_task.arn}"</span>,
         <span class="hljs-string">"Retry"</span>: [
           {
             <span class="hljs-string">"ErrorEquals"</span>: [
@@ -232,12 +232,12 @@ state_machine_definition = &lt;&lt;JSON
             <span class="hljs-string">"MaxAttempts"</span>: <span class="hljs-number">3</span>
           }
         ],
-        <span class="hljs-string">"End"</span>: true
+        <span class="hljs-string">"End"</span>: <span class="hljs-literal">true</span>
       }
     }
   }
 }
-JSON
+<span class="hljs-built_in">JSON</span>
 </code></pre>
 <p>Again, please make sure to modify the value <code>response-endpoint</code> to match the stream name (not ARN) for your Kinesis response stream.</p>
 <h3><a class="anchor" aria-hidden="true" id="lambda-configuration"></a><a href="#lambda-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Lambda Configuration</h3>

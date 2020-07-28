@@ -140,12 +140,12 @@ table. That table can be created with the following command:</p>
 <p>Terraform can be configured to use the S3 backend by adding the following to
 your deployment's Terraform config. If following the file layout <a href="#adding-terraform-to-your-deployment">described above</a>,
 this should be added to your <strong>terraform.tf</strong> file.</p>
-<pre><code class="hljs css language-hcl">terraform {
-  backend <span class="hljs-string">"s3"</span> {
-    <span class="hljs-attr">region</span>         = <span class="hljs-string">"us-east-1"</span>
-    <span class="hljs-attr">bucket</span>         = <span class="hljs-string">"my-tf-state-bucket"</span>
-    <span class="hljs-attr">key</span>            = <span class="hljs-string">"terraform.tfstate"</span>
-    <span class="hljs-attr">dynamodb_table</span> = <span class="hljs-string">"my-tf-locks-table"</span>
+<pre><code class="hljs css language-hcl"><span class="hljs-section">terraform</span> {
+  <span class="hljs-attribute">backend</span> <span class="hljs-string">"s3"</span> {
+    <span class="hljs-attribute">region</span>         = <span class="hljs-string">"us-east-1"</span>
+    bucket         = <span class="hljs-string">"my-tf-state-bucket"</span>
+    key            = <span class="hljs-string">"terraform.tfstate"</span>
+    dynamodb_table = <span class="hljs-string">"my-tf-locks-table"</span>
   }
 }
 </code></pre>
