@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const pick = require('lodash/pick');
 const set = require('lodash/set');
 const { promisify } = require('util');
 const js2xmlParser = require('js2xmlparser');
@@ -73,18 +74,20 @@ function isCMRFile(fileobject) {
 }
 
 /**
- * Extract CMR file object from granule object
+ * Extracts CMR file objects from the specified granule object.
  *
- * @param {Object} granule - granule object
- *
- * @returns {Array<Object>} - array of CMR file objects
+ * @param {Object} granule - granule object containing CMR files within its
+ *    `files` property
+ * @returns {Array<Object>} an array of CMR file objects, each with properties
+ *    `granuleId`, `filename`, and possibly `etag` (if present on input)
  */
 function granuleToCmrFileObject(granule) {
   return granule.files
     .filter(isCMRFile)
-    .map((f) => ({
+    .map((file) => ({
+      ...pick(file, 'etag'),
       // handle both new-style and old-style files model
-      filename: f.key ? buildS3Uri(f.bucket, f.key) : f.filename,
+      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
       granuleId: granule.granuleId
     }));
 }
@@ -101,7 +104,7 @@ function granulesToCmrFileObjects(granules) {
 }
 
 /**
- * function for posting cmr xml files from S3 to CMR
+ * Posts CMR XML files from S3 to CMR.
  *
  * @param {Object} cmrFile - an object representing the cmr file
  * @param {string} cmrFile.granuleId - the granuleId of the cmr xml File
@@ -185,17 +188,19 @@ async function publish2CMR(cmrPublishObject, creds) {
 }
 
 /**
- * Gets metadata for a cmr xml file from s3
+ * Gets metadata for a CMR XML file from S3.
  *
- * @param {string} xmlFilePath - S3 URI to the xml metadata document
- * @returns {string} returns stringified xml document downloaded from S3
+ * @param {string} xmlFilePath - S3 URI to the XML metadata document
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
+ * @returns {Promise<string>} stringified XML document downloaded from S3
  */
-async function getXMLMetadataAsString(xmlFilePath) {
+async function getXMLMetadataAsString(xmlFilePath, etag) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
   const { Bucket, Key } = parseS3Uri(xmlFilePath);
-  const obj = await getS3Object(Bucket, Key, { retries: 5 });
+  const obj = await getS3Object({ Bucket, Key, IfMatch: etag }, { retries: 5 });
   return obj.Body.toString();
 }
 
@@ -206,43 +211,55 @@ async function getXMLMetadataAsString(xmlFilePath) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return (promisify(xml2js.parseString))(xml, xmlParseOptions);
+  return promisify(xml2js.parseString)(xml, xmlParseOptions);
 }
 
 /**
- * return UMMG metadata object from CMR UMM-G json file
- * @param {string} cmrFilename - s3 path to json file
+ * Returns UMMG metadata object from CMR UMM-G JSON file in S3.
+ *
+ * @param {string} cmrFilename - S3 path to JSON file
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
  * @returns {Promise<Object>} CMR UMMG metadata object
  */
-async function metadataObjectFromCMRJSONFile(cmrFilename) {
+async function metadataObjectFromCMRJSONFile(cmrFilename, etag) {
   const { Bucket, Key } = parseS3Uri(cmrFilename);
-  const obj = await getS3Object(Bucket, Key, { retries: 5 });
+  const obj = await getS3Object({ Bucket, Key, IfMatch: etag }, { retries: 5 });
   return JSON.parse(obj.Body.toString());
 }
 
 /**
- * return metadata object from cmr echo10 XML file.
- * @param {string} cmrFilename
- * @returns {Promise<Object>} cmr xml metadata as object.
+ * Returns metadata object from CMR Echo10 XML file in S3.
+ *
+ * @param {string} cmrFilename - S3 path to XML file
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
+ * @returns {Promise<Object>} CMR XML metadata object
  */
-async function metadataObjectFromCMRXMLFile(cmrFilename) {
-  const metadata = await getXMLMetadataAsString(cmrFilename);
-  return parseXmlString(metadata);
-}
+const metadataObjectFromCMRXMLFile = (cmrFilename, etag) =>
+  getXMLMetadataAsString(cmrFilename, etag).then(parseXmlString);
 
 /**
- * Return cmr metadata object from a CMR Echo10XML file or CMR UMMG File.
- * @param {string} cmrFilename - s3 path to cmr file
- * @returns {Promise<Object>} - metadata object from the file.
+ * Returns CMR metadata object from a CMR ECHO-10 XML file or CMR UMMG JSON
+ * file in S3.
+ *
+ * @param {string} cmrFilename - S3 path to CMR file
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
+ * @returns {Promise<Object>} metadata object from the file
+ * @throws {Error} if the specified filename does not represent an ECHO-10 XML
+ *    file or a UMMG file
+ * @see isECHO10File
+ * @see isUMMGFile
  */
-async function metadataObjectFromCMRFile(cmrFilename) {
+function metadataObjectFromCMRFile(cmrFilename, etag) {
   if (isECHO10File(cmrFilename)) {
-    return metadataObjectFromCMRXMLFile(cmrFilename);
+    return metadataObjectFromCMRXMLFile(cmrFilename, etag);
   }
   if (isUMMGFile(cmrFilename)) {
-    return metadataObjectFromCMRJSONFile(cmrFilename);
+    return metadataObjectFromCMRJSONFile(cmrFilename, etag);
   }
-  throw new Error(`cannot return metdata from invalid cmrFilename: ${cmrFilename}`);
+  throw new Error(`Invalid CMR filename: ${cmrFilename}`);
 }
 
 /**
@@ -465,8 +482,8 @@ function mergeURLs(original, updated = [], removed = []) {
   const removedBasenames = removed.map((url) => path.basename(url.URL));
 
   const unchangedOriginals = original.filter(
-    (url) => !newURLBasenames.includes(path.basename(url.URL)) &&
-      !removedBasenames.includes(path.basename(url.URL))
+    (url) => !newURLBasenames.includes(path.basename(url.URL))
+      && !removedBasenames.includes(path.basename(url.URL))
   );
 
   const updatedWithMergedOriginals = updated.map((url) => {
@@ -604,8 +621,8 @@ async function getCmrSettings(cmrConfig = {}) {
     };
   }
 
-  const passwordSecretName = cmrConfig.passwordSecretName ||
-    process.env.cmr_password_secret_name;
+  const passwordSecretName = cmrConfig.passwordSecretName
+    || process.env.cmr_password_secret_name;
   const password = await getSecretString(
     passwordSecretName
   );

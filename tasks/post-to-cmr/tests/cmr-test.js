@@ -1,10 +1,10 @@
 'use strict';
 
+const delay = require('delay');
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
-const { promisify } = require('util');
 
 const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
@@ -12,10 +12,9 @@ const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-cli
 const { randomString } = require('@cumulus/common/test-utils');
 const { CMRMetaFileNotFound } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
+const { isCMRFile } = require('@cumulus/cmrjs');
 
 const { postToCMR } = require('..');
-
-const readFile = promisify(fs.readFile);
 
 const result = {
   'concept-id': 'testingtesting'
@@ -42,7 +41,7 @@ test.beforeEach(async (t) => {
   t.context.bucket = randomString();
 
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   const payload = JSON.parse(rawPayload);
   t.context.payload = payload;
 
@@ -103,16 +102,48 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
+  const inputCmrFile = newPayload.input.granules[0].files.find(isCMRFile);
+  const cmrXml = fs.readFileSync(path.join(path.dirname(__filename), 'data',
+    'meta.xml'), 'utf8');
+  // "Minify" the XML simply to make it differ from the original XML so that S3
+  // treats them as different versions (i.e., generates different ETags)
+  const updatedCmrXml = cmrXml.split('\n').join('');
+
   try {
-    await promiseS3Upload({
+    // Upload updated XML to obtain the updated ETag so we can add it to the
+    // input CMR file.
+    const { ETag: newEtag } = await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
+      Body: updatedCmrXml
     });
 
-    const output = await postToCMR(newPayload);
+    // Upload "original" XML so that the updated XML is not initially available
+    // to the postToCMR task.
+    const { ETag: oldEtag } = await promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: cmrXml
+    });
+
+    t.not(oldEtag, newEtag, 'ETags should be different');
+    inputCmrFile.etag = newEtag;
+
+    // Invoke postToCMR and then upload the updated XML to test that postToCMR
+    // will properly wait for the correct version of the CMR file to exist.
+    const outputPromise = postToCMR(newPayload);
+    await delay(3000).then(promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: updatedCmrXml
+    }));
+    const output = await outputPromise;
 
     t.is(output.granules.length, 1);
+
+    const outputCmrFile = output.granules[0].files.find(isCMRFile);
+
+    t.is(outputCmrFile.etag, newEtag);
 
     t.is(
       output.granules[0].cmrLink,
@@ -243,7 +274,7 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
   }
 });
 
-test.serial('postToCmr identifies files with the new file schema', async (t) => {
+test.serial('postToCMR identifies files with the new file schema', async (t) => {
   const newPayload = t.context.payload;
   const cmrFile = newPayload.input.granules[0].files[3];
   newPayload.input.granules[0].files = [{

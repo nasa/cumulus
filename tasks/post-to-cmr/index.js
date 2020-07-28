@@ -39,19 +39,20 @@ function buildOutput(results, granules) {
 }
 
 /**
- * Append metadata object to each cmrFile object
- * @param {Array<Object>} cmrFiles - CMR Objects with filenames and granuleIds.
- * @returns {Array<Object>} clone of input array with object updated with it's metadata.
+ * Appends metadata object to each CMR file object.
+ *
+ * @param {Array<Object>} cmrFiles - array of CMR file objects, each with a
+ *    `filename`,`granuleId`, and optionally an `etag` (for specifying an exact
+ *    CMR file version)
+ * @returns {Promise<Array<Object>>} clone of input array with each object
+ *    updated with its metadata as a `metadataObject` property
  */
-async function addMetadataObjects(cmrFiles) {
-  const updatedCMRFiles = [];
-  const objectPromises = cmrFiles.map(async (cmrFile) => {
-    const metadataObject = await metadataObjectFromCMRFile(cmrFile.filename);
-    const updatedFile = { ...cmrFile, metadataObject };
-    updatedCMRFiles.push(updatedFile);
-  });
-  await Promise.all(objectPromises);
-  return updatedCMRFiles;
+function addMetadataObjects(cmrFiles) {
+  return Promise.all(cmrFiles.map((cmrFile) =>
+    metadataObjectFromCMRFile(
+      cmrFile.filename,
+      cmrFile.etag
+    ).then((metadataObject) => ({ ...cmrFile, metadataObject }))));
 }
 
 /**
@@ -127,7 +128,6 @@ async function postToCMR(event) {
     }))
   };
 }
-exports.postToCMR = postToCMR;
 
 /**
  * Lambda handler
@@ -142,3 +142,4 @@ async function handler(event, context) {
 }
 
 exports.handler = handler;
+exports.postToCMR = postToCMR;

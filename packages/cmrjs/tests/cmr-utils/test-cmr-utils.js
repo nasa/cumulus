@@ -244,7 +244,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
     path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
     'utf8'
   );
-  const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
+  const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
   const filesObject = await readJsonFixture(
     path.join(__dirname, '../fixtures/filesObjectFixture.json')
   );
