@@ -28,6 +28,7 @@ const {
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
+const { getEsTypes, getIndexNameForType, getAliasByType } = require('../../es/types');
 
 const workflowList = getWorkflowList();
 
@@ -126,7 +127,8 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   const { esClient, esIndex } = t.context;
 
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((type) =>
+    esClient.indices.delete({ index: getIndexNameForType(type, esIndex) })));
 
   await executionModel.deleteTable();
   await asyncOperationModel.deleteTable();
@@ -307,7 +309,7 @@ test.serial('failure in indexing record of specific type should not prevent inde
     await Promise.all(searchResults.results.map(
       (result) =>
         esClient.delete({
-          index: esAlias,
+          index: getAliasByType('granule', esAlias),
           type: 'granule',
           id: result.granuleId,
           parent: result.collectionId,
@@ -358,7 +360,7 @@ test.serial('failure in indexing record of one type should not prevent indexing 
     await Promise.all(searchResults.results.map(
       (result) =>
         esClient.delete({
-          index: esAlias,
+          index: getAliasByType('provider', esAlias),
           type: 'provider',
           id: result.id,
           refresh: true

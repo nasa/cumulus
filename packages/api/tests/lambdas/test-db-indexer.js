@@ -12,6 +12,7 @@ const models = require('../../models');
 const { Search } = require('../../es/search');
 const bootstrap = require('../../lambdas/bootstrap');
 const dbIndexer = rewire('../../lambdas/db-indexer');
+const { getEsTypes, getIndexNameForType } = require('../../es/types');
 const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
@@ -156,7 +157,8 @@ test.after.always(async () => {
   await ruleModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await Promise.all(getEsTypes().map((type) =>
+    esClient.indices.delete({ index: getIndexNameForType(type, esIndex) })));
 });
 
 test('getRecordId() returns correct ID for collection record', (t) => {

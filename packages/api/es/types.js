@@ -42,7 +42,7 @@ function isValidEsType(type) {
 }
 
 function getAliasByType(type, aliasOverride = undefined) {
-  if (process.env.MULTI_INDICES === true) {
+  if (process.env.MULTI_INDICES) {
     if (isValidEsType(type)) {
       if (aliasOverride) {
         return `${aliasOverride}-${type.toLowerCase()}`;
@@ -57,7 +57,7 @@ function getAliasByType(type, aliasOverride = undefined) {
 }
 
 function getIndexNameForType(type, indexName) {
-  if (process.env.MULTI_INDICES === true) {
+  if (process.env.MULTI_INDICES) {
     if (indexName) {
       return `${indexName}-${type.toLowerCase()}`;
     }

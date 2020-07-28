@@ -177,8 +177,8 @@ test.afterEach.always(async (t) => {
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();
-  await Promise.all(getEsTypes().map((t) =>
-    esClient.indices.delete({ index: getIndexNameForType(t, esIndex) })));
+  await Promise.all(getEsTypes().map((type) =>
+    esClient.indices.delete({ index: getIndexNameForType(type, esIndex) })));
 });
 
 test.after.always(async () => {
