@@ -328,12 +328,13 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      stackName        = var.prefix
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
-      system_bucket    = var.system_bucket
+      CMR_ENVIRONMENT          = var.cmr_environment
+      stackName                = var.prefix
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      RulesTable               = var.dynamo_tables.rules.name
+      system_bucket            = var.system_bucket
+      defaultSchedulerQueueUrl = aws_sqs_queue.start_sf.id
     }
   }
   tags = var.tags
