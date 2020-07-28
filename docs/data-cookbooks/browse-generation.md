@@ -76,7 +76,10 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
 #### Workflow Configuration
 
-Add the following to a new file `browse_example.tf` in your deployment's main directory: [from github](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/browse_example.tf). The file should contain the two example workflow modules.
+Copy the following workflow deployment files to your deployment's main directory (including the referenced `.asl.json` files):
+
+- [`browse_example.tf` (`DiscoverGranulesBrowseExample` workflow)](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/browse_example.tf)
+- [`cookbook_browse_example_workflow.tf` (`CookbookBrowseExample` workflow)](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf)
 
 **Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module release artifact to the version of Cumulus you're deploying:
 
@@ -85,6 +88,8 @@ source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-
 ```
 
 A few things to note about tasks in the workflow being added:
+
+> Note: In the snippets below, `${post_to_cmr_task_arn}` and `${fake_processing_task_arn}` are interpolated values referring to Terraform resources. See the example deployment code for the [`CookbookBrowseExample` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf).
 
 - The CMR step in CookbookBrowseExample:
 
@@ -104,7 +109,7 @@ A few things to note about tasks in the workflow being added:
       }
     },
     "Type": "Task",
-    "Resource": "${module.cumulus.post_to_cmr_task.task_arn}",
+    "Resource": "${post_to_cmr_task_arn}",
     "Retry": [
       {
         "ErrorEquals": [
@@ -161,7 +166,7 @@ Note that, in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will co
     }
   },
   "Type": "Task",
-  "Resource": "${module.cumulus.fake_processing_task.task_arn}",
+  "Resource": "${fake_processing_task_arn}",
   "Catch": [
     {
       "ErrorEquals": [
