@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## Added
+- **CUMULUS-1886**
+  - Added `multiple sort keys` support to `@cumulus/api`
+
+### Fixed
+
+- Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
+
+
 ## [v2.0.0] 2020-07-23
 
 ### BREAKING CHANGES
@@ -157,7 +166,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup)
     documentation.
   - Added `checksumFor` validation to collections model.
-
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
   - The `/s3credentials` endpoint that is deployed as part of distribution now
