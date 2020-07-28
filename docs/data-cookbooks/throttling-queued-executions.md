@@ -94,7 +94,9 @@ Follow the instructions to [re-deploy your Cumulus application](./../deployment/
 
 For any workflows using `QueueGranules` or `QueuePdrs` that you want to use your new queue, update the Cumulus configuration of those steps in your workflows.
 
-As seen in this partial configuration for a `QueueGranules` step (a full example of the step definition can be found in the [discover granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf)), update the `queueUrl` to reference the new throttled queue:
+As seen in this partial configuration for a `QueueGranules` step, update the `queueUrl` to reference the new throttled queue:
+
+> Note: `${ingest_granule_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverGranules` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
 
 ```json
 {
@@ -110,7 +112,7 @@ As seen in this partial configuration for a `QueueGranules` step (a full example
           "provider": "{$.meta.provider}",
           "internalBucket": "{$.meta.buckets.internal.name}",
           "stackName": "{$.meta.stack}",
-          "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}"
+          "granuleIngestWorkflow": "${ingest_granule_workflow_name}"
         }
       }
     }
@@ -118,7 +120,9 @@ As seen in this partial configuration for a `QueueGranules` step (a full example
 }
 ```
 
-Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf) for full step definition):
+Similarly, for a `QueuePdrs` step:
+
+> Note: `${parse_pdr_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverPdrs` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf).
 
 ```json
 {
@@ -135,7 +139,7 @@ Similarly, for a `QueuePdrs` step (see [example discover PDRs workflow](https://
           "collection": "{$.meta.collection}",
           "internalBucket": "{$.meta.buckets.internal.name}",
           "stackName": "{$.meta.stack}",
-          "parsePdrWorkflow": "${module.parse_pdr_workflow.name}"
+          "parsePdrWorkflow": "${parse_pdr_workflow_name}"
         }
       }
     }

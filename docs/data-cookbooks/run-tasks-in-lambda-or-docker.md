@@ -37,7 +37,9 @@ The `cumulus-ecs-task` container takes an AWS Lambda Amazon Resource Name (ARN) 
 
 This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules` task](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in its configuration.
 
-The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) containing the step definition for the `QueueGranules` step:
+The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json) containing the step definition for the `QueueGranules` step:
+
+> Note: `${ingest_granule_workflow_name}` and `${queue_granules_task_arn}` are interpolated values that refer to Terraform resources. See the example deployment code for the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
 
 ```json
   "QueueGranules": {
@@ -51,13 +53,13 @@ The following example is an excerpt from the [Discover Granules workflow](https:
           "provider": "{$.meta.provider}",
           "internalBucket": "{$.meta.buckets.internal.name}",
           "stackName": "{$.meta.stack}",
-          "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}",
-          "queueUrl": "${module.cumulus.start_sf_queue_url}"
+          "granuleIngestWorkflow": "${ingest_granule_workflow_name}",
+          "queueUrl": "{$.meta.queues.startSF}"
         }
       }
     },
     "Type": "Task",
-    "Resource": "${module.cumulus.queue_granules_task.task_arn}",
+    "Resource": "${queue_granules_task_arn}",
     "Retry": [
       {
         "ErrorEquals": [
@@ -135,9 +137,9 @@ module "queue_granules_service" {
 
 > **Please note:** If you have updated the code for the Lambda specified by `--lambdaArn`, you will have to manually restart the tasks in your ECS service before invocation of the Step Function activity will use the updated Lambda code.
 
-- An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) to utilize the new resource, where the `Resource` key of `QueueGranules` step has been updated to:
+- An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json)) to utilize the new resource (the `Resource` key in the `QueueGranules` step has been updated to:
 
-`"Resource": "${aws_sfn_activity.queue_granules.id}"`
+`"Resource": "${aws_sfn_activity.queue_granules.id}"`)`
 
 If you then run this workflow in place of the `DiscoverGranules` workflow, the `QueueGranules` step would run as an ECS task instead of a lambda.
 
