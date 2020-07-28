@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1886**
+  - Added `multiple sort keys` support to `@cumulus/api`
 - **CUMULUS-2099**
   - `@cumulus/message/Queue.getQueueUrl` to get the queue URL specified in a Cumulus workflow message, if any.
 
@@ -179,7 +181,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Setup'](https://nasa.github.io/cumulus/docs/next/data-cookbooks/setup)
     documentation.
   - Added `checksumFor` validation to collections model.
-
 - **CUMULUS-1956**
   - Added `@cumulus/earthata-login-client` package
   - The `/s3credentials` endpoint that is deployed as part of distribution now
