@@ -18,6 +18,26 @@ export interface EventWithDuplicateHandling {
   },
 }
 
+export interface File {
+  bucket?: string,
+  key?: string,
+  fileName?: string,
+  name?: string,
+  filename?: string
+}
+
+export interface MoveFileParams {
+  source?: {
+    Bucket: string,
+    Key: string
+  },
+  target?: {
+    Bucket: string,
+    Key: string
+  },
+  file: File
+}
+
 /**
   * rename s3 file with timestamp
   *
@@ -223,28 +243,8 @@ export async function handleDuplicateFile(params: {
   return [];
 }
 
-interface File {
-  bucket?: string,
-  key?: string,
-  fileName?: string,
-  name?: string,
-  filename?: string
-}
-
 const getNameOfFile = (file: File): string | undefined =>
   file.fileName ?? file.name;
-
-interface MoveFileParams {
-  source?: {
-    Bucket: string,
-    Key: string
-  },
-  target?: {
-    Bucket: string,
-    Key: string
-  },
-  file: File
-}
 
 /**
  * For each source file, see if there is a destination and generate the source
