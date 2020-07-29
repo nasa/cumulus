@@ -14,8 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   rather than `null` if the mime type could not be found.
 - The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
 
-## Added
-=======
+### Added
 
 - **CUMULUS-1886**
   - Added `multiple sort keys` support to `@cumulus/api`
