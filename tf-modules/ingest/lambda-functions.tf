@@ -2,6 +2,7 @@ locals {
   # Pulled out into a local to prevent cyclic dependencies if/when
   # we move to a more restrictive IAM policy.
   sqs2sf_timeout = 200
+  defaultSchedulerQueueUrl = aws_sqs_queue.start_sf.id
 }
 
 resource "aws_lambda_function" "fallback_consumer" {
@@ -139,13 +140,14 @@ resource "aws_lambda_function" "message_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      stackName        = var.prefix
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
-      system_bucket    = var.system_bucket
-      FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
+      CMR_ENVIRONMENT          = var.cmr_environment
+      stackName                = var.prefix
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      RulesTable               = var.dynamo_tables.rules.name
+      system_bucket            = var.system_bucket
+      FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags
@@ -180,7 +182,7 @@ resource "aws_lambda_function" "schedule_sf" {
       CollectionsTable         = var.dynamo_tables.collections.name
       ProvidersTable           = var.dynamo_tables.providers.name
       stackName                = var.prefix
-      defaultSchedulerQueueUrl = aws_sqs_queue.start_sf.id
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags
@@ -334,7 +336,7 @@ resource "aws_lambda_function" "sqs_message_consumer" {
       ProvidersTable           = var.dynamo_tables.providers.name
       RulesTable               = var.dynamo_tables.rules.name
       system_bucket            = var.system_bucket
-      defaultSchedulerQueueUrl = aws_sqs_queue.start_sf.id
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags
