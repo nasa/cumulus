@@ -68,10 +68,10 @@
 <h3><a class="anchor" aria-hidden="true" id="create-and-deploy-the-queue"></a><a href="#create-and-deploy-the-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create and deploy the queue</h3>
 <h4><a class="anchor" aria-hidden="true" id="add-a-new-queue"></a><a href="#add-a-new-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Add a new queue</h4>
 <p>In a <code>.tf</code> file for your <a href="./../deployment/deployment-readme#deploy-the-cumulus-instance">Cumulus deployment</a>, add a new SQS queue:</p>
-<pre><code class="hljs css language-hcl"><span class="hljs-attribute">resource</span> <span class="hljs-string">"aws_sqs_queue"</span> <span class="hljs-string">"background_job_queue"</span> {
-  <span class="hljs-attribute">name</span>                       = <span class="hljs-string">"<span class="hljs-variable">${var.prefix}</span>-backgroundJobQueue"</span>
-  receive_wait_time_seconds  = <span class="hljs-number">20</span>
-  visibility_timeout_seconds = <span class="hljs-number">60</span>
+<pre><code class="hljs css language-hcl">resource <span class="hljs-string">"aws_sqs_queue"</span> <span class="hljs-string">"background_job_queue"</span> {
+  <span class="hljs-attr">name</span>                       = <span class="hljs-string">"<span class="hljs-subst">${var.prefix}</span>-backgroundJobQueue"</span>
+  <span class="hljs-attr">receive_wait_time_seconds</span>  = <span class="hljs-number">20</span>
+  <span class="hljs-attr">visibility_timeout_seconds</span> = <span class="hljs-number">60</span>
 }
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="set-maximum-executions-for-the-queue"></a><a href="#set-maximum-executions-for-the-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Set maximum executions for the queue</h4>
@@ -79,13 +79,13 @@
 <blockquote>
 <p><strong>Please note:</strong> The <code>id</code> used to identify the new queue is arbitrary, but <strong>will be used to refer to this queue later when configuring workflows and rules</strong>.</p>
 </blockquote>
-<pre><code class="hljs css language-hcl"><span class="hljs-attribute">module</span> <span class="hljs-string">"cumulus"</span> {
-  <span class="hljs-comment"># ... other variables</span>
+<pre><code class="hljs css language-hcl">module <span class="hljs-string">"cumulus"</span> {
+  # ... other <span class="hljs-keyword">variables</span>
 
-  <span class="hljs-attribute">throttled_queues</span> = [{
-    <span class="hljs-attribute">id</span> = <span class="hljs-string">"backgroundJobQueue"</span>,
-    url = aws_sqs_queue.background_job_queue.id,
-    execution_limit = <span class="hljs-number">5</span>
+  throttled_queues <span class="hljs-comment">= [{</span>
+    id <span class="hljs-comment">=</span> <span class="hljs-comment">"backgroundJobQueue"</span><span class="hljs-comment">,</span>
+    url <span class="hljs-comment">= aws_sqs_queue.background_job_queue.id,</span>
+    execution_limit <span class="hljs-comment">= 5</span>
   }]
 }
 </code></pre>
@@ -95,22 +95,22 @@
 <p><strong>Please note</strong>: You <strong>must use the <code>sqs2sfThrottle</code> Lambda as the consumer for any queue with a queue execution limit</strong> or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.</p>
 </blockquote>
 <p><code>aws_sqs_queue.background_job_queue.id</code> refers to the <a href="#add-a-new-queue">queue resource defined above</a>.</p>
-<pre><code class="hljs css language-hcl"><span class="hljs-attribute">resource</span> <span class="hljs-string">"aws_cloudwatch_event_rule"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
-  <span class="hljs-attribute">schedule_expression</span> = <span class="hljs-string">"rate(1 minute)"</span>
+<pre><code class="hljs css language-hcl">resource <span class="hljs-string">"aws_cloudwatch_event_rule"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
+  schedule_expression = <span class="hljs-string">"rate(1 minute)"</span>
 }
-
-resource <span class="hljs-string">"aws_cloudwatch_event_target"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
-  <span class="hljs-attribute">rule</span> = aws_cloudwatch_event_rule.background_job_queue_watcher.name
+<span class="hljs-built_in">
+resource </span><span class="hljs-string">"aws_cloudwatch_event_target"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
+  rule = aws_cloudwatch_event_rule.background_job_queue_watcher.name
   arn  = module.cumulus.sqs2sfThrottle_lambda_function_arn
   input = jsonencode({
-    <span class="hljs-attribute">messageLimit</span> = <span class="hljs-number">500</span>
+    messageLimit = 500
     queueUrl     = aws_sqs_queue.background_job_queue.id
-    timeLimit    = <span class="hljs-number">60</span>
+    timeLimit    = 60
   })
 }
-
-resource <span class="hljs-string">"aws_lambda_permission"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
-  <span class="hljs-attribute">action</span>        = <span class="hljs-string">"lambda:InvokeFunction"</span>
+<span class="hljs-built_in">
+resource </span><span class="hljs-string">"aws_lambda_permission"</span> <span class="hljs-string">"background_job_queue_watcher"</span> {
+  action        = <span class="hljs-string">"lambda:InvokeFunction"</span>
   function_name = module.cumulus.sqs2sfThrottle_lambda_function_arn
   principal     = <span class="hljs-string">"events.amazonaws.com"</span>
   source_arn    = aws_cloudwatch_event_rule.background_job_queue_watcher.arn

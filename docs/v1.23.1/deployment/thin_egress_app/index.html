@@ -111,11 +111,11 @@ credentials.</p>
 TEA outputs as outputs of your Terraform deployment. That would look something
 like this:</p>
 <pre><code class="hljs css language-hcl">output <span class="hljs-string">"tea_api_endpoint"</span> {
-  value = <span class="hljs-class"><span class="hljs-keyword">module</span>.<span class="hljs-title">thin_egress_app</span>.<span class="hljs-title">api_endpoint</span></span>
+  <span class="hljs-keyword">value</span> = <span class="hljs-keyword">module</span>.thin<span class="hljs-number">_</span>egress<span class="hljs-number">_</span>app.api<span class="hljs-number">_</span>endpoint
 }
 
 output <span class="hljs-string">"tea_urs_redirect_uri"</span> {
-  value = <span class="hljs-class"><span class="hljs-keyword">module</span>.<span class="hljs-title">thin_egress_app</span>.<span class="hljs-title">urs_redirect_uri</span></span>
+  <span class="hljs-keyword">value</span> = <span class="hljs-keyword">module</span>.thin<span class="hljs-number">_</span>egress<span class="hljs-number">_</span>app.urs<span class="hljs-number">_</span>redirect<span class="hljs-number">_u</span>ri
 }
 </code></pre>
 <p>Once you've run the Terraform deployment, you should get an output something

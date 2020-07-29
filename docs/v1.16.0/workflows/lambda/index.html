@@ -73,19 +73,19 @@
 <h2><a class="anchor" aria-hidden="true" id="deploy-a-lambda"></a><a href="#deploy-a-lambda" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Deploy a Lambda</h2>
 <h3><a class="anchor" aria-hidden="true" id="nodejs-lambda"></a><a href="#nodejs-lambda" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Node.js Lambda</h3>
 <p>For a new Node.js Lambda, create a new function and add an <code>aws_lambda_function</code> resource to your Cumulus deployment (for examples, see the example in source <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/lambdas.tf">example/lambdas.tf</a> and <a href="https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/lambda-functions.tf">ingest/lambda-functions.tf</a>) as either a new <code>.tf</code> file, or added to an existing <code>.tf</code> file:</p>
-<pre><code class="hljs css language-hcl"><span class="hljs-attribute">resource</span> <span class="hljs-string">"aws_lambda_function"</span> <span class="hljs-string">"myfunction"</span> {
-  <span class="hljs-attribute">function_name</span>    = <span class="hljs-string">"<span class="hljs-variable">${var.prefix}</span>-function"</span>
-  filename         = <span class="hljs-string">"/path/to/zip/lambda.zip"</span>
-  source_code_hash = filebase64sha256(<span class="hljs-string">"/path/to/zip/lambda.zip"</span>)
-  handler          = <span class="hljs-string">"index.handler"</span>
-  role             = module.cumulus.lambda_processing_role_arn
-  runtime          = <span class="hljs-string">"nodejs8.10"</span>
+<pre><code class="hljs css language-hcl">resource <span class="hljs-string">"aws_lambda_function"</span> <span class="hljs-string">"myfunction"</span> {
+  <span class="hljs-attr">function_name</span>    = <span class="hljs-string">"<span class="hljs-subst">${var.prefix}</span>-function"</span>
+  <span class="hljs-attr">filename</span>         = <span class="hljs-string">"/path/to/zip/lambda.zip"</span>
+  <span class="hljs-attr">source_code_hash</span> = filebase64sha256(<span class="hljs-string">"/path/to/zip/lambda.zip"</span>)
+  <span class="hljs-attr">handler</span>          = <span class="hljs-string">"index.handler"</span>
+  <span class="hljs-attr">role</span>             = module.cumulus.lambda_processing_role_arn
+  <span class="hljs-attr">runtime</span>          = <span class="hljs-string">"nodejs8.10"</span>
 
-  tags = { <span class="hljs-attribute">Deployment</span> = var.prefix }
+  <span class="hljs-attr">tags</span> = { <span class="hljs-attr">Deployment</span> = var.prefix }
 
   vpc_config {
-    <span class="hljs-attribute">subnet_ids</span>         = var.subnet_ids
-    security_group_ids = var.security_group_ids
+    <span class="hljs-attr">subnet_ids</span>         = var.subnet_ids
+    <span class="hljs-attr">security_group_ids</span> = var.security_group_ids
   }
 }
 </code></pre>
@@ -105,10 +105,10 @@
 <p>Cumulus supports all of the options available to you via the <code>aws_lambda_function</code> Terraform resource.   For more information on what's available, check out the <a href="https://www.terraform.io/docs/providers/aws/r/lambda_function.html">Terraform resource docs</a>.</p>
 <h3><a class="anchor" aria-hidden="true" id="cloudwatch-log-groups"></a><a href="#cloudwatch-log-groups" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cloudwatch log groups</h3>
 <p>If you want to enable <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/index.html">Cloudwatch</a> logging for your Lambda resource, you'll need to add a <code>aws_cloudwatch_log_group</code> resource to your Lambda definition:</p>
-<pre><code class="hljs css language-hcl"><span class="hljs-attribute">resource</span> <span class="hljs-string">"aws_cloudwatch_log_group"</span> <span class="hljs-string">"myfunction_log_group"</span> {
-  <span class="hljs-attribute">name</span> = <span class="hljs-string">"/aws/lambda/<span class="hljs-variable">${aws_lambda_function.myfunction.function_name}</span>"</span>
-  retention_in_days = <span class="hljs-number">30</span>
-  tags = { <span class="hljs-attribute">Deployment</span> = var.prefix }
+<pre><code class="hljs css language-hcl">resource <span class="hljs-string">"aws_cloudwatch_log_group"</span> <span class="hljs-string">"myfunction_log_group"</span> {
+  <span class="hljs-attr">name</span> = <span class="hljs-string">"/aws/lambda/<span class="hljs-subst">${aws_lambda_function.myfunction.function_name}</span>"</span>
+  <span class="hljs-attr">retention_in_days</span> = <span class="hljs-number">30</span>
+  <span class="hljs-attr">tags</span> = { <span class="hljs-attr">Deployment</span> = var.prefix }
 }
 </code></pre>
 </span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.16.0/workflows/developing-workflow-tasks"><span class="arrow-prev">← </span><span>Developing Workflow Tasks</span></a><a class="docs-next button" href="/cumulus/docs/v1.16.0/workflows/docker"><span>Dockerizing Data Processing</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#develop-a-new-cumulus-lambda">Develop a new Cumulus Lambda</a></li><li><a href="#deploy-a-lambda">Deploy a Lambda</a><ul class="toc-headings"><li><a href="#nodejs-lambda">Node.js Lambda</a></li><li><a href="#java-lambda">Java Lambda</a></li><li><a href="#python-lambda">Python Lambda</a></li></ul></li><li><a href="#cumulus-message-adapter">Cumulus Message Adapter</a></li><li><a href="#other-lambda-options">Other Lambda Options</a><ul class="toc-headings"><li><a href="#cloudwatch-log-groups">Cloudwatch log groups</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>

@@ -139,41 +139,41 @@
 <li>An instance of the <code>cumulus_ecs_service</code> module (found on the <a href="https://github.com/nasa/cumulus/releases">Cumulus releases page</a> configured to provide the <code>QueueGranules</code> task:</li>
 </ul>
 <pre><code class="hljs css language-hcl">
-<span class="hljs-attr">module</span> <span class="hljs-string">"queue_granules_service" {</span>
+module <span class="hljs-string">"queue_granules_service"</span> {
   <span class="hljs-attr">source</span> = <span class="hljs-string">"https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-ecs-service.zip"</span>
 
-  <span class="hljs-attr">prefix</span> = <span class="hljs-string">var.prefix</span>
+  <span class="hljs-attr">prefix</span> = var.prefix
   <span class="hljs-attr">name</span>   = <span class="hljs-string">"QueueGranules"</span>
-  <span class="hljs-attr">tags</span>   = <span class="hljs-string">local.default_tags</span>
+  <span class="hljs-attr">tags</span>   = local.default_tags
 
-  <span class="hljs-attr">cluster_arn</span>                           = <span class="hljs-string">module.cumulus.ecs_cluster_arn</span>
-  <span class="hljs-attr">desired_count</span>                         = <span class="hljs-string">1</span>
+  <span class="hljs-attr">cluster_arn</span>                           = module.cumulus.ecs_cluster_arn
+  <span class="hljs-attr">desired_count</span>                         = <span class="hljs-number">1</span>
   <span class="hljs-attr">image</span>                                 = <span class="hljs-string">"cumuluss/cumulus-ecs-task:1.4.0"</span>
-  <span class="hljs-attr">log2elasticsearch_lambda_function_arn</span> = <span class="hljs-string">module.cumulus.log2elasticsearch_lambda_function_arn</span>
+  <span class="hljs-attr">log2elasticsearch_lambda_function_arn</span> = module.cumulus.log2elasticsearch_lambda_function_arn
 
-  <span class="hljs-attr">cpu</span>                = <span class="hljs-string">400</span>
-  <span class="hljs-attr">memory_reservation</span> = <span class="hljs-string">700</span>
+  <span class="hljs-attr">cpu</span>                = <span class="hljs-number">400</span>
+  <span class="hljs-attr">memory_reservation</span> = <span class="hljs-number">700</span>
 
-  <span class="hljs-attr">environment</span> = <span class="hljs-string">{</span>
-    <span class="hljs-attr">AWS_DEFAULT_REGION</span> = <span class="hljs-string">data.aws_region.current.name</span>
-  <span class="hljs-attr">}</span>
-  <span class="hljs-attr">command</span> = <span class="hljs-string">[</span>
-    <span class="hljs-attr">"cumulus-ecs-task",</span>
-    <span class="hljs-attr">"--activityArn",</span>
-    <span class="hljs-attr">aws_sfn_activity.queue_granules.id,</span>
-    <span class="hljs-attr">"--lambdaArn",</span>
-    <span class="hljs-attr">module.cumulus.queue_granules_task.task_arn</span>
-  <span class="hljs-attr">]</span>
-  <span class="hljs-attr">alarms</span> = <span class="hljs-string">{</span>
-    <span class="hljs-attr">TaskCountHigh</span> = <span class="hljs-string">{</span>
+  <span class="hljs-attr">environment</span> = {
+    <span class="hljs-attr">AWS_DEFAULT_REGION</span> = data.aws_region.current.name
+  }
+  <span class="hljs-attr">command</span> = [
+    <span class="hljs-string">"cumulus-ecs-task"</span>,
+    <span class="hljs-string">"--activityArn"</span>,
+    aws_sfn_activity.queue_granules.id,
+    <span class="hljs-string">"--lambdaArn"</span>,
+    module.cumulus.queue_granules_task.task_arn
+  ]
+  <span class="hljs-attr">alarms</span> = {
+    <span class="hljs-attr">TaskCountHigh</span> = {
       <span class="hljs-attr">comparison_operator</span> = <span class="hljs-string">"GreaterThanThreshold"</span>
-      <span class="hljs-attr">evaluation_periods</span>  = <span class="hljs-string">1</span>
+      <span class="hljs-attr">evaluation_periods</span>  = <span class="hljs-number">1</span>
       <span class="hljs-attr">metric_name</span>         = <span class="hljs-string">"MemoryUtilization"</span>
       <span class="hljs-attr">statistic</span>           = <span class="hljs-string">"SampleCount"</span>
-      <span class="hljs-attr">threshold</span>           = <span class="hljs-string">1</span>
-    <span class="hljs-attr">}</span>
-  <span class="hljs-attr">}</span>
-<span class="hljs-attr">}</span>
+      <span class="hljs-attr">threshold</span>           = <span class="hljs-number">1</span>
+    }
+  }
+}
 </code></pre>
 <blockquote>
 <p><strong>Please note:</strong> If you have updated the code for the Lambda specified by <code>--lambdaArn</code>, you will have to manually restart the tasks in your ECS service before invocation of the Step Function activity will use the updated Lambda code.</p>
@@ -182,16 +182,16 @@
 <li>An updated <a href="https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf">Discover Granules workflow</a> to utilize the new resource (the resource key in the <code>QueueGranules</code> step has been updated to:</li>
 </ul>
 <p><code>&quot;Resource&quot;: &quot;${aws_sfn_activity.queue_granules.id}&quot;</code>)`</p>
-<pre><code class="hljs css language-hcl"><span class="hljs-built_in">module</span> <span class="hljs-string">"cookbook_discover_granules_workflow"</span> {
+<pre><code class="hljs css language-hcl">module <span class="hljs-string">"cookbook_discover_granules_workflow"</span> {
   source = <span class="hljs-string">"https://github.com/jkovarik/cumulus/releases/download/v1.27.0/terraform-aws-cumulus-workflow.zip"</span>
 
-  prefix                                = <span class="hljs-keyword">var</span>.prefix
+  prefix                                = var.prefix
   name                                  = <span class="hljs-string">"CookbookDiscoverGranules"</span>
-  workflow_config                       = <span class="hljs-built_in">module</span>.cumulus.workflow_config
-  system_bucket                         = <span class="hljs-keyword">var</span>.system_bucket
+  workflow_config                       = module.cumulus.workflow_config
+  system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
-  state_machine_definition = &lt;&lt;<span class="hljs-built_in">JSON</span>
+  state_machine_definition = &lt;&lt;JSON
 {
   <span class="hljs-string">"Comment"</span>: <span class="hljs-string">"Discovers new Granules from a given provider"</span>,
   <span class="hljs-string">"StartAt"</span>: <span class="hljs-string">"DiscoverGranules"</span>,
@@ -200,20 +200,20 @@
     <span class="hljs-string">"DiscoverGranules"</span>: {
       <span class="hljs-string">"Parameters"</span>: {
         <span class="hljs-string">"cma"</span>: {
-          <span class="hljs-string">"event.$"</span>: <span class="hljs-string">"$"</span>,
+          <span class="hljs-string">"event.<span class="hljs-variable">$</span>"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>"</span>,
           <span class="hljs-string">"ReplaceConfig"</span>: {
-            <span class="hljs-string">"FullMessage"</span>: <span class="hljs-literal">true</span>
+            <span class="hljs-string">"FullMessage"</span>: true
           },
           <span class="hljs-string">"task_config"</span>: {
-            <span class="hljs-string">"provider"</span>: <span class="hljs-string">"{$.meta.provider}"</span>,
-            <span class="hljs-string">"collection"</span>: <span class="hljs-string">"{$.meta.collection}"</span>,
-            <span class="hljs-string">"buckets"</span>: <span class="hljs-string">"{$.meta.buckets}"</span>,
-            <span class="hljs-string">"stack"</span>: <span class="hljs-string">"{$.meta.stack}"</span>
+            <span class="hljs-string">"provider"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.provider}"</span>,
+            <span class="hljs-string">"collection"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.collection}"</span>,
+            <span class="hljs-string">"buckets"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.buckets}"</span>,
+            <span class="hljs-string">"stack"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.stack}"</span>
           }
         }
       },
       <span class="hljs-string">"Type"</span>: <span class="hljs-string">"Task"</span>,
-      <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"${module.cumulus.discover_granules_task.task_arn}"</span>,
+      <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>{module.cumulus.discover_granules_task.task_arn}"</span>,
       <span class="hljs-string">"Retry"</span>: [
         {
           <span class="hljs-string">"ErrorEquals"</span>: [
@@ -231,7 +231,7 @@
           <span class="hljs-string">"ErrorEquals"</span>: [
             <span class="hljs-string">"States.ALL"</span>
           ],
-          <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"$.exception"</span>,
+          <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>.exception"</span>,
           <span class="hljs-string">"Next"</span>: <span class="hljs-string">"WorkflowFailed"</span>
         }
       ],
@@ -240,21 +240,21 @@
     <span class="hljs-string">"QueueGranules"</span>: {
       <span class="hljs-string">"Parameters"</span>: {
         <span class="hljs-string">"cma"</span>: {
-          <span class="hljs-string">"event.$"</span>: <span class="hljs-string">"$"</span>,
+          <span class="hljs-string">"event.<span class="hljs-variable">$</span>"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>"</span>,
           <span class="hljs-string">"ReplaceConfig"</span>: {
-            <span class="hljs-string">"FullMessage"</span>: <span class="hljs-literal">true</span>
+            <span class="hljs-string">"FullMessage"</span>: true
           },
           <span class="hljs-string">"task_config"</span>: {
-            <span class="hljs-string">"queueUrl"</span>: <span class="hljs-string">"{$.meta.queues.startSF}"</span>,
-            <span class="hljs-string">"provider"</span>: <span class="hljs-string">"{$.meta.provider}"</span>,
-            <span class="hljs-string">"internalBucket"</span>: <span class="hljs-string">"{$.meta.buckets.internal.name}"</span>,
-            <span class="hljs-string">"stackName"</span>: <span class="hljs-string">"{$.meta.stack}"</span>,
-            <span class="hljs-string">"granuleIngestWorkflow"</span>: <span class="hljs-string">"${var.prefix}-IngestGranule"</span>
+            <span class="hljs-string">"queueUrl"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.queues.startSF}"</span>,
+            <span class="hljs-string">"provider"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.provider}"</span>,
+            <span class="hljs-string">"internalBucket"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.buckets.internal.name}"</span>,
+            <span class="hljs-string">"stackName"</span>: <span class="hljs-string">"{<span class="hljs-variable">$</span>.meta.stack}"</span>,
+            <span class="hljs-string">"granuleIngestWorkflow"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>{var.prefix}-IngestGranule"</span>
           }
         }
       },
       <span class="hljs-string">"Type"</span>: <span class="hljs-string">"Task"</span>,
-      <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"${aws_sfn_activity.queue_granules.id}"</span>,
+      <span class="hljs-string">"Resource"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>{aws_sfn_activity.queue_granules.id}"</span>,
       <span class="hljs-string">"Retry"</span>: [
         {
           <span class="hljs-string">"ErrorEquals"</span>: [
@@ -272,11 +272,11 @@
           <span class="hljs-string">"ErrorEquals"</span>: [
             <span class="hljs-string">"States.ALL"</span>
           ],
-          <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"$.exception"</span>,
+          <span class="hljs-string">"ResultPath"</span>: <span class="hljs-string">"<span class="hljs-variable">$</span>.exception"</span>,
           <span class="hljs-string">"Next"</span>: <span class="hljs-string">"WorkflowFailed"</span>
         }
       ],
-      <span class="hljs-string">"End"</span>: <span class="hljs-literal">true</span>
+      <span class="hljs-string">"End"</span>: true
     },
     <span class="hljs-string">"WorkflowFailed"</span>: {
       <span class="hljs-string">"Type"</span>: <span class="hljs-string">"Fail"</span>,
@@ -284,7 +284,7 @@
     }
   }
 }
-<span class="hljs-built_in">JSON</span>
+JSON
 }
 </code></pre>
 <p>If you then run this workflow in place of the <code>DiscoverGranules</code> workflow, the <code>QueueGranules</code> step would run as an ECS task instead of a lambda.</p>

@@ -70,14 +70,14 @@
 e.g.</p>
 <pre><code class="hljs css language-hcl">module <span class="hljs-string">"s3-replicator"</span> {
   source = <span class="hljs-string">"&lt;path to s3-replicator.zip&gt;"</span>
-  <span class="hljs-keyword">prefix</span>               = <span class="hljs-keyword">var</span>.<span class="hljs-keyword">prefix</span>
-  vpc_id               = <span class="hljs-keyword">var</span>.vpc_id
-  subnet_ids           = <span class="hljs-keyword">var</span>.subnet_ids
-  permissions_boundary = <span class="hljs-keyword">var</span>.permissions_boundary_arn
-  source_bucket        = <span class="hljs-keyword">var</span>.s3_replicator_config.source_bucket
-  source_prefix        = <span class="hljs-keyword">var</span>.s3_replicator_config.source_prefix
-  target_bucket        = <span class="hljs-keyword">var</span>.s3_replicator_config.target_bucket
-  target_prefix        = <span class="hljs-keyword">var</span>.s3_replicator_config.target_prefix
+  prefix               = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.prefix</span>
+  vpc_id               = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.vpc_id</span>
+  subnet_ids           = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.subnet_ids</span>
+  permissions_boundary = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.permissions_boundary_arn</span>
+  source_bucket        = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.s3_replicator_config</span><span class="hljs-selector-class">.source_bucket</span>
+  source_prefix        = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.s3_replicator_config</span><span class="hljs-selector-class">.source_prefix</span>
+  target_bucket        = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.s3_replicator_config</span><span class="hljs-selector-class">.target_bucket</span>
+  target_prefix        = <span class="hljs-selector-tag">var</span><span class="hljs-selector-class">.s3_replicator_config</span><span class="hljs-selector-class">.target_prefix</span>
 }
 </code></pre>
 <p>The terraform source package can be found on the <a href="https://github.com/nasa/cumulus/releases">Cumulus github release page</a> under the asset tab <code>terraform-aws-cumulus-s3-replicator.zip</code>.</p>

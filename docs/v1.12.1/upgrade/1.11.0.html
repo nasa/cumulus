@@ -89,8 +89,8 @@ the migrations associated with the release upgrades in the correct order.</p>
 <ol start="2">
 <li><strong>Invoke the lambda function directly with AWS CLI:</strong></li>
 </ol>
-<pre><code class="hljs">$ aws lambda invoke --<span class="hljs-function"><span class="hljs-keyword">function</span>-<span class="hljs-title">name</span> &lt;<span class="hljs-title">your</span>-<span class="hljs-title">cloudformation</span>-<span class="hljs-title">stack</span>-<span class="hljs-title">name</span>&gt;-<span class="hljs-title">executeMigrations</span> --<span class="hljs-title">payload</span> '</span>{<span class="hljs-string">"migrations"</span>: [<span class="hljs-string">"&lt;migration name goes here&gt;"</span>]}<span class="hljs-string">'
-</span></code></pre>
+<pre><code class="hljs">$ aws lambda<span class="hljs-built_in"> invoke </span>--function-name &lt;your-cloudformation-stack-name&gt;-executeMigrations --payload '{<span class="hljs-string">"migrations"</span>: [<span class="hljs-string">"&lt;migration name goes here&gt;"</span>]}'
+</code></pre>
 <ol start="3">
 <li><strong>Invoke the lambda function from the AWS website:</strong></li>
 </ol>

@@ -247,8 +247,8 @@ Terraform has been successfully initialized!
 <pre><code class="hljs css language-bash">terraform import module.data_persistence.aws_elasticsearch_domain.es_vpc PREFIX-es5vpc
 </code></pre>
 <p>You will also need to make sure to set these variables in your <code>terraform.tfvars</code> file:</p>
-<pre><code class="hljs css language-hcl"><span class="hljs-attr">prefix</span> = <span class="hljs-string">"PREFIX"</span>     <span class="hljs-comment"># must match prefix of existing deployment</span>
-<span class="hljs-attr">custom_domain_name</span> = <span class="hljs-string">"PREFIX-es5vpc"</span>  <span class="hljs-comment"># must match existing Elasticsearch domain name</span>
+<pre><code class="hljs css language-hcl">prefix = <span class="hljs-string">"PREFIX"</span>     # must match<span class="hljs-built_in"> prefix </span>of existing deployment
+custom_domain_name = <span class="hljs-string">"PREFIX-es5vpc"</span>  # must match existing Elasticsearch domain name
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong> If you are importing data resources from a previous version of Cumulus deployed using Cloudformation, then make sure <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-deletionpolicy.html"><code>DeletionPolicy: Retain</code></a> is set on the data resources in the Cloudformation stack before deleting that stack. Otherwise, the imported data resources will be destroyed when you delete that stack. As of Cumulus version 1.15.0, <code>DeletionPolicy: Retain</code> is set by default for the data resources in the Cloudformation stack.</p>

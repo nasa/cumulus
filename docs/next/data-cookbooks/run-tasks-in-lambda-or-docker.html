@@ -141,40 +141,40 @@
 <li>An instance of the <code>cumulus_ecs_service</code> module (found on the <a href="https://github.com/nasa/cumulus/releases">Cumulus releases page</a> configured to provide the <code>QueueGranules</code> task:</li>
 </ul>
 <pre><code class="hljs css language-hcl">
-<span class="hljs-attr">module</span> <span class="hljs-string">"queue_granules_service" {</span>
+module <span class="hljs-string">"queue_granules_service"</span> {
   <span class="hljs-attr">source</span> = <span class="hljs-string">"https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-ecs-service.zip"</span>
 
-  <span class="hljs-attr">prefix</span> = <span class="hljs-string">var.prefix</span>
+  <span class="hljs-attr">prefix</span> = var.prefix
   <span class="hljs-attr">name</span>   = <span class="hljs-string">"QueueGranules"</span>
 
-  <span class="hljs-attr">cluster_arn</span>                           = <span class="hljs-string">module.cumulus.ecs_cluster_arn</span>
-  <span class="hljs-attr">desired_count</span>                         = <span class="hljs-string">1</span>
+  <span class="hljs-attr">cluster_arn</span>                           = module.cumulus.ecs_cluster_arn
+  <span class="hljs-attr">desired_count</span>                         = <span class="hljs-number">1</span>
   <span class="hljs-attr">image</span>                                 = <span class="hljs-string">"cumuluss/cumulus-ecs-task:1.7.0"</span>
-  <span class="hljs-attr">log2elasticsearch_lambda_function_arn</span> = <span class="hljs-string">module.cumulus.log2elasticsearch_lambda_function_arn</span>
+  <span class="hljs-attr">log2elasticsearch_lambda_function_arn</span> = module.cumulus.log2elasticsearch_lambda_function_arn
 
-  <span class="hljs-attr">cpu</span>                = <span class="hljs-string">400</span>
-  <span class="hljs-attr">memory_reservation</span> = <span class="hljs-string">700</span>
+  <span class="hljs-attr">cpu</span>                = <span class="hljs-number">400</span>
+  <span class="hljs-attr">memory_reservation</span> = <span class="hljs-number">700</span>
 
-  <span class="hljs-attr">environment</span> = <span class="hljs-string">{</span>
-    <span class="hljs-attr">AWS_DEFAULT_REGION</span> = <span class="hljs-string">data.aws_region.current.name</span>
-  <span class="hljs-attr">}</span>
-  <span class="hljs-attr">command</span> = <span class="hljs-string">[</span>
-    <span class="hljs-attr">"cumulus-ecs-task",</span>
-    <span class="hljs-attr">"--activityArn",</span>
-    <span class="hljs-attr">aws_sfn_activity.queue_granules.id,</span>
-    <span class="hljs-attr">"--lambdaArn",</span>
-    <span class="hljs-attr">module.cumulus.queue_granules_task.task_arn</span>
-  <span class="hljs-attr">]</span>
-  <span class="hljs-attr">alarms</span> = <span class="hljs-string">{</span>
-    <span class="hljs-attr">TaskCountHigh</span> = <span class="hljs-string">{</span>
+  <span class="hljs-attr">environment</span> = {
+    <span class="hljs-attr">AWS_DEFAULT_REGION</span> = data.aws_region.current.name
+  }
+  <span class="hljs-attr">command</span> = [
+    <span class="hljs-string">"cumulus-ecs-task"</span>,
+    <span class="hljs-string">"--activityArn"</span>,
+    aws_sfn_activity.queue_granules.id,
+    <span class="hljs-string">"--lambdaArn"</span>,
+    module.cumulus.queue_granules_task.task_arn
+  ]
+  <span class="hljs-attr">alarms</span> = {
+    <span class="hljs-attr">TaskCountHigh</span> = {
       <span class="hljs-attr">comparison_operator</span> = <span class="hljs-string">"GreaterThanThreshold"</span>
-      <span class="hljs-attr">evaluation_periods</span>  = <span class="hljs-string">1</span>
+      <span class="hljs-attr">evaluation_periods</span>  = <span class="hljs-number">1</span>
       <span class="hljs-attr">metric_name</span>         = <span class="hljs-string">"MemoryUtilization"</span>
       <span class="hljs-attr">statistic</span>           = <span class="hljs-string">"SampleCount"</span>
-      <span class="hljs-attr">threshold</span>           = <span class="hljs-string">1</span>
-    <span class="hljs-attr">}</span>
-  <span class="hljs-attr">}</span>
-<span class="hljs-attr">}</span>
+      <span class="hljs-attr">threshold</span>           = <span class="hljs-number">1</span>
+    }
+  }
+}
 </code></pre>
 <blockquote>
 <p><strong>Please note:</strong> If you have updated the code for the Lambda specified by <code>--lambdaArn</code>, you will have to manually restart the tasks in your ECS service before invocation of the Step Function activity will use the updated Lambda code.</p>

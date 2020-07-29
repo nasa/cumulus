@@ -168,7 +168,7 @@ cmr:</p>
 <h4><a class="anchor" aria-hidden="true" id="cumulus-configuration"></a><a href="#cumulus-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Configuration</h4>
 <p>In an editor, open app/config.yml and modify your stepFunctions key to contain the file you just created:</p>
 <pre><code class="hljs">stepFunctions: !!files [
-  {some <span class="hljs-keyword">list</span> of workflows},
+  {some list of workflows},
   <span class="hljs-string">'browseExample.yml'</span>
 ]
 </code></pre>
@@ -286,9 +286,9 @@ cmr:</p>
 <p><strong>Please note</strong>: Even though our initial discover granules ingest brings in only the .hdf and .met files we've staged, we still configure the other possible file types for this collection's granules.</p>
 <h3><a class="anchor" aria-hidden="true" id="add-provider"></a><a href="#add-provider" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Add Provider</h3>
 <p>Next navigate to the Provider tab and create a provider with the following values, using whatever name you wish, and the bucket the data was staged to as the host:</p>
-<pre><code class="hljs"><span class="hljs-attribute">Name</span>:
-<span class="hljs-attribute">Protocol</span>: S3
-<span class="hljs-attribute">Host</span>: {{data_source_bucket}}
+<pre><code class="hljs"><span class="hljs-symbol">Name:</span>
+<span class="hljs-symbol">Protocol:</span> S3
+<span class="hljs-symbol">Host:</span> {{data_source_bucket}}
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="add-rule"></a><a href="#add-rule" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Add Rule</h3>
 <p>Once you have your provider and rule added, go to the Rules tab, and add a rule with the following values (using whatever name you wish, populating the workflow and provider keys with the previously entered values:</p>
@@ -305,7 +305,7 @@ cmr:</p>
         <span class="hljs-string">"type"</span>: <span class="hljs-string">"onetime"</span>
     },
     <span class="hljs-string">"state"</span>: <span class="hljs-string">"ENABLED"</span>,
-    <span class="hljs-string">"updatedAt"</span>: 1553053438767
+    <span class="hljs-string">"updatedAt"</span>: <span class="hljs-number">1553053438767</span>
 }
 </code></pre>
 <hr>
@@ -334,11 +334,11 @@ cmr:</p>
             <span class="hljs-string">"fileType"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-protected"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"</span>,
-            <span class="hljs-string">"time"</span>: 1553027415000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027415000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"</span>,
             <span class="hljs-string">"duplicate_found"</span>: <span class="hljs-literal">true</span>,
-            <span class="hljs-string">"size"</span>: 1908635
+            <span class="hljs-string">"size"</span>: <span class="hljs-number">1908635</span>
           },
           {
             <span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"</span>,
@@ -346,11 +346,11 @@ cmr:</p>
             <span class="hljs-string">"fileType"</span>: <span class="hljs-string">"metadata"</span>,
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-private"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-private/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"</span>,
-            <span class="hljs-string">"time"</span>: 1553027412000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027412000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"</span>,
             <span class="hljs-string">"duplicate_found"</span>: <span class="hljs-literal">true</span>,
-            <span class="hljs-string">"size"</span>: 21708
+            <span class="hljs-string">"size"</span>: <span class="hljs-number">21708</span>
           },
           {
             <span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ.A2016358.h13v04.006.2016360104606.jpg"</span>,
@@ -358,11 +358,11 @@ cmr:</p>
             <span class="hljs-string">"fileType"</span>: <span class="hljs-string">"browse"</span>,
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-protected"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg"</span>,
-            <span class="hljs-string">"time"</span>: 1553027415000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027415000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"</span>,
             <span class="hljs-string">"duplicate_found"</span>: <span class="hljs-literal">true</span>,
-            <span class="hljs-string">"size"</span>: 1908635
+            <span class="hljs-string">"size"</span>: <span class="hljs-number">1908635</span>
           },
           {
             <span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"</span>,
@@ -414,10 +414,10 @@ cmr:</p>
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-internal"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"</span>,
             <span class="hljs-string">"fileStagingDir"</span>: <span class="hljs-string">"file-staging/jk2/MOD09GQ___006"</span>,
-            <span class="hljs-string">"time"</span>: 1553027415000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027415000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"</span>,
-            <span class="hljs-string">"size"</span>: 1908635
+            <span class="hljs-string">"size"</span>: <span class="hljs-number">1908635</span>
           },
           {
             <span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"</span>,
@@ -425,10 +425,10 @@ cmr:</p>
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-internal"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"</span>,
             <span class="hljs-string">"fileStagingDir"</span>: <span class="hljs-string">"file-staging/jk2/MOD09GQ___006"</span>,
-            <span class="hljs-string">"time"</span>: 1553027412000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027412000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"</span>,
-            <span class="hljs-string">"size"</span>: 21708
+            <span class="hljs-string">"size"</span>: <span class="hljs-number">21708</span>
           }
         ]
       }
@@ -458,11 +458,11 @@ cmr:</p>
 <h4><a class="anchor" aria-hidden="true" id="payload-1"></a><a href="#payload-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>payload</h4>
 <p>The payload includes a full list of files to be 'moved' into the cumulus archive.   The <code>FilesToGranules</code> task will take this list, merge it with the information from <code>InputGranules</code>, then pass that list to the <code>MoveGranules</code> task.  The <code>MoveGranules</code> task will then move the files to their targets and update the CMR metadata file if it exists with the updated granule locations.</p>
 <p>In the provided example, a payload being passed to the  <code>FilesToGranules</code> task should be expected to look like:</p>
-<pre><code class="hljs">  <span class="hljs-string">"payload"</span>: [
-    <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"</span>,
-    <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"</span>,
-    <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg"</span>,
-    <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"</span>
+<pre><code class="hljs">  "payload": [
+    "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.<span class="hljs-keyword">A</span><span class="hljs-number">2016358</span>.h<span class="hljs-number">13v04.006</span>.<span class="hljs-number">2016360104606</span>.hdf",
+    "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.<span class="hljs-keyword">A</span><span class="hljs-number">2016358</span>.h<span class="hljs-number">13v04.006</span>.<span class="hljs-number">2016360104606</span>.hdf.met",
+    "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.<span class="hljs-keyword">A</span><span class="hljs-number">2016358</span>.h<span class="hljs-number">13v04.006</span>.<span class="hljs-number">2016360104606</span>.jpg",
+    "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.<span class="hljs-keyword">A</span><span class="hljs-number">2016358</span>.h<span class="hljs-number">13v04.006</span>.<span class="hljs-number">2016360104606</span>.cmr.xml"
   ]
 </code></pre>
 <p>This list is the list of granules <code>FilesToGranules</code> will act upon to add/merge with the input_granules object.</p>
@@ -481,11 +481,11 @@ cmr:</p>
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-internal"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"</span>,
             <span class="hljs-string">"fileStagingDir"</span>: <span class="hljs-string">"file-staging/jk2/MOD09GQ___006"</span>,
-            <span class="hljs-string">"time"</span>: 1553027415000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027415000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"</span>,
             <span class="hljs-string">"duplicate_found"</span>: <span class="hljs-literal">true</span>,
-            <span class="hljs-string">"size"</span>: 1908635
+            <span class="hljs-string">"size"</span>: <span class="hljs-number">1908635</span>
           },
           {
             <span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"</span>,
@@ -493,11 +493,11 @@ cmr:</p>
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-internal"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"</span>,
             <span class="hljs-string">"fileStagingDir"</span>: <span class="hljs-string">"file-staging/jk2/MOD09GQ___006"</span>,
-            <span class="hljs-string">"time"</span>: 1553027412000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027412000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"</span>,
             <span class="hljs-string">"duplicate_found"</span>: <span class="hljs-literal">true</span>,
-            <span class="hljs-string">"size"</span>: 21708
+            <span class="hljs-string">"size"</span>: <span class="hljs-number">21708</span>
           },
           {
             <span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ.A2016358.h13v04.006.2016360104606.jpg"</span>,
@@ -505,7 +505,7 @@ cmr:</p>
             <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"cumulus-test-sandbox-internal"</span>,
             <span class="hljs-string">"filename"</span>: <span class="hljs-string">"s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg"</span>,
             <span class="hljs-string">"fileStagingDir"</span>: <span class="hljs-string">"file-staging/jk2/MOD09GQ___006"</span>,
-            <span class="hljs-string">"time"</span>: 1553027415000,
+            <span class="hljs-string">"time"</span>: <span class="hljs-number">1553027415000</span>,
             <span class="hljs-string">"path"</span>: <span class="hljs-string">"data"</span>,
             <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"</span>,
             <span class="hljs-string">"duplicate_found"</span>: <span class="hljs-literal">true</span>,

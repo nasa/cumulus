@@ -72,19 +72,19 @@
 <p>Consider this <code>app/config.yml</code> for all following examples:</p>
 <pre><code class="hljs">buckets:
   internal:
-    name: sample-internal-bucket
+    <span class="hljs-keyword">name</span>: sample-internal-bucket
     <span class="hljs-keyword">type</span>: internal
   <span class="hljs-keyword">private</span>:
-    name: sample-<span class="hljs-keyword">private</span>-bucket
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">private</span>-bucket
     <span class="hljs-keyword">type</span>: <span class="hljs-keyword">private</span>
   <span class="hljs-keyword">protected</span>:
-    name: sample-<span class="hljs-keyword">protected</span>-bucket
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">protected</span>-bucket
     <span class="hljs-keyword">type</span>: <span class="hljs-keyword">protected</span>
   <span class="hljs-keyword">public</span>:
-    name: sample-<span class="hljs-keyword">public</span>-bucket
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">public</span>-bucket
     <span class="hljs-keyword">type</span>: <span class="hljs-keyword">public</span>
-  <span class="hljs-keyword">protected</span><span class="hljs-number">-2</span>:
-    name: sample-<span class="hljs-keyword">protected</span>-bucket<span class="hljs-number">-2</span>
+  <span class="hljs-keyword">protected</span>-<span class="hljs-number">2</span>:
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">protected</span>-bucket-<span class="hljs-number">2</span>
     <span class="hljs-keyword">type</span>: <span class="hljs-keyword">protected</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="point-to-buckets-in-the-workflow-configuration"></a><a href="#point-to-buckets-in-the-workflow-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Point to buckets in the workflow configuration</h3>
@@ -181,14 +181,14 @@ To take a subset of any given metadata, use the option <code>substring</code>.</
 <p>Note: the move-granules step needs to be in the workflow for this template to be populated and the file moved. This <code>cmrMetadata</code> or CMR granule XML needs to have been generated and stored on S3. From there any field could be retrieved and used for a url_path.</p>
 <h3><a class="anchor" aria-hidden="true" id="adding-metadata-dates-and-times-to-the-url-path"></a><a href="#adding-metadata-dates-and-times-to-the-url-path" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Adding Metadata dates and times to the URL Path</h3>
 <p>There are a number of options to pull dates from the CMR file metadata. With this metadata:</p>
-<pre><code class="hljs"><span class="hljs-tag">&lt;<span class="hljs-name">Granule</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Temporal</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">RangeDateTime</span>&gt;</span>
-            <span class="hljs-tag">&lt;<span class="hljs-name">BeginningDateTime</span>&gt;</span>2003-02-19T00:00:00Z<span class="hljs-tag">&lt;/<span class="hljs-name">BeginningDateTime</span>&gt;</span>
-            <span class="hljs-tag">&lt;<span class="hljs-name">EndingDateTime</span>&gt;</span>2003-02-19T23:59:59Z<span class="hljs-tag">&lt;/<span class="hljs-name">EndingDateTime</span>&gt;</span>
-        <span class="hljs-tag">&lt;/<span class="hljs-name">RangeDateTime</span>&gt;</span>
-    <span class="hljs-tag">&lt;/<span class="hljs-name">Temporal</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">Granule</span>&gt;</span>
+<pre><code class="hljs">&lt;Granule&gt;
+    &lt;Temporal&gt;
+        &lt;RangeDateTime&gt;
+            &lt;BeginningDateTime&gt;<span class="hljs-number">2003</span><span class="hljs-number">-02</span><span class="hljs-number">-19</span>T00:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>Z&lt;/BeginningDateTime&gt;
+            &lt;EndingDateTime&gt;<span class="hljs-number">2003</span><span class="hljs-number">-02</span><span class="hljs-number">-19</span>T23:<span class="hljs-number">59</span>:<span class="hljs-number">59</span>Z&lt;/EndingDateTime&gt;
+        &lt;/RangeDateTime&gt;
+    &lt;/Temporal&gt;
+&lt;/Granule&gt;
 </code></pre>
 <p>The following examples of <code>url_path</code> could be used.</p>
 <p><code>{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}</code> will pull the year from the full date: <code>2003</code>.</p>
