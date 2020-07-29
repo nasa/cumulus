@@ -107,13 +107,14 @@ resource "aws_lambda_function" "manual_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      stackName        = var.prefix
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
-      system_bucket    = var.system_bucket
-      FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
+      CMR_ENVIRONMENT          = var.cmr_environment
+      stackName                = var.prefix
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      RulesTable               = var.dynamo_tables.rules.name
+      system_bucket            = var.system_bucket
+      FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags

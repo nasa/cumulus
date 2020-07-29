@@ -29,12 +29,6 @@ async function startKinesisReplayAsyncOperation(req, res) {
   }
 
   const input = {
-    CollectionsTable: process.env.CollectionsTable,
-    RulesTable: process.env.RulesTable,
-    ProvidersTable: process.env.ProvidersTable,
-    stackName: process.env.stackName,
-    system_bucket: process.env.system_bucket,
-    FallbackTopicArn: process.env.KinesisFallbackTopicArn,
     ...payload
   };
 
@@ -44,7 +38,8 @@ async function startKinesisReplayAsyncOperation(req, res) {
     lambdaName: process.env.ManualConsumerLambda,
     description: 'Kinesis Replay',
     operationType: 'Kinesis Replay',
-    payload: input
+    payload: input,
+    useLambdaEnvironmentVariables: true
   });
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
