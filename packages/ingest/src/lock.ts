@@ -54,9 +54,9 @@ export async function countLock(
 
   if (s3Objects === undefined) return 0;
 
-  const x = <Lock[]>s3Objects.filter(({ Key }) => Key !== undefined);
+  const locks = <Lock[]>s3Objects.filter(({ Key }) => Key !== undefined);
 
-  return checkOldLocks(bucket, x);
+  return checkOldLocks(bucket, locks);
 }
 
 async function addLock(
