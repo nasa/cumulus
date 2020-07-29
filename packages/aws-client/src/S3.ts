@@ -739,7 +739,7 @@ export const calculateS3ObjectChecksum = deprecate(
       algorithm: string,
       bucket: string,
       key: string,
-      options: TransformOptions
+      options?: TransformOptions
     }
   ) => {
     const { algorithm, bucket, key, options } = params;
