@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+#### CODE CHANGES
+
+- The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
+  rather than `null` if the mime type could not be found.
+
 ## [v2.0.1] 2020-07-28
 
-## Added
+### Added
 
 - **CUMULUS-1886**
   - Added `multiple sort keys` support to `@cumulus/api`
