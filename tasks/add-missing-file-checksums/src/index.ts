@@ -1,8 +1,7 @@
-// @ts-expect-error
-import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
+import { types, runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import * as awsClients from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
-import { Granule, GranuleFile, HandlerEvent, HandlerInput } from './types';
+import { Granule, GranuleFile, HandlerInput } from './types';
 
 const parseS3Uri = (uri: string) => {
   const { Bucket, Key } = S3.parseS3Uri(uri);
@@ -96,7 +95,7 @@ const addFileChecksumsToGranule = async (params: {
   };
 };
 
-export const handler = async (event: HandlerEvent) => {
+export const handler = async (event: types.CumulusTaskFunction) => {
   const { config, input } = event;
 
   const granulesWithChecksums = await Promise.all(
