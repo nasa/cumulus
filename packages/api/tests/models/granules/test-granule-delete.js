@@ -152,3 +152,21 @@ test('granule.deletePublishedGranule() deletes published granule', async (t) => 
   t.true(removeGranuleFromCmrStub.called);
   t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
 });
+
+test.serial('granule.deletePublishedGranule() leaves granule.published = true if delete fails', async (t) => {
+  const deleteStub = sinon.stub(models.Granule.prototype, '_deleteRecord').throws();
+  t.teardown(() => deleteStub.restore());
+
+  const granule = fakeGranuleFactoryV2({
+    published: true
+  });
+
+  await granuleModel.create(granule);
+
+  await t.throwsAsync(
+    granuleModel.deletePublishedGranule(granule)
+  );
+  const record = await granuleModel.get({ granuleId: granule.granuleId });
+  t.true(record.published);
+  t.truthy(record.cmrLink);
+});
