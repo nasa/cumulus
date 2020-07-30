@@ -25,6 +25,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - All references to `meta.queues` in workflow configuration must be replaced with references to queue URLs from Terraform resources. See the updated [data cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/about-cookbooks) or example [Discover Granules workflow configuration](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json).
   - The steps for configuring queued execution throttling have changed. See the [updated documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
 
+### Deprecated
+
+- `@cumulus/message/Queue.getQueueNameByUrl()`
+- `@cumulus/message/Queue.getQueueName()`
+
+## [v2.0.1] 2020-07-28
+
 ### Added
 
 - **CUMULUS-1886**
@@ -34,12 +41,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
-
-### Deprecated
-
-- `@cumulus/message/Queue.getQueueNameByUrl()`
-- `@cumulus/message/Queue.getQueueName()`
+- **[PR 1790](https://github.com/nasa/cumulus/pull/1790)**
+  - Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
 
 ## [v2.0.0] 2020-07-23
 
@@ -3233,7 +3236,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.1...HEAD
+[v2.0.1]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.1
 [v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
 [v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
 [v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
