@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The `@cumulus/ingest/granule.generateMoveFileParams` function now returns
   `source = undefined` and `target = undefined` if either could not be
   determined. Previously, `null` had been returned.
+- The `@cumulus/ingest/recursion.recursion` function must now be imported using
+  `const { recursion } = require('@cumulus/ingest/recursion');`
 
 ### Added
 

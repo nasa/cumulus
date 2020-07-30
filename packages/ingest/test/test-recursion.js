@@ -2,7 +2,7 @@
 
 const test = require('ava');
 
-const recursion = require('../recursion');
+const { recursion } = require('../recursion');
 
 test('recursion lists all files in default directory and subdirectories when originalPath is empty',
   async (t) => {

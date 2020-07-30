@@ -1,7 +1,5 @@
-'use strict';
-
-const path = require('path');
-const log = require('@cumulus/common/log');
+import path from 'path';
+import * as log from '@cumulus/common/log';
 
 /**
  * Recur on directory, list all files, and recur into any further directories,
@@ -13,13 +11,18 @@ const log = require('@cumulus/common/log');
  * @param {number} position - current position in the segment list
  * @returns {Array<Object>} - filtered contents of directory
  */
-async function recurOnDirectory(fn, currentPath, segments, position) {
+async function recurOnDirectory(
+  fn: (x: string) => { name: string, type: string }[],
+  currentPath: string,
+  segments: string[],
+  position: number
+): Promise<{ name: string, type: string }[]> {
   // interpret the next path segment as a regex for filtering, and
   // recursively list everything when we've run out of segments
   const filterExpr = segments[position + 1] || '.*';
   const filterRegex = new RegExp(filterExpr);
   const contents = await fn(currentPath);
-  let files = [];
+  let files: { name: string, type: string }[] = [];
 
   for (let ctr = 0; ctr < contents.length; ctr += 1) {
     const item = contents[ctr];
@@ -60,7 +63,10 @@ async function recurOnDirectory(fn, currentPath, segments, position) {
  * @returns {Promise} the promise of an object that has the path is the key and
  *   list of files as values
  */
-async function recursion(fn, configuredPath) {
+export async function recursion(
+  fn: (x: string) => { name: string, type: string }[],
+  configuredPath: string
+): Promise<{ name: string, type: string }[]> {
   const normalizedPath = path.normalize(configuredPath);
   const isAbsolutePath = path.isAbsolute(normalizedPath);
   try {
@@ -75,5 +81,3 @@ async function recursion(fn, configuredPath) {
     return recurOnDirectory(fn, normalizedPath, [], 0);
   }
 }
-
-module.exports = recursion;
