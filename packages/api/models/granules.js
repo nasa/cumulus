@@ -118,7 +118,15 @@ class Granule extends Manager {
     return scanResponse;
   }
 
-  async removeGranuleFromCmrByGranule(granule) {
+  /**
+   * Remove granule record from CMR
+   *
+   * @param {Object} granule - A granule record
+   * @throws {CumulusModelError|Error}
+   * @returns {Promise}
+   * @private
+   */
+  async _removeGranuleFromCmr(granule) {
     log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
 
     if (!granule.published || !granule.cmrLink) {
@@ -131,6 +139,10 @@ class Granule extends Manager {
 
     // Use granule UR to delete from CMR
     await cmr.deleteGranule(metadata.title, granule.collectionId);
+  }
+
+  async removeGranuleFromCmrByGranule(granule) {
+    await this._removeGranuleFromCmr(granule);
     return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
   }
 
@@ -425,16 +437,13 @@ class Granule extends Manager {
   }
 
   /**
-   * Delete a granule
+   * Delete a granule record and remove its files from S3.
    *
-   * @param {Object} granule record
+   * @param {Object} granule - A granule record
    * @returns {Promise}
+   * @private
    */
-  async delete(granule) {
-    if (granule.published) {
-      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-    }
-
+  async _deleteRecord(granule) {
     // Delete granule files
     await pMap(
       get(granule, 'files', []),
@@ -446,6 +455,31 @@ class Granule extends Manager {
     );
 
     return super.delete({ granuleId: granule.granuleId });
+  }
+
+  /**
+   * Delete a published granule.
+   *
+   * @param {Object} granule
+   * @returns {Promise}
+   */
+  async deletePublishedGranule(granule) {
+    await this._removeGranuleFromCmr(granule);
+    return this._deleteRecord(granule);
+  }
+
+  /**
+   * Delete a granule
+   *
+   * @param {Object} granule record
+   * @returns {Promise}
+   */
+  async delete(granule) {
+    if (granule.published) {
+      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+    }
+
+    return this._deleteRecord(granule);
   }
 
   /**

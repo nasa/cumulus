@@ -178,9 +178,16 @@ async function indexRecord(esClient, record) {
   const id = getRecordId(indexType, keys);
 
   if (record.eventName === 'REMOVE') {
+    if (indexType === 'granule') {
+      console.log('deleting granule', oldData);
+    }
     const parentId = getParentId(indexType, oldData);
     const deletedObject = await performDelete(esClient, indexType, id, parentId);
     return deletedObject;
+  }
+
+  if (indexType === 'granule') {
+    console.log('indexing granule', data);
   }
 
   const response = await performIndex(indexFnName, esClient, data);
@@ -195,6 +202,8 @@ async function indexRecord(esClient, record) {
  */
 async function indexRecords(records) {
   const esClient = await Search.es();
+
+  console.log('records', records);
 
   return pMap(
     records,

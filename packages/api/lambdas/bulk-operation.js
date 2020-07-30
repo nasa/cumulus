@@ -119,6 +119,7 @@ async function bulkGranuleDelete(payload) {
       if (granule.published && forceRemoveFromCmr) {
         granule = await granuleModel.removeGranuleFromCmrByGranule(granule);
       }
+      console.log('deleting granule', granule);
       await granuleModel.delete(granule);
       return granuleId;
     },

@@ -336,6 +336,11 @@ async function deleteRecord({
   const getResponse = await actualEsClient.get(params, options);
   const deleteResponse = await actualEsClient.delete(params, options);
 
+  if (type === 'granule') {
+    console.log(getResponse);
+    console.log(deleteResponse);
+  }
+
   if (type === 'granule' && getResponse.body.found) {
     const doc = getResponse.body._source;
     doc.timestamp = Date.now();
@@ -351,6 +356,7 @@ async function deleteRecord({
       'deletedgranule',
       parent
     );
+    console.log('added deletedgranule', doc.granuleId);
   }
   return deleteResponse.body;
 }
