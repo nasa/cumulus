@@ -1,6 +1,13 @@
 import path from 'path';
 import * as log from '@cumulus/common/log';
 
+export interface RecursionFile {
+  name: string,
+  type: string
+}
+
+export type RecursionFunction = (x: string) => RecursionFile[];
+
 /**
  * Recur on directory, list all files, and recur into any further directories,
  * as specified regex segments allow.
@@ -12,17 +19,17 @@ import * as log from '@cumulus/common/log';
  * @returns {Array<Object>} - filtered contents of directory
  */
 async function recurOnDirectory(
-  fn: (x: string) => { name: string, type: string }[],
+  fn: RecursionFunction,
   currentPath: string,
   segments: string[],
   position: number
-): Promise<{ name: string, type: string }[]> {
+): Promise<RecursionFile[]> {
   // interpret the next path segment as a regex for filtering, and
   // recursively list everything when we've run out of segments
   const filterExpr = segments[position + 1] || '.*';
   const filterRegex = new RegExp(filterExpr);
   const contents = await fn(currentPath);
-  let files: { name: string, type: string }[] = [];
+  let files: RecursionFile[] = [];
 
   for (let ctr = 0; ctr < contents.length; ctr += 1) {
     const item = contents[ctr];
@@ -32,8 +39,10 @@ async function recurOnDirectory(
         files.push(item);
       } else if (['d', 1].includes(item.type)) {
         const nextDir = path.normalize(`${currentPath}/${item.name}`);
-        // eslint-disable-next-line no-await-in-loop
-        files = files.concat(await recurOnDirectory(fn, nextDir, segments, position + 1));
+        files = files.concat(
+          // eslint-disable-next-line no-await-in-loop
+          await recurOnDirectory(fn, nextDir, segments, position + 1)
+        );
       }
     }
   }
@@ -64,9 +73,9 @@ async function recurOnDirectory(
  *   list of files as values
  */
 export async function recursion(
-  fn: (x: string) => { name: string, type: string }[],
+  fn: RecursionFunction,
   configuredPath: string
-): Promise<{ name: string, type: string }[]> {
+): Promise<RecursionFile[]> {
   const normalizedPath = path.normalize(configuredPath);
   const isAbsolutePath = path.isAbsolute(normalizedPath);
   try {
