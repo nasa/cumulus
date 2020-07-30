@@ -8,11 +8,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1684**
+  - Keypair-encrypted provider credentials are no longer supported. Release
+    `v1.19.0` provided migration instructions for moving to KMS-encrypted
+    credentials, and releases since then have supported both KMS and
+    keypair-encrypted credentials. This release removes support for
+    keypair-based encryption. If the migration utility has _not_ yet been run,
+    deploying this release will fail with a message that you will need to run
+    the "providerSecretsMigration Lambda function".
+  - The `ProviderSecretsMigration"` lambda function has been removed.
+
 #### CODE CHANGES
 
 - The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
   rather than `null` if the mime type could not be found.
 - The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
+- The `@cumulus/common/execution-history` module has been removed
+- The `@cumulus/common/key-pair-provider` module has been removed
+- `@cumulus/common/keyPairProvider` has been removed
+- The `@cumulus/common/kms` module has been removed
+- The `@cumulus/ingest/util.decrypt` function now only supports KMS
 
 ### Added
 
@@ -22,7 +37,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
-
 
 ## [v2.0.0] 2020-07-23
 

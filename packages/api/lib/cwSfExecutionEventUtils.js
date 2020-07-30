@@ -4,10 +4,6 @@ const get = require('lodash/get');
 const set = require('lodash/set');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
-const {
-  getStepExitedEvent,
-  getTaskExitedEventOutput
-} = require('@cumulus/common/execution-history');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
@@ -22,6 +18,15 @@ const executionStatusToWorkflowStatus = (executionStatus) => {
 
   return statusMap[executionStatus];
 };
+
+const getTaskExitedEventOutput = (event) =>
+  get(event, 'stateExitedEventDetails.output');
+
+const getStepExitedEvent = (events, lastStepEvent) =>
+  events.find(
+    ({ type, previousEventId }) =>
+      type === 'TaskStateExited' && previousEventId === lastStepEvent.id
+  );
 
 /**
  * Get message to use for publishing failed execution notifications.

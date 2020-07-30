@@ -10,3 +10,9 @@ locals {
     var.elasticsearch_security_group_id
   ])
 }
+
+data "aws_lambda_invocation" "verify_provider_secrets_migration" {
+  function_name = aws_lambda_function.verify_provider_secrets_migration.function_name
+
+  input = "{}"
+}

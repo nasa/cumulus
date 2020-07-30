@@ -43,7 +43,6 @@
     "@cumulus/errors": "2.0.0",
     "@cumulus/logger": "2.0.0",
     "ajv": "^5.2.2",
-    "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
