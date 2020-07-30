@@ -465,6 +465,9 @@ class Granule extends Manager {
    */
   async deletePublishedGranule(granule) {
     await this._removeGranuleFromCmr(granule);
+    // Intentionally do not update the record to set `published: false`.
+    // So if _deleteRecord fails, the record is still in a state where this
+    // operation can be retried.
     return this._deleteRecord(granule);
   }
 
