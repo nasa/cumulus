@@ -59,6 +59,7 @@
   "devDependencies": {
     "@cumulus/checksum": "2.0.1",
     "@cumulus/cmrjs": "2.0.1",
-    "@cumulus/test-data": "2.0.1"
+    "@cumulus/test-data": "2.0.1",
+    "@cumulus/types": "2.0.1"
   }
 }

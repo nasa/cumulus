@@ -7,7 +7,7 @@ const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const isNil = require('lodash/isNil');
-const recursion = require('./recursion');
+const { recursion } = require('./recursion');
 const { lookupMimeType, decrypt } = require('./util');
 const {
   emptyProviderConnectEndMixin
