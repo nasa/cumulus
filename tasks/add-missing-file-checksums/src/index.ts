@@ -1,7 +1,9 @@
-import { types, runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
+import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import * as awsClients from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
-import { Granule, GranuleFile, HandlerInput } from './types';
+import { Context } from 'aws-lambda';
+import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
+import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
 
 const parseS3Uri = (uri: string) => {
   const { Bucket, Key } = S3.parseS3Uri(uri);
@@ -95,9 +97,8 @@ const addFileChecksumsToGranule = async (params: {
   };
 };
 
-export const handler = async (event: types.CumulusTaskFunction) => {
+export const handler = async (event: HandlerEvent) => {
   const { config, input } = event;
-
   const granulesWithChecksums = await Promise.all(
     input.granules.map(
       (granule) => addFileChecksumsToGranule({
@@ -114,5 +115,5 @@ export const handler = async (event: types.CumulusTaskFunction) => {
   };
 };
 
-export const cmaHandler = (event: unknown, context: unknown) =>
+export const cmaHandler = (event: CumulusMessage | CumulusRemoteMessage, context: Context) =>
   runCumulusTask(handler, event, context);
