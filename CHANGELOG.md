@@ -10,8 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2099**
   - `meta.queues` has been removed from Cumulus core workflow messages.
-  - `@cumulus/message/Build.buildQueueMessageFromTemplate` no longer takes `params.queueName` as a parameter. It has been replaced by `params.queueUrl`, which should be an SQS queue URL.
-  - `@cumulus/message/Queue.getMaximumExecutions` no longer takes `queueName` as a parameter. It has been replaced by `queueUrl`, which should be an SQS queue URL.
+  - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
 
 #### CODE CHANGES
 
@@ -25,6 +24,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `const { recursion } = require('@cumulus/ingest/recursion');`
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
+- **CUMULUS-2099**
+  - `meta.queues` has been removed from Cumulus core workflow messages.
 
 ### Removed
 
