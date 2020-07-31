@@ -4,7 +4,7 @@ const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
-  entry: './index.js',
+  entry: './src/index.js',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
