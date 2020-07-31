@@ -20,9 +20,7 @@ resource "aws_lambda_function" "sqs_message_remover" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
+      security_group_ids = var.security_group_ids
     }
   }
 }
