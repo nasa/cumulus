@@ -23,7 +23,7 @@
     "dist/src/**/*.d.ts"
   ],
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "git clean -d -x -e node_modules",
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs dist/src/*.js > README.md",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",

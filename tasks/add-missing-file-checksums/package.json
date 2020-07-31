@@ -19,7 +19,7 @@
     "test": "tests"
   },
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "git clean -d -x -e node_modules",
     "package": "./bin/package.sh",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",

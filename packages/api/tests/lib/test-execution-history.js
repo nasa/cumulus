@@ -5,7 +5,7 @@ const test = require('ava');
 const {
   getStepExitedEvent,
   getTaskExitedEventOutput
-} = require('../execution-history');
+} = require('../../lib/cwSfExecutionEventUtils');
 
 test('getStepExitedEvent returns undefined if task exited event cannot be found', (t) => {
   const events = [

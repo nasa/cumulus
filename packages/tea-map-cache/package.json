@@ -7,7 +7,7 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "clean": "rm -f ./dist/*.js ./dist/*.d.ts ./dist/lambda.zip",
+    "clean": "git clean -d -x -e node_modules",
     "package": "npm run clean || true && npm run prepare && cd dist && zip -r -q ./lambda.zip * && cd .. && zip -r -q ./dist/lambda.zip node_modules",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",

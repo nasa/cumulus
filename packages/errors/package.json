@@ -25,6 +25,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
+    "clean": "git clean -d -x -e node_modules",
     "test:coverage": "../../node_modules/.bin/nyc true",
     "tsc": "../../node_modules/.bin/tsc",
     "prepare": "npm run tsc"

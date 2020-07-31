@@ -19,9 +19,11 @@ const executionStatusToWorkflowStatus = (executionStatus) => {
   return statusMap[executionStatus];
 };
 
+/* @private */
 const getTaskExitedEventOutput = (event) =>
   get(event, 'stateExitedEventDetails.output');
 
+/* @private */
 const getStepExitedEvent = (events, lastStepEvent) =>
   events.find(
     ({ type, previousEventId }) =>
@@ -105,6 +107,8 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
 };
 
 module.exports = {
+  getCumulusMessageFromExecutionEvent,
   getFailedExecutionMessage,
-  getCumulusMessageFromExecutionEvent
+  getStepExitedEvent,
+  getTaskExitedEventOutput
 };

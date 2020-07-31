@@ -8,6 +8,7 @@
     "node": ">=12.18.0"
   },
   "scripts": {
+    "clean": "git clean -d -x -e node_modules",
     "package": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js",
     "python-lint": "true"
   },

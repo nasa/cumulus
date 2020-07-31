@@ -12,6 +12,7 @@
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
     "build": "../../node_modules/.bin/webpack",
+    "clean": "git clean -d -x -e node_modules",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run build && npm run link-api-bin && npm run build-lambda-zips",
     "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
