@@ -47,14 +47,10 @@ export async function countLock(
   bucket: string,
   providerName: string
 ): Promise<number> {
-  const s3Objects = await listS3ObjectsV2({
+  const locks = await listS3ObjectsV2({
     Bucket: bucket,
     Prefix: `${lockPrefix}/${providerName}`
   });
-
-  if (s3Objects === undefined) return 0;
-
-  const locks = <Lock[]>s3Objects.filter(({ Key }) => Key !== undefined);
 
   return checkOldLocks(bucket, locks);
 }
