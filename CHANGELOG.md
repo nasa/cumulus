@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   rather than `null` if the mime type could not be found.
 - The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
 - The `@cumulus/ingest/granule.generateMoveFileParams` function now returns
-  `source = undefined` and `target = undefined` if either could not be
+  `source: undefined` and `target :undefined` on the response object if either could not be
   determined. Previously, `null` had been returned.
 - The `@cumulus/ingest/recursion.recursion` function must now be imported using
   `const { recursion } = require('@cumulus/ingest/recursion');`
