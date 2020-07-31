@@ -1,5 +1,5 @@
 module "sqs_message_remover_lambda" {
-  source = "../../lambdas/sqs-message-remover-lambda"
+  source = "../../lambdas/sqs-message-remover"
 
   prefix = var.prefix
 
