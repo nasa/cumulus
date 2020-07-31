@@ -65,12 +65,16 @@ test('buildCumulusMeta returns expected object', (t) => {
 });
 
 test('buildQueueMessageFromTemplate does not overwrite contents from message template', (t) => {
+  const queueUrl = randomId('queue');
   const messageTemplate = {
     foo: 'bar',
     meta: {
       template: 's3://bucket/template.json'
     },
     cumulus_meta: {
+      queueExecutionLimits: {
+        [queueUrl]: 5
+      },
       message_source: 'sfn'
     }
   };
@@ -80,7 +84,6 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
   };
   const provider = randomId('provider');
   const collection = randomId('collection');
-  const queueUrl = randomId('queue');
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
@@ -104,6 +107,9 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
       message_source: 'sfn',
       execution_name: fakeId,
       queueUrl,
+      queueExecutionLimits: {
+        [queueUrl]: 5
+      },
       state_machine: workflow.arn
     },
     payload
