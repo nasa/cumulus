@@ -7,7 +7,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
   generateMoveFileParams,
-  getRenamedS3File,
+  listVersionedObjects,
   moveGranuleFiles,
   renameS3FileWithTimestamp,
   unversionFilename
@@ -313,7 +313,7 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   };
   await S3.s3PutObject(existingRenamedParams);
   await renameS3FileWithTimestamp(bucket, key);
-  const renamedFiles = await getRenamedS3File(bucket, key);
+  const renamedFiles = await listVersionedObjects(bucket, key);
 
   t.is(renamedFiles.length, 2);
   // renamed files have the right prefix

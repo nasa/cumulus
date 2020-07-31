@@ -6,7 +6,7 @@ export interface RecursionFile {
   type: string
 }
 
-export type RecursionFunction = (x: string) => RecursionFile[];
+export type RecursionFunction = (path: string) => RecursionFile[];
 
 /**
  * Recur on directory, list all files, and recur into any further directories,

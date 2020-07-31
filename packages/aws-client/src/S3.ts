@@ -32,6 +32,12 @@ export type GetObjectMethod = (params: { Bucket: string, Key: string }) => {
   createReadStream: () => Readable
 };
 
+export type Object = Required<AWS.S3.Object>;
+
+export interface ListObjectsV2Output extends AWS.S3.ListObjectsV2Output {
+  Contents: Object[]
+}
+
 const log = new Logger({ sender: 'aws-client/s3' });
 
 const buildDeprecationMessage = (
@@ -657,6 +663,8 @@ export const listS3Objects = async (
   return contents;
 };
 
+export type ListS3ObjectsV2Result = Promise<Object[]>;
+
 /**
  * Fetch complete list of S3 objects
  *
@@ -673,22 +681,28 @@ export const listS3Objects = async (
  *
  * @static
  */
-export const listS3ObjectsV2 = async (params: AWS.S3.ListObjectsV2Request) => {
+export const listS3ObjectsV2 = async (
+  params: AWS.S3.ListObjectsV2Request
+): ListS3ObjectsV2Result => {
   // Fetch the first list of objects from S3
-  let listObjectsResponse = await s3().listObjectsV2(params).promise();
+  let listObjectsResponse = <ListObjectsV2Output>(
+    await s3().listObjectsV2(params).promise()
+  );
+
   let discoveredObjects = listObjectsResponse.Contents;
 
   // Keep listing more objects from S3 until we have all of them
   while (listObjectsResponse.IsTruncated) {
-    listObjectsResponse = await s3().listObjectsV2( // eslint-disable-line no-await-in-loop
+    // eslint-disable-next-line no-await-in-loop
+    listObjectsResponse = <ListObjectsV2Output>(await s3().listObjectsV2(
       // Update the params with a Continuation Token
       {
 
         ...params,
         ContinuationToken: listObjectsResponse.NextContinuationToken
       }
-    ).promise();
-    discoveredObjects = (discoveredObjects || []).concat(listObjectsResponse.Contents || []);
+    ).promise());
+    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
   }
 
   return discoveredObjects;

@@ -26,6 +26,12 @@ export interface File {
   filename?: string
 }
 
+export interface MovedGranuleFile {
+  bucket: string,
+  key: string,
+  name?: string
+}
+
 export interface MoveFileParams {
   source?: {
     Bucket: string,
@@ -36,6 +42,12 @@ export interface MoveFileParams {
     Key: string
   },
   file: File
+}
+
+export interface VersionedObject {
+  Bucket: string,
+  Key: string,
+  size: number
 }
 
 /**
@@ -82,28 +94,20 @@ export async function renameS3FileWithTimestamp(
   * @param {string} key - s3 key of the file
   * @returns {Array<Object>} returns renamed files
   */
-export async function getRenamedS3File(
+export async function listVersionedObjects(
   bucket: string,
   key: string
-): Promise<{ Bucket: string, Key: string, size: number }[]> {
+): Promise<VersionedObject[]> {
   const s3list = await S3.listS3ObjectsV2({
     Bucket: bucket,
     Prefix: `${key}.v`
   });
 
-  if (s3list === undefined) {
-    return [];
-  }
-
-  return s3list
-    .filter((o) => o.Key !== undefined && o.Size !== undefined)
-    .map((c) => (
-      <{ Bucket: string, Key: string, size: number }>{
-        Bucket: bucket,
-        Key: c.Key,
-        size: c.Size
-      }
-    ));
+  return s3list.map(({ Key, Size }) => ({
+    Bucket: bucket,
+    Key,
+    size: Size
+  }));
 }
 
 /**
@@ -122,13 +126,15 @@ export async function getRenamedS3File(
 * @param {Object} sourceChecksumObject.checksum - checksum value
 * @param {string} ACL - an S3 [Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
 * @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
+*
+* @private
 **/
-async function moveGranuleFileWithVersioning(
+export async function moveGranuleFileWithVersioning(
   source: { Bucket: string, Key: string },
   target: { Bucket: string, Key: string },
   sourceChecksumObject: { checksumType?: string, checksum?: string } = {},
   ACL?: string
-): Promise<{ Bucket: string, Key: string, size: number }[]> {
+): Promise<VersionedObject[]> {
   const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
   const targetFileSum = await S3.calculateS3ObjectChecksum({
@@ -161,7 +167,7 @@ async function moveGranuleFileWithVersioning(
     });
   }
   // return renamed files
-  return getRenamedS3File(target.Bucket, target.Key);
+  return listVersionedObjects(target.Bucket, target.Key);
 }
 
 /**
@@ -192,7 +198,7 @@ export async function handleDuplicateFile(params: {
   checksumFunction?: (bucket: string, key: string) => Promise<[string, string]>,
   syncFileFunction?: (bucket: string, key: string) => Promise<void>,
   ACL?: string
-}): Promise<{ Bucket: string, Key: string, size: number }[]> {
+}): Promise<VersionedObject[]> {
   const {
     source,
     target,
@@ -320,20 +326,16 @@ export function generateMoveFileParams(
  * @returns {Promise<Array>} returns array of source files updated with new locations.
  */
 export async function moveGranuleFiles(
-  sourceFiles: {
-    name: string,
-    bucket: string,
-    key: string
-  }[],
+  sourceFiles: File[],
   destinations: {
     regex: string,
     bucket: string,
     filepath: string
   }[]
-): Promise<{ bucket: string, key: string, name?: string }[]> {
+): Promise<MovedGranuleFile[]> {
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
-  const processedFiles: { bucket: string, key: string, name?: string }[] = [];
+  const movedGranuleFiles: MovedGranuleFile[] = [];
   const moveFileRequests = moveFileParams.map(
     async (moveFileParam) => {
       const { source, target, file } = moveFileParam;
@@ -349,7 +351,7 @@ export async function moveGranuleFiles(
           copyTags: true
         });
 
-        processedFiles.push({
+        movedGranuleFiles.push({
           bucket: target.Bucket,
           key: target.Key,
           name: getNameOfFile(file)
@@ -368,7 +370,7 @@ export async function moveGranuleFiles(
           throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
         }
 
-        processedFiles.push({
+        movedGranuleFiles.push({
           bucket: fileBucket,
           key: fileKey,
           name: getNameOfFile(file)
@@ -379,7 +381,7 @@ export async function moveGranuleFiles(
 
   await Promise.all(moveFileRequests);
 
-  return processedFiles;
+  return movedGranuleFiles;
 }
 
 /**
@@ -414,7 +416,9 @@ export function unversionFilename(filename: string): string {
 
  * @returns {string} - duplicate handling directive.
  */
-export function duplicateHandlingType(event: EventWithDuplicateHandling) {
+export function duplicateHandlingType(
+  event: EventWithDuplicateHandling
+): DuplicateHandling {
   if (event?.cumulus_config?.cumulus_context?.forceDuplicateOverwrite) {
     return 'replace';
   }
