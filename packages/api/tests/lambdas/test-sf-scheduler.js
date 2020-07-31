@@ -140,7 +140,6 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
   t.is(targetQueueUrl, defaultQueueUrl);
   t.is(targetMessage.cumulus_meta.queueUrl, defaultQueueUrl);
-  t.is(targetMessage.cumulus_meta.queueExecutionLimits[customQueueUrl], 5);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });
