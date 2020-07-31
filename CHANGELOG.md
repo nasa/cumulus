@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   determined. Previously, `null` had been returned.
 - The `@cumulus/ingest/recursion.recursion` function must now be imported using
   `const { recursion } = require('@cumulus/ingest/recursion');`
+- The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
+  `listVersionedObjects`
 
 ### Removed
 
@@ -32,7 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **[PR 1790](https://github.com/nasa/cumulus/pull/1790)**
-- Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
+  - Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
 
 ## [v2.0.0] 2020-07-23
 
