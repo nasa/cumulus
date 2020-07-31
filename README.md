@@ -119,6 +119,10 @@ Run the test commands next
 
 For more information please [read this](docs/development/integration-tests.md).
 
+### Running tests via VScode debugger
+
+Copy `launch.json.example` to `.vscode/launch.json`. Refer to the [VScode documentation on how to use the debugger](https://code.visualstudio.com/docs/editor/debugging).
+
 ## 🔦 Code Coverage and Quality
 
 For more information please [read this](docs/development/quality-and-coverage.md).
