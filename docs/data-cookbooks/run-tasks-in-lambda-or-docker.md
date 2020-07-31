@@ -37,50 +37,52 @@ The `cumulus-ecs-task` container takes an AWS Lambda Amazon Resource Name (ARN) 
 
 This example will use an already-defined workflow from the `cumulus` module that includes the [`QueueGranules` task](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/queue-granules-task.tf) in its configuration.
 
-The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) containing the step definition for the `Queue Granules` step:
+The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json) containing the step definition for the `QueueGranules` step:
+
+> Note: `${ingest_granule_workflow_name}` and `${queue_granules_task_arn}` are interpolated values that refer to Terraform resources. See the example deployment code for the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
 
 ```json
   "QueueGranules": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "provider": "{$.meta.provider}",
-            "internalBucket": "{$.meta.buckets.internal.name}",
-            "stackName": "{$.meta.stack}",
-            "granuleIngestWorkflow": "${module.ingest_granule_workflow.name}",
-            "queueUrl": "{$.meta.queues.startSF}"
-          }
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "ReplaceConfig": {
+          "FullMessage": true
+        },
+        "task_config": {
+          "provider": "{$.meta.provider}",
+          "internalBucket": "{$.meta.buckets.internal.name}",
+          "stackName": "{$.meta.stack}",
+          "granuleIngestWorkflow": "${ingest_granule_workflow_name}",
+          "queueUrl": "{$.meta.queues.startSF}"
         }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.queue_granules_task.task_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "Next": "CheckStatus"
+      }
     },
+    "Type": "Task",
+    "Resource": "${queue_granules_task_arn}",
+    "Retry": [
+      {
+        "ErrorEquals": [
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 6,
+        "BackoffRate": 2
+      }
+    ],
+    "Catch": [
+      {
+        "ErrorEquals": [
+          "States.ALL"
+        ],
+        "ResultPath": "$.exception",
+        "Next": "WorkflowFailed"
+      }
+    ],
+    "Next": "CheckStatus"
+  },
 ```
 
 Given it has been discovered this task can no longer run in AWS Lambda, you can instead run it on the Cumulus ECS cluster by adding the following resources to your terraform deployment (by either adding a new `.tf` file or updating an existing one):
@@ -135,116 +137,9 @@ module "queue_granules_service" {
 
 > **Please note:** If you have updated the code for the Lambda specified by `--lambdaArn`, you will have to manually restart the tasks in your ECS service before invocation of the Step Function activity will use the updated Lambda code.
 
-- An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) to utilize the new resource (the resource key in the `QueueGranules` step has been updated to:
+- An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json)) to utilize the new resource (the `Resource` key in the `QueueGranules` step has been updated to:
 
 `"Resource": "${aws_sfn_activity.queue_granules.id}"`)`
-
-```hcl
-module "cookbook_discover_granules_workflow" {
-  source = "https://github.com/jkovarik/cumulus/releases/download/v1.27.0/terraform-aws-cumulus-workflow.zip"
-
-  prefix                                = var.prefix
-  name                                  = "CookbookDiscoverGranules"
-  workflow_config                       = module.cumulus.workflow_config
-  system_bucket                         = var.system_bucket
-
-  state_machine_definition = <<JSON
-{
-  "Comment": "Discovers new Granules from a given provider",
-  "StartAt": "DiscoverGranules",
-  "TimeoutSeconds": 18000,
-  "States": {
-    "DiscoverGranules": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "provider": "{$.meta.provider}",
-            "provider_path": "{$.meta.provider_path}",
-            "collection": "{$.meta.collection}",
-            "buckets": "{$.meta.buckets}",
-            "stack": "{$.meta.stack}"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${module.cumulus.discover_granules_task.task_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "Next": "QueueGranules"
-    },
-    "QueueGranules": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "queueUrl": "{$.meta.queues.startSF}",
-            "provider": "{$.meta.provider}",
-            "internalBucket": "{$.meta.buckets.internal.name}",
-            "stackName": "{$.meta.stack}",
-            "granuleIngestWorkflow": "${var.prefix}-IngestGranule"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${aws_sfn_activity.queue_granules.id}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "End": true
-    },
-    "WorkflowFailed": {
-      "Type": "Fail",
-      "Cause": "Workflow failed"
-    }
-  }
-}
-JSON
-}
-```
 
 If you then run this workflow in place of the `DiscoverGranules` workflow, the `QueueGranules` step would run as an ECS task instead of a lambda.
 

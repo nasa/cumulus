@@ -1,18 +1,30 @@
 'use strict';
 
-const rewire = require('rewire');
+const proxyquire = require('proxyquire');
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
-
-const lock = rewire('../lock');
-const { checkOldLocks, countLock, proceed } = lock;
 
 // 5 * 60 seconds * 1000 milliseconds
 const fiveMinutes = 5 * 60 * 1000;
 
-test.before(() => {
-  lock.__set__('deleteS3Object', () => Promise.resolve());
-});
+const { checkOldLocks, countLock, proceed } = proxyquire(
+  '../lock',
+  {
+    '@cumulus/aws-client/S3': {
+      deleteS3Object: () => Promise.resolve(),
+      listS3ObjectsV2: (_, providerName) => Promise.resolve([
+        {
+          Key: `lock/${providerName}/test`,
+          LastModified: new Date()
+        },
+        {
+          Key: `lock/${providerName}/test2`,
+          LastModified: new Date(Date.now() - (fiveMinutes + 1))
+        }
+      ])
+    }
+  }
+);
 
 test.beforeEach(async (t) => {
   t.context.bucket = randomString();
@@ -28,15 +40,15 @@ test('checkOldLocks() returns correct number of locks', async (t) => {
   count = await checkOldLocks(bucket, [
     {
       Key: `lock/${providerName}/test`,
-      LastModified: Date.now()
+      LastModified: new Date()
     },
     {
       Key: `lock/${providerName}/test2`,
-      LastModified: Date.now() - (fiveMinutes + 1)
+      LastModified: new Date(Date.now() - (fiveMinutes + 1))
     },
     {
       Key: `lock/${providerName}/test3`,
-      LastModified: Date.now() - (fiveMinutes + 1)
+      LastModified: new Date(Date.now() - (fiveMinutes + 1))
     }
   ]);
   t.is(count, 1);
@@ -45,16 +57,8 @@ test('checkOldLocks() returns correct number of locks', async (t) => {
 test('countLock() returns the correct number of locks', async (t) => {
   const { bucket, providerName } = t.context;
 
-  const count = await lock.__with__('listS3ObjectsV2', () => Promise.resolve([
-    {
-      Key: `lock/${providerName}/test`,
-      LastModified: Date.now()
-    },
-    {
-      Key: `lock/${providerName}/test2`,
-      LastModified: Date.now() - (fiveMinutes + 1)
-    }
-  ]))(() => countLock(bucket, providerName));
+  const count = await countLock(bucket, providerName);
+
   t.is(count, 1);
 });
 

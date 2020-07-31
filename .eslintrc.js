@@ -46,6 +46,7 @@ module.exports = {
     'plugin:eslint-comments/recommended',
     'plugin:import/errors',
     'plugin:import/warnings',
+    'plugin:import/typescript',
     'plugin:lodash/recommended',
     'plugin:node/recommended',
     'plugin:promise/recommended',

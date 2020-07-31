@@ -1,13 +1,17 @@
-'use strict';
-
-const delay = require('delay');
-const {
+import delay from 'delay';
+import {
   s3PutObject,
   deleteS3Object,
   listS3ObjectsV2
-} = require('@cumulus/aws-client/S3');
-const log = require('@cumulus/common/log');
+} from '@cumulus/aws-client/S3';
+import * as log from '@cumulus/common/log';
+
 const lockPrefix = 'lock';
+
+export interface Lock {
+  Key: string,
+  LastModified: Date
+}
 
 /**
 * Checks all locks and removes those older than five minutes. Returns a count
@@ -17,10 +21,18 @@ const lockPrefix = 'lock';
 * @param {Array} locks - The list of locks in the bucket
 * @returns {integer} - Number of locks remaining in bucket
 **/
-async function checkOldLocks(bucket, locks = []) {
+export async function checkOldLocks(
+  bucket: string,
+  locks: Lock[] = []
+): Promise<number> {
   const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-  const expiredLocks = locks.filter((lock) => lock.LastModified < fiveMinutesAgo);
-  await Promise.all(expiredLocks.map((lock) => deleteS3Object(bucket, lock.Key)));
+
+  const expiredLocks = locks.filter(
+    (lock) => lock.LastModified.getTime() < fiveMinutesAgo
+  );
+
+  await Promise.all(expiredLocks.map(({ Key }) => deleteS3Object(bucket, Key)));
+
   return locks.length - expiredLocks.length;
 }
 
@@ -31,30 +43,54 @@ async function checkOldLocks(bucket, locks = []) {
 * @param {string} providerName - The provider name
 * @returns {integer} - Number of current locks in the bucket
 **/
-async function countLock(bucket, providerName) {
+export async function countLock(
+  bucket: string,
+  providerName: string
+): Promise<number> {
   const s3Objects = await listS3ObjectsV2({
     Bucket: bucket,
     Prefix: `${lockPrefix}/${providerName}`
   });
-  return checkOldLocks(bucket, s3Objects);
+
+  if (s3Objects === undefined) return 0;
+
+  const locks = <Lock[]>s3Objects.filter(({ Key }) => Key !== undefined);
+
+  return checkOldLocks(bucket, locks);
 }
 
-function addLock(bucket, providerName, filename) {
-  return s3PutObject({
+async function addLock(
+  bucket: string,
+  providerName: string,
+  filename: string
+): Promise<void> {
+  await s3PutObject({
     Bucket: bucket,
     Key: `${lockPrefix}/${providerName}/${filename}`,
     Body: ''
   });
 }
 
-function removeLock(bucket, providerName, filename) {
-  return deleteS3Object(
+export async function removeLock(
+  bucket: string,
+  providerName: string,
+  filename: string
+): Promise<void> {
+  await deleteS3Object(
     bucket,
     `${lockPrefix}/${providerName}/${filename}`
   );
 }
 
-async function proceed(bucket, provider, filename, counter = 0) {
+export async function proceed(
+  bucket: string,
+  provider: {
+    id: string,
+    globalConnectionLimit?: number
+  },
+  filename: string,
+  counter = 0
+): Promise<boolean> {
   if (provider.globalConnectionLimit === undefined) {
     return true;
   }
@@ -79,10 +115,3 @@ async function proceed(bucket, provider, filename, counter = 0) {
   await addLock(bucket, provider.id, filename);
   return true;
 }
-
-module.exports = {
-  checkOldLocks,
-  countLock,
-  proceed,
-  removeLock
-};
