@@ -95,5 +95,6 @@ function handler(event) {
 }
 
 module.exports = {
+  updateSqsQueue,
   handler
 };

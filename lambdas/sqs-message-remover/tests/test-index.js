@@ -1,7 +1,6 @@
 'use strict';
 
 const delay = require('delay');
-const rewire = require('rewire');
 const test = require('ava');
 const get = require('lodash/get');
 
@@ -9,8 +8,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const sqsMessageRemover = rewire('..');
-const updateSqsQueue = sqsMessageRemover.__get__('updateSqsQueue');
+const { updateSqsQueue } = require('..');
 
 // TODO: Copied from @cumulus/api/lib/testUtils to avoid the dependency, but
 // these helpers should probably have a better home?
