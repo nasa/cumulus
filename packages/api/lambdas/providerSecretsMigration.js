@@ -15,15 +15,20 @@ const getDecryptedField = async (provider, field) => {
 };
 
 const migrateProvider = async (provider) => {
-  const username = await getDecryptedField(provider, 'username');
-  const password = await getDecryptedField(provider, 'password');
+  try {
+    const username = await getDecryptedField(provider, 'username');
+    const password = await getDecryptedField(provider, 'password');
 
-  const updates = {};
-  if (username) updates.username = username;
-  if (password) updates.password = password;
+    const updates = {};
+    if (username) updates.username = username;
+    if (password) updates.password = password;
 
-  const providerModel = new Provider();
-  return providerModel.update({ id: provider.id }, updates);
+    const providerModel = new Provider();
+    return providerModel.update({ id: provider.id }, updates);
+  } catch (error) {
+    error.provider = provider;
+    throw error;
+  }
 };
 
 const handler = async () => {
@@ -31,7 +36,22 @@ const handler = async () => {
     TableName: process.env.ProvidersTable
   }).promise();
 
-  await Promise.all(scanResponse.Items.map(migrateProvider));
+  try {
+    await Promise.all(scanResponse.Items.map(migrateProvider));
+    return { status: 'success' };
+  } catch (error) {
+    const failingProvider = error.provider;
+    delete error.provider;
+    return {
+      status: 'failure',
+      failingProvider,
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack.split('\n')
+      }
+    };
+  }
 };
 
 module.exports = { handler };
