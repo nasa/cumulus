@@ -7,9 +7,8 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
   generateMoveFileParams,
-  getRenamedS3File,
+  listVersionedObjects,
   moveGranuleFiles,
-  moveGranuleFile,
   renameS3FileWithTimestamp,
   unversionFilename
 } = require('../granule');
@@ -29,58 +28,6 @@ test.afterEach(async (t) => {
     S3.recursivelyDeleteS3Bucket(t.context.internalBucket),
     S3.recursivelyDeleteS3Bucket(t.context.destBucket)
   ]);
-});
-
-test('moveGranuleFile moves a single file between s3 locations', async (t) => {
-  const Bucket = t.context.internalBucket;
-
-  const name = 'test.txt';
-  const Key = `origin/${name}`;
-  const params = { Bucket, Key, Body: 'test' };
-  await S3.s3PutObject(params);
-
-  const source = { Bucket, Key };
-  const target = { Bucket, Key: `moved/${name}` };
-
-  await moveGranuleFile(source, target);
-
-  const listObjectsResponse = await s3().listObjects({ Bucket }).promise();
-
-  t.is(listObjectsResponse.Contents.length, 1);
-  t.is(listObjectsResponse.Contents[0].Key, `moved/${name}`);
-});
-
-test('moveGranuleFile overwrites existing file by default', async (t) => {
-  const sourceBucket = t.context.internalBucket;
-  const destBucket = t.context.destBucket;
-
-  const name = 'test.txt';
-  const Key = `origin/${name}`;
-
-  // Pre-stage destination file
-  await S3.s3PutObject({ Bucket: destBucket, Key, Body: 'initialBody' });
-
-  // Stage source file
-  const updatedBody = randomId('updatedBody');
-  const params = { Bucket: sourceBucket, Key, Body: updatedBody };
-  await S3.s3PutObject(params);
-
-  const source = { Bucket: sourceBucket, Key };
-  const target = { Bucket: destBucket, Key };
-
-  try {
-    await moveGranuleFile(source, target);
-  } catch (error) {
-    t.fail();
-  } finally {
-    const objects = await s3().listObjects({ Bucket: destBucket }).promise();
-    t.is(objects.Contents.length, 1);
-
-    const item = objects.Contents[0];
-    t.is(item.Key, Key);
-
-    t.is(item.Size, updatedBody.length);
-  }
 });
 
 test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
@@ -320,7 +267,7 @@ test('generateMoveFileParams generates correct parameters', (t) => {
   }));
 });
 
-test('generateMoveFileParams generates null source and target for no destination', (t) => {
+test('generateMoveFileParams generates undefined source and target for no destination', (t) => {
   const filenames = [
     'included-in-move.txt',
     'exclude'
@@ -350,11 +297,7 @@ test('generateMoveFileParams generates null source and target for no destination
 
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
-  t.deepEqual(moveFileParams[1], {
-    file: sourceFiles[1],
-    source: null,
-    target: null
-  });
+  t.deepEqual(moveFileParams[1], { file: sourceFiles[1] });
 });
 
 test('renameS3FileWithTimestamp renames file', async (t) => {
@@ -370,7 +313,7 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   };
   await S3.s3PutObject(existingRenamedParams);
   await renameS3FileWithTimestamp(bucket, key);
-  const renamedFiles = await getRenamedS3File(bucket, key);
+  const renamedFiles = await listVersionedObjects(bucket, key);
 
   t.is(renamedFiles.length, 2);
   // renamed files have the right prefix

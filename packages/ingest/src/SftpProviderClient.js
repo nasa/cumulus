@@ -7,7 +7,7 @@ const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const { SftpClient } = require('@cumulus/sftp-client');
 const isNil = require('lodash/isNil');
-const recursion = require('./recursion');
+const { recursion } = require('./recursion');
 const { decrypt } = require('./util');
 
 class SftpProviderClient {

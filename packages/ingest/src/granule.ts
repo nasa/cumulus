@@ -1,71 +1,113 @@
-'use strict';
+import * as errors from '@cumulus/errors';
+import moment from 'moment';
+import * as S3 from '@cumulus/aws-client/S3';
+import * as log from '@cumulus/common/log';
+import { DuplicateHandling } from '@cumulus/types';
 
-const encodeurl = require('encodeurl');
-const errors = require('@cumulus/errors');
-const get = require('lodash/get');
-const moment = require('moment');
-const S3 = require('@cumulus/aws-client/S3');
-const log = require('@cumulus/common/log');
-const { deprecate } = require('@cumulus/common/util');
+export interface EventWithDuplicateHandling {
+  config: {
+    collection: {
+      duplicateHandling?: DuplicateHandling
+    },
+    duplicateHandling?: DuplicateHandling,
+  },
+  cumulus_config?: {
+    cumulus_context?: {
+      forceDuplicateOverwrite?: boolean
+    }
+  },
+}
 
-/**
-* Copy granule file from one s3 bucket & keypath to another
-*
-* @param {Object} source - source
-* @param {string} source.Bucket - source
-* @param {string} source.Key - source
-* @param {Object} target - target
-* @param {string} target.Bucket - target
-* @param {string} target.Key - target
-* @param {Object} options - optional object with properties as defined by AWS API:
-* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property
-* @returns {Promise} returms a promise that is resolved when the file is copied
-**/
-function copyGranuleFile(source, target, options = {}) {
-  deprecate(
-    '@cumulus/ingest/granule.copyGranuleFile',
-    '1.22.1',
-    '@cumulus/aws-client/S3.multipartCopyObject'
-  );
+export interface File {
+  bucket?: string,
+  key?: string,
+  fileName?: string,
+  name?: string,
+  filename?: string
+}
 
-  const CopySource = encodeurl(`${source.Bucket}/${source.Key}`);
+export interface MovedGranuleFile {
+  bucket: string,
+  key: string,
+  name?: string
+}
 
-  const params = {
-    CopySource,
-    Bucket: target.Bucket,
-    Key: target.Key,
-    ...options
-  };
+export interface MoveFileParams {
+  source?: {
+    Bucket: string,
+    Key: string
+  },
+  target?: {
+    Bucket: string,
+    Key: string
+  },
+  file: File
+}
 
-  return S3.s3CopyObject(params)
-    .catch((error) => {
-      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${error.message}`);
-      throw error;
-    });
+export interface VersionedObject {
+  Bucket: string,
+  Key: string,
+  size: number
 }
 
 /**
-* Move granule file from one s3 bucket & keypath to another
-*
-* @param {Object} source - source
-* @param {string} source.Bucket - source
-* @param {string} source.Key - source
-* @param {Object} target - target
-* @param {string} target.Bucket - target
-* @param {string} target.Key - target
-* @param {Object} options - optional object with properties as defined by AWS API:
-* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
-* @returns {Promise} returns a promise that is resolved when the file is moved
-**/
-async function moveGranuleFile(source, target, options) {
-  deprecate(
-    '@cumulus/ingest/granule.moveGranuleFile',
-    '1.22.1',
-    '@cumulus/aws-client/S3.moveObject'
-  );
+  * rename s3 file with timestamp
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Promise} promise that resolves when file is renamed
+  */
+export async function renameS3FileWithTimestamp(
+  bucket: string,
+  key: string
+): Promise<void> {
+  const formatString = 'YYYYMMDDTHHmmssSSS';
+  const timestamp = (await S3.headObject(bucket, key)).LastModified;
 
-  await copyGranuleFile(source, target, options);
-  return S3.deleteS3Object(source.Bucket, source.Key);
+  if (!timestamp) {
+    throw new Error(`s3://${bucket}/${key} does not have a LastModified property`);
+  }
+
+  let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
+
+  // if the renamed file already exists, get a new name
+  // eslint-disable-next-line no-await-in-loop
+  while (await S3.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
+    renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
+  }
+
+  log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
+
+  await S3.moveObject({
+    sourceBucket: bucket,
+    sourceKey: key,
+    destinationBucket: bucket,
+    destinationKey: renamedKey,
+    copyTags: true
+  });
+}
+
+/**
+  * get all renamed s3 files for a given bucket and key
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Array<Object>} returns renamed files
+  */
+export async function listVersionedObjects(
+  bucket: string,
+  key: string
+): Promise<VersionedObject[]> {
+  const s3list = await S3.listS3ObjectsV2({
+    Bucket: bucket,
+    Prefix: `${key}.v`
+  });
+
+  return s3list.map(({ Key, Size }) => ({
+    Bucket: bucket,
+    Key,
+    size: Size
+  }));
 }
 
 /**
@@ -84,16 +126,28 @@ async function moveGranuleFile(source, target, options) {
 * @param {Object} sourceChecksumObject.checksum - checksum value
 * @param {string} ACL - an S3 [Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
 * @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
+*
+* @private
 **/
-async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, ACL) {
+export async function moveGranuleFileWithVersioning(
+  source: { Bucket: string, Key: string },
+  target: { Bucket: string, Key: string },
+  sourceChecksumObject: { checksumType?: string, checksum?: string } = {},
+  ACL?: string
+): Promise<VersionedObject[]> {
   const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
-  const targetFileSum = await S3.calculateS3ObjectChecksum(
-    { algorithm: (checksumType || 'CKSUM'), bucket: target.Bucket, key: target.Key }
-  );
-  const sourceFileSum = checksum || await S3.calculateS3ObjectChecksum(
-    { algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key }
-  );
+  const targetFileSum = await S3.calculateS3ObjectChecksum({
+    algorithm: checksumType ?? 'CKSUM',
+    bucket: target.Bucket,
+    key: target.Key
+  });
+
+  const sourceFileSum = checksum ?? await S3.calculateS3ObjectChecksum({
+    algorithm: 'CKSUM',
+    bucket: source.Bucket,
+    key: source.Key
+  });
 
   // if the checksum of the existing file is the same as the new one, keep the existing file,
   // else rename the existing file, and both files are part of the granule.
@@ -101,7 +155,7 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
     await S3.deleteS3Object(source.Bucket, source.Key);
   } else {
     log.debug(`Renaming ${target.Key}...`);
-    await exports.renameS3FileWithTimestamp(target.Bucket, target.Key);
+    await renameS3FileWithTimestamp(target.Bucket, target.Key);
 
     await S3.moveObject({
       sourceBucket: source.Bucket,
@@ -113,7 +167,7 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
     });
   }
   // return renamed files
-  return exports.getRenamedS3File(target.Bucket, target.Key);
+  return listVersionedObjects(target.Bucket, target.Key);
 }
 
 /**
@@ -137,14 +191,23 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
  * @throws {DuplicateFile} DuplicateFile error in `error` case.
  * @returns {Array<Object>} List of file version S3 Objects in `version` case, otherwise empty.
  */
-async function handleDuplicateFile({
-  source,
-  target,
-  duplicateHandling,
-  checksumFunction,
-  syncFileFunction,
-  ACL
-}) {
+export async function handleDuplicateFile(params: {
+  source: { Bucket: string, Key: string },
+  target: { Bucket: string, Key: string },
+  duplicateHandling: DuplicateHandling,
+  checksumFunction?: (bucket: string, key: string) => Promise<[string, string]>,
+  syncFileFunction?: (bucket: string, key: string) => Promise<void>,
+  ACL?: string
+}): Promise<VersionedObject[]> {
+  const {
+    source,
+    target,
+    duplicateHandling,
+    checksumFunction,
+    syncFileFunction,
+    ACL
+  } = params;
+
   if (duplicateHandling === 'error') {
     // Have to throw DuplicateFile and not WorkflowError, because the latter
     // is not treated as a failure by the message adapter.
@@ -186,7 +249,8 @@ async function handleDuplicateFile({
   return [];
 }
 
-const getNameOfFile = (file) => file.fileName || file.name;
+const getNameOfFile = (file: File): string | undefined =>
+  file.fileName ?? file.name;
 
 /**
  * For each source file, see if there is a destination and generate the source
@@ -200,13 +264,23 @@ const getNameOfFile = (file) => file.fileName || file.name;
  *    file: file object
  *  }
  */
-function generateMoveFileParams(sourceFiles, destinations) {
+export function generateMoveFileParams(
+  sourceFiles: File[],
+  destinations: {
+    bucket: string,
+    filepath?: string,
+    regex: string | RegExp
+  }[]
+): MoveFileParams[] {
   return sourceFiles.map((file) => {
     const fileName = getNameOfFile(file);
+
+    if (fileName === undefined) return { file };
+
     const destination = destinations.find((dest) => fileName.match(dest.regex));
 
     // if there's no match, we skip the file
-    if (!destination) return { source: null, target: null, file };
+    if (!destination) return { file };
 
     let source;
     if (file.bucket && file.key) {
@@ -223,6 +297,10 @@ function generateMoveFileParams(sourceFiles, destinations) {
     const targetKey = destination.filepath
       ? `${destination.filepath}/${getNameOfFile(file)}`
       : getNameOfFile(file);
+
+    if (targetKey === undefined) {
+      return { file };
+    }
 
     const target = {
       Bucket: destination.bucket,
@@ -247,15 +325,22 @@ function generateMoveFileParams(sourceFiles, destinations) {
  * @param {string} destinations.filepath - file path/directory on the bucket for the destination
  * @returns {Promise<Array>} returns array of source files updated with new locations.
  */
-async function moveGranuleFiles(sourceFiles, destinations) {
+export async function moveGranuleFiles(
+  sourceFiles: File[],
+  destinations: {
+    regex: string,
+    bucket: string,
+    filepath: string
+  }[]
+): Promise<MovedGranuleFile[]> {
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
-  const processedFiles = [];
+  const movedGranuleFiles: MovedGranuleFile[] = [];
   const moveFileRequests = moveFileParams.map(
     async (moveFileParam) => {
       const { source, target, file } = moveFileParam;
 
-      if (target) {
+      if (source && target) {
         log.debug('moveGranuleFiles', source, target);
 
         await S3.moveObject({
@@ -266,7 +351,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
           copyTags: true
         });
 
-        processedFiles.push({
+        movedGranuleFiles.push({
           bucket: target.Bucket,
           key: target.Key,
           name: getNameOfFile(file)
@@ -285,7 +370,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
           throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
         }
 
-        processedFiles.push({
+        movedGranuleFiles.push({
           bucket: fileBucket,
           key: fileKey,
           name: getNameOfFile(file)
@@ -296,48 +381,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
 
   await Promise.all(moveFileRequests);
 
-  return processedFiles;
-}
-
-/**
-  * rename s3 file with timestamp
-  *
-  * @param {string} bucket - bucket of the file
-  * @param {string} key - s3 key of the file
-  * @returns {Promise} promise that resolves when file is renamed
-  */
-async function renameS3FileWithTimestamp(bucket, key) {
-  const formatString = 'YYYYMMDDTHHmmssSSS';
-  const timestamp = (await S3.headObject(bucket, key)).LastModified;
-  let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
-
-  // if the renamed file already exists, get a new name
-  // eslint-disable-next-line no-await-in-loop
-  while (await S3.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
-    renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
-  }
-
-  log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
-
-  await S3.moveObject({
-    sourceBucket: bucket,
-    sourceKey: key,
-    destinationBucket: bucket,
-    destinationKey: renamedKey,
-    copyTags: true
-  });
-}
-
-/**
-  * get all renamed s3 files for a given bucket and key
-  *
-  * @param {string} bucket - bucket of the file
-  * @param {string} key - s3 key of the file
-  * @returns {Array<Object>} returns renamed files
-  */
-async function getRenamedS3File(bucket, key) {
-  const s3list = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
-  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, size: c.Size }));
+  return movedGranuleFiles;
 }
 
 /**
@@ -346,7 +390,7 @@ async function getRenamedS3File(bucket, key) {
  * @param {string} filename - name of the file
  * @returns {boolean} whether the file is renamed
  */
-function isFileRenamed(filename) {
+function isFileRenamed(filename: string): boolean {
   const suffixRegex = '\\.v[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])T(2[0-3]|[01][0-9])[0-5][0-9][0-5][0-9][0-9]{3}$';
   return (filename.match(suffixRegex) !== null);
 }
@@ -357,8 +401,10 @@ function isFileRenamed(filename) {
  * @param {string} filename
  * @returns {string} - filename with timestamp removed
  */
-function unversionFilename(filename) {
-  return isFileRenamed(filename) ? filename.split('.').slice(0, -1).join('.') : filename;
+export function unversionFilename(filename: string): string {
+  return isFileRenamed(filename)
+    ? filename.split('.').slice(0, -1).join('.')
+    : filename;
 }
 
 /**
@@ -370,27 +416,14 @@ function unversionFilename(filename) {
 
  * @returns {string} - duplicate handling directive.
  */
-function duplicateHandlingType(event) {
-  const config = get(event, 'config');
-  const collection = get(config, 'collection');
+export function duplicateHandlingType(
+  event: EventWithDuplicateHandling
+): DuplicateHandling {
+  if (event?.cumulus_config?.cumulus_context?.forceDuplicateOverwrite) {
+    return 'replace';
+  }
 
-  let duplicateHandling = get(config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error'));
-
-  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
-
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
-
-  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
-
-  return duplicateHandling;
+  return event.config.duplicateHandling
+    ?? event.config.collection.duplicateHandling
+    ?? 'error';
 }
-
-module.exports.getRenamedS3File = getRenamedS3File;
-module.exports.handleDuplicateFile = handleDuplicateFile;
-module.exports.copyGranuleFile = copyGranuleFile;
-module.exports.unversionFilename = unversionFilename;
-module.exports.moveGranuleFile = moveGranuleFile;
-module.exports.moveGranuleFiles = moveGranuleFiles;
-module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
-module.exports.generateMoveFileParams = generateMoveFileParams;
-module.exports.duplicateHandlingType = duplicateHandlingType;
