@@ -138,7 +138,7 @@ test('granule.delete() with the old file format succeeds', async (t) => {
   }));
 });
 
-test('granule.deletePublishedGranule() deletes published granule', async (t) => {
+test('granule.unpublishAndDeleteGranule() deletes published granule', async (t) => {
   const granule = fakeGranuleFactoryV2({
     published: true
   });
@@ -147,13 +147,13 @@ test('granule.deletePublishedGranule() deletes published granule', async (t) => 
 
   t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
   await t.notThrowsAsync(
-    granuleModel.deletePublishedGranule(granule)
+    granuleModel.unpublishAndDeleteGranule(granule)
   );
   t.true(removeGranuleFromCmrStub.called);
   t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
 });
 
-test.serial('granule.deletePublishedGranule() leaves granule.published = true if delete fails', async (t) => {
+test.serial('granule.unpublishAndDeleteGranule() leaves granule.published = true if delete fails', async (t) => {
   const deleteStub = sinon.stub(models.Granule.prototype, '_deleteRecord').throws();
   t.teardown(() => deleteStub.restore());
 
@@ -164,7 +164,7 @@ test.serial('granule.deletePublishedGranule() leaves granule.published = true if
   await granuleModel.create(granule);
 
   await t.throwsAsync(
-    granuleModel.deletePublishedGranule(granule)
+    granuleModel.unpublishAndDeleteGranule(granule)
   );
   const record = await granuleModel.get({ granuleId: granule.granuleId });
   t.true(record.published);
