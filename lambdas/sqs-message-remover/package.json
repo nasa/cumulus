@@ -2,7 +2,7 @@
   "name": "@cumulus/sqs-message-remover-lambda",
   "version": "2.0.1",
   "description": "Remove processed messages from SQS queues",
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "private": true,
   "directories": {
     "test": "tests"
