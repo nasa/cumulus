@@ -11,7 +11,9 @@ const {
   isSfExecutionEvent,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
+
+const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
 
 /**
  * Determine if the SQS queue update is needed for the event
@@ -61,7 +63,7 @@ async function updateSqsQueue(event) {
 
   if (isFailedSfStatus(eventStatus)) {
     // update visibilityTimeout to 5s so the message can be retried
-    log.debug(`update message ${receiptHandle} queue ${queueUrl} visibilityTimeout to 5s`);
+    logger.debug(`update message ${receiptHandle} queue ${queueUrl} visibilityTimeout to 5s`);
 
     const params = {
       QueueUrl: queueUrl,
@@ -71,7 +73,7 @@ async function updateSqsQueue(event) {
     await sqs().changeMessageVisibility(params).promise();
   } else {
     // delete SQS message from the source queue when the workflow succeeded
-    log.debug(`remove message ${receiptHandle} from queue ${queueUrl}`);
+    logger.debug(`remove message ${receiptHandle} from queue ${queueUrl}`);
     await deleteSQSMessage(queueUrl, receiptHandle);
   }
 
