@@ -23,6 +23,12 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "npm run clean && mkdir dist && ../../node_modules/.bin/webpack --progress -w"
   },
+  "ava": {
+    "files": [
+      "tests/**/*.js"
+    ],
+    "timeout": "15m"
+  },
   "publishConfig": {
     "access": "public"
   },
