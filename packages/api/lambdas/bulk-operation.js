@@ -115,11 +115,12 @@ async function bulkGranuleDelete(payload) {
   const deletedGranules = await pMap(
     granuleIds,
     async (granuleId) => {
-      let granule = await granuleModel.getRecord({ granuleId });
+      const granule = await granuleModel.getRecord({ granuleId });
       if (granule.published && forceRemoveFromCmr) {
-        granule = await granuleModel.removeGranuleFromCmrByGranule(granule);
+        await granuleModel.unpublishAndDeleteGranule(granule);
+      } else {
+        await granuleModel.delete(granule);
       }
-      await granuleModel.delete(granule);
       return granuleId;
     },
     {

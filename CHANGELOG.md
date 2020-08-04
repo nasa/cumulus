@@ -19,6 +19,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
 
+### Added
+
+- **CUMULUS-2116**
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+
+### Fixed
+
+- **CUMULUS-2116**
+  - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
+
 ### Removed
 
 - The `@cumulus/ingest/granule.copyGranuleFile` function has been removed
