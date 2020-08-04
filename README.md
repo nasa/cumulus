@@ -119,6 +119,10 @@ Run the test commands next
 
 For more information please [read this](docs/development/integration-tests.md).
 
+### Running tests via VS Code debugger
+
+Copy the `.vscode.example` directory to `.vscode` to create your debugger launch configuration. Refer to the [VS Code documentation on how to use the debugger](https://code.visualstudio.com/docs/editor/debugging).
+
 ## 🔦 Code Coverage and Quality
 
 For more information please [read this](docs/development/quality-and-coverage.md).
