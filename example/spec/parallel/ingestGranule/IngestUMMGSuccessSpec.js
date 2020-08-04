@@ -216,10 +216,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       }),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
-      // granulesApiTestUtils.removePublishedGranule({
-      //   prefix: config.stackName,
-      //   granuleId: inputPayload.granules[0].granuleId
-      // })
+      granulesApiTestUtils.removePublishedGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
     ]);
   });
 
