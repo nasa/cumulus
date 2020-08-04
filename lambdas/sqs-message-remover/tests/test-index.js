@@ -1,17 +1,89 @@
 'use strict';
 
 const delay = require('delay');
-const rewire = require('rewire');
 const test = require('ava');
 const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
-const { createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 
-const sqsMessageRemover = rewire('../../lambdas/sqs-message-remover');
-const updateSqsQueue = sqsMessageRemover.__get__('updateSqsQueue');
+const { updateSqsQueue } = require('..');
+
+// TODO: Copied from @cumulus/api/lib/testUtils to avoid the dependency, but
+// these helpers should probably have a better home?
+
+/**
+ * create a dead-letter queue and a source queue
+ *
+ * @param {string} queueNamePrefix - prefix of the queue name
+ * @param {number} maxReceiveCount
+ *   Maximum number of times message can be removed before being sent to DLQ
+ * @param {string} visibilityTimeout - visibility timeout for queue messages
+ * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
+ */
+async function createSqsQueues(
+  queueNamePrefix,
+  maxReceiveCount = 3,
+  visibilityTimeout = '300'
+) {
+  // dead letter queue
+  const deadLetterQueueName = `${queueNamePrefix}DeadLetterQueue`;
+  const deadLetterQueueParms = {
+    QueueName: deadLetterQueueName,
+    Attributes: {
+      VisibilityTimeout: visibilityTimeout
+    }
+  };
+  const { QueueUrl: deadLetterQueueUrl } = await awsServices.sqs()
+    .createQueue(deadLetterQueueParms).promise();
+  const qAttrParams = {
+    QueueUrl: deadLetterQueueUrl,
+    AttributeNames: ['QueueArn']
+  };
+  const { Attributes: { QueueArn: deadLetterQueueArn } } = await awsServices.sqs()
+    .getQueueAttributes(qAttrParams).promise();
+
+  // source queue
+  const queueName = `${queueNamePrefix}Queue`;
+  const queueParms = {
+    QueueName: queueName,
+    Attributes: {
+      RedrivePolicy: JSON.stringify({
+        deadLetterTargetArn: deadLetterQueueArn,
+        maxReceiveCount
+      }),
+      VisibilityTimeout: visibilityTimeout
+    }
+  };
+
+  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
+  return { deadLetterQueueUrl, queueUrl };
+}
+
+/**
+ * get message counts of the given SQS queue
+ *
+ * @param {string} queueUrl - SQS queue URL
+ * @returns {Object} - message counts
+ * {numberOfMessagesAvailable: <number>, numberOfMessagesNotVisible: <number>}
+ */
+async function getSqsQueueMessageCounts(queueUrl) {
+  const qAttrParams = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All']
+  };
+  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+  const {
+    ApproximateNumberOfMessages: numberOfMessagesAvailable,
+    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
+  } = attributes.Attributes;
+
+  return {
+    numberOfMessagesAvailable: Number.parseInt(numberOfMessagesAvailable, 10),
+    numberOfMessagesNotVisible: Number.parseInt(numberOfMessagesNotVisible, 10)
+  };
+}
 
 const createEventSource = ({
   type = 'sqs',
