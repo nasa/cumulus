@@ -1,0 +1,45 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run AVA test",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "runtimeArgs": [
+        "debug",
+        "--break",
+        "${file}"
+      ],
+      "skipFiles": [
+        "<node_internals>/**/*.js"
+      ],
+      "port": 9229,
+      "outputCapture": "std",
+      "runtimeVersion": "12.18.2",
+      "env": {
+        "LOCALSTACK_HOST": "localhost",
+        "LOCAL_ES_HOST": "localhost"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run Jasmine test",
+      "cwd": "${workspaceRoot}/example",
+      "program": "${workspaceRoot}/node_modules/jasmine/bin/jasmine.js",
+      "args": [
+        "${file}"
+      ],
+      "runtimeVersion": "12.18.2",
+      "env": {
+        "AWS_PROFILE": "<your-profile>",
+        "DEPLOYMENT": "<your-deployment>",
+        "FAKE_PROVIDER_CONFIG_BUCKET": "<your-internal-bucket>"
+      }
+    }
+  ]
+}
