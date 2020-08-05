@@ -283,7 +283,7 @@ test.serial('processStream does not throw error if describeStream throws', async
   }
 });
 
-test.serial('handler sets envs from event', async (t) => {
+test.serial('handler sets timestamp envs from event', async (t) => {
   const event = {
     endTimestamp: '1969-12-31T16:00:00.000Z',
     startTimestamp: '1969-12-31T16:00:00.000Z'
