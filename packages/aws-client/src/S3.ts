@@ -357,15 +357,17 @@ export const s3PutObjectTagging = improveStackTrace(
  * @example
  * const obj = await getObject(s3(), { Bucket: 'b', Key: 'k' })
  *
- * @param {AWS.S3} s3Client
- * @param {AWS.S3.GetObjectRequest} params
- * @returns {Promise<AWS.S3.GetObjectOutput>}
+ * @param {AWS.S3} s3 - an `AWS.S3` instance
+ * @param {AWS.S3.GetObjectRequest} params - parameters object to pass through
+ *   to `AWS.S3.getObject()`
+ * @returns {Promise<AWS.S3.GetObjectOutput>} response from `AWS.S3.getObject()`
+ *   as a Promise
  */
 export const getObject = (
-  s3Client: { getObject: GetObjectPromiseMethod },
+  // eslint-disable-next-line no-shadow
+  s3: { getObject: GetObjectPromiseMethod },
   params: AWS.S3.GetObjectRequest
-): Promise<AWS.S3.GetObjectOutput> =>
-  s3Client.getObject(params).promise();
+): Promise<AWS.S3.GetObjectOutput> => s3.getObject(params).promise();
 
 /**
  * Get an object from S3, waiting for it to exist and, if specified, have the
