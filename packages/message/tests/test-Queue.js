@@ -80,7 +80,7 @@ test('getMaximumExecutions returns correct value', (t) => {
   t.is(maxExecutions, 5);
 });
 
-test('getMaximumExecutions throws an error when queue cannot be found', (t) => {
+test('getMaximumExecutions throws an error when queue cannot be found in message', (t) => {
   const testMessage = {
     cumulus_meta: {
       queueExecutionLimits: {}
