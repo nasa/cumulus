@@ -14,25 +14,22 @@ const {
   headObject,
   parseS3Uri
 } = require('@cumulus/aws-client/S3');
-const { isCMRFile, isCMRFilename } = require('@cumulus/cmrjs');
+const { isCMRFile } = require('@cumulus/cmrjs');
 const cloneDeep = require('lodash/cloneDeep');
 const set = require('lodash/set');
 const errors = require('@cumulus/errors');
 const {
   randomString, randomId, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
-const { promisify } = require('util');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
 const { moveGranules } = require('..');
-
-const readFile = promisify(fs.readFile);
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
-    Body: isCMRFilename(file)
+    Body: file.endsWith('.cmr.xml')
       ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key
   })));
 }
@@ -128,7 +125,7 @@ test.beforeEach(async (t) => {
   );
 
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
-  const rawPayload = await readFile(payloadPath, 'utf8');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
   const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
   t.context.filesToUpload = filesToUpload.map((file) =>

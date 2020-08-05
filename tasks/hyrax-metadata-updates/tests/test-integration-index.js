@@ -1,8 +1,10 @@
 'use strict';
 
+const delay = require('delay');
 const nock = require('nock');
 const { promisify } = require('util');
 const test = require('ava');
+const proxyquire = require('proxyquire');
 const fs = require('fs');
 const xml2js = require('xml2js');
 
@@ -13,18 +15,16 @@ const xmlParseOptions = {
 };
 
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
-const {
-  randomId
-} = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const path = require('path');
 const {
   buildS3Uri,
   recursivelyDeleteS3Bucket,
   promiseS3Upload,
   parseS3Uri,
-  getS3Object
+  getObject
 } = require('@cumulus/aws-client/S3');
-const readFile = promisify(fs.readFile);
+const { retryOnMissingObjectError } = require('@cumulus/aws-client/utils');
 const { InvalidArgument } = require('@cumulus/errors');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -33,10 +33,36 @@ const rewire = require('rewire');
 
 const HyraxMetadataUpdate = rewire('../index');
 
-const hyraxMetadataUpdate = HyraxMetadataUpdate.__get__('hyraxMetadataUpdate');
 const generateHyraxUrl = HyraxMetadataUpdate.__get__('generateHyraxUrl');
 const generatePath = HyraxMetadataUpdate.__get__('generatePath');
 const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
+
+const preconditionFailedSelector = {
+  code: 'PreconditionFailed',
+  statusCode: 412,
+  message: 'At least one of the pre-conditions you specified did not hold'
+};
+
+const { hyraxMetadataUpdate } = proxyquire('..', {
+  '@cumulus/aws-client/utils': {
+    // Reduce retries to avoid excessively long tests
+    retryOnMissingObjectError: (fn) =>
+      retryOnMissingObjectError(fn, { retries: 2 })
+  },
+  '@cumulus/aws-client/S3': {
+    getObject: async (s3, params) => {
+      const result = await getObject(s3, params);
+
+      // LocalStack does not handle pre-condition checks, so we have to
+      // manually check, and throw, if necessary.
+      if (params.IfMatch && result.ETag !== params.IfMatch) {
+        throw Object.assign(new Error(), preconditionFailedSelector);
+      }
+
+      return result;
+    }
+  }
+});
 
 const cmrPasswordSecret = randomId('cmrPassword');
 
@@ -120,15 +146,16 @@ function buildPayload(t) {
 
 async function setupS3(t, isUmmG) {
   t.context.stagingBucket = randomId('staging');
-  await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise()
-  ]);
+
+  await s3().createBucket({ Bucket: t.context.stagingBucket }).promise();
+
   const filename = isUmmG ? 'payload-json.json' : 'payload-xml.json';
   const payloadPath = path.join(__dirname, 'data', filename);
-  const rawPayload = await readFile(payloadPath, 'utf8');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
   const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) => buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
   buildPayload(t);
   if (isUmmG) {
     await uploadFilesJson(filesToUpload, t.context.stagingBucket);
@@ -152,45 +179,250 @@ const event = {
 
 test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
-  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
     .reply(200);
   await setupS3(t, false);
+
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
 
-  await hyraxMetadataUpdate(e);
-  // Verify the metadata has been updated at the S3 location
-  const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
-  const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
-  const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
-  t.is(actual.Body.toString(), expected);
+  try {
+    await hyraxMetadataUpdate(e);
 
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+    // Verify the metadata has been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
+      f.type === 'metadata');
+    const actual = await getObject(s3(), {
+      Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+      Key: metadataFile.name
+    });
+    const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
+
+    t.is(actual.Body.toString(), expected);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+
+test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata file with incoming etag', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+    .reply(200);
+
+  await setupS3(t, false);
+
+  const e = {
+    config: event.config,
+    input: t.context.payload.input
+  };
+
+  try {
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
+      f.type === 'metadata');
+    const { ETag: inputEtag } = await getObject(s3(), {
+      Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+      Key: metadataFile.name
+    });
+    metadataFile.etag = inputEtag;
+
+    const { granules } = await hyraxMetadataUpdate(e);
+
+    const { etag: outputEtag } = granules[0].files.find((f) =>
+      f.type === 'metadata');
+    // Verify the metadata has been updated at the S3 location
+    const actual = await getObject(s3(), {
+      Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+      Key: metadataFile.name
+    });
+    const actualPartial = {
+      etag: actual.ETag,
+      body: actual.Body.toString()
+    };
+    const expectedPartial = {
+      etag: outputEtag,
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8')
+    };
+
+    t.not(outputEtag, inputEtag);
+    t.like(actualPartial, expectedPartial);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+
+test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata file with incoming etag', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+    .reply(200);
+
+  await setupS3(t, false);
+
+  const e = {
+    config: event.config,
+    input: t.context.payload.input
+  };
+
+  try {
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
+      f.type === 'metadata');
+    const bucket = `${metadataFile.bucket}/${metadataFile.fileStagingDir}`;
+    const { ETag: inputEtag } = await getObject(s3(), {
+      Bucket: bucket,
+      Key: metadataFile.name
+    });
+    metadataFile.etag = inputEtag;
+
+    // Upload dummy file to force retries in hyraxMetadataUpdate because ETag is
+    // not initially matched.
+    await promiseS3Upload({
+      Bucket: bucket,
+      Key: metadataFile.name,
+      Body: 'foo'
+    });
+
+    const granulesPromise = hyraxMetadataUpdate(e);
+    await delay(2000).then(promiseS3Upload({
+      Bucket: bucket,
+      Key: metadataFile.name,
+      Body: fs.createReadStream('tests/data/echo10in.xml')
+    }));
+    const { granules } = await granulesPromise;
+
+    const { etag: outputEtag } = granules[0].files.find((f) =>
+      f.type === 'metadata');
+    // Verify the metadata has been updated at the S3 location
+    const actual = await getObject(s3(), {
+      Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+      Key: metadataFile.name
+    });
+    const actualPartial = {
+      etag: actual.ETag,
+      body: actual.Body.toString()
+    };
+    const expectedPartial = {
+      etag: outputEtag,
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8')
+    };
+
+    t.not(outputEtag, inputEtag);
+    t.like(actualPartial, expectedPartial);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+
+test.serial('hyraxMetadataUpdate fails with PreconditionFailure when metadata with incoming etag cannot be found', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+    .reply(200);
+
+  await setupS3(t, false);
+
+  const e = {
+    config: event.config,
+    input: t.context.payload.input
+  };
+
+  try {
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
+      f.type === 'metadata');
+    metadataFile.etag = randomString();
+
+    const error = await t.throwsAsync(hyraxMetadataUpdate(e));
+
+    t.like(error, preconditionFailedSelector);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
 });
 
 test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
-  nock('https://cmr.earthdata.nasa.gov').post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
     .reply(200);
+
   await setupS3(t, true);
+
   const e = {
     config: event.config,
     input: t.context.payload.input
   };
 
-  await hyraxMetadataUpdate(e);
-  // Verify the metadata has been updated at the S3 location
-  const metadataFile = t.context.payload.input.granules[0].files.find((f) => f.type === 'metadata');
-  const actual = await getS3Object(`${metadataFile.bucket}/${metadataFile.fileStagingDir}`, metadataFile.name);
-  const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
-  // We do this dance because formatting.
-  const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
-  const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
-  t.is(actualString, expectedString);
+  try {
+    await hyraxMetadataUpdate(e);
 
-  await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+    // Verify the metadata has been updated at the S3 location
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
+      f.type === 'metadata');
+    const actual = await getObject(s3(), {
+      Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+      Key: metadataFile.name
+    });
+    const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
+    // We do this dance because formatting.
+    const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
+    const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
+
+    t.is(actualString, expectedString);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+});
+
+test.serial('hyraxMetadataUpdate immediately finds and updates UMM-G metadata file with incoming etag', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
+    .reply(200);
+
+  await setupS3(t, true);
+
+  const e = {
+    config: event.config,
+    input: t.context.payload.input
+  };
+
+  try {
+    const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
+      f.type === 'metadata');
+    const { ETag: inputEtag } = await getObject(s3(), {
+      Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+      Key: metadataFile.name
+    });
+    metadataFile.etag = inputEtag;
+
+    const { granules } = await hyraxMetadataUpdate(e);
+
+    const { etag: outputEtag } = granules[0].files.find((f) =>
+      f.type === 'metadata');
+    // Verify the metadata has been updated at the S3 location
+    const actual = await getObject(s3(), {
+      Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
+      Key: metadataFile.name
+    });
+    // We do this dance because formatting.
+    const normalizeBody = (body) => JSON.stringify(JSON.parse(body), null, 2);
+    const actualPartial = {
+      etag: actual.ETag,
+      body: normalizeBody(actual.Body.toString())
+    };
+    const expectedPartial = {
+      etag: outputEtag,
+      body: normalizeBody(fs.readFileSync('tests/data/umm-gout.json', 'utf8'))
+    };
+
+    t.not(outputEtag, inputEtag);
+    t.like(actualPartial, expectedPartial);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
 });
 
 test.serial('Test validation error when updating UMM-G metadata file in S3', async (t) => {
@@ -254,7 +486,7 @@ test.serial('Test record does not exist error when granule object has no recogni
 
   await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: RecordDoesNotExist,
-    message: 'There is no recogizable CMR metadata file in this granule object (*.cmr.xml or *.cmr.json)'
+    message: new RegExp(e.input.granules[0].granuleId)
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);

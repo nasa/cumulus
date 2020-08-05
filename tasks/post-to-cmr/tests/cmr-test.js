@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
+const proxyquire = require('proxyquire');
 
 const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
@@ -19,6 +20,7 @@ const { postToCMR } = require('..');
 const result = {
   'concept-id': 'testingtesting'
 };
+const resultThunk = () => ({ result });
 
 test.before(async (t) => {
   // Store the CMR password
@@ -84,10 +86,8 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
       Key: key,
       Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
     });
-    await postToCMR(newPayload);
-    t.fail();
-  } catch (error) {
-    t.true(error instanceof cmrClient.ValidationError);
+    await t.throwsAsync(postToCMR(newPayload),
+      { instanceOf: cmrClient.ValidationError });
   } finally {
     cmrClient.CMR.prototype.getToken.restore();
   }
@@ -95,10 +95,77 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
 
 test.serial('postToCMR succeeds with correct payload', async (t) => {
   const newPayload = t.context.payload;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
 
-  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
-    result
-  }));
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
+
+  try {
+    await promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
+    });
+
+    const output = await postToCMR(newPayload);
+
+    t.is(output.granules.length, 1);
+
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+
+    output.granules.forEach((g) => {
+      t.true(Number.isInteger(g.post_to_cmr_duration));
+      t.true(g.post_to_cmr_duration >= 0);
+    });
+  } finally {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  }
+});
+
+test.serial('postToCMR immediately succeeds using metadata file ETag', async (t) => {
+  const newPayload = t.context.payload;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+  const inputCmrFile = newPayload.input.granules[0].files.find(isCMRFile);
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
+
+  try {
+    const { ETag: etag } = await promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
+    });
+
+    inputCmrFile.etag = etag;
+
+    const output = await postToCMR(newPayload);
+
+    t.is(output.granules.length, 1);
+
+    const outputCmrFile = output.granules[0].files.find(isCMRFile);
+
+    t.is(outputCmrFile.etag, etag);
+
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+
+    output.granules.forEach((g) => {
+      t.true(Number.isInteger(g.post_to_cmr_duration));
+      t.true(g.post_to_cmr_duration >= 0);
+    });
+  } finally {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  }
+});
+
+test.serial('postToCMR eventually succeeds using metadata file ETag', async (t) => {
+  const newPayload = t.context.payload;
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
@@ -108,6 +175,8 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
   // "Minify" the XML simply to make it differ from the original XML so that S3
   // treats them as different versions (i.e., generates different ETags)
   const updatedCmrXml = cmrXml.split('\n').join('');
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
 
   try {
     // Upload updated XML to obtain the updated ETag so we can add it to the
@@ -159,16 +228,58 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
   }
 });
 
+test.serial('postToCMR fails with PreconditionFailure when such error is thrown while getting metadata object from CMR', async (t) => {
+  const newPayload = t.context.payload;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+  const inputCmrFile = newPayload.input.granules[0].files.find(isCMRFile);
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
+
+  try {
+    const { ETag: etag } = await promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data',
+        'meta.xml'))
+    });
+
+    inputCmrFile.etag = etag;
+
+    // We must simulate throwing a PreconditionFailed error from the function
+    // metadataObjectFromCMRFile because LocalStack does not correctly do so
+    // via the S3.getObject() method.  All we can do is make sure postToCMR
+    // properly propagates the error from metadataObjectFromCMRFile (which will
+    // originate indirectly from S3.getObject() when hitting AWS instead of
+    // LocalStack).
+    const errorSelector = {
+      code: 'PreconditionFailed',
+      statusCode: 412
+    };
+    const { postToCMR: postToCMR_ } = proxyquire('..', {
+      '@cumulus/cmrjs': {
+        metadataObjectFromCMRFile: () => {
+          throw Object.assign(new Error(), errorSelector);
+        }
+      }
+    });
+
+    const error = await t.throwsAsync(postToCMR_(newPayload));
+
+    t.like(error, errorSelector);
+  } finally {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  }
+});
+
 test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
 
   const newPayload = t.context.payload;
-
-  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
-    result
-  }));
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
 
   try {
     await promiseS3Upload({
@@ -233,12 +344,8 @@ test.serial('postToCMR continues without metadata file if there is skipMetaCheck
   newPayload.input.granules = newGranule;
   newPayload.config.skipMetaCheck = true;
   const granuleId = newPayload.input.granules[0].granuleId;
-  try {
-    const output = await postToCMR(newPayload);
-    t.is(output.granules[0].granuleId, granuleId);
-  } catch (error) {
-    t.fail(error);
-  }
+  const output = await postToCMR(newPayload);
+  t.is(output.granules[0].granuleId, granuleId);
 });
 
 test.serial('postToCMR continues with skipMetaCheck even if any granule is missing a metadata file', async (t) => {
@@ -252,9 +359,8 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
   newPayload.input.granules.push(newGranule);
   newPayload.config.skipMetaCheck = true;
 
-  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
-    result
-  }));
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
+
   try {
     await promiseS3Upload({
       Bucket: t.context.bucket,
@@ -267,8 +373,6 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
     t.is(output.granules[1].cmrLink, undefined);
-  } catch (error) {
-    t.fail(error);
   } finally {
     cmrClient.CMR.prototype.ingestGranule.restore();
   }
@@ -283,9 +387,7 @@ test.serial('postToCMR identifies files with the new file schema', async (t) => 
     fileName: cmrFile.name
   }];
 
-  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
-    result
-  }));
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
 
   try {
     await promiseS3Upload({
@@ -305,15 +407,12 @@ test.serial('postToCMR identifies files with the new file schema', async (t) => 
 
 test.serial('postToCMR succeeds with launchpad authentication', async (t) => {
   const newPayload = t.context.payload;
-  newPayload.config.cmr.oauthProvider = 'launchpad';
-
-  sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
-
-  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
-    result
-  }));
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
+
+  newPayload.config.cmr.oauthProvider = 'launchpad';
+  sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
 
   try {
     await promiseS3Upload({

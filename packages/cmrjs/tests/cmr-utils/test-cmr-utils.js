@@ -77,17 +77,13 @@ test.before(async (t) => {
 
   const bucketsJson = await readJsonFixture(path.join(__dirname, '../fixtures/buckets.json'));
 
-  t.context.bucketTypes = Object.values(bucketsJson)
-    .reduce(
-      (acc, { name, type }) => ({ ...acc, [name]: type }),
-      {}
-    );
+  t.context.bucketTypes = Object.fromEntries(
+    Object.values(bucketsJson).map(({ name, type }) => [name, type])
+  );
 
-  t.context.distributionBucketMap = Object.values(bucketsJson)
-    .reduce(
-      (acc, { name }) => ({ ...acc, [name]: name }),
-      {}
-    );
+  t.context.distributionBucketMap = Object.fromEntries(
+    Object.values(bucketsJson).map(({ name }) => [name, name])
+  );
 });
 
 test.after.always(async (t) => {
@@ -680,3 +676,40 @@ test('getFileDescription returns fallback if file name cannot be determined', (t
     'File to download'
   );
 });
+
+const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
+  // Simulate throwing a PreconditionFailed error from getObject() because
+  // LocalStack ignores the `IfMatch` (and the `IfNoneMatch`) param passed
+  // to S3.getObject()
+  const errorSelector = {
+    code: 'PreconditionFailed',
+    errorCode: 412,
+    message: 'At least one of the pre-conditions you specified did not hold'
+  };
+  const { metadataObjectFromCMRFile } = proxyquire('../../cmr-utils', {
+    '@cumulus/aws-client/utils': {
+      // Don't bother with retries
+      retryOnMissingObjectError: (fn) => fn
+    },
+    '@cumulus/aws-client/S3': {
+      getObject: (_, { IfMatch: actualEtag }) => {
+        t.is(actualEtag, etag);
+        throw Object.assign(new Error(), errorSelector);
+      }
+    }
+  });
+
+  const error = await t.throwsAsync(metadataObjectFromCMRFile(filename, etag));
+
+  t.like(error, errorSelector);
+};
+
+test(
+  'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR XML metadata file',
+  testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.xml')
+);
+
+test(
+  'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR UMMG JSON metadata file',
+  testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.json')
+);

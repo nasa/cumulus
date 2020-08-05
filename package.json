@@ -4,11 +4,6 @@
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
     "audit": "audit-ci --config ./audit-ci.json && lerna exec -- audit-ci --config $(pwd)/audit-ci.json",
-    "deploy": "npm run deploy-cumulus",
-    "deploy-all": "npm run deploy-data && npm run deploy-cumulus",
-    "predeploy-cumulus": "npm install && npm run bootstrap",
-    "deploy-cumulus": "cd example/cumulus-tf && terraform init && terraform apply -auto-approve",
-    "deploy-data": "cd example/data-persistence-tf && terraform init && terraform apply -auto-approve",
     "docs-build-packages": "lerna run build-docs",
     "docs-build-tasks": "./bin/build-tasks-doc.js",
     "docs-install": "(cd website && npm install)",

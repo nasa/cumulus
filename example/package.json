@@ -16,6 +16,10 @@
   },
   "scripts": {
     "all-tests": "npm run parallel-tests && ../node_modules/.bin/jasmine && npm run redeploy-test",
+    "deploy": "npm run deploy-cumulus --",
+    "deploy-all": "npm run deploy-data && npm run deploy-cumulus",
+    "deploy-cumulus": "cd cumulus-tf && terraform init && terraform apply",
+    "deploy-data": "cd data-persistence-tf && terraform init && terraform apply",
     "int-test": "../node_modules/.bin/jasmine && npm run parallel-tests",
     "package": "for x in lambdas/*; do cd $x && npm run package && cd -; done",
     "parallel-tests": "sh scripts/tests-parallel.sh",

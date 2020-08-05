@@ -17,6 +17,7 @@ const {
   getJsonS3Object,
   getObjectSize,
   getS3Object,
+  getObject,
   getTextObject,
   headObject,
   downloadS3File,
@@ -124,40 +125,6 @@ test('getS3Object() returns an existing S3 object', async (t) => {
   t.is(response.Body.toString(), 'asdf');
 });
 
-test('getS3Object() returns correct version of an existing S3 object', async (t) => {
-  const { Bucket } = t.context;
-  const { ETag: etag1, Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
-  const { ETag: etag2 } = await stageTestObjectToLocalStack(Bucket, 'fdsa', Key);
-
-  t.not(etag2, etag1, 'ETags should be different');
-
-  const { ETag, Body } = await getS3Object({ Bucket, Key, IfMatch: etag2 });
-
-  t.like({ ETag, Body: Body.toString() }, { ETag: etag2, Body: 'fdsa' });
-});
-
-test('getS3Object() will retry if the expected version of an existing S3 object does not exist', async (t) => {
-  const { Bucket } = t.context;
-  const { ETag: etag1, Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
-  const { ETag: etag2 } = await stageTestObjectToLocalStack(Bucket, 'fdsa', Key);
-
-  t.not(etag2, etag1, 'ETags should be different');
-
-  const promise = getS3Object({ Bucket, Key, IfMatch: etag1 }, { retries: 5 });
-  await delay(2000).then(stageTestObjectToLocalStack(Bucket, 'asdf', Key));
-  const { ETag, Body } = await promise;
-
-  t.like({ ETag, Body: Body.toString() }, { ETag: etag1, Body: 'asdf' });
-});
-
-test('getS3Object() throws a pre-condition failure if a version of an object does not exist', async (t) => {
-  const { Bucket } = t.context;
-  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
-
-  const error = await t.throwsAsync(getS3Object({ Bucket, Key, IfMatch: '"bad"' }));
-  t.is(error.statusCode, 412);
-});
-
 test('getS3Object() immediately throws an exception if the requested bucket does not exist', async (t) => {
   const promisedGetS3Object = getS3Object(randomString(), 'asdf');
   const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
@@ -168,7 +135,7 @@ test('getS3Object() throws an exception if the requested key does not exist', as
   const { Bucket } = t.context;
 
   const err = await t.throwsAsync(
-    () => getS3Object(Bucket, 'does-not-exist', { retries: 1 })
+    getS3Object(Bucket, 'does-not-exist', { retries: 1 })
   );
   t.is(err.code, 'NoSuchKey');
 });
@@ -194,6 +161,35 @@ test('getS3Object() will retry if the requested key does not exist', async (t) =
   const response = await promisedGetS3Object;
 
   t.is(response.Body.toString(), 'asdf');
+});
+
+test('getObject() returns an existing S3 object', async (t) => {
+  const { Bucket } = t.context;
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+
+  const response = await getObject(awsServices.s3(), { Bucket, Key });
+
+  t.is(response.Body.toString(), 'asdf');
+});
+
+test('getObject() throws an exception if the requested bucket does not exist', async (t) => {
+  const Bucket = randomString();
+
+  const promisedObject = getObject(awsServices.s3(), { Bucket, Key: 'asdf' });
+
+  const error = await t.throwsAsync(pTimeout(promisedObject, 5000));
+
+  t.is(error.code, 'NoSuchBucket');
+});
+
+test('getObject() throws an exception if the requested key does not exist', async (t) => {
+  const { Bucket } = t.context;
+
+  const promisedObject = getObject(awsServices.s3(), { Bucket, Key: 'asdf' });
+
+  const err = await t.throwsAsync(pTimeout(promisedObject, 5000));
+
+  t.is(err.code, 'NoSuchKey');
 });
 
 test('s3Join behaves as expected', (t) => {
@@ -336,7 +332,7 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
   const cksum = 11111111111;
 
   await t.throwsAsync(
-    () => validateS3ObjectChecksum({
+    validateS3ObjectChecksum({
       algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
     }),
     {

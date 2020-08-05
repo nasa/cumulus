@@ -48,11 +48,19 @@ function buildOutput(results, granules) {
  *    updated with its metadata as a `metadataObject` property
  */
 function addMetadataObjects(cmrFiles) {
-  return Promise.all(cmrFiles.map((cmrFile) =>
-    metadataObjectFromCMRFile(
-      cmrFile.filename,
-      cmrFile.etag
-    ).then((metadataObject) => ({ ...cmrFile, metadataObject }))));
+  return Promise.all(
+    cmrFiles.map(async (cmrFile) => {
+      const metadataObject = await metadataObjectFromCMRFile(
+        cmrFile.filename,
+        cmrFile.etag
+      );
+
+      return {
+        ...cmrFile,
+        metadataObject
+      };
+    })
+  );
 }
 
 /**

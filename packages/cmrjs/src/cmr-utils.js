@@ -10,12 +10,14 @@ const urljoin = require('url-join');
 const xml2js = require('xml2js');
 const {
   buildS3Uri,
-  getS3Object,
+  getObject,
   parseS3Uri,
   promiseS3Upload,
   s3GetObjectTagging,
   s3TagSetToQueryString
 } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
+const { retryOnMissingObjectError } = require('@cumulus/aws-client/utils');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
 const log = require('@cumulus/common/log');
@@ -188,6 +190,24 @@ async function publish2CMR(cmrPublishObject, creds) {
 }
 
 /**
+ * Returns the S3 object identified by the specified S3 URI and (optional)
+ * entity tag, retrying up to 5 times, if necessary.
+ *
+ * @param {string} filename - S3 URI of the desired object
+ * @param {string|undefined} [etag] - entity tag of the desired object (optional)
+ * @returns {Promise} result of `AWS.S3.getObject()` as a Promise
+ */
+function getObjectByFilename(filename, etag) {
+  const { Bucket, Key } = parseS3Uri(filename);
+  const retryGetObject = retryOnMissingObjectError(getObject, { retries: 5 });
+  const params = etag
+    ? { Bucket, Key, IfMatch: etag }
+    : { Bucket, Key };
+
+  return retryGetObject(s3(), params);
+}
+
+/**
  * Gets metadata for a CMR XML file from S3.
  *
  * @param {string} xmlFilePath - S3 URI to the XML metadata document
@@ -199,8 +219,7 @@ async function getXMLMetadataAsString(xmlFilePath, etag) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
-  const { Bucket, Key } = parseS3Uri(xmlFilePath);
-  const obj = await getS3Object({ Bucket, Key, IfMatch: etag }, { retries: 5 });
+  const obj = await getObjectByFilename(xmlFilePath, etag);
   return obj.Body.toString();
 }
 
@@ -223,8 +242,7 @@ async function parseXmlString(xml) {
  * @returns {Promise<Object>} CMR UMMG metadata object
  */
 async function metadataObjectFromCMRJSONFile(cmrFilename, etag) {
-  const { Bucket, Key } = parseS3Uri(cmrFilename);
-  const obj = await getS3Object({ Bucket, Key, IfMatch: etag }, { retries: 5 });
+  const obj = await getObjectByFilename(cmrFilename, etag);
   return JSON.parse(obj.Body.toString());
 }
 
@@ -259,7 +277,9 @@ function metadataObjectFromCMRFile(cmrFilename, etag) {
   if (isUMMGFile(cmrFilename)) {
     return metadataObjectFromCMRJSONFile(cmrFilename, etag);
   }
-  throw new Error(`Invalid CMR filename: ${cmrFilename}`);
+  throw new Error(
+    `Cannot retrieve metadata: invalid CMR filename: ${cmrFilename}`
+  );
 }
 
 /**
