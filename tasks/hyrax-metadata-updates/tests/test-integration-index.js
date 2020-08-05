@@ -7,6 +7,7 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 const fs = require('fs');
 const xml2js = require('xml2js');
+const pickAll = require('lodash/fp/pickAll');
 
 const xmlParseOptions = {
   ignoreAttrs: true,
@@ -248,7 +249,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata f
     };
 
     t.not(outputEtag, inputEtag);
-    t.like(actualPartial, expectedPartial);
+    t.deepEqual(actualPartial, expectedPartial);
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
@@ -310,7 +311,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     };
 
     t.not(outputEtag, inputEtag);
-    t.like(actualPartial, expectedPartial);
+    t.deepEqual(actualPartial, expectedPartial);
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
@@ -336,7 +337,8 @@ test.serial('hyraxMetadataUpdate fails with PreconditionFailure when metadata wi
 
     const error = await t.throwsAsync(hyraxMetadataUpdate(e));
 
-    t.like(error, preconditionFailedSelector);
+    t.deepEqual(pickAll(Object.keys(preconditionFailedSelector), error),
+      preconditionFailedSelector);
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
@@ -421,7 +423,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates UMM-G metadata fi
     };
 
     t.not(outputEtag, inputEtag);
-    t.like(actualPartial, expectedPartial);
+    t.deepEqual(actualPartial, expectedPartial);
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }

@@ -6,6 +6,7 @@ const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
+const pickAll = require('lodash/fp/pickAll');
 
 const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
@@ -266,7 +267,7 @@ test.serial('postToCMR fails with PreconditionFailure when such error is thrown 
 
     const error = await t.throwsAsync(postToCMR_(newPayload));
 
-    t.like(error, errorSelector);
+    t.deepEqual(pickAll(Object.keys(errorSelector), error), errorSelector);
   } finally {
     cmrClient.CMR.prototype.ingestGranule.restore();
   }

@@ -31,10 +31,7 @@
     "fail-fast": true,
     "serial": true,
     "verbose": true,
-    "timeout": "15m",
-    "nonSemVerExperiments": {
-      "likeAssertion": true
-    }
+    "timeout": "15m"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

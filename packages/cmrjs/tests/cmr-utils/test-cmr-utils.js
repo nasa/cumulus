@@ -6,6 +6,7 @@ const fs = require('fs-extra');
 const xml2js = require('xml2js');
 const sinon = require('sinon');
 const { promisify } = require('util');
+const pickAll = require('lodash/fp/pickAll');
 const {
   buildS3Uri,
   getS3Object,
@@ -701,7 +702,7 @@ const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
 
   const error = await t.throwsAsync(metadataObjectFromCMRFile(filename, etag));
 
-  t.like(error, errorSelector);
+  t.deepEqual(pickAll(Object.keys(errorSelector), error), errorSelector);
 };
 
 test(
