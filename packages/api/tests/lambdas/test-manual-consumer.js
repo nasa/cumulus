@@ -294,7 +294,7 @@ test.serial('handler sets envs from event', async (t) => {
   Object.keys(event).forEach((key) => delete process.env[key]);
 });
 
-test.serial('handler should not overwrite existing envs', async (t) => {
+test.serial('handler should not overwrite existing timestamp envs', async (t) => {
   const originalEnvs = {
     endTimestamp: '1969-12-31T16:00:00.000Z',
     startTimestamp: '1969-12-31T16:00:00.000Z'
