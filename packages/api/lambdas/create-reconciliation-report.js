@@ -44,13 +44,47 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
 );
 
 /**
+ * @param {string} datestring - ISO timestamp string
+ * @returns {number} - primitive value of input date.
+ */
+function ISODateToValue(datestring) {
+  return (new Date(datestring)).valueOf();
+}
+
+/**
+ *
+ * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for Elasticsearch.
+ */
+function convertToESSearchParams(params) {
+  return {
+    timestamp__from: ISODateToValue(params.startTimestamp),
+    timestamp__to: ISODateToValue(params.endTimestamp)
+  };
+}
+
+/**
+ *
+ * @param {Object} params - request params to convert to bucket filter params
+ * @returns {Object} desired parameters formated for bucket reconcilation
+ *                   report filtering.
+ */
+function convertToBucketReportFilterParams(params) {
+  return {
+    startDateTime: ISODateToValue(params.startTimestamp),
+    endDateTime: ISODateToValue(params.endTimestamp)
+  };
+}
+/**
  * Verify that all objects in an S3 bucket contain corresponding entries in
  * DynamoDB, and that there are no extras in either S3 or DynamoDB
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
+ (TODO [MHS, 08/07/2020] for future use)
+ * @param {Object} _bucketReportParams - bucket Filter information.
  * @returns {Promise<Object>} a report
  */
-async function createReconciliationReportForBucket(Bucket) {
+async function createReconciliationReportForBucket(Bucket, _bucketReportParams = {}) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
   const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
 
@@ -109,10 +143,12 @@ async function createReconciliationReportForBucket(Bucket) {
 /**
  * Compare the collection holdings in CMR with Cumulus
  *
+ * @param {Object} esSearchParams - filtering parameters to narrow limit of report.
+ *
  * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
  * onlyInCmr
  */
-async function reconciliationReportForCollections() {
+async function reconciliationReportForCollections(esSearchParams) {
   // compare collection holdings:
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
@@ -128,6 +164,9 @@ async function reconciliationReportForCollections() {
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
   // get all collections from Elasticsearch database and sort them.
+  // TODO [MHS, 2020-07-13] Use ESCollection instead
+  // Build a ESCollection and call the aggregateActiveGranuleCollections to get list of Active CollectionIds
+
   const esCollection = new ESSearchQueue({}, 'collection', process.env.ES_INDEX);
   const esCollectionItems = await esCollection.empty();
   const esCollectionIds = esCollectionItems.map(
@@ -292,8 +331,9 @@ async function reconciliationReportForGranules(params) {
   //   Get CUMULUS granules list (by collectionId order by granuleId)
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
-  const { collectionId, bucketsConfig, distributionBucketMap } = params;
+  const { collectionId, bucketsConfig, distributionBucketMap, searchParams } = params;
   const { name, version } = deconstructCollectionId(collectionId);
+
   const cmrSettings = await getCmrSettings();
   const cmrGranulesIterator = new CMRSearchConceptQueue({
     cmrSettings,
@@ -301,7 +341,7 @@ async function reconciliationReportForGranules(params) {
     searchParams: { short_name: name, version: version, sort_key: ['granule_ur'] },
     format: 'umm_json'
   });
-
+  // TODO [MHS, 2020-07-13] time has to get passed into here.
   const esGranulesIterator = new ESCollectionGranuleQueue({ collectionId }, process.env.ES_INDEX);
 
   const granulesReport = {
@@ -401,11 +441,12 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @param {Object} params.bucketsConfig          - bucket configuration object
  * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
+ * @param {Object} params.esSearchParams         - optional input params to narrow report focus
  * @returns {Promise<Object>}                    - a reconciliation report
  */
 async function reconciliationReportForCumulusCMR(params) {
-  const { bucketsConfig, distributionBucketMap } = params;
-  const collectionReport = await reconciliationReportForCollections();
+  const { bucketsConfig, distributionBucketMap, esSearchParams } = params;
+  const collectionReport = await reconciliationReportForCollections(esSearchParams);
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
     onlyInCumulus: collectionReport.onlyInCumulus,
@@ -413,8 +454,9 @@ async function reconciliationReportForCumulusCMR(params) {
   };
 
   // create granule and granule file report for collections in both Cumulus and CMR
-  const promisedGranuleReports = collectionReport.okCollections.map((collectionId) =>
-    reconciliationReportForGranules({ collectionId, bucketsConfig, distributionBucketMap }));
+  const promisedGranuleReports = collectionReport.okCollections.map(
+    (collectionId) => reconciliationReportForGranules({ collectionId, bucketsConfig, distributionBucketMap, esSearchParams })
+  );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
 
   const granulesInCumulusCmr = {};
@@ -440,15 +482,16 @@ async function reconciliationReportForCumulusCMR(params) {
 
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
 }
+
 /**
  * Create a Reconciliation report and save it to S3
  *
  * @param {Object} params - params
  * @param {moment} params.createStartTime - when the report creation was begun
- * @param {moment} params.endTimestamp - end of date range for report
+ * @param {moment} params.endTimestamp - ending report datetime ISO Timestamp
  * @param {string} params.reportKey - the s3 report key
  * @param {string} params.stackName - the name of the CUMULUS stack
- * @param {moment} params.startTimestamp - begginning of date range for report
+ * @param {moment} params.startTimestamp - beginning report datetime ISO timestamp
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
@@ -489,11 +532,11 @@ async function createReconciliationReport(params) {
 
   let report = {
     createStartTime: createStartTime.toISOString(),
-    createEndTime: null,
+    createEndTime: undefined,
     reportStartTime: startTimestamp,
     reportEndTime: endTimestamp,
     status: 'RUNNING',
-    error: null,
+    error: undefined,
     filesInCumulus,
     collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
@@ -506,9 +549,12 @@ async function createReconciliationReport(params) {
     Body: JSON.stringify(report)
   }).promise();
 
+  // Internal consistency check S3 vs Cumulus DBs
+  // --------------------------------------------
+  const bucketReportParams = convertToBucketReportFilterParams(params);
   // Create a report for each bucket
   const promisedBucketReports = dataBuckets.map(
-    (bucket) => createReconciliationReportForBucket(bucket)
+    (bucket) => createReconciliationReportForBucket(bucket, bucketReportParams)
   );
   const bucketReports = await Promise.all(promisedBucketReports);
 
@@ -522,8 +568,10 @@ async function createReconciliationReport(params) {
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
+  // -----------------------------------------------------
+  const cumulusCmrFilterParams = convertToESSearchParams(params);
   const cumulusCmrReport = await reconciliationReportForCumulusCMR({
-    bucketsConfig, distributionBucketMap
+    bucketsConfig, distributionBucketMap, cumulusCmrFilterParams
   });
   report = Object.assign(report, cumulusCmrReport);
 
@@ -582,16 +630,43 @@ async function processRequest(params) {
   return reconciliationReportModel.get({ name: reportRecord.name });
 }
 
+/**
+ * Convert input to an ISO timestamp.
+ * @param {any} dateable - any type convertable to JS Date
+ * @returns {string} - date formated as ISO timestamp;
+ */
+function isoTimestamp(dateable) {
+  if (dateable) {
+    const aDate = new Date(dateable);
+    if (Number.isNaN(aDate.valueOf())) {
+      throw new TypeError(`${dateable} is not a valid input for new Date().`);
+    }
+    return aDate.toISOString();
+  }
+  return undefined;
+}
+
+/**
+ * Converts input parameters to normalized versions to pass on to the report
+ * functions.  Ensures any input dates are formatted as ISO strings.
+ *
+ * @param {Object} event - input payload
+ * @returns {Object} - Object with normalized parameters
+ */
+function normalizeEvent(event) {
+  const systemBucket = event.systemBucket || process.env.system_bucket;
+  const stackName = event.stackName || process.env.stackName;
+  const startTimestamp = isoTimestamp(event.startTimestamp);
+  const endTimestamp = isoTimestamp(event.endTimestamp);
+  return { systemBucket, stackName, startTimestamp, endTimestamp };
+}
+
 async function handler(event) {
   // increase the limit of search result from CMR.searchCollections/searchGranules
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return processRequest({
-    systemBucket: event.systemBucket || process.env.system_bucket,
-    stackName: event.stackName || process.env.stackName,
-    startTimestamp: event.startTimestamp || null,
-    endTimestamp: event.endTimestamp || null
-  });
+  const reportParams = normalizeEvent(event);
+  return processRequest(reportParams);
 }
 exports.handler = handler;
