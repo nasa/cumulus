@@ -686,18 +686,17 @@ const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
     errorCode: 412,
     message: 'At least one of the pre-conditions you specified did not hold'
   };
-  const { metadataObjectFromCMRFile } = proxyquire('../../cmr-utils', {
-    '@cumulus/aws-client/utils': {
-      // Don't bother with retries
-      retryOnMissingObjectError: (fn) => fn
-    },
-    '@cumulus/aws-client/S3': {
-      getObject: (_, { IfMatch: actualEtag }) => {
-        t.is(actualEtag, etag);
-        throw Object.assign(new Error(), errorSelector);
+  const { metadataObjectFromCMRFile } = proxyquire(
+    '../../cmr-utils',
+    {
+      '@cumulus/aws-client/S3': {
+        waitForObject: async (_, params) => {
+          t.is(params.IfMatch, etag);
+          throw Object.assign(new Error(), errorSelector);
+        }
       }
     }
-  });
+  );
 
   const error = await t.throwsAsync(metadataObjectFromCMRFile(filename, etag));
 

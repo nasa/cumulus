@@ -24,7 +24,6 @@ const {
   parseS3Uri,
   getObject
 } = require('@cumulus/aws-client/S3');
-const { retryOnMissingObjectError } = require('@cumulus/aws-client/utils');
 const { InvalidArgument } = require('@cumulus/errors');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -43,26 +42,24 @@ const preconditionFailedSelector = {
   message: 'At least one of the pre-conditions you specified did not hold'
 };
 
-const { hyraxMetadataUpdate } = proxyquire('..', {
-  '@cumulus/aws-client/utils': {
-    // Reduce retries to avoid excessively long tests
-    retryOnMissingObjectError: (fn) =>
-      retryOnMissingObjectError(fn, { retries: 2 })
-  },
-  '@cumulus/aws-client/S3': {
-    getObject: async (s3Service, params) => {
-      const result = await getObject(s3Service, params);
+const { hyraxMetadataUpdate } = proxyquire(
+  '..',
+  {
+    '@cumulus/aws-client/S3': {
+      waitForObject: async (s3Client, params) => {
+        const result = await getObject(s3Client, params);
 
-      // LocalStack does not handle pre-condition checks, so we have to
-      // manually check, and throw, if necessary.
-      if (params.IfMatch && result.ETag !== params.IfMatch) {
-        throw Object.assign(new Error(), preconditionFailedSelector);
+        // LocalStack does not handle pre-condition checks, so we have to
+        // manually check, and throw, if necessary.
+        if (params.IfMatch && result.ETag !== params.IfMatch) {
+          throw Object.assign(new Error(), preconditionFailedSelector);
+        }
+
+        return result;
       }
-
-      return result;
     }
   }
-});
+);
 
 const cmrPasswordSecret = randomId('cmrPassword');
 

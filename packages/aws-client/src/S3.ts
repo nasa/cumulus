@@ -28,8 +28,12 @@ import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
-export type GetObjectMethod = (params: { Bucket: string, Key: string }) => {
+export type GetObjectCreateReadStreamMethod = (params: AWS.S3.GetObjectRequest) => {
   createReadStream: () => Readable
+};
+
+export type GetObjectPromiseMethod = (params: AWS.S3.GetObjectRequest) => {
+  promise: () => Promise<AWS.S3.GetObjectOutput>
 };
 
 export type Object = Required<AWS.S3.Object>;
@@ -353,16 +357,47 @@ export const s3PutObjectTagging = improveStackTrace(
  * @example
  * const obj = await getObject(s3(), { Bucket: 'b', Key: 'k' })
  *
- * @param {AWS.S3} s3 - an `AWS.S3` instance
- * @param {AWS.S3.GetObjectRequest} params - parameters object to pass through
- *    to `AWS.S3.getObject()`
- * @returns {Promise} response from `AWS.S3.getObject()` as a Promise
+ * @param {AWS.S3} s3Client
+ * @param {AWS.S3.GetObjectRequest} params
+ * @returns {Promise<AWS.S3.GetObjectOutput>}
  */
-// eslint-disable-next-line no-shadow
-export const getObject = (s3: AWS.S3, params: AWS.S3.GetObjectRequest) =>
-  improveStackTrace(
-    (request: AWS.S3.GetObjectRequest) => s3.getObject(request).promise()
-  )(params);
+export const getObject = (
+  s3Client: { getObject: GetObjectPromiseMethod },
+  params: AWS.S3.GetObjectRequest
+): Promise<AWS.S3.GetObjectOutput> =>
+  s3Client.getObject(params).promise();
+
+/**
+ * Get an object from S3, waiting for it to exist and, if specified, have the
+ * correct ETag.
+ *
+ * @param {AWS.S3} s3Client
+ * @param {AWS.S3.GetObjectRequest} params
+ * @param {pRetry.Options} [retryOptions={}]
+ * @returns {Promise<AWS.S3.GetObjectOutput>}
+ */
+export const waitForObject = (
+  s3Client: { getObject: GetObjectPromiseMethod },
+  params: AWS.S3.GetObjectRequest,
+  retryOptions: pRetry.Options = {}
+): Promise<AWS.S3.GetObjectOutput> =>
+  pRetry(
+    async () => {
+      try {
+        return await getObject(s3Client, params);
+      } catch (error) {
+        // Retry if the object does not exist
+        if (error.code === 'NoSuchKey') throw error;
+
+        // Retry if the etag did not match
+        if (params.IfMatch && error.code === 'PreconditionFailed') throw error;
+
+        // For any other error, fail without retrying
+        throw new pRetry.AbortError(error);
+      }
+    },
+    retryOptions
+  );
 
 /**
  * Gets an object from S3.
@@ -379,15 +414,9 @@ export const getObject = (s3: AWS.S3, params: AWS.S3.GetObjectRequest) =>
 export const getS3Object = deprecate(
   improveStackTrace(
     (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
-      pRetry(
-        async () => {
-          try {
-            return await s3().getObject({ Bucket, Key }).promise();
-          } catch (error) {
-            if (error.code === 'NoSuchKey') throw error;
-            throw new pRetry.AbortError(error);
-          }
-        },
+      waitForObject(
+        s3(),
+        { Bucket, Key },
         {
           maxTimeout: 10000,
           onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
@@ -398,7 +427,7 @@ export const getS3Object = deprecate(
   buildDeprecationMessage(
     '@cumulus/aws-client/S3.getS3Object',
     '2.0.1',
-    '@cumulus/aws-client/S3.getObject'
+    '@cumulus/aws-client/S3.getObject or @cumulus/aws-client/S3.waitForObject'
   )
 );
 
@@ -446,7 +475,7 @@ export const putJsonS3Object = (bucket: string, key: string, data: any) =>
  * @returns {Readable}
  */
 export const getObjectReadStream = (params: {
-  s3: { getObject: GetObjectMethod },
+  s3: { getObject: GetObjectCreateReadStreamMethod },
   bucket: string,
   key: string
 }) => {
@@ -588,7 +617,7 @@ type FileInfo = {
 };
 
 export const uploadS3Files = (
-  files: Array<string|FileInfo>,
+  files: Array<string | FileInfo>,
   defaultBucket: string,
   keyPath: string | ((x: string) => string),
   s3opts: Partial<AWS.S3.PutObjectRequest> = {}
@@ -746,7 +775,7 @@ export const listS3ObjectsV2 = async (
  */
 export const calculateObjectHash = async (
   params: {
-    s3: { getObject: GetObjectMethod },
+    s3: { getObject: GetObjectCreateReadStreamMethod },
     algorithm: string,
     bucket: string,
     key: string

@@ -24,7 +24,7 @@ const parseS3Uri = (uri: string) => {
 };
 
 const calculateGranuleFileChecksum = async (params: {
-  s3: { getObject: S3.GetObjectMethod },
+  s3: { getObject: S3.GetObjectCreateReadStreamMethod },
   algorithm: string,
   granuleFile: GranuleFile
 }) => {
@@ -51,7 +51,7 @@ const skipGranuleFileUpdate = (granuleFile: GranuleFile) =>
   || granuleFileDoesNotHaveFilename(granuleFile);
 
 export const addChecksumToGranuleFile = async (params: {
-  s3: { getObject: S3.GetObjectMethod },
+  s3: { getObject: S3.GetObjectCreateReadStreamMethod },
   algorithm: string,
   granuleFile: GranuleFile
 }) => {
@@ -75,7 +75,7 @@ export const addChecksumToGranuleFile = async (params: {
 };
 
 const addFileChecksumsToGranule = async (params: {
-  s3: { getObject: S3.GetObjectMethod },
+  s3: { getObject: S3.GetObjectCreateReadStreamMethod },
   algorithm: string,
   granule: Granule
 }) => {

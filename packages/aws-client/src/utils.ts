@@ -68,34 +68,3 @@ export const retryOnThrottlingException = <T, U extends unknown[]>(
         () => fn(...args).catch(retryIfThrottlingException),
         { maxTimeout: 5000, ...options }
       );
-
-const retryIfMissingObjectError = (error: Error & { statusCode?: number }) => {
-  const { statusCode } = error;
-
-  if (statusCode && [404, 412].includes(statusCode)) throw error;
-  throw new pRetry.AbortError(error);
-};
-
-/**
- * Returns a function that wraps the specified function, but will retry the
- * wrapped function when it throws a "not found" (404) or "pre-condition failed"
- * (412) error, based upon the specified retry options.
- *
- * @param {Function} fn - function (that returns a Promise) to retry on error
- * @param {Object} options - retry options
- * @returns {Function} a function that will retry the specified function when
- *    it throws a "not found" or "pre-condition failed" error (i.e., the
- *    `statusCode` property of the error is either 404 or 412)
- * @see https://github.com/sindresorhus/p-retry#options
- * @see https://github.com/tim-kos/node-retry#retryoperationoptions
- * @see https://github.com/tim-kos/node-retry#retrytimeoutsoptions
- */
-export const retryOnMissingObjectError = <T, U extends unknown[]>(
-  fn: (...args: U) => Promise<T>,
-  options: pRetry.Options = {}
-) =>
-    (...args: U) =>
-      pRetry(
-        () => fn(...args).catch(retryIfMissingObjectError),
-        { maxTimeout: 5000, ...options }
-      );
