@@ -50,8 +50,8 @@ const { hyraxMetadataUpdate } = proxyquire('..', {
       retryOnMissingObjectError(fn, { retries: 2 })
   },
   '@cumulus/aws-client/S3': {
-    getObject: async (s3, params) => {
-      const result = await getObject(s3, params);
+    getObject: async (s3Service, params) => {
+      const result = await getObject(s3Service, params);
 
       // LocalStack does not handle pre-condition checks, so we have to
       // manually check, and throw, if necessary.
@@ -367,8 +367,9 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
     });
     const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
     // We do this dance because formatting.
-    const expectedString = JSON.stringify(JSON.parse(expected), null, 2);
-    const actualString = JSON.stringify(JSON.parse(actual.Body.toString()), null, 2);
+    const expectedString = JSON.stringify(JSON.parse(expected), undefined, 2);
+    const actualString = JSON.stringify(JSON.parse(actual.Body.toString()),
+      undefined, 2);
 
     t.is(actualString, expectedString);
   } finally {
@@ -408,7 +409,8 @@ test.serial('hyraxMetadataUpdate immediately finds and updates UMM-G metadata fi
       Key: metadataFile.name
     });
     // We do this dance because formatting.
-    const normalizeBody = (body) => JSON.stringify(JSON.parse(body), null, 2);
+    const normalizeBody = (body) => JSON.stringify(JSON.parse(body), undefined,
+      2);
     const actualPartial = {
       etag: actual.ETag,
       body: normalizeBody(actual.Body.toString())

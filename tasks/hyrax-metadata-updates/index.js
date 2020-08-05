@@ -175,7 +175,7 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
   };
   metadataCopy.RelatedUrls.push(url);
 
-  return JSON.stringify(metadataCopy, null, 2);
+  return JSON.stringify(metadataCopy, undefined, 2);
 }
 
 /**
@@ -247,18 +247,27 @@ async function getMetadataObject(metadataFileName, metadata) {
 }
 
 /**
+ * @callback GranuleUpdater
+ * @param {Object} - granule object containing a metadata file to update
+ * @returns {Object} shallow copy of the specified granule, but with its
+ *    metadata file updated with its currenty entity tag (`etag`) after updating
+ *    it in S3 with a hyrax URL
+ */
+
+/**
  * updateSingleGranule
  *
- * @param {Object} config
- * @param {Object} granuleObject - granule files object
+ * @param {Object} config - configuration object with CMR information
+ * @returns {GranuleUpdater} a function for updating a granule's metadata file
+ *    with a hyrax URL
  */
-const updateGranule = (config) => async (granuleObject) => {
+const updateGranule = (config) => async (granule) => {
   // Read in the metadata file
-  const metadataFile = granuleObject.files.find(isCMRFile);
+  const metadataFile = granule.files.find(isCMRFile);
   // If there is no metadata file, error out.
   if (metadataFile === undefined) {
     throw new RecordDoesNotExist(
-      `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granuleObject.granuleId}`
+      `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}`
     );
   }
   const { Bucket, Key } = parseS3Uri(metadataFile.filename);
@@ -290,12 +299,12 @@ const updateGranule = (config) => async (granuleObject) => {
   });
 
   return {
-    ...granuleObject,
-    files: granuleObject.files.map(
+    ...granule,
+    files: granule.files.map(
       (file) => (file === metadataFile ? assoc('etag', newEtag, file) : file)
     )
   };
-}
+};
 
 /**
  * Update the metadata of each granule with an OPeNDAP data acquisition URL.
