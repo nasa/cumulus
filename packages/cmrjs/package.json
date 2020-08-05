@@ -15,10 +15,7 @@
   },
   "ava": {
     "serial": true,
-    "timeout": "15m",
-    "nonSemVerExperiments": {
-      "likeAssertion": true
-    }
+    "timeout": "15m"
   },
   "keywords": [
     "CUMULUS"
