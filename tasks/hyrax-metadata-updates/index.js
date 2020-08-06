@@ -26,13 +26,12 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  getObject,
   s3GetObjectTagging,
   s3PutObject,
   s3TagSetToQueryString,
-  parseS3Uri
+  parseS3Uri,
+  waitForObject
 } = require('@cumulus/aws-client/S3');
-const { retryOnMissingObjectError } = require('@cumulus/aws-client/utils');
 
 const xml2js = require('xml2js');
 
@@ -41,8 +40,6 @@ const xmlParseOptions = {
   mergeAttrs: true,
   explicitArray: false
 };
-
-const retryGetObject = retryOnMissingObjectError(getObject, { retries: 5 });
 
 /**
  * generateAddress
@@ -273,7 +270,7 @@ const updateGranule = (config) => async (granule) => {
   const { Bucket, Key } = parseS3Uri(metadataFile.filename);
   const etag = metadataFile.etag;
   const params = etag ? { Bucket, Key, IfMatch: etag } : { Bucket, Key };
-  const metadataResult = await retryGetObject(s3(), params);
+  const metadataResult = await waitForObject(s3(), params, { retries: 5 });
 
   const tags = await s3GetObjectTagging(Bucket, Key);
 

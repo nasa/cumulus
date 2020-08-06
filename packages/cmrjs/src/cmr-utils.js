@@ -10,14 +10,13 @@ const urljoin = require('url-join');
 const xml2js = require('xml2js');
 const {
   buildS3Uri,
-  getObject,
   parseS3Uri,
   promiseS3Upload,
   s3GetObjectTagging,
-  s3TagSetToQueryString
+  s3TagSetToQueryString,
+  waitForObject
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { retryOnMissingObjectError } = require('@cumulus/aws-client/utils');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
 const log = require('@cumulus/common/log');
@@ -199,12 +198,12 @@ async function publish2CMR(cmrPublishObject, creds) {
  */
 function getObjectByFilename(filename, etag) {
   const { Bucket, Key } = parseS3Uri(filename);
-  const retryGetObject = retryOnMissingObjectError(getObject, { retries: 5 });
+
   const params = etag
     ? { Bucket, Key, IfMatch: etag }
     : { Bucket, Key };
 
-  return retryGetObject(s3(), params);
+  return waitForObject(s3(), params, { retries: 5 });
 }
 
 /**
