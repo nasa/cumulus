@@ -1,6 +1,7 @@
 'use strict';
 
 const delay = require('delay');
+const pRetry = require('p-retry');
 const nock = require('nock');
 const { promisify } = require('util');
 const test = require('ava');
@@ -47,17 +48,22 @@ const { hyraxMetadataUpdate } = proxyquire(
   '..',
   {
     '@cumulus/aws-client/S3': {
-      waitForObject: async (s3Client, params) => {
-        const result = await getObject(s3Client, params);
+      waitForObject: (s3Client, params, retryOptions) =>
+        pRetry(
+          async () => {
+            const result = await getObject(s3Client, params);
 
-        // LocalStack does not handle pre-condition checks, so we have to
-        // manually check, and throw, if necessary.
-        if (params.IfMatch && result.ETag !== params.IfMatch) {
-          throw Object.assign(new Error(), preconditionFailedSelector);
-        }
+            // LocalStack does not handle pre-condition checks, so we have to
+            // manually check, and throw, if necessary.
+            if (params.IfMatch && result.ETag !== params.IfMatch) {
+              throw Object.assign(new Error(), preconditionFailedSelector);
+            }
 
-        return result;
-      }
+            return result;
+          },
+          // Reduce number of retries to reduce test times
+          { ...retryOptions, retries: 2 }
+        )
     }
   }
 );
@@ -284,7 +290,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     });
 
     const granulesPromise = hyraxMetadataUpdate(e);
-    await delay(2000).then(promiseS3Upload({
+    await delay(3000).then(promiseS3Upload({
       Bucket: bucket,
       Key: metadataFile.name,
       Body: fs.createReadStream('tests/data/echo10in.xml')
