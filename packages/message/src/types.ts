@@ -1,29 +1,17 @@
 import { Message } from '@cumulus/types';
 
-export interface MessageTemplateCumulusMeta {
-  queueExecutionLimits: {
-    [queueUrl: string]: number
-  }
+export interface WorkflowMessageTemplateCumulusMeta {
+  queueExecutionLimits: Message.QueueExecutionLimits
 }
 
-export interface MessageTemplate {
-  cumulus_meta: MessageTemplateCumulusMeta
+// Minimal type to define the shape of the template
+// used to prepare workflow messages
+export interface WorkflowMessageTemplate {
+  cumulus_meta: WorkflowMessageTemplateCumulusMeta
   meta: object
 }
 
 export interface Workflow {
   arn: string
   name: string
-}
-
-export interface QueueMessageMeta {
-  workflow_name: string
-  collection?: object
-  provider?: object
-}
-
-export interface CumulusQueueMessage {
-  cumulus_meta: Message.CumulusMeta & MessageTemplateCumulusMeta
-  meta: QueueMessageMeta
-  payload: object
 }

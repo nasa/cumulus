@@ -39,13 +39,6 @@ test('getQueueUrl returns correct queue URL', (t) => {
   t.is(getQueueUrl(message), queueUrl);
 });
 
-test('getQueueUrl throws an error if cumulus_meta.queueUrl is not set in message', (t) => {
-  const message = {
-    cumulus_meta: {}
-  };
-  t.throws(() => getQueueUrl(message));
-});
-
 test('getQueueNameByUrl returns correct value', (t) => {
   const queueName = randomId('queueName');
   const queueUrl = randomId('queueUrl');

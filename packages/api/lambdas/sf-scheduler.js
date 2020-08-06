@@ -21,7 +21,7 @@ const getCollection = (collection) => {
 };
 
 /**
- * Add a Cumulus workflow message to the queue specified by event.queueName.
+ * Add a Cumulus workflow message to the queue specified by event.queueUrl.
  *
  * A consumer should be configured for this queue to start executions for
  * the queued message.
@@ -43,14 +43,18 @@ async function handleScheduleEvent(event) {
     arn: workflowDefinition.arn
   };
 
+  const eventCustomMeta = get(event, 'meta', {});
+
   const message = buildQueueMessageFromTemplate({
-    collection,
     messageTemplate,
-    provider,
     queueUrl,
     asyncOperationId: get(event, 'asyncOperationId'),
     customCumulusMeta: get(event, 'cumulus_meta', {}),
-    customMeta: get(event, 'meta', {}),
+    customMeta: {
+      ...eventCustomMeta,
+      collection,
+      provider
+    },
     payload: get(event, 'payload', {}),
     workflow
   });

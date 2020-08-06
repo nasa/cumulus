@@ -87,12 +87,14 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
-    provider,
-    collection,
     queueUrl,
     messageTemplate,
     payload,
-    workflow
+    workflow,
+    customMeta: {
+      collection,
+      provider
+    }
   });
 
   const expectedMessage = {
@@ -137,12 +139,14 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
   };
 
   const actualMessage = buildQueueMessageFromTemplate({
-    provider,
-    collection,
     queueUrl,
     messageTemplate,
     payload,
-    workflow
+    workflow,
+    customMeta: {
+      collection,
+      provider
+    }
   });
 
   const expectedMessage = {
@@ -187,12 +191,14 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
-    provider: undefined,
-    collection: undefined,
     queueUrl,
     messageTemplate,
     payload,
-    workflow
+    workflow,
+    customMeta: {
+      provider: undefined,
+      collection: undefined
+    }
   });
 
   const expectedMessage = {
@@ -229,12 +235,14 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
   const payload = {};
 
   const actualMessage = buildQueueMessageFromTemplate({
-    provider,
-    collection,
     queueUrl,
     messageTemplate,
     payload,
-    workflow
+    workflow,
+    customMeta: {
+      provider,
+      collection
+    }
   });
 
   const expectedMessage = {
@@ -255,7 +263,12 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
 });
 
 test('buildQueueMessageFromTemplate returns expected message with custom cumulus_meta and meta', (t) => {
-  const messageTemplate = {};
+  const messageTemplate = {
+    meta: {
+      provider: 'fake-provider', // should get overridden
+      collection: 'fake-collection' // should get overriden
+    }
+  };
   const provider = randomId('provider');
   const collection = randomId('collection');
   const queueUrl = randomId('queue');
@@ -269,8 +282,8 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
   };
   const customMeta = {
     foo: 'bar',
-    provider: 'fake-provider', // should get overridden
-    collection: 'fake-collection', // should get overriden
+    provider,
+    collection,
     object: {
       key: 'value'
     }

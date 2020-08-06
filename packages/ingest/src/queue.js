@@ -47,13 +47,17 @@ async function enqueueParsePdrMessage({
   };
 
   const message = buildQueueMessageFromTemplate({
-    collection,
+    // collection,
     messageTemplate,
     parentExecutionArn,
     payload,
-    provider,
+    // provider,
     queueUrl,
-    workflow
+    workflow,
+    customMeta: {
+      collection,
+      provider
+    }
   });
 
   const arn = buildExecutionArn(
@@ -111,13 +115,17 @@ async function enqueueGranuleIngestMessage({
   };
 
   const message = buildQueueMessageFromTemplate({
-    collection,
+    // collection,
     messageTemplate,
     parentExecutionArn,
     payload,
-    provider,
+    // provider,
     queueUrl,
-    workflow
+    workflow,
+    customMeta: {
+      collection,
+      provider
+    }
   });
 
   if (pdr) message.meta.pdr = pdr;
