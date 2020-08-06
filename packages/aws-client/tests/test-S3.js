@@ -17,7 +17,6 @@ const {
   getJsonS3Object,
   getObjectSize,
   getS3Object,
-  getObject,
   getTextObject,
   headObject,
   downloadS3File,
@@ -161,35 +160,6 @@ test('getS3Object() will retry if the requested key does not exist', async (t) =
   const response = await promisedGetS3Object;
 
   t.is(response.Body.toString(), 'asdf');
-});
-
-test('getObject() returns an existing S3 object', async (t) => {
-  const { Bucket } = t.context;
-  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
-
-  const response = await getObject(awsServices.s3(), { Bucket, Key });
-
-  t.is(response.Body.toString(), 'asdf');
-});
-
-test('getObject() throws an exception if the requested bucket does not exist', async (t) => {
-  const Bucket = randomString();
-
-  const promisedObject = getObject(awsServices.s3(), { Bucket, Key: 'asdf' });
-
-  const error = await t.throwsAsync(pTimeout(promisedObject, 5000));
-
-  t.is(error.code, 'NoSuchBucket');
-});
-
-test('getObject() throws an exception if the requested key does not exist', async (t) => {
-  const { Bucket } = t.context;
-
-  const promisedObject = getObject(awsServices.s3(), { Bucket, Key: 'asdf' });
-
-  const err = await t.throwsAsync(pTimeout(promisedObject, 5000));
-
-  t.is(err.code, 'NoSuchKey');
 });
 
 test('s3Join behaves as expected', (t) => {

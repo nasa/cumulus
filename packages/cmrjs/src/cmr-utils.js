@@ -86,6 +86,7 @@ function granuleToCmrFileObject(granule) {
   return granule.files
     .filter(isCMRFile)
     .map((file) => ({
+      // Include etag only if file has one
       ...pick(file, 'etag'),
       // handle both new-style and old-style files model
       filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
