@@ -8,7 +8,7 @@ import { handler, addChecksumToGranuleFile } from '../src';
 const randomString = () => cryptoRandomString({ length: 10 });
 
 const test = anyTest as TestInterface<{
-  stubS3: { getObject: S3.GetObjectMethod }
+  stubS3: { getObject: S3.GetObjectCreateReadStreamMethod }
 }>;
 
 test.before((t) => {

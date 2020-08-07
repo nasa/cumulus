@@ -31,6 +31,10 @@
                 "bucket": {
                   "type": "string"
                 },
+                "etag": {
+                  "description": "Entity tag for the current version of the file",
+                  "type": "string"
+                },
                 "duplicate_found": {
                   "description": "whether a duplicate for this file was found",
                   "type": "boolean"
