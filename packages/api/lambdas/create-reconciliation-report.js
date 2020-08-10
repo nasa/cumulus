@@ -55,6 +55,19 @@ function ISODateToValue(datestring) {
 /**
  *
  * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for CMR Collection search.
+ */
+function convertToCMRCollectionSearchParams(params) {
+  const startDate = params.startTimestamp || '';
+  const endDate = params.endTimestamp || '';
+  return {
+    'has_granules_revised_at[]': `${startDate},${endDate}`
+  };
+}
+
+/**
+ *
+ * @param {Object} params - request params to convert to Elasticsearch params
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
 function convertToESSearchParams(params) {
@@ -156,12 +169,12 @@ async function createReconciliationReportForBucket(Bucket, _bucketReportParams =
 /**
  * Compare the collection holdings in CMR with Cumulus
  *
- * @param {Object} esCollectionSearchParams - filtering parameters to narrow limit of report.
- *
+ * @param {Object} recReportParams - lambda's input filtering parameters to
+ *                                   narrow limit of report.
  * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
  * onlyInCmr
  */
-async function reconciliationReportForCollections(esCollectionSearchParams) {
+async function reconciliationReportForCollections(recReportParams) {
   // compare collection holdings:
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
@@ -174,12 +187,18 @@ async function reconciliationReportForCollections(esCollectionSearchParams) {
   const cmr = new CMR(cmrSettings);
   // TODO [MHS, 08/05/2020]  Set query params for CMR here or are we one-waying now only.
   // ""has granules revised at"" <- see slack.
-  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
+  // probably want a search like this:
+  // curl "https://cmr.earthdata.nasa.gov/search/collections?has_granules_revised_at\[\]=2015-01-01T10:00:00Z,2015-02-02T10:10:00Z"
+  const cmrSearchParams = convertToCMRCollectionSearchParams(recReportParams);
+  // Logged to
+  log.info(`cmrSearchParams: ${JSON.stringify(cmrSearchParams)}`);
+  const cmrCollectionItems = await cmr.searchCollections(cmrSearchParams, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
-  // Build a ESCollection and call the aggregateActiveGranuleCollections to get list of Active CollectionIds
-  // TODO [MHS, 08/05/2020] I don't think we can aggregate collections in this version of ES.  So just grab them all. it's small for now.
+  // Build a ESCollection and call the aggregateActiveGranuleCollections to get
+  // list of Active CollectionIds
+  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
   const esCollection = new Collection({ queryStringParameters: esCollectionSearchParams }, 'collection', process.env.ES_INDEX);
   const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
   const esCollectionIds = esCollectionItems.sort();
@@ -461,8 +480,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  */
 async function reconciliationReportForCumulusCMR(params) {
   const { bucketsConfig, distributionBucketMap, recReportParams } = params;
-  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
-  const collectionReport = await reconciliationReportForCollections(esCollectionSearchParams);
+  const collectionReport = await reconciliationReportForCollections(recReportParams);
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
     onlyInCumulus: collectionReport.onlyInCumulus,
