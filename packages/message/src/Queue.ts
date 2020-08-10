@@ -59,8 +59,13 @@ export const getQueueName = (message: Message.CumulusMessage) => {
  *
  * @alias module:Queue
  */
-export const getQueueUrl = (message: Message.CumulusMessage): string =>
-  message.cumulus_meta.queueUrl;
+export const getQueueUrl = (message: Message.CumulusMessage): string => {
+  const queueUrl = message.cumulus_meta.queueUrl;
+  if (isNil(queueUrl)) {
+    throw new Error('Could not find queue URL at cumulus_meta.queueUrl in message');
+  }
+  return queueUrl;
+};
 
 /**
  * Get the maximum executions for a queue.

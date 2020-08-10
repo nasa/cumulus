@@ -20,14 +20,17 @@ const createCloudwatchEventMessage = ({
   queueUrl,
   source = sfEventSource
 }) => {
+  const cumulusMeta = {
+    execution_name: randomString()
+  };
+  if (queueUrl) {
+    cumulusMeta.queueUrl = queueUrl;
+    cumulusMeta.queueExecutionLimits = {
+      [queueUrl]: 5
+    };
+  }
   const message = JSON.stringify({
-    cumulus_meta: {
-      execution_name: randomString(),
-      queueUrl,
-      queueExecutionLimits: {
-        [queueUrl]: 5
-      }
-    }
+    cumulus_meta: cumulusMeta
   });
   const detail = (status === 'SUCCEEDED'
     ? { status, output: message }
@@ -130,7 +133,7 @@ test('sfSemaphoreDown lambda does nothing for an event with the wrong source', a
   assertInvalidDecrementEvent(t, output);
 });
 
-test('sfSemaphoreDown lambda does nothing for a workflow message with no queue name', async (t) => {
+test('sfSemaphoreDown lambda does nothing for a workflow message with no queue URL', async (t) => {
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status: 'SUCCEEDED'

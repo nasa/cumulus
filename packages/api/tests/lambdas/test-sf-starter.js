@@ -157,10 +157,9 @@ test.serial('handleEvent returns the number of messages consumed', async (t) => 
   t.is(data, 9);
 });
 
-test('incrementAndDispatch throws error for message without queue name', async (t) => {
+test('incrementAndDispatch throws error for message without queue URL', async (t) => {
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage() }),
-    { message: 'cumulus_meta.queueUrl not set in message' }
+    () => incrementAndDispatch({ Body: createWorkflowMessage() })
   );
 });
 
@@ -168,8 +167,7 @@ test('incrementAndDispatch throws error for message with no maximum executions v
   const { queueUrl } = t.context;
 
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage(queueUrl) }),
-    { message: `Could not determine maximum executions for queue ${queueUrl}` }
+    () => incrementAndDispatch({ Body: createWorkflowMessage(queueUrl) })
   );
 });
 
