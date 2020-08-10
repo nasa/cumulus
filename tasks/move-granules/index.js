@@ -5,7 +5,9 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const flatten = require('lodash/flatten');
 const keyBy = require('lodash/keyBy');
+const mapValues = require('lodash/mapValues');
 const path = require('path');
+const set = require('lodash/set');
 
 const {
   buildS3Uri,
@@ -38,8 +40,9 @@ const log = require('@cumulus/common/log');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
 /**
- * validates the file matched only one collection.file and has a valid bucket
+ * Validates the file matched only one collection.file and has a valid bucket
  * config.
+ *
  * @param {Array<Object>} match - list of matched collection.file.
  * @param {BucketsConfig} bucketsConfig - instance describing stack configuration.
  * @param {Object} fileName - the file name tested.
@@ -56,7 +59,7 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
   }
   if (!bucketsConfig.keyExists(match[0].bucket)) {
     throw new InvalidArgument(`Collection config specifies a bucket key of ${match[0].bucket}, `
-                              + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
+      + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
   }
 }
 
@@ -120,7 +123,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 }
 
 /**
- * move file from source bucket to target location, and return the file moved.
+ * Move file from source bucket to target location, and return the file moved.
  * In case of 'version' duplicateHandling, also return the renamed files.
  *
  * @param {Object} file - granule file to be moved
@@ -128,7 +131,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {string} duplicateHandling - how to handle duplicate files
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @param {boolean} markDuplicates - Override to handle cmr metadata files that
-                                     shouldn't be marked as duplicates
+ *                                   shouldn't be marked as duplicates
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
 async function moveFileRequest(
@@ -204,7 +207,7 @@ async function moveFileRequest(
  * @param {string} duplicateHandling - how to handle duplicate files
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @returns {Object} the object with updated granules
- **/
+ */
 async function moveFilesForAllGranules(
   granulesObject,
   sourceBucket,
@@ -242,11 +245,11 @@ async function moveFilesForAllGranules(
  * @param {Object} granulesObject        - an object of the granules where the key is the granuleId
  * @param {string} cmrGranuleUrlType .   - type of granule CMR url
  * @param {string} distEndpoint          - the api distribution endpoint
- * @param {Object} bucketTypes - map of bucket names to bucket types
+ * @param {Object} bucketTypes           - map of bucket names to bucket types
  * @param {Object} distributionBucketMap - mapping of bucket->distirubtion path values
  *                                         (e.g. { bucket: distribution path })
- * @returns {Promise}                    - promise resolves when all files have been updated
- **/
+ * @returns {Promise<Object[]>} array of updated CMR files with etags
+ */
 async function updateEachCmrFileAccessURLs(
   cmrFiles,
   granulesObject,
@@ -255,13 +258,13 @@ async function updateEachCmrFileAccessURLs(
   bucketTypes,
   distributionBucketMap
 ) {
-  return Promise.all(cmrFiles.map(async (cmrFile) => {
+  return Promise.all(cmrFiles.map((cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
-    const updatedCmrFile = granule.files.find(isCMRFile);
+
     return updateCMRMetadata({
       granuleId,
-      cmrFile: updatedCmrFile,
+      cmrFile: granule.files.find(isCMRFile),
       files: granule.files,
       distEndpoint,
       published: false, // Do the publish in publish-to-cmr step
@@ -273,8 +276,29 @@ async function updateEachCmrFileAccessURLs(
 }
 
 /**
- * Move Granule files to final Location
- * See the schemas directory for detailed input and output schemas
+ * Adds etag values to the specified granules' CMR files.
+ *
+ * @param {Object} granulesByGranuleId - mapping of granule IDs to granules,
+ *    each containing a list of `files`
+ * @param {Object[]} cmrFiles - array of CMR file objects with `filename` and
+ *    `etag` properties
+ * @returns {Object} granule mapping identical to input granule mapping, but
+ *    with CMR file objects updated with the `etag` values supplied via the
+ *    array of CMR file objects, matched by `filename`
+ */
+function addCmrFileEtags(granulesByGranuleId, cmrFiles) {
+  const etagsByFilename = Object.fromEntries(cmrFiles
+    .map(({ filename, etag }) => [filename, etag]));
+  const addEtag = (file) => set(file, 'etag', etagsByFilename[file.filename]);
+  const addEtags = (files) => files.map((f) => (isCMRFile(f) ? addEtag(f) : f));
+
+  return mapValues(granulesByGranuleId,
+    (granule) => ({ ...granule, files: addEtags(granule.files) }));
+}
+
+/**
+ * Move Granule files to final location.
+ * See the schemas directory for detailed input and output schemas.
  *
  * @param {Object} event - Lambda function payload
  * @param {Object} event.config - the config object
@@ -290,16 +314,11 @@ async function updateEachCmrFileAccessURLs(
  * @returns {Promise} returns the promise of an updated event object
  */
 async function moveGranules(event) {
-  // we have to post the meta-xml file of all output granules
-  // first we check if there is an output file
+  // We have to post the meta-xml file of all output granules
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
-
-  const bucketTypes = Object.values(bucketsConfig.buckets)
-    .reduce(
-      (acc, { name, type }) => ({ ...acc, [name]: type }),
-      {}
-    );
+  const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
+    .map(({ name, type }) => [name, type]));
 
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'distribution');
@@ -315,37 +334,42 @@ async function moveGranules(event) {
     getDistributionBucketMapKey(process.env.stackName)
   );
 
-  let movedGranules;
+  let movedGranulesByGranuleId;
 
   // allows us to disable moving the files
   if (moveStagedFiles) {
-    // update allGranules with aspirational metadata (where the file should end up after moving.)
+    // Update all granules with aspirational metadata (where the files should
+    // end up after moving).
     const granulesToMove = await updateGranuleMetadata(
       granulesByGranuleId, config.collection, cmrFiles, bucketsConfig
     );
 
-    // move files from staging location to final location
-    movedGranules = await moveFilesForAllGranules(
+    // Move files from staging location to final location
+    movedGranulesByGranuleId = await moveFilesForAllGranules(
       granulesToMove, config.bucket, duplicateHandling, bucketsConfig
     );
-    // update cmr metadata files with correct online access urls
-    await updateEachCmrFileAccessURLs(
+
+    // Update cmr metadata files with correct online access urls and etags
+    const updatedCmrFiles = await updateEachCmrFileAccessURLs(
       cmrFiles,
-      movedGranules,
+      movedGranulesByGranuleId,
       cmrGranuleUrlType,
       config.distribution_endpoint,
       bucketTypes,
       distributionBucketMap
     );
+
+    // Transfer etag info to granules' CMR files
+    movedGranulesByGranuleId = addCmrFileEtags(movedGranulesByGranuleId,
+      updatedCmrFiles);
   } else {
-    movedGranules = granulesByGranuleId;
+    movedGranulesByGranuleId = granulesByGranuleId;
   }
 
   return {
-    granules: Object.values(movedGranules)
+    granules: Object.values(movedGranulesByGranuleId)
   };
 }
-exports.moveGranules = moveGranules;
 
 /**
  * Lambda handler
@@ -360,3 +384,4 @@ async function handler(event, context) {
 }
 
 exports.handler = handler;
+exports.moveGranules = moveGranules;

@@ -37,7 +37,7 @@ export const improveStackTrace = <T, U extends unknown[]>(fn: (...args: U) => Pr
     } catch (error) {
       // @ts-ignore
       setErrorStack(error, tracerError.stack);
-      error.message = `${error.message}; Function params: ${JSON.stringify(args, null, 2)}`;
+      error.message = `${error.message}; Function params: ${JSON.stringify(args, undefined, 2)}`;
       throw error;
     }
   };

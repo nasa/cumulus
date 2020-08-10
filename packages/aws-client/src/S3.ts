@@ -28,8 +28,12 @@ import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
-export type GetObjectMethod = (params: { Bucket: string, Key: string }) => {
+export type GetObjectCreateReadStreamMethod = (params: AWS.S3.GetObjectRequest) => {
   createReadStream: () => Readable
+};
+
+export type GetObjectPromiseMethod = (params: AWS.S3.GetObjectRequest) => {
+  promise: () => Promise<AWS.S3.GetObjectOutput>
 };
 
 export type Object = Required<AWS.S3.Object>;
@@ -115,7 +119,7 @@ export const buildS3Uri = (bucket: string, key: string) =>
 * @returns {string} tags query string
 */
 export const s3TagSetToQueryString = (tagset: AWS.S3.TagSet) =>
-  tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
+  tagset.map(({ Key, Value }) => `${Key}=${Value}`).join('&');
 
 /**
  * Delete an object from S3
@@ -348,32 +352,85 @@ export const s3PutObjectTagging = improveStackTrace(
 );
 
 /**
-* Get an object from S3
-*
-* @param {string} Bucket - name of bucket
-* @param {string} Key - key for object (filepath + filename)
-* @param {Object} retryOptions - options to control retry behavior when an
-*   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
-*   By default, retries will not be performed
-* @returns {Promise} returns response from `S3.getObject` as a promise
-**/
-export const getS3Object = improveStackTrace(
-  (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
-    pRetry(
-      async () => {
-        try {
-          return await s3().getObject({ Bucket, Key }).promise();
-        } catch (error) {
-          if (error.code === 'NoSuchKey') throw error;
-          throw new pRetry.AbortError(error);
-        }
-      },
-      {
-        maxTimeout: 10000,
-        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-        ...retryOptions
+ * Gets an object from S3.
+ *
+ * @example
+ * const obj = await getObject(s3(), { Bucket: 'b', Key: 'k' })
+ *
+ * @param {AWS.S3} s3 - an `AWS.S3` instance
+ * @param {AWS.S3.GetObjectRequest} params - parameters object to pass through
+ *   to `AWS.S3.getObject()`
+ * @returns {Promise<AWS.S3.GetObjectOutput>} response from `AWS.S3.getObject()`
+ *   as a Promise
+ */
+export const getObject = (
+  // eslint-disable-next-line no-shadow
+  s3: { getObject: GetObjectPromiseMethod },
+  params: AWS.S3.GetObjectRequest
+): Promise<AWS.S3.GetObjectOutput> => s3.getObject(params).promise();
+
+/**
+ * Get an object from S3, waiting for it to exist and, if specified, have the
+ * correct ETag.
+ *
+ * @param {AWS.S3} s3Client
+ * @param {AWS.S3.GetObjectRequest} params
+ * @param {pRetry.Options} [retryOptions={}]
+ * @returns {Promise<AWS.S3.GetObjectOutput>}
+ */
+export const waitForObject = (
+  s3Client: { getObject: GetObjectPromiseMethod },
+  params: AWS.S3.GetObjectRequest,
+  retryOptions: pRetry.Options = {}
+): Promise<AWS.S3.GetObjectOutput> =>
+  pRetry(
+    async () => {
+      try {
+        return await getObject(s3Client, params);
+      } catch (error) {
+        // Retry if the object does not exist
+        if (error.code === 'NoSuchKey') throw error;
+
+        // Retry if the etag did not match
+        if (params.IfMatch && error.code === 'PreconditionFailed') throw error;
+
+        // For any other error, fail without retrying
+        throw new pRetry.AbortError(error);
       }
-    )
+    },
+    retryOptions
+  );
+
+/**
+ * Gets an object from S3.
+ *
+ * @param {string} Bucket - name of bucket
+ * @param {string} Key - key for object (filepath + filename)
+ * @param {Object} retryOptions - options to control retry behavior when an
+ *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
+ *   By default, retries will not be performed
+ * @returns {Promise} returns response from `S3.getObject` as a promise
+ *
+ * @deprecated
+ */
+export const getS3Object = deprecate(
+  improveStackTrace(
+    (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
+      waitForObject(
+        s3(),
+        { Bucket, Key },
+        {
+          maxTimeout: 10000,
+          onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+          ...retryOptions
+        }
+      )
+  ),
+  buildDeprecationMessage(
+    '@cumulus/aws-client/S3.getS3Object',
+    '2.0.1',
+    '@cumulus/aws-client/S3.getObject or @cumulus/aws-client/S3.waitForObject'
+  )
 );
 
 /**
@@ -420,7 +477,7 @@ export const putJsonS3Object = (bucket: string, key: string, data: any) =>
  * @returns {Readable}
  */
 export const getObjectReadStream = (params: {
-  s3: { getObject: GetObjectMethod },
+  s3: { getObject: GetObjectCreateReadStreamMethod },
   bucket: string,
   key: string
 }) => {
@@ -562,7 +619,7 @@ type FileInfo = {
 };
 
 export const uploadS3Files = (
-  files: Array<string|FileInfo>,
+  files: Array<string | FileInfo>,
   defaultBucket: string,
   keyPath: string | ((x: string) => string),
   s3opts: Partial<AWS.S3.PutObjectRequest> = {}
@@ -720,7 +777,7 @@ export const listS3ObjectsV2 = async (
  */
 export const calculateObjectHash = async (
   params: {
-    s3: { getObject: GetObjectMethod },
+    s3: { getObject: GetObjectCreateReadStreamMethod },
     algorithm: string,
     bucket: string,
     key: string

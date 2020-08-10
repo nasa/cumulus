@@ -36,13 +36,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1955**
+  - Added `@cumulus/aws-client/S3.getObject` to get an AWS S3 object
+  - Added `@cumulus/aws-client/S3.waitForObject` to get an AWS S3 object,
+    retrying, if necessary
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
 
 ### Fixed
 
+- **CUMULUS-1955**
+  - Due to AWS's eventual consistency model, it was possible for PostToCMR to
+    publish an earlier version of a CMR metadata file, rather than the latest
+    version created in a workflow.  This fix guarantees that the latest version
+    is published, as expected.
 - **CUMULUS-2116**
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
+
+### Deprecated
+
+- **CUMULUS-1955**
+  - `@cumulus/aws-client/S3.getS3Object()`
 
 ### Removed
 

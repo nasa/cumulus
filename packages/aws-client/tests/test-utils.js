@@ -1,32 +1,17 @@
 const path = require('path');
 const test = require('ava');
 
-const { throttleOnce } = require('../test-utils');
-const { retryOnThrottlingException } = require('../utils');
-const { getS3Object } = require('../S3');
+const { getObject } = require('../S3');
+const { s3 } = require('../services');
 
 test('better stack traces', async (t) => {
-  const f = () => getS3Object('asdf');
+  const f = () => getObject(s3(), { Bucket: 'asdf', Key: 'jkl;' });
   const g = () => f();
   const h = () => g();
 
   try {
-    console.log(await h());
-    t.fail('Expected an exception');
+    await t.throwsAsync(h, { message: /The specified bucket does not exist/ });
   } catch (error) {
     t.true(error.stack.includes(path.basename(__filename)));
   }
-});
-
-test('retryOnThrottlingException() properly retries after ThrottlingExceptions', async (t) => {
-  const asyncSquare = (x) => Promise.resolve(x * x);
-
-  const throttledAsyncSquare = throttleOnce(asyncSquare);
-
-  const throttledAsyncSquareWithRetries = retryOnThrottlingException(throttledAsyncSquare);
-
-  t.is(
-    await throttledAsyncSquareWithRetries(3),
-    9
-  );
 });

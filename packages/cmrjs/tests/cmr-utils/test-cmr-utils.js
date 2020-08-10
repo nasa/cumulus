@@ -6,6 +6,7 @@ const fs = require('fs-extra');
 const xml2js = require('xml2js');
 const sinon = require('sinon');
 const { promisify } = require('util');
+const pickAll = require('lodash/fp/pickAll');
 const {
   buildS3Uri,
   getS3Object,
@@ -77,17 +78,13 @@ test.before(async (t) => {
 
   const bucketsJson = await readJsonFixture(path.join(__dirname, '../fixtures/buckets.json'));
 
-  t.context.bucketTypes = Object.values(bucketsJson)
-    .reduce(
-      (acc, { name, type }) => ({ ...acc, [name]: type }),
-      {}
-    );
+  t.context.bucketTypes = Object.fromEntries(
+    Object.values(bucketsJson).map(({ name, type }) => [name, type])
+  );
 
-  t.context.distributionBucketMap = Object.values(bucketsJson)
-    .reduce(
-      (acc, { name }) => ({ ...acc, [name]: name }),
-      {}
-    );
+  t.context.distributionBucketMap = Object.fromEntries(
+    Object.values(bucketsJson).map(({ name }) => [name, name])
+  );
 });
 
 test.after.always(async (t) => {
@@ -237,12 +234,14 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
-  const uploadEchoSpy = sinon.spy(() => Promise.resolve);
+  // Yes, ETag values always include enclosing double-quotes
+  const expectedEtag = '"abc"';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: expectedEtag }));
   const cmrXml = await fs.readFile(
     path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
     'utf8'
   );
-  const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
+  const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
   const filesObject = await readJsonFixture(
     path.join(__dirname, '../fixtures/filesObjectFixture.json')
   );
@@ -283,30 +282,40 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg'
     }
   ];
-  let actual;
+
   try {
-    actual = await updateEcho10XMLMetadata({
+    const { metadataObject, etag } = await updateEcho10XMLMetadata({
       cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
       files: filesObject,
       distEndpoint,
       bucketTypes,
       distributionBucketMap
     });
+
+    t.is(etag, expectedEtag, "ETag doesn't match");
+    t.deepEqual(metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL,
+      onlineAccessURLsExpected);
+    t.deepEqual(metadataObject.Granule.OnlineResources.OnlineResource,
+      onlineResourcesExpected);
+    t.deepEqual(
+      metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl,
+      AssociatedBrowseExpected
+    );
+    t.truthy(uploadEchoSpy.calledWith('testXmlString',
+      { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
   } finally {
     revertMetaObject();
     revertMockUpload();
     revertGenerateXml();
   }
-  t.deepEqual(actual.Granule.OnlineAccessURLs.OnlineAccessURL, onlineAccessURLsExpected);
-  t.deepEqual(actual.Granule.OnlineResources.OnlineResource, onlineResourcesExpected);
-  t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
-  t.truthy(uploadEchoSpy.calledWith('testXmlString', { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
 });
 
 test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule files', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
-  const uploadEchoSpy = sinon.spy(() => Promise.resolve);
+  // Yes, ETag values always include enclosing double-quotes
+  const expectedEtag = '"abc"';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: expectedEtag }));
 
   const cmrJSON = await fs.readFile(
     path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json'),
@@ -350,20 +359,22 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
       Type: 'VIEW RELATED INFORMATION'
     }
   ];
-  let actualOutput;
+
   try {
-    actualOutput = await updateUMMGMetadata({
+    const { metadataObject, etag } = await updateUMMGMetadata({
       cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
       files: filesObject,
       distEndpoint,
       bucketTypes,
       distributionBucketMap
     });
+
+    t.is(etag, expectedEtag, "ETag doesn't match");
+    t.deepEqual(metadataObject.RelatedUrls, expectedRelatedURLs);
   } finally {
     revertMetaObject();
     revertMockUpload();
   }
-  t.deepEqual(actualOutput.RelatedUrls, expectedRelatedURLs);
 });
 
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
@@ -379,14 +390,17 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     lastUpdateDateTime: '2018-12-19T17:30:31.424Z'
   };
 
-  let temporalInfo;
   try {
-    temporalInfo = await getGranuleTemporalInfo({ granuleId: 'testGranuleId', files: [] });
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: []
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
     revertCmrFileObject();
     revertMetaObject();
   }
-  t.deepEqual(temporalInfo, expectedTemporalInfo);
 });
 
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file', async (t) => {
@@ -402,14 +416,17 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     lastUpdateDateTime: '2018-04-25T21:45:45.524053'
   };
 
-  let temporalInfo;
   try {
-    temporalInfo = await getGranuleTemporalInfo({ granuleId: 'testGranuleId', files: [] });
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: []
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
     revertCmrFileObject();
     revertMetaObject();
   }
-  t.deepEqual(temporalInfo, expectedTemporalInfo);
 });
 
 test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', async (t) => {
@@ -528,8 +545,7 @@ test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution wit
     teaEndpoint: 'fakeTeaEndpoint',
     cmrGranuleUrlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap
-  }),
-  { instanceOf: errors.MissingBucketMap });
+  }), { instanceOf: errors.MissingBucketMap });
 });
 
 test('getCmrSettings uses values in environment variables by default', async (t) => {
@@ -661,3 +677,39 @@ test('getFileDescription returns fallback if file name cannot be determined', (t
     'File to download'
   );
 });
+
+const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
+  // Simulate throwing a PreconditionFailed error from getObject() because
+  // LocalStack ignores the `IfMatch` (and the `IfNoneMatch`) param passed
+  // to S3.getObject()
+  const errorSelector = {
+    code: 'PreconditionFailed',
+    errorCode: 412,
+    message: 'At least one of the pre-conditions you specified did not hold'
+  };
+  const { metadataObjectFromCMRFile } = proxyquire(
+    '../../cmr-utils',
+    {
+      '@cumulus/aws-client/S3': {
+        waitForObject: async (_, params) => {
+          t.is(params.IfMatch, etag);
+          throw Object.assign(new Error(), errorSelector);
+        }
+      }
+    }
+  );
+
+  const error = await t.throwsAsync(metadataObjectFromCMRFile(filename, etag));
+
+  t.deepEqual(pickAll(Object.keys(errorSelector), error), errorSelector);
+};
+
+test(
+  'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR XML metadata file',
+  testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.xml')
+);
+
+test(
+  'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR UMMG JSON metadata file',
+  testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.json')
+);
