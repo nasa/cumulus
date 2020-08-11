@@ -9,16 +9,16 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   EarthdataLoginClient,
-  EarthdataLoginError
+  EarthdataLoginError,
 } = require('@cumulus/earthdata-login-client');
 
 const assertions = require('../../lib/assertions');
 const {
-  createJwtToken
+  createJwtToken,
 } = require('../../lib/token');
 const {
   fakeAccessTokenFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { AccessToken } = require('../../models');
 
@@ -115,7 +115,7 @@ test.serial('GET /token with a code but no state returns the access token', asyn
     username: 'my-username',
     accessToken: 'my-access-token',
     refreshToken: 'my-refresh-token',
-    expirationTime: 12345
+    expirationTime: 12345,
   };
   const jwtToken = createJwtToken(getAccessTokenResponse);
 
@@ -307,10 +307,10 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   t.is(response.body.token, refreshedJwtToken);
 
   t.false(await accessTokenModel.exists({
-    accessToken: initialTokenRecord.accessToken
+    accessToken: initialTokenRecord.accessToken,
   }));
   t.true(await accessTokenModel.exists({
-    accessToken: refreshedTokenRecord.accessToken
+    accessToken: refreshedTokenRecord.accessToken,
   }));
   stub.restore();
 });

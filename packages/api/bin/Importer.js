@@ -21,7 +21,7 @@ class Importer extends Transform {
       // this _should_ work.  This should probably be re-implemented since
       // Manager is an abstract class and is not intended to be instantiated.
       tableHash: {},
-      validate: false
+      validate: false,
     });
     this.promises = [];
     this.limit = pLimit(concurrencyLimit);

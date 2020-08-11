@@ -14,7 +14,7 @@ const Rule = require('../../models/rules');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
-  fakeRuleFactoryV2
+  fakeRuleFactoryV2,
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
@@ -25,7 +25,7 @@ const assertions = require('../../lib/assertions');
   'RulesTable',
   'stackName',
   'system_bucket',
-  'TOKEN_SECRET'
+  'TOKEN_SECRET',
   // eslint-disable-next-line no-return-assign
 ].forEach((varName) => process.env[varName] = randomString());
 
@@ -258,7 +258,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
 
 test('POST creates a rule', async (t) => {
   const newRule = fakeRuleFactoryV2({
-    name: 'make_waffles'
+    name: 'make_waffles',
   });
   const response = await request(app)
     .post('/rules')
@@ -324,7 +324,7 @@ test('POST returns a 400 response if record is missing a required property', asy
 
 test('POST returns a 400 response if rule name is invalid', async (t) => {
   const newRule = fakeRuleFactoryV2({
-    name: 'bad rule name'
+    name: 'bad rule name',
   });
 
   const response = await request(app)
@@ -338,7 +338,7 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
 
 test('POST returns a 400 response if rule type is invalid', async (t) => {
   const newRule = fakeRuleFactoryV2({
-    type: 'invalid'
+    type: 'invalid',
   });
 
   const response = await request(app)
@@ -374,7 +374,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
     });
 
   const newRule = fakeRuleFactoryV2({
-    type: 'invalid'
+    type: 'invalid',
   });
 
   try {
@@ -393,7 +393,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 test('PUT replaces a rule', async (t) => {
   const expectedRule = {
     ...omit(testRule, 'provider'),
-    state: 'ENABLED'
+    state: 'ENABLED',
   };
 
   // Make sure testRule contains values for the properties we omitted from
@@ -417,7 +417,7 @@ test('PUT replaces a rule', async (t) => {
   t.deepEqual(actualRule, {
     ...expectedRule,
     createdAt: actualRule.createdAt,
-    updatedAt: actualRule.updatedAt
+    updatedAt: actualRule.updatedAt,
   });
 });
 

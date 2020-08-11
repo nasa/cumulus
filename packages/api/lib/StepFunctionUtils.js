@@ -7,5 +7,5 @@ const getExecutionUrl = (executionArn) => {
 };
 
 module.exports = {
-  getExecutionUrl
+  getExecutionUrl,
 };

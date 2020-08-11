@@ -4,10 +4,10 @@ const createJwtToken = ({ accessToken, expirationTime, username }) =>
   jwtSign({
     exp: expirationTime,
     accessToken,
-    username
+    username,
   }, process.env.TOKEN_SECRET, {
     algorithm: 'HS256',
-    noTimestamp: true
+    noTimestamp: true,
   });
 
 const verifyJwtToken = (jwtToken, params = {}) => {
@@ -30,5 +30,5 @@ function isAccessTokenExpired({ expirationTime }) {
 module.exports = {
   createJwtToken,
   verifyJwtToken,
-  isAccessTokenExpired
+  isAccessTokenExpired,
 };

@@ -30,6 +30,6 @@ export const invoke = async (name: string, payload: unknown, type = 'Event') => 
   return lambda().invoke({
     FunctionName: name,
     Payload: JSON.stringify(payload),
-    InvocationType: type
+    InvocationType: type,
   }).promise();
 };

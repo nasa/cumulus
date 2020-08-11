@@ -7,7 +7,7 @@ const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   DeletePublishedGranule,
-  RecordDoesNotExist
+  RecordDoesNotExist,
 } = require('@cumulus/errors');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -65,7 +65,7 @@ async function put(req, res) {
     const response = {
       action,
       granuleId: granule.granuleId,
-      status: 'SUCCESS'
+      status: 'SUCCESS',
     };
 
     if (collection.duplicateHandling !== 'replace') {
@@ -84,7 +84,7 @@ async function put(req, res) {
     return res.send({
       granuleId: granule.granuleId,
       action: `applyWorkflow ${body.workflow}`,
-      status: 'SUCCESS'
+      status: 'SUCCESS',
     });
   }
 
@@ -94,7 +94,7 @@ async function put(req, res) {
     return res.send({
       granuleId: granule.granuleId,
       action,
-      status: 'SUCCESS'
+      status: 'SUCCESS',
     });
   }
 
@@ -116,7 +116,7 @@ async function put(req, res) {
     return res.send({
       granuleId: granule.granuleId,
       action,
-      status: 'SUCCESS'
+      status: 'SUCCESS',
     });
   }
 
@@ -167,7 +167,7 @@ async function del(req, res) {
       type: 'granule',
       parent: granule.collectionId,
       index: process.env.ES_INDEX,
-      ignore: [404]
+      ignore: [404],
     });
   }
 
@@ -236,7 +236,7 @@ async function bulkOperations(req, res) {
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    tableName: process.env.AsyncOperationsTable,
   });
 
   let description;
@@ -265,10 +265,10 @@ async function bulkOperations(req, res) {
         invoke: process.env.invoke,
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
         METRICS_ES_USER: process.env.METRICS_ES_USER,
-        METRICS_ES_PASS: process.env.METRICS_ES_PASS
-      }
+        METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+      },
     },
-    esHost: process.env.ES_HOST
+    esHost: process.env.ES_HOST,
   });
 
   return res.status(202).send(asyncOperation);
@@ -291,7 +291,7 @@ async function bulkDelete(req, res) {
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    tableName: process.env.AsyncOperationsTable,
   });
 
   const asyncOperation = await asyncOperationModel.start({
@@ -318,9 +318,9 @@ async function bulkDelete(req, res) {
         METRICS_ES_USER: process.env.METRICS_ES_USER,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
         stackName: process.env.stackName,
-        system_bucket: process.env.system_bucket
-      }
-    }
+        system_bucket: process.env.system_bucket,
+      },
+    },
   });
 
   return res.status(202).send(asyncOperation);

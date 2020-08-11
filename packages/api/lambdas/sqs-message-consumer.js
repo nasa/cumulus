@@ -24,7 +24,7 @@ async function processQueues(event, dispatchFn) {
   try {
     rules = await rulesModel.queryRules({
       type: 'sqs',
-      state: 'ENABLED'
+      state: 'ENABLED',
     });
   } catch (error) {
     log.error(error);
@@ -59,13 +59,13 @@ async function processQueues(event, dispatchFn) {
       messageLimit,
       timeLimit,
       visibilityTimeout,
-      deleteProcessedMessage: false
+      deleteProcessedMessage: false,
     });
     log.info(`processing queue ${queueUrl}`);
 
     return consumer.consume(dispatchFn.bind({
       queueUrl,
-      rulesForQueue
+      rulesForQueue,
     }));
   }));
 }
@@ -93,7 +93,7 @@ function dispatch(message) {
       const params = {
         QueueUrl: queueUrl,
         ReceiptHandle: message.ReceiptHandle,
-        VisibilityTimeout: 5
+        VisibilityTimeout: 5,
       };
       return sqs().changeMessageVisibility(params).promise();
     }
@@ -109,7 +109,7 @@ function dispatch(message) {
       receiptHandle: message.ReceiptHandle,
       receivedCount: messageReceiveCount,
       deleteCompletedMessage: true,
-      workflow_name: rule.workflow
+      workflow_name: rule.workflow,
     };
     return rulesHelpers.queueMessageForRule(rule, eventObject, eventSource);
   }));
@@ -132,5 +132,5 @@ async function handler(event) {
 }
 
 module.exports = {
-  handler
+  handler,
 };

@@ -6,7 +6,7 @@ const util = require('../util');
 test('omit removes a key from object', (t) => {
   const testObj = {
     leaveme: 'a value',
-    Type: 'should be stripped'
+    Type: 'should be stripped',
   };
   const expected = { leaveme: 'a value' };
 
@@ -18,7 +18,7 @@ test('omit removes a key from object', (t) => {
 test('omit returns same object if key does not exist', (t) => {
   const testObj = {
     leaveme: 'a value',
-    existing: 'should not be stripped from object'
+    existing: 'should not be stripped from object',
   };
   const expected = { ...testObj };
 
@@ -29,7 +29,7 @@ test('omit returns same object if key does not exist', (t) => {
 
 test('omit removes an array of keys from object', (t) => {
   const testObj = {
-    a: 1, b: 2, c: 3, leaveme: 'a value'
+    a: 1, b: 2, c: 3, leaveme: 'a value',
   };
 
   const expected = { leaveme: 'a value' };

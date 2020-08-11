@@ -23,8 +23,8 @@ async function createTable(tableName, attributeDefs, keySchema) {
     KeySchema: keySchema,
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
-    }
+      WriteCapacityUnits: 5,
+    },
   }).promise();
 
   return aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
@@ -35,7 +35,7 @@ test('getStateFilesFromTable returns empty array if it is not a table containing
   await createTable(tableName, [{ AttributeName: 'bucket', AttributeType: 'S' }], [{ AttributeName: 'bucket', KeyType: 'HASH' }]);
   await aws.dynamodb().putItem({
     TableName: tableName,
-    Item: { bucket: { S: 'bucket' } }
+    Item: { bucket: { S: 'bucket' } },
   }).promise();
   const stateFiles = await getStateFilesFromTable(tableName);
 
@@ -60,7 +60,7 @@ test('getStateFilesFromTable returns state files without checksum extension', as
 
   await aws.dynamodb().putItem({
     TableName: tableName,
-    Item: { LockID: { S: 'cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate.md5' } }
+    Item: { LockID: { S: 'cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate.md5' } },
   }).promise();
 
   const stateFiles = await getStateFilesFromTable(tableName);
@@ -76,7 +76,7 @@ test('listTfStateFiles lists state files only', async (t) => {
 
   await aws.dynamodb().putItem({
     TableName: stateFileTableName,
-    Item: { LockID: { S: 'cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate.md5' } }
+    Item: { LockID: { S: 'cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate.md5' } },
   }).promise();
 
   const noStateFileTableName = randomString();
@@ -84,7 +84,7 @@ test('listTfStateFiles lists state files only', async (t) => {
 
   await aws.dynamodb().putItem({
     TableName: noStateFileTableName,
-    Item: { bucket: { S: 'bucket' } }
+    Item: { bucket: { S: 'bucket' } },
   }).promise();
 
   const stateFiles = await stateFile.listTfStateFiles();
@@ -105,7 +105,7 @@ test('getStateFileDeploymentInfo lists correct resources', async (t) => {
   await promiseS3Upload({
     Bucket: bucket,
     Key: key,
-    Body: state
+    Body: state,
   });
 
   const resources = await stateFile.getStateFileDeploymentInfo(`${bucket}/${key}`);
@@ -133,7 +133,7 @@ test('listResourcesForFile lists resources', async (t) => {
   await promiseS3Upload({
     Bucket: bucket,
     Key: key,
-    Body: state
+    Body: state,
   });
 
   const resources = await stateFile.listResourcesForFile(`${bucket}/${key}`);
@@ -141,7 +141,7 @@ test('listResourcesForFile lists resources', async (t) => {
     {
       ecsClusters: ['arn:aws:ecs:us-east-1:12345:cluster/lpf-tf-CumulusECSCluster'],
       ec2Instances: ['i-1234', 'i-4321'],
-      esDomainNames: ['cumulus-tf-es-vpc']
+      esDomainNames: ['cumulus-tf-es-vpc'],
     },
     resources
   );
@@ -173,7 +173,7 @@ test('listTfDeployments lists unique Tf deployments based on state file name', (
     'bucket/cumulus/data-persistence/terraform.tfstate',
     'bucket/cumulus/cumulus/terraform.tfstate',
     'bucket/tf/data-persistence-tf/terraform.tfstate',
-    'bucket/tf/cumulus-tf/terraform.tfstate'
+    'bucket/tf/cumulus-tf/terraform.tfstate',
   ];
 
   const deployments = stateFile.listTfDeployments(stateFiles);
@@ -184,7 +184,7 @@ test('listTfDeployments lists unique Tf deployments based on state file name', (
 test('listTfDeployments lists unique Tf deployments based on state file name with specified regex', (t) => {
   const stateFiles = [
     'bucket/cumulus/terraform.tfstate',
-    'bucket/tf/terraform.tfstate'
+    'bucket/tf/terraform.tfstate',
   ];
 
   const deployments = stateFile.listTfDeployments(stateFiles, /.*\/(.*)\/terraform.tfstate/);
@@ -204,7 +204,7 @@ test('deploymentReport returns information about the deployment', async (t) => {
       file,
       deployment: file,
       lastModified: new Date(2020, 1, 1),
-      resources: [1, 2]
+      resources: [1, 2],
     })
   );
 
@@ -229,20 +229,20 @@ test.serial('listClusterEC2Instances returns lists of instance ids', async (t) =
           Promise.resolve({
             containerInstances: [
               {
-                ec2InstanceId: 'i-12345'
+                ec2InstanceId: 'i-12345',
               },
               {
-                ec2InstanceId: 'i-23456'
-              }
-            ]
-          })
+                ec2InstanceId: 'i-23456',
+              },
+            ],
+          }),
       }),
       listContainerInstances: () => ({
         promise: () =>
           Promise.resolve({
-            containerInstanceArns: ['arn1']
-          })
-      })
+            containerInstanceArns: ['arn1'],
+          }),
+      }),
     });
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
@@ -257,9 +257,9 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
       listContainerInstances: () => ({
         promise: () =>
           Promise.resolve({
-            containerInstanceArns: null
-          })
-      })
+            containerInstanceArns: null,
+          }),
+      }),
     });
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
@@ -273,8 +273,8 @@ test.serial('listClusterEC2Instances returns empty list if ContainerInstances re
     .returns({
       listContainerInstances: () => ({
         promise: () =>
-          Promise.resolve(null)
-      })
+          Promise.resolve(null),
+      }),
     });
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');

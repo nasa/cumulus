@@ -19,15 +19,15 @@ test('getExecutionWithStatus() will retry if the execution does not exist', asyn
 
       if (callCount === 1) {
         return {
-          body: JSON.stringify({ statusCode: 404 })
+          body: JSON.stringify({ statusCode: 404 }),
         };
       }
 
       return {
         body: JSON.stringify({
           statusCode: 200,
-          status: 'completed'
-        })
+          status: 'completed',
+        }),
       };
     };
   })();
@@ -38,7 +38,7 @@ test('getExecutionWithStatus() will retry if the execution does not exist', asyn
       arn,
       status: 'completed',
       timeout: 1,
-      callback
+      callback,
     })
   );
 });

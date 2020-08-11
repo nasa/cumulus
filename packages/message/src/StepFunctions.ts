@@ -14,7 +14,7 @@ import Logger from '@cumulus/logger';
 import { Message } from '@cumulus/types';
 
 const log = new Logger({
-  sender: '@cumulus/message/StepFunctions'
+  sender: '@cumulus/message/StepFunctions',
 });
 
 /**
@@ -45,7 +45,7 @@ export const pullStepFunctionEvent = async (
     const replaceNodeSearch = JSONPath({
       path: event.replace.TargetPath,
       json: event,
-      resultType: 'all'
+      resultType: 'all',
     });
     if (replaceNodeSearch.length !== 1) {
       throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);

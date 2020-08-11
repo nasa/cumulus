@@ -25,7 +25,7 @@ const listFiles = async (params) => {
   const provider = buildProviderClient({
     ...providerConfig,
     useList,
-    httpRequestTimeout
+    httpRequestTimeout,
   });
 
   try {
@@ -42,7 +42,7 @@ const isPdrFile = ({ name }) => name.toUpperCase().endsWith('.PDR');
 const isNewPdr = (bucket, stackName, folder, pdr) =>
   s3ObjectExists({
     Bucket: bucket,
-    Key: `${stackName}/${folder}/${pdr.name}`
+    Key: `${stackName}/${folder}/${pdr.name}`,
   }).then((pdrIsInS3) => pdrIsInS3 === false);
 
 /**
@@ -56,7 +56,7 @@ const discoverPdrs = async ({ config }) => {
     providerConfig: config.provider,
     useList: config.useList,
     httpRequestTimeout: config.httpRequestTimeout,
-    path: config.provider_path
+    path: config.provider_path,
   });
 
   const discoveredPdrs = discoveredFiles.filter(isPdrFile);
@@ -73,7 +73,7 @@ const discoverPdrs = async ({ config }) => {
 
   const pdrNameFilter = get(config, 'filterPdrs', /.*/);
   return {
-    pdrs: pdrsToReturn.filter(({ name }) => name.match(pdrNameFilter))
+    pdrs: pdrsToReturn.filter(({ name }) => name.match(pdrNameFilter)),
   };
 };
 
@@ -89,5 +89,5 @@ const handler = async (event, context) => runCumulusTask(discoverPdrs, event, co
 
 module.exports = {
   discoverPdrs,
-  handler
+  handler,
 };

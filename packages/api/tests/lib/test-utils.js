@@ -28,7 +28,7 @@ test('parseException() returns an Unknown Error object if the exception is not a
     parseException('blah'),
     {
       Error: 'Unknown Error',
-      Cause: 'blah'
+      Cause: 'blah',
     }
   );
 });

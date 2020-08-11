@@ -89,5 +89,5 @@ module.exports = {
   addPdrs,
   addProviders,
   addReconciliationReports,
-  addRules
+  addRules,
 };

@@ -6,7 +6,7 @@ const {
   sfn,
   sqs,
   dynamodbDocClient,
-  cloudwatchevents
+  cloudwatchevents,
 } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { waitForAllTestSf } = require('@cumulus/integration-tests');
@@ -14,7 +14,7 @@ const { waitForAllTestSf } = require('@cumulus/integration-tests');
 const {
   loadConfig,
   createTimestampedTestId,
-  timestampedName
+  timestampedName,
 } = require('../../helpers/testUtils');
 
 async function sendStartSfMessages({
@@ -23,24 +23,24 @@ async function sendStartSfMessages({
   queueName,
   queueUrl,
   workflowArn,
-  payload = {}
+  payload = {},
 }) {
   const message = {
     cumulus_meta: {
       queueName,
-      state_machine: workflowArn
+      state_machine: workflowArn,
     },
     meta: {
       queues: {
-        [queueName]: queueUrl
-      }
+        [queueName]: queueUrl,
+      },
     },
-    payload
+    payload,
   };
 
   if (queueMaxExecutions) {
     message.meta.queueExecutionLimits = {
-      [queueName]: queueMaxExecutions
+      [queueName]: queueMaxExecutions,
     };
   }
 
@@ -58,42 +58,42 @@ const createCloudwatchRuleWithTarget = async ({
   functionName,
   ruleName,
   ruleTargetId,
-  rulePermissionId
+  rulePermissionId,
 }) => {
   const { RuleArn } = await cloudwatchevents().putRule({
     Name: ruleName,
     State: 'ENABLED',
     EventPattern: JSON.stringify({
       source: [
-        'aws.states'
+        'aws.states',
       ],
       'detail-type': [
-        'Step Functions Execution Status Change'
+        'Step Functions Execution Status Change',
       ],
       detail: {
         status: [
           'ABORTED',
           'FAILED',
           'SUCCEEDED',
-          'TIMED_OUT'
+          'TIMED_OUT',
         ],
         stateMachineArn: [
-          stateMachineArn
-        ]
-      }
-    })
+          stateMachineArn,
+        ],
+      },
+    }),
   }).promise();
 
   const { Configuration } = await lambda().getFunction({
-    FunctionName: functionName
+    FunctionName: functionName,
   }).promise();
 
   await cloudwatchevents().putTargets({
     Rule: ruleName,
     Targets: [{
       Id: ruleTargetId,
-      Arn: Configuration.FunctionArn
-    }]
+      Arn: Configuration.FunctionArn,
+    }],
   }).promise();
 
   return lambda().addPermission({
@@ -101,7 +101,7 @@ const createCloudwatchRuleWithTarget = async ({
     FunctionName: functionName,
     Principal: 'events.amazonaws.com',
     StatementId: rulePermissionId,
-    SourceArn: RuleArn
+    SourceArn: RuleArn,
   }).promise();
 };
 
@@ -109,22 +109,22 @@ const deleteCloudwatchRuleWithTargets = async ({
   functionName,
   ruleName,
   rulePermissionId,
-  ruleTargetId
+  ruleTargetId,
 }) => {
   await cloudwatchevents().removeTargets({
     Ids: [
-      ruleTargetId
+      ruleTargetId,
     ],
-    Rule: ruleName
+    Rule: ruleName,
   }).promise();
 
   await lambda().removePermission({
     FunctionName: functionName,
-    StatementId: rulePermissionId
+    StatementId: rulePermissionId,
   }).promise();
 
   return cloudwatchevents().deleteRule({
-    Name: ruleName
+    Name: ruleName,
   }).promise();
 };
 
@@ -149,15 +149,15 @@ describe('the sf-starter lambda function', () => {
         PassState: {
           Type: 'Pass',
           ResultPath: '$.payload',
-          End: true
-        }
-      }
+          End: true,
+        },
+      },
     };
 
     passSfParams = {
       name: passSfName,
       definition: JSON.stringify(passSfDef),
-      roleArn: passSfRoleArn
+      roleArn: passSfRoleArn,
     };
 
     const waitPassSfName = timestampedName('waitPassTestSf');
@@ -168,20 +168,20 @@ describe('the sf-starter lambda function', () => {
         WaitState: {
           Type: 'Wait',
           Seconds: 3,
-          Next: 'PassState'
+          Next: 'PassState',
         },
         PassState: {
           Type: 'Pass',
           ResultPath: '$.payload',
-          End: true
-        }
-      }
+          End: true,
+        },
+      },
     };
 
     waitPassSfParams = {
       name: waitPassSfName,
       definition: JSON.stringify(waitPassSfDef),
-      roleArn: passSfRoleArn
+      roleArn: passSfRoleArn,
     };
   });
 
@@ -204,14 +204,14 @@ describe('the sf-starter lambda function', () => {
       const { QueueUrl } = await sqs().createQueue({
         QueueName: queueName,
         Attributes: {
-          VisibilityTimeout: '360'
-        }
+          VisibilityTimeout: '360',
+        },
       }).promise();
       queueUrl = QueueUrl;
 
       const { Attributes } = await sqs().getQueueAttributes({
         QueueUrl: queueUrl,
-        AttributeNames: ['QueueArn']
+        AttributeNames: ['QueueArn'],
       }).promise();
       queueArn = Attributes.QueueArn;
 
@@ -223,7 +223,7 @@ describe('the sf-starter lambda function', () => {
         queueName,
         queueUrl,
         workflowArn: passSfArn,
-        payload: executionPayload
+        payload: executionPayload,
       });
     });
 
@@ -231,8 +231,8 @@ describe('the sf-starter lambda function', () => {
       await Promise.all([
         sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise(),
         sqs().deleteQueue({
-          QueueUrl: queueUrl
-        }).promise()
+          QueueUrl: queueUrl,
+        }).promise(),
       ]);
     });
 
@@ -247,14 +247,14 @@ describe('the sf-starter lambda function', () => {
         const { UUID } = await lambda().createEventSourceMapping({
           EventSourceArn: queueArn,
           FunctionName: sfStarterName,
-          Enabled: true
+          Enabled: true,
         }).promise();
         mappingUUID = UUID;
       });
 
       afterAll(async () => {
         await lambda().deleteEventSourceMapping({
-          UUID: mappingUUID
+          UUID: mappingUUID,
         });
       });
 
@@ -293,7 +293,7 @@ describe('the sf-starter lambda function', () => {
       maxQueueName = `${testName}MaxQueue`;
 
       const { QueueUrl } = await sqs().createQueue({
-        QueueName: maxQueueName
+        QueueName: maxQueueName,
       }).promise();
       maxQueueUrl = QueueUrl;
 
@@ -309,7 +309,7 @@ describe('the sf-starter lambda function', () => {
         functionName: semaphoreDownLambda,
         ruleName,
         ruleTargetId,
-        rulePermissionId
+        rulePermissionId,
       });
 
       // Wait 60 seconds before starting new executions to allow the Cloudwatch rule to settle.
@@ -321,7 +321,7 @@ describe('the sf-starter lambda function', () => {
         queueMaxExecutions,
         queueName: maxQueueName,
         queueUrl: maxQueueUrl,
-        workflowArn: waitPassSfArn
+        workflowArn: waitPassSfArn,
       });
     });
 
@@ -330,20 +330,20 @@ describe('the sf-starter lambda function', () => {
         functionName: semaphoreDownLambda,
         ruleName,
         rulePermissionId,
-        ruleTargetId
+        ruleTargetId,
       });
 
       await Promise.all([
         sqs().deleteQueue({
-          QueueUrl: maxQueueUrl
+          QueueUrl: maxQueueUrl,
         }).promise(),
         sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise(),
         dynamodbDocClient().delete({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
-            key: maxQueueName
-          }
-        }).promise()
+            key: maxQueueName,
+          },
+        }).promise(),
       ]);
     });
 
@@ -353,8 +353,8 @@ describe('the sf-starter lambda function', () => {
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
           queueUrl: maxQueueUrl,
-          messageLimit: totalNumMessages
-        })
+          messageLimit: totalNumMessages,
+        }),
       }).promise();
       messagesConsumed = Number.parseInt(Payload, 10);
       // Can't test that the messages consumed is exactly the number the
@@ -371,7 +371,7 @@ describe('the sf-starter lambda function', () => {
     xdescribe('and the semaphore', () => {
       beforeAll(async () => {
         await sqs().purgeQueue({
-          QueueUrl: maxQueueUrl
+          QueueUrl: maxQueueUrl,
         });
 
         // Wait 10 seconds to allow running executions to finish.
@@ -382,8 +382,8 @@ describe('the sf-starter lambda function', () => {
         const semItem = await dynamodbDocClient().get({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
-            key: maxQueueName
-          }
+            key: maxQueueName,
+          },
         }).promise();
         expect(semItem.Item.semvalue).toBe(0);
       });

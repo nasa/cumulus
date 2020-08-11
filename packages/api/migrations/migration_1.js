@@ -79,7 +79,7 @@ async function run(options) {
     if (extracted) {
       hash[t] = {
         type: extracted[1].toLowerCase(),
-        class: models[extracted[1]]
+        class: models[extracted[1]],
       };
     }
   });

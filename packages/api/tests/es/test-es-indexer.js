@@ -77,14 +77,14 @@ test.before(async (t) => {
     beginningDateTime: '2017-10-24T00:00:00.000Z',
     endingDateTime: '2018-10-24T00:00:00.000Z',
     lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
-    productionDateTime: '2018-04-25T21:45:45.524Z'
+    productionDateTime: '2018-04-25T21:45:45.524Z',
   };
   cmrStub = sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
 
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
     input,
     startDate: new Date(Date.UTC(2019, 6, 28)),
-    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1)),
   });
   existsStub = sinon.stub(s3Utils, 'fileExists').returns(true);
   templateStub = sinon.stub(Rule, 'buildPayload')
@@ -124,7 +124,7 @@ test.serial('indexing a deletedgranule record', async (t) => {
     id: granule.granuleId,
     type: granuletype,
     parent: collectionId,
-    index: esAlias
+    index: esAlias,
   });
   t.is(r.result, 'deleted');
 
@@ -133,7 +133,7 @@ test.serial('indexing a deletedgranule record', async (t) => {
     index: esAlias,
     type: 'deletedgranule',
     id: granule.granuleId,
-    parent: collectionId
+    parent: collectionId,
   };
 
   let record = await esClient.get(deletedGranParams)
@@ -179,7 +179,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
         id: g.granuleId,
         type: 'granule',
         parent: g.collectionId,
-        index: esAlias
+        index: esAlias,
       })));
   t.is(response.length, 11);
   response.forEach((r) => t.is(r.result, 'deleted'));
@@ -199,19 +199,19 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
               range: {
                 deletedAt: {
                   gte: 'now-1d',
-                  lte: 'now+1s'
-                }
-              }
+                  lte: 'now+1s',
+                },
+              },
             },
             {
               parent_id: {
                 type: 'deletedgranule',
-                id: collectionId
-              }
-            }]
-        }
-      }
-    }
+                id: collectionId,
+              },
+            }],
+        },
+      },
+    },
   };
 
   response = await esClient.search(deletedGranParams)
@@ -227,7 +227,7 @@ test.serial('indexing a rule record', async (t) => {
   const { esAlias } = t.context;
 
   const testRecord = {
-    name: randomString()
+    name: randomString(),
   };
 
   const r = await indexer.indexRule(esClient, testRecord, esAlias);
@@ -239,7 +239,7 @@ test.serial('indexing a rule record', async (t) => {
   const record = await esClient.get({
     index: esAlias,
     type: 'rule',
-    id: testRecord.name
+    id: testRecord.name,
   }).then((response) => response.body);
 
   t.is(record._id, testRecord.name);
@@ -250,7 +250,7 @@ test.serial('indexing a provider record', async (t) => {
   const { esAlias } = t.context;
 
   const testRecord = {
-    id: randomString()
+    id: randomString(),
   };
 
   const r = await indexer.indexProvider(esClient, testRecord, esAlias);
@@ -262,7 +262,7 @@ test.serial('indexing a provider record', async (t) => {
   const record = await esClient.get({
     index: esAlias,
     type: 'provider',
-    id: testRecord.id
+    id: testRecord.id,
   }).then((response) => response.body);
 
   t.is(record._id, testRecord.id);
@@ -274,7 +274,7 @@ test.serial('indexing a collection record', async (t) => {
 
   const collection = {
     name: randomString(),
-    version: '001'
+    version: '001',
   };
 
   const collectionId = constructCollectionId(collection.name, collection.version);
@@ -287,7 +287,7 @@ test.serial('indexing a collection record', async (t) => {
   const record = await esClient.get({
     index: esAlias,
     type: 'collection',
-    id: collectionId
+    id: collectionId,
   }).then((response) => response.body);
 
   t.is(record._id, collectionId);
@@ -308,7 +308,7 @@ test.serial('indexing collection records with different versions', async (t) => 
     const collection = {
       name: name,
       version: version,
-      [`${key}`]: value
+      [`${key}`]: value,
     };
 
     const r = await indexer.indexCollection(esClient, collection, esAlias);
@@ -327,7 +327,7 @@ test.serial('indexing collection records with different versions', async (t) => 
     const record = await esClient.get({ // eslint-disable-line no-await-in-loop
       index: esAlias,
       type: 'collection',
-      id: collectionId
+      id: collectionId,
     }).then((response) => response.body);
 
     t.is(record._id, collectionId);
@@ -347,9 +347,9 @@ test.serial('updating a collection record', async (t) => {
     anyObject: {
       key: 'value',
       key1: 'value1',
-      key2: 'value2'
+      key2: 'value2',
     },
-    anyKey: 'anyValue'
+    anyKey: 'anyValue',
   };
 
   // updatedCollection has some parameters removed
@@ -357,8 +357,8 @@ test.serial('updating a collection record', async (t) => {
     name: collection.name,
     version: '001',
     anyparams: {
-      key1: 'value1'
-    }
+      key1: 'value1',
+    },
   };
 
   const collectionId = constructCollectionId(collection.name, collection.version);
@@ -375,7 +375,7 @@ test.serial('updating a collection record', async (t) => {
   const record = await esClient.get({
     index: esAlias,
     type: 'collection',
-    id: collectionId
+    id: collectionId,
   }).then((response) => response.body);
 
   t.is(record._id, collectionId);
@@ -390,7 +390,7 @@ test.serial('delete a provider record', async (t) => {
   const { esAlias } = t.context;
 
   const testRecord = {
-    id: randomString()
+    id: randomString(),
   };
   const type = 'provider';
 
@@ -404,7 +404,7 @@ test.serial('delete a provider record', async (t) => {
     esClient,
     id: testRecord.id,
     type,
-    index: esAlias
+    index: esAlias,
   });
 
   t.is(r.result, 'deleted');
@@ -443,7 +443,7 @@ test.serial('indexing a granule record', async (t) => {
     index: esAlias,
     type: 'granule',
     id: granule.granuleId,
-    parent: granule.collectionId
+    parent: granule.collectionId,
   }).then((response) => response.body);
   t.is(record._id, granule.granuleId);
 });
@@ -468,7 +468,7 @@ test.serial('indexing a PDR record', async (t) => {
   const record = await esClient.get({
     index: esAlias,
     type: 'pdr',
-    id: pdr.pdrName
+    id: pdr.pdrName,
   }).then((response) => response.body);
   t.is(record._id, pdr.pdrName);
   t.falsy(record._source.error);
@@ -527,7 +527,7 @@ test.serial('parsePayload correctly parses AWS Linux style console output', asyn
     some: 'key',
     sender: 'some sender',
     message: 'a messaage',
-    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a'
+    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a',
   };
   const actual = parsePayload({ sender: 'fixture_sender', message: '2018-06-01T17:45:27.108Z\ta714a0ef-f141-4e52-9661-58ca2233959a\t{"some": "key", "sender": "some sender", "message": "a messaage"}' });
   t.deepEqual(actual, expected);
@@ -539,7 +539,7 @@ test.serial('parsePayload correctly parses AWS Linux 2 style console output', as
     some: 'key',
     sender: 'some sender',
     message: 'a messaage',
-    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a'
+    RequestId: 'a714a0ef-f141-4e52-9661-58ca2233959a',
   };
   const actual = parsePayload({ sender: 'fixture_sender', message: '2018-06-01T17:45:27.108Z\ta714a0ef-f141-4e52-9661-58ca2233959a\tINFO\t{"some": "key", "sender": "some sender", "message": "a messaage"}' });
   t.deepEqual(actual, expected);
@@ -552,7 +552,7 @@ test.serial('parsePayload correctly handles unparseable record', async (t) => {
     sender: 'AWS sender',
     executions: 'some execution value',
     timestamp: '2018-06-01T17:45:27.108Z',
-    version: '1'
+    version: '1',
   };
   const expected = {
     message: 'INFO MESSAGE',
@@ -562,7 +562,7 @@ test.serial('parsePayload correctly handles unparseable record', async (t) => {
     version: '1',
     level: 30,
     pid: 1,
-    name: 'cumulus'
+    name: 'cumulus',
   };
   const actual = parsePayload(testPayload);
   t.deepEqual(actual, expected);

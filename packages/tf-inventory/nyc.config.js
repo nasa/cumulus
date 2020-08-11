@@ -4,6 +4,6 @@ module.exports = {
   extends: '../../nyc.config.js',
   include: [
     'bin',
-    'src'
-  ]
+    'src',
+  ],
 };

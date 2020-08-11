@@ -6,7 +6,7 @@ const {
   getQueueName,
   getQueueNameByUrl,
   getMaximumExecutions,
-  hasQueueAndExecutionLimit
+  hasQueueAndExecutionLimit,
 } = require('../Queue');
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
@@ -15,15 +15,15 @@ test('getQueueName returns correct queue name', (t) => {
   const queueName = randomId('queue');
   const message = {
     cumulus_meta: {
-      queueName
-    }
+      queueName,
+    },
   };
   t.is(getQueueName(message), queueName);
 });
 
 test('getQueueName throws error if cumulus_meta.queueName is not set in message', (t) => {
   const message = {
-    cumulus_meta: {}
+    cumulus_meta: {},
   };
   t.throws(() => getQueueName(message));
 });
@@ -34,9 +34,9 @@ test('getQueueNameByUrl returns correct value', (t) => {
   const testMessage = {
     meta: {
       queues: {
-        [queueName]: queueUrl
-      }
-    }
+        [queueName]: queueUrl,
+      },
+    },
   };
 
   let queueNameResult = getQueueNameByUrl(testMessage, queueUrl);
@@ -54,9 +54,9 @@ test('getMaximumExecutions returns correct value', (t) => {
   const testMessage = {
     meta: {
       queueExecutionLimits: {
-        [queueName]: 5
-      }
-    }
+        [queueName]: 5,
+      },
+    },
   };
   const maxExecutions = getMaximumExecutions(testMessage, queueName);
   t.is(maxExecutions, 5);
@@ -65,8 +65,8 @@ test('getMaximumExecutions returns correct value', (t) => {
 test('getMaximumExecutions throw error when queue cannot be found', (t) => {
   const testMessage = {
     meta: {
-      queueExecutionLimits: {}
-    }
+      queueExecutionLimits: {},
+    },
   };
   t.throws(
     () => getMaximumExecutions(testMessage, 'testQueueName')
@@ -77,13 +77,13 @@ test('hasQueueAndExecutionLimit returns true if queue name and execution limit e
   const queueName = randomId('queue');
   const message = {
     cumulus_meta: {
-      queueName
+      queueName,
     },
     meta: {
       queueExecutionLimits: {
-        [queueName]: 5
-      }
-    }
+        [queueName]: 5,
+      },
+    },
   };
   t.true(hasQueueAndExecutionLimit(message));
 });
@@ -94,9 +94,9 @@ test('hasQueueAndExecutionLimit returns false if queue name does not exist in me
     cumulus_meta: {},
     meta: {
       queueExecutionLimits: {
-        [queueName]: 5
-      }
-    }
+        [queueName]: 5,
+      },
+    },
   };
   t.false(hasQueueAndExecutionLimit(message));
 });
@@ -105,11 +105,11 @@ test('hasQueueAndExecutionLimit returns false if execution limit does not exist 
   const queueName = randomId('queue');
   const message = {
     cumulus_meta: {
-      queueName
+      queueName,
     },
     meta: {
-      queueExecutionLimits: {}
-    }
+      queueExecutionLimits: {},
+    },
   };
   t.false(hasQueueAndExecutionLimit(message));
 });

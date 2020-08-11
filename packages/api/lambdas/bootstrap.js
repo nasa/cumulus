@@ -27,7 +27,7 @@ const { IndexExistsError } = require('../lib/errors');
  */
 async function findMissingMappings(esClient, index, newMappings) {
   const typesResponse = await esClient.indices.getMapping({
-    index
+    index,
   }).then((response) => response.body);
 
   const types = Object.keys(newMappings);
@@ -68,8 +68,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
   // Make sure that indexes are not automatically created
   await esClient.cluster.putSettings({
     body: {
-      persistent: { 'action.auto_create_index': false }
-    }
+      persistent: { 'action.auto_create_index': false },
+    },
   });
 
   // If the alias already exists as an index, remove it
@@ -100,7 +100,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
   if (!exists) {
     await esClient.indices.putAlias({
       index: index,
-      name: alias
+      name: alias,
     });
 
     log.info(`Created alias ${alias} for index ${index}`);
@@ -110,13 +110,13 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     let aliasedIndex = index;
 
     const aliasExists = await esClient.indices.existsAlias({
-      name: alias
+      name: alias,
     }).then((response) => response.body);
 
     if (!aliasExists) {
       await esClient.indices.putAlias({
         index: index,
-        name: alias
+        name: alias,
       });
 
       log.info(`Created alias ${alias} for index ${index}`);
@@ -141,7 +141,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
         limit(() => esClient.indices.putMapping({
           index: aliasedIndex,
           type,
-          body: get(mappings, type)
+          body: get(mappings, type),
         })));
 
       await Promise.all(addMissingTypesPromises);
@@ -171,5 +171,5 @@ module.exports = {
   handler,
   bootstrapElasticSearch,
   // for testing
-  findMissingMappings
+  findMissingMappings,
 };

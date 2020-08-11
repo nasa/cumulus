@@ -9,7 +9,7 @@ const SQS = require('@cumulus/aws-client/SQS');
 const {
   createBucket,
   putJsonS3Object,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const Rule = require('../../models/rules');
@@ -17,7 +17,7 @@ const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require
 const rulesHelpers = require('../../lib/rulesHelpers');
 
 const {
-  handler
+  handler,
 } = require('../../lambdas/sqs-message-consumer');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
@@ -39,34 +39,34 @@ async function createRulesAndQueues(ruleMeta, queueMaxReceiveCount) {
     fakeRuleFactoryV2({
       workflow,
       rule: {
-        type: 'onetime'
+        type: 'onetime',
       },
-      state: 'ENABLED'
+      state: 'ENABLED',
     }),
     fakeRuleFactoryV2({
       workflow,
       rule: {
         type: 'sqs',
-        value: queues[0].queueUrl
+        value: queues[0].queueUrl,
       },
       meta: {
         visibilityTimeout: 120,
-        ...ruleMeta
+        ...ruleMeta,
       },
-      state: 'ENABLED'
+      state: 'ENABLED',
     }),
     fakeRuleFactoryV2({
       workflow,
       rule: {
         type: 'sqs',
-        value: queues[1].queueUrl
+        value: queues[1].queueUrl,
       },
       meta: {
         visibilityTimeout: 120,
-        ...ruleMeta
+        ...ruleMeta,
       },
-      state: 'DISABLED'
-    })
+      state: 'DISABLED',
+    }),
   ];
   rules = await Promise.all(
     rules.map((rule) => rulesModel.create(rule))
@@ -104,7 +104,7 @@ test.before(async () => {
       process.env.system_bucket,
       workflowfile,
       { testworkflow: 'workflowconfig' }
-    )
+    ),
   ]);
 });
 
@@ -137,9 +137,9 @@ test.serial('processQueues does nothing when queue does not exist', async (t) =>
     workflow,
     rule: {
       type: 'sqs',
-      value: 'non-existent-queue'
+      value: 'non-existent-queue',
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   }));
   await handler(event);
   t.is(queueMessageStub.notCalled, true);
@@ -152,19 +152,19 @@ test.serial('processQueues does nothing when no rule matches collection in messa
   const queue = await createSqsQueues(randomId('queue'));
   const collection = {
     name: randomId('col'),
-    version: '1.0.0'
+    version: '1.0.0',
   };
   const rule = await rulesModel.create(fakeRuleFactoryV2({
     collection: {
       name: 'different-collection',
-      version: '1.2.3'
+      version: '1.2.3',
     },
     workflow,
     rule: {
       type: 'sqs',
-      value: queue.queueUrl
+      value: queue.queueUrl,
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   }));
 
   await SQS.sendSQSMessage(
@@ -287,10 +287,10 @@ test.serial('SQS message consumer queues workflow for rule when there is no even
     name: randomId('matchingRule'),
     rule: {
       type: 'sqs',
-      value: queue.queueUrl
+      value: queue.queueUrl,
     },
     state: 'ENABLED',
-    workflow
+    workflow,
   });
 
   const createdRule = await rulesModel.create(rule);
@@ -315,7 +315,7 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
   const queue = await createSqsQueues(randomId('queue'));
   const collection = {
     name: randomId('collection'),
-    version: '1.0.0'
+    version: '1.0.0',
   };
   // Set visibility timeout to 0 for testing to ensure that message is
   // read when processing all rules
@@ -326,25 +326,25 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
       collection,
       rule: {
         type: 'sqs',
-        value: queue.queueUrl
+        value: queue.queueUrl,
       },
       meta: {
-        visibilityTimeout
+        visibilityTimeout,
       },
       state: 'ENABLED',
-      workflow
+      workflow,
     }),
     fakeRuleFactoryV2({
       rule: {
         type: 'sqs',
-        value: queue.queueUrl
+        value: queue.queueUrl,
       },
       meta: {
-        visibilityTimeout
+        visibilityTimeout,
       },
       state: 'ENABLED',
-      workflow
-    })
+      workflow,
+    }),
   ];
 
   await Promise.all(rules.map((rule) => rulesModel.create(rule)));

@@ -33,7 +33,7 @@ function testEndpoint(endpoint, event, testCallback) {
   return new Promise((resolve, reject) => {
     endpoint(event, {
       succeed: (response) => resolve(testCallback(response)),
-      fail: (e) => reject(e)
+      fail: (e) => reject(e),
     });
   });
 }
@@ -45,7 +45,7 @@ function fakeFileFactory(params = {}) {
     bucket: randomId('bucket'),
     fileName,
     key: fileName,
-    ...params
+    ...params,
   };
 }
 
@@ -68,7 +68,7 @@ function fakeGranuleFactory(status = 'completed') {
     published: true,
     cmrLink: 'example.com',
     productVolume: 100,
-    duration: 0
+    duration: 0,
   };
 }
 
@@ -98,12 +98,12 @@ function fakeRuleFactoryV2(params = {}) {
     provider: randomId('provider'),
     collection: {
       name: randomId('colName'),
-      version: '0.0.0'
+      version: '0.0.0',
     },
     rule: {
-      type: 'onetime'
+      type: 'onetime',
     },
-    state: 'DISABLED'
+    state: 'DISABLED',
   };
 
   return { ...rule, ...params };
@@ -131,7 +131,7 @@ function fakePdrFactory(status = 'completed') {
     collectionId: 'fakeCollection___v1',
     provider: 'fakeProvider',
     status,
-    createdAt: Date.now()
+    createdAt: Date.now(),
   };
 }
 
@@ -147,7 +147,7 @@ function fakePdrFactoryV2(params = {}) {
     collectionId: 'fakeCollection___v1',
     provider: 'fakeProvider',
     status: 'completed',
-    createdAt: Date.now()
+    createdAt: Date.now(),
   };
 
   return { ...pdr, ...params };
@@ -174,7 +174,7 @@ function fakeExecutionFactoryV2(params = {}) {
     type: 'fakeWorkflow',
     originalPayload: { testInput: 'originalPayloadValue' },
     finalPayload: { testOutput: 'finalPayloadValue' },
-    tasks: {}
+    tasks: {},
   };
 
   return { ...execution, ...params };
@@ -206,7 +206,7 @@ function fakeAsyncOperationFactory(params = {}) {
     status: 'SUCCEEDED',
     createdAt: Date.now() - 180.5 * 1000,
     updatedAt: Date.now(),
-    output: randomId('output')
+    output: randomId('output'),
   };
 
   return { ...asyncOperation, ...params };
@@ -227,7 +227,7 @@ function fakeCollectionFactory(options = {}) {
     granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
     sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
     files: [],
-    ...options
+    ...options,
   };
 }
 
@@ -244,7 +244,7 @@ function fakeProviderFactory(options = {}) {
     protocol: 'http',
     host: randomId('host'),
     port: 80,
-    ...options
+    ...options,
   };
 }
 
@@ -262,7 +262,7 @@ function fakeReconciliationReportFactory(options = {}) {
     location: randomId('location'),
     createdAt: Date.now() - 180.5 * 1000,
     updatedAt: Date.now(),
-    ...options
+    ...options,
   };
 }
 
@@ -272,7 +272,7 @@ function fakeAccessTokenFactory(params = {}) {
     refreshToken: randomId('refreshToken'),
     username: randomId('username'),
     expirationTime: moment().unix() + 60 * 60,
-    ...params
+    ...params,
   };
 }
 
@@ -283,7 +283,7 @@ async function createFakeJwtAuthToken({ accessTokenModel, username }) {
   const {
     accessToken,
     refreshToken,
-    expirationTime
+    expirationTime,
   } = fakeAccessTokenFactory();
   await accessTokenModel.create({ accessToken, refreshToken, expirationTime });
 
@@ -309,14 +309,14 @@ async function createSqsQueues(
   const deadLetterQueueParms = {
     QueueName: deadLetterQueueName,
     Attributes: {
-      VisibilityTimeout: visibilityTimeout
-    }
+      VisibilityTimeout: visibilityTimeout,
+    },
   };
   const { QueueUrl: deadLetterQueueUrl } = await sqs()
     .createQueue(deadLetterQueueParms).promise();
   const qAttrParams = {
     QueueUrl: deadLetterQueueUrl,
-    AttributeNames: ['QueueArn']
+    AttributeNames: ['QueueArn'],
   };
   const { Attributes: { QueueArn: deadLetterQueueArn } } = await sqs()
     .getQueueAttributes(qAttrParams).promise();
@@ -328,10 +328,10 @@ async function createSqsQueues(
     Attributes: {
       RedrivePolicy: JSON.stringify({
         deadLetterTargetArn: deadLetterQueueArn,
-        maxReceiveCount
+        maxReceiveCount,
       }),
-      VisibilityTimeout: visibilityTimeout
-    }
+      VisibilityTimeout: visibilityTimeout,
+    },
   };
 
   const { QueueUrl: queueUrl } = await sqs().createQueue(queueParms).promise();
@@ -348,17 +348,17 @@ async function createSqsQueues(
 async function getSqsQueueMessageCounts(queueUrl) {
   const qAttrParams = {
     QueueUrl: queueUrl,
-    AttributeNames: ['All']
+    AttributeNames: ['All'],
   };
   const attributes = await sqs().getQueueAttributes(qAttrParams).promise();
   const {
     ApproximateNumberOfMessages: numberOfMessagesAvailable,
-    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
+    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible,
   } = attributes.Attributes;
 
   return {
     numberOfMessagesAvailable: Number.parseInt(numberOfMessagesAvailable, 10),
-    numberOfMessagesNotVisible: Number.parseInt(numberOfMessagesNotVisible, 10)
+    numberOfMessagesNotVisible: Number.parseInt(numberOfMessagesNotVisible, 10),
   };
 }
 
@@ -383,5 +383,5 @@ module.exports = {
   getWorkflowList,
   isLocalApi,
   testEndpoint,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 };

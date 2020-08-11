@@ -4,12 +4,12 @@ const test = require('ava');
 const request = require('supertest');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
@@ -52,13 +52,13 @@ test.before(async () => {
   const executions = [
     {
       arn: 'arn1',
-      status: 'running'
+      status: 'running',
     },
     {
       arn: 'arn2',
       status: 'completed',
-      asyncOperationId: '012345-12345'
-    }
+      asyncOperationId: '012345-12345',
+    },
   ];
 
   const executionIndexPromises = executions

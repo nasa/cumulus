@@ -9,11 +9,11 @@ const {
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 
 const {
-  waitForModelStatus
+  waitForModelStatus,
 } = require('../../helpers/apiUtils');
 const {
   loadConfig,
@@ -21,7 +21,7 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -31,7 +31,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
 ];
 
 describe('The Ingest Granule failure workflow', () => {
@@ -66,7 +66,7 @@ describe('The Ingest Granule failure workflow', () => {
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -99,8 +99,8 @@ describe('The Ingest Granule failure workflow', () => {
       executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
+        granuleId: inputPayload.granules[0].granuleId,
+      }),
     ]);
   });
 
@@ -118,7 +118,7 @@ describe('The Ingest Granule failure workflow', () => {
       const executionArn = workflowExecution.executionArn;
       const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
         prefix: config.stackName,
-        arn: executionArn
+        arn: executionArn,
       });
       executionStatus = JSON.parse(executionStatusResponse.body);
 
@@ -131,7 +131,7 @@ describe('The Ingest Granule failure workflow', () => {
       );
       execution = await executionsApiTestUtils.getExecution({
         prefix: config.stackName,
-        arn: executionArn
+        arn: executionArn,
       });
     });
 
@@ -197,7 +197,7 @@ describe('The Ingest Granule failure workflow', () => {
 
       const granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       });
       const granule = JSON.parse(granuleResponse.body);
 

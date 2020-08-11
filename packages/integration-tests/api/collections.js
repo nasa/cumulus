@@ -57,5 +57,5 @@ const getCollection = (params) => {
 module.exports = {
   createCollection,
   deleteCollection,
-  getCollection
+  getCollection,
 };

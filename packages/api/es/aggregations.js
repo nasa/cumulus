@@ -12,9 +12,9 @@ function date(field) {
         format: 'YYYY-MM-dd',
         interval: 'day',
         field: field,
-        order: { _key: 'desc' }
-      }
-    }
+        order: { _key: 'desc' },
+      },
+    },
   };
 }
 
@@ -23,8 +23,8 @@ function term(field) {
 
   aggs[`terms_${field}`] = {
     terms: {
-      field: field
-    }
+      field: field,
+    },
   };
 
   return aggs;

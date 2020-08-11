@@ -7,7 +7,7 @@ import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
 import {
   LaunchpadTokenParams,
   GetTokenResponse,
-  ValidateTokenResponse
+  ValidateTokenResponse,
 } from './types';
 import { getEnvVar } from './utils';
 
@@ -91,8 +91,8 @@ class LaunchpadToken {
       prefixUrl: this.api,
       pfx,
       https: {
-        passphrase: this.passphrase
-      }
+        passphrase: this.passphrase,
+      },
     };
 
     const response = await got.get('gettoken', options).json();
@@ -117,12 +117,12 @@ class LaunchpadToken {
       body: data,
       pfx,
       https: {
-        passphrase: this.passphrase
+        passphrase: this.passphrase,
       },
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': data.length.toString()
-      }
+        'Content-Length': data.length.toString(),
+      },
     };
 
     const response = await got.post('validate', options).json();

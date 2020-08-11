@@ -15,7 +15,7 @@ const granules = [
   fakeGranuleFactoryV2({ collectionId: collectionIds[0] }),
   fakeGranuleFactoryV2({ collectionId: collectionIds[1], granuleId: randomId('granprefix123') }),
   fakeGranuleFactoryV2({ collectionId: collectionIds[1], granuleId: randomId('granprefix'), status: 'failed' }),
-  fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'failed' })
+  fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'failed' }),
 ];
 
 let esClient;
@@ -42,7 +42,7 @@ test('Search with prefix returns correct granules', async (t) => {
   const params = {
     limit: 50,
     page: 1,
-    prefix
+    prefix,
   };
 
   const es = new Search(
@@ -69,7 +69,7 @@ test('Search with infix returns correct granules', async (t) => {
     order: 'desc',
     sort_by: 'timestamp',
     status: 'failed',
-    infix
+    infix,
   };
 
   const es = new Search(
@@ -94,7 +94,7 @@ test('Search with both prefix and infix returns correct granules', async (t) => 
     order: 'desc',
     sort_by: 'timestamp',
     prefix,
-    infix
+    infix,
   };
 
   const es = new Search(
@@ -114,7 +114,7 @@ test('Search with sort_key returns correctly ordered granules', async (t) => {
   const params = {
     limit: 50,
     page: 1,
-    sort_key: ['-collectionId', '+status', 'granuleId']
+    sort_key: ['-collectionId', '+status', 'granuleId'],
   };
 
   const es = new Search(
@@ -136,7 +136,7 @@ test('Search with sort_by and order returns correctly ordered granules', async (
     limit: 50,
     page: 1,
     sort_by: 'granuleId',
-    order: 'desc'
+    order: 'desc',
   };
 
   const es = new Search(

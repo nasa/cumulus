@@ -51,5 +51,5 @@ const fetchTextFile = async (providerClient, remotePath) => {
 
 module.exports = {
   buildProviderClient,
-  fetchTextFile
+  fetchTextFile,
 };

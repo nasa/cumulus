@@ -19,11 +19,11 @@ test('postRule calls the callback with the expected object', async (t) => {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: '/rules',
-      body: JSON.stringify(t.context.testRule)
-    }
+      body: JSON.stringify(t.context.testRule),
+    },
   };
 
   const callback = async (configObject) => {
@@ -33,7 +33,7 @@ test('postRule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(rulesApi.postRule({
     prefix: t.context.testPrefix,
     rule: t.context.testRule,
-    callback
+    callback,
   }));
 });
 
@@ -44,11 +44,11 @@ test('updateRule calls the callback with the expected object', async (t) => {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: `/rules/${t.context.testName}`,
-      body: JSON.stringify(t.context.updateParams)
-    }
+      body: JSON.stringify(t.context.updateParams),
+    },
   };
 
   const callback = async (configObject) => {
@@ -59,7 +59,7 @@ test('updateRule calls the callback with the expected object', async (t) => {
     prefix: t.context.testPrefix,
     ruleName: t.context.testName,
     updateParams: t.context.updateParams,
-    callback
+    callback,
   }));
 });
 
@@ -70,8 +70,8 @@ test('listRules calls the callback with the expected object', async (t) => {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/rules',
-      queryStringParameters: {}
-    }
+      queryStringParameters: {},
+    },
   };
 
   const callback = async (configObject) => {
@@ -80,7 +80,7 @@ test('listRules calls the callback with the expected object', async (t) => {
 
   await t.notThrowsAsync(rulesApi.listRules({
     prefix: t.context.testPrefix,
-    callback
+    callback,
   }));
 });
 
@@ -90,8 +90,8 @@ test('getRule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/rules/${t.context.testName}`
-    }
+      path: `/rules/${t.context.testName}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -101,7 +101,7 @@ test('getRule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(rulesApi.getRule({
     prefix: t.context.testPrefix,
     ruleName: t.context.testName,
-    callback
+    callback,
   }));
 });
 
@@ -111,8 +111,8 @@ test('deleteRule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/rules/${t.context.testName}`
-    }
+      path: `/rules/${t.context.testName}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -122,7 +122,7 @@ test('deleteRule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(rulesApi.deleteRule({
     prefix: t.context.testPrefix,
     ruleName: t.context.testName,
-    callback
+    callback,
   }));
 });
 
@@ -131,10 +131,10 @@ test('rerunRule calls the updateRule with the expected object', async (t) => {
     httpMethod: 'PUT',
     resource: '/{proxy+}',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
     path: `/rules/${t.context.testName}`,
-    body: JSON.stringify({ action: 'rerun' })
+    body: JSON.stringify({ action: 'rerun' }),
   };
 
   const callback = async ({ payload }) => {
@@ -144,6 +144,6 @@ test('rerunRule calls the updateRule with the expected object', async (t) => {
   await t.notThrowsAsync(rulesApi.rerunRule({
     prefix: t.context.testPrefix,
     ruleName: t.context.testName,
-    callback
+    callback,
   }));
 });

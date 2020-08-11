@@ -19,9 +19,9 @@ const event = {
       eventName: 'aws:kinesis:record',
       invokeIdentityArn: 'someArnHere',
       awsRegion: 'us-east-1',
-      eventSourceARN: 'someEventSourceArnHere'
-    }
-  }]
+      eventSourceARN: 'someEventSourceArnHere',
+    },
+  }],
 };
 
 test('The lambda processes incoming record and writes to CloudWatch', async (t) => {

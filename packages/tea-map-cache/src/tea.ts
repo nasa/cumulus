@@ -23,7 +23,7 @@ export const getTeaBucketPath = async (params: {
   const {
     bucket,
     teaEndPoint,
-    retries = 5
+    retries = 5,
   } = params;
   return pRetry(
     async () => {

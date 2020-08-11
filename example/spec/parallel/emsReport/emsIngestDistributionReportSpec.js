@@ -14,11 +14,11 @@ const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
-  cleanupProviders
+  cleanupProviders,
 } = require('@cumulus/integration-tests');
 const {
   getTEADistributionApiRedirect,
-  getTEARequestHeaders
+  getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const { getOnlineResources } = require('@cumulus/integration-tests/cmr');
@@ -29,16 +29,16 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 const {
   setDistributionApiEnvVars,
-  waitForModelStatus
+  waitForModelStatus,
 } = require('../../helpers/apiUtils');
 
 const {
   setupTestGranuleForIngest,
-  waitForGranuleRecordsInList
+  waitForGranuleRecordsInList,
 } = require('../../helpers/granuleUtils');
 
 const providersDir = './data/providers/s3/';
@@ -53,14 +53,14 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   const s3data = [
     '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf.met',
     '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf',
-    '@cumulus/test-data/granules/BROWSE.MOD14A1.A2000049.h00v10.006.2015041132152.1.jpg'
+    '@cumulus/test-data/granules/BROWSE.MOD14A1.A2000049.h00v10.006.2015041132152.1.jpg',
   ];
 
   // populate collections, providers and test data
   await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
     addCollections(config.stackName, config.bucket, collectionsDir),
-    addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
   ]);
 }
 
@@ -176,7 +176,7 @@ xdescribe('The EMS report', () => {
         ingestAndPublishGranule(config, testSuffix, testDataFolder),
 
         // ingest a granule but not publish it to CMR
-        ingestAndPublishGranule(config, testSuffix, testDataFolder, false)
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
       ]);
 
       // wait until records searchable in elasticsearch
@@ -194,7 +194,7 @@ xdescribe('The EMS report', () => {
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       // leave collection in the table for daily reports
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     ]);
   });
 
@@ -246,8 +246,8 @@ xdescribe('The EMS report', () => {
         FunctionName: emsIngestReportLambda,
         Payload: JSON.stringify({
           startTime,
-          endTime
-        })
+          endTime,
+        }),
       }).promise()
         .catch((error) => console.log('invoke err', error));
 
@@ -288,12 +288,12 @@ xdescribe('The EMS report', () => {
         startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
         endTime: moment.utc().add(1, 'days').startOf('day').format(),
         collectionId,
-        invocationType: 'RequestResponse'
+        invocationType: 'RequestResponse',
       };
 
       const response = await emsApi.createEmsReports({
         prefix: config.stackName,
-        request: inputPayload
+        request: inputPayload,
       });
 
       const reports = JSON.parse(response.body).reports;
@@ -358,8 +358,8 @@ xdescribe('The EMS report', () => {
           FunctionName: emsDistributionReportLambda,
           Payload: JSON.stringify({
             startTime,
-            endTime
-          })
+            endTime,
+          }),
         }).promise()
           .catch((error) => console.log('invoke err', error));
 
@@ -389,12 +389,12 @@ xdescribe('The EMS report', () => {
           reportType: 'distribution',
           startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
           endTime: moment.utc().add(1, 'days').startOf('day').format(),
-          collectionId
+          collectionId,
         };
 
         const response = await emsApi.createEmsReports({
           prefix: config.stackName,
-          request: inputPayload
+          request: inputPayload,
         });
 
         const { message } = JSON.parse(response.body);

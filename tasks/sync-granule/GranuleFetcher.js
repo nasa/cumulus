@@ -64,7 +64,7 @@ class GranuleFetcher {
     collection,
     provider,
     fileStagingDir = 'file-staging',
-    duplicateHandling = 'error'
+    duplicateHandling = 'error',
   }) {
     this.buckets = buckets;
     this.collection = collection;
@@ -107,7 +107,7 @@ class GranuleFetcher {
         systemBucket: bucket,
         stackName: process.env.stackName,
         name: collectionName,
-        version: collectionVersion
+        version: collectionVersion,
       });
     }
 
@@ -129,7 +129,7 @@ class GranuleFetcher {
       granuleId: granule.granuleId,
       dataType: collectionName,
       version: collectionVersion,
-      files
+      files,
     };
   }
 
@@ -277,7 +277,7 @@ class GranuleFetcher {
         bucket,
         key,
         expectedSum: file.checksum,
-        options
+        options,
       });
     } else {
       log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
@@ -313,7 +313,7 @@ class GranuleFetcher {
     if (versioning.Status !== 'Enabled') {
       s3().putBucketVersioning({
         Bucket: bucket,
-        VersioningConfiguration: { Status: 'Enabled' }
+        VersioningConfiguration: { Status: 'Enabled' },
       }).promise();
     }
   }
@@ -344,7 +344,7 @@ class GranuleFetcher {
       filename: S3.buildS3Uri(destinationBucket, destinationKey),
       fileStagingDir: stagingPath,
       url_path: this.getUrlPath(file),
-      bucket: destinationBucket
+      bucket: destinationBucket,
     };
 
     const s3ObjAlreadyExists = await S3.s3ObjectExists(
@@ -373,7 +373,7 @@ class GranuleFetcher {
           target: { Bucket: destinationBucket, Key: destinationKey },
           duplicateHandling,
           checksumFunction: this.verifyFile.bind(this, file),
-          syncFileFunction
+          syncFileFunction,
         });
       } else {
         log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
@@ -390,7 +390,7 @@ class GranuleFetcher {
     stagedFile.size = await S3.getObjectSize({
       s3: s3(),
       bucket: destinationBucket,
-      key: destinationKey
+      key: destinationKey,
     });
     delete stagedFile.fileSize; // CUMULUS-1269: delete obsolete field until CnmToGranule is patched
     // return all files, the renamed files don't have the same properties
@@ -404,7 +404,7 @@ class GranuleFetcher {
         filename: S3.buildS3Uri(f.Bucket, f.Key),
         size: f.size,
         fileStagingDir: stagingPath,
-        url_path: this.getUrlPath(file)
+        url_path: this.getUrlPath(file),
       })));
   }
 }

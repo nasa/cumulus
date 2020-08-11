@@ -6,7 +6,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const {
   getStepExitedEvent,
-  getTaskExitedEventOutput
+  getTaskExitedEventOutput,
 } = require('@cumulus/common/execution-history');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
@@ -17,7 +17,7 @@ const executionStatusToWorkflowStatus = (executionStatus) => {
     FAILED: 'failed',
     RUNNING: 'running',
     SUCCEEDED: 'completed',
-    TIMED_OUT: 'failed'
+    TIMED_OUT: 'failed',
   };
 
   return statusMap[executionStatus];
@@ -63,7 +63,7 @@ const getFailedExecutionMessage = async (inputMessage) => {
       // input.
       return {
         ...inputMessage,
-        exception
+        exception,
       };
     }
 
@@ -101,5 +101,5 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
 
 module.exports = {
   getFailedExecutionMessage,
-  getCumulusMessageFromExecutionEvent
+  getCumulusMessageFromExecutionEvent,
 };

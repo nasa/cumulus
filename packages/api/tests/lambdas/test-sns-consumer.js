@@ -39,15 +39,15 @@ const event = {
         TopicArn: snsArn,
         Subject: 'Amazon S3 Notification',
         Message: messageBody,
-        MessageAttributes: {}
-      }
-    }
-  ]
+        MessageAttributes: {},
+      },
+    },
+  ],
 };
 
 const collection = {
   name: testCollectionName,
-  version: '0.0.0'
+  version: '0.0.0',
 };
 const provider = { id: 'PROV1' };
 
@@ -77,11 +77,11 @@ test.beforeEach(async (t) => {
   t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
   t.context.messageTemplate = {
-    meta: { queues: { startSF: stubQueueUrl } }
+    meta: { queues: { startSF: stubQueueUrl } },
   };
   const workflowDefinition = {
     name: t.context.workflow,
-    arn: t.context.stateMachineArn
+    arn: t.context.stateMachineArn,
   };
 
   sfSchedulerSpy = sandbox.stub(SQS, 'sendSQSMessage').returns(true);
@@ -92,7 +92,7 @@ test.beforeEach(async (t) => {
     collection: item.collection,
     meta: get(item, 'meta', {}),
     payload: get(item, 'payload', {}),
-    definition: workflowDefinition
+    definition: workflowDefinition,
   }));
   sandbox.stub(Provider.prototype, 'get').resolves(provider);
   sandbox.stub(Collection.prototype, 'get').resolves(collection);
@@ -115,10 +115,10 @@ test.serial('it should enqueue a message for each associated workflow', async (t
     provider: provider.id,
     rule: {
       type: 'sns',
-      value: snsArn
+      value: snsArn,
     },
     state: 'ENABLED',
-    workflow: 'test-workflow-1'
+    workflow: 'test-workflow-1',
   };
 
   await ruleModel.create(rule1);
@@ -129,16 +129,16 @@ test.serial('it should enqueue a message for each associated workflow', async (t
   const actualMessage = sfSchedulerSpy.getCall(0).args[1];
   const expectedMessage = {
     cumulus_meta: {
-      state_machine: t.context.stateMachineArn
+      state_machine: t.context.stateMachineArn,
     },
     meta: {
       queues: { startSF: stubQueueUrl },
       provider,
       collection,
       snsSourceArn: snsArn,
-      workflow_name: t.context.workflow
+      workflow_name: t.context.workflow,
     },
-    payload: JSON.parse(messageBody)
+    payload: JSON.parse(messageBody),
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
   t.deepEqual(actualMessage.meta, expectedMessage.meta);

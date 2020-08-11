@@ -10,7 +10,7 @@ const {
   listVersionedObjects,
   moveGranuleFiles,
   renameS3FileWithTimestamp,
-  unversionFilename
+  unversionFilename,
 } = require('../granule');
 
 test.beforeEach(async (t) => {
@@ -19,14 +19,14 @@ test.beforeEach(async (t) => {
 
   await Promise.all([
     s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.destBucket }).promise()
+    s3().createBucket({ Bucket: t.context.destBucket }).promise(),
   ]);
 });
 
 test.afterEach(async (t) => {
   await Promise.all([
     S3.recursivelyDeleteS3Bucket(t.context.internalBucket),
-    S3.recursivelyDeleteS3Bucket(t.context.destBucket)
+    S3.recursivelyDeleteS3Bucket(t.context.destBucket),
   ]);
 });
 
@@ -37,7 +37,7 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   const filenames = [
     'test-one.txt',
     'test-two.md',
-    'test-three.jpg'
+    'test-three.jpg',
   ];
 
   const sourceFilePromises = filenames.map(async (name) => {
@@ -48,7 +48,7 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
       name,
       bucket,
       key: sourcefilePath,
-      filename: S3.buildS3Uri(bucket, sourcefilePath)
+      filename: S3.buildS3Uri(bucket, sourcefilePath),
     };
   });
 
@@ -58,18 +58,18 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
     {
       regex: '.*.txt$',
       bucket,
-      filepath: destinationFilepath
+      filepath: destinationFilepath,
     },
     {
       regex: '.*.md$',
       bucket,
-      filepath: destinationFilepath
+      filepath: destinationFilepath,
     },
     {
       regex: '.*.jpg$',
       bucket: secondBucket,
-      filepath: destinationFilepath
-    }
+      filepath: destinationFilepath,
+    },
   ];
 
   const sourceFiles = await Promise.all(sourceFilePromises);
@@ -79,7 +79,7 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
 
   // ASSERT
   const listObjectsResponse = await s3().listObjects({
-    Bucket: bucket
+    Bucket: bucket,
   }).promise();
 
   t.is(listObjectsResponse.Contents.length, 2);
@@ -88,7 +88,7 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   t.true(listObjectsResponse.Contents[1].Key.startsWith(destinationFilepath));
 
   const secondListObjectsResponse = await s3().listObjects({
-    Bucket: secondBucket
+    Bucket: secondBucket,
   }).promise();
 
   t.is((secondListObjectsResponse).Contents.length, 1);
@@ -104,7 +104,7 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
 
   const filenames = [
     'included-in-move.txt',
-    'excluded-from-move'
+    'excluded-from-move',
   ];
 
   const sourceFilePromises = filenames.map(async (name) => {
@@ -115,7 +115,7 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
       name,
       bucket,
       key: sourcefilePath,
-      filename: S3.buildS3Uri(bucket, sourcefilePath)
+      filename: S3.buildS3Uri(bucket, sourcefilePath),
     };
   });
 
@@ -125,15 +125,15 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
     {
       regex: '.*.txt$',
       bucket: secondBucket,
-      filepath: destinationFilepath
-    }
+      filepath: destinationFilepath,
+    },
   ];
 
   const sourceFiles = await Promise.all(sourceFilePromises);
   await moveGranuleFiles(sourceFiles, destinations);
 
   const bucketListResponse = await s3().listObjects({
-    Bucket: bucket
+    Bucket: bucket,
   }).promise();
 
   t.is(bucketListResponse.Contents.length, 1);
@@ -141,7 +141,7 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   t.is(bucketListResponse.Contents[0].Key, 'origin/excluded-from-move');
 
   const secondBucketListResponse = await s3().listObjects({
-    Bucket: secondBucket
+    Bucket: secondBucket,
   }).promise();
 
   t.is(secondBucketListResponse.Contents.length, 1);
@@ -156,7 +156,7 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
   const filenames = [
     'test-one.txt',
     'test-two.md',
-    'test-three.jpg'
+    'test-three.jpg',
   ];
 
   const sourceFilePromises = filenames.map(async (name) => {
@@ -167,7 +167,7 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
       name,
       bucket,
       key: sourcefilePath,
-      filename: S3.buildS3Uri(bucket, sourcefilePath)
+      filename: S3.buildS3Uri(bucket, sourcefilePath),
     };
   });
 
@@ -177,36 +177,36 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
     {
       regex: '.*.txt$',
       bucket,
-      filepath: destinationFilepath
+      filepath: destinationFilepath,
     },
     {
       regex: '.*.md$',
       bucket,
-      filepath: destinationFilepath
+      filepath: destinationFilepath,
     },
     {
       regex: '.*.jpg$',
       bucket: secondBucket,
-      filepath: destinationFilepath
-    }
+      filepath: destinationFilepath,
+    },
   ];
 
   const expectedUpdatedFiles = [
     {
       name: 'test-one.txt',
       bucket: bucket,
-      key: 'destination/test-one.txt'
+      key: 'destination/test-one.txt',
     },
     {
       name: 'test-two.md',
       bucket: bucket,
-      key: 'destination/test-two.md'
+      key: 'destination/test-two.md',
     },
     {
       name: 'test-three.jpg',
       bucket: secondBucket,
-      key: 'destination/test-three.jpg'
-    }
+      key: 'destination/test-three.jpg',
+    },
   ];
 
   const sourceFiles = await Promise.all(sourceFilePromises);
@@ -227,7 +227,7 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
 test('generateMoveFileParams generates correct parameters', (t) => {
   const filenames = [
     'included-in-move.txt',
-    'another-move.txt'
+    'another-move.txt',
   ];
 
   const sourceBucket = 'test-bucket';
@@ -238,7 +238,7 @@ test('generateMoveFileParams generates correct parameters', (t) => {
     return {
       name,
       bucket: sourceBucket,
-      key: sourcefilePath
+      key: sourcefilePath,
     };
   });
 
@@ -248,8 +248,8 @@ test('generateMoveFileParams generates correct parameters', (t) => {
     {
       regex: '.*.txt$',
       bucket: destBucket,
-      filepath: destinationFilepath
-    }
+      filepath: destinationFilepath,
+    },
   ];
 
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
@@ -258,19 +258,19 @@ test('generateMoveFileParams generates correct parameters', (t) => {
     file: sourceFiles[index],
     source: {
       Bucket: sourceBucket,
-      Key: `origin/${filenames[index]}`
+      Key: `origin/${filenames[index]}`,
     },
     target: {
       Bucket: destBucket,
-      Key: `${destinationFilepath}/${filenames[index]}`
-    }
+      Key: `${destinationFilepath}/${filenames[index]}`,
+    },
   }));
 });
 
 test('generateMoveFileParams generates undefined source and target for no destination', (t) => {
   const filenames = [
     'included-in-move.txt',
-    'exclude'
+    'exclude',
   ];
 
   const sourceBucket = 'test-bucket';
@@ -281,7 +281,7 @@ test('generateMoveFileParams generates undefined source and target for no destin
     return {
       name,
       bucket: sourceBucket,
-      key: sourcefilePath
+      key: sourcefilePath,
     };
   });
 
@@ -291,8 +291,8 @@ test('generateMoveFileParams generates undefined source and target for no destin
     {
       regex: '.*.txt$',
       bucket: destBucket,
-      filepath: destinationFilepath
-    }
+      filepath: destinationFilepath,
+    },
   ];
 
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
@@ -309,7 +309,7 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   const formatString = 'YYYYMMDDTHHmmssSSS';
   const existingRenamedKey = `${key}.v${moment.utc().format(formatString)}`;
   const existingRenamedParams = {
-    Bucket: bucket, Key: existingRenamedKey, Body: randomString()
+    Bucket: bucket, Key: existingRenamedKey, Body: randomString(),
   };
   await S3.s3PutObject(existingRenamedParams);
   await renameS3FileWithTimestamp(bucket, key);

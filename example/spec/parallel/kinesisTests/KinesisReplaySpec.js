@@ -17,7 +17,7 @@ const {
   cleanupProviders,
   deleteRules,
   readJsonFilesFromDir,
-  setProcessEnvironment
+  setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 
 const {
@@ -27,7 +27,7 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForTestSfForRecord
+  waitForTestSfForRecord,
 } = require('../../helpers/kinesisHelpers');
 
 const {
@@ -35,7 +35,7 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 
 // When kinesis-type rules exist, the Cumulus lambda messageConsumer is
@@ -75,7 +75,7 @@ describe('The Kinesis Replay API', () => {
         deleteFolder(testConfig.bucket, testDataFolder),
         cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
         cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
-        deleteTestStream(streamName)
+        deleteTestStream(streamName),
       ]);
     } catch (error) {
       console.log(`Cleanup failed, ${error}.   Stack may need to be manually cleaned up.`);
@@ -96,7 +96,7 @@ describe('The Kinesis Replay API', () => {
       provider: `PODAAC_SWOT${testSuffix}`,
       collection: `MOD09GQ${testSuffix}`,
       bucket: 'random-bucket',
-      identifier: identifier || randomString()
+      identifier: identifier || randomString(),
     });
 
     tooOldToFetchRecords = [createRecord(`too-old-${testId}`)];
@@ -105,7 +105,7 @@ describe('The Kinesis Replay API', () => {
 
     await Promise.all([
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
     ]);
 
     await tryCatchExit(cleanUp, async () => {
@@ -148,7 +148,7 @@ describe('The Kinesis Replay API', () => {
         type: 'kinesis',
         kinesisStream: streamName,
         endTimestamp,
-        startTimestamp
+        startTimestamp,
       };
       const response = await invokeApi({
         prefix: testConfig.stackName,
@@ -156,11 +156,11 @@ describe('The Kinesis Replay API', () => {
           httpMethod: 'POST',
           resource: '/{proxy+}',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           path: '/replays',
-          body: JSON.stringify(apiRequestBody)
-        }
+          body: JSON.stringify(apiRequestBody),
+        },
       });
       console.log(`received response ${JSON.stringify(response)}`);
       asyncOperationId = JSON.parse(response.body).asyncOperationId;

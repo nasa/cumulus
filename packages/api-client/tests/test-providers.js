@@ -17,8 +17,8 @@ test('createProvider calls the callback with the expected object', async (t) => 
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/providers',
-      body: JSON.stringify(t.context.testProvider)
-    }
+      body: JSON.stringify(t.context.testProvider),
+    },
   };
   const callback = async (configObject) => {
     t.deepEqual(configObject, expected);
@@ -27,7 +27,7 @@ test('createProvider calls the callback with the expected object', async (t) => 
   await t.notThrowsAsync(providersApi.createProvider({
     prefix: t.context.testPrefix,
     provider: t.context.testProvider,
-    callback
+    callback,
   }));
 });
 
@@ -37,8 +37,8 @@ test('deleteProvider calls the callback with the expected object', async (t) => 
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/providers/${t.context.testProviderId}`
-    }
+      path: `/providers/${t.context.testProviderId}`,
+    },
   };
   const callback = async (configObject) => {
     t.deepEqual(configObject, expected);
@@ -47,7 +47,7 @@ test('deleteProvider calls the callback with the expected object', async (t) => 
   await t.notThrowsAsync(providersApi.deleteProvider({
     prefix: t.context.testPrefix,
     providerId: t.context.testProviderId,
-    callback
+    callback,
   }));
 });
 
@@ -57,8 +57,8 @@ test('getProvider calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/providers/${t.context.testProviderId}`
-    }
+      path: `/providers/${t.context.testProviderId}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -68,7 +68,7 @@ test('getProvider calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(providersApi.getProvider({
     prefix: t.context.testPrefix,
     providerId: t.context.testProviderId,
-    callback
+    callback,
   }));
 });
 
@@ -78,8 +78,8 @@ test('getProviders calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/providers'
-    }
+      path: '/providers',
+    },
   };
 
   const callback = async (configObject) => {
@@ -88,6 +88,6 @@ test('getProviders calls the callback with the expected object', async (t) => {
 
   await t.notThrowsAsync(providersApi.getProviders({
     prefix: t.context.testPrefix,
-    callback
+    callback,
   }));
 });

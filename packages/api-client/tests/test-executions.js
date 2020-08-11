@@ -15,8 +15,8 @@ test('getExecution calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/executions/${t.context.arn}`
-    }
+      path: `/executions/${t.context.arn}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -27,7 +27,7 @@ test('getExecution calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(executionsApi.getExecution({
     prefix: t.context.testPrefix,
     arn: t.context.arn,
-    callback
+    callback,
   }));
 });
 
@@ -38,8 +38,8 @@ test('getExecutions calls the callback with the expected object', async (t) => {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/executions',
-      queryStringParameters: undefined
-    }
+      queryStringParameters: undefined,
+    },
   };
 
   const callback = async (configObject) => {
@@ -48,7 +48,7 @@ test('getExecutions calls the callback with the expected object', async (t) => {
 
   await t.notThrowsAsync(executionsApi.getExecutions({
     prefix: t.context.testPrefix,
-    callback
+    callback,
   }));
 });
 
@@ -60,8 +60,8 @@ test('getExecutions calls the callback with the expected object with query param
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/executions',
-      queryStringParameters: query
-    }
+      queryStringParameters: query,
+    },
   };
 
   const callback = async (configObject) => {
@@ -71,7 +71,7 @@ test('getExecutions calls the callback with the expected object with query param
   await t.notThrowsAsync(executionsApi.getExecutions({
     prefix: t.context.testPrefix,
     query,
-    callback
+    callback,
   }));
 });
 
@@ -81,8 +81,8 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/executions/status/${t.context.arn}`
-    }
+      path: `/executions/status/${t.context.arn}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -92,6 +92,6 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
   await t.notThrowsAsync(executionsApi.getExecutionStatus({
     prefix: t.context.testPrefix,
     arn: t.context.arn,
-    callback
+    callback,
   }));
 });

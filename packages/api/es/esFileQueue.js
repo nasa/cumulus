@@ -28,7 +28,7 @@ const buildFilesResponse = (granuleFilesList, bucket) =>
     granuleFilesList.map((gfl) =>
       gfl.files.filter(sameBucket(bucket)).map((object) => ({
         granuleId: gfl.granuleId,
-        ...object
+        ...object,
       })))
   );
 
@@ -49,11 +49,11 @@ class ESFileQueue {
           {
             'files.key.keyword': {
               order: 'asc',
-              unmapped_type: 'keyword'
-            }
-          }
-        ]
-      }
+              unmapped_type: 'keyword',
+            },
+          },
+        ],
+      },
     };
   }
 
@@ -91,7 +91,7 @@ class ESFileQueue {
     if (!this.esClient) {
       this.esClient = new ESScrollSearch(
         {
-          queryStringParameters: this.params
+          queryStringParameters: this.params,
         },
         'granule',
         this.index

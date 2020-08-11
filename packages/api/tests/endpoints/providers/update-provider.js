@@ -5,7 +5,7 @@ const test = require('ava');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -14,7 +14,7 @@ const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -58,7 +58,7 @@ test.before(async () => {
 test.beforeEach(async (t) => {
   t.context.testProvider = {
     ...fakeProviderFactory(),
-    cmKeyId: 'key'
+    cmKeyId: 'key',
   };
   await providerModel.create(t.context.testProvider);
 });
@@ -111,7 +111,7 @@ test('PUT replaces existing provider', async (t) => {
     ...expectedProvider,
     protocol: 'http', // Default value
     createdAt: actualProvider.createdAt,
-    updatedAt: actualProvider.updatedAt
+    updatedAt: actualProvider.updatedAt,
   });
 });
 
@@ -153,7 +153,7 @@ test('PUT without an Authorization header returns an Authorization Missing respo
 
   assertions.isAuthorizationMissingResponse(t, response);
   const provider = await providerModel.get({
-    id: t.context.testProvider.id
+    id: t.context.testProvider.id,
   });
   t.is(provider.globalConnectionLimit, t.context.testProvider.globalConnectionLimit);
 });

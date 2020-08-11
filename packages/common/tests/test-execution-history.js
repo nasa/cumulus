@@ -4,7 +4,7 @@ const test = require('ava');
 
 const {
   getStepExitedEvent,
-  getTaskExitedEventOutput
+  getTaskExitedEventOutput,
 } = require('../execution-history');
 
 test('getStepExitedEvent returns undefined if task exited event cannot be found', (t) => {
@@ -12,16 +12,16 @@ test('getStepExitedEvent returns undefined if task exited event cannot be found'
     {
       type: 'LambdafunctionFailed',
       id: 1,
-      lambdaFunctionFailedEventDetails: {}
+      lambdaFunctionFailedEventDetails: {},
     },
     {
       type: 'TaskStateExited',
       id: 2,
       previousEventId: 1,
       stateExitedEventDetails: {
-        output: {}
-      }
-    }
+        output: {},
+      },
+    },
   ];
 
   t.is(getStepExitedEvent(events, { id: 3 }), undefined);
@@ -32,16 +32,16 @@ test('getStepExitedEvent returns correct task exited event', (t) => {
     {
       type: 'LambdafunctionFailed',
       id: 1,
-      lambdaFunctionFailedEventDetails: {}
+      lambdaFunctionFailedEventDetails: {},
     },
     {
       type: 'TaskStateExited',
       id: 2,
       previousEventId: 1,
       stateExitedEventDetails: {
-        output: {}
-      }
-    }
+        output: {},
+      },
+    },
   ];
 
   const taskExitedEvent = getStepExitedEvent(
@@ -55,12 +55,12 @@ test('getStepExitedEvent returns correct task exited event', (t) => {
 
 test('getTaskExitedEventOutput returns correct output', (t) => {
   const payload = {
-    foo: 'bar'
+    foo: 'bar',
   };
   const event = {
     stateExitedEventDetails: {
-      output: JSON.stringify(payload)
-    }
+      output: JSON.stringify(payload),
+    },
   };
   const output = getTaskExitedEventOutput(event);
   t.deepEqual(JSON.parse(output), payload);

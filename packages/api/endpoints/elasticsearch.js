@@ -58,7 +58,7 @@ async function reindex(req, res) {
   const esClient = await Search.es();
 
   const alias = await esClient.indices.getAlias({
-    name: aliasName
+    name: aliasName,
   }).then((response) => response.body);
 
   // alias keys = index name
@@ -104,8 +104,8 @@ async function reindex(req, res) {
   esClient.reindex({
     body: {
       source: { index: sourceIndex },
-      dest: { index: destIndex }
-    }
+      dest: { index: destIndex },
+    },
   });
 
   const message = `Reindexing to ${destIndex} from ${sourceIndex}. Check the reindex-status endpoint for status.`;
@@ -122,12 +122,12 @@ async function reindexStatus(req, res) {
   await esClient.indices.refresh();
 
   const indexStatus = await esClient.indices.stats({
-    metric: 'docs'
+    metric: 'docs',
   }).then((response) => response.body);
 
   const status = {
     reindexStatus: reindexTaskStatus,
-    indexStatus
+    indexStatus,
   };
 
   return res.send(status);
@@ -168,9 +168,9 @@ async function changeIndex(req, res) {
       body: {
         actions: [
           { remove: { index: currentIndex, alias: aliasName } },
-          { add: { index: newIndex, alias: aliasName } }
-        ]
-      }
+          { add: { index: newIndex, alias: aliasName } },
+        ],
+      },
     });
 
     log.info(`Removed alias ${aliasName} from index ${currentIndex} and added alias to ${newIndex}`);
@@ -210,7 +210,7 @@ async function indexFromDatabase(req, res) {
   const asyncOperationModel = new AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    tableName: process.env.AsyncOperationsTable,
   });
 
   const asyncOperation = await asyncOperationModel.start({
@@ -229,11 +229,11 @@ async function indexFromDatabase(req, res) {
         providersTable: process.env.ProvidersTable,
         reconciliationReportsTable: process.env.ReconciliationReportsTable,
         rulesTable: process.env.RulesTable,
-        asyncOperationsTable: process.env.AsyncOperationsTable
+        asyncOperationsTable: process.env.AsyncOperationsTable,
       },
       esHost: process.env.ES_HOST,
-      esRequestConcurrency: process.env.ES_CONCURRENCY
-    }
+      esRequestConcurrency: process.env.ES_CONCURRENCY,
+    },
   });
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });

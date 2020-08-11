@@ -7,7 +7,7 @@ const omit = require('lodash/omit');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   promiseS3Upload,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -23,7 +23,7 @@ const {
   fakeProviderFactory,
   fakeReconciliationReportFactory,
   fakeRuleFactoryV2,
-  getWorkflowList
+  getWorkflowList,
 } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
@@ -52,14 +52,14 @@ const tables = {
   pdrsTable: process.env.PdrsTable,
   providersTable: process.env.ProvidersTable,
   reconciliationReportsTable: process.env.ReconciliationReportsTable,
-  rulesTable: process.env.RulesTable
+  rulesTable: process.env.RulesTable,
 };
 
 const executionModel = new models.Execution();
 const asyncOperationModel = new models.AsyncOperation({
   systemBucket: process.env.system_bucket,
   stackName: process.env.stackName,
-  tableName: process.env.AsyncOperationsTable
+  tableName: process.env.AsyncOperationsTable,
 });
 const collectionModel = new models.Collection();
 const granuleModel = new models.Granule();
@@ -113,13 +113,13 @@ test.before(async (t) => {
     promiseS3Upload({
       Bucket: process.env.system_bucket,
       Key: wKey,
-      Body: JSON.stringify(workflowList[0])
+      Body: JSON.stringify(workflowList[0]),
     }),
     promiseS3Upload({
       Bucket: process.env.system_bucket,
       Key: tKey,
-      Body: JSON.stringify({})
-    })
+      Body: JSON.stringify({}),
+    }),
   ]);
 });
 
@@ -142,7 +142,7 @@ test.after.always(async (t) => {
 
 test('getEsRequestConcurrency respects concurrency value in payload', (t) => {
   t.is(indexFromDatabase.getEsRequestConcurrency({
-    esRequestConcurrency: 5
+    esRequestConcurrency: 5,
   }), 5);
 });
 
@@ -159,7 +159,7 @@ test('getEsRequestConcurrency correctly returns 10 when nothing is specified', (
 test.serial('getEsRequestConcurrency throws an error when -1 is specified', (t) => {
   t.throws(
     () => indexFromDatabase.getEsRequestConcurrency({
-      esRequestConcurrency: -1
+      esRequestConcurrency: -1,
     }),
     { instanceOf: TypeError }
   );
@@ -177,7 +177,7 @@ test.serial('getEsRequestConcurrency throws an error when -1 is specified', (t) 
 test.serial('getEsRequestConcurrency throws an error when "asdf" is specified', (t) => {
   t.throws(
     () => indexFromDatabase.getEsRequestConcurrency({
-      esRequestConcurrency: 'asdf'
+      esRequestConcurrency: 'asdf',
     }),
     { instanceOf: TypeError }
   );
@@ -195,7 +195,7 @@ test.serial('getEsRequestConcurrency throws an error when "asdf" is specified', 
 test.serial('getEsRequestConcurrency throws an error when 0 is specified', (t) => {
   t.throws(
     () => indexFromDatabase.getEsRequestConcurrency({
-      esRequestConcurrency: 0
+      esRequestConcurrency: 0,
     }),
     { instanceOf: TypeError }
   );
@@ -215,7 +215,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
 
   t.notThrows(async () => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
-    tables
+    tables,
   }));
 });
 
@@ -232,12 +232,12 @@ test('Lambda successfully indexes records of all types', async (t) => {
     addFakeData(numItems, fakePdrFactoryV2, pdrModel),
     addFakeData(numItems, fakeProviderFactory, providersModel),
     addFakeData(numItems, fakeReconciliationReportFactory, reconciliationReportModel),
-    addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
+    addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name }),
   ]);
 
   await indexFromDatabase.handler({
     indexName: esAlias,
-    tables
+    tables,
   });
 
   const searchResults = await Promise.all([
@@ -247,7 +247,7 @@ test('Lambda successfully indexes records of all types', async (t) => {
     searchEs('pdr', esAlias),
     searchEs('provider', esAlias),
     searchEs('reconciliationReport', esAlias),
-    searchEs('rule', esAlias)
+    searchEs('rule', esAlias),
   ]);
 
   searchResults.map((res) => t.is(res.meta.count, numItems));
@@ -285,7 +285,7 @@ test.serial('failure in indexing record of specific type should not prevent inde
   try {
     await indexFromDatabase.handler({
       indexName: esAlias,
-      tables
+      tables,
     });
 
     searchResults = await searchEs('granule', esAlias);
@@ -311,7 +311,7 @@ test.serial('failure in indexing record of specific type should not prevent inde
           type: 'granule',
           id: result.granuleId,
           parent: result.collectionId,
-          refresh: true
+          refresh: true,
         })
     ));
   }
@@ -323,7 +323,7 @@ test.serial('failure in indexing record of one type should not prevent indexing 
   const numItems = 2;
   const [fakeProviderData, fakeGranuleData] = await Promise.all([
     addFakeData(numItems, fakeProviderFactory, providersModel),
-    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel)
+    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
   ]);
 
   const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
@@ -333,7 +333,7 @@ test.serial('failure in indexing record of one type should not prevent indexing 
   try {
     await indexFromDatabase.handler({
       indexName: esAlias,
-      tables
+      tables,
     });
 
     searchResults = await searchEs('provider', esAlias);
@@ -361,7 +361,7 @@ test.serial('failure in indexing record of one type should not prevent indexing 
           index: esAlias,
           type: 'provider',
           id: result.id,
-          refresh: true
+          refresh: true,
         })
     ));
   }

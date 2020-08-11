@@ -18,16 +18,16 @@ async function reportSQSMessage(event) {
     ...event.input,
     meta: {
       ...meta,
-      status: 'running'
-    }
+      status: 'running',
+    },
   };
 
   const sqsEvent = {
     detail: {
       input: JSON.stringify(message),
       status: 'RUNNING',
-      stopDate: null
-    }
+      stopDate: null,
+    },
   };
 
   const reportingQueueUrl = get(event, 'input.meta.queues.reporting', process.env.reporting_queue_url);

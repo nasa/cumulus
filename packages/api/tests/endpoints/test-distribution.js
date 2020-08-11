@@ -93,7 +93,7 @@ test.before(async () => {
     authorizationUrl,
     signedFileUrl,
     authorizationCode: randomId('code'),
-    distributionUrl: process.env.DISTRIBUTION_ENDPOINT
+    distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
   };
 });
 
@@ -129,7 +129,7 @@ test('A request for a file using an expired access token returns a redirect to a
   const { accessTokenModel, fileLocation } = context;
 
   const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: moment().unix()
+    expirationTime: moment().unix(),
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -158,7 +158,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
     accessTokenCookie,
     accessTokenRecord,
     fileLocation,
-    signedFileUrl
+    signedFileUrl,
   } = context;
 
   const response = await request(distributionApp)
@@ -181,7 +181,7 @@ test('A /redirect request with a good authorization code returns a correct respo
     authorizationCode,
     getAccessTokenResponse,
     distributionUrl,
-    fileLocation
+    fileLocation,
   } = context;
 
   const response = await request(distributionApp)
@@ -213,7 +213,7 @@ test('A /redirect request with a good authorization code stores the access token
   const {
     accessTokenModel,
     authorizationCode,
-    fileLocation
+    fileLocation,
   } = context;
 
   const response = await request(distributionApp)

@@ -17,9 +17,9 @@ function filePutRequestsFromGranule(granule) {
       Item: {
         bucket: { S: file.bucket },
         key: { S: parseS3Uri(file.filename).Key },
-        granuleId: { S: granule.granuleId }
-      }
-    }
+        granuleId: { S: granule.granuleId },
+      },
+    },
   }));
 }
 
@@ -36,7 +36,7 @@ function filePutRequestsFromGranule(granule) {
 async function run({ granulesTable, filesTable }) {
   const granuleTableScanQueue = new DynamoDbSearchQueue({
     TableName: granulesTable,
-    ProjectionExpression: 'granuleId, files'
+    ProjectionExpression: 'granuleId, files',
   });
 
   // Track DynamoDB PutRequests that need to be written to the Files table, so
@@ -51,8 +51,8 @@ async function run({ granulesTable, filesTable }) {
     while (filePutRequestBuffer.length >= 25) {
       const batchWriteItemParams = {
         RequestItems: {
-          [filesTable]: filePutRequestBuffer.slice(0, 25)
-        }
+          [filesTable]: filePutRequestBuffer.slice(0, 25),
+        },
       };
 
       await dynamodb().batchWriteItem(batchWriteItemParams).promise(); // eslint-disable-line no-await-in-loop, max-len
@@ -68,8 +68,8 @@ async function run({ granulesTable, filesTable }) {
   while (filePutRequestBuffer.length > 0) {
     const batchWriteItemParams = {
       RequestItems: {
-        [filesTable]: filePutRequestBuffer.slice(0, 25)
-      }
+        [filesTable]: filePutRequestBuffer.slice(0, 25),
+      },
     };
 
     await dynamodb().batchWriteItem(batchWriteItemParams).promise(); // eslint-disable-line no-await-in-loop, max-len

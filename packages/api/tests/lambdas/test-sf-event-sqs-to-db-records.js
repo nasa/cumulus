@@ -15,12 +15,12 @@ const Pdr = require('../../models/pdrs');
 const {
   saveExecutionToDb,
   saveGranulesToDb,
-  savePdrToDb
+  savePdrToDb,
 } = require('../../lambdas/sf-event-sqs-to-db-records');
 const { handler } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
-    sendSQSMessage: async (queue, message) => [queue, message]
-  }
+    sendSQSMessage: async (queue, message) => [queue, message],
+  },
 });
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -59,7 +59,7 @@ const runHandler = async (cumulusMessage = {}) => {
 
   const pdrName = randomString();
   cumulusMessage.payload.pdr = {
-    name: pdrName
+    name: pdrName,
   };
 
   fixture.detail.input = JSON.stringify(cumulusMessage);
@@ -67,8 +67,8 @@ const runHandler = async (cumulusMessage = {}) => {
   const sqsEvent = {
     Records: [{
       eventSource: 'aws:sqs',
-      body: JSON.stringify(fixture)
-    }]
+      body: JSON.stringify(fixture),
+    }],
   };
   const handlerResponse = await handler(sqsEvent);
   return { executionArn, granuleId, pdrName, handlerResponse, sqsEvent };
@@ -98,23 +98,23 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122
+      workflow_start_time: 122,
     },
     meta: {
       status: 'running',
       collection: {
         name: 'my-collection',
-        version: 5
+        version: 5,
       },
       provider: {
         id: 'test-provider',
         host: 'test-bucket',
-        protocol: 's3'
-      }
+        protocol: 's3',
+      },
     },
     payload: {
-      key: 'my-payload'
-    }
+      key: 'my-payload',
+    },
   };
 });
 
@@ -181,7 +181,7 @@ test('saveGranulesToDb() saves a granule record to the database', async (t) => {
   const files = [fakeFileFactory({ size: 250 })];
   const granule = fakeGranuleFactoryV2({
     files,
-    granuleId
+    granuleId,
   });
   delete granule.version;
   delete granule.dataType;
@@ -203,7 +203,7 @@ test('saveGranulesToDb() saves a granule record to the database', async (t) => {
     timeToPreprocess: 0,
     duration: fetchedGranule.duration,
     timestamp: fetchedGranule.timestamp,
-    updatedAt: fetchedGranule.updatedAt
+    updatedAt: fetchedGranule.updatedAt,
   };
   t.deepEqual(fetchedGranule, expectedGranule);
 });
@@ -238,13 +238,13 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
   const pdr = {
     name: randomString(),
     PANSent: false,
-    PANmessage: 'test'
+    PANmessage: 'test',
   };
   cumulusMessage.payload = {
     pdr,
     completed: new Array(4).map(randomString),
     failed: new Array(2).map(randomString),
-    running: new Array(6).map(randomString)
+    running: new Array(6).map(randomString),
   };
   await savePdrToDb(cumulusMessage);
 
@@ -267,11 +267,11 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
       processing: 6,
       completed: 4,
       failed: 2,
-      total: 12
+      total: 12,
     },
     createdAt: cumulusMessage.cumulus_meta.workflow_start_time,
     duration: fetchedPdr.duration,
-    timestamp: fetchedPdr.timestamp
+    timestamp: fetchedPdr.timestamp,
   };
   t.deepEqual(fetchedPdr, expectedPdr);
 });
@@ -295,7 +295,7 @@ test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and p
     cumulusMessage,
     executionModel,
     granuleModel,
-    pdrModel
+    pdrModel,
   } = t.context;
 
   delete cumulusMessage.meta.collection;
@@ -304,7 +304,7 @@ test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and p
     granuleId,
     pdrName,
     handlerResponse,
-    sqsEvent
+    sqsEvent,
   } = await runHandler(cumulusMessage);
 
   t.true(await executionModel.exists({ arn: executionArn }));
@@ -318,7 +318,7 @@ test('The sf-event-sqs-to-db-records Lambda adds records to the granule, executi
     cumulusMessage,
     executionModel,
     granuleModel,
-    pdrModel
+    pdrModel,
   } = t.context;
 
   const { executionArn, granuleId, pdrName } = await runHandler(cumulusMessage);

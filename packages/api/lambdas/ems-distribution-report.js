@@ -6,7 +6,7 @@ const moment = require('moment');
 const {
   buildS3Uri,
   deleteS3Files,
-  listS3ObjectsV2
+  listS3ObjectsV2,
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
@@ -18,7 +18,7 @@ const {
   determineReportsStartEndTime,
   getEmsEnabledCollections,
   getExpiredS3Objects,
-  submitReports
+  submitReports,
 } = require('../lib/ems');
 
 /**
@@ -46,7 +46,7 @@ const bucketsPrefixes = () => ({
   reportsBucket: process.env.system_bucket,
   logsPrefix: `${process.env.stackName}/ems-distribution/s3-server-access-logs/`,
   reportsPrefix: `${process.env.stackName}/ems-distribution/reports/`,
-  reportsSentPrefix: `${process.env.stackName}/ems-distribution/reports/sent/`
+  reportsSentPrefix: `${process.env.stackName}/ems-distribution/reports/sent/`,
 });
 exports.bucketsPrefixes = bucketsPrefixes;
 
@@ -80,7 +80,7 @@ async function cleanup() {
 async function getDistributionEventsFromS3Object(params) {
   const {
     Bucket,
-    Key
+    Key,
   } = params;
 
   const logLines = await awsServices.s3().getObject({ Bucket, Key }).promise()
@@ -106,7 +106,7 @@ async function getDistributionEventsFromS3Object(params) {
 async function generateDistributionReport(params) {
   const {
     reportStartTime,
-    reportEndTime
+    reportEndTime,
   } = params;
 
   log.info(`generateDistributionReport for access records between ${reportStartTime.format()} and ${reportEndTime.format()}`);
@@ -172,12 +172,12 @@ async function generateDistributionReport(params) {
 async function generateAndStoreDistributionReport(params) {
   const {
     startTime,
-    endTime
+    endTime,
   } = params;
 
   const distributionReport = await generateDistributionReport({
     reportStartTime: moment.utc(startTime),
-    reportEndTime: moment.utc(endTime)
+    reportEndTime: moment.utc(endTime),
   });
 
   const { reportsBucket, reportsPrefix } = bucketsPrefixes();
@@ -189,7 +189,7 @@ async function generateAndStoreDistributionReport(params) {
   return awsServices.s3().putObject({
     Bucket: reportsBucket,
     Key: reportKey,
-    Body: distributionReport
+    Body: distributionReport,
   }).promise()
     .then(() => ({ reportType: DISTRIBUTION_REPORT, file: s3Uri }));
 }
@@ -259,7 +259,7 @@ function handler(event, context, cb) {
     reportsBucket: process.env.system_bucket,
     reportsPrefix: `${process.env.stackName}/ems-distribution/reports/`,
     provider: process.env.ems_provider || 'cumulus',
-    stackName: process.env.stackName
+    stackName: process.env.stackName,
   };
 
   // catch up run to generate reports for each day

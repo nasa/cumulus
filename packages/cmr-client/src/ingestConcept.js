@@ -11,7 +11,7 @@ const { parseXMLString } = require('./Utils');
 const log = new Logger({ sender: 'cmr-client' });
 
 const logDetails = {
-  file: 'cmr-client/ingestConcept.js'
+  file: 'cmr-client/ingestConcept.js',
 };
 
 /**
@@ -38,7 +38,7 @@ async function ingestConcept(type, xmlString, identifierPath, provider, headers)
       `${getUrl('ingest', provider)}${type}s/${identifier}`,
       {
         body: xmlString,
-        headers
+        headers,
       }
     );
 

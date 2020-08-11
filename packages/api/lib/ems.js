@@ -8,7 +8,7 @@ const {
   parseS3Uri,
   s3CopyObject,
   buildS3Uri,
-  getTextObject
+  getTextObject,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
@@ -27,7 +27,7 @@ const reportToFileType = (reportType) => {
     archive: 'Arch',
     delete: 'ArchDel',
     distribution: 'DistCustom',
-    metadata: 'Meta'
+    metadata: 'Meta',
   };
   return type[reportType];
 };
@@ -66,7 +66,7 @@ async function determineReportKey(reportType, reportStartTime, reportsPrefix) {
 
   const revisionNumber = (await listS3ObjectsV2({
     Bucket: process.env.system_bucket,
-    Prefix: s3Join([reportsPrefix, reportName])
+    Prefix: s3Join([reportsPrefix, reportName]),
   })).length;
 
   if (revisionNumber > 0) reportName = `${reportName}.rev${revisionNumber}`;
@@ -137,7 +137,7 @@ async function submitReports(reports) {
     username: process.env.ems_username,
     host: process.env.ems_host,
     port: process.env.ems_port,
-    privateKey
+    privateKey,
   };
 
   const reportsSent = [];
@@ -166,12 +166,12 @@ async function submitReports(reports) {
       await s3CopyObject({
         CopySource: `${parsed.Bucket}/${parsed.Key}`,
         Bucket: parsed.Bucket,
-        Key: newKey
+        Key: newKey,
       });
 
       reportsSent.push({
         reportType: reports[i].reportType,
-        file: buildS3Uri(parsed.Bucket, newKey)
+        file: buildS3Uri(parsed.Bucket, newKey),
       });
     }
   } finally {
@@ -211,7 +211,7 @@ function buildStartEndTimes(reportStartTime, reportEndTime) {
   while (reportStartTime.isBefore(reportEndTime)) {
     startEndTimes.push({
       startTime: moment(reportStartTime).format(),
-      endTime: moment(reportStartTime).add(1, 'days').format()
+      endTime: moment(reportStartTime).add(1, 'days').format(),
     });
     reportStartTime.add(1, 'days');
   }
@@ -226,5 +226,5 @@ module.exports = {
   getEmsEnabledCollections,
   getExpiredS3Objects,
   submitReports,
-  reportToFileType
+  reportToFileType,
 };

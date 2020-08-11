@@ -8,7 +8,7 @@ const { handler } = require('../../lambdas/publish-collections');
 
 const randomCollection = () => ({
   name: randomString(),
-  version: randomString()
+  version: randomString(),
 });
 
 test.before(async (t) => {
@@ -18,17 +18,17 @@ test.before(async (t) => {
   const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
   const { Attributes: { QueueArn } } = await sqs().getQueueAttributes({
     QueueUrl,
-    AttributeNames: ['QueueArn']
+    AttributeNames: ['QueueArn'],
   }).promise();
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
-    Endpoint: QueueArn
+    Endpoint: QueueArn,
   }).promise();
 
   await sns().confirmSubscription({
     TopicArn,
-    Token: SubscriptionArn
+    Token: SubscriptionArn,
   }).promise();
 
   process.env.collection_sns_topic_arn = TopicArn;
@@ -40,7 +40,7 @@ test.after.always(async (t) => {
 
   await Promise.all([
     sqs().deleteQueue({ QueueUrl }).promise(),
-    sns().deleteTopic({ TopicArn }).promise()
+    sns().deleteTopic({ TopicArn }).promise(),
   ]);
 });
 
@@ -53,19 +53,19 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
         dynamodb: {
           NewImage: {
             name: { S: collection.name },
-            version: { S: collection.version }
-          }
+            version: { S: collection.version },
+          },
         },
-        eventName: 'MODIFY'
-      }
-    ]
+        eventName: 'MODIFY',
+      },
+    ],
   };
 
   await handler(event);
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
-    WaitTimeSeconds: 10
+    WaitTimeSeconds: 10,
   }).promise();
 
   t.is(Messages.length, 1);
@@ -85,21 +85,21 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
         dynamodb: {
           NewImage: {
             name: { S: collection1.name },
-            version: { S: collection1.version }
-          }
+            version: { S: collection1.version },
+          },
         },
-        eventName: 'INSERT'
+        eventName: 'INSERT',
       },
       {
         dynamodb: {
           NewImage: {
             name: { S: collection2.name },
-            version: { S: collection2.version }
-          }
+            version: { S: collection2.version },
+          },
         },
-        eventName: 'MODIFY'
-      }
-    ]
+        eventName: 'MODIFY',
+      },
+    ],
   };
 
   await handler(event);
@@ -107,7 +107,7 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
     MaxNumberOfMessages: 2,
-    WaitTimeSeconds: 10
+    WaitTimeSeconds: 10,
   }).promise();
 
   const actualMessages = Messages
@@ -115,7 +115,7 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
     .sort((message) => (message.event === 'Create' ? -1 : 1));
   const expectedMessages = [
     { event: 'Create', record: collection1 },
-    { event: 'Update', record: collection2 }
+    { event: 'Update', record: collection2 },
   ];
 
   t.deepEqual(actualMessages, expectedMessages);
@@ -132,19 +132,19 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
         dynamodb: {
           OldImage: {
             name: { S: name },
-            version: { S: version }
-          }
+            version: { S: version },
+          },
         },
-        eventName: 'REMOVE'
-      }
-    ]
+        eventName: 'REMOVE',
+      },
+    ],
   };
 
   await handler(event);
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
-    WaitTimeSeconds: 10
+    WaitTimeSeconds: 10,
   }).promise();
 
   t.is(Messages.length, 1);
@@ -154,7 +154,7 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
   t.deepEqual(message, {
     event: 'Delete',
     record: { name, version },
-    deletedAt
+    deletedAt,
   });
 
   stub.restore();

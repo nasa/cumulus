@@ -9,8 +9,8 @@ const CloudFormationGateway = require('../CloudFormationGateway');
 function buildDescribeStacksResponse(StackStatus) {
   return {
     Stacks: [
-      { StackStatus }
-    ]
+      { StackStatus },
+    ],
   };
 }
 
@@ -25,7 +25,7 @@ test.serial('getStackStatus returns the correct stack status', async (t) => {
 
   sinon.stub(cfService, 'describeStacks')
     .returns({
-      promise: () => Promise.resolve(describeStacksResponse)
+      promise: () => Promise.resolve(describeStacksResponse),
     });
 
   const cloudFormationGateway = new CloudFormationGateway(cfService);
@@ -44,11 +44,11 @@ test.serial('getStackStatus will retry if a throttling exception is encountered'
   sinon.stub(cfService, 'describeStacks')
     .onFirstCall()
     .returns({
-      promise: () => Promise.reject(throttlingResult)
+      promise: () => Promise.reject(throttlingResult),
     })
     .onSecondCall()
     .returns({
-      promise: () => Promise.resolve(goodResult)
+      promise: () => Promise.resolve(goodResult),
     });
 
   const cloudFormationGateway = new CloudFormationGateway(cfService);

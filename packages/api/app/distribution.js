@@ -62,5 +62,5 @@ const server = awsServerlessExpress.createServer(distributionApp);
 
 module.exports = {
   distributionApp,
-  handler: (event, context) => awsServerlessExpress.proxy(server, event, context)
+  handler: (event, context) => awsServerlessExpress.proxy(server, event, context),
 };

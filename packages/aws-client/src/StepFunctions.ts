@@ -92,26 +92,26 @@ export const getExecutionHistory = improveStackTrace(
     async (
       params: AWS.StepFunctions.GetExecutionHistoryInput,
       previousResponse: { events: AWS.StepFunctions.HistoryEventList } = {
-        events: []
+        events: [],
       }
     ): Promise<{ events: AWS.StepFunctions.HistoryEventList }> => {
       const response = await sfn().getExecutionHistory(params).promise();
       const events = [
         ...previousResponse.events,
-        ...response.events
+        ...response.events,
       ];
       // If there is a nextToken, recursively call this function to get all events
       // in the execution history.
       if (response.nextToken) {
         return getExecutionHistory({
           ...params,
-          nextToken: response.nextToken
+          nextToken: response.nextToken,
         }, {
-          events
+          events,
         });
       }
       return {
-        events
+        events,
       };
     }
   )
@@ -120,11 +120,11 @@ export const getExecutionHistory = improveStackTrace(
 export const getExecutionStatus = async (executionArn: string) => {
   const [execution, executionHistory] = await Promise.all([
     describeExecution({ executionArn }),
-    getExecutionHistory({ executionArn })
+    getExecutionHistory({ executionArn }),
   ]);
 
   const stateMachine = await describeStateMachine({
-    stateMachineArn: execution.stateMachineArn
+    stateMachineArn: execution.stateMachineArn,
   });
 
   return { execution, executionHistory, stateMachine };

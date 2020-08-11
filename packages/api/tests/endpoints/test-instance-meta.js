@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const assertions = require('../../lib/assertions');
@@ -12,10 +12,10 @@ const models = require('../../models');
 const {
   createFakeJwtAuthToken,
   fakeAccessTokenFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const {
-  createJwtToken
+  createJwtToken,
 } = require('../../lib/token');
 
 const CMR_ENVIRONMENT = randomString();
@@ -60,11 +60,11 @@ test('GET returns expected metadata', async (t) => {
   t.deepEqual(response.body, {
     cmr: {
       provider: CMR_PROVIDER,
-      environment: CMR_ENVIRONMENT
+      environment: CMR_ENVIRONMENT,
     },
     cumulus: {
-      stackName: STACKNAME
-    }
+      stackName: STACKNAME,
+    },
   });
 });
 

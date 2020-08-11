@@ -8,7 +8,7 @@ async function parseXMLString(xmlString) {
   const xmlParseOptions = {
     ignoreAttrs: true,
     mergeAttrs: true,
-    explicitArray: false
+    explicitArray: false,
   };
 
   return parseString(xmlString, xmlParseOptions);

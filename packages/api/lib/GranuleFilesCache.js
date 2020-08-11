@@ -51,7 +51,7 @@ const validateDeleteFile = (file) => {
 
 const batchWriteItems = (items) =>
   dynamodbDocClient().batchWrite({
-    RequestItems: { [cacheTableName()]: items }
+    RequestItems: { [cacheTableName()]: items },
   }).promise();
 
 /**
@@ -84,8 +84,8 @@ const batchUpdate = async (params = {}) => {
 
       requestItems.push({
         PutRequest: {
-          Item: pick(file, ['bucket', 'key', 'granuleId'])
-        }
+          Item: pick(file, ['bucket', 'key', 'granuleId']),
+        },
       });
     } catch (error) {
       errors.push(error);
@@ -98,8 +98,8 @@ const batchUpdate = async (params = {}) => {
 
       requestItems.push({
         DeleteRequest: {
-          Key: pick(file, ['bucket', 'key'])
-        }
+          Key: pick(file, ['bucket', 'key']),
+        },
       });
     } catch (error) {
       errors.push(error);
@@ -116,7 +116,7 @@ const batchUpdate = async (params = {}) => {
   } catch (error) {
     errors = [
       ...errors,
-      ...Array.from(error)
+      ...Array.from(error),
     ];
   }
 
@@ -136,13 +136,13 @@ const createCacheTable = async () => {
     TableName: cacheTableName(),
     AttributeDefinitions: [
       { AttributeName: 'bucket', AttributeType: 'S' },
-      { AttributeName: 'key', AttributeType: 'S' }
+      { AttributeName: 'key', AttributeType: 'S' },
     ],
     KeySchema: [
       { AttributeName: 'bucket', KeyType: 'HASH' },
-      { AttributeName: 'key', KeyType: 'RANGE' }
+      { AttributeName: 'key', KeyType: 'RANGE' },
     ],
-    BillingMode: 'PAY_PER_REQUEST'
+    BillingMode: 'PAY_PER_REQUEST',
   }).promise();
 
   await dynamodb().waitFor(
@@ -175,7 +175,7 @@ const deleteCacheTable = async () => {
 const getGranuleId = async (bucket, key) => {
   const getResponse = await dynamodbDocClient().get({
     TableName: cacheTableName(),
-    Key: { bucket, key }
+    Key: { bucket, key },
   }).promise();
 
   return getResponse.Item ? getResponse.Item.granuleId : undefined;
@@ -192,7 +192,7 @@ const getGranuleId = async (bucket, key) => {
 const put = async (file) => {
   await dynamodbDocClient().put({
     TableName: cacheTableName(),
-    Item: file
+    Item: file,
   }).promise();
 };
 
@@ -206,7 +206,7 @@ const put = async (file) => {
 const del = async ({ bucket, key }) => {
   await dynamodbDocClient().delete({
     TableName: cacheTableName(),
-    Key: { bucket, key }
+    Key: { bucket, key },
   }).promise();
 };
 
@@ -217,5 +217,5 @@ module.exports = {
   del,
   deleteCacheTable,
   getGranuleId,
-  put
+  put,
 };

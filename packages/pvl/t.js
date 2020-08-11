@@ -98,6 +98,6 @@ module.exports = {
     PVLGroup: PVLGroup,
     PVLNumeric: PVLNumeric,
     PVLDateTime: PVLDateTime,
-    PVLTextString: PVLTextString
-  }
+    PVLTextString: PVLTextString,
+  },
 };

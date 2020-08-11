@@ -37,7 +37,7 @@ async function queueGranules(event) {
         pdr: event.input.pdr,
         parentExecutionArn: arn,
         stack: event.config.stackName,
-        systemBucket: event.config.internalBucket
+        systemBucket: event.config.internalBucket,
       });
     })
   );

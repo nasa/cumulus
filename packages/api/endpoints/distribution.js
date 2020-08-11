@@ -48,14 +48,14 @@ function getConfigurations() {
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
     earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 
   return {
     accessTokenModel: new AccessToken(),
     authClient: earthdataLoginClient,
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
-    s3Client: s3()
+    s3Client: s3(),
   };
 }
 
@@ -70,7 +70,7 @@ async function handleRedirectRequest(req, res) {
   const {
     accessTokenModel,
     authClient,
-    distributionUrl
+    distributionUrl,
   } = getConfigurations();
 
   const { code, state } = req.query;
@@ -81,7 +81,7 @@ async function handleRedirectRequest(req, res) {
     accessToken: getAccessTokenResponse.accessToken,
     expirationTime: getAccessTokenResponse.expirationTime,
     refreshToken: getAccessTokenResponse.refreshToken,
-    username: getAccessTokenResponse.username
+    username: getAccessTokenResponse.username,
   });
 
   return res
@@ -92,7 +92,7 @@ async function handleRedirectRequest(req, res) {
         // expirationTime is in seconds but Date() expects milliseconds
         expires: new Date(getAccessTokenResponse.expirationTime * 1000),
         httpOnly: true,
-        secure: useSecureCookies()
+        secure: useSecureCookies(),
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })
@@ -137,5 +137,5 @@ async function handleFileRequest(req, res) {
 module.exports = {
   getConfigurations,
   handleRedirectRequest,
-  handleFileRequest
+  handleFileRequest,
 };

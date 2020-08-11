@@ -48,7 +48,7 @@ test.beforeEach(async (t) => {
     port: 2222,
     username: 'user',
     encrypted: false,
-    privateKey: 'ssh_client_rsa_key'
+    privateKey: 'ssh_client_rsa_key',
   });
 
   await t.context.mySftpProviderClient.connect();
@@ -60,7 +60,7 @@ test.afterEach.always(async (t) => {
 
 test.after.always(async () => {
   await Promise.all([
-    S3.recursivelyDeleteS3Bucket(process.env.system_bucket)
+    S3.recursivelyDeleteS3Bucket(process.env.system_bucket),
   ]);
 });
 
@@ -70,7 +70,7 @@ test('SftpProviderClient supports plaintext usernames and passwords', async (t) 
     port: 2222,
     username: 'user',
     password: 'password',
-    encrypted: false
+    encrypted: false,
   });
 
   await sftpProviderClient.connect();
@@ -87,7 +87,7 @@ test('SftpProviderClient supports S3-keypair-encrypted usernames and passwords',
     port: 2222,
     username: await S3KeyPairProvider.encrypt('user'),
     password: await S3KeyPairProvider.encrypt('password'),
-    encrypted: true
+    encrypted: true,
   });
 
   await sftpProviderClient.connect();
@@ -104,7 +104,7 @@ test('SftpClient supports KMS-encrypted usernames and passwords', async (t) => {
     port: 2222,
     username: await KMS.encrypt(t.context.kmsKeyId, 'user'),
     password: await KMS.encrypt(t.context.kmsKeyId, 'password'),
-    encrypted: true
+    encrypted: true,
   });
 
   await sftpProviderClient.connect();
@@ -120,7 +120,7 @@ test('SftpClient supports unencrypted private keys', async (t) => {
     host: '127.0.0.1',
     port: 2222,
     username: 'user',
-    privateKey: 'ssh_client_rsa_key'
+    privateKey: 'ssh_client_rsa_key',
   });
 
   await sftpProviderClient.connect();
@@ -142,7 +142,7 @@ test('SftpClient supports KMS-encrypted private keys', async (t) => {
   await S3.s3PutObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/crypto/${privateKey}`,
-    Body: await KMS.encrypt(t.context.kmsKeyId, unencryptedPrivateKey)
+    Body: await KMS.encrypt(t.context.kmsKeyId, unencryptedPrivateKey),
   });
 
   const sftpProviderClient = new SftpProviderClient({
@@ -150,7 +150,7 @@ test('SftpClient supports KMS-encrypted private keys', async (t) => {
     port: 2222,
     username: 'user',
     cmKeyId: 'sureWhyNot',
-    privateKey
+    privateKey,
   });
 
   await sftpProviderClient.connect();

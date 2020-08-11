@@ -6,7 +6,7 @@ const test = require('ava');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
@@ -59,7 +59,7 @@ test('put request with reingest action calls the granuleModel.reingest function 
 
   const expectedQueueName = process.env.backgroundQueueName;
   const body = {
-    action: 'reingest'
+    action: 'reingest',
   };
 
   await request(app)

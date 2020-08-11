@@ -13,11 +13,11 @@ const { handler } = proxyquire(
       lambda: () => ({
         invoke: () => ({
           promise: async () => ({
-            Payload: JSON.stringify(lambdaResponsePayload)
-          })
-        })
-      })
-    }
+            Payload: JSON.stringify(lambdaResponsePayload),
+          }),
+        }),
+      }),
+    },
   }
 );
 
@@ -39,17 +39,17 @@ test.before(async (t) => {
       token: t.context.validToken,
       statusCode: 200,
       body: {
-        uid: 'some-user'
-      }
+        uid: 'some-user',
+      },
     },
     {
       token: t.context.invalidToken,
       statusCode: 403,
       body: {
         error: 'invalid_token',
-        error_description: 'The token is either malformed or does not exist'
-      }
-    }
+        error_description: 'The token is either malformed or does not exist',
+      },
+    },
   ];
 
   nockInterceptors.forEach(({ token, statusCode, body }) => {
@@ -60,7 +60,7 @@ test.before(async (t) => {
         {
           token,
           client_id: process.env.EARTHDATA_CLIENT_ID,
-          on_behalf_of: t.context.callerClientId
+          on_behalf_of: t.context.callerClientId,
         }
       )
       .reply(statusCode, body);
@@ -78,8 +78,8 @@ test('GET /s3credentials with a valid EDL token and client id returns credential
     path: '/s3credentials',
     headers: {
       'EDL-Client-Id': t.context.callerClientId,
-      'EDL-Token': t.context.validToken
-    }
+      'EDL-Token': t.context.validToken,
+    },
   };
 
   const response = await handler(event);
@@ -98,8 +98,8 @@ test('GET /s3credentials returns a 403 response for an invalid EDL token', async
     path: '/s3credentials',
     headers: {
       'EDL-Client-Id': t.context.callerClientId,
-      'EDL-Token': t.context.invalidToken
-    }
+      'EDL-Token': t.context.invalidToken,
+    },
   };
 
   const response = await handler(event);
@@ -114,16 +114,16 @@ test('GET /s3credentials forwards the X-Request-Id header to Earthdata Login', a
     headers: {
       'EDL-Client-Id': t.context.callerClientId,
       'EDL-Token': 'X-Request-Id-test',
-      'X-Request-Id': 'test-x-request-id'
-    }
+      'X-Request-Id': 'test-x-request-id',
+    },
   };
 
   const nockScope = nock(
     process.env.EARTHDATA_BASE_URL,
     {
       reqheaders: {
-        'X-Request-Id': event.headers['X-Request-Id']
-      }
+        'X-Request-Id': event.headers['X-Request-Id'],
+      },
     }
   )
     .post(
@@ -131,7 +131,7 @@ test('GET /s3credentials forwards the X-Request-Id header to Earthdata Login', a
       {
         token: event.headers['EDL-Token'],
         client_id: process.env.EARTHDATA_CLIENT_ID,
-        on_behalf_of: t.context.callerClientId
+        on_behalf_of: t.context.callerClientId,
       }
     )
     .reply(200, {});

@@ -30,7 +30,7 @@ async function searchConcept({
   recursive = true,
   cmrEnvironment = process.env.CMR_ENVIRONMENT,
   cmrLimit = process.env.CMR_LIMIT,
-  cmrPageSize = process.env.CMR_PAGE_SIZE
+  cmrPageSize = process.env.CMR_PAGE_SIZE,
 }) {
   const recordsLimit = cmrLimit || 100;
   const pageSize = searchParams.pageSize || cmrPageSize || 50;
@@ -61,7 +61,7 @@ async function searchConcept({
       previousResults: fetchedResults,
       headers,
       format,
-      recursive
+      recursive,
     });
   }
   return fetchedResults.slice(0, recordsLimit);

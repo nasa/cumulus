@@ -2,7 +2,7 @@
 
 const {
   JsonWebTokenError,
-  TokenExpiredError
+  TokenExpiredError,
 } = require('jsonwebtoken');
 const moment = require('moment');
 
@@ -42,7 +42,7 @@ const ensureValidCustomLaunchpadToken = async (req, res, next) => {
       const config = {
         passphrase,
         api: process.env.launchpad_api,
-        certificate: process.env.launchpad_certificate
+        certificate: process.env.launchpad_certificate,
       };
 
       const userGroup = process.env.oauth_user_group;
@@ -52,7 +52,7 @@ const ensureValidCustomLaunchpadToken = async (req, res, next) => {
         await accessTokenModel.create({
           accessToken: token,
           expirationTime: moment().unix() + verifyResponse.session_maxtimeout,
-          username: verifyResponse.owner_auid
+          username: verifyResponse.owner_auid,
         });
 
         req.authorizedMetadata = { userName: verifyResponse.owner_auid };
@@ -121,5 +121,5 @@ async function ensureLaunchpadAPIAuthorized(req, res, next) {
 
 module.exports = {
   ensureLaunchpadAPIAuthorized,
-  launchpadProtectedAuth
+  launchpadProtectedAuth,
 };

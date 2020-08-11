@@ -4,7 +4,7 @@ const test = require('ava');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
@@ -32,7 +32,7 @@ process.env = {
   ES_HOST: randomString(),
   METRICS_ES_HOST: randomString(),
   METRICS_ES_USER: randomString(),
-  METRICS_ES_PASS: randomString()
+  METRICS_ES_PASS: randomString(),
 };
 
 let accessTokenModel;
@@ -75,7 +75,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   const body = {
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
-    ids: expectedIds
+    ids: expectedIds,
   };
 
   const response = await request(app)
@@ -90,7 +90,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     lambdaName,
     cluster,
     description,
-    payload
+    payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
@@ -106,8 +106,8 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
       invoke: process.env.invoke,
       METRICS_ES_HOST: process.env.METRICS_ES_HOST,
       METRICS_ES_USER: process.env.METRICS_ES_USER,
-      METRICS_ES_PASS: process.env.METRICS_ES_PASS
-    }
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+    },
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
@@ -125,7 +125,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
-    query: expectedQuery
+    query: expectedQuery,
   };
 
   const response = await request(app)
@@ -142,7 +142,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     lambdaName,
     cluster,
     description,
-    payload
+    payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
@@ -158,8 +158,8 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
       invoke: process.env.invoke,
       METRICS_ES_HOST: process.env.METRICS_ES_HOST,
       METRICS_ES_USER: process.env.METRICS_ES_USER,
-      METRICS_ES_PASS: process.env.METRICS_ES_PASS
-    }
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+    },
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
@@ -175,7 +175,7 @@ test.serial('POST /granules/bulk returns 400 when a query is provided with no in
   const body = {
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
-    query: expectedQuery
+    query: expectedQuery,
   };
 
   await request(app)
@@ -197,7 +197,7 @@ test.serial('POST /granules/bulk returns 400 when no IDs or query is provided', 
   const body = {
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
-    index: expectedIndex
+    index: expectedIndex,
   };
 
   await request(app)
@@ -220,7 +220,7 @@ test.serial('POST /granules/bulk returns 400 when IDs is not an array', async (t
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
-    ids: 'bad-value'
+    ids: 'bad-value',
   };
 
   await request(app)
@@ -243,7 +243,7 @@ test.serial('POST /granules/bulk returns 400 when IDs is an empty array', async 
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
-    ids: []
+    ids: [],
   };
 
   await request(app)
@@ -265,7 +265,7 @@ test.serial('POST /granules/bulk returns 400 when no workflowName is provided', 
   const body = {
     queueName: expectedQueueName,
     index: expectedIndex,
-    query: expectedQuery
+    query: expectedQuery,
   };
 
   await request(app)
@@ -289,7 +289,7 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
-    query: expectedQuery
+    query: expectedQuery,
   };
 
   process.env.METRICS_ES_USER = undefined;
@@ -316,7 +316,7 @@ test.serial('POST /granules/bulk returns 500 if starting ECS task throws unexpec
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       workflowName: 'workflowName',
-      ids: [1, 2, 3]
+      ids: [1, 2, 3],
     });
   t.is(response.status, 500);
 });
@@ -333,7 +333,7 @@ test.serial('POST /granules/bulk returns 503 if starting ECS task throws unexpec
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       workflowName: 'workflowName',
-      ids: [1, 2, 3]
+      ids: [1, 2, 3],
     });
   t.is(response.status, 503);
 });

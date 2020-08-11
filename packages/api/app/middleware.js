@@ -58,5 +58,5 @@ const jsonBodyParser = (req, res, next) => {
 module.exports = {
   asyncOperationEndpointErrorHandler,
   defaultErrorHandler,
-  jsonBodyParser
+  jsonBodyParser,
 };

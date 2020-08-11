@@ -7,13 +7,13 @@ test('filterDatabaseProperties() returns only those properties that belong in th
   const file = {
     a: 1,
     b: 2,
-    bucket: 'my-bucket'
+    bucket: 'my-bucket',
   };
 
   t.deepEqual(
     filterDatabaseProperties(file),
     {
-      bucket: 'my-bucket'
+      bucket: 'my-bucket',
     }
   );
 });

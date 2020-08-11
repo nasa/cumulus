@@ -7,23 +7,23 @@ test('isSnsEvent returns false for non-SNS events', (t) => {
   t.false(isSnsEvent({}));
 
   t.false(isSnsEvent({
-    Sns: {}
+    Sns: {},
   }));
 
   t.false(isSnsEvent({
     EventSource: 'aws:cloudwatch',
     CloudWatch: {
-      Message: 'message'
-    }
+      Message: 'message',
+    },
   }));
 
   t.false(isSnsEvent({
     Records: [{
       EventSource: 'aws:states',
       Sns: {
-        Message: 'message'
-      }
-    }]
+        Message: 'message',
+      },
+    }],
   }));
 
   t.false(isSnsEvent({
@@ -32,12 +32,12 @@ test('isSnsEvent returns false for non-SNS events', (t) => {
       Message: JSON.stringify({
         cumulus_meta: {
           execution_name: 'exec123',
-          state_machine: 'workflow123'
+          state_machine: 'workflow123',
         },
         meta: {},
-        payload: {}
-      })
-    }
+        payload: {},
+      }),
+    },
   }));
 });
 
@@ -50,14 +50,14 @@ test('getSnsEventMessageObject() returns correct object', (t) => {
   const messageObject = {
     foo: 'bar',
     nested: {
-      key: 'value'
-    }
+      key: 'value',
+    },
   };
 
   const returnedObject = getSnsEventMessageObject({
     Sns: {
-      Message: JSON.stringify(messageObject)
-    }
+      Message: JSON.stringify(messageObject),
+    },
   });
 
   t.deepEqual(returnedObject, messageObject);
@@ -66,8 +66,8 @@ test('getSnsEventMessageObject() returns correct object', (t) => {
 test('getSnsEventMessageObject() returns null for non-JSON string message', (t) => {
   const returnedObject = getSnsEventMessageObject({
     Sns: {
-      Message: 'message'
-    }
+      Message: 'message',
+    },
   });
 
   t.is(returnedObject, undefined);

@@ -67,7 +67,7 @@ const setS3FileSize = async (s3, file) => {
     const size = await getObjectSize({
       s3,
       bucket: file.bucket,
-      key: file.key
+      key: file.key,
     });
 
     return { ...file, size };
@@ -84,7 +84,7 @@ const parseSource = (inFile) => {
     const parsedFile = parseS3Uri(file.source);
     return {
       ...{ key: parsedFile.Key, bucket: parsedFile.Bucket },
-      ...file
+      ...file,
     };
   } catch (error) {
     return inFile;
@@ -96,7 +96,7 @@ const setSource = (providerURL, file) => {
 
   return {
     ...file,
-    source: buildFileSourceURL(providerURL, file)
+    source: buildFileSourceURL(providerURL, file),
   };
 };
 
@@ -114,13 +114,13 @@ const buildDatabaseFile = (s3, providerURL, file) =>
     setFileName,
     partial(setSource, providerURL),
     parseSource,
-    partial(setS3FileSize, s3) // This one is last because it returns a Promise
+    partial(setS3FileSize, s3), // This one is last because it returns a Promise
   ])(file);
 
 const cleanDatabaseFile = (file) =>
   flow([
     filterDatabaseProperties,
-    removeNilProperties
+    removeNilProperties,
   ])(file);
 
 const buildDatabaseFiles = async ({ s3, providerURL, files }) =>
@@ -137,5 +137,5 @@ module.exports = {
   getFileName,
   setS3FileSize,
   getBucket,
-  getKey
+  getKey,
 };

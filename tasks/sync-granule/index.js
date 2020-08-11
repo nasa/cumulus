@@ -26,7 +26,7 @@ async function download({
   bucket,
   provider,
   granules,
-  syncChecksumFiles = false
+  syncChecksumFiles = false,
 }) {
   log.debug(
     'awaiting lock.proceed in download() '
@@ -53,7 +53,7 @@ async function download({
 
       return {
         ...r,
-        sync_granule_duration: endTime - startTime
+        sync_granule_duration: endTime - startTime,
       };
     } catch (error) {
       log.error(error);
@@ -102,7 +102,7 @@ exports.syncGranule = function syncGranule(event) {
     collection,
     provider,
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   return download({
@@ -110,7 +110,7 @@ exports.syncGranule = function syncGranule(event) {
     bucket: downloadBucket,
     provider,
     granules: input.granules,
-    syncChecksumFiles
+    syncChecksumFiles,
   }).then((granules) => {
     const output = { granules };
     if (collection && collection.process) output.process = collection.process;

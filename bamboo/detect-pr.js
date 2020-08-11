@@ -34,8 +34,8 @@ async function getPrsForRef(headRefName, baseRefName) {
         }
   }`, {
     headers: {
-      authorization: `token ${process.env.GITHUB_TOKEN}`
-    }
+      authorization: `token ${process.env.GITHUB_TOKEN}`,
+    },
   });
   const edges = queryResponse.repository.ref.target.history.nodes[0].associatedPullRequests.edges;
   const nodes = edges

@@ -30,17 +30,17 @@ test('GoogleOAuth2.getAuthorizationUrl() properly reqeusts an authorization URL 
       t.is(params.state, 'my-state');
 
       return 'http://www.example.com';
-    }
+    },
   };
 
   const mockGooglePlusPeopleClient = {
     people: {
       get: async () => ({
         data: {
-          emailAddresses: ['fakeEmail@fake.com']
-        }
-      })
-    }
+          emailAddresses: ['fakeEmail@fake.com'],
+        },
+      }),
+    },
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -49,17 +49,17 @@ test('GoogleOAuth2.getAuthorizationUrl() properly reqeusts an authorization URL 
 
 test('GoogleOAuth2.getAuthorizationUrl() returns the correct authorization URL', async (t) => {
   const mockGoogleOAuth2Client = {
-    generateAuthUrl: () => 'http://www.example.com'
+    generateAuthUrl: () => 'http://www.example.com',
   };
 
   const mockGooglePlusPeopleClient = {
     people: {
       get: async () => ({
         data: {
-          emailAddresses: ['fakeEmail@fake.com']
-        }
-      })
-    }
+          emailAddresses: ['fakeEmail@fake.com'],
+        },
+      }),
+    },
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -76,11 +76,11 @@ test('GoogleOAuth2.getAccessToken() throws a TypeError if authorizationCode is n
       get: async () => ({
         data: {
           emailAddresses: [
-            { value: 'fakeEmail@fake.com' }
-          ]
-        }
-      })
-    }
+            { value: 'fakeEmail@fake.com' },
+          ],
+        },
+      }),
+    },
   };
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
 
@@ -95,7 +95,7 @@ test('GoogleOAuth2.getAccessToken() throws a TypeError if authorizationCode is n
 
 test('GoogleOAuth2.getAccessToken() properly reqeusts a token from the googleOAuth2Client', async (t) => {
   const getTokenResponse = {
-    tokens: { access_token: 'my-access-token' }
+    tokens: { access_token: 'my-access-token' },
   };
 
   const mockGoogleOAuth2Client = {
@@ -104,7 +104,7 @@ test('GoogleOAuth2.getAccessToken() properly reqeusts a token from the googleOAu
 
       return getTokenResponse;
     },
-    setCredentials: () => undefined
+    setCredentials: () => undefined,
   };
 
   const mockGooglePlusPeopleClient = {
@@ -112,11 +112,11 @@ test('GoogleOAuth2.getAccessToken() properly reqeusts a token from the googleOAu
       get: async () => ({
         data: {
           emailAddresses: [
-            { value: 'sidney@example.com' }
-          ]
-        }
-      })
-    }
+            { value: 'sidney@example.com' },
+          ],
+        },
+      }),
+    },
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -125,7 +125,7 @@ test('GoogleOAuth2.getAccessToken() properly reqeusts a token from the googleOAu
 
 test('GoogleOAuth2.getAccessToken() properly sets credentials on the googleOAuth2Client', async (t) => {
   const getTokenResponse = {
-    tokens: { access_token: 'my-access-token' }
+    tokens: { access_token: 'my-access-token' },
   };
 
   const mockGoogleOAuth2Client = {
@@ -133,7 +133,7 @@ test('GoogleOAuth2.getAccessToken() properly sets credentials on the googleOAuth
 
     setCredentials: (tokensParam) => {
       t.deepEqual(getTokenResponse.tokens, tokensParam);
-    }
+    },
   };
 
   const mockGooglePlusPeopleClient = {
@@ -141,11 +141,11 @@ test('GoogleOAuth2.getAccessToken() properly sets credentials on the googleOAuth
       get: async () => ({
         data: {
           emailAddresses: [
-            { value: 'sidney@example.com' }
-          ]
-        }
-      })
-    }
+            { value: 'sidney@example.com' },
+          ],
+        },
+      }),
+    },
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -154,12 +154,12 @@ test('GoogleOAuth2.getAccessToken() properly sets credentials on the googleOAuth
 
 test('GoogleOAuth2.getAccessToken() properly requests user info from the googlePlusPeopleClient', async (t) => {
   const getTokenResponse = {
-    tokens: { access_token: 'my-access-token' }
+    tokens: { access_token: 'my-access-token' },
   };
 
   const mockGoogleOAuth2Client = {
     getToken: async () => getTokenResponse,
-    setCredentials: () => undefined
+    setCredentials: () => undefined,
   };
 
   const mockGooglePlusPeopleClient = {
@@ -171,12 +171,12 @@ test('GoogleOAuth2.getAccessToken() properly requests user info from the googleP
         return {
           data: {
             emailAddresses: [
-              { value: 'sidney@example.com' }
-            ]
-          }
+              { value: 'sidney@example.com' },
+            ],
+          },
         };
-      }
-    }
+      },
+    },
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -188,14 +188,14 @@ test('GoogleOAuth2.getAccessToken() returns token information for a valid author
   const tokens = {
     access_token: 'my-access-token',
     refresh_token: 'my-refresh-token',
-    expiry_date: expiryDate
+    expiry_date: expiryDate,
   };
 
   const getTokenResponse = { tokens };
 
   const mockGoogleOAuth2Client = {
     getToken: async () => getTokenResponse,
-    setCredentials: () => undefined
+    setCredentials: () => undefined,
   };
 
   const mockGooglePlusPeopleClient = {
@@ -207,12 +207,12 @@ test('GoogleOAuth2.getAccessToken() returns token information for a valid author
         return {
           data: {
             emailAddresses: [
-              { value: 'sidney@example.com' }
-            ]
-          }
+              { value: 'sidney@example.com' },
+            ],
+          },
         };
-      }
-    }
+      },
+    },
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
@@ -221,7 +221,7 @@ test('GoogleOAuth2.getAccessToken() returns token information for a valid author
     accessToken,
     refreshToken,
     expirationTime,
-    username
+    username,
   } = await googleOAuth2.getAccessToken('my-authorization-code');
 
   t.is(accessToken, 'my-access-token');

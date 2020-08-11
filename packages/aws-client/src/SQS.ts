@@ -32,7 +32,7 @@ export const getQueueUrlByName = async (queueName: string) => {
  */
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
-    QueueName
+    QueueName,
   }).promise();
 
   if (inTestMode()) {
@@ -61,7 +61,7 @@ export async function createQueue(QueueName: string) {
 
 export const deleteQueue = (queueUrl: string) =>
   sqs().deleteQueue({
-    QueueUrl: queueUrl
+    QueueUrl: queueUrl,
   }).promise();
 
 export const getQueueAttributes = async (queueName: string) => {
@@ -73,12 +73,12 @@ export const getQueueAttributes = async (queueName: string) => {
 
   const response = await sqs().getQueueAttributes({
     AttributeNames: ['All'],
-    QueueUrl: queueUrl
+    QueueUrl: queueUrl,
   }).promise();
 
   return {
     ...response.Attributes,
-    name: queueName
+    name: queueName,
   };
 };
 
@@ -98,7 +98,7 @@ export const sendSQSMessage = (queueUrl: string, message: string | object) => {
 
   return sqs().sendMessage({
     MessageBody: messageBody,
-    QueueUrl: queueUrl
+    QueueUrl: queueUrl,
   }).promise();
 };
 
@@ -127,7 +127,7 @@ export const receiveSQSMessages = async (queueUrl: string, options: receiveSQSMe
     // 0 is a valid value for VisibilityTimeout
     VisibilityTimeout: isNil(options.visibilityTimeout) ? 30 : options.visibilityTimeout,
     WaitTimeSeconds: options.waitTimeSeconds || 0,
-    MaxNumberOfMessages: options.numOfMessages || 1
+    MaxNumberOfMessages: options.numOfMessages || 1,
   };
 
   const messages = await sqs().receiveMessage(params).promise();

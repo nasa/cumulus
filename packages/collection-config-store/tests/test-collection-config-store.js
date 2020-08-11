@@ -7,7 +7,7 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   getJsonS3Object,
-  putJsonS3Object
+  putJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -45,7 +45,7 @@ test.serial('get() fetches a collection config from S3', async (t) => {
     collectionConfigKey,
     name,
     version,
-    stackName
+    stackName,
   } = t.context;
 
   await putJsonS3Object(
@@ -68,7 +68,7 @@ test.serial('get() does not hit S3 for a cached collection config', async (t) =>
     collectionConfigKey,
     name,
     version,
-    stackName
+    stackName,
   } = t.context;
 
   await putJsonS3Object(
@@ -123,7 +123,7 @@ test.serial('put() stores a collection config to S3', async (t) => {
     collectionConfigKey,
     name,
     version,
-    stackName
+    stackName,
   } = t.context;
   const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
   await collectionConfigStore.put(name, version, collectionConfig);
@@ -141,7 +141,7 @@ test.serial('put() updates the cache with the new collection config', async (t) 
     name,
     version,
     collectionConfig,
-    stackName
+    stackName,
   } = t.context;
   const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
 
@@ -164,7 +164,7 @@ test.serial('delete() removes the collection config from S3', async (t) => {
     collectionConfigKey,
     name,
     version,
-    stackName
+    stackName,
   } = t.context;
   const key = collectionConfigKey(name, version);
   const s3Object = { Bucket: bucket, Key: key };
@@ -189,7 +189,7 @@ test('delete() the collection config from the cache', async (t) => {
     collectionConfig,
     name,
     version,
-    stackName
+    stackName,
   } = t.context;
   const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
 

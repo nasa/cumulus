@@ -31,7 +31,7 @@ const addUrlPathToGranuleFiles = (files, testId, collectionUrlPath) =>
 
     return {
       ...file,
-      url_path: `${updatedUrlPath}${testId}/`
+      url_path: `${updatedUrlPath}${testId}/`,
     };
   });
 
@@ -55,7 +55,7 @@ const addUniqueGranuleFilePathToGranuleFiles = (granules, filePath) =>
 
       Object.assign(file, {
         filename: buildS3Uri(Bucket, updateKey),
-        filepath: updateKey
+        filepath: updateKey,
       });
     });
 
@@ -77,7 +77,7 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
     s3().copyObject({
       Bucket: bucket,
       CopySource: `${bucket}/${file.path}/${file.name}`,
-      Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
+      Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`,
     }).promise()
       .catch((error) => {
         console.error(`Failed to copy s3://${bucket}/${file.path}/${file.name} to s3://${bucket}/${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}: ${error.message}`);
@@ -132,7 +132,7 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
   return flow([
     JSON.stringify,
     replace(new RegExp(oldGranuleId, 'g'), newGranuleId),
-    JSON.parse
+    JSON.parse,
   ])(baseInputPayload);
 }
 
@@ -161,7 +161,7 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
     replace(/replace-me-path/g, newPath),
     replace(/replace-me-collectionId/g, newCollectionId),
     replace(/replace-me-stackId/g, stackId),
-    JSON.parse
+    JSON.parse,
   ])(fileContents);
 };
 
@@ -172,15 +172,15 @@ const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIs
       query: {
         fields: 'granuleId',
         granuleId,
-        ...additionalQueryParams
-      }
+        ...additionalQueryParams,
+      },
     });
     const ids = JSON.parse(resp.body).results.map((g) => g.granuleId);
     return granuleIsIncluded ? ids.includes(granuleId) : !ids.includes(granuleId);
   },
   {
     interval: 3000,
-    timeout: 240 * 1000
+    timeout: 240 * 1000,
   }
 );
 
@@ -204,5 +204,5 @@ module.exports = {
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
   waitForGranuleRecordsInList,
-  waitForGranuleRecordsNotInList
+  waitForGranuleRecordsNotInList,
 };

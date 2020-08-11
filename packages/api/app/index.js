@@ -63,12 +63,12 @@ const handler = (event, context) => {
   // untill this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
   const modifiedEvent = {
     ...event,
-    queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters
+    queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
   awsServerlessExpress.proxy(server, modifiedEvent, context);
 };
 
 module.exports = {
   app,
-  handler
+  handler,
 };

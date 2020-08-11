@@ -35,7 +35,7 @@ const {
   distributionApp,
   handleTokenAuthRequest,
   requestTemporaryCredentialsFromNgap,
-  s3credentials
+  s3credentials,
 } = require('..');
 
 test.before(async () => {
@@ -68,8 +68,8 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
   const spy = sinon.spy(() => Promise.resolve(fakeCredential));
   sinon.stub(awsServices, 'lambda').callsFake(() => ({
     invoke: (params) => ({
-      promise: () => spy(params)
-    })
+      promise: () => spy(params),
+    }),
   }));
 
   const accessTokenRecord = fakeAccessTokenFactory({ username });
@@ -82,7 +82,7 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
     returntype: 'lowerCamel',
     duration: '3600',
     rolesession: username,
-    userid: username
+    userid: username,
   });
 
   await request(distributionApp)
@@ -94,7 +94,7 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
   t.true(spy.called);
   t.deepEqual(spy.args[0][0], {
     FunctionName,
-    Payload
+    Payload,
   });
 });
 
@@ -110,7 +110,7 @@ test('An s3credential request without access Token redirects to Oauth2 provider.
 
 test('An s3credential request with expired accessToken redirects to Oauth2 provider', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: moment().unix()
+    expirationTime: moment().unix(),
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -158,21 +158,21 @@ test('requestTemporaryCredentialsFromNgap() invokes the credentials lambda with 
           returntype: 'lowerCamel',
           duration: '3600',
           rolesession: roleSessionName,
-          userid: userId
+          userid: userId,
         }
       );
 
       return {
-        promise: async () => undefined
+        promise: async () => undefined,
       };
-    }
+    },
   };
 
   await requestTemporaryCredentialsFromNgap({
     lambda: fakeLambda,
     lambdaFunctionName,
     userId,
-    roleSessionName
+    roleSessionName,
   });
 
   t.is(invocationCount, 1);
@@ -186,13 +186,13 @@ test('handleTokenAuthRequest() saves the client name in the request, if provided
     headers: {
       'EDL-Client-Id': 'my-client-id',
       'EDL-Token': 'my-token',
-      'EDL-Client-Name': 'my-client-name'
+      'EDL-Client-Name': 'my-client-name',
     },
     earthdataLoginClient: {
       async getTokenUsername() {
         return 'my-username';
-      }
-    }
+      },
+    },
   };
 
   await handleTokenAuthRequest(req, undefined, () => undefined);
@@ -208,19 +208,19 @@ test('handleTokenAuthRequest() with an invalid client name results in a "Bad Req
     headers: {
       'EDL-Client-Id': 'my-client-id',
       'EDL-Token': 'my-token',
-      'EDL-Client-Name': 'not valid'
+      'EDL-Client-Name': 'not valid',
     },
     earthdataLoginClient: {
       async getTokenUsername() {
         return 'my-username';
-      }
-    }
+      },
+    },
   };
 
   const res = {
     boom: {
-      badRequest: () => 'response-from-boom-badRequest'
-    }
+      badRequest: () => 'response-from-boom-badRequest',
+    },
   };
 
   const next = () => t.fail('next() should not have been called');
@@ -245,22 +245,22 @@ test('s3credentials() with just a username sends the correct request to the Lamb
 
       return {
         promise: async () => ({
-          Payload: JSON.stringify({})
-        })
+          Payload: JSON.stringify({}),
+        }),
       };
-    }
+    },
   };
 
   const req = {
     authorizedMetadata: {
-      userName: 'my-user-name'
+      userName: 'my-user-name',
     },
-    lambda: fakeLambda
+    lambda: fakeLambda,
   };
 
   const res = {
     // eslint-disable-next-line lodash/prefer-noop
-    send() {}
+    send() {},
   };
 
   await s3credentials(req, res);
@@ -282,23 +282,23 @@ test('s3credentials() with a username and a client name sends the correct reques
 
       return {
         promise: async () => ({
-          Payload: JSON.stringify({})
-        })
+          Payload: JSON.stringify({}),
+        }),
       };
-    }
+    },
   };
 
   const req = {
     authorizedMetadata: {
       userName: 'my-user-name',
-      clientName: 'my-client-name'
+      clientName: 'my-client-name',
     },
-    lambda: fakeLambda
+    lambda: fakeLambda,
   };
 
   const res = {
     // eslint-disable-next-line lodash/prefer-noop
-    send() {}
+    send() {},
   };
 
   await s3credentials(req, res);

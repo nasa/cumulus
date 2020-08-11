@@ -8,7 +8,7 @@ class ReconciliationReport extends Manager {
     super({
       tableName: process.env.ReconciliationReportsTable,
       tableHash: { name: 'name', type: 'S' },
-      schema: reconciliationReport
+      schema: reconciliationReport,
     });
   }
 }

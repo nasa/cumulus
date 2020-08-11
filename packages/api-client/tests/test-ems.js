@@ -8,7 +8,7 @@ const fakeServices = {};
 const emsApi = proxyquire(
   '../ems',
   {
-    '@cumulus/aws-client/services': fakeServices
+    '@cumulus/aws-client/services': fakeServices,
   }
 );
 
@@ -25,11 +25,11 @@ test('createEmsReports calls the callback with the expected object', async (t) =
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: '/ems',
-      body: JSON.stringify(t.context.request)
-    }
+      body: JSON.stringify(t.context.request),
+    },
   };
 
   const callback = async (configObject) => {
@@ -39,7 +39,7 @@ test('createEmsReports calls the callback with the expected object', async (t) =
   await t.notThrowsAsync(emsApi.createEmsReports({
     callback,
     prefix: t.context.testPrefix,
-    request: t.context.request
+    request: t.context.request,
   }));
 });
 
@@ -51,16 +51,16 @@ test.serial('getLambdaEmsSettings returns the expected environment variables', a
           Variables: {
             ems_var1: 'value 1',
             ems_var2: 'value 2',
-            env_var: 'not ems'
-          }
-        }
-      })
-    })
+            env_var: 'not ems',
+          },
+        },
+      }),
+    }),
   });
 
   const expected = {
     var1: 'value 1',
-    var2: 'value 2'
+    var2: 'value 2',
   };
 
   const actual = await emsApi.getLambdaEmsSettings('mockLambdaName');

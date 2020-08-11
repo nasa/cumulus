@@ -12,11 +12,11 @@ const translateGranule = async (granule) => {
     ...granule,
     files: await buildDatabaseFiles({
       s3: awsClients.s3(),
-      files: granule.files
-    })
+      files: granule.files,
+    }),
   };
 };
 
 module.exports = {
-  translateGranule
+  translateGranule,
 };

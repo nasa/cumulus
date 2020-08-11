@@ -104,5 +104,5 @@ module.exports = {
   deleteRule,
   getRule,
   listRules,
-  rerunRule
+  rerunRule,
 };

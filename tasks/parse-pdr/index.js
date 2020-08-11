@@ -26,7 +26,7 @@ const pdrToCnmMap = {
   PRODHIST: 'qa',
   QA: 'metadata',
   TGZ: 'data',
-  LINKAGE: 'linkage'
+  LINKAGE: 'linkage',
 };
 
 const getItem = (spec, pdrName, name, must = true) => {
@@ -103,7 +103,7 @@ const parseSpec = (pdrName, spec) => {
     path: dirPath,
     size: fileSize,
     name: filename,
-    type: pdrToCnmMap[fileType]
+    type: pdrToCnmMap[fileType],
   };
 
   if (checksum || checksumType) {
@@ -165,7 +165,7 @@ const convertFileGroupToGranule = async (fileGroup, pdrName, collectionConfigSto
     version,
     files,
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
-    granuleSize: files.reduce((total, file) => total + file.size, 0)
+    granuleSize: files.reduce((total, file) => total + file.size, 0),
   };
 };
 
@@ -219,7 +219,7 @@ const parsePdr = async ({ config, input }) => {
   await S3.s3PutObject({
     Bucket: config.bucket,
     Key: S3.s3Join(config.stack, 'pdrs', input.pdr.name),
-    Body: rawPdr
+    Body: rawPdr,
   });
 
   // Filter based on the granuleIdFilter, default to match all granules
@@ -231,7 +231,7 @@ const parsePdr = async ({ config, input }) => {
     granules,
     granulesCount: granules.length,
     filesCount: granules.reduce((sum, { files }) => sum + files.length, 0),
-    totalSize: granules.reduce((sum, { granuleSize }) => sum + granuleSize, 0)
+    totalSize: granules.reduce((sum, { granuleSize }) => sum + granuleSize, 0),
   };
 };
 

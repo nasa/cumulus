@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   MessageTemplate,
   QueueMessageMeta,
-  Workflow
+  Workflow,
 } from './types';
 
 /**
@@ -43,7 +43,7 @@ export const buildCumulusMeta = ({
   queueName,
   stateMachine,
   asyncOperationId,
-  parentExecutionArn
+  parentExecutionArn,
 }: {
   queueName?: string
   stateMachine: string,
@@ -53,7 +53,7 @@ export const buildCumulusMeta = ({
   const cumulusMeta: Message.CumulusMeta = {
     execution_name: createExecutionName(),
     queueName,
-    state_machine: stateMachine
+    state_machine: stateMachine,
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
   if (asyncOperationId) cumulusMeta.asyncOperationId = asyncOperationId;
@@ -74,14 +74,14 @@ export const buildCumulusMeta = ({
 const buildMeta = ({
   workflowName,
   collection,
-  provider
+  provider,
 }: {
   workflowName: string
   collection?: object
   provider?: object
 }) => {
   const meta: QueueMessageMeta = {
-    workflow_name: workflowName
+    workflow_name: workflowName,
   };
   if (collection) {
     meta.collection = collection;
@@ -121,7 +121,7 @@ export const buildQueueMessageFromTemplate = ({
   payload,
   workflow,
   customCumulusMeta = {},
-  customMeta = {}
+  customMeta = {},
 }: {
   provider: object,
   collection: object
@@ -138,20 +138,20 @@ export const buildQueueMessageFromTemplate = ({
     asyncOperationId,
     parentExecutionArn,
     queueName,
-    stateMachine: workflow.arn
+    stateMachine: workflow.arn,
   });
 
   const meta = buildMeta({
     collection,
     provider,
-    workflowName: workflow.name
+    workflowName: workflow.name,
   });
 
   const message = {
     ...messageTemplate,
     meta: merge(messageTemplate.meta, customMeta, meta),
     cumulus_meta: merge(messageTemplate.cumulus_meta, customCumulusMeta, cumulusMeta),
-    payload
+    payload,
   };
 
   return message;

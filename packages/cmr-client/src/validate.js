@@ -21,8 +21,8 @@ async function validate(type, xml, identifier, provider) {
     result = await got.post(`${getUrl('validate', provider)}${type}/${identifier}`, {
       body: xml,
       headers: {
-        'Content-type': 'application/echo10+xml'
-      }
+        'Content-type': 'application/echo10+xml',
+      },
     });
 
     if (result.statusCode === 200) {

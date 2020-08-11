@@ -11,7 +11,7 @@ test('leaves file unchanged if it has no source', (t) => {
     key: 'key',
     bucket: 'bucket',
     path: 'path',
-    anythingelse: 'anything else'
+    anythingelse: 'anything else',
   };
 
   const expected = { ...file };
@@ -26,7 +26,7 @@ test('leaves file unchanged if key is not null', (t) => {
     key: 'notnull',
     bucket: null,
     path: 'path',
-    anythingelse: 'anything else'
+    anythingelse: 'anything else',
   };
 
   const expected = { ...file };
@@ -41,7 +41,7 @@ test('leaves file unchanged if bucket is not null', (t) => {
     key: null,
     bucket: 'notnull',
     path: 'path',
-    anythingelse: 'anything else'
+    anythingelse: 'anything else',
   };
 
   const expected = { ...file };
@@ -54,7 +54,7 @@ test('leaves file unchanged if bucket is not null', (t) => {
 test('leaves file unchanged if key and bucket are undefined', (t) => {
   const file = {
     path: 'path',
-    anythingelse: 'anything else'
+    anythingelse: 'anything else',
   };
 
   const expected = { ...file };
@@ -70,7 +70,7 @@ test('updates bucket and key if source is a s3 url', (t) => {
     key: null,
     source: 's3://bucketname/some/key/to/file',
     path: 'path',
-    anythingelse: 'anything else'
+    anythingelse: 'anything else',
   };
 
   const expected = { ...file };
@@ -88,7 +88,7 @@ test('leaves file unchanged if source is an http url', (t) => {
     key: null,
     source: 'https://bucketname/some/key/to/file',
     path: 'path',
-    anythingelse: 'anything else'
+    anythingelse: 'anything else',
   };
 
   const expected = { ...file };

@@ -74,7 +74,7 @@ async function handler(event) {
     credentials: {
       accessKeyId,
       secretAccessKey,
-      sessionToken
+      sessionToken,
     },
     testName,
     ...params
@@ -83,13 +83,13 @@ async function handler(event) {
   const s3 = new S3({
     accessKeyId,
     secretAccessKey,
-    sessionToken
+    sessionToken,
   });
 
   const testChoices = {
     'get-object': testGet,
     'write-object': testWrite,
-    'list-objects': testList
+    'list-objects': testList,
   };
   return testChoices[testName](s3, params);
 }

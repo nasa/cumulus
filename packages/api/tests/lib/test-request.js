@@ -4,7 +4,7 @@ const test = require('ava');
 const {
   sign: jwtSign,
   JsonWebTokenError,
-  TokenExpiredError
+  TokenExpiredError,
 } = require('jsonwebtoken');
 const moment = require('moment');
 
@@ -14,12 +14,12 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { noop } = require('@cumulus/common/util');
 
 const {
-  TokenUnauthorizedUserError
+  TokenUnauthorizedUserError,
 } = require('../../lib/errors');
 const { verifyJwtAuthorization } = require('../../lib/request');
 const {
   fakeAccessTokenFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { createJwtToken } = require('../../lib/token');
 
@@ -50,7 +50,7 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for non-JWT token', asyn
 test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with invalid secret', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = jwtSign(accessTokenRecord, 'invalid-secret', {
-    algorithm: 'HS256'
+    algorithm: 'HS256',
   });
 
   try {
@@ -65,7 +65,7 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with in
 test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with invalid algorithm', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = jwtSign(accessTokenRecord, process.env.TOKEN_SECRET, {
-    algorithm: 'HS512'
+    algorithm: 'HS512',
   });
 
   try {
@@ -79,7 +79,7 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with in
 
 test('verifyJwtAuthorization() throws TokenExpiredError for expired token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: moment().unix()
+    expirationTime: moment().unix(),
   });
   const expiredJwtToken = createJwtToken(accessTokenRecord);
 

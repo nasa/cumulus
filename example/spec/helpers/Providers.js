@@ -41,7 +41,7 @@ const buildFtpProvider = async (postfix = '') => {
     host: await getProviderHost(),
     username: 'testuser',
     password: 'testpass',
-    globalConnectionLimit: 10
+    globalConnectionLimit: 10,
   };
 
   if (process.env.PROVIDER_FTP_PORT) {
@@ -53,7 +53,7 @@ const buildFtpProvider = async (postfix = '') => {
 
 const fakeProviderPortMap = {
   http: process.env.PROVIDER_HTTP_PORT ? Number(process.env.PROVIDER_HTTP_PORT) : 3030,
-  https: process.env.PROVIDER_HTTPS_PORT ? Number(process.env.PROVIDER_HTTPS_PORT) : 4040
+  https: process.env.PROVIDER_HTTPS_PORT ? Number(process.env.PROVIDER_HTTPS_PORT) : 4040,
 };
 
 const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http') => {
@@ -63,7 +63,7 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
     protocol,
     host: await getProviderHost(),
     port: fakeProviderPortMap[protocol],
-    globalConnectionLimit: 10
+    globalConnectionLimit: 10,
   };
 
   if (protocol === 'https') {
@@ -73,7 +73,7 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
       await s3CopyObject({
         CopySource: `${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-cert.pem`,
         Bucket: systemBucket,
-        Key: 'fake-provider-cert.pem'
+        Key: 'fake-provider-cert.pem',
       });
     }
     provider.certificateUri = `s3://${systemBucket}/fake-provider-cert.pem`;
@@ -91,5 +91,5 @@ module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
   createProvider,
-  fetchFakeS3ProviderBucket
+  fetchFakeS3ProviderBucket,
 };

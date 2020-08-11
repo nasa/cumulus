@@ -19,13 +19,13 @@ test.before(async (t) => {
 
   await Promise.all([
     S3.createBucket(t.context.sourceBucket),
-    S3.createBucket(t.context.targetBucket)
+    S3.createBucket(t.context.targetBucket),
   ]);
 
   await S3.s3PutObject({
     Bucket: t.context.sourceBucket,
     Key: t.context.sourceKey,
-    Body: t.context.fileContent
+    Body: t.context.fileContent,
   });
 });
 
@@ -33,7 +33,7 @@ test.after.always(async (t) => {
   fs.unlinkSync(localPath);
   return Promise.all([
     S3.recursivelyDeleteS3Bucket(t.context.sourceBucket),
-    S3.recursivelyDeleteS3Bucket(t.context.targetBucket)
+    S3.recursivelyDeleteS3Bucket(t.context.targetBucket),
   ]);
 });
 
@@ -97,7 +97,7 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
     s3ProviderClient.sync('non-existent', t.context.targetBucket, 'target.json'),
     {
       instanceOf: errors.FileNotFound,
-      message: `Source file not found s3://${t.context.sourceBucket}/non-existent`
+      message: `Source file not found s3://${t.context.sourceBucket}/non-existent`,
     }
   );
 });

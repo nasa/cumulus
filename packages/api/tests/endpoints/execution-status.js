@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   putJsonS3Object,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -16,7 +16,7 @@ const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
   fakeExecutionFactoryV2,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
@@ -32,7 +32,7 @@ const executionStatusCommon = {
   name: '3ea094d8',
   status: 'SUCCEEDED',
   startDate: 'date',
-  stopDate: 'date'
+  stopDate: 'date',
 };
 
 const cumulusMetaOutput = () => ({
@@ -41,8 +41,8 @@ const cumulusMetaOutput = () => ({
     message_source: 'sfn',
     workflow_start_time: 1536279498569,
     execution_name: '3ea094d8',
-    system_bucket: process.env.system_bucket
-  }
+    system_bucket: process.env.system_bucket,
+  },
 });
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
@@ -52,13 +52,13 @@ const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn }
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
     Bucket: process.env.system_bucket,
-    Key: lambdaEvent ? 'events/lambdaEventUUID' : 'events/executionEventUUID'
-  }
+    Key: lambdaEvent ? 'events/lambdaEventUUID' : 'events/executionEventUUID',
+  },
 });
 
 const remoteExecutionOutput = () => ({
   ...cumulusMetaOutput(),
-  ...replaceObject(false)
+  ...replaceObject(false),
 });
 
 const fullMessageOutput = () => ({
@@ -66,7 +66,7 @@ const fullMessageOutput = () => ({
   meta: {},
   payload: {},
   exception: 'None',
-  workflow_config: {}
+  workflow_config: {},
 });
 
 const lambdaCommonOutput = () => ({
@@ -76,24 +76,24 @@ const lambdaCommonOutput = () => ({
     execution_name: 'bae909c1',
     state_machine: 'arn:aws:states:us-east-1:xxx:stateMachine:testIngestGranuleStateMachine-222',
     workflow_start_time: 111,
-    system_bucket: process.env.system_bucket
+    system_bucket: process.env.system_bucket,
   },
   meta: {
-    sync_granule_duration: 2872
-  }
+    sync_granule_duration: 2872,
+  },
 });
 
 const lambdaRemoteOutput = () => ({
   ...replaceObject(),
-  ...lambdaCommonOutput()
+  ...lambdaCommonOutput(),
 });
 
 const lambdaCompleteOutput = () => ({
   ...lambdaCommonOutput(),
   payload: {
-    message: 'Big message'
+    message: 'Big message',
   },
-  exception: 'None'
+  exception: 'None',
 });
 
 const lambdaEventOutput = () => ({
@@ -101,7 +101,7 @@ const lambdaEventOutput = () => ({
   id: 13,
   previousEventId: 12,
   name: 'SyncGranule',
-  output: JSON.stringify(lambdaCompleteOutput())
+  output: JSON.stringify(lambdaCompleteOutput()),
 });
 
 const lambdaFunctionEvent = () => ({
@@ -110,8 +110,8 @@ const lambdaFunctionEvent = () => ({
   previousEventId: 12,
   stateExitedEventDetails: {
     name: 'SyncGranule',
-    output: JSON.stringify(lambdaRemoteOutput())
-  }
+    output: JSON.stringify(lambdaRemoteOutput()),
+  },
 });
 
 const stepFunctionMock = {
@@ -123,19 +123,19 @@ const stepFunctionMock = {
       } else {
         executionStatus = {
           ...executionStatusCommon,
-          output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput()) : JSON.stringify(remoteExecutionOutput())
+          output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput()) : JSON.stringify(remoteExecutionOutput()),
         };
       }
       resolve({
         execution: executionStatus,
         executionHistory: {
           events: [
-            lambdaFunctionEvent()
-          ]
+            lambdaFunctionEvent(),
+          ],
         },
-        stateMachine: {}
+        stateMachine: {},
       });
-    })
+    }),
 };
 
 const executionExistsMock = (arn) => {
@@ -146,11 +146,11 @@ const executionExistsMock = (arn) => {
         const error = new Error();
         error.code = 'ExecutionDoesNotExist';
         return Promise.reject(error);
-      }
+      },
     };
   }
   return {
-    promise: () => Promise.resolve(true)
+    promise: () => Promise.resolve(true),
   };
 };
 
@@ -256,14 +256,14 @@ test('fetches messages from S3 when remote message (for both SF execution histor
   const expectedResponse = {
     execution: {
       ...executionStatusCommon,
-      output: JSON.stringify(fullMessageOutput())
+      output: JSON.stringify(fullMessageOutput()),
     },
     executionHistory: {
       events: [
-        lambdaEventOutput()
-      ]
+        lambdaEventOutput(),
+      ],
     },
-    stateMachine: {}
+    stateMachine: {},
   };
   t.deepEqual(expectedResponse, executionStatus);
 });
@@ -280,10 +280,10 @@ test('when execution is still running, still returns status and fetches SF execu
     execution: executionStatusCommon,
     executionHistory: {
       events: [
-        lambdaEventOutput()
-      ]
+        lambdaEventOutput(),
+      ],
     },
-    stateMachine: {}
+    stateMachine: {},
   };
   t.deepEqual(expectedResponse, executionStatus);
 });

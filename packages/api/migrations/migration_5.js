@@ -8,7 +8,7 @@ const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
 function getS3ReportsKeys(systemBucket, stackName) {
   return s3().listObjectsV2({
     Bucket: systemBucket,
-    Prefix: reportsPrefix(stackName)
+    Prefix: reportsPrefix(stackName),
   }).promise()
     .then((response) => response.Contents.map((o) => o.Key));
 }
@@ -26,7 +26,7 @@ async function run(_options) {
 
   const reportToRecordStatus = {
     SUCCESS: 'Generated',
-    RUNNING: 'Pending'
+    RUNNING: 'Pending',
   };
 
   const addedItems = await Promise.all(s3filesNotInDb.map(async (s3Report) => {
@@ -37,7 +37,7 @@ async function run(_options) {
       type: 'Inventory',
       status: reportToRecordStatus[report.status] || 'Failed',
       location: s3Report,
-      createdAt: moment.utc(report.reportStartTime).toDate().getTime()
+      createdAt: moment.utc(report.reportStartTime).toDate().getTime(),
     };
     return reportRecord;
   }));

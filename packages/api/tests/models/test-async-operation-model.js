@@ -25,7 +25,7 @@ test.before(async () => {
   asyncOperationModel = new AsyncOperation({
     systemBucket,
     stackName: randomString(),
-    tableName: randomString()
+    tableName: randomString(),
   });
   await asyncOperationModel.createTable();
 
@@ -37,7 +37,7 @@ test.before(async () => {
       promise: () => {
         if (!stubbedEcsRunTaskResult) return Promise.reject(new Error('stubbedEcsRunTaskResult has not yet been set'));
         return Promise.resolve(stubbedEcsRunTaskResult);
-      }
+      },
     };
   };
 
@@ -46,10 +46,10 @@ test.before(async () => {
       Environment: {
         Variables: {
           ES_HOST: 'es-host',
-          AsyncOperationsTable: 'async-operations-table'
-        }
-      }
-    })
+          AsyncOperationsTable: 'async-operations-table',
+        },
+      },
+    }),
   });
 });
 
@@ -63,7 +63,7 @@ test('The AsyncOperation constructor requires that stackName be specified', (t) 
   try {
     new AsyncOperation({
       systemBucket: 'asdf',
-      tableName: 'asdf'
+      tableName: 'asdf',
     });
     t.fail('stackName should be required');
   } catch (error) {
@@ -76,7 +76,7 @@ test('The AsyncOperation constructor requires that systemBucket be specified', (
   try {
     new AsyncOperation({
       stackName: 'asdf',
-      tableName: 'asdf'
+      tableName: 'asdf',
     });
     t.fail('systemBucket should be required');
   } catch (error) {
@@ -90,7 +90,7 @@ test('The AsyncOperation constructor sets the stackName', (t) => {
   const asyncOperation = new AsyncOperation({
     stackName: thisTestStackName,
     systemBucket: randomString(),
-    tableName: randomString
+    tableName: randomString,
   });
 
   t.is(asyncOperation.stackName, thisTestStackName);
@@ -100,7 +100,7 @@ test('The AsyncOperation constructor sets the systemBucket', (t) => {
   const localAsyncOperationModel = new AsyncOperation({
     stackName: randomString(),
     systemBucket,
-    tableName: randomString
+    tableName: randomString,
   });
 
   t.is(localAsyncOperationModel.systemBucket, systemBucket);
@@ -109,7 +109,7 @@ test('The AsyncOperation constructor sets the systemBucket', (t) => {
 test.serial('The AsyncOperation.start() method uploads the payload to S3', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
-    failures: []
+    failures: [],
   };
 
   const payload = { number: 42 };
@@ -120,12 +120,12 @@ test.serial('The AsyncOperation.start() method uploads the payload to S3', async
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
-    payload
+    payload,
   });
 
   const getObjectResponse = await s3().getObject({
     Bucket: systemBucket,
-    Key: `${asyncOperationModel.stackName}/async-operation-payloads/${id}.json`
+    Key: `${asyncOperationModel.stackName}/async-operation-payloads/${id}.json`,
   }).promise();
 
   t.deepEqual(JSON.parse(getObjectResponse.Body.toString()), payload);
@@ -135,7 +135,7 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
   stubbedEcsRunTaskParams = {};
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
-    failures: []
+    failures: [],
   };
 
   const asyncOperationTaskDefinition = randomString();
@@ -149,7 +149,7 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
     lambdaName,
     description: randomString(),
     operationType: 'ES Index',
-    payload
+    payload,
   });
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
@@ -170,7 +170,7 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
 test('The AsyncOperation.start() method throws error and updates operation if it is unable to create an ECS task', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [],
-    failures: [{ arn: randomString(), reason: 'out of cheese' }]
+    failures: [{ arn: randomString(), reason: 'out of cheese' }],
   };
 
   await t.throwsAsync(asyncOperationModel.start({
@@ -179,17 +179,17 @@ test('The AsyncOperation.start() method throws error and updates operation if it
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
-    payload: {}
+    payload: {},
   }), {
     instanceOf: EcsStartTaskError,
-    message: 'Failed to start AsyncOperation: out of cheese'
+    message: 'Failed to start AsyncOperation: out of cheese',
   });
 });
 
 test.serial('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
-    failures: []
+    failures: [],
   };
 
   const { id } = await asyncOperationModel.start({
@@ -198,7 +198,7 @@ test.serial('The AsyncOperation.start() method writes a new record to DynamoDB',
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
-    payload: {}
+    payload: {},
   });
 
   const fetchedAsyncOperation = await asyncOperationModel.get({ id });
@@ -208,7 +208,7 @@ test.serial('The AsyncOperation.start() method writes a new record to DynamoDB',
 test.serial('The AsyncOperation.start() method returns an item id', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
-    failures: []
+    failures: [],
   };
 
   const { id } = await asyncOperationModel.start({
@@ -217,7 +217,7 @@ test.serial('The AsyncOperation.start() method returns an item id', async (t) =>
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
-    payload: {}
+    payload: {},
   });
 
   t.true(isString(id));
@@ -226,7 +226,7 @@ test.serial('The AsyncOperation.start() method returns an item id', async (t) =>
 test.serial('The AsyncOperation.start() method sets the record status to "RUNNING"', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
-    failures: []
+    failures: [],
   };
 
   const { id } = await asyncOperationModel.start({
@@ -235,7 +235,7 @@ test.serial('The AsyncOperation.start() method sets the record status to "RUNNIN
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
-    payload: {}
+    payload: {},
   });
 
   const fetchedAsyncOperation = await asyncOperationModel.get({ id });
@@ -245,7 +245,7 @@ test.serial('The AsyncOperation.start() method sets the record status to "RUNNIN
 test.serial('The AsyncOperation.start() method returns the newly-generated record', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
-    failures: []
+    failures: [],
   };
 
   const { taskArn } = await asyncOperationModel.start({
@@ -254,7 +254,7 @@ test.serial('The AsyncOperation.start() method returns the newly-generated recor
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
-    payload: {}
+    payload: {},
   });
 
   t.is(taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
@@ -265,14 +265,14 @@ test('getLambdaEnvironmentVariables returns formatted environment variables', as
 
   t.deepEqual(new Set(vars), new Set([
     { name: 'ES_HOST', value: 'es-host' },
-    { name: 'AsyncOperationsTable', value: 'async-operations-table' }
+    { name: 'AsyncOperationsTable', value: 'async-operations-table' },
   ]));
 });
 
 test.serial('ECS task params contain lambda environment variables when flag is set', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
-    failures: []
+    failures: [],
   };
 
   await asyncOperationModel.start({
@@ -282,7 +282,7 @@ test.serial('ECS task params contain lambda environment variables when flag is s
     description: randomString(),
     operationType: 'ES Index',
     payload: {},
-    useLambdaEnvironmentVariables: true
+    useLambdaEnvironmentVariables: true,
   });
 
   const environmentOverrides = {};

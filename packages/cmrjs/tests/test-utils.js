@@ -3,7 +3,7 @@
 const test = require('ava');
 
 const {
-  ummVersionToMetadataFormat
+  ummVersionToMetadataFormat,
 } = require('../utils');
 
 test('ummVersionToMetadataFormat returns correct metadata format for UMM-G versions', (t) => {

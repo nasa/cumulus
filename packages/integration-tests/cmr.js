@@ -22,7 +22,7 @@ const sampleEcho10Granule = {
     LastUpdate: '2018-04-25T21:45:45.524053',
     Collection: {
       ShortName: 'MYD13Q1',
-      VersionId: '006'
+      VersionId: '006',
     },
     DataGranule:
     {
@@ -32,13 +32,13 @@ const sampleEcho10Granule = {
       ProducerGranuleId: 'SMAP_L3_SM_P_20150407_R13080_001.h5',
       DayNightFlag: 'UNSPECIFIED',
       ProductionDateTime: '2018-07-19T12:01:01Z',
-      LocalVersionId: 'LocalVersionIdValue'
+      LocalVersionId: 'LocalVersionIdValue',
     },
     Temporal: {
       RangeDateTime: {
         BeginningDateTime: '2017-10-24T00:00:00Z',
-        EndingDateTime: '2017-11-08T23:59:59Z'
-      }
+        EndingDateTime: '2017-11-08T23:59:59Z',
+      },
     },
     Spatial: {
       HorizontalSpatialDomain: {
@@ -48,25 +48,25 @@ const sampleEcho10Granule = {
               Point: [
                 {
                   PointLongitude: '10.598766856250499',
-                  PointLatitude: '-20.004533998735798'
+                  PointLatitude: '-20.004533998735798',
                 },
                 {
                   PointLongitude: '10.116488181247300',
-                  PointLatitude: '-9.963464459448231'
+                  PointLatitude: '-9.963464459448231',
                 },
                 {
                   PointLongitude: '20.318223437416400',
-                  PointLatitude: '-9.958850980581371'
+                  PointLatitude: '-9.958850980581371',
                 },
                 {
                   PointLongitude: '21.290997939442398',
-                  PointLatitude: '-19.999772984245801'
-                }
-              ]
-            }
-          }
-        }
-      }
+                  PointLatitude: '-19.999772984245801',
+                },
+              ],
+            },
+          },
+        },
+      },
     },
     // TwoDCoordinateSystem: {
     //   StartCoordinate1: '19',
@@ -76,13 +76,13 @@ const sampleEcho10Granule = {
     OnlineAccessURLs: [{
       OnlineAccessURL: {
         URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
-        URLDescription: 'Download MYD13Q1.A2017297.h19v10.006.2017313221202.hdf'
-      }
+        URLDescription: 'Download MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
+      },
     }],
     Orderable: 'true',
     Visible: 'true',
-    CloudCover: '13'
-  }
+    CloudCover: '13',
+  },
 };
 
 const sampleUmmGranule = {
@@ -94,17 +94,17 @@ const sampleUmmGranule = {
             WestBoundingCoordinate: -180,
             EastBoundingCoordinate: 180,
             NorthBoundingCoordinate: 90,
-            SouthBoundingCoordinate: -90
-          }
-        ]
-      }
-    }
+            SouthBoundingCoordinate: -90,
+          },
+        ],
+      },
+    },
   },
   ProviderDates: [
     {
       Date: '2018-12-19T17:30:31.424Z',
-      Type: 'Insert'
-    }
+      Type: 'Insert',
+    },
   ],
   DataGranule: {
     DayNightFlag: 'Unspecified',
@@ -113,16 +113,16 @@ const sampleUmmGranule = {
       {
         Name: 'Not provided',
         Size: 1.009857177734375,
-        SizeUnit: 'NA'
-      }
-    ]
+        SizeUnit: 'NA',
+      },
+    ],
   },
   TemporalExtent: {
     RangeDateTime: {
       BeginningDateTime: '2016-01-09T11:40:45.032Z',
-      EndingDateTime: '2016-01-09T11:41:12.027Z'
-    }
-  }
+      EndingDateTime: '2016-01-09T11:41:12.027Z',
+    },
+  },
 };
 
 /**
@@ -184,7 +184,7 @@ function generateCmrXml(granule, collection, additionalUrls) {
 
   xmlObject.Granule.Collection = {
     ShortName: collection.name,
-    VersionId: collection.version
+    VersionId: collection.version,
   };
 
   xmlObject.Granule.OnlineAccessURLs.forEach((url) => {
@@ -196,8 +196,8 @@ function generateCmrXml(granule, collection, additionalUrls) {
     xmlObject.Granule.OnlineAccessURLs = additionalUrls.map((url) => ({
       OnlineAccessURL: {
         URL: url,
-        URLDescription: 'File to download'
-      }
+        URLDescription: 'File to download',
+      },
     }));
   }
 
@@ -228,7 +228,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
     Key: filename,
     Body: xml,
     ContentType: 'application/xml',
-    Tagging: `granuleId=${granule.granuleId}`
+    Tagging: `granuleId=${granule.granuleId}`,
   };
 
   await s3().putObject(params).promise();
@@ -358,13 +358,13 @@ async function generateAndStoreCmrUmmJson(
 
   jsonObject.CollectionReference = {
     ShortName: collection.name,
-    Version: collection.version
+    Version: collection.version,
   };
 
   if (additionalUrls) {
     jsonObject.RelatedUrls = additionalUrls.map((url) => ({
       URL: url,
-      Type: 'GET DATA'
+      Type: 'GET DATA',
     }));
   }
 
@@ -373,7 +373,7 @@ async function generateAndStoreCmrUmmJson(
     jsonObject.MetadataSpecification = {
       URL: `https://cdn.earthdata.nasa.gov/umm/granule/v${versionString}`,
       Name: 'UMM-G',
-      Version: versionString
+      Version: versionString,
     };
   }
 
@@ -386,7 +386,7 @@ async function generateAndStoreCmrUmmJson(
     Key: filename,
     Body: JSON.stringify(jsonObject),
     ContentType: 'application/json',
-    Tagging: `granuleId=${granule.granuleId}`
+    Tagging: `granuleId=${granule.granuleId}`,
   };
 
   await s3().putObject(params).promise();
@@ -442,5 +442,5 @@ module.exports = {
   getOnlineResources,
   generateCmrFilesForGranules,
   generateCmrXml,
-  waitForConceptExistsOutcome
+  waitForConceptExistsOutcome,
 };

@@ -4,5 +4,5 @@ module.exports = {
   fail: async () => {
     throw new Error('triggered failure');
   },
-  success: async (event) => event
+  success: async (event) => event,
 };

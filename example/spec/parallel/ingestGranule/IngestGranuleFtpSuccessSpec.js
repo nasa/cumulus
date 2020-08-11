@@ -9,7 +9,7 @@ const {
   addCollections,
   buildAndExecuteWorkflow,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const mime = require('mime-types');
@@ -44,7 +44,7 @@ describe('The FTP Ingest Granules workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-      createProvider(config.stackName, provider)
+      createProvider(config.stackName, provider),
     ]);
 
     console.log('\nStarting ingest test');
@@ -66,7 +66,7 @@ describe('The FTP Ingest Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      deleteProvider({ prefix: config.stackName, provider: provider.id })
+      deleteProvider({ prefix: config.stackName, provider: provider.id }),
     ]);
   });
 
@@ -85,7 +85,7 @@ describe('The FTP Ingest Granules workflow', () => {
 
       granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       });
       granule = JSON.parse(granuleResponse.body);
     });
@@ -94,7 +94,7 @@ describe('The FTP Ingest Granules workflow', () => {
       // clean up granule
       await granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       });
     });
 
@@ -116,7 +116,7 @@ describe('The FTP Ingest Granules workflow', () => {
 
           return [
             headObjectResponse.ContentType,
-            mime.lookup(key) || 'application/octet-stream'
+            mime.lookup(key) || 'application/octet-stream',
           ];
         }
       );

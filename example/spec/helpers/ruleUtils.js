@@ -13,16 +13,16 @@ const waitForRuleInList = async (stackName, ruleQueryParams) => pWaitFor(
   async () => {
     const resp = await listRules({
       prefix: stackName,
-      query: ruleQueryParams
+      query: ruleQueryParams,
     });
     return JSON.parse(resp.body).results.length > 0;
   },
   {
     interval: 3000,
-    timeout: 30 * 1000
+    timeout: 30 * 1000,
   }
 );
 
 module.exports = {
-  waitForRuleInList
+  waitForRuleInList,
 };

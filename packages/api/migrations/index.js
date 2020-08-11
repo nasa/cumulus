@@ -18,7 +18,7 @@ async function findNewMigrations(allMigrations, migrationFolder) {
   // list executed migrations
   const listed = await listS3ObjectsV2({
     Bucket: process.env.system_bucket,
-    Prefix: migrationFolder
+    Prefix: migrationFolder,
   });
 
   const executedMigrations = listed.map((c) => path.basename(c.Key));
@@ -54,7 +54,7 @@ async function runMigrations(migrations, options) {
     // write the migration on s3
     await s3().putObject({ // eslint-disable-line no-await-in-loop
       Bucket: process.env.system_bucket,
-      Key: `${migrationFolder}/${m.name}`
+      Key: `${migrationFolder}/${m.name}`,
     }).promise();
     log.info(`Successfully ran migration script ${m.name}`);
   }

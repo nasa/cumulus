@@ -42,7 +42,7 @@ describe('The SyncGranule task', () => {
         prefix,
         {
           duplicateHandling: 'error',
-          process: 'modis'
+          process: 'modis',
         }
       );
 
@@ -58,7 +58,7 @@ describe('The SyncGranule task', () => {
         Bucket: sourceBucket,
         Key: sourceKey,
         Body: 'asdf',
-        Tagging: querystring.stringify({ granuleId })
+        Tagging: querystring.stringify({ granuleId }),
       });
 
       // Call syncGranule
@@ -68,7 +68,7 @@ describe('The SyncGranule task', () => {
           buckets: config.buckets,
           provider,
           collection,
-          downloadBucket: config.bucket
+          downloadBucket: config.bucket,
         },
         input: {
           granules: [
@@ -79,12 +79,12 @@ describe('The SyncGranule task', () => {
               files: [
                 {
                   path: sourcePath,
-                  name: sourceFilename
-                }
-              ]
-            }
-          ]
-        }
+                  name: sourceFilename,
+                },
+              ],
+            },
+          ],
+        },
       });
 
       // Verify that the tags of the synced granule match the tags of the source
@@ -98,8 +98,8 @@ describe('The SyncGranule task', () => {
       const expectedTagSet = [
         {
           Key: 'granuleId',
-          Value: granuleId
-        }
+          Value: granuleId,
+        },
       ];
 
       expect(stagedFileTags.TagSet).toEqual(expectedTagSet);
@@ -112,8 +112,8 @@ describe('The SyncGranule task', () => {
           () => deleteCollection({
             prefix,
             collectionName: get(collection, 'name'),
-            collectionVersion: get(collection, 'version')
-          })
+            collectionVersion: get(collection, 'version'),
+          }),
         ],
         { stopOnError: false }
       ).catch(console.error);

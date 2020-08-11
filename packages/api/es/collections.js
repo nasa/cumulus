@@ -23,32 +23,32 @@ class Collection extends BaseSearch {
       body: {
         query: {
           terms: {
-            _id: ids
-          }
+            _id: ids,
+          },
         },
         aggs: {
           hashes: {
             terms: {
-              field: '_uid'
+              field: '_uid',
             },
             aggs: {
               stats: {
                 children: {
-                  type: 'granule'
+                  type: 'granule',
                 },
                 aggs: {
                   count: {
                     terms: {
-                      field: 'status'
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                      field: 'status',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
-      size: 0
+      size: 0,
     }).then((response) => response.body);
 
     // add aggs to res
@@ -59,7 +59,7 @@ class Collection extends BaseSearch {
         running: 0,
         completed: 0,
         failed: 0,
-        total: 0
+        total: 0,
       };
 
       // Can't aggregate on the _id but can on the _uid which is collection#_id
@@ -100,9 +100,9 @@ class Collection extends BaseSearch {
     searchParams.body.aggs = {
       collections: {
         terms: {
-          field: 'collectionId'
-        }
-      }
+          field: 'collectionId',
+        },
+      },
     };
 
     const searchResults = await this.client.search(searchParams)
@@ -138,10 +138,10 @@ class Collection extends BaseSearch {
       constant_score: {
         filter: {
           terms: {
-            _id: collectionIds
-          }
-        }
-      }
+            _id: collectionIds,
+          },
+        },
+      },
     };
 
     const res = await this.query(searchParams);

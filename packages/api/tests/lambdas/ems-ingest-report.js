@@ -9,29 +9,29 @@ const {
   fileExists,
   parseS3Uri,
   getS3Object,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 const {
-  emsMappings, generateReports, generateReportsForEachDay
+  emsMappings, generateReports, generateReportsForEachDay,
 } = require('../../lambdas/ems-ingest-report');
 const models = require('../../models');
 
 const collections = [
   fakeCollectionFactory({
     name: 'MOD09GQ',
-    version: '006'
+    version: '006',
   }),
   fakeCollectionFactory({
     name: 'MOD11A1',
-    version: '006'
+    version: '006',
   }),
   fakeCollectionFactory({
     name: 'MOD14A1',
     version: '006',
-    reportToEms: false
+    reportToEms: false,
   })];
 
 const granule = {
@@ -51,7 +51,7 @@ const granule = {
   beginningDateTime: '2017-10-24T00:00:00Z',
   endingDateTime: '2017-11-08T23:59:59Z',
   productionDateTime: '2017-11-10T03:12:24.000Z',
-  lastUpdateDateTime: '2018-04-25T21:45:45.524053'
+  lastUpdateDateTime: '2018-04-25T21:45:45.524053',
 };
 
 const deletedgranule = Object.assign(cloneDeep(granule), { deletedAt: Date.now() });
@@ -72,7 +72,7 @@ const formatMappings = {
     datetimeRegx, // processingEndDateTime
     decimalIntRegx, // timeToArchive
     decimalIntRegx, // timeToPreprocess
-    decimalIntRegx //timeToXfer
+    decimalIntRegx, //timeToXfer
   ],
 
   archive: [
@@ -88,13 +88,13 @@ const formatMappings = {
     '^\\d+$', // versionID
     '^N$', // deleteFromArchive 'N'
     '^$', // deleteEffectiveDate null
-    datetimeRegx // lastUpdate
+    datetimeRegx, // lastUpdate
   ],
 
   delete: [
     granuleIdRegx, // dbID
-    dateRegx // deleteEffectiveDate
-  ]
+    dateRegx, // deleteEffectiveDate
+  ],
 };
 
 process.env.ES_SCROLL_SIZE = 3;
@@ -135,8 +135,8 @@ test.before(async () => {
     parent: g.collectionId,
     body: {
       doc: g,
-      doc_as_upsert: true
-    }
+      doc_as_upsert: true,
+    },
   }));
 
   // add 15 deleted granules to es, 5 from 1 day ago, 5 from 2 day ago, 5 from today
@@ -157,8 +157,8 @@ test.before(async () => {
     parent: g.collectionId,
     body: {
       doc: g,
-      doc_as_upsert: true
-    }
+      doc_as_upsert: true,
+    },
   }));
 
   await Promise.all(granjobs.concat(deletedgranjobs));

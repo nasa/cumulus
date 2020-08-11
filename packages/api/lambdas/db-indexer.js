@@ -20,36 +20,36 @@ const getTableIndexDetails = (tableName) => {
   const indexTables = {
     [process.env.AsyncOperationsTable]: {
       indexFnName: 'indexAsyncOperation',
-      indexType: 'asyncOperation'
+      indexType: 'asyncOperation',
     },
     [process.env.CollectionsTable]: {
       indexFnName: 'indexCollection',
-      indexType: 'collection'
+      indexType: 'collection',
     },
     [process.env.ExecutionsTable]: {
       indexFnName: 'indexExecution',
-      indexType: 'execution'
+      indexType: 'execution',
     },
     [process.env.GranulesTable]: {
       indexFnName: 'indexGranule',
-      indexType: 'granule'
+      indexType: 'granule',
     },
     [process.env.PdrsTable]: {
       indexFnName: 'indexPdr',
-      indexType: 'pdr'
+      indexType: 'pdr',
     },
     [process.env.ProvidersTable]: {
       indexFnName: 'indexProvider',
-      indexType: 'provider'
+      indexType: 'provider',
     },
     [process.env.ReconciliationReportsTable]: {
       indexFnName: 'indexReconciliationReport',
-      indexType: 'reconciliationReport'
+      indexType: 'reconciliationReport',
     },
     [process.env.RulesTable]: {
       indexFnName: 'indexRule',
-      indexType: 'rule'
-    }
+      indexType: 'rule',
+    },
   };
   return indexTables[tableName];
 };
@@ -67,7 +67,7 @@ const mapIndexTypeToIdFieldName = (type) => {
     pdr: 'pdrName',
     provider: 'id',
     reconciliationReport: 'name',
-    rule: 'name'
+    rule: 'name',
   };
   return idFieldsByType[type];
 };
@@ -144,7 +144,7 @@ function performDelete(esClient, type, id, parentId) {
       id,
       type,
       parent: parentId,
-      index: process.env.ES_INDEX
+      index: process.env.ES_INDEX,
     });
 }
 
@@ -202,7 +202,7 @@ async function indexRecords(records) {
     {
       concurrency: process.env.ES_CONCURRENCY
         ? Number.parseInt(process.env.ES_CONCURRENCY, 10)
-        : 3
+        : 3,
     }
   );
 }
@@ -222,5 +222,5 @@ module.exports = {
   getRecordId,
   handler,
   performDelete,
-  performIndex
+  performIndex,
 };

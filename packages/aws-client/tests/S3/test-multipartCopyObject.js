@@ -7,7 +7,7 @@ const { createHash } = require('crypto');
 const {
   createBucket,
   multipartCopyObject,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('../../S3');
 const { s3 } = require('../../services');
 
@@ -25,7 +25,7 @@ const createDummyObject = ({ Bucket, Key, size, contentType }) => {
     Bucket,
     Key,
     Body: readStream,
-    ContentType: contentType
+    ContentType: contentType,
   }).promise();
 };
 
@@ -65,24 +65,24 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
   await createDummyObject({
     Bucket: sourceBucket,
     Key: sourceKey,
-    size: 6 * MB
+    size: 6 * MB,
   });
 
   const sourceChecksum = await md5OfObject({
     Bucket: sourceBucket,
-    Key: sourceKey
+    Key: sourceKey,
   });
 
   const { etag } = await multipartCopyObject({
     sourceBucket,
     sourceKey,
     destinationBucket,
-    destinationKey
+    destinationKey,
   });
 
   const destinationChecksum = await md5OfObject({
     Bucket: destinationBucket,
-    Key: destinationKey
+    Key: destinationKey,
   });
 
   t.is(sourceChecksum, destinationChecksum, 'Source and destination checksums do not match');
@@ -98,7 +98,7 @@ test("multipartCopyObject() sets the object's ACL", async (t) => {
   await createDummyObject({
     Bucket: sourceBucket,
     Key: sourceKey,
-    size: 10
+    size: 10,
   });
 
   await multipartCopyObject({
@@ -106,12 +106,12 @@ test("multipartCopyObject() sets the object's ACL", async (t) => {
     sourceKey,
     destinationBucket,
     destinationKey,
-    ACL: 'public-read'
+    ACL: 'public-read',
   });
 
   const destinationAcls = await s3().getObjectAcl({
     Bucket: destinationBucket,
-    Key: destinationKey
+    Key: destinationKey,
   }).promise();
 
   const allUsersGrant = destinationAcls.Grants.find(
@@ -132,19 +132,19 @@ test('multipartCopyObject() copies content type', async (t) => {
     Bucket: sourceBucket,
     Key: sourceKey,
     size: 5,
-    contentType: 'application/xml'
+    contentType: 'application/xml',
   });
 
   await multipartCopyObject({
     sourceBucket,
     sourceKey,
     destinationBucket,
-    destinationKey
+    destinationKey,
   });
 
   const copiedObject = await s3().headObject({
     Bucket: destinationBucket,
-    Key: destinationKey
+    Key: destinationKey,
   }).promise();
 
   t.deepEqual(

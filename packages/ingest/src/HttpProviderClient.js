@@ -13,7 +13,7 @@ const {
   buildS3Uri,
   getTextObject,
   parseS3Uri,
-  promiseS3Upload
+  promiseS3Upload,
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
@@ -22,7 +22,7 @@ const errors = require('@cumulus/errors');
 
 const { lookupMimeType, decrypt } = require('./util');
 const {
-  emptyProviderConnectEndMixin
+  emptyProviderConnectEndMixin,
 } = require('./emptyProviderConnectEndMixin');
 
 const validateHost = (host) => {
@@ -47,7 +47,7 @@ class HttpProviderClient {
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
-      port: this.port
+      port: this.port,
     });
   }
 
@@ -64,7 +64,7 @@ class HttpProviderClient {
     this.gotOptions = {
       ...this.gotOptions,
       auth,
-      cookieJar
+      cookieJar,
     };
   }
 
@@ -99,7 +99,7 @@ class HttpProviderClient {
         protocol: this.protocol,
         host: this.host,
         port: this.port,
-        path
+        path,
       })
     );
 
@@ -185,7 +185,7 @@ class HttpProviderClient {
       protocol: this.protocol,
       host: this.host,
       port: this.port,
-      path: remotePath
+      path: remotePath,
     });
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
@@ -219,7 +219,7 @@ class HttpProviderClient {
       protocol: this.protocol,
       host: this.host,
       port: this.port,
-      path: remotePath
+      path: remotePath,
     });
 
     const s3uri = buildS3Uri(bucket, key);
@@ -240,7 +240,7 @@ class HttpProviderClient {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: contentType
+      ContentType: contentType,
     });
 
     log.info('Uploading to s3 is complete (http)', s3uri);

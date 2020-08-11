@@ -7,7 +7,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
   cleanupCollections,
-  emsApi
+  emsApi,
 } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../../helpers/testUtils');
@@ -57,8 +57,8 @@ describe('The EMS product metadata report', () => {
           FunctionName: emsProductMetadataReportLambda,
           Payload: JSON.stringify({
             startTime,
-            endTime
-          })
+            endTime,
+          }),
         }).promise();
         lambdaOutput = JSON.parse(response.Payload);
       } catch (error) {
@@ -103,12 +103,12 @@ describe('The EMS product metadata report', () => {
         startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
         endTime: moment.utc().add(1, 'days').startOf('day').format(),
         collectionId: constructCollectionId(collection.name, collection.version),
-        invocationType: 'RequestResponse'
+        invocationType: 'RequestResponse',
       };
 
       const response = await emsApi.createEmsReports({
         prefix: config.stackName,
-        request: inputPayload
+        request: inputPayload,
       });
 
       // verify the report has the specified collection

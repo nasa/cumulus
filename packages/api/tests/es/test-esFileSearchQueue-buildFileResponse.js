@@ -20,21 +20,21 @@ test('buildFileResponse transforms a granules file list into correct objects.', 
       granuleId: 'gran.nToe7O.001',
       bucket: 'stackName-protected',
       fileName: 'gran.nToe7O.001.cmr.json',
-      key: 'gran___001/stackName/gran.nToe7O.001.cmr.json'
+      key: 'gran___001/stackName/gran.nToe7O.001.cmr.json',
     },
     {
       granuleId: 'gran.nToe7O.001',
       bucket: 'stackName-protected',
       fileName: 'gran.nToe7O.001.hdf',
       key:
-        'stackName-test-data/files/gran___001/2016/stackName/gran.nToe7O.001.hdf'
+        'stackName-test-data/files/gran___001/2016/stackName/gran.nToe7O.001.hdf',
     },
     {
       granuleId: 'gran.A7444061.d7sYKL.001',
       bucket: 'stackName-protected',
       fileName: 'gran.A7444061.d7sYKL.001.cmr.json',
-      key: 'gran___001/stackName/gran.A7444061.d7sYKL.001.cmr.json'
-    }
+      key: 'gran___001/stackName/gran.A7444061.d7sYKL.001.cmr.json',
+    },
   ];
 
   t.deepEqual(expected, actual);

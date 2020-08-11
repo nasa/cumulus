@@ -20,9 +20,9 @@ test.serial('get CMR metadata, success', async (t) => {
             updated: '2018-04-25T21:45:45.524Z',
             dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
             data_center: 'CUMULUS',
-            title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
-          }]
-        }
+            title: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+          }],
+        },
       }));
 
   const response = await getConceptMetadata('https://www.example.com');

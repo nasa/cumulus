@@ -9,7 +9,7 @@ const {
   getUrl,
   xmlParseOptions,
   getHost,
-  hostId
+  hostId,
 } = require('./utils');
 const {
   constructOnlineAccessUrl,
@@ -19,7 +19,7 @@ const {
   publish2CMR,
   granulesToCmrFileObjects,
   reconcileCMRMetadata,
-  updateCMRMetadata
+  updateCMRMetadata,
 } = require('./cmr-utils');
 
 /**
@@ -85,5 +85,5 @@ module.exports = {
   reconcileCMRMetadata,
   granulesToCmrFileObjects,
   updateCMRMetadata,
-  updateToken
+  updateToken,
 };

@@ -14,8 +14,8 @@ test('getGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`
-    }
+      path: `/granules/${t.context.granuleId}`,
+    },
   };
 
   const callback = (configObject) => {
@@ -25,7 +25,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.getGranule({
     callback,
     prefix: t.context.testPrefix,
-    granuleId: t.context.granuleId
+    granuleId: t.context.granuleId,
   }));
 });
 
@@ -40,7 +40,7 @@ test('waitForGranules calls getGranules with the expected payload', async (t) =>
   await granulesApi.waitForGranule({
     callback,
     prefix: t.context.testPrefix,
-    granuleId: t.context.granuleId
+    granuleId: t.context.granuleId,
   });
 });
 
@@ -48,7 +48,7 @@ test('waitForGranules fails on 500 statusCode', async (t) => {
   await t.throwsAsync(granulesApi.waitForGranule({
     callback: async () => ({ statusCode: 500 }),
     prefix: t.context.testPrefix,
-    granuleId: t.context.granuleId
+    granuleId: t.context.granuleId,
   }));
 });
 
@@ -66,7 +66,7 @@ test('waitForGranules retries on status codes other than 500, 200, then throws e
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     retries,
-    pRetryOptions: { minTimeout: 1, maxTimeout: 1 }
+    pRetryOptions: { minTimeout: 1, maxTimeout: 1 },
   }));
 
   t.is(retryCount, retries + 1);
@@ -81,13 +81,13 @@ test('waitForGranules retries if status does not match provided status', async (
     if (callbackCount === 1) {
       return {
         statusCode: 200,
-        body: '{ "status": "running" }'
+        body: '{ "status": "running" }',
       };
     }
 
     return {
       statusCode: 200,
-      body: '{ "status": "completed" }'
+      body: '{ "status": "completed" }',
     };
   };
 
@@ -96,7 +96,7 @@ test('waitForGranules retries if status does not match provided status', async (
     granuleId: t.context.granuleId,
     status: 'completed',
     pRetryOptions: { minTimeout: 1, maxTimeout: 1 },
-    callback
+    callback,
   });
 
   t.is(callbackCount, 2);
@@ -110,10 +110,10 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'reingest' })
-    }
+      body: JSON.stringify({ action: 'reingest' }),
+    },
   };
 
   const callback = (configObject) => {
@@ -123,7 +123,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
   await t.notThrowsAsync(granulesApi.reingestGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
-    callback
+    callback,
   }));
 });
 
@@ -135,10 +135,10 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'removeFromCmr' })
-    }
+      body: JSON.stringify({ action: 'removeFromCmr' }),
+    },
   };
 
   const callback = (configObject) => {
@@ -148,7 +148,7 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.removeFromCMR({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
-    callback
+    callback,
   }));
 });
 
@@ -160,11 +160,11 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: `/granules/${t.context.granuleId}`,
-      body: JSON.stringify({ action: 'applyWorkflow', workflow })
-    }
+      body: JSON.stringify({ action: 'applyWorkflow', workflow }),
+    },
   };
 
   const callback = (configObject) => {
@@ -175,7 +175,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     workflow,
-    callback
+    callback,
   }));
 });
 
@@ -185,8 +185,8 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`
-    }
+      path: `/granules/${t.context.granuleId}`,
+    },
   };
 
   const callback = (configObject) => {
@@ -196,7 +196,7 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.deleteGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
-    callback
+    callback,
   }));
 });
 
@@ -208,11 +208,11 @@ test('moveGranule calls the callback with the expected object', async (t) => {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: `/granules/${t.context.granuleId}`,
-      body: JSON.stringify({ action: 'move', destinations })
-    }
+      body: JSON.stringify({ action: 'move', destinations }),
+    },
   };
 
   const callback = (configObject) => {
@@ -223,7 +223,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     destinations,
-    callback
+    callback,
   }));
 });
 
@@ -235,8 +235,8 @@ test('listGranules calls the callback with the expected object', async (t) => {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/granules',
-      queryStringParameters: query
-    }
+      queryStringParameters: query,
+    },
   };
 
   const callback = (configObject) => {
@@ -246,7 +246,7 @@ test('listGranules calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.listGranules({
     prefix: t.context.testPrefix,
     query,
-    callback
+    callback,
   }));
 });
 
@@ -258,8 +258,8 @@ test('listGranules calls the callback with the expected object if there is no qu
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/granules',
-      queryStringParameters: undefined
-    }
+      queryStringParameters: undefined,
+    },
   };
 
   const callback = (configObject) => {
@@ -269,7 +269,7 @@ test('listGranules calls the callback with the expected object if there is no qu
   await t.notThrowsAsync(granulesApi.listGranules({
     prefix: t.context.testPrefix,
     query,
-    callback
+    callback,
   }));
 });
 
@@ -297,7 +297,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   await granulesApi.removePublishedGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
-    callback
+    callback,
   });
 
   t.true(removeFromCmrCalled);

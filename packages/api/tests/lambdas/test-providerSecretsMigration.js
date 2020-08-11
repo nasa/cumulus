@@ -53,7 +53,7 @@ test.serial('Empty, Plaintext, KMS-encrypted, and S3KeyPairProvider-encrypted cr
   // Create and store the provider without credentials
   const uncredentialedProvider = fakeProviderFactory({
     protocol: 'ftp',
-    encrypted: false
+    encrypted: false,
   });
 
   delete uncredentialedProvider.username;
@@ -61,7 +61,7 @@ test.serial('Empty, Plaintext, KMS-encrypted, and S3KeyPairProvider-encrypted cr
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...uncredentialedProvider, createdAt: Date.now() }
+    Item: { ...uncredentialedProvider, createdAt: Date.now() },
   }).promise();
 
   // Create and store the plaintext provider
@@ -69,19 +69,19 @@ test.serial('Empty, Plaintext, KMS-encrypted, and S3KeyPairProvider-encrypted cr
     protocol: 'ftp',
     encrypted: false,
     username: 'my-username',
-    password: 'my-password'
+    password: 'my-password',
   });
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...ptProvider, createdAt: Date.now() }
+    Item: { ...ptProvider, createdAt: Date.now() },
   }).promise();
 
   // Create and store the KMS provider
   const kmsProvider = fakeProviderFactory({
     protocol: 'ftp',
     username: 'my-username',
-    password: 'my-password'
+    password: 'my-password',
   });
 
   await providerModel.create(kmsProvider);
@@ -94,12 +94,12 @@ test.serial('Empty, Plaintext, KMS-encrypted, and S3KeyPairProvider-encrypted cr
     protocol: 'ftp',
     encrypted: true,
     username,
-    password
+    password,
   });
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...s3EncryptedProvider, createdAt: Date.now() }
+    Item: { ...s3EncryptedProvider, createdAt: Date.now() },
   }).promise();
 
   await handler();
@@ -131,12 +131,12 @@ test.serial('A provider with an un-decryptable encrypted password causes an exce
     protocol: 'ftp',
     encrypted: true,
     username: 'blah',
-    password: 'blah'
+    password: 'blah',
   });
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...provider, createdAt: Date.now() }
+    Item: { ...provider, createdAt: Date.now() },
   }).promise();
 
   await t.throwsAsync(handler());
