@@ -10,8 +10,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test:coverage": "../../node_modules/.bin/nyc true"
+    "clean": "rm -rf dist",
+    "prepare": "npm run tsc",
+    "test:coverage": "../../node_modules/.bin/nyc true",
+    "tsc": "../../node_modules/.bin/tsc"
   },
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/test-data",
   "repository": {
