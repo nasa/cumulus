@@ -283,16 +283,10 @@ test.serial('processStream does not throw error if describeStream throws', async
   }
 });
 
-test.serial('handler sets envs from event', async (t) => {
+test.serial('handler sets timestamp envs from event', async (t) => {
   const event = {
     endTimestamp: '1969-12-31T16:00:00.000Z',
-    startTimestamp: '1969-12-31T16:00:00.000Z',
-    CollectionsTable: 'test-CollectionsTable',
-    RulesTable: 'test-RulesTable',
-    ProvidersTable: 'test-ProvidersTable',
-    stackName: 'test-stack',
-    system_bucket: 'test-bucket',
-    FallbackTopicArn: 'arn:aws:sns:us-east-1:00000000000:fallbackTopic'
+    startTimestamp: '1969-12-31T16:00:00.000Z'
   };
   await manualConsumer.handler(event);
 
@@ -300,16 +294,10 @@ test.serial('handler sets envs from event', async (t) => {
   Object.keys(event).forEach((key) => delete process.env[key]);
 });
 
-test.serial('handler should not overwrite existing envs', async (t) => {
+test.serial('handler should not overwrite existing timestamp envs', async (t) => {
   const originalEnvs = {
     endTimestamp: '1969-12-31T16:00:00.000Z',
-    startTimestamp: '1969-12-31T16:00:00.000Z',
-    CollectionsTable: 'test-CollectionsTable',
-    RulesTable: 'test-RulesTable',
-    ProvidersTable: 'test-ProvidersTable',
-    stackName: 'test-stack',
-    system_bucket: 'test-bucket',
-    FallbackTopicArn: 'arn:aws:sns:us-east-1:00000000000:fallbackTopic'
+    startTimestamp: '1969-12-31T16:00:00.000Z'
   };
   const event = {};
   Object.keys(originalEnvs).forEach((key) => {

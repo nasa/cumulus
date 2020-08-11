@@ -11,7 +11,6 @@ const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const {
-  randomId,
   randomNumber,
   randomString,
   validateConfig,
@@ -33,22 +32,14 @@ test.beforeEach(async (t) => {
 
   await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
 
-  const queueName = randomId('queue');
-  t.context.queueName = queueName;
-  const queueUrl = await createQueue(randomString());
+  t.context.queueUrl = await createQueue(randomString());
 
-  t.context.queues = {
-    [queueName]: queueUrl
-  };
   t.context.queueExecutionLimits = {
-    [queueName]: randomNumber()
+    [t.context.queueUrl]: randomNumber()
   };
   t.context.messageTemplate = {
     cumulus_meta: {
-      queueName
-    },
-    meta: {
-      queues: t.context.queues,
+      queueUrl: t.context.queueUrl,
       queueExecutionLimits: t.context.queueExecutionLimits
     }
   };
@@ -77,7 +68,7 @@ test.beforeEach(async (t) => {
       internalBucket: t.context.internalBucket,
       stackName: t.context.stackName,
       provider: { name: 'provider-name' },
-      queueUrl,
+      queueUrl: t.context.queueUrl,
       granuleIngestWorkflow: t.context.workflow
     },
     input: {
@@ -202,8 +193,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   const {
     collectionConfigStore,
     event,
-    queueName,
-    queues,
+    queueUrl,
     queueExecutionLimits,
     stateMachineArn,
     workflow
@@ -257,14 +247,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     message1,
     {
       cumulus_meta: {
-        queueName,
+        queueUrl,
+        queueExecutionLimits,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
         state_machine: stateMachineArn
       },
       meta: {
-        queues,
-        queueExecutionLimits,
         collection: collectionConfig1,
         provider: { name: 'provider-name' },
         workflow_name: workflow
@@ -289,14 +278,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     message2,
     {
       cumulus_meta: {
-        queueName,
+        queueUrl,
+        queueExecutionLimits,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
         state_machine: stateMachineArn
       },
       meta: {
-        queues,
-        queueExecutionLimits,
         collection: collectionConfig2,
         provider: { name: 'provider-name' },
         workflow_name: workflow
@@ -319,8 +307,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
   const {
     collectionConfigStore,
     event,
-    queueName,
-    queues,
+    queueUrl,
     queueExecutionLimits,
     stateMachineArn,
     workflow
@@ -386,15 +373,14 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     message1,
     {
       cumulus_meta: {
-        queueName,
+        queueUrl,
+        queueExecutionLimits,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
         parentExecutionArn: arn,
         state_machine: stateMachineArn
       },
       meta: {
-        queues,
-        queueExecutionLimits,
         pdr: event.input.pdr,
         collection: collectionConfig1,
         provider: { name: 'provider-name' },
@@ -420,15 +406,14 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     message2,
     {
       cumulus_meta: {
-        queueName,
+        queueUrl,
+        queueExecutionLimits,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
         parentExecutionArn: arn,
         state_machine: stateMachineArn
       },
       meta: {
-        queues,
-        queueExecutionLimits,
         pdr: event.input.pdr,
         collection: collectionConfig2,
         provider: { name: 'provider-name' },
