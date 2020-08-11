@@ -83,7 +83,7 @@
     "babel-plugin-source-map-support": "^2.1.1",
     "babel-preset-env": "^1.7.0",
     "cookie-parser": "^1.4.5",
-    "copy-webpack-plugin": "^4.6.0",
+    "copy-webpack-plugin": "^6.0.3",
     "coveralls": "^3.0.0",
     "create-test-server": "^3.0.1",
     "crypto-random-string": "^3.2.0",
@@ -134,7 +134,7 @@
     "tsc-watch": "^4.2.8",
     "typescript": "^3.9.0",
     "uuid": "^3.2.1",
-    "webpack": "~4.5.0",
+    "webpack": "^4.44.1",
     "webpack-cli": "^3.3.5",
     "xml2js": "^0.4.19"
   },
