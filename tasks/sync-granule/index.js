@@ -19,7 +19,8 @@ const GranuleFetcher = require('./GranuleFetcher');
  * @param {Object[]} kwargs.granules - the granules to be ingested
  * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
  *    all corresponding checksum files
- * @returns {Promise<Array>} - the list of successfully ingested granules
+ * @returns {Promise<Array>} the list of successfully ingested granules, or an
+ *    empty list if the input granules was not a non-empty array of granules
  */
 async function download({
   ingest,
@@ -28,6 +29,8 @@ async function download({
   granules,
   syncChecksumFiles = false
 }) {
+  if (!Array.isArray(granules) || granules.length === 0) return [];
+
   log.debug(
     'awaiting lock.proceed in download() '
     + `bucket: ${bucket}, `
