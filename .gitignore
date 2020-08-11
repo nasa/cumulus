@@ -1,8 +1,9 @@
+.env
+.envrc
 package-lock.json
 .git
 yarn.lock
 yarn-error.log
-node_modules
 build/
 dist/
 test-reports

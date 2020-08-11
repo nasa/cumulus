@@ -28,6 +28,9 @@
                 },
                 "bucket": {
                   "type": "string"
+                },
+                "etag": {
+                  "type": "string"
                 }
               }
             }
