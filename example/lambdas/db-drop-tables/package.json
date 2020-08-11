@@ -1,0 +1,15 @@
+{
+  "name": "@cumulus/db-drop-tables-lambda",
+  "description": "A Lambda function to be used to drop DB tables in CI",
+  "version": "2.0.1",
+  "private": true,
+  "dependencies": {
+    "@cumulus/db": "2.0.1"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "package": "npm run clean && npm run tsc && ../../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
+    "prepare": "npm run tsc",
+    "tsc": "../../../node_modules/.bin/tsc"
+  }
+}

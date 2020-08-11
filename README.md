@@ -106,6 +106,12 @@ Stop localstack/unit test services:
 
     $ npm run stop-unit-test-stack
 
+#### Run database migrations
+
+```
+$ npm run db:local:migrate
+```
+
 #### Run tests
 
 Run the test commands next
