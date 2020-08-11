@@ -21,7 +21,7 @@ const getCollection = (collection) => {
 };
 
 /**
- * Add a Cumulus workflow message to the queue specified by event.queueName.
+ * Add a Cumulus workflow message to the queue specified by event.queueUrl.
  *
  * A consumer should be configured for this queue to start executions for
  * the queued message.
@@ -36,26 +36,30 @@ async function handleScheduleEvent(event) {
   ]);
 
   const messageTemplate = get(event, 'template');
-  const queueName = get(event, 'queueName', 'startSF');
+  const queueUrl = get(event, 'queueUrl', process.env.defaultSchedulerQueueUrl);
   const workflowDefinition = get(event, 'definition');
   const workflow = {
     name: workflowDefinition.name,
     arn: workflowDefinition.arn
   };
 
+  const eventCustomMeta = get(event, 'meta', {});
+
   const message = buildQueueMessageFromTemplate({
-    collection,
     messageTemplate,
-    provider,
-    queueName,
+    queueUrl,
     asyncOperationId: get(event, 'asyncOperationId'),
     customCumulusMeta: get(event, 'cumulus_meta', {}),
-    customMeta: get(event, 'meta', {}),
+    customMeta: {
+      ...eventCustomMeta,
+      collection,
+      provider
+    },
     payload: get(event, 'payload', {}),
     workflow
   });
 
-  return SQS.sendSQSMessage(message.meta.queues[queueName], message);
+  return SQS.sendSQSMessage(queueUrl, message);
 }
 
 module.exports = {

@@ -152,3 +152,9 @@ output "ecs_cluster_arn" {
 output "ecs_cluster_name" {
   value = aws_ecs_cluster.default.name
 }
+
+# Queues
+
+output "start_sf_queue_url" {
+  value = module.ingest.start_sf_queue_url
+}

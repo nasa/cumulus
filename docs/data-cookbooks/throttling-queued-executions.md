@@ -32,14 +32,11 @@ resource "aws_sqs_queue" "background_job_queue" {
 
 Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
 
-> **Please note:** The `id` used to identify the new queue is arbitrary, but **will be used to refer to this queue later when configuring workflows and rules**.
-
 ```hcl
 module "cumulus" {
   # ... other variables
 
   throttled_queues = [{
-    id = "backgroundJobQueue",
     url = aws_sqs_queue.background_job_queue.id,
     execution_limit = 5
   }]
@@ -83,12 +80,9 @@ Follow the instructions to [re-deploy your Cumulus application](./../deployment/
 
 ```json
 {
-  "meta": {
-    "queues": {
-      "backgroundJobQueue": "<backgroundJobQueue_SQS_URL>"
-    },
+  "cumulus_meta": {
     "queueExecutionLimits": {
-      "backgroundJobQueue": 5
+      "<backgroundJobQueue_SQS_URL>": 5
     }
   }
 }
@@ -114,7 +108,7 @@ As seen in this partial configuration for a `QueueGranules` step, update the `qu
           "FullMessage": true
         },
         "task_config": {
-          "queueUrl": "{$.meta.queues.backgroundJobQueue}",
+          "queueUrl": "${aws_sqs_queue.background_job_queue.id}",
           "provider": "{$.meta.provider}",
           "internalBucket": "{$.meta.buckets.internal.name}",
           "stackName": "{$.meta.stack}",
@@ -125,8 +119,6 @@ As seen in this partial configuration for a `QueueGranules` step, update the `qu
   }
 }
 ```
-
-> **Please note:** Make sure that the last component of the JSON path for the `queueUrl` (`backgroundJobQueue` of `$.meta.queues.backgroundJobQueue`) used to identify the queue matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue).
 
 Similarly, for a `QueuePdrs` step:
 
@@ -142,7 +134,7 @@ Similarly, for a `QueuePdrs` step:
           "FullMessage": true
         },
         "task_config": {
-          "queueUrl": "{$.meta.queues.backgroundJobQueue}",
+          "queueUrl": "${aws_sqs_queue.background_job_queue.id}",
           "provider": "{$.meta.provider}",
           "collection": "{$.meta.collection}",
           "internalBucket": "{$.meta.buckets.internal.name}",
@@ -159,7 +151,7 @@ After making these changes, [re-deploy your Cumulus application](./../deployment
 
 #### Create/update a rule to use your new queue
 
-Create or update a rule definition to include a `queueName` property that refers to your new queue, where `queueName` matches the `id` that was [defined previously for the queue](#set-maximum-executions-for-the-queue):
+Create or update a rule definition to include a `queueUrl` property that refers to your new queue:
 
 ```json
 {
@@ -174,7 +166,7 @@ Create or update a rule definition to include a `queueName` property that refers
     "type": "onetime"
   },
   "state": "ENABLED",
-  "queueName": "backgroundJobQueue" // configure rule to use your queue
+  "queueUrl": "<backgroundJobQueue_SQS_URL>" // configure rule to use your queue URL
 }
 ```
 
