@@ -1,21 +1,22 @@
 'use strict';
 
-const _get = require('lodash/get');
-const _set = require('lodash/set');
+const get = require('lodash/get');
+const pick = require('lodash/pick');
+const set = require('lodash/set');
 const { promisify } = require('util');
-const flatten = require('lodash/flatten');
 const js2xmlParser = require('js2xmlparser');
 const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
 const {
   buildS3Uri,
-  getS3Object,
   parseS3Uri,
   promiseS3Upload,
   s3GetObjectTagging,
-  s3TagSetToQueryString
+  s3TagSetToQueryString,
+  waitForObject
 } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
 const log = require('@cumulus/common/log');
@@ -74,17 +75,22 @@ function isCMRFile(fileobject) {
 }
 
 /**
- * Extract CMR file object from granule object
+ * Extracts CMR file objects from the specified granule object.
  *
- * @param {Object} granule - granule object
- *
- * @returns {Array<Object>} - array of CMR file objects
+ * @param {Object} granule - granule object containing CMR files within its
+ *    `files` property
+ * @returns {Array<Object>} an array of CMR file objects, each with properties
+ *    `granuleId`, `filename`, and possibly `etag` (if present on input)
  */
 function granuleToCmrFileObject(granule) {
   return granule.files
     .filter(isCMRFile)
-    .map((f) => ({ // handle both new-style and old-style files model
-      filename: f.key ? buildS3Uri(f.bucket, f.key) : f.filename, granuleId: granule.granuleId
+    .map((file) => ({
+      // Include etag only if file has one
+      ...pick(file, 'etag'),
+      // handle both new-style and old-style files model
+      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
+      granuleId: granule.granuleId
     }));
 }
 
@@ -96,11 +102,11 @@ function granuleToCmrFileObject(granule) {
  * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
  */
 function granulesToCmrFileObjects(granules) {
-  return flatten(granules.map(granuleToCmrFileObject));
+  return granules.flatMap(granuleToCmrFileObject);
 }
 
 /**
- * function for posting cmr xml files from S3 to CMR
+ * Posts CMR XML files from S3 to CMR.
  *
  * @param {Object} cmrFile - an object representing the cmr file
  * @param {string} cmrFile.granuleId - the granuleId of the cmr xml File
@@ -127,27 +133,29 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
 }
 
 /**
- * function for posting cmr JSON files from S3 to CMR
+ * Posts CMR JSON files from S3 to CMR.
  *
- * @param {Object} cmrPublishObject -
- * @param {string} cmrPublishObject.filename - the cmr filename
- * @param {Object} cmrPublishObject.metadataObject - the UMMG JSON cmr metadata
- * @param {Object} cmrPublishObject.granuleId - the metadata's granuleId
+ * @param {Object} cmrFile - an object representing the CMR file
+ * @param {string} cmrFile.filename - the cmr filename
+ * @param {Object} cmrFile.metadataObject - the UMMG JSON cmr metadata
+ * @param {Object} cmrFile.granuleId - the metadata's granuleId
  * @param {Object} cmrClient - a CMR instance
+ * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishUMMGJSON2CMR(cmrPublishObject, cmrClient) {
-  const granuleId = cmrPublishObject.metadataObject.GranuleUR;
+async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
+  const granuleId = cmrFile.metadataObject.GranuleUR;
 
-  const res = await cmrClient.ingestUMMGranule(cmrPublishObject.metadataObject);
+  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject);
   const conceptId = res['concept-id'];
 
   log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
 
   return {
     granuleId,
+    filename: getS3UrlOfFile(cmrFile),
     conceptId,
-    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`,
-    metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrPublishObject.metadataObject))
+    metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
+    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`
   };
 }
 
@@ -182,17 +190,36 @@ async function publish2CMR(cmrPublishObject, creds) {
 }
 
 /**
- * Gets metadata for a cmr xml file from s3
+ * Returns the S3 object identified by the specified S3 URI and (optional)
+ * entity tag, retrying up to 5 times, if necessary.
  *
- * @param {string} xmlFilePath - S3 URI to the xml metadata document
- * @returns {string} returns stringified xml document downloaded from S3
+ * @param {string} filename - S3 URI of the desired object
+ * @param {string|undefined} [etag] - entity tag of the desired object (optional)
+ * @returns {Promise} result of `AWS.S3.getObject()` as a Promise
  */
-async function getXMLMetadataAsString(xmlFilePath) {
+function getObjectByFilename(filename, etag) {
+  const { Bucket, Key } = parseS3Uri(filename);
+
+  const params = etag
+    ? { Bucket, Key, IfMatch: etag }
+    : { Bucket, Key };
+
+  return waitForObject(s3(), params, { retries: 5 });
+}
+
+/**
+ * Gets metadata for a CMR XML file from S3.
+ *
+ * @param {string} xmlFilePath - S3 URI to the XML metadata document
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
+ * @returns {Promise<string>} stringified XML document downloaded from S3
+ */
+async function getXMLMetadataAsString(xmlFilePath, etag) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
-  const { Bucket, Key } = parseS3Uri(xmlFilePath);
-  const obj = await getS3Object(Bucket, Key, { retries: 5 });
+  const obj = await getObjectByFilename(xmlFilePath, etag);
   return obj.Body.toString();
 }
 
@@ -203,43 +230,56 @@ async function getXMLMetadataAsString(xmlFilePath) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return (promisify(xml2js.parseString))(xml, xmlParseOptions);
+  return promisify(xml2js.parseString)(xml, xmlParseOptions);
 }
 
 /**
- * return UMMG metadata object from CMR UMM-G json file
- * @param {string} cmrFilename - s3 path to json file
+ * Returns UMMG metadata object from CMR UMM-G JSON file in S3.
+ *
+ * @param {string} cmrFilename - S3 path to JSON file
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
  * @returns {Promise<Object>} CMR UMMG metadata object
  */
-async function metadataObjectFromCMRJSONFile(cmrFilename) {
-  const { Bucket, Key } = parseS3Uri(cmrFilename);
-  const obj = await getS3Object(Bucket, Key, { retries: 5 });
+async function metadataObjectFromCMRJSONFile(cmrFilename, etag) {
+  const obj = await getObjectByFilename(cmrFilename, etag);
   return JSON.parse(obj.Body.toString());
 }
 
 /**
- * return metadata object from cmr echo10 XML file.
- * @param {string} cmrFilename
- * @returns {Promise<Object>} cmr xml metadata as object.
+ * Returns metadata object from CMR Echo10 XML file in S3.
+ *
+ * @param {string} cmrFilename - S3 path to XML file
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
+ * @returns {Promise<Object>} CMR XML metadata object
  */
-async function metadataObjectFromCMRXMLFile(cmrFilename) {
-  const metadata = await getXMLMetadataAsString(cmrFilename);
-  return parseXmlString(metadata);
-}
+const metadataObjectFromCMRXMLFile = (cmrFilename, etag) =>
+  getXMLMetadataAsString(cmrFilename, etag).then(parseXmlString);
 
 /**
- * Return cmr metadata object from a CMR Echo10XML file or CMR UMMG File.
- * @param {string} cmrFilename - s3 path to cmr file
- * @returns {Promise<Object>} - metadata object from the file.
+ * Returns CMR metadata object from a CMR ECHO-10 XML file or CMR UMMG JSON
+ * file in S3.
+ *
+ * @param {string} cmrFilename - S3 path to CMR file
+ * @param {string} [etag] - optional entity tag for the desired version of the
+ *    CMR file
+ * @returns {Promise<Object>} metadata object from the file
+ * @throws {Error} if the specified filename does not represent an ECHO-10 XML
+ *    file or a UMMG file
+ * @see isECHO10File
+ * @see isUMMGFile
  */
-async function metadataObjectFromCMRFile(cmrFilename) {
+function metadataObjectFromCMRFile(cmrFilename, etag) {
   if (isECHO10File(cmrFilename)) {
-    return metadataObjectFromCMRXMLFile(cmrFilename);
+    return metadataObjectFromCMRXMLFile(cmrFilename, etag);
   }
   if (isUMMGFile(cmrFilename)) {
-    return metadataObjectFromCMRJSONFile(cmrFilename);
+    return metadataObjectFromCMRJSONFile(cmrFilename, etag);
   }
-  throw new Error(`cannot return metdata from invalid cmrFilename: ${cmrFilename}`);
+  throw new Error(
+    `Cannot retrieve metadata: invalid CMR filename: ${cmrFilename}`
+  );
 }
 
 /**
@@ -352,8 +392,8 @@ async function constructOnlineAccessUrl({
  * @param {Object} params.bucketTypes - map of bucket name to bucket type
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
- * @returns {Array<{URL: string, URLDescription: string}>}
- *   returns the list of online access url objects
+ * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
+ *    online access url objects
  */
 async function constructOnlineAccessUrls({
   files,
@@ -385,10 +425,10 @@ async function constructOnlineAccessUrls({
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
- * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
- *                                                               for all distribution bucketss
- * @returns {Array<{URL: string, string, Description: string, Type: string}>}
- *   returns the list of online access url objects
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Promise<[{URL: string, string, Description: string, Type: string}]>}
+ *   an array of online access url objects
  */
 async function constructRelatedUrls({
   files,
@@ -462,8 +502,8 @@ function mergeURLs(original, updated = [], removed = []) {
   const removedBasenames = removed.map((url) => path.basename(url.URL));
 
   const unchangedOriginals = original.filter(
-    (url) => !newURLBasenames.includes(path.basename(url.URL)) &&
-      !removedBasenames.includes(path.basename(url.URL))
+    (url) => !newURLBasenames.includes(path.basename(url.URL))
+      && !removedBasenames.includes(path.basename(url.URL))
   );
 
   const updatedWithMergedOriginals = updated.map((url) => {
@@ -523,9 +563,11 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
  * @param {Array<Object>} params.files - array of moved file objects.
  * @param {string} params.distEndpoint - distribution endpoint form config.
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
- *                                                               for all distribution bucketss
- * @returns {Promise} returns promised updated UMMG metadata object.
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
+ *    containing a `metadataObject` (the updated UMMG metadata object) and the
+ *    `etag` of the uploaded CMR file
  */
 async function updateUMMGMetadata({
   cmrFile,
@@ -546,15 +588,17 @@ async function updateUMMGMetadata({
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
 
-  const originalURLs = _get(metadataObject, 'RelatedUrls', []);
+  const originalURLs = get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
-  _set(metadataObject, 'RelatedUrls', mergedURLs);
+  set(metadataObject, 'RelatedUrls', mergedURLs);
 
-  await uploadUMMGJSONCMRFile(metadataObject, cmrFile);
-  return metadataObject;
+  const { ETag: etag } = await uploadUMMGJSONCMRFile(metadataObject, cmrFile);
+  return { metadataObject, etag };
 }
 
-/** helper to build an CMR settings object, used to initialize CMR
+/**
+ * Helper to build an CMR settings object, used to initialize CMR.
+ *
  * @param {Object} cmrConfig - CMR configuration object
  * @param {string} cmrConfig.oauthProvider - Oauth provider: launchpad or earthdata
  * @param {string} cmrConfig.provider - the CMR provider
@@ -564,8 +608,9 @@ async function updateUMMGMetadata({
  * @param {string} cmrConfig.certificate - Launchpad certificate
  * @param {string} cmrConfig.username - EDL username
  * @param {string} cmrConfig.passwordSecretName - CMR password secret name
- * @returns {Object} object to create CMR instance - contains the provider, clientId, and either
- * launchpad token or EDL username and password
+ * @returns {Promise<Object>} object to create CMR instance - contains the
+ *    provider, clientId, and either launchpad token or EDL username and
+ *    password
 */
 async function getCmrSettings(cmrConfig = {}) {
   const oauthProvider = cmrConfig.oauthProvider || process.env.cmr_oauth_provider;
@@ -576,8 +621,8 @@ async function getCmrSettings(cmrConfig = {}) {
   };
 
   if (oauthProvider === 'launchpad') {
-    const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName ||
-      process.env.launchpad_passphrase_secret_name;
+    const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
+      || process.env.launchpad_passphrase_secret_name;
     const passphrase = await getSecretString(
       launchpadPassphraseSecretName
     );
@@ -596,8 +641,8 @@ async function getCmrSettings(cmrConfig = {}) {
     };
   }
 
-  const passwordSecretName = cmrConfig.passwordSecretName ||
-    process.env.cmr_password_secret_name;
+  const passwordSecretName = cmrConfig.passwordSecretName
+    || process.env.cmr_password_secret_name;
   const password = await getSecretString(
     passwordSecretName
   );
@@ -659,7 +704,7 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
 }
 
 /**
- * After files are moved, this function creates new online access URLs and then updates
+ * After files are moved, creates new online access URLs and then updates
  * the S3 ECHO10 CMR XML file with this information.
  *
  * @param {Object} params - parameter object
@@ -667,9 +712,10 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
- *                                                               for all distribution bucketss
- * @returns {Promise} returns promised updated metadata object.
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
+ *    containing a `metadataObject` and the `etag` of the uploaded CMR file
  */
 async function updateEcho10XMLMetadata({
   cmrFile,
@@ -686,11 +732,11 @@ async function updateEcho10XMLMetadata({
   const metadataGranule = metadataObject.Granule;
   const updatedGranule = { ...metadataGranule };
 
-  const originalOnlineAccessURLs = [].concat(_get(metadataGranule,
+  const originalOnlineAccessURLs = [].concat(get(metadataGranule,
     'OnlineAccessURLs.OnlineAccessURL', []));
-  const originalOnlineResourceURLs = [].concat(_get(metadataGranule,
+  const originalOnlineResourceURLs = [].concat(get(metadataGranule,
     'OnlineResources.OnlineResource', []));
-  const originalAssociatedBrowseURLs = [].concat(_get(metadataGranule,
+  const originalAssociatedBrowseURLs = [].concat(get(metadataGranule,
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
@@ -711,14 +757,14 @@ async function updateEcho10XMLMetadata({
     removedURLs, ['GET RELATED VISUALIZATION'], ['URLDescription', 'Type']);
 
   // Update the Granule with the updated/merged lists
-  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
-  _set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
-  _set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
+  set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
+  set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
+  set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
 
   metadataObject.Granule = updatedGranule;
   const xml = generateEcho10XMLString(updatedGranule);
-  await uploadEcho10CMRFile(xml, cmrFile);
-  return metadataObject;
+  const { ETag: etag } = await uploadEcho10CMRFile(xml, cmrFile);
+  return { metadataObject, etag };
 }
 
 /**
@@ -732,10 +778,10 @@ async function updateEcho10XMLMetadata({
  * @param {boolean} params.published - indicate if publish is needed
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
- * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
- *                                                               for all distribution buckets
- * @returns {Promise} returns promise to publish metadata to CMR Service
- *                    or resolved promise if published === false.
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Promise<Object>} CMR file object with the `etag` of the newly
+ *    updated metadata file
  */
 async function updateCMRMetadata({
   granuleId,
@@ -752,8 +798,6 @@ async function updateCMRMetadata({
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
 
   const cmrCredentials = (published) ? await getCmrSettings() : {};
-  let theMetadata;
-
   const params = {
     cmrFile,
     files,
@@ -763,24 +807,29 @@ async function updateCMRMetadata({
     distributionBucketMap
   };
 
+  let metadataObject;
+  let etag;
+
   if (isECHO10File(filename)) {
-    theMetadata = await updateEcho10XMLMetadata(params);
+    ({ metadataObject, etag } = await updateEcho10XMLMetadata(params));
   } else if (isUMMGFile(filename)) {
-    theMetadata = await updateUMMGMetadata(params);
+    ({ metadataObject, etag } = await updateUMMGMetadata(params));
   } else {
-    throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
+    throw new errors.CMRMetaFileNotFound(`Invalid CMR filetype: ${filename}`);
   }
 
   if (published) {
     // post metadata Object to CMR
     const cmrPublishObject = {
       filename,
-      metadataObject: theMetadata,
-      granuleId: granuleId
+      metadataObject,
+      granuleId
     };
-    return publish2CMR(cmrPublishObject, cmrCredentials);
+
+    return { ...await publish2CMR(cmrPublishObject, cmrCredentials), etag };
   }
-  return Promise.resolve();
+
+  return { ...cmrFile, etag };
 }
 
 /**
@@ -836,9 +885,9 @@ async function getGranuleTemporalInfo(granule) {
   const cmrFilename = cmrFile[0].filename;
   if (isECHO10File(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
-    const beginningDateTime = _get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
-    const endingDateTime = _get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
-    const productionDateTime = _get(metadata.Granule, 'DataGranule.ProductionDateTime');
+    const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
+    const endingDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
+    const productionDateTime = get(metadata.Granule, 'DataGranule.ProductionDateTime');
     const lastUpdateDateTime = metadata.Granule.LastUpdate || metadata.Granule.InsertTime;
     return {
       beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime
@@ -846,9 +895,9 @@ async function getGranuleTemporalInfo(granule) {
   }
   if (isUMMGFile(cmrFilename)) {
     const metadata = await metadataObjectFromCMRJSONFile(cmrFilename);
-    const beginningDateTime = _get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
-    const endingDateTime = _get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
-    const productionDateTime = _get(metadata, 'DataGranule.ProductionDateTime');
+    const beginningDateTime = get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
+    const endingDateTime = get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
+    const productionDateTime = get(metadata, 'DataGranule.ProductionDateTime');
     let updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Update');
     if (updateDate.length === 0) {
       updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Insert');

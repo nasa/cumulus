@@ -12,7 +12,8 @@ module "discover_granules_workflow" {
     {
       ingest_granule_workflow_name: module.ingest_granule_workflow.name,
       discover_granules_task_arn: module.cumulus.discover_granules_task.task_arn,
-      queue_granules_task_arn: module.cumulus.queue_granules_task.task_arn
+      queue_granules_task_arn: module.cumulus.queue_granules_task.task_arn,
+      start_sf_queue_url: module.cumulus.start_sf_queue_url
     }
   )
 }

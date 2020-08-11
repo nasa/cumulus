@@ -464,7 +464,10 @@ variable "thin_egress_lambda_code_dependency_archive_key" {
 
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
-  type        = list(object({ id = string, url = string, execution_limit = number }))
+  type        = list(object({
+    url = string,
+    execution_limit = number
+  }))
   default     = []
 }
 

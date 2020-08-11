@@ -4,6 +4,7 @@
   "packages": [
     "example",
     "example/lambdas/*",
+    "lambdas/*",
     "packages/*",
     "tasks/*",
     "tf-modules/*"

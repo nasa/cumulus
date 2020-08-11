@@ -2,6 +2,7 @@ locals {
   # Pulled out into a local to prevent cyclic dependencies if/when
   # we move to a more restrictive IAM policy.
   sqs2sf_timeout = 200
+  defaultSchedulerQueueUrl = aws_sqs_queue.start_sf.id
 }
 
 resource "aws_lambda_function" "fallback_consumer" {
@@ -106,13 +107,14 @@ resource "aws_lambda_function" "manual_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      stackName        = var.prefix
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
-      system_bucket    = var.system_bucket
-      FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
+      CMR_ENVIRONMENT          = var.cmr_environment
+      stackName                = var.prefix
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      RulesTable               = var.dynamo_tables.rules.name
+      system_bucket            = var.system_bucket
+      FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags
@@ -139,13 +141,14 @@ resource "aws_lambda_function" "message_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      stackName        = var.prefix
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
-      system_bucket    = var.system_bucket
-      FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
+      CMR_ENVIRONMENT          = var.cmr_environment
+      stackName                = var.prefix
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      RulesTable               = var.dynamo_tables.rules.name
+      system_bucket            = var.system_bucket
+      FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags
@@ -176,10 +179,11 @@ resource "aws_lambda_function" "schedule_sf" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      stackName        = var.prefix
+      CMR_ENVIRONMENT          = var.cmr_environment
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      stackName                = var.prefix
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags
@@ -327,41 +331,13 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      stackName        = var.prefix
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
-      system_bucket    = var.system_bucket
-    }
-  }
-  tags = var.tags
-
-  dynamic "vpc_config" {
-    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
-    content {
-      subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
-    }
-  }
-}
-
-resource "aws_lambda_function" "sqs_message_remover" {
-  function_name    = "${var.prefix}-sqsMessageRemover"
-  filename         = "${path.module}/../../packages/api/dist/sqsMessageRemover/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sqsMessageRemover/lambda.zip")
-  handler          = "index.handler"
-  role             = var.lambda_processing_role_arn
-  runtime          = "nodejs12.x"
-  timeout          = 100
-  memory_size      = 256
-  environment {
-    variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      stackName        = var.prefix
-      system_bucket    = var.system_bucket
+      CMR_ENVIRONMENT          = var.cmr_environment
+      stackName                = var.prefix
+      CollectionsTable         = var.dynamo_tables.collections.name
+      ProvidersTable           = var.dynamo_tables.providers.name
+      RulesTable               = var.dynamo_tables.rules.name
+      system_bucket            = var.system_bucket
+      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
   }
   tags = var.tags

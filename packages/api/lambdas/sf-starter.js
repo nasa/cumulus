@@ -6,7 +6,7 @@ const get = require('lodash/get');
 const { sfn } = require('@cumulus/aws-client/services');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const {
-  getQueueName,
+  getQueueUrl,
   getMaximumExecutions
 } = require('@cumulus/message/Queue');
 const { Consumer } = require('@cumulus/ingest/consumer');
@@ -51,10 +51,10 @@ function dispatch(message) {
 async function incrementAndDispatch(queueMessage) {
   const workflowMessage = JSON.parse(get(queueMessage, 'Body', '{}'));
 
-  const queueName = getQueueName(workflowMessage);
-  const maxExecutions = getMaximumExecutions(workflowMessage, queueName);
+  const queueUrl = getQueueUrl(workflowMessage);
+  const maxExecutions = getMaximumExecutions(workflowMessage, queueUrl);
 
-  await incrementQueueSemaphore(queueName, maxExecutions);
+  await incrementQueueSemaphore(queueUrl, maxExecutions);
 
   // If dispatch() fails, execution is not started and thus semaphore will
   // never be decremented for the above increment, so we decrement it
@@ -62,7 +62,7 @@ async function incrementAndDispatch(queueMessage) {
   try {
     return await dispatch(queueMessage);
   } catch (error) {
-    await decrementQueueSemaphore(queueName);
+    await decrementQueueSemaphore(queueUrl);
     throw error;
   }
 }

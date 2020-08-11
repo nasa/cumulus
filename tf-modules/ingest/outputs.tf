@@ -105,7 +105,7 @@ output "sf_semaphore_down_lambda_function_arn" {
 }
 
 output "sqs_message_remover_lambda_function_arn" {
-  value = aws_lambda_function.sqs_message_remover.arn
+  value = module.sqs_message_remover_lambda.function_arn
 }
 
 output "sqs2sfThrottle_lambda_function_arn" {
@@ -132,4 +132,12 @@ output "step_role_arn" {
 
 output "scaling_role_arn" {
   value = aws_iam_role.scaling.arn
+}
+
+output "background_queue_url" {
+  value = aws_sqs_queue.background_processing.id
+}
+
+output "start_sf_queue_url" {
+  value = aws_sqs_queue.start_sf.id
 }

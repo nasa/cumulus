@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### MIGRATION STEPS
+
+- **CUMULUS-2099**
+  - All references to `meta.queues` in workflow configuration must be replaced with references to queue URLs from Terraform resources. See the updated [data cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/about-cookbooks) or example [Discover Granules workflow configuration](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json).
+  - The steps for configuring queued execution throttling have changed. See the [updated documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
+  - In addition to the configuration for execution throttling, the internal mechanism for tracking executions by queue has changed. As a result, you should **disable any rules or workflows scheduling executions via a throttled queue** before upgrading. Otherwise, you may be at risk of having **twice as many executions** as are configured for the queue while the updated tracking is deployed. You can re-enable these rules/workflows once the upgrade is complete.
+
+### BREAKING CHANGES
+
+- **CUMULUS-2099**
+  - `meta.queues` has been removed from Cumulus core workflow messages.
+  - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
+
 #### CODE CHANGES
 
 - The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
@@ -18,21 +31,42 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `const { recursion } = require('@cumulus/ingest/recursion');`
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
+- **CUMULUS-2099**
+  - `meta.queues` has been removed from Cumulus core workflow messages.
 
 ### Added
 
+- **CUMULUS-1955**
+  - Added `@cumulus/aws-client/S3.getObject` to get an AWS S3 object
+  - Added `@cumulus/aws-client/S3.waitForObject` to get an AWS S3 object,
+    retrying, if necessary
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
 
 ### Fixed
 
+- **CUMULUS-1955**
+  - Due to AWS's eventual consistency model, it was possible for PostToCMR to
+    publish an earlier version of a CMR metadata file, rather than the latest
+    version created in a workflow.  This fix guarantees that the latest version
+    is published, as expected.
 - **CUMULUS-2116**
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
+
+### Deprecated
+
+- **CUMULUS-1955**
+  - `@cumulus/aws-client/S3.getS3Object()`
 
 ### Removed
 
 - The `@cumulus/ingest/granule.copyGranuleFile` function has been removed
 - The `@cumulus/ingest/granule.moveGranuleFile` function has been removed
+
+### Deprecated
+
+- `@cumulus/message/Queue.getQueueNameByUrl()`
+- `@cumulus/message/Queue.getQueueName()`
 
 ## [v2.0.1] 2020-07-28
 
@@ -40,6 +74,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1886**
   - Added `multiple sort keys` support to `@cumulus/api`
+- **CUMULUS-2099**
+  - `@cumulus/message/Queue.getQueueUrl` to get the queue URL specified in a Cumulus workflow message, if any.
 
 ### Fixed
 
@@ -50,9 +86,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- Changes to the `@cumulus/cumulus-api` package
+- Changes to the `@cumulus/api-client` package
   - The `CumulusApiClientError` class must now be imported using
-    `const { CumulusApiClientError } = require('@cumulus/cumulus-api/CumulusApiClientError')`
+    `const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError')`
 - The `@cumulus/sftp-client/SftpClient` class must now be imported using
   `const { SftpClient } = require('@cumulus/sftp-client');`
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly connect

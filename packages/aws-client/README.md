@@ -296,7 +296,7 @@ Invoke a Lambda function
     * [.promiseS3Upload](#module_S3.promiseS3Upload) ⇒ <code>Promise</code>
     * [.s3GetObjectTagging](#module_S3.s3GetObjectTagging) ⇒ <code>Promise.&lt;AWS.S3.GetObjectTaggingOutput&gt;</code>
     * [.s3PutObjectTagging](#module_S3.s3PutObjectTagging) ⇒ <code>Promise</code>
-    * [.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>
+    * ~~[.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>~~
     * ~~[.getS3ObjectReadStream](#module_S3.getS3ObjectReadStream) ⇒ <code>ReadableStream</code>~~
     * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒ <code>Promise</code>
     * ~~[.calculateS3ObjectChecksum](#module_S3.calculateS3ObjectChecksum) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>~~
@@ -309,6 +309,8 @@ Invoke a Lambda function
     * [.putFile(bucket, key, filename)](#module_S3.putFile) ⇒ <code>Promise</code>
     * [.downloadS3File(s3Obj, filepath)](#module_S3.downloadS3File) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getObjectSize(params)](#module_S3.getObjectSize) ⇒ <code>Promise.&lt;(number\|undefined)&gt;</code>
+    * [.getObject(s3, params)](#module_S3.getObject) ⇒ <code>Promise.&lt;AWS.S3.GetObjectOutput&gt;</code>
+    * [.waitForObject(s3Client, params, [retryOptions])](#module_S3.waitForObject) ⇒ <code>Promise.&lt;AWS.S3.GetObjectOutput&gt;</code>
     * [.getTextObject(bucket, key)](#module_S3.getTextObject) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getJsonS3Object(bucket, key)](#module_S3.getJsonS3Object) ⇒ <code>Promise.&lt;\*&gt;</code>
     * [.getObjectReadStream(params)](#module_S3.getObjectReadStream) ⇒ <code>Readable</code>
@@ -418,8 +420,10 @@ https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging
 
 <a name="module_S3.getS3Object"></a>
 
-### S3.getS3Object ⇒ <code>Promise</code>
-Get an object from S3
+### ~~S3.getS3Object ⇒ <code>Promise</code>~~
+***Deprecated***
+
+Gets an object from S3.
 
 **Kind**: static property of [<code>S3</code>](#module_S3)  
 **Returns**: <code>Promise</code> - returns response from `S3.getObject` as a promise  
@@ -596,6 +600,38 @@ Get the size of an S3 object
 | params.bucket | <code>string</code> |  |
 | params.key | <code>string</code> |  |
 | params.s3 | <code>AWS.S3</code> | an S3 client instance |
+
+<a name="module_S3.getObject"></a>
+
+### S3.getObject(s3, params) ⇒ <code>Promise.&lt;AWS.S3.GetObjectOutput&gt;</code>
+Gets an object from S3.
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+**Returns**: <code>Promise.&lt;AWS.S3.GetObjectOutput&gt;</code> - response from `AWS.S3.getObject()`
+  as a Promise  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| s3 | <code>AWS.S3</code> | an `AWS.S3` instance |
+| params | <code>AWS.S3.GetObjectRequest</code> | parameters object to pass through   to `AWS.S3.getObject()` |
+
+**Example**  
+```js
+const obj = await getObject(s3(), { Bucket: 'b', Key: 'k' })
+```
+<a name="module_S3.waitForObject"></a>
+
+### S3.waitForObject(s3Client, params, [retryOptions]) ⇒ <code>Promise.&lt;AWS.S3.GetObjectOutput&gt;</code>
+Get an object from S3, waiting for it to exist and, if specified, have the
+correct ETag.
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Type | Default |
+| --- | --- | --- |
+| s3Client | <code>AWS.S3</code> |  | 
+| params | <code>AWS.S3.GetObjectRequest</code> |  | 
+| [retryOptions] | <code>pRetry.Options</code> | <code>{}</code> | 
 
 <a name="module_S3.getTextObject"></a>
 
