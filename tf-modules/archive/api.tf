@@ -32,7 +32,7 @@ locals {
       oauth_user_group             = var.oauth_user_group
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
-      backgroundQueueName          = var.background_queue_name
+      backgroundQueueUrl           = var.background_queue_url
       cmr_client_id                = var.cmr_client_id
       cmr_oauth_provider           = var.cmr_oauth_provider
       cmr_password_secret_name     = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name

@@ -240,12 +240,6 @@ async function processStream(streamName, streamCreationTimestamp) {
  */
 async function handler(event) {
   configureTimestampEnvs(event);
-  if (!process.env.CollectionsTable) process.env.CollectionsTable = event.CollectionsTable;
-  if (!process.env.RulesTable) process.env.RulesTable = event.RulesTable;
-  if (!process.env.ProvidersTable) process.env.ProvidersTable = event.ProvidersTable;
-  if (!process.env.stackName) process.env.stackName = event.stackName;
-  if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
-  if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.FallbackTopicArn;
 
   if (event.type === 'kinesis' && event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);

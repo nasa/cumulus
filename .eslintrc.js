@@ -115,7 +115,7 @@ module.exports = {
     'prefer-template': 'warn',
     'no-underscore-dangle': 'off',
     'comma-dangle': [
-      'warn',
+      'error',
       {
         arrays: 'always-multiline',
         objects: 'always-multiline',
@@ -190,7 +190,7 @@ module.exports = {
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
         'comma-dangle': [
-          'warn',
+          'error',
           {
             arrays: 'always-multiline',
             objects: 'always-multiline',

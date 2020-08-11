@@ -483,19 +483,19 @@ test('creating an invalid kinesis type rule does not add event mappings', async 
   t.is(logEventMappings.length, 0);
 });
 
-test('Creating a rule with a queueName parameter', async (t) => {
+test('Creating a rule with a queueUrl parameter', async (t) => {
   const { onetimeRule } = t.context;
 
   const ruleItem = cloneDeep(onetimeRule);
-  ruleItem.queueName = 'testQueue';
+  ruleItem.queueUrl = 'testQueue';
 
   const response = await rulesModel.create(ruleItem);
 
   const payload = await models.Rule.buildPayload(ruleItem);
 
-  t.truthy(response.queueName);
-  t.is(response.queueName, ruleItem.queueName);
-  t.is(payload.queueName, ruleItem.queueName);
+  t.truthy(response.queueUrl);
+  t.is(response.queueUrl, ruleItem.queueUrl);
+  t.is(payload.queueUrl, ruleItem.queueUrl);
 });
 
 test('updates rule meta object', async (t) => {
