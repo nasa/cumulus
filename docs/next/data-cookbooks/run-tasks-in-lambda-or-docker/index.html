@@ -126,7 +126,7 @@
         "Next": "WorkflowFailed"
       }
     ],
-    "Next": "CheckStatus"
+    "End": true
   },
 </code></pre>
 <p>Given it has been discovered this task can no longer run in AWS Lambda, you can instead run it on the Cumulus ECS cluster by adding the following resources to your terraform deployment (by either adding a new <code>.tf</code> file or updating an existing one):</p>
