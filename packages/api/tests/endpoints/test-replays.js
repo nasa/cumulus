@@ -115,15 +115,7 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.ManualConsumerLambda);
   t.is(cluster, process.env.EcsCluster);
-  t.deepEqual(payload, {
-    CollectionsTable: process.env.CollectionsTable,
-    RulesTable: process.env.RulesTable,
-    ProvidersTable: process.env.ProvidersTable,
-    stackName: process.env.stackName,
-    system_bucket: process.env.system_bucket,
-    FallbackTopicArn: process.env.KinesisFallbackTopicArn,
-    ...body
-  });
+  t.deepEqual(payload, body);
 
   asyncOperationStartStub.restore();
 });

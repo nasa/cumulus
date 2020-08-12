@@ -604,16 +604,16 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 });
 
 test.serial(
-  'reingest pushes a message with the correct queueName',
+  'reingest pushes a message with the correct queueUrl',
   async (t) => {
     const { granuleModel } = t.context;
     const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-    const queueName = 'testQueueName';
+    const queueUrl = 'testqueueUrl';
     const granule = {
       execution: 'some/execution',
       collectionId: 'MyCollection___006',
       provider: 'someProvider',
-      queueName
+      queueUrl
     };
     const fileExists = async () => true;
     const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
@@ -624,7 +624,7 @@ test.serial(
       // Rule.buildPayload has its own unit tests to ensure the queue name
       // is used properly, so just ensure that we pass the correct argument
       // to that function.
-      t.is(buildPayloadSpy.args[0][0].queueName, queueName);
+      t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
     } finally {
       fileExistsStub.restore();
       buildPayloadSpy.restore();

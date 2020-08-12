@@ -82,23 +82,7 @@ module "archive" {
   non_complete_execution_payload_timeout_disable = var.non_complete_execution_payload_timeout_disable
   non_complete_execution_payload_timeout = var.non_complete_execution_payload_timeout
 
-
-  # TODO We need to figure out how to make this dynamic
-  #
-  # From @mboyd
-  # OK, well I can help you unwind that ball of yarn when you get to it.
-  # However, I was curious so I looked into it.
-  #
-  # The name here is backgroundProcessing (without prefix) because that is the
-  # key of the queue in meta.queues of the execution message. The reason for
-  # that is in the code that creates the workflow templates:
-  #
-  # https://github.com/nasa/cumulus/blob/master/packages/deployment/lib/message.js#L115
-  #
-  # It gets the queue names by stripping SQSOutput from the Cloudformation
-  # template outputs. And these template outputs do not include prefix, but just
-  # the keys of the queues from config.sqs, thus backgroundProcessing
-  background_queue_name = "backgroundProcessing"
+  background_queue_url = module.ingest.background_queue_url
 
   distribution_api_id = module.distribution.rest_api_id
   distribution_url    = module.distribution.distribution_url

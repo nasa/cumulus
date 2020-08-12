@@ -3,14 +3,21 @@
 const get = require('lodash/get');
 const sinon = require('sinon');
 const test = require('ava');
+const proxyquire = require('proxyquire');
 
-const SQS = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
-const { handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
+
+const sandbox = sinon.createSandbox();
+const queueMessageStub = sandbox.stub().resolves(true);
+const { handler } = proxyquire('../../lambdas/message-consumer', {
+  '../lib/rulesHelpers': {
+    queueMessageForRule: queueMessageStub
+  }
+});
 
 /**
  * Callback used for testing
@@ -51,10 +58,7 @@ const collection = {
 };
 const provider = { id: 'PROV1' };
 
-const stubQueueUrl = 'stubQueueUrl';
 let ruleModel;
-let sandbox;
-let sfSchedulerSpy;
 
 test.before(async () => {
   process.env.CollectionsTable = randomString();
@@ -67,27 +71,19 @@ test.before(async () => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  sandbox = sinon.createSandbox();
   sandbox.stub(ruleModel, 'addSnsTrigger');
   sandbox.stub(ruleModel, 'deleteSnsTrigger');
-});
 
-test.beforeEach(async (t) => {
-  t.context.templateBucket = randomString();
-  t.context.workflow = randomString();
-  t.context.stateMachineArn = randomString();
-  t.context.messageTemplate = {
-    meta: { queues: { startSF: stubQueueUrl } }
-  };
+  const workflow = randomString();
+  const stateMachineArn = randomString();
+  const messageTemplate = {};
   const workflowDefinition = {
-    name: t.context.workflow,
-    arn: t.context.stateMachineArn
+    name: workflow,
+    arn: stateMachineArn
   };
-
-  sfSchedulerSpy = sandbox.stub(SQS, 'sendSQSMessage').returns(true);
 
   sandbox.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
-    template: t.context.messageTemplate,
+    template: messageTemplate,
     provider: item.provider,
     collection: item.collection,
     meta: get(item, 'meta', {}),
@@ -99,7 +95,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async () => {
-  sfSchedulerSpy.resetHistory();
+  queueMessageStub.resetHistory();
 });
 
 test.after.always(async () => {
@@ -108,7 +104,7 @@ test.after.always(async () => {
 });
 
 // handler tests
-test.serial('it should enqueue a message for each associated workflow', async (t) => {
+test.serial('it should enqueue a message for each SNS rule', async (t) => {
   const rule1 = {
     name: 'testRule1',
     collection,
@@ -121,26 +117,16 @@ test.serial('it should enqueue a message for each associated workflow', async (t
     workflow: 'test-workflow-1'
   };
 
-  await ruleModel.create(rule1);
+  const createdRule = await ruleModel.create(rule1);
+  const expectedRule = {
+    ...createdRule,
+    meta: {
+      snsSourceArn: snsArn
+    }
+  };
   await handler(event, {}, testCallback);
 
-  const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
-  t.is(actualQueueUrl, stubQueueUrl);
-  const actualMessage = sfSchedulerSpy.getCall(0).args[1];
-  const expectedMessage = {
-    cumulus_meta: {
-      state_machine: t.context.stateMachineArn
-    },
-    meta: {
-      queues: { startSF: stubQueueUrl },
-      provider,
-      collection,
-      snsSourceArn: snsArn,
-      workflow_name: t.context.workflow
-    },
-    payload: JSON.parse(messageBody)
-  };
-  t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
-  t.deepEqual(actualMessage.meta, expectedMessage.meta);
-  t.deepEqual(actualMessage.payload, expectedMessage.payload);
+  t.is(queueMessageStub.callCount, 1);
+  t.deepEqual(queueMessageStub.getCall(0).args[0], expectedRule);
+  t.deepEqual(queueMessageStub.getCall(0).args[1], JSON.parse(messageBody));
 });
