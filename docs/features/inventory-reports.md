@@ -6,8 +6,9 @@ hide_title: true
 
 # Inventory Reports
 
-This feature provides a detailed report of collections, granules and files in Cumulus and CMR. 
+This feature provides a detailed report of collections, granules and files in Cumulus and CMR.
 These reports show the following data:
+
 * Files in Cumulus, those that are in S3 but missing in DynamoDB and those in DynamoDB but not S3
 * All Collections in Cumulus and CMR, highlighting any collections only in Cumulus or only in CMR
 * All Granules in Cumulus and CMR, highlighting any granules only in Cumulus or only in CMR
@@ -15,11 +16,10 @@ These reports show the following data:
 
 ## Viewing Reports on the Cumulus Dashboard
 
-The Cumulus Dashboard offers an interface to create, manage and view these inventory reports. 
+The Cumulus Dashboard offers an interface to create, manage and view these inventory reports.
 
 The Reconciliation Reports Overvew page shows a full list of existing reports and the option to create a new report.
 ![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
-
 
 Viewing a report will show a detailed list of collections, granules and files.
 ![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
