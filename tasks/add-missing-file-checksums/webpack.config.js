@@ -10,5 +10,8 @@ module.exports = {
   },
   externals: ['aws-sdk'],
   target: 'node',
-  devtool: 'eval-cheap-module-source-map'
+  devtool: 'eval-cheap-module-source-map',
+  optimization: {
+    nodeEnv: false
+  }
 };
