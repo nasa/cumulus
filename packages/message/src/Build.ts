@@ -14,8 +14,8 @@ import { Message } from '@cumulus/types';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  MessageTemplate,
-  QueueMessageMeta,
+  WorkflowMessageTemplate,
+  WorkflowMessageTemplateCumulusMeta,
   Workflow
 } from './types';
 
@@ -25,71 +25,42 @@ import {
  * @returns {string}
  * @private
  */
-const createExecutionName = () => uuidv4();
+const createExecutionName = (): string => uuidv4();
 
 /**
  * Build base message.cumulus_meta for a queued execution.
  *
  * @param {Object} params
- * @param {string} [params.queueName] - An SQS queue name
+ * @param {string} [params.queueUrl] - An SQS queue URL
  * @param {string} params.stateMachine - State machine name
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {string} [params.parentExecutionArn] - Parent execution ARN
- * @returns {CumulusMeta}
+ * @returns {Message.CumulusMeta}
  *
  * @private
  */
 export const buildCumulusMeta = ({
-  queueName,
+  queueUrl,
   stateMachine,
   asyncOperationId,
-  parentExecutionArn
+  parentExecutionArn,
+  templateCumulusMeta
 }: {
-  queueName?: string
+  queueUrl: string
   stateMachine: string,
   asyncOperationId?: string,
-  parentExecutionArn?: string
-}) => {
+  parentExecutionArn?: string,
+  templateCumulusMeta: WorkflowMessageTemplateCumulusMeta
+}): Message.CumulusMeta => {
   const cumulusMeta: Message.CumulusMeta = {
+    ...templateCumulusMeta,
     execution_name: createExecutionName(),
-    queueName,
+    queueUrl,
     state_machine: stateMachine
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
   if (asyncOperationId) cumulusMeta.asyncOperationId = asyncOperationId;
   return cumulusMeta;
-};
-
-/**
- * Build base message.meta for a queued execution.
- *
- * @param {Object} params
- * @param {string} params.workflowName - Workflow name
- * @param {Object} [params.collection] - A collection object
- * @param {Object} [params.provider] - A provider object
- * @returns {Meta}
- *
- * @private
- */
-const buildMeta = ({
-  workflowName,
-  collection,
-  provider
-}: {
-  workflowName: string
-  collection?: object
-  provider?: object
-}) => {
-  const meta: QueueMessageMeta = {
-    workflow_name: workflowName
-  };
-  if (collection) {
-    meta.collection = collection;
-  }
-  if (provider) {
-    meta.provider = provider;
-  }
-  return meta;
 };
 
 /**
@@ -102,20 +73,18 @@ const buildMeta = ({
  * @param {Object} params.messageTemplate - Message template for the workflow
  * @param {Object} params.payload - Payload for the workflow
  * @param {Object} params.workflow - workflow name & arn object
- * @param {string} [params.queueName] - SQS queue name
+ * @param {string} [params.queueUrl] - SQS queue URL
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {Object} [params.customCumulusMeta] - Custom data for message.cumulus_meta
  * @param {Object} [params.customMeta] - Custom data for message.meta
  *
- * @returns {CumulusMessage} A Cumulus message object
+ * @returns {Message.CumulusMessage} A Cumulus message object
  *
  * @alias module:Build
  */
 export const buildQueueMessageFromTemplate = ({
-  provider,
-  collection,
   parentExecutionArn,
-  queueName,
+  queueUrl,
   asyncOperationId,
   messageTemplate,
   payload,
@@ -123,13 +92,11 @@ export const buildQueueMessageFromTemplate = ({
   customCumulusMeta = {},
   customMeta = {}
 }: {
-  provider: object,
-  collection: object
   parentExecutionArn: string,
-  messageTemplate: MessageTemplate,
+  messageTemplate: WorkflowMessageTemplate,
   payload: object
   workflow: Workflow,
-  queueName?: string,
+  queueUrl: string,
   asyncOperationId?: string,
   customCumulusMeta?: object
   customMeta?: object
@@ -137,20 +104,17 @@ export const buildQueueMessageFromTemplate = ({
   const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
-    queueName,
-    stateMachine: workflow.arn
-  });
-
-  const meta = buildMeta({
-    collection,
-    provider,
-    workflowName: workflow.name
+    queueUrl,
+    stateMachine: workflow.arn,
+    templateCumulusMeta: messageTemplate.cumulus_meta
   });
 
   const message = {
     ...messageTemplate,
-    meta: merge(messageTemplate.meta, customMeta, meta),
-    cumulus_meta: merge(messageTemplate.cumulus_meta, customCumulusMeta, cumulusMeta),
+    meta: merge(messageTemplate.meta, customMeta, {
+      workflow_name: workflow.name
+    }),
+    cumulus_meta: merge(customCumulusMeta, cumulusMeta),
     payload
   };
 

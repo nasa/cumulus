@@ -28,23 +28,14 @@ async function startKinesisReplayAsyncOperation(req, res) {
     return res.boom.badRequest('kinesisStream is required for kinesis-type replay');
   }
 
-  const input = {
-    CollectionsTable: process.env.CollectionsTable,
-    RulesTable: process.env.RulesTable,
-    ProvidersTable: process.env.ProvidersTable,
-    stackName: process.env.stackName,
-    system_bucket: process.env.system_bucket,
-    FallbackTopicArn: process.env.KinesisFallbackTopicArn,
-    ...payload
-  };
-
   const asyncOperation = await asyncOperationModel.start({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.ManualConsumerLambda,
     description: 'Kinesis Replay',
     operationType: 'Kinesis Replay',
-    payload: input
+    payload,
+    useLambdaEnvironmentVariables: true
   });
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });

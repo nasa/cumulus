@@ -43,21 +43,10 @@ resource "aws_iam_role_policy" "lambda_processing_role_get_secrets" {
 }
 
 locals {
-  default_queues = {
-    backgroundProcessing      = aws_sqs_queue.background_processing.id
-    kinesisFailure            = aws_sqs_queue.kinesis_failure.id
-    reporting                 = var.sf_event_sqs_to_db_records_sqs_queue_url
-    startSF                   = aws_sqs_queue.start_sf.id
-    ScheduleSFDeadLetterQueue = aws_sqs_queue.schedule_sf_dead_letter_queue.id
-    triggerLambdaFailure      = aws_sqs_queue.trigger_lambda_failure.id
-  }
-  custom_queues = { for queue in var.custom_queues: queue.id => queue.url }
-  custom_throttled_queues = { for queue in var.throttled_queues: queue.id => queue.url }
-
   default_queue_execution_limits = {
-    backgroundProcessing = 5
+    (aws_sqs_queue.background_processing.id) = 5
   }
-  custom_queue_execution_limits = { for queue in var.throttled_queues: queue.id => queue.execution_limit }
+  custom_queue_execution_limits = { for queue in var.throttled_queues: queue.url => queue.execution_limit }
 
   message_template_key = "${var.prefix}/workflow_template.json"
 
@@ -68,6 +57,7 @@ locals {
       state_machine           = null
       execution_name          = null
       workflow_start_time     = null
+      queueExecutionLimits    = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
     }
     meta = {
       workflow_name  = null
@@ -93,8 +83,6 @@ locals {
       collection            = {}
       provider              = {}
       template              = "s3://${var.system_bucket}/${local.message_template_key}"
-      queues                = merge(local.default_queues, local.custom_queues, local.custom_throttled_queues)
-      queueExecutionLimits  = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
     }
     payload   = {}
     exception = null
