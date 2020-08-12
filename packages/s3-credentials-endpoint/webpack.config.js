@@ -43,5 +43,8 @@ module.exports = {
     warningsFilter: [
       /critical dependency:/i
     ],
+  },
+  optimization: {
+    nodeEnv: false
   }
 };
