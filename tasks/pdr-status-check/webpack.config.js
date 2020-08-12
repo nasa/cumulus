@@ -36,5 +36,8 @@ module.exports = {
     ],
   },
   devtool: 'inline-source-map',
-  target: 'node'
+  target: 'node',
+  optimization: {
+    nodeEnv: false
+  }
 };
