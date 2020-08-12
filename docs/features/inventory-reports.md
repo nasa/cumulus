@@ -47,7 +47,7 @@ Example response:
 
 ### Retrieving a Report via API
 
-Once a report has been generated, you can retreive the full report.
+Once a report has been generated, you can retrieve the full report.
 
 ```bash
 curl https://example.com/reconciliationReports/inventoryReport-20190305T153430508 --header 'Authorization: Bearer ReplaceWithTheToken'
