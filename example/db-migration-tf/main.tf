@@ -9,7 +9,7 @@ provider "aws" {
   profile = var.aws_profile
 }
 
-module "cumulus" {
+module "db_migration" {
   source = "../../lambdas/db-migration"
 
   permissions_boundary_arn = var.permissions_boundary_arn
