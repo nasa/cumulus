@@ -18,7 +18,7 @@ async function handleExecutions(event) {
   return s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${executionRecord.name}.output`,
-    Body: JSON.stringify(event, undefined, 2)
+    Body: JSON.stringify(event, undefined, 2),
   }).promise();
 }
 
@@ -38,7 +38,7 @@ async function handleGranules(event) {
   return s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${granuleRecord.record.granuleId}-${granuleRecord.record.status}.output`,
-    Body: JSON.stringify(event, undefined, 2)
+    Body: JSON.stringify(event, undefined, 2),
   }).promise();
 }
 
@@ -58,7 +58,7 @@ async function handlePdrs(event) {
   return s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${pdr.pdrName}-${pdr.status}.output`,
-    Body: JSON.stringify(event, undefined, 2)
+    Body: JSON.stringify(event, undefined, 2),
   }).promise();
 }
 
@@ -71,7 +71,7 @@ async function handlePdrs(event) {
 async function handleCollections(event) {
   const {
     event: eventType,
-    record: collection
+    record: collection,
   } = JSON.parse(event.Records[0].Sns.Message);
 
   if (!collection.name) {
@@ -83,7 +83,7 @@ async function handleCollections(event) {
   return s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${collection.name}-${collection.version}-${eventType}.output`,
-    Body: JSON.stringify(event, undefined, 2)
+    Body: JSON.stringify(event, undefined, 2),
   }).promise();
 }
 
@@ -91,5 +91,5 @@ module.exports = {
   handleExecutions,
   handleGranules,
   handlePdrs,
-  handleCollections
+  handleCollections,
 };

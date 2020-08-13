@@ -8,7 +8,7 @@ const { validate } = require('@cumulus/cmr-client/ingestConcept');
 const xmlParseOptions = {
   ignoreAttrs: true,
   mergeAttrs: true,
-  explicitArray: false
+  explicitArray: false,
 };
 
 /**
@@ -27,5 +27,5 @@ module.exports = {
   getUrl,
   ummVersionToMetadataFormat,
   validate,
-  xmlParseOptions
+  xmlParseOptions,
 };

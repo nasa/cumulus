@@ -200,7 +200,7 @@ class DistributionEvent {
           collectionId: granule.collectionId,
           ...deconstructCollectionId(granule.collectionId),
           granuleId: granule.granuleId,
-          fileType: this.getFileType(this.bucket, this.key, granule)
+          fileType: this.getFileType(this.bucket, this.key, granule),
         };
       } else {
         this.productInfo = {};
@@ -221,7 +221,7 @@ class DistributionEvent {
         productInfo.name,
         productInfo.version,
         productInfo.granuleId,
-        productInfo.fileType
+        productInfo.fileType,
       ]);
   }
 
@@ -239,7 +239,7 @@ class DistributionEvent {
       this.remoteIP,
       `s3://${this.bucket}/${this.key}`,
       this.bytesSent,
-      this.transferStatus
+      this.transferStatus,
     ]
       .concat(await this.product) // product name, version, granuleId and file type
       .concat(['HTTPS']) // protocol

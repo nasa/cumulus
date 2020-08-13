@@ -29,7 +29,7 @@ export const createMultipartChunks = (
     .map(
       (start) => ({
         start,
-        end: Math.min(start + maxChunkSize, objectSize) - 1
+        end: Math.min(start + maxChunkSize, objectSize) - 1,
       })
     );
 

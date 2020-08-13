@@ -16,16 +16,16 @@ test.beforeEach(async (t) => {
     TableName: t.context.tableName,
     AttributeDefinitions: [
       { AttributeName: 'bucket', AttributeType: 'S' },
-      { AttributeName: 'key', AttributeType: 'S' }
+      { AttributeName: 'key', AttributeType: 'S' },
     ],
     KeySchema: [
       { AttributeName: 'bucket', KeyType: 'HASH' },
-      { AttributeName: 'key', KeyType: 'RANGE' }
+      { AttributeName: 'key', KeyType: 'RANGE' },
     ],
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
-    }
+      WriteCapacityUnits: 5,
+    },
   }).promise();
 
   return awsServices.dynamodb().waitFor('tableExists', { TableName: t.context.tableName }).promise();
@@ -46,8 +46,8 @@ test.serial('DynamoDbSearchQueue.peek() returns the next item but does not remov
     TableName: t.context.tableName,
     Item: {
       bucket: { S: bucket },
-      key: { S: key }
-    }
+      key: { S: key },
+    },
   }).promise();
 
   const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
@@ -64,8 +64,8 @@ test.serial('DynamoDbSearchQueue.shift() returns the next object and removes it 
     TableName: t.context.tableName,
     Item: {
       bucket: { S: bucket },
-      key: { S: key }
-    }
+      key: { S: key },
+    },
   }).promise();
 
   const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
@@ -81,13 +81,13 @@ test.serial('DynamoDbSearchQueue can handle paging', async (t) => {
       TableName: t.context.tableName,
       Item: {
         bucket: { S: randomString() },
-        key: { S: randomString() }
-      }
+        key: { S: randomString() },
+      },
     }).promise()));
 
   const queue = new DynamoDbSearchQueue({
     TableName: t.context.tableName,
-    Limit: 2
+    Limit: 2,
   });
 
   let returnedItemsCount = 0;

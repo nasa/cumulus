@@ -39,8 +39,8 @@ test('test basic usage', (t) => {
   const context = {
     file: {
       bucket: 'example',
-      name: 'file.hdf'
-    }
+      name: 'file.hdf',
+    },
   };
 
   const result = urlPathTemplate(urlPath, context);

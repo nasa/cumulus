@@ -11,7 +11,7 @@ const {
   findTestDataDirectory,
   randomString,
   validateConfig,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 const { discoverPdrs } = require('..');
 
@@ -31,7 +31,7 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
 
   await validateConfig(t, event.config);
@@ -54,7 +54,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
 
   const newPayload = t.context.input;
@@ -73,13 +73,13 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
       const Key = [
         newPayload.config.stack,
         'pdrs',
-        'PDN.ID1611071307.PDR'
+        'PDN.ID1611071307.PDR',
       ].join('/');
 
       return s3().putObject({
         Bucket: internalBucketName,
         Key,
-        Body: 'PDN.ID1611071307.PDR'
+        Body: 'PDN.ID1611071307.PDR',
       }).promise();
     })
     .then(() => discoverPdrs(newPayload, {}))
@@ -108,7 +108,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       id: 'MODAPS',
       protocol: 'http',
       host: '127.0.0.1',
-      port: 3030
+      port: 3030,
     };
     event.config.provider_path = '/pdrs/discover-pdrs';
     event.input = {};
@@ -118,7 +118,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       Bucket: internalBucketName,
       // 'pdrs' is the default 'folder' value in the Discover contructor
       Key: `${event.config.stack}/pdrs/${oldPdr}`,
-      Body: 'Pretend this is a PDR'
+      Body: 'Pretend this is a PDR',
     }).promise();
 
     await validateConfig(t, event.config);
@@ -160,7 +160,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       host: '127.0.0.1',
       port: 2222,
       username: 'user',
-      password: 'password'
+      password: 'password',
     };
     event.config.provider_path = 'pdrs/discover-pdrs';
     event.input = {};
@@ -170,7 +170,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       Bucket: internalBucketName,
       // 'pdrs' is the default 'folder' value in the Discover constructor
       Key: `${event.config.stack}/pdrs/${oldPdr}`,
-      Body: 'Pretend this is a PDR'
+      Body: 'Pretend this is a PDR',
     }).promise();
 
     await validateConfig(t, event.config);

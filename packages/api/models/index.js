@@ -21,5 +21,5 @@ module.exports = {
   ReconciliationReport,
   Rule,
   Manager,
-  Execution
+  Execution,
 };

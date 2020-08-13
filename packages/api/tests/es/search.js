@@ -11,9 +11,9 @@ test.before(async () => {
     config: {
       credentials: {
         user: 'test',
-        password: 'testPassword'
-      }
-    }
+        password: 'testPassword',
+      },
+    },
   };
   esSearch.__set__('aws', awsMock);
   esSearch.__set__('inTestMode', () => false);

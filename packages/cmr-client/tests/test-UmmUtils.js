@@ -17,9 +17,9 @@ const ummValidationError = {
   errors: [
     {
       path: ['Temporal'],
-      errors: [cmrError]
-    }
-  ]
+      errors: [cmrError],
+    },
+  ],
 };
 
 test.before(() => {
@@ -113,8 +113,8 @@ test.serial('validateUMMG calls post with correct metadata version when metadata
     MetadataSpecification: {
       URL: 'https://cdn.earthdata.nasa.gov/umm/granule/v1.5',
       Name: 'UMM-G',
-      Version: '1.5'
-    }
+      Version: '1.5',
+    },
   };
 
   nock('https://cmr.uat.earthdata.nasa.gov')
@@ -133,7 +133,7 @@ test.serial('validateUMMG calls post with default version (1.4) when metadata ve
   const identifier = 'fakeIdentifier';
   const metadata = {
     restOfMetadataUpHere: 'still fake',
-    MissingMetadataSpecification: 'nothing here'
+    MissingMetadataSpecification: 'nothing here',
   };
 
   nock('https://cmr.uat.earthdata.nasa.gov')
@@ -154,8 +154,8 @@ test('ummVersion returns UMM version if found on metadata object.', (t) => {
     MetadataSpecification: {
       URL: 'https://cdn.earthdata.nasa.gov/umm/granule/v1.5',
       Name: 'UMM-G',
-      Version: '1.5'
-    }
+      Version: '1.5',
+    },
   };
 
   t.is(ummVersion(metadata), '1.5');
@@ -164,7 +164,7 @@ test('ummVersion returns UMM version if found on metadata object.', (t) => {
 test('ummVersion returns default version 1.4 if object has no metadata specification.', (t) => {
   const metadata = {
     restOfMetadataUpHere: 'still fake',
-    MissingMetadataSpecification: 'nothing here'
+    MissingMetadataSpecification: 'nothing here',
   };
 
   t.is(ummVersion(metadata), '1.4');

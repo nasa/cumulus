@@ -11,7 +11,7 @@ const {
   fileExists,
   parseS3Uri,
   getS3Object,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
@@ -44,7 +44,7 @@ async function addTestCollections() {
     fakeCollectionFactory({
       name: cmrCollection.Collection.ShortName,
       version: cmrCollection.Collection.VersionId,
-      reportToEms: (cmrCollection.Collection.ShortName !== 'MOD14A1')
+      reportToEms: (cmrCollection.Collection.ShortName !== 'MOD14A1'),
     }))
     .filter((collection) => (collection.name !== 'MOD11A1'));
 
@@ -65,14 +65,14 @@ test.before(async () => {
   process.env.cmr_password_secret_name = randomId('cmr-secret-name');
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
-    SecretString: randomId('cmr-password')
+    SecretString: randomId('cmr-password'),
   }).promise();
 });
 
 test.after.always(async () => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
   delete process.env.cmr_password_secret_name;
 });
@@ -96,7 +96,7 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(process.env.system_bucket),
-    t.context.collectionModel.deleteTable()
+    t.context.collectionModel.deleteTable(),
   ]);
 
   CMR.prototype.searchCollections.restore();
@@ -124,7 +124,7 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
     + 'NOAA-18;Coriolis;TERRA;AQUA|&|AVHRR-3;WindSat;MODIS;AMSR-E,MODIS|&|E|&|1',
 
     'MYD13Q1|&|MODIS/Aqua Vegetation Indices 16-Day L3 Global 250m SIN Grid V006|&|'
-    + '3|&|BIOSPHERE|&|NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS|&|testEmsProvider|&|AQUA|&|MODIS|&|E|&|1'
+    + '3|&|BIOSPHERE|&|NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS|&|testEmsProvider|&|AQUA|&|MODIS|&|E|&|1',
   ];
   // check the number of records for each report
   const s3Object = await getS3Object(parsed.Bucket, parsed.Key);
@@ -146,7 +146,7 @@ test.serial('generateReport creates flat file for one collection which is in bot
 
   const expectedRecords = [
     'A2_SI25_NRT|&|NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS V0|&|'
-    + '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1'
+    + '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1',
   ];
   // check the number of records for each report
   const s3Object = await getS3Object(parsed.Bucket, parsed.Key);

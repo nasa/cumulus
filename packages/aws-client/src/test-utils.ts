@@ -26,7 +26,7 @@ const localStackPorts = {
   sns: 4575,
   sqs: 4576,
   ssm: 4583,
-  sts: 4592
+  sts: 4592,
 };
 
 /**
@@ -86,7 +86,7 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
     accessKeyId: 'my-access-key-id',
     secretAccessKey: 'my-secret-access-key',
     region: 'us-east-1',
-    endpoint: getLocalstackEndpoint(serviceIdentifier)
+    endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
   if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;

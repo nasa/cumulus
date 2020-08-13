@@ -16,7 +16,7 @@ const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
   createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
@@ -76,7 +76,7 @@ test.before(async () => {
     indexer.indexCollection(esClient, fakeCollectionFactory(), esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1' }), esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1' }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed', duration: 3 }), esAlias)
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed', duration: 3 }), esAlias),
   ]);
 
   // Indexing using Date.now() to generate the timestamp
@@ -84,17 +84,17 @@ test.before(async () => {
 
   await Promise.all([
     indexer.indexCollection(esClient, fakeCollectionFactory({
-      updatedAt: new Date(2020, 0, 29)
+      updatedAt: new Date(2020, 0, 29),
     }), esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({
       status: 'failed',
       updatedAt: new Date(2020, 0, 29),
-      duration: 4
+      duration: 4,
     }), esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({
       updatedAt: new Date(2020, 0, 29),
-      duration: 4
-    }), esAlias)
+      duration: 4,
+    }), esAlias),
   ]);
 
   stub.restore();
@@ -106,7 +106,7 @@ test.after.always(async () => {
     collectionModel.deleteTable(),
     granuleModel.deleteTable(),
     await accessTokenModel.deleteTable(),
-    s3.recursivelyDeleteS3Bucket(process.env.system_bucket)
+    s3.recursivelyDeleteS3Bucket(process.env.system_bucket),
   ]);
 });
 
@@ -233,7 +233,7 @@ test('GET /stats/aggregate returns correct response', async (t) => {
 
   t.is(response.body.meta.count, 5);
   t.deepEqual(response.body.count, [
-    { key: 'completed', count: 3 }, { key: 'failed', count: 2 }
+    { key: 'completed', count: 3 }, { key: 'failed', count: 2 },
   ]);
 });
 
@@ -246,6 +246,6 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
 
   t.is(response.body.meta.count, 2);
   t.deepEqual(response.body.count, [
-    { key: 'completed', count: 1 }, { key: 'failed', count: 1 }
+    { key: 'completed', count: 1 }, { key: 'failed', count: 1 },
   ]);
 });

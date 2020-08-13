@@ -38,7 +38,7 @@ function groupExecutionsByStatus(executions) {
     completed: [],
     aborted: [],
     failed: [],
-    running: []
+    running: [],
   };
 
   executions.forEach((execution) => {
@@ -63,7 +63,7 @@ function logStatus(output) {
     completed: output.completed.length,
     failed: output.failed.length,
     counter: output.counter,
-    limit: output.limit
+    limit: output.limit,
   }, 'latest status');
 }
 
@@ -115,7 +115,7 @@ function buildOutput(event, groupedExecutions) {
     running,
     failed,
     completed,
-    pdr: event.input.pdr
+    pdr: event.input.pdr,
   };
 
   if (!output.isFinished) {

@@ -6,16 +6,16 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const { google } = require('googleapis');
 const {
   JsonWebTokenError,
-  TokenExpiredError
+  TokenExpiredError,
 } = require('jsonwebtoken');
 const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 const {
-  TokenUnauthorizedUserError
+  TokenUnauthorizedUserError,
 } = require('../lib/errors');
 
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
-  createJwtToken
+  createJwtToken,
 } = require('../lib/token');
 
 const { verifyJwtAuthorization } = require('../lib/request');
@@ -67,7 +67,7 @@ async function token(event, oAuth2Provider, response) {
         accessToken,
         refreshToken,
         username,
-        expirationTime
+        expirationTime,
       } = await oAuth2Provider.getAccessToken(code);
 
       const accessTokenModel = new AccessToken();
@@ -75,7 +75,7 @@ async function token(event, oAuth2Provider, response) {
       await accessTokenModel.create({
         accessToken,
         refreshToken,
-        expirationTime
+        expirationTime,
       });
 
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
@@ -144,12 +144,12 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
       username,
-      expirationTime
+      expirationTime,
     } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
   } finally {
     // Delete old token record to prevent refresh with old tokens
     await accessTokenModel.delete({
-      accessToken: accessTokenRecord.accessToken
+      accessToken: accessTokenRecord.accessToken,
     });
   }
 
@@ -157,7 +157,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   await accessTokenModel.create({
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
-    expirationTime
+    expirationTime,
   });
 
   const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
@@ -229,7 +229,7 @@ function buildEarthdataLoginProviderFromEnv() {
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
     earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.TOKEN_REDIRECT_ENDPOINT
+    redirectUri: process.env.TOKEN_REDIRECT_ENDPOINT,
   });
 }
 
@@ -266,5 +266,5 @@ async function refreshEndpoint(req, res) {
 module.exports = {
   refreshEndpoint,
   tokenEndpoint,
-  deleteTokenEndpoint
+  deleteTokenEndpoint,
 };

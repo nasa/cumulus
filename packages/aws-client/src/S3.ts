@@ -15,11 +15,11 @@ import { deprecate } from 'util';
 
 import {
   generateChecksumFromStream,
-  validateChecksumFromStream
+  validateChecksumFromStream,
 } from '@cumulus/checksum';
 import {
   InvalidChecksum,
-  UnparsableFileLocationError
+  UnparsableFileLocationError,
 } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
@@ -97,7 +97,7 @@ export const parseS3Uri = (uri: string) => {
 
   return {
     Bucket: match[1],
-    Key: match[2]
+    Key: match[2],
   };
 };
 
@@ -193,7 +193,7 @@ export const waitForObjectToExist = async (params: {
     bucket,
     key,
     interval = 1000,
-    timeout = 30 * 1000
+    timeout = 30 * 1000,
   } = params;
 
   await pWaitFor(
@@ -211,7 +211,7 @@ export const waitForObjectToExist = async (params: {
 export const s3PutObject = improveStackTrace(
   (params: AWS.S3.PutObjectRequest) => s3().putObject({
     ACL: 'private',
-    ...params
+    ...params,
   }).promise()
 );
 
@@ -227,7 +227,7 @@ export const putFile = (bucket: string, key: string, filename: string) =>
   s3PutObject({
     Bucket: bucket,
     Key: key,
-    Body: fs.createReadStream(filename)
+    Body: fs.createReadStream(filename),
   });
 
 /**
@@ -239,7 +239,7 @@ export const putFile = (bucket: string, key: string, filename: string) =>
 export const s3CopyObject = improveStackTrace(
   (params: AWS.S3.CopyObjectRequest) => s3().copyObject({
     TaggingDirective: 'COPY',
-    ...params
+    ...params,
   }).promise()
 );
 
@@ -300,7 +300,7 @@ export const getObjectSize = async (
 
   const headObjectResponse = await s3.headObject({
     Bucket: bucket,
-    Key: key
+    Key: key,
   }).promise();
 
   return headObjectResponse.ContentLength;
@@ -347,7 +347,7 @@ export const s3PutObjectTagging = improveStackTrace(
     s3().putObjectTagging({
       Bucket,
       Key,
-      Tagging
+      Tagging,
     }).promise()
 );
 
@@ -422,7 +422,7 @@ export const getS3Object = deprecate(
         {
           maxTimeout: 10000,
           onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-          ...retryOptions
+          ...retryOptions,
         }
       )
   ),
@@ -464,7 +464,7 @@ export const putJsonS3Object = (bucket: string, key: string, data: any) =>
   s3PutObject({
     Bucket: bucket,
     Key: key,
-    Body: JSON.stringify(data)
+    Body: JSON.stringify(data),
   });
 
 /**
@@ -551,7 +551,7 @@ export const downloadS3Files = (
   // Scrub s3Ojbs to avoid errors from the AWS SDK
   const scrubbedS3Objs = s3Objs.map((s3Obj) => ({
     Bucket: s3Obj.Bucket,
-    Key: s3Obj.Key
+    Key: s3Obj.Key,
   }));
   let i = 0;
   const n = s3Objs.length;
@@ -603,7 +603,7 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
 
       return {
         Bucket: bucket,
-        Key: o.Key
+        Key: o.Key,
       };
     });
 
@@ -653,7 +653,7 @@ export const uploadS3Files = (
       Bucket: bucket,
       Key: key,
       Body: fs.createReadStream(filename),
-      ...s3opts
+      ...s3opts,
     });
 
     i += 1;
@@ -685,7 +685,7 @@ export const uploadS3FileStream = (
     Bucket: bucket,
     Key: key,
     Body: fileStream,
-    ...s3opts
+    ...s3opts,
   });
 
 /**
@@ -707,7 +707,7 @@ export const listS3Objects = async (
 ) => {
   log.info(`Listing objects in s3://${bucket}`);
   const params: AWS.S3.ListObjectsRequest = {
-    Bucket: bucket
+    Bucket: bucket,
   };
   if (prefix) params.Prefix = prefix;
 
@@ -756,7 +756,7 @@ export const listS3ObjectsV2 = async (
       {
 
         ...params,
-        ContinuationToken: listObjectsResponse.NextContinuationToken
+        ContinuationToken: listObjectsResponse.NextContinuationToken,
       }
     ).promise());
     discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
@@ -896,7 +896,7 @@ const createMultipartUpload = async (
     Bucket: params.destinationBucket,
     Key: params.destinationKey,
     ACL: params.ACL,
-    ContentType: params.contentType
+    ContentType: params.contentType,
   };
 
   if (params.copyTags) {
@@ -942,7 +942,7 @@ const uploadPartCopy = async (
     Key: params.destinationKey,
     PartNumber: params.partNumber,
     CopySource: `/${params.sourceBucket}/${params.sourceKey}`,
-    CopySourceRange: `bytes=${params.start}-${params.end}`
+    CopySourceRange: `bytes=${params.start}-${params.end}`,
   });
 
   if (response.CopyPartResult === undefined) {
@@ -951,7 +951,7 @@ const uploadPartCopy = async (
 
   return {
     ETag: response.CopyPartResult.ETag,
-    PartNumber: params.partNumber
+    PartNumber: params.partNumber,
   };
 };
 
@@ -985,7 +985,7 @@ export const multipartCopyObject = async (
     destinationBucket,
     destinationKey,
     ACL,
-    copyTags = false
+    copyTags = false,
   } = params;
 
   const sourceObject = await headObject(sourceBucket, sourceKey);
@@ -998,7 +998,7 @@ export const multipartCopyObject = async (
     destinationKey,
     ACL,
     copyTags,
-    contentType: sourceObject.ContentType
+    contentType: sourceObject.ContentType,
   });
 
   try {
@@ -1023,7 +1023,7 @@ export const multipartCopyObject = async (
             sourceBucket,
             sourceKey,
             destinationBucket,
-            destinationKey
+            destinationKey,
           })
       )
     );
@@ -1034,8 +1034,8 @@ export const multipartCopyObject = async (
       Bucket: destinationBucket,
       Key: destinationKey,
       MultipartUpload: {
-        Parts: uploadPartCopyResponses
-      }
+        Parts: uploadPartCopyResponses,
+      },
     });
 
     return { etag };
@@ -1045,7 +1045,7 @@ export const multipartCopyObject = async (
     await S3MultipartUploads.abortMultipartUpload({
       Bucket: destinationBucket,
       Key: destinationKey,
-      UploadId: uploadId
+      UploadId: uploadId,
     });
 
     throw error;
@@ -1080,7 +1080,7 @@ export const moveObject = async (
     destinationBucket: params.destinationBucket,
     destinationKey: params.destinationKey,
     ACL: params.ACL,
-    copyTags: isBoolean(params.copyTags) ? params.copyTags : true
+    copyTags: isBoolean(params.copyTags) ? params.copyTags : true,
   });
   await deleteS3Object(params.sourceBucket, params.sourceKey);
 };

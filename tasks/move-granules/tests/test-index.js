@@ -12,14 +12,14 @@ const {
   s3ObjectExists,
   promiseS3Upload,
   headObject,
-  parseS3Uri
+  parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { isCMRFile } = require('@cumulus/cmrjs');
 const cloneDeep = require('lodash/cloneDeep');
 const set = require('lodash/set');
 const errors = require('@cumulus/errors');
 const {
-  randomString, randomId, validateConfig, validateInput, validateOutput
+  randomString, randomId, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
@@ -30,7 +30,7 @@ async function uploadFiles(files, bucket) {
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
     Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key
+      ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key,
   })));
 }
 
@@ -72,7 +72,7 @@ function getExpectedOutputFileNames(t) {
     `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
     `s3://${t.context.publicBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
+    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`,
   ];
 }
 /**
@@ -93,7 +93,7 @@ async function getFilesMetadata(files) {
     return {
       filename: f.filename,
       size: s3object[0].Size,
-      LastModified: s3object[0].LastModified
+      LastModified: s3object[0].LastModified,
     };
   });
   return Promise.all(getFileRequests);
@@ -109,7 +109,7 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.stagingBucket }).promise(),
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
     s3().createBucket({ Bucket: t.context.protectedBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.systemBucket }).promise()
+    s3().createBucket({ Bucket: t.context.systemBucket }).promise(),
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
@@ -120,7 +120,7 @@ test.beforeEach(async (t) => {
       [t.context.stagingBucket]: t.context.stagingBucket,
       [t.context.publicBucket]: t.context.publicBucket,
       [t.context.protectedBucket]: t.context.protectedBucket,
-      [t.context.systemBucket]: t.context.systemBucket
+      [t.context.systemBucket]: t.context.systemBucket,
     }
   );
 
@@ -150,7 +150,7 @@ test.serial('Should move files to final location.', async (t) => {
 
   const check = await s3ObjectExists({
     Bucket: t.context.publicBucket,
-    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
   });
 
   t.true(check);
@@ -168,7 +168,7 @@ test.serial('should not move files when event.moveStagedFiles is false', async (
 
   const check = await s3ObjectExists({
     Bucket: t.context.publicBucket,
-    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
   });
 
   t.false(check);
@@ -203,7 +203,7 @@ test.serial('Should move renamed files in staging area to final location.', asyn
     name: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705',
     bucket: t.context.stagingBucket,
     filename: `s3://${t.context.stagingBucket}/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`,
-    fileStagingDir: 'file-staging/subdir'
+    fileStagingDir: 'file-staging/subdir',
   });
 
   const output = await moveGranules(newPayload);
@@ -211,7 +211,7 @@ test.serial('Should move renamed files in staging area to final location.', asyn
 
   const check = await s3ObjectExists({
     Bucket: t.context.protectedBucket,
-    Key: 'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705'
+    Key: 'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705',
   });
 
   t.true(check);
@@ -278,13 +278,13 @@ test.serial('Should overwrite files.', async (t) => {
 
   newPayload.input.granules[0].files = [{
     filename: `s3://${t.context.stagingBucket}/${sourceKey}`,
-    name: filename
+    name: filename,
   }];
 
   const uploadParams = {
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
-    Body: 'Something'
+    Body: 'Something',
   };
 
   t.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
@@ -318,7 +318,7 @@ test.serial('Should overwrite files.', async (t) => {
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
-    Body: content
+    Body: content,
   });
 
   t.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
@@ -428,7 +428,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   const inputHdfFile = filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
   const updatedBody = randomString();
   const params = {
-    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody,
   };
   await s3().putObject(params).promise();
 
@@ -511,7 +511,7 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   const inputHdfFile = filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
   const updatedBody = randomString();
   const params = {
-    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody,
   };
   await s3().putObject(params).promise();
 
@@ -573,7 +573,7 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   const inputHdfFile = filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
   const updatedBody = randomString();
   const params = {
-    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody,
   };
   await s3().putObject(params).promise();
 

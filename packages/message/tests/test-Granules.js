@@ -9,12 +9,12 @@ const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
 test('getMessageGranules returns granules from payload.granules', (t) => {
   const granules = [{
-    granuleId: randomId('granule')
+    granuleId: randomId('granule'),
   }];
   const testMessage = {
     payload: {
-      granules
-    }
+      granules,
+    },
   };
   const result = getMessageGranules(testMessage);
   t.deepEqual(result, granules);

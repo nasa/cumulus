@@ -31,12 +31,12 @@ export const publishSnsMessage = async (
 
       await sns().publish({
         TopicArn: snsTopicArn,
-        Message: JSON.stringify(message)
+        Message: JSON.stringify(message),
       }).promise();
     },
     {
       maxTimeout: 5000,
       onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-      ...retryOptions
+      ...retryOptions,
     }
   );

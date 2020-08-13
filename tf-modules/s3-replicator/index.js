@@ -14,11 +14,11 @@ async function handler(event, _context) {
       CopySource: `${srcBucket}/${srcKey}`,
       Bucket: process.env.TARGET_BUCKET,
       Key: `${process.env.TARGET_PREFIX}/${path.basename(srcKey)}`,
-      ACL: 'bucket-owner-full-control'
+      ACL: 'bucket-owner-full-control',
     }).promise();
   }));
 }
 
 module.exports = {
-  handler
+  handler,
 };

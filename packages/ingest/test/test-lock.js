@@ -15,14 +15,14 @@ const { checkOldLocks, countLock, proceed } = proxyquire(
       listS3ObjectsV2: (_, providerName) => Promise.resolve([
         {
           Key: `lock/${providerName}/test`,
-          LastModified: new Date()
+          LastModified: new Date(),
         },
         {
           Key: `lock/${providerName}/test2`,
-          LastModified: new Date(Date.now() - (fiveMinutes + 1))
-        }
-      ])
-    }
+          LastModified: new Date(Date.now() - (fiveMinutes + 1)),
+        },
+      ]),
+    },
   }
 );
 
@@ -40,16 +40,16 @@ test('checkOldLocks() returns correct number of locks', async (t) => {
   count = await checkOldLocks(bucket, [
     {
       Key: `lock/${providerName}/test`,
-      LastModified: new Date()
+      LastModified: new Date(),
     },
     {
       Key: `lock/${providerName}/test2`,
-      LastModified: new Date(Date.now() - (fiveMinutes + 1))
+      LastModified: new Date(Date.now() - (fiveMinutes + 1)),
     },
     {
       Key: `lock/${providerName}/test3`,
-      LastModified: new Date(Date.now() - (fiveMinutes + 1))
-    }
+      LastModified: new Date(Date.now() - (fiveMinutes + 1)),
+    },
   ]);
   t.is(count, 1);
 });

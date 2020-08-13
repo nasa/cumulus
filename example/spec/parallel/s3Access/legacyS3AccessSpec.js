@@ -11,7 +11,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const {
   EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: { invokeTEADistributionLambda }
+  distributionApi: { invokeTEADistributionLambda },
 } = require('@cumulus/integration-tests');
 
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
@@ -39,8 +39,8 @@ async function invokeTestLambda(stackName, region, testBucketName, testFileKey, 
       Bucket: testBucketName,
       Key: testFileKey,
       credentials,
-      testName
-    })
+      testName,
+    }),
   }).promise();
 
   return data.Payload;
@@ -80,7 +80,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
 
     await Promise.all([
       s3().putObject({ Bucket: protectedBucketName, Key: testFileKey, Body: 'test' }).promise(),
-      s3().putObject({ Bucket: publicBucketName, Key: testFileKey, Body: 'test' }).promise()
+      s3().putObject({ Bucket: publicBucketName, Key: testFileKey, Body: 'test' }).promise(),
     ]);
     setDistributionApiEnvVars();
   });
@@ -89,7 +89,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
     await Promise.all([
       s3().deleteObject({ Bucket: protectedBucketName, Key: testFileKey }).promise(),
       s3().deleteObject({ Bucket: publicBucketName, Key: testFileKey }).promise(),
-      accessTokensModel.delete({ accessToken })
+      accessTokensModel.delete({ accessToken }),
     ]);
   });
 
@@ -111,7 +111,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
       const accessTokenResponse = await getEarthdataAccessToken({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
-        userParams: { username }
+        userParams: { username },
       }).catch((error) => {
         console.log(error);
         throw error;
@@ -134,7 +134,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
       const {
         accessKeyId,
         secretAccessKey,
-        sessionToken
+        sessionToken,
       } = creds;
 
       const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
@@ -190,7 +190,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
         accessKeyId: randomId('accessKeyId'),
         secretAccessKey: randomId('secretAccessKey'),
         sessionToken: randomId('sessionToken'),
-        expiration: '2019-02-26 00:08:18+00:00'
+        expiration: '2019-02-26 00:08:18+00:00',
       };
 
       function executeThirdPartyTestsAgainst(testBucket) {

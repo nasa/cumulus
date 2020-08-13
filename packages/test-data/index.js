@@ -41,5 +41,5 @@ const streamTestData = (name) => {
 module.exports = {
   loadJSONTestData,
   loadTestData,
-  streamTestData
+  streamTestData,
 };

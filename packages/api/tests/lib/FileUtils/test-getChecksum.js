@@ -24,7 +24,7 @@ test('getChecksum() returns the value of the checksumValue property', (t) => {
 test('getChecksum() prefers checksum over checksumValue', (t) => {
   const file = {
     checksum: 'my-checksum',
-    checksumValue: 'my-checksumValue'
+    checksumValue: 'my-checksumValue',
   };
 
   t.is(

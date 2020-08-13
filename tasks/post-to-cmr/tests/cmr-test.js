@@ -19,7 +19,7 @@ const { isCMRFile } = require('@cumulus/cmrjs');
 const { postToCMR } = require('..');
 
 const result = {
-  'concept-id': 'testingtesting'
+  'concept-id': 'testingtesting',
 };
 const resultThunk = () => ({ result });
 
@@ -28,14 +28,14 @@ test.before(async (t) => {
   t.context.cmrPasswordSecretName = randomString();
   await awsServices.secretsManager().createSecret({
     Name: t.context.cmrPasswordSecretName,
-    SecretString: randomString()
+    SecretString: randomString(),
   }).promise();
 
   // Store the Launchpadd passphrase
   t.context.launchpadPassphraseSecretName = randomString();
   await awsServices.secretsManager().createSecret({
     Name: t.context.launchpadPassphraseSecretName,
-    SecretString: randomString()
+    SecretString: randomString(),
   }).promise();
 });
 
@@ -65,11 +65,11 @@ test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucket));
 test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.cmrPasswordSecretName,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
   await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.launchpadPassphraseSecretName,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
 });
 
@@ -85,7 +85,7 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
     await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
+      Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>',
     });
     await t.throwsAsync(postToCMR(newPayload),
       { instanceOf: cmrClient.ValidationError });
@@ -105,7 +105,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
     await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
     });
 
     const output = await postToCMR(newPayload);
@@ -138,7 +138,7 @@ test.serial('postToCMR immediately succeeds using metadata file ETag', async (t)
     const { ETag: etag } = await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
     });
 
     inputCmrFile.etag = etag;
@@ -185,7 +185,7 @@ test.serial('postToCMR eventually succeeds using metadata file ETag', async (t) 
     const { ETag: newEtag } = await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: updatedCmrXml
+      Body: updatedCmrXml,
     });
 
     // Upload "original" XML so that the updated XML is not initially available
@@ -193,7 +193,7 @@ test.serial('postToCMR eventually succeeds using metadata file ETag', async (t) 
     const { ETag: oldEtag } = await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: cmrXml
+      Body: cmrXml,
     });
 
     t.not(oldEtag, newEtag, 'ETags should be different');
@@ -205,7 +205,7 @@ test.serial('postToCMR eventually succeeds using metadata file ETag', async (t) 
     await delay(3000).then(promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: updatedCmrXml
+      Body: updatedCmrXml,
     }));
     const output = await outputPromise;
 
@@ -242,7 +242,7 @@ test.serial('postToCMR fails with PreconditionFailure when such error is thrown 
       Bucket: t.context.bucket,
       Key: key,
       Body: fs.createReadStream(path.join(path.dirname(__filename), 'data',
-        'meta.xml'))
+        'meta.xml')),
     });
 
     inputCmrFile.etag = etag;
@@ -255,14 +255,14 @@ test.serial('postToCMR fails with PreconditionFailure when such error is thrown 
     // LocalStack).
     const errorSelector = {
       code: 'PreconditionFailed',
-      statusCode: 412
+      statusCode: 412,
     };
     const { postToCMR: postToCMR_ } = proxyquire('..', {
       '@cumulus/cmrjs': {
         metadataObjectFromCMRFile: () => {
           throw Object.assign(new Error(), errorSelector);
-        }
-      }
+        },
+      },
     });
 
     const error = await t.throwsAsync(postToCMR_(newPayload));
@@ -286,7 +286,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
     await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: fs.createReadStream('tests/data/meta.xml')
+      Body: fs.createReadStream('tests/data/meta.xml'),
     });
     const output = await postToCMR(newPayload);
     t.is(
@@ -305,8 +305,8 @@ test.serial('postToCMR throws an error if there is no CMR metadata file', async 
   newPayload.input.granules = [{
     granuleId: 'some granule',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.blah`
-    }]
+      filename: `s3://${t.context.bucket}/to/file.blah`,
+    }],
   }];
 
   try {
@@ -321,8 +321,8 @@ test.serial('postToCMR throws an error if any granule is missing a metadata file
   const newGranule = {
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.blah`
-    }]
+      filename: `s3://${t.context.bucket}/to/file.blah`,
+    }],
   };
   newPayload.input.granules.push(newGranule);
 
@@ -339,8 +339,8 @@ test.serial('postToCMR continues without metadata file if there is skipMetaCheck
   const newGranule = [{
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.blah`
-    }]
+      filename: `s3://${t.context.bucket}/to/file.blah`,
+    }],
   }];
   newPayload.input.granules = newGranule;
   newPayload.config.skipMetaCheck = true;
@@ -354,8 +354,8 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
   const newGranule = {
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.blah`
-    }]
+      filename: `s3://${t.context.bucket}/to/file.blah`,
+    }],
   };
   newPayload.input.granules.push(newGranule);
   newPayload.config.skipMetaCheck = true;
@@ -366,7 +366,7 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
     await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: `${newPayload.input.granules[0].granuleId}.cmr.xml`,
-      Body: fs.createReadStream('tests/data/meta.xml')
+      Body: fs.createReadStream('tests/data/meta.xml'),
     });
     const output = await postToCMR(newPayload);
     t.is(
@@ -385,7 +385,7 @@ test.serial('postToCMR identifies files with the new file schema', async (t) => 
   newPayload.input.granules[0].files = [{
     bucket: t.context.bucket,
     key: `path/${cmrFile.name}`,
-    fileName: cmrFile.name
+    fileName: cmrFile.name,
   }];
 
   sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
@@ -394,7 +394,7 @@ test.serial('postToCMR identifies files with the new file schema', async (t) => 
     await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: `path/${cmrFile.name}`,
-      Body: fs.createReadStream('tests/data/meta.xml')
+      Body: fs.createReadStream('tests/data/meta.xml'),
     });
     const output = await postToCMR(newPayload);
     t.is(
@@ -419,7 +419,7 @@ test.serial('postToCMR succeeds with launchpad authentication', async (t) => {
     await promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
     });
 
     const output = await postToCMR(newPayload);

@@ -20,7 +20,7 @@ const validateTokenResponse = {
   owner_auid: randomId('owner_auid'),
   session_maxtimeout: 3600,
   session_starttime: 1564067402,
-  status: 'success'
+  status: 'success',
 };
 const validUsername = randomId('user');
 
@@ -42,7 +42,7 @@ test.before(async () => {
   process.env.launchpad_passphrase_secret_name = randomId('launchpad-secret-name');
   await secretsManager().createSecret({
     Name: process.env.launchpad_passphrase_secret_name,
-    SecretString: randomId('launchpad-passphrase')
+    SecretString: randomId('launchpad-passphrase'),
   }).promise();
 
   await createBucket(process.env.system_bucket);
@@ -66,7 +66,7 @@ test.after.always(async () => {
 
   await secretsManager().deleteSecret({
     SecretId: process.env.launchpad_passphrase_secret_name,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
 });
 
@@ -91,7 +91,7 @@ test.serial('API request with a valid Launchpad token stores the access token', 
 test.serial('API request with an invalid Launchpad token returns a 403 unauthorized response', async (t) => {
   const tokenResponse = {
     message: 'Invalid access token',
-    status: 'failed'
+    status: 'failed',
   };
 
   const stub = sinon.stub(launchpad, 'validateLaunchpadToken')
@@ -148,7 +148,7 @@ test.serial('API request with an expired Launchpad token returns a 401 response'
   try {
     await accessTokenModel.create({
       accessToken: 'ValidAccessToken3',
-      expirationTime: moment().unix()
+      expirationTime: moment().unix(),
     });
 
     const response = await request(app)
@@ -166,7 +166,7 @@ test.serial('API request with an expired Launchpad token returns a 401 response'
 test.serial('API request returns a 403 unauthorized response when Launchpad validation response does not contain user group', async (t) => {
   const tokenResponse = {
     message: 'User not authorized',
-    status: 'failed'
+    status: 'failed',
   };
 
   const stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(tokenResponse);
@@ -203,7 +203,7 @@ test.serial('Non-Launchpad protected API explicitly disallows valid Launchpad to
 
 test.serial('API request with valid JWT returns 200 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    username: validUsername
+    username: validUsername,
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -220,7 +220,7 @@ test.serial('API request with valid JWT returns 200 response', async (t) => {
 test.serial('API request with expired JWT returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
     expirationTime: moment().unix(),
-    username: validUsername
+    username: validUsername,
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -236,7 +236,7 @@ test.serial('API request with expired JWT returns 401 response', async (t) => {
 
 test.serial('API request with invalid JWT returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    username: validUsername
+    username: validUsername,
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -256,7 +256,7 @@ test.serial('API request with invalid JWT returns 401 response', async (t) => {
 
 test.serial('API request with JWT and no corresponding token record returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    username: validUsername
+    username: validUsername,
   });
 
   const jwt = createJwtToken(accessTokenRecord);

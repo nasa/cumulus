@@ -32,7 +32,7 @@ class SftpProviderClient {
       port: get(this.providerConfig, 'port', 22),
       username: await this.getUsername(),
       password: await this.getPassword(),
-      privateKey: await this.getPrivateKey()
+      privateKey: await this.getPrivateKey(),
     });
 
     await this.privateSftpClient.connect(this.clientOptions);

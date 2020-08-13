@@ -28,33 +28,33 @@ const createPdrMessage = ({
   execution = randomId('execution'),
   providerId = 'prov1',
   stateMachine = randomId('stateMachine'),
-  status = 'running'
+  status = 'running',
 } = {}) => ({
   cumulus_meta: {
     state_machine: stateMachine,
     execution_name: execution,
-    workflow_start_time: createdAtTime
+    workflow_start_time: createdAtTime,
   },
   meta: {
     collection: deconstructCollectionId(collectionId),
     provider: {
       id: providerId,
       protocol: 's3',
-      host: 'random-bucket'
+      host: 'random-bucket',
     },
-    status
+    status,
   },
   payload: {
     completed: [
-      ...new Array(numCompletedExecutions)
+      ...new Array(numCompletedExecutions),
     ].map(() => randomId('execution')),
     failed: [
-      ...new Array(numFailedExecutions)
+      ...new Array(numFailedExecutions),
     ].map(() => randomId('execution')),
     running: [
-      ...new Array(numRunningExecutions)
-    ].map(() => randomId('execution'))
-  }
+      ...new Array(numRunningExecutions),
+    ].map(() => randomId('execution')),
+  },
 });
 
 test('generatePdrRecord() returns undefined if message.payload.pdr is not set', (t) => {
@@ -66,8 +66,8 @@ test('generatePdrRecord() returns undefined if message.payload.pdr is not set', 
 test('generatePdrRecord() throws error if message.payload.pdr.name is not set', (t) => {
   t.throws(() => pdrsModel.generatePdrRecord({
     payload: {
-      pdr: {}
-    }
+      pdr: {},
+    },
   }),
   { message: 'Could not find name on PDR object {}' });
 });
@@ -75,11 +75,11 @@ test('generatePdrRecord() throws error if message.payload.pdr.name is not set', 
 test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {
   const pdrName = randomId('pdr');
   const message = createPdrMessage({
-    numRunningExecutions: 3
+    numRunningExecutions: 3,
   });
 
   const pdr = {
-    name: pdrName
+    name: pdrName,
   };
 
   message.payload.pdr = pdr;
@@ -97,10 +97,10 @@ test('generatePdrRecord() sets correct progress value for partially complete PDR
   const message = createPdrMessage({
     numCompletedExecutions: 1,
     numFailedExecutions: 2,
-    numRunningExecutions: 3
+    numRunningExecutions: 3,
   });
   const pdr = {
-    name: pdrName
+    name: pdrName,
   };
 
   message.payload.pdr = pdr;
@@ -127,10 +127,10 @@ test('generatePdrRecord() generates a completed PDR record', async (t) => {
     collectionId,
     createdAtTime,
     providerId,
-    status
+    status,
   });
   const pdr = {
-    name: pdrName
+    name: pdrName,
   };
 
   message.payload.pdr = pdr;
@@ -161,11 +161,11 @@ test('generatePdrRecord() generates a failed PDR record', async (t) => {
     collectionId,
     createdAtTime,
     providerId,
-    status
+    status,
   });
 
   const pdr = {
-    name: pdrName
+    name: pdrName,
   };
 
   message.payload.pdr = pdr;
@@ -193,7 +193,7 @@ test('generatePdrRecord() sets PDR properties when included', async (t) => {
   const pdr = {
     name: pdrName,
     PANSent: true,
-    PANmessage
+    PANmessage,
   };
 
   message.payload.pdr = pdr;
@@ -219,11 +219,11 @@ test(
 
     const initialMsg = createPdrMessage({
       stateMachine,
-      status: 'completed'
+      status: 'completed',
     });
 
     initialMsg.payload.pdr = {
-      name: pdrName
+      name: pdrName,
     };
 
     await pdrsModel.storePdrFromCumulusMessage(initialMsg);
@@ -235,11 +235,11 @@ test(
     const newMsg = createPdrMessage({
       execution: exec2,
       stateMachine,
-      status: 'running'
+      status: 'running',
     });
 
     newMsg.payload.pdr = {
-      name: pdrName
+      name: pdrName,
     };
 
     await pdrsModel.storePdrFromCumulusMessage(newMsg);
@@ -261,11 +261,11 @@ test(
       execution,
       stateMachine,
       numCompletedExecutions: 3,
-      status: 'completed'
+      status: 'completed',
     });
 
     initialMsg.payload.pdr = {
-      name: pdrName
+      name: pdrName,
     };
 
     await pdrsModel.storePdrFromCumulusMessage(initialMsg);
@@ -277,11 +277,11 @@ test(
       execution,
       stateMachine,
       numRunningExecutions: 3,
-      status: 'running'
+      status: 'running',
     });
 
     newMsg.payload.pdr = {
-      name: pdrName
+      name: pdrName,
     };
 
     await pdrsModel.storePdrFromCumulusMessage(newMsg);
@@ -302,11 +302,11 @@ test('storePdrFromCumulusMessage overwrites a same-execution running status if p
       execution,
       numRunningExecutions: 5,
       stateMachine,
-      status: 'running'
+      status: 'running',
     });
 
     initialMsg.payload.pdr = {
-      name: pdrName
+      name: pdrName,
     };
 
     await pdrsModel.storePdrFromCumulusMessage(initialMsg);
@@ -319,11 +319,11 @@ test('storePdrFromCumulusMessage overwrites a same-execution running status if p
       numRunningExecutions: 1,
       numCompletedExecutions: 4,
       stateMachine,
-      status: 'running'
+      status: 'running',
     });
 
     newMsg.payload.pdr = {
-      name: pdrName
+      name: pdrName,
     };
 
     await pdrsModel.storePdrFromCumulusMessage(newMsg);

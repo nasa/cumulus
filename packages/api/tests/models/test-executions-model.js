@@ -18,18 +18,18 @@ test.beforeEach(async (t) => {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: t.context.executionName,
-      workflow_start_time: 123
+      workflow_start_time: 123,
     },
     meta: {
       status: 'running',
       collection: {
         name: 'my-name',
-        version: 'my-version'
-      }
+        version: 'my-version',
+      },
     },
     payload: {
-      value: 'my-payload'
-    }
+      value: 'my-payload',
+    },
   };
 
   t.context.executionArn = `arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:${t.context.executionName}`;
@@ -55,9 +55,9 @@ test('generateRecord() returns the correct record in the basic case', (t) => {
     timestamp: actualRecord.timestamp,
     updatedAt: actualRecord.updatedAt,
     originalPayload: {
-      value: 'my-payload'
+      value: 'my-payload',
     },
-    duration: 0
+    duration: 0,
   };
 
   t.deepEqual(actualRecord, expectedRecord);
@@ -66,7 +66,7 @@ test('generateRecord() returns the correct record in the basic case', (t) => {
 test('generateRecord() throws an exception if the execution ARN cannot be determined', (t) => {
   t.throws(
     () => Execution.generateRecord({
-      cumulus_meta: {}
+      cumulus_meta: {},
     })
   );
 });
@@ -149,14 +149,14 @@ test.serial('_getMutableFieldNames() returns correct fields for running status',
 
   const updatedItem = {
     arn: randomString(),
-    status: 'running'
+    status: 'running',
   };
 
   const updateFields = executionModel._getMutableFieldNames(updatedItem);
 
   // Fields are included even if not present in the item.
   t.deepEqual(updateFields, [
-    'createdAt', 'updatedAt', 'timestamp', 'originalPayload'
+    'createdAt', 'updatedAt', 'timestamp', 'originalPayload',
   ]);
 });
 
@@ -167,7 +167,7 @@ test.serial('_getMutableFieldNames() returns correct fields for completed status
     arn: randomString(),
     status: 'completed',
     name: 'execution-1',
-    finalPayload: { foo: 'bar' }
+    finalPayload: { foo: 'bar' },
   };
 
   const updateFields = executionModel._getMutableFieldNames(item);
@@ -189,7 +189,7 @@ test.serial('storeExecutionFromCumulusMessage() can be used to update a running 
   const {
     cumulusMessage,
     executionArn,
-    executionModel
+    executionModel,
   } = t.context;
 
   cumulusMessage.cumulus_meta.asyncOperationId = '1';
@@ -225,7 +225,7 @@ test.serial('storeExecutionFromCumulusMessage() can be used to update a complete
   const {
     cumulusMessage,
     executionArn,
-    executionModel
+    executionModel,
   } = t.context;
 
   await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);

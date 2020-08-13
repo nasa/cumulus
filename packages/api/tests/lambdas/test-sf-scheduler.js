@@ -13,9 +13,9 @@ const customQueueUrl = 'userDefinedQueueUrl';
 const fakeMessageResponse = {
   cumulus_meta: {
     queueExecutionLimits: {
-      [customQueueUrl]: 5
-    }
-  }
+      [customQueueUrl]: 5,
+    },
+  },
 };
 const scheduleEventTemplate = {
   collection: 'fakeCollection',
@@ -23,15 +23,15 @@ const scheduleEventTemplate = {
   cumulus_meta: {},
   payload: {},
   template: fakeMessageResponse,
-  definition: {}
+  definition: {},
 };
 const fakeCollection = {
   name: 'fakeCollection',
-  version: '000'
+  version: '000',
 };
 const fakeProvider = {
   id: 'fakeProviderId',
-  host: 'fakeHost'
+  host: 'fakeHost',
 };
 
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
@@ -93,7 +93,7 @@ test.serial('getCollection returns undefined when input is falsey', async (t) =>
 test.serial('getCollection returns collection when input is a valid collection name/version', async (t) => {
   const collectionInput = {
     name: fakeCollection.name,
-    version: fakeCollection.version
+    version: fakeCollection.version,
   };
 
   const response = await getCollection(collectionInput);
@@ -108,8 +108,8 @@ test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
-      version: fakeCollection.version
-    }
+      version: fakeCollection.version,
+    },
   };
   await schedule.handleScheduleEvent(scheduleInput);
 
@@ -129,8 +129,8 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
-      version: fakeCollection.version
-    }
+      version: fakeCollection.version,
+    },
   };
 
   await schedule.handleScheduleEvent(scheduleInput);

@@ -24,7 +24,7 @@ const loadConfigYmlFile = (stackName) => {
   return {
     ...ymlConfigs.default,
     ...stackConfig,
-    stackName
+    stackName,
   };
 };
 
@@ -50,7 +50,7 @@ const verifyRequiredEnvironmentVariables = () => {
     'EARTHDATA_CLIENT_PASSWORD',
     'EARTHDATA_PASSWORD',
     'EARTHDATA_USERNAME',
-    'TOKEN_SECRET'
+    'TOKEN_SECRET',
   ].forEach((x) => {
     if (isNil(process.env[x])) {
       throw new Error(`Environment variable "${x}" is not set.`);
@@ -74,5 +74,5 @@ const loadConfig = async () => {
 
 module.exports = {
   loadConfig,
-  loadYmlFile
+  loadYmlFile,
 };

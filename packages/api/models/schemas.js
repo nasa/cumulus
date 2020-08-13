@@ -10,25 +10,25 @@ module.exports.accessToken = {
     accessToken: {
       title: 'Access Token',
       description: 'The access token returned by the OAuth provider',
-      type: 'string'
+      type: 'string',
     },
     createdAt: { type: 'integer' },
     expirationTime: {
       description: 'The expiration time of the access token in milliseconds',
-      type: 'integer'
+      type: 'integer',
     },
     refreshToken: {
       title: 'Refresh Token',
       description: 'The refresh token returned by the OAuth provider',
-      type: 'string'
+      type: 'string',
     },
     updatedAt: { type: 'integer' },
     username: {
       title: 'Username',
       description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
-      type: 'string'
-    }
-  }
+      type: 'string',
+    },
+  },
 };
 
 // Async Operation record definition
@@ -44,19 +44,19 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Kinesis Replay', 'Reconciliation Report']
+      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Kinesis Replay', 'Reconciliation Report'],
     },
     output: {
       description: 'The result of the operation, stored as JSON',
-      type: 'string'
+      type: 'string',
     },
     status: {
       type: 'string',
-      enum: ['RUNNING', 'SUCCEEDED', 'RUNNER_FAILED', 'TASK_FAILED']
+      enum: ['RUNNING', 'SUCCEEDED', 'RUNNER_FAILED', 'TASK_FAILED'],
     },
     taskArn: { type: 'string' },
-    updatedAt: { type: 'integer' }
-  }
+    updatedAt: { type: 'integer' },
+  },
 };
 
 // Collection Record Definition
@@ -68,59 +68,59 @@ module.exports.collection = {
     name: {
       title: 'Name',
       description: 'Collection short_name registered with the CMR',
-      type: 'string'
+      type: 'string',
     },
     version: {
       title: 'Version',
       description: 'The version registered with the CMR.',
-      type: 'string'
+      type: 'string',
     },
     dataType: {
       title: 'DataType',
       description: 'This field is deprecated and unused',
-      type: 'string'
+      type: 'string',
     },
     process: {
       title: 'Process',
       description: 'Name of the docker process to be used, e.g. modis, aster',
-      type: 'string'
+      type: 'string',
     },
     url_path: {
       title: 'Url Path',
       description: 'The folder (url) used to save granules on S3 buckets',
-      type: 'string'
+      type: 'string',
     },
     duplicateHandling: {
       title: 'Duplicate Granule Handling',
       description: 'How to handle duplicate granules',
       type: 'string',
       enum: ['error', 'skip', 'replace', 'version'],
-      default: 'error'
+      default: 'error',
     },
     granuleId: {
       title: 'GranuleId Validation Regex',
       description: 'The regular expression used to validate the granule ID '
         + 'extracted from filenames according to the `granuleIdExtraction`',
-      type: 'string'
+      type: 'string',
     },
     granuleIdExtraction: {
       title: 'GranuleId Extraction Regex',
       description: 'The regular expression used to extract the granule ID from filenames. '
         + 'The first capturing group extracted from the filename by the regex'
         + 'will be used as the granule ID.',
-      type: 'string'
+      type: 'string',
     },
     reportToEms: {
       title: 'Report to EMS',
       description: 'Indicates whether the collection will be reported to EMS',
       type: 'boolean',
-      default: true
+      default: true,
     },
     sampleFileName: {
       title: 'Sample Filename',
       description: 'Is used to validate to test granule ID '
         + 'validation and extraction regexes against',
-      type: 'string'
+      type: 'string',
     },
     ignoreFilesConfigForDiscovery: {
       title: 'Ignore Files Configuration During Discovery',
@@ -130,7 +130,7 @@ module.exports.collection = {
         + " this collection's files config list.  When this property is"
         + ' specified on a task, it overrides the value set on a collection.'
         + ' Defaults to false.',
-      type: 'boolean'
+      type: 'boolean',
     },
     files: {
       title: 'Files',
@@ -142,61 +142,61 @@ module.exports.collection = {
           regex: {
             title: 'Regex',
             description: 'Regular expression used to identify the file',
-            type: 'string'
+            type: 'string',
           },
           sampleFileName: {
             title: 'Sample Filename',
             description: 'Filename used to validate the provided regular expression',
-            type: 'string'
+            type: 'string',
           },
           bucket: {
             title: 'Bucket',
             description: 'Bucket name used to store the file',
-            type: 'string'
+            type: 'string',
           },
           url_path: {
             title: 'Url Path',
             description: 'Folder used to save the granule in the bucket. '
               + 'Defaults to the collection url_path',
-            type: 'string'
+            type: 'string',
           },
           type: {
             title: 'File Type',
             description: 'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" type',
-            type: 'string'
+            type: 'string',
           },
           checksumFor: {
             title: 'Checksum-For Regex',
             description: 'Regex to identify the base file for which this files serves as a sidecar checksum file. Should be identical to the \'regex\' property of the base file',
-            type: 'string'
-          }
+            type: 'string',
+          },
         },
         required: [
           'regex',
           'sampleFileName',
-          'bucket'
-        ]
-      }
+          'bucket',
+        ],
+      },
     },
     createdAt: {
       type: 'integer',
-      readonly: true
+      readonly: true,
     },
     updatedAt: {
-      type: 'integer'
+      type: 'integer',
     },
     meta: {
       title: 'Optional MetaData for the Collection',
       type: 'object',
-      additionalProperties: true
+      additionalProperties: true,
     },
     tags: {
       title: 'Optional tags for search',
       type: 'array',
       items: {
-        type: 'string'
-      }
-    }
+        type: 'string',
+      },
+    },
   },
   required: [
     'name',
@@ -206,8 +206,8 @@ module.exports.collection = {
     'sampleFileName',
     'files',
     'createdAt',
-    'updatedAt'
-  ]
+    'updatedAt',
+  ],
 };
 
 module.exports.file = {
@@ -217,15 +217,15 @@ module.exports.file = {
     'bucket',
     'key',
     'createdAt',
-    'updatedAt'
+    'updatedAt',
   ],
   properties: {
     granuleId: { type: 'string' },
     bucket: { type: 'string' },
     key: { type: 'string' },
     createdAt: { type: 'integer' },
-    updatedAt: { type: 'integer' }
-  }
+    updatedAt: { type: 'integer' },
+  },
 };
 
 // Granule Record Schema
@@ -236,43 +236,43 @@ module.exports.granule = {
     granuleId: {
       title: 'Granule ID',
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     pdrName: {
       title: 'PDR associated with the granule',
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     collectionId: {
       title: 'Collection associated with the granule',
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     status: {
       title: 'Ingest status of the granule',
       enum: ['running', 'completed', 'failed'],
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     execution: {
       title: 'Step Function Execution link',
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     cmrLink: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     published: {
       type: 'boolean',
       default: false,
       description: 'shows whether the granule is published to CMR',
-      readonly: true
+      readonly: true,
     },
     duration: {
       title: 'Ingest duration',
       type: 'number',
-      readonly: true
+      readonly: true,
     },
     files: {
       title: 'Files',
@@ -288,56 +288,56 @@ module.exports.granule = {
           size: { type: 'integer' },
           fileName: { type: 'string' },
           source: { type: 'string' },
-          type: { type: 'string' }
-        }
-      }
+          type: { type: 'string' },
+        },
+      },
     },
     error: {
       type: 'object',
-      additionalProperties: true
+      additionalProperties: true,
     },
     productVolume: {
       type: 'number',
-      readonly: true
+      readonly: true,
     },
     timeToPreprocess: {
       type: 'number',
-      readonly: true
+      readonly: true,
     },
     beginningDateTime: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     endingDateTime: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     processingStartDateTime: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     processingEndDateTime: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     lastUpdateDateTime: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     timeToArchive: {
       type: 'number',
-      readonly: true
+      readonly: true,
     },
     productionDateTime: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     timestamp: { type: 'integer' },
     createdAt: { type: 'integer' },
     updatedAt: { type: 'integer' },
     dataType: { type: 'string' },
     version: { type: 'string' },
-    provider: { type: 'string' }
+    provider: { type: 'string' },
   },
   required: [
     'granuleId',
@@ -345,8 +345,8 @@ module.exports.granule = {
     'status',
     'execution',
     'createdAt',
-    'updatedAt'
-  ]
+    'updatedAt',
+  ],
 };
 
 // Reconciliation Report record
@@ -359,20 +359,20 @@ module.exports.reconciliationReport = {
     name: { type: 'string' },
     type: {
       type: 'string',
-      enum: ['Inventory']
+      enum: ['Inventory'],
     },
     status: {
       type: 'string',
-      enum: ['Generated', 'Pending', 'Failed']
+      enum: ['Generated', 'Pending', 'Failed'],
     },
     location: { type: 'string' },
     error: {
       type: 'object',
-      additionalProperties: true
+      additionalProperties: true,
     },
     createdAt: { type: 'integer' },
-    updatedAt: { type: 'integer' }
-  }
+    updatedAt: { type: 'integer' },
+  },
 };
 
 // Ingest Rule Record Schema
@@ -382,15 +382,15 @@ module.exports.rule = {
   properties: {
     name: {
       title: 'name',
-      type: 'string'
+      type: 'string',
     },
     workflow: {
       title: 'Workflow Name',
-      type: 'string'
+      type: 'string',
     },
     provider: {
       title: 'Provider ID',
-      type: 'string'
+      type: 'string',
     },
     collection: {
       title: 'Collection Name and Version',
@@ -398,14 +398,14 @@ module.exports.rule = {
       properties: {
         name: {
           title: 'Collection Name',
-          type: 'string'
+          type: 'string',
         },
         version: {
           title: 'Collection Version',
-          type: 'string'
-        }
+          type: 'string',
+        },
       },
-      required: ['name', 'version']
+      required: ['name', 'version'],
     },
     meta: {
       title: 'Optional MetaData for the Rule',
@@ -413,21 +413,21 @@ module.exports.rule = {
       properties: {
         retries: {
           description: 'Number of retries on errors, for sqs-type rule only. Default to 3.',
-          type: 'number'
+          type: 'number',
         },
         visibilityTimeout: {
           description: 'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only.  Default to the visibility timeout of the SQS queue when the rule is created.',
-          type: 'number'
-        }
+          type: 'number',
+        },
       },
-      additionalProperties: true
+      additionalProperties: true,
     },
     payload: {
-      title: 'Optional input payload to be used in onetime and scheduled rules'
+      title: 'Optional input payload to be used in onetime and scheduled rules',
     },
     queueUrl: {
       title: 'Optional queue URL used to schedule executions for this rule',
-      type: 'string'
+      type: 'string',
     },
     rule: {
       title: 'Ingest Rule',
@@ -435,49 +435,49 @@ module.exports.rule = {
       properties: {
         type: {
           type: 'string',
-          enum: ['onetime', 'scheduled', 'sns', 'kinesis', 'sqs']
+          enum: ['onetime', 'scheduled', 'sns', 'kinesis', 'sqs'],
         },
         // Value is multi-use.   For a kinesis rule this is the target stream arn, for
         // a scheduled event it's the schedule pattern (e.g. cron), for a one-time rule.
         value: {
-          type: 'string'
+          type: 'string',
         },
         // Kinesis scheduled event arn
         arn: {
           type: 'string',
-          readonly: true
+          readonly: true,
         },
         // Kinesis scheduled log event arn
         logEventArn: {
           type: 'string',
-          readonly: true
-        }
+          readonly: true,
+        },
       },
-      required: ['type']
+      required: ['type'],
     },
     state: {
       title: 'Rule state',
       type: 'string',
-      enum: ['ENABLED', 'DISABLED']
+      enum: ['ENABLED', 'DISABLED'],
     },
     createdAt: {
       type: 'integer',
-      readonly: true
+      readonly: true,
     },
     updatedAt: {
-      type: 'integer'
+      type: 'integer',
     },
     tags: {
       title: 'Optional tags for search',
       type: 'array',
       items: {
-        type: 'string'
-      }
-    }
+        type: 'string',
+      },
+    },
   },
   required: [
-    'name', 'workflow', 'rule', 'state', 'createdAt', 'updatedAt'
-  ]
+    'name', 'workflow', 'rule', 'state', 'createdAt', 'updatedAt',
+  ],
 };
 
 // PDR Record Schema
@@ -488,80 +488,80 @@ module.exports.pdr = {
     pdrName: {
       title: 'PDR Name',
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     collectionId: {
       title: 'Collection Name',
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     provider: {
       title: 'Provider Name',
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     status: {
       type: 'string',
       enum: ['running', 'failed', 'completed'],
-      readonly: true
+      readonly: true,
     },
     progress: {
       type: 'number',
-      readonly: true
+      readonly: true,
     },
     execution: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     PANSent: {
       type: 'boolean',
-      readonly: true
+      readonly: true,
     },
     PANmessage: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     stats: {
       type: 'object',
       readonly: true,
       properties: {
         total: {
-          type: 'number'
+          type: 'number',
         },
         completed: {
-          type: 'number'
+          type: 'number',
         },
         failed: {
-          type: 'number'
+          type: 'number',
         },
         processing: {
-          type: 'number'
-        }
-      }
+          type: 'number',
+        },
+      },
     },
     address: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     originalUrl: {
       type: 'string',
-      readonly: true
+      readonly: true,
     },
     timestamp: { type: 'integer' },
     duration: { type: 'number' },
     createdAt: {
       type: 'integer',
-      readonly: true
+      readonly: true,
     },
-    updatedAt: { type: 'integer' }
+    updatedAt: { type: 'integer' },
   },
   required: [
     'pdrName',
     'provider',
     'collectionId',
     'status',
-    'createdAt'
-  ]
+    'createdAt',
+  ],
 };
 
 // Provider Schema => the model keeps information about each ingest location
@@ -572,63 +572,63 @@ module.exports.provider = {
   properties: {
     id: {
       title: 'Provider Name',
-      type: 'string'
+      type: 'string',
     },
     globalConnectionLimit: {
       title: 'Concurrent Connection Limit',
-      type: 'integer'
+      type: 'integer',
     },
     protocol: {
       title: 'Protocol',
       type: 'string',
       enum: ['http', 'https', 'ftp', 'sftp', 's3'],
-      default: 'http'
+      default: 'http',
     },
     host: {
       title: 'Host',
-      type: 'string'
+      type: 'string',
     },
     port: {
       title: 'Port',
-      type: 'number'
+      type: 'number',
     },
     username: {
-      type: 'string'
+      type: 'string',
     },
     password: {
-      type: 'string'
+      type: 'string',
     },
     encrypted: {
       type: 'boolean',
-      readonly: true
+      readonly: true,
     },
     createdAt: {
       type: 'integer',
-      readonly: true
+      readonly: true,
     },
     updatedAt: {
       type: 'integer',
-      readonly: true
+      readonly: true,
     },
     privateKey: {
       type: 'string',
-      description: 'filename assumed to be in s3://bucketInternal/stackName/crypto'
+      description: 'filename assumed to be in s3://bucketInternal/stackName/crypto',
     },
     cmKeyId: {
       type: 'string',
-      description: 'AWS KMS Customer Master Key arn or alias'
+      description: 'AWS KMS Customer Master Key arn or alias',
     },
     certificateUri: {
       type: 'string',
-      description: 'Optional SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate'
-    }
+      description: 'Optional SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate',
+    },
   },
   required: [
     'id',
     'protocol',
     'host',
-    'createdAt'
-  ]
+    'createdAt',
+  ],
 };
 
 // Execution Schema => the model keeps information about each step function execution
@@ -639,63 +639,63 @@ module.exports.execution = {
   properties: {
     arn: {
       title: 'Execution arn (this field is unique)',
-      type: 'string'
+      type: 'string',
     },
     name: {
       title: 'Execution name',
-      type: 'string'
+      type: 'string',
     },
     execution: {
       title: 'The execution page url on AWS console',
-      type: 'string'
+      type: 'string',
     },
     error: {
       title: 'The error details in case of a failed execution',
       type: 'object',
-      additionalProperties: true
+      additionalProperties: true,
     },
     tasks: {
       type: 'object',
-      additionalProperties: true
+      additionalProperties: true,
     },
     type: {
       title: 'The workflow name, e.g. IngestGranule',
-      type: 'string'
+      type: 'string',
     },
     status: {
       title: 'the execution status',
       enum: ['running', 'completed', 'failed', 'unknown'],
-      type: 'string'
+      type: 'string',
     },
     createdAt: {
       type: 'integer',
-      readonly: true
+      readonly: true,
     },
     updatedAt: { type: 'integer' },
     timestamp: {
       type: 'number',
-      readonly: true
+      readonly: true,
     },
     originalPayload: {
       title: 'The original payload for this workflow',
       type: 'object',
-      additionalProperties: true
+      additionalProperties: true,
     },
     finalPayload: {
       title: 'The final payload of this workflow',
       type: 'object',
-      additionalProperties: true
+      additionalProperties: true,
     },
     collectionId: { type: 'string' },
     duration: { type: 'number' },
     parentArn: { type: 'string' },
-    asyncOperationId: { type: 'string' }
+    asyncOperationId: { type: 'string' },
   },
   required: [
     'arn',
     'name',
     'status',
     'createdAt',
-    'updatedAt'
-  ]
+    'updatedAt',
+  ],
 };

@@ -6,7 +6,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const {
   URL,
-  resolve
+  resolve,
 } = require('url');
 const mime = require('mime-types');
 
@@ -16,7 +16,7 @@ const {
   getS3Object,
   s3ObjectExists,
   parseS3Uri,
-  headObject
+  headObject,
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -24,7 +24,7 @@ const {
   addCollections,
   buildAndExecuteWorkflow,
   conceptExists,
-  getOnlineResources
+  getOnlineResources,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -33,7 +33,7 @@ const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
   getTEADistributionApiFileStream,
-  getTEARequestHeaders
+  getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
@@ -44,16 +44,16 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  templateFile
+  templateFile,
 } = require('../../helpers/testUtils');
 const {
-  setDistributionApiEnvVars
+  setDistributionApiEnvVars,
 } = require('../../helpers/apiUtils');
 const {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdPathAndCollection
+  loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
 const lambdaStep = new LambdaStep();
@@ -64,7 +64,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
 ];
 
 async function getUmmObject(fileLocation) {
@@ -140,13 +140,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     const providerData = {
       ...providerJson,
       id: provider.id,
-      host: config.bucket
+      host: config.bucket,
     };
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
+      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData }),
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -162,24 +162,24 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
             files: [
               {
                 bucket: config.buckets.protected.name,
-                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf`
+                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf`,
               },
               {
                 bucket: config.buckets.private.name,
-                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`
+                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`,
               },
               {
                 bucket: config.buckets.public.name,
-                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`
+                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`,
               },
               {
                 bucket: config.buckets['protected-2'].name,
-                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json`
-              }
-            ]
-          }
-        ]
-      }
+                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json`,
+              },
+            ],
+          },
+        ],
+      },
     });
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
@@ -200,7 +200,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       {
         cmrMetadataFormat: 'umm_json_v1_5',
         additionalUrls: [cumulusDocUrl],
-        distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
+        distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
       }
     );
   });
@@ -212,14 +212,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
-        collectionVersion: collection.version
+        collectionVersion: collection.version,
       }),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
+        granuleId: inputPayload.granules[0].granuleId,
+      }),
     ]);
   });
 
@@ -263,7 +263,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         ({
           ...fileObject,
           ...await headObject(fileObject.bucket, fileObject.filepath),
-          expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream'
+          expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream',
         })));
     });
 
@@ -310,10 +310,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
         [
           onlineResources,
-          teaRequestHeaders
+          teaRequestHeaders,
         ] = await Promise.all([
           getOnlineResourcesWithRetries(granule),
-          getTEARequestHeaders(config.stackName)
+          getTEARequestHeaders(config.stackName),
         ]);
 
         resourceURLs = onlineResources.map((resource) => resource.URL);
@@ -338,11 +338,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const browseFile = files.find((f) => f.filepath.endsWith('jpg'));
 
       const distributionUrl = getDistributionFileUrl({
-        bucket: scienceFile.bucket, key: scienceFile.filepath
+        bucket: scienceFile.bucket, key: scienceFile.filepath,
       });
 
       const s3BrowseImageUrl = getDistributionFileUrl({
-        bucket: browseFile.bucket, key: browseFile.filepath
+        bucket: browseFile.bucket, key: browseFile.filepath,
       });
 
       expect(resourceURLs).toContain(distributionUrl);
@@ -427,7 +427,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       destinations = [{
         regex: '.*.hdf$',
         bucket: config.buckets.protected.name,
-        filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
+        filepath: `${testDataFolder}/${path.dirname(file.filepath)}`,
       }];
 
       const originalUmm = await getUmmObject(newS3UMMJsonFileLocation);
@@ -438,7 +438,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        destinations
+        destinations,
       });
 
       expect(moveGranuleResponse.statusCode).toEqual(200);

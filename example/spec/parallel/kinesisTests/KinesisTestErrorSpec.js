@@ -14,7 +14,7 @@ const {
   addCollections,
   cleanupCollections,
   readJsonFilesFromDir,
-  setProcessEnvironment
+  setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 
 const {
@@ -25,14 +25,14 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForQueuedRecord
+  waitForQueuedRecord,
 } = require('../../helpers/kinesisHelpers');
 
 const {
   loadConfig,
   createTimestampedTestId,
   createTestSuffix,
-  createTestDataPath
+  createTestDataPath,
 } = require('../../helpers/testUtils');
 
 const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
@@ -70,7 +70,7 @@ describe('The messageConsumer receives a bad record.\n', () => {
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
       deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
-      deleteTestStream(streamName)
+      deleteTestStream(streamName),
     ]);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
   }
@@ -99,15 +99,15 @@ describe('The messageConsumer receives a bad record.\n', () => {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
       collection: {
         name: record.collection,
-        version: '000'
+        version: '000',
       },
-      provider: record.provider
+      provider: record.provider,
     };
 
     // populate collections, providers and test data
     await Promise.all([
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
     ]);
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;

@@ -39,7 +39,7 @@ export const encrypt = async (KeyId: string, Plaintext: string) => {
  */
 export const decryptBase64String = async (ciphertext: string) => {
   const { Plaintext } = await kms().decrypt({
-    CiphertextBlob: Buffer.from(ciphertext, 'base64')
+    CiphertextBlob: Buffer.from(ciphertext, 'base64'),
   }).promise();
 
   if (Plaintext === undefined) return undefined;

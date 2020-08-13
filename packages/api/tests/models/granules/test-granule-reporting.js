@@ -27,7 +27,7 @@ test('_validateAndStoreGranuleRecord() can be used to create a new running granu
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
-    status: 'running'
+    status: 'running',
   });
 
   await granuleModel._validateAndStoreGranuleRecord(granule);
@@ -70,7 +70,7 @@ test('_validateAndStoreGranuleRecord() can be used to update a completed granule
 
   const updatedGranule = {
     ...granule,
-    productVolume: 500
+    productVolume: 500,
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -91,7 +91,7 @@ test('_validateAndStoreGranuleRecord() can be used to update a failed granule', 
   const newError = { cause: 'fail' };
   const updatedGranule = {
     ...granule,
-    error: newError
+    error: newError,
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -111,7 +111,7 @@ test('_validateAndStoreGranuleRecord() will allow a completed status to replace 
 
   const updatedGranule = {
     ...granule,
-    status: 'completed'
+    status: 'completed',
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -130,7 +130,7 @@ test('_validateAndStoreGranuleRecord() will allow a failed status to replace a r
 
   const updatedGranule = {
     ...granule,
-    status: 'failed'
+    status: 'failed',
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -149,7 +149,7 @@ test('_validateAndStoreGranuleRecord() will not allow a running status to replac
 
   const updatedGranule = {
     ...granule,
-    status: 'running'
+    status: 'running',
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -168,7 +168,7 @@ test('_validateAndStoreGranuleRecord() will not allow a running status to replac
 
   const updatedGranule = {
     ...granule,
-    status: 'running'
+    status: 'running',
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -188,7 +188,7 @@ test('_validateAndStoreGranuleRecord() will allow a running status to replace a 
   const updatedGranule = {
     ...granule,
     execution: 'new-execution-url',
-    status: 'running'
+    status: 'running',
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -208,7 +208,7 @@ test('_validateAndStoreGranuleRecord() will allow a running status to replace a 
   const updatedGranule = {
     ...granule,
     execution: 'new-execution-url',
-    status: 'running'
+    status: 'running',
   };
 
   await granuleModel._validateAndStoreGranuleRecord(updatedGranule);
@@ -241,40 +241,40 @@ test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus me
 
   try {
     const granule1 = fakeGranuleFactoryV2({
-      files: [fakeFileFactory({ bucket })]
+      files: [fakeFileFactory({ bucket })],
     });
     const granule2 = fakeGranuleFactoryV2({
-      files: [fakeFileFactory({ bucket })]
+      files: [fakeFileFactory({ bucket })],
     });
 
     await Promise.all([
       S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' }),
-      S3.s3PutObject({ Bucket: bucket, Key: granule2.files[0].key, Body: 'asdf' })
+      S3.s3PutObject({ Bucket: bucket, Key: granule2.files[0].key, Body: 'asdf' }),
     ]);
 
     const cumulusMessage = {
       cumulus_meta: {
         execution_name: randomId('execution'),
         state_machine: 'state-machine',
-        workflow_start_time: Date.now()
+        workflow_start_time: Date.now(),
       },
       meta: {
         collection: {
           name: 'name',
-          version: '001'
+          version: '001',
         },
         provider: {
           host: 'example-bucket',
-          protocol: 's3'
+          protocol: 's3',
         },
-        status: 'completed'
+        status: 'completed',
       },
       payload: {
         granules: [
           granule1,
-          granule2
-        ]
-      }
+          granule2,
+        ],
+      },
     };
 
     await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);

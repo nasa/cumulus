@@ -5,7 +5,7 @@ const rewire = require('rewire');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -25,7 +25,7 @@ test.after.always(async () => {
 test.serial('retrievePrivateKey throws an error if they key does not exist', async (t) => {
   await t.throwsAsync(retrievePrivateKey(), {
     instanceOf: Error,
-    message: `ems-private.pem does not exist in S3 crypto directory: s3://${process.env.system_bucket}/${process.env.stackName}/crypto/ems-private.pem`
+    message: `ems-private.pem does not exist in S3 crypto directory: s3://${process.env.system_bucket}/${process.env.stackName}/crypto/ems-private.pem`,
   });
 });
 
@@ -35,7 +35,7 @@ test.serial('retrievePrivateKey retrieves private key in default location', asyn
   await s3PutObject({
     Bucket: process.env.system_bucket,
     Key: privateKeyPath,
-    Body: 'private-key'
+    Body: 'private-key',
   });
 
   const privateKey = await retrievePrivateKey();
@@ -54,13 +54,13 @@ test.serial('retrievePrivateKey retrieves private key in an alternate location',
     s3PutObject({
       Bucket: process.env.system_bucket,
       Key: privateKeyPath,
-      Body: 'private-key'
+      Body: 'private-key',
     }),
     s3PutObject({
       Bucket: process.env.system_bucket,
       Key: alternatePrivateKeyPath,
-      Body: 'alternate-private-key'
-    })
+      Body: 'alternate-private-key',
+    }),
   ]);
 
   const privateKey = await retrievePrivateKey();
@@ -69,7 +69,13 @@ test.serial('retrievePrivateKey retrieves private key in an alternate location',
 
   delete process.env.ems_privateKey;
   await Promise.all([
-    s3().deleteObject({ Bucket: process.env.system_bucket, Key: privateKeyPath }).promise(),
-    s3().deleteObject({ Bucket: process.env.system_bucket, Key: alternatePrivateKeyPath }).promise()
+    s3().deleteObject({
+      Bucket: process.env.system_bucket,
+      Key: privateKeyPath,
+    }).promise(),
+    s3().deleteObject({
+      Bucket: process.env.system_bucket,
+      Key: alternatePrivateKeyPath,
+    }).promise(),
   ]);
 });

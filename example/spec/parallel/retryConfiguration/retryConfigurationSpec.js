@@ -58,7 +58,7 @@ describe('When a task is configured', () => {
     const executions = await Promise.all([
       retryPassPromise,
       noRetryPromise,
-      retryFailPromise
+      retryFailPromise,
     ]);
 
     retryPassWorkflowExecution = executions[0];
@@ -70,7 +70,7 @@ describe('When a task is configured', () => {
 
     const lambdaExecutions = await Promise.all([
       retryPassLambdaExecutionsPromise,
-      retryFailLambdaExecutionsPromise
+      retryFailLambdaExecutionsPromise,
     ]);
 
     retryPassLambdaExecutions = lambdaExecutions[0];

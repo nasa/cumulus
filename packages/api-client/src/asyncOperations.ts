@@ -24,7 +24,7 @@ export const getAsyncOperation = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/asyncOperations/${asyncOperationId}`
-    }
+      path: `/asyncOperations/${asyncOperationId}`,
+    },
   });
 };

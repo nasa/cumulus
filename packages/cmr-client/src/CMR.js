@@ -16,7 +16,7 @@ const { ummVersion, validateUMMG } = require('./UmmUtils');
 const log = new Logger({ sender: 'cmr-client' });
 
 const logDetails = {
-  file: 'cmr-client/CMR.js'
+  file: 'cmr-client/CMR.js',
 };
 
 const IP_TIMEOUT_MS = 1 * 1000;
@@ -55,9 +55,9 @@ async function updateToken(cmrProvider, clientId, username, password) {
           password: password,
           client_id: clientId,
           user_ip_address: await userIpAddress(),
-          provider: cmrProvider
-        }
-      }
+          provider: cmrProvider,
+        },
+      },
     });
   } catch (error) {
     if (get(error, 'response.body.errors')) {
@@ -156,7 +156,7 @@ class CMR {
 
     const headers = {
       'Client-Id': this.clientId,
-      'Content-type': contentType
+      'Content-type': contentType,
     };
 
     if (params.token) headers['Echo-Token'] = params.token;
@@ -174,7 +174,7 @@ class CMR {
    */
   getReadHeaders(params = {}) {
     const headers = {
-      'Client-Id': this.clientId
+      'Client-Id': this.clientId,
     };
 
     if (params.token) headers['Echo-Token'] = params.token;
@@ -213,7 +213,7 @@ class CMR {
   async ingestUMMGranule(ummgMetadata) {
     const headers = this.getWriteHeaders({
       token: await this.getToken(),
-      ummgVersion: ummVersion(ummgMetadata)
+      ummgVersion: ummVersion(ummgMetadata),
     });
 
     const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
@@ -228,7 +228,7 @@ class CMR {
         {
           json: true,
           body: ummgMetadata,
-          headers
+          headers,
         }
       );
       if (response.body.errors) {
@@ -272,7 +272,7 @@ class CMR {
       previousResults: [],
       headers,
       format,
-      recursive
+      recursive,
     });
   }
 

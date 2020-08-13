@@ -1,7 +1,7 @@
 const log = require('@cumulus/common/log');
 
 const {
-  TokenUnauthorizedUserError
+  TokenUnauthorizedUserError,
 } = require('./errors');
 const { verifyJwtToken } = require('./token');
 const { isAuthorizedOAuthUser } = require('../app/auth');
@@ -34,5 +34,5 @@ async function verifyJwtAuthorization(requestJwtToken) {
 }
 
 module.exports = {
-  verifyJwtAuthorization
+  verifyJwtAuthorization,
 };

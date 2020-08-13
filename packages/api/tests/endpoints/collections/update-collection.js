@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../../models');
@@ -12,7 +12,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -89,13 +89,13 @@ test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user ret
 test('PUT replaces an existing collection', async (t) => {
   const originalCollection = fakeCollectionFactory({
     duplicateHandling: 'replace',
-    process: randomString()
+    process: randomString(),
   });
   await collectionModel.create(originalCollection);
 
   const updatedCollection = {
     ...originalCollection,
-    duplicateHandling: 'error'
+    duplicateHandling: 'error',
   };
 
   delete updatedCollection.process;
@@ -109,7 +109,7 @@ test('PUT replaces an existing collection', async (t) => {
 
   const fetchedCollection = await collectionModel.get({
     name: originalCollection.name,
-    version: originalCollection.version
+    version: originalCollection.version,
   });
 
   t.is(fetchedCollection.name, originalCollection.name);

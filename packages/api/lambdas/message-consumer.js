@@ -39,7 +39,7 @@ async function publishRecordToFallbackTopic(record) {
   log.info('record:', JSON.stringify(record));
   return sns().publish({
     TopicArn: fallbackArn,
-    Message: JSON.stringify(record)
+    Message: JSON.stringify(record),
   }).promise();
 }
 
@@ -113,7 +113,7 @@ function processRecord(record, fromSNS) {
     ruleParam = {
       type: originalMessageSource,
       ...lookupCollectionInEvent(eventObject),
-      sourceArn: get(record, 'Sns.TopicArn')
+      sourceArn: get(record, 'Sns.TopicArn'),
     };
   } else {
     // kinesis notification -  sns fallback or direct
@@ -131,7 +131,7 @@ function processRecord(record, fromSNS) {
       ruleParam = {
         type: originalMessageSource,
         ...lookupCollectionInEvent(eventObject),
-        sourceArn: get(parsed, 'eventSourceARN')
+        sourceArn: get(parsed, 'eventSourceARN'),
       };
     } catch (error) {
       log.error('Caught error parsing JSON:');
@@ -178,5 +178,5 @@ function handler(event, context, cb) {
 
 module.exports = {
   processRecord,
-  handler
+  handler,
 };

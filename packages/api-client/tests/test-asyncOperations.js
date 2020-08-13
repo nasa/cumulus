@@ -12,8 +12,8 @@ test('getAsyncOperation calls the callback with the expected object and returns 
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/asyncOperations/${asyncOperationId}`
-    }
+      path: `/asyncOperations/${asyncOperationId}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -25,7 +25,7 @@ test('getAsyncOperation calls the callback with the expected object and returns 
   const result = await asyncOperations.getAsyncOperation({
     prefix,
     asyncOperationId,
-    callback
+    callback,
   });
 
   t.deepEqual(JSON.parse(result.body), { foo: 'bar' });

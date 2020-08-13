@@ -14,7 +14,7 @@ const {
   promiseS3Upload,
   s3GetObjectTagging,
   s3TagSetToQueryString,
-  waitForObject
+  waitForObject,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
@@ -28,7 +28,7 @@ const { ummVersion } = require('@cumulus/cmr-client/UmmUtils');
 const {
   getUrl,
   xmlParseOptions,
-  ummVersionToMetadataFormat
+  ummVersionToMetadataFormat,
 } = require('./utils');
 
 function getS3KeyOfFile(file) {
@@ -90,7 +90,7 @@ function granuleToCmrFileObject(granule) {
       ...pick(file, 'etag'),
       // handle both new-style and old-style files model
       filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId: granule.granuleId
+      granuleId: granule.granuleId,
     }));
 }
 
@@ -128,7 +128,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: 'echo10',
-    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`
+    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`,
   };
 }
 
@@ -155,7 +155,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
-    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`
+    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`,
   };
 }
 
@@ -293,7 +293,7 @@ function getS3CredentialsObject(s3CredsUrl) {
     URL: s3CredsUrl,
     URLDescription: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
-    Type: 'VIEW RELATED INFORMATION'
+    Type: 'VIEW RELATED INFORMATION',
   };
 }
 
@@ -310,7 +310,7 @@ function mapCNMTypeToCMRType(type) {
     browse: 'GET RELATED VISUALIZATION',
     linkage: 'EXTENDED METADATA',
     metadata: 'EXTENDED METADATA',
-    qa: 'EXTENDED METADATA'
+    qa: 'EXTENDED METADATA',
   };
   if (!mapping[type]) {
     log.warn(`CNM Type ${type} invalid for mapping to UMM/ECHO10 type value, using GET DATA instead`);
@@ -323,7 +323,7 @@ async function generateFileUrl({
   file,
   distEndpoint,
   cmrGranuleUrlType = 'distribution',
-  distributionBucketMap
+  distributionBucketMap,
 }) {
   if (cmrGranuleUrlType === 'distribution') {
     const bucketPath = distributionBucketMap[file.bucket];
@@ -364,7 +364,7 @@ async function constructOnlineAccessUrl({
   distEndpoint,
   bucketTypes,
   cmrGranuleUrlType = 'distribution',
-  distributionBucketMap
+  distributionBucketMap,
 }) {
   const bucketType = bucketTypes[file.bucket];
   const distributionApiBuckets = ['protected', 'public'];
@@ -376,7 +376,7 @@ async function constructOnlineAccessUrl({
         URL: fileUrl,
         URLDescription: fileDescription, // used by ECHO10
         Description: fileDescription, // used by UMMG
-        Type: mapCNMTypeToCMRType(file.type) // used by UMMG
+        Type: mapCNMTypeToCMRType(file.type), // used by UMMG
       };
     }
   }
@@ -400,7 +400,7 @@ async function constructOnlineAccessUrls({
   distEndpoint,
   bucketTypes,
   cmrGranuleUrlType = 'distribution',
-  distributionBucketMap
+  distributionBucketMap,
 }) {
   if (cmrGranuleUrlType === 'distribution' && !distEndpoint) {
     throw new Error('cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
@@ -411,7 +411,7 @@ async function constructOnlineAccessUrls({
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
-    distributionBucketMap
+    distributionBucketMap,
   }));
   const urlList = await Promise.all(urlListPromises);
   return urlList.filter((urlObj) => urlObj);
@@ -436,7 +436,7 @@ async function constructRelatedUrls({
   bucketTypes,
   s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'distribution',
-  distributionBucketMap
+  distributionBucketMap,
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
@@ -445,7 +445,7 @@ async function constructRelatedUrls({
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
-    distributionBucketMap
+    distributionBucketMap,
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -469,7 +469,7 @@ function onlineAccessURLsToRemove(files, bucketTypes) {
 
       return [
         ...acc,
-        { URL: getS3KeyOfFile(file) }
+        { URL: getS3KeyOfFile(file) },
       ];
     },
     []
@@ -515,7 +515,7 @@ function mergeURLs(original, updated = [], removed = []) {
       // preferring all metadata from original except the new url.URL
       // and description
       const updatedMetadata = {
-        URL: url.URL
+        URL: url.URL,
       };
       if (url.Description) {
         updatedMetadata.Description = url.Description;
@@ -526,7 +526,7 @@ function mergeURLs(original, updated = [], removed = []) {
       return {
         ...url,
         ...matchedOriginal[0],
-        ...updatedMetadata
+        ...updatedMetadata,
       };
     }
     return url;
@@ -550,7 +550,7 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
     Key: getS3KeyOfFile(cmrFile),
     Body: JSON.stringify(metadataObject),
     Tagging: tagsQueryString,
-    ContentType: 'application/json'
+    ContentType: 'application/json',
   });
 }
 
@@ -575,14 +575,14 @@ async function updateUMMGMetadata({
   distEndpoint,
   bucketTypes,
   cmrGranuleUrlType = 'distribution',
-  distributionBucketMap
+  distributionBucketMap,
 }) {
   const newURLs = await constructRelatedUrls({
     files,
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
-    distributionBucketMap
+    distributionBucketMap,
   });
   const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
   const filename = getS3UrlOfFile(cmrFile);
@@ -617,7 +617,7 @@ async function getCmrSettings(cmrConfig = {}) {
 
   const cmrCredentials = {
     provider: cmrConfig.provider || process.env.cmr_provider,
-    clientId: cmrConfig.clientId || process.env.cmr_client_id
+    clientId: cmrConfig.clientId || process.env.cmr_client_id,
   };
 
   if (oauthProvider === 'launchpad') {
@@ -630,14 +630,14 @@ async function getCmrSettings(cmrConfig = {}) {
     const config = {
       passphrase,
       api: cmrConfig.api || process.env.launchpad_api,
-      certificate: cmrConfig.certificate || process.env.launchpad_certificate
+      certificate: cmrConfig.certificate || process.env.launchpad_certificate,
     };
 
     log.debug('cmrjs.getCreds getLaunchpadToken');
     const token = await launchpad.getLaunchpadToken(config);
     return {
       ...cmrCredentials,
-      token
+      token,
     };
   }
 
@@ -650,7 +650,7 @@ async function getCmrSettings(cmrConfig = {}) {
   return {
     ...cmrCredentials,
     password,
-    username: cmrConfig.username || process.env.cmr_username
+    username: cmrConfig.username || process.env.cmr_username,
   };
 }
 
@@ -682,7 +682,7 @@ async function uploadEcho10CMRFile(xml, cmrFile) {
     Key: getS3KeyOfFile(cmrFile),
     Body: xml,
     Tagging: tagsQueryString,
-    ContentType: 'application/xml'
+    ContentType: 'application/xml',
   });
 }
 /**
@@ -724,7 +724,7 @@ async function updateEcho10XMLMetadata({
   bucketTypes,
   s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'distribution',
-  distributionBucketMap
+  distributionBucketMap,
 }) {
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -745,7 +745,7 @@ async function updateEcho10XMLMetadata({
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
-    distributionBucketMap
+    distributionBucketMap,
   });
   newURLs.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
@@ -791,7 +791,7 @@ async function updateCMRMetadata({
   published,
   bucketTypes,
   cmrGranuleUrlType = 'distribution',
-  distributionBucketMap
+  distributionBucketMap,
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
@@ -804,7 +804,7 @@ async function updateCMRMetadata({
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
-    distributionBucketMap
+    distributionBucketMap,
   };
 
   let metadataObject;
@@ -823,7 +823,7 @@ async function updateCMRMetadata({
     const cmrPublishObject = {
       filename,
       metadataObject,
-      granuleId
+      granuleId,
     };
 
     return { ...await publish2CMR(cmrPublishObject, cmrCredentials), etag };
@@ -851,7 +851,7 @@ async function reconcileCMRMetadata({
   distEndpoint,
   published,
   distributionBucketMap,
-  bucketTypes
+  bucketTypes,
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
@@ -862,7 +862,7 @@ async function reconcileCMRMetadata({
       distEndpoint,
       published,
       distributionBucketMap,
-      bucketTypes
+      bucketTypes,
     });
   }
   if (cmrMetadataFiles.length > 1) {
@@ -890,7 +890,7 @@ async function getGranuleTemporalInfo(granule) {
     const productionDateTime = get(metadata.Granule, 'DataGranule.ProductionDateTime');
     const lastUpdateDateTime = metadata.Granule.LastUpdate || metadata.Granule.InsertTime;
     return {
-      beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime
+      beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime,
     };
   }
   if (isUMMGFile(cmrFilename)) {
@@ -904,7 +904,7 @@ async function getGranuleTemporalInfo(granule) {
     }
     const lastUpdateDateTime = updateDate[0].Date;
     return {
-      beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime
+      beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime,
     };
   }
   return {};
@@ -927,5 +927,5 @@ module.exports = {
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
-  updateCMRMetadata
+  updateCMRMetadata,
 };

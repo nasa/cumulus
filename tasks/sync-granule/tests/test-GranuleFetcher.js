@@ -17,9 +17,9 @@ test.before((t) => {
     version: 'testVersion',
     files: [
       {
-        regex: '^[A-Z]|[a-z]+\.txt'
-      }
-    ]
+        regex: '^[A-Z]|[a-z]+\.txt',
+      },
+    ],
   };
 });
 
@@ -28,14 +28,14 @@ test.beforeEach(async (t) => {
   t.context.destBucket = randomId('dest-bucket');
   await Promise.all([
     s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.destBucket }).promise()
+    s3().createBucket({ Bucket: t.context.destBucket }).promise(),
   ]);
 });
 
 test.afterEach(async (t) => {
   await Promise.all([
     S3.recursivelyDeleteS3Bucket(t.context.internalBucket),
-    S3.recursivelyDeleteS3Bucket(t.context.destBucket)
+    S3.recursivelyDeleteS3Bucket(t.context.destBucket),
   ]);
 });
 
@@ -64,12 +64,12 @@ test('findCollectionFileConfigForFile returns the correct config', (t) => {
   const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right-bucket' };
   const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
   const collectionConfig = {
-    files: [rightCollectionFileConfig, wrongCollectionFileConfig]
+    files: [rightCollectionFileConfig, wrongCollectionFileConfig],
   };
 
   const testGranule = new GranuleFetcher({
     collection: collectionConfig,
-    provider: { protocol: 's3', host: 'some-bucket' }
+    provider: { protocol: 's3', host: 'some-bucket' },
   });
 
   const file = { name: 'right-file' };
@@ -81,12 +81,12 @@ test('findCollectionFileConfigForFile returns the correct config', (t) => {
 test('findCollectionFileConfigForFile returns undefined if no config matches', (t) => {
   const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
   const collectionConfig = {
-    files: [wrongCollectionFileConfig]
+    files: [wrongCollectionFileConfig],
   };
 
   const testGranule = new GranuleFetcher({
     collection: collectionConfig,
-    provider: { protocol: 's3', host: 'some-bucket' }
+    provider: { protocol: 's3', host: 'some-bucket' },
   });
 
   const file = { name: 'right-file' };
@@ -99,19 +99,19 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
   const buckets = {
     private: {
       name: 'private-bucket',
-      type: 'private'
-    }
+      type: 'private',
+    },
   };
 
   const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
   const collectionConfig = {
-    files: [wrongCollectionFileConfig]
+    files: [wrongCollectionFileConfig],
   };
 
   const testGranule = new GranuleFetcher({
     buckets,
     collection: collectionConfig,
-    provider: { protocol: 's3', host: 'some-bucket' }
+    provider: { protocol: 's3', host: 'some-bucket' },
   });
 
   const file = { name: 'right-file' };
@@ -119,7 +119,7 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
   t.throws(
     () => testGranule.addBucketToFile(file),
     {
-      message: 'Unable to update file. Cannot find file config for file right-file'
+      message: 'Unable to update file. Cannot find file config for file right-file',
     }
   );
 });
@@ -128,24 +128,24 @@ test('addBucketToFile adds the correct bucket when a config is found', (t) => {
   const buckets = {
     private: {
       name: 'private-bucket',
-      type: 'private'
+      type: 'private',
     },
     right: {
       name: 'right-bucket',
-      type: 'private'
-    }
+      type: 'private',
+    },
   };
 
   const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right' };
   const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong' };
   const collectionConfig = {
-    files: [rightCollectionFileConfig, wrongCollectionFileConfig]
+    files: [rightCollectionFileConfig, wrongCollectionFileConfig],
   };
 
   const testGranule = new GranuleFetcher({
     buckets,
     collection: collectionConfig,
-    provider: { protocol: 's3', host: 'some-bucket' }
+    provider: { protocol: 's3', host: 'some-bucket' },
   });
 
   const file = { name: 'right-file' };
@@ -159,7 +159,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
 
   const file = {
     path: randomString(),
-    name: 'test.txt'
+    name: 'test.txt',
   };
   const key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString() };
@@ -172,7 +172,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
     collection: collectionConfig,
     provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
@@ -192,7 +192,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
 
   const file = {
     path: '',
-    name: 'test.txt'
+    name: 'test.txt',
   };
 
   const Key = S3.s3Join(file.path, file.name);
@@ -205,7 +205,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     collection: collectionConfig,
     provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   // This test needs to use a unique bucket for each test (or remove the object
@@ -219,7 +219,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     () => testGranule.ingestFile(file, destBucket, duplicateHandling),
     {
       instanceOf: errors.DuplicateFile,
-      message: `${destFileKey} already exists in ${destBucket} bucket`
+      message: `${destFileKey} already exists in ${destBucket} bucket`,
     }
   );
 });
@@ -229,7 +229,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
 
   const file = {
     path: randomString(),
-    name: 'test.txt'
+    name: 'test.txt',
   };
   const key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
@@ -241,7 +241,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
     collection: collectionConfig,
     provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
@@ -264,7 +264,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
 
   const file = {
     path: randomString(),
-    name: 'test.txt'
+    name: 'test.txt',
   };
   const key = S3.s3Join(file.path, file.name);
   const params = { Bucket: internalBucket, Key: key, Body: randomString(30) };
@@ -276,7 +276,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
     collection: collectionConfig,
     provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
@@ -301,7 +301,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     path: '',
     name: 'test.txt',
     checksumType: 'md5',
-    checksum: 'badchecksum'
+    checksum: 'badchecksum',
   };
 
   const Key = S3.s3Join(file.path, file.name);
@@ -314,7 +314,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     collection: collectionConfig,
     provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   const stagingPath = S3.s3Join(testGranule.fileStagingDir, testGranule.collectionId);
@@ -326,7 +326,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     () => testGranule.ingestFile(file, destBucket, duplicateHandling),
     {
       instanceOf: errors.InvalidChecksum,
-      message: `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name} with type ${file.checksumType} and expected sum ${file.checksum}`
+      message: `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name} with type ${file.checksumType} and expected sum ${file.checksum}`,
     }
   );
 });
@@ -337,7 +337,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
   const file = {
     path: '',
     name: 'test.txt',
-    size: 123456789
+    size: 123456789,
   };
 
   const Key = S3.s3Join(file.path, file.name);
@@ -350,7 +350,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
     collection: collectionConfig,
     provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   // This test needs to use a unique bucket for each test (or remove the object
@@ -360,7 +360,7 @@ test('ingestFile throws an error when no checksum is provided and the size is no
     () => testGranule.ingestFile(file, destBucket, duplicateHandling),
     {
       instanceOf: errors.UnexpectedFileSize,
-      message: `verifyFile ${file.name} failed: Actual file size ${params.Body.length} did not match expected file size ${file.size}`
+      message: `verifyFile ${file.name} failed: Actual file size ${params.Body.length} did not match expected file size ${file.size}`,
     }
   );
 });
@@ -375,7 +375,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
     name: 'test.txt',
     checksumType: 'md5',
     checksum: '661f8009fa8e56a9d0e94a0a644397d7',
-    size: content.length
+    size: content.length,
   };
 
   const Key = S3.s3Join(file.path, file.name);
@@ -388,7 +388,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
     collection: collectionConfig,
     provider: { protocol: 's3', host: internalBucket },
     fileStagingDir,
-    duplicateHandling
+    duplicateHandling,
   });
 
   const [type, value] = await testGranule.verifyFile(file, internalBucket, Key);
@@ -401,12 +401,12 @@ test("getUrlPath() returns the collection's url_path if there are no matching co
 
   const collectionConfig = {
     url_path: 'collection-url-path',
-    files: []
+    files: [],
   };
 
   const granuleFetcher = new GranuleFetcher({
     collection: collectionConfig,
-    provider
+    provider,
   });
 
   const file = { name: 'asdf' };
@@ -421,13 +421,13 @@ test("getUrlPath() returns the collection file config's url_path if there is one
     url_path: 'collection-url-path',
     files: [{
       regex: /sd/,
-      url_path: 'file-url-path'
-    }]
+      url_path: 'file-url-path',
+    }],
   };
 
   const granuleFetcher = new GranuleFetcher({
     collection: collectionConfig,
-    provider
+    provider,
   });
 
   const file = { name: 'asdf' };
@@ -441,13 +441,13 @@ test("getUrlPath() returns the collection's url_path if there is a matching coll
   const collectionConfig = {
     url_path: 'collection-url-path',
     files: [{
-      regex: /sd/
-    }]
+      regex: /sd/,
+    }],
   };
 
   const granuleFetcher = new GranuleFetcher({
     collection: collectionConfig,
-    provider
+    provider,
   });
 
   const file = { name: 'asdf' };
@@ -464,26 +464,26 @@ test('addChecksumsToFiles adds checksums correctly if checksumFor is defined', a
     name: 'testName',
     version: 'testVersion',
     files: [{
-      regex: dataFileRegex
+      regex: dataFileRegex,
     },
     {
       regex: '.*\.md5',
-      checksumFor: dataFileRegex
-    }]
+      checksumFor: dataFileRegex,
+    }],
   };
 
   const fetcher = new GranuleFetcher({
     collection: collectionConfig,
-    provider
+    provider,
   });
 
   const dataFile = {
     name: 'dataFile.hdf',
-    path: ''
+    path: '',
   };
   const checksumFile = {
     name: 'dataChecksum.md5',
-    path: ''
+    path: '',
   };
 
   const files = [dataFile, checksumFile];
@@ -499,7 +499,7 @@ test('addChecksumsToFiles adds checksums correctly if checksumFor is defined', a
     {
       ...dataFile,
       checksumType: 'md5',
-      checksum: fakeChecksum
+      checksum: fakeChecksum,
     }
   );
 });
@@ -513,25 +513,25 @@ test('addChecksumsToFiles falls back to dataFileExt.checksumExt assumption if ch
     name: 'testName',
     version: 'testVersion',
     files: [{
-      regex: dataFileRegex
+      regex: dataFileRegex,
     },
     {
-      regex: '.*\.md5'
-    }]
+      regex: '.*\.md5',
+    }],
   };
 
   const fetcher = new GranuleFetcher({
     collection: collectionConfig,
-    provider
+    provider,
   });
 
   const dataFile = {
     name: 'dataFile.hdf',
-    path: ''
+    path: '',
   };
   const checksumFile = {
     name: 'dataFile.hdf.md5',
-    path: ''
+    path: '',
   };
 
   const files = [dataFile, checksumFile];
@@ -547,7 +547,7 @@ test('addChecksumsToFiles falls back to dataFileExt.checksumExt assumption if ch
     {
       ...dataFile,
       checksumType: 'md5',
-      checksum: fakeChecksum
+      checksum: fakeChecksum,
     }
   );
 });
@@ -561,26 +561,26 @@ test('addChecksumsToFiles throws an error if no file matches the checksumFor con
     name: 'testName',
     version: 'testVersion',
     files: [{
-      regex: '.*\.hdf'
+      regex: '.*\.hdf',
     },
     {
       regex: '.*\.md5',
-      checksumFor
-    }]
+      checksumFor,
+    }],
   };
 
   const fetcher = new GranuleFetcher({
     collection: collectionConfig,
-    provider
+    provider,
   });
 
   const dataFile = {
     name: 'dataFile.hdf',
-    path: ''
+    path: '',
   };
   const checksumFile = {
     name: 'dataFile.md5',
-    path: ''
+    path: '',
   };
 
   const files = [dataFile, checksumFile];
@@ -589,7 +589,7 @@ test('addChecksumsToFiles throws an error if no file matches the checksumFor con
     () => fetcher.addChecksumsToFiles(files),
     {
       instanceOf: errors.FileNotFound,
-      message: `Could not find file to match ${checksumFile.name} checksumFor ${checksumFor}`
+      message: `Could not find file to match ${checksumFile.name} checksumFor ${checksumFor}`,
     }
   );
 });

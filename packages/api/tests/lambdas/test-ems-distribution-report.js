@@ -8,12 +8,12 @@ const test = require('ava');
 const {
   parseS3Uri,
   recursivelyDeleteS3Bucket,
-  s3Join
+  s3Join,
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  bucketsPrefixes, generateAndStoreDistributionReport, generateAndStoreReportsForEachDay
+  bucketsPrefixes, generateAndStoreDistributionReport, generateAndStoreReportsForEachDay,
 } = require('../../lambdas/ems-distribution-report');
 const models = require('../../models');
 const { fakeCollectionFactory, fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
@@ -33,47 +33,47 @@ const createGranule = async (granule) => {
 const collections = [
   fakeCollectionFactory({
     name: 'MYD13Q1',
-    version: '006'
+    version: '006',
   }),
   fakeCollectionFactory({
     name: 'MOD14A1',
     version: '006',
-    reportToEms: false
+    reportToEms: false,
   })];
 
 function fakeGranules() {
   const granules = [
     fakeGranuleFactoryV2({ collectionId: 'MYD13Q1___006' }),
-    fakeGranuleFactoryV2({ collectionId: 'MOD14A1___006' })
+    fakeGranuleFactoryV2({ collectionId: 'MOD14A1___006' }),
   ];
 
   granules[0].files = [
     fakeFileFactory({
       bucket: 'my-dist-bucket',
       key: 'my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf',
-      type: 'data'
+      type: 'data',
     }),
     fakeFileFactory({
       bucket: 'my-dist-bucket',
       key: 'my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.cmr.xml',
-      type: 'metadata'
+      type: 'metadata',
     }),
     fakeFileFactory({
       bucket: 'my-public-dist-bucket',
-      key: 'my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg'
-    })
+      key: 'my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg',
+    }),
   ];
 
   granules[1].files = [
     fakeFileFactory({
       bucket: 'my-dist-bucket2',
       key: 'MOD14A1___006/MOD/MOD14A1.A2739327.duVbLT.006.3445346596432_ndvi.jpg',
-      type: 'browse'
+      type: 'browse',
     }),
     fakeFileFactory({
       bucket: 'my-dist-bucket2',
-      key: 'MOD14A1___006/2017/MOD/MOD14A1.A0511093.PzaAbP.006.7020516472140.hdf'
-    })
+      key: 'MOD14A1___006/2017/MOD/MOD14A1.A0511093.PzaAbP.006.7020516472140.hdf',
+    }),
   ];
   return granules;
 }
@@ -117,7 +117,7 @@ test.beforeEach(async (t) => {
     `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
     `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.cmr.xml|&|807|&|F|&|MYD13Q1|&|006|&|${myd13GranId}|&|METADATA|&|HTTPS`,
     `01-JUN-81 01:35:13 PM|&|fake|&|192.0.2.7|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
-    `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`
+    `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`,
   ];
 
   await pMap(granules, createGranule);
@@ -133,7 +133,7 @@ test.beforeEach(async (t) => {
     awsServices.s3().putObject({
       Bucket: logsBucket,
       Key: s3Join([logsPrefix, `${randomString()}.log`]),
-      Body: serverLog
+      Body: serverLog,
     }).promise()));
 });
 
@@ -141,7 +141,7 @@ test.afterEach.always(async (t) => {
   await Promise.all([
     GranuleFilesCache.deleteCacheTable(),
     t.context.granuleModel.deleteTable(),
-    t.context.collectionModel.deleteTable()
+    t.context.collectionModel.deleteTable(),
   ]);
   await recursivelyDeleteS3Bucket(t.context.internalBucket);
 });
@@ -158,7 +158,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   // Fetch the distribution report from S3
   const getObjectResponse = await awsServices.s3().getObject({
     Bucket: reportsBucket,
-    Key: parseS3Uri(report.file).Key
+    Key: parseS3Uri(report.file).Key,
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -176,7 +176,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   await awsServices.s3().putObject({
     Bucket: reportsBucket,
     Key: s3Join([reportsPrefix, reportName]),
-    Body: 'my report'
+    Body: 'my report',
   }).promise();
 
   // Generate the distribution report
@@ -185,7 +185,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   // Fetch the distribution report from S3
   const getObjectResponse = await awsServices.s3().getObject({
     Bucket: reportsBucket,
-    Key: s3Join([reportsPrefix, `${reportName}.rev1`])
+    Key: s3Join([reportsPrefix, `${reportName}.rev1`]),
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -205,13 +205,13 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
     awsServices.s3().putObject({
       Bucket: reportsBucket,
       Key: s3Join([reportsPrefix, reportName]),
-      Body: 'my report'
+      Body: 'my report',
     }).promise(),
     awsServices.s3().putObject({
       Bucket: reportsBucket,
       Key: s3Join([reportsPrefix, `${reportName}.rev1`]),
-      Body: 'my report'
-    }).promise()
+      Body: 'my report',
+    }).promise(),
   ]);
 
   // Generate the distribution report
@@ -220,7 +220,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   // Fetch the distribution report from S3
   const getObjectResponse = await awsServices.s3().getObject({
     Bucket: reportsBucket,
-    Key: s3Join([reportsPrefix, `${reportName}.rev2`])
+    Key: s3Join([reportsPrefix, `${reportName}.rev2`]),
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -247,11 +247,11 @@ test.serial('emsDistributionReport writes multiple reports when report spans mul
       `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.cmr.xml|&|807|&|F|&|MYD13Q1|&|006|&|${myd13GranId}|&|METADATA|&|HTTPS`,
       `01-JUN-81 01:35:13 PM|&|fake|&|192.0.2.7|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
       `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`,
-      `01-JUN-81 04:02:13 PM|&|amurray|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`
+      `01-JUN-81 04:02:13 PM|&|amurray|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
     ],
     [
-      `02-JUN-81 12:02:13 AM|&|mike|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`
-    ]
+      `02-JUN-81 12:02:13 AM|&|mike|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
+    ],
   ];
 
   // Fetch the distribution reports from S3
@@ -259,7 +259,7 @@ test.serial('emsDistributionReport writes multiple reports when report spans mul
     reports.map(async (report) => {
       const getObjectResponse = await awsServices.s3().getObject({
         Bucket: reportsBucket,
-        Key: parseS3Uri(report.file).Key
+        Key: parseS3Uri(report.file).Key,
       }).promise();
       return getObjectResponse.Body.toString().split('\n');
     })

@@ -10,7 +10,7 @@ const bucketConfig = {
   protected: { type: 'protected', name: 'a-protected-bucket' },
   shared: { type: 'shared', name: 'a-shared-bucket' },
   internal: { type: 'internal', name: 'an-internal-bucket' },
-  public2: { type: 'public', name: 'a-second-public-bucket' }
+  public2: { type: 'public', name: 'a-second-public-bucket' },
 };
 
 const sortByName = (a, b) => (a.name < b.name ? -1 : 1);
@@ -54,7 +54,7 @@ test('bucket object are found by bucketName', (t) => {
   const Bucket = new BucketsConfig(bucketConfig);
   const expected = {
     type: 'internal',
-    name: 'an-internal-bucket'
+    name: 'an-internal-bucket',
   };
 
   const actual = Bucket.bucket(bucketName);
@@ -86,7 +86,7 @@ test('bucketsOfType returns a list of buckets of desired type with string input'
   const Bucket = new BucketsConfig(bucketConfig);
   const expected = [
     { type: 'public', name: 'a-public-bucket' },
-    { type: 'public', name: 'a-second-public-bucket' }
+    { type: 'public', name: 'a-second-public-bucket' },
   ];
 
   const actual = Bucket.bucketsOfType(testType);
@@ -101,7 +101,7 @@ test('bucketsOfType returns protected and private buckets with array input', (t)
   const expected = [
     { type: 'public', name: 'a-public-bucket' },
     { type: 'public', name: 'a-second-public-bucket' },
-    { type: 'protected', name: 'a-protected-bucket' }
+    { type: 'protected', name: 'a-protected-bucket' },
   ];
 
   const actual = Bucket.bucketsOfType(testTypes);

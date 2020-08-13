@@ -33,12 +33,12 @@ async function waitForModelStatus(model, params, status) {
       return record;
     },
     {
-      maxTimeout: 60 * 1000
+      maxTimeout: 60 * 1000,
     }
   );
 }
 
 module.exports = {
   setDistributionApiEnvVars,
-  waitForModelStatus
+  waitForModelStatus,
 };

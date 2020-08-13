@@ -6,14 +6,14 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 const {
-  constructCollectionId
+  constructCollectionId,
 } = require('@cumulus/message/Collections');
 
 const { AssociatedRulesError } = require('../../lib/errors');
 const { Collection, Manager, Rule } = require('../../models');
 const {
   fakeCollectionFactory,
-  fakeRuleFactoryV2
+  fakeRuleFactoryV2,
 } = require('../../lib/testUtils');
 
 let collectionsModel;
@@ -42,7 +42,7 @@ test.after.always(async () => {
 test.serial('Collection.create() throws InvalidRegexError for invalid granuleIdExtraction', async (t) => {
   await t.throwsAsync(
     collectionsModel.create(fakeCollectionFactory({
-      granuleIdExtraction: '*'
+      granuleIdExtraction: '*',
     })),
     { instanceOf: InvalidRegexError }
   );
@@ -52,7 +52,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching gra
   await t.throwsAsync(
     collectionsModel.create(fakeCollectionFactory({
       granuleIdExtraction: '(1234)',
-      sampleFileName: 'abcd'
+      sampleFileName: 'abcd',
     })),
     { instanceOf: UnmatchedRegexError }
   );
@@ -62,7 +62,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for granuleIdExtract
   await t.throwsAsync(
     collectionsModel.create(fakeCollectionFactory({
       granuleIdExtraction: '1234',
-      sampleFileName: '1234'
+      sampleFileName: '1234',
     })),
     { instanceOf: UnmatchedRegexError }
   );
@@ -71,7 +71,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for granuleIdExtract
 test.serial('Collection.create() throws InvalidRegexError for invalid granuleId regex', async (t) => {
   await t.throwsAsync(
     collectionsModel.create(fakeCollectionFactory({
-      granuleId: '*'
+      granuleId: '*',
     })),
     { instanceOf: InvalidRegexError }
   );
@@ -82,7 +82,7 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching gra
     collectionsModel.create(fakeCollectionFactory({
       granuleIdExtraction: '(1234)',
       sampleFileName: '1234',
-      granuleId: 'abcd'
+      granuleId: 'abcd',
     })),
     { instanceOf: UnmatchedRegexError }
   );
@@ -94,8 +94,8 @@ test.serial('Collection.create() throws InvalidRegexError for invalid file.regex
       files: [{
         bucket: 'bucket',
         regex: '*',
-        sampleFileName: 'filename'
-      }]
+        sampleFileName: 'filename',
+      }],
     })),
     { instanceOf: InvalidRegexError }
   );
@@ -107,8 +107,8 @@ test.serial('Collection.create() throws UnmatchedRegexError for non-matching fil
       files: [{
         bucket: 'bucket',
         regex: '^1234$',
-        sampleFileName: 'filename'
-      }]
+        sampleFileName: 'filename',
+      }],
     })),
     { instanceOf: UnmatchedRegexError }
   );
@@ -121,12 +121,12 @@ test.serial('Collection.create() throws UnmatchedRegexError for unmatched file.c
         bucket: 'bucket',
         regex: '^.*$',
         sampleFileName: 'filename',
-        checksumFor: '^1234$'
-      }]
+        checksumFor: '^1234$',
+      }],
     })),
     {
       instanceOf: UnmatchedRegexError,
-      message: 'checksumFor \'^1234$\' does not match any file regex'
+      message: 'checksumFor \'^1234$\' does not match any file regex',
     }
   );
 });
@@ -137,23 +137,23 @@ test.serial('Collection.create() throws InvalidRegexError for file.checksumFor m
       files: [{
         bucket: 'bucket',
         regex: '^.*$',
-        sampleFileName: 'filename'
+        sampleFileName: 'filename',
       },
       {
         bucket: 'bucket',
         regex: '^.*$',
-        sampleFileName: 'filename2'
+        sampleFileName: 'filename2',
       },
       {
         bucket: 'bucket',
         regex: '^file.*$',
         sampleFileName: 'filename3',
-        checksumFor: '^.*$'
-      }]
+        checksumFor: '^.*$',
+      }],
     })),
     {
       instanceOf: InvalidRegexError,
-      message: 'checksumFor \'^.*$\' matches multiple file regexes'
+      message: 'checksumFor \'^.*$\' matches multiple file regexes',
     }
   );
 });
@@ -165,12 +165,12 @@ test.serial('Collection.create() throws InvalidRegexError for file.checksumFor m
         bucket: 'bucket',
         regex: '^.*$',
         sampleFileName: 'filename',
-        checksumFor: '^.*$'
-      }]
+        checksumFor: '^.*$',
+      }],
     })),
     {
       instanceOf: InvalidRegexError,
-      message: 'checksumFor \'^.*$\' cannot be used to validate itself'
+      message: 'checksumFor \'^.*$\' cannot be used to validate itself',
     }
   );
 });
@@ -197,11 +197,11 @@ test.serial('Collection.delete() throws an exception if the collection has assoc
   const rule = fakeRuleFactoryV2({
     collection: {
       name,
-      version
+      version,
     },
     rule: {
-      type: 'onetime'
-    }
+      type: 'onetime',
+    },
   });
 
   // The workflow message template must exist in S3 before the rule can be created
@@ -209,13 +209,13 @@ test.serial('Collection.delete() throws an exception if the collection has assoc
     s3().putObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-      Body: JSON.stringify({})
+      Body: JSON.stringify({}),
     }).promise(),
     s3().putObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/workflow_template.json`,
-      Body: JSON.stringify({})
-    }).promise()
+      Body: JSON.stringify({}),
+    }).promise(),
   ]);
 
   await ruleModel.create(rule);
@@ -271,14 +271,14 @@ test('Collection.get() does not return the deprecated `provider_path` field', as
     tableName: process.env.CollectionsTable,
     tableHash: { name: 'name', type: 'S' },
     tableRange: { name: 'version', type: 'S' },
-    validate: false
+    validate: false,
   });
 
   await baseModel.create(collection);
 
   const fetchedCollection = await collectionsModel.get({
     name: collection.name,
-    version: collection.version
+    version: collection.version,
   });
 
   t.is(fetchedCollection.provider_path, undefined);
@@ -291,7 +291,7 @@ test('Collection.getAllCollections() does not return the deprecated `provider_pa
     tableName: process.env.CollectionsTable,
     tableHash: { name: 'name', type: 'S' },
     tableRange: { name: 'version', type: 'S' },
-    validate: false
+    validate: false,
   });
 
   await baseModel.create(collection);

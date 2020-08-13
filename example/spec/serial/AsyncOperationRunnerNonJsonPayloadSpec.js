@@ -6,7 +6,7 @@ const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
-  waitForAsyncOperationStatus
+  waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
@@ -35,7 +35,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
       asyncOperationModel = new AsyncOperation({
         stackName: config.stackName,
         systemBucket: config.bucket,
-        tableName: asyncOperationsTableName
+        tableName: asyncOperationsTableName,
       });
 
       // Find the ARN of the cluster
@@ -51,7 +51,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
       await s3().putObject({
         Bucket: config.bucket,
         Key: payloadKey,
-        Body: 'invalid JSON'
+        Body: 'invalid JSON',
       }).promise();
 
       await asyncOperationModel.create({
@@ -59,7 +59,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         taskArn: randomString(),
         description: 'Some description',
         operationType: 'ES Index',
-        status: 'RUNNING'
+        status: 'RUNNING',
       });
 
       const runTaskResponse = await ecs().runTask({
@@ -74,11 +74,11 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
-              ]
-            }
-          ]
-        }
+                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
+              ],
+            },
+          ],
+        },
       }).promise();
 
       const failures = get(runTaskResponse, 'failures', []);
@@ -92,14 +92,14 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         'tasksStopped',
         {
           cluster,
-          tasks: [taskArn]
+          tasks: [taskArn],
         }
       ).promise();
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'TASK_FAILED',
-        stackName: config.stackName
+        stackName: config.stackName,
       });
     } catch (error) {
       beforeAllFailed = true;

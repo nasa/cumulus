@@ -7,7 +7,7 @@ const migrations = require('../migrations');
 const migration5 = require('../migrations/migration_5');
 
 const mappings = {
-  migration5: migration5
+  migration5: migration5,
 };
 
 /**

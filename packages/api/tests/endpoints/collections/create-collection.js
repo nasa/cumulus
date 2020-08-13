@@ -6,7 +6,7 @@ const request = require('supertest');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -16,7 +16,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -60,7 +60,7 @@ test.before(async () => {
 
   process.env.collection_sns_topic_arn = randomString();
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
-    promise: async () => true
+    promise: async () => true,
   });
 });
 
@@ -190,7 +190,7 @@ test('POST with non-matching file.regex returns 400 bad request repsonse', async
   newCollection.files = [{
     regex,
     sampleFileName: filename,
-    bucket: randomString()
+    bucket: randomString(),
   }];
 
   const res = await request(app)
@@ -227,7 +227,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 
 test('POST with invalid granuleIdExtraction regex returns 400 bad request', async (t) => {
   const newCollection = fakeCollectionFactory({
-    granuleIdExtraction: '*'
+    granuleIdExtraction: '*',
   });
 
   const response = await request(app)
@@ -245,8 +245,8 @@ test('POST with invalid file.regex returns 400 bad request', async (t) => {
     files: [{
       bucket: 'test-bucket',
       regex: '*',
-      sampleFileName: 'filename'
-    }]
+      sampleFileName: 'filename',
+    }],
   });
 
   const response = await request(app)
@@ -261,7 +261,7 @@ test('POST with invalid file.regex returns 400 bad request', async (t) => {
 
 test('POST with invalid granuleId regex returns 400 bad request', async (t) => {
   const newCollection = fakeCollectionFactory({
-    granuleId: '*'
+    granuleId: '*',
   });
 
   const response = await request(app)
@@ -278,7 +278,7 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
   const newCollection = fakeCollectionFactory({
     granuleIdExtraction: '(filename)',
     sampleFileName: 'filename',
-    granuleId: 'badregex'
+    granuleId: 'badregex',
   });
 
   const res = await request(app)

@@ -8,7 +8,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   createQueue,
   receiveSQSMessages,
-  sendSQSMessage
+  sendSQSMessage,
 } = require('@cumulus/aws-client/SQS');
 const { ResourcesLockedError } = require('@cumulus/errors');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -21,7 +21,7 @@ const {
   incrementAndDispatch,
   handleEvent,
   handleThrottledEvent,
-  handleSourceMappingEvent
+  handleSourceMappingEvent,
 } = sfStarter;
 
 class stubConsumer {
@@ -33,8 +33,8 @@ class stubConsumer {
 // Mock startExecution so nothing attempts to start executions.
 const stubSFN = () => ({
   startExecution: () => ({
-    promise: () => Promise.resolve({})
-  })
+    promise: () => Promise.resolve({}),
+  }),
 });
 sfStarter.__set__('sfn', stubSFN);
 
@@ -43,16 +43,16 @@ let manager;
 const createRuleInput = (queueUrl, timeLimit = 60) => ({
   queueUrl,
   messageLimit: 50,
-  timeLimit
+  timeLimit,
 });
 
 const createWorkflowMessage = (queueUrl, maxExecutions) => JSON.stringify({
   cumulus_meta: {
     queueUrl,
     queueExecutionLimits: {
-      [queueUrl]: maxExecutions
-    }
-  }
+      [queueUrl]: maxExecutions,
+    },
+  },
 });
 
 const createSendMessageTasks = (queueUrl, message, total) => {
@@ -72,7 +72,7 @@ test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');
   manager = new Manager({
     tableName: process.env.SemaphoresTable,
-    tableHash: { name: 'key', type: 'S' }
+    tableHash: { name: 'key', type: 'S' },
   });
   await manager.createTable();
 });
@@ -97,12 +97,12 @@ test('dispatch() sets the workflow_start_time', async (t) => {
   const cumulusMessage = {
     cumulus_meta: {
       state_machine: 'my-state-machine',
-      execution_name: 'my-execution-name'
-    }
+      execution_name: 'my-execution-name',
+    },
   };
 
   const sqsMessage = {
-    Body: JSON.stringify(cumulusMessage)
+    Body: JSON.stringify(cumulusMessage),
   };
 
   let startExecutionParams;
@@ -112,10 +112,10 @@ test('dispatch() sets the workflow_start_time', async (t) => {
       startExecution: (params) => {
         startExecutionParams = params;
         return ({
-          promise: () => Promise.resolve({})
+          promise: () => Promise.resolve({}),
         });
-      }
-    })
+      },
+    }),
   })(() => sfStarter.__get__('dispatch')(sqsMessage));
 
   const executionInput = JSON.parse(startExecutionParams.input);
@@ -193,8 +193,8 @@ test.serial('incrementAndDispatch decrements priority semaphore if dispatch() th
         const response = await semaphore.get(queueUrl);
         t.is(response.semvalue, 1);
         throw new Error('testing');
-      }
-    })
+      },
+    }),
   });
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
 
@@ -217,8 +217,8 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
     TableName: process.env.SemaphoresTable,
     Item: {
       key: queueUrl,
-      semvalue: maxExecutions
-    }
+      semvalue: maxExecutions,
+    },
   }).promise();
 
   await t.throwsAsync(
@@ -236,8 +236,8 @@ test('handleThrottledEvent starts 0 executions when priority semaphore is at max
     TableName: process.env.SemaphoresTable,
     Item: {
       key: queueUrl,
-      semvalue: maxExecutions
-    }
+      semvalue: maxExecutions,
+    },
   }).promise();
 
   const message = createWorkflowMessage(queueUrl, maxExecutions);
@@ -264,8 +264,8 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
     TableName: process.env.SemaphoresTable,
     Item: {
       key: queueUrl,
-      semvalue: initialSemValue
-    }
+      semvalue: initialSemValue,
+    },
   }).promise();
 
   const message = createWorkflowMessage(queueUrl, maxExecutions);
@@ -276,7 +276,7 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
 
   const result = await handleThrottledEvent({
     queueUrl,
-    messageLimit
+    messageLimit,
   }, 0);
   // Only 3 executions should have been started, even though 4 messages are in the queue
   //   5 (semaphore max )- 2 (initial value) = 3 available executions
@@ -285,7 +285,7 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
   // There should be 1 message left in the queue.
   //   4 initial messages - 3 messages read/deleted = 1 message
   const messages = await receiveSQSMessages(queueUrl, {
-    numOfMessages: messageLimit
+    numOfMessages: messageLimit,
   });
   t.is(messages.length, numOfMessages - result);
 });
@@ -295,12 +295,12 @@ test('handleSourceMappingEvent calls dispatch on messages in an EventSource even
   const event = {
     Records: [
       {
-        body: createWorkflowMessage('test')
+        body: createWorkflowMessage('test'),
       },
       {
-        body: createWorkflowMessage('test')
-      }
-    ]
+        body: createWorkflowMessage('test'),
+      },
+    ],
   };
   const output = await handleSourceMappingEvent(event);
 

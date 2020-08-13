@@ -43,12 +43,12 @@ test.serial('S3ListObjectsV2Queue can handle paging', async (t) => {
     awsServices.s3().putObject({
       Bucket: t.context.bucketName,
       Key: randomString(),
-      Body: 'body'
+      Body: 'body',
     }).promise()));
 
   const queue = new S3ListObjectsV2Queue({
     Bucket: t.context.bucketName,
-    MaxKeys: 2 // Force paging of results
+    MaxKeys: 2, // Force paging of results
   });
 
   let returnedObjectsCount = 0;

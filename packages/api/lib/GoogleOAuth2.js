@@ -35,7 +35,7 @@ class GoogleOAuth2 {
     return this.googleOAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
-      state: state
+      state: state,
     });
   }
 
@@ -63,14 +63,14 @@ class GoogleOAuth2 {
     const userDataResponse = await this.googlePlusPeopleClient.people.get({
       resourceName: 'people/me',
       access_token: tokens.access_token,
-      personFields: 'emailAddresses'
+      personFields: 'emailAddresses',
     });
     return {
       accessToken: tokens.access_token,
       // expiry_date is in milliseconds, expirationTime should be in seconds
       expirationTime: Math.floor(tokens.expiry_date / 1000),
       refreshToken: tokens.refresh_token,
-      username: userDataResponse.data.emailAddresses[0].value
+      username: userDataResponse.data.emailAddresses[0].value,
     };
   }
 

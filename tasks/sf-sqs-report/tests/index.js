@@ -23,8 +23,8 @@ test('task returns payload as output', async (t) => {
     input: {
       meta: { topic_arn: 'test_topic_arn' },
       anykey: 'anyvalue',
-      payload: { someKey: 'someValue' }
-    }
+      payload: { someKey: 'someValue' },
+    },
   };
 
   const output = await reportSQSMessage(event);
@@ -35,9 +35,9 @@ test('task returns empty object when no payload is present on input to the task'
   const input = {
     meta: {
       topic_arn: 'test_topic_arn',
-      granuleId: randomString()
+      granuleId: randomString(),
     },
-    anykey: 'anyvalue'
+    anykey: 'anyvalue',
   };
   const event = {};
   event.input = input;

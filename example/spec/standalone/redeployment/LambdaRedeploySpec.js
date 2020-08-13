@@ -5,14 +5,14 @@ const {
   buildAndStartWorkflow,
   getLambdaAliases,
   getLambdaVersions,
-  waitForCompletedExecution
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const fs = require('fs-extra');
 const {
   loadConfig,
   protectFile,
-  runKes
+  runKes,
 } = require('../../helpers/testUtils');
 
 xdescribe('When a workflow is running and a new version of a workflow lambda is deployed', () => {

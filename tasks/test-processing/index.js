@@ -22,7 +22,7 @@ async function uploadFakeBrowse(input) {
         uploadPromises.push(promiseS3Upload({
           Bucket: browseFile.bucket,
           Key: (`${browseFile.fileStagingDir}/${browseFile.name}`),
-          Body: browseStream
+          Body: browseStream,
         }));
         granule.files.push(browseFile);
       }

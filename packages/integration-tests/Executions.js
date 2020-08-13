@@ -40,8 +40,8 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
           query: {
             limit: EXECUTION_LIST_LIMIT,
             page: pageNumber,
-            ...queryParameters
-          }
+            ...queryParameters,
+          },
         });
         let executions = JSON.parse(body);
         execution = executions.results.find(matcher);
@@ -53,8 +53,8 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
             query: {
               limit: EXECUTION_LIST_LIMIT,
               page: pageNumber += 1,
-              ...queryParameters
-            }
+              ...queryParameters,
+            },
           });
           executions = JSON.parse(response.body);
           execution = executions.results.find(matcher);
@@ -69,7 +69,7 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
     },
     {
       retries: options.timeout,
-      maxTimeout: 1000
+      maxTimeout: 1000,
     }
   );
 
@@ -131,11 +131,11 @@ const getExecutionWithStatus = async (params) =>
     },
     {
       retries: get(params, 'timeout', 30),
-      maxTimeout: 1000
+      maxTimeout: 1000,
     }
   );
 
 module.exports = {
   findExecutionArn,
-  getExecutionWithStatus
+  getExecutionWithStatus,
 };

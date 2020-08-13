@@ -10,7 +10,7 @@ const isNil = require('lodash/isNil');
 const { recursion } = require('./recursion');
 const { lookupMimeType, decrypt } = require('./util');
 const {
-  emptyProviderConnectEndMixin
+  emptyProviderConnectEndMixin,
 } = require('./emptyProviderConnectEndMixin');
 
 class FtpProviderClient {
@@ -49,7 +49,7 @@ class FtpProviderClient {
         port: get(this.providerConfig, 'port', 21),
         user: await this.getUsername(),
         pass: await this.getPassword(),
-        useList: get(this.providerConfig, 'useList', false)
+        useList: get(this.providerConfig, 'useList', false),
       });
     }
     return this.ftpClient;
@@ -131,7 +131,7 @@ class FtpProviderClient {
           path: path,
           size: Number.parseInt(d.size, 10),
           time: d.time,
-          type: d.type
+          type: d.type,
         })));
       });
     });
@@ -186,7 +186,7 @@ class FtpProviderClient {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: lookupMimeType(key)
+      ContentType: lookupMimeType(key),
     };
 
     try {

@@ -29,7 +29,7 @@ const {
   putFile,
   calculateObjectHash,
   getObjectReadStream,
-  getS3ObjectReadStream
+  getS3ObjectReadStream,
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -187,7 +187,7 @@ test('listS3ObjectsV2 handles non-truncated case', async (t) => {
   await Promise.all(['a', 'b', 'c'].map((Key) => awsServices.s3().putObject({
     Bucket,
     Key,
-    Body: 'my-body'
+    Body: 'my-body',
   }).promise()));
 
   // List things from S3
@@ -207,7 +207,7 @@ test('listS3ObjectsV2 handles truncated case', async (t) => {
   await Promise.all(['a', 'b', 'c'].map((Key) => awsServices.s3().putObject({
     Bucket,
     Key,
-    Body: 'my-body'
+    Body: 'my-body',
   }).promise()));
 
   // List things from S3
@@ -285,7 +285,7 @@ test('validateS3ObjectChecksum returns true for good checksum', async (t) => {
 
   const cksum = 148323542;
   const ret = await validateS3ObjectChecksum({
-    algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
+    algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum,
   });
   t.true(ret);
   return recursivelyDeleteS3Bucket(Bucket);
@@ -303,10 +303,10 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
 
   await t.throwsAsync(
     validateS3ObjectChecksum({
-      algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
+      algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum,
     }),
     {
-      message: `Invalid checksum for S3 object s3://${Bucket}/${Key} with type cksum and expected sum ${cksum}`
+      message: `Invalid checksum for S3 object s3://${Bucket}/${Key} with type cksum and expected sum ${cksum}`,
     }
   );
 
@@ -377,16 +377,16 @@ test('calculateObjectHash() calculates the correct hash', async (t) => {
       t.is(params.Key, key);
 
       return {
-        createReadStream: () => Readable.from(['asdf'])
+        createReadStream: () => Readable.from(['asdf']),
       };
-    }
+    },
   };
 
   const hash = await calculateObjectHash({
     s3: stubS3,
     bucket: t.context.Bucket,
     key,
-    algorithm: 'md5'
+    algorithm: 'md5',
   });
 
   t.is(getObjectCallCount, 1);
@@ -401,13 +401,13 @@ test('getObjectSize() returns the size of an object', async (t) => {
   await awsServices.s3().putObject({
     Bucket,
     Key: key,
-    Body: 'asdf'
+    Body: 'asdf',
   }).promise();
 
   const objectSize = await getObjectSize({
     s3: awsServices.s3(),
     bucket: Bucket,
-    key
+    key,
   });
 
   t.is(objectSize, 4);

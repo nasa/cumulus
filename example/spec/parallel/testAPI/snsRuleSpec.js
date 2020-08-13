@@ -9,7 +9,7 @@ const {
   isWorkflowTriggeredByRule,
   removeRuleAddedParams,
   rulesApi: rulesApiTestUtils,
-  waitForTestExecutionStart
+  waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 
 const { sns, lambda } = require('@cumulus/aws-client/services');
@@ -19,7 +19,7 @@ const {
   createTestSuffix,
   createTimestampedTestId,
   loadConfig,
-  timestampedName
+  timestampedName,
 } = require('../../helpers/testUtils');
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
@@ -73,7 +73,7 @@ describe('The SNS-type rule', () => {
     process.env.stackName = config.stackName;
 
     snsRuleDefinition.collection = {
-      name: `MOD09GQ${testSuffix}`, version: '006'
+      name: `MOD09GQ${testSuffix}`, version: '006',
     };
 
     await addCollections(config.stackName, config.bucket, collectionsDir,
@@ -83,7 +83,7 @@ describe('The SNS-type rule', () => {
     snsRuleDefinition.rule.value = TopicArn;
     const postRuleResponse = await rulesApiTestUtils.postRule({
       prefix: config.stackName,
-      rule: snsRuleDefinition
+      rule: snsRuleDefinition,
     });
     postRule = JSON.parse(postRuleResponse.body);
   });
@@ -94,7 +94,7 @@ describe('The SNS-type rule', () => {
     try {
       const permissionParams = {
         FunctionName: consumerName,
-        StatementId: `${ruleName}Permission`
+        StatementId: `${ruleName}Permission`,
       };
       await lambda().removePermission(permissionParams).promise();
     } catch (error) {
@@ -106,7 +106,7 @@ describe('The SNS-type rule', () => {
 
     await rulesApiTestUtils.deleteRule({
       prefix: config.stackName,
-      ruleName: snsRuleDefinition.name
+      ruleName: snsRuleDefinition.name,
     });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
@@ -129,7 +129,7 @@ describe('The SNS-type rule', () => {
 
     it('creates a policy when it is created in an enabled state', async () => {
       const { Policy } = await lambda().getPolicy({
-        FunctionName: consumerName
+        FunctionName: consumerName,
       }).promise();
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
@@ -149,7 +149,7 @@ describe('The SNS-type rule', () => {
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
         findExecutionFnParams: { rule: ruleName },
-        startTask: 'HelloWorld'
+        startTask: 'HelloWorld',
       });
     });
 
@@ -171,8 +171,8 @@ describe('The SNS-type rule', () => {
         ruleName,
         updateParams: {
           ...postRule.record,
-          state: 'DISABLED'
-        }
+          state: 'DISABLED',
+        },
       });
       updatedRule = JSON.parse(putRuleResponse.body);
     });
@@ -194,8 +194,8 @@ describe('The SNS-type rule', () => {
         ruleName,
         updateParams: {
           ...updatedRule,
-          state: 'ENABLED'
-        }
+          state: 'ENABLED',
+        },
       });
       updatedRule = JSON.parse(putRuleResponse.body);
     });
@@ -222,9 +222,9 @@ describe('The SNS-type rule', () => {
           ...postRule.record,
           rule: {
             value: TopicArn,
-            type: 'sns'
-          }
-        }
+            type: 'sns',
+          },
+        },
       });
       putRule = JSON.parse(putRuleResponse.body);
     });
@@ -235,8 +235,8 @@ describe('The SNS-type rule', () => {
         ruleName,
         updateParams: {
           ...postRule.record,
-          state: 'DISABLED'
-        }
+          state: 'DISABLED',
+        },
       });
       await SNS.deleteTopic({ TopicArn: newTopicArn }).promise();
     });
@@ -269,7 +269,7 @@ describe('The SNS-type rule', () => {
         TopicArn,
         Protocol: 'lambda',
         Endpoint: (await lambda().getFunction({ FunctionName: consumerName }).promise()).Configuration.FunctionArn,
-        ReturnSubscriptionArn: true
+        ReturnSubscriptionArn: true,
       };
       const { SubscriptionArn } = await SNS.subscribe(subscriptionParams).promise();
       subscriptionArn = SubscriptionArn;
@@ -280,10 +280,10 @@ describe('The SNS-type rule', () => {
           ...postRule.record,
           rule: {
             value: TopicArn,
-            type: 'sns'
+            type: 'sns',
           },
-          state: 'ENABLED'
-        }
+          state: 'ENABLED',
+        },
       });
       putRule = JSON.parse(putRuleResponse.body);
     });

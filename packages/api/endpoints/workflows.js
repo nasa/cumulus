@@ -3,7 +3,7 @@
 const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const {
   getWorkflowsListKeyPrefix,
-  getWorkflowFileKey
+  getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const router = require('express-promise-router')();
 
@@ -17,7 +17,7 @@ const router = require('express-promise-router')();
 async function list(req, res) {
   const workflows = await listS3ObjectsV2({
     Bucket: process.env.system_bucket,
-    Prefix: getWorkflowsListKeyPrefix(process.env.stackName)
+    Prefix: getWorkflowsListKeyPrefix(process.env.stackName),
   });
   const body = await Promise.all(workflows.map(
     (obj) => getJsonS3Object(process.env.system_bucket, obj.Key)

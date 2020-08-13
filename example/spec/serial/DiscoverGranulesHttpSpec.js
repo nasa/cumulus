@@ -8,13 +8,13 @@ const {
   addCollections,
   buildAndExecuteWorkflow,
   cleanupCollections,
-  waitForCompletedExecution
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
   createTimestampedTestId,
-  createTestSuffix
+  createTestSuffix,
 } = require('../helpers/testUtils');
 
 const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
@@ -56,13 +56,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
     // populate collections and providers
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      createProvider(config.stackName, provider)
+      createProvider(config.stackName, provider),
     ]);
 
     collection = JSON.parse((await apiTestUtils.getCollection({
       prefix: config.stackName,
       collectionName: collection.name,
-      collectionVersion: collection.version
+      collectionVersion: collection.version,
     })).body);
 
     httpWorkflowExecution = await buildAndExecuteWorkflow(
@@ -87,7 +87,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     // clean up stack state added by test
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      deleteProvider({ prefix: config.stackName, providerId: provider.id })
+      deleteProvider({ prefix: config.stackName, providerId: provider.id }),
     ]);
   });
 
@@ -186,7 +186,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
         collection,
-        updateParams: { files: [] }
+        updateParams: { files: [] },
       });
 
       httpWorkflowExecution = await buildAndExecuteWorkflow(
@@ -230,7 +230,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
         collection,
-        updateParams: { files: [collection.files[0]] }
+        updateParams: { files: [collection.files[0]] },
       });
 
       httpWorkflowExecution = await buildAndExecuteWorkflow(
@@ -276,8 +276,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
         collection,
         updateParams: {
           files: [],
-          ignoreFilesConfigForDiscovery: true
-        }
+          ignoreFilesConfigForDiscovery: true,
+        },
       });
 
       httpWorkflowExecution = await buildAndExecuteWorkflow(

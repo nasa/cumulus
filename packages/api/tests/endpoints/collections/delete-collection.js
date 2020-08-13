@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -13,7 +13,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const {
   fakeCollectionFactory,
   createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -63,7 +63,7 @@ test.before(async () => {
   await awsServices.s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
-    Body: JSON.stringify({})
+    Body: JSON.stringify({}),
   }).promise();
 });
 
@@ -134,18 +134,18 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   const rule = fakeRuleFactoryV2({
     collection: {
       name: collection.name,
-      version: collection.version
+      version: collection.version,
     },
     rule: {
-      type: 'onetime'
-    }
+      type: 'onetime',
+    },
   });
 
   // The workflow message template must exist in S3 before the rule can be created
   await awsServices.s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
+    Body: JSON.stringify({}),
   }).promise();
 
   await ruleModel.create(rule);
@@ -167,18 +167,18 @@ test('Attempting to delete a collection with an associated rule does not delete 
   const rule = fakeRuleFactoryV2({
     collection: {
       name: collection.name,
-      version: collection.version
+      version: collection.version,
     },
     rule: {
-      type: 'onetime'
-    }
+      type: 'onetime',
+    },
   });
 
   // The workflow message template must exist in S3 before the rule can be created
   await awsServices.s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
+    Body: JSON.stringify({}),
   }).promise();
 
   await ruleModel.create(rule);

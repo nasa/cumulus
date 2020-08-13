@@ -6,30 +6,30 @@ const isEqual = require('lodash/isEqual');
 const omit = require('lodash/omit');
 const request = require('supertest');
 const {
-  EcsStartTaskError
+  EcsStartTaskError,
 } = require('@cumulus/errors');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
   fileExists,
   parseS3Uri,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const {
   randomId,
-  randomString
+  randomString,
 } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken,
   fakeReconciliationReportFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
 const {
-  Search
+  Search,
 } = require('../../es/search');
 
 process.env.invoke = 'granule-reconciliation-reports';
@@ -47,7 +47,7 @@ process.env.EcsCluster = randomId('ecsCluster');
 
 // import the express app after setting the env variables
 const {
-  app
+  app,
 } = require('../../app');
 
 let esClient;
@@ -77,12 +77,12 @@ test.before(async () => {
 
   asyncOperationsModel = new models.AsyncOperation({
     stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket
+    systemBucket: process.env.system_bucket,
   });
   await asyncOperationsModel.createTable();
 
   await awsServices.s3().createBucket({
-    Bucket: process.env.system_bucket
+    Bucket: process.env.system_bucket,
   }).promise();
 
   const username = randomId('username');
@@ -90,7 +90,7 @@ test.before(async () => {
 
   jwtAuthToken = await createFakeJwtAuthToken({
     accessTokenModel,
-    username
+    username,
   });
 
   const reportNames = [randomString(), randomString(), randomString()];
@@ -98,7 +98,7 @@ test.before(async () => {
 
   fakeReportRecords = reportNames.map((reportName) => fakeReconciliationReportFactory({
     name: reportName,
-    location: buildS3Uri(process.env.system_bucket, `${reportDirectory}/${reportName}`)
+    location: buildS3Uri(process.env.system_bucket, `${reportDirectory}/${reportName}`),
   }));
 
   // add report records to database and report files go to s3
@@ -107,8 +107,8 @@ test.before(async () => {
     awsServices.s3().putObject({
       ...parseS3Uri(reportRecord.location),
       Body: JSON.stringify({
-        test_key: `${reportRecord.name} test data`
-      })
+        test_key: `${reportRecord.name} test data`,
+      }),
     }).promise()));
 
   // add records to es
@@ -122,7 +122,7 @@ test.after.always(async () => {
   await reconciliationReportModel.deleteTable();
   await asyncOperationsModel.deleteTable();
   await esClient.indices.delete({
-    index: esIndex
+    index: esIndex,
   });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
@@ -238,7 +238,7 @@ test.serial('get a report', (t) =>
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .expect(200);
     t.deepEqual(response.body, {
-      test_key: `${record.name} test data`
+      test_key: `${record.name} test data`,
     });
   })));
 
@@ -270,7 +270,7 @@ test.serial('delete a report', (t) =>
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .expect(200);
     t.deepEqual(response.body, {
-      message: 'Report deleted'
+      message: 'Report deleted',
     });
 
     const parsed = parseS3Uri(record.location);
@@ -281,7 +281,7 @@ test.serial('delete a report', (t) =>
 test.serial('create a report starts an async operation', async (t) => {
   const id = randomId('id');
   const stub = sinon.stub(models.AsyncOperation.prototype, 'start').resolves({
-    id
+    id,
   });
 
   try {
@@ -292,7 +292,7 @@ test.serial('create a report starts an async operation', async (t) => {
       .expect(202);
 
     t.deepEqual(response.body, {
-      id
+      id,
     });
 
     t.true(stub.calledWith({
@@ -302,7 +302,7 @@ test.serial('create a report starts an async operation', async (t) => {
       description: 'Create Inventory Report',
       operationType: 'Reconciliation Report',
       payload: { startTimestamp: undefined, endTimestamp: undefined },
-      useLambdaEnvironmentVariables: true
+      useLambdaEnvironmentVariables: true,
     }));
   } finally {
     stub.restore();

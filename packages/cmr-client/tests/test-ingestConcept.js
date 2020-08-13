@@ -14,18 +14,18 @@ const gotResponses = {
   200: {
     statusCode: 200,
     statusMessage: 'OK',
-    body: '<result><concept-id>G1222482316-CUMULUS</concept-id><revision-id>9</revision-id></result>'
+    body: '<result><concept-id>G1222482316-CUMULUS</concept-id><revision-id>9</revision-id></result>',
   },
   404: {
     statusCode: 404,
     statusMessage: 'not found',
-    body: `<errors><error>${alreadyDeleted}</error></errors>`
+    body: `<errors><error>${alreadyDeleted}</error></errors>`,
   },
   400: {
     statusCode: 400,
     statusMessage: 'bad request',
-    body: '<errors><error>Bad request</error></errors>'
-  }
+    body: '<errors><error>Bad request</error></errors>',
+  },
 };
 
 test.serial('ingestConcept request includes CMR client id', async (t) => {

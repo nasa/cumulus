@@ -25,7 +25,7 @@ describe('GET /workflow', () => {
 
     const response = await getWorkflow({
       prefix: config.stackName,
-      workflowName: 'HelloWorldWorkflow'
+      workflowName: 'HelloWorldWorkflow',
     });
 
     expect(response.statusCode).toBe(200);

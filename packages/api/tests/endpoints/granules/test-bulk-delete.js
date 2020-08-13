@@ -6,14 +6,14 @@ const sinon = require('sinon');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const {
   createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const AccessToken = require('../../../models/access-tokens');
 const AsyncOperation = require('../../../models/async-operation');
@@ -80,7 +80,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
 
   const body = {
     ids: expectedIds,
-    forceRemoveFromCmr: true
+    forceRemoveFromCmr: true,
   };
 
   const response = await request(app)
@@ -97,7 +97,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     lambdaName,
     cluster,
     description,
-    payload
+    payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
@@ -121,8 +121,8 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       stackName: process.env.stackName,
-      system_bucket: process.env.system_bucket
-    }
+      system_bucket: process.env.system_bucket,
+    },
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
@@ -136,7 +136,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
 
   const body = {
     index: expectedIndex,
-    query: expectedQuery
+    query: expectedQuery,
   };
 
   const response = await request(app)
@@ -153,7 +153,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     lambdaName,
     cluster,
     description,
-    payload
+    payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
@@ -177,8 +177,8 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       stackName: process.env.stackName,
-      system_bucket: process.env.system_bucket
-    }
+      system_bucket: process.env.system_bucket,
+    },
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
@@ -190,7 +190,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when a query is provided wi
   const expectedQuery = { query: 'fake-query' };
 
   const body = {
-    query: expectedQuery
+    query: expectedQuery,
   };
 
   await request(app)
@@ -221,7 +221,7 @@ test.serial('POST /granules/bulkDelete returns 400 when IDs are not an array', a
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    ids: 'bad-value'
+    ids: 'bad-value',
   };
   await request(app)
     .post('/granules/bulkDelete')
@@ -237,7 +237,7 @@ test.serial('POST /granules/bulkDelete returns 400 when IDs is an empty array of
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    ids: []
+    ids: [],
   };
   await request(app)
     .post('/granules/bulkDelete')
@@ -253,7 +253,7 @@ test.serial('POST /granules/bulkDelete returns 400 when the Metrics ELK stack is
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    query: 'fake-query'
+    query: 'fake-query',
   };
 
   delete process.env.METRICS_ES_HOST;
@@ -276,7 +276,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
 
   const body = {
     ids: ['granule-1'],
-    forceRemoveFromCmr: 'true'
+    forceRemoveFromCmr: 'true',
   };
 
   await request(app)
@@ -305,7 +305,7 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if starting EC
   );
 
   const body = {
-    ids: [randomString()]
+    ids: [randomString()],
   };
 
   const response = await request(app)
@@ -323,7 +323,7 @@ test.serial('request to /granules/bulkDelete endpoint returns 503 if starting EC
   );
 
   const body = {
-    ids: [randomString()]
+    ids: [randomString()],
   };
 
   const response = await request(app)

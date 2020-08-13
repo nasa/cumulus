@@ -6,7 +6,7 @@ const { ecs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
-  waitForAsyncOperationStatus
+  waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
@@ -35,7 +35,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
       asyncOperationModel = new AsyncOperation({
         stackName: config.stackName,
         systemBucket: config.bucket,
-        tableName: asyncOperationsTableName
+        tableName: asyncOperationsTableName,
       });
 
       // Find the ARN of the cluster
@@ -51,7 +51,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         taskArn: randomString(),
         description: 'Some description',
         operationType: 'ES Index',
-        status: 'RUNNING'
+        status: 'RUNNING',
       });
 
       payloadUrl = `s3://${config.bucket}/${randomString()}`;
@@ -67,11 +67,11 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: payloadUrl }
-              ]
-            }
-          ]
-        }
+                { name: 'payloadUrl', value: payloadUrl },
+              ],
+            },
+          ],
+        },
       }).promise();
 
       const failures = get(runTaskResponse, 'failures', []);
@@ -85,14 +85,14 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         'tasksStopped',
         {
           cluster,
-          tasks: [taskArn]
+          tasks: [taskArn],
         }
       ).promise();
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'RUNNER_FAILED',
-        stackName: config.stackName
+        stackName: config.stackName,
       });
     } catch (error) {
       beforeAllFailed = true;

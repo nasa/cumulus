@@ -9,12 +9,12 @@ test.beforeEach((t) => {
   t.context.timeout = 123;
   t.context.tableName = 'sometable';
   t.context.getResults = {
-    Item: { sha: t.context.sha, key: t.context.key, expire: t.context.timeout }
+    Item: { sha: t.context.sha, key: t.context.key, expire: t.context.timeout },
   };
   t.context.docClient = {
     get: () => ({ promise: () => t.context.getResults }),
     put: (params) => ({ promise: () => Promise.resolve(params) }),
-    delete: () => ({ promise: () => true })
+    delete: () => ({ promise: () => true }),
   };
   t.context.mutex = new Mutex(t.context.docClient, t.context.tableName);
 });
@@ -29,17 +29,17 @@ test('Mutex.wrieLock() passes correct params to dynamo docClient', async (t) => 
     Item: {
       key: key,
       expire: 500 + timeout,
-      sha: sha
+      sha: sha,
     },
     ConditionExpression: '#key <> :key OR (#key = :key AND #expire < :expire)',
     ExpressionAttributeNames: {
       '#key': 'key',
-      '#expire': 'expire'
+      '#expire': 'expire',
     },
     ExpressionAttributeValues: {
       ':key': key,
-      ':expire': 500
-    }
+      ':expire': 500,
+    },
   };
 
   const mutex = t.context.mutex;
@@ -69,8 +69,8 @@ test('Mutex.unlock() throws a CumulusLockError if there is a SHA mismatch', asyn
   };
   docClient.get = () => ({
     promise: () => ({
-      Item: { sha: 'someOtherSha', key: t.context.key, expire: t.context.timeout }
-    })
+      Item: { sha: 'someOtherSha', key: t.context.key, expire: t.context.timeout },
+    }),
   });
   const mutex = new Mutex(docClient, 'sometable');
   await t.throwsAsync(
@@ -87,7 +87,7 @@ test('Mutex.unlock() re-throws error from DynamoDb document client if checkMatch
     throw new Error('test error');
   };
   docClient.get = () => ({
-    promise: () => ({})
+    promise: () => ({}),
   });
   const mutex = new Mutex(docClient, 'sometable');
   await t.throwsAsync(

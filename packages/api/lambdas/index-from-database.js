@@ -48,10 +48,10 @@ async function indexModel({
   tableName,
   esIndex,
   indexFn,
-  limitEsRequests
+  limitEsRequests,
 }) {
   const scanQueue = new DynamoDbSearchQueue({
-    TableName: tableName
+    TableName: tableName,
   });
 
   let itemsComplete = false;
@@ -102,7 +102,7 @@ async function indexFromDatabase(event) {
   const {
     indexName: esIndex,
     tables,
-    esHost = process.env.ES_HOST
+    esHost = process.env.ES_HOST,
   } = event;
   const esClient = await Search.es(esHost);
 
@@ -115,57 +115,57 @@ async function indexFromDatabase(event) {
       tableName: tables.collectionsTable,
       esIndex,
       indexFn: indexer.indexCollection,
-      limitEsRequests
+      limitEsRequests,
     }),
     indexModel({
       esClient,
       tableName: tables.executionsTable,
       esIndex,
       indexFn: indexer.indexExecution,
-      limitEsRequests
+      limitEsRequests,
     }),
     indexModel({
       esClient,
       tableName: tables.asyncOperationsTable,
       esIndex,
       indexFn: indexer.indexAsyncOperation,
-      limitEsRequests
+      limitEsRequests,
     }),
     indexModel({
       esClient,
       tableName: tables.granulesTable,
       esIndex,
       indexFn: indexer.indexGranule,
-      limitEsRequests
+      limitEsRequests,
     }),
     indexModel({
       esClient,
       tableName: tables.pdrsTable,
       esIndex,
       indexFn: indexer.indexPdr,
-      limitEsRequests
+      limitEsRequests,
     }),
     indexModel({
       esClient,
       tableName: tables.providersTable,
       esIndex,
       indexFn: indexer.indexProvider,
-      limitEsRequests
+      limitEsRequests,
     }),
     indexModel({
       esClient,
       tableName: tables.reconciliationReportsTable,
       esIndex,
       indexFn: indexer.indexReconciliationReport,
-      limitEsRequests
+      limitEsRequests,
     }),
     indexModel({
       esClient,
       tableName: tables.rulesTable,
       esIndex,
       indexFn: indexer.indexRule,
-      limitEsRequests
-    })
+      limitEsRequests,
+    }),
   ]);
 }
 
@@ -182,5 +182,5 @@ async function handler(event) {
 module.exports = {
   handler,
   indexFromDatabase,
-  getEsRequestConcurrency
+  getEsRequestConcurrency,
 };

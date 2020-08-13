@@ -19,12 +19,12 @@ async function cleanExecutionPayloads(ExecutionModel) {
   const configuration = [{
     name: 'nonCompleteExecutionPayloadTimeout',
     value: nonCompleteTimeout,
-    originalValue: process.env.nonCompleteExecutionPayloadTimeout
+    originalValue: process.env.nonCompleteExecutionPayloadTimeout,
   },
   {
     name: 'completeExecutionPayloadTimeout',
     value: completeTimeout,
-    originalValue: process.env.completeExecutionPayloadTimeout
+    originalValue: process.env.completeExecutionPayloadTimeout,
   }];
 
   configuration.forEach((timeout) => {

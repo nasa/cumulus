@@ -7,7 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
-  findExecutionArn, getExecutionWithStatus
+  findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
@@ -42,7 +42,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
         prefix,
         {
           duplicateHandling: 'version',
-          process: 'modis'
+          process: 'modis',
         }
       );
 
@@ -70,12 +70,12 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
                 files: [
                   {
                     name: '11G.dat',
-                    path: ''
-                  }
-                ]
-              }
-            ]
-          }
+                    path: '',
+                  },
+                ],
+              },
+            ],
+          },
         }
       );
 
@@ -95,7 +95,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
         prefix,
         arn: ingestGranuleExecutionArn,
         status: 'completed',
-        timeout: 120
+        timeout: 120,
       });
 
       // Wait for the granule to be fully ingested
@@ -119,7 +119,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
     // Must delete rules before deleting associated collection and provider
     await pAll(
       [
-        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') })
+        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') }),
       ],
       { stopOnError: false }
     ).catch(console.error);
@@ -131,8 +131,8 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
         () => deleteCollection({
           prefix,
           collectionName: get(collection, 'name'),
-          collectionVersion: get(collection, 'version')
-        })
+          collectionVersion: get(collection, 'version'),
+        }),
       ],
       { stopOnError: false }
     ).catch(console.error);

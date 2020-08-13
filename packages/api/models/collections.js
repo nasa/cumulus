@@ -80,7 +80,7 @@ const validateCollection = (collection) => {
 // Fields which are no longer supported in collection items, and which should
 // not be returned when records are read from the database.
 const deprecatedFields = Object.freeze([
-  'provider_path'
+  'provider_path',
 ]);
 
 class Collection {
@@ -106,7 +106,7 @@ class Collection {
       tableName: process.env.CollectionsTable,
       tableHash: { name: 'name', type: 'S' },
       tableRange: { name: 'version', type: 'S' },
-      schema: collectionSchema
+      schema: collectionSchema,
     });
 
     this.collectionConfigStore = new CollectionConfigStore(
@@ -228,13 +228,13 @@ class Collection {
         names: {
           '#c': 'collection',
           '#n': 'name',
-          '#v': 'version'
+          '#v': 'version',
         },
         filter: '#c.#n = :n AND #c.#v = :v',
         values: {
           ':n': name,
-          ':v': version
-        }
+          ':v': version,
+        },
       }
     );
 
@@ -254,8 +254,8 @@ class Collection {
           '#version': 'version',
           '#reportToEms': 'reportToEms',
           '#createdAt': 'createdAt',
-          '#updatedAt': 'updatedAt'
-        }
+          '#updatedAt': 'updatedAt',
+        },
       },
       '#name, #version, #reportToEms, #createdAt, #updatedAt'
     ).then((result) => result.Items);

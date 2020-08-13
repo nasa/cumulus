@@ -35,7 +35,7 @@ async function waitForDeployment(cloudFormation, stackName) {
     },
     {
       retries: maxRetries,
-      maxTimeout: 5000
+      maxTimeout: 5000,
     }
   );
 }

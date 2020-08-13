@@ -6,7 +6,7 @@ const errors = require('@cumulus/errors');
 const isString = require('lodash/isString');
 const { basename, dirname } = require('path');
 const {
-  emptyProviderConnectEndMixin
+  emptyProviderConnectEndMixin,
 } = require('./emptyProviderConnectEndMixin');
 
 class S3ProviderClient {
@@ -28,7 +28,7 @@ class S3ProviderClient {
 
     const s3Obj = {
       Bucket: this.bucket,
-      Key: remotePath
+      Key: remotePath,
     };
 
     const retval = await S3.downloadS3File(s3Obj, localPath);
@@ -48,7 +48,7 @@ class S3ProviderClient {
     const objects = await S3.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,
-      Prefix: path
+      Prefix: path,
     });
 
     return objects.map(({ Key, Size, LastModified }) => ({
@@ -57,7 +57,7 @@ class S3ProviderClient {
       // to return "." as the dirname.  It should instead be undefined.
       path: dirname(Key) === '.' ? undefined : dirname(Key),
       size: Size,
-      time: LastModified.valueOf()
+      time: LastModified.valueOf(),
     }));
   }
 
@@ -79,7 +79,7 @@ class S3ProviderClient {
         destinationBucket,
         destinationKey,
         ACL: 'private',
-        copyTags: true
+        copyTags: true,
       });
 
       return { s3uri, etag };

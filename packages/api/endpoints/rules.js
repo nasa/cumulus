@@ -160,7 +160,7 @@ async function del(req, res) {
     await esClient.delete({
       id: name,
       index: process.env.ES_INDEX,
-      type: 'rule'
+      type: 'rule',
     }, { ignore: [404] });
   }
   return res.send({ message: 'Record deleted' });

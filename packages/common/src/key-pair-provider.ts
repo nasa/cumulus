@@ -34,7 +34,7 @@ const buildS3Client = () => {
   AWS.config.setPromisesDependency(Promise);
 
   const options: AWS.S3.Types.ClientConfiguration = {
-    apiVersion: '2006-03-01'
+    apiVersion: '2006-03-01',
   };
 
   if (inTestMode()) {
@@ -53,7 +53,7 @@ const getTextObject = async (bucket: string, key: string) => {
 
   const { Body } = await s3.getObject({
     Bucket: bucket,
-    Key: key
+    Key: key,
   }).promise();
 
   return Body ? Body.toString() : undefined;

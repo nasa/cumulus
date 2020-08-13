@@ -17,13 +17,13 @@ const moment = require('moment');
 
 const {
   ecs,
-  sfn
+  sfn,
 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   templateKey,
-  getWorkflowFileKey
+  getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const ProvidersModel = require('@cumulus/api/models/providers');
@@ -71,11 +71,11 @@ async function waitForAsyncOperationStatus({
   id,
   status,
   stackName,
-  retries = 10
+  retries = 10,
 }) {
   const response = await asyncOperationsApi.getAsyncOperation({
     prefix: stackName,
-    asyncOperationId: id
+    asyncOperationId: id,
   });
 
   const operation = JSON.parse(response.body);
@@ -87,7 +87,7 @@ async function waitForAsyncOperationStatus({
     id,
     status,
     stackName,
-    retries: retries - 1
+    retries: retries - 1,
   });
 }
 
@@ -167,7 +167,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
     },
     {
       interval: 2000,
-      timeout: timeout * 1000
+      timeout: timeout * 1000,
     }
   );
 
@@ -190,7 +190,7 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
   const workflowParams = {
     stateMachineArn: workflowArn,
     input: JSON.stringify(workflowMsg),
-    name: workflowMsg.cumulus_meta.execution_name
+    name: workflowMsg.cumulus_meta.execution_name,
   };
 
   return sfn().startExecution(workflowParams).promise();
@@ -312,7 +312,7 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
         return collectionsApi.deleteCollection({
           prefix: stackName,
           collectionName: realName,
-          collectionVersion: version
+          collectionVersion: version,
         });
       }
     )
@@ -424,7 +424,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
       ...provider,
       id: postfix ? `${provider.id}${postfix}` : provider.id,
       port: getProviderPort(provider),
-      host
+      host,
     };
   });
 
@@ -515,7 +515,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
       const templatedRule = JSON.parse(ruleTemplate({
         AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
         AWS_REGION: process.env.AWS_REGION,
-        ...config
+        ...config,
       }));
 
       const rulesmodel = new RulesModel();
@@ -631,7 +631,7 @@ async function buildWorkflow(
     template.meta.collection = await collectionsApi.getCollection({
       prefix: stackName,
       collectionName: collection.name,
-      collectionVersion: collection.version
+      collectionVersion: collection.version,
     });
   } else {
     template.meta.collection = {};
@@ -729,7 +729,7 @@ async function buildAndStartWorkflow(
 async function getExecutions(workflowArn, maxExecutionResults = 10) {
   const data = await StepFunctions.listExecutions({
     stateMachineArn: workflowArn,
-    maxResults: maxExecutionResults
+    maxResults: maxExecutionResults,
   });
   return (orderBy(data.executions, ['startDate'], ['desc']));
 }
@@ -759,7 +759,7 @@ async function waitForTestExecutionStart({
   findExecutionFn,
   findExecutionFnParams,
   startTask,
-  maxWaitSeconds = maxWaitForStartedExecutionSecs
+  maxWaitSeconds = maxWaitForStartedExecutionSecs,
 }) {
   let timeWaitedSecs = 0;
   const { arn: workflowArn } = await getJsonS3Object(
@@ -901,5 +901,5 @@ module.exports = {
   waitForCompletedExecution,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitForDeploymentHandler: waitForDeployment.handler,
-  waitForTestExecutionStart
+  waitForTestExecutionStart,
 };

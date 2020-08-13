@@ -45,8 +45,8 @@ test.serial('indexing log messages', async (t) => {
     index: esAlias,
     type: 'logs',
     body: {
-      ids: event.logEvents.map((r) => r.id)
-    }
+      ids: event.logEvents.map((r) => r.id),
+    },
   }).then((getResponse) => getResponse.body);
   // console.log(JSON.stringify(records, null, 2));
   t.is(records.docs.length, 5);
@@ -62,13 +62,13 @@ test.serial('indexing log messages', async (t) => {
   });
   const searchParams = {
     limit: 50,
-    'executions.keyword': '157de51a-bc7d-4766-b419-a2c1c09f9207'
+    'executions.keyword': '157de51a-bc7d-4766-b419-a2c1c09f9207',
   };
   const body = queries(searchParams);
   const searchRecord = await esClient.search({
     index: esAlias,
     type: 'logs',
-    body
+    body,
   }).then((searchResponse) => searchResponse.body);
   t.is(searchRecord.hits.total, 2);
 });

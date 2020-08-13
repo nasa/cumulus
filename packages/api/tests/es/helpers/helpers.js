@@ -23,5 +23,5 @@ const loadGranules = async (granules, t) => {
 
 module.exports = {
   granuleFactory,
-  loadGranules
+  loadGranules,
 };

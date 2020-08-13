@@ -14,7 +14,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 const {
   deleteFolder,
@@ -24,11 +24,11 @@ const {
   createTimestampedTestId,
   createTestSuffix,
   getFilesMetadata,
-  uploadTestDataToBucket
+  uploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
-  setupTestGranuleForIngest
+  setupTestGranuleForIngest,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
@@ -38,7 +38,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
 
 const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
@@ -81,7 +81,7 @@ describe('When the Sync Granule workflow is configured', () => {
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -99,17 +99,17 @@ describe('When the Sync Granule workflow is configured', () => {
               {
                 bucket: config.buckets.internal.name,
                 filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
               },
               {
                 bucket: config.buckets.internal.name,
                 filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
-              }
-            ]
-          }
-        ]
-      }
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
+              },
+            ],
+          },
+        ],
+      },
     });
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
@@ -134,11 +134,11 @@ describe('When the Sync Granule workflow is configured', () => {
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       }),
       pdrModel.delete({
-        pdrName: inputPayload.pdr.name
-      })
+        pdrName: inputPayload.pdr.name,
+      }),
     ]);
   });
 
@@ -163,7 +163,7 @@ describe('When the Sync Granule workflow is configured', () => {
         await apiTestUtils.updateCollection({
           prefix: config.stackName,
           collection,
-          updateParams: { duplicateHandling: 'version' }
+          updateParams: { duplicateHandling: 'version' },
         });
 
         workflowExecution = await buildAndExecuteWorkflow(
@@ -188,12 +188,12 @@ describe('When the Sync Granule workflow is configured', () => {
 
         const updatedGranule = {
           ...expectedPayload.granules[0],
-          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
+          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
         };
 
         const updatedExpectedPayload = {
           ...expectedPayload,
-          granules: [updatedGranule]
+          granules: [updatedGranule],
         };
 
         expect(currentFiles).toEqual(existingfiles);
@@ -216,7 +216,7 @@ describe('When the Sync Granule workflow is configured', () => {
         const file = inputPayload.granules[0].files[0];
         fileUpdated = file.name;
         const updateParams = {
-          Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content
+          Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content,
         };
 
         await s3().putObject(updateParams).promise();
@@ -255,7 +255,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
         const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+          granuleId: inputPayload.granules[0].granuleId,
         });
         const granule = JSON.parse(granuleResponse.body);
         expect(granule.files.length).toEqual(3);
@@ -272,7 +272,7 @@ describe('When the Sync Granule workflow is configured', () => {
         const file = inputPayload.granules[0].files[0];
         updatedFileName = file.name;
         const updateParams = {
-          Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content
+          Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content,
         };
 
         await s3().putObject(updateParams).promise();
@@ -306,7 +306,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
         const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+          granuleId: inputPayload.granules[0].granuleId,
         });
         const granule = JSON.parse(granuleResponse.body);
         expect(granule.files.length).toEqual(4);
@@ -321,7 +321,7 @@ describe('When the Sync Granule workflow is configured', () => {
         await apiTestUtils.updateCollection({
           prefix: config.stackName,
           collection,
-          updateParams: { duplicateHandling: 'error' }
+          updateParams: { duplicateHandling: 'error' },
         });
 
         workflowExecution = await buildAndExecuteWorkflow(

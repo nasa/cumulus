@@ -35,5 +35,5 @@ const setProcessEnvironment = (stackName, bucketName) => {
 
 module.exports = {
   readJsonFilesFromDir,
-  setProcessEnvironment
+  setProcessEnvironment,
 };

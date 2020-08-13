@@ -13,11 +13,11 @@ function instanceMetadata(req, res) {
   return res.send({
     cmr: {
       provider: process.env.cmr_provider,
-      environment: process.env.CMR_ENVIRONMENT || 'UAT'
+      environment: process.env.CMR_ENVIRONMENT || 'UAT',
     },
     cumulus: {
-      stackName: process.env.stackName
-    }
+      stackName: process.env.stackName,
+    },
   });
 }
 

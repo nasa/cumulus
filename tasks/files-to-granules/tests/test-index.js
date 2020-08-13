@@ -6,7 +6,7 @@ const test = require('ava');
 const { promisify } = require('util');
 
 const {
-  validateConfig, validateInput, validateOutput
+  validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { filesToGranules } = require('..');
 const readFile = promisify(fs.readFile);

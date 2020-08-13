@@ -25,8 +25,8 @@ export const getWorkflow = (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/workflows/${workflowName}`
-    }
+      path: `/workflows/${workflowName}`,
+    },
   });
 };
 
@@ -48,7 +48,7 @@ export const getWorkflows = (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/workflows'
-    }
+      path: '/workflows',
+    },
   });
 };

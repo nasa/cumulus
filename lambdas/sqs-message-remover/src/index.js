@@ -9,7 +9,7 @@ const {
   getSfEventStatus,
   isFailedSfStatus,
   isSfExecutionEvent,
-  isTerminalSfStatus
+  isTerminalSfStatus,
 } = require('@cumulus/common/cloudwatch-event');
 const Logger = require('@cumulus/logger');
 
@@ -58,7 +58,7 @@ async function updateSqsQueue(event) {
 
   const {
     queueUrl,
-    receiptHandle
+    receiptHandle,
   } = eventMessage.meta.eventSource;
 
   if (isFailedSfStatus(eventStatus)) {
@@ -68,7 +68,7 @@ async function updateSqsQueue(event) {
     const params = {
       QueueUrl: queueUrl,
       ReceiptHandle: receiptHandle,
-      VisibilityTimeout: 5
+      VisibilityTimeout: 5,
     };
     await sqs().changeMessageVisibility(params).promise();
   } else {
@@ -98,5 +98,5 @@ function handler(event) {
 
 module.exports = {
   updateSqsQueue,
-  handler
+  handler,
 };

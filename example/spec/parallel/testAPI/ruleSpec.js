@@ -6,7 +6,7 @@ const {
   addCollections,
   cleanupCollections,
   isWorkflowTriggeredByRule,
-  waitForTestExecutionStart
+  waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 
 const rulesApi = require('@cumulus/api-client/rules');
@@ -15,7 +15,7 @@ const {
   createTestSuffix,
   createTimestampedTestId,
   loadConfig,
-  timestampedName
+  timestampedName,
 } = require('../../helpers/testUtils');
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
@@ -39,11 +39,11 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       workflow: 'HelloWorldWorkflow',
       rule: {
         type: 'scheduled',
-        value: 'rate(2 minutes)'
+        value: 'rate(2 minutes)',
       },
       meta: {
-        triggerRule: scheduledRuleName
-      }
+        triggerRule: scheduledRuleName,
+      },
     };
 
     await addCollections(config.stackName, config.bucket, collectionsDir,
@@ -52,7 +52,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     console.log(`post rule ${scheduledRuleName}`);
     await rulesApi.postRule({
       prefix: config.stackName,
-      rule: scheduledHelloWorldRule
+      rule: scheduledHelloWorldRule,
     });
   });
 
@@ -61,7 +61,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
     await rulesApi.deleteRule({
       prefix: config.stackName,
-      ruleName: scheduledRuleName
+      ruleName: scheduledRuleName,
     });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
@@ -76,7 +76,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         findExecutionFn: (taskInput, params) =>
           taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
         findExecutionFnParams: { ruleName: scheduledRuleName },
-        startTask: 'HelloWorld'
+        startTask: 'HelloWorld',
       });
 
       console.log(`Scheduled Execution ARN: ${execution.executionArn}`);
@@ -93,7 +93,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
       await rulesApi.deleteRule({
         prefix: config.stackName,
-        ruleName: scheduledHelloWorldRule.name
+        ruleName: scheduledHelloWorldRule.name,
       });
     });
 
@@ -107,7 +107,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
           (taskInput.meta.triggerRule === params.ruleName) &&
           (taskInput.cumulus_meta.execution_name !== params.execution.name),
         findExecutionFnParams: { ruleName: scheduledRuleName, execution },
-        startTask: 'HelloWorld'
+        startTask: 'HelloWorld',
       }).catch((error) =>
         expect(error.message).toEqual('Never found started workflow.'));
     });
@@ -137,17 +137,17 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       name: oneTimeRuleName,
       workflow: 'HelloWorldWorkflow',
       rule: {
-        type: 'onetime'
+        type: 'onetime',
       },
       meta: {
-        triggerRule: createdCheck // used to detect that we're looking at the correct execution
-      }
+        triggerRule: createdCheck, // used to detect that we're looking at the correct execution
+      },
     };
 
     // Create a one-time rule
     const postRuleResponse = await rulesApi.postRule({
       prefix: config.stackName,
-      rule: helloWorldRule
+      rule: helloWorldRule,
     });
     postRule = JSON.parse(postRuleResponse.body);
   });
@@ -156,7 +156,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
     await rulesApi.deleteRule({
       prefix: config.stackName,
-      ruleName: helloWorldRule.name
+      ruleName: helloWorldRule.name,
     });
   });
 
@@ -172,7 +172,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
         findExecutionFnParams: { rule: createdCheck },
-        startTask: 'HelloWorld'
+        startTask: 'HelloWorld',
       });
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
@@ -184,9 +184,9 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         updateParams: {
           ...postRule.record,
           meta: {
-            triggerRule: updatedCheck
-          }
-        }
+            triggerRule: updatedCheck,
+          },
+        },
       });
 
       const updatedRule = JSON.parse(updatingRuleResponse.body);
@@ -194,7 +194,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       await rulesApi.rerunRule({
         prefix: config.stackName,
         ruleName: helloWorldRule.name,
-        updateParams: { ...updatedRule }
+        updateParams: { ...updatedRule },
       });
 
       console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
@@ -204,7 +204,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         bucket: config.bucket,
         findExecutionFn: isWorkflowTriggeredByRule,
         findExecutionFnParams: { rule: updatedCheck },
-        startTask: 'HelloWorld'
+        startTask: 'HelloWorld',
       });
       const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'HelloWorld');
       expect(updatedExecution).not.toBeNull();
@@ -219,8 +219,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
           const listRulesResponse = await rulesApi.listRules({
             prefix,
             query: {
-              name: helloWorldRule.name
-            }
+              name: helloWorldRule.name,
+            },
           });
           const responseBody = JSON.parse(listRulesResponse.body);
 
@@ -228,7 +228,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         },
         {
           interval: 1000,
-          timeout: 60 * 1000
+          timeout: 60 * 1000,
         }
       )
     ).toBeResolved();

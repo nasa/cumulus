@@ -50,5 +50,5 @@ async function getExecutionStatus(params) {
 module.exports = {
   getExecution,
   getExecutions,
-  getExecutionStatus
+  getExecutionStatus,
 };

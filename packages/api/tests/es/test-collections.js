@@ -54,24 +54,24 @@ test.before(async () => {
   await Promise.all([
     indexer.indexCollection(esClient, fakeCollectionFactory({
       name: 'coll1',
-      version: '1'
+      version: '1',
     }), esAlias),
     indexer.indexCollection(esClient, fakeCollectionFactory({
       name: 'coll1',
-      version: '2'
+      version: '2',
     }), esAlias),
     indexer.indexCollection(esClient, fakeCollectionFactory({
       name: 'coll2',
-      version: '1'
+      version: '1',
     }), esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({
       collectionId: 'coll1___1',
-      status: 'completed'
+      status: 'completed',
     }), esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({
       collectionId: 'coll1___1',
-      status: 'completed'
-    }), esAlias)
+      status: 'completed',
+    }), esAlias),
   ]);
 
   // Indexing using Date.now() to generate the timestamp
@@ -82,13 +82,13 @@ test.before(async () => {
       indexer.indexCollection(esClient, fakeCollectionFactory({
         name: 'coll3',
         version: '1',
-        updatedAt: new Date(2020, 0, 29)
+        updatedAt: new Date(2020, 0, 29),
       }), esAlias),
       indexer.indexGranule(esClient, fakeGranuleFactoryV2({
         updatedAt: new Date(2020, 1, 29),
         collectionId: 'coll3___1',
-        status: 'completed'
-      }), esAlias)
+        status: 'completed',
+      }), esAlias),
     ]);
   } finally {
     stub.restore();
@@ -119,7 +119,7 @@ test.serial('getStats returns an empty list if there are no records', async (t) 
 test.serial('getStats returns empty stats if there are no ids', async (t) => {
   const records = [
     { name: 'coll1', version: '1' },
-    { name: 'coll1', version: '2' }
+    { name: 'coll1', version: '2' },
   ];
   const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
   const stats = await collectionSearch.getStats(records, []);
@@ -131,8 +131,8 @@ test.serial('getStats returns empty stats if there are no ids', async (t) => {
         running: 0,
         completed: 0,
         failed: 0,
-        total: 0
-      }
+        total: 0,
+      },
     })));
 });
 
@@ -145,7 +145,7 @@ test.serial('getStats correctly adds stats', async (t) => {
     running: 0,
     completed: 2,
     failed: 0,
-    total: 2
+    total: 2,
   });
 });
 
@@ -154,12 +154,12 @@ test.serial('getStats correctly adds stats to different versions of collections'
   const stats = await collectionSearch.getStats([
     {
       name: 'coll1',
-      version: '1'
+      version: '1',
     },
     {
       name: 'coll1',
-      version: '2'
-    }
+      version: '2',
+    },
   ],
   ['coll1___1', 'coll1___2']);
 
@@ -172,8 +172,8 @@ test.serial('getStats correctly adds stats to different versions of collections'
         running: 0,
         completed: 2,
         failed: 0,
-        total: 2
-      }
+        total: 2,
+      },
     },
     {
       name: 'coll1',
@@ -182,9 +182,9 @@ test.serial('getStats correctly adds stats to different versions of collections'
         running: 0,
         completed: 0,
         failed: 0,
-        total: 0
-      }
-    }
+        total: 0,
+      },
+    },
   ]);
 });
 
@@ -192,12 +192,12 @@ test.serial('addStatsToCollection add stats to ES collection results', async (t)
   const esResults = [
     {
       name: 'coll1',
-      version: '1'
+      version: '1',
     },
     {
       name: 'coll1',
-      version: '2'
-    }
+      version: '2',
+    },
   ];
 
   const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
@@ -211,8 +211,8 @@ test.serial('addStatsToCollection add stats to ES collection results', async (t)
         running: 0,
         completed: 2,
         failed: 0,
-        total: 2
-      }
+        total: 2,
+      },
     },
     {
       name: 'coll1',
@@ -221,9 +221,9 @@ test.serial('addStatsToCollection add stats to ES collection results', async (t)
         running: 0,
         completed: 0,
         failed: 0,
-        total: 0
-      }
-    }
+        total: 0,
+      },
+    },
   ]);
 });
 
@@ -243,7 +243,7 @@ test.serial('query returns all collections with stats by default', async (t) => 
   const collections = queryResult.results.map((c) => ({
     name: c.name,
     version: c.version,
-    stats: c.stats
+    stats: c.stats,
   }));
   const orderedCollections = sortBy(collections, ['name', 'version']);
   t.deepEqual(orderedCollections, [
@@ -254,8 +254,8 @@ test.serial('query returns all collections with stats by default', async (t) => 
         running: 0,
         completed: 2,
         failed: 0,
-        total: 2
-      }
+        total: 2,
+      },
     },
     {
       name: 'coll1',
@@ -264,8 +264,8 @@ test.serial('query returns all collections with stats by default', async (t) => 
         running: 0,
         completed: 0,
         failed: 0,
-        total: 0
-      }
+        total: 0,
+      },
     },
     {
       name: 'coll2',
@@ -274,8 +274,8 @@ test.serial('query returns all collections with stats by default', async (t) => 
         running: 0,
         completed: 0,
         failed: 0,
-        total: 0
-      }
+        total: 0,
+      },
     },
     {
       name: 'coll3',
@@ -284,9 +284,9 @@ test.serial('query returns all collections with stats by default', async (t) => 
         running: 0,
         completed: 1,
         failed: 0,
-        total: 1
-      }
-    }
+        total: 1,
+      },
+    },
   ]);
 });
 
@@ -294,8 +294,8 @@ test.serial('query correctly queries collection by date', async (t) => {
   const collectionSearch = new Collection({
     queryStringParameters: {
       updatedAt__from: (new Date(2020, 0, 25)).getTime(),
-      updatedAt__to: (new Date(2020, 0, 30)).getTime()
-    }
+      updatedAt__to: (new Date(2020, 0, 30)).getTime(),
+    },
   }, undefined, process.env.ES_INDEX);
   const queryResult = await collectionSearch.query();
 
@@ -314,8 +314,8 @@ test.serial('aggregateActiveGranuleCollections respects date range for granules'
   const collectionSearch = new Collection({
     queryStringParameters: {
       updatedAt__from: (new Date(2020, 1, 25)).getTime(),
-      updatedAt__to: (new Date(2020, 1, 30)).getTime()
-    }
+      updatedAt__to: (new Date(2020, 1, 30)).getTime(),
+    },
   }, undefined, process.env.ES_INDEX);
   const queryResult = await collectionSearch.aggregateActiveGranuleCollections();
 
@@ -331,7 +331,7 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
   const collections = queryResult.results.map((c) => ({
     name: c.name,
     version: c.version,
-    stats: c.stats
+    stats: c.stats,
   }));
   t.deepEqual(collections, [
     {
@@ -341,8 +341,8 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
         running: 0,
         completed: 2,
         failed: 0,
-        total: 2
-      }
+        total: 2,
+      },
     },
     {
       name: 'coll3',
@@ -351,9 +351,9 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
         running: 0,
         completed: 1,
         failed: 0,
-        total: 1
-      }
-    }
+        total: 1,
+      },
+    },
   ]);
 });
 
@@ -361,8 +361,8 @@ test.serial('queryCollectionsWithActiveGranules respects granule update times, b
   const collectionSearch = new Collection({
     queryStringParameters: {
       updatedAt__from: (new Date(2020, 1, 25)).getTime(),
-      updatedAt__to: (new Date(2020, 1, 30)).getTime()
-    }
+      updatedAt__to: (new Date(2020, 1, 30)).getTime(),
+    },
   }, undefined, process.env.ES_INDEX);
   const queryResult = await collectionSearch.queryCollectionsWithActiveGranules();
 

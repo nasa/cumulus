@@ -12,11 +12,11 @@ const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   api: apiTestUtils,
-  getClusterArn
+  getClusterArn,
 } = require('@cumulus/integration-tests');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
-  findExecutionArn, getExecutionWithStatus
+  findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
@@ -25,7 +25,7 @@ const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const {
   createTimestampedTestId,
   createTestSuffix,
-  loadConfig
+  loadConfig,
 } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete', () => {
@@ -70,14 +70,14 @@ describe('POST /granules/bulkDelete', () => {
         const cmrCollection = {
           name: `MCD43A1${testSuffix}`,
           dataType: 'MCD43A1',
-          version: '006'
+          version: '006',
         };
         collection = await createCollection(
           prefix,
           {
             ...cmrCollection,
             duplicateHandling: 'error',
-            process: 'modis'
+            process: 'modis',
           }
         );
 
@@ -89,7 +89,7 @@ describe('POST /granules/bulkDelete', () => {
         await s3PutObject({
           Bucket: sourceBucket,
           Key: fileKey,
-          Body: 'asdf'
+          Body: 'asdf',
         });
 
         granuleId = randomId('granule-id-');
@@ -104,7 +104,7 @@ describe('POST /granules/bulkDelete', () => {
             workflow: 'IngestAndPublishGranule',
             collection: {
               name: collection.name,
-              version: collection.version
+              version: collection.version,
             },
             provider: provider.id,
             payload: {
@@ -117,12 +117,12 @@ describe('POST /granules/bulkDelete', () => {
                   files: [
                     {
                       name: filename,
-                      path: sourcePath
-                    }
-                  ]
-                }
-              ]
-            }
+                      path: sourcePath,
+                    },
+                  ],
+                },
+              ],
+            },
           }
         );
 
@@ -142,7 +142,7 @@ describe('POST /granules/bulkDelete', () => {
           prefix,
           arn: firstIngestGranuleExecutionArn,
           status: 'completed',
-          timeout: 60
+          timeout: 60,
         });
 
         // Wait for the granule to be fully ingested
@@ -153,15 +153,15 @@ describe('POST /granules/bulkDelete', () => {
           body: {
             ids: [granuleId],
             // required to force removal of granules from CMR before deletion
-            forceRemoveFromCmr: true
-          }
+            forceRemoveFromCmr: true,
+          },
         });
         postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
         // Query the AsyncOperation API to get the task ARN
         const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
           prefix,
-          id: postBulkDeleteBody.id
+          id: postBulkDeleteBody.id,
         });
         ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
         beforeAllSucceeded = true;
@@ -180,8 +180,8 @@ describe('POST /granules/bulkDelete', () => {
           () => deleteCollection({
             prefix,
             collectionName: get(collection, 'name'),
-            collectionVersion: get(collection, 'version')
-          })
+            collectionVersion: get(collection, 'version'),
+          }),
         ],
         { stopOnError: false }
       ).catch(console.error);
@@ -208,7 +208,7 @@ describe('POST /granules/bulkDelete', () => {
 
       const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id
+        id: postBulkDeleteBody.id,
       });
 
       expect(getAsyncOperationResponse.statusCode).toEqual(200);
@@ -224,7 +224,7 @@ describe('POST /granules/bulkDelete', () => {
       // Verify that the task ARN exists in that cluster
       const describeTasksResponse = await ecs().describeTasks({
         cluster: clusterArn,
-        tasks: [taskArn]
+        tasks: [taskArn],
       }).promise();
 
       expect(describeTasksResponse.tasks.length).toEqual(1);
@@ -237,13 +237,13 @@ describe('POST /granules/bulkDelete', () => {
         'tasksStopped',
         {
           cluster: clusterArn,
-          tasks: [taskArn]
+          tasks: [taskArn],
         }
       ).promise();
 
       const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id
+        id: postBulkDeleteBody.id,
       });
 
       const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);

@@ -15,7 +15,7 @@ const stubS3MultipartUploads = {};
 const { createBucket, multipartCopyObject, recursivelyDeleteS3Bucket } = proxyquire(
   '../../S3',
   {
-    './lib/S3MultipartUploads': stubS3MultipartUploads
+    './lib/S3MultipartUploads': stubS3MultipartUploads,
   }
 );
 
@@ -29,7 +29,7 @@ const createDummyObject = async ({ Bucket, Key, size, tags = {} }) => {
   await s3().upload({
     Bucket,
     Key,
-    Body: readStream
+    Body: readStream,
   }).promise();
 
   await s3().putObjectTagging({
@@ -38,8 +38,8 @@ const createDummyObject = async ({ Bucket, Key, size, tags = {} }) => {
     Tagging: {
       TagSet: Object.entries(tags).map(
         ([tagKey, tagValue]) => ({ Key: tagKey, Value: tagValue })
-      )
-    }
+      ),
+    },
   }).promise();
 };
 
@@ -58,12 +58,12 @@ test.beforeEach((t) => {
   stubS3MultipartUploads.uploadPartCopy = sinon.fake.resolves({
     PartNumber: 1,
     CopyPartResult: {
-      ETag: 'etag-1'
-    }
+      ETag: 'etag-1',
+    },
   });
 
   stubS3MultipartUploads.completeMultipartUpload = sinon.fake.resolves({
-    etag: 'etag-complete'
+    etag: 'etag-complete',
   });
 });
 
@@ -76,7 +76,7 @@ test.serial('multipartCopyObject() copies tags if copyTags=true', async (t) => {
   const {
     sourceBucket,
     destinationBucket,
-    fakeCreateMultipartUpload
+    fakeCreateMultipartUpload,
   } = t.context;
 
   const sourceKey = randomId('source-key');
@@ -86,7 +86,7 @@ test.serial('multipartCopyObject() copies tags if copyTags=true', async (t) => {
     Bucket: sourceBucket,
     Key: sourceKey,
     size: 10,
-    tags: { key: 'value' }
+    tags: { key: 'value' },
   });
 
   await multipartCopyObject({
@@ -94,7 +94,7 @@ test.serial('multipartCopyObject() copies tags if copyTags=true', async (t) => {
     sourceKey,
     destinationBucket,
     destinationKey,
-    copyTags: true
+    copyTags: true,
   });
 
   t.true(
@@ -108,7 +108,7 @@ test.serial('multipartCopyObject() does not copy tags if copyTags=false', async 
   const {
     sourceBucket,
     destinationBucket,
-    fakeCreateMultipartUpload
+    fakeCreateMultipartUpload,
   } = t.context;
 
   const sourceKey = randomId('source-key');
@@ -118,7 +118,7 @@ test.serial('multipartCopyObject() does not copy tags if copyTags=false', async 
     Bucket: sourceBucket,
     Key: sourceKey,
     size: 10,
-    tags: { key: 'value' }
+    tags: { key: 'value' },
   });
 
   await multipartCopyObject({
@@ -126,7 +126,7 @@ test.serial('multipartCopyObject() does not copy tags if copyTags=false', async 
     sourceKey,
     destinationBucket,
     destinationKey,
-    copyTags: false
+    copyTags: false,
   });
 
   t.true(fakeCreateMultipartUpload.calledOnce);
@@ -141,7 +141,7 @@ test.serial('multipartCopyObject() does not copy tags by default', async (t) => 
   const {
     sourceBucket,
     destinationBucket,
-    fakeCreateMultipartUpload
+    fakeCreateMultipartUpload,
   } = t.context;
 
   const sourceKey = randomId('source-key');
@@ -151,14 +151,14 @@ test.serial('multipartCopyObject() does not copy tags by default', async (t) => 
     Bucket: sourceBucket,
     Key: sourceKey,
     size: 10,
-    tags: { key: 'value' }
+    tags: { key: 'value' },
   });
 
   await multipartCopyObject({
     sourceBucket,
     sourceKey,
     destinationBucket,
-    destinationKey
+    destinationKey,
   });
 
   t.true(fakeCreateMultipartUpload.calledOnce);
