@@ -46,13 +46,11 @@ const createRuleInput = (queueUrl, timeLimit = 60) => ({
   timeLimit
 });
 
-const createWorkflowMessage = (queueName, maxExecutions) => JSON.stringify({
+const createWorkflowMessage = (queueUrl, maxExecutions) => JSON.stringify({
   cumulus_meta: {
-    queueName
-  },
-  meta: {
+    queueUrl,
     queueExecutionLimits: {
-      [queueName]: maxExecutions
+      [queueUrl]: maxExecutions
     }
   }
 });
@@ -159,44 +157,40 @@ test.serial('handleEvent returns the number of messages consumed', async (t) => 
   t.is(data, 9);
 });
 
-test('incrementAndDispatch throws error for message without queue name', async (t) => {
+test('incrementAndDispatch throws error for message without queue URL', async (t) => {
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage() }),
-    { message: 'cumulus_meta.queueName not set in message' }
+    () => incrementAndDispatch({ Body: createWorkflowMessage() })
   );
 });
 
 test('incrementAndDispatch throws error for message with no maximum executions value', async (t) => {
-  const queueName = randomId('queue');
+  const { queueUrl } = t.context;
 
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage(queueName) }),
-    { message: `Could not determine maximum executions for queue ${queueName}` }
+    () => incrementAndDispatch({ Body: createWorkflowMessage(queueUrl) })
   );
 });
 
 test('incrementAndDispatch increments priority semaphore', async (t) => {
-  const { semaphore } = t.context;
+  const { semaphore, queueUrl } = t.context;
 
-  const queueName = randomId('low');
-  const message = createWorkflowMessage(queueName, 5);
+  const message = createWorkflowMessage(queueUrl, 5);
 
   await incrementAndDispatch({ Body: message });
 
-  const response = await semaphore.get(queueName);
+  const response = await semaphore.get(queueUrl);
   t.is(response.semvalue, 1);
 });
 
 test.serial('incrementAndDispatch decrements priority semaphore if dispatch() throws error', async (t) => {
-  const { semaphore } = t.context;
+  const { semaphore, queueUrl } = t.context;
 
-  const queueName = randomId('low');
-  const message = createWorkflowMessage(queueName, 5);
+  const message = createWorkflowMessage(queueUrl, 5);
 
   const stubSFNThrowError = () => ({
     startExecution: () => ({
       promise: async () => {
-        const response = await semaphore.get(queueName);
+        const response = await semaphore.get(queueUrl);
         t.is(response.semvalue, 1);
         throw new Error('testing');
       }
@@ -207,7 +201,7 @@ test.serial('incrementAndDispatch decrements priority semaphore if dispatch() th
   try {
     await incrementAndDispatch({ Body: message });
   } catch (error) {
-    const response = await semaphore.get(queueName);
+    const response = await semaphore.get(queueUrl);
     t.is(response.semvalue, 0);
   } finally {
     revert();
@@ -215,40 +209,38 @@ test.serial('incrementAndDispatch decrements priority semaphore if dispatch() th
 });
 
 test('incrementAndDispatch throws error when trying to increment priority semaphore beyond maximum', async (t) => {
-  const { client } = t.context;
-  const queueName = randomId('low');
+  const { client, queueUrl } = t.context;
   const maxExecutions = 5;
 
   // Set semaphore value to the maximum.
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key: queueName,
+      key: queueUrl,
       semvalue: maxExecutions
     }
   }).promise();
 
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage(queueName, maxExecutions) }),
+    () => incrementAndDispatch({ Body: createWorkflowMessage(queueUrl, maxExecutions) }),
     { instanceOf: ResourcesLockedError }
   );
 });
 
 test('handleThrottledEvent starts 0 executions when priority semaphore is at maximum', async (t) => {
   const { client, queueUrl } = t.context;
-  const queueName = randomId('low');
   const maxExecutions = 5;
 
   // Set semaphore value to the maximum.
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key: queueName,
+      key: queueUrl,
       semvalue: maxExecutions
     }
   }).promise();
 
-  const message = createWorkflowMessage(queueName, maxExecutions);
+  const message = createWorkflowMessage(queueUrl, maxExecutions);
 
   await sendSQSMessage(
     queueUrl,
@@ -262,7 +254,6 @@ test('handleThrottledEvent starts 0 executions when priority semaphore is at max
 test('handleThrottledEvent starts MAX - N executions for messages with priority', async (t) => {
   const { client, queueUrl } = t.context;
 
-  const queueName = randomId('low');
   const maxExecutions = 5;
   const initialSemValue = 2;
   const numOfMessages = 4;
@@ -272,12 +263,12 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key: queueName,
+      key: queueUrl,
       semvalue: initialSemValue
     }
   }).promise();
 
-  const message = createWorkflowMessage(queueName, maxExecutions);
+  const message = createWorkflowMessage(queueUrl, maxExecutions);
 
   // Create 4 messages in the queue.
   const sendMessageTasks = createSendMessageTasks(queueUrl, message, numOfMessages);
@@ -297,72 +288,6 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
     numOfMessages: messageLimit
   });
   t.is(messages.length, numOfMessages - result);
-});
-
-test('handleThrottledEvent respects maximum executions for multiple priority levels', async (t) => {
-  const { client, queueUrl } = t.context;
-
-  const lowPriorityQueue = randomId('low');
-  const lowMaxExecutions = 3;
-  const lowInitialValue = 2;
-  const lowMessageCount = 2;
-
-  const medPriorityQueue = randomId('med');
-  const medMaxExecutions = 5;
-  const medInitialValue = 3;
-  const medMessageCount = 4;
-
-  const messageLimit = lowMessageCount + medMessageCount;
-
-  // Set initial semaphore values.
-  await Promise.all([
-    client.put({
-      TableName: process.env.SemaphoresTable,
-      Item: {
-        key: lowPriorityQueue,
-        semvalue: lowInitialValue
-      }
-    }).promise(),
-    client.put({
-      TableName: process.env.SemaphoresTable,
-      Item: {
-        key: medPriorityQueue,
-        semvalue: medInitialValue
-      }
-    }).promise()
-  ]);
-
-  const lowPriorityMessage = createWorkflowMessage(lowPriorityQueue, lowMaxExecutions);
-  const lowMessageTasks = createSendMessageTasks(queueUrl, lowPriorityMessage, lowMessageCount);
-
-  const medPriorityMessage = createWorkflowMessage(medPriorityQueue, medMaxExecutions);
-  const medMessageTasks = createSendMessageTasks(queueUrl, medPriorityMessage, medMessageCount);
-
-  await Promise.all([
-    ...lowMessageTasks,
-    ...medMessageTasks
-  ]);
-
-  const result = await handleThrottledEvent({
-    queueUrl,
-    messageLimit
-  }, 0);
-
-  // Max - initial value = Number of executions started
-  const expectedLowResult = lowMaxExecutions - lowInitialValue;
-  const expectedMedResult = medMaxExecutions - medInitialValue;
-  const expectedResult = expectedLowResult + expectedMedResult;
-  t.is(result, expectedResult);
-
-  const messages = await receiveSQSMessages(queueUrl, {
-    numOfMessages: messageLimit
-  });
-
-  // Number of messages - number of messages read/deleted = number of messages left
-  const expectedLowCount = (lowMessageCount - expectedLowResult);
-  const expectedMedCount = (medMessageCount - expectedMedResult);
-  const expectedMessageCount = expectedLowCount + expectedMedCount;
-  t.is(messages.length, expectedMessageCount);
 });
 
 test('handleSourceMappingEvent calls dispatch on messages in an EventSource event', async (t) => {

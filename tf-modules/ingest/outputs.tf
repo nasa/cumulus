@@ -133,3 +133,11 @@ output "step_role_arn" {
 output "scaling_role_arn" {
   value = aws_iam_role.scaling.arn
 }
+
+output "background_queue_url" {
+  value = aws_sqs_queue.background_processing.id
+}
+
+output "start_sf_queue_url" {
+  value = aws_sqs_queue.start_sf.id
+}

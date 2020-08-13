@@ -20,27 +20,21 @@ const {
 async function sendStartSfMessages({
   numOfMessages,
   queueMaxExecutions,
-  queueName,
   queueUrl,
   workflowArn,
   payload = {}
 }) {
   const message = {
     cumulus_meta: {
-      queueName,
+      queueUrl,
       state_machine: workflowArn
-    },
-    meta: {
-      queues: {
-        [queueName]: queueUrl
-      }
     },
     payload
   };
 
   if (queueMaxExecutions) {
-    message.meta.queueExecutionLimits = {
-      [queueName]: queueMaxExecutions
+    message.cumulus_meta.queueExecutionLimits = {
+      [queueUrl]: queueMaxExecutions
     };
   }
 
@@ -275,7 +269,6 @@ describe('the sf-starter lambda function', () => {
   });
 
   describe('when provided a queue with a maximum number of executions', () => {
-    let maxQueueName;
     let maxQueueUrl;
     let messagesConsumed;
     let ruleName;
@@ -290,7 +283,7 @@ describe('the sf-starter lambda function', () => {
     beforeAll(async () => {
       semaphoreDownLambda = `${config.stackName}-sfSemaphoreDown`;
 
-      maxQueueName = `${testName}MaxQueue`;
+      const maxQueueName = `${testName}MaxQueue`;
 
       const { QueueUrl } = await sqs().createQueue({
         QueueName: maxQueueName
@@ -319,7 +312,6 @@ describe('the sf-starter lambda function', () => {
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
         queueMaxExecutions,
-        queueName: maxQueueName,
         queueUrl: maxQueueUrl,
         workflowArn: waitPassSfArn
       });
@@ -341,7 +333,7 @@ describe('the sf-starter lambda function', () => {
         dynamodbDocClient().delete({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
-            key: maxQueueName
+            key: maxQueueUrl
           }
         }).promise()
       ]);
@@ -382,7 +374,7 @@ describe('the sf-starter lambda function', () => {
         const semItem = await dynamodbDocClient().get({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
-            key: maxQueueName
+            key: maxQueueUrl
           }
         }).promise();
         expect(semItem.Item.semvalue).toBe(0);

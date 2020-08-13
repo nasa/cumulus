@@ -15,7 +15,6 @@ test.beforeEach(async (t) => {
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
   t.context.stackName = randomId('stack');
-  t.context.queueName = randomId('queue');
   t.context.queueUrl = await createQueue(randomString());
   t.context.queueExecutionLimit = randomNumber();
 
@@ -23,12 +22,9 @@ test.beforeEach(async (t) => {
   t.context.stateMachineArn = randomString();
 
   t.context.messageTemplate = {
-    meta: {
-      queues: {
-        [t.context.queueName]: t.context.queueUrl
-      },
+    cumulus_meta: {
       queueExecutionLimits: {
-        [t.context.queueName]: t.context.queueExecutionLimit
+        [t.context.queueUrl]: t.context.queueExecutionLimit
       }
     }
   };
@@ -68,7 +64,6 @@ test.serial('the queue receives a correctly formatted workflow message without a
   const granule = { granuleId: '1', files: [] };
   const {
     queueExecutionLimit,
-    queueName,
     queueUrl,
     stateMachineArn,
     workflow,
@@ -106,15 +101,12 @@ test.serial('the queue receives a correctly formatted workflow message without a
   const expectedMessage = {
     cumulus_meta: {
       state_machine: stateMachineArn,
-      queueName
+      queueUrl,
+      queueExecutionLimits: {
+        [queueUrl]: queueExecutionLimit
+      }
     },
     meta: {
-      queues: {
-        [queueName]: queueUrl
-      },
-      queueExecutionLimits: {
-        [queueName]: queueExecutionLimit
-      },
       provider: provider,
       collection: collection,
       workflow_name: workflow
@@ -131,7 +123,6 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
   const granule = { granuleId: '1', files: [] };
   const {
     queueExecutionLimit,
-    queueName,
     queueUrl,
     stateMachineArn,
     workflow,
@@ -174,15 +165,12 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     cumulus_meta: {
       state_machine: stateMachineArn,
       parentExecutionArn: arn,
-      queueName
+      queueUrl,
+      queueExecutionLimits: {
+        [queueUrl]: queueExecutionLimit
+      }
     },
     meta: {
-      queues: {
-        [queueName]: queueUrl
-      },
-      queueExecutionLimits: {
-        [queueName]: queueExecutionLimit
-      },
       provider: provider,
       collection: collection,
       pdr: pdr,
