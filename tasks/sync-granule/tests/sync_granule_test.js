@@ -130,6 +130,22 @@ test.afterEach.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(t.context.protectedBucketName),
 ]));
 
+test.serial('should return empty granules list given empty granules list on input', async (t) => {
+  t.context.event.input.granules = [];
+
+  const output = await syncGranule(t.context.event);
+
+  t.deepEqual(output.granules, [], 'output granules list should be empty');
+});
+
+test.serial('should return empty granules list given no granules list on input', async (t) => {
+  delete t.context.event.input.granules;
+
+  const output = await syncGranule(t.context.event);
+
+  t.deepEqual(output.granules, [], 'output granules list should be empty');
+});
+
 test.serial('error when provider info is missing', async (t) => {
   delete t.context.event.config.provider;
 

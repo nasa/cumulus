@@ -263,9 +263,14 @@ async function reconciliationReportForGranuleFiles(params) {
         && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
       okCount += 1;
     } else {
+      let uri = granuleFiles[fileName].source;
+      if (granuleFiles[fileName].bucket && granuleFiles[fileName].key) {
+        uri = buildS3Uri(granuleFiles[fileName].bucket, granuleFiles[fileName].key);
+      }
+
       onlyInCumulus.push({
         fileName: fileName,
-        uri: buildS3Uri(granuleFiles[fileName].bucket, granuleFiles[fileName].key),
+        uri,
         granuleId: granuleInDb.granuleId,
       });
     }
@@ -567,7 +572,7 @@ async function processRequest(params) {
     await createReconciliationReport({ ...params, createStartTime, reportKey });
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
-    log.error(`${JSON.stringify(error)}`);
+    log.error(JSON.stringify(error)); // helps debug ES errors
     log.error(`Error creating reconciliation report ${reportRecordName}`, error);
     const updates = {
       status: 'Failed',

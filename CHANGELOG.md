@@ -36,6 +36,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-1855**
+  - Fixed SyncGranule task to return an empty granules list when given an empty
+    (or absent) granules list on input, rather than throwing an exception
 - **CUMULUS-1955**
   - Added `@cumulus/aws-client/S3.getObject` to get an AWS S3 object
   - Added `@cumulus/aws-client/S3.waitForObject` to get an AWS S3 object,

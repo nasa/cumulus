@@ -2,7 +2,7 @@
 
 const { Search } = require('./search');
 const defaultESScrollSize = 1000;
-const defaultESScrollDuration = '30s';
+const defaultESScrollDuration = '2m';
 
 /**
  * Scroll wrapper class for Search
@@ -41,7 +41,7 @@ class ESScrollSearch extends Search {
     if (!this.scrollId) {
       const searchParams = this._buildSearch();
       searchParams.size = process.env.ES_SCROLL_SIZE || defaultESScrollSize;
-      searchParams.scroll = defaultESScrollDuration;
+      searchParams.scroll = process.env.ES_SCROLL || defaultESScrollDuration;
       response = await this.client.search(searchParams);
       this.scrollId = response.body._scroll_id;
     } else {
