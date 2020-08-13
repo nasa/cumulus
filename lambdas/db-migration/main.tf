@@ -20,6 +20,10 @@ variable "pg_password" {
   type = string
 }
 
+variable "pg_database" {
+  type = string
+}
+
 variable "subnet_ids" {
   type    = list(string)
   default = []
@@ -113,6 +117,7 @@ resource "aws_lambda_function" "db_migration" {
       PG_HOST = var.pg_host
       PG_USER = var.pg_user
       PG_PASSWORD = var.pg_password
+      PG_DATABASE = var.pg_database
     }
   }
 

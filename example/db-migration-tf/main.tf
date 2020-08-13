@@ -16,6 +16,7 @@ module "db_migration" {
   pg_host                  = var.pg_host
   pg_password              = var.pg_password
   pg_user                  = var.pg_user
+  pg_database              = var.pg_database
   prefix                   = var.prefix
   subnet_ids               = var.subnet_ids
   tags                     = merge(var.tags, { Deployment = var.prefix })

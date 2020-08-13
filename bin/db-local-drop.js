@@ -11,7 +11,8 @@ const { dropAllTables } = require('../packages/db');
     connection: {
       host: 'localhost',
       user: 'postgres',
-      password: 'password'
+      password: 'password',
+      database: 'postgres'
     },
     asyncStackTraces: true
   });
