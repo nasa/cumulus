@@ -1,8 +1,8 @@
 import * as Knex from 'knex';
 
-export const up = async (knex: Knex): Promise<void> => {
+export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('collections', (table) => {
-    table.integer('cumulusId').primary();
+    table.increments('cumulusId').primary();
     table.string('name');
     table.string('version');
     table.string('process');
@@ -16,9 +16,10 @@ export const up = async (knex: Knex): Promise<void> => {
     table.jsonb('files');
     table.jsonb('meta');
     table.timestamps(); // adds "created_at" and "updated_at" columns automatically
-  });
-};
 
-export const down = async (knex: Knex): Promise<void> => {
+    // add unique constraints
+    table.unique(['name', 'version']);
+  });
+
+export const down = async (knex: Knex): Promise<void> =>
   knex.schema.dropTable('collections');
-};
