@@ -1,51 +1,6 @@
-# Input variables
-
-variable "permissions_boundary_arn" {
-  type = string
-}
-
-variable "prefix" {
-  type = string
-}
-
-variable "pg_host" {
-  type = string
-}
-
-variable "pg_user" {
-  type = string
-}
-
-variable "pg_password" {
-  type = string
-}
-
-variable "pg_database" {
-  type = string
-}
-
-variable "subnet_ids" {
-  type    = list(string)
-  default = []
-}
-
-variable "tags" {
-  type    = map(string)
-  default = {}
-}
-
-variable "vpc_id" {
-  type    = string
-  default = null
-}
-
-# Local variables
-
 locals {
   lambda_path = "${path.module}/dist/lambda.zip"
 }
-
-# Resources
 
 data "aws_iam_policy_document" "lambda_assume_role_policy" {
   statement {
@@ -140,10 +95,4 @@ data "aws_lambda_invocation" "db_migration" {
   function_name = aws_lambda_function.db_migration.function_name
 
   input = "{}"
-}
-
-# Output variables
-
-output "db_migration" {
-  value = data.aws_lambda_invocation.db_migration.result
 }
