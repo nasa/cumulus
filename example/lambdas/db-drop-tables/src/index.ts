@@ -1,5 +1,5 @@
 import Knex from 'knex';
-import { dropAllTables } from '@cumulus/db';
+import { dropAllTables } from '../../../../dist/lib/db';
 
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
