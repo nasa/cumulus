@@ -18,7 +18,7 @@ These reports show the following data:
 
 The Cumulus Dashboard offers an interface to create, manage and view these inventory reports.
 
-The Reconciliation Reports Overvew page shows a full list of existing reports and the option to create a new report.
+The Reconciliation Reports Overview page shows a full list of existing reports and the option to create a new report.
 ![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
 
 Viewing a report will show a detailed list of collections, granules and files.
