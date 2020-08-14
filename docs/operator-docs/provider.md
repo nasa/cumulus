@@ -25,7 +25,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |:---:|:----|:------:|-----------|
 |id|string|Yes|Unique identifier for the provider|
 |globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider. This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
-|protocol|string|Yes|The protocol for this provider. Must be `S3` for this provider type. |
+|protocol|string|Yes|The protocol for this provider. Must be `s3` for this provider type. |
 |host|string|Yes|S3 Bucket to pull data from |
 
 ### http
