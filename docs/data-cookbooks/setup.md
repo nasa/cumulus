@@ -1,6 +1,6 @@
 ---
 id: setup
-title: Datacookbooks Introduction
+title: Data Cookbooks Introduction
 hide_title: true
 ---
 
