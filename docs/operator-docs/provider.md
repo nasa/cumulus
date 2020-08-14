@@ -11,7 +11,7 @@ In Cumulus, a Provider represents a endpoint from which data is ingested.   For 
 Please note:
 
 * While *connection* configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
-* Task-specific provider configurations that are expected to be configured on a *per-workflow* basis exist, and may be tweaked to allow for task-specific configuration (e.g. https timeout values for the `discover-granules` task).
+* There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
 
 A Provider can be created via use of the [API](https://nasa.github.io/cumulus-api/#create-provider) or via a client application like the [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard).
 
