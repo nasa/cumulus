@@ -1,9 +1,10 @@
 'use strict';
 
+const isEmpty = require('lodash/isEmpty');
 const omit = require('lodash/omit');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
-
+const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
@@ -259,6 +260,39 @@ class Collection {
       },
       '#name, #version, #reportToEms, #createdAt, #updatedAt'
     ).then((result) => result.Items);
+  }
+
+  async getCollections(searchParams) {
+    const attributeNames = {};
+    const attributeValues = {};
+    const filterExpressions = [];
+
+    Object.entries(searchParams).forEach(([key, value]) => {
+      let field = key;
+      let operation = '=';
+      if (key.includes('__')) {
+        field = key.split('__').shift();
+        operation = key.endsWith('__from') ? '>=' : '<=';
+      }
+
+      attributeNames[`#${field}`] = field;
+      attributeValues[`:${key}`] = value;
+      filterExpressions.push(`#${field} ${operation} :${key}`);
+    });
+
+    const params = (searchParams && !isEmpty(searchParams))
+      ? {
+        TableName: this.dynamoDbClient.tableName,
+        ExpressionAttributeNames: attributeNames,
+        ExpressionAttributeValues: attributeValues,
+        FilterExpression: filterExpressions.join(' AND '),
+      }
+      : {
+        TableName: this.dynamoDbClient.tableName,
+      };
+
+    console.log(params);
+    return new DynamoDbSearchQueue(params, 'scan');
   }
 
   async deleteCollections() {
