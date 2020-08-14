@@ -1,0 +1,23 @@
+{
+  "name": "@cumulus/data-migration-lambda",
+  "description": "A Lambda function used for doing data migrations",
+  "version": "2.0.1",
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "main": "dist/index.js",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist",
+    "package": "./package.sh",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc"
+  },
+  "dependencies": {
+    "knex": "^0.21.2",
+    "pg": "^8.3.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^7.14.4"
+  }
+}
