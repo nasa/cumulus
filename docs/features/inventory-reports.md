@@ -11,7 +11,7 @@ These reports show the following data:
 
 * Files in Cumulus, those that are in S3 but missing in DynamoDB and those in DynamoDB but not S3
 * All Collections in Cumulus and CMR, highlighting any collections only in Cumulus or only in CMR
-* All Granules in Cumulus and CMR, highlighting any granules only in Cumulus or only in CMR
+* All Granules in Cumulus and CMR belonging to collections found in both, highlighting any granules only in Cumulus or only in CMR
 * All Files in Cumulus and CMR, highlighting any files only in Cumulus or only in CMR
 
 ## Viewing Reports on the Cumulus Dashboard
