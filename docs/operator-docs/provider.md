@@ -17,7 +17,7 @@ A Provider can be created via use of the [API](https://nasa.github.io/cumulus-ap
 
 ## Provider Configuration
 
-The Provider configuration is defined by a JSON object that takes different configuration keys depending on the provider type.    The following are definitions of a typical configuration values relevant for the various providers:
+The Provider configuration is defined by a JSON object that takes different configuration keys depending on the provider type.    The following are definitions of typical configuration values relevant for the various providers:
 
 ### S3
 
