@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cumulus-integration-tests",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Cumulus Integration Test Deployment",
   "private": true,
   "main": "index.js",
@@ -40,29 +40,29 @@
     ]
   },
   "dependencies": {
-    "@cumulus/api": "2.0.1",
-    "@cumulus/api-client": "2.0.1",
-    "@cumulus/aws-client": "2.0.1",
-    "@cumulus/checksum": "2.0.1",
-    "@cumulus/cmrjs": "2.0.1",
-    "@cumulus/common": "2.0.1",
-    "@cumulus/discover-granules": "2.0.1",
-    "@cumulus/discover-pdrs": "2.0.1",
-    "@cumulus/files-to-granules": "2.0.1",
-    "@cumulus/hello-world": "2.0.1",
-    "@cumulus/integration-tests": "2.0.1",
-    "@cumulus/message": "2.0.1",
-    "@cumulus/move-granules": "2.0.1",
-    "@cumulus/parse-pdr": "2.0.1",
-    "@cumulus/pdr-status-check": "2.0.1",
-    "@cumulus/post-to-cmr": "2.0.1",
-    "@cumulus/queue-granules": "2.0.1",
-    "@cumulus/queue-pdrs": "2.0.1",
-    "@cumulus/sf-sqs-report": "2.0.1",
-    "@cumulus/sync-granule": "2.0.1",
-    "@cumulus/test-processing": "2.0.1"
+    "@cumulus/api": "2.0.2",
+    "@cumulus/api-client": "2.0.2",
+    "@cumulus/aws-client": "2.0.2",
+    "@cumulus/checksum": "2.0.2",
+    "@cumulus/cmrjs": "2.0.2",
+    "@cumulus/common": "2.0.2",
+    "@cumulus/discover-granules": "2.0.2",
+    "@cumulus/discover-pdrs": "2.0.2",
+    "@cumulus/files-to-granules": "2.0.2",
+    "@cumulus/hello-world": "2.0.2",
+    "@cumulus/integration-tests": "2.0.2",
+    "@cumulus/message": "2.0.2",
+    "@cumulus/move-granules": "2.0.2",
+    "@cumulus/parse-pdr": "2.0.2",
+    "@cumulus/pdr-status-check": "2.0.2",
+    "@cumulus/post-to-cmr": "2.0.2",
+    "@cumulus/queue-granules": "2.0.2",
+    "@cumulus/queue-pdrs": "2.0.2",
+    "@cumulus/sf-sqs-report": "2.0.2",
+    "@cumulus/sync-granule": "2.0.2",
+    "@cumulus/test-processing": "2.0.2"
   },
   "devDependencies": {
-    "@cumulus/test-data": "2.0.1"
+    "@cumulus/test-data": "2.0.2"
   }
 }
