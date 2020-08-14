@@ -1,8 +1,8 @@
 {
   "name": "@cumulus/db",
   "version": "2.0.1",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",
