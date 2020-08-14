@@ -11,13 +11,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
   rather than `null` if the mime type could not be found.
 - The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
-- The `@cumulus/ingest/granule.generateMoveFileParams` function now returns
-  `source: undefined` and `target :undefined` on the response object if either could not be
-  determined. Previously, `null` had been returned.
-- The `@cumulus/ingest/recursion.recursion` function must now be imported using
-  `const { recursion } = require('@cumulus/ingest/recursion');`
-- The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
-  `listVersionedObjects`
 
 ### Added
 
@@ -28,11 +21,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2116**
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
-
-### Removed
-
-- The `@cumulus/ingest/granule.copyGranuleFile` function has been removed
-- The `@cumulus/ingest/granule.moveGranuleFile` function has been removed
 
 ## [v2.0.1] 2020-07-28
 
