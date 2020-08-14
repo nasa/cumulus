@@ -14,21 +14,21 @@ const test = anyTest as TestInterface<{
 test.before((t) => {
   t.context.stubS3 = {
     getObject: () => ({
-      createReadStream: () => Readable.from(['asdf'])
-    })
+      createReadStream: () => Readable.from(['asdf']),
+    }),
   };
 });
 
 test('addChecksumToGranuleFile() does not update a granule file if checksumType is set but checksum is not', async (t) => {
   const granuleFile = {
     filename: 's3://bucket/key',
-    checksumType: 'md5'
+    checksumType: 'md5',
   };
 
   const result = await addChecksumToGranuleFile({
     s3: t.context.stubS3,
     algorithm: 'md5',
-    granuleFile
+    granuleFile,
   });
 
   t.deepEqual(result, granuleFile);
@@ -37,13 +37,13 @@ test('addChecksumToGranuleFile() does not update a granule file if checksumType 
 test('addChecksumToGranuleFile() does not update a granule file if checksum is set but checksumType is not', async (t) => {
   const granuleFile = {
     filename: 's3://bucket/key',
-    checksum: 'asdf'
+    checksum: 'asdf',
   };
 
   const result = await addChecksumToGranuleFile({
     s3: t.context.stubS3,
     algorithm: 'md5',
-    granuleFile
+    granuleFile,
   });
 
   t.deepEqual(result, granuleFile);
@@ -56,7 +56,7 @@ test('addChecksumToGranuleFile() does not update a granule file if it does not h
     s3: t.context.stubS3,
     algorithm: 'md5',
     // @ts-expect-error
-    granuleFile
+    granuleFile,
   });
 
   t.deepEqual(result, granuleFile);
@@ -66,13 +66,13 @@ test('addChecksumToGranuleFile() returns the file if checksumType and checksum a
   const granuleFile = {
     filename: 's3://bucket/key',
     checksumType: 'md5',
-    checksum: 'asdf'
+    checksum: 'asdf',
   };
 
   const result = await addChecksumToGranuleFile({
     s3: t.context.stubS3,
     algorithm: 'md5',
-    granuleFile
+    granuleFile,
   });
 
   t.deepEqual(result, granuleFile);
@@ -80,23 +80,23 @@ test('addChecksumToGranuleFile() returns the file if checksumType and checksum a
 
 test('addChecksumToGranuleFile() adds the checksumType and checksum to the file if they are missing', async (t) => {
   const granuleFile = {
-    filename: 's3://my-bucket/path/to/file.txt'
+    filename: 's3://my-bucket/path/to/file.txt',
   };
 
   const fakeGetObject = sinon.fake.returns({
-    createReadStream: () => Readable.from(['asdf'])
+    createReadStream: () => Readable.from(['asdf']),
   });
 
   const result = await addChecksumToGranuleFile({
     s3: { getObject: fakeGetObject },
     algorithm: 'md5',
-    granuleFile
+    granuleFile,
   });
 
   t.true(
     fakeGetObject.calledOnceWithExactly({
       Bucket: 'my-bucket',
-      Key: 'path/to/file.txt'
+      Key: 'path/to/file.txt',
     })
   );
 
@@ -105,7 +105,7 @@ test('addChecksumToGranuleFile() adds the checksumType and checksum to the file 
     {
       ...granuleFile,
       checksumType: 'md5',
-      checksum: '912ec803b2ce49e4a541068d495ab570'
+      checksum: '912ec803b2ce49e4a541068d495ab570',
     }
   );
 });
@@ -113,7 +113,7 @@ test('addChecksumToGranuleFile() adds the checksumType and checksum to the file 
 test('The handler does not update files that already have a checksum', async (t) => {
   const event = {
     config: {
-      algorithm: 'md5'
+      algorithm: 'md5',
     },
     input: {
       granules: [
@@ -123,12 +123,12 @@ test('The handler does not update files that already have a checksum', async (t)
             {
               filename: 's3://bucket/key',
               checksumType: 'c-type',
-              checksum: 'c-value'
-            }
-          ]
-        }
-      ]
-    }
+              checksum: 'c-value',
+            },
+          ],
+        },
+      ],
+    },
   };
 
   const result = await handler(event);
@@ -148,23 +148,23 @@ test('The handler updates files that do not have a checksum', async (t) => {
   await S3.s3PutObject({
     Bucket: bucket,
     Key: key,
-    Body: 'asdf'
+    Body: 'asdf',
   });
 
   const event = {
     config: {
-      algorithm: 'md5'
+      algorithm: 'md5',
     },
     input: {
       granules: [
         {
           granuleId: 'g-1',
           files: [
-            { filename: `s3://${bucket}/${key}` }
-          ]
-        }
-      ]
-    }
+            { filename: `s3://${bucket}/${key}` },
+          ],
+        },
+      ],
+    },
   };
 
   const result = await handler(event);
@@ -176,7 +176,7 @@ test('The handler updates files that do not have a checksum', async (t) => {
 test('The handler preserves extra input properties', async (t) => {
   const event = {
     config: {
-      algorithm: 'md5'
+      algorithm: 'md5',
     },
     input: {
       foo: 'bar',
@@ -187,12 +187,12 @@ test('The handler preserves extra input properties', async (t) => {
             {
               filename: 's3://bucket/key',
               checksumType: 'c-type',
-              checksum: 'c-value'
-            }
-          ]
-        }
-      ]
-    }
+              checksum: 'c-value',
+            },
+          ],
+        },
+      ],
+    },
   };
 
   const result = await handler(event);
@@ -203,7 +203,7 @@ test('The handler preserves extra input properties', async (t) => {
 test('The handler preserves extra granule properties', async (t) => {
   const event = {
     config: {
-      algorithm: 'md5'
+      algorithm: 'md5',
     },
     input: {
       granules: [
@@ -214,12 +214,12 @@ test('The handler preserves extra granule properties', async (t) => {
             {
               filename: 's3://bucket/key',
               checksumType: 'c-type',
-              checksum: 'c-value'
-            }
-          ]
-        }
-      ]
-    }
+              checksum: 'c-value',
+            },
+          ],
+        },
+      ],
+    },
   };
 
   const result = await handler(event);
@@ -230,7 +230,7 @@ test('The handler preserves extra granule properties', async (t) => {
 test('The handler preserves extra granule file properties', async (t) => {
   const event = {
     config: {
-      algorithm: 'md5'
+      algorithm: 'md5',
     },
     input: {
       granules: [
@@ -241,12 +241,12 @@ test('The handler preserves extra granule file properties', async (t) => {
               foo: 'bar',
               filename: 's3://bucket/key',
               checksumType: 'c-type',
-              checksum: 'c-value'
-            }
-          ]
-        }
-      ]
-    }
+              checksum: 'c-value',
+            },
+          ],
+        },
+      ],
+    },
   };
 
   const result = await handler(event);

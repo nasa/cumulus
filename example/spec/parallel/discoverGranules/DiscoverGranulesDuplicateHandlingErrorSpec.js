@@ -8,7 +8,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn,
-  getExecutionWithStatus
+  getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
@@ -48,7 +48,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       collection = await createCollection(
         prefix,
         {
-          duplicateHandling: 'error'
+          duplicateHandling: 'error',
         }
       );
 
@@ -61,7 +61,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       await s3PutObject({
         Bucket: sourceBucket,
         Key: existingGranuleKey,
-        Body: 'asdf'
+        Body: 'asdf',
       });
 
       const ingestTime = Date.now() - 1000 * 30;
@@ -83,12 +83,12 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
                 files: [
                   {
                     name: `${existingGranuleId}.txt`,
-                    path: sourcePath
-                  }
-                ]
-              }
-            ]
-          }
+                    path: sourcePath,
+                  },
+                ],
+              },
+            ],
+          },
         }
       );
 
@@ -105,7 +105,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       await getExecutionWithStatus({
         prefix,
         arn: ingestGranuleExecutionArn,
-        status: 'completed'
+        status: 'completed',
       });
 
       // Wait for the existing granule to be fully ingested
@@ -118,15 +118,15 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
           workflow: 'DiscoverGranules',
           collection: {
             name: collection.name,
-            version: collection.version
+            version: collection.version,
           },
           provider: provider.id,
           meta: {
-            provider_path: `${sourcePath}/`
+            provider_path: `${sourcePath}/`,
           },
           payload: {
-            testExecutionId: randomId('test-execution-')
-          }
+            testExecutionId: randomId('test-execution-'),
+          },
         }
       );
 
@@ -152,7 +152,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       const execution = await getExecutionWithStatus({
         prefix,
         arn: discoverGranulesExecutionArn,
-        status: 'failed'
+        status: 'failed',
       });
 
       const errorCause = JSON.parse(get(execution, 'error.Cause', {}));
@@ -166,7 +166,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
     await pAll(
       [
         () => deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') }),
-        () => deleteRule({ prefix, ruleName: get(discoverGranulesRule, 'name') })
+        () => deleteRule({ prefix, ruleName: get(discoverGranulesRule, 'name') }),
       ],
       { stopOnError: false }
     ).catch(console.error);
@@ -179,8 +179,8 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         () => deleteCollection({
           prefix,
           collectionName: get(collection, 'name'),
-          collectionVersion: get(collection, 'version')
-        })
+          collectionVersion: get(collection, 'version'),
+        }),
       ],
       { stopOnError: false }
     ).catch(console.error);

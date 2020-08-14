@@ -13,9 +13,9 @@ test('waitForObject() returns the requested object', async (t) => {
       t.is(params.Key, Key);
 
       return {
-        promise: async () => 'asdf'
+        promise: async () => 'asdf',
       };
-    }
+    },
   };
 
   const result = await waitForObject(s3Client, { Bucket, Key });
@@ -40,7 +40,7 @@ test('waitForObject() does not retry if the requested bucket does not exist', as
       error.code = 'NoSuchBucket';
 
       return { promise: () => Promise.reject(error) };
-    }
+    },
   };
 
   await t.throwsAsync(
@@ -76,7 +76,7 @@ test('waitForObject() retries if the requested object does not exist', async (t)
       }
 
       return { promise: () => Promise.resolve('asdf') };
-    }
+    },
   };
 
   const result = await waitForObject(
@@ -110,7 +110,7 @@ test('waitForObject() retries if the wrong etag was returned', async (t) => {
       }
 
       return { promise: () => Promise.resolve('asdf') };
-    }
+    },
   };
 
   const result = await waitForObject(

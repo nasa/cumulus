@@ -12,7 +12,7 @@ class AccessToken extends Manager {
     super({
       tableName: params.tableName || process.env.AccessTokensTable,
       tableHash: { name: 'accessToken', type: 'S' },
-      schema: accessTokenSchema
+      schema: accessTokenSchema,
     });
   }
 
@@ -31,8 +31,8 @@ class AccessToken extends Manager {
       item,
       client: this.dynamodbDocClient,
       getParams: {
-        ConsistentRead: true
-      }
+        ConsistentRead: true,
+      },
     });
   }
 
@@ -60,7 +60,7 @@ class AccessToken extends Manager {
       ? item
       : {
         ...item,
-        expirationTime: this._getDefaultExpirationTime()
+        expirationTime: this._getDefaultExpirationTime(),
       };
     return super.create(record);
   }

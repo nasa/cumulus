@@ -1,7 +1,7 @@
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const {
   isConditionalCheckException,
-  ResourcesLockedError
+  ResourcesLockedError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
@@ -19,11 +19,11 @@ class Semaphore {
         TableName: this.tableName,
         Item: {
           key,
-          semvalue: 0
+          semvalue: 0,
         },
         ConditionExpression: '#key <> :key',
         ExpressionAttributeNames: { '#key': 'key' },
-        ExpressionAttributeValues: { ':key': key }
+        ExpressionAttributeValues: { ':key': key },
       };
       await this.docClient.put(params).promise();
     } catch (error) {
@@ -40,15 +40,15 @@ class Semaphore {
     return DynamoDb.get({
       tableName: this.tableName,
       item: {
-        key
+        key,
       },
-      client: this.docClient
+      client: this.docClient,
     });
   }
 
   scan() {
     return DynamoDb.scan({
-      tableName: this.tableName
+      tableName: this.tableName,
     });
   }
 
@@ -80,16 +80,16 @@ class Semaphore {
     const updateParams = {
       TableName: this.tableName,
       Key: {
-        key
+        key,
       },
       UpdateExpression: 'set #semvalue = #semvalue + :val',
       ExpressionAttributeNames: {
-        '#semvalue': 'semvalue'
+        '#semvalue': 'semvalue',
       },
       ExpressionAttributeValues: {
-        ':val': count
+        ':val': count,
       },
-      ReturnValues: 'UPDATED_NEW'
+      ReturnValues: 'UPDATED_NEW',
     };
 
     if (count > 0 && max >= 0) {

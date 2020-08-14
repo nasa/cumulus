@@ -20,5 +20,5 @@ async function findAsyncOperationTaskDefinitionForDeployment(stackName) {
 }
 
 module.exports = {
-  findAsyncOperationTaskDefinitionForDeployment
+  findAsyncOperationTaskDefinitionForDeployment,
 };

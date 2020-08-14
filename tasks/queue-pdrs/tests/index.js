@@ -4,7 +4,7 @@ const test = require('ava');
 
 const {
   s3,
-  sqs
+  sqs,
 } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
@@ -14,7 +14,7 @@ const {
   randomString,
   validateConfig,
   validateInput,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 
 const { queuePdrs } = require('..');
@@ -31,17 +31,17 @@ test.beforeEach(async (t) => {
   t.context.queueUrl = await createQueue(randomString());
 
   t.context.queueExecutionLimits = {
-    [t.context.queueUrl]: randomNumber()
+    [t.context.queueUrl]: randomNumber(),
   };
   t.context.messageTemplate = {
     cumulus_meta: {
       queueExecutionLimits: t.context.queueExecutionLimits,
-      state_machine: t.context.stateMachineArn
-    }
+      state_machine: t.context.stateMachineArn,
+    },
   };
   const workflowDefinition = {
     name: t.context.workflow,
-    arn: t.context.stateMachineArn
+    arn: t.context.stateMachineArn,
   };
   const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
@@ -50,13 +50,13 @@ test.beforeEach(async (t) => {
     s3PutObject({
       Bucket: t.context.templateBucket,
       Key: messageTemplateKey,
-      Body: JSON.stringify(t.context.messageTemplate)
+      Body: JSON.stringify(t.context.messageTemplate),
     }),
     s3PutObject({
       Bucket: t.context.templateBucket,
       Key: workflowDefinitionKey,
-      Body: JSON.stringify(workflowDefinition)
-    })
+      Body: JSON.stringify(workflowDefinition),
+    }),
   ]);
 
   t.context.event = {
@@ -66,18 +66,18 @@ test.beforeEach(async (t) => {
       queueUrl: t.context.queueUrl,
       parsePdrWorkflow: t.context.workflow,
       stackName: t.context.stackName,
-      internalBucket: t.context.templateBucket
+      internalBucket: t.context.templateBucket,
     },
     input: {
-      pdrs: []
-    }
+      pdrs: [],
+    },
   };
 });
 
 test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise()
+    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
   ]);
 });
 
@@ -85,7 +85,7 @@ test.serial('The correct output is returned when PDRs are queued', async (t) => 
   const event = t.context.event;
   event.input.pdrs = [
     { name: randomString(), path: randomString() },
-    { name: randomString(), path: randomString() }
+    { name: randomString(), path: randomString() },
   ];
 
   await validateConfig(t, event.config);
@@ -116,7 +116,7 @@ test.serial('PDRs are added to the queue', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [
     { name: randomString(), path: randomString() },
-    { name: randomString(), path: randomString() }
+    { name: randomString(), path: randomString() },
   ];
 
   await validateConfig(t, event.config);
@@ -130,7 +130,7 @@ test.serial('PDRs are added to the queue', async (t) => {
   const receiveMessageResponse = await sqs().receiveMessage({
     QueueUrl: t.context.event.config.queueUrl,
     MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
+    WaitTimeSeconds: 1,
   }).promise();
   const messages = receiveMessageResponse.Messages;
 
@@ -143,7 +143,7 @@ test.serial('The correct message is enqueued', async (t) => {
     queueExecutionLimits,
     queueUrl,
     stateMachineArn,
-    workflow
+    workflow,
   } = t.context;
 
   // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
@@ -155,12 +155,12 @@ test.serial('The correct message is enqueued', async (t) => {
   event.input.pdrs = [
     {
       name: randomString(),
-      path: randomString()
+      path: randomString(),
     },
     {
       name: randomString(),
-      path: randomString()
-    }
+      path: randomString(),
+    },
   ];
 
   await validateConfig(t, event.config);
@@ -174,7 +174,7 @@ test.serial('The correct message is enqueued', async (t) => {
   const receiveMessageResponse = await sqs().receiveMessage({
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
+    WaitTimeSeconds: 1,
   }).promise();
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
@@ -192,19 +192,19 @@ test.serial('The correct message is enqueued', async (t) => {
         state_machine: stateMachineArn,
         parentExecutionArn: arn,
         queueUrl,
-        queueExecutionLimits
+        queueExecutionLimits,
       },
       meta: {
         collection: { name: 'collection-name' },
         provider: { name: 'provider-name' },
-        workflow_name: workflow
+        workflow_name: workflow,
       },
       payload: {
         pdr: {
           name: pdr.name,
-          path: pdr.path
-        }
-      }
+          path: pdr.path,
+        },
+      },
     };
   });
 

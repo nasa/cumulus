@@ -73,7 +73,7 @@ test('bootstrap adds alias to existing index', async (t) => {
 
   await esClient.indices.create({
     index: indexName,
-    body: { mappings }
+    body: { mappings },
   });
 
   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
@@ -95,7 +95,7 @@ test('Missing types added to index', async (t) => {
 
   await esClient.indices.create({
     index: indexName,
-    body: { mappings: mappingsSubset }
+    body: { mappings: mappingsSubset },
   });
 
   t.deepEqual(
@@ -122,7 +122,7 @@ test('Missing fields added to index', async (t) => {
 
   await esClient.indices.create({
     index: indexName,
-    body: { mappings: mappingsNoFields }
+    body: { mappings: mappingsNoFields },
   });
 
   t.deepEqual(
@@ -150,7 +150,7 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   // Create index with name of alias we want to use
   await esClient.indices.create({
     index: testAlias,
-    body: { mappings }
+    body: { mappings },
   });
 
   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);

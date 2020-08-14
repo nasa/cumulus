@@ -6,7 +6,7 @@ const request = require('supertest');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -17,7 +17,7 @@ const Provider = require('../../../models/providers');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -118,7 +118,7 @@ test('POST with invalid authorization scheme returns an invalid authorization re
 test('POST creates a new provider', async (t) => {
   const newProviderId = 'AQUA';
   const newProvider = fakeProviderFactory({
-    id: newProviderId
+    id: newProviderId,
   });
 
   const response = await request(app)
@@ -185,7 +185,7 @@ test('POST returns a 400 response if invalid record is provided', async (t) => {
 
 test('POST returns a 400 response if invalid hostname is provided', async (t) => {
   const newProvider = fakeProviderFactory({
-    host: '-bad-hostname'
+    host: '-bad-hostname',
   });
 
   const response = await request(app)

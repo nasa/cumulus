@@ -15,7 +15,7 @@ const {
   Execution,
   Granule,
   Pdr,
-  Provider
+  Provider,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -25,7 +25,7 @@ const {
   parseS3Uri,
   s3CopyObject,
   s3GetObjectTagging,
-  s3ObjectExists
+  s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
@@ -39,7 +39,7 @@ const {
   getOnlineResources,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
-  waitForCompletedExecution
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -49,7 +49,7 @@ const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
   getTEADistributionApiFileStream,
-  getTEARequestHeaders
+  getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
@@ -62,17 +62,17 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  getFilesMetadata
+  getFilesMetadata,
 } = require('../../helpers/testUtils');
 const {
   setDistributionApiEnvVars,
-  waitForModelStatus
+  waitForModelStatus,
 } = require('../../helpers/apiUtils');
 const {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdPathAndCollection
+  loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
@@ -85,7 +85,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
 ];
 
 function isExecutionForGranuleId(taskInput, params) {
@@ -142,14 +142,14 @@ describe('The S3 Ingest Granules workflow', () => {
     const providerData = {
       ...providerJson,
       id: provider.id,
-      host: config.bucket
+      host: config.bucket,
     };
 
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId, collectionDupeHandling),
-      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
+      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData }),
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -171,22 +171,22 @@ describe('The S3 Ingest Granules workflow', () => {
               {
                 bucket: config.buckets.internal.name,
                 filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
-                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
               },
               {
                 bucket: config.buckets.internal.name,
                 filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
-                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
               },
               {
                 bucket: config.buckets.internal.name,
                 filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg`,
-                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`
-              }
-            ]
-          }
-        ]
-      }
+                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
+              },
+            ],
+          },
+        ],
+      },
     });
 
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
@@ -202,24 +202,24 @@ describe('The S3 Ingest Granules workflow', () => {
             files: [
               {
                 bucket: config.buckets.protected.name,
-                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf`
+                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf`,
               },
               {
                 bucket: config.buckets.private.name,
-                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`
+                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`,
               },
               {
                 bucket: config.buckets.public.name,
-                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`
+                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`,
               },
               {
                 bucket: config.buckets['protected-2'].name,
-                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml`
-              }
-            ]
-          }
-        ]
-      }
+                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml`,
+              },
+            ],
+          },
+        ],
+      },
     });
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
@@ -238,7 +238,7 @@ describe('The S3 Ingest Granules workflow', () => {
       provider,
       inputPayload,
       {
-        distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
+        distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
       }
     );
 
@@ -252,19 +252,19 @@ describe('The S3 Ingest Granules workflow', () => {
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
-        collectionVersion: collection.version
+        collectionVersion: collection.version,
       }),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecutionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       }),
       pdrModel.delete({
-        pdrName: inputPayload.pdr.name
+        pdrName: inputPayload.pdr.name,
       }),
       deleteS3Object(config.bucket, granuleCompletedMessageKey),
-      deleteS3Object(config.bucket, granuleRunningMessageKey)
+      deleteS3Object(config.bucket, granuleRunningMessageKey),
     ]);
   });
 
@@ -295,7 +295,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     const granuleResponse = await granulesApiTestUtils.getGranule({
       prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
+      granuleId: inputPayload.granules[0].granuleId,
     });
     const granule = JSON.parse(granuleResponse.body);
 
@@ -310,7 +310,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('adds checksums to all granule files', async () => {
     const execution = await StepFunctions.describeExecution({
-      executionArn: workflowExecutionArn
+      executionArn: workflowExecutionArn,
     });
 
     const executionOutput = JSON.parse(execution.output);
@@ -389,12 +389,12 @@ describe('The S3 Ingest Granules workflow', () => {
     it('output includes the ingested granule with file staging location paths', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
-        sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
+        sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
       };
 
       const updatedPayload = {
         ...expectedSyncGranulePayload,
-        granules: [updatedGranule]
+        granules: [updatedGranule],
       };
       expect(lambdaOutput.payload).toEqual(updatedPayload);
     });
@@ -402,7 +402,7 @@ describe('The S3 Ingest Granules workflow', () => {
     it('updates the meta object with input_granules', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
-        sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
+        sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
       };
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
     });
@@ -425,7 +425,7 @@ describe('The S3 Ingest Granules workflow', () => {
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath }),
         s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath }),
-        s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath })
+        s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath }),
       ]);
     });
 
@@ -479,7 +479,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const result = await Promise.all([
           getOnlineResources(granule),
           getOnlineResources(ummGranule),
-          getTEARequestHeaders(config.stackName)
+          getTEARequestHeaders(config.stackName),
         ]);
 
         cmrResource = result[0];
@@ -520,7 +520,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const resource = ummCmrResource;
       const distributionUrl = getDistributionFileUrl({
         bucket: files[0].bucket,
-        key: files[0].filepath
+        key: files[0].filepath,
       });
       const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
@@ -529,7 +529,7 @@ describe('The S3 Ingest Granules workflow', () => {
         'VIEW RELATED INFORMATION',
         'VIEW RELATED INFORMATION',
         'GET DATA',
-        'GET RELATED VISUALIZATION'
+        'GET RELATED VISUALIZATION',
       ];
       const cmrUrls = resource.map((r) => r.URL);
 
@@ -644,14 +644,14 @@ describe('The S3 Ingest Granules workflow', () => {
       await Promise.all([
         executionModel.delete({ arn: failedExecutionArn }),
         deleteS3Object(config.bucket, executionCompletedKey),
-        deleteS3Object(config.bucket, executionFailedKey)
+        deleteS3Object(config.bucket, executionFailedKey),
       ]);
     });
 
     it('is published for a running granule', async () => {
       const granuleExists = await s3ObjectExists({
         Bucket: config.bucket,
-        Key: granuleRunningMessageKey
+        Key: granuleRunningMessageKey,
       });
       expect(granuleExists).toEqual(true);
     });
@@ -659,7 +659,7 @@ describe('The S3 Ingest Granules workflow', () => {
     it('is published for an execution on a successful workflow completion', async () => {
       const executionExists = await s3ObjectExists({
         Bucket: config.bucket,
-        Key: executionCompletedKey
+        Key: executionCompletedKey,
       });
       expect(executionExists).toEqual(true);
     });
@@ -667,7 +667,7 @@ describe('The S3 Ingest Granules workflow', () => {
     it('is published for a granule on a successful workflow completion', async () => {
       const granuleExists = await s3ObjectExists({
         Bucket: config.bucket,
-        Key: granuleCompletedMessageKey
+        Key: granuleCompletedMessageKey,
       });
       expect(granuleExists).toEqual(true);
     });
@@ -675,7 +675,7 @@ describe('The S3 Ingest Granules workflow', () => {
     it('is published for an execution on workflow failure', async () => {
       const executionExists = await s3ObjectExists({
         Bucket: config.bucket,
-        Key: executionFailedKey
+        Key: executionFailedKey,
       });
 
       expect(executionExists).toEqual(true);
@@ -691,7 +691,7 @@ describe('The S3 Ingest Granules workflow', () => {
       beforeAll(async () => {
         const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+          granuleId: inputPayload.granules[0].granuleId,
         });
         granule = JSON.parse(granuleResponse.body);
         cmrLink = granule.cmrLink;
@@ -738,7 +738,7 @@ describe('The S3 Ingest Granules workflow', () => {
           oldExecution = granule.execution;
           const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
             prefix: config.stackName,
-            granuleId: inputPayload.granules[0].granuleId
+            granuleId: inputPayload.granules[0].granuleId,
           });
           reingestResponse = JSON.parse(reingestGranuleResponse.body);
         });
@@ -759,7 +759,7 @@ describe('The S3 Ingest Granules workflow', () => {
             bucket: config.bucket,
             findExecutionFn: isReingestExecutionForGranuleId,
             findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
-            startTask: 'SyncGranule'
+            startTask: 'SyncGranule',
           });
 
           console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
@@ -783,7 +783,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
             prefix: config.stackName,
-            granuleId: inputPayload.granules[0].granuleId
+            granuleId: inputPayload.granules[0].granuleId,
           });
 
           const updatedGranule = JSON.parse(updatedGranuleResponse.body);
@@ -811,7 +811,7 @@ describe('The S3 Ingest Granules workflow', () => {
         // Remove the granule from CMR
         await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+          granuleId: inputPayload.granules[0].granuleId,
         });
 
         // Check that the granule was removed
@@ -828,7 +828,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await granulesApiTestUtils.applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
-          workflow: 'PublishGranule'
+          workflow: 'PublishGranule',
         });
 
         publishGranuleExecution = await waitForTestExecutionStart({
@@ -837,7 +837,7 @@ describe('The S3 Ingest Granules workflow', () => {
           bucket: config.bucket,
           findExecutionFn: isExecutionForGranuleId,
           findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
-          startTask: 'PostToCmr'
+          startTask: 'PostToCmr',
         });
 
         console.log(`Wait for completed execution ${publishGranuleExecution.executionArn}`);
@@ -863,7 +863,7 @@ describe('The S3 Ingest Granules workflow', () => {
             destinations = [{
               regex: '.*.hdf$',
               bucket: config.bucket,
-              filepath: `${testDataFolder}/${path.dirname(file.key)}`
+              filepath: `${testDataFolder}/${path.dirname(file.key)}`,
             }];
           } catch (error) {
             console.error('Error in beforeAll() block:', error);
@@ -875,13 +875,13 @@ describe('The S3 Ingest Granules workflow', () => {
           await s3CopyObject({
             Bucket: config.bucket,
             CopySource: `${file.bucket}/${file.key}`,
-            Key: destinationKey
+            Key: destinationKey,
           });
 
           const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
-            destinations
+            destinations,
           });
 
           const responseBody = JSON.parse(moveGranuleResponse.body);
@@ -902,7 +902,7 @@ describe('The S3 Ingest Granules workflow', () => {
           const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
-            destinations
+            destinations,
           });
 
           expect(moveGranuleResponse.statusCode).toEqual(200);
@@ -916,19 +916,19 @@ describe('The S3 Ingest Granules workflow', () => {
         // pre-delete: Remove the granule from CMR
         await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+          granuleId: inputPayload.granules[0].granuleId,
         });
 
         // Delete the granule
         await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+          granuleId: inputPayload.granules[0].granuleId,
         });
 
         // Verify deletion
         const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+          granuleId: inputPayload.granules[0].granuleId,
         });
         const resp = JSON.parse(granuleResponse.body);
 
@@ -942,12 +942,12 @@ describe('The S3 Ingest Granules workflow', () => {
 
       beforeAll(async () => {
         const executionsApiResponse = await executionsApiTestUtils.getExecutions({
-          prefix: config.stackName
+          prefix: config.stackName,
         });
         executions = JSON.parse(executionsApiResponse.body);
         executionResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
-          arn: workflowExecutionArn
+          arn: workflowExecutionArn,
         });
       });
 
@@ -979,7 +979,7 @@ describe('The S3 Ingest Granules workflow', () => {
       beforeAll(async () => {
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
-          arn: workflowExecutionArn
+          arn: workflowExecutionArn,
         });
 
         executionStatus = JSON.parse(executionStatusResponse.body);
@@ -1020,7 +1020,7 @@ describe('The S3 Ingest Granules workflow', () => {
           'FilesToGranulesStep',
           'MoveGranuleStep',
           'CmrStep',
-          'WorkflowSucceeded'
+          'WorkflowSucceeded',
         ];
 
         // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited

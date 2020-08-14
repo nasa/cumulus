@@ -5,7 +5,7 @@ const pLimit = require('p-limit');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
-  getMessageExecutionName
+  getMessageExecutionName,
 } = require('@cumulus/message/Executions');
 const { isNil, removeNilProperties } = require('@cumulus/common/util');
 
@@ -19,7 +19,7 @@ class Execution extends Manager {
     super({
       tableName: process.env.ExecutionsTable,
       tableHash: { name: 'arn', type: 'S' },
-      schema: executionSchema
+      schema: executionSchema,
     });
   }
 
@@ -58,7 +58,7 @@ class Execution extends Manager {
       updatedAt: now,
       originalPayload: status === 'running' ? cumulusMessage.payload : undefined,
       finalPayload: status === 'running' ? undefined : cumulusMessage.payload,
-      duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000
+      duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000,
     };
 
     return removeNilProperties(record);
@@ -90,7 +90,7 @@ class Execution extends Manager {
     const oldExecutionRows = await this.scan({
       names: executionNames,
       filter: filter,
-      values: executionValues
+      values: executionValues,
     });
 
     const concurrencyLimit = process.env.CONCURRENCY || 10;
@@ -146,7 +146,7 @@ class Execution extends Manager {
     const updateParams = this._buildDocClientUpdateParams({
       item: executionItem,
       itemKey: { arn: executionItem.arn },
-      mutableFieldNames
+      mutableFieldNames,
     });
 
     await this.dynamodbDocClient.update(updateParams).promise();

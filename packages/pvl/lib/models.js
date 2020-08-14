@@ -135,5 +135,5 @@ module.exports = {
   PVLGroup,
   PVLNumeric,
   PVLDateTime,
-  PVLTextString
+  PVLTextString,
 };

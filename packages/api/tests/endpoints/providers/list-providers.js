@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -13,7 +13,7 @@ const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const indexer = require('../../../es/indexer');
@@ -50,7 +50,7 @@ test.before(async () => {
   await Promise.all([
     accessTokenModel.createTable(),
     bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias),
-    providerModel.createTable()
+    providerModel.createTable(),
   ]);
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -62,7 +62,7 @@ test.after.always(() => Promise.all([
   recursivelyDeleteS3Bucket(process.env.system_bucket),
   accessTokenModel.deleteTable(),
   esClient.indices.delete({ index: esIndex }),
-  providerModel.deleteTable()
+  providerModel.deleteTable(),
 ]));
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {

@@ -32,7 +32,7 @@ const getCollection = (collection) => {
 async function handleScheduleEvent(event) {
   const [provider, collection] = await Promise.all([
     getProvider(event.provider),
-    getCollection(event.collection)
+    getCollection(event.collection),
   ]);
 
   const messageTemplate = get(event, 'template');
@@ -40,7 +40,7 @@ async function handleScheduleEvent(event) {
   const workflowDefinition = get(event, 'definition');
   const workflow = {
     name: workflowDefinition.name,
-    arn: workflowDefinition.arn
+    arn: workflowDefinition.arn,
   };
 
   const eventCustomMeta = get(event, 'meta', {});
@@ -53,15 +53,15 @@ async function handleScheduleEvent(event) {
     customMeta: {
       ...eventCustomMeta,
       collection,
-      provider
+      provider,
     },
     payload: get(event, 'payload', {}),
-    workflow
+    workflow,
   });
 
   return SQS.sendSQSMessage(queueUrl, message);
 }
 
 module.exports = {
-  handleScheduleEvent
+  handleScheduleEvent,
 };

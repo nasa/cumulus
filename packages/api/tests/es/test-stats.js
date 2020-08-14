@@ -85,7 +85,7 @@ test.serial('Stats returns correct granule errors', async (t) => {
     indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias)
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
   ]);
 
   const stats = new Stats({}, undefined, process.env.ES_INDEX);
@@ -108,7 +108,7 @@ test.serial('Count returns correct granule and collection count', async (t) => {
     indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias)
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
   ]);
 
   const stats = new Stats({}, 'granule', process.env.ES_INDEX);
@@ -117,7 +117,7 @@ test.serial('Count returns correct granule and collection count', async (t) => {
   t.is(countResult.meta.count, 4);
   t.deepEqual(countResult.count, [
     { key: 'completed', count: 2 },
-    { key: 'failed', count: 2 }
+    { key: 'failed', count: 2 },
   ]);
 
   const collectionStats = new Stats({}, 'collection', process.env.ES_INDEX);
@@ -129,11 +129,11 @@ test.serial('Count returns correct granule and collection count', async (t) => {
 test.serial('Count returns correct count for date range', async (t) => {
   await Promise.all([
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({
-      updatedAt: new Date(2020, 0, 27)
+      updatedAt: new Date(2020, 0, 27),
     }), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias)
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias),
   ]);
 
   let stats = new Stats(
@@ -146,7 +146,7 @@ test.serial('Count returns correct count for date range', async (t) => {
   t.is(countResult.meta.count, 2);
   t.deepEqual(countResult.count, [
     { key: 'completed', count: 1 },
-    { key: 'failed', count: 1 }
+    { key: 'failed', count: 1 },
   ]);
 
   stats = new Stats(
@@ -159,15 +159,15 @@ test.serial('Count returns correct count for date range', async (t) => {
   t.is(countResult.meta.count, 2);
   t.deepEqual(countResult.count, [
     { key: 'completed', count: 1 },
-    { key: 'failed', count: 1 }
+    { key: 'failed', count: 1 },
   ]);
 
   stats = new Stats(
     {
       queryStringParameters: {
         updatedAt__from: (new Date(2020, 0, 25)).getTime(),
-        updatedAt__to: (new Date(2020, 0, 28)).getTime()
-      }
+        updatedAt__to: (new Date(2020, 0, 28)).getTime(),
+      },
     },
     'granule',
     process.env.ES_INDEX
@@ -176,7 +176,7 @@ test.serial('Count returns correct count for date range', async (t) => {
 
   t.is(countResult.meta.count, 1);
   t.deepEqual(countResult.count, [
-    { key: 'completed', count: 1 }
+    { key: 'completed', count: 1 },
   ]);
 });
 
@@ -185,7 +185,7 @@ test.serial('Count returns correct count for with custom field specified', async
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection1' }), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection2' }), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection3', status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection1', status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias)
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection1', status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias),
   ]);
 
   const stats = new Stats(
@@ -199,6 +199,6 @@ test.serial('Count returns correct count for with custom field specified', async
   t.deepEqual(countResult.count, [
     { key: 'collection1', count: 2 },
     { key: 'collection2', count: 1 },
-    { key: 'collection3', count: 1 }
+    { key: 'collection3', count: 1 },
   ]);
 });

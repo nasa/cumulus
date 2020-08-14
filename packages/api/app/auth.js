@@ -2,7 +2,7 @@
 
 const {
   JsonWebTokenError,
-  TokenExpiredError
+  TokenExpiredError,
 } = require('jsonwebtoken');
 
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
@@ -88,5 +88,5 @@ async function ensureAuthorized(req, res, next) {
 module.exports = {
   authorizedOAuthUsersKey,
   ensureAuthorized,
-  isAuthorizedOAuthUser
+  isAuthorizedOAuthUser,
 };

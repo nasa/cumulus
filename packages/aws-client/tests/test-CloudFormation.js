@@ -11,8 +11,8 @@ test('describeCfStack() returns the stack information', async (t) => {
   await cf().createStack({
     StackName,
     TemplateBody: JSON.stringify({
-      Resources: {}
-    })
+      Resources: {},
+    }),
   }).promise();
 
   const actualStack = await CloudFormation.describeCfStack(StackName);
@@ -33,10 +33,10 @@ test('describeCfStackResources() returns resources for stack', async (t) => {
     TemplateBody: JSON.stringify({
       Resources: {
         MyBucket: {
-          Type: 'AWS::S3::Bucket'
-        }
-      }
-    })
+          Type: 'AWS::S3::Bucket',
+        },
+      },
+    }),
   }).promise();
 
   const actualStackResources = await CloudFormation.describeCfStackResources(StackName);
@@ -60,8 +60,8 @@ test('getCfStackParameterValues() returns object excluding keys for missing para
   await cf().createStack({
     StackName,
     TemplateBody: JSON.stringify({
-      Resources: {}
-    })
+      Resources: {},
+    }),
   }).promise();
 
   const parameters = await CloudFormation.getCfStackParameterValues('test', ['foo']);
@@ -79,14 +79,14 @@ test('getCfStackParameterValues() returns requested stack parameters', async (t)
     TemplateBody: JSON.stringify({
       Parameters: {
         foo: { Type: 'String' },
-        key: { Type: 'String' }
+        key: { Type: 'String' },
       },
-      Resources: {}
+      Resources: {},
     }),
     Parameters: [
       { ParameterKey: 'foo', ParameterValue: 'bar' },
-      { ParameterKey: 'key', ParameterValue: 'value' }
-    ]
+      { ParameterKey: 'key', ParameterValue: 'value' },
+    ],
   }).promise();
 
   const parameters = await CloudFormation.getCfStackParameterValues(StackName, ['foo', 'key']);
@@ -95,7 +95,7 @@ test('getCfStackParameterValues() returns requested stack parameters', async (t)
     parameters,
     {
       foo: 'bar',
-      key: 'value'
+      key: 'value',
     }
   );
 

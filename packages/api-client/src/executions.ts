@@ -25,8 +25,8 @@ export const getExecution = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/executions/${arn}`
-    }
+      path: `/executions/${arn}`,
+    },
   });
 
   return JSON.parse(response.body);
@@ -55,8 +55,8 @@ export const getExecutions = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/executions',
-      queryStringParameters: query
-    }
+      queryStringParameters: query,
+    },
   });
 };
 
@@ -83,7 +83,7 @@ export const getExecutionStatus = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/executions/status/${arn}`
-    }
+      path: `/executions/status/${arn}`,
+    },
   });
 };

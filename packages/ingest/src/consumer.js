@@ -9,7 +9,7 @@ class Consumer {
     messageLimit = 1,
     timeLimit = 90,
     visibilityTimeout,
-    deleteProcessedMessage = true
+    deleteProcessedMessage = true,
   }) {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
@@ -80,5 +80,5 @@ class Consumer {
 }
 
 module.exports = {
-  Consumer
+  Consumer,
 };

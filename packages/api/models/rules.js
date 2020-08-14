@@ -22,7 +22,7 @@ class Rule extends Manager {
     super({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
-      schema: ruleSchema
+      schema: ruleSchema,
     });
 
     this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
@@ -217,7 +217,7 @@ class Rule extends Manager {
       cumulus_meta: get(item, 'cumulus_meta', {}),
       payload: get(item, 'payload', {}),
       queueUrl: item.queueUrl,
-      asyncOperationId: item.asyncOperationId
+      asyncOperationId: item.asyncOperationId,
     };
   }
 
@@ -319,7 +319,7 @@ class Rule extends Manager {
     // use the existing event source mapping if it already exists and is enabled
     const listParams = {
       FunctionName: lambda.name,
-      EventSourceArn: item.rule.value
+      EventSourceArn: item.rule.value,
     };
     const listData = await awsServices.lambda().listEventSourceMappings(listParams).promise();
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
@@ -331,7 +331,7 @@ class Rule extends Manager {
       }
       return awsServices.lambda().updateEventSourceMapping({
         UUID: currentMapping.UUID,
-        Enabled: true
+        Enabled: true,
       }).promise();
     }
 
@@ -340,7 +340,7 @@ class Rule extends Manager {
       EventSourceArn: item.rule.value,
       FunctionName: lambda.name,
       StartingPosition: 'TRIM_HORIZON',
-      Enabled: true
+      Enabled: true,
     };
     return awsServices.lambda().createEventSourceMapping(params).promise();
   }
@@ -374,7 +374,7 @@ class Rule extends Manager {
       return undefined;
     }
     const params = {
-      UUID: item.rule[this.eventMapping[eventType]]
+      UUID: item.rule[this.eventMapping[eventType]],
     };
     return awsServices.lambda().deleteEventSourceMapping(params).promise();
   }
@@ -391,20 +391,20 @@ class Rule extends Manager {
     const queryNames = {
       '#nm': 'name',
       '#rl': 'rule',
-      '#tp': 'type'
+      '#tp': 'type',
     };
     queryNames[`#${eventType}`] = eventType;
 
     const queryValues = {
       ':name': item.name,
-      ':ruleType': item.rule.type
+      ':ruleType': item.rule.type,
     };
     queryValues[`:${eventType}`] = item.rule[eventType];
 
     const rules = await super.scan({
       names: queryNames,
       filter: `#nm <> :name AND #rl.#tp = :ruleType AND ${arnClause}`,
-      values: queryValues
+      values: queryValues,
     });
 
     return (rules.Count && rules.Count > 0);
@@ -419,7 +419,7 @@ class Rule extends Manager {
     do {
       const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
         TopicArn: item.rule.value,
-        NextToken: token
+        NextToken: token,
       }).promise();
       token = subsResponse.NextToken;
       if (subsResponse.Subscriptions) {
@@ -442,7 +442,7 @@ class Rule extends Manager {
         TopicArn: item.rule.value,
         Protocol: 'lambda',
         Endpoint: process.env.messageConsumer,
-        ReturnSubscriptionArn: true
+        ReturnSubscriptionArn: true,
       };
       const r = await awsServices.sns().subscribe(subscriptionParams).promise();
       subscriptionArn = r.SubscriptionArn;
@@ -453,7 +453,7 @@ class Rule extends Manager {
       FunctionName: process.env.messageConsumer,
       Principal: 'sns.amazonaws.com',
       SourceArn: item.rule.value,
-      StatementId: `${item.name}Permission`
+      StatementId: `${item.name}Permission`,
     };
     await awsServices.lambda().addPermission(permissionParams).promise();
     return subscriptionArn;
@@ -467,12 +467,12 @@ class Rule extends Manager {
     // delete permission statement
     const permissionParams = {
       FunctionName: process.env.messageConsumer,
-      StatementId: `${item.name}Permission`
+      StatementId: `${item.name}Permission`,
     };
     await awsServices.lambda().removePermission(permissionParams).promise();
     // delete sns subscription
     const subscriptionParams = {
-      SubscriptionArn: item.rule.arn
+      SubscriptionArn: item.rule.arn,
     };
     return awsServices.sns().unsubscribe(subscriptionParams).promise();
   }
@@ -491,7 +491,7 @@ class Rule extends Manager {
 
     const qAttrParams = {
       QueueUrl: queueUrl,
-      AttributeNames: ['All']
+      AttributeNames: ['All'],
     };
     const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
     if (!attributes.Attributes.RedrivePolicy) {
@@ -529,7 +529,7 @@ class Rule extends Manager {
     version,
     sourceArn,
     state = 'ENABLED',
-    type
+    type,
   }) {
     if (!['kinesis', 'sns', 'sqs', 'onetime'].includes(type)) {
       throw new Error(`Unrecognized rule type: ${type}. Expected "kinesis", "sns", "sqs", or "onetime"`);
@@ -537,12 +537,12 @@ class Rule extends Manager {
     const names = {
       '#st': 'state',
       '#rl': 'rule',
-      '#tp': 'type'
+      '#tp': 'type',
     };
     let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
     const values = {
       ':enabledState': state,
-      ':ruleType': type
+      ':ruleType': type,
     };
     if (name) {
       values[':collectionName'] = name;
@@ -564,7 +564,7 @@ class Rule extends Manager {
     const rulesQueryResultsForSourceArn = await this.scan({
       names,
       filter,
-      values
+      values,
     });
 
     const rules = rulesQueryResultsForSourceArn.Items || [];

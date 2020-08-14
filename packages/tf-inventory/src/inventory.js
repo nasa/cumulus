@@ -86,7 +86,7 @@ async function listAwsResources() {
   return {
     ecsClusters: ecsClusters.clusterArns,
     ec2Instances,
-    esDomainNames
+    esDomainNames,
   };
 }
 
@@ -108,5 +108,5 @@ async function reconcileResources() {
 
 module.exports = {
   reconcileResources,
-  listTfResources
+  listTfResources,
 };

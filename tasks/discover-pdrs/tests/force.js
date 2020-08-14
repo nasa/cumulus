@@ -10,7 +10,7 @@ const { s3Join, recursivelyDeleteS3Bucket, uploadS3Files } = require('@cumulus/a
 const {
   randomString,
   validateConfig,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 const { RemoteResourceError } = require('@cumulus/errors');
 
@@ -36,7 +36,7 @@ test('test pdr discovery with force=false', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
 
   await validateConfig(t, event.config);
@@ -89,7 +89,7 @@ test('test pdr discovery with force=true', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
 
   await validateConfig(t, event.config);

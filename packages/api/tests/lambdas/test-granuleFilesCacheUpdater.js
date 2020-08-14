@@ -27,10 +27,10 @@ test('A granule insert event adds files to the granule files cache', async (t) =
       {
         eventName: 'INSERT',
         dynamodb: {
-          NewImage: attr.wrap(granule)
-        }
-      }
-    ]
+          NewImage: attr.wrap(granule),
+        },
+      },
+    ],
   };
 
   await handler(event);
@@ -51,7 +51,7 @@ test('A granule modify event adds additional files to the granule files cache', 
 
   const originalGranule = fakeGranuleFactoryV2({
     granuleId,
-    files: [originalFile]
+    files: [originalFile],
   });
 
   const newFile = { bucket: randomString(), key: randomString() };
@@ -60,8 +60,8 @@ test('A granule modify event adds additional files to the granule files cache', 
     ...originalGranule,
     files: [
       originalFile,
-      newFile
-    ]
+      newFile,
+    ],
   };
 
   const event = {
@@ -70,10 +70,10 @@ test('A granule modify event adds additional files to the granule files cache', 
         eventName: 'MODIFY',
         dynamodb: {
           NewImage: attr.wrap(newGranule),
-          OldImage: attr.wrap(originalGranule)
-        }
-      }
-    ]
+          OldImage: attr.wrap(originalGranule),
+        },
+      },
+    ],
   };
 
   await handler(event);
@@ -104,7 +104,7 @@ test('A granule modify event can remove files from the granule files cache', asy
   // granule only has one file.
   const originalGranule = fakeGranuleFactoryV2({
     granuleId,
-    files: [file1, file2]
+    files: [file1, file2],
   });
 
   const newGranule = { ...originalGranule, files: [file1] };
@@ -115,10 +115,10 @@ test('A granule modify event can remove files from the granule files cache', asy
         eventName: 'MODIFY',
         dynamodb: {
           NewImage: attr.wrap(newGranule),
-          OldImage: attr.wrap(originalGranule)
-        }
-      }
-    ]
+          OldImage: attr.wrap(originalGranule),
+        },
+      },
+    ],
   };
 
   await handler(event);
@@ -141,7 +141,7 @@ test("A granule delete remove event removes the granule's files from the cache",
 
   const originalGranule = fakeGranuleFactoryV2({
     granuleId,
-    files: [file]
+    files: [file],
   });
 
   const event = {
@@ -149,10 +149,10 @@ test("A granule delete remove event removes the granule's files from the cache",
       {
         eventName: 'REMOVE',
         dynamodb: {
-          OldImage: attr.wrap(originalGranule)
-        }
-      }
-    ]
+          OldImage: attr.wrap(originalGranule),
+        },
+      },
+    ],
   };
 
   await handler(event);

@@ -13,7 +13,7 @@ const pickAll = require('lodash/fp/pickAll');
 const xmlParseOptions = {
   ignoreAttrs: true,
   mergeAttrs: true,
-  explicitArray: false
+  explicitArray: false,
 };
 
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
@@ -24,7 +24,7 @@ const {
   recursivelyDeleteS3Bucket,
   promiseS3Upload,
   parseS3Uri,
-  getObject
+  getObject,
 } = require('@cumulus/aws-client/S3');
 const { InvalidArgument } = require('@cumulus/errors');
 const ValidationError = require('@cumulus/cmr-client/ValidationError');
@@ -41,7 +41,7 @@ const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
 const preconditionFailedSelector = {
   code: 'PreconditionFailed',
   statusCode: 412,
-  message: 'At least one of the pre-conditions you specified did not hold'
+  message: 'At least one of the pre-conditions you specified did not hold',
 };
 
 const { hyraxMetadataUpdate } = proxyquire(
@@ -63,8 +63,8 @@ const { hyraxMetadataUpdate } = proxyquire(
           },
           // Reduce number of retries to reduce test times
           { ...retryOptions, retries: 2 }
-        )
-    }
+        ),
+    },
   }
 );
 
@@ -73,7 +73,7 @@ const cmrPasswordSecret = randomId('cmrPassword');
 test.before(async () => {
   await secretsManager().createSecret({
     Name: cmrPasswordSecret,
-    SecretString: randomId('cmrPasswordSecret')
+    SecretString: randomId('cmrPasswordSecret'),
   }).promise();
 });
 
@@ -86,7 +86,7 @@ test.beforeEach(() => {
       version: '2.0',
       page_size: '50',
       page_num: '1',
-      provider_short_name: 'GES_DISC'
+      provider_short_name: 'GES_DISC',
     })
     .replyWithFile(200, 'tests/data/cmr-results.json', headers);
 
@@ -105,7 +105,7 @@ test.afterEach.always(() => {
 test.after.always(async () => {
   await secretsManager().deleteSecret({
     SecretId: cmrPasswordSecret,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
 });
 
@@ -114,7 +114,7 @@ async function uploadFilesXml(files, bucket) {
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
     Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key
+      ? fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key,
   })));
 }
 
@@ -123,7 +123,7 @@ async function uploadFilesJson(files, bucket) {
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
     Body: file.endsWith('.cmr.json')
-      ? fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key
+      ? fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key,
   })));
 }
 
@@ -175,10 +175,10 @@ const event = {
       provider: 'GES_DISC',
       clientId: 'xxxxxx',
       username: 'xxxxxx',
-      passwordSecretName: cmrPasswordSecret
-    }
+      passwordSecretName: cmrPasswordSecret,
+    },
   },
-  input: {}
+  input: {},
 };
 
 test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
@@ -190,7 +190,7 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
 
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   try {
@@ -201,7 +201,7 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
       f.type === 'metadata');
     const actual = await getObject(s3(), {
       Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
 
@@ -221,7 +221,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata f
 
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   try {
@@ -229,7 +229,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata f
       f.type === 'metadata');
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     metadataFile.etag = inputEtag;
 
@@ -240,15 +240,15 @@ test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata f
     // Verify the metadata has been updated at the S3 location
     const actual = await getObject(s3(), {
       Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     const actualPartial = {
       etag: actual.ETag,
-      body: actual.Body.toString()
+      body: actual.Body.toString(),
     };
     const expectedPartial = {
       etag: outputEtag,
-      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8')
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8'),
     };
 
     t.not(outputEtag, inputEtag);
@@ -268,7 +268,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
 
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   try {
@@ -277,7 +277,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     const bucket = `${metadataFile.bucket}/${metadataFile.fileStagingDir}`;
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: bucket,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     metadataFile.etag = inputEtag;
 
@@ -286,14 +286,14 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     await promiseS3Upload({
       Bucket: bucket,
       Key: metadataFile.name,
-      Body: 'foo'
+      Body: 'foo',
     });
 
     const granulesPromise = hyraxMetadataUpdate(e);
     await delay(3000).then(promiseS3Upload({
       Bucket: bucket,
       Key: metadataFile.name,
-      Body: fs.createReadStream('tests/data/echo10in.xml')
+      Body: fs.createReadStream('tests/data/echo10in.xml'),
     }));
     const { granules } = await granulesPromise;
 
@@ -302,15 +302,15 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     // Verify the metadata has been updated at the S3 location
     const actual = await getObject(s3(), {
       Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     const actualPartial = {
       etag: actual.ETag,
-      body: actual.Body.toString()
+      body: actual.Body.toString(),
     };
     const expectedPartial = {
       etag: outputEtag,
-      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8')
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8'),
     };
 
     t.not(outputEtag, inputEtag);
@@ -330,7 +330,7 @@ test.serial('hyraxMetadataUpdate fails with PreconditionFailure when metadata wi
 
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   try {
@@ -357,7 +357,7 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
 
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   try {
@@ -368,7 +368,7 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
       f.type === 'metadata');
     const actual = await getObject(s3(), {
       Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
     // We do this dance because formatting.
@@ -392,7 +392,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates UMM-G metadata fi
 
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   try {
@@ -400,7 +400,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates UMM-G metadata fi
       f.type === 'metadata');
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     metadataFile.etag = inputEtag;
 
@@ -411,18 +411,18 @@ test.serial('hyraxMetadataUpdate immediately finds and updates UMM-G metadata fi
     // Verify the metadata has been updated at the S3 location
     const actual = await getObject(s3(), {
       Bucket: `${metadataFile.bucket}/${metadataFile.fileStagingDir}`,
-      Key: metadataFile.name
+      Key: metadataFile.name,
     });
     // We do this dance because formatting.
     const normalizeBody = (body) => JSON.stringify(JSON.parse(body), undefined,
       2);
     const actualPartial = {
       etag: actual.ETag,
-      body: normalizeBody(actual.Body.toString())
+      body: normalizeBody(actual.Body.toString()),
     };
     const expectedPartial = {
       etag: outputEtag,
-      body: normalizeBody(fs.readFileSync('tests/data/umm-gout.json', 'utf8'))
+      body: normalizeBody(fs.readFileSync('tests/data/umm-gout.json', 'utf8')),
     };
 
     t.not(outputEtag, inputEtag);
@@ -439,12 +439,12 @@ test.serial('Test validation error when updating UMM-G metadata file in S3', asy
   await setupS3(t, true);
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: ValidationError,
-    message: 'Validation was not successful, CMR error message: undefined'
+    message: 'Validation was not successful, CMR error message: undefined',
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
@@ -458,12 +458,12 @@ test.serial('Test validation error when updating ECHO10 metadata file in S3', as
 
   const e = {
     config: event.config,
-    input: t.context.payload.input
+    input: t.context.payload.input,
   };
 
   await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: ValidationError,
-    message: 'Validation was not successful, CMR error message: "foo"'
+    message: 'Validation was not successful, CMR error message: "foo"',
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
@@ -483,17 +483,17 @@ test.serial('Test record does not exist error when granule object has no recogni
               bucket: 'cumulus-internal',
               filename: 's3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
               type: 'data',
-              fileStagingDir: 'file-staging/subdir'
-            }
-          ]
-        }
-      ]
-    }
+              fileStagingDir: 'file-staging/subdir',
+            },
+          ],
+        },
+      ],
+    },
   };
 
   await t.throwsAsync(hyraxMetadataUpdate(e), {
     instanceOf: RecordDoesNotExist,
-    message: new RegExp(e.input.granules[0].granuleId)
+    message: new RegExp(e.input.granules[0].granuleId),
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
@@ -551,15 +551,15 @@ test('Test generate path from ECHO-10 throws exception with broken config', asyn
         oauthProvider: 'earthdata',
         clientId: 'xxxxxx',
         username: 'xxxxxx',
-        passwordSecretName: 'xxxxx'
-      }
+        passwordSecretName: 'xxxxx',
+      },
     },
-    input: {}
+    input: {},
   };
   const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadataObject = await (promisify(xml2js.parseString))(metadata, xmlParseOptions);
   await t.throwsAsync(generatePath(badEvent.config, metadataObject, false), {
     instanceOf: InvalidArgument,
-    message: 'Provider not supplied in configuration. Unable to construct path'
+    message: 'Provider not supplied in configuration. Unable to construct path',
   });
 });

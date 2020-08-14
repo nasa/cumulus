@@ -46,7 +46,7 @@ const configureTimestampEnvs = (event) => {
 const setupIteratorParams = (stream, shardId) => {
   const params = {
     StreamName: stream,
-    ShardId: shardId
+    ShardId: shardId,
   };
   if (process.env.startTimestamp) {
     params.ShardIteratorType = 'AT_TIMESTAMP';
@@ -69,7 +69,7 @@ const setupIteratorParams = (stream, shardId) => {
  */
 const setupListShardParams = (stream, streamCreationTimestamp) => {
   const params = {
-    StreamName: stream
+    StreamName: stream,
   };
   if (streamCreationTimestamp) params.StreamCreationTimestamp = new Date(streamCreationTimestamp);
   return params;
@@ -91,7 +91,7 @@ async function processRecordBatch(streamArn, records) {
       await messageConsumer.processRecord(
         {
           kinesis: { data: record.Data },
-          eventSourceARN: streamArn
+          eventSourceARN: streamArn,
         },
         false
       );
@@ -128,7 +128,7 @@ async function processRecordBatch(streamArn, records) {
 async function iterateOverShardRecursively(streamArn, recordPromiseList, shardIterator) {
   try {
     const response = await Kinesis.getRecords({
-      ShardIterator: shardIterator
+      ShardIterator: shardIterator,
     }).promise();
     recordPromiseList.push(processRecordBatch(streamArn, response.Records));
     if (response.MillisBehindLatest === 0 || !response.NextShardIterator) return recordPromiseList;
@@ -261,5 +261,5 @@ module.exports = {
   processShard,
   processStream,
   setupIteratorParams,
-  setupListShardParams
+  setupListShardParams,
 };

@@ -8,7 +8,7 @@ const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
 const {
   EarthdataLoginClient,
-  EarthdataLoginError
+  EarthdataLoginError,
 } = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
@@ -42,7 +42,7 @@ const buildEarthdataLoginClient = () =>
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
     earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 
 /**
@@ -58,19 +58,19 @@ async function requestTemporaryCredentialsFromNgap({
   lambda,
   lambdaFunctionName,
   userId,
-  roleSessionName
+  roleSessionName,
 }) {
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
     duration: '3600', // one hour max allowed by AWS.
     rolesession: roleSessionName, // <- shows up in S3 server access logs
-    userid: userId // <- used by NGAP
+    userid: userId, // <- used by NGAP
   });
 
   return lambda.invoke({
     FunctionName: lambdaFunctionName,
-    Payload
+    Payload,
   }).promise();
 }
 
@@ -92,7 +92,7 @@ async function s3credentials(req, res) {
     lambda: req.lambda,
     lambdaFunctionName: process.env.STSCredentialsLambda,
     userId: req.authorizedMetadata.userName,
-    roleSessionName
+    roleSessionName,
   });
 
   const creds = JSON.parse(credentials.Payload);
@@ -124,7 +124,7 @@ function getConfigurations() {
     accessTokenModel: new AccessToken(),
     authClient: buildEarthdataLoginClient(),
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
-    s3Client: awsServices.s3()
+    s3Client: awsServices.s3(),
   };
 }
 
@@ -139,7 +139,7 @@ async function handleRedirectRequest(req, res) {
   const {
     accessTokenModel,
     authClient,
-    distributionUrl
+    distributionUrl,
   } = getConfigurations();
 
   const { code, state } = req.query;
@@ -150,7 +150,7 @@ async function handleRedirectRequest(req, res) {
     accessToken: getAccessTokenResponse.accessToken,
     expirationTime: getAccessTokenResponse.expirationTime,
     refreshToken: getAccessTokenResponse.refreshToken,
-    username: getAccessTokenResponse.username
+    username: getAccessTokenResponse.username,
   });
 
   return res
@@ -160,7 +160,7 @@ async function handleRedirectRequest(req, res) {
       {
         expires: new Date(getAccessTokenResponse.expirationTime),
         httpOnly: true,
-        secure: useSecureCookies()
+        secure: useSecureCookies(),
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })
@@ -219,7 +219,7 @@ const handleTokenAuthRequest = async (req, res, next) => {
     const userName = await req.earthdataLoginClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
       token: req.get('EDL-Token'),
-      xRequestId: req.get('X-Request-Id')
+      xRequestId: req.get('X-Request-Id'),
     });
 
     req.authorizedMetadata = { userName };
@@ -271,7 +271,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
   const {
     accessTokenModel,
-    authClient
+    authClient,
   } = getConfigurations();
 
   const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
@@ -349,5 +349,5 @@ module.exports = {
   handler,
   handleTokenAuthRequest,
   requestTemporaryCredentialsFromNgap,
-  s3credentials
+  s3credentials,
 };

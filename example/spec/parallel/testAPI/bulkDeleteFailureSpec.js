@@ -6,7 +6,7 @@ const granules = require('@cumulus/api-client/granules');
 const { ecs } = require('@cumulus/aws-client/services');
 const {
   api: apiTestUtils,
-  getClusterArn
+  getClusterArn,
 } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -36,15 +36,15 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     postBulkDeleteResponse = await granules.bulkDeleteGranules({
       prefix: config.stackName,
       body: {
-        ids: [granule.granuleId]
-      }
+        ids: [granule.granuleId],
+      },
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
     // Query the AsyncOperation API to get the task ARN
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id
+      id: postBulkDeleteBody.id,
     });
     ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
 
@@ -66,7 +66,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id
+      id: postBulkDeleteBody.id,
     });
 
     expect(getAsyncOperationResponse.statusCode).toEqual(200);
@@ -82,7 +82,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     // Verify that the task ARN exists in that cluster
     const describeTasksResponse = await ecs().describeTasks({
       cluster: clusterArn,
-      tasks: [taskArn]
+      tasks: [taskArn],
     }).promise();
 
     expect(describeTasksResponse.tasks.length).toEqual(1);
@@ -95,13 +95,13 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
       'tasksStopped',
       {
         cluster: clusterArn,
-        tasks: [taskArn]
+        tasks: [taskArn],
       }
     ).promise();
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id
+      id: postBulkDeleteBody.id,
     });
 
     const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);

@@ -64,13 +64,13 @@ export const addChecksumToGranuleFile = async (params: {
   const checksum = await calculateGranuleFileChecksum({
     s3,
     algorithm,
-    granuleFile
+    granuleFile,
   });
 
   return <GranuleFile>{
     ...granuleFile,
     checksumType: algorithm,
-    checksum
+    checksum,
   };
 };
 
@@ -86,14 +86,14 @@ const addFileChecksumsToGranule = async (params: {
       (granuleFile) => addChecksumToGranuleFile({
         s3: s3,
         algorithm,
-        granuleFile
+        granuleFile,
       })
     )
   );
 
   return {
     ...granule,
-    files: filesWithChecksums
+    files: filesWithChecksums,
   };
 };
 
@@ -104,14 +104,14 @@ export const handler = async (event: HandlerEvent) => {
       (granule) => addFileChecksumsToGranule({
         s3: awsClients.s3(),
         algorithm: config.algorithm,
-        granule
+        granule,
       })
     )
   );
 
   return <HandlerInput>{
     ...input,
-    granules: granulesWithChecksums
+    granules: granulesWithChecksums,
   };
 };
 

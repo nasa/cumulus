@@ -8,12 +8,12 @@ const rewire = require('rewire');
 const logApi = rewire('../../endpoints/logs');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');

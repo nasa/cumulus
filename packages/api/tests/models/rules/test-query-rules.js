@@ -17,7 +17,7 @@ let sandbox;
 const testCollectionName = randomId('collection');
 const collection = {
   name: testCollectionName,
-  version: '0.0.0'
+  version: '0.0.0',
 };
 const provider = { id: 'PROV1' };
 
@@ -25,28 +25,28 @@ const provider = { id: 'PROV1' };
 const commonRuleParams = {
   collection,
   provider: provider.id,
-  workflow: randomId('workflow')
+  workflow: randomId('workflow'),
 };
 
 const kinesisRuleParams = {
   rule: {
     type: 'kinesis',
-    value: 'test-kinesisarn'
-  }
+    value: 'test-kinesisarn',
+  },
 };
 
 const kinesisRule1 = {
   ...commonRuleParams,
   ...kinesisRuleParams,
   name: 'testRule1',
-  state: 'ENABLED'
+  state: 'ENABLED',
 };
 
 // if the state is not provided, it will be set to default value 'ENABLED'
 const kinesisRule2 = {
   ...commonRuleParams,
   ...kinesisRuleParams,
-  name: 'testRule2'
+  name: 'testRule2',
 };
 
 const kinesisRule3 = {
@@ -54,10 +54,10 @@ const kinesisRule3 = {
   ...kinesisRuleParams,
   collection: {
     name: testCollectionName,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   name: 'testRule3',
-  state: 'ENABLED'
+  state: 'ENABLED',
 };
 
 const kinesisRule4 = {
@@ -66,29 +66,29 @@ const kinesisRule4 = {
   state: 'ENABLED',
   rule: {
     type: 'kinesis',
-    value: 'kinesisarn-4'
-  }
+    value: 'kinesisarn-4',
+  },
 };
 
 const kinesisRule5 = {
   ...commonRuleParams,
   collection: {
     name: testCollectionName,
-    version: '2.0.0'
+    version: '2.0.0',
   },
   name: 'testRule5',
   state: 'ENABLED',
   rule: {
     type: 'kinesis',
-    value: 'kinesisarn-5'
-  }
+    value: 'kinesisarn-5',
+  },
 };
 
 const disabledKinesisRule = {
   ...commonRuleParams,
   ...kinesisRuleParams,
   name: 'disabledRule',
-  state: 'DISABLED'
+  state: 'DISABLED',
 };
 
 test.before(async () => {
@@ -109,23 +109,23 @@ test.before(async () => {
       process.env.system_bucket,
       templateFile,
       {}
-    )
+    ),
   ]);
 
   sandbox = sinon.createSandbox();
 
   sandbox.stub(awsServices, 'sqs').returns({
     getQueueUrl: () => ({
-      promise: () => Promise.resolve(true)
+      promise: () => Promise.resolve(true),
     }),
     getQueueAttributes: () => ({
       promise: () => Promise.resolve({
         Attributes: {
           RedrivePolicy: 'fake-policy',
-          VisibilityTimeout: '10'
-        }
-      })
-    })
+          VisibilityTimeout: '10',
+        },
+      }),
+    }),
   });
 
   const stubWorkflowFileKey = randomId('key');
@@ -149,7 +149,7 @@ test.before(async () => {
     kinesisRule3,
     kinesisRule4,
     kinesisRule5,
-    disabledKinesisRule
+    disabledKinesisRule,
   ];
   await Promise.all(kinesisRules.map((rule) => rulesModel.create(rule)));
 });
@@ -164,29 +164,29 @@ test.serial('queryRules returns correct rules for given state and type', async (
   const onetimeRules = [
     fakeRuleFactoryV2({
       rule: {
-        type: 'onetime'
+        type: 'onetime',
       },
-      state: 'ENABLED'
+      state: 'ENABLED',
     }),
     fakeRuleFactoryV2({
       rule: {
         type: 'sqs',
-        value: randomId('queue')
+        value: randomId('queue'),
       },
-      state: 'ENABLED'
+      state: 'ENABLED',
     }),
     fakeRuleFactoryV2({
       rule: {
-        type: 'onetime'
+        type: 'onetime',
       },
-      state: 'DISABLED'
-    })
+      state: 'DISABLED',
+    }),
   ];
   await Promise.all(onetimeRules.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     status: 'ENABLED',
-    type: 'onetime'
+    type: 'onetime',
   });
   t.truthy(result.find((rule) => rule.name === onetimeRules[0].name));
   t.falsy(result.find((rule) => rule.name === onetimeRules[1].name));
@@ -201,20 +201,20 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
   const rules = [
     fakeRuleFactoryV2({
       rule: {
-        type: 'onetime'
+        type: 'onetime',
       },
-      state: 'ENABLED'
+      state: 'ENABLED',
     }),
     fakeRuleFactoryV2({
       rule: {
-        type: 'onetime'
+        type: 'onetime',
       },
-      state: 'DISABLED'
-    })
+      state: 'DISABLED',
+    }),
   ];
   await Promise.all(rules.map((rule) => rulesModel.create(rule)));
   const results = await rulesModel.queryRules({
-    type: 'onetime'
+    type: 'onetime',
   });
   t.is(results.length, 1);
   const expectedRule = results[0];
@@ -231,45 +231,45 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   // See https://github.com/localstack/localstack/issues/2016
   const stub = sinon.stub(awsServices, 'lambda').returns({
     addPermission: () => ({
-      promise: async () => true
+      promise: async () => true,
     }),
     removePermission: () => ({
-      promise: async () => true
-    })
+      promise: async () => true,
+    }),
   });
 
   const { TopicArn } = await awsServices.sns().createTopic({
-    Name: randomId('topic')
+    Name: randomId('topic'),
   }).promise();
 
   const rules = [
     fakeRuleFactoryV2({
       rule: {
         type: 'sns',
-        value: TopicArn
+        value: TopicArn,
       },
-      state: 'ENABLED'
+      state: 'ENABLED',
     }),
     fakeRuleFactoryV2({
       rule: {
         type: 'sns',
-        value: TopicArn
+        value: TopicArn,
       },
-      state: 'DISABLED'
-    })
+      state: 'DISABLED',
+    }),
   ];
   const createdRules = await Promise.all(rules.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     type: 'sns',
-    sourceArn: TopicArn
+    sourceArn: TopicArn,
   });
   t.is(result.length, 1);
   t.deepEqual(result[0], createdRules[0]);
   t.teardown(async () => {
     await Promise.all(createdRules.map((rule) => rulesModel.delete(rule)));
     await awsServices.sns().deleteTopic({
-      TopicArn
+      TopicArn,
     });
     stub.restore();
   });
@@ -279,47 +279,47 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   // See https://github.com/localstack/localstack/issues/2016
   const stub = sinon.stub(awsServices, 'lambda').returns({
     addPermission: () => ({
-      promise: async () => true
+      promise: async () => true,
     }),
     removePermission: () => ({
-      promise: async () => true
-    })
+      promise: async () => true,
+    }),
   });
 
   const { TopicArn } = await awsServices.sns().createTopic({
-    Name: randomId('topic')
+    Name: randomId('topic'),
   }).promise();
 
   const rules = [
     fakeRuleFactoryV2({
       rule: {
         type: 'sns',
-        value: TopicArn
+        value: TopicArn,
       },
       collection,
-      state: 'ENABLED'
+      state: 'ENABLED',
     }),
     fakeRuleFactoryV2({
       rule: {
         type: 'sns',
-        value: TopicArn
+        value: TopicArn,
       },
-      state: 'ENABLED'
-    })
+      state: 'ENABLED',
+    }),
   ];
   const createdRules = await Promise.all(rules.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     type: 'sns',
     name: collection.name,
-    version: collection.version
+    version: collection.version,
   });
   t.is(result.length, 1);
   t.deepEqual(result[0], createdRules[0]);
   t.teardown(async () => {
     await Promise.all(createdRules.map((rule) => rulesModel.delete(rule)));
     await awsServices.sns().deleteTopic({
-      TopicArn
+      TopicArn,
     });
     stub.restore();
   });
@@ -328,7 +328,7 @@ test.serial('queryRules should look up sns-type rules which are associated with 
 test('queryRules should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
   const result = await rulesModel.queryRules({
     name: testCollectionName,
-    type: 'kinesis'
+    type: 'kinesis',
   });
   t.is(result.length, 5);
 });
@@ -337,7 +337,7 @@ test('queryRules should look up kinesis-type rules which are associated with the
   const result = await rulesModel.queryRules({
     name: testCollectionName,
     version: '1.0.0',
-    type: 'kinesis'
+    type: 'kinesis',
   });
   t.is(result.length, 1);
 });
@@ -345,7 +345,7 @@ test('queryRules should look up kinesis-type rules which are associated with the
 test('queryRules should look up kinesis-type rules which are associated with the source ARN', async (t) => {
   const result = await rulesModel.queryRules({
     sourceArn: 'kinesisarn-4',
-    type: 'kinesis'
+    type: 'kinesis',
   });
   t.is(result.length, 1);
 });
@@ -355,7 +355,7 @@ test('queryRules should look up kinesis-type rules which are associated with the
     name: testCollectionName,
     version: '2.0.0',
     sourceArn: 'kinesisarn-5',
-    type: 'kinesis'
+    type: 'kinesis',
   });
   t.is(result.length, 1);
 });

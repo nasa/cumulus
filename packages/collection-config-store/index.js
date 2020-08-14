@@ -10,7 +10,7 @@ const { deprecate } = require('@cumulus/common/util');
 const {
   deleteS3Object,
   getJsonS3Object,
-  putJsonS3Object
+  putJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 

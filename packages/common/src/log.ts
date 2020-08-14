@@ -10,7 +10,7 @@ function logger() {
     parentArn: process.env.PARENTARN,
     sender: process.env.SENDER,
     stackName: process.env.STACKNAME,
-    version: process.env.TASKVERSION
+    version: process.env.TASKVERSION,
   });
 }
 
@@ -94,7 +94,7 @@ export function convertLogLevel(level) {
     warn: 40,
     info: 30,
     debug: 20,
-    trace: 10
+    trace: 10,
   };
   // @ts-ignore
   if (isString(level)) return mapping[level];

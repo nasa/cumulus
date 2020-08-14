@@ -36,7 +36,7 @@ function lookupCollectionInEvent(eventObject) {
   return removeNilProperties({
     name: get(eventObject, 'collection.name', get(eventObject, 'collection')),
     version: get(eventObject, 'collection.version', get(eventObject, 'product.dataVersion')),
-    dataType: get(eventObject, 'collection.dataType')
+    dataType: get(eventObject, 'collection.dataType'),
   });
 }
 
@@ -59,7 +59,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
     provider: rule.provider,
     collection,
     meta: eventSource ? { ...rule.meta, eventSource } : rule.meta,
-    payload: eventObject
+    payload: eventObject,
   };
 
   const payload = await Rule.buildPayload(item);
@@ -71,5 +71,5 @@ module.exports = {
   filterRulesbyCollection,
   getMaxTimeoutForRules,
   lookupCollectionInEvent,
-  queueMessageForRule
+  queueMessageForRule,
 };

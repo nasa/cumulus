@@ -6,7 +6,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   RecordDoesNotExist,
   InvalidRegexError,
-  UnmatchedRegexError
+  UnmatchedRegexError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -175,7 +175,7 @@ async function del(req, res) {
       await esClient.delete({
         id: collectionId,
         index: process.env.ES_INDEX,
-        type: 'collection'
+        type: 'collection',
       }, { ignore: [404] });
     }
 

@@ -10,7 +10,7 @@ const {
   randomString,
   validateConfig,
   validateInput,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 
 const { streamTestData } = require('@cumulus/test-data');
@@ -22,21 +22,21 @@ test.beforeEach(async (t) => {
     config: {
       stack: randomString(),
       bucket: randomString(),
-      provider: {}
+      provider: {},
     },
     input: {
       pdr: {
         name: 'MOD09GQ.PDR',
-        path: '/pdrs'
-      }
-    }
+        path: '/pdrs',
+      },
+    },
   };
 
   await s3().createBucket({ Bucket: t.context.payload.config.bucket }).promise();
 
   const collectionConfig = {
     name: 'MOD09GQ',
-    granuleIdExtraction: '^(.*)\.hdf'
+    granuleIdExtraction: '^(.*)\.hdf',
   };
 
   t.context.collectionConfigStore = new CollectionConfigStore(
@@ -49,7 +49,7 @@ test.beforeEach(async (t) => {
 const testGranule = {
   granuleId: 'MOD09GQ.A2017224.h09v02.006.2017227165020',
   dataType: 'MOD09GQ',
-  granuleSize: 17909733
+  granuleSize: 17909733,
 };
 
 const testHdfFile = {
@@ -57,13 +57,13 @@ const testHdfFile = {
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
   size: 17865615,
   checksumType: 'CKSUM',
-  checksum: 4208254019
+  checksum: 4208254019,
 };
 
 const testMetFile = {
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
   size: 44118,
-  type: 'metadata'
+  type: 'metadata',
 };
 
 test.afterEach(async (t) => {
@@ -76,7 +76,7 @@ test.serial('parse PDR from FTP endpoint', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
   t.context.payload.config.useList = true;
 
@@ -117,7 +117,7 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
 
   await validateInput(t, t.context.payload.input);
@@ -163,7 +163,7 @@ test.serial('parse PDR from SFTP endpoint', async (t) => {
     host: '127.0.0.1',
     port: 2222,
     username: 'user',
-    password: 'password'
+    password: 'password',
   };
 
   await validateInput(t, t.context.payload.input);
@@ -204,7 +204,7 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
-    host: randomString()
+    host: randomString(),
   };
   t.context.payload.input.pdr.path = '/pdrs';
 
@@ -217,7 +217,7 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-      Body: streamTestData('pdrs/MOD09GQ.PDR')
+      Body: streamTestData('pdrs/MOD09GQ.PDR'),
     }).promise();
 
     const output = await parsePdr(t.context.payload);
@@ -259,7 +259,7 @@ test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => 
     t.context.collectionConfigStore.put(
       'MYG29_N1D_SIR', '006',
       { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    )
+    ),
   ]);
 
   // Set up the task config
@@ -268,7 +268,7 @@ test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => 
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
   t.context.payload.config.useList = true;
 
@@ -293,7 +293,7 @@ test.serial('Empty FILE_ID value in PDR, parse-pdr throws error', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
-    host: randomString()
+    host: randomString(),
   };
   t.context.payload.input.pdr.path = '/pdrs';
 
@@ -305,7 +305,7 @@ test.serial('Empty FILE_ID value in PDR, parse-pdr throws error', async (t) => {
   await s3().putObject({
     Bucket: t.context.payload.config.provider.host,
     Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-    Body: streamTestData('pdrs/MOD09GQ-without-file-id-value.PDR')
+    Body: streamTestData('pdrs/MOD09GQ-without-file-id-value.PDR'),
   }).promise();
 
   await t.throwsAsync(
@@ -319,7 +319,7 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
-    host: randomString()
+    host: randomString(),
   };
   t.context.payload.input.pdr.path = '/pdrs';
 
@@ -331,7 +331,7 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
   await s3().putObject({
     Bucket: t.context.payload.config.provider.host,
     Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-    Body: streamTestData('pdrs/MOD09GQ-without-file-id.PDR')
+    Body: streamTestData('pdrs/MOD09GQ-without-file-id.PDR'),
   }).promise();
 
   await t.throwsAsync(
@@ -351,7 +351,7 @@ test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
     t.context.collectionConfigStore.put(
       'MYG29_N1D_SIR', '006',
       { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    )
+    ),
   ]);
 
   // Set up the task config
@@ -360,7 +360,7 @@ test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
   t.context.payload.config.useList = true;
   t.context.payload.config.granuleIdFilter = '^MYG29_S1D_SIR.A2012254.tiled.006.2018082201326\..*';

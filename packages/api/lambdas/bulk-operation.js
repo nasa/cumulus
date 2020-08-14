@@ -38,7 +38,7 @@ async function getGranuleIdsForPayload(payload) {
     const esUrl = `https://${process.env.METRICS_ES_USER}:${
       process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
     const client = new elasticsearch.Client({
-      node: esUrl
+      node: esUrl,
     });
 
     const searchResponse = await client.search({
@@ -46,7 +46,7 @@ async function getGranuleIdsForPayload(payload) {
       scroll: '30s',
       size: SCROLL_SIZE,
       _source: ['granuleId'],
-      body: query
+      body: query,
     });
 
     responseQueue.push(searchResponse);
@@ -62,7 +62,7 @@ async function getGranuleIdsForPayload(payload) {
           // eslint-disable-next-line no-await-in-loop
           await client.scroll({
             scrollId: body._scroll_id,
-            scroll: '30s'
+            scroll: '30s',
           })
         );
       }
@@ -125,7 +125,7 @@ async function bulkGranuleDelete(payload) {
     },
     {
       concurrency: 10, // is this necessary?
-      stopOnError: false
+      stopOnError: false,
     }
   );
   return { deletedGranules };
@@ -175,5 +175,5 @@ async function handler(event) {
 
 module.exports = {
   getGranuleIdsForPayload,
-  handler
+  handler,
 };

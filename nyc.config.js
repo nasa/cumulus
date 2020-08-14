@@ -7,5 +7,5 @@ module.exports = {
   clean: process.env.NYC_CLEAN !== 'false',
   silent: process.env.NYC_SILENT === 'true',
   'cache-dir': path.join(__dirname, 'node_modules', '.cache', 'nyc'),
-  'temp-dir': path.join(__dirname, '.nyc_output')
+  'temp-dir': path.join(__dirname, '.nyc_output'),
 };

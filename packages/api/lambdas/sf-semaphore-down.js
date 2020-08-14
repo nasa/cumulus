@@ -4,11 +4,11 @@ const {
   getSfEventMessageObject,
   getSfEventStatus,
   isSfExecutionEvent,
-  isTerminalSfStatus
+  isTerminalSfStatus,
 } = require('@cumulus/common/cloudwatch-event');
 const {
   getQueueUrl,
-  hasQueueAndExecutionLimit
+  hasQueueAndExecutionLimit,
 } = require('@cumulus/message/Queue');
 const stepFunctions = require('@cumulus/message/StepFunctions');
 
@@ -61,5 +61,5 @@ async function handler(event) {
 module.exports = {
   isDecrementEvent,
   handleSemaphoreDecrementTask,
-  handler
+  handler,
 };

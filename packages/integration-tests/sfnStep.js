@@ -257,12 +257,12 @@ class LambdaStep extends SfnStep {
     this.scheduleSuccessfulEvent = 'LambdaFunctionScheduled';
     this.scheduleEvents = [
       this.scheduleFailedEvent,
-      this.scheduleSuccessfulEvent
+      this.scheduleSuccessfulEvent,
     ];
     this.startFailedEvent = 'LambdaFunctionStartFailed';
     this.startEvents = [
       this.startFailedEvent,
-      'LambdaFunctionStarted'
+      'LambdaFunctionStarted',
     ];
     this.successEvent = 'LambdaFunctionSucceeded';
     this.taskStartEvent = 'TaskStateEntered';
@@ -270,12 +270,12 @@ class LambdaStep extends SfnStep {
     this.completionEvents = [
       this.successEvent,
       this.failureEvent,
-      'LambdaFunctionTimedOut'
+      'LambdaFunctionTimedOut',
     ];
     this.eventDetailsKeys = {
       scheduled: 'lambdaFunctionScheduledEventDetails',
       succeeded: 'lambdaFunctionSucceededEventDetails',
-      failed: 'lambdaFunctionFailedEventDetails'
+      failed: 'lambdaFunctionFailedEventDetails',
     };
     this.classType = 'lambda';
   }
@@ -290,7 +290,7 @@ class ActivityStep extends SfnStep {
     this.scheduleFailedEvent = 'ActivityScheduleFailed';
     this.scheduleEvents = [
       'ActivityScheduled',
-      this.scheduleFailedEvent
+      this.scheduleFailedEvent,
     ];
     this.startEvents = ['ActivityStarted'];
     this.startFailedEvent = undefined; // there is no 'ActivityStartFailed'
@@ -299,12 +299,12 @@ class ActivityStep extends SfnStep {
     this.completionEvents = [
       this.successEvent,
       this.failureEvent,
-      'ActivityTimedOut'
+      'ActivityTimedOut',
     ];
     this.eventDetailsKeys = {
       scheduled: 'activityScheduledEventDetails',
       succeeded: 'activitySucceededEventDetails',
-      failed: 'activityFailedEventDetails'
+      failed: 'activityFailedEventDetails',
     };
     this.classType = 'activity';
   }
@@ -313,5 +313,5 @@ class ActivityStep extends SfnStep {
 module.exports = {
   SfnStep,
   ActivityStep,
-  LambdaStep
+  LambdaStep,
 };

@@ -32,7 +32,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
       asyncOperationModel = new AsyncOperation({
         stackName: config.stackName,
         systemBucket: config.bucket,
-        tableName: asyncOperationsTableName
+        tableName: asyncOperationsTableName,
       });
 
       // Find the ARN of the cluster
@@ -48,14 +48,14 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
       await s3().putObject({
         Bucket: config.bucket,
         Key: payloadKey,
-        Body: JSON.stringify([1, 2, 3])
+        Body: JSON.stringify([1, 2, 3]),
       }).promise();
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
         operationType: 'ES Index',
-        status: 'RUNNING'
+        status: 'RUNNING',
       });
 
       const runTaskResponse = await ecs().runTask({
@@ -70,11 +70,11 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: asyncOperationsTableName },
                 { name: 'lambdaName', value: failFunctionName },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
-              ]
-            }
-          ]
-        }
+                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
+              ],
+            },
+          ],
+        },
       }).promise();
 
       const failures = get(runTaskResponse, 'failures', []);
@@ -88,14 +88,14 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
         'tasksStopped',
         {
           cluster,
-          tasks: [taskArn]
+          tasks: [taskArn],
         }
       ).promise();
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'TASK_FAILED',
-        stackName: config.stackName
+        stackName: config.stackName,
       });
     } catch (error) {
       beforeAllFailed = true;

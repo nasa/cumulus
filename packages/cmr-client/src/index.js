@@ -7,5 +7,5 @@ const ValidationError = require('./ValidationError');
 module.exports = {
   CMR,
   CMRSearchConceptQueue,
-  ValidationError
+  ValidationError,
 };

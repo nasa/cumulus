@@ -36,7 +36,7 @@ const {
   cleanupProviders,
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
-  waitForCompletedExecution
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const {
@@ -47,11 +47,11 @@ const {
   getExecutionUrl,
   loadConfig,
   uploadTestDataToBucket,
-  updateAndUploadTestDataToBucket
+  updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 
 const {
-  loadFileWithUpdatedGranuleIdPathAndCollection
+  loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -61,12 +61,12 @@ const workflowName = 'DiscoverAndQueuePdrs';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 const s3data = [
-  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
 ];
 
 const unmodifiedS3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
 
 describe('Ingesting from PDR', () => {
@@ -109,7 +109,7 @@ describe('Ingesting from PDR', () => {
           testDataFolder,
           [
             { old: 'cumulus-test-data/pdrs', new: testDataFolder },
-            { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }
+            { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
           ]
         ),
         uploadTestDataToBucket(
@@ -118,7 +118,7 @@ describe('Ingesting from PDR', () => {
           testDataFolder
         ),
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
       ]);
 
       addedCollection = populatePromises[2][0];
@@ -127,7 +127,7 @@ describe('Ingesting from PDR', () => {
       await s3().copyObject({
         Bucket: config.bucket,
         CopySource: `${config.bucket}/${testDataFolder}/${origPdrFilename}`,
-        Key: `${testDataFolder}/${pdrFilename}`
+        Key: `${testDataFolder}/${pdrFilename}`,
       }).promise();
 
       await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
@@ -147,8 +147,8 @@ describe('Ingesting from PDR', () => {
       executionModel.delete({ arn: parsePdrExecutionArn }),
       apiTestUtils.deletePdr({
         prefix: config.stackName,
-        pdr: pdrFilename
-      })
+        pdr: pdrFilename,
+      }),
     ]);
   });
 
@@ -258,7 +258,7 @@ describe('Ingesting from PDR', () => {
         );
         await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
-          granuleId: parseLambdaOutput.payload.granules[0].granuleId
+          granuleId: parseLambdaOutput.payload.granules[0].granuleId,
         });
       });
 
@@ -375,7 +375,7 @@ describe('Ingesting from PDR', () => {
             finalOutput.payload.granules.map((g) =>
               granulesApiTestUtils.deleteGranule({
                 prefix: config.stackName,
-                granuleId: g.granuleId
+                granuleId: g.granuleId,
               }))
           );
         });
@@ -419,7 +419,7 @@ describe('Ingesting from PDR', () => {
 
             const ingestGranuleExecution = await executionsApiTestUtils.getExecution({
               prefix: config.stackName,
-              arn: ingestGranuleWorkflowArn
+              arn: ingestGranuleWorkflowArn,
             });
 
             expect(ingestGranuleExecution.parentArn).toEqual(parsePdrExecutionArn);
@@ -433,7 +433,7 @@ describe('Ingesting from PDR', () => {
           else {
             const parsePdrExecution = await executionsApiTestUtils.getExecution({
               prefix: config.stackName,
-              arn: workflowExecution.executionArn
+              arn: workflowExecution.executionArn,
             });
 
             expect(parsePdrExecution.parentArn).toBeUndefined();
@@ -449,7 +449,7 @@ describe('Ingesting from PDR', () => {
           try {
             executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
               prefix: config.stackName,
-              arn: parsePdrExecutionArn
+              arn: parsePdrExecutionArn,
             });
             console.log(`Execution status request status: ${executionStatusResponse.status}`);
             executionStatus = JSON.parse(executionStatusResponse.body);
@@ -543,7 +543,7 @@ describe('Ingesting from PDR', () => {
           parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
           const parsePdrExecution = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
-            arn: parsePdrExecutionArn
+            arn: parsePdrExecutionArn,
           });
 
           expect(parsePdrExecution.parentArn).toEqual(workflowExecution.executionArn);
@@ -557,7 +557,7 @@ describe('Ingesting from PDR', () => {
         else {
           const queuePdrsExecution = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
-            arn: workflowExecution.executionArn
+            arn: workflowExecution.executionArn,
           });
 
           expect(queuePdrsExecution.parentArn).toBeUndefined();
@@ -588,7 +588,7 @@ describe('Ingesting from PDR', () => {
         await Promise.all([
           deleteS3Object(config.bucket, executionCompletedKey),
           deleteS3Object(config.bucket, pdrRunningMessageKey),
-          deleteS3Object(config.bucket, pdrCompletedMessageKey)
+          deleteS3Object(config.bucket, pdrCompletedMessageKey),
         ]);
       });
 
@@ -597,7 +597,7 @@ describe('Ingesting from PDR', () => {
         else {
           const pdrExists = await s3ObjectExists({
             Bucket: config.bucket,
-            Key: pdrRunningMessageKey
+            Key: pdrRunningMessageKey,
           });
           expect(pdrExists).toEqual(true);
         }
@@ -608,7 +608,7 @@ describe('Ingesting from PDR', () => {
         else {
           const executionExists = await s3ObjectExists({
             Bucket: config.bucket,
-            Key: executionCompletedKey
+            Key: executionCompletedKey,
           });
           expect(executionExists).toEqual(true);
         }
@@ -619,7 +619,7 @@ describe('Ingesting from PDR', () => {
         else {
           const pdrExists = await s3ObjectExists({
             Bucket: config.bucket,
-            Key: pdrCompletedMessageKey
+            Key: pdrCompletedMessageKey,
           });
           expect(pdrExists).toEqual(true);
         }

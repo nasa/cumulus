@@ -11,7 +11,7 @@ const {
   calculateS3ObjectChecksum,
   fileExists,
   recursivelyDeleteS3Bucket,
-  headObject
+  headObject,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -52,7 +52,7 @@ test('FtpProviderClient.list lists objects', async (t) => {
     host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass',
-    useList: true
+    useList: true,
   });
 
   const list = await myFtpProviderClient.list('');
@@ -64,7 +64,7 @@ test('FtpProviderClient.list filters listed objects with path', async (t) => {
     host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass',
-    useList: true
+    useList: true,
   });
 
   const list = await myFtpProviderClient.list('pdrs/MOD09GQ_1granule_v3.PDR');
@@ -78,7 +78,7 @@ test('FtpProviderClient supports plaintext usernames and passwords', async (t) =
     encrypted: false,
     username: 'testuser',
     password: 'testpass',
-    useList: true
+    useList: true,
   });
 
   const files = await ftpClient.list('/');
@@ -94,7 +94,7 @@ test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords',
       encrypted: true,
       username: await S3KeyPairProvider.encrypt('testuser'),
       password: await S3KeyPairProvider.encrypt('testpass'),
-      useList: true
+      useList: true,
     });
 
     const files = await ftpClient.list('/');
@@ -109,7 +109,7 @@ test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (
     encrypted: true,
     username: await KMS.encrypt(t.context.kmsKeyId, 'testuser'),
     password: await KMS.encrypt(t.context.kmsKeyId, 'testpass'),
-    useList: true
+    useList: true,
   });
 
   const files = await ftpClient.list('/');
@@ -121,14 +121,14 @@ test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (
 test('useList is present and true when assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
   const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
-    jsftp: jsftpSpy
+    jsftp: jsftpSpy,
   });
 
   const myFtpProviderClient = new ProxiedFtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass',
-    useList: true
+    useList: true,
   });
 
   await myFtpProviderClient.list('');
@@ -140,13 +140,13 @@ test('useList is present and true when assigned', async (t) => {
 test('useList defaults to false when not assigned', async (t) => {
   const jsftpSpy = sinon.spy(JSFtp);
   const ProxiedFtpProviderClient = proxyquire('../FtpProviderClient', {
-    jsftp: jsftpSpy
+    jsftp: jsftpSpy,
   });
 
   const myFtpProviderClient = new ProxiedFtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   });
 
   await myFtpProviderClient.list('');
@@ -161,7 +161,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
     username: 'testuser',
     password: 'testpass',
     path: '',
-    useList: true
+    useList: true,
   });
 
   const bucket = randomString();
@@ -190,14 +190,14 @@ test.serial('FtpProviderClient throws an error when listing a non-permitted dire
     code: 451,
     text: `Could not retrieve a file listing for ${path}.`,
     isMark: false,
-    isError: true
+    isError: true,
   }));
 
   const myFtpProviderClient = new FtpProviderClient({
     host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass',
-    useList: true
+    useList: true,
   });
   const error = await t.throwsAsync(myFtpProviderClient.list('/forbidden/file.txt'));
   jsftpStubbed.restore();

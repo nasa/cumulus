@@ -34,7 +34,7 @@ describe('Collections API', () => {
   afterAll(async () => {
     await Promise.all([
       deleteS3Object(config.bucket, recordCreatedKey),
-      deleteS3Object(config.bucket, recordDeletedKey)
+      deleteS3Object(config.bucket, recordDeletedKey),
     ]);
   });
 
@@ -44,7 +44,7 @@ describe('Collections API', () => {
     } else {
       await expectAsync(waitForObjectToExist({
         bucket: config.bucket,
-        key: recordCreatedKey
+        key: recordCreatedKey,
       })).toBeResolved();
     }
   });
@@ -56,12 +56,12 @@ describe('Collections API', () => {
       await deleteCollection({
         prefix,
         collectionName: collection.name,
-        collectionVersion: collection.version
+        collectionVersion: collection.version,
       });
 
       await expectAsync(waitForObjectToExist({
         bucket: config.bucket,
-        key: recordDeletedKey
+        key: recordDeletedKey,
       })).toBeResolved();
     }
   });
