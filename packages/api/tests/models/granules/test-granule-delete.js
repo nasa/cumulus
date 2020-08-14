@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 
 const s3Utils = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -13,6 +14,7 @@ const models = require('../../../models');
 
 const bucket = randomId('bucket');
 let granuleModel;
+let removeGranuleFromCmrStub;
 
 test.before(async () => {
   await s3Utils.createBucket(bucket);
@@ -20,6 +22,8 @@ test.before(async () => {
   process.env.GranulesTable = randomId('granule');
   granuleModel = new models.Granule();
   await granuleModel.createTable();
+
+  removeGranuleFromCmrStub = sinon.stub(models.Granule.prototype, '_removeGranuleFromCmr').resolves();
 });
 
 test.after.always(async () => {
@@ -27,6 +31,7 @@ test.after.always(async () => {
     s3Utils.recursivelyDeleteS3Bucket(bucket),
     granuleModel.deleteTable()
   ]);
+  removeGranuleFromCmrStub.restore();
 });
 
 test('granule.delete() removes granule files from S3 and record from Dynamo', async (t) => {
@@ -131,4 +136,37 @@ test('granule.delete() with the old file format succeeds', async (t) => {
     Bucket: granuleBucket,
     Key: key
   }));
+});
+
+test('granule.unpublishAndDeleteGranule() deletes published granule', async (t) => {
+  const granule = fakeGranuleFactoryV2({
+    published: true
+  });
+
+  await granuleModel.create(granule);
+
+  t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
+  await t.notThrowsAsync(
+    granuleModel.unpublishAndDeleteGranule(granule)
+  );
+  t.true(removeGranuleFromCmrStub.called);
+  t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
+});
+
+test.serial('granule.unpublishAndDeleteGranule() leaves granule.published = true if delete fails', async (t) => {
+  const deleteStub = sinon.stub(models.Granule.prototype, '_deleteRecord').throws();
+  t.teardown(() => deleteStub.restore());
+
+  const granule = fakeGranuleFactoryV2({
+    published: true
+  });
+
+  await granuleModel.create(granule);
+
+  await t.throwsAsync(
+    granuleModel.unpublishAndDeleteGranule(granule)
+  );
+  const record = await granuleModel.get({ granuleId: granule.granuleId });
+  t.true(record.published);
+  t.truthy(record.cmrLink);
 });
