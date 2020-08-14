@@ -18,7 +18,7 @@ const getConnectionConfig = (env: NodeJS.ProcessEnv): Knex.PgConnectionConfig =>
   user: getRequiredEnvVar('PG_USER', env),
   // TODO Get this value from secrets manager
   password: getRequiredEnvVar('PG_PASSWORD', env),
-  database: getRequiredEnvVar('PG_DATABASE', env)
+  database: getRequiredEnvVar('PG_DATABASE', env),
 });
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
@@ -28,7 +28,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     client: 'pg',
     connection: getConnectionConfig(env),
     debug: true,
-    asyncStackTraces: true
+    asyncStackTraces: true,
   });
 
   try {
