@@ -6,7 +6,7 @@ hide_title: true
 
 # Provider Configuration
 
-In Cumulus a Provider represents a endpoint from which data is ingested.   For example, a http server serving data from a data provider, or an S3 bucket deployed within your organization with data staged for ingest into Cumulus.
+In Cumulus, a Provider represents a endpoint from which data is ingested.   For example, a HTTP server serving data from a data provider, or an S3 bucket deployed within your organization with data staged for ingest into Cumulus.
 
 Please note:
 
