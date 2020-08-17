@@ -17,7 +17,7 @@ const {
   fakeGranuleFactoryV2,
   fakeExecutionFactory,
   fakeFileFactory,
-  fakeProviderFactory
+  fakeProviderFactory,
 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
@@ -28,7 +28,7 @@ const {
   getParentId,
   getRecordId,
   performDelete,
-  performIndex
+  performIndex,
 } = dbIndexer;
 
 let esClient;
@@ -44,7 +44,7 @@ process.env.ProvidersTable = randomString();
 process.env.RulesTable = randomString();
 
 const buildDynamoStreamRecord = ({
-  eventName, tableName, keys, oldImage, newImage
+  eventName, tableName, keys, oldImage, newImage,
 }) => {
   const record = {
     eventID: '1',
@@ -57,8 +57,8 @@ const buildDynamoStreamRecord = ({
       Keys: attr.wrap(keys),
       SequenceNumber: '1',
       SizeBytes: eventName === 'REMOVE' ? -1 : 1,
-      StreamViewType: 'NEW_AND_OLD_IMAGES'
-    }
+      StreamViewType: 'NEW_AND_OLD_IMAGES',
+    },
   };
 
   if (['INSERT', 'MODIFY'].includes(eventName)) {
@@ -77,12 +77,12 @@ const buildCollectionRecord = ({ type, oldCollection, newCollection }) => {
   if (type === 'REMOVE') {
     keys = {
       name: oldCollection.name,
-      version: oldCollection.version
+      version: oldCollection.version,
     };
   } else {
     keys = {
       name: newCollection.name,
-      version: newCollection.version
+      version: newCollection.version,
     };
   }
 
@@ -91,7 +91,7 @@ const buildCollectionRecord = ({ type, oldCollection, newCollection }) => {
     tableName: process.env.CollectionsTable,
     keys,
     oldImage: oldCollection,
-    newImage: newCollection
+    newImage: newCollection,
   });
 };
 
@@ -103,7 +103,7 @@ const buildExecutionRecord = ({ type, oldExecution, newExecution }) => {
     tableName: process.env.ExecutionsTable,
     keys: { arn },
     oldImage: oldExecution,
-    newImage: newExecution
+    newImage: newExecution,
   });
 };
 
@@ -115,7 +115,7 @@ const buildGranuleRecord = ({ type, oldGranule, newGranule }) => {
     tableName: process.env.GranulesTable,
     keys: { granuleId },
     oldImage: oldGranule,
-    newImage: newGranule
+    newImage: newGranule,
   });
 };
 
@@ -137,7 +137,7 @@ test.before(async (t) => {
     collectionModel.createTable(),
     executionModel.createTable(),
     granuleModel.createTable(),
-    ruleModel.createTable()
+    ruleModel.createTable(),
   ]);
 
   // bootstrap the esIndex
@@ -162,7 +162,7 @@ test.after.always(async () => {
 test('getRecordId() returns correct ID for collection record', (t) => {
   const collection = {
     name: randomString(),
-    version: '0.0.0'
+    version: '0.0.0',
   };
   t.is(
     getRecordId('collection', collection),
@@ -172,7 +172,7 @@ test('getRecordId() returns correct ID for collection record', (t) => {
 
 test('getRecordId() returns correct ID for non-collection record', (t) => {
   const execution = {
-    arn: randomString()
+    arn: randomString(),
   };
   t.is(
     getRecordId('execution', execution),
@@ -182,7 +182,7 @@ test('getRecordId() returns correct ID for non-collection record', (t) => {
 
 test('getParentId() returns correct ID for granule record', (t) => {
   const granule = {
-    collectionId: randomString()
+    collectionId: randomString(),
   };
   t.is(getParentId('granule', granule), granule.collectionId);
 });
@@ -212,7 +212,7 @@ test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
 test('getTableIndexDetails() returns the correct function name and index type', (t) => {
   t.deepEqual(getTableIndexDetails(process.env.CollectionsTable), {
     indexFnName: 'indexCollection',
-    indexType: 'collection'
+    indexType: 'collection',
   });
 });
 
@@ -249,7 +249,7 @@ test.serial('create, update and delete a collection in DynamoDB and ES', async (
 
   const insertRecord = buildCollectionRecord({
     type: 'INSERT',
-    newCollection: c
+    newCollection: c,
   });
 
   // fake the lambda trigger
@@ -264,7 +264,7 @@ test.serial('create, update and delete a collection in DynamoDB and ES', async (
   const modifyRecord = buildCollectionRecord({
     type: 'MODIFY',
     oldCollection: c,
-    newCollection: { ...c, dataType: 'testing' }
+    newCollection: { ...c, dataType: 'testing' },
   });
 
   // fake the lambda trigger
@@ -276,7 +276,7 @@ test.serial('create, update and delete a collection in DynamoDB and ES', async (
   // delete the record
   const removeRecord = buildCollectionRecord({
     type: 'REMOVE',
-    oldCollection: { ...c, dataType: 'testing' }
+    oldCollection: { ...c, dataType: 'testing' },
   });
 
   // fake the lambda trigger
@@ -294,7 +294,7 @@ test.serial('create, update and delete a granule in DynamoDB and ES', async (t) 
 
   const insertRecord = buildGranuleRecord({
     type: 'INSERT',
-    newGranule: fakeGranule
+    newGranule: fakeGranule,
   });
 
   // fake the lambda trigger
@@ -309,7 +309,7 @@ test.serial('create, update and delete a granule in DynamoDB and ES', async (t) 
   const modifyRecord = buildGranuleRecord({
     type: 'MODIFY',
     oldGranule: fakeGranule,
-    newGranule: { ...fakeGranule, status: 'failed' }
+    newGranule: { ...fakeGranule, status: 'failed' },
   });
 
   // fake the lambda trigger
@@ -321,7 +321,7 @@ test.serial('create, update and delete a granule in DynamoDB and ES', async (t) 
   // delete the record
   const removeRecord = buildGranuleRecord({
     type: 'REMOVE',
-    oldGranule: { ...fakeGranule, status: 'failed' }
+    oldGranule: { ...fakeGranule, status: 'failed' },
   });
 
   // fake the lambda trigger
@@ -342,7 +342,7 @@ test.serial('create, update and delete an execution in DynamoDB and es', async (
 
   const insertRecord = buildExecutionRecord({
     type: 'INSERT',
-    newExecution: fakeRecord
+    newExecution: fakeRecord,
   });
 
   // fake the lambda trigger
@@ -357,7 +357,7 @@ test.serial('create, update and delete an execution in DynamoDB and es', async (
   const modifyRecord = buildExecutionRecord({
     type: 'MODIFY',
     oldExecution: fakeRecord,
-    newExecution: { ...fakeRecord, status: 'failed' }
+    newExecution: { ...fakeRecord, status: 'failed' },
   });
 
   // fake the lambda trigger
@@ -369,7 +369,7 @@ test.serial('create, update and delete an execution in DynamoDB and es', async (
   // delete the record
   const removeRecord = buildExecutionRecord({
     type: 'REMOVE',
-    oldExecution: { ...fakeRecord, status: 'failed' }
+    oldExecution: { ...fakeRecord, status: 'failed' },
   });
 
   // fake the lambda trigger
@@ -382,15 +382,15 @@ test.serial('create, update and delete an execution in DynamoDB and es', async (
 test.serial('The db-indexer does not throw an exception when execution fails', async (t) => {
   const insertRecord = buildExecutionRecord({
     type: 'INSERT',
-    newExecution: fakeExecutionFactory()
+    newExecution: fakeExecutionFactory(),
   });
 
   // fake the lambda trigger
   await t.notThrowsAsync(
     dbIndexer.__with__({
       indexer: {
-        indexExecution: () => Promise.reject(new Error('oh no'))
-      }
+        indexExecution: () => Promise.reject(new Error('oh no')),
+      },
     })(() => handler({ Records: [insertRecord] }))
   );
 });

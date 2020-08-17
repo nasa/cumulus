@@ -14,7 +14,7 @@ const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
-  '@elastic/elasticsearch': { Client: FakeEsClient }
+  '@elastic/elasticsearch': { Client: FakeEsClient },
 });
 
 let applyWorkflowStub;
@@ -33,7 +33,7 @@ const envVars = {
   METRICS_ES_USER: randomId('user'),
   METRICS_ES_PASS: randomId('pass'),
   stackName: randomId('stack'),
-  system_bucket: randomId('bucket')
+  system_bucket: randomId('bucket'),
 };
 
 test.before(async () => {
@@ -60,7 +60,7 @@ test('getGranuleIdsForPayload returns unique granule IDs from payload', async (t
   const granuleId2 = randomId('granule');
   const ids = [granuleId1, granuleId1, granuleId2];
   const returnedIds = await bulkOperation.getGranuleIdsForPayload({
-    ids
+    ids,
   });
   t.deepEqual(
     returnedIds.sort(),
@@ -76,26 +76,26 @@ test.serial('getGranuleIdsForPayload returns unique granule IDs from query', asy
       hits: {
         hits: [{
           _source: {
-            granuleId: granuleId1
-          }
+            granuleId: granuleId1,
+          },
         }, {
           _source: {
-            granuleId: granuleId1
-          }
+            granuleId: granuleId1,
+          },
         }, {
           _source: {
-            granuleId: granuleId2
-          }
+            granuleId: granuleId2,
+          },
         }],
         total: {
-          value: 3
-        }
-      }
-    }
+          value: 3,
+        },
+      },
+    },
   });
   const returnedIds = await bulkOperation.getGranuleIdsForPayload({
     query: 'fake-query',
-    index: 'fake-index'
+    index: 'fake-index',
   });
   t.deepEqual(
     returnedIds.sort(),
@@ -112,37 +112,37 @@ test.serial('getGranuleIdsForPayload handles query paging', async (t) => {
       hits: {
         hits: [{
           _source: {
-            granuleId: granuleId1
-          }
+            granuleId: granuleId1,
+          },
         }, {
           _source: {
-            granuleId: granuleId2
-          }
+            granuleId: granuleId2,
+          },
         }],
         total: {
-          value: 3
-        }
-      }
-    }
+          value: 3,
+        },
+      },
+    },
   });
   esScrollStub.resolves({
     body: {
       hits: {
         hits: [{
           _source: {
-            granuleId: granuleId3
-          }
+            granuleId: granuleId3,
+          },
         }],
         total: {
-          value: 3
-        }
-      }
-    }
+          value: 3,
+        },
+      },
+    },
   });
   t.deepEqual(
     await bulkOperation.getGranuleIdsForPayload({
       query: 'fake-query',
-      index: 'fake-index'
+      index: 'fake-index',
     }),
     [granuleId1, granuleId2, granuleId3]
   );
@@ -150,7 +150,7 @@ test.serial('getGranuleIdsForPayload handles query paging', async (t) => {
 
 test('bulk operation lambda throws error for unknown event type', async (t) => {
   await t.throwsAsync(bulkOperation.handler({
-    type: randomId('type')
+    type: randomId('type'),
   }));
 });
 
@@ -169,8 +169,8 @@ test.serial('bulk operation lambda sets env vars provided in payload', async (t)
     envVars,
     payload: {
       ids: [granule.granuleId],
-      workflowName
-    }
+      workflowName,
+    },
   });
   Object.keys(envVars).forEach((envVarKey) => {
     t.is(process.env[envVarKey], envVars[envVarKey]);
@@ -181,7 +181,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2())
+    granuleModel.create(fakeGranuleFactoryV2()),
   ]);
 
   const workflowName = randomId('workflow');
@@ -191,10 +191,10 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
     payload: {
       ids: [
         granules[0].granuleId,
-        granules[1].granuleId
+        granules[1].granuleId,
       ],
-      workflowName
-    }
+      workflowName,
+    },
   });
   t.is(applyWorkflowStub.callCount, 2);
   // Can't guarantee processing order so test against granule matching by ID
@@ -209,7 +209,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2())
+    granuleModel.create(fakeGranuleFactoryV2()),
   ]);
 
   esSearchStub.resolves({
@@ -217,18 +217,18 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
       hits: {
         hits: [{
           _source: {
-            granuleId: granules[0].granuleId
-          }
+            granuleId: granules[0].granuleId,
+          },
         }, {
           _source: {
-            granuleId: granules[1].granuleId
-          }
+            granuleId: granules[1].granuleId,
+          },
         }],
         total: {
-          value: 2
-        }
-      }
-    }
+          value: 2,
+        },
+      },
+    },
   });
 
   const workflowName = randomId('workflow');
@@ -238,8 +238,8 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
     payload: {
       query: 'fake-query',
       workflowName,
-      index: randomId('index')
-    }
+      index: randomId('index'),
+    },
   });
 
   t.true(esSearchStub.called);
@@ -256,7 +256,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', asy
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2({ published: false })),
-    granuleModel.create(fakeGranuleFactoryV2({ published: false }))
+    granuleModel.create(fakeGranuleFactoryV2({ published: false })),
   ]);
 
   const { deletedGranules } = await bulkOperation.handler({
@@ -265,16 +265,16 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', asy
     payload: {
       ids: [
         granules[0].granuleId,
-        granules[1].granuleId
-      ]
-    }
+        granules[1].granuleId,
+      ],
+    },
   });
 
   t.deepEqual(
     deletedGranules,
     [
       granules[0].granuleId,
-      granules[1].granuleId
+      granules[1].granuleId,
     ]
   );
 });
@@ -302,7 +302,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
     granuleModel.create(fakeGranuleFactoryV2()),
     granuleModel.create(fakeGranuleFactoryV2()),
     granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2())
+    granuleModel.create(fakeGranuleFactoryV2()),
   ]);
 
   const aggregateError = await t.throwsAsync(bulkOperation.handler({
@@ -315,9 +315,9 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
         granules[2].granuleId,
         granules[3].granuleId,
         granules[4].granuleId,
-        granules[5].granuleId
-      ]
-    }
+        granules[5].granuleId,
+      ],
+    },
   }));
 
   // tried to delete 6 times, but failed 3 times
@@ -327,7 +327,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
     [
       errorMessage,
       errorMessage,
-      errorMessage
+      errorMessage,
     ]
   );
 });
@@ -336,7 +336,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2({ published: false })),
-    granuleModel.create(fakeGranuleFactoryV2({ published: false }))
+    granuleModel.create(fakeGranuleFactoryV2({ published: false })),
   ]);
 
   esSearchStub.resolves({
@@ -344,18 +344,18 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
       hits: {
         hits: [{
           _source: {
-            granuleId: granules[0].granuleId
-          }
+            granuleId: granules[0].granuleId,
+          },
         }, {
           _source: {
-            granuleId: granules[1].granuleId
-          }
+            granuleId: granules[1].granuleId,
+          },
         }],
         total: {
-          value: 2
-        }
-      }
-    }
+          value: 2,
+        },
+      },
+    },
   });
 
   const { deletedGranules } = await bulkOperation.handler({
@@ -363,8 +363,8 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
     envVars,
     payload: {
       query: 'fake-query',
-      index: randomId('index')
-    }
+      index: randomId('index'),
+    },
   });
 
   t.true(esSearchStub.called);
@@ -372,7 +372,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
     deletedGranules,
     [
       granules[0].granuleId,
-      granules[1].granuleId
+      granules[1].granuleId,
     ]
   );
 });
@@ -381,7 +381,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2({ published: true })),
-    granuleModel.create(fakeGranuleFactoryV2({ published: true }))
+    granuleModel.create(fakeGranuleFactoryV2({ published: true })),
   ]);
 
   const { deletedGranules } = await bulkOperation.handler({
@@ -390,17 +390,17 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
     payload: {
       ids: [
         granules[0].granuleId,
-        granules[1].granuleId
+        granules[1].granuleId,
       ],
-      forceRemoveFromCmr: true
-    }
+      forceRemoveFromCmr: true,
+    },
   });
 
   t.deepEqual(
     deletedGranules,
     [
       granules[0].granuleId,
-      granules[1].granuleId
+      granules[1].granuleId,
     ]
   );
 });

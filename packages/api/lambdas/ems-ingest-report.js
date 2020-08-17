@@ -16,7 +16,7 @@ const {
   getEmsEnabledCollections,
   getExpiredS3Objects,
   reportToFileType,
-  submitReports
+  submitReports,
 } = require('../lib/ems');
 const { deconstructCollectionId } = require('../lib/utils');
 const { Search, defaultIndexAlias } = require('../es/search');
@@ -45,7 +45,7 @@ const defaultESScrollSize = 1000;
 const bucketsPrefixes = () => ({
   reportsBucket: process.env.system_bucket,
   reportsPrefix: `${process.env.stackName}/ems/`,
-  reportsSentPrefix: `${process.env.stackName}/ems/sent/`
+  reportsSentPrefix: `${process.env.stackName}/ems/sent/`,
 });
 exports.bucketsPrefixes = bucketsPrefixes;
 
@@ -64,7 +64,7 @@ const emsMappings = {
     processingEndDateTime: 'processingEndDateTime',
     timeToArchive: 'timeToArchive',
     timeToPreprocess: 'timeToPreprocess',
-    timeToXfer: 'duration'
+    timeToXfer: 'duration',
   },
 
   archive: {
@@ -82,13 +82,13 @@ const emsMappings = {
     // deleteFromArchive shall have value 'N', deleteEffectiveDate shall be left blank
     deleteFromArchive: 'deleteFromArchive', // N
     deleteEffectiveDate: 'deleteEffectiveDate', // null
-    lastUpdate: 'lastUpdateDateTime'
+    lastUpdate: 'lastUpdateDateTime',
   },
 
   delete: {
     dbID: 'granuleId',
-    deleteEffectiveDate: 'deletedAt'
-  }
+    deleteEffectiveDate: 'deletedAt',
+  },
 };
 
 /**
@@ -116,19 +116,19 @@ function buildSearchQuery(esIndex, type, startTime, endTime) {
               range: {
                 [`${timeFieldName}`]: {
                   gte: moment.utc(startTime).toDate().getTime(),
-                  lt: moment.utc(endTime).toDate().getTime()
-                }
-              }
+                  lt: moment.utc(endTime).toDate().getTime(),
+                },
+              },
             },
             {
               terms: {
                 // filter out 'running' status
-                status: ['failed', 'completed']
-              }
-            }]
-        }
-      }
-    }
+                status: ['failed', 'completed'],
+              },
+            }],
+        },
+      },
+    },
   };
   if (type === 'deletedgranule') params._source = ['granuleId', 'collectionId', 'deletedAt'];
   return params;
@@ -146,7 +146,7 @@ async function uploadReportToS3(filename, reportBucket, reportKey) {
   await awsServices.s3().putObject({
     Bucket: reportBucket,
     Key: reportKey,
-    Body: fs.createReadStream(filename)
+    Body: fs.createReadStream(filename),
   }).promise();
 
   fs.unlinkSync(filename);
@@ -267,7 +267,7 @@ async function generateReport(reportType, startTime, endTime, collections) {
   while (response.hits.total !== numRetrieved) {
     response = await esClient.scroll({ // eslint-disable-line no-await-in-loop
       scrollId: response._scroll_id,
-      scroll: '30s'
+      scroll: '30s',
     }).then((scrollResponse) => scrollResponse.body);
     granules = response.hits.hits.map((s) => s._source);
     records = buildEMSRecords(emsMappings[reportType], granules, collections);
@@ -317,7 +317,7 @@ async function generateReportsForEachDay(params) {
 
   const {
     reportStartTime,
-    reportEndTime
+    reportEndTime,
   } = determineReportsStartEndTime(params.startTime, params.endTime);
 
   // ICD Section 3.4 Data Files Interface section describes that each file should contain one day's
@@ -404,5 +404,5 @@ module.exports = {
   emsMappings,
   generateReports,
   generateReportsForEachDay,
-  handler
+  handler,
 };

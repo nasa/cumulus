@@ -37,10 +37,10 @@ async function createIndex(esClient, indexName) {
       mappings,
       settings: {
         index: {
-          number_of_shards: process.env.ES_INDEX_SHARDS || 1
-        }
-      }
-    }
+          number_of_shards: process.env.ES_INDEX_SHARDS || 1,
+        },
+      },
+    },
   });
 
   log.info(`Created esIndex ${indexName}`);
@@ -105,7 +105,7 @@ function parsePayload(payload) {
       version: payload.version,
       level: 30,
       pid: 1,
-      name: 'cumulus'
+      name: 'cumulus',
     };
   }
   return record;
@@ -157,7 +157,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
     id,
     index,
     type,
-    refresh: inTestMode()
+    refresh: inTestMode(),
   };
 
   if (parent) params.parent = parent;
@@ -266,7 +266,7 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
     type: 'deletedgranule',
     id: payload.granuleId,
     parent: payload.collectionId,
-    refresh: inTestMode()
+    refresh: inTestMode(),
   };
   await esClient.delete(delGranParams, { ignore: [404] });
 
@@ -317,13 +317,13 @@ async function deleteRecord({
   type,
   parent,
   index = defaultIndexAlias,
-  ignore
+  ignore,
 }) {
   const params = {
     index,
     type,
     id,
-    refresh: inTestMode()
+    refresh: inTestMode(),
   };
 
   let options = {};
@@ -417,5 +417,5 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
-  reingest
+  reingest,
 };

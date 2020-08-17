@@ -138,7 +138,7 @@ async function del(req, res) {
       await esClient.delete({
         id: req.params.id,
         type: 'provider',
-        index: process.env.ES_INDEX
+        index: process.env.ES_INDEX,
       }, { ignore: [404] });
     }
     return res.send({ message: 'Record deleted' });

@@ -48,7 +48,7 @@ test.after.always(() => S3.recursivelyDeleteS3Bucket(process.env.system_bucket))
 test.serial('verifyProviderSecretsMigration passes if empty credentials are found', async (t) => {
   const provider = fakeProviderFactory({
     protocol: 'ftp',
-    encrypted: false
+    encrypted: false,
   });
 
   delete provider.username;
@@ -56,7 +56,7 @@ test.serial('verifyProviderSecretsMigration passes if empty credentials are foun
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...provider, createdAt: Date.now() }
+    Item: { ...provider, createdAt: Date.now() },
   }).promise();
 
   await t.notThrowsAsync(handler());
@@ -68,7 +68,7 @@ test.serial('verifyProviderSecretsMigration passes if KMS credentials are found'
   const provider = fakeProviderFactory({
     protocol: 'ftp',
     username: 'my-username',
-    password: 'my-password'
+    password: 'my-password',
   });
 
   await providerModel.create(provider);
@@ -81,12 +81,12 @@ test.serial('verifyProviderSecretsMigration fails if plaintext credentials are f
     protocol: 'ftp',
     encrypted: false,
     username: 'my-username',
-    password: 'my-password'
+    password: 'my-password',
   });
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...provider, createdAt: Date.now() }
+    Item: { ...provider, createdAt: Date.now() },
   }).promise();
 
   const err = await t.throwsAsync(handler());
@@ -102,12 +102,12 @@ test.serial('verifyProviderSecretsMigration fails if S3 keypair credentials are 
     protocol: 'ftp',
     encrypted: true,
     username: await S3KeyPairProvider.encrypt('my-username'),
-    password: await S3KeyPairProvider.encrypt('my-password')
+    password: await S3KeyPairProvider.encrypt('my-password'),
   });
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...provider, createdAt: Date.now() }
+    Item: { ...provider, createdAt: Date.now() },
   }).promise();
 
   await t.throwsAsync(handler());
@@ -119,7 +119,7 @@ test.serial('verifyProviderSecretsMigration verifies all providers', async (t) =
   const kmsProvider = fakeProviderFactory({
     protocol: 'ftp',
     username: 'my-username',
-    password: 'my-password'
+    password: 'my-password',
   });
 
   await providerModel.create(kmsProvider);
@@ -128,12 +128,12 @@ test.serial('verifyProviderSecretsMigration verifies all providers', async (t) =
     protocol: 'ftp',
     encrypted: true,
     username: await S3KeyPairProvider.encrypt('my-username'),
-    password: await S3KeyPairProvider.encrypt('my-password')
+    password: await S3KeyPairProvider.encrypt('my-password'),
   });
 
   await dynamodbDocClient().put({
     TableName: process.env.ProvidersTable,
-    Item: { ...s3Provider, createdAt: Date.now() }
+    Item: { ...s3Provider, createdAt: Date.now() },
   }).promise();
 
   await t.throwsAsync(handler());

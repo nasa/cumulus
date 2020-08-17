@@ -30,8 +30,8 @@ test.serial('getExecutionHistory() retries if a ThrottlingException occurs', asy
         promise: () => {
           promiseSpy();
           return promise();
-        }
-      })
+        },
+      }),
     });
 
   try {
@@ -46,14 +46,14 @@ test.serial('getExecutionHistory() retries if a ThrottlingException occurs', asy
 test.serial('getExecutionHistory() returns non-paginated list of events', async (t) => {
   const firstResponse = {
     events: [{
-      name: 'event1'
-    }]
+      name: 'event1',
+    }],
   };
   const stub = sinon.stub(awsServices, 'sfn')
     .returns({
       getExecutionHistory: () => ({
-        promise: () => Promise.resolve(firstResponse)
-      })
+        promise: () => Promise.resolve(firstResponse),
+      }),
     });
 
   try {
@@ -69,20 +69,20 @@ test.serial('getExecutionHistory() returns full, paginated list of events', asyn
   const firstResponse = {
     nextToken: firstToken,
     events: [{
-      name: 'event1'
-    }]
+      name: 'event1',
+    }],
   };
   const secondToken = 'token2';
   const secondResponse = {
     nextToken: secondToken,
     events: [{
-      name: 'event2'
-    }]
+      name: 'event2',
+    }],
   };
   const thirdResponse = {
     events: [{
-      name: 'event3'
-    }]
+      name: 'event3',
+    }],
   };
   // Throw a throttling exception for the first response from
   // awsServices.sfn().getExecutionHistory().promise()to simulate
@@ -101,8 +101,8 @@ test.serial('getExecutionHistory() returns full, paginated list of events', asyn
           }
 
           return Promise.resolve(thirdResponse);
-        }
-      })
+        },
+      }),
     });
 
   try {
@@ -110,7 +110,7 @@ test.serial('getExecutionHistory() returns full, paginated list of events', asyn
     t.deepEqual(response.events, [
       ...firstResponse.events,
       ...secondResponse.events,
-      ...thirdResponse.events
+      ...thirdResponse.events,
     ]);
   } finally {
     stub.restore();

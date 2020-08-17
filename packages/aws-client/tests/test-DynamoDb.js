@@ -13,15 +13,15 @@ test.before(async () => {
   await awsServices.dynamodb().createTable({
     TableName: process.env.tableName,
     AttributeDefinitions: [
-      { AttributeName: 'hash', AttributeType: 'S' }
+      { AttributeName: 'hash', AttributeType: 'S' },
     ],
     KeySchema: [
-      { AttributeName: 'hash', KeyType: 'HASH' }
+      { AttributeName: 'hash', KeyType: 'HASH' },
     ],
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
-    }
+      WriteCapacityUnits: 5,
+    },
   }).promise();
 });
 
@@ -38,20 +38,20 @@ test('DynamoDb.get() returns an existing item', async (t) => {
   const hash = `hash${cryptoRandomString({ length: 10 })}`;
   const item = {
     hash,
-    foo: 'bar'
+    foo: 'bar',
   };
 
   await client.put({
     TableName: process.env.tableName,
-    Item: item
+    Item: item,
   }).promise();
 
   const response = await DynamoDb.get({
     tableName: process.env.tableName,
     client,
     item: {
-      hash
-    }
+      hash,
+    },
   });
 
   t.deepEqual(response, item);
@@ -65,8 +65,8 @@ test('DynamoDb.get() throws RecordDoesNotExist when item does not exist', async 
       tableName: process.env.tableName,
       client,
       item: {
-        hash: `hash${cryptoRandomString({ length: 10 })}`
-      }
+        hash: `hash${cryptoRandomString({ length: 10 })}`,
+      },
     }),
     { instanceOf: RecordDoesNotExist }
   );
@@ -79,7 +79,7 @@ test.serial('DynamoDb.get() throws general error from failure on client.get', as
     .returns({
       promise: () => {
         throw new Error('fail');
-      }
+      },
     });
 
   try {
@@ -88,8 +88,8 @@ test.serial('DynamoDb.get() throws general error from failure on client.get', as
         tableName: process.env.tableName,
         client,
         item: {
-          hash: `hash${cryptoRandomString({ length: 10 })}`
-        }
+          hash: `hash${cryptoRandomString({ length: 10 })}`,
+        },
       }),
       { message: /fail/ }
     );
@@ -109,8 +109,8 @@ test.serial('DynamoDb.scan() properly returns all paginated results', async (t) 
       TableName: process.env.tableName,
       Item: {
         hash: `hash${cryptoRandomString({ length: 10 })}`,
-        foo: 'bar'
-      }
+        foo: 'bar',
+      },
     }).promise();
     count += 1;
   }
@@ -118,7 +118,7 @@ test.serial('DynamoDb.scan() properly returns all paginated results', async (t) 
   const response = await DynamoDb.scan({
     tableName: process.env.tableName,
     client,
-    limit: 2
+    limit: 2,
   });
 
   t.is(response.Items.length, 3);

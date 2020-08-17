@@ -4,7 +4,7 @@
 
 const {
   createErrorType,
-  ValidationError
+  ValidationError,
 } = require('@cumulus/errors');
 
 const isBadRequestError = (err) =>
@@ -37,5 +37,5 @@ module.exports = {
   IndexExistsError,
   TokenUnauthorizedUserError,
   EarthdataLoginError,
-  isBadRequestError
+  isBadRequestError,
 };

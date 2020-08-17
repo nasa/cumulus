@@ -129,5 +129,5 @@ module.exports = {
   listGranules,
   moveGranule,
   waitForGranule,
-  removePublishedGranule
+  removePublishedGranule,
 };

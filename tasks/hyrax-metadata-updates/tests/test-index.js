@@ -8,7 +8,7 @@ const { promisify } = require('util');
 const xmlParseOptions = {
   ignoreAttrs: true,
   mergeAttrs: true,
-  explicitArray: false
+  explicitArray: false,
 };
 
 const { InvalidArgument } = require('@cumulus/errors');
@@ -59,7 +59,7 @@ test('Test return error when invalid environment supplied for host generation', 
     () => generateAddress(),
     {
       message: 'Environment foo is not a valid environment.',
-      instanceOf: InvalidArgument
+      instanceOf: InvalidArgument,
     }
   );
 });

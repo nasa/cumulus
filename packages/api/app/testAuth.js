@@ -3,7 +3,7 @@
 const get = require('lodash/get');
 const {
   JsonWebTokenError,
-  TokenExpiredError
+  TokenExpiredError,
 } = require('jsonwebtoken');
 const moment = require('moment');
 
@@ -43,8 +43,8 @@ async function tokenEndpoint(req, res) {
     }
     return res.send({
       message: {
-        token: jwt
-      }
+        token: jwt,
+      },
     });
   }
 
@@ -71,8 +71,8 @@ async function refreshEndpoint(req, res) {
   jwt = newToken();
   return res.send({
     message: {
-      token: jwt
-    }
+      token: jwt,
+    },
   });
 }
 
@@ -142,5 +142,5 @@ module.exports = {
   tokenEndpoint,
   refreshEndpoint,
   deleteTokenEndpoint,
-  ensureAuthorized
+  ensureAuthorized,
 };

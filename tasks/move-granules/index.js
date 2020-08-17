@@ -15,7 +15,7 @@ const {
   moveObject,
   s3Join,
   s3ObjectExists,
-  waitForObjectToExist
+  waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 
 const { InvalidArgument } = require('@cumulus/errors');
@@ -23,14 +23,14 @@ const { InvalidArgument } = require('@cumulus/errors');
 const {
   handleDuplicateFile,
   unversionFilename,
-  duplicateHandlingType
+  duplicateHandlingType,
 } = require('@cumulus/ingest/granule');
 
 const {
   isCMRFile,
   metadataObjectFromCMRFile,
   granulesToCmrFileObjects,
-  updateCMRMetadata
+  updateCMRMetadata,
 } = require('@cumulus/cmrjs');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
@@ -101,7 +101,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
       const urlPath = urlPathTemplate(URLPathTemplate, {
         file,
         granule: granulesObject[granuleId],
-        cmrMetadata
+        cmrMetadata,
       });
       const bucketName = bucketsConfig.nameByKey(match[0].bucket);
       const filepath = s3Join(urlPath, file.name);
@@ -113,8 +113,8 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
           bucket: bucketName,
           filepath,
           filename: `s3://${s3Join(bucketName, filepath)}`,
-          url_path: URLPathTemplate
-        }
+          url_path: URLPathTemplate,
+        },
       });
     });
     updatedGranules[granuleId].files = [...updatedFiles];
@@ -144,11 +144,11 @@ async function moveFileRequest(
   const fileStagingDir = file.fileStagingDir || 'file-staging';
   const source = {
     Bucket: sourceBucket,
-    Key: `${fileStagingDir}/${file.name}`
+    Key: `${fileStagingDir}/${file.name}`,
   };
   const target = {
     Bucket: file.bucket,
-    Key: file.filepath
+    Key: file.filepath,
   };
 
   // Due to S3's eventual consistency model, we need to make sure that the
@@ -172,7 +172,7 @@ async function moveFileRequest(
       source,
       target,
       duplicateHandling,
-      ACL
+      ACL,
     });
   } else {
     await moveObject({
@@ -181,7 +181,7 @@ async function moveFileRequest(
       destinationBucket: target.Bucket,
       destinationKey: target.Key,
       copyTags: true,
-      ACL
+      ACL,
     });
   }
 
@@ -191,7 +191,7 @@ async function moveFileRequest(
     filename: buildS3Uri(f.Bucket, f.Key),
     filepath: f.Key,
     size: f.size,
-    url_path: file.url_path
+    url_path: file.url_path,
   }));
 
   // return both file moved and renamed files
@@ -270,7 +270,7 @@ async function updateEachCmrFileAccessURLs(
       published: false, // Do the publish in publish-to-cmr step
       bucketTypes,
       cmrGranuleUrlType,
-      distributionBucketMap
+      distributionBucketMap,
     });
   }));
 }
@@ -367,7 +367,7 @@ async function moveGranules(event) {
   }
 
   return {
-    granules: Object.values(movedGranulesByGranuleId)
+    granules: Object.values(movedGranulesByGranuleId),
   };
 }
 

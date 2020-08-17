@@ -14,7 +14,7 @@ const createSnsMessage = (record) => {
   case 'REMOVE': return {
     event: 'Delete',
     record: { name, version },
-    deletedAt: Date.now()
+    deletedAt: Date.now(),
   };
   default: return {};
   }

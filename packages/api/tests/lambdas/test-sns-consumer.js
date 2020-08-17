@@ -15,8 +15,8 @@ const sandbox = sinon.createSandbox();
 const queueMessageStub = sandbox.stub().resolves(true);
 const { handler } = proxyquire('../../lambdas/message-consumer', {
   '../lib/rulesHelpers': {
-    queueMessageForRule: queueMessageStub
-  }
+    queueMessageForRule: queueMessageStub,
+  },
 });
 
 /**
@@ -46,15 +46,15 @@ const event = {
         TopicArn: snsArn,
         Subject: 'Amazon S3 Notification',
         Message: messageBody,
-        MessageAttributes: {}
-      }
-    }
-  ]
+        MessageAttributes: {},
+      },
+    },
+  ],
 };
 
 const collection = {
   name: testCollectionName,
-  version: '0.0.0'
+  version: '0.0.0',
 };
 const provider = { id: 'PROV1' };
 
@@ -79,7 +79,7 @@ test.before(async () => {
   const messageTemplate = {};
   const workflowDefinition = {
     name: workflow,
-    arn: stateMachineArn
+    arn: stateMachineArn,
   };
 
   sandbox.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
@@ -88,7 +88,7 @@ test.before(async () => {
     collection: item.collection,
     meta: get(item, 'meta', {}),
     payload: get(item, 'payload', {}),
-    definition: workflowDefinition
+    definition: workflowDefinition,
   }));
   sandbox.stub(Provider.prototype, 'get').resolves(provider);
   sandbox.stub(Collection.prototype, 'get').resolves(collection);
@@ -111,18 +111,18 @@ test.serial('it should enqueue a message for each SNS rule', async (t) => {
     provider: provider.id,
     rule: {
       type: 'sns',
-      value: snsArn
+      value: snsArn,
     },
     state: 'ENABLED',
-    workflow: 'test-workflow-1'
+    workflow: 'test-workflow-1',
   };
 
   const createdRule = await ruleModel.create(rule1);
   const expectedRule = {
     ...createdRule,
     meta: {
-      snsSourceArn: snsArn
-    }
+      snsSourceArn: snsArn,
+    },
   };
   await handler(event, {}, testCallback);
 

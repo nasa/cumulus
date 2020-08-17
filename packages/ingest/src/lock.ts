@@ -2,7 +2,7 @@ import delay from 'delay';
 import {
   s3PutObject,
   deleteS3Object,
-  listS3ObjectsV2
+  listS3ObjectsV2,
 } from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 
@@ -49,7 +49,7 @@ export async function countLock(
 ): Promise<number> {
   const locks = await listS3ObjectsV2({
     Bucket: bucket,
-    Prefix: `${lockPrefix}/${providerName}`
+    Prefix: `${lockPrefix}/${providerName}`,
   });
 
   return checkOldLocks(bucket, locks);
@@ -63,7 +63,7 @@ async function addLock(
   await s3PutObject({
     Bucket: bucket,
     Key: `${lockPrefix}/${providerName}/${filename}`,
-    Body: ''
+    Body: '',
   });
 }
 

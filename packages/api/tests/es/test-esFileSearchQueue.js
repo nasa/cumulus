@@ -46,7 +46,7 @@ test.serial(
 
     const expected = {
       granuleId: granules[0].granuleId,
-      ...granules[0].files[0]
+      ...granules[0].files[0],
     };
 
     const sq = new ESFileQueue({ bucket: targetBucket });
@@ -65,11 +65,11 @@ test.serial(
     granules = granules.sort(sortByFileKey);
     const expected0 = {
       granuleId: granules[0].granuleId,
-      ...granules[0].files[0]
+      ...granules[0].files[0],
     };
     const expected1 = {
       granuleId: granules[1].granuleId,
-      ...granules[1].files[0]
+      ...granules[1].files[0],
     };
 
     const bucket = granules[0].files[0].bucket;

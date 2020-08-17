@@ -20,7 +20,7 @@ class CloudFormationGateway {
       async () => {
         try {
           const stackDetails = await this.cloudFormationService.describeStacks({
-            StackName
+            StackName,
           }).promise();
 
           if (!stackDetails.Stacks) {
@@ -35,7 +35,7 @@ class CloudFormationGateway {
       },
       {
         maxTimeout: 5000,
-        onFailedAttempt: () => log.debug('ThrottlingException when calling cloudformation.describeStacks(), will retry.')
+        onFailedAttempt: () => log.debug('ThrottlingException when calling cloudformation.describeStacks(), will retry.'),
       }
     );
   }

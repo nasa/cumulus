@@ -24,7 +24,7 @@ function missingEnvironmentVariables() {
     'asyncOperationId',
     'asyncOperationsTable',
     'lambdaName',
-    'payloadUrl'
+    'payloadUrl',
   ].filter((key) => process.env[key] === undefined);
 }
 
@@ -88,7 +88,7 @@ async function getLambdaInfo(FunctionName) {
   const lambda = new AWS.Lambda();
 
   const getFunctionResponse = await lambda.getFunction({
-    FunctionName
+    FunctionName,
   }).promise();
 
   const handler = getFunctionResponse.Configuration.Handler;
@@ -97,7 +97,7 @@ async function getLambdaInfo(FunctionName) {
   return {
     moduleFileName,
     moduleFunctionName,
-    codeUrl: getFunctionResponse.Code.Location
+    codeUrl: getFunctionResponse.Code.Location,
   };
 }
 
@@ -128,7 +128,7 @@ async function fetchLambdaFunction(codeUrl) {
           ? `Failed to download lambda function (will retry): ${err}`
           : `Failed to download lambda function (will not retry): ${err}`;
         logger.error(message);
-      }
+      },
     }
   );
 
@@ -146,7 +146,7 @@ function buildErrorOutput(error) {
   return {
     name: error.name,
     message: error.message,
-    stack: error.stack
+    stack: error.stack,
   };
 }
 
@@ -172,14 +172,14 @@ function updateAsyncOperation(status, output) {
     ExpressionAttributeNames: {
       '#S': 'status',
       '#O': 'output',
-      '#U': 'updatedAt'
+      '#U': 'updatedAt',
     },
     ExpressionAttributeValues: {
       ':s': { S: status },
       ':o': { S: actualOutput ? JSON.stringify(actualOutput) : 'none' },
-      ':u': { N: (Number(Date.now())).toString() }
+      ':u': { N: (Number(Date.now())).toString() },
     },
-    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u'
+    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
   }).promise();
 }
 

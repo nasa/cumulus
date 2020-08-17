@@ -12,7 +12,7 @@ const log = require('@cumulus/common/log');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const {
-  determineReportKey, getExpiredS3Objects, submitReports
+  determineReportKey, getExpiredS3Objects, submitReports,
 } = require('../lib/ems');
 
 const { Collection } = require('../models');
@@ -20,7 +20,7 @@ const { Collection } = require('../models');
 const bucketsPrefixes = () => ({
   reportsBucket: process.env.system_bucket,
   reportsPrefix: `${process.env.stackName}/ems/`,
-  reportsSentPrefix: `${process.env.stackName}/ems/sent/`
+  reportsSentPrefix: `${process.env.stackName}/ems/sent/`,
 });
 exports.bucketsPrefixes = bucketsPrefixes;
 
@@ -98,7 +98,7 @@ const emsMapping = {
   mission: mission,
   instrument: instrument,
   eosFlag: 'E', // EOS
-  productFlag: 1 // Data Product file
+  productFlag: 1, // Data Product file
 };
 
 /**
@@ -115,7 +115,7 @@ async function getCmrCollections() {
   const cmrCollectionsIterator = new CMRSearchConceptQueue({
     cmrSettings,
     type: 'collections',
-    format: 'echo10'
+    format: 'echo10',
   });
 
   let nextCmrItem = await cmrCollectionsIterator.peek();
@@ -163,7 +163,7 @@ const getDbCollections = async () =>
       reportToEms: get(collection, 'reportToEms', true),
       lastUpdate: millisecondsToUTCString(
         collection.updatedAt || collection.createdAt || Date.now()
-      )
+      ),
     }));
 
 /**
@@ -262,7 +262,7 @@ async function generateReport(startTime, endTime, collectionId) {
   return s3().putObject({
     Bucket: reportsBucket,
     Key: reportKey,
-    Body: report
+    Body: report,
   }).promise()
     .then(() => ({ reportType, file: s3Uri }));
 }

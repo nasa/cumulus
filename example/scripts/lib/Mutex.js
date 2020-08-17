@@ -21,8 +21,8 @@ class Mutex {
     const params = {
       TableName: this.tableName,
       Key: {
-        key: key
-      }
+        key: key,
+      },
     };
     const record = await this.docClient.get(params).promise();
     if (record.Item) {
@@ -47,17 +47,17 @@ class Mutex {
       Item: {
         key: key,
         expire: now + timeoutMs,
-        sha: gitSHA
+        sha: gitSHA,
       },
       ConditionExpression: '#key <> :key OR (#key = :key AND #expire < :expire)',
       ExpressionAttributeNames: {
         '#key': 'key',
-        '#expire': 'expire'
+        '#expire': 'expire',
       },
       ExpressionAttributeValues: {
         ':key': key,
-        ':expire': now
-      }
+        ':expire': now,
+      },
     };
     return this.docClient.put(params).promise();
   }
@@ -77,11 +77,11 @@ class Mutex {
       Key: { key: key },
       ConditionExpression: '#sha = :sha OR attribute_not_exists(sha)',
       ExpressionAttributeNames: {
-        '#sha': 'sha'
+        '#sha': 'sha',
       },
       ExpressionAttributeValues: {
-        ':sha': gitSHA
-      }
+        ':sha': gitSHA,
+      },
     };
 
     let deleteResult;

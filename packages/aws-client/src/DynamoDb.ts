@@ -31,13 +31,13 @@ export const get = improveStackTrace(
       client,
       getParams = {},
       item,
-      tableName
+      tableName,
     } = params;
 
     const getResponse = await client.get({
       ...getParams,
       TableName: tableName,
-      Key: item
+      Key: item,
     }).promise();
 
     if (getResponse.Item) return getResponse.Item;
@@ -76,11 +76,11 @@ export const scan = improveStackTrace(
       query,
       select,
       startKey,
-      tableName
+      tableName,
     } = params;
 
     const scanParams: AWS.DynamoDB.DocumentClient.ScanInput = {
-      TableName: tableName
+      TableName: tableName,
     };
 
     if (query) {
@@ -121,7 +121,7 @@ export const scan = improveStackTrace(
         fields,
         limit,
         select,
-        startKey: response.LastEvaluatedKey
+        startKey: response.LastEvaluatedKey,
       });
 
       if (more.Items) {

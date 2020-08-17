@@ -25,7 +25,7 @@ const validateHost = (host) => {
   if (isValidHostname(host)) return;
 
   throw buildValidationError({
-    detail: `${host} is not a valid hostname or IP address`
+    detail: `${host} is not a valid hostname or IP address`,
   });
 };
 
@@ -40,7 +40,7 @@ class Provider extends Manager {
     super({
       tableName: process.env.ProvidersTable,
       tableHash: { name: 'id', type: 'S' },
-      schema: schemas.provider
+      schema: schemas.provider,
     });
 
     this.removeAdditional = 'all';
@@ -121,7 +121,7 @@ class Provider extends Manager {
 
     const scanResult = await ruleModel.scan({
       filter: 'provider = :provider',
-      values: { ':provider': id }
+      values: { ':provider': id },
     });
 
     return scanResult.Items;

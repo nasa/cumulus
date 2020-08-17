@@ -11,6 +11,6 @@ module.exports = {
     'lambdas',
     'lib',
     'migrations',
-    'models'
-  ]
+    'models',
+  ],
 };

@@ -18,7 +18,7 @@ class Stats extends BaseSearch {
         'type',
         'interval',
         'format',
-        'field'
+        'field',
       ]
     );
 
@@ -41,19 +41,19 @@ class Stats extends BaseSearch {
     searchParams.body.aggs = {
       averageDuration: {
         avg: {
-          field: 'duration'
-        }
+          field: 'duration',
+        },
       },
       granulesStatus: {
         terms: {
-          field: 'status'
-        }
+          field: 'status',
+        },
       },
       collections: {
         cardinality: {
-          field: 'collectionId'
-        }
-      }
+          field: 'collectionId',
+        },
+      },
     };
 
     const granules = await this.client.search(searchParams)
@@ -76,29 +76,29 @@ class Stats extends BaseSearch {
         dateTo,
         value: granulesErrors,
         aggregation: 'count',
-        unit: 'error'
+        unit: 'error',
       },
       collections: {
         dateFrom,
         dateTo,
         value: granules.aggregations.collections.value,
         aggregation: 'count',
-        unit: 'collection'
+        unit: 'collection',
       },
       processingTime: {
         dateFrom,
         dateTo,
         value: granules.aggregations.averageDuration.value,
         aggregation: 'average',
-        unit: 'second'
+        unit: 'second',
       },
       granules: {
         dateFrom,
         dateTo,
         value: granules.hits.total,
         aggregation: 'count',
-        unit: 'granule'
-      }
+        unit: 'granule',
+      },
     };
   }
 
@@ -114,8 +114,8 @@ class Stats extends BaseSearch {
     searchParams.size = 0;
     searchParams.body.aggs = {
       count: {
-        terms: { field }
-      }
+        terms: { field },
+      },
     };
 
     const count = await this.client.search(searchParams)
@@ -125,12 +125,12 @@ class Stats extends BaseSearch {
       meta: {
         name: 'cumulus-api',
         count: count.hits.total,
-        field: field
+        field: field,
       },
       count: count.aggregations.count.buckets.map((b) => ({
         key: b.key,
-        count: b.doc_count
-      }))
+        count: b.doc_count,
+      })),
     };
   }
 }

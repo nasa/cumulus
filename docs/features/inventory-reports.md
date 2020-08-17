@@ -9,16 +9,16 @@ hide_title: true
 This feature provides a detailed report of collections, granules and files in Cumulus and CMR.
 These reports show the following data:
 
-* Files in Cumulus, those that are in S3 but missing in DynamoDB and those in DynamoDB but not S3
+* Granule files in Cumulus, those that are in S3 but missing in the internal data store and those in the internal data store but not S3
 * All Collections in Cumulus and CMR, highlighting any collections only in Cumulus or only in CMR
-* All Granules in Cumulus and CMR, highlighting any granules only in Cumulus or only in CMR
-* All Files in Cumulus and CMR, highlighting any files only in Cumulus or only in CMR
+* All Granules in Cumulus and CMR belonging to collections found in both, highlighting any granules only in Cumulus or only in CMR
+* All granule files in Cumulus and CMR belonging to granules found in both, highlighting any files only in Cumulus or only in CMR
 
 ## Viewing Reports on the Cumulus Dashboard
 
 The Cumulus Dashboard offers an interface to create, manage and view these inventory reports.
 
-The Reconciliation Reports Overvew page shows a full list of existing reports and the option to create a new report.
+The Reconciliation Reports Overview page shows a full list of existing reports and the option to create a new report.
 ![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
 
 Viewing a report will show a detailed list of collections, granules and files.

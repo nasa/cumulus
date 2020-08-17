@@ -8,7 +8,7 @@ const { buildExecutionArn } = require('@cumulus/message/Executions');
 
 const {
   getWorkflowFileKey,
-  templateKey
+  templateKey,
 } = require('@cumulus/common/workflows');
 
 /**
@@ -33,7 +33,7 @@ async function enqueueParsePdrMessage({
   provider,
   stack,
   systemBucket,
-  queueUrl
+  queueUrl,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: parsePdrArn } = await getJsonS3Object(
@@ -43,7 +43,7 @@ async function enqueueParsePdrMessage({
   const payload = { pdr };
   const workflow = {
     name: parsePdrWorkflow,
-    arn: parsePdrArn
+    arn: parsePdrArn,
   };
 
   const message = buildQueueMessageFromTemplate({
@@ -56,8 +56,8 @@ async function enqueueParsePdrMessage({
     workflow,
     customMeta: {
       collection,
-      provider
-    }
+      provider,
+    },
   });
 
   const arn = buildExecutionArn(
@@ -95,7 +95,7 @@ async function enqueueGranuleIngestMessage({
   provider,
   stack,
   systemBucket,
-  queueUrl
+  queueUrl,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: ingestGranuleArn } = await getJsonS3Object(
@@ -105,13 +105,13 @@ async function enqueueGranuleIngestMessage({
 
   const payload = {
     granules: [
-      granule
-    ]
+      granule,
+    ],
   };
 
   const workflow = {
     name: granuleIngestWorkflow,
-    arn: ingestGranuleArn
+    arn: ingestGranuleArn,
   };
 
   const message = buildQueueMessageFromTemplate({
@@ -124,8 +124,8 @@ async function enqueueGranuleIngestMessage({
     workflow,
     customMeta: {
       collection,
-      provider
-    }
+      provider,
+    },
   });
 
   if (pdr) message.meta.pdr = pdr;

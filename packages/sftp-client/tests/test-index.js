@@ -18,7 +18,7 @@ test.before(async (t) => {
     host: '127.0.0.1',
     port: 2222,
     username: 'user',
-    password: 'password'
+    password: 'password',
   });
 
   await t.context.sftpClient.connect();
@@ -37,7 +37,7 @@ test('SftpClient supports password authentication', async (t) => {
     host: '127.0.0.1',
     port: '2222',
     username: 'user',
-    password: 'password'
+    password: 'password',
   });
 
   let files;
@@ -64,7 +64,7 @@ test('SftpClient supports ssh keypair authentication', async (t) => {
     host: '127.0.0.1',
     port: '2222',
     username: 'user',
-    privateKey
+    privateKey,
   });
 
   let files;

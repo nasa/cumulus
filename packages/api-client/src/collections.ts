@@ -1,6 +1,6 @@
 import {
   CollectionRecord,
-  NewCollectionRecord
+  NewCollectionRecord,
 } from '@cumulus/types/api/collections';
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
@@ -30,8 +30,8 @@ export const createCollection = async (params: {
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/collections',
-      body: JSON.stringify(collection)
-    }
+      body: JSON.stringify(collection),
+    },
   });
 };
 
@@ -57,7 +57,7 @@ export const deleteCollection = async (params: {
     prefix,
     collectionName,
     collectionVersion,
-    callback = invokeApi
+    callback = invokeApi,
   } = params;
 
   return callback({
@@ -65,8 +65,8 @@ export const deleteCollection = async (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/collections/${collectionName}/${collectionVersion}`
-    }
+      path: `/collections/${collectionName}/${collectionVersion}`,
+    },
   });
 };
 
@@ -93,7 +93,7 @@ export const getCollection = async (params: {
     prefix,
     collectionName,
     collectionVersion,
-    callback = invokeApi
+    callback = invokeApi,
   } = params;
 
   const returnedCollection = await callback({
@@ -101,8 +101,8 @@ export const getCollection = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/collections/${collectionName}/${collectionVersion}`
-    }
+      path: `/collections/${collectionName}/${collectionVersion}`,
+    },
   });
 
   return JSON.parse(returnedCollection.body);
@@ -130,7 +130,7 @@ export const getCollections = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/collections/'
-    }
+      path: '/collections/',
+    },
   });
 };

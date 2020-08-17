@@ -58,7 +58,7 @@ test.serial('Run migrations the first time, it should run', async (t) => {
 
   await s3().headObject({
     Bucket: process.env.system_bucket,
-    Key
+    Key,
   }).promise();
 });
 
@@ -70,7 +70,7 @@ test.serial('Run the migration again, it should not run', async (t) => {
 
   await s3().headObject({
     Bucket: process.env.system_bucket,
-    Key
+    Key,
   }).promise();
 });
 
@@ -107,10 +107,10 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
   await migration1.run({
     tables: [
       granulesTable,
-      executionsTable
+      executionsTable,
     ],
     elasticsearch_host: getLocalEsHost(),
-    elasticsearch_index: esAlias
+    elasticsearch_index: esAlias,
   });
 
   // check records exists in dynamoDB

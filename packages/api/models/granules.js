@@ -19,18 +19,18 @@ const { getMessageGranules } = require('@cumulus/message/Granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   isNil,
-  removeNilProperties
+  removeNilProperties,
 } = require('@cumulus/common/util');
 const {
   getBucketsConfigKey,
-  getDistributionBucketMapKey
+  getDistributionBucketMapKey,
 } = require('@cumulus/common/stack');
 const {
-  DeletePublishedGranule
+  DeletePublishedGranule,
 } = require('@cumulus/errors');
 const {
   generateMoveFileParams,
-  moveGranuleFiles
+  moveGranuleFiles,
 } = require('@cumulus/ingest/granule');
 
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
@@ -44,7 +44,7 @@ const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 const {
   parseException,
   deconstructCollectionId,
-  getGranuleProductVolume
+  getGranuleProductVolume,
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
@@ -62,20 +62,20 @@ class Granule extends Manager {
       KeySchema: [
         {
           AttributeName: 'collectionId',
-          KeyType: 'HASH'
+          KeyType: 'HASH',
         },
         {
           AttributeName: 'granuleId',
-          KeyType: 'RANGE'
-        }
+          KeyType: 'RANGE',
+        },
       ],
       Projection: {
-        ProjectionType: 'ALL'
+        ProjectionType: 'ALL',
       },
       ProvisionedThroughput: {
         ReadCapacityUnits: 5,
-        WriteCapacityUnits: 10
-      }
+        WriteCapacityUnits: 10,
+      },
     }];
 
     super({
@@ -83,7 +83,7 @@ class Granule extends Manager {
       tableHash: { name: 'granuleId', type: 'S' },
       tableAttributes: [{ name: 'collectionId', type: 'S' }],
       tableIndexes: { GlobalSecondaryIndexes: globalSecondaryIndexes },
-      schema: granuleSchema
+      schema: granuleSchema,
     });
   }
 
@@ -111,7 +111,7 @@ class Granule extends Manager {
     if (scanResponse.Items) {
       return {
         ...scanResponse,
-        Items: await Promise.all(scanResponse.Items.map(translateGranule))
+        Items: await Promise.all(scanResponse.Items.map(translateGranule)),
       };
     }
 
@@ -166,16 +166,16 @@ class Granule extends Manager {
       cumulus_meta: {
         cumulus_context: {
           reingestGranule: true,
-          forceDuplicateOverwrite: true
-        }
+          forceDuplicateOverwrite: true,
+        },
       },
       payload: originalMessage.payload,
       provider: granule.provider,
       collection: {
         name,
-        version
+        version,
       },
-      queueUrl: granule.queueUrl
+      queueUrl: granule.queueUrl,
     });
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
@@ -207,15 +207,15 @@ class Granule extends Manager {
     const lambdaPayload = await Rule.buildPayload({
       workflow,
       payload: {
-        granules: [g]
+        granules: [g],
       },
       provider: g.provider,
       collection: {
         name,
-        version
+        version,
       },
       queueName,
-      asyncOperationId
+      asyncOperationId,
     });
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
@@ -261,13 +261,13 @@ class Granule extends Manager {
       distEndpoint,
       published: g.published,
       distributionBucketMap,
-      bucketTypes
+      bucketTypes,
     });
 
     return this.update(
       { granuleId: g.granuleId },
       {
-        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName'))
+        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
       }
     );
   }
@@ -325,7 +325,7 @@ class Granule extends Manager {
     granule,
     message,
     executionUrl,
-    executionDescription = {}
+    executionDescription = {},
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
@@ -337,9 +337,9 @@ class Granule extends Manager {
       providerURL: buildURL({
         protocol: message.meta.provider.protocol,
         host: message.meta.provider.host,
-        port: message.meta.provider.port
+        port: message.meta.provider.port,
       }),
-      files: granule.files
+      files: granule.files,
     });
 
     const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
@@ -372,7 +372,7 @@ class Granule extends Manager {
       timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
       timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
       ...processingTimeInfo,
-      ...temporalInfo
+      ...temporalInfo,
     };
 
     record.published = get(granule, 'published', false);
@@ -399,11 +399,11 @@ class Granule extends Manager {
         '#granuleId': 'granuleId',
         '#files': 'files',
         '#published': 'published',
-        '#createdAt': 'createdAt'
+        '#createdAt': 'createdAt',
       },
       ExpressionAttributeValues: { ':collectionId': collectionId },
       KeyConditionExpression: '#collectionId = :collectionId',
-      ProjectionExpression: '#granuleId, #collectionId, #files, #published, #createdAt'
+      ProjectionExpression: '#granuleId, #collectionId, #files, #published, #createdAt',
     };
 
     // add status filter
@@ -428,9 +428,9 @@ class Granule extends Manager {
         '#createdAt': 'createdAt',
         '#status': 'status',
         '#updatedAt': 'updatedAt',
-        '#published': 'published'
+        '#published': 'published',
       },
-      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published'
+      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
     };
 
     return new GranuleSearchQueue(params);
@@ -539,7 +539,7 @@ class Granule extends Manager {
               granule,
               message: cumulusMessage,
               executionUrl,
-              executionDescription
+              executionDescription,
             });
           } catch (error) {
             log.logAdditionalKeys(
@@ -547,9 +547,9 @@ class Granule extends Manager {
                 error: {
                   name: error.name,
                   message: error.message,
-                  stack: error.stack.split('\n')
+                  stack: error.stack.split('\n'),
                 },
-                cumulusMessage
+                cumulusMessage,
               },
               'Unable to get granule records from Cumulus Message'
             );
@@ -580,7 +580,7 @@ class Granule extends Manager {
       const updateParams = this._buildDocClientUpdateParams({
         item: granuleRecord,
         itemKey: { granuleId: granuleRecord.granuleId },
-        mutableFieldNames
+        mutableFieldNames,
       });
 
       // Only allow "running" granule to replace completed/failed

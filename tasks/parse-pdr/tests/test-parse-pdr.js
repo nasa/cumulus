@@ -4,13 +4,13 @@ const test = require('ava');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const {
   randomString,
   validateConfig,
   validateInput,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { PDRParsingError } = require('@cumulus/errors');
@@ -22,10 +22,10 @@ async function setUpTestPdrAndValidate(t) {
     s3PutObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-      Body: streamTestData(`pdrs/${t.context.payload.input.pdr.name}`)
+      Body: streamTestData(`pdrs/${t.context.payload.input.pdr.name}`),
     }),
     validateInput(t, t.context.payload.input),
-    validateConfig(t, t.context.payload.config)
+    validateConfig(t, t.context.payload.config),
   ]);
 }
 
@@ -38,14 +38,14 @@ test.before(async (t) => {
     t.context.stackName
   );
   const mod09CollectionConfig = {
-    granuleIdExtraction: '^(.*)\.hdf'
+    granuleIdExtraction: '^(.*)\.hdf',
   };
   const mod87CollectionConfig = {
-    granuleIdExtraction: '^PENS-(.*)\.hdf'
+    granuleIdExtraction: '^PENS-(.*)\.hdf',
   };
   await Promise.all([
     t.context.collectionConfigStore.put('MOD09GQ', '006', mod09CollectionConfig),
-    t.context.collectionConfigStore.put('MOD87GQ', '006', mod87CollectionConfig)
+    t.context.collectionConfigStore.put('MOD87GQ', '006', mod87CollectionConfig),
   ]);
 
   t.context.payload = {
@@ -55,15 +55,15 @@ test.before(async (t) => {
       provider: {
         id: 'MODAPS',
         protocol: 's3',
-        host: testBucket
-      }
+        host: testBucket,
+      },
     },
     input: {
       pdr: {
         name: '',
-        path: '/pdrs'
-      }
-    }
+        path: '/pdrs',
+      },
+    },
   };
 });
 
@@ -160,7 +160,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKS
     parsePdr(t.context.payload),
     {
       instanceOf: PDRParsingError,
-      message: 'MISSING FILE_CKSUM_VALUE PARAMETER'
+      message: 'MISSING FILE_CKSUM_VALUE PARAMETER',
     }
   );
 });
@@ -173,7 +173,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CK
     parsePdr(t.context.payload),
     {
       instanceOf: PDRParsingError,
-      message: 'MISSING FILE_CKSUM_TYPE PARAMETER'
+      message: 'MISSING FILE_CKSUM_TYPE PARAMETER',
     }
   );
 });
@@ -221,7 +221,7 @@ test.serial('parsePdr throws an exception if the a FILE_TYPE in the evaluated PD
     parsePdr(t.context.payload),
     {
       instanceOf: PDRParsingError,
-      message: 'INVALID FILE_TYPE PARAMETER : INVALID'
+      message: 'INVALID FILE_TYPE PARAMETER : INVALID',
     }
   );
 });

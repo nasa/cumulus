@@ -9,5 +9,5 @@ module.exports = {
     return (matched !== null ? matched[1] : null);
   },
 
-  areIDsSame: (a, b) => a === b
+  areIDsSame: (a, b) => a === b,
 };

@@ -5,7 +5,7 @@ const awsServices = require('../services');
 const {
   createQueue,
   parseSQSMessageBody,
-  sqsQueueExists
+  sqsQueueExists,
 } = require('../SQS');
 
 const randomString = () => cryptoRandomString({ length: 10 });

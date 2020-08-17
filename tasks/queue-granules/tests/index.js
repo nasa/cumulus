@@ -4,7 +4,7 @@ const test = require('ava');
 
 const {
   s3,
-  sqs
+  sqs,
 } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
@@ -15,7 +15,7 @@ const {
   randomString,
   validateConfig,
   validateInput,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 
 const { queueGranules } = require('..');
@@ -35,17 +35,17 @@ test.beforeEach(async (t) => {
   t.context.queueUrl = await createQueue(randomString());
 
   t.context.queueExecutionLimits = {
-    [t.context.queueUrl]: randomNumber()
+    [t.context.queueUrl]: randomNumber(),
   };
   t.context.messageTemplate = {
     cumulus_meta: {
       queueUrl: t.context.queueUrl,
-      queueExecutionLimits: t.context.queueExecutionLimits
-    }
+      queueExecutionLimits: t.context.queueExecutionLimits,
+    },
   };
   const workflowDefinition = {
     name: t.context.workflow,
-    arn: t.context.stateMachineArn
+    arn: t.context.stateMachineArn,
   };
   const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
@@ -54,13 +54,13 @@ test.beforeEach(async (t) => {
     s3PutObject({
       Bucket: t.context.internalBucket,
       Key: messageTemplateKey,
-      Body: JSON.stringify(t.context.messageTemplate)
+      Body: JSON.stringify(t.context.messageTemplate),
     }),
     s3PutObject({
       Bucket: t.context.internalBucket,
       Key: workflowDefinitionKey,
-      Body: JSON.stringify(workflowDefinition)
-    })
+      Body: JSON.stringify(workflowDefinition),
+    }),
   ]);
 
   t.context.event = {
@@ -69,18 +69,18 @@ test.beforeEach(async (t) => {
       stackName: t.context.stackName,
       provider: { name: 'provider-name' },
       queueUrl: t.context.queueUrl,
-      granuleIngestWorkflow: t.context.workflow
+      granuleIngestWorkflow: t.context.workflow,
     },
     input: {
-      granules: []
-    }
+      granules: [],
+    },
   };
 });
 
 test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.internalBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise()
+    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
   ]);
 });
 
@@ -93,11 +93,11 @@ test.serial('The correct output is returned when granules are queued without a P
   const { event } = t.context;
   event.input.granules = [
     {
-      dataType, version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: [],
     },
     {
-      dataType, version, granuleId: randomString(), files: []
-    }
+      dataType, version, granuleId: randomString(), files: [],
+    },
   ];
 
   await validateConfig(t, event.config);
@@ -119,11 +119,11 @@ test.serial('The correct output is returned when granules are queued with a PDR'
   const { event } = t.context;
   event.input.granules = [
     {
-      dataType, version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: [],
     },
     {
-      dataType, version, granuleId: randomString(), files: []
-    }
+      dataType, version, granuleId: randomString(), files: [],
+    },
   ];
   event.input.pdr = { name: randomString(), path: randomString() };
 
@@ -164,11 +164,11 @@ test.serial('Granules are added to the queue', async (t) => {
   const { event } = t.context;
   event.input.granules = [
     {
-      dataType, version, granuleId: randomString(), files: []
+      dataType, version, granuleId: randomString(), files: [],
     },
     {
-      dataType, version, granuleId: randomString(), files: []
-    }
+      dataType, version, granuleId: randomString(), files: [],
+    },
   ];
 
   await validateConfig(t, event.config);
@@ -182,7 +182,7 @@ test.serial('Granules are added to the queue', async (t) => {
   const receiveMessageResponse = await sqs().receiveMessage({
     QueueUrl: t.context.event.config.queueUrl,
     MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
+    WaitTimeSeconds: 1,
   }).promise();
   const messages = receiveMessageResponse.Messages;
 
@@ -196,14 +196,14 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     queueUrl,
     queueExecutionLimits,
     stateMachineArn,
-    workflow
+    workflow,
   } = t.context;
 
   const granule1 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }]
+    files: [{ name: `file-${randomString().slice(0, 6)}` }],
   };
   const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
@@ -211,7 +211,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }]
+    files: [{ name: `file-${randomString().slice(0, 6)}` }],
   };
   const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
@@ -219,7 +219,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
   await Promise.all([
     collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
-    collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
+    collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2),
   ]);
 
   await validateConfig(t, event.config);
@@ -233,7 +233,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   const receiveMessageResponse = await sqs().receiveMessage({
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
+    WaitTimeSeconds: 1,
   }).promise();
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
@@ -251,12 +251,12 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         queueExecutionLimits,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
-        state_machine: stateMachineArn
+        state_machine: stateMachineArn,
       },
       meta: {
         collection: collectionConfig1,
         provider: { name: 'provider-name' },
-        workflow_name: workflow
+        workflow_name: workflow,
       },
       payload: {
         granules: [
@@ -264,10 +264,10 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
             dataType: granule1.dataType,
             granuleId: granule1.granuleId,
             files: granule1.files,
-            version: granule1.version
-          }
-        ]
-      }
+            version: granule1.version,
+          },
+        ],
+      },
     }
   );
 
@@ -282,12 +282,12 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         queueExecutionLimits,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
-        state_machine: stateMachineArn
+        state_machine: stateMachineArn,
       },
       meta: {
         collection: collectionConfig2,
         provider: { name: 'provider-name' },
-        workflow_name: workflow
+        workflow_name: workflow,
       },
       payload: {
         granules: [
@@ -295,10 +295,10 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
             dataType: granule2.dataType,
             granuleId: granule2.granuleId,
             files: granule2.files,
-            version: granule2.version
-          }
-        ]
-      }
+            version: granule2.version,
+          },
+        ],
+      },
     }
   );
 });
@@ -310,7 +310,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     queueUrl,
     queueExecutionLimits,
     stateMachineArn,
-    workflow
+    workflow,
   } = t.context;
 
   // if the event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
@@ -329,7 +329,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }]
+    files: [{ name: `file-${randomString().slice(0, 6)}` }],
   };
   const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
@@ -337,7 +337,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }]
+    files: [{ name: `file-${randomString().slice(0, 6)}` }],
   };
   const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
@@ -345,7 +345,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
 
   await Promise.all([
     collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
-    collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
+    collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2),
   ]);
 
   await validateConfig(t, event.config);
@@ -359,7 +359,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
   const receiveMessageResponse = await sqs().receiveMessage({
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
+    WaitTimeSeconds: 1,
   }).promise();
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
@@ -378,13 +378,13 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
         parentExecutionArn: arn,
-        state_machine: stateMachineArn
+        state_machine: stateMachineArn,
       },
       meta: {
         pdr: event.input.pdr,
         collection: collectionConfig1,
         provider: { name: 'provider-name' },
-        workflow_name: workflow
+        workflow_name: workflow,
       },
       payload: {
         granules: [
@@ -392,10 +392,10 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
             dataType: granule1.dataType,
             granuleId: granule1.granuleId,
             files: granule1.files,
-            version: granule1.version
-          }
-        ]
-      }
+            version: granule1.version,
+          },
+        ],
+      },
     }
   );
 
@@ -411,13 +411,13 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
         parentExecutionArn: arn,
-        state_machine: stateMachineArn
+        state_machine: stateMachineArn,
       },
       meta: {
         pdr: event.input.pdr,
         collection: collectionConfig2,
         provider: { name: 'provider-name' },
-        workflow_name: workflow
+        workflow_name: workflow,
       },
       payload: {
         granules: [
@@ -425,10 +425,10 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
             dataType: granule2.dataType,
             granuleId: granule2.granuleId,
             files: granule2.files,
-            version: granule2.version
-          }
-        ]
-      }
+            version: granule2.version,
+          },
+        ],
+      },
     }
   );
 });

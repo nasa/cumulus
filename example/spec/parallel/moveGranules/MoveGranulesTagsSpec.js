@@ -42,7 +42,7 @@ describe('The MoveGranules task', () => {
         prefix,
         {
           duplicateHandling: 'error',
-          process: 'modis'
+          process: 'modis',
         }
       );
 
@@ -55,7 +55,7 @@ describe('The MoveGranules task', () => {
         Bucket: sourceBucket,
         Key: sourceKey,
         Body: 'asdf',
-        Tagging: querystring.stringify({ granuleId })
+        Tagging: querystring.stringify({ granuleId }),
       });
 
       const moveGranulesResponse = await moveGranules({
@@ -63,7 +63,7 @@ describe('The MoveGranules task', () => {
           bucket: config.bucket,
           buckets: config.buckets,
           distribution_endpoint: 'http://www.example.com',
-          collection
+          collection,
         },
         input: {
           granules: [
@@ -72,12 +72,12 @@ describe('The MoveGranules task', () => {
                 {
                   bucket: sourceBucket,
                   path: stagingDir,
-                  name: stagedFilename
-                }
-              ]
-            }
-          ]
-        }
+                  name: stagedFilename,
+                },
+              ],
+            },
+          ],
+        },
       });
 
       // Verify that the tags of the moved granule match the tags of the source
@@ -91,8 +91,8 @@ describe('The MoveGranules task', () => {
       const expectedTagSet = [
         {
           Key: 'granuleId',
-          Value: granuleId
-        }
+          Value: granuleId,
+        },
       ];
 
       expect(movedFileTags.TagSet).toEqual(expectedTagSet);
@@ -104,8 +104,8 @@ describe('The MoveGranules task', () => {
           () => deleteCollection({
             prefix,
             collectionName: get(collection, 'name'),
-            collectionVersion: get(collection, 'version')
-          })
+            collectionVersion: get(collection, 'version'),
+          }),
         ],
         { stopOnError: false }
       ).catch(console.error);

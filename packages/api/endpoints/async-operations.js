@@ -28,7 +28,7 @@ async function getAsyncOperation(req, res) {
   const asyncOperationModel = new AsyncOperationModel({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    tableName: process.env.AsyncOperationsTable,
   });
 
   let asyncOperation;

@@ -11,26 +11,26 @@ const stepFunctions = require('@cumulus/message/StepFunctions');
 const Semaphore = require('../../lib/Semaphore');
 const { Manager } = require('../../models');
 const {
-  handleSemaphoreDecrementTask
+  handleSemaphoreDecrementTask,
 } = require('../../lambdas/sf-semaphore-down');
 
 const sfEventSource = 'aws.states';
 const createCloudwatchEventMessage = ({
   status,
   queueUrl,
-  source = sfEventSource
+  source = sfEventSource,
 }) => {
   const cumulusMeta = {
-    execution_name: randomString()
+    execution_name: randomString(),
   };
   if (queueUrl) {
     cumulusMeta.queueUrl = queueUrl;
     cumulusMeta.queueExecutionLimits = {
-      [queueUrl]: 5
+      [queueUrl]: 5,
     };
   }
   const message = JSON.stringify({
-    cumulus_meta: cumulusMeta
+    cumulus_meta: cumulusMeta,
   });
   const detail = (status === 'SUCCEEDED'
     ? { status, output: message }
@@ -41,17 +41,17 @@ const createCloudwatchEventMessage = ({
 const createCloudwatchPackagedEventMessage = ({
   status,
   queueUrl,
-  source = sfEventSource
+  source = sfEventSource,
 }) => {
   const message = JSON.stringify({
     cumulus_meta: {
       execution_name: randomString(),
-      queueUrl
+      queueUrl,
     },
     replace: {
       Bucket: 'cumulus-sandbox-testing',
-      Key: 'stubbedKey'
-    }
+      Key: 'stubbedKey',
+    },
   });
   const detail = (status === 'SUCCEEDED'
     ? { status, output: message }
@@ -65,9 +65,9 @@ const createExecutionMessage = ((queueUrl) => (
       execution_name: randomString(),
       queueUrl,
       queueExecutionLimits: {
-        [queueUrl]: 5
-      }
-    }
+        [queueUrl]: 5,
+      },
+    },
   }
 ));
 
@@ -80,14 +80,14 @@ const testTerminalEventMessage = async (t, status) => {
     TableName: process.env.SemaphoresTable,
     Item: {
       key: queueUrl,
-      semvalue: 1
-    }
+      semvalue: 1,
+    },
   }).promise();
 
   await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status,
-      queueUrl
+      queueUrl,
     })
   );
 
@@ -104,7 +104,7 @@ test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');
   manager = new Manager({
     tableName: process.env.SemaphoresTable,
-    tableHash: { name: 'key', type: 'S' }
+    tableHash: { name: 'key', type: 'S' },
   });
   await manager.createTable();
 });
@@ -126,7 +126,7 @@ test('sfSemaphoreDown lambda does nothing for an event with the wrong source', a
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
       queueUrl,
-      source: 'fake-source'
+      source: 'fake-source',
     })
   );
 
@@ -136,7 +136,7 @@ test('sfSemaphoreDown lambda does nothing for an event with the wrong source', a
 test('sfSemaphoreDown lambda does nothing for a workflow message with no queue URL', async (t) => {
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
-      status: 'SUCCEEDED'
+      status: 'SUCCEEDED',
     })
   );
 
@@ -148,7 +148,7 @@ test('sfSemaphoreDown lambda does nothing for an event with no status', async (t
 
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
-      queueUrl
+      queueUrl,
     })
   );
 
@@ -161,7 +161,7 @@ test('sfSemaphoreDown lambda does nothing for an event with a RUNNING status', a
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status: 'RUNNING',
-      queueUrl
+      queueUrl,
     })
   );
 
@@ -172,8 +172,8 @@ test('sfSemaphoreDown lambda does nothing for an event with no message', async (
   const output = await handleSemaphoreDecrementTask({
     source: sfEventSource,
     detail: {
-      status: 'SUCCEEDED'
-    }
+      status: 'SUCCEEDED',
+    },
   });
 
   assertInvalidDecrementEvent(t, output);
@@ -186,7 +186,7 @@ test('sfSemaphoreDown lambda throws error when attempting to decrement empty sem
     () => handleSemaphoreDecrementTask(
       createCloudwatchEventMessage({
         status: 'SUCCEEDED',
-        queueUrl
+        queueUrl,
       })
     )
   );
@@ -197,8 +197,8 @@ test('sfSemaphoreDown lambda returns not a valid event for invalid event message
     source: sfEventSource,
     detail: {
       status: 'SUCCEEDED',
-      output: 'invalid message'
-    }
+      output: 'invalid message',
+    },
   });
 
   assertInvalidDecrementEvent(t, output);
@@ -213,8 +213,8 @@ test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', 
     TableName: process.env.SemaphoresTable,
     Item: {
       key: queueUrl,
-      semvalue: 1
-    }
+      semvalue: 1,
+    },
   }).promise();
 
   const stubReturn = createExecutionMessage(queueUrl);

@@ -16,7 +16,7 @@ const aggs = require('./aggregations');
 
 const logDetails = {
   file: 'lib/es/search.js',
-  type: 'apigateway'
+  type: 'apigateway',
 };
 
 const defaultIndexAlias = 'cumulus-alias';
@@ -44,8 +44,8 @@ const esTestConfig = () => ({
   node: getLocalEsHost(),
   requestTimeout: 5000,
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
 const esProdConfig = async (host) => {
@@ -63,11 +63,11 @@ const esProdConfig = async (host) => {
     node,
     Connection: AmazonConnection,
     awsConfig: {
-      credentials: aws.config.credentials
+      credentials: aws.config.credentials,
     },
 
     // Note that this doesn't abort the query.
-    requestTimeout: 50000 // milliseconds
+    requestTimeout: 50000, // milliseconds
   };
 };
 
@@ -83,7 +83,7 @@ const esMetricsConfig = () => {
 
   return {
     node,
-    requestTimeout: 50000
+    requestTimeout: 50000,
   };
 };
 
@@ -156,7 +156,7 @@ class BaseSearch {
       size: this.size,
       from: this.frm,
       type: this.type,
-      _source: fields
+      _source: fields,
     };
   }
 
@@ -181,7 +181,7 @@ class BaseSearch {
       index: this.index,
       body: { ...aggrs, ...queries(this.params) },
       type: this.type,
-      size: 0
+      size: 0,
     };
   }
 
@@ -189,7 +189,7 @@ class BaseSearch {
     return {
       name: 'cumulus-api',
       stack: process.env.stackName,
-      table: this.type
+      table: this.type,
     };
   }
 
@@ -197,9 +197,9 @@ class BaseSearch {
     const body = {
       query: {
         term: {
-          _id: id
-        }
-      }
+          _id: id,
+        },
+      },
     };
 
     logDetails.granuleId = id;
@@ -211,7 +211,7 @@ class BaseSearch {
     const result = await this.client.search({
       index: this.index,
       type: this.type,
-      body: body
+      body: body,
     }).then((response) => response.body);
 
     if (result.hits.total > 1) {
@@ -230,33 +230,33 @@ class BaseSearch {
     const body = {
       query: {
         term: {
-          [`${key}.keyword`]: value
-        }
+          [`${key}.keyword`]: value,
+        },
       },
       aggs: {
         statusCount: {
           terms: {
-            field: 'status.keyword'
-          }
+            field: 'status.keyword',
+          },
         },
         averageDuration: {
           avg: {
-            field: 'duration'
-          }
+            field: 'duration',
+          },
         },
         granulesCount: {
           value_count: {
-            field: 'granuleId.keyword'
-          }
-        }
-      }
+            field: 'granuleId.keyword',
+          },
+        },
+      },
     };
 
     const ag = await this.client.search({
       index: this.index,
       type: process.env.GranulesTable,
       body: body,
-      size: 0
+      size: 0,
     });
 
     const status = {
@@ -265,7 +265,7 @@ class BaseSearch {
       processing: 0,
       archiving: 0,
       cmr: 0,
-      completed: 0
+      completed: 0,
     };
 
     const item = ag.body.aggregations;
@@ -273,7 +273,7 @@ class BaseSearch {
     const newObj = {
       averageDuration: item.averageDuration.value,
       granules: item.granulesCount.value,
-      granulesStatus: { ...status }
+      granulesStatus: { ...status },
     };
 
     item.statusCount.buckets.forEach((b) => {
@@ -313,7 +313,7 @@ class BaseSearch {
 
       return {
         meta,
-        results: response
+        results: response,
       };
     } catch (error) {
       //log.error(e, logDetails);
@@ -335,9 +335,9 @@ class BaseSearch {
       return {
         meta: {
           found: count,
-          name: 'cumulus-api'
+          name: 'cumulus-api',
         },
-        counts: result.body.aggregations
+        counts: result.body.aggregations,
       };
     } catch (error) {
       //log.error(e, logDetails);
@@ -352,5 +352,5 @@ module.exports = {
   BaseSearch,
   Search,
   defaultIndexAlias,
-  getLocalEsHost
+  getLocalEsHost,
 };

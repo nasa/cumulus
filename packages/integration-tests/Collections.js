@@ -35,7 +35,7 @@ const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
 
     return {
       ...file,
-      url_path: `${urlPath}${customFilePath}/`
+      url_path: `${urlPath}${customFilePath}/`,
     };
   });
 
@@ -54,7 +54,7 @@ const addCustomUrlPathToCollectionFiles = (collection, customFilePath) =>
  */
 const buildCollection = (params = {}) => {
   const {
-    collection, customFilePath, duplicateHandling, postfix
+    collection, customFilePath, duplicateHandling, postfix,
   } = params;
 
   const updatedCollection = { ...collection };
@@ -89,10 +89,10 @@ const buildRandomizedCollection = (overrides = {}) => ({
     {
       bucket: 'protected',
       regex: '^[^.]+\..+$',
-      sampleFileName: 'asdf.jpg'
-    }
+      sampleFileName: 'asdf.jpg',
+    },
   ],
-  ...overrides
+  ...overrides,
 });
 
 /**
@@ -106,7 +106,7 @@ const addCollection = async (stackName, collection) => {
   await CollectionsApi.deleteCollection({
     prefix: stackName,
     collectionName: collection.name,
-    collectionVersion: collection.version
+    collectionVersion: collection.version,
   });
   await CollectionsApi.createCollection({ prefix: stackName, collection });
 };
@@ -134,7 +134,7 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
       collection,
       customFilePath,
       duplicateHandling,
-      postfix
+      postfix,
     })
   );
 
@@ -181,7 +181,7 @@ const createCollection = async (prefix, overrides = {}) => {
 
   const createResponse = await CollectionsApi.createCollection({
     prefix,
-    collection
+    collection,
   });
 
   if (createResponse.statusCode !== 200) {
@@ -194,5 +194,5 @@ const createCollection = async (prefix, overrides = {}) => {
 module.exports = {
   addCollections,
   buildCollection,
-  createCollection
+  createCollection,
 };
