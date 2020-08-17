@@ -2,6 +2,7 @@
 
 const sortBy = require('lodash/sortBy');
 const isEqual = require('lodash/isEqual');
+const union = require('lodash/union');
 const omit = require('lodash/omit');
 const log = require('@cumulus/common/log');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -46,13 +47,13 @@ async function reconciliationReportForCollections(recReportParams) {
   );
 
   // get collections from database and sort them, since the scan result is not ordered
-  const dbCollectionsQueue = await (new Collection()).getCollections(searchParams);
+  const dbCollectionsQueue = await (new Collection()).searchCollections(searchParams);
   const dbCollectionItems = sortBy(await dbCollectionsQueue.empty(), ['name', 'version']);
 
   let okCount = 0;
   const itemsWithConflicts = [];
-  let itemsOnlyInES = [];
-  let itemsOnlyInDB = [];
+  let itemsOnlyInEs = [];
+  let itemsOnlyInDb = [];
 
   let nextEsItem = await esCollectionsIterator.peek();
   let nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : null;
@@ -63,15 +64,15 @@ async function reconciliationReportForCollections(recReportParams) {
     console.log(esCollectionId, dbCollectionId);
     if (esCollectionId < dbCollectionId) {
       // Found an item that is only in ES and not in DB
-      itemsOnlyInES.push(esCollectionId);
+      itemsOnlyInEs.push(esCollectionId);
       await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
     } else if (esCollectionId > dbCollectionId) {
       // Found an item that is only in DB and not in ES
-      itemsOnlyInDB.push(dbCollectionId);
+      itemsOnlyInDb.push(dbCollectionId);
       dbCollectionItems.shift();
     } else {
       // Found an item that is in both cmr and database
-      if (isEqual(omit(nextEsItem, ['timestamp']), omit(nextDbItem, ['timestamp']))) {
+      if (isEqual(omit(nextEsItem, ['timestamp', 'updatedAt']), omit(nextDbItem, ['timestamp', 'updatedAt']))) {
         okCount += 1;
       } else {
         itemsWithConflicts.push({ es: nextEsItem, db: nextDbItem });
@@ -85,36 +86,70 @@ async function reconciliationReportForCollections(recReportParams) {
   }
 
   // Add any remaining ES items to the report
-  itemsOnlyInES = itemsOnlyInES.concat(
+  itemsOnlyInEs = itemsOnlyInEs.concat(
     (await esCollectionsIterator.empty())
       .map((item) => constructCollectionId(item.name, item.version))
   );
 
   // Add any remaining DB items to the report
-  itemsOnlyInDB = itemsOnlyInDB
+  itemsOnlyInDb = itemsOnlyInDb
     .concat(dbCollectionItems.map((item) => constructCollectionId(item.name, item.version)));
 
   return {
     okCount,
     conflicts: itemsWithConflicts,
-    onlyInES: itemsOnlyInES,
-    onlyInDB: itemsOnlyInDB,
+    onlyInEs: itemsOnlyInEs,
+    onlyInDb: itemsOnlyInDb,
   };
 }
 
 // export for testing
 exports.reconciliationReportForCollections = reconciliationReportForCollections;
 
+async function getAllCollections() {
+  const dbCollections = (await new Collection().getAllCollections())
+    .map((collection) => constructCollectionId(collection.name, collection.version));
+
+  const esCollectionsIterator = new ESSearchQueue(
+    { sort_key: ['name', 'version'], fields: ['name', 'version'] }, 'collection', process.env.ES_INDEX
+  );
+  const esCollectins = (await esCollectionsIterator.empty())
+    .map((item) => constructCollectionId(item.name, item.version));
+
+  return union(dbCollections, esCollectins);
+}
+
+exports.getAllCollections = getAllCollections;
+
 async function reconciliationReportForGranules(recReportParams) {
   log.debug('internal-reconciliation-report reconciliationReportForGranules');
   // compare granule holdings:
-  //   Get granule list in ES ordered by granuleId
-  //   Get granule list in DynamoDB ordered by granuleId
+  //   Get all collections list from db and es
+  //   For each collection,
+  //     Get granule list in ES ordered by granuleId
+  //     Get granule list in DynamoDB ordered by granuleId
   //   Report granules only in ES
   //   Report granules only in DynamoDB
   //   Report granules with different contents
 
   // get collections list in ES and dynamoDB combined
+  const collections = getAllCollections();
+  return {};
+}
+
+async function reconciliationReportForGranulesByCollection(collectionId, recReportParams) {
+  log.debug('internal-reconciliation-report reconciliationReportForGranules');
+  // compare granule holdings:
+  //   Get all collections list from db and es
+  //   For each collection,
+  //     Get granule list in ES ordered by granuleId
+  //     Get granule list in DynamoDB ordered by granuleId
+  //   Report granules only in ES
+  //   Report granules only in DynamoDB
+  //   Report granules with different contents
+
+  // get collections list in ES and dynamoDB combined
+  const collections = getAllCollections();
   return {};
 }
 

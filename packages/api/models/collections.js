@@ -262,7 +262,7 @@ class Collection {
     ).then((result) => result.Items);
   }
 
-  async getCollections(searchParams) {
+  async searchCollections(searchParams) {
     const attributeNames = {};
     const attributeValues = {};
     const filterExpressions = [];
