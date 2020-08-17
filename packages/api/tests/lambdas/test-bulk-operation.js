@@ -2,8 +2,6 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 
-const { CMR } = require('@cumulus/cmr-client');
-const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -46,13 +44,7 @@ test.before(async () => {
   await new Granule().createTable();
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');
-
-  sandbox.stub(cmrUtils, 'getCmrSettings').resolves({});
-  sandbox.stub(CMR.prototype, 'deleteGranule').resolves();
-  sandbox.stub(
-    CMR.prototype,
-    'getGranuleMetadata'
-  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
+  sandbox.stub(Granule.prototype, '_removeGranuleFromCmr').resolves();
 });
 
 test.afterEach.always(() => {
@@ -385,7 +377,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
   );
 });
 
-test.serial('bulk operation BULK_GRANULE_DELETE does not fail on publish granules if payload.forceRemoveFromCmr is true', async (t) => {
+test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
   const granuleModel = new Granule();
   const granules = await Promise.all([
     granuleModel.create(fakeGranuleFactoryV2({ published: true })),

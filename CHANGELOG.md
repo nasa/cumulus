@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   rather than `null` if the mime type could not be found.
 - The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
 
+### Added
+
+- **CUMULUS-2116**
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+
+### Fixed
+
+- **CUMULUS-2116**
+  - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
+
 ## [v2.0.1] 2020-07-28
 
 ### Added
@@ -22,7 +32,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **[PR 1790](https://github.com/nasa/cumulus/pull/1790)**
-
   - Fixed bug with request headers in `@cumulus/launchpad-auth` causing Launchpad token requests to fail
 
 ## [v2.0.0] 2020-07-23

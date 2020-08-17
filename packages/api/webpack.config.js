@@ -49,9 +49,11 @@ module.exports = {
   },
   plugins: [
     // templates to use saml2.js, dependency problem with xml-encryption package
-    new CopyPlugin([
-      { from: 'node_modules/xml-encryption/lib/templates', to: 'app/templates' }
-    ])
+    new CopyPlugin({
+      patterns: [
+        { from: 'node_modules/xml-encryption/lib/templates', to: 'app/templates' }
+      ]
+    })
   ],
   output: {
     libraryTarget: 'commonjs2',
