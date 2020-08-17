@@ -1,5 +1,6 @@
+import * as AWS from 'aws-sdk';
 import Knex from 'knex';
-import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+import { dynamodbDocClient } from '@cumulus/aws-client/services';
 
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
@@ -13,18 +14,37 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
   throw new Error(`The ${name} environment variable must be set`);
 };
 
-export const migrateCollections = async (env: NodeJS.ProcessEnv) => {
-  const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
-  const dbSearchQueue = new DynamoDbSearchQueue({
-    TableName: collectionsTable,
-  }, 'scan');
-  let result = await dbSearchQueue.peek();
-  while (result) {
-    console.log(result);
-    await dbSearchQueue.shift();
-    result = await dbSearchQueue.peek();
+const getScanResults = async (tableName: string, prevResponse?: AWS.DynamoDB.ScanOutput) => {
+  if (prevResponse && !prevResponse.LastEvaluatedKey) {
+    return {
+      Items: undefined,
+    };
   }
-  // return knex('collections').insert(data);
+  const response = await dynamodbDocClient().scan({
+    TableName: tableName,
+    ExclusiveStartKey: prevResponse?.LastEvaluatedKey,
+  }).promise();
+  return response;
+};
+
+export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
+  const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
+  let response = await getScanResults(collectionsTable);
+  /* eslint-disable no-await-in-loop */
+  while (response.Items) {
+    await Promise.all(response.Items.map(async (record) => {
+      const updatedRecord: any = {
+        ...record,
+        granuleIdValidationRegex: record.granuleId,
+        files: JSON.stringify(record.files),
+        meta: JSON.stringify(record.meta),
+      };
+      delete updatedRecord.granuleId;
+      await knex('collections').insert(updatedRecord);
+    }));
+    response = await getScanResults(collectionsTable, response);
+  }
+  /* eslint-enable no-await-in-loop */
 };
 
 const getConnectionConfig = (env: NodeJS.ProcessEnv): Knex.PgConnectionConfig => ({
@@ -46,7 +66,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   });
 
   try {
-    await migrateCollections(env);
+    await migrateCollections(env, knex);
   } finally {
     await knex.destroy();
   }
