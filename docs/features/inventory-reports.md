@@ -22,7 +22,7 @@ The Reconciliation Reports Overvew page shows a full list of existing reports an
 ![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
 
 Viewing a report will show a detailed list of collections, granules and files.
-![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
+![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/inventory_report.png)
 
 ## API
 
