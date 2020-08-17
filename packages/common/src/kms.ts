@@ -10,7 +10,7 @@ export class KMS {
 
     const params = {
       KeyId: kmsId,
-      Plaintext: text
+      Plaintext: text,
     };
 
     const kms = new AWS.KMS();
@@ -27,7 +27,7 @@ export class KMS {
     deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.decryptBase64String');
 
     const params = {
-      CiphertextBlob: Buffer.from(text, 'base64')
+      CiphertextBlob: Buffer.from(text, 'base64'),
     };
 
     const kms = new AWS.KMS();

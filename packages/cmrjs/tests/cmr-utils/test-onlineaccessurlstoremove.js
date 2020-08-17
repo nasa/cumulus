@@ -11,7 +11,7 @@ test.beforeEach((t) => {
   t.context.bucketConfig = {
     private: { name: randomId('private'), type: 'private' },
     protected: { name: randomId('protected'), type: 'protected' },
-    public: { name: randomId('public'), type: 'public' }
+    public: { name: randomId('public'), type: 'public' },
   };
   t.context.bucketTypes = Object.values(t.context.bucketConfig)
     .reduce(
@@ -24,8 +24,8 @@ test('returns an empty set if no private files', (t) => {
   const movedFiles = [
     {
       key: 'some/path/protected-file.hdf',
-      bucket: t.context.bucketConfig.protected.name
-    }
+      bucket: t.context.bucketConfig.protected.name,
+    },
   ];
   const actual = onlineAccessURLsToRemove(movedFiles, t.context.bucketTypes);
 
@@ -36,12 +36,12 @@ test('returns a list of files to remove if there are private files', (t) => {
   const movedFiles = [
     {
       key: 'some/path/protected-file.hdf',
-      bucket: t.context.bucketConfig.protected.name
+      bucket: t.context.bucketConfig.protected.name,
     },
     {
       key: 'some/path/private-file.hdf',
-      bucket: t.context.bucketConfig.private.name
-    }
+      bucket: t.context.bucketConfig.private.name,
+    },
 
   ];
   const actual = onlineAccessURLsToRemove(movedFiles, t.context.bucketTypes);

@@ -7,7 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
-  findExecutionArn, getExecutionWithStatus
+  findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
@@ -53,7 +53,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         prefix,
         {
           duplicateHandling: 'version',
-          process: 'modis'
+          process: 'modis',
         }
       );
 
@@ -66,7 +66,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       await s3PutObject({
         Bucket: sourceBucket,
         Key: sameChecksumKey,
-        Body: 'asdf'
+        Body: 'asdf',
       });
 
       differentChecksumFilename = `${randomId('file-with-different-checksum-')}.txt`;
@@ -74,7 +74,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       await s3PutObject({
         Bucket: sourceBucket,
         Key: differentChecksumKey,
-        Body: 'original contents'
+        Body: 'original contents',
       });
 
       granuleId = randomId('granule-id-');
@@ -98,16 +98,16 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
                 files: [
                   {
                     name: sameChecksumFilename,
-                    path: sourcePath
+                    path: sourcePath,
                   },
                   {
                     name: differentChecksumFilename,
-                    path: sourcePath
-                  }
-                ]
-              }
-            ]
-          }
+                    path: sourcePath,
+                  },
+                ],
+              },
+            ],
+          },
         }
       );
 
@@ -126,7 +126,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       await getExecutionWithStatus({
         prefix,
         arn: firstIngestGranuleExecutionArn,
-        status: 'completed'
+        status: 'completed',
       });
 
       // Wait for the granule to be fully ingested
@@ -136,7 +136,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       await s3PutObject({
         Bucket: sourceBucket,
         Key: differentChecksumKey,
-        Body: 'new contents'
+        Body: 'new contents',
       });
 
       // Create a new granule file
@@ -145,7 +145,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       await s3PutObject({
         Bucket: sourceBucket,
         Key: newFileKey,
-        Body: 'asdf'
+        Body: 'asdf',
       });
 
       // Re-ingest the updated granule
@@ -165,20 +165,20 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
                 files: [
                   {
                     name: sameChecksumFilename,
-                    path: sourcePath
+                    path: sourcePath,
                   },
                   {
                     name: differentChecksumFilename,
-                    path: sourcePath
+                    path: sourcePath,
                   },
                   {
                     name: newFileFilename,
-                    path: sourcePath
-                  }
-                ]
-              }
-            ]
-          }
+                    path: sourcePath,
+                  },
+                ],
+              },
+            ],
+          },
         }
       );
 
@@ -197,7 +197,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       secondIngestGranuleExecution = await getExecutionWithStatus({
         prefix,
         arn: secondIngestGranuleExecutionArn,
-        status: 'completed'
+        status: 'completed',
       });
     } catch (error) {
       beforeAllFailed = true;
@@ -233,7 +233,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
     await pAll(
       [
         () => deleteRule({ prefix, ruleName: get(firstIngestGranuleRule, 'name') }),
-        () => deleteRule({ prefix, ruleName: get(secondIngestGranuleRule, 'name') })
+        () => deleteRule({ prefix, ruleName: get(secondIngestGranuleRule, 'name') }),
       ],
       { stopOnError: false }
     ).catch(console.error);
@@ -248,8 +248,8 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         () => deleteCollection({
           prefix,
           collectionName: get(collection, 'name'),
-          collectionVersion: get(collection, 'version')
-        })
+          collectionVersion: get(collection, 'version'),
+        }),
       ],
       { stopOnError: false }
     ).catch(console.error);

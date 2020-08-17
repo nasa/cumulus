@@ -26,7 +26,7 @@ async function queuePdrs(event) {
       collection: event.config.collection,
       parentExecutionArn: arn,
       stack: event.config.stackName,
-      systemBucket: event.config.internalBucket
+      systemBucket: event.config.internalBucket,
     }))
   );
 

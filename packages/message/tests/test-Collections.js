@@ -4,7 +4,7 @@ const test = require('ava');
 
 const {
   constructCollectionId,
-  getCollectionIdFromMessage
+  getCollectionIdFromMessage,
 } = require('../Collections');
 
 test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
@@ -14,9 +14,9 @@ test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
     meta: {
       collection: {
         name,
-        version
-      }
-    }
+        version,
+      },
+    },
   });
   t.is(collectionId, constructCollectionId(name, version));
 });

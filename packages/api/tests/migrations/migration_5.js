@@ -19,11 +19,11 @@ const reconciliationReport = {
   status: 'SUCCESS',
   error: null,
   filesInCumulus: {
-    okCount: 88
+    okCount: 88,
   },
   collectionsInCumulusCmr: {
-    okCount: 1
-  }
+    okCount: 1,
+  },
 };
 
 let reconciliationReportModel;
@@ -34,7 +34,7 @@ test.before(async () => {
   await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: reportFileKey,
-    Body: JSON.stringify(reconciliationReport)
+    Body: JSON.stringify(reconciliationReport),
   }).promise();
 });
 

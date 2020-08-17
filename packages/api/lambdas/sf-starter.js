@@ -7,13 +7,13 @@ const { sfn } = require('@cumulus/aws-client/services');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const {
   getQueueUrl,
-  getMaximumExecutions
+  getMaximumExecutions,
 } = require('@cumulus/message/Queue');
 const { Consumer } = require('@cumulus/ingest/consumer');
 
 const {
   decrementQueueSemaphore,
-  incrementQueueSemaphore
+  incrementQueueSemaphore,
 } = require('../lib/SemaphoreUtils');
 
 /**
@@ -34,7 +34,7 @@ function dispatch(message) {
   return sfn().startExecution({
     stateMachineArn: input.cumulus_meta.state_machine,
     input: JSON.stringify(input),
-    name: input.cumulus_meta.execution_name
+    name: input.cumulus_meta.execution_name,
   }).promise();
 }
 
@@ -104,7 +104,7 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
     queueUrl: event.queueUrl,
     messageLimit,
     timeLimit,
-    visibilityTimeout
+    visibilityTimeout,
   });
   return consumer.consume(dispatchFn);
 }
@@ -171,5 +171,5 @@ module.exports = {
   sqs2sfThrottleHandler,
   handleEvent,
   handleThrottledEvent,
-  handleSourceMappingEvent
+  handleSourceMappingEvent,
 };

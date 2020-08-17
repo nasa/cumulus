@@ -96,7 +96,7 @@ test('Logger.info() logs executions if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    executions: 'my-executions'
+    executions: 'my-executions',
   });
 
   logger.info('hello');
@@ -110,7 +110,7 @@ test('Logger.info() logs granules if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    granules: '[{"granule":"testing"}]'
+    granules: '[{"granule":"testing"}]',
   });
 
   logger.info('hello');
@@ -125,7 +125,7 @@ test('Logger.info() logs parentArn if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    parentArn: arnString
+    parentArn: arnString,
   });
 
   logger.info('hello');
@@ -140,7 +140,7 @@ test('Logger.info() logs stackName if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    stackName
+    stackName,
   });
 
   logger.info('hello');
@@ -154,7 +154,7 @@ test('Logger.info() logs version if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    version: 'my-version'
+    version: 'my-version',
   });
 
   logger.info('hello');
@@ -168,7 +168,7 @@ test('Logger.info() logs asyncOperationId if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    asyncOperationId: 'async-id-12345'
+    asyncOperationId: 'async-id-12345',
   });
 
   logger.info('hello');
@@ -182,7 +182,7 @@ test('Logger.info() ignores unknown keys', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    unknownKey: 'anything at all'
+    unknownKey: 'anything at all',
   });
 
   logger.info('hello');
@@ -324,7 +324,7 @@ test('Logger.infoWithAdditionalKeys() logs the specified keys', (t) => {
   logger.infoWithAdditionalKeys(
     {
       name: 'Frank',
-      age: 42
+      age: 42,
     },
     'hello'
   );

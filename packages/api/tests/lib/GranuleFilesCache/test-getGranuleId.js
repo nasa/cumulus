@@ -21,7 +21,7 @@ test('getGranuleId() returns the correct granuleId if the file exists in the tab
 
   await dynamodbDocClient().put({
     TableName: process.env.FilesTable,
-    Item: { bucket, key, granuleId }
+    Item: { bucket, key, granuleId },
   }).promise();
 
   const fetchedGranuleId = await GranuleFilesCache.getGranuleId(bucket, key);

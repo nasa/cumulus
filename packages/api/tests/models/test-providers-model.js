@@ -8,7 +8,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const schemas = require('../../models/schemas');
 const {
   fakeProviderFactory,
-  fakeRuleFactoryV2
+  fakeRuleFactoryV2,
 } = require('../../lib/testUtils');
 const { Manager, Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
@@ -30,7 +30,7 @@ test.before(async (t) => {
   manager = new Manager({
     tableName: process.env.ProvidersTable,
     tableHash: { name: 'id', type: 'S' },
-    schema: schemas.provider
+    schema: schemas.provider,
   });
 
   await manager.createTable();
@@ -71,8 +71,8 @@ test('Providers.delete() throws an exception if the provider has associated rule
   const rule = fakeRuleFactoryV2({
     provider: providerId,
     rule: {
-      type: 'onetime'
-    }
+      type: 'onetime',
+    },
   });
 
   // The workflow message template must exist in S3 before the rule can be created
@@ -86,7 +86,7 @@ test('Providers.delete() throws an exception if the provider has associated rule
       process.env.system_bucket,
       `${process.env.stackName}/workflow_template.json`,
       {}
-    )
+    ),
   ]);
 
   await ruleModel.create(rule);
@@ -129,7 +129,7 @@ test('Providers.create() encrypts the credentials using KMS', async (t) => {
 
   const provider = fakeProviderFactory({
     username: 'my-username',
-    password: 'my-password'
+    password: 'my-password',
   });
 
   await providersModel.create(provider);
@@ -185,7 +185,7 @@ test('Providers.update() encrypts the credentials using KMS', async (t) => {
 
   const provider = fakeProviderFactory({
     username: 'my-username-1',
-    password: 'my-password-1'
+    password: 'my-password-1',
   });
 
   await providersModel.create(provider);
@@ -194,7 +194,7 @@ test('Providers.update() encrypts the credentials using KMS', async (t) => {
     { id: provider.id },
     {
       username: 'my-username-2',
-      password: 'my-password-2'
+      password: 'my-password-2',
     }
   );
 

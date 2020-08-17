@@ -76,7 +76,7 @@ async function listTfStateFiles() {
       tablesComplete = true;
     } else {
       tables = await aws.dynamodb().listTables({
-        ExclusiveStartTableName: tables.LastEvaluatedTableName
+        ExclusiveStartTableName: tables.LastEvaluatedTableName,
       }).promise();
     }
   }
@@ -94,7 +94,7 @@ async function listTfStateFiles() {
  */
 async function listClusterEC2Instances(clusterArn) {
   const clusterContainerInstances = await aws.ecs().listContainerInstances({
-    cluster: clusterArn
+    cluster: clusterArn,
   }).promise()
     .catch((error) => {
       console.log(`Error listing container instances for cluster ${clusterArn}: ${error}`);
@@ -107,7 +107,7 @@ async function listClusterEC2Instances(clusterArn) {
 
   const containerInstances = await aws.ecs().describeContainerInstances({
     cluster: clusterArn,
-    containerInstances: clusterContainerInstances.containerInstanceArns
+    containerInstances: clusterContainerInstances.containerInstanceArns,
   }).promise();
 
   return containerInstances.containerInstances.map((c) => c.ec2InstanceId);
@@ -152,7 +152,7 @@ async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX
       file,
       deployment: extractDeploymentName(file, regex),
       lastModified: stateFile.LastModified,
-      resources: stateFileBody.resources
+      resources: stateFileBody.resources,
     };
   } catch (error) {
     console.log(`Error reading ${file}: ${error.message}`);
@@ -236,7 +236,7 @@ async function deploymentReport(regex = DEFAULT_DEPLOYMENT_REGEX) {
 
   const resourcesForReports = resources.map((r) => ({
     ...r,
-    resources: r.resources ? r.resources.length : 0
+    resources: r.resources ? r.resources.length : 0,
   }));
 
   const resourcesByDeployment = groupBy(resourcesForReports, 'deployment');
@@ -249,5 +249,5 @@ module.exports = {
   getStateFileDeploymentInfo,
   listResourcesForFile,
   listTfDeployments,
-  listTfStateFiles
+  listTfStateFiles,
 };

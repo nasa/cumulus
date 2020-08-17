@@ -11,8 +11,8 @@ test.serial('getFailedExecutionMessage() returns the Cumulus message from the ou
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
-    }
+      execution_name: 'my-execution-name',
+    },
   };
 
   const failedTaskOutput = { a: 1 };
@@ -28,21 +28,21 @@ test.serial('getFailedExecutionMessage() returns the Cumulus message from the ou
             {
               // lastStepFailedEvent
               type: 'LambdaFunctionFailed',
-              id: 1
+              id: 1,
             },
             {
               // failedStepExitedEvent
               type: 'TaskStateExited',
               previousEventId: 1,
               stateExitedEventDetails: {
-                output: JSON.stringify(failedTaskOutput)
+                output: JSON.stringify(failedTaskOutput),
               },
-              resource: 'x'
-            }
-          ]
+              resource: 'x',
+            },
+          ],
         };
-      }
-    }
+      },
+    },
   })(() => getFailedExecutionMessage(inputMessage));
 
   t.deepEqual(result, failedTaskOutput);
@@ -62,8 +62,8 @@ test.serial('getFailedExecutionMessage() returns the input message when no Activ
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
-    }
+      execution_name: 'my-execution-name',
+    },
   };
 
   const actualResult = await cwSfExecutionEventUtils.__with__({
@@ -73,10 +73,10 @@ test.serial('getFailedExecutionMessage() returns the input message when no Activ
           throw new Error(`Expected executionArn === 'arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name' but got ${executionArn}`);
         }
         return {
-          events: []
+          events: [],
         };
-      }
-    }
+      },
+    },
   })(() => getFailedExecutionMessage(inputMessage));
 
   t.deepEqual(actualResult, inputMessage);
@@ -86,8 +86,8 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
-    }
+      execution_name: 'my-execution-name',
+    },
   };
 
   const actualResult = await cwSfExecutionEventUtils.__with__({
@@ -103,20 +103,20 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
               type: 'LambdaFunctionFailed',
               id: 1,
               lambdaFunctionFailedEventDetails: {
-                type: 'really bad'
-              }
-            }
-          ]
+                type: 'really bad',
+              },
+            },
+          ],
         };
-      }
-    }
+      },
+    },
   })(() => getFailedExecutionMessage(inputMessage));
 
   const expectedResult = {
     ...inputMessage,
     exception: {
-      type: 'really bad'
-    }
+      type: 'really bad',
+    },
   };
 
   t.deepEqual(actualResult, expectedResult);
@@ -126,8 +126,8 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
-    }
+      execution_name: 'my-execution-name',
+    },
   };
 
   const actualResult = await cwSfExecutionEventUtils.__with__({
@@ -143,20 +143,20 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
               type: 'ActivityFailed',
               id: 1,
               activityFailedEventDetails: {
-                reason: 'busted'
-              }
-            }
-          ]
+                reason: 'busted',
+              },
+            },
+          ],
         };
-      }
-    }
+      },
+    },
   })(() => getFailedExecutionMessage(inputMessage));
 
   const expectedResult = {
     ...inputMessage,
     exception: {
-      reason: 'busted'
-    }
+      reason: 'busted',
+    },
   };
 
   t.deepEqual(actualResult, expectedResult);
@@ -168,12 +168,12 @@ test('getCumulusMessageFromExecutionEvent() returns the event input for a RUNNIN
       status: 'RUNNING',
       input: JSON.stringify({
         cumulus_meta: {
-          workflow_start_time: 122
-        }
+          workflow_start_time: 122,
+        },
       }),
       startDate: 123,
-      stopDate: null
-    }
+      stopDate: null,
+    },
   };
 
   const message = await getCumulusMessageFromExecutionEvent(event);
@@ -181,11 +181,11 @@ test('getCumulusMessageFromExecutionEvent() returns the event input for a RUNNIN
   const expectedMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
-      workflow_stop_time: null
+      workflow_stop_time: null,
     },
     meta: {
-      status: 'running'
-    }
+      status: 'running',
+    },
   };
 
   t.deepEqual(message, expectedMessage);
@@ -197,12 +197,12 @@ test('getCumulusMessageFromExecutionEvent() returns the event output for a SUCCE
       status: 'SUCCEEDED',
       output: JSON.stringify({
         cumulus_meta: {
-          workflow_start_time: 122
-        }
+          workflow_start_time: 122,
+        },
       }),
       startDate: 123,
-      stopDate: 124
-    }
+      stopDate: 124,
+    },
   };
 
   const message = await getCumulusMessageFromExecutionEvent(event);
@@ -210,11 +210,11 @@ test('getCumulusMessageFromExecutionEvent() returns the event output for a SUCCE
   const expectedMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
-      workflow_stop_time: 124
+      workflow_stop_time: 124,
     },
     meta: {
-      status: 'completed'
-    }
+      status: 'completed',
+    },
   };
 
   t.deepEqual(message, expectedMessage);
@@ -225,8 +225,8 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: 'my-execution-name',
-      workflow_start_time: 122
-    }
+      workflow_start_time: 122,
+    },
   };
 
   const event = {
@@ -234,8 +234,8 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
       status: 'FAILED',
       input: JSON.stringify(input),
       startDate: 123,
-      stopDate: 124
-    }
+      stopDate: 124,
+    },
   };
 
   const failedTaskOutput = input;
@@ -251,22 +251,22 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
             {
               // lastStepFailedEvent
               type: 'LambdaFunctionFailed',
-              id: 1
+              id: 1,
             },
             {
               // failedStepExitedEvent
               type: 'TaskStateExited',
               previousEventId: 1,
               stateExitedEventDetails: {
-                output: JSON.stringify(failedTaskOutput)
+                output: JSON.stringify(failedTaskOutput),
               },
-              resource: 'x'
-            }
-          ]
+              resource: 'x',
+            },
+          ],
         };
-      }
+      },
     },
-    pullStepFunctionEvent: async () => input
+    pullStepFunctionEvent: async () => input,
   })(() => getCumulusMessageFromExecutionEvent(event));
 
   const expectedMessage = {
@@ -274,11 +274,11 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: 'my-execution-name',
       workflow_start_time: 122,
-      workflow_stop_time: 124
+      workflow_stop_time: 124,
     },
     meta: {
-      status: 'failed'
-    }
+      status: 'failed',
+    },
   };
 
   t.deepEqual(message, expectedMessage);

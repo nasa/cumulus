@@ -28,7 +28,7 @@ const migrateProvider = async (provider) => {
 
 const handler = async () => {
   const scanResponse = await dynamodbDocClient().scan({
-    TableName: process.env.ProvidersTable
+    TableName: process.env.ProvidersTable,
   }).promise();
 
   await Promise.all(scanResponse.Items.map(migrateProvider));

@@ -32,5 +32,5 @@ function isReingestExecutionForGranuleId(taskInput, { granuleId }) {
 }
 
 module.exports = {
-  isReingestExecutionForGranuleId
+  isReingestExecutionForGranuleId,
 };

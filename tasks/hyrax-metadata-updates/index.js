@@ -9,7 +9,7 @@ const get = require('lodash/get');
 const cloneDeep = require('lodash/cloneDeep');
 
 const {
-  CMR
+  CMR,
 } = require('@cumulus/cmr-client');
 
 const {
@@ -17,7 +17,7 @@ const {
   isUMMGFile,
   isCMRFile,
   generateEcho10XMLString,
-  getCmrSettings
+  getCmrSettings,
 } = require('@cumulus/cmrjs/cmr-utils');
 
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
@@ -30,7 +30,7 @@ const {
   s3PutObject,
   s3TagSetToQueryString,
   parseS3Uri,
-  waitForObject
+  waitForObject,
 } = require('@cumulus/aws-client/S3');
 
 const xml2js = require('xml2js');
@@ -38,7 +38,7 @@ const xml2js = require('xml2js');
 const xmlParseOptions = {
   ignoreAttrs: true,
   mergeAttrs: true,
-  explicitArray: false
+  explicitArray: false,
 };
 
 /**
@@ -93,7 +93,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
 
   const cmrSettings = await getCmrSettings({
     ...config.cmr,
-    ...config.launchpad
+    ...config.launchpad,
   });
 
   // Query CMR for collection and retrieve entry title
@@ -101,7 +101,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
 
   const searchParams = {
     short_name: shortName,
-    version: version
+    version: version,
   };
 
   const result = await cmrInstance.searchCollections(searchParams);
@@ -168,7 +168,7 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
     URL: hyraxUrl,
     Type: 'GET DATA',
     Subtype: 'OPENDAP DATA',
-    Description: 'OPeNDAP request URL'
+    Description: 'OPeNDAP request URL',
   };
   metadataCopy.RelatedUrls.push(url);
 
@@ -198,12 +198,12 @@ function addHyraxUrlToEcho10(metadata, hyraxUrl) {
   const url = {
     URL: hyraxUrl,
     Description: 'OPeNDAP request URL',
-    Type: 'GET DATA : OPENDAP DATA'
+    Type: 'GET DATA : OPENDAP DATA',
   };
   resourceUrls.push(url);
 
   metadataCopy.Granule.OnlineResources = {
-    OnlineResource: resourceUrls
+    OnlineResource: resourceUrls,
   };
 
   return generateEcho10XMLString(metadataCopy.Granule);
@@ -292,14 +292,14 @@ const updateGranule = (config) => async (granule) => {
     Key,
     Body: updatedMetadata,
     ContentType: metadataResult.ContentType,
-    Tagging: s3TagSetToQueryString(tags.TagSet)
+    Tagging: s3TagSetToQueryString(tags.TagSet),
   });
 
   return {
     ...granule,
     files: granule.files.map(
       (file) => (file === metadataFile ? assoc('etag', newEtag, file) : file)
-    )
+    ),
   };
 };
 
@@ -311,7 +311,7 @@ const updateGranule = (config) => async (granule) => {
  */
 async function hyraxMetadataUpdate({ config, input }) {
   return {
-    granules: await Promise.all(input.granules.map(updateGranule(config)))
+    granules: await Promise.all(input.granules.map(updateGranule(config))),
   };
 }
 

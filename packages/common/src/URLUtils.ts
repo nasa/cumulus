@@ -46,7 +46,7 @@ export const buildURL = (params: {
     protocol,
     host,
     port,
-    path = []
+    path = [],
   } = params;
 
   if (isNil(protocol)) throw new TypeError('protocol is required');

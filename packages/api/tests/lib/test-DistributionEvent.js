@@ -6,7 +6,7 @@ const pMap = require('p-map');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -14,7 +14,7 @@ const Granule = require('../../models/granules');
 const DistributionEvent = require('../../lib/DistributionEvent');
 const {
   fakeGranuleFactoryV2,
-  fakeFileFactory
+  fakeFileFactory,
 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
@@ -79,9 +79,9 @@ test.before(async (t) => {
       fakeFileFactory({
         bucket: t.context.publicBucket,
         key: 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-        type: 'data'
-      })
-    ]
+        type: 'data',
+      }),
+    ],
   });
 
   await createGranule(t.context.hdfGranule);
@@ -92,9 +92,9 @@ test.before(async (t) => {
       fakeFileFactory({
         bucket: t.context.protectedBucket,
         key: 'files/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-        type: 'metadata'
-      })
-    ]
+        type: 'metadata',
+      }),
+    ],
   });
 
   await createGranule(t.context.metadataGranule);
@@ -170,7 +170,7 @@ test('DistributionEvent.toString() returns correct output for authenticated down
       '001',
       t.context.metadataGranule.granuleId,
       'METADATA',
-      'HTTPS'
+      'HTTPS',
     ]
   );
 });
@@ -191,7 +191,7 @@ test('DistributionEvent.toString() returns correct output for un-authenticated d
       '001',
       t.context.hdfGranule.granuleId,
       'SCIENCE',
-      'HTTPS'
+      'HTTPS',
     ]
   );
 });
@@ -212,7 +212,7 @@ test('DistributionEvent.toString() returns correct IP for download via proxy', a
       '001',
       t.context.metadataGranule.granuleId,
       'METADATA',
-      'HTTPS'
+      'HTTPS',
     ]
   );
 });

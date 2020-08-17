@@ -16,7 +16,7 @@ const {
   cleanupCollections,
   readJsonFilesFromDir,
   deleteRules,
-  setProcessEnvironment
+  setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -26,7 +26,7 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 
 const {
@@ -36,7 +36,7 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForAllTestSfForRecord
+  waitForAllTestSfForRecord,
 } = require('../../helpers/kinesisHelpers');
 
 const ruleDirectory = './spec/parallel/kinesisTests/data/lambdaEventSourceTestRules';
@@ -73,7 +73,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDirMOD09GQ, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
-      deleteTestStream(streamName)
+      deleteTestStream(streamName),
     ]);
   }
 
@@ -95,7 +95,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDirMOD09GQ, testSuffix),
-      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
     ]);
     // create streams
     await tryCatchExit(cleanUp, async () => {
@@ -129,7 +129,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
           provider: `SWOT_PODAAC${testSuffix}`,
           collection: `L2_HR_PIXC${testSuffix}`,
           bucket: 'random-bucket',
-          identifier: recordIdentifier
+          identifier: recordIdentifier,
         };
 
         console.log(`Dropping record onto ${streamName}, recordIdentifier: ${recordIdentifier}.`);

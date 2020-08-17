@@ -12,15 +12,15 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const buildRule = (overrides = {}) => ({
   name: randomId('rule_'),
-  ...overrides
+  ...overrides,
 });
 
 const buildOneTimeRule = (overrides = {}) =>
   buildRule({
     ...overrides,
     rule: {
-      type: 'onetime'
-    }
+      type: 'onetime',
+    },
   });
 
 /**
@@ -50,5 +50,5 @@ const createOneTimeRule = async (prefix, overrides = {}) => {
 };
 
 module.exports = {
-  createOneTimeRule
+  createOneTimeRule,
 };

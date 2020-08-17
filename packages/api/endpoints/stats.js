@@ -17,7 +17,7 @@ function getType(req) {
     collections: 'collection',
     logs: 'logs',
     providers: 'provider',
-    executions: 'execution'
+    executions: 'execution',
   };
 
   const typeRequested = get(req, 'params.type') || get(req, 'query.type');
@@ -59,7 +59,7 @@ async function aggregate(req, res) {
   const type = getType(req);
 
   const stats = new Stats({
-    queryStringParameters: req.query
+    queryStringParameters: req.query,
   }, type, process.env.ES_INDEX);
   const r = await stats.count();
   return res.send(r);

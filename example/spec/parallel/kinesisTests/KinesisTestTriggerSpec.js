@@ -21,7 +21,7 @@ const {
   readJsonFilesFromDir,
   deleteRules,
   granulesApi: granulesApiTestUtils,
-  setProcessEnvironment
+  setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -33,7 +33,7 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 
 const {
@@ -45,7 +45,7 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForTestSfForRecord
+  waitForTestSfForRecord,
 } = require('../../helpers/kinesisHelpers');
 
 const testWorkflow = 'KinesisTriggerTest';
@@ -102,12 +102,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       executionModel.delete({ arn: workflowExecution.executionArn }),
       s3().deleteObject({
         Bucket: testConfig.buckets.private.name,
-        Key: `${filePrefix}/${fileData.name}`
+        Key: `${filePrefix}/${fileData.name}`,
       }).promise(),
       granulesApiTestUtils.deleteGranule({
         prefix: testConfig.stackName,
-        granuleId
-      })
+        granuleId,
+      }),
     ]);
   }
 
@@ -154,11 +154,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
               url_path: recordFile.uri,
               size: recordFile.size,
               checksumType: recordFile.checksumType,
-              checksum: recordFile.checksum
-            }
-          ]
-        }
-      ]
+              checksum: recordFile.checksum,
+            },
+          ],
+        },
+      ],
     };
 
     fileData = expectedTranslatePayload.granules[0].files[0];
@@ -170,7 +170,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       bucket: testConfig.buckets.private.name,
       url_path: '',
       fileStagingDir: filePrefix,
-      size: fileData.size
+      size: fileData.size,
     };
 
     expectedSyncGranulesPayload = {
@@ -179,9 +179,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           granuleId: granuleId,
           dataType: record.collection,
           version: '000',
-          files: [fileDataWithFilename]
-        }
-      ]
+          files: [fileDataWithFilename],
+        },
+      ],
     };
 
     ruleDirectory = './spec/parallel/kinesisTests/data/rules';
@@ -189,9 +189,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
       collection: {
         name: record.collection,
-        version: '000'
+        version: '000',
       },
-      provider: record.provider
+      provider: record.provider,
     };
 
     const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
@@ -209,18 +209,18 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
     ]);
     // create streams
     await tryCatchExit(cleanUp, async () => {
       await Promise.all([
         createOrUseTestStream(streamName),
-        createOrUseTestStream(cnmResponseStreamName)
+        createOrUseTestStream(cnmResponseStreamName),
       ]);
       console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
       await Promise.all([
         waitForActiveStream(streamName),
-        waitForActiveStream(cnmResponseStreamName)
+        waitForActiveStream(cnmResponseStreamName),
       ]);
       const ruleList = await addRules(testConfig, ruleDirectory, ruleOverride);
       logEventSourceMapping = await getEventSourceMapping(ruleList[0].rule.logEventArn);
@@ -279,7 +279,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           identifier: recordIdentifier,
           bucket: record.bucket,
           provider: record.provider,
-          collection: record.collection
+          collection: record.collection,
         });
       });
     });
@@ -316,9 +316,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           granules: [
             {
               ...expectedSyncGranulesPayload.granules[0],
-              sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
-            }
-          ]
+              sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+            },
+          ],
         };
 
         expect(lambdaOutput.payload).toEqual(updatedExpectedPayload);
@@ -327,7 +327,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       it('syncs data to s3 target location.', async () => {
         s3FileHead = await s3().headObject({
           Bucket: testConfig.buckets.private.name,
-          Key: `${filePrefix}/${fileData.name}`
+          Key: `${filePrefix}/${fileData.name}`,
         }).promise();
         expect(new Date() - s3FileHead.LastModified < maxWaitForSFExistSecs * 1000).toBeTruthy();
       });
@@ -356,8 +356,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           provider: record.provider,
           identifier: recordIdentifier,
           response: {
-            status: 'SUCCESS'
-          }
+            status: 'SUCCESS',
+          },
         });
       });
 

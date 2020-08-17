@@ -14,7 +14,7 @@ const {
   calculateS3ObjectChecksum,
   fileExists,
   recursivelyDeleteS3Bucket,
-  headObject
+  headObject,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -28,7 +28,7 @@ const testListWith = (discoverer, event, ...args) => {
   }
 
   return HttpProviderClient.__with__({
-    Crawler
+    Crawler,
   })(() => discoverer.list(''));
 };
 
@@ -36,7 +36,7 @@ test.before((t) => {
   t.context.httpProviderClient = new HttpProviderClient({
     protocol: 'http',
     host: 'localhost',
-    port: 3030
+    port: 3030,
   });
 });
 
@@ -115,7 +115,7 @@ test.serial('list() returns files for provider with multiple links on a single s
 
   const expectedFiles = [
     { name: 'test.txt', path: '' },
-    { name: 'test2.txt', path: '' }
+    { name: 'test2.txt', path: '' },
   ];
 
   t.deepEqual(actualFiles, expectedFiles);
@@ -139,7 +139,7 @@ test.serial('list() returns all files for provider from multiple source lines', 
 
   const expectedFiles = [
     { name: 'test.txt', path: '' },
-    { name: 'test2.txt', path: '' }
+    { name: 'test2.txt', path: '' },
   ];
 
   t.deepEqual(actualFiles, expectedFiles);
@@ -155,7 +155,7 @@ test.serial('list() strips path from file names', async (t) => {
   }
 
   const actualFiles = await HttpProviderClient.__with__({
-    Crawler
+    Crawler,
   })(() => t.context.httpProviderClient.list('/path/to/file/'));
 
   const expectedFiles = [{ name: 'test.txt', path: '/path/to/file/' }];
@@ -213,7 +213,7 @@ test.serial('list() returns an exception with helpful information if a fetcherro
       this.push(nextChunk);
       // eslint-disable-next-line unicorn/no-null
       nextChunk = null;
-    }
+    },
   });
 
   response.statusCode = 401;
@@ -259,7 +259,7 @@ test.serial('list succeeds if server wait time is unexpectedly slow', async (t) 
     protocol: 'http',
     host: 'localhost',
     port: 3030,
-    httpListTimeout: 1005
+    httpListTimeout: 1005,
   });
 
   nock('http://localhost:3030')
@@ -282,7 +282,7 @@ test.serial('list fails if client wait time is set less than the response delay'
     protocol: 'http',
     host: 'testhost',
     port: 3030,
-    httpListTimeout: 1
+    httpListTimeout: 1,
   });
 
   nock('http://testhost:3030')
@@ -296,7 +296,7 @@ test.serial('list fails if client wait time is set less than the response delay'
     async () => httpProviderClient.list('test_url'),
     {
       message: 'Connection timed out',
-      instanceOf: errors.RemoteResourceError
+      instanceOf: errors.RemoteResourceError,
     }
   );
 });

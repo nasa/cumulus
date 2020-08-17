@@ -4,7 +4,7 @@ async function run(_options) {
   const rule = new Rule();
   const manager = new Manager({
     tableName: process.env.RulesTable,
-    tableHash: { name: 'name', type: 'S' }
+    tableHash: { name: 'name', type: 'S' },
   });
 
   const queryNames = { '#tp': 'type', '#rl': 'rule' };
@@ -13,14 +13,14 @@ async function run(_options) {
   const response = await rule.scan({
     names: queryNames,
     values: queryValues,
-    filter: filter
+    filter: filter,
   });
   const updateItems = response.Items.filter((item) => !item.rule.logEventArn);
 
   const updatePromises = updateItems.map((item) => rule.addKinesisEventSource(item,
     {
       name: process.env.KinesisInboundEventLogger,
-      eventType: 'logEventArn'
+      eventType: 'logEventArn',
     }));
 
   const updateMappings = await Promise.all(updatePromises);

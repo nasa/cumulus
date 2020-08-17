@@ -64,8 +64,8 @@ class Logger {
       const additionalKeys: { error: { name: string, message: string, stack?: string[] }} = {
         error: {
           name: error.name,
-          message: error.message
-        }
+          message: error.message,
+        },
       };
       if (error.stack) additionalKeys.error.stack = error.stack.split('\n');
 
@@ -135,12 +135,12 @@ class Logger {
       sender: this.sender,
       stackName: this.stackName,
       timestamp: (new Date()).toISOString(),
-      version: this.version
+      version: this.version,
     };
 
     const logEvent = {
       ...additionalKeys,
-      ...standardLogEvent
+      ...standardLogEvent,
     };
 
     return this.pretty

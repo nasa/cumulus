@@ -8,7 +8,7 @@ export const setErrorStack = (error: Error, newStack: string) => {
     // eslint-disable-next-line no-param-reassign
     error.stack = [
       error.stack.split('\n')[0],
-      ...newStack.split('\n').slice(1)
+      ...newStack.split('\n').slice(1),
     ].join('\n');
   } else {
     // eslint-disable-next-line no-param-reassign

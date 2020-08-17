@@ -13,7 +13,7 @@ const {
   localStackName,
   localSystemBucket,
   localUserName,
-  getESClientAndIndex
+  getESClientAndIndex,
 } = require('./local-test-defaults');
 
 const workflowList = testUtils.getWorkflowList();
@@ -23,7 +23,7 @@ async function createTable(Model, tableName) {
     const model = new Model({
       tableName,
       stackName: process.env.stackName,
-      systemBucket: process.env.system_bucket
+      systemBucket: process.env.system_bucket,
     });
     await model.createTable();
   } catch (error) {
@@ -40,7 +40,7 @@ async function populateBucket(bucket, stackName) {
   const workflowPromises = workflowList.map((obj) => promiseS3Upload({
     Bucket: bucket,
     Key: `${stackName}/workflows/${obj.name}.json`,
-    Body: JSON.stringify(obj)
+    Body: JSON.stringify(obj),
   }));
 
   // upload workflow template
@@ -48,7 +48,7 @@ async function populateBucket(bucket, stackName) {
   const templatePromise = promiseS3Upload({
     Bucket: bucket,
     Key: workflow,
-    Body: JSON.stringify({})
+    Body: JSON.stringify({}),
   });
   await Promise.all([...workflowPromises, templatePromise]);
 }
@@ -72,7 +72,7 @@ function setTableEnvVariables(stackName) {
 
   return {
     tableModels,
-    tableNames
+    tableNames,
   };
 }
 
@@ -181,8 +181,8 @@ async function createDBRecords(stackName, user) {
     provider: `${stackName}-provider`,
     collection: {
       name: `${stackName}-collection`,
-      version: '0.0.0'
-    }
+      version: '0.0.0',
+    },
   });
   await serveUtils.addRules([rule]);
 
@@ -209,7 +209,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     'stackName',
     'system_bucket',
     'TOKEN_REDIRECT_ENDPOINT',
-    'TOKEN_SECRET'
+    'TOKEN_SECRET',
   ];
 
   // Set env variable to mark this as a local run of the API
@@ -254,7 +254,7 @@ async function serveDistributionApi(stackName = localStackName, done) {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = [
     'DISTRIBUTION_REDIRECT_ENDPOINT',
-    'DISTRIBUTION_ENDPOINT'
+    'DISTRIBUTION_ENDPOINT',
   ];
 
   // Set env variable to mark this as a local run of the API
@@ -312,7 +312,7 @@ async function eraseDynamoTables(stackName, systemBucket) {
       providerModel.deleteProviders(),
       executionModel.deleteExecutions(),
       granulesModel.deleteGranules(),
-      pdrsModel.deletePdrs()
+      pdrsModel.deletePdrs(),
     ]);
   } catch (error) {
     console.log(error);
@@ -360,5 +360,5 @@ module.exports = {
   eraseDataStack,
   serveApi,
   serveDistributionApi,
-  resetTables
+  resetTables,
 };

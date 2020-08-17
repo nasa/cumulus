@@ -4,7 +4,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const {
   deleteS3Object,
   s3ObjectExists,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
@@ -26,7 +26,7 @@ async function throwErrorIfConfigured(event) {
   if (event.config.passOnRetry) {
     isRetry = await s3ObjectExists({
       Bucket: bucket,
-      Key: retryFilename
+      Key: retryFilename,
     });
   }
 
@@ -40,7 +40,7 @@ async function throwErrorIfConfigured(event) {
       await s3PutObject({
         Bucket: bucket,
         Key: retryFilename,
-        Body: ''
+        Body: '',
       });
     }
 
@@ -58,7 +58,7 @@ async function helloWorld(event) {
   await throwErrorIfConfigured(event);
 
   return {
-    hello: 'Hello World'
+    hello: 'Hello World',
   };
 }
 /**

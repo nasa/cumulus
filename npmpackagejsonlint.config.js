@@ -70,7 +70,7 @@ module.exports = {
         //     'keywords',
         //     'homepage',
         //     'bugs',
-        'license'
+        'license',
         //     'author',
         // //     'contributors',
         //     'files',
@@ -111,8 +111,8 @@ module.exports = {
         //     'preferGlobal',
         //     'private',
         //     'publishConfig'
-      ]
+      ],
     ],
-    'no-duplicate-properties': 'error'
-  }
+    'no-duplicate-properties': 'error',
+  },
 };

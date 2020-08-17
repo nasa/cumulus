@@ -5,16 +5,16 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   buildAndExecuteWorkflow,
   loadCollection,
-  loadProvider
+  loadProvider,
 } = require('@cumulus/integration-tests');
 const {
-  getExecutionWithStatus
+  getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
 const {
-  createCollection, deleteCollection
+  createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
 const {
-  createProvider, deleteProvider
+  createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -40,13 +40,13 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
     provider = await loadProvider({
       filename: './data/providers/s3/s3_provider.json',
       postfix: testId,
-      s3Host: randomString()
+      s3Host: randomString(),
     });
     await createProvider({ prefix: stackName, provider });
     // Create the collection
     collection = await loadCollection({
       filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
-      postfix: testId
+      postfix: testId,
     });
 
     await createCollection({ prefix: stackName, collection });
@@ -70,9 +70,9 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
       deleteCollection({
         prefix: stackName,
         collectionName: collection.name,
-        collectionVersion: collection.version
+        collectionVersion: collection.version,
       }),
-      deleteProvider({ prefix: stackName, providerId: provider.id })
+      deleteProvider({ prefix: stackName, providerId: provider.id }),
     ]));
 
   it('fails', () => {
@@ -86,7 +86,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
       const failedExecutionFromApi = await getExecutionWithStatus({
         prefix: stackName,
         arn: workflowExecution.executionArn,
-        status: 'failed'
+        status: 'failed',
       });
 
       expect(

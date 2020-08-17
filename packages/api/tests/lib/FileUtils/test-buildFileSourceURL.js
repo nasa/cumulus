@@ -6,7 +6,7 @@ const { buildFileSourceURL } = require('../../../lib/FileUtils');
 test('buildFileSourceURL() returns a correct S3 source URL', (t) => {
   const file = {
     path: 'path/to',
-    name: 'file.txt'
+    name: 'file.txt',
   };
 
   t.is(
@@ -18,7 +18,7 @@ test('buildFileSourceURL() returns a correct S3 source URL', (t) => {
 test('buildFileSourceURL() returns a correct source URL with a leading slash in its path', (t) => {
   const file = {
     path: '/path/to',
-    name: 'file.txt'
+    name: 'file.txt',
   };
 
   t.is(
@@ -30,7 +30,7 @@ test('buildFileSourceURL() returns a correct source URL with a leading slash in 
 test('buildFileSourceURL() returns a correct source URL with a non-standard port', (t) => {
   const file = {
     path: '/path/to',
-    name: 'file.txt'
+    name: 'file.txt',
   };
 
   t.is(
@@ -41,7 +41,7 @@ test('buildFileSourceURL() returns a correct source URL with a non-standard port
 
 test('buildFileSourceURL() throws a TypeError if the file does not have a path property', (t) => {
   const file = {
-    name: 'file.txt'
+    name: 'file.txt',
   };
 
   try {

@@ -15,7 +15,7 @@ const AsyncOperation = require('../models/async-operation');
 async function startKinesisReplayAsyncOperation(req, res) {
   const asyncOperationModel = new AsyncOperation({
     stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket
+    systemBucket: process.env.system_bucket,
   });
 
   const payload = req.body;
@@ -35,7 +35,7 @@ async function startKinesisReplayAsyncOperation(req, res) {
     description: 'Kinesis Replay',
     operationType: 'Kinesis Replay',
     payload,
-    useLambdaEnvironmentVariables: true
+    useLambdaEnvironmentVariables: true,
   });
 
   return res.status(202).send({ asyncOperationId: asyncOperation.id });

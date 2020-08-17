@@ -14,7 +14,7 @@ test('createKey() creates a key', async (t) => {
 
   await t.notThrowsAsync(
     kms().describeKey({
-      KeyId: createKeyResponse.KeyMetadata.KeyId
+      KeyId: createKeyResponse.KeyMetadata.KeyId,
     }).promise()
   );
 });
@@ -23,7 +23,7 @@ test('encrypt() properly encrypts a value', async (t) => {
   const ciphertext = await KMS.encrypt(t.context.KeyId, 'asdf');
 
   const plaintext = await kms().decrypt({
-    CiphertextBlob: Buffer.from(ciphertext, 'base64')
+    CiphertextBlob: Buffer.from(ciphertext, 'base64'),
   }).promise()
     .then(({ Plaintext }) => Plaintext.toString());
 

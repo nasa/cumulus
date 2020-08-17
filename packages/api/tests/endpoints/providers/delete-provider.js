@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -13,7 +13,7 @@ const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -66,7 +66,7 @@ test.before(async () => {
   await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
-    Body: JSON.stringify({})
+    Body: JSON.stringify({}),
   }).promise();
 });
 
@@ -125,15 +125,15 @@ test('Attempting to delete a provider with an associated rule returns a 409 resp
   const rule = fakeRuleFactoryV2({
     provider: testProvider.id,
     rule: {
-      type: 'onetime'
-    }
+      type: 'onetime',
+    },
   });
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
+    Body: JSON.stringify({}),
   }).promise();
 
   await ruleModel.create(rule);
@@ -154,15 +154,15 @@ test('Attempting to delete a provider with an associated rule does not delete th
   const rule = fakeRuleFactoryV2({
     provider: testProvider.id,
     rule: {
-      type: 'onetime'
-    }
+      type: 'onetime',
+    },
   });
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
+    Body: JSON.stringify({}),
   }).promise();
 
   await ruleModel.create(rule);

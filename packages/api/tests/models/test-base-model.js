@@ -13,23 +13,23 @@ test.beforeEach(async (t) => {
   const tableHash = { name: 'id', type: 'S' };
   t.context.manager = new Manager({
     tableName: t.context.tableName,
-    tableHash
+    tableHash,
   });
 
   await DynamoDb.createAndWaitForDynamoDbTable({
     TableName: t.context.tableName,
     AttributeDefinitions: [{
       AttributeName: tableHash.name,
-      AttributeType: tableHash.type
+      AttributeType: tableHash.type,
     }],
     KeySchema: [{
       AttributeName: tableHash.name,
-      KeyType: 'HASH'
+      KeyType: 'HASH',
     }],
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
-    }
+      WriteCapacityUnits: 5,
+    },
   });
 });
 
@@ -56,13 +56,13 @@ test('Manager.createTable() creates the correct table', async (t) => {
   const tableName = randomString();
   const manager = new Manager({
     tableName,
-    tableHash: { name: 'id', type: 'S' }
+    tableHash: { name: 'id', type: 'S' },
   });
 
   try {
     await manager.createTable();
     const describeTableResponse = await dynamodb().describeTable({
-      TableName: tableName
+      TableName: tableName,
     }).promise();
 
     t.is(describeTableResponse.Table.TableStatus, 'ACTIVE');
@@ -75,12 +75,12 @@ test('The Manager deleteTable method deletes the correct table', async (t) => {
   const tableName = randomString();
   const manager = new Manager({
     tableName,
-    tableHash: { name: 'id', type: 'S' }
+    tableHash: { name: 'id', type: 'S' },
   });
 
   await manager.createTable();
   const describeTableResponse = await dynamodb().describeTable({
-    TableName: tableName
+    TableName: tableName,
   }).promise();
 
   t.is(describeTableResponse.Table.TableStatus, 'ACTIVE');
@@ -103,8 +103,8 @@ test('Manager.exists() returns true when a record exists', async (t) => {
   await dynamodb().putItem({
     TableName: tableName,
     Item: {
-      id: { S: id }
-    }
+      id: { S: id },
+    },
   }).promise();
 
   t.true(await manager.exists({ id }));
@@ -120,7 +120,7 @@ test('Manager._buildDocClientUpdateParams() returns null for an empty item', (t)
   const { manager } = t.context;
   t.is(manager._buildDocClientUpdateParams({
     item: {},
-    itemKey: {}
+    itemKey: {},
   }), undefined);
 });
 
@@ -130,12 +130,12 @@ test('Manager._buildDocClientUpdateParams() does not try to update the key field
   const item = {
     id: 'value1',
     key: 'value2',
-    foo: 'bar'
+    foo: 'bar',
   };
 
   const actualParams = manager._buildDocClientUpdateParams({
     item,
-    itemKey: { id: item.id, key: item.key }
+    itemKey: { id: item.id, key: item.key },
   });
 
   t.false(Object.keys(actualParams.ExpressionAttributeNames).includes('#key1'));
@@ -154,13 +154,13 @@ test('Manager._buildDocClientUpdateParams() does not try to update a value to `u
   const item = {
     ...itemKey,
     foo: 'bar',
-    wrong: undefined
+    wrong: undefined,
   };
 
   const actualParams = manager._buildDocClientUpdateParams({
     item,
     itemKey,
-    mutableFieldNames: ['foo']
+    mutableFieldNames: ['foo'],
   });
 
   t.false(Object.keys(actualParams.ExpressionAttributeNames).includes('#wrong'));
@@ -177,13 +177,13 @@ test('Manager._buildDocClientUpdateParams() only updates specified fields', (t) 
     foo: 'bar',
     prop1: 'value1',
     prop2: 123,
-    prop3: 'value3'
+    prop3: 'value3',
   };
 
   const actualParams = manager._buildDocClientUpdateParams({
     item,
     itemKey,
-    mutableFieldNames: ['foo', 'prop1']
+    mutableFieldNames: ['foo', 'prop1'],
   });
 
   t.true(actualParams.UpdateExpression.startsWith('SET '));

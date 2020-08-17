@@ -10,14 +10,14 @@ test('Merges two sets of URLs.', (t) => {
   const originalURLs = [
     {
       URL: 'https://path/to/metadata.cmr.xml',
-      URLDescription: 'File to download'
-    }
+      URLDescription: 'File to download',
+    },
   ];
   const newURLs = [
     {
       URL: 's3://path/to/different-file.hdf',
-      URLDescription: 'File to download'
-    }
+      URLDescription: 'File to download',
+    },
   ];
   const expected = [...originalURLs, ...newURLs];
 
@@ -30,14 +30,14 @@ test('Replaces an updated URL.', (t) => {
   const originalURLs = [
     {
       URL: 'https://path/to/metadata.cmr.xml',
-      URLDescription: 'File to download'
-    }
+      URLDescription: 'File to download',
+    },
   ];
   const newURLs = [
     {
       URL: 's3://path/to/metadata.cmr.xml',
-      URLDescription: 'File to download'
-    }
+      URLDescription: 'File to download',
+    },
   ];
   const expected = [...newURLs];
 
@@ -50,14 +50,14 @@ test('Replaces an updated description.', (t) => {
   const originalURLs = [
     {
       URL: 'https://path/to/metadata.cmr.xml',
-      URLDescription: 'File to download'
-    }
+      URLDescription: 'File to download',
+    },
   ];
   const newURLs = [
     {
       URL: 's3://path/to/metadata.cmr.xml',
-      URLDescription: 'Download metadata.cmr.xml'
-    }
+      URLDescription: 'Download metadata.cmr.xml',
+    },
   ];
   const expected = [...newURLs];
 
@@ -70,12 +70,12 @@ test('Removes a file made private.', (t) => {
   const originalURLs = [
     {
       URL: 'https://path/to/metadata.cmr.xml',
-      URLDescription: 'File to download'
-    }
+      URLDescription: 'File to download',
+    },
   ];
   const newURLs = [];
   const deletedUrls = [
-    { URL: 'https://now/private/metadata.cmr.xml' }
+    { URL: 'https://now/private/metadata.cmr.xml' },
   ];
 
   const expected = [];
@@ -91,22 +91,22 @@ test('Replaces an updated URL, but keeps any additional metadata from the origin
       URL: 'https://path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
       MimeType: 'application/x-hdfeos',
-      moreMetadataFields: 'somthingelse'
-    }
+      moreMetadataFields: 'somthingelse',
+    },
   ];
   const newURLs = [
     {
       URL: 's3://path/to/metadata.cmr.xml',
-      URLDescription: 'File to download'
-    }
+      URLDescription: 'File to download',
+    },
   ];
   const expected = [
     {
       URL: 's3://path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
       MimeType: 'application/x-hdfeos',
-      moreMetadataFields: 'somthingelse'
-    }
+      moreMetadataFields: 'somthingelse',
+    },
   ];
   const deleted = [{ URL: 'does not exist' }];
   const actual = mergeURLs(originalURLs, newURLs, deleted);
@@ -119,21 +119,21 @@ test('Replaces an updated URL, but does not overwrite existing metadata fields.'
     {
       URL: 'https://path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
-      MimeType: 'application/x-hdfeos'
-    }
+      MimeType: 'application/x-hdfeos',
+    },
   ];
   const newURLs = [
     {
       URL: 's3://expected/to/change/path/to/metadata.cmr.xml',
-      MimeType: 'UPDATED METADATA TO BE IGNORED'
-    }
+      MimeType: 'UPDATED METADATA TO BE IGNORED',
+    },
   ];
   const expected = [
     {
       URL: 's3://expected/to/change/path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
-      MimeType: 'application/x-hdfeos'
-    }
+      MimeType: 'application/x-hdfeos',
+    },
   ];
 
   const actual = mergeURLs(originalURLs, newURLs);
@@ -146,24 +146,24 @@ test('Replaces an updated URL and adds new metadata, but does not overwrite exis
     {
       URL: 'https://original/path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
-      MimeType: 'text/xml'
-    }
+      MimeType: 'text/xml',
+    },
   ];
   const newURLs = [
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
       Type: 'expected to add: GET DATA',
-      MimeType: 'UPDATED METADATA: IGNORE'
-    }
+      MimeType: 'UPDATED METADATA: IGNORE',
+    },
   ];
   const expected = [
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
       MimeType: 'text/xml',
-      Type: 'expected to add: GET DATA'
-    }
+      Type: 'expected to add: GET DATA',
+    },
   ];
 
   const actual = mergeURLs(originalURLs, newURLs);
@@ -176,39 +176,39 @@ test('Does Complicated merging', (t) => {
     {
       URL: 'https://replaced/path/to/data.hdf',
       URLDescription: 'File to download',
-      MimeType: 'keeps mimetype: application/x-hdfeos'
+      MimeType: 'keeps mimetype: application/x-hdfeos',
     },
     {
       URL: 'https://staging/path/to/data.hdf.met',
-      URLDescription: 'File is made private and should be deleted'
+      URLDescription: 'File is made private and should be deleted',
     },
     {
       URL: 'https://replaced/path/to/metadata.cmr.xml',
       Type: 'keeps Type: ORIGINAL',
-      MimeType: 'also from original: text/xml'
+      MimeType: 'also from original: text/xml',
     },
     {
       URL: 'https://original/path/to/passthrough.jpg',
       Type: 'GET RELATED VISUALIZATION',
-      MimeType: 'image/jpeg'
-    }
+      MimeType: 'image/jpeg',
+    },
   ];
   const newURLs = [
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'from Updated',
-      Type: 'SHOULD BE IGNORED: GET DATA'
+      Type: 'SHOULD BE IGNORED: GET DATA',
     },
     {
       URL: 's3://new/path/to/data.hdf',
       URLDescription: 'Updated description',
-      Type: 'adds type when missing: GET DATA'
-    }
+      Type: 'adds type when missing: GET DATA',
+    },
   ];
   const deletedURLs = [
     {
-      URL: 'https://new/private/location/to/data.hdf.met'
-    }
+      URL: 'https://new/private/location/to/data.hdf.met',
+    },
   ];
 
   const expected = [
@@ -216,19 +216,19 @@ test('Does Complicated merging', (t) => {
       URL: 's3://new/path/to/data.hdf',
       URLDescription: 'Updated description',
       MimeType: 'keeps mimetype: application/x-hdfeos',
-      Type: 'adds type when missing: GET DATA'
+      Type: 'adds type when missing: GET DATA',
     },
     {
       URL: 'https://original/path/to/passthrough.jpg',
       Type: 'GET RELATED VISUALIZATION',
-      MimeType: 'image/jpeg'
+      MimeType: 'image/jpeg',
     },
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'from Updated',
       Type: 'keeps Type: ORIGINAL',
-      MimeType: 'also from original: text/xml'
-    }
+      MimeType: 'also from original: text/xml',
+    },
   ];
 
   const actual = mergeURLs(originalURLs, newURLs, deletedURLs);

@@ -6,7 +6,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   getConfigurations,
   handleRedirectRequest,
-  handleFileRequest
+  handleFileRequest,
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
 
@@ -63,7 +63,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
   const {
     accessTokenModel,
-    authClient
+    authClient,
   } = getConfigurations();
 
   const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);

@@ -27,11 +27,11 @@ export const postRule = async (params: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: '/rules',
-      body: JSON.stringify(rule)
-    }
+      body: JSON.stringify(rule),
+    },
   });
 };
 
@@ -57,7 +57,7 @@ export const updateRule = async (params: {
     prefix,
     ruleName,
     updateParams,
-    callback = invokeApi
+    callback = invokeApi,
   } = params;
 
   return callback({
@@ -66,11 +66,11 @@ export const updateRule = async (params: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: `/rules/${ruleName}`,
-      body: JSON.stringify(updateParams)
-    }
+      body: JSON.stringify(updateParams),
+    },
   });
 };
 
@@ -97,8 +97,8 @@ export const listRules = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/rules',
-      queryStringParameters: query
-    }
+      queryStringParameters: query,
+    },
   });
 };
 
@@ -125,8 +125,8 @@ export const getRule = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/rules/${ruleName}`
-    }
+      path: `/rules/${ruleName}`,
+    },
   });
 };
 
@@ -152,8 +152,8 @@ export const deleteRule = async (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/rules/${ruleName}`
-    }
+      path: `/rules/${ruleName}`,
+    },
   });
 };
 
@@ -179,7 +179,7 @@ export async function rerunRule(params: {
     prefix,
     ruleName,
     updateParams = {},
-    callback = invokeApi
+    callback = invokeApi,
   } = params;
 
   return updateRule({
@@ -187,8 +187,8 @@ export async function rerunRule(params: {
     ruleName,
     updateParams: {
       ...updateParams,
-      action: 'rerun'
+      action: 'rerun',
     },
-    callback
+    callback,
   });
 }

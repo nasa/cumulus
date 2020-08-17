@@ -22,7 +22,7 @@ function fileObjectFromS3URI(s3URI) {
     name: path.basename(s3URI),
     bucket: uriParsed.Bucket,
     filename: s3URI,
-    fileStagingDir: path.dirname(uriParsed.Key)
+    fileStagingDir: path.dirname(uriParsed.Key),
   };
 }
 
@@ -59,7 +59,7 @@ function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
     });
 
   return {
-    granules: Object.keys(granulesHash).map((k) => granulesHash[k])
+    granules: Object.keys(granulesHash).map((k) => granulesHash[k]),
   };
 }
 

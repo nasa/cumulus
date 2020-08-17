@@ -25,8 +25,8 @@ export const getReconciliationReport = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/reconciliationReports/${name}`
-    }
+      path: `/reconciliationReports/${name}`,
+    },
   });
 };
 
@@ -55,8 +55,8 @@ export const deleteReconciliationReport = async (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/reconciliationReports/${name}`
-    }
+      path: `/reconciliationReports/${name}`,
+    },
   });
 };
 
@@ -85,10 +85,10 @@ export async function createReconciliationReport(params: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: '/reconciliationReports',
-      body: JSON.stringify(request)
-    }
+      body: JSON.stringify(request),
+    },
   });
 }

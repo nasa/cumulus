@@ -7,7 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
-  findExecutionArn, getExecutionWithStatus
+  findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
@@ -49,7 +49,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
         prefix,
         {
           duplicateHandling: 'error',
-          process: 'modis'
+          process: 'modis',
         }
       );
 
@@ -62,7 +62,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       await s3PutObject({
         Bucket: sourceBucket,
         Key: sameChecksumKey,
-        Body: 'asdf'
+        Body: 'asdf',
       });
 
       granuleId = randomId('granule-id-');
@@ -88,12 +88,12 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
                 files: [
                   {
                     name: sameChecksumFilename,
-                    path: sourcePath
-                  }
-                ]
-              }
-            ]
-          }
+                    path: sourcePath,
+                  },
+                ],
+              },
+            ],
+          },
         }
       );
 
@@ -113,7 +113,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       await getExecutionWithStatus({
         prefix,
         arn: firstIngestGranuleExecutionArn,
-        status: 'completed'
+        status: 'completed',
       });
 
       // Wait for the granule to be fully ingested
@@ -136,12 +136,12 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
                 files: [
                   {
                     name: sameChecksumFilename,
-                    path: sourcePath
-                  }
-                ]
-              }
-            ]
-          }
+                    path: sourcePath,
+                  },
+                ],
+              },
+            ],
+          },
         }
       );
 
@@ -161,7 +161,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       secondIngestGranuleExecution = await getExecutionWithStatus({
         prefix,
         arn: secondIngestGranuleExecutionArn,
-        status: 'completed'
+        status: 'completed',
       });
     } catch (error) {
       beforeAllFailed = true;
@@ -199,7 +199,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
     await pAll(
       [
         () => deleteRule({ prefix, ruleName: get(firstIngestGranuleRule, 'name') }),
-        () => deleteRule({ prefix, ruleName: get(secondIngestGranuleRule, 'name') })
+        () => deleteRule({ prefix, ruleName: get(secondIngestGranuleRule, 'name') }),
       ],
       { stopOnError: false }
     ).catch(console.error);
@@ -212,8 +212,8 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
         () => deleteCollection({
           prefix,
           collectionName: get(collection, 'name'),
-          collectionVersion: get(collection, 'version')
-        })
+          collectionVersion: get(collection, 'version'),
+        }),
       ],
       { stopOnError: false }
     ).catch(console.error);

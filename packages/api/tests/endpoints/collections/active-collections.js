@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const models = require('../../../models');
@@ -16,7 +16,7 @@ const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -64,14 +64,14 @@ test.before(async () => {
   await Promise.all([
     indexer.indexCollection(esClient, fakeCollectionFactory({
       name: 'coll1',
-      version: '1'
+      version: '1',
     }), esAlias),
     indexer.indexCollection(esClient, fakeCollectionFactory({
       name: 'coll2',
-      version: '1'
+      version: '1',
     }), esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1___1' }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1___1' }), esAlias)
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1___1' }), esAlias),
   ]);
 
   // Indexing using Date.now() to generate the timestamp
@@ -82,12 +82,12 @@ test.before(async () => {
       indexer.indexCollection(esClient, fakeCollectionFactory({
         name: 'coll3',
         version: '1',
-        updatedAt: new Date(2020, 0, 29)
+        updatedAt: new Date(2020, 0, 29),
       }), esAlias),
       indexer.indexGranule(esClient, fakeGranuleFactoryV2({
         updatedAt: new Date(2020, 1, 29),
-        collectionId: 'coll3___1'
-      }), esAlias)
+        collectionId: 'coll3___1',
+      }), esAlias),
     ]);
   } finally {
     stub.restore();

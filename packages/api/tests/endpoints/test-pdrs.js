@@ -11,7 +11,7 @@ const indexer = require('../../es/indexer');
 const {
   createFakeJwtAuthToken,
   fakePdrFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
@@ -31,7 +31,7 @@ const uploadPdrToS3 = (bucket, pdrName, pdrBody) =>
   awsServices.s3().putObject({
     Bucket: bucket,
     Key: pdrS3Key(pdrName),
-    Body: pdrBody
+    Body: pdrBody,
   }).promise();
 
 // create all the variables needed across this test

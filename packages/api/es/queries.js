@@ -14,7 +14,7 @@ const regexes = {
   term: /^((?!__).)*$/,
   not: /^(.*)__not$/,
   exists: /^(.*)__exists$/,
-  range: /^(.*)__(from|to)$/
+  range: /^(.*)__(from|to)$/,
 };
 
 const queryFields = [
@@ -24,14 +24,14 @@ const queryFields = [
   'status',
   'pdrName',
   'msg',
-  'name'
+  'name',
 ];
 
 const build = {
   general: (params) => ({
     query_string: {
-      query: params.q
-    }
+      query: params.q,
+    },
   }),
 
   sort: (params) => {
@@ -42,7 +42,7 @@ const build = {
       sort = [{ [sortBy]: { order: order } }];
     } else if (sortKey && Array.isArray(sortKey)) {
       sort = sortKey.map((key) => ({
-        [key.replace(/^[+-]/, '')]: { order: key.startsWith('-') ? 'desc' : 'asc' }
+        [key.replace(/^[+-]/, '')]: { order: key.startsWith('-') ? 'desc' : 'asc' },
       }));
     } else {
       sort = [{ timestamp: { order: 'desc' } }];
@@ -62,8 +62,8 @@ const build = {
 
       const results = fields.map((f) => ({
         prefix: {
-          [`${f}`]: _prefix
-        }
+          [`${f}`]: _prefix,
+        },
       }));
 
       queries.should = queries.should.concat(results);
@@ -83,8 +83,8 @@ const build = {
       const results = {
         query_string: {
           query: `*${_infix}*`,
-          fields
-        }
+          fields,
+        },
       };
 
       queries.should = queries.should.concat(results);
@@ -102,8 +102,8 @@ const build = {
 
     return {
       match: {
-        [fieldName]: i.value
-      }
+        [fieldName]: i.value,
+      },
     };
   }),
 
@@ -141,8 +141,8 @@ const build = {
       const field = i.name.match(regex)[1];
       return {
         terms: {
-          [field]: i.value.replace(' ', '').split(',')
-        }
+          [field]: i.value.replace(' ', '').split(','),
+        },
       };
     });
 
@@ -154,8 +154,8 @@ const build = {
       const field = i.name.match(regex)[1];
       return {
         terms: {
-          [field]: i.value.replace(' ', '').split(',')
-        }
+          [field]: i.value.replace(' ', '').split(','),
+        },
       };
     });
 
@@ -167,13 +167,13 @@ const build = {
       const field = i.name.match(regex)[1];
       return {
         exists: {
-          field: field
-        }
+          field: field,
+        },
       };
     });
 
     queries.must = queries.must.concat(results);
-  }
+  },
 };
 
 function selectParams(fields, regex) {
@@ -186,13 +186,13 @@ module.exports = function query(params) {
 
   const response = {
     query: { match_all: {} },
-    sort: sortParams.sort
+    sort: sortParams.sort,
   };
 
   const queries = {
     must: [],
     should: [],
-    must_not: []
+    must_not: [],
   };
 
   const { prefix: _prefix, infix: _infix } = params;
@@ -209,7 +209,7 @@ module.exports = function query(params) {
       'order',
       'prefix',
       'infix',
-      'fields'
+      'fields',
     ]
   );
 
@@ -240,7 +240,7 @@ module.exports = function query(params) {
   build.infix(queries, _infix, fields);
 
   response.query = {
-    bool: queries
+    bool: queries,
   };
 
   return response;

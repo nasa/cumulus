@@ -12,7 +12,7 @@ const {
   promiseS3Upload,
   headObject,
   parseS3Uri,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const errors = require('@cumulus/errors');
 const set = require('lodash/set');
@@ -23,7 +23,7 @@ const {
   randomString,
   validateConfig,
   validateInput,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 const { syncGranule } = require('..');
 
@@ -34,7 +34,7 @@ async function prepareS3DownloadEvent(t) {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
-    host: randomString()
+    host: randomString(),
   };
 
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
@@ -53,7 +53,7 @@ async function prepareS3DownloadEvent(t) {
       await s3PutObject({
         Bucket: t.context.event.config.provider.host,
         Key: key,
-        Body: streamTestData(`granules/${granuleFileName}`)
+        Body: streamTestData(`granules/${granuleFileName}`),
       });
     }
   }
@@ -77,7 +77,7 @@ async function getFilesMetadata(files) {
     return {
       filename: f.filename,
       size: s3object[0].Size,
-      LastModified: s3object[0].LastModified
+      LastModified: s3object[0].LastModified,
     };
   });
   return Promise.all(getFileRequests);
@@ -92,7 +92,7 @@ test.beforeEach(async (t) => {
   await Promise.all([
     s3().createBucket({ Bucket: t.context.internalBucketName }).promise(),
     s3().createBucket({ Bucket: t.context.privateBucketName }).promise(),
-    s3().createBucket({ Bucket: t.context.protectedBucketName }).promise()
+    s3().createBucket({ Bucket: t.context.protectedBucketName }).promise(),
   ]);
 
   t.context.event = await loadJSONTestData('payloads/new-message-schema/ingest.json');
@@ -105,21 +105,21 @@ test.beforeEach(async (t) => {
     Bucket: t.context.internalBucketName,
     Key: key,
     Body: JSON.stringify(collection),
-    ACL: 'public-read'
+    ACL: 'public-read',
   });
 
   t.context.event.config.downloadBucket = t.context.internalBucketName;
   t.context.event.config.buckets.internal = {
     name: t.context.internalBucketName,
-    type: 'internal'
+    type: 'internal',
   };
   t.context.event.config.buckets.private = {
     name: t.context.privateBucketName,
-    type: 'private'
+    type: 'private',
   };
   t.context.event.config.buckets.protected = {
     name: t.context.protectedBucketName,
-    type: 'protected'
+    type: 'protected',
   };
 });
 
@@ -127,8 +127,24 @@ test.beforeEach(async (t) => {
 test.afterEach.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(t.context.internalBucketName),
   recursivelyDeleteS3Bucket(t.context.privateBucketName),
-  recursivelyDeleteS3Bucket(t.context.protectedBucketName)
+  recursivelyDeleteS3Bucket(t.context.protectedBucketName),
 ]));
+
+test.serial('should return empty granules list given empty granules list on input', async (t) => {
+  t.context.event.input.granules = [];
+
+  const output = await syncGranule(t.context.event);
+
+  t.deepEqual(output.granules, [], 'output granules list should be empty');
+});
+
+test.serial('should return empty granules list given no granules list on input', async (t) => {
+  delete t.context.event.input.granules;
+
+  const output = await syncGranule(t.context.event);
+
+  t.deepEqual(output.granules, [], 'output granules list should be empty');
+});
 
 test.serial('error when provider info is missing', async (t) => {
   delete t.context.event.config.provider;
@@ -150,7 +166,7 @@ test.serial('no error when collection info is not provided in the event', async 
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
 
   const output = await syncGranule(t.context.event);
@@ -165,7 +181,7 @@ test.serial('download Granule from FTP endpoint', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
 
   t.context.event.config.collection.url_path = 'example/';
@@ -193,7 +209,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
 
@@ -221,7 +237,7 @@ test.serial('verify that all returned granules have sync_granule_duration set', 
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
 
@@ -247,7 +263,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
     host: '127.0.0.1',
     port: 2222,
     username: 'user',
-    password: 'password'
+    password: 'password',
   };
 
   t.context.event.input.granules[0].files[0].path = '/granules';
@@ -273,7 +289,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
     true,
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${granuleFilename}`
+      Key: `${keypath}/${granuleFilename}`,
     })
   );
 });
@@ -285,7 +301,7 @@ test.serial('download granule from S3 provider', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
-    host: randomString()
+    host: randomString(),
   };
 
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
@@ -300,7 +316,7 @@ test.serial('download granule from S3 provider', async (t) => {
     await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${granuleFilePath}/${granuleFileName}`,
-      Body: streamTestData(`granules/${granuleFileName}`)
+      Body: streamTestData(`granules/${granuleFileName}`),
     });
 
     const output = await syncGranule(t.context.event);
@@ -319,7 +335,7 @@ test.serial('download granule from S3 provider', async (t) => {
       true,
       await s3ObjectExists({
         Bucket: t.context.internalBucketName,
-        Key: `${keypath}/${granuleFileName}`
+        Key: `${keypath}/${granuleFileName}`,
       })
     );
   } finally {
@@ -340,7 +356,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
 
   await validateConfig(t, config);
@@ -364,13 +380,13 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   t.true(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${granuleFilename}`
+      Key: `${keypath}/${granuleFilename}`,
     })
   );
   t.false(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${checksumFilename}`
+      Key: `${keypath}/${checksumFilename}`,
     })
   );
 });
@@ -388,7 +404,7 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
 
   await validateConfig(t, config);
@@ -425,13 +441,13 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
   t.true(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${granuleFilename}`
+      Key: `${keypath}/${granuleFilename}`,
     })
   );
   t.true(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${checksumFilename}`
+      Key: `${keypath}/${checksumFilename}`,
     })
   );
 });
@@ -445,7 +461,7 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
 
   await validateConfig(t, t.context.event.config);
@@ -469,14 +485,14 @@ test.serial('validate file properties', async (t) => {
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
   const [file] = t.context.event.input.granules[0].files;
 
   t.context.event.input.granules[0].files[1] = {
     ...file,
-    name: 'MOD09GQ.A2017224.h27v08.006.2017227165029_1.jpg'
+    name: 'MOD09GQ.A2017224.h27v08.006.2017227165029_1.jpg',
   };
 
   t.context.event.config.collection.files[0].url_path = 'file-example/';
@@ -508,7 +524,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
-    host: randomString()
+    host: randomString(),
   };
 
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
@@ -597,14 +613,14 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
-      Body: newContent
+      Body: newContent,
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
     t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
-      key
+      key,
     });
 
     output = await syncGranule(t.context.event);
@@ -635,14 +651,14 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
-      Body: newerContent
+      Body: newerContent,
     });
 
     t.context.event.input.granules[0].files[0].size = newerContent.length;
     t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
-      key
+      key,
     });
 
     output = await syncGranule(t.context.event);
@@ -688,14 +704,14 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
-      Body: newContent
+      Body: newContent,
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
     t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
-      key
+      key,
     });
 
     output = await syncGranule(t.context.event);
@@ -744,14 +760,14 @@ async function granuleFilesOverwrittenTest(t) {
     await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
-      Body: newContent
+      Body: newContent,
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
     t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
-      key
+      key,
     });
 
     output = await syncGranule(t.context.event);
@@ -830,7 +846,7 @@ test.serial('download multiple granules from S3 provider to staging directory', 
           // eslint-disable-next-line no-await-in-loop
           await s3ObjectExists({
             Bucket: t.context.internalBucketName,
-            Key: `${keypath}/${granuleFileName}`
+            Key: `${keypath}/${granuleFileName}`,
           })
         );
       }
