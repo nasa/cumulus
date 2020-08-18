@@ -3,17 +3,17 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('collections', (table) => {
     table.increments('cumulusId').primary();
-    table.string('name');
-    table.string('version');
+    table.string('name').notNullable();
+    table.string('version').notNullable();
+    table.string('sampleFileName').notNullable();
+    table.string('granuleIdValidationRegex').notNullable(); // does this need to be longer than 255 chars?
+    table.string('granuleIdExtraction').notNullable(); // does this need to be longer than 255 chars?
+    table.jsonb('files').notNullable();
     table.string('process');
     table.string('url_path');
     table.enum('duplicateHandling', ['error', 'replace', 'skip', 'version']);
-    table.string('granuleIdValidationRegex'); // does this need to be longer than 255 chars?
-    table.string('granuleIdExtraction'); // does this need to be longer than 255 chars?
     table.boolean('reportToEms');
-    table.string('sampleFileName');
     table.boolean('ignoreFilesConfigForDiscovery');
-    table.jsonb('files');
     table.jsonb('meta');
     table.jsonb('tags');
     // adds "created_at" and "updated_at" columns automatically
