@@ -1,0 +1,43 @@
+{
+  "name": "@cumulus/update-cmr-access-constraints",
+  "version": "2.0.1",
+  "description": "Updates CMR metadata to set access constraints",
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "private": true,
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/update-cmr-access-constraints#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "tasks/update-cmr-access-constraints"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "main": "dist/index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build-lambda-zips": "(cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
+    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
+    "package": "npm run build && npm run build-lambda-zips",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w"
+  },
+  "ava": {
+    "files": [
+      "tests/*"
+    ],
+    "verbose": true
+  },
+  "dependencies": {
+    "@cumulus/aws-client": "2.0.1",
+    "@cumulus/cmrjs": "2.0.1",
+    "@cumulus/common": "2.0.1",
+    "@cumulus/cumulus-message-adapter-js": "1.3.1",
+    "lodash": "^4.17.5"
+  }
+}
