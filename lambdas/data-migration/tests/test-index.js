@@ -1,10 +1,12 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
+const sortBy = require('lodash/sortBy');
 const Knex = require('knex');
 
 const {
   createAndWaitForDynamoDbTable,
-  deleteAndWaitForDynamoDbTableNotExists
+  deleteAndWaitForDynamoDbTableNotExists,
 } = require('@cumulus/aws-client/DynamoDb');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 
@@ -30,6 +32,7 @@ const generateFakeCollection = (params) => ({
   files: [{ regex: 'fake-regex ', name: 'file.name' }],
   meta: { foo: 'bar', key: { value: 'test' } },
   reportToEms: false,
+  ignoreFilesConfigForDiscovery: false,
   process: 'modis',
   url_path: 'path',
   tags: ['tag1', 'tag2'],
@@ -40,8 +43,31 @@ const generateFakeCollection = (params) => ({
 
 const batchWriteItems = (tableName, items) =>
   dynamodbDocClient().batchWrite({
-    RequestItems: { [tableName]: items },
+    RequestItems: {
+      [tableName]: items.map((item) => ({
+        PutRequest: {
+          Item: item,
+        },
+      })),
+    },
   }).promise();
+
+const createCollectionDynamoRecords = (items) =>
+  batchWriteItems(
+    process.env.CollectionsTable,
+    items
+  );
+
+const destroyCollectionDynamoRecords = (records) =>
+  Promise.all(records.map(
+    (record) => dynamodbDocClient().delete({
+      TableName: process.env.CollectionsTable,
+      Key: {
+        name: record.name,
+        version: record.version,
+      },
+    }).promise()
+  ));
 
 test.before(async () => {
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
@@ -71,6 +97,10 @@ test.before(async () => {
   });
 });
 
+test.afterEach.always(async () => {
+  await knex('collections').truncate();
+});
+
 test.after.always(async () => {
   await deleteAndWaitForDynamoDbTableNotExists({
     TableName: process.env.CollectionsTable,
@@ -78,37 +108,56 @@ test.after.always(async () => {
   await knex.destroy();
 });
 
-test('migrateCollections', async (t) => {
+test.serial('migrateCollections handles multiple collections', async (t) => {
   const fakeCollection1 = generateFakeCollection();
-  const items = [{
-    PutRequest: {
-      Item: fakeCollection1,
-    },
-  }, {
-    PutRequest: {
-      Item: generateFakeCollection(),
-    },
-  }];
-  try {
-    await batchWriteItems(process.env.CollectionsTable, items);
-    await migrateCollections(process.env, knex);
+  const fakeCollection2 = generateFakeCollection();
 
-    const results = await knex().select().table('collections');
-    t.teardown(async () => {
-      await Promise.all(results.map(async (result) => {
-        await knex('collections')
-          .where('cumulusId', result.cumulusId)
-          .delete();
-      }));
-    });
+  await createCollectionDynamoRecords([
+    fakeCollection1,
+    fakeCollection2,
+  ]);
+  t.teardown(() => destroyCollectionDynamoRecords([
+    fakeCollection1,
+    fakeCollection2,
+  ]));
 
-    t.pass();
-    // delete fakeCollection1.granuleId;
-    // t.deepEqual(results[0], {
-    //   ...fakeCollection1,
-    //   granuleIdValidationRegex: fakeCollection1.granuleId,
-    // });
-  } catch (err) {
-    t.fail();
-  }
+  await migrateCollections(process.env, knex);
+
+  const records = await knex().select().table('collections');
+
+  t.deepEqual(
+    sortBy([
+      omit(records[0], ['cumulusId', 'created_at', 'updated_at']),
+      omit(records[1], ['cumulusId', 'created_at', 'updated_at']),
+    ], 'name'),
+    sortBy([
+      omit({
+        ...fakeCollection1,
+        granuleIdValidationRegex: fakeCollection1.granuleId,
+      }, ['granuleId', 'createdAt', 'updatedAt']),
+      omit({
+        ...fakeCollection2,
+        granuleIdValidationRegex: fakeCollection2.granuleId,
+      }, ['granuleId', 'createdAt', 'updatedAt']),
+    ], 'name')
+  );
+});
+
+test.serial('migrateCollections processes all non-failing records', async (t) => {
+  const fakeCollection1 = generateFakeCollection();
+  const fakeCollection2 = generateFakeCollection();
+  // change timestamp to string so that record will fail
+  fakeCollection2.createdAt = 'bad-value';
+
+  await createCollectionDynamoRecords([
+    fakeCollection1,
+    fakeCollection2,
+  ]);
+  t.teardown(() => destroyCollectionDynamoRecords([
+    fakeCollection1,
+    fakeCollection2,
+  ]));
+
+  const createdRecordIds = await migrateCollections(process.env, knex);
+  t.is(createdRecordIds.length, 1);
 });

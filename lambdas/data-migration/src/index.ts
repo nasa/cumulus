@@ -1,9 +1,8 @@
-// import * as AWS from 'aws-sdk';
 import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-// import Logger from '@cumulus/logger';
+import Logger from '@cumulus/logger';
 
-// const logger = new Logger({ sender: '@cumulus/data-migration' });
+const logger = new Logger({ sender: '@cumulus/data-migration' });
 
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
@@ -19,24 +18,22 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
 
 export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
   const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
-
   const searchQueue = new DynamoDbSearchQueue({
     TableName: collectionsTable,
   });
+  const createdRecordIds = [];
 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
-    // logger.info(`Attempting to process ${searchQueue.getItemsCount()} items`);
-
     // Map old record to new schema.
     const updatedRecord: any = {
       ...record,
       granuleIdValidationRegex: record.granuleId,
       files: JSON.stringify(record.files),
       meta: JSON.stringify(record.meta),
-      created_at: record.createdAt,
-      updated_at: record.updatedAt,
+      created_at: new Date(record.createdAt),
+      updated_at: new Date(record.updatedAt),
       tags: JSON.stringify(record.tags),
     };
 
@@ -45,12 +42,21 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
     delete updatedRecord.createdAt;
     delete updatedRecord.updatedAt;
 
-    await knex('collections').insert(updatedRecord);
+    try {
+      const [cumulusId] = await knex('collections')
+        .returning('cumulusId')
+        .insert(updatedRecord);
+      createdRecordIds.push(cumulusId);
+    } catch (error) {
+      logger.error('Could not create collection record:', error);
+    }
 
-    searchQueue.shift();
+    await searchQueue.shift();
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
+  logger.info(`successfully migrated ${createdRecordIds.length} collection records`);
+  return createdRecordIds;
 };
 
 const getConnectionConfig = (env: NodeJS.ProcessEnv): Knex.PgConnectionConfig => ({
