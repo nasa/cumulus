@@ -82,10 +82,10 @@ function convertToESCollectionSearchParams(params) {
  * @param {Object} params - request params to convert to Elasticsearch params
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
-function convertToESSearchParams(params) {
+function convertToESGranuleSearchParams(params) {
   return {
-    timestamp__from: ISODateToValue(params.startTimestamp),
-    timestamp__to: ISODateToValue(params.endTimestamp)
+    updatedAt__from: ISODateToValue(params.startTimestamp),
+    updatedAt__to: ISODateToValue(params.endTimestamp)
   };
 }
 
@@ -391,8 +391,13 @@ async function reconciliationReportForGranules(params) {
     format: 'umm_json'
   });
 
-  const esCollectionSearchParams = { ...convertToESSearchParams(recReportParams), collectionId };
-  const esGranulesIterator = new ESCollectionGranuleQueue(esCollectionSearchParams, process.env.ES_INDEX);
+  const esCollectionSearchParams = {
+    ...convertToESGranuleSearchParams(recReportParams),
+    collectionId
+  };
+  const esGranulesIterator = new ESCollectionGranuleQueue(
+    esCollectionSearchParams, process.env.ES_INDEX
+  );
   const oneWay = isOneWayReport(recReportParams);
   const granulesReport = {
     okCount: 0,
