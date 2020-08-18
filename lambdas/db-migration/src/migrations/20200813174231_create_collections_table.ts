@@ -15,6 +15,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table.boolean('ignoreFilesConfigForDiscovery');
     table.jsonb('files');
     table.jsonb('meta');
+    table.jsonb('tags');
     table.timestamps(); // adds "created_at" and "updated_at" columns automatically
 
     // add unique constraints
