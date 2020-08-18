@@ -14,7 +14,7 @@
     "tsc": "../../node_modules/.bin/tsc"
   },
   "dependencies": {
-    "knex": "^0.21.2",
+    "knex": "^0.21.5",
     "pg": "^8.3.0"
   },
   "devDependencies": {

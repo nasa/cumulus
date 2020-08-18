@@ -1,16 +1,19 @@
 {
   "name": "@cumulus/db",
-  "version": "2.0.1",
+  "version": "2.0.1-alpha.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "private": true,
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts"
+  ],
   "scripts": {
     "clean": "rm -rf dist",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc"
   },
   "dependencies": {
-    "knex": "^0.21.2",
+    "knex": "^0.21.5",
     "pg": "^8.3.0"
   }
 }
