@@ -32,7 +32,7 @@ const generateFakeCollection = (params) => ({
   reportToEms: false,
   process: 'modis',
   url_path: 'path',
-  // tags: ['tag1', 'tag2'],
+  tags: ['tag1', 'tag2'],
   createdAt: Date.now(),
   updatedAt: Date.now(),
   ...params,

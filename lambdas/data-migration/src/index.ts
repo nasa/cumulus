@@ -37,7 +37,7 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
       meta: JSON.stringify(record.meta),
       created_at: record.createdAt,
       updated_at: record.updatedAt,
-      // tags: JSON.stringify(record.tags),
+      tags: JSON.stringify(record.tags),
     };
 
     // Remove field names that do not exist in new schema
