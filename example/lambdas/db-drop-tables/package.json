@@ -10,6 +10,6 @@
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run tsc && ../../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "prepare": "npm run tsc",
-    "tsc": "ls -l node_modules; ls -l node_modules/@cumulus; ls -l node_modules/@cumulus/db; ../../../node_modules/.bin/tsc"
+    "tsc": "../../../node_modules/.bin/tsc"
   }
 }
