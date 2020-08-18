@@ -3,7 +3,7 @@
 const { Search } = require('./search');
 const {
   defaultESScrollSize,
-  defaultESScrollDuration
+  defaultESScrollDuration,
 } = require('./esDefaults');
 
 /**

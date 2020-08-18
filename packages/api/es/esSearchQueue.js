@@ -72,7 +72,7 @@ class ESSearchQueue {
     if (!this.scrollClient) {
       this.scrollClient = new ESScrollSearch(
         {
-          queryStringParameters: this.params
+          queryStringParameters: this.params,
         },
         this.type,
         this.index

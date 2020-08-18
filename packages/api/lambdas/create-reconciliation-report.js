@@ -1,4 +1,4 @@
-pn'use strict';
+'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
@@ -60,7 +60,7 @@ function ISODateToValue(datestring) {
 function convertToESCollectionSearchParams(params) {
   return {
     updatedAt__from: ISODateToValue(params.startTimestamp),
-    updatedAt__to: ISODateToValue(params.endTimestamp)
+    updatedAt__to: ISODateToValue(params.endTimestamp),
   };
 }
 
@@ -72,7 +72,7 @@ function convertToESCollectionSearchParams(params) {
 function convertToESGranuleSearchParams(params) {
   return {
     updatedAt__from: ISODateToValue(params.startTimestamp),
-    updatedAt__to: ISODateToValue(params.endTimestamp)
+    updatedAt__to: ISODateToValue(params.endTimestamp),
   };
 }
 
@@ -85,7 +85,7 @@ function convertToESGranuleSearchParams(params) {
 function convertToBucketReportFilterParams(params) {
   return {
     startDateTime: ISODateToValue(params.startTimestamp),
-    endDateTime: ISODateToValue(params.endTimestamp)
+    endDateTime: ISODateToValue(params.endTimestamp),
   };
 }
 
@@ -100,7 +100,7 @@ function convertToBucketReportFilterParams(params) {
 function isOneWayReport(reportParams) {
   return [
     'startTimestamp',
-    'endTimestamp'
+    'endTimestamp',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -382,7 +382,7 @@ async function reconciliationReportForGranules(params) {
 
   const esCollectionSearchParams = {
     ...convertToESGranuleSearchParams(recReportParams),
-    collectionId
+    collectionId,
   };
   const esGranulesIterator = new ESCollectionGranuleQueue(
     esCollectionSearchParams, process.env.ES_INDEX
@@ -508,7 +508,7 @@ async function reconciliationReportForCumulusCMR(params) {
   // create granule and granule file report for collections in both Cumulus and CMR
   const promisedGranuleReports = collectionReport.okCollections.map(
     (collectionId) => reconciliationReportForGranules({
-      collectionId, bucketsConfig, distributionBucketMap, recReportParams
+      collectionId, bucketsConfig, distributionBucketMap, recReportParams,
     })
   );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
