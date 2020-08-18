@@ -54,19 +54,6 @@ function ISODateToValue(datestring) {
 
 /**
  *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for CMR Collection search.
- */
-function convertToCMRCollectionSearchParams(params) {
-  const startDate = params.startTimestamp || '';
-  const endDate = params.endTimestamp || '';
-  return {
-    'has_granules_revised_at[]': `${startDate},${endDate}`
-  };
-}
-
-/**
- *
  * @param {Object} params - request params to convert to reconciliationReportForCollection params
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
@@ -107,7 +94,7 @@ function convertToBucketReportFilterParams(params) {
  * would turn a Cumulus Vs CMR comparison into a one way report.
  *
  * @param {Object} reportParams
- * @returns {boolean} Returns true only if a tested key exists on the input
+ * @returns {boolean} Returns true if any tested key exists on the input
  *                    object and the key references a defined value.
  */
 function isOneWayReport(reportParams) {
@@ -204,10 +191,7 @@ async function reconciliationReportForCollections(recReportParams) {
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  const cmrSearchParams = convertToCMRCollectionSearchParams(recReportParams);
-  log.info(`cmrSearchParams: ${JSON.stringify(cmrSearchParams)}`);
-  const cmrCollectionItems = await cmr.searchCollections(cmrSearchParams, 'umm_json');
-
+  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
@@ -399,6 +383,7 @@ async function reconciliationReportForGranules(params) {
     esCollectionSearchParams, process.env.ES_INDEX
   );
   const oneWay = isOneWayReport(recReportParams);
+
   const granulesReport = {
     okCount: 0,
     onlyInCumulus: [],
