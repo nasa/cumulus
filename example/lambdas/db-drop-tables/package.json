@@ -4,7 +4,7 @@
   "version": "2.0.1",
   "private": true,
   "dependencies": {
-    "@cumulus/db": "file://../../../packages/db"
+    "@cumulus/db": "../../../packages/db"
   },
   "scripts": {
     "clean": "rm -rf dist",
