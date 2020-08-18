@@ -70,19 +70,19 @@ function convertToCMRCollectionSearchParams(params) {
  * @param {Object} params - request params to convert to Elasticsearch params
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
-function convertToESSearchParams(params) {
-  return {
-    timestamp__from: ISODateToValue(params.startTimestamp),
-    timestamp__to: ISODateToValue(params.endTimestamp)
-  };
-}
+// function convertToESSearchParams(params) {
+//   return {
+//     timestamp__from: ISODateToValue(params.startTimestamp),
+//     timestamp__to: ISODateToValue(params.endTimestamp)
+//   };
+// }
 
 /**
  *
  * @param {Object} params - request params to convert to reconciliationReportForCollection params
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
-function convertToESCollectionSearchParams(params) {
+function convertToESSearchParams(params) {
   return {
     updatedAt__from: ISODateToValue(params.startTimestamp),
     updatedAt__to: ISODateToValue(params.endTimestamp)
@@ -185,10 +185,7 @@ async function reconciliationReportForCollections(recReportParams) {
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  // TODO [MHS, 08/05/2020]  Set query params for CMR here or are we one-waying now only.
-  // ""has granules revised at"" <- see slack.
-  // probably want a search like this:
-  // curl "https://cmr.earthdata.nasa.gov/search/collections?has_granules_revised_at\[\]=2015-01-01T10:00:00Z,2015-02-02T10:10:00Z"
+
   const cmrSearchParams = convertToCMRCollectionSearchParams(recReportParams);
   // Logged to
   log.info(`cmrSearchParams: ${JSON.stringify(cmrSearchParams)}`);
@@ -198,12 +195,14 @@ async function reconciliationReportForCollections(recReportParams) {
 
   // Build a ESCollection and call the aggregateActiveGranuleCollections to get
   // list of Active CollectionIds
-  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
+  const esCollectionSearchParams = convertToESSearchParams(recReportParams);
   const esCollection = new Collection({ queryStringParameters: esCollectionSearchParams }, 'collection', process.env.ES_INDEX);
   const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
   const esCollectionIds = esCollectionItems.sort();
   log.info(`esCollectionIds: ${JSON.stringify(esCollectionIds)}`);
   log.info(`esCollectionSearchParams: ${JSON.stringify(esCollectionSearchParams)}`);
+
+  const timestamps = !!recReportParams.startTimestamp || !!recReportParams.endTimestamp;
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
@@ -219,7 +218,10 @@ async function reconciliationReportForCollections(recReportParams) {
       collectionsOnlyInCumulus.push(nextDbCollectionId);
     } else if (nextDbCollectionId > nextCmrCollectionId) {
       // Found an item that is only in cmr and not in Cumulus database
-      collectionsOnlyInCmr.push(nextCmrCollectionId);
+      // Can skip for searches with timestamp range
+      if (!timestamps) {
+        collectionsOnlyInCmr.push(nextCmrCollectionId);
+      }
       cmrCollectionIds.shift();
     } else {
       // Found an item that is in both cmr and database
@@ -374,7 +376,11 @@ async function reconciliationReportForGranules(params) {
     format: 'umm_json'
   });
   // TODO [MHS, 2020-07-13] time has to get passed into here.
-  const esGranulesIterator = new ESCollectionGranuleQueue({ collectionId }, process.env.ES_INDEX);
+  const esCollectionSearchParams = { ...convertToESSearchParams(searchParams), collectionId };
+  const esGranulesIterator = new ESCollectionGranuleQueue(esCollectionSearchParams,
+    process.env.ES_INDEX);
+
+  const timestamps = !!searchParams.startTimestamp || !!searchParams.endTimestamp;
 
   const granulesReport = {
     okCount: 0,
@@ -403,11 +409,14 @@ async function reconciliationReportForGranules(params) {
       await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     } else if (nextDbGranuleId > nextCmrGranuleId) {
       // Found an item that is only in CMR and not in Cumulus database
-      granulesReport.onlyInCmr.push({
-        GranuleUR: nextCmrGranuleId,
-        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
-        Version: nextCmrItem.umm.CollectionReference.Version
-      });
+      // For a timerange, we can skip this step
+      if (!timestamps) {
+        granulesReport.onlyInCmr.push({
+          GranuleUR: nextCmrGranuleId,
+          ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+          Version: nextCmrItem.umm.CollectionReference.Version
+        });
+      }
       await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     } else {
       // Found an item that is in both CMR and Cumulus database
@@ -449,13 +458,16 @@ async function reconciliationReportForGranules(params) {
   }
 
   // Add any remaining CMR items to the report
-  while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-    const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    granulesReport.onlyInCmr.push({
-      GranuleUR: cmrItem.umm.GranuleUR,
-      ShortName: nextCmrItem.umm.CollectionReference.ShortName,
-      Version: nextCmrItem.umm.CollectionReference.Version
-    });
+  // This step can be skipped for timerange search
+  if (!timestamps) {
+    while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+      const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      granulesReport.onlyInCmr.push({
+        GranuleUR: cmrItem.umm.GranuleUR,
+        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+        Version: nextCmrItem.umm.CollectionReference.Version
+      });
+    }
   }
 
   return {
