@@ -1,5 +1,6 @@
 'use strict';
 
+const pick = require('lodash/pick');
 const sortBy = require('lodash/sortBy');
 const isEqual = require('lodash/isEqual');
 const union = require('lodash/union');
@@ -8,7 +9,7 @@ const log = require('@cumulus/common/log');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { ESSearchQueue } = require('../es/esSearchQueue');
-const { Collection } = require('../models');
+const { Collection, Granule } = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 
 /**
@@ -67,6 +68,7 @@ async function reconciliationReportForCollections(recReportParams) {
   let itemsOnlyInEs = [];
   let itemsOnlyInDb = [];
 
+  const diffIgnoreFields = ['timestamp', 'updatedAt'];
   let nextEsItem = await esCollectionsIterator.peek();
   let nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : null;
 
@@ -83,8 +85,8 @@ async function reconciliationReportForCollections(recReportParams) {
       itemsOnlyInDb.push(dbCollectionId);
       dbCollectionItems.shift();
     } else {
-      // Found an item that is in both cmr and database
-      if (isEqual(omit(nextEsItem, ['timestamp', 'updatedAt']), omit(nextDbItem, ['timestamp', 'updatedAt']))) {
+      // Found an item that is in both ES and DB
+      if (isEqual(omit(nextEsItem, diffIgnoreFields), omit(nextDbItem, diffIgnoreFields))) {
         okCount += 1;
       } else {
         itemsWithConflicts.push({ es: nextEsItem, db: nextDbItem });
@@ -133,37 +135,95 @@ async function getAllCollections() {
 
 exports.getAllCollections = getAllCollections;
 
+async function reportForGranulesByCollectionId(collectionId, recReportParams) {
+  log.debug('internal-reconciliation-report reportForGranulesByCollectionId');
+  //   For each collection,
+  //     Get granule list in ES ordered by granuleId
+  //     Get granule list in DynamoDB ordered by granuleId
+  //   Report granules only in ES
+  //   Report granules only in DynamoDB
+  //   Report granules with different contents
+
+  const searchParams = convertToGranuleSearchParams(recReportParams);
+  console.log('search param', searchParams);
+  const esGranulesIterator = new ESSearchQueue(
+    { ...searchParams, collectionId, sort_key: ['granuleId'] }, 'granule', process.env.ES_INDEX
+  );
+
+  const dbGranulesIterator = await (new Granule())
+    .searchGranulesForCollection(collectionId, searchParams);
+
+  let okCount = 0;
+  const itemsWithConflicts = [];
+  const itemsOnlyInEs = [];
+  const itemsOnlyInDb = [];
+  const diffIgnoreFields = ['timestamp', 'updatedAt'];
+
+  const granuleFields = ['granuleId', 'collectionId', 'provider'];
+  let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
+
+  /* eslint-disable no-await-in-loop */
+  while (nextEsItem && nextDbItem) {
+    if (nextEsItem.granuleId < nextDbItem.granuleId) {
+      // Found an item that is only in ES and not in DB
+      itemsOnlyInEs.push(pick(nextEsItem, granuleFields));
+      await esGranulesIterator.shift();
+    } else if (nextEsItem.granuleId > nextDbItem.granuleId) {
+      // Found an item that is only in DB and not in ES
+      itemsOnlyInDb.push(pick(nextDbItem, granuleFields));
+      await dbGranulesIterator.shift();
+    } else {
+      // Found an item that is in both ES and DB
+      if (isEqual(omit(nextEsItem, diffIgnoreFields), omit(nextDbItem, diffIgnoreFields))) {
+        okCount += 1;
+      } else {
+        itemsWithConflicts.push({ es: nextEsItem, db: nextDbItem });
+      }
+      await Promise.all([esGranulesIterator.shift(), dbGranulesIterator.shift()]);
+    }
+
+    [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
+  }
+
+  // Add any remaining ES items to the report
+  while (await esGranulesIterator.peek()) {
+    const item = await esGranulesIterator.shift();
+    itemsOnlyInEs.push(pick(item, granuleFields));
+  }
+
+  // Add any remaining DB items to the report
+  while (await dbGranulesIterator.peek()) {
+    const item = await dbGranulesIterator.shift();
+    itemsOnlyInDb.push(pick(item, granuleFields));
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return {
+    okCount,
+    conflicts: itemsWithConflicts,
+    onlyInEs: itemsOnlyInEs,
+    onlyInDb: itemsOnlyInDb,
+  };
+}
+exports.reportForGranulesByCollectionId = reportForGranulesByCollectionId;
+
 async function reconciliationReportForGranules(recReportParams) {
   log.debug('internal-reconciliation-report reconciliationReportForGranules');
   // compare granule holdings:
-  //   Get all collections list from db and es
+  //   Get all collections list from db and es or use the collectionId from the request
   //   For each collection,
-  //     Get granule list in ES ordered by granuleId
-  //     Get granule list in DynamoDB ordered by granuleId
+  //     compare granule holdings and get report
   //   Report granules only in ES
   //   Report granules only in DynamoDB
   //   Report granules with different contents
 
   // get collections list in ES and dynamoDB combined
-  const collections = getAllCollections();
+  const [collectionId, ...searchParams] = recReportParams;
+  const collections = collectionId ? [collectionId] : await getAllCollections();
+
   return {};
 }
 
-async function reconciliationReportForGranulesByCollection(collectionId, recReportParams) {
-  log.debug('internal-reconciliation-report reconciliationReportForGranules');
-  // compare granule holdings:
-  //   Get all collections list from db and es
-  //   For each collection,
-  //     Get granule list in ES ordered by granuleId
-  //     Get granule list in DynamoDB ordered by granuleId
-  //   Report granules only in ES
-  //   Report granules only in DynamoDB
-  //   Report granules with different contents
-
-  // get collections list in ES and dynamoDB combined
-  const collections = getAllCollections();
-  return {};
-}
 
 // export for testing
 exports.reconciliationReportForGranules = reconciliationReportForGranules;

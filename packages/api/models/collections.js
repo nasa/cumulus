@@ -268,11 +268,11 @@ class Collection {
    * return the queue of the granules for a given collection and search params
    * the items are ordered by granuleId
    *
-   * @param {string} searchParams - search parameters
+   * @param {Object} searchParams - optional, search parameters
    * @param {Array<string>} fields - optional, fields to return
    * @returns {Array<Object>} the granules' queue for a given collection
    */
-  async searchCollections(searchParams, fields) {
+  async searchCollections(searchParams = {}, fields = []) {
     const attributeNames = {};
     const attributeValues = {};
     const filterArray = [];

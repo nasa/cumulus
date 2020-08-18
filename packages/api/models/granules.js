@@ -401,11 +401,11 @@ class Granule extends Manager {
    * the items are ordered by granuleId
    *
    * @param {string} collectionId - collection id
-   * @param {string} searchParams - search parameters
+   * @param {Object} searchParams - optional, search parameters
    * @param {Array<string>} fields - optional, fields to return
    * @returns {Array<Object>} the granules' queue for a given collection
    */
-  searchGranulesForCollection(collectionId, searchParams, fields) {
+  searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
     const attributeNames = {};
     const attributeValues = {};
     const filterArray = [];
