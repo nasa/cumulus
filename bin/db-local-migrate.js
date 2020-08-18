@@ -9,6 +9,6 @@ handler({
     PG_HOST: 'localhost',
     PG_USER: 'postgres',
     PG_PASSWORD: 'password',
-    PG_DATABASE: 'postgres'
-  }
+    PG_DATABASE: 'postgres',
+  },
 }).catch(console.error);

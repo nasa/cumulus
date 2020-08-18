@@ -2,7 +2,7 @@ import Knex from 'knex';
 
 export const dropAllTables = async ({
   knex,
-  schema = 'public'
+  schema = 'public',
 }: {
   knex: Knex<any, unknown[]>,
   schema?: string

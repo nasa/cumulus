@@ -12,9 +12,9 @@ const { dropAllTables } = require('../dist/lib/db');
       host: 'localhost',
       user: 'postgres',
       password: 'password',
-      database: 'postgres'
+      database: 'postgres',
     },
-    asyncStackTraces: true
+    asyncStackTraces: true,
   });
 
   try {
