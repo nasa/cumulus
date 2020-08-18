@@ -54,31 +54,6 @@ function ISODateToValue(datestring) {
 
 /**
  *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for CMR Collection search.
- */
-function convertToCMRCollectionSearchParams(params) {
-  const startDate = params.startTimestamp || '';
-  const endDate = params.endTimestamp || '';
-  return {
-    'has_granules_revised_at[]': `${startDate},${endDate}`
-  };
-}
-
-/**
- *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESSearchParams(params) {
-  return {
-    timestamp__from: ISODateToValue(params.startTimestamp),
-    timestamp__to: ISODateToValue(params.endTimestamp)
-  };
-}
-
-/**
- *
  * @param {Object} params - request params to convert to reconciliationReportForCollection params
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
@@ -101,6 +76,22 @@ function convertToBucketReportFilterParams(params) {
     endDateTime: ISODateToValue(params.endTimestamp)
   };
 }
+
+/**
+ * Checks to see if any of the included reportParams contains a value that
+ * would turn a Cumulus Vs CMR comparison into a one way report.
+ *
+ * @param {Object} reportParams
+ * @returns {boolean} Returns true only if a tested key exists on the input
+ *                    object and the key references a defined value.
+ */
+function isOneWayReport(reportParams) {
+  return [
+    'startTimestamp',
+    'endTimestamp'
+  ].some((e) => !!reportParams[e]);
+}
+
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
  * DynamoDB, and that there are no extras in either S3 or DynamoDB
@@ -186,16 +177,14 @@ async function reconciliationReportForCollections(recReportParams) {
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
   // TODO [MHS, 08/05/2020]  Set query params for CMR here or are we one-waying now only.
-  // ""has granules revised at"" <- see slack.
-  // probably want a search like this:
-  // curl "https://cmr.earthdata.nasa.gov/search/collections?has_granules_revised_at\[\]=2015-01-01T10:00:00Z,2015-02-02T10:10:00Z"
-  const cmrSearchParams = convertToCMRCollectionSearchParams(recReportParams);
-  // Logged to
-  log.info(`cmrSearchParams: ${JSON.stringify(cmrSearchParams)}`);
-  const cmrCollectionItems = await cmr.searchCollections(cmrSearchParams, 'umm_json');
+  // TODO [MHS, 08/17/2020] Well, this is different again?  We are one-waying?
+  const oneWayReport = isOneWayReport(recReportParams);
+  log.info(`is OneWay: ${oneWayReport}`);
+  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
+  log.info(`CMR Collection Ids: ${JSON.stringify(cmrCollectionIds)}`);
   // Build a ESCollection and call the aggregateActiveGranuleCollections to get
   // list of Active CollectionIds
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
@@ -219,7 +208,7 @@ async function reconciliationReportForCollections(recReportParams) {
       collectionsOnlyInCumulus.push(nextDbCollectionId);
     } else if (nextDbCollectionId > nextCmrCollectionId) {
       // Found an item that is only in cmr and not in Cumulus database
-      collectionsOnlyInCmr.push(nextCmrCollectionId);
+      if (!oneWayReport) collectionsOnlyInCmr.push(nextCmrCollectionId);
       cmrCollectionIds.shift();
     } else {
       // Found an item that is in both cmr and database
@@ -236,7 +225,7 @@ async function reconciliationReportForCollections(recReportParams) {
   collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(esCollectionIds);
 
   // Add any remaining CMR items to the report
-  collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
+  if (!oneWayReport) collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
 
   return {
     okCollections,
@@ -594,7 +583,6 @@ async function createReconciliationReport(recReportParams) {
   );
   const bucketReports = await Promise.all(promisedBucketReports);
 
-  // compare CUMULUS internal holdings in s3 and database
   bucketReports.forEach((bucketReport) => {
     report.filesInCumulus.okCount += bucketReport.okCount;
     report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
