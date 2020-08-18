@@ -54,6 +54,19 @@ function ISODateToValue(datestring) {
 
 /**
  *
+ * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for CMR Collection search.
+ */
+function convertToCMRCollectionSearchParams(params) {
+  const startDate = params.startTimestamp || '';
+  const endDate = params.endTimestamp || '';
+  return {
+    'has_granules_revised_at[]': `${startDate},${endDate}`
+  };
+}
+
+/**
+ *
  * @param {Object} params - request params to convert to reconciliationReportForCollection params
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
@@ -172,15 +185,17 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
 
+  const oneWayReport = isOneWayReport(recReportParams);
+  log.info(`is OneWay: ${oneWayReport}`);
+
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  // TODO [MHS, 08/05/2020]  Set query params for CMR here or are we one-waying now only.
-  // TODO [MHS, 08/17/2020] Well, this is different again?  We are one-waying?
-  const oneWayReport = isOneWayReport(recReportParams);
-  log.info(`is OneWay: ${oneWayReport}`);
-  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
+  const cmrSearchParams = convertToCMRCollectionSearchParams(recReportParams);
+  log.info(`cmrSearchParams: ${JSON.stringify(cmrSearchParams)}`);
+  const cmrCollectionItems = await cmr.searchCollections(cmrSearchParams, 'umm_json');
+
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
