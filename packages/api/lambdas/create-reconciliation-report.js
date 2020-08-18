@@ -79,6 +79,18 @@ function convertToESCollectionSearchParams(params) {
 
 /**
  *
+ * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for Elasticsearch.
+ */
+function convertToESSearchParams(params) {
+  return {
+    timestamp__from: ISODateToValue(params.startTimestamp),
+    timestamp__to: ISODateToValue(params.endTimestamp)
+  };
+}
+
+/**
+ *
  * @param {Object} params - request params to convert to bucket filter params
  * @returns {Object} desired parameters formated for bucket reconcilation
  *                   report filtering.
@@ -359,6 +371,7 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
  * @param {Object} params.bucketsConfig          - bucket configuration object
  * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
+ * @param {Object} params.recReportParams        - Lambda report paramaters for narrowing focus
  * @returns {Promise<Object>}                    - an object with the granulesReport and filesReport
  */
 async function reconciliationReportForGranules(params) {
@@ -367,7 +380,7 @@ async function reconciliationReportForGranules(params) {
   //   Get CUMULUS granules list (by collectionId order by granuleId)
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
-  const { collectionId, bucketsConfig, distributionBucketMap, searchParams } = params;
+  const { collectionId, bucketsConfig, distributionBucketMap, recReportParams } = params;
   const { name, version } = deconstructCollectionId(collectionId);
 
   const cmrSettings = await getCmrSettings();
@@ -377,9 +390,10 @@ async function reconciliationReportForGranules(params) {
     searchParams: { short_name: name, version: version, sort_key: ['granule_ur'] },
     format: 'umm_json'
   });
-  // TODO [MHS, 2020-07-13] time has to get passed into here.
-  const esGranulesIterator = new ESCollectionGranuleQueue({ collectionId }, process.env.ES_INDEX);
 
+  const esCollectionSearchParams = { ...convertToESSearchParams(recReportParams), collectionId };
+  const esGranulesIterator = new ESCollectionGranuleQueue(esCollectionSearchParams, process.env.ES_INDEX);
+  const oneWay = isOneWayReport(recReportParams);
   const granulesReport = {
     okCount: 0,
     onlyInCumulus: [],
@@ -407,11 +421,13 @@ async function reconciliationReportForGranules(params) {
       await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     } else if (nextDbGranuleId > nextCmrGranuleId) {
       // Found an item that is only in CMR and not in Cumulus database
-      granulesReport.onlyInCmr.push({
-        GranuleUR: nextCmrGranuleId,
-        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
-        Version: nextCmrItem.umm.CollectionReference.Version
-      });
+      if (!oneWay) {
+        granulesReport.onlyInCmr.push({
+          GranuleUR: nextCmrGranuleId,
+          ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+          Version: nextCmrItem.umm.CollectionReference.Version
+        });
+      }
       await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     } else {
       // Found an item that is in both CMR and Cumulus database
@@ -453,13 +469,15 @@ async function reconciliationReportForGranules(params) {
   }
 
   // Add any remaining CMR items to the report
-  while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-    const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    granulesReport.onlyInCmr.push({
-      GranuleUR: cmrItem.umm.GranuleUR,
-      ShortName: nextCmrItem.umm.CollectionReference.ShortName,
-      Version: nextCmrItem.umm.CollectionReference.Version
-    });
+  if (!oneWay) {
+    while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+      const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      granulesReport.onlyInCmr.push({
+        GranuleUR: cmrItem.umm.GranuleUR,
+        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+        Version: nextCmrItem.umm.CollectionReference.Version
+      });
+    }
   }
 
   return {
