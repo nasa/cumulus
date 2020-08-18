@@ -3,7 +3,7 @@
 'use strict';
 
 const Knex = require('knex');
-const { dropAllTables } = require('../dist/lib/db');
+const { dropAllTables } = require('../packages/db');
 
 (async () => {
   const knex = Knex({
