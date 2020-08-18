@@ -65,11 +65,11 @@ async function reconciliationReportForCollections(recReportParams) {
   const dbCollectionItems = sortBy(await dbCollectionsQueue.empty(), ['name', 'version']);
 
   let okCount = 0;
-  const itemsWithConflicts = [];
-  let itemsOnlyInEs = [];
-  let itemsOnlyInDb = [];
+  const withConflicts = [];
+  let onlyInEs = [];
+  let onlyInDb = [];
 
-  const diffIgnoreFields = ['timestamp', 'updatedAt'];
+  const fieldsIgnored = ['timestamp', 'updatedAt'];
   let nextEsItem = await esCollectionsIterator.peek();
   let nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : null;
 
@@ -79,18 +79,18 @@ async function reconciliationReportForCollections(recReportParams) {
     console.log(esCollectionId, dbCollectionId);
     if (esCollectionId < dbCollectionId) {
       // Found an item that is only in ES and not in DB
-      itemsOnlyInEs.push(esCollectionId);
+      onlyInEs.push(esCollectionId);
       await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
     } else if (esCollectionId > dbCollectionId) {
       // Found an item that is only in DB and not in ES
-      itemsOnlyInDb.push(dbCollectionId);
+      onlyInDb.push(dbCollectionId);
       dbCollectionItems.shift();
     } else {
       // Found an item that is in both ES and DB
-      if (isEqual(omit(nextEsItem, diffIgnoreFields), omit(nextDbItem, diffIgnoreFields))) {
+      if (isEqual(omit(nextEsItem, fieldsIgnored), omit(nextDbItem, fieldsIgnored))) {
         okCount += 1;
       } else {
-        itemsWithConflicts.push({ es: nextEsItem, db: nextDbItem });
+        withConflicts.push({ es: nextEsItem, db: nextDbItem });
       }
       esCollectionsIterator.shift();
       dbCollectionItems.shift();
@@ -101,21 +101,16 @@ async function reconciliationReportForCollections(recReportParams) {
   }
 
   // Add any remaining ES items to the report
-  itemsOnlyInEs = itemsOnlyInEs.concat(
+  onlyInEs = onlyInEs.concat(
     (await esCollectionsIterator.empty())
       .map((item) => constructCollectionId(item.name, item.version))
   );
 
   // Add any remaining DB items to the report
-  itemsOnlyInDb = itemsOnlyInDb
+  onlyInDb = onlyInDb
     .concat(dbCollectionItems.map((item) => constructCollectionId(item.name, item.version)));
 
-  return {
-    okCount,
-    conflicts: itemsWithConflicts,
-    onlyInEs: itemsOnlyInEs,
-    onlyInDb: itemsOnlyInDb,
-  };
+  return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
 
 // export for testing
@@ -155,10 +150,10 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
     .searchGranulesForCollection(collectionId, searchParams);
 
   let okCount = 0;
-  const itemsWithConflicts = [];
-  const itemsOnlyInEs = [];
-  const itemsOnlyInDb = [];
-  const diffIgnoreFields = ['timestamp', 'updatedAt'];
+  const withConflicts = [];
+  const onlyInEs = [];
+  const onlyInDb = [];
+  const fieldsIgnored = ['timestamp', 'updatedAt'];
 
   const granuleFields = ['granuleId', 'collectionId', 'provider'];
   let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
@@ -167,18 +162,18 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   while (nextEsItem && nextDbItem) {
     if (nextEsItem.granuleId < nextDbItem.granuleId) {
       // Found an item that is only in ES and not in DB
-      itemsOnlyInEs.push(pick(nextEsItem, granuleFields));
+      onlyInEs.push(pick(nextEsItem, granuleFields));
       await esGranulesIterator.shift();
     } else if (nextEsItem.granuleId > nextDbItem.granuleId) {
       // Found an item that is only in DB and not in ES
-      itemsOnlyInDb.push(pick(nextDbItem, granuleFields));
+      onlyInDb.push(pick(nextDbItem, granuleFields));
       await dbGranulesIterator.shift();
     } else {
       // Found an item that is in both ES and DB
-      if (isEqual(omit(nextEsItem, diffIgnoreFields), omit(nextDbItem, diffIgnoreFields))) {
+      if (isEqual(omit(nextEsItem, fieldsIgnored), omit(nextDbItem, fieldsIgnored))) {
         okCount += 1;
       } else {
-        itemsWithConflicts.push({ es: nextEsItem, db: nextDbItem });
+        withConflicts.push({ es: nextEsItem, db: nextDbItem });
       }
       await Promise.all([esGranulesIterator.shift(), dbGranulesIterator.shift()]);
     }
@@ -189,22 +184,17 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   // Add any remaining ES items to the report
   while (await esGranulesIterator.peek()) {
     const item = await esGranulesIterator.shift();
-    itemsOnlyInEs.push(pick(item, granuleFields));
+    onlyInEs.push(pick(item, granuleFields));
   }
 
   // Add any remaining DB items to the report
   while (await dbGranulesIterator.peek()) {
     const item = await dbGranulesIterator.shift();
-    itemsOnlyInDb.push(pick(item, granuleFields));
+    onlyInDb.push(pick(item, granuleFields));
   }
   /* eslint-enable no-await-in-loop */
 
-  return {
-    okCount,
-    conflicts: itemsWithConflicts,
-    onlyInEs: itemsOnlyInEs,
-    onlyInDb: itemsOnlyInDb,
-  };
+  return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
 exports.reportForGranulesByCollectionId = reportForGranulesByCollectionId;
 
@@ -231,8 +221,8 @@ async function reconciliationReportForGranules(recReportParams) {
   const report = {};
   report.okCount = reports
     .reduce((accumulator, currentValue) => accumulator + currentValue.okCount, 0);
-  report.conflicts = reports
-    .reduce((accumulator, currentValue) => accumulator.concat(currentValue.conflicts), []);
+  report.withConflicts = reports
+    .reduce((accumulator, currentValue) => accumulator.concat(currentValue.withConflicts), []);
   report.onlyInEs = reports
     .reduce((accumulator, currentValue) => accumulator.concat(currentValue.onlyInEs), []);
   report.onlyInDb = reports
