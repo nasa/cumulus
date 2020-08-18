@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@cumulus/aws-client": "2.0.1",
+    "@cumulus/logger": "2.0.1",
     "knex": "^0.21.2",
     "pg": "^8.3.0"
   },

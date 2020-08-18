@@ -1,6 +1,9 @@
-import * as AWS from 'aws-sdk';
+// import * as AWS from 'aws-sdk';
 import Knex from 'knex';
-import { dynamodbDocClient } from '@cumulus/aws-client/services';
+import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+// import Logger from '@cumulus/logger';
+
+// const logger = new Logger({ sender: '@cumulus/data-migration' });
 
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
@@ -14,35 +17,38 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
   throw new Error(`The ${name} environment variable must be set`);
 };
 
-const getScanResults = async (tableName: string, prevResponse?: AWS.DynamoDB.ScanOutput) => {
-  if (prevResponse && !prevResponse.LastEvaluatedKey) {
-    return {
-      Items: undefined,
-    };
-  }
-  const response = await dynamodbDocClient().scan({
-    TableName: tableName,
-    ExclusiveStartKey: prevResponse?.LastEvaluatedKey,
-  }).promise();
-  return response;
-};
-
 export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
   const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
-  let response = await getScanResults(collectionsTable);
+
+  const searchQueue = new DynamoDbSearchQueue({
+    TableName: collectionsTable,
+  });
+
+  let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
-  while (response.Items) {
-    await Promise.all(response.Items.map(async (record) => {
-      const updatedRecord: any = {
-        ...record,
-        granuleIdValidationRegex: record.granuleId,
-        files: JSON.stringify(record.files),
-        meta: JSON.stringify(record.meta),
-      };
-      delete updatedRecord.granuleId;
-      await knex('collections').insert(updatedRecord);
-    }));
-    response = await getScanResults(collectionsTable, response);
+  while (record) {
+    // logger.info(`Attempting to process ${searchQueue.getItemsCount()} items`);
+
+    // Map old record to new schema.
+    const updatedRecord: any = {
+      ...record,
+      granuleIdValidationRegex: record.granuleId,
+      files: JSON.stringify(record.files),
+      meta: JSON.stringify(record.meta),
+      created_at: record.createdAt,
+      updated_at: record.updatedAt,
+      // tags: JSON.stringify(record.tags),
+    };
+
+    // Remove field names that do not exist in new schema
+    delete updatedRecord.granuleId;
+    delete updatedRecord.createdAt;
+    delete updatedRecord.updatedAt;
+
+    await knex('collections').insert(updatedRecord);
+
+    searchQueue.shift();
+    record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
 };
