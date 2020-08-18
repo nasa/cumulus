@@ -5,6 +5,7 @@ const sortBy = require('lodash/sortBy');
 const isEqual = require('lodash/isEqual');
 const union = require('lodash/union');
 const omit = require('lodash/omit');
+const pLimit = require('p-limit');
 const log = require('@cumulus/common/log');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -217,11 +218,27 @@ async function reconciliationReportForGranules(recReportParams) {
   //   Report granules only in DynamoDB
   //   Report granules with different contents
 
+  const { collectionId, ...searchParams } = recReportParams;
   // get collections list in ES and dynamoDB combined
-  const [collectionId, ...searchParams] = recReportParams;
   const collections = collectionId ? [collectionId] : await getAllCollections();
 
-  return {};
+  const concurrencyLimit = process.env.CONCURRENCY || 3;
+  const limit = pLimit(concurrencyLimit);
+
+  const reports = await Promise.all(collections.map((collection) => limit(() =>
+    reportForGranulesByCollectionId(collection, searchParams))));
+
+  const report = {};
+  report.okCount = reports
+    .reduce((accumulator, currentValue) => accumulator + currentValue.okCount, 0);
+  report.conflicts = reports
+    .reduce((accumulator, currentValue) => accumulator.concat(currentValue.conflicts), []);
+  report.onlyInEs = reports
+    .reduce((accumulator, currentValue) => accumulator.concat(currentValue.onlyInEs), []);
+  report.onlyInDb = reports
+    .reduce((accumulator, currentValue) => accumulator.concat(currentValue.onlyInDb), []);
+
+  return report;
 }
 
 
