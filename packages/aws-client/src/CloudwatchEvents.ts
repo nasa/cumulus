@@ -26,7 +26,7 @@ export const putEvent = (
     Description: description,
     RoleArn: role,
     ScheduleExpression: schedule,
-    State: state
+    State: state,
   }).promise();
 
 export const deleteEvent = (name: string) =>
@@ -35,7 +35,7 @@ export const deleteEvent = (name: string) =>
 export const deleteTarget = (id: string, rule: string) =>
   cloudwatchevents().removeTargets({
     Ids: [id],
-    Rule: rule
+    Rule: rule,
   }).promise();
 
 export const putTarget = (rule: string, id: string, arn: string, input: string) =>
@@ -45,7 +45,7 @@ export const putTarget = (rule: string, id: string, arn: string, input: string) 
       {
         Arn: arn,
         Id: id,
-        Input: input
-      }
-    ]
+        Input: input,
+      },
+    ],
   }).promise();

@@ -24,7 +24,7 @@ async function deleteConcept(type, identifier, provider, headers) {
   let result;
   try {
     result = await got.delete(url, {
-      headers
+      headers,
     });
   } catch (error) {
     result = error.response;

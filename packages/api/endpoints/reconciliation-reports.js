@@ -6,7 +6,7 @@ const {
   deleteS3Object,
   getS3Object,
   fileExists,
-  parseS3Uri
+  parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -86,7 +86,7 @@ async function deleteReport(req, res) {
       id: name,
       type: 'reconciliationReport',
       index: process.env.ES_INDEX,
-      ignore: [404]
+      ignore: [404],
     });
   }
 
@@ -105,7 +105,7 @@ async function createReport(req, res) {
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    tableName: process.env.AsyncOperationsTable,
   });
 
   const asyncOperation = await asyncOperationModel.start({
@@ -115,7 +115,7 @@ async function createReport(req, res) {
     description: 'Create Inventory Report',
     operationType: 'Reconciliation Report',
     payload,
-    useLambdaEnvironmentVariables: true
+    useLambdaEnvironmentVariables: true,
   });
 
   return res.status(202).send(asyncOperation);

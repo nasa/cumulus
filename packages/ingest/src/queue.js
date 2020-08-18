@@ -5,11 +5,10 @@ const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
-const { getQueueNameByUrl } = require('@cumulus/message/Queue');
 
 const {
   getWorkflowFileKey,
-  templateKey
+  templateKey,
 } = require('@cumulus/common/workflows');
 
 /**
@@ -34,28 +33,31 @@ async function enqueueParsePdrMessage({
   provider,
   stack,
   systemBucket,
-  queueUrl
+  queueUrl,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: parsePdrArn } = await getJsonS3Object(
     systemBucket,
     getWorkflowFileKey(stack, parsePdrWorkflow)
   );
-  const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
   const payload = { pdr };
   const workflow = {
     name: parsePdrWorkflow,
-    arn: parsePdrArn
+    arn: parsePdrArn,
   };
 
   const message = buildQueueMessageFromTemplate({
-    collection,
+    // collection,
     messageTemplate,
     parentExecutionArn,
     payload,
-    provider,
-    queueName,
-    workflow
+    // provider,
+    queueUrl,
+    workflow,
+    customMeta: {
+      collection,
+      provider,
+    },
   });
 
   const arn = buildExecutionArn(
@@ -93,34 +95,37 @@ async function enqueueGranuleIngestMessage({
   provider,
   stack,
   systemBucket,
-  queueUrl
+  queueUrl,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: ingestGranuleArn } = await getJsonS3Object(
     systemBucket,
     getWorkflowFileKey(stack, granuleIngestWorkflow)
   );
-  const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
 
   const payload = {
     granules: [
-      granule
-    ]
+      granule,
+    ],
   };
 
   const workflow = {
     name: granuleIngestWorkflow,
-    arn: ingestGranuleArn
+    arn: ingestGranuleArn,
   };
 
   const message = buildQueueMessageFromTemplate({
-    collection,
+    // collection,
     messageTemplate,
     parentExecutionArn,
     payload,
-    provider,
-    queueName,
-    workflow
+    // provider,
+    queueUrl,
+    workflow,
+    customMeta: {
+      collection,
+      provider,
+    },
   });
 
   if (pdr) message.meta.pdr = pdr;

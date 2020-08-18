@@ -58,10 +58,10 @@ export async function createEmsReports(params: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: '/ems',
-      body: JSON.stringify(request)
-    }
+      body: JSON.stringify(request),
+    },
   });
 }

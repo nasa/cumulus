@@ -39,8 +39,8 @@ async function getAsyncOperation({ prefix, id }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/asyncOperations/${id}`
-    }
+      path: `/asyncOperations/${id}`,
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -61,10 +61,10 @@ async function postBulkDelete({ prefix, granuleIds }) {
       resource: '/{proxy+}',
       path: '/bulkDelete/',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ granuleIds })
-    }
+      body: JSON.stringify({ granuleIds }),
+    },
   });
   return verifyCumulusApiResponse(response, [202]);
 }
@@ -83,8 +83,8 @@ async function deletePdr({ prefix, pdr }) {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/pdrs/${pdr}`
-    }
+      path: `/pdrs/${pdr}`,
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -102,8 +102,8 @@ async function getLogs({ prefix }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/logs'
-    }
+      path: '/logs',
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -122,8 +122,8 @@ async function getExecutionLogs({ prefix, executionName }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/logs/${executionName}`
-    }
+      path: `/logs/${executionName}`,
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -146,10 +146,10 @@ async function addProviderApi({ prefix, provider }) {
       resource: '/{proxy+}',
       path: '/providers/',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(provider)
-    }
+      body: JSON.stringify(provider),
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -169,8 +169,8 @@ async function getProviders({ prefix }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/providers'
-    }
+      path: '/providers',
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -191,8 +191,8 @@ async function getProvider({ prefix, providerId }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/providers/${providerId}`
-    }
+      path: `/providers/${providerId}`,
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -212,8 +212,8 @@ async function getCollections({ prefix }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/collections'
-    }
+      path: '/collections',
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -235,8 +235,8 @@ async function getCollection({ prefix, collectionName, collectionVersion }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/collections/${collectionName}/${collectionVersion}`
-    }
+      path: `/collections/${collectionName}/${collectionVersion}`,
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -254,8 +254,8 @@ async function getWorkflows({ prefix }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/workflows'
-    }
+      path: '/workflows',
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -274,8 +274,8 @@ async function getWorkflow({ prefix, workflowName }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/workflows/${workflowName}`
-    }
+      path: `/workflows/${workflowName}`,
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -295,7 +295,7 @@ async function updateCollection({ prefix, collection, updateParams }) {
   const originalCollection = JSON.parse((await getCollection({
     prefix,
     collectionName: collection.name,
-    collectionVersion: collection.version
+    collectionVersion: collection.version,
   })).body);
 
   const response = await invokeApi({
@@ -305,13 +305,13 @@ async function updateCollection({ prefix, collection, updateParams }) {
       resource: '/{proxy+}',
       path: `/collections/${collection.name}/${collection.version}`,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         ...originalCollection,
-        ...updateParams
-      })
-    }
+        ...updateParams,
+      }),
+    },
   });
 
   return verifyCumulusApiResponse(response);
@@ -335,10 +335,10 @@ async function updateProvider({ prefix, provider, updateParams }) {
       resource: '/{proxy+}',
       path: `/providers/${provider.id}`,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(Object.assign(provider, updateParams))
-    }
+      body: JSON.stringify(Object.assign(provider, updateParams)),
+    },
   });
   return verifyCumulusApiResponse(response);
 }
@@ -358,5 +358,5 @@ module.exports = {
   getLogs,
   postBulkDelete,
   updateCollection,
-  updateProvider
+  updateProvider,
 };

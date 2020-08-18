@@ -37,7 +37,7 @@ const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
   version?: string
 ): (options?: object) => T => {
   const options: { region: string, apiVersion?: string } = {
-    region: getRegion()
+    region: getRegion(),
   };
   if (version) options.apiVersion = version;
 

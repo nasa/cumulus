@@ -40,7 +40,7 @@ export class SftpClient {
 
     this.clientOptions = {
       host: config.host,
-      port: get(config, 'port', 22)
+      port: get(config, 'port', 22),
     };
 
     if (config.username) this.clientOptions.username = config.username;
@@ -141,7 +141,7 @@ export class SftpClient {
       Bucket: bucket,
       Key: key,
       Body: sftpReadStream,
-      ContentType: mime.lookup(key) || undefined
+      ContentType: mime.lookup(key) || undefined,
     });
 
     log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
@@ -163,7 +163,7 @@ export class SftpClient {
       path: remotePath,
       type: remoteFile.type,
       size: remoteFile.size,
-      time: remoteFile.modifyTime
+      time: remoteFile.modifyTime,
     }));
   }
 
@@ -188,7 +188,7 @@ export class SftpClient {
     const readStream = await S3.getObjectReadStream({
       s3: s3(),
       bucket: s3object.Bucket,
-      key: s3object.Key
+      key: s3object.Key,
     });
 
     await this.sftp.put(readStream, remotePath);

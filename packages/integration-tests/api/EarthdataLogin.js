@@ -25,7 +25,7 @@ async function getEarthdataAccessToken({
   redirectUri,
   requestOrigin,
   userParams = {},
-  storeAccessToken = true
+  storeAccessToken = true,
 }) {
   if (!process.env.EARTHDATA_USERNAME) {
     throw new Error('EARTHDATA_USERNAME environment variable is required');
@@ -38,7 +38,7 @@ async function getEarthdataAccessToken({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
     earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri
+    redirectUri,
   });
 
   const authorizeUrl = earthdataLoginClient.getAuthorizationUrl();
@@ -49,9 +49,9 @@ async function getEarthdataAccessToken({
     form: true,
     body: { credentials: auth },
     headers: {
-      origin: requestOrigin // must equal an origin allowed for Earthdata
+      origin: requestOrigin, // must equal an origin allowed for Earthdata
     },
-    followRedirect: false
+    followRedirect: false,
   };
 
   // Make request to login to Earthdata.
@@ -94,5 +94,5 @@ async function getEarthdataAccessToken({
 }
 
 module.exports = {
-  getEarthdataAccessToken
+  getEarthdataAccessToken,
 };

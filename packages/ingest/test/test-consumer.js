@@ -65,7 +65,7 @@ test.serial('processMessages throws error on large batch sizes', async (t) => {
   await t.throwsAsync(
     () => testConsumer.processMessages(processFn, 20),
     {
-      message: 'Cannot process more than 10 messages per function call. Received limit: 20'
+      message: 'Cannot process more than 10 messages per function call. Received limit: 20',
     }
   );
 });

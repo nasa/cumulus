@@ -7,14 +7,14 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   promiseS3Upload,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 
 const models = require('../../models');
 const {
   createFakeJwtAuthToken,
   getWorkflowList,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
@@ -40,7 +40,7 @@ test.before(async () => {
     return promiseS3Upload({
       Bucket: testBucketName,
       Key: workflowsListKey,
-      Body: JSON.stringify(wf)
+      Body: JSON.stringify(wf),
     });
   }));
 

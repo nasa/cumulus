@@ -21,7 +21,7 @@ export const isTerminalSfStatus: (status: string) => boolean = isOneOf([
   'ABORTED',
   'SUCCEEDED',
   'FAILED',
-  'TIMED_OUT'
+  'TIMED_OUT',
 ]);
 
 /**
@@ -33,7 +33,7 @@ export const isTerminalSfStatus: (status: string) => boolean = isOneOf([
 export const isFailedSfStatus: (status: string) => boolean = isOneOf([
   'ABORTED',
   'FAILED',
-  'TIMED_OUT'
+  'TIMED_OUT',
 ]);
 
 /**

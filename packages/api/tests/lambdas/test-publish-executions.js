@@ -14,19 +14,19 @@ test.before(async (t) => {
   const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
-    AttributeNames: ['QueueArn']
+    AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
-    Endpoint: QueueArn
+    Endpoint: QueueArn,
   }).promise();
 
   await sns().confirmSubscription({
     TopicArn,
-    Token: SubscriptionArn
+    Token: SubscriptionArn,
   }).promise();
 
   t.context = { QueueUrl, TopicArn };
@@ -49,11 +49,11 @@ test.serial('The publish-executions Lambda function takes a DynamoDB stream even
         dynamodb: {
           NewImage: {
             arn: { S: executionArn },
-            status: { S: 'running' }
-          }
-        }
-      }
-    ]
+            status: { S: 'running' },
+          },
+        },
+      },
+    ],
   };
 
   await handler(event);
@@ -78,19 +78,19 @@ test.serial('The publish-executions Lambda function takes a DynamoDB stream even
         dynamodb: {
           NewImage: {
             arn: { S: randomString() },
-            status: { S: 'running' }
-          }
-        }
+            status: { S: 'running' },
+          },
+        },
       },
       {
         dynamodb: {
           NewImage: {
             arn: { S: randomString() },
-            status: { S: 'running' }
-          }
-        }
-      }
-    ]
+            status: { S: 'running' },
+          },
+        },
+      },
+    ],
   };
 
   await handler(event);
@@ -98,7 +98,7 @@ test.serial('The publish-executions Lambda function takes a DynamoDB stream even
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
     MaxNumberOfMessages: 2,
-    WaitTimeSeconds: 10
+    WaitTimeSeconds: 10,
   }).promise();
 
   t.is(Messages.length, 2);

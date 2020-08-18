@@ -13,7 +13,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   parseS3Uri,
   recursivelyDeleteS3Bucket,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -50,11 +50,11 @@ const badMetadataFixture = fs.readFileSync(
 );
 const goodMetadataFile = {
   key: 'valid-metadata.xml',
-  content: xmlMetadataFixture
+  content: xmlMetadataFixture,
 };
 const badMetadataFile = {
   key: 'bad-metadata.xml',
-  content: badMetadataFixture
+  content: badMetadataFixture,
 };
 const testFiles = [goodMetadataFile, badMetadataFile];
 
@@ -63,7 +63,7 @@ const certificate = require('./fixtures/_certificateFixture');
 const gotLaunchpadMetadataResponse = {
   statusCode: 200,
   statusMessage: 'OK',
-  body: xmlMetadataFixture
+  body: xmlMetadataFixture,
 };
 
 let accessTokenModel;
@@ -77,7 +77,7 @@ test.before(async () => {
       s3PutObject({
         Bucket: testBucketName,
         Key: f.key,
-        Body: f.content
+        Body: f.content,
       }))
   );
 
@@ -85,7 +85,7 @@ test.before(async () => {
   await s3PutObject({
     Bucket,
     Key,
-    Body: xmlMetadataFixture
+    Body: xmlMetadataFixture,
   });
 });
 
@@ -106,10 +106,10 @@ test.beforeEach(async (t) => {
       attributes: {
         UserId: [validUser],
         userGroup: [
-          `cn=${userGroup},ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov^cn=AM-Application-Administrator,ou=ICAM,ou=Groups,dc=nasa,dc=gov`
-        ]
-      }
-    }
+          `cn=${userGroup},ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov^cn=AM-Application-Administrator,ou=ICAM,ou=Groups,dc=nasa,dc=gov`,
+        ],
+      },
+    },
   };
 
   const unauthorizedSamlResponse = {
@@ -118,10 +118,10 @@ test.beforeEach(async (t) => {
       attributes: {
         UserId: [unauthorizedUser],
         userGroup: [
-          'cn=WrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov'
-        ]
-      }
-    }
+          'cn=WrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov',
+        ],
+      },
+    },
   };
 
   const badSamlResponse = { user: {} };
@@ -134,7 +134,7 @@ test.beforeEach(async (t) => {
     successfulSamlResponse,
     unauthorizedSamlResponse,
     badSamlResponse,
-    userGroup
+    userGroup,
   };
 });
 
@@ -165,7 +165,7 @@ test(
       launchpadPublicCertificate(`s3://${testBucketName}/bad-metadata.xml`),
       {
         instanceOf: Error,
-        message: `Failed to retrieve Launchpad metadata X509 Certificate from s3://${testBucketName}/bad-metadata.xml`
+        message: `Failed to retrieve Launchpad metadata X509 Certificate from s3://${testBucketName}/bad-metadata.xml`,
       }
     );
   }
@@ -187,7 +187,7 @@ test(
     const stub = sinon.stub(got, 'get').callsFake(() => gotLaunchpadMetadataResponse);
     await t.throwsAsync(launchpadPublicCertificate('s3://badBucket/location'), {
       instanceOf: Error,
-      message: 'Cumulus could not find Launchpad public xml metadata at s3://badBucket/location'
+      message: 'Cumulus could not find Launchpad public xml metadata at s3://badBucket/location',
     });
     stub.restore();
   }
@@ -229,7 +229,7 @@ test('buildLaunchpadJwt returns a valid JWT with correct SAML information.', asy
   t.is(decodedToken.accessToken, t.context.validIndex);
 
   const modelToken = await accessTokenModel.get({
-    accessToken: t.context.validIndex
+    accessToken: t.context.validIndex,
   });
   t.is(modelToken.accessToken, t.context.validIndex);
   t.is(modelToken.username, t.context.validUser);
@@ -238,14 +238,14 @@ test('buildLaunchpadJwt returns a valid JWT with correct SAML information.', asy
 test('buildLaunchpadJwt throws with bad SAML return value.', async (t) => {
   await t.throwsAsync(buildLaunchpadJwt(t.context.badSamlResponse), {
     instanceOf: Error,
-    message: 'invalid SAML response received {"user":{}}'
+    message: 'invalid SAML response received {"user":{}}',
   });
 });
 
 test('buildLaunchpadJwt throws with unauthorized user.', async (t) => {
   await t.throwsAsync(buildLaunchpadJwt(t.context.unauthorizedSamlResponse), {
     instanceOf: Error,
-    message: `User not authorized for this application ${t.context.unauthorizedUser} not a member of userGroup: ${t.context.userGroup}`
+    message: `User not authorized for this application ${t.context.unauthorizedUser} not a member of userGroup: ${t.context.userGroup}`,
   });
 });
 
@@ -310,7 +310,7 @@ test('/token endpoint without proper context headers returns expectation failed.
     error: 'Expectation Failed',
     message: ('Could not retrieve necessary information from express request object. '
               + 'Incorrect relayState or stageName information in express request.'),
-    statusCode: 417
+    statusCode: 417,
   };
 
   const badHeaders = await request(app)

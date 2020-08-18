@@ -5,18 +5,18 @@ const pRetry = require('p-retry');
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
-  executionsApi: executionsApiTestUtils
+  executionsApi: executionsApiTestUtils,
 } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
   protectFile,
-  runKes
+  runKes,
 } = require('../../helpers/testUtils');
 
 const {
   removeWorkflow,
-  removeTaskFromWorkflow
+  removeTaskFromWorkflow,
 } = require('../../helpers/workflowUtils');
 
 const workflowsYmlFile = './workflows.yml';
@@ -28,7 +28,7 @@ function redeployWithRetries(config) {
   return pRetry(
     () => runKes(config, { timeout: deployTimeout }),
     {
-      retries: 2
+      retries: 2,
     }
   );
 }
@@ -75,7 +75,7 @@ xdescribe('When a workflow', () => {
       beforeAll(async () => {
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
-          arn: workflowExecutionArn
+          arn: workflowExecutionArn,
         });
         executionStatus = JSON.parse(executionStatusResponse.body);
       });

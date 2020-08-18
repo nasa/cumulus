@@ -51,5 +51,5 @@ function runReaper() {
 }
 
 module.exports = {
-  runReaper
+  runReaper,
 };

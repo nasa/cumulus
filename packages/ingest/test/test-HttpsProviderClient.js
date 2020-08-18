@@ -13,7 +13,7 @@ const {
   getTextObject,
   headObject,
   promiseS3Upload,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -64,14 +64,14 @@ test.beforeEach(async (t) => {
   await promiseS3Upload({
     Bucket: t.context.configBucket,
     Key: 'certificate.pem',
-    Body: t.context.server.caCert
+    Body: t.context.server.caCert,
   });
 
   t.context.httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
     port: t.context.server.sslPort,
-    certificateUri: `s3://${t.context.configBucket}/certificate.pem`
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
   });
 });
 
@@ -85,7 +85,7 @@ test('HttpsProviderClient decrypts credentials when encrypted', async (t) => {
   const encryptedPass = '1234abcd';
   const encryptionMap = {
     [encryptedUser]: basicUsername,
-    [encryptedPass]: basicPassword
+    [encryptedPass]: basicPassword,
   };
 
   HttpProviderClient.__set__('decrypt', (encryptedValue) => Promise.resolve(encryptionMap[encryptedValue]));
@@ -96,7 +96,7 @@ test('HttpsProviderClient decrypts credentials when encrypted', async (t) => {
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: encryptedUser,
     password: encryptedPass,
-    encrypted: true
+    encrypted: true,
   });
 
   await httpsProviderClient.setUpGotOptions();
@@ -158,11 +158,11 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
     host: '127.0.0.1',
     port: t.context.server.sslPort,
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
-    username: 'user'
+    username: 'user',
   }),
   {
     instanceOf: ReferenceError,
-    message: 'Found providerConfig.username, but providerConfig.password is not defined'
+    message: 'Found providerConfig.username, but providerConfig.password is not defined',
   });
 });
 
@@ -173,7 +173,7 @@ test('HttpsProviderClient supports basic auth with redirects for download', asyn
     port: t.context.server.sslPort,
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
-    password: basicPassword
+    password: basicPassword,
   });
 
   const localPath = path.join(tmpdir(), randomString());
@@ -192,7 +192,7 @@ test('HttpsProviderClient supports basic auth with redirects for sync', async (t
     port: t.context.server.sslPort,
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
-    password: basicPassword
+    password: basicPassword,
   });
 
   const bucket = randomString();

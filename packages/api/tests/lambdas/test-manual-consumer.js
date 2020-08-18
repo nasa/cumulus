@@ -17,8 +17,8 @@ let describeStreamStub;
 test.before(() => {
   describeStreamStub = sinon.stub(kinesisUtils, 'describeStream').callsFake(async () => ({
     StreamDescription: {
-      StreamARN: 'fake-stream-arn'
-    }
+      StreamARN: 'fake-stream-arn',
+    },
   }));
 });
 
@@ -28,7 +28,7 @@ test.after.always(() => {
 
 test.serial('configureTimestampEnvs throws error when invalid endTimestamp is provided', (t) => {
   const event = {
-    endTimestamp: Date.now().toString()
+    endTimestamp: Date.now().toString(),
   };
   t.throws(
     () => manualConsumer.configureTimestampEnvs(event),
@@ -39,7 +39,7 @@ test.serial('configureTimestampEnvs throws error when invalid endTimestamp is pr
 
 test.serial('configureTimestampEnvs throws error when invalid startTimestamp is provided', (t) => {
   const event = {
-    startTimestamp: Date.now().toString()
+    startTimestamp: Date.now().toString(),
   };
   t.throws(
     () => manualConsumer.configureTimestampEnvs(event),
@@ -54,7 +54,7 @@ test('setupIteratorParams returns TRIM_HORIZON iterator params if timestamp env 
   const expectedParams = {
     StreamName: stream,
     ShardId: shardId,
-    ShardIteratorType: 'TRIM_HORIZON'
+    ShardIteratorType: 'TRIM_HORIZON',
   };
   const actualParams = manualConsumer.setupIteratorParams(stream, shardId);
   t.deepEqual(expectedParams, actualParams);
@@ -68,7 +68,7 @@ test.serial('setupIteratorParams returns AT_TIMESTAMP iterator params if timesta
     StreamName: stream,
     ShardId: shardId,
     ShardIteratorType: 'AT_TIMESTAMP',
-    Timestamp: process.env.startTimestamp
+    Timestamp: process.env.startTimestamp,
   };
   const actualParams = manualConsumer.setupIteratorParams(stream, shardId);
   delete process.env.startTimestamp;
@@ -78,7 +78,7 @@ test.serial('setupIteratorParams returns AT_TIMESTAMP iterator params if timesta
 test('setupListShardParams returns params with no StreamCreationTimestamp if it is omitted', (t) => {
   const stream = 'stream-1234';
   const expectedParams = {
-    StreamName: stream
+    StreamName: stream,
   };
   const actualParams = manualConsumer.setupListShardParams(stream);
   t.deepEqual(expectedParams, actualParams);
@@ -89,7 +89,7 @@ test('setupListShardParams returns params with StreamCreationTimestamp if it is 
   const creationTimestamp = '1969-12-31T16:00:00.000Z';
   const expectedParams = {
     StreamName: stream,
-    StreamCreationTimestamp: new Date(creationTimestamp)
+    StreamCreationTimestamp: new Date(creationTimestamp),
   };
   const actualParams = manualConsumer.setupListShardParams(stream, creationTimestamp);
   t.deepEqual(expectedParams, actualParams);
@@ -103,7 +103,7 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
   try {
     const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
       { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
-      { Data: 'record2', ApproximateArrivalTimestamp: Date.now() }
+      { Data: 'record2', ApproximateArrivalTimestamp: Date.now() },
     ]);
 
     t.is(result, 2);
@@ -111,14 +111,14 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
     t.deepEqual(processRecord.args[0][0], {
       eventSourceARN: 'fake-stream-arn',
       kinesis: {
-        data: 'record1'
-      }
+        data: 'record1',
+      },
     });
     t.deepEqual(processRecord.args[1][0], {
       eventSourceARN: 'fake-stream-arn',
       kinesis: {
-        data: 'record2'
-      }
+        data: 'record2',
+      },
     });
   } finally {
     processRecord.restore();
@@ -131,7 +131,7 @@ test.serial('processRecordBatch skips records newer than the endTimestamp and lo
   process.env.endTimestamp = new Date(Date.now() - 1000);
   const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
     { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
-    { Data: 'record2', ApproximateArrivalTimestamp: Date.now() }
+    { Data: 'record2', ApproximateArrivalTimestamp: Date.now() },
   ]);
 
   processRecord.restore();
@@ -149,7 +149,7 @@ test.serial('processRecordBatch logs errors for processRecord failures and does 
   const logWarn = sinon.spy(log, 'warn');
   const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
     { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
-    { Data: 'record2', ApproximateArrivalTimestamp: Date.now() }
+    { Data: 'record2', ApproximateArrivalTimestamp: Date.now() },
   ]);
 
   processRecord.restore();
@@ -180,11 +180,11 @@ test.serial('iterateOverShardRecursively recurs until MillisBehindLatest reaches
       const response = {
         Records: [{}],
         NextShardIterator: '123456',
-        MillisBehindLatest: recurred ? 0 : 100
+        MillisBehindLatest: recurred ? 0 : 100,
       };
       recurred = true;
       return Promise.resolve(response);
-    }
+    },
   }));
   const processRecordStub = sinon.stub(messageConsumer, 'processRecord').returns(true);
   try {
@@ -211,9 +211,9 @@ test.serial('processShard returns number of records processed from shard', async
   const restoreKinesis = manualConsumer.__set__('Kinesis', {
     getShardIterator: () => ({
       promise: () => Promise.resolve({
-        ShardIterator: 'fakeIterator'
-      })
-    })
+        ShardIterator: 'fakeIterator',
+      }),
+    }),
   });
   const logError = sinon.spy(log, 'error');
   const restoreProcessShard = manualConsumer.__set__('iterateOverShardRecursively', async () => [Promise.resolve(2), Promise.resolve(3)]);
@@ -240,12 +240,12 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShard
       promise: () => {
         const response = {
           Shards: [{}],
-          NextToken: recurred ? undefined : '123456'
+          NextToken: recurred ? undefined : '123456',
         };
         recurred = true;
         return Promise.resolve(response);
-      }
-    })
+      },
+    }),
   });
   const restoreHandleShard = manualConsumer.__set__('processShard', async () => Promise.resolve(1));
   const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakestream', 'fake-arn', [], {});
@@ -283,16 +283,10 @@ test.serial('processStream does not throw error if describeStream throws', async
   }
 });
 
-test.serial('handler sets envs from event', async (t) => {
+test.serial('handler sets timestamp envs from event', async (t) => {
   const event = {
     endTimestamp: '1969-12-31T16:00:00.000Z',
     startTimestamp: '1969-12-31T16:00:00.000Z',
-    CollectionsTable: 'test-CollectionsTable',
-    RulesTable: 'test-RulesTable',
-    ProvidersTable: 'test-ProvidersTable',
-    stackName: 'test-stack',
-    system_bucket: 'test-bucket',
-    FallbackTopicArn: 'arn:aws:sns:us-east-1:00000000000:fallbackTopic'
   };
   await manualConsumer.handler(event);
 
@@ -300,16 +294,10 @@ test.serial('handler sets envs from event', async (t) => {
   Object.keys(event).forEach((key) => delete process.env[key]);
 });
 
-test.serial('handler should not overwrite existing envs', async (t) => {
+test.serial('handler should not overwrite existing timestamp envs', async (t) => {
   const originalEnvs = {
     endTimestamp: '1969-12-31T16:00:00.000Z',
     startTimestamp: '1969-12-31T16:00:00.000Z',
-    CollectionsTable: 'test-CollectionsTable',
-    RulesTable: 'test-RulesTable',
-    ProvidersTable: 'test-ProvidersTable',
-    stackName: 'test-stack',
-    system_bucket: 'test-bucket',
-    FallbackTopicArn: 'arn:aws:sns:us-east-1:00000000000:fallbackTopic'
   };
   const event = {};
   Object.keys(originalEnvs).forEach((key) => {

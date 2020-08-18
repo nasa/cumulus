@@ -19,27 +19,27 @@ test.beforeEach((t) => {
     meta: {
       collection: {
         name: 'c',
-        version: 'v'
+        version: 'v',
       },
       provider: {
         protocol: 'https',
         host: 'example.com',
-        port: 80
-      }
+        port: 80,
+      },
     },
     cumulus_meta: {
       execution_name: t.context.executionName,
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      workflow_start_time: 123
+      workflow_start_time: 123,
     },
     payload: {
       granules: [
         {
           granuleId: 'granule-1',
-          files: []
-        }
-      ]
-    }
+          files: [],
+        },
+      ],
+    },
   };
 });
 
@@ -63,7 +63,7 @@ test('Granule._getGranuleRecordsFromCumulusMessage() returns the correct granule
     timeToArchive: 0,
     timeToPreprocess: 0,
     timestamp: granuleRecords[0].timestamp,
-    updatedAt: granuleRecords[0].updatedAt
+    updatedAt: granuleRecords[0].updatedAt,
   };
 
   t.deepEqual(granuleRecords, [expectedGranule]);
@@ -74,7 +74,7 @@ test('Granule._getGranuleRecordsFromCumulusMessage() returns the correct granule
 
   cumulusMessage.payload.granules = [
     { granuleId: 'granule-1', files: [] },
-    { granuleId: 'granule-2', files: [] }
+    { granuleId: 'granule-2', files: [] },
   ];
 
   const granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
@@ -125,7 +125,7 @@ test('Granule._getGranuleRecordsFromCumulusMessage() returns the list of valid g
   // Add a valid granule
   cumulusMessage.payload.granules.push({
     ...cumulusMessage.payload.granules[0],
-    granuleId: 'granule-x'
+    granuleId: 'granule-x',
   });
 
   // Delete the granuleId of the first granule, so that it will fail to be generated

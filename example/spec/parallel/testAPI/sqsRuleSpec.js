@@ -18,7 +18,7 @@ const {
   cleanupCollections,
   readJsonFilesFromDir,
   deleteRules,
-  setProcessEnvironment
+  setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -30,7 +30,7 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 
 let config;
@@ -54,14 +54,14 @@ async function setupCollectionAndTestData() {
   const s3data = [
     '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
     '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
   ];
 
   // populate collections, providers and test data
   await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
     addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-    addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
   ]);
 }
 
@@ -75,7 +75,7 @@ async function cleanUp() {
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     sqs().deleteQueue({ QueueUrl: queues.queueUrl }).promise(),
-    sqs().deleteQueue({ QueueUrl: queues.deadLetterQueueUrl }).promise()
+    sqs().deleteQueue({ QueueUrl: queues.deadLetterQueueUrl }).promise(),
   ]);
 }
 
@@ -93,14 +93,14 @@ const waitForQueueMessageCount = (queueUrl, expectedCount) =>
     async () => {
       const {
         numberOfMessagesAvailable,
-        numberOfMessagesNotVisible
+        numberOfMessagesNotVisible,
       } = await getSqsQueueMessageCounts(queueUrl);
       return numberOfMessagesAvailable === expectedCount &&
         numberOfMessagesNotVisible === expectedCount;
     },
     {
       interval: 3000,
-      timeout: 30 * 1000
+      timeout: 30 * 1000,
     }
   );
 
@@ -119,13 +119,13 @@ describe('The SQS rule', () => {
       name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
       collection: {
         name: collection.name,
-        version: collection.version
+        version: collection.version,
       },
       provider: provider.id,
       workflow: workflowName,
       meta: {
-        retries: 1
-      }
+        retries: 1,
+      },
     };
 
     await setupCollectionAndTestData();

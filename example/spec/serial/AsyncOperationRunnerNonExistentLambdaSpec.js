@@ -26,7 +26,7 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       asyncOperationModel = new AsyncOperation({
         stackName: config.stackName,
         systemBucket: config.bucket,
-        tableName: asyncOperationsTableName
+        tableName: asyncOperationsTableName,
       });
 
       // Find the ARN of the cluster
@@ -38,28 +38,28 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       // Start the AsyncOperation
       ({
         id: asyncOperationId,
-        taskArn
+        taskArn,
       } = await asyncOperationModel.start({
         asyncOperationTaskDefinition,
         cluster,
         lambdaName: 'does-not-exist',
         description: 'Some description',
         operationType: 'ES Index',
-        payload: {}
+        payload: {},
       }));
 
       await ecs().waitFor(
         'tasksStopped',
         {
           cluster,
-          tasks: [taskArn]
+          tasks: [taskArn],
         }
       ).promise();
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'RUNNER_FAILED',
-        stackName: config.stackName
+        stackName: config.stackName,
       });
     } catch (error) {
       beforeAllFailed = true;

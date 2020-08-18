@@ -52,7 +52,7 @@ const handler = async (event) => {
     const results = await Promise.allSettled([
       saveExecutionToDb(cumulusMessage),
       saveGranulesToDb(cumulusMessage),
-      savePdrToDb(cumulusMessage)
+      savePdrToDb(cumulusMessage),
     ]);
     if (results.some((result) => result.status === 'rejected')) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
@@ -66,5 +66,5 @@ module.exports = {
   handler,
   saveExecutionToDb,
   saveGranulesToDb,
-  savePdrToDb
+  savePdrToDb,
 };

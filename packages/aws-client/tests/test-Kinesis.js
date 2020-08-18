@@ -12,20 +12,20 @@ const testStreamName = cryptoRandomString({ length: 10 });
 test.before(async () => {
   await kinesis().createStream({
     StreamName: testStreamName,
-    ShardCount: 1
+    ShardCount: 1,
   }).promise();
 });
 
 test('describeStream returns the stream description', async (t) => {
   const response = await Kinesis.describeStream({
-    StreamName: testStreamName
+    StreamName: testStreamName,
   });
   t.truthy(response.StreamDescription);
 });
 
 test('describeStream throws error for non-existent stream if retries are disabled', async (t) => {
   await t.throwsAsync(Kinesis.describeStream({
-    StreamName: 'non-existent-stream'
+    StreamName: 'non-existent-stream',
   }));
 });
 
@@ -44,7 +44,7 @@ test.serial('describeStream returns stream on retry', async (t) => {
         } else {
           return { StreamDescription: {} };
         }
-      }
+      },
     });
 
   try {
@@ -53,7 +53,7 @@ test.serial('describeStream returns stream on retry', async (t) => {
       {
         minTimeout: 100, // only set to speed up testing
         maxTimeout: 100, // only set to speed up testing
-        retries: maxRetries
+        retries: maxRetries,
       }
     );
     t.truthy(response.StreamDescription);

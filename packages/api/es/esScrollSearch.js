@@ -43,13 +43,13 @@ class ESScrollSearch extends Search {
     if (!this.scrollId) {
       const searchParams = this._buildSearch();
       searchParams.size = process.env.ES_SCROLL_SIZE || defaultESScrollSize;
-      searchParams.scroll = defaultESScrollDuration;
+      searchParams.scroll = process.env.ES_SCROLL || defaultESScrollDuration;
       response = await this.client.search(searchParams);
       this.scrollId = response.body._scroll_id;
     } else {
       response = await this.client.scroll({
         scrollId: this.scrollId,
-        scroll: defaultESScrollDuration
+        scroll: defaultESScrollDuration,
       });
       this.scrollId = response.body._scroll_id;
     }

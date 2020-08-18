@@ -7,7 +7,7 @@ const {
   getMessageExecutionArn,
   getMessageExecutionName,
   getMessageStateMachineArn,
-  getStateMachineArnFromExecutionArn
+  getStateMachineArnFromExecutionArn,
 } = require('../Executions');
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
@@ -46,8 +46,8 @@ test('getMessageExecutionArn returns correct execution ARN for valid message', (
   const cumulusMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name'
-    }
+      execution_name: 'my-execution-name',
+    },
   };
 
   const executionArn = getMessageExecutionArn(cumulusMessage);

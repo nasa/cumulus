@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
@@ -13,7 +13,7 @@ const indexer = require('../../es/indexer');
 const {
   createFakeJwtAuthToken,
   fakeExecutionFactory,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');

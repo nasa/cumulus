@@ -6,6 +6,6 @@ module.exports = {
     '*.js',
     'api',
     'bin',
-    'lambdas'
-  ]
+    'lambdas',
+  ],
 };

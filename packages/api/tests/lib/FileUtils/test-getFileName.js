@@ -24,7 +24,7 @@ test('getFileName() returns the value of the name property', (t) => {
 test('getFileName() prefers fileName over name', (t) => {
   const file = {
     fileName: 'my-fileName.txt',
-    name: 'my-name.txt'
+    name: 'my-name.txt',
   };
 
   t.is(

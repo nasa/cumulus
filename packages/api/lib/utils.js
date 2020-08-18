@@ -20,7 +20,7 @@ function parseException(exception) {
   if (isObject(exception)) return exception;
   return {
     Error: 'Unknown Error',
-    Cause: exception
+    Cause: exception,
   };
 }
 
@@ -35,7 +35,7 @@ function deconstructCollectionId(collectionId) {
   const [name, version] = collectionId.split('___');
   return {
     name,
-    version
+    version,
   };
 }
 
@@ -103,5 +103,5 @@ module.exports = {
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
   getGranuleProductVolume,
-  parseException
+  parseException,
 };

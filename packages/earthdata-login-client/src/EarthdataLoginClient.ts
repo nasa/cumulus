@@ -81,7 +81,7 @@ export class EarthdataLoginClient {
       clientId,
       clientPassword,
       earthdataLoginUrl,
-      redirectUri
+      redirectUri,
     } = params;
 
     if (!clientId) throw new TypeError('clientId is required');
@@ -125,8 +125,8 @@ export class EarthdataLoginClient {
       form: {
         grant_type: 'authorization_code',
         code: authorizationCode,
-        redirect_uri: this.redirectUri
-      }
+        redirect_uri: this.redirectUri,
+      },
     }));
   }
 
@@ -155,7 +155,7 @@ export class EarthdataLoginClient {
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
         // expires_in value is in seconds
-        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in
+        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
       };
     } catch (error) {
       if (isHttpBadRequestError(error)) {
@@ -171,8 +171,8 @@ export class EarthdataLoginClient {
       earthdataLoginPath: 'oauth/token',
       form: {
         grant_type: 'refresh_token',
-        refresh_token: refreshToken
-      }
+        refresh_token: refreshToken,
+      },
     }));
   }
 
@@ -200,7 +200,7 @@ export class EarthdataLoginClient {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in
+        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
       };
     } catch (error) {
       if (isHttpBadRequestError(error)) {
@@ -238,8 +238,8 @@ export class EarthdataLoginClient {
         form: {
           client_id: this.clientId,
           on_behalf_of: onBehalfOf,
-          token
-        }
+          token,
+        },
       }));
 
       return response.body.uid;
@@ -275,10 +275,10 @@ export class EarthdataLoginClient {
         prefixUrl: this.earthdataLoginUrl,
         headers: {
           ...params.headers,
-          Authorization: `Basic ${credentials}`
+          Authorization: `Basic ${credentials}`,
         },
         form: params.form,
-        responseType: 'json'
+        responseType: 'json',
       }
     );
   }

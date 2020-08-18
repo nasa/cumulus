@@ -16,7 +16,7 @@ async function post(req, res) {
   const typeToLambda = {
     metadata: process.env.EmsProductMetadataReport,
     ingest: process.env.EmsIngestReport,
-    distribution: process.env.EmsDistributionReport
+    distribution: process.env.EmsDistributionReport,
   };
 
   const reportType = req.body.reportType;
@@ -31,7 +31,7 @@ async function post(req, res) {
   const result = await lambda().invoke({
     FunctionName: typeToLambda[reportType],
     Payload: JSON.stringify(inputPayload),
-    InvocationType: invocationType
+    InvocationType: invocationType,
   }).promise();
 
   const response = (invocationType === 'Event')

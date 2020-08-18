@@ -31,7 +31,7 @@ export const handler = async (event: {
   }
 
   const bucketMapPromises = event.bucketList.map(async (bucket) => ({
-    [bucket]: await getTeaBucketPath({ bucket, teaEndPoint })
+    [bucket]: await getTeaBucketPath({ bucket, teaEndPoint }),
   }));
   const bucketMapObjects = await Promise.all(bucketMapPromises);
 
@@ -42,7 +42,7 @@ export const handler = async (event: {
   await s3PutObject({
     Bucket: s3Bucket,
     Key: s3Key,
-    Body: JSON.stringify(bucketMap)
+    Body: JSON.stringify(bucketMap),
   });
   log.info(`Wrote bucketmap ${JSON.stringify(bucketMap)} to ${s3Bucket}/${s3Key}`);
   return bucketMap;

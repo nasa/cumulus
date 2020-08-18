@@ -27,7 +27,7 @@ export function invokeApi(
     async () => {
       const apiOutput = await lambda().invoke({
         Payload: JSON.stringify(payload),
-        FunctionName: `${prefix}-PrivateApiLambda`
+        FunctionName: `${prefix}-PrivateApiLambda`,
       }).promise();
 
       if (!apiOutput.Payload) {
@@ -48,7 +48,7 @@ export function invokeApi(
       retries: 3,
       maxTimeout: 10000,
       onFailedAttempt: (e) => logger.error(`API invoke error: ${e.message}.`),
-      ...pRetryOptions
+      ...pRetryOptions,
     }
   );
 }

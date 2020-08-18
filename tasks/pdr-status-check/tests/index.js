@@ -6,7 +6,7 @@ const isEqual = require('lodash/isEqual');
 const some = require('lodash/some');
 const {
   validateInput,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 
 const { checkPdrStatuses } = require('..');
@@ -15,8 +15,8 @@ test('valid output when no running executions', async (t) => {
   const event = {
     input: {
       running: [],
-      pdr: { name: 'test.PDR', path: 'test-path' }
-    }
+      pdr: { name: 'test.PDR', path: 'test-path' },
+    },
   };
 
   await validateInput(t, event.input);
@@ -29,7 +29,7 @@ test('valid output when no running executions', async (t) => {
     running: [],
     failed: [],
     completed: [],
-    pdr: { name: 'test.PDR', path: 'test-path' }
+    pdr: { name: 'test.PDR', path: 'test-path' },
   };
 
   t.deepEqual(output, expectedOutput);
@@ -41,8 +41,8 @@ test.serial('error thrown when limit exceeded', async (t) => {
       running: ['arn:123'],
       counter: 2,
       limit: 3,
-      pdr: { name: 'test.PDR', path: 'test-path' }
-    }
+      pdr: { name: 'test.PDR', path: 'test-path' },
+    },
   };
 
   await validateInput(t, event.input);
@@ -52,8 +52,8 @@ test.serial('error thrown when limit exceeded', async (t) => {
     sfn.describeExecution = () => ({
       promise: () => Promise.resolve({
         status: 'RUNNING',
-        executionArn: 'arn:123'
-      })
+        executionArn: 'arn:123',
+      }),
     });
 
     await checkPdrStatuses(event);
@@ -73,8 +73,8 @@ test.serial('returns the correct results in the nominal case', async (t) => {
       failed: [{ arn: 'arn:6', reason: 'OutOfCheese' }],
       counter: 5,
       limit: 10,
-      pdr: { name: 'test.PDR', path: 'test-path' }
-    }
+      pdr: { name: 'test.PDR', path: 'test-path' },
+    },
   };
 
   await validateInput(t, event.input);
@@ -84,7 +84,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
     'arn:2': 'SUCCEEDED',
     'arn:3': 'FAILED',
     'arn:4': 'ABORTED',
-    'arn:7': null
+    'arn:7': null,
   };
 
   const sfn = awsServices.sfn();
@@ -100,9 +100,9 @@ test.serial('returns the correct results in the nominal case', async (t) => {
         }
         return Promise.resolve({
           executionArn,
-          status: executionStatuses[executionArn]
+          status: executionStatuses[executionArn],
         });
-      }
+      },
     });
 
     output = await checkPdrStatuses(event);
@@ -122,7 +122,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
   const expectedFailed = [
     { arn: 'arn:6', reason: 'OutOfCheese' },
     { arn: 'arn:3', reason: 'Workflow Failed' },
-    { arn: 'arn:4', reason: 'Workflow Aborted' }
+    { arn: 'arn:4', reason: 'Workflow Aborted' },
   ];
   expectedFailed.forEach((expectedItem) => {
     const matches = (o) => isEqual(expectedItem, o);

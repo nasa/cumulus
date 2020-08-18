@@ -34,14 +34,14 @@ test.serial('batchUpdate() can create a file record', async (t) => {
   const file = {
     bucket: randomString(),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   };
 
   await GranuleFilesCache.batchUpdate({ puts: [file] });
 
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
-    Key: { bucket: file.bucket, key: file.key }
+    Key: { bucket: file.bucket, key: file.key },
   }).promise();
 
   t.is(get(getResponse, 'Item.granuleId'), file.granuleId);
@@ -51,12 +51,12 @@ test.serial('batchUpdate() can update an existing a file record', async (t) => {
   const originalFile = {
     bucket: randomString(),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   };
 
   await dynamodbDocClient().put({
     TableName: process.env.FilesTable,
-    Item: originalFile
+    Item: originalFile,
   }).promise();
 
   const updatedFile = { ...originalFile, granuleId: randomString() };
@@ -65,7 +65,7 @@ test.serial('batchUpdate() can update an existing a file record', async (t) => {
 
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
-    Key: { bucket: updatedFile.bucket, key: updatedFile.key }
+    Key: { bucket: updatedFile.bucket, key: updatedFile.key },
   }).promise();
 
   t.is(get(getResponse, 'Item.granuleId'), updatedFile.granuleId);
@@ -75,19 +75,19 @@ test.serial('batchUpdate() can delete a file record', async (t) => {
   const file = {
     bucket: randomString(),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   };
 
   await dynamodbDocClient().put({
     TableName: process.env.FilesTable,
-    Item: file
+    Item: file,
   }).promise();
 
   await GranuleFilesCache.batchUpdate({ deletes: [file] });
 
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
-    Key: { bucket: file.bucket, key: file.key }
+    Key: { bucket: file.bucket, key: file.key },
   }).promise();
 
   t.is(getResponse.Item, undefined);
@@ -99,9 +99,9 @@ test.serial('batchUpdate() does not throw an exception when attempting to delete
       deletes: [
         {
           bucket: randomString(),
-          key: randomString()
-        }
-      ]
+          key: randomString(),
+        },
+      ],
     })
   );
 });
@@ -112,9 +112,9 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
       puts: [
         {
           key: randomString(),
-          granuleId: randomString()
-        }
-      ]
+          granuleId: randomString(),
+        },
+      ],
     }),
     { instanceOf: AggregateError }
   );
@@ -130,9 +130,9 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
       puts: [
         {
           bucket: randomString(),
-          granuleId: randomString()
-        }
-      ]
+          granuleId: randomString(),
+        },
+      ],
     }),
     { instanceOf: AggregateError }
   );
@@ -148,9 +148,9 @@ test.serial('batchUpdate() will throw an exception if a put request does not con
       puts: [
         {
           bucket: randomString(),
-          key: randomString()
-        }
-      ]
+          key: randomString(),
+        },
+      ],
     }),
     { instanceOf: AggregateError }
   );
@@ -165,9 +165,9 @@ test.serial('batchUpdate() will throw an exception if a delete request does not 
     GranuleFilesCache.batchUpdate({
       deletes: [
         {
-          key: randomString()
-        }
-      ]
+          key: randomString(),
+        },
+      ],
     }),
     { instanceOf: AggregateError }
   );
@@ -182,9 +182,9 @@ test.serial('batchUpdate() will throw an exception if a delete request does not 
     GranuleFilesCache.batchUpdate({
       deletes: [
         {
-          bucket: randomString()
-        }
-      ]
+          bucket: randomString(),
+        },
+      ],
     }),
     { instanceOf: AggregateError }
   );
@@ -199,14 +199,14 @@ test.serial('batchUpdate() will ignore extra fields in a put', async (t) => {
     bucket: randomString(),
     key: randomString(),
     granuleId: randomString(),
-    name: 'Frank'
+    name: 'Frank',
   };
 
   await GranuleFilesCache.batchUpdate({ puts: [file] });
 
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
-    Key: { bucket: file.bucket, key: file.key }
+    Key: { bucket: file.bucket, key: file.key },
   }).promise();
 
   t.deepEqual(
@@ -214,7 +214,7 @@ test.serial('batchUpdate() will ignore extra fields in a put', async (t) => {
     {
       bucket: file.bucket,
       key: file.key,
-      granuleId: file.granuleId
+      granuleId: file.granuleId,
     }
   );
 });
@@ -223,14 +223,14 @@ test.serial('batchUpdate() will ignore extra fields in a delete', async (t) => {
   const file = {
     bucket: randomString(),
     key: randomString(),
-    name: 'Frank'
+    name: 'Frank',
   };
 
   await GranuleFilesCache.batchUpdate({ deletes: [file] });
 
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
-    Key: { bucket: file.bucket, key: file.key }
+    Key: { bucket: file.bucket, key: file.key },
   }).promise();
 
   t.is(getResponse.Item, undefined);
@@ -242,7 +242,7 @@ test.serial('batchUpdate() can handle more than 25 updates', async (t) => {
   const files = range(26).map(() => ({
     bucket: randomString(),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   }));
 
   await GranuleFilesCache.batchUpdate({ puts: files });
@@ -251,7 +251,7 @@ test.serial('batchUpdate() can handle more than 25 updates', async (t) => {
     files.map(async (file) => {
       const getResponse = await dynamodbDocClient().get({
         TableName: process.env.FilesTable,
-        Key: { bucket: file.bucket, key: file.key }
+        Key: { bucket: file.bucket, key: file.key },
       }).promise();
 
       t.is(get(getResponse, 'Item.granuleId'), file.granuleId);

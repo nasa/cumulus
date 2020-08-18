@@ -38,6 +38,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "2.0.1",
+    "@cumulus/common": "2.0.1",
     "@cumulus/logger": "2.0.1",
     "@cumulus/types": "2.0.1",
     "jsonpath-plus": "^3.0.0",

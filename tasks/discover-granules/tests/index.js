@@ -9,7 +9,7 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   randomString,
   validateConfig,
-  validateOutput
+  validateOutput,
 } = require('@cumulus/common/test-utils');
 const Logger = require('@cumulus/logger');
 
@@ -21,7 +21,7 @@ let logEvents = [];
 const fakeConsole = {
   log(message) {
     logEvents.push(JSON.parse(message));
-  }
+  },
 };
 
 class FakeLogger extends Logger {
@@ -41,22 +41,22 @@ const fakeGranulesModule = {
     if (granuleId === 'crash-the-api') {
       return {
         statusCode: 500,
-        body: '{}'
+        body: '{}',
       };
     }
 
     if (granuleId === 'duplicate') {
       return {
         statusCode: 200,
-        body: '{}'
+        body: '{}',
       };
     }
 
     return {
       statusCode: 404,
-      body: JSON.stringify({ error: 'Not Found' })
+      body: JSON.stringify({ error: 'Not Found' }),
     };
-  }
+  },
 };
 
 // Import the discover-granules functions that we'll be testing, configuring them to use the fake
@@ -65,12 +65,12 @@ const {
   checkGranuleHasNoDuplicate,
   discoverGranules,
   filterDuplicates,
-  handleDuplicates
+  handleDuplicates,
 } = proxyquire(
   '..',
   {
     '@cumulus/api-client/granules': fakeGranulesModule,
-    '@cumulus/logger': FakeLogger
+    '@cumulus/logger': FakeLogger,
   }
 );
 
@@ -89,7 +89,7 @@ test.beforeEach(async (t) => {
   t.context.filesByGranuleId = {
     duplicate: {},
     notDuplicate: {},
-    someOtherGranule: {}
+    someOtherGranule: {},
   };
 });
 
@@ -102,7 +102,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
 
   await validateConfig(t, event.config);
@@ -126,7 +126,7 @@ test('discover granules using FTP', async (t) => {
     protocol: 'ftp',
     host: '127.0.0.1',
     username: 'testuser',
-    password: 'testpass'
+    password: 'testpass',
   };
 
   await validateConfig(t, event.config);
@@ -145,7 +145,7 @@ test('discover granules using SFTP', async (t) => {
     host: '127.0.0.1',
     port: 2222,
     username: 'user',
-    password: 'password'
+    password: 'password',
   };
 
   await validateConfig(t, event.config);
@@ -162,7 +162,7 @@ test('discover granules using HTTP', async (t) => {
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
 
   await validateConfig(t, event.config);
@@ -177,7 +177,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     const files = [
       'granule-1.nc', 'granule-1.nc.md5',
       'granule-2.nc', 'granule-2.nc.md5',
-      'granule-3.nc', 'granule-3.nc.md5'
+      'granule-3.nc', 'granule-3.nc.md5',
     ];
 
     config.sourceBucketName = randomString();
@@ -193,7 +193,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
         s3().putObject({
           Bucket: config.sourceBucketName,
           Key: `${event.config.provider_path}/${file}`,
-          Body: `This is ${file}`
+          Body: `This is ${file}`,
         }).promise()));
       await assert(t, await discoverGranules(event));
     } finally {
@@ -207,7 +207,7 @@ test('discover granules using S3',
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
-      host: config.sourceBucketName
+      host: config.sourceBucketName,
     };
   }));
 
@@ -219,7 +219,7 @@ test('discover granules without collection files config using S3',
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
-      host: config.sourceBucketName
+      host: config.sourceBucketName,
     };
   }, async (t, output) => {
     await validateOutput(t, output);
@@ -237,7 +237,7 @@ test('discover granules without collection files config, but configuring collect
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
-      host: config.sourceBucketName
+      host: config.sourceBucketName,
     };
   }, async (t, output) => {
     await validateOutput(t, output);
@@ -255,7 +255,7 @@ test('discover granules without collection files config, but configuring task to
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
-      host: config.sourceBucketName
+      host: config.sourceBucketName,
     };
   }, async (t, output) => {
     await validateOutput(t, output);
@@ -271,7 +271,7 @@ test('discover granules without collection files config, but configuring task to
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
-      host: config.sourceBucketName
+      host: config.sourceBucketName,
     };
   }, async (t, output) => {
     await validateOutput(t, output);
@@ -288,7 +288,7 @@ test('discover granules without collection files config for .nc files using S3',
     config.provider = {
       id: 'MODAPS',
       protocol: 's3',
-      host: config.sourceBucketName
+      host: config.sourceBucketName,
     };
   }, async (t, output) => {
     await validateOutput(t, output);
@@ -304,7 +304,7 @@ test('discover granules using S3 throws error when discovery fails',
         protocol: 's3',
         // Ignore config.sourceBucketName and use random bucket name to force
         // NoSuchBucket error.
-        host: randomString()
+        host: randomString(),
       };
     });
     await t.throwsAsync(assert(t), { code: 'NoSuchBucket' });
@@ -386,7 +386,7 @@ test.serial('discover granules sets the GRANULES environment variable and logs t
     id: 'MODAPS',
     protocol: 'http',
     host: '127.0.0.1',
-    port: 3030
+    port: 3030,
   };
 
   // Empty out the list of log events

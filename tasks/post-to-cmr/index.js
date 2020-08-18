@@ -5,7 +5,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const {
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
-  publish2CMR
+  publish2CMR,
 } = require('@cumulus/cmrjs');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
@@ -33,7 +33,7 @@ function buildOutput(results, granules) {
       cmrLink: result.link,
       cmrConceptId: result.conceptId,
       published: true,
-      cmrMetadataFormat: result.metadataFormat
+      cmrMetadataFormat: result.metadataFormat,
     });
   });
 }
@@ -57,7 +57,7 @@ function addMetadataObjects(cmrFiles) {
 
       return {
         ...cmrFile,
-        metadataObject
+        metadataObject,
       };
     })
   );
@@ -116,7 +116,7 @@ async function postToCMR(event) {
 
   const cmrSettings = await getCmrSettings({
     ...event.config.cmr,
-    ...event.config.launchpad
+    ...event.config.launchpad,
   });
 
   // post all meta files to CMR
@@ -132,8 +132,8 @@ async function postToCMR(event) {
       event.input.granules
     ).map((g) => ({
       ...g,
-      post_to_cmr_duration: endTime - startTime
-    }))
+      post_to_cmr_duration: endTime - startTime,
+    })),
   };
 }
 

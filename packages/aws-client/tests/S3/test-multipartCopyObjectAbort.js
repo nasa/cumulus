@@ -12,9 +12,9 @@ const S3 = proxyquire(
     './services': {
       s3: () => ({
         headObject: () => ({
-          promise: async () => ({ ContentLength: 5 })
-        })
-      })
+          promise: async () => ({ ContentLength: 5 }),
+        }),
+      }),
     },
     './lib/S3MultipartUploads': {
       abortMultipartUpload: async (params) => {
@@ -22,8 +22,8 @@ const S3 = proxyquire(
         abortMultipartUploadParams = params;
       },
       createMultipartUpload: () => Promise.resolve({ UploadId: 'abc-123' }),
-      uploadPartCopy: () => Promise.reject(new Error('uh oh'))
-    }
+      uploadPartCopy: () => Promise.reject(new Error('uh oh')),
+    },
   }
 );
 
@@ -33,7 +33,7 @@ test('multipartCopyObject() aborts the upload if something fails', async (t) => 
       sourceBucket: 'source-bucket',
       sourceKey: 'source-key',
       destinationBucket: 'destination-bucket',
-      destinationKey: 'destination-key'
+      destinationKey: 'destination-key',
     })
   );
 
@@ -44,7 +44,7 @@ test('multipartCopyObject() aborts the upload if something fails', async (t) => 
     {
       Bucket: 'destination-bucket',
       Key: 'destination-key',
-      UploadId: 'abc-123'
+      UploadId: 'abc-123',
     }
   );
 });

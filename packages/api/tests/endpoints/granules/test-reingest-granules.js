@@ -6,7 +6,7 @@ const test = require('ava');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
@@ -16,7 +16,7 @@ const models = require('../../../models');
 const { app } = require('../../../app');
 
 process.env.AccessTokensTable = randomString();
-process.env.backgroundQueueName = randomString();
+process.env.backgroundQueueUrl = randomString();
 process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -57,9 +57,8 @@ test('put request with reingest action calls the granuleModel.reingest function 
     new Promise((resolve) => resolve(fakeCollection))
   );
 
-  const expectedQueueName = process.env.backgroundQueueName;
   const body = {
-    action: 'reingest'
+    action: 'reingest',
   };
 
   await request(app)
@@ -72,9 +71,8 @@ test('put request with reingest action calls the granuleModel.reingest function 
   t.is(granuleReingestStub.calledOnce, true);
 
   const reingestArgs = granuleReingestStub.args[0];
-  const { queueName } = reingestArgs[0];
-  t.truthy(queueName);
-  t.is(queueName, expectedQueueName);
+  const { queueUrl } = reingestArgs[0];
+  t.is(queueUrl, process.env.backgroundQueueUrl);
 
   granuleGetStub.restore();
   granuleReingestStub.restore();

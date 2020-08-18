@@ -32,7 +32,7 @@ class AsyncOperation extends Manager {
     super({
       tableName: params.tableName || process.env.AsyncOperationsTable,
       tableHash: { name: 'id', type: 'S' },
-      schema: asyncOperationSchema
+      schema: asyncOperationSchema,
     });
 
     this.systemBucket = params.systemBucket;
@@ -41,7 +41,7 @@ class AsyncOperation extends Manager {
 
   async getLambdaEnvironmentVariables(functionName) {
     const lambdaConfig = await lambda().getFunctionConfiguration({
-      FunctionName: functionName
+      FunctionName: functionName,
     }).promise();
     return Object.entries(lambdaConfig.Environment.Variables)
       .map(([name, value]) => ({ name, value }));
@@ -70,13 +70,13 @@ class AsyncOperation extends Manager {
     id,
     payloadBucket,
     payloadKey,
-    useLambdaEnvironmentVariables
+    useLambdaEnvironmentVariables,
   }) {
     let envVars = [
       { name: 'asyncOperationId', value: id },
       { name: 'asyncOperationsTable', value: this.tableName },
       { name: 'lambdaName', value: lambdaName },
-      { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` }
+      { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` },
     ];
 
     if (useLambdaEnvironmentVariables) {
@@ -92,10 +92,10 @@ class AsyncOperation extends Manager {
         containerOverrides: [
           {
             name: 'AsyncOperation',
-            environment: envVars
-          }
-        ]
-      }
+            environment: envVars,
+          },
+        ],
+      },
     }).promise();
   }
 
@@ -117,7 +117,7 @@ class AsyncOperation extends Manager {
     const {
       description,
       operationType,
-      payload
+      payload,
     } = params;
 
     // Create the record in the database
@@ -130,7 +130,7 @@ class AsyncOperation extends Manager {
     await s3().putObject({
       Bucket: payloadBucket,
       Key: payloadKey,
-      Body: JSON.stringify(payload)
+      Body: JSON.stringify(payload),
     }).promise();
 
     // Start the task in ECS
@@ -138,7 +138,7 @@ class AsyncOperation extends Manager {
       ...params,
       id,
       payloadBucket,
-      payloadKey
+      payloadKey,
     });
 
     if (runTaskResponse.failures.length > 0) {
@@ -153,7 +153,7 @@ class AsyncOperation extends Manager {
       status: 'RUNNING',
       taskArn: runTaskResponse.tasks[0].taskArn,
       description,
-      operationType
+      operationType,
     });
   }
 }

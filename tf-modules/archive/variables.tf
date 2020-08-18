@@ -1,6 +1,7 @@
 # Required
 
-variable "background_queue_name" {
+variable "background_queue_url" {
+  description = "Queue URL to use for throttled background operations (e.g. granule reingest)"
   type = string
 }
 

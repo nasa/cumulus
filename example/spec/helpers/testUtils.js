@@ -69,7 +69,7 @@ function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-da
     Bucket: bucket,
     Key: `${prefix}/${key}`,
     Body: data,
-    ContentType: mime.lookup(key) || null
+    ContentType: mime.lookup(key) || null,
   }).promise();
 }
 
@@ -109,13 +109,13 @@ function uploadTestDataToBucket(bucket, data, prefix) {
 async function deleteFolder(bucket, folder) {
   const l = await s3().listObjectsV2({
     Bucket: bucket,
-    Prefix: folder
+    Prefix: folder,
   }).promise();
 
   await Promise.all(l.Contents.map((item) =>
     s3().deleteObject({
       Bucket: bucket,
-      Key: item.Key
+      Key: item.Key,
     }).promise()));
 }
 
@@ -153,7 +153,7 @@ async function getFileMetadata(file) {
     return {
       filename: file.filename,
       size: headObjectResponse.ContentLength,
-      LastModified: headObjectResponse.LastModified
+      LastModified: headObjectResponse.LastModified,
     };
   } catch (error) {
     log.error(`Failed to headObject the object at ${Bucket}/${Key} in s3.`);
@@ -182,5 +182,5 @@ module.exports = {
   templateFile,
   timestampedName,
   updateAndUploadTestDataToBucket,
-  uploadTestDataToBucket
+  uploadTestDataToBucket,
 };

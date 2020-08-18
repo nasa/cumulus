@@ -37,7 +37,7 @@ test.after.always(async () => {
 
 test('API request with valid JWT returns 200 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    username: validUsername
+    username: validUsername,
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -69,7 +69,7 @@ test('API request with JWT for unauthorized user returns 401 response', async (t
 test('API request with expired JWT returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
     expirationTime: moment().unix(),
-    username: validUsername
+    username: validUsername,
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -86,7 +86,7 @@ test('API request with expired JWT returns 401 response', async (t) => {
 
 test.serial('API request with invalid JWT returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    username: validUsername
+    username: validUsername,
   });
   await accessTokenModel.create(accessTokenRecord);
 
@@ -107,7 +107,7 @@ test.serial('API request with invalid JWT returns 401 response', async (t) => {
 
 test('API request with JWT and no corresponding token record returns 401 response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
-    username: validUsername
+    username: validUsername,
   });
 
   const jwt = createJwtToken(accessTokenRecord);

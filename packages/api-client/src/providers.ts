@@ -25,8 +25,8 @@ export const createProvider = (params: {
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/providers',
-      body: JSON.stringify(provider)
-    }
+      body: JSON.stringify(provider),
+    },
   });
 };
 
@@ -54,8 +54,8 @@ export const deleteProvider = (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/providers/${providerId}`
-    }
+      path: `/providers/${providerId}`,
+    },
   });
 };
 
@@ -83,8 +83,8 @@ export const getProvider = (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/providers/${providerId}`
-    }
+      path: `/providers/${providerId}`,
+    },
   });
 };
 
@@ -106,7 +106,7 @@ export const getProviders = (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/providers'
-    }
+      path: '/providers',
+    },
   });
 };

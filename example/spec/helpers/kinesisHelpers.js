@@ -7,7 +7,7 @@ const { Kinesis } = require('aws-sdk');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 
 const {
-  waitForAllTestSf
+  waitForAllTestSf,
 } = require('@cumulus/integration-tests');
 
 const waitPeriodMs = 1000;
@@ -84,7 +84,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
       retries: maxRetries,
       onFailedAttempt: (error) => {
         console.log(`Stream in state ${streamStatus} retrying. ${error.attemptsLeft} remain on ${displayName} at ${new Date().toString()}`);
-      }
+      },
     }
   );
 }
@@ -120,7 +120,7 @@ async function createKinesisStream(streamName) {
     {
       minTimeout: 2000,
       maxTimeout: 32000,
-      onFailedAttempt: () => console.log('LimitExceededException when calling kinesis.createStream(), will retry.')
+      onFailedAttempt: () => console.log('LimitExceededException when calling kinesis.createStream(), will retry.'),
     }
   );
 }
@@ -163,7 +163,7 @@ async function getShardIterator(streamName) {
   const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
 
   const describeStreamParams = {
-    StreamName: streamName
+    StreamName: streamName,
   };
 
   const streamDetails = await kinesis.describeStream(describeStreamParams).promise();
@@ -174,7 +174,7 @@ async function getShardIterator(streamName) {
     ShardId: shardId, /* required */
     ShardIteratorType: 'AT_SEQUENCE_NUMBER',
     StartingSequenceNumber: startingSequenceNumber,
-    StreamName: streamName
+    StreamName: streamName,
   };
 
   const shardIterator = await kinesis.getShardIterator(shardIteratorParams).promise();
@@ -212,7 +212,7 @@ async function putRecordOnStream(streamName, record) {
   return kinesis.putRecord({
     Data: JSON.stringify(record),
     PartitionKey: '1',
-    StreamName: streamName
+    StreamName: streamName,
   }).promise();
 }
 
@@ -330,7 +330,7 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) 
       retries: maxRetries,
       onFailedAttempt: (error) => {
         console.log(`No message on Queue. ${error.attemptsLeft} retries remain. ${new Date().toLocaleString()}`);
-      }
+      },
     }
   );
 }
@@ -347,5 +347,5 @@ module.exports = {
   waitForActiveStream,
   waitForAllTestSfForRecord,
   waitForQueuedRecord,
-  waitForTestSfForRecord
+  waitForTestSfForRecord,
 };

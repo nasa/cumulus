@@ -1,4 +1,4 @@
-'use strict';
+pn'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
@@ -557,7 +557,7 @@ async function createReconciliationReport(recReportParams) {
     reportKey,
     stackName,
     startTimestamp,
-    systemBucket
+    systemBucket,
   } = recReportParams;
 
   // Fetch the bucket names to reconcile

@@ -7,20 +7,15 @@ const test = require('ava');
 const SQS = require('@cumulus/aws-client/SQS');
 const schedule = rewire('../../lambdas/sf-scheduler');
 
-const defaultQueueName = 'startSF';
-const customQueueName = 'userDefinedQueueName';
+const defaultQueueUrl = 'defaultQueueUrl';
 const customQueueUrl = 'userDefinedQueueUrl';
 
 const fakeMessageResponse = {
-  meta: {
-    queues: {
-      [customQueueName]: customQueueUrl,
-      [defaultQueueName]: 'startSFQueueUrl'
-    },
+  cumulus_meta: {
     queueExecutionLimits: {
-      [customQueueName]: 5
-    }
-  }
+      [customQueueUrl]: 5,
+    },
+  },
 };
 const scheduleEventTemplate = {
   collection: 'fakeCollection',
@@ -28,15 +23,15 @@ const scheduleEventTemplate = {
   cumulus_meta: {},
   payload: {},
   template: fakeMessageResponse,
-  definition: {}
+  definition: {},
 };
 const fakeCollection = {
   name: 'fakeCollection',
-  version: '000'
+  version: '000',
 };
 const fakeProvider = {
   id: 'fakeProviderId',
-  host: 'fakeHost'
+  host: 'fakeHost',
 };
 
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
@@ -66,6 +61,10 @@ const getCollection = schedule.__get__('getCollection');
 const resetProvider = schedule.__set__('Provider', FakeProvider);
 const resetCollection = schedule.__set__('Collection', FakeCollection);
 
+test.before(() => {
+  process.env.defaultSchedulerQueueUrl = defaultQueueUrl;
+});
+
 test.afterEach.always(() => {
   sqsStub.resetHistory();
 });
@@ -94,7 +93,7 @@ test.serial('getCollection returns undefined when input is falsey', async (t) =>
 test.serial('getCollection returns collection when input is a valid collection name/version', async (t) => {
   const collectionInput = {
     name: fakeCollection.name,
-    version: fakeCollection.version
+    version: fakeCollection.version,
   };
 
   const response = await getCollection(collectionInput);
@@ -102,36 +101,36 @@ test.serial('getCollection returns collection when input is a valid collection n
   t.deepEqual(response, fakeCollection);
 });
 
-test.serial('Sends a message to SQS with a custom queue name if queueName is defined', async (t) => {
+test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined', async (t) => {
   const scheduleInput = {
     ...scheduleEventTemplate,
-    queueName: customQueueName,
+    queueUrl: customQueueUrl,
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
-      version: fakeCollection.version
-    }
+      version: fakeCollection.version,
+    },
   };
   await schedule.handleScheduleEvent(scheduleInput);
 
   t.is(sqsStub.calledOnce, true);
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
-  t.is(targetQueueUrl, fakeMessageResponse.meta.queues[customQueueName]);
-  t.is(targetMessage.cumulus_meta.queueName, customQueueName);
-  t.is(targetMessage.meta.queueExecutionLimits[customQueueName], 5);
+  t.is(targetQueueUrl, customQueueUrl);
+  t.is(targetMessage.cumulus_meta.queueUrl, customQueueUrl);
+  t.is(targetMessage.cumulus_meta.queueExecutionLimits[customQueueUrl], 5);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });
 
-test.serial('Sends a message to SQS with the startSF queue if queueName is not defined', async (t) => {
+test.serial('Sends an SQS message to the default queue if queueUrl is not defined', async (t) => {
   const scheduleInput = {
     ...scheduleEventTemplate,
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
-      version: fakeCollection.version
-    }
+      version: fakeCollection.version,
+    },
   };
 
   await schedule.handleScheduleEvent(scheduleInput);
@@ -139,9 +138,8 @@ test.serial('Sends a message to SQS with the startSF queue if queueName is not d
   t.is(sqsStub.calledOnce, true);
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
-  t.is(targetQueueUrl, fakeMessageResponse.meta.queues[defaultQueueName]);
-  t.is(targetMessage.cumulus_meta.queueName, defaultQueueName);
-  t.is(targetMessage.meta.queueExecutionLimits[customQueueName], 5);
+  t.is(targetQueueUrl, defaultQueueUrl);
+  t.is(targetMessage.cumulus_meta.queueUrl, defaultQueueUrl);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });

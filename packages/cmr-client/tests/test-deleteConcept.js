@@ -15,18 +15,18 @@ const gotResponses = {
   200: {
     statusCode: 200,
     statusMessage: 'OK',
-    body: '<result><concept-id>G1222482316-CUMULUS</concept-id><revision-id>9</revision-id></result>'
+    body: '<result><concept-id>G1222482316-CUMULUS</concept-id><revision-id>9</revision-id></result>',
   },
   404: {
     statusCode: 404,
     statusMessage: 'not found',
-    body: `<errors><error>${alreadyDeleted}</error></errors>`
+    body: `<errors><error>${alreadyDeleted}</error></errors>`,
   },
   400: {
     statusCode: 400,
     statusMessage: 'bad request',
-    body: '<errors><error>Bad request</error></errors>'
-  }
+    body: '<errors><error>Bad request</error></errors>',
+  },
 };
 
 let statusCode;
@@ -48,11 +48,11 @@ const stubclient = {
           updated: '2018-04-25T21:45:45.524Z',
           dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
           data_center: 'CUMULUS',
-          title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
-        }]
-      }
-    })
-  })
+          title: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+        }],
+      },
+    }),
+  }),
 };
 
 test.serial('deleteConcept returns expected result when granule is in CMR', async (t) => {

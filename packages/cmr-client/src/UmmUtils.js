@@ -34,9 +34,9 @@ const validateUMMG = async (ummMetadata, identifier, provider) => {
       body: ummMetadata,
       headers: {
         Accept: 'application/json',
-        'Content-type': `application/vnd.nasa.cmr.umm+json;version=${version}`
+        'Content-type': `application/vnd.nasa.cmr.umm+json;version=${version}`,
       },
-      throwHttpErrors: false
+      throwHttpErrors: false,
     }
   );
 
@@ -47,5 +47,5 @@ const validateUMMG = async (ummMetadata, identifier, provider) => {
 
 module.exports = {
   ummVersion,
-  validateUMMG
+  validateUMMG,
 };

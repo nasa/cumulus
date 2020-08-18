@@ -15,8 +15,8 @@ test('deleteCollection calls the callback with the expected object', async (t) =
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/collections/${t.context.collectionName}/${t.context.collectionVersion}`
-    }
+      path: `/collections/${t.context.collectionName}/${t.context.collectionVersion}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -27,7 +27,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
     callback,
     prefix: t.context.testPrefix,
     collectionName: t.context.collectionName,
-    collectionVersion: t.context.collectionVersion
+    collectionVersion: t.context.collectionVersion,
   }));
 });
 
@@ -39,8 +39,8 @@ test('createCollection calls the callback with the expected object', async (t) =
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/collections',
-      body: JSON.stringify(t.context.collection)
-    }
+      body: JSON.stringify(t.context.collection),
+    },
   };
 
   const callback = async (configObject) => {
@@ -49,7 +49,7 @@ test('createCollection calls the callback with the expected object', async (t) =
   await t.notThrowsAsync(collectionsApi.createCollection({
     callback,
     prefix: t.context.testPrefix,
-    collectionName: t.context.collectionName
+    collectionName: t.context.collectionName,
   }));
 });
 
@@ -59,8 +59,8 @@ test('getCollection calls the callback with the expected object and returns the 
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/collections/${t.context.collectionName}/${t.context.collectionVersion}`
-    }
+      path: `/collections/${t.context.collectionName}/${t.context.collectionVersion}`,
+    },
   };
 
   const callback = async (configObject) => {
@@ -72,7 +72,7 @@ test('getCollection calls the callback with the expected object and returns the 
     callback,
     prefix: t.context.testPrefix,
     collectionName: t.context.collectionName,
-    collectionVersion: t.context.collectionVersion
+    collectionVersion: t.context.collectionVersion,
   });
 
   t.deepEqual(result, { foo: 'bar' });
@@ -84,8 +84,8 @@ test('getCollections calls the callback with the expected object and returns the
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/collections/'
-    }
+      path: '/collections/',
+    },
   };
 
   const callback = async (configObject) => {
@@ -95,7 +95,7 @@ test('getCollections calls the callback with the expected object and returns the
 
   const result = await collectionsApi.getCollections({
     callback,
-    prefix: t.context.testPrefix
+    prefix: t.context.testPrefix,
   });
 
   t.deepEqual(result, { foo: 'bar' });

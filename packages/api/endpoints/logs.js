@@ -18,7 +18,7 @@ function metricsConfig() {
   return {
     type: '_doc',
     index: `${process.env.stackName}-*`,
-    metrics: true
+    metrics: true,
   };
 }
 
@@ -26,7 +26,7 @@ function cumulusDefaultConfig() {
   return {
     type: 'logs',
     index: process.env.ES_INDEX,
-    metrics: false
+    metrics: false,
   };
 }
 
@@ -68,8 +68,8 @@ async function get(req, res) {
     {
       queryStringParameters: {
         limit: 50,
-        'executions.keyword': executionName
-      }
+        'executions.keyword': executionName,
+      },
     },
     config.type,
     config.index,
