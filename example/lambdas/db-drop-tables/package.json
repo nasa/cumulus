@@ -1,7 +1,8 @@
 {
   "name": "@cumulus/db-drop-tables-lambda",
-  "description": "A Lambda function to be used to drop DB tables in CI",
   "version": "2.0.1",
+  "description": "A Lambda function to be used to drop DB tables in CI",
+  "license": "Apache-2.0",
   "private": true,
   "dependencies": {
     "@cumulus/db": "2.0.1-alpha.1"
