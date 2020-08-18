@@ -5,10 +5,12 @@ const omit = require('lodash/omit');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+const { removeNilProperties } = require('@cumulus/common/util');
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
 const { AssociatedRulesError } = require('../lib/errors');
+
 
 /**
  * Test a regular expression against a sample filename.
@@ -262,10 +264,19 @@ class Collection {
     ).then((result) => result.Items);
   }
 
-  async searchCollections(searchParams) {
+  /**
+   * return the queue of the granules for a given collection and search params
+   * the items are ordered by granuleId
+   *
+   * @param {string} searchParams - search parameters
+   * @param {Array<string>} fields - optional, fields to return
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  async searchCollections(searchParams, fields) {
     const attributeNames = {};
     const attributeValues = {};
-    const filterExpressions = [];
+    const filterArray = [];
+    const projectionArray = [];
 
     Object.entries(searchParams).forEach(([key, value]) => {
       let field = key;
@@ -277,22 +288,23 @@ class Collection {
 
       attributeNames[`#${field}`] = field;
       attributeValues[`:${key}`] = value;
-      filterExpressions.push(`#${field} ${operation} :${key}`);
+      filterArray.push(`#${field} ${operation} :${key}`);
     });
 
-    const params = (searchParams && !isEmpty(searchParams))
-      ? {
-        TableName: this.dynamoDbClient.tableName,
-        ExpressionAttributeNames: attributeNames,
-        ExpressionAttributeValues: attributeValues,
-        FilterExpression: filterExpressions.join(' AND '),
-      }
-      : {
-        TableName: this.dynamoDbClient.tableName,
-      };
+    fields.forEach((field) => {
+      attributeNames[`#${field}`] = field;
+      projectionArray.push(`#${field}`);
+    });
 
+    const params = {
+      TableName: this.dynamoDbClient.tableName,
+      ExpressionAttributeNames: !isEmpty(attributeNames) ? attributeNames : undefined,
+      ExpressionAttributeValues: !isEmpty(attributeValues) ? attributeValues : undefined,
+      ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
+      FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
+    };
     console.log(params);
-    return new DynamoDbSearchQueue(params, 'scan');
+    return new DynamoDbSearchQueue(removeNilProperties(params), 'scan');
   }
 
   async deleteCollections() {

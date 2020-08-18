@@ -31,6 +31,18 @@ function convertToCollectionSearchParams(params) {
   return removeNilProperties(searchParams);
 }
 
+function convertToGranuleSearchParams(params) {
+  const { collectionId, granuleId, provider, startTimestamp, endTimestamp } = params;
+  const searchParams = {
+    updatedAt__from: ISODateToValue(startTimestamp),
+    updatedAt__to: ISODateToValue(endTimestamp),
+    collectionId,
+    granuleId,
+    provider,
+  };
+  return removeNilProperties(searchParams);
+}
+
 async function reconciliationReportForCollections(recReportParams) {
   log.debug('internal-reconciliation-report reconciliationReportForCollections');
   // compare collection holdings:
