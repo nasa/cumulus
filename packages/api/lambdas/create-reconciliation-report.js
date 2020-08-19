@@ -77,19 +77,6 @@ function convertToESGranuleSearchParams(params) {
 }
 
 /**
- *
- * @param {Object} params - request params to convert to bucket filter params
- * @returns {Object} desired parameters formated for bucket reconcilation
- *                   report filtering.
- */
-function convertToBucketReportFilterParams(params) {
-  return {
-    startDateTime: ISODateToValue(params.startTimestamp),
-    endDateTime: ISODateToValue(params.endTimestamp),
-  };
-}
-
-/**
  * Checks to see if any of the included reportParams contains a value that
  * would turn a Cumulus Vs CMR comparison into a one way report.
  *
@@ -109,11 +96,9 @@ function isOneWayReport(reportParams) {
  * DynamoDB, and that there are no extras in either S3 or DynamoDB
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
- (TODO [MHS, 08/07/2020] for future use)
- * @param {Object} _bucketReportParams - bucket Filter information.
  * @returns {Promise<Object>} a report
  */
-async function createReconciliationReportForBucket(Bucket, _bucketReportParams = {}) {
+async function createReconciliationReportForBucket(Bucket) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
   const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
 
@@ -601,10 +586,9 @@ async function createReconciliationReport(recReportParams) {
 
   // Internal consistency check S3 vs Cumulus DBs
   // --------------------------------------------
-  const bucketReportParams = convertToBucketReportFilterParams(recReportParams);
   // Create a report for each bucket
   const promisedBucketReports = dataBuckets.map(
-    (bucket) => createReconciliationReportForBucket(bucket, bucketReportParams)
+    (bucket) => createReconciliationReportForBucket(bucket)
   );
   const bucketReports = await Promise.all(promisedBucketReports);
 
