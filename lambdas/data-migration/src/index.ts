@@ -29,6 +29,8 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
     // TODO: use schema to validate record before processing
 
     // Map old record to new schema.
+    // should not spread old record properties - should map the properties
+    // i want directly
     const updatedRecord: any = {
       ...record,
       granuleIdValidationRegex: record.granuleId,
