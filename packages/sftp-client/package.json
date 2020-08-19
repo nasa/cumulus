@@ -21,7 +21,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "clean": "rm -f dist",
+    "clean": "git clean -d -x -e node_modules -f",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
