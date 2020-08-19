@@ -11,6 +11,7 @@
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run tsc && ../../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "prepare": "npm run tsc",
+    "python-lint": "true",
     "tsc": "../../../node_modules/.bin/tsc"
   }
 }
