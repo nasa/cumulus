@@ -161,3 +161,7 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
   const createdRecordIds = await migrateCollections(process.env, knex);
   t.is(createdRecordIds.length, 1);
 });
+
+test.todo('handles nullable fields');
+test.todo('ignores extraneous fields');
+test.todo('JSONB fields are in expected state');

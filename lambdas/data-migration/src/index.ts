@@ -26,6 +26,8 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
+    // TODO: use schema to validate record before processing
+
     // Map old record to new schema.
     const updatedRecord: any = {
       ...record,
@@ -41,6 +43,7 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
     delete updatedRecord.granuleId;
     delete updatedRecord.createdAt;
     delete updatedRecord.updatedAt;
+    delete updatedRecord.dataType;
 
     try {
       const [cumulusId] = await knex('collections')
