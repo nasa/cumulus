@@ -6,8 +6,8 @@ export const up = async (knex: Knex): Promise<void> =>
     table.string('name').notNullable();
     table.string('version').notNullable();
     table.string('sampleFileName').notNullable();
-    table.string('granuleIdValidationRegex').notNullable(); // does this need to be longer than 255 chars?
-    table.string('granuleIdExtraction').notNullable(); // does this need to be longer than 255 chars?
+    table.text('granuleIdValidationRegex').notNullable();
+    table.text('granuleIdExtraction').notNullable();
     table.jsonb('files').notNullable();
     table.string('process');
     table.string('url_path');
