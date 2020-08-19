@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { noop } = require('@cumulus/common/util');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -13,7 +13,7 @@ const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const {
   AccessToken,
-  AsyncOperation: AsyncOperationModel
+  AsyncOperation: AsyncOperationModel,
 } = require('../../models');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 
@@ -46,7 +46,7 @@ test.before(async () => {
   asyncOperationModel = new AsyncOperationModel({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    tableName: process.env.AsyncOperationsTable,
   });
   await asyncOperationModel.createTable();
 
@@ -73,7 +73,7 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
     taskArn: randomString(),
     description: 'Some async run',
     operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 })
+    output: JSON.stringify({ age: 59 }),
   };
   const asyncOperation2 = {
     id: 'abc-456',
@@ -81,7 +81,7 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
     taskArn: randomString(),
     description: 'Some async run',
     operationType: 'ES Index',
-    output: JSON.stringify({ age: 37 })
+    output: JSON.stringify({ age: 37 }),
   };
 
   await asyncOperationModel.create(asyncOperation1);
@@ -122,7 +122,7 @@ test.serial('GET /asyncOperations with a timestamp parameter returns a list of f
     taskArn: randomString(),
     description: 'Some async run',
     operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 })
+    output: JSON.stringify({ age: 59 }),
   };
   const asyncOperation2 = {
     id: 'abc-294',
@@ -130,7 +130,7 @@ test.serial('GET /asyncOperations with a timestamp parameter returns a list of f
     taskArn: randomString(),
     description: 'Some async run',
     operationType: 'ES Index',
-    output: JSON.stringify({ age: 37 })
+    output: JSON.stringify({ age: 37 }),
   };
 
   await asyncOperationModel.create(asyncOperation1);
@@ -186,7 +186,7 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
     taskArn: randomString(),
     description: 'Some async run',
     operationType: 'ES Index',
-    output: JSON.stringify({ age: 37 })
+    output: JSON.stringify({ age: 37 }),
   };
 
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
@@ -207,7 +207,7 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
       operationType: asyncOperation.operationType,
       status: asyncOperation.status,
       output: asyncOperation.output,
-      taskArn: asyncOperation.taskArn
+      taskArn: asyncOperation.taskArn,
     }
   );
 });

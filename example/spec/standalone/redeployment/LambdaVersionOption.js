@@ -10,7 +10,7 @@ const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 
 const {
   loadConfig,
-  runKes
+  runKes,
 } = require('../../helpers/testUtils');
 
 xdescribe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
@@ -38,7 +38,7 @@ xdescribe('When the useWorkflowLambdaVersions option is set to false the deploym
 
       await runKes(config, {
         template: 'test_app/',
-        kesClass: 'node_modules/@cumulus/deployment/app/kes.js'
+        kesClass: 'node_modules/@cumulus/deployment/app/kes.js',
       });
     } finally {
       await fs.remove('test_app');

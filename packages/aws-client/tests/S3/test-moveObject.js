@@ -9,7 +9,7 @@ const {
   moveObject,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
-  s3PutObject
+  s3PutObject,
 } = require('../../S3');
 
 // Create a random id with a prefix
@@ -38,14 +38,14 @@ test('moveObject() copies the source file to the destination', async (t) => {
   await s3PutObject({
     Bucket: sourceBucket,
     Key: sourceKey,
-    Body: 'asdf'
+    Body: 'asdf',
   });
 
   await moveObject({
     sourceBucket,
     sourceKey,
     destinationBucket,
-    destinationKey
+    destinationKey,
   });
 
   const copiedObject = await getS3Object(destinationBucket, destinationKey);
@@ -62,20 +62,20 @@ test('moveObject() deletes the source file', async (t) => {
   await s3PutObject({
     Bucket: sourceBucket,
     Key: sourceKey,
-    Body: 'asdf'
+    Body: 'asdf',
   });
 
   await moveObject({
     sourceBucket,
     sourceKey,
     destinationBucket,
-    destinationKey
+    destinationKey,
   });
 
   t.false(
     await s3ObjectExists({
       Bucket: sourceBucket,
-      Key: sourceKey
+      Key: sourceKey,
     })
   );
 });

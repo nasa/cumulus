@@ -10,11 +10,11 @@ test('pullStepFunctionEvent returns original message if message does not contain
   const event = {
     cumulus_meta: {
       state_machine: 'state machine',
-      execution_name: 'execution'
+      execution_name: 'execution',
     },
     meta: {
-      bucket: 'test bucket'
-    }
+      bucket: 'test bucket',
+    },
   };
 
   const message = await StepFunctions.pullStepFunctionEvent(event);
@@ -26,24 +26,24 @@ test.serial('pullStepFunctionEvent replaces message key specified by replace.Tar
   const expectedMessage = {
     cumulus_meta: {
       state_machine: 'state machine',
-      execution_name: 'execution'
+      execution_name: 'execution',
     },
     payload: {
-      someKey: 'some data'
-    }
+      someKey: 'some data',
+    },
   };
 
   const event = {
     cumulus_meta: {
       state_machine: 'state machine',
-      execution_name: 'execution'
+      execution_name: 'execution',
     },
     payload: {},
     replace: {
       Bucket: 'test bucket',
       Key: 'key',
-      TargetPath: '$.payload'
-    }
+      TargetPath: '$.payload',
+    },
   };
 
   const stub = sinon.stub(s3Utils, 'getJsonS3Object').resolves(
@@ -59,22 +59,22 @@ test.serial('pullStepFunctionEvent replaces entire message with S3 message objec
   const fullMessage = {
     cumulus_meta: {
       state_machine: 'state machine',
-      execution_name: 'execution'
+      execution_name: 'execution',
     },
     meta: {
-      bucket: 'test bucket'
-    }
+      bucket: 'test bucket',
+    },
   };
 
   const event = {
     cumulus_meta: {
       state_machine: 'state machine',
-      execution_name: 'execution'
+      execution_name: 'execution',
     },
     replace: {
       Bucket: 'test bucket',
-      Key: 'key'
-    }
+      Key: 'key',
+    },
   };
 
   const stub = sinon.stub(s3Utils, 'getJsonS3Object').resolves(fullMessage);
@@ -88,13 +88,13 @@ test.serial('pullStepFunctionEvent throws error if replace.TargetPath cannot be 
   const event = {
     cumulus_meta: {
       state_machine: 'state machine',
-      execution_name: 'execution'
+      execution_name: 'execution',
     },
     replace: {
       Bucket: 'test bucket',
       Key: 'key',
-      TargetPath: 'fakeKey'
-    }
+      TargetPath: 'fakeKey',
+    },
   };
 
   const stub = sinon.stub(s3Utils, 'getS3Object').resolves({});
@@ -110,18 +110,18 @@ test('StepFunctions.parseStepMessage parses message correctly', async (t) => {
       foo: 'bar',
       event: {
         payload: {
-          granule1: 'granule1'
-        }
-      }
-    }
+          granule1: 'granule1',
+        },
+      },
+    },
   };
 
   t.deepEqual(await StepFunctions.parseStepMessage(event), {
     key: 'value',
     foo: 'bar',
     payload: {
-      granule1: 'granule1'
-    }
+      granule1: 'granule1',
+    },
   });
 });
 
@@ -135,19 +135,19 @@ test.serial('StepFunctions.parseStepMessage returns correct output if input mess
         replace: {
           Bucket: 'somebucket',
           Key: 'somekey',
-          TargetPath: '$'
-        }
-      }
-    }
+          TargetPath: '$',
+        },
+      },
+    },
   };
   const fullRemoteMessage = {
     cumulus_meta: {
-      state_machine: 'machine'
+      state_machine: 'machine',
     },
     payload: {
       granule1: 'granule1',
-      granule2: 'granule2'
-    }
+      granule2: 'granule2',
+    },
   };
 
   const stub = sinon.stub(s3Utils, 'getJsonS3Object');

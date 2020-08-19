@@ -18,17 +18,17 @@ const fakeS3 = () => ({
         }
 
         return {};
-      }
+      },
     };
-  }
+  },
 });
 
 const S3 = proxyquire(
   '../../S3',
   {
     './services': {
-      s3: fakeS3
-    }
+      s3: fakeS3,
+    },
   }
 );
 
@@ -37,7 +37,7 @@ test('waitForObjectToExist() retries if the object does not exist', async (t) =>
     S3.waitForObjectToExist({
       bucket: 'my-bucket',
       key: 'my-key',
-      interval: 1
+      interval: 1,
     })
   );
 });

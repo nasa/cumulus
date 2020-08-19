@@ -7,7 +7,7 @@ const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
@@ -16,7 +16,7 @@ const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers
+  setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { Search, defaultIndexAlias } = require('../../es/search');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
@@ -47,7 +47,7 @@ async function indexData() {
   const rules = [
     { name: 'Rule1' },
     { name: 'Rule2' },
-    { name: 'Rule3' }
+    { name: 'Rule3' },
   ];
 
   await Promise.all(rules.map(async (rule) => {
@@ -55,7 +55,7 @@ async function indexData() {
       index: esIndex,
       type: 'rule',
       id: rule.name,
-      body: rule
+      body: rule,
     });
   }));
 
@@ -86,7 +86,7 @@ test.before(async (t) => {
   asyncOperationsModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable
+    tableName: process.env.AsyncOperationsTable,
   });
   await asyncOperationsModel.createTable();
 
@@ -136,22 +136,22 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 
   await esClient.indices.create({
     index: indexName,
-    body: { mappings }
+    body: { mappings },
   });
 
   await esClient.indices.putAlias({
     index: indexName,
-    name: aliasName
+    name: aliasName,
   });
 
   await esClient.indices.create({
     index: otherIndexName,
-    body: { mappings }
+    body: { mappings },
   });
 
   await esClient.indices.putAlias({
     index: otherIndexName,
-    name: aliasName
+    name: aliasName,
   });
 
   const response = await request(app)
@@ -186,7 +186,7 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   await esClient.indices.create({
     index: indexName,
-    body: { mappings }
+    body: { mappings },
   });
 
   const response = await request(app)
@@ -210,7 +210,7 @@ test.serial('Reindex success', async (t) => {
     .send({
       aliasName: esAlias,
       destIndex,
-      sourceIndex: esIndex
+      sourceIndex: esIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -257,7 +257,7 @@ test.serial('Reindex - destination index exists', async (t) => {
     .send({
       aliasName: esAlias,
       destIndex: esIndex,
-      sourceIndex: esIndex
+      sourceIndex: esIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -282,7 +282,7 @@ test.serial('Change index - no current', async (t) => {
     .post('/elasticsearch/change-index')
     .send({
       aliasName: esAlias,
-      newIndex: 'dest-index'
+      newIndex: 'dest-index',
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -298,7 +298,7 @@ test.serial('Change index - no new', async (t) => {
     .post('/elasticsearch/change-index')
     .send({
       aliasName: esAlias,
-      currentIndex: 'source-index'
+      currentIndex: 'source-index',
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -317,7 +317,7 @@ test.serial('Change index - current index does not exist', async (t) => {
     .send({
       aliasName: esAlias,
       currentIndex,
-      newIndex: 'dest-index'
+      newIndex: 'dest-index',
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -336,7 +336,7 @@ test.serial('Change index - new index does not exist', async (t) => {
     .send({
       aliasName: esAlias,
       currentIndex: esIndex,
-      newIndex
+      newIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -353,7 +353,7 @@ test.serial('Change index - current index same as new index', async (t) => {
     .send({
       aliasName: esAlias,
       currentIndex: 'source',
-      newIndex: 'source'
+      newIndex: 'source',
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -374,7 +374,7 @@ test.serial('Change index', async (t) => {
     .send({
       aliasName,
       sourceIndex,
-      destIndex
+      destIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -385,7 +385,7 @@ test.serial('Change index', async (t) => {
     .send({
       aliasName,
       currentIndex: sourceIndex,
-      newIndex: destIndex
+      newIndex: destIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -417,7 +417,7 @@ test.serial('Change index and delete source index', async (t) => {
     .send({
       aliasName,
       sourceIndex,
-      destIndex
+      destIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -429,7 +429,7 @@ test.serial('Change index and delete source index', async (t) => {
       aliasName,
       currentIndex: sourceIndex,
       newIndex: destIndex,
-      deleteSource: true
+      deleteSource: true,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -452,7 +452,7 @@ test.serial('Reindex from database - create new index', async (t) => {
     const response = await request(app)
       .post('/elasticsearch/index-from-database')
       .send({
-        indexName
+        indexName,
       })
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -477,12 +477,12 @@ test.serial('Indices status', async (t) => {
 
   await esClient.indices.create({
     index: indexName,
-    body: { mappings }
+    body: { mappings },
   });
 
   await esClient.indices.create({
     index: otherIndexName,
-    body: { mappings }
+    body: { mappings },
   });
 
   const response = await request(app)

@@ -6,18 +6,18 @@ const {
   buildAndExecuteWorkflow,
   loadCollection,
   loadProvider,
-  waitForCompletedExecution
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
-  createCollection, deleteCollection
+  createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
 const { getExecution } = require('@cumulus/api-client/executions');
 const {
-  createProvider, deleteProvider
+  createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
 const {
-  deleteFolder, loadConfig, updateAndUploadTestDataToBucket
+  deleteFolder, loadConfig, updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow', () => {
@@ -44,14 +44,14 @@ describe('The DiscoverGranules workflow', () => {
     provider = await loadProvider({
       filename: './data/providers/s3/s3_provider.json',
       postfix: testId,
-      s3Host: bucket
+      s3Host: bucket,
     });
     await createProvider({ prefix: stackName, provider });
 
     // Create the collection
     collection = await loadCollection({
       filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
-      postfix: testId
+      postfix: testId,
     });
 
     await createCollection({ prefix: stackName, collection });
@@ -64,7 +64,7 @@ describe('The DiscoverGranules workflow', () => {
       [
         '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
         '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
       ],
       providerPath
     );
@@ -96,12 +96,12 @@ describe('The DiscoverGranules workflow', () => {
       deleteCollection({
         prefix: stackName,
         collectionName: collection.name,
-        collectionVersion: collection.version
+        collectionVersion: collection.version,
       }),
       deleteProvider({
         prefix: stackName,
-        provider: provider.id
-      })
+        provider: provider.id,
+      }),
     ]));
 
   it('executes successfully', () => {
@@ -117,7 +117,7 @@ describe('The DiscoverGranules workflow', () => {
           async () => {
             const { status } = await getExecution({
               prefix: stackName,
-              arn: workflowExecution.executionArn
+              arn: workflowExecution.executionArn,
             });
 
             return status === 'completed';

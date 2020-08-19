@@ -100,7 +100,7 @@ async function get(req, res) {
     startDate: new Date(response.createdAt),
     stopDate: new Date(response.createdAt + response.duration * 1000),
     ...{ input: JSON.stringify(response.originalPayload) },
-    ...{ output: JSON.stringify(response.finalPayload) }
+    ...{ output: JSON.stringify(response.finalPayload) },
   };
   return res.send({ warning, execution });
 }

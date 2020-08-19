@@ -6,7 +6,7 @@ const HelloWorld = require('..');
 test('Test return value from Hello World Task', async (t) => {
   const event = {
     config: {},
-    input: {}
+    input: {},
   };
   const data = await HelloWorld.helloWorld(event);
 

@@ -81,7 +81,7 @@ The following example is an excerpt from the [Discover Granules workflow](https:
         "Next": "WorkflowFailed"
       }
     ],
-    "Next": "CheckStatus"
+    "End": true
   },
 ```
 

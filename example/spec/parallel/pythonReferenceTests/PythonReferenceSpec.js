@@ -16,8 +16,8 @@ describe('The Python Reference workflow', () => {
   const initialPayload = {
     initialData: {
       key1: 'value1',
-      key2: 'value2'
-    }
+      key2: 'value2',
+    },
   };
 
   beforeAll(async () => {
@@ -45,7 +45,7 @@ describe('The Python Reference workflow', () => {
     const expectedPayload = {
       inputData: initialPayload.initialData,
       configInputData: { key1: 'injectedData' },
-      newData: { newKey1: 'newData1' }
+      newData: { newKey1: 'newData1' },
     };
 
     expect(stepOutput.payload).toEqual(expectedPayload);
@@ -57,7 +57,7 @@ describe('The Python Reference workflow', () => {
     const stepOutput = await activityStep.getStepOutput(workflowExecution.executionArn, 'EcsTaskPythonProcess');
     const expectedPayload = {
       fake_output1: 'first fake output',
-      fake_output2: 'second fake output'
+      fake_output2: 'second fake output',
     };
     expect(stepOutput.payload).toEqual(expectedPayload);
     expect(Object.keys(stepOutput)).toContain('meta');

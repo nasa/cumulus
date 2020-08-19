@@ -11,25 +11,26 @@ const stepFunctions = require('@cumulus/message/StepFunctions');
 const Semaphore = require('../../lib/Semaphore');
 const { Manager } = require('../../models');
 const {
-  handleSemaphoreDecrementTask
+  handleSemaphoreDecrementTask,
 } = require('../../lambdas/sf-semaphore-down');
 
 const sfEventSource = 'aws.states';
 const createCloudwatchEventMessage = ({
   status,
-  queueName,
-  source = sfEventSource
+  queueUrl,
+  source = sfEventSource,
 }) => {
+  const cumulusMeta = {
+    execution_name: randomString(),
+  };
+  if (queueUrl) {
+    cumulusMeta.queueUrl = queueUrl;
+    cumulusMeta.queueExecutionLimits = {
+      [queueUrl]: 5,
+    };
+  }
   const message = JSON.stringify({
-    cumulus_meta: {
-      execution_name: randomString(),
-      queueName
-    },
-    meta: {
-      queueExecutionLimits: {
-        [queueName]: 5
-      }
-    }
+    cumulus_meta: cumulusMeta,
   });
   const detail = (status === 'SUCCEEDED'
     ? { status, output: message }
@@ -39,18 +40,18 @@ const createCloudwatchEventMessage = ({
 
 const createCloudwatchPackagedEventMessage = ({
   status,
-  queueName,
-  source = sfEventSource
+  queueUrl,
+  source = sfEventSource,
 }) => {
   const message = JSON.stringify({
     cumulus_meta: {
       execution_name: randomString(),
-      queueName
+      queueUrl,
     },
     replace: {
       Bucket: 'cumulus-sandbox-testing',
-      Key: 'stubbedKey'
-    }
+      Key: 'stubbedKey',
+    },
   });
   const detail = (status === 'SUCCEEDED'
     ? { status, output: message }
@@ -58,41 +59,39 @@ const createCloudwatchPackagedEventMessage = ({
   return { source, detail };
 };
 
-const createExecutionMessage = ((queueName) => (
+const createExecutionMessage = ((queueUrl) => (
   {
     cumulus_meta: {
       execution_name: randomString(),
-      queueName
-    },
-    meta: {
+      queueUrl,
       queueExecutionLimits: {
-        [queueName]: 5
-      }
-    }
+        [queueUrl]: 5,
+      },
+    },
   }
 ));
 
 const testTerminalEventMessage = async (t, status) => {
   const { client, semaphore } = t.context;
-  const queueName = randomId('low');
+  const queueUrl = randomId('low');
 
   // arbitrarily set semaphore so it can be decremented
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key: queueName,
-      semvalue: 1
-    }
+      key: queueUrl,
+      semvalue: 1,
+    },
   }).promise();
 
   await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status,
-      queueName
+      queueUrl,
     })
   );
 
-  const response = await semaphore.get(queueName);
+  const response = await semaphore.get(queueUrl);
   t.is(response.semvalue, 0);
 };
 
@@ -105,7 +104,7 @@ test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');
   manager = new Manager({
     tableName: process.env.SemaphoresTable,
-    tableHash: { name: 'key', type: 'S' }
+    tableHash: { name: 'key', type: 'S' },
   });
   await manager.createTable();
 });
@@ -121,23 +120,23 @@ test.beforeEach(async (t) => {
 test.after.always(() => manager.deleteTable());
 
 test('sfSemaphoreDown lambda does nothing for an event with the wrong source', async (t) => {
-  const queueName = randomId('low');
+  const queueUrl = randomId('low');
 
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
-      queueName,
-      source: 'fake-source'
+      queueUrl,
+      source: 'fake-source',
     })
   );
 
   assertInvalidDecrementEvent(t, output);
 });
 
-test('sfSemaphoreDown lambda does nothing for a workflow message with no queue name', async (t) => {
+test('sfSemaphoreDown lambda does nothing for a workflow message with no queue URL', async (t) => {
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
-      status: 'SUCCEEDED'
+      status: 'SUCCEEDED',
     })
   );
 
@@ -145,11 +144,11 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no queue n
 });
 
 test('sfSemaphoreDown lambda does nothing for an event with no status', async (t) => {
-  const queueName = randomId('low');
+  const queueUrl = randomId('low');
 
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
-      queueName
+      queueUrl,
     })
   );
 
@@ -157,12 +156,12 @@ test('sfSemaphoreDown lambda does nothing for an event with no status', async (t
 });
 
 test('sfSemaphoreDown lambda does nothing for an event with a RUNNING status', async (t) => {
-  const queueName = randomId('low');
+  const queueUrl = randomId('low');
 
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status: 'RUNNING',
-      queueName
+      queueUrl,
     })
   );
 
@@ -173,21 +172,21 @@ test('sfSemaphoreDown lambda does nothing for an event with no message', async (
   const output = await handleSemaphoreDecrementTask({
     source: sfEventSource,
     detail: {
-      status: 'SUCCEEDED'
-    }
+      status: 'SUCCEEDED',
+    },
   });
 
   assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {
-  const queueName = randomId('low');
+  const queueUrl = randomId('low');
 
   await t.throwsAsync(
     () => handleSemaphoreDecrementTask(
       createCloudwatchEventMessage({
         status: 'SUCCEEDED',
-        queueName
+        queueUrl,
       })
     )
   );
@@ -198,8 +197,8 @@ test('sfSemaphoreDown lambda returns not a valid event for invalid event message
     source: sfEventSource,
     detail: {
       status: 'SUCCEEDED',
-      output: 'invalid message'
-    }
+      output: 'invalid message',
+    },
   });
 
   assertInvalidDecrementEvent(t, output);
@@ -208,25 +207,25 @@ test('sfSemaphoreDown lambda returns not a valid event for invalid event message
 test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', async (t) => {
   const status = 'SUCCEEDED';
   const { client, semaphore } = t.context;
-  const queueName = randomId('low');
+  const queueUrl = randomId('low');
   // arbitrarily set semaphore so it can be decremented
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key: queueName,
-      semvalue: 1
-    }
+      key: queueUrl,
+      semvalue: 1,
+    },
   }).promise();
 
-  const stubReturn = createExecutionMessage(queueName);
+  const stubReturn = createExecutionMessage(queueUrl);
   const pullStepFunctionStub = sinon.stub(stepFunctions, 'pullStepFunctionEvent');
   try {
     const proxiedFunction = proxyquire('../../lambdas/sf-semaphore-down', { pullStepFunctionEvent: pullStepFunctionStub }).handleSemaphoreDecrementTask;
     pullStepFunctionStub.returns(stubReturn);
     await proxiedFunction(
-      createCloudwatchPackagedEventMessage({ status, queueName })
+      createCloudwatchPackagedEventMessage({ status, queueUrl })
     );
-    const response = await semaphore.get(queueName);
+    const response = await semaphore.get(queueUrl);
     t.is(response.semvalue, 0);
   } finally {
     pullStepFunctionStub.restore();

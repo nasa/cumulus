@@ -7,7 +7,7 @@ describe('Cleans up Test Resources', () => {
 
     const params = {
       Bucket: testConfig.bucket,
-      Prefix: `${testConfig.stackName}/test-output/`
+      Prefix: `${testConfig.stackName}/test-output/`,
     };
     const s3list = await listS3ObjectsV2(params);
     const s3objects = s3list.map((obj) => ({ Bucket: testConfig.bucket, Key: obj.Key }));

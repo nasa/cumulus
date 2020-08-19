@@ -9,7 +9,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   createBucket,
   putJsonS3Object,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -70,7 +70,7 @@ test.before(async () => {
       process.env.system_bucket,
       templateFile,
       {}
-    )
+    ),
   ]);
 });
 
@@ -81,12 +81,12 @@ test.beforeEach(async (t) => {
     provider: 'my-provider',
     collection: {
       name: 'my-collection-name',
-      version: 'my-collection-version'
+      version: 'my-collection-version',
     },
     rule: {
-      type: 'onetime'
+      type: 'onetime',
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   };
 
   t.context.kinesisRule = {
@@ -95,13 +95,13 @@ test.beforeEach(async (t) => {
     provider: 'my-provider',
     collection: {
       name: 'my-collection-name',
-      version: 'my-collection-version'
+      version: 'my-collection-version',
     },
     rule: {
       type: 'kinesis',
-      value: 'my-kinesis-arn'
+      value: 'my-kinesis-arn',
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   };
 });
 
@@ -149,7 +149,7 @@ test('Creating a rule with an invalid name throws an error', async (t) => {
     () => rulesModel.create(ruleItem),
     {
       instanceOf: ValidationError,
-      message: 'Rule name may only contain letters, numbers, and underscores.'
+      message: 'Rule name may only contain letters, numbers, and underscores.',
     }
   );
 });
@@ -310,7 +310,7 @@ test.serial('update a kinesis type rule value, resulting in new event source map
   // update rule value
   const updates = {
     name: rule.name,
-    rule: { type: rule.rule.type, value: 'my-new-kinesis-arn' }
+    rule: { type: rule.rule.type, value: 'my-new-kinesis-arn' },
   };
 
   const updatedRule = await rulesModel.update(rule, updates);
@@ -338,7 +338,7 @@ test.serial('update a kinesis type rule workflow does not affect value or event 
   // update rule value
   const updates = {
     name: rule.name,
-    workflow: 'new-workflow'
+    workflow: 'new-workflow',
   };
 
   const updatedRule = await rulesModel.update(rule, updates);
@@ -424,21 +424,21 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
     workflow,
     rule: {
       type: 'kinesis',
-      value: randomString()
+      value: randomString(),
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   });
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       createEventSourceMapping: () => ({
-        promise: () => Promise.resolve({ UUID: randomString() })
+        promise: () => Promise.resolve({ UUID: randomString() }),
       }),
       deleteEventSourceMapping: () => ({
-        promise: () => Promise.resolve()
+        promise: () => Promise.resolve(),
       }),
       updateEventSourceMapping: () => ({
-        promise: () => Promise.resolve({ UUID: randomString() })
+        promise: () => Promise.resolve({ UUID: randomString() }),
       }),
       listEventSourceMappings: () => ({
         promise: () => Promise.resolve({
@@ -447,11 +447,11 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
               UUID: randomString(),
               EventSourceArn: item.rule.value,
               FunctionArn: `arn:aws:lambda:us-west-2:000000000000:function:${process.env.messageConsumer}`,
-              State: 'Disabled'
-            }
-          ]
-        })
-      })
+              State: 'Disabled',
+            },
+          ],
+        }),
+      }),
     });
 
   try {
@@ -483,19 +483,19 @@ test('creating an invalid kinesis type rule does not add event mappings', async 
   t.is(logEventMappings.length, 0);
 });
 
-test('Creating a rule with a queueName parameter', async (t) => {
+test('Creating a rule with a queueUrl parameter', async (t) => {
   const { onetimeRule } = t.context;
 
   const ruleItem = cloneDeep(onetimeRule);
-  ruleItem.queueName = 'testQueue';
+  ruleItem.queueUrl = 'testQueue';
 
   const response = await rulesModel.create(ruleItem);
 
   const payload = await models.Rule.buildPayload(ruleItem);
 
-  t.truthy(response.queueName);
-  t.is(response.queueName, ruleItem.queueName);
-  t.is(payload.queueName, ruleItem.queueName);
+  t.truthy(response.queueUrl);
+  t.is(response.queueUrl, ruleItem.queueUrl);
+  t.is(payload.queueUrl, ruleItem.queueUrl);
 });
 
 test('updates rule meta object', async (t) => {
@@ -504,7 +504,7 @@ test('updates rule meta object', async (t) => {
   const triggerRule = randomId('triggerRule');
   const ruleItem = cloneDeep(onetimeRule);
   ruleItem.meta = {
-    triggerRule
+    triggerRule,
   };
 
   const rule = await rulesModel.create(ruleItem);
@@ -522,11 +522,11 @@ test('updates a deeply nested key', async (t) => {
   const { onetimeRule } = t.context;
 
   const testObject = {
-    key: randomString()
+    key: randomString(),
   };
   const ruleItem = cloneDeep(onetimeRule);
   ruleItem.meta = {
-    testObject
+    testObject,
   };
 
   const rule = await rulesModel.create(ruleItem);
@@ -537,8 +537,8 @@ test('updates a deeply nested key', async (t) => {
   const updates = {
     name: rule.name,
     meta: {
-      testObject: newTestObject
-    }
+      testObject: newTestObject,
+    },
   };
   const updatedRule = await rulesModel.update(rule, updates);
 
@@ -549,12 +549,12 @@ test('update preserves nested keys', async (t) => {
   const { onetimeRule } = t.context;
 
   const testObject = {
-    key: randomString()
+    key: randomString(),
   };
   const ruleItem = cloneDeep(onetimeRule);
   ruleItem.meta = {
     foo: 'bar',
-    testObject
+    testObject,
   };
 
   const rule = await rulesModel.create(ruleItem);
@@ -566,8 +566,8 @@ test('update preserves nested keys', async (t) => {
   const updates = {
     name: rule.name,
     meta: {
-      testObject: newTestObject
-    }
+      testObject: newTestObject,
+    },
   };
   const updatedRule = await rulesModel.update(rule, updates);
 
@@ -583,9 +583,9 @@ test('create, update and delete sqs type rule', async (t) => {
     workflow,
     rule: {
       type: 'sqs',
-      value: queueUrls.queueUrl
+      value: queueUrls.queueUrl,
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   });
 
   const createdRule = await rulesModel.create(rule);
@@ -595,18 +595,18 @@ test('create, update and delete sqs type rule', async (t) => {
   t.is(get(createdRule, 'meta.retries', 3), 3);
 
   const testObject = {
-    key: randomString()
+    key: randomString(),
   };
   const updates = {
     name: rule.name,
     meta: {
       testObject: testObject,
       visibilityTimeout: 60,
-      retries: 6
+      retries: 6,
     },
     rule: {
-      value: newQueueUrls.queueUrl
-    }
+      value: newQueueUrls.queueUrl,
+    },
   };
 
   const updatedRule = await rulesModel.update(createdRule, updates);
@@ -629,9 +629,9 @@ test('creating SQS rule fails if queue does not exist', async (t) => {
     workflow,
     rule: {
       type: 'sqs',
-      value: 'non-existent-queue'
+      value: 'non-existent-queue',
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   });
   await t.throwsAsync(
     rulesModel.create(rule),
@@ -645,9 +645,9 @@ test('creating SQS rule fails if there is no redrive policy on the queue', async
     workflow,
     rule: {
       type: 'sqs',
-      value: queueUrl
+      value: queueUrl,
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   });
   await t.throwsAsync(
     rulesModel.create(rule),

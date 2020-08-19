@@ -14,8 +14,8 @@ async function enableStream(tableName) {
     TableName: tableName,
     StreamSpecification: {
       StreamEnabled: true,
-      StreamViewType: 'NEW_AND_OLD_IMAGES'
-    }
+      StreamViewType: 'NEW_AND_OLD_IMAGES',
+    },
   };
 
   await awsServices.dynamodb().updateTable(params).promise();
@@ -33,28 +33,28 @@ async function createTable(tableName, hash, range, attributes, indexes) {
     TableName: tableName,
     AttributeDefinitions: [{
       AttributeName: hash.name,
-      AttributeType: hash.type
+      AttributeType: hash.type,
     }],
     KeySchema: [{
       AttributeName: hash.name,
-      KeyType: 'HASH'
+      KeyType: 'HASH',
     }],
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
+      WriteCapacityUnits: 5,
     },
-    ...indexes
+    ...indexes,
   };
 
   if (range) {
     params.KeySchema.push({
       AttributeName: range.name,
-      KeyType: 'RANGE'
+      KeyType: 'RANGE',
     });
 
     params.AttributeDefinitions.push({
       AttributeName: range.name,
-      AttributeType: range.type
+      AttributeType: range.type,
     });
   }
 
@@ -62,7 +62,7 @@ async function createTable(tableName, hash, range, attributes, indexes) {
     attributes.forEach((attribute) => {
       params.AttributeDefinitions.push({
         AttributeName: attribute.name,
-        AttributeType: attribute.type
+        AttributeType: attribute.type,
       });
     });
   }
@@ -77,7 +77,7 @@ async function createTable(tableName, hash, range, attributes, indexes) {
 
 async function deleteTable(tableName) {
   const output = await awsServices.dynamodb().deleteTable({
-    TableName: tableName
+    TableName: tableName,
   }).promise();
 
   await awsServices.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
@@ -100,7 +100,7 @@ class Manager {
           if (value.type === 'object') {
             return {
               additionalProperties: false,
-              ...value
+              ...value,
             };
           }
 
@@ -112,7 +112,7 @@ class Manager {
     const ajv = new Ajv({
       removeAdditional,
       useDefaults: true,
-      v5: true
+      v5: true,
     });
     const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
     const valid = validate(item);
@@ -224,7 +224,7 @@ class Manager {
       tableName: this.tableName,
       item,
       client: this.dynamodbDocClient,
-      getParams: { ConsistentRead: true }
+      getParams: { ConsistentRead: true },
     });
   }
 
@@ -232,9 +232,9 @@ class Manager {
     const params = {
       RequestItems: {
         [this.tableName]: {
-          Keys: items
-        }
-      }
+          Keys: items,
+        },
+      },
     };
 
     if (attributes) {
@@ -246,14 +246,14 @@ class Manager {
 
   async batchWrite(deletes, puts = []) {
     const deleteRequests = (deletes || []).map((Key) => ({
-      DeleteRequest: { Key }
+      DeleteRequest: { Key },
     }));
 
     const now = Date.now();
     const putsWithTimestamps = puts.map((item) => ({
       createdAt: now,
       ...item,
-      updatedAt: now
+      updatedAt: now,
     }));
 
     if (this.validate) {
@@ -263,7 +263,7 @@ class Manager {
     }
 
     const putRequests = putsWithTimestamps.map((Item) => ({
-      PutRequest: { Item }
+      PutRequest: { Item },
     }));
 
     const requests = deleteRequests.concat(putRequests);
@@ -274,8 +274,8 @@ class Manager {
 
     const params = {
       RequestItems: {
-        [this.tableName]: requests
-      }
+        [this.tableName]: requests,
+      },
     };
 
     return this.dynamodbDocClient.batchWrite(params).promise();
@@ -304,7 +304,7 @@ class Manager {
       return {
         createdAt: now,
         ...item,
-        updatedAt: now
+        updatedAt: now,
       };
     });
 
@@ -320,7 +320,7 @@ class Manager {
     for (let i = 0; i < itemsWithTimestamps.length; i += 1) {
       await this.dynamodbDocClient.put({ // eslint-disable-line no-await-in-loop
         TableName: this.tableName,
-        Item: itemsWithTimestamps[i]
+        Item: itemsWithTimestamps[i],
       }).promise();
     }
 
@@ -337,14 +337,14 @@ class Manager {
       fields,
       limit,
       select,
-      startKey
+      startKey,
     });
   }
 
   async delete(item) {
     const params = {
       TableName: this.tableName,
-      Key: item
+      Key: item,
     };
 
     return this.dynamodbDocClient.delete(params).promise();
@@ -353,7 +353,7 @@ class Manager {
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
     const actualUpdates = {
       ...updates,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
 
     // Make sure that we don't update the key fields
@@ -365,7 +365,7 @@ class Manager {
     const currentItem = await this.get(itemKeys);
     const updatedItem = {
       ...currentItem,
-      ...updates
+      ...updates,
     };
 
     optionalFieldsToDelete.forEach((f) => {
@@ -386,7 +386,7 @@ class Manager {
     Object.keys(actualUpdates).forEach((property) => {
       attributeUpdates[property] = {
         Action: 'PUT',
-        Value: actualUpdates[property]
+        Value: actualUpdates[property],
       };
     });
 
@@ -400,7 +400,7 @@ class Manager {
       TableName: this.tableName,
       Key: itemKeys,
       ReturnValues: 'ALL_NEW',
-      AttributeUpdates: attributeUpdates
+      AttributeUpdates: attributeUpdates,
     }).promise();
 
     return updateResponse.Attributes;
@@ -449,7 +449,7 @@ class Manager {
   _buildDocClientUpdateParams({
     item,
     itemKey,
-    mutableFieldNames = []
+    mutableFieldNames = [],
   }) {
     const ExpressionAttributeNames = {};
     const ExpressionAttributeValues = {};
@@ -478,7 +478,7 @@ class Manager {
       Key: itemKey,
       ExpressionAttributeNames,
       ExpressionAttributeValues,
-      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`
+      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`,
     };
   }
 }

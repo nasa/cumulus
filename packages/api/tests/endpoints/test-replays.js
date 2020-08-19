@@ -28,7 +28,7 @@ const envs = {
   ProvidersTable: randomString(),
   RulesTable: randomString(),
   stackName: randomString(),
-  system_bucket: randomString()
+  system_bucket: randomString(),
 };
 
 test.before(async () => {
@@ -78,7 +78,7 @@ test.serial('request to replays endpoint returns 400 if type is kinesis but no k
   );
 
   const body = {
-    type: 'kinesis'
+    type: 'kinesis',
   };
 
   await request(app)
@@ -101,7 +101,7 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
     type: 'kinesis',
     kinesisStream: 'fakestream',
     endTimestamp: 12345678,
-    startTimestamp: 12356789
+    startTimestamp: 12356789,
   };
 
   await request(app)
@@ -115,15 +115,7 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.ManualConsumerLambda);
   t.is(cluster, process.env.EcsCluster);
-  t.deepEqual(payload, {
-    CollectionsTable: process.env.CollectionsTable,
-    RulesTable: process.env.RulesTable,
-    ProvidersTable: process.env.ProvidersTable,
-    stackName: process.env.stackName,
-    system_bucket: process.env.system_bucket,
-    FallbackTopicArn: process.env.KinesisFallbackTopicArn,
-    ...body
-  });
+  t.deepEqual(payload, body);
 
   asyncOperationStartStub.restore();
 });
@@ -137,7 +129,7 @@ test.serial('request to /replays endpoint returns 500 if starting ECS task throw
     type: 'kinesis',
     kinesisStream: 'fakestream',
     endTimestamp: 12345678,
-    startTimestamp: 12356789
+    startTimestamp: 12356789,
   };
 
   try {
@@ -161,7 +153,7 @@ test.serial('request to /replays endpoint returns 503 if starting ECS task throw
     type: 'kinesis',
     kinesisStream: 'fakestream',
     endTimestamp: 12345678,
-    startTimestamp: 12356789
+    startTimestamp: 12356789,
   };
 
   try {

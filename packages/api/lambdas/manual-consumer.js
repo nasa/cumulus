@@ -46,7 +46,7 @@ const configureTimestampEnvs = (event) => {
 const setupIteratorParams = (stream, shardId) => {
   const params = {
     StreamName: stream,
-    ShardId: shardId
+    ShardId: shardId,
   };
   if (process.env.startTimestamp) {
     params.ShardIteratorType = 'AT_TIMESTAMP';
@@ -69,7 +69,7 @@ const setupIteratorParams = (stream, shardId) => {
  */
 const setupListShardParams = (stream, streamCreationTimestamp) => {
   const params = {
-    StreamName: stream
+    StreamName: stream,
   };
   if (streamCreationTimestamp) params.StreamCreationTimestamp = new Date(streamCreationTimestamp);
   return params;
@@ -91,7 +91,7 @@ async function processRecordBatch(streamArn, records) {
       await messageConsumer.processRecord(
         {
           kinesis: { data: record.Data },
-          eventSourceARN: streamArn
+          eventSourceARN: streamArn,
         },
         false
       );
@@ -128,7 +128,7 @@ async function processRecordBatch(streamArn, records) {
 async function iterateOverShardRecursively(streamArn, recordPromiseList, shardIterator) {
   try {
     const response = await Kinesis.getRecords({
-      ShardIterator: shardIterator
+      ShardIterator: shardIterator,
     }).promise();
     recordPromiseList.push(processRecordBatch(streamArn, response.Records));
     if (response.MillisBehindLatest === 0 || !response.NextShardIterator) return recordPromiseList;
@@ -240,12 +240,6 @@ async function processStream(streamName, streamCreationTimestamp) {
  */
 async function handler(event) {
   configureTimestampEnvs(event);
-  if (!process.env.CollectionsTable) process.env.CollectionsTable = event.CollectionsTable;
-  if (!process.env.RulesTable) process.env.RulesTable = event.RulesTable;
-  if (!process.env.ProvidersTable) process.env.ProvidersTable = event.ProvidersTable;
-  if (!process.env.stackName) process.env.stackName = event.stackName;
-  if (!process.env.system_bucket) process.env.system_bucket = event.system_bucket;
-  if (!process.env.FallbackTopicArn) process.env.FallbackTopicArn = event.FallbackTopicArn;
 
   if (event.type === 'kinesis' && event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);
@@ -267,5 +261,5 @@ module.exports = {
   processShard,
   processStream,
   setupIteratorParams,
-  setupListShardParams
+  setupListShardParams,
 };

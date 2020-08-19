@@ -53,7 +53,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
     { cmrEntry3: 'data3' },
     { cmrEntry4: 'data4' },
     { cmrEntry5: 'data5' },
-    { cmrEntry6: 'data6' }
+    { cmrEntry6: 'data6' },
   ];
   process.env.CMR_ENVIRONMENT = 'UAT';
 
@@ -61,7 +61,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
     provider: 'CUMULUS',
     clientId: 'clientID',
     username: 'username',
-    password: 'password'
+    password: 'password',
   });
   const results = await cmrSearch.searchCollections();
 
@@ -77,7 +77,7 @@ test('getWriteHeaders returns correct Content-type for UMMG metadata', (t) => {
     provider: 'provider',
     clientId: 'clientID',
     username: 'username',
-    password: 'password'
+    password: 'password',
   });
   const ummgVersion = '1.5';
   const headers = cmrInstance.getWriteHeaders({ ummgVersion });
@@ -90,7 +90,7 @@ test('getWriteHeaders returns correct Content-type for xml metadata by default',
     provider: 'provider',
     clientId: 'clientID',
     username: 'username',
-    password: 'password'
+    password: 'password',
   });
   const headers = cmrInstance.getWriteHeaders();
   t.is(headers['Content-type'], 'application/echo10+xml');
@@ -103,7 +103,7 @@ test('getReadHeaders returns clientId and token', (t) => {
     provider: 'provider',
     clientId: 'test-client-id',
     username: 'username',
-    password: 'password'
+    password: 'password',
   });
 
   const headers = cmrInstance.getReadHeaders({ token: '12345' });
@@ -120,9 +120,9 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
     errors: [
       {
         path: ['Temporal'],
-        errors: ['oh snap']
-      }
-    ]
+        errors: ['oh snap'],
+      },
+    ],
   };
 
   process.env.CMR_ENVIRONMENT = 'SIT';
@@ -150,7 +150,7 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
   const secretName = 'secret-name';
   await awsServices.secretsManager().createSecret({
     Name: secretName,
-    SecretString: 'secretString'
+    SecretString: 'secretString',
   }).promise();
 
   try {
@@ -160,7 +160,7 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
   } finally {
     await awsServices.secretsManager().deleteSecret({
       SecretId: secretName,
-      ForceDeleteWithoutRecovery: true
+      ForceDeleteWithoutRecovery: true,
     }).promise();
   }
 });

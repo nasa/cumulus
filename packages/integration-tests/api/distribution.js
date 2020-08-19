@@ -43,20 +43,20 @@ async function invokeTEADistributionLambda(
       httpMethod: 'GET',
       path: '/{proxy+}',
       identity: {
-        sourceIp: '127.0.0.1'
-      }
+        sourceIp: '127.0.0.1',
+      },
     },
     multiValueQueryStringParameters: null,
     pathParameters: {
-      proxy: path.replace(/\/+/, '')
+      proxy: path.replace(/\/+/, ''),
     },
     body: null,
-    stageVariables: null
+    stageVariables: null,
   };
 
   const data = await lambda.invoke({
     FunctionName,
-    Payload: JSON.stringify(event)
+    Payload: JSON.stringify(event),
   }).promise();
 
   const payload = JSON.parse(data.Payload);
@@ -82,7 +82,7 @@ async function invokeS3CredentialsLambda(path, accessToken = '') {
 
   const event = {
     method: 'GET',
-    path
+    path,
   };
 
   if (accessToken) {
@@ -91,7 +91,7 @@ async function invokeS3CredentialsLambda(path, accessToken = '') {
 
   const data = await lambda.invoke({
     FunctionName,
-    Payload: JSON.stringify(event)
+    Payload: JSON.stringify(event),
   }).promise();
 
   const payload = JSON.parse(data.Payload);
@@ -112,7 +112,7 @@ async function invokeS3CredentialsLambda(path, accessToken = '') {
 function getDistributionFileUrl({
   distributionEndpoint = process.env.DISTRIBUTION_ENDPOINT,
   bucket,
-  key
+  key,
 }) {
   const theUrl = new URL(`${bucket}/${key}`, distributionEndpoint);
   return theUrl.href;
@@ -168,7 +168,7 @@ async function getTEARequestJwtToken(
   {
     accessToken,
     username = '',
-    expirationTime = Date.now()
+    expirationTime = Date.now(),
   }
 ) {
   const { JwtAlgo, JwtKeySecretName } = await CloudFormation.getCfStackParameterValues(
@@ -183,9 +183,9 @@ async function getTEARequestJwtToken(
     'urs-user-id': username,
     'urs-access-token': accessToken,
     'urs-groups': [],
-    exp: expirationTime
+    exp: expirationTime,
   }, jwtPrivateKey, {
-    algorithm: JwtAlgo
+    algorithm: JwtAlgo,
   });
 }
 
@@ -202,7 +202,7 @@ function buildTeaRequestHeaders(accessToken, jwtToken) {
   // TODO: No great way to get cookie names dynamically?
   const cookieHeaders = [
     `urs-access-token=${accessToken}`,
-    `asf-urs=${jwtToken}`
+    `asf-urs=${jwtToken}`,
   ];
 
   return { cookie: cookieHeaders.join(';') };
@@ -218,7 +218,7 @@ async function getTEARequestHeaders(stackName) {
   const accessTokenResponse = await getEarthdataAccessToken({
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
     requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
-    storeAccessToken: false
+    storeAccessToken: false,
   });
 
   const jwtToken = await getTEARequestJwtToken(stackName, accessTokenResponse);
@@ -231,5 +231,5 @@ module.exports = {
   getTEADistributionApiFileStream,
   getTEADistributionApiRedirect,
   getTEARequestHeaders,
-  invokeS3CredentialsLambda
+  invokeS3CredentialsLambda,
 };

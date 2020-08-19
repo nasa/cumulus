@@ -14,7 +14,7 @@ const {
   promiseS3Upload,
   s3GetObjectTagging,
   parseS3Uri,
-  s3TagSetToQueryString
+  s3TagSetToQueryString,
 } = require('@cumulus/aws-client/S3');
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
 const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
@@ -32,7 +32,7 @@ const stubDistributionBucketMap = {
   'mapped-bucket': 'mapped/path/example',
   'cumulus-test-sandbox-protected': 'cumulus-test-sandbox-protected',
   'cumulus-test-sandbox-protected-2': 'cumulus-test-sandbox-protected-2',
-  'cumulus-test-sandbox-public': 'cumulus-test-sandbox-public'
+  'cumulus-test-sandbox-public': 'cumulus-test-sandbox-public',
 };
 const { generateFileUrl } = proxyquire('../../cmr-utils', {
   '@cumulus/aws-client/S3': {
@@ -42,8 +42,8 @@ const { generateFileUrl } = proxyquire('../../cmr-utils', {
     parseS3Uri,
     promiseS3Upload,
     s3GetObjectTagging,
-    s3TagSetToQueryString
-  }
+    s3TagSetToQueryString,
+  },
 });
 
 const launchpadSecret = randomId('launchpad-secret');
@@ -62,7 +62,7 @@ test.before(async (t) => {
 
   await secretsManager().createSecret({
     Name: launchpadSecret,
-    SecretString: launchpadPassphrase
+    SecretString: launchpadPassphrase,
   }).promise();
 
   process.env.cmr_password_secret_name = cmrPasswordSecret;
@@ -70,7 +70,7 @@ test.before(async (t) => {
 
   await secretsManager().createSecret({
     Name: cmrPasswordSecret,
-    SecretString: cmrPassword
+    SecretString: cmrPassword,
   }).promise();
 
   t.context.launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken')
@@ -91,12 +91,12 @@ test.after.always(async (t) => {
   await Promise.all([
     await secretsManager().deleteSecret({
       SecretId: launchpadSecret,
-      ForceDeleteWithoutRecovery: true
+      ForceDeleteWithoutRecovery: true,
     }).promise(),
     await secretsManager().deleteSecret({
       SecretId: cmrPasswordSecret,
-      ForceDeleteWithoutRecovery: true
-    }).promise()
+      ForceDeleteWithoutRecovery: true,
+    }).promise(),
   ]);
 
   t.context.launchpadStub.restore();
@@ -104,56 +104,56 @@ test.after.always(async (t) => {
 
 test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
   const fileObj = {
-    name: 'validfile.cmr.xml'
+    name: 'validfile.cmr.xml',
   };
   t.truthy(isCMRFile(fileObj));
 });
 
 test('isCMRFile returns falsy if fileobject does not valid xml name', (t) => {
   const fileObj = {
-    name: 'invalidfile.xml'
+    name: 'invalidfile.xml',
   };
   t.falsy(isCMRFile(fileObj));
 });
 
 test('isCMRFile returns truthy if fileobject has valid json name', (t) => {
   const fileObj = {
-    name: 'validfile.cmr.json'
+    name: 'validfile.cmr.json',
   };
   t.truthy(isCMRFile(fileObj));
 });
 
 test('isCMRFile returns falsy if fileobject does not valid json name', (t) => {
   const fileObj = {
-    name: 'invalidfile.json'
+    name: 'invalidfile.json',
   };
   t.falsy(isCMRFile(fileObj));
 });
 
 test('isCMRFile returns truthy if fileobject has valid xml filenamename', (t) => {
   const fileObj = {
-    filename: 'validfile.cmr.xml'
+    filename: 'validfile.cmr.xml',
   };
   t.truthy(isCMRFile(fileObj));
 });
 
 test('isCMRFile returns falsy if fileobject does not valid xml filenamename', (t) => {
   const fileObj = {
-    filename: 'invalidfile.xml'
+    filename: 'invalidfile.xml',
   };
   t.falsy(isCMRFile(fileObj));
 });
 
 test('isCMRFile returns truthy if fileobject has valid json filenamename', (t) => {
   const fileObj = {
-    filename: 'validfile.cmr.json'
+    filename: 'validfile.cmr.json',
   };
   t.truthy(isCMRFile(fileObj));
 });
 
 test('isCMRFile returns falsy if fileobject does not valid json filenamename', (t) => {
   const fileObj = {
-    filename: 'invalidfile.json'
+    filename: 'invalidfile.json',
   };
   t.falsy(isCMRFile(fileObj));
 });
@@ -176,7 +176,7 @@ test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specifie
 test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
   const cmrFile = {
     bucket: 'Echo10FileBucket',
-    key: 'metadata.cmr.xml'
+    key: 'metadata.cmr.xml',
   };
   await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
   try {
@@ -185,7 +185,7 @@ test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving ta
       Bucket: cmrFile.bucket,
       Key: cmrFile.key,
       Body: fakeXmlString,
-      Tagging: 'tagA=iamtag1&tagB=iamtag2'
+      Tagging: 'tagA=iamtag1&tagB=iamtag2',
     });
 
     const newXmlString = '<Granule>new-granule</Granule>';
@@ -205,7 +205,7 @@ test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving ta
 test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
   const cmrFile = {
     bucket: 'UMMGJSONFileBucket',
-    key: 'metadata.cmr.json'
+    key: 'metadata.cmr.json',
   };
   await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
   try {
@@ -214,7 +214,7 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
       Bucket: cmrFile.bucket,
       Key: cmrFile.key,
       Body: JSON.stringify(fakeMetadataObject),
-      Tagging: 'tagA=iamtag1&tagB=iamtag2'
+      Tagging: 'tagA=iamtag1&tagB=iamtag2',
     });
 
     const newFakeMetaObj = { newFake: 'granule' };
@@ -257,30 +257,30 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   const onlineAccessURLsExpected = [
     {
       URL: 'https://textFixtureUrl.gov/someCmrFile',
-      URLDescription: 'File to download'
+      URLDescription: 'File to download',
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf`,
-      URLDescription: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf'
-    }
+      URLDescription: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf',
+    },
   ];
   const onlineResourcesExpected = [
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json`,
       Type: 'EXTENDED METADATA',
-      Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json'
+      Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json',
     },
     {
       URL: `${distEndpoint}/s3credentials`,
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
-      Type: 'VIEW RELATED INFORMATION'
-    }
+      Type: 'VIEW RELATED INFORMATION',
+    },
   ];
   const AssociatedBrowseExpected = [
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg`,
-      Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg'
-    }
+      Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
+    },
   ];
 
   try {
@@ -289,7 +289,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       files: filesObject,
       distEndpoint,
       bucketTypes,
-      distributionBucketMap
+      distributionBucketMap,
     });
 
     t.is(etag, expectedEtag, "ETag doesn't match");
@@ -336,28 +336,28 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
   const expectedRelatedURLs = [
     {
       URL: 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme',
-      Type: 'GET DATA'
+      Type: 'GET DATA',
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf`,
       Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
-      Type: 'GET DATA'
+      Type: 'GET DATA',
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg`,
       Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
-      Type: 'GET RELATED VISUALIZATION'
+      Type: 'GET RELATED VISUALIZATION',
     },
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json`,
       Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
-      Type: 'EXTENDED METADATA'
+      Type: 'EXTENDED METADATA',
     },
     {
       URL: `${distEndpoint}/s3credentials`,
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
-      Type: 'VIEW RELATED INFORMATION'
-    }
+      Type: 'VIEW RELATED INFORMATION',
+    },
   ];
 
   try {
@@ -366,7 +366,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
       files: filesObject,
       distEndpoint,
       bucketTypes,
-      distributionBucketMap
+      distributionBucketMap,
     });
 
     t.is(etag, expectedEtag, "ETag doesn't match");
@@ -387,13 +387,13 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     beginningDateTime: '2016-01-09T11:40:45.032Z',
     endingDateTime: '2016-01-09T11:41:12.027Z',
     productionDateTime: '2016-01-09T11:40:45.032Z',
-    lastUpdateDateTime: '2018-12-19T17:30:31.424Z'
+    lastUpdateDateTime: '2018-12-19T17:30:31.424Z',
   };
 
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: []
+      files: [],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
@@ -413,13 +413,13 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     beginningDateTime: '2017-10-24T00:00:00Z',
     endingDateTime: '2017-11-08T23:59:59Z',
     productionDateTime: '2018-07-19T12:01:01Z',
-    lastUpdateDateTime: '2018-04-25T21:45:45.524053'
+    lastUpdateDateTime: '2018-04-25T21:45:45.524053',
   };
 
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: []
+      files: [],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
@@ -436,14 +436,14 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
   const file = {
     filename,
     bucket: 'fake-bucket',
-    key: 'folder/key.txt'
+    key: 'folder/key.txt',
   };
 
   const url = await generateFileUrl({
     file,
     distEndpoint,
     cmrGranuleUrlType: 'distribution',
-    distributionBucketMap: stubDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
@@ -456,14 +456,14 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', as
   const file = {
     filename,
     bucket: 'fake-bucket',
-    key: 'folder/key.txt'
+    key: 'folder/key.txt',
   };
 
   const url = await generateFileUrl({
     file,
     distEndpoint,
     cmrGranuleUrlType: 's3',
-    distributionBucketMap: stubDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, filename);
@@ -475,14 +475,14 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
 
   const file = {
     bucket: 'fake-bucket',
-    key: 'folder/key.txt'
+    key: 'folder/key.txt',
   };
 
   const url = await generateFileUrl({
     file,
     distEndpoint,
     cmrGranuleUrlType: 's3',
-    distributionBucketMap: stubDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, filename);
@@ -495,14 +495,14 @@ test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', asyn
   const file = {
     filename,
     bucket: 'fake-bucket',
-    key: 'folder/key.txt'
+    key: 'folder/key.txt',
   };
 
   const url = await generateFileUrl({
     file,
     distEndpoint,
     cmrGranuleUrlType: 'none',
-    distributionBucketMap: stubDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, undefined);
@@ -515,7 +515,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
   const file = {
     filename,
     bucket: 'mapped-bucket',
-    key: 'folder/key.txt'
+    key: 'folder/key.txt',
   };
 
   const url = await generateFileUrl({
@@ -523,7 +523,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
     cmrGranuleUrlType: 'distribution',
-    distributionBucketMap: stubDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, 'www.example.com/mapped/path/example/folder/key.txt');
@@ -536,7 +536,7 @@ test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution wit
   const file = {
     filename,
     bucket: 'other-fake-bucket',
-    key: 'folder/key.txt'
+    key: 'folder/key.txt',
   };
 
   await t.throwsAsync(generateFileUrl({
@@ -544,7 +544,7 @@ test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution wit
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
     cmrGranuleUrlType: 'distribution',
-    distributionBucketMap: stubDistributionBucketMap
+    distributionBucketMap: stubDistributionBucketMap,
   }), { instanceOf: errors.MissingBucketMap });
 });
 
@@ -555,7 +555,7 @@ test('getCmrSettings uses values in environment variables by default', async (t)
     provider: 'CUMULUS-TEST',
     clientId: 'Cumulus-Client-Id',
     password: cmrPassword,
-    username: 'cmr-user'
+    username: 'cmr-user',
   });
 });
 
@@ -565,7 +565,7 @@ test('getCmrSettings uses values in environment variables by default for launchp
   t.deepEqual(credentials, {
     provider: 'CUMULUS-TEST',
     clientId: 'Cumulus-Client-Id',
-    token: `${launchpadPassphrase}-launchpad-api-launchpad-cert`
+    token: `${launchpadPassphrase}-launchpad-api-launchpad-cert`,
   });
 });
 
@@ -575,7 +575,7 @@ test('getCmrSettings uses values in config for earthdata oauth', async (t) => {
 
   await secretsManager().createSecret({
     Name: testPasswordSecret,
-    SecretString: testPassword
+    SecretString: testPassword,
   }).promise();
 
   try {
@@ -583,19 +583,19 @@ test('getCmrSettings uses values in config for earthdata oauth', async (t) => {
       provider: 'CUMULUS-PROV',
       clientId: 'test-client-id',
       username: 'cumulus',
-      passwordSecretName: testPasswordSecret
+      passwordSecretName: testPasswordSecret,
     });
 
     t.deepEqual(credentials, {
       provider: 'CUMULUS-PROV',
       clientId: 'test-client-id',
       password: testPassword,
-      username: 'cumulus'
+      username: 'cumulus',
     });
   } finally {
     await secretsManager().deleteSecret({
       SecretId: testPasswordSecret,
-      ForceDeleteWithoutRecovery: true
+      ForceDeleteWithoutRecovery: true,
     }).promise();
   }
 });
@@ -606,7 +606,7 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
 
   await secretsManager().createSecret({
     Name: testPassphraseSecret,
-    SecretString: testPassphrase
+    SecretString: testPassphrase,
   }).promise();
 
   try {
@@ -614,18 +614,18 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
       oauthProvider: 'launchpad',
       passphraseSecretName: testPassphraseSecret,
       api: 'test-api',
-      certificate: 'test-certificate'
+      certificate: 'test-certificate',
     });
 
     t.deepEqual(credentials, {
       provider: 'CUMULUS-TEST',
       clientId: 'Cumulus-Client-Id',
-      token: `${testPassphrase}-test-api-test-certificate`
+      token: `${testPassphrase}-test-api-test-certificate`,
     });
   } finally {
     await secretsManager().deleteSecret({
       SecretId: testPassphraseSecret,
-      ForceDeleteWithoutRecovery: true
+      ForceDeleteWithoutRecovery: true,
     }).promise();
   }
 });
@@ -685,7 +685,7 @@ const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
   const errorSelector = {
     code: 'PreconditionFailed',
     errorCode: 412,
-    message: 'At least one of the pre-conditions you specified did not hold'
+    message: 'At least one of the pre-conditions you specified did not hold',
   };
   const { metadataObjectFromCMRFile } = proxyquire(
     '../../cmr-utils',
@@ -694,8 +694,8 @@ const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
         waitForObject: async (_, params) => {
           t.is(params.IfMatch, etag);
           throw Object.assign(new Error(), errorSelector);
-        }
-      }
+        },
+      },
     }
   );
 

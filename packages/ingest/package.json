@@ -6,7 +6,7 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "clean": "rm -f *.js *.map *.d.ts",
+    "clean": "git clean -d -x -e node_modules -f",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",

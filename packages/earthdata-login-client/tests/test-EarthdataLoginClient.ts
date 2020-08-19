@@ -5,7 +5,7 @@ import { URL, URLSearchParams } from 'url';
 
 import {
   EarthdataLoginClient,
-  EarthdataLoginError
+  EarthdataLoginError,
 } from '../src';
 
 const randomString = () => cryptoRandomString({ length: 6 });
@@ -20,7 +20,7 @@ const buildEarthdataLoginClient = () =>
     clientId: randomId('client-id'),
     clientPassword: randomId('client-password'),
     earthdataLoginUrl: randomUrl(),
-    redirectUri: randomUrl()
+    redirectUri: randomUrl(),
   });
 
 const nockEarthdataLoginCall = (
@@ -39,7 +39,7 @@ const nockEarthdataLoginCall = (
     requestBody,
     requestHeaders = {},
     responseStatus,
-    responseBody
+    responseBody,
   } = params;
 
   return nock(
@@ -49,7 +49,7 @@ const nockEarthdataLoginCall = (
     .post(path, requestBody)
     .basicAuth({
       user: earthdataLoginClient.clientId,
-      pass: earthdataLoginClient.clientPassword
+      pass: earthdataLoginClient.clientPassword,
     })
     .reply(responseStatus, responseBody);
 };
@@ -65,12 +65,12 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
       new EarthdataLoginClient({
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
-        redirectUri: 'http://www.example.com/cb'
+        redirectUri: 'http://www.example.com/cb',
       });
     },
     {
       instanceOf: TypeError,
-      message: 'clientId is required'
+      message: 'clientId is required',
     }
   );
 });
@@ -82,12 +82,12 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
       new EarthdataLoginClient({
         clientId: 'client-id',
         earthdataLoginUrl: 'http://www.example.com',
-        redirectUri: 'http://www.example.com/cb'
+        redirectUri: 'http://www.example.com/cb',
       });
     },
     {
       instanceOf: TypeError,
-      message: 'clientPassword is required'
+      message: 'clientPassword is required',
     }
   );
 });
@@ -99,12 +99,12 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
       new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        redirectUri: 'http://www.example.com/cb'
+        redirectUri: 'http://www.example.com/cb',
       });
     },
     {
       instanceOf: TypeError,
-      message: 'earthdataLoginUrl is required'
+      message: 'earthdataLoginUrl is required',
     }
   );
 });
@@ -116,7 +116,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'asdf',
-        redirectUri: 'http://www.example.com/cb'
+        redirectUri: 'http://www.example.com/cb',
       });
     },
     { instanceOf: TypeError }
@@ -130,12 +130,12 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
       new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        earthdataLoginUrl: 'http://www.example.com'
+        earthdataLoginUrl: 'http://www.example.com',
       });
     },
     {
       instanceOf: TypeError,
-      message: 'redirectUri is required'
+      message: 'redirectUri is required',
     }
   );
 });
@@ -147,7 +147,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a 
         clientId: 'client-id',
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
-        redirectUri: 'asdf'
+        redirectUri: 'asdf',
       });
     },
     { instanceOf: TypeError }
@@ -190,7 +190,7 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
     () => earthdataLoginClient.getAccessToken(),
     {
       instanceOf: TypeError,
-      message: 'authorizationCode is required'
+      message: 'authorizationCode is required',
     }
   );
 });
@@ -202,8 +202,8 @@ test('EarthdataLogin.getAccessToken() sends a correct request to the token endpo
     earthdataLoginClient.earthdataLoginUrl,
     {
       reqheaders: {
-        'content-type': 'application/x-www-form-urlencoded'
-      }
+        'content-type': 'application/x-www-form-urlencoded',
+      },
     }
   )
     .post(
@@ -218,7 +218,7 @@ test('EarthdataLogin.getAccessToken() sends a correct request to the token endpo
     )
     .basicAuth({
       user: earthdataLoginClient.clientId,
-      pass: earthdataLoginClient.clientPassword
+      pass: earthdataLoginClient.clientPassword,
     })
     .reply(
       200,
@@ -227,7 +227,7 @@ test('EarthdataLogin.getAccessToken() sends a correct request to the token endpo
         token_type: 'bearer',
         expires_in: 123,
         refresh_token: 'refresh-token',
-        endpoint: '/api/users/sidney'
+        endpoint: '/api/users/sidney',
       }
     );
 
@@ -248,8 +248,8 @@ test('EarthdataLogin.getAccessToken() returns token information for a valid auth
       token_type: 'bearer',
       expires_in: 100,
       refresh_token: 'refresh-token',
-      endpoint: '/api/users/sidney'
-    }
+      endpoint: '/api/users/sidney',
+    },
   });
 
   const requestStartTime = Math.floor(Date.now() / 1000);
@@ -257,7 +257,7 @@ test('EarthdataLogin.getAccessToken() returns token information for a valid auth
     accessToken,
     refreshToken,
     expirationTime,
-    username
+    username,
   } = await earthdataLoginClient.getAccessToken('authorization-code');
   const requestEndTime = Math.floor(Date.now() / 1000);
 
@@ -274,7 +274,7 @@ test('EarthdataLogin.getAccessToken() throws an EarthdataLoginError error for an
   nockEarthdataLoginCall({
     earthdataLoginClient,
     path: '/oauth/token',
-    responseStatus: 400
+    responseStatus: 400,
   });
 
   await t.throwsAsync(
@@ -289,7 +289,7 @@ test('EarthdataLogin.getAccessToken() throws an EarthdataLoginError error if the
   nockEarthdataLoginCall({
     earthdataLoginClient,
     path: '/oauth/token',
-    responseStatus: 500
+    responseStatus: 500,
   });
 
   await t.throwsAsync(
@@ -306,7 +306,7 @@ test('EarthdataLogin.refreshAccessToken() throws a TypeError if refreshToken is 
     () => earthdataLoginClient.refreshAccessToken(),
     {
       instanceOf: TypeError,
-      message: 'refreshToken is required'
+      message: 'refreshToken is required',
     }
   );
 });
@@ -318,8 +318,8 @@ test('EarthdataLogin.refreshAccessToken() sends a correct request to the token e
     earthdataLoginClient.earthdataLoginUrl,
     {
       reqheaders: {
-        'content-type': 'application/x-www-form-urlencoded'
-      }
+        'content-type': 'application/x-www-form-urlencoded',
+      },
     }
   )
     .post(
@@ -333,7 +333,7 @@ test('EarthdataLogin.refreshAccessToken() sends a correct request to the token e
     )
     .basicAuth({
       user: earthdataLoginClient.clientId,
-      pass: earthdataLoginClient.clientPassword
+      pass: earthdataLoginClient.clientPassword,
     })
     .reply(
       200,
@@ -342,7 +342,7 @@ test('EarthdataLogin.refreshAccessToken() sends a correct request to the token e
         token_type: 'bearer',
         expires_in: 123,
         refresh_token: 'refresh-token',
-        endpoint: '/api/users/sidney'
+        endpoint: '/api/users/sidney',
       }
     );
 
@@ -363,8 +363,8 @@ test('EarthdataLogin.refreshAccessToken() returns token information for a valid 
       token_type: 'bearer',
       expires_in: 100,
       refresh_token: 'refresh-token',
-      endpoint: '/api/users/sidney'
-    }
+      endpoint: '/api/users/sidney',
+    },
   });
 
   const requestStartTime = Math.floor(Date.now() / 1000);
@@ -372,7 +372,7 @@ test('EarthdataLogin.refreshAccessToken() returns token information for a valid 
     accessToken,
     refreshToken,
     expirationTime,
-    username
+    username,
   } = await earthdataLoginClient.refreshAccessToken('refresh-token');
   const requestEndTime = Math.floor(Date.now() / 1000);
 
@@ -389,7 +389,7 @@ test('EarthdataLogin.refreshAccessToken() throws an EarthdataLoginError error fo
   nockEarthdataLoginCall({
     earthdataLoginClient,
     path: '/oauth/token',
-    responseStatus: 400
+    responseStatus: 400,
   });
 
   await t.throwsAsync(
@@ -404,7 +404,7 @@ test('EarthdataLogin.refreshAccessToken() throws an EarthdataLoginError error if
   nockEarthdataLoginCall({
     earthdataLoginClient,
     path: '/oauth/token',
-    responseStatus: 500
+    responseStatus: 500,
   });
 
   await t.throwsAsync(
@@ -426,15 +426,15 @@ test('EarthdataLogin.getTokenUsername() returns the username associated with a v
     requestBody: {
       token,
       client_id: earthdataLoginClient.clientId,
-      on_behalf_of: onBehalfOf
+      on_behalf_of: onBehalfOf,
     },
     responseStatus: 200,
-    responseBody: { uid: expectedUsername }
+    responseBody: { uid: expectedUsername },
   });
 
   const username = await earthdataLoginClient.getTokenUsername({
     token,
-    onBehalfOf
+    onBehalfOf,
   });
 
   t.is(username, expectedUsername);
@@ -452,23 +452,23 @@ test('EarthdataLogin.getTokenUsername() throws an exception for an invalid token
     requestBody: {
       token,
       client_id: earthdataLoginClient.clientId,
-      on_behalf_of: onBehalfOf
+      on_behalf_of: onBehalfOf,
     },
     responseStatus: 403,
     responseBody: {
       error: 'invalid_token',
-      error_description: 'The token is either malformed or does not exist'
-    }
+      error_description: 'The token is either malformed or does not exist',
+    },
   });
 
   await t.throwsAsync(
     earthdataLoginClient.getTokenUsername({
       token,
-      onBehalfOf
+      onBehalfOf,
     }),
     {
       instanceOf: EarthdataLoginError,
-      code: 'InvalidToken'
+      code: 'InvalidToken',
     }
   );
 });
@@ -485,23 +485,23 @@ test('EarthdataLogin.getTokenUsername() throws an exception for an expired token
     requestBody: {
       token,
       client_id: earthdataLoginClient.clientId,
-      on_behalf_of: onBehalfOf
+      on_behalf_of: onBehalfOf,
     },
     responseStatus: 403,
     responseBody: {
       error: 'token_expired',
-      error_description: 'The token has expired'
-    }
+      error_description: 'The token has expired',
+    },
   });
 
   await t.throwsAsync(
     earthdataLoginClient.getTokenUsername({
       token,
-      onBehalfOf
+      onBehalfOf,
     }),
     {
       instanceOf: EarthdataLoginError,
-      code: 'TokenExpired'
+      code: 'TokenExpired',
     }
   );
 });
@@ -518,20 +518,20 @@ test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin re
     requestBody: {
       token,
       client_id: earthdataLoginClient.clientId,
-      on_behalf_of: onBehalfOf
+      on_behalf_of: onBehalfOf,
     },
     responseStatus: 200,
-    responseBody: 'asdf'
+    responseBody: 'asdf',
   });
 
   await t.throwsAsync(
     earthdataLoginClient.getTokenUsername({
       token,
-      onBehalfOf
+      onBehalfOf,
     }),
     {
       instanceOf: EarthdataLoginError,
-      code: 'InvalidResponse'
+      code: 'InvalidResponse',
     }
   );
 });
@@ -548,20 +548,20 @@ test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin re
     requestBody: {
       token,
       client_id: earthdataLoginClient.clientId,
-      on_behalf_of: onBehalfOf
+      on_behalf_of: onBehalfOf,
     },
     responseStatus: 403,
-    responseBody: 'asdf'
+    responseBody: 'asdf',
   });
 
   await t.throwsAsync(
     earthdataLoginClient.getTokenUsername({
       token,
-      onBehalfOf
+      onBehalfOf,
     }),
     {
       instanceOf: EarthdataLoginError,
-      code: 'UnexpectedResponse'
+      code: 'UnexpectedResponse',
     }
   );
 });
@@ -578,20 +578,20 @@ test('EarthdataLogin.getTokenUsername() throws an exception if EarthdataLogin re
     requestBody: {
       token,
       client_id: earthdataLoginClient.clientId,
-      on_behalf_of: onBehalfOf
+      on_behalf_of: onBehalfOf,
     },
     responseStatus: 403,
     responseBody: {
       error: 'something_unexpected',
-      error_description: 'Something unexpected'
-    }
+      error_description: 'Something unexpected',
+    },
   });
 
   await t.throwsAsync(
     earthdataLoginClient.getTokenUsername({ token, onBehalfOf }),
     {
       instanceOf: EarthdataLoginError,
-      code: 'UnexpectedResponse'
+      code: 'UnexpectedResponse',
     }
   );
 });
@@ -611,15 +611,15 @@ test('EarthdataLogin.getTokenUsername() forwards the X-Request-Id if present', a
     requestBody: {
       token,
       client_id: earthdataLoginClient.clientId,
-      on_behalf_of: onBehalfOf
+      on_behalf_of: onBehalfOf,
     },
     responseStatus: 200,
-    responseBody: { uid: expectedUsername }
+    responseBody: { uid: expectedUsername },
   });
   await earthdataLoginClient.getTokenUsername({
     token,
     onBehalfOf,
-    xRequestId
+    xRequestId,
   });
 
   t.true(nockScope.isDone());

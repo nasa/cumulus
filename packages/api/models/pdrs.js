@@ -16,7 +16,7 @@ class Pdr extends Manager {
     super({
       tableName: process.env.PdrsTable,
       tableHash: { name: 'pdrName', type: 'S' },
-      schema: pdrSchema
+      schema: pdrSchema,
     });
   }
 
@@ -78,7 +78,7 @@ class Pdr extends Manager {
     const stats = {
       processing: get(message, 'payload.running', []).length,
       completed: get(message, 'payload.completed', []).length,
-      failed: get(message, 'payload.failed', []).length
+      failed: get(message, 'payload.failed', []).length,
     };
 
     stats.total = stats.processing + stats.completed + stats.failed;
@@ -100,7 +100,7 @@ class Pdr extends Manager {
       PANmessage: get(pdr, 'PANmessage', 'N/A'),
       stats,
       createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     record.duration = (record.timestamp - record.createdAt) / 1000;
@@ -145,7 +145,7 @@ class Pdr extends Manager {
     const updateParams = this._buildDocClientUpdateParams({
       item: pdrRecord,
       itemKey: { pdrName: pdrRecord.pdrName },
-      mutableFieldNames
+      mutableFieldNames,
     });
     return updateParams;
   }

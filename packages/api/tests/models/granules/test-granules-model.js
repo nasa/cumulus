@@ -28,18 +28,18 @@ test.before(async () => {
     cumulus_meta: {
       execution_name: randomString(),
       state_machine: 'arn:aws:states:us-east-1:123456789012:stateMachine:HelloStateMachine',
-      workflow_start_time: Date.now()
+      workflow_start_time: Date.now(),
     },
     meta: {
       collection: {
         name: randomString(),
-        version: randomString()
+        version: randomString(),
       },
       provider: {
         host: randomString(),
-        protocol: 's3'
+        protocol: 's3',
       },
-      status: 'completed'
+      status: 'completed',
     },
     payload: {
       granules: [
@@ -47,10 +47,10 @@ test.before(async () => {
           granuleId: randomString(),
           sync_granule_duration: 123,
           post_to_cmr_duration: 456,
-          files: []
-        }
-      ]
-    }
+          files: [],
+        },
+      ],
+    },
   };
 
   sandbox = sinon.createSandbox();
@@ -58,7 +58,7 @@ test.before(async () => {
   fakeExecution = {
     input: JSON.stringify(testCumulusMessage),
     startDate: new Date(Date.UTC(2019, 6, 28)),
-    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1)),
   };
   sandbox.stub(StepFunctions, 'describeExecution').resolves(fakeExecution);
 
@@ -66,14 +66,14 @@ test.before(async () => {
   process.env.cmr_password_secret_name = randomString();
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
-    SecretString: randomString()
+    SecretString: randomString(),
   }).promise();
 
   // Store the launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
   await awsServices.secretsManager().createSecret({
     Name: process.env.launchpad_passphrase_secret_name,
-    SecretString: randomString()
+    SecretString: randomString(),
   }).promise();
 });
 
@@ -84,11 +84,11 @@ test.beforeEach((t) => {
 test.after.always(async () => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.launchpad_passphrase_secret_name,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
   await new Granule().deleteTable();
   sandbox.restore();
@@ -97,7 +97,7 @@ test.after.always(async () => {
 test('files existing at location returns empty array if no files exist', async (t) => {
   const filenames = [
     'granule-file-1.hdf',
-    'granule-file-2.hdf'
+    'granule-file-2.hdf',
   ];
 
   const sourceBucket = 'test-bucket';
@@ -108,7 +108,7 @@ test('files existing at location returns empty array if no files exist', async (
       fakeFileFactory({
         name,
         bucket: sourceBucket,
-        key: `origin/${name}`
+        key: `origin/${name}`,
       })
   );
 
@@ -118,12 +118,12 @@ test('files existing at location returns empty array if no files exist', async (
     {
       regex: '.*.hdf$',
       bucket: destBucket,
-      key: destinationFilepath
-    }
+      key: destinationFilepath,
+    },
   ];
 
   const granule = {
-    files: sourceFiles
+    files: sourceFiles,
   };
 
   const granulesModel = new Granule();
@@ -136,7 +136,7 @@ test('files existing at location returns empty array if no files exist', async (
 test('files existing at location returns both files if both exist', async (t) => {
   const filenames = [
     'granule-file-1.hdf',
-    'granule-file-2.hdf'
+    'granule-file-2.hdf',
   ];
 
   const sourceBucket = 'test-bucket';
@@ -151,15 +151,15 @@ test('files existing at location returns both files if both exist', async (t) =>
   const destinations = [
     {
       regex: '.*.hdf$',
-      bucket: destBucket
-    }
+      bucket: destBucket,
+    },
   ];
 
   const dataSetupPromises = filenames.map(async (filename) => {
     const params = {
       Bucket: destBucket,
       Key: filename,
-      Body: 'test'
+      Body: 'test',
     };
     return awsServices.s3().putObject(params).promise();
   });
@@ -167,7 +167,7 @@ test('files existing at location returns both files if both exist', async (t) =>
   await Promise.all(dataSetupPromises);
 
   const granule = {
-    files: sourceFiles
+    files: sourceFiles,
   };
 
   const granulesModel = new Granule();
@@ -182,7 +182,7 @@ test('files existing at location returns both files if both exist', async (t) =>
 test('files existing at location returns only file that exists', async (t) => {
   const filenames = [
     'granule-file-1.hdf',
-    'granule-file-2.hdf'
+    'granule-file-2.hdf',
   ];
 
   const sourceBucket = 'test-bucket';
@@ -198,19 +198,19 @@ test('files existing at location returns only file that exists', async (t) => {
     {
       regex: '.*.hdf$',
       bucket: destBucket,
-      filepath: ''
-    }
+      filepath: '',
+    },
   ];
 
   const params = {
     Bucket: destBucket,
     Key: filenames[1],
-    Body: 'test'
+    Body: 'test',
   };
   await awsServices.s3().putObject(params).promise();
 
   const granule = {
-    files: sourceFiles
+    files: sourceFiles,
   };
 
   const granulesModel = new Granule();
@@ -225,7 +225,7 @@ test('files existing at location returns only file that exists', async (t) => {
 test('files existing at location returns only file that exists with multiple destinations', async (t) => {
   const filenames = [
     'granule-file-1.txt',
-    'granule-file-2.hdf'
+    'granule-file-2.hdf',
   ];
 
   const sourceBucket = 'test-bucket';
@@ -234,7 +234,7 @@ test('files existing at location returns only file that exists with multiple des
 
   await Promise.all([
     awsServices.s3().createBucket({ Bucket: destBucket1 }).promise(),
-    awsServices.s3().createBucket({ Bucket: destBucket2 }).promise()
+    awsServices.s3().createBucket({ Bucket: destBucket2 }).promise(),
   ]);
 
   const sourceFiles = filenames.map(
@@ -245,31 +245,31 @@ test('files existing at location returns only file that exists with multiple des
     {
       regex: '.*.txt$',
       bucket: destBucket1,
-      filepath: ''
+      filepath: '',
     },
     {
       regex: '.*.hdf$',
       bucket: destBucket2,
-      filepath: ''
-    }
+      filepath: '',
+    },
   ];
 
   let params = {
     Bucket: destBucket1,
     Key: filenames[0],
-    Body: 'test'
+    Body: 'test',
   };
   await awsServices.s3().putObject(params).promise();
 
   params = {
     Bucket: destBucket2,
     Key: filenames[1],
-    Body: 'test'
+    Body: 'test',
   };
   await awsServices.s3().putObject(params).promise();
 
   const granule = {
-    files: sourceFiles
+    files: sourceFiles,
   };
 
   const granulesModel = new Granule();
@@ -280,7 +280,7 @@ test('files existing at location returns only file that exists with multiple des
 
   await Promise.all([
     s3Utils.recursivelyDeleteS3Bucket(destBucket1),
-    s3Utils.recursivelyDeleteS3Bucket(destBucket2)
+    s3Utils.recursivelyDeleteS3Bucket(destBucket2),
   ]);
 });
 
@@ -294,14 +294,14 @@ test('get() will translate an old-style granule file into the new schema', async
     checksumType: 'my-checksumType',
     checksumValue: 'my-checksumValue',
     url_path: 'some-url-path',
-    fileSize: 1234
+    fileSize: 1234,
   };
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
-    Item: granule
+    Item: granule,
   }).promise();
 
   const granuleModel = new Granule();
@@ -315,7 +315,7 @@ test('get() will translate an old-style granule file into the new schema', async
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234
+      size: 1234,
     }
   );
 });
@@ -327,14 +327,14 @@ test('get() will correctly return a granule file stored using the new schema', a
     fileName: 'file123.txt',
     checksumType: 'my-checksumType',
     checksum: 'my-checksumValue',
-    size: 1234
+    size: 1234,
   };
 
   const granule = fakeGranuleFactoryV2({ files: [newFile] });
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
-    Item: granule
+    Item: granule,
   }).promise();
 
   const granuleModel = new Granule();
@@ -348,7 +348,7 @@ test('get() will correctly return a granule file stored using the new schema', a
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234
+      size: 1234,
     }
   );
 });
@@ -358,13 +358,13 @@ test('getRecord() returns a granule record from the database', async (t) => {
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
-    Item: granule
+    Item: granule,
   }).promise();
 
   const granuleModel = new Granule();
 
   const fetchedGranule = await granuleModel.getRecord({
-    granuleId: granule.granuleId
+    granuleId: granule.granuleId,
   });
 
   t.is(fetchedGranule.granuleId, granule.granuleId);
@@ -380,19 +380,19 @@ test('batchGet() will translate old-style granule files into the new schema', as
     checksumType: 'my-checksumType',
     checksumValue: 'my-checksumValue',
     url_path: 'some-url-path',
-    fileSize: 1234
+    fileSize: 1234,
   };
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
-    Item: granule
+    Item: granule,
   }).promise();
 
   const granuleModel = new Granule();
   const batchGetResponse = await granuleModel.batchGet([
-    { granuleId: granule.granuleId }
+    { granuleId: granule.granuleId },
   ]);
 
   const fetchedGranule = batchGetResponse.Responses[process.env.GranulesTable][0];
@@ -405,7 +405,7 @@ test('batchGet() will translate old-style granule files into the new schema', as
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234
+      size: 1234,
     }
   );
 });
@@ -420,21 +420,21 @@ test('scan() will translate old-style granule files into the new schema', async 
     checksumType: 'my-checksumType',
     checksumValue: 'my-checksumValue',
     url_path: 'some-url-path',
-    fileSize: 1234
+    fileSize: 1234,
   };
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
-    Item: granule
+    Item: granule,
   }).promise();
 
   const granuleModel = new Granule();
   const scanResponse = await granuleModel.scan({
     names: { '#granuleId': 'granuleId' },
     filter: '#granuleId = :granuleId',
-    values: { ':granuleId': granule.granuleId }
+    values: { ':granuleId': granule.granuleId },
   });
 
   t.deepEqual(
@@ -445,7 +445,7 @@ test('scan() will translate old-style granule files into the new schema', async 
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234
+      size: 1234,
     }
   );
 });
@@ -457,7 +457,7 @@ test('getGranulesForCollection() only returns granules belonging to the specifie
 
   await granuleModel.create([
     expectedGranule,
-    fakeGranuleFactoryV2({ collectionId: 'bad-collection' })
+    fakeGranuleFactoryV2({ collectionId: 'bad-collection' }),
   ]);
 
   const granules = await granuleModel.getGranulesForCollection('good-collection');
@@ -473,7 +473,7 @@ test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
   const collectionId = randomString();
   const granules = [
     fakeGranuleFactoryV2({ collectionId }),
-    fakeGranuleFactoryV2({ collectionId })
+    fakeGranuleFactoryV2({ collectionId }),
   ];
 
   await granuleModel.create(granules);
@@ -482,7 +482,7 @@ test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
 
   const fetchedGranules = [
     await granulesQueue.shift(),
-    await granulesQueue.shift()
+    await granulesQueue.shift(),
   ];
 
   t.is(await granulesQueue.shift(), null);
@@ -501,7 +501,7 @@ test('getGranulesForCollection() filters by status', async (t) => {
 
   await granuleModel.create([
     expectedGranule,
-    fakeGranuleFactoryV2({ collectionId, status: 'failed' })
+    fakeGranuleFactoryV2({ collectionId, status: 'failed' }),
   ]);
 
   const granules = await granuleModel.getGranulesForCollection(collectionId, 'completed');
@@ -516,7 +516,7 @@ test('removing a granule from CMR fails if the granule is not in CMR', async (t)
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
-    Item: granule
+    Item: granule,
   }).promise();
 
   const granuleModel = new Granule();
@@ -549,7 +549,7 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
 
     await awsServices.dynamodbDocClient().put({
       TableName: process.env.GranulesTable,
-      Item: granule
+      Item: granule,
     }).promise();
 
     const granuleModel = new Granule();
@@ -586,7 +586,7 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 
     await awsServices.dynamodbDocClient().put({
       TableName: process.env.GranulesTable,
-      Item: granule
+      Item: granule,
     }).promise();
 
     const granuleModel = new Granule();
@@ -604,16 +604,16 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 });
 
 test.serial(
-  'reingest pushes a message with the correct queueName',
+  'reingest pushes a message with the correct queueUrl',
   async (t) => {
     const { granuleModel } = t.context;
     const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-    const queueName = 'testQueueName';
+    const queueUrl = 'testqueueUrl';
     const granule = {
       execution: 'some/execution',
       collectionId: 'MyCollection___006',
       provider: 'someProvider',
-      queueName
+      queueUrl,
     };
     const fileExists = async () => true;
     const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
@@ -624,7 +624,7 @@ test.serial(
       // Rule.buildPayload has its own unit tests to ensure the queue name
       // is used properly, so just ensure that we pass the correct argument
       // to that function.
-      t.is(buildPayloadSpy.args[0][0].queueName, queueName);
+      t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
     } finally {
       fileExistsStub.restore();
       buildPayloadSpy.restore();
@@ -638,13 +638,13 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
 
   const updatedItem = {
     granuleId: randomString(),
-    status: 'running'
+    status: 'running',
   };
 
   const updateFields = granuleModel._getMutableFieldNames(updatedItem);
 
   t.deepEqual(updateFields, [
-    'updatedAt', 'timestamp', 'status', 'execution'
+    'updatedAt', 'timestamp', 'status', 'execution',
   ]);
 });
 
@@ -655,7 +655,7 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
     granuleId: randomString(),
     status: 'completed',
     pdrName: 'pdr',
-    files: []
+    files: [],
   };
 
   const updateFields = granuleModel._getMutableFieldNames(item);
@@ -667,13 +667,13 @@ test('applyWorkflow throws error if workflow argument is missing', async (t) => 
   const { granuleModel } = t.context;
 
   const granule = {
-    granuleId: randomString()
+    granuleId: randomString(),
   };
 
   await t.throwsAsync(
     granuleModel.applyWorkflow(granule),
     {
-      instanceOf: TypeError
+      instanceOf: TypeError,
     }
   );
 });
@@ -685,8 +685,8 @@ test('applyWorkflow updates granule status and invokes Lambda to schedule workfl
   const workflow = randomString();
   const lambdaPayload = {
     payload: {
-      granules: [granule]
-    }
+      granules: [granule],
+    },
   };
 
   await granuleModel.create(granule);

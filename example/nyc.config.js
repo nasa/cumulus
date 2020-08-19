@@ -2,5 +2,5 @@
 
 module.exports = {
   extends: '../nyc.config.js',
-  include: ['scripts']
+  include: ['scripts'],
 };

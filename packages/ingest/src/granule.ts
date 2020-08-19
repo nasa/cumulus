@@ -83,7 +83,7 @@ export async function renameS3FileWithTimestamp(
     sourceKey: key,
     destinationBucket: bucket,
     destinationKey: renamedKey,
-    copyTags: true
+    copyTags: true,
   });
 }
 
@@ -100,13 +100,13 @@ export async function listVersionedObjects(
 ): Promise<VersionedObject[]> {
   const s3list = await S3.listS3ObjectsV2({
     Bucket: bucket,
-    Prefix: `${key}.v`
+    Prefix: `${key}.v`,
   });
 
   return s3list.map(({ Key, Size }) => ({
     Bucket: bucket,
     Key,
-    size: Size
+    size: Size,
   }));
 }
 
@@ -140,13 +140,13 @@ export async function moveGranuleFileWithVersioning(
   const targetFileSum = await S3.calculateS3ObjectChecksum({
     algorithm: checksumType ?? 'CKSUM',
     bucket: target.Bucket,
-    key: target.Key
+    key: target.Key,
   });
 
   const sourceFileSum = checksum ?? await S3.calculateS3ObjectChecksum({
     algorithm: 'CKSUM',
     bucket: source.Bucket,
-    key: source.Key
+    key: source.Key,
   });
 
   // if the checksum of the existing file is the same as the new one, keep the existing file,
@@ -163,7 +163,7 @@ export async function moveGranuleFileWithVersioning(
       destinationBucket: target.Bucket,
       destinationKey: target.Key,
       copyTags: true,
-      ACL
+      ACL,
     });
   }
   // return renamed files
@@ -205,7 +205,7 @@ export async function handleDuplicateFile(params: {
     duplicateHandling,
     checksumFunction,
     syncFileFunction,
-    ACL
+    ACL,
   } = params;
 
   if (duplicateHandling === 'error') {
@@ -239,7 +239,7 @@ export async function handleDuplicateFile(params: {
         destinationBucket: target.Bucket,
         destinationKey: target.Key,
         copyTags: true,
-        ACL
+        ACL,
       });
     }
     // verify integrity after sync/move
@@ -286,7 +286,7 @@ export function generateMoveFileParams(
     if (file.bucket && file.key) {
       source = {
         Bucket: file.bucket,
-        Key: file.key
+        Key: file.key,
       };
     } else if (file.filename) {
       source = S3.parseS3Uri(file.filename);
@@ -304,7 +304,7 @@ export function generateMoveFileParams(
 
     const target = {
       Bucket: destination.bucket,
-      Key: targetKey
+      Key: targetKey,
     };
 
     return { source, target, file };
@@ -348,13 +348,13 @@ export async function moveGranuleFiles(
           sourceKey: source.Key,
           destinationBucket: target.Bucket,
           destinationKey: target.Key,
-          copyTags: true
+          copyTags: true,
         });
 
         movedGranuleFiles.push({
           bucket: target.Bucket,
           key: target.Key,
-          name: getNameOfFile(file)
+          name: getNameOfFile(file),
         });
       } else {
         let fileBucket;
@@ -373,7 +373,7 @@ export async function moveGranuleFiles(
         movedGranuleFiles.push({
           bucket: fileBucket,
           key: fileKey,
-          name: getNameOfFile(file)
+          name: getNameOfFile(file),
         });
       }
     }

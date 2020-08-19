@@ -23,7 +23,7 @@ function resourcesForStateFile(sf) {
     return {
       ecsClusters: ['clusterArn1', 'clusterArn2'],
       ec2Instances: ['i-000'],
-      esDomainNames: ['cumulus-1-es5vpc']
+      esDomainNames: ['cumulus-1-es5vpc'],
     };
   }
 
@@ -31,7 +31,7 @@ function resourcesForStateFile(sf) {
     return {
       ecsClusters: ['clusterArn3'],
       ec2Instances: ['i-111', 'i-222'],
-      esDomainNames: ['cumulus-2-es5vpc']
+      esDomainNames: ['cumulus-2-es5vpc'],
     };
   }
 
@@ -52,9 +52,9 @@ test.before(() => {
       listClusters: () => ({
         promise: () =>
           Promise.resolve({
-            clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4']
-          })
-      })
+            clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
+          }),
+      }),
     });
 
   ec2Stub = sinon.stub(aws, 'ec2')
@@ -66,18 +66,18 @@ test.before(() => {
               {
                 Instances: [
                   { InstanceId: 'i-000' },
-                  { InstanceId: 'i-111' }
-                ]
+                  { InstanceId: 'i-111' },
+                ],
               },
               {
                 Instances: [
                   { InstanceId: 'i-222' },
-                  { InstanceId: 'i-333' }
-                ]
-              }
-            ]
-          })
-      })
+                  { InstanceId: 'i-333' },
+                ],
+              },
+            ],
+          }),
+      }),
     });
 
   esStub = sinon.stub(aws, 'es')
@@ -88,10 +88,10 @@ test.before(() => {
             DomainNames: [
               { DomainName: 'cumulus-es5vpc' },
               { DomainName: 'cumulus-1-es5vpc' },
-              { DomainName: 'cumulus-2-es5vpc' }
-            ]
-          })
-      })
+              { DomainName: 'cumulus-2-es5vpc' },
+            ],
+          }),
+      }),
     });
 });
 
@@ -108,25 +108,25 @@ test('mergeResourceLists merges resource object by key', (t) => {
     ecsClusters: [
       {
         arn: 'clusterArn1',
-        id: 'id1'
+        id: 'id1',
       },
       {
         arn: 'clusterArn2',
-        id: 'id2'
-      }
-    ]
+        id: 'id2',
+      },
+    ],
   };
 
   const y = {
     ecsClusters: [
       {
         arn: 'clusterArn3',
-        id: 'id3'
-      }
+        id: 'id3',
+      },
     ],
     ec2Instances: [
-      'i-12345'
-    ]
+      'i-12345',
+    ],
   };
 
   const merged = mergeResourceLists(x, y);
@@ -135,20 +135,20 @@ test('mergeResourceLists merges resource object by key', (t) => {
     ecsClusters: [
       {
         arn: 'clusterArn1',
-        id: 'id1'
+        id: 'id1',
       },
       {
         arn: 'clusterArn2',
-        id: 'id2'
+        id: 'id2',
       },
       {
         arn: 'clusterArn3',
-        id: 'id3'
-      }
+        id: 'id3',
+      },
     ],
     ec2Instances: [
-      'i-12345'
-    ]
+      'i-12345',
+    ],
   });
 });
 
@@ -157,13 +157,13 @@ test('mergeResourceLists correctly merges null or empty entries', (t) => {
     ecsClusters: [
       {
         arn: 'clusterArn1',
-        id: 'id1'
+        id: 'id1',
       },
       {
         arn: 'clusterArn2',
-        id: 'id2'
-      }
-    ]
+        id: 'id2',
+      },
+    ],
   };
 
   t.deepEqual(mergeResourceLists(null, sampleResource), sampleResource);
@@ -178,24 +178,24 @@ test('mergeResourceLists correctly merges different resources', (t) => {
     ecsClusters: [
       {
         arn: 'clusterArn1',
-        id: 'id1'
+        id: 'id1',
       },
       {
         arn: 'clusterArn2',
-        id: 'id2'
-      }
-    ]
+        id: 'id2',
+      },
+    ],
   };
 
   const ec2 = {
     ec2Instances: [
-      'i-12345'
-    ]
+      'i-12345',
+    ],
   };
 
   t.deepEqual(mergeResourceLists(ecs, ec2), {
     ec2Instances: ec2.ec2Instances,
-    ecsClusters: ecs.ecsClusters
+    ecsClusters: ecs.ecsClusters,
   });
 });
 
@@ -203,31 +203,31 @@ test('resourceDiff lists items that are only in the first object', (t) => {
   const x = {
     ecsClusters: [
       'clusterArn1',
-      'clusterArn2'
+      'clusterArn2',
     ],
     ec2Instances: [
-      'i-12345'
-    ]
+      'i-12345',
+    ],
   };
 
   const y = {
     ecsClusters: [
-      'clusterArn1'
+      'clusterArn1',
     ],
     test: [
-      'test'
-    ]
+      'test',
+    ],
   };
 
   const diff = resourceDiff(x, y);
 
   t.deepEqual(diff, {
     ecsClusters: [
-      'clusterArn2'
+      'clusterArn2',
     ],
     ec2Instances: [
-      'i-12345'
-    ]
+      'i-12345',
+    ],
   });
 });
 
@@ -237,7 +237,7 @@ test('listTfResources merges resources correctly', async (t) => {
   t.deepEqual(tfResources, {
     ecsClusters: ['clusterArn1', 'clusterArn2', 'clusterArn3'],
     ec2Instances: ['i-000', 'i-111', 'i-222'],
-    esDomainNames: ['cumulus-1-es5vpc', 'cumulus-2-es5vpc']
+    esDomainNames: ['cumulus-1-es5vpc', 'cumulus-2-es5vpc'],
   });
 });
 
@@ -248,7 +248,7 @@ test('listAwsResources properly combines ec2 intsances', async (t) => {
     {
       ecsClusters: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
       ec2Instances: ['i-000', 'i-111', 'i-222', 'i-333'],
-      esDomainNames: ['cumulus-es5vpc', 'cumulus-1-es5vpc', 'cumulus-2-es5vpc']
+      esDomainNames: ['cumulus-es5vpc', 'cumulus-1-es5vpc', 'cumulus-2-es5vpc'],
     });
 });
 
@@ -259,6 +259,6 @@ test('reconcileResources returns only resources not specified in TF files', asyn
     {
       ecsClusters: ['clusterArn4'],
       ec2Instances: ['i-333'],
-      esDomainNames: ['cumulus-es5vpc']
+      esDomainNames: ['cumulus-es5vpc'],
     });
 });

@@ -37,7 +37,7 @@ describe('Creating a one-time rule via the Cumulus API', () => {
           workflow: 'HelloWorldWorkflow',
           collection: pick(collection, ['name', 'version']),
           // provider: provider.id,
-          payload: { testExecutionId }
+          payload: { testExecutionId },
         }
       );
     } catch (error) {
@@ -55,7 +55,7 @@ describe('Creating a one-time rule via the Cumulus API', () => {
       await deleteCollection({
         prefix,
         collectionName: collection.name,
-        collectionVersion: collection.version
+        collectionVersion: collection.version,
       });
     }
   });

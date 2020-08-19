@@ -15,5 +15,5 @@ async function createEmsReports(params) {
 
 module.exports = {
   createEmsReports,
-  getLambdaEmsSettings
+  getLambdaEmsSettings,
 };

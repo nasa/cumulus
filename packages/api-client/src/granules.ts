@@ -30,8 +30,8 @@ export const getGranule = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`
-    }
+      path: `/granules/${granuleId}`,
+    },
   });
 };
 
@@ -60,7 +60,7 @@ export const waitForGranule = async (params: {
     status,
     retries = 10,
     pRetryOptions = {},
-    callback = invokeApi
+    callback = invokeApi,
   } = params;
 
   await pRetry(
@@ -90,7 +90,7 @@ export const waitForGranule = async (params: {
       onFailedAttempt: async (e) => {
         logger.error(e.message);
       },
-      ...pRetryOptions
+      ...pRetryOptions,
     }
   );
 };
@@ -122,10 +122,10 @@ export const reingestGranule = async (params: {
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'reingest' })
-    }
+      body: JSON.stringify({ action: 'reingest' }),
+    },
   });
 };
 
@@ -156,10 +156,10 @@ export const removeFromCMR = async (params: {
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'removeFromCmr' })
-    }
+      body: JSON.stringify({ action: 'removeFromCmr' }),
+    },
   });
 };
 
@@ -187,7 +187,7 @@ export const applyWorkflow = async (params: {
     prefix,
     granuleId,
     workflow,
-    callback = invokeApi
+    callback = invokeApi,
   } = params;
 
   return callback({
@@ -196,11 +196,11 @@ export const applyWorkflow = async (params: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: `/granules/${granuleId}`,
-      body: JSON.stringify({ action: 'applyWorkflow', workflow })
-    }
+      body: JSON.stringify({ action: 'applyWorkflow', workflow }),
+    },
   });
 };
 
@@ -229,8 +229,8 @@ export const deleteGranule = async (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`
-    }
+      path: `/granules/${granuleId}`,
+    },
   });
 };
 
@@ -258,7 +258,7 @@ export const moveGranule = async (params: {
     prefix,
     granuleId,
     destinations,
-    callback = invokeApi
+    callback = invokeApi,
   } = params;
 
   return callback({
@@ -267,11 +267,11 @@ export const moveGranule = async (params: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: `/granules/${granuleId}`,
-      body: JSON.stringify({ action: 'move', destinations })
-    }
+      body: JSON.stringify({ action: 'move', destinations }),
+    },
   });
 };
 
@@ -323,8 +323,8 @@ export const listGranules = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/granules',
-      queryStringParameters: query
-    }
+      queryStringParameters: query,
+    },
   });
 };
 
@@ -352,10 +352,10 @@ export const bulkDeleteGranules = async (params: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       path: '/granules/bulkDelete',
-      body: JSON.stringify(body)
-    }
+      body: JSON.stringify(body),
+    },
   });
 };

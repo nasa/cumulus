@@ -7,7 +7,7 @@ const pRetry = require('p-retry');
 
 const {
   Execution,
-  Pdr
+  Pdr,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
@@ -16,12 +16,12 @@ const {
   addCollections,
   buildAndStartWorkflow,
   getExecutionOutput,
-  waitForCompletedExecution
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { getGranule, removePublishedGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const {
-  deleteProvider, createProvider
+  deleteProvider, createProvider,
 } = require('@cumulus/api-client/providers');
 
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
@@ -32,7 +32,7 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -42,7 +42,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
 ];
 
 describe('The TestPythonProcessing workflow', () => {
@@ -89,13 +89,13 @@ describe('The TestPythonProcessing workflow', () => {
       providerData = {
         ...providerJson,
         id: provider.id,
-        host: config.bucket
+        host: config.bucket,
       };
       // populate collections, providers and test data
       await Promise.all([
         uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId, collectionDupeHandling),
-        createProvider({ prefix: config.stackName, provider: providerData })
+        createProvider({ prefix: config.stackName, provider: providerData }),
       ]);
 
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -115,7 +115,7 @@ describe('The TestPythonProcessing workflow', () => {
         provider,
         inputPayload,
         {
-          distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
+          distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
         }
       );
     } catch (error) {
@@ -134,17 +134,17 @@ describe('The TestPythonProcessing workflow', () => {
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
-        collectionVersion: collection.version
+        collectionVersion: collection.version,
       }),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
       executionModel.delete({ arn: workflowExecutionArn }),
       removePublishedGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       }),
       pdrModel.delete({
-        pdrName: inputPayload.pdr.name
-      })
+        pdrName: inputPayload.pdr.name,
+      }),
     ]);
   });
 
@@ -152,11 +152,11 @@ describe('The TestPythonProcessing workflow', () => {
     await waitForGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
-      status: 'completed'
+      status: 'completed',
     });
     const granuleResponse = await getGranule({
       prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
+      granuleId: inputPayload.granules[0].granuleId,
     });
     granuleResult = JSON.parse(granuleResponse.body);
     expect(granuleResult.granuleId).toEqual(inputPayload.granules[0].granuleId);

@@ -51,7 +51,7 @@
             "stackName": "{$.meta.stack}",
             "granuleIngestMessageTemplateUri": "{$.meta.template}",
             "granuleIngestWorkflow": "CookbookBrowseExample",
-            "queueUrl": "{$.meta.queues.startSF}"
+            "queueUrl": "${start_sf_queue_url}"
           }
         }
       },

@@ -41,7 +41,7 @@ async function getAllPages(config, key, listFunction) {
 async function getLambdaAliases(lambdaFunctionName) {
   const config = {
     MaxItems: 10000,
-    FunctionName: lambdaFunctionName
+    FunctionName: lambdaFunctionName,
   };
   return getAllPages(config, 'Aliases', lambda().listAliases.bind(lambda()));
 }

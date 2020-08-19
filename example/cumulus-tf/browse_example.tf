@@ -11,7 +11,8 @@ module "discover_granules_browse_example_workflow" {
     "${path.module}/browse_example.asl.json",
     {
       discover_granules_task_arn: module.cumulus.discover_granules_task.task_arn,
-      queue_granules_task_arn: module.cumulus.queue_granules_task.task_arn
+      queue_granules_task_arn: module.cumulus.queue_granules_task.task_arn,
+      start_sf_queue_url: module.cumulus.start_sf_queue_url
     }
   )
 }

@@ -30,7 +30,7 @@ program
     console.log(`Invoking migration: ${cmd.migrationVersion}`);
     l.invoke({
       FunctionName: `${cmd.stack}-executeMigrations`,
-      Payload: `{ "migrations": ["${cmd.migrationVersion}"] }`
+      Payload: `{ "migrations": ["${cmd.migrationVersion}"] }`,
     }).promise().then(console.log).catch(console.error);
   });
 

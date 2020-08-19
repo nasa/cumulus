@@ -1,0 +1,8 @@
+permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
+prefix = "PREFIX"
+pg_host = "POSTGRES HOSTNAME"
+pg_user = "POSTGRES USERNAME"
+pg_password = "POSTGRES PASSWORD"
+pg_database = "POSTGRES DATABASE"
+subnet_ids = ["subnet-12345"]
+vpc_id = "vpc-12345"

@@ -14,7 +14,7 @@ const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue
 const {
   buildS3Uri,
   parseS3Uri,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
@@ -26,7 +26,7 @@ const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const { Search } = require('../../es/search');
 const {
-  handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles
+  handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 
 const models = require('../../models');
@@ -42,7 +42,7 @@ function createDistributionBucketMapFromBuckets(buckets) {
   let bucketMap = {};
   Object.keys(buckets).forEach((key) => {
     bucketMap = {
-      ...bucketMap, ...{ [buckets[key].name]: buckets[key].name }
+      ...bucketMap, ...{ [buckets[key].name]: buckets[key].name },
     };
   });
   return bucketMap;
@@ -61,7 +61,7 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
   buckets.forEach((bucket) => {
     bucketsConfig[bucket] = {
       name: bucket,
-      type: 'protected'
+      type: 'protected',
     };
   });
 
@@ -70,13 +70,13 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
   await awsServices.s3().putObject({
     Bucket: systemBucket,
     Key: getDistributionBucketMapKey(stackName),
-    Body: JSON.stringify(distributionMap)
+    Body: JSON.stringify(distributionMap),
   }).promise();
 
   return awsServices.s3().putObject({
     Bucket: systemBucket,
     Key: `${stackName}/workflows/buckets.json`,
-    Body: JSON.stringify(bucketsConfig)
+    Body: JSON.stringify(bucketsConfig),
   }).promise();
 }
 
@@ -85,7 +85,7 @@ function storeFilesToS3(files) {
   const putObjectParams = files.map((file) => ({
     Bucket: file.bucket,
     Key: file.key,
-    Body: randomId('Body')
+    Body: randomId('Body'),
   }));
 
   return pMap(
@@ -130,7 +130,7 @@ test.before(async () => {
   process.env.cmr_password_secret_name = randomId('cmr-secret-name');
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
-    SecretString: randomId('cmr-password')
+    SecretString: randomId('cmr-password'),
   }).promise();
 });
 
@@ -170,7 +170,7 @@ test.afterEach.always(async (t) => {
       new models.Collection().deleteTable(),
       new models.Granule().deleteTable(),
       GranuleFilesCache.deleteCacheTable(),
-      new models.ReconciliationReport().deleteTable()
+      new models.ReconciliationReport().deleteTable(),
     ])
   );
   CMR.prototype.searchCollections.restore();
@@ -182,7 +182,7 @@ test.afterEach.always(async (t) => {
 test.after.always(async () => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
   delete process.env.cmr_password_secret_name;
 });
@@ -199,7 +199,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
     startTimestamp: randomId('startTimestamp'),
-    endTimestamp: randomId('endTimestamp')
+    endTimestamp: randomId('endTimestamp'),
   };
 
   const reportRecord = await handler(event, {});
@@ -238,24 +238,24 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   const files = range(10).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
     key: randomId('key'),
-    granuleId: randomId('granuleId')
+    granuleId: randomId('granuleId'),
   }));
 
   // Store the files to S3 and DynamoDB
   await Promise.all([
     storeFilesToS3(files),
-    GranuleFilesCache.batchUpdate({ puts: files })
+    GranuleFilesCache.batchUpdate({ puts: files }),
   ]);
 
   // Create collections that are in sync
   const matchingColls = range(10).map(() => ({
     name: randomId('name'),
-    version: randomId('vers')
+    version: randomId('vers'),
   }));
 
   const cmrCollections = sortBy(matchingColls, ['name', 'version'])
     .map((collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version }
+      umm: { ShortName: collection.name, Version: collection.version },
     }));
 
   CMR.prototype.searchCollections.restore();
@@ -265,7 +265,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
 
   const event = {
     systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName
+    stackName: t.context.stackName,
   };
 
   const reportRecord = await handler(event);
@@ -305,7 +305,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   const matchingFiles = range(10).map(() => ({
     bucket: sample(dataBuckets),
     key: randomId('key'),
-    granuleId: randomId('granuleId')
+    granuleId: randomId('granuleId'),
   }));
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomId('key') };
@@ -317,7 +317,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
 
   const event = {
     systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName
+    stackName: t.context.stackName,
   };
 
   const reportRecord = await handler(event);
@@ -357,29 +357,29 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
   const matchingFiles = range(10).map(() => ({
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   }));
 
   const extraDbFile1 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles);
   await GranuleFilesCache.batchUpdate({
-    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
+    puts: matchingFiles.concat([extraDbFile1, extraDbFile2]),
   });
 
   const event = {
     systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName
+    stackName: t.context.stackName,
   };
 
   const reportRecord = await handler(event);
@@ -422,7 +422,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const matchingFiles = range(10).map(() => ({
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   }));
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
@@ -430,23 +430,23 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const extraDbFile1 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString()
+    granuleId: randomString(),
   };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
   await GranuleFilesCache.batchUpdate({
-    puts: matchingFiles.concat([extraDbFile1, extraDbFile2])
+    puts: matchingFiles.concat([extraDbFile1, extraDbFile2]),
   });
 
   const event = {
     systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName
+    stackName: t.context.stackName,
   };
 
   const reportRecord = await handler(event);
@@ -491,21 +491,21 @@ test.serial('A valid reconciliation report is generated when there are both extr
   // Create collections that are in sync
   const matchingColls = range(10).map(() => ({
     name: randomString(),
-    version: randomString()
+    version: randomString(),
   }));
 
   const extraDbColls = range(2).map(() => ({
     name: randomString(),
-    version: randomString()
+    version: randomString(),
   }));
   const extraCmrColls = range(2).map(() => ({
     name: randomString(),
-    version: randomString()
+    version: randomString(),
   }));
 
   const cmrCollections = sortBy(matchingColls.concat(extraCmrColls), ['name', 'version'])
     .map((collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version }
+      umm: { ShortName: collection.name, Version: collection.version },
     }));
 
   CMR.prototype.searchCollections.restore();
@@ -515,7 +515,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   const event = {
     systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName
+    stackName: t.context.stackName,
   };
 
   const reportRecord = await handler(event);
@@ -556,15 +556,15 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   const extraCmrGrans = range(2).map(() => ({
     granuleId: randomString(),
-    collectionId: collectionId
+    collectionId: collectionId,
   }));
 
   const cmrGranules = sortBy(matchingGrans.concat(extraCmrGrans), ['granuleId']).map((granule) => ({
     umm: {
       GranuleUR: granule.granuleId,
       CollectionReference: { ShortName: shortName, Version: version },
-      RelatedUrls: []
-    }
+      RelatedUrls: [],
+    },
   }));
 
   CMRSearchConceptQueue.prototype.peek.restore();
@@ -577,7 +577,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
   const { granulesReport, filesReport } = await reconciliationReportForGranules({
     collectionId,
     bucketsConfig: new BucketsConfig({}),
-    distributionBucketMap: {}
+    distributionBucketMap: {},
   });
 
   t.is(granulesReport.okCount, 10);
@@ -601,7 +601,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     private: { name: 'testbucket-private', type: 'private' },
     protected: { name: 'testbucket-protected', type: 'protected' },
     public: { name: 'testbucket-public', type: 'public' },
-    'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
+    'protected-2': { name: 'testbucket-protected-2', type: 'protected' },
   };
   const bucketsConfig = new BucketsConfig(buckets);
   const distributionBucketMap = createDistributionBucketMapFromBuckets(buckets);
@@ -610,86 +610,86 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
     size: 17865615,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
   },
   {
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
     size: 44118,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
   },
   {
     bucket: 'testbucket-protected-2',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
     size: 2708,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
   }];
 
   const privateFilesInDb = [{
     bucket: 'testbucket-private',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
     size: 44118,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
   }];
 
   const filesOnlyInDb = [{
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/extra123.jpg',
     size: 44118,
-    fileName: 'extra123.jpg'
+    fileName: 'extra123.jpg',
   },
   {
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/MOD/extra456.jpg',
     size: 44118,
-    fileName: 'extra456.jpg'
+    fileName: 'extra456.jpg',
   }];
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
-    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
+    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
   const matchingFilesInCmr = [{
     URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf`,
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   },
   {
     URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-public/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg`,
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   },
   {
     URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml`,
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   }];
 
   const filesOnlyInCmr = [{
     URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   }];
 
   const urlsShouldOnlyInCmr = [{
     URL: `${process.env.DISTRIBUTION_ENDPOINT}s3credentials`,
     Type: 'VIEW RELATED INFORMATION',
-    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
   }];
 
   const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
-    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
+    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr),
   };
   const report = await reconciliationReportForGranuleFiles({
     granuleInDb,
     granuleInCmr,
     bucketsConfig,
-    distributionBucketMap
+    distributionBucketMap,
   });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
@@ -707,7 +707,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     private: { name: 'testbucket-private', type: 'private' },
     protected: { name: 'testbucket-protected', type: 'protected' },
     public: { name: 'testbucket-public', type: 'public' },
-    'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
+    'protected-2': { name: 'testbucket-protected-2', type: 'protected' },
   };
   const bucketsConfig = new BucketsConfig(buckets);
   const distributionBucketMap = createDistributionBucketMapFromBuckets(buckets);
@@ -715,87 +715,87 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
     size: 17865615,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
   },
   {
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
     size: 44118,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
   },
   {
     bucket: 'testbucket-protected-2',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
     size: 2708,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
   }];
 
   const privateFilesInDb = [{
     bucket: 'testbucket-private',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
     size: 44118,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
   }];
 
   const filesOnlyInDb = [{
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/extra123.jpg',
     size: 44118,
-    fileName: 'extra123.jpg'
+    fileName: 'extra123.jpg',
   },
   {
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/MOD/extra456.jpg',
     size: 44118,
-    fileName: 'extra456.jpg'
+    fileName: 'extra456.jpg',
   }];
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
-    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
+    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
   const matchingFilesInCmr = [{
     URL: 's3://testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   },
   {
     URL: 's3://testbucket-public/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   },
   {
     URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml`,
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   }];
 
   const filesOnlyInCmr = [{
     URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   }];
 
   const urlsShouldOnlyInCmr = [{
     URL: `${process.env.DISTRIBUTION_ENDPOINT}s3credentials`,
     Type: 'VIEW RELATED INFORMATION',
-    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
   }];
 
   const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
-    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
+    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr),
   };
 
   const report = await reconciliationReportForGranuleFiles({
     granuleInDb,
     granuleInCmr,
     bucketsConfig,
-    distributionBucketMap
+    distributionBucketMap,
   });
 
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
@@ -813,7 +813,7 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     private: { name: 'testbucket-private', type: 'private' },
     protected: { name: 'testbucket-protected', type: 'protected' },
     public: { name: 'testbucket-public', type: 'public' },
-    'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
+    'protected-2': { name: 'testbucket-protected-2', type: 'protected' },
   };
   const bucketsConfig = new BucketsConfig(buckets);
   const distributionBucketMap = createDistributionBucketMapFromBuckets(buckets);
@@ -822,84 +822,84 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
     size: 17865615,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
   },
   {
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
     size: 44118,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
   },
   {
     bucket: 'testbucket-protected-2',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
     size: 2708,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
   }];
 
   const privateFilesInDb = [{
     bucket: 'testbucket-private',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
     size: 44118,
-    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met'
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
   }];
 
   const filesOnlyInDb = [{
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/extra123.jpg',
     size: 44118,
-    fileName: 'extra123.jpg'
+    fileName: 'extra123.jpg',
   },
   {
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/MOD/extra456.jpg',
     size: 44118,
-    fileName: 'extra456.jpg'
+    fileName: 'extra456.jpg',
   }];
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     collectionId: 'MOD09GQ___006',
-    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
+    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
   const matchingFilesInCmr = [{
     URL: 's3://testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   },
   {
     URL: 's3://testbucket-public/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   },
   {
     URL: 's3://testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   }];
 
   const filesOnlyInCmr = [{
     URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
     Type: 'GET DATA',
-    Description: 'File to download'
+    Description: 'File to download',
   }];
 
   const urlsShouldOnlyInCmr = [{
     URL: `${process.env.DISTRIBUTION_ENDPOINT}s3credentials`,
     Type: 'VIEW RELATED INFORMATION',
-    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
   }];
 
   const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
-    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
+    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr),
   };
 
   const report = await reconciliationReportForGranuleFiles({
-    granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap
+    granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap,
   });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
@@ -931,7 +931,7 @@ test.serial('When report creation fails, reconciliation report status is set to 
 
   const event = {
     systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName
+    stackName: t.context.stackName,
   };
 
   const reportRecord = await handler(event);

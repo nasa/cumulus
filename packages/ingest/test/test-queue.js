@@ -3,7 +3,7 @@
 const test = require('ava');
 const {
   s3PutObject,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { s3, sqs } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
@@ -15,7 +15,6 @@ test.beforeEach(async (t) => {
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
   t.context.stackName = randomId('stack');
-  t.context.queueName = randomId('queue');
   t.context.queueUrl = await createQueue(randomString());
   t.context.queueExecutionLimit = randomNumber();
 
@@ -23,19 +22,16 @@ test.beforeEach(async (t) => {
   t.context.stateMachineArn = randomString();
 
   t.context.messageTemplate = {
-    meta: {
-      queues: {
-        [t.context.queueName]: t.context.queueUrl
-      },
+    cumulus_meta: {
       queueExecutionLimits: {
-        [t.context.queueName]: t.context.queueExecutionLimit
-      }
-    }
+        [t.context.queueUrl]: t.context.queueExecutionLimit,
+      },
+    },
   };
 
   const workflowDefinition = {
     name: t.context.workflow,
-    arn: t.context.stateMachineArn
+    arn: t.context.stateMachineArn,
   };
 
   const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
@@ -45,13 +41,13 @@ test.beforeEach(async (t) => {
     s3PutObject({
       Bucket: t.context.templateBucket,
       Key: messageTemplateKey,
-      Body: JSON.stringify(t.context.messageTemplate)
+      Body: JSON.stringify(t.context.messageTemplate),
     }),
     s3PutObject({
       Bucket: t.context.templateBucket,
       Key: workflowDefinitionKey,
-      Body: JSON.stringify(workflowDefinition)
-    })
+      Body: JSON.stringify(workflowDefinition),
+    }),
   ]);
 
   t.context.template = `s3://${t.context.templateBucket}/${messageTemplateKey}`;
@@ -60,7 +56,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
+    sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise(),
   ]);
 });
 
@@ -68,12 +64,11 @@ test.serial('the queue receives a correctly formatted workflow message without a
   const granule = { granuleId: '1', files: [] };
   const {
     queueExecutionLimit,
-    queueName,
     queueUrl,
     stateMachineArn,
     workflow,
     templateBucket,
-    stackName
+    stackName,
   } = t.context;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
@@ -89,12 +84,12 @@ test.serial('the queue receives a correctly formatted workflow message without a
       provider,
       collection,
       systemBucket: templateBucket,
-      stack: stackName
+      stack: stackName,
     });
     receiveMessageResponse = await sqs().receiveMessage({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
-      WaitTimeSeconds: 1
+      WaitTimeSeconds: 1,
     }).promise();
   } catch (error) {
     t.fail(error);
@@ -106,20 +101,17 @@ test.serial('the queue receives a correctly formatted workflow message without a
   const expectedMessage = {
     cumulus_meta: {
       state_machine: stateMachineArn,
-      queueName
+      queueUrl,
+      queueExecutionLimits: {
+        [queueUrl]: queueExecutionLimit,
+      },
     },
     meta: {
-      queues: {
-        [queueName]: queueUrl
-      },
-      queueExecutionLimits: {
-        [queueName]: queueExecutionLimit
-      },
       provider: provider,
       collection: collection,
-      workflow_name: workflow
+      workflow_name: workflow,
     },
-    payload: { granules: [granule] }
+    payload: { granules: [granule] },
   };
   t.truthy(actualMessage.cumulus_meta.execution_name);
   t.true(output.endsWith(actualMessage.cumulus_meta.execution_name));
@@ -131,12 +123,11 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
   const granule = { granuleId: '1', files: [] };
   const {
     queueExecutionLimit,
-    queueName,
     queueUrl,
     stateMachineArn,
     workflow,
     templateBucket,
-    stackName
+    stackName,
   } = t.context;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
@@ -156,12 +147,12 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       pdr,
       parentExecutionArn: arn,
       systemBucket: templateBucket,
-      stack: stackName
+      stack: stackName,
     });
     receiveMessageResponse = await sqs().receiveMessage({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
-      WaitTimeSeconds: 1
+      WaitTimeSeconds: 1,
     }).promise();
   } catch (error) {
     t.fail(error);
@@ -174,21 +165,18 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     cumulus_meta: {
       state_machine: stateMachineArn,
       parentExecutionArn: arn,
-      queueName
+      queueUrl,
+      queueExecutionLimits: {
+        [queueUrl]: queueExecutionLimit,
+      },
     },
     meta: {
-      queues: {
-        [queueName]: queueUrl
-      },
-      queueExecutionLimits: {
-        [queueName]: queueExecutionLimit
-      },
       provider: provider,
       collection: collection,
       pdr: pdr,
-      workflow_name: workflow
+      workflow_name: workflow,
     },
-    payload: { granules: [granule] }
+    payload: { granules: [granule] },
   };
   t.truthy(actualMessage.cumulus_meta.execution_name);
   t.true(output.endsWith(actualMessage.cumulus_meta.execution_name));
@@ -202,7 +190,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     dataType: randomString(),
     version: randomString(),
     files: [],
-    foo: 'bar' // should not be removed or altered
+    foo: 'bar', // should not be removed or altered
   };
   const { queueUrl } = t.context;
   const collection = { name: 'test-collection', version: '0.0.0' };
@@ -211,13 +199,13 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
   const {
     templateBucket,
     stackName,
-    workflow
+    workflow,
   } = t.context;
 
   const expectedPayload = {
     granules: [
-      granule
-    ]
+      granule,
+    ],
   };
 
   let response;
@@ -230,12 +218,12 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
       provider,
       collection,
       systemBucket: templateBucket,
-      stack: stackName
+      stack: stackName,
     });
     response = await sqs().receiveMessage({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
-      WaitTimeSeconds: 1
+      WaitTimeSeconds: 1,
     }).promise();
   } catch (error) {
     t.fail(error);

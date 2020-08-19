@@ -2,7 +2,7 @@
 
 const router = require('express-promise-router')();
 const {
-  deleteS3Object
+  deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -75,7 +75,7 @@ async function del(req, res) {
       await esClient.delete({
         id: pdrName,
         index: process.env.ES_INDEX,
-        type: 'pdr'
+        type: 'pdr',
       }, { ignore: [404] });
     }
   } catch (error) {

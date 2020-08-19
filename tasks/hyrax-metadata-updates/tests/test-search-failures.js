@@ -8,7 +8,7 @@ const rewire = require('rewire');
 const HyraxMetadataUpdate = rewire('../index');
 const { secretsManager } = require('@cumulus/aws-client/services');
 const {
-  randomId
+  randomId,
 } = require('@cumulus/common/test-utils');
 
 const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
@@ -22,16 +22,16 @@ const event = {
       provider: 'GES_DISC',
       clientId: 'xxxxxx',
       username: 'xxxxxx',
-      passwordSecretName: cmrPasswordSecret
-    }
+      passwordSecretName: cmrPasswordSecret,
+    },
   },
-  input: {}
+  input: {},
 };
 
 test.before(async () => {
   await secretsManager().createSecret({
     Name: cmrPasswordSecret,
-    SecretString: randomId('cmrPasswordSecret')
+    SecretString: randomId('cmrPasswordSecret'),
   }).promise();
 });
 
@@ -51,7 +51,7 @@ test.afterEach.always(() => {
 test.after.always(async () => {
   await secretsManager().deleteSecret({
     SecretId: cmrPasswordSecret,
-    ForceDeleteWithoutRecovery: true
+    ForceDeleteWithoutRecovery: true,
   }).promise();
 });
 
@@ -64,7 +64,7 @@ test.serial('Test retrieving entry title with invalid result', async (t) => {
       version: '2.0',
       page_size: '50',
       page_num: '1',
-      provider_short_name: 'GES_DISC'
+      provider_short_name: 'GES_DISC',
     })
     .replyWithFile(200, 'tests/data/cmr-results-no-dataset-id.json', headers);
 
@@ -73,7 +73,7 @@ test.serial('Test retrieving entry title with invalid result', async (t) => {
 
   await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
-    message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0'
+    message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0',
   });
 });
 
@@ -86,7 +86,7 @@ test.serial('Test retrieving entry title with no results', async (t) => {
       version: '2.0',
       page_size: '50',
       page_num: '1',
-      provider_short_name: 'GES_DISC'
+      provider_short_name: 'GES_DISC',
     })
     .replyWithFile(200, 'tests/data/cmr-results-no-results.json', headers);
 
@@ -95,6 +95,6 @@ test.serial('Test retrieving entry title with no results', async (t) => {
 
   await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
-    message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0'
+    message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0',
   });
 });

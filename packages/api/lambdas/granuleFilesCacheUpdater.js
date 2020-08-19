@@ -8,7 +8,7 @@ const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const handleInsert = (record) => {
   const { files, granuleId } = attr.unwrap(record.dynamodb.NewImage);
   return GranuleFilesCache.batchUpdate({
-    puts: files.map((file) => ({ ...file, granuleId }))
+    puts: files.map((file) => ({ ...file, granuleId })),
   });
 };
 
@@ -41,5 +41,5 @@ const updateCache = (record) => {
 
 module.exports = {
   // eslint-disable-next-line no-console
-  handler: async ({ Records }) => pMap(Records, updateCache).catch(console.log)
+  handler: async ({ Records }) => pMap(Records, updateCache).catch(console.log),
 };

@@ -27,7 +27,7 @@ const granuleFileToRecord = (granuleFile) => {
     ...granuleFile,
     key: s3Utils.parseS3Uri(granuleFile.filename).Key,
     fileName: granuleFile.name,
-    checksum: granuleFile.checksum
+    checksum: granuleFile.checksum,
   };
 
   if (granuleFile.path) {
@@ -47,18 +47,18 @@ test.before(async (t) => {
     cumulus_meta: {
       execution_name: randomString(),
       state_machine: 'arn:aws:states:us-east-1:123456789012:stateMachine:HelloStateMachine',
-      workflow_start_time: Date.now()
+      workflow_start_time: Date.now(),
     },
     meta: {
       collection: {
         name: randomString(),
-        version: randomString()
+        version: randomString(),
       },
       provider: {
         host: randomString(),
-        protocol: 's3'
+        protocol: 's3',
       },
-      status: 'completed'
+      status: 'completed',
     },
     payload: {
       granules: [
@@ -66,10 +66,10 @@ test.before(async (t) => {
           granuleId: randomString(),
           sync_granule_duration: 123,
           post_to_cmr_duration: 456,
-          files: []
-        }
-      ]
-    }
+          files: [],
+        },
+      ],
+    },
   };
 
   sandbox = sinon.createSandbox();
@@ -78,22 +78,22 @@ test.before(async (t) => {
     beginningDateTime: '2017-10-24T00:00:00.000Z',
     endingDateTime: '2018-10-24T00:00:00.000Z',
     lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
-    productionDateTime: '2018-04-25T21:45:45.524Z'
+    productionDateTime: '2018-04-25T21:45:45.524Z',
   };
   sandbox.stub(cmrUtils, 'getGranuleTemporalInfo').resolves(fakeMetadata);
 
   fakeExecution = {
     input: JSON.stringify(testCumulusMessage),
     startDate: new Date(Date.UTC(2019, 6, 28)),
-    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1)),
   };
 
   t.context.fakeS3 = {
     headObject: () => ({
       promise: async () => ({
-        ContentLength: mockedFileSize
-      })
-    })
+        ContentLength: mockedFileSize,
+      }),
+    }),
   };
 });
 
@@ -117,7 +117,7 @@ test(
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
-      executionUrl: randomString()
+      executionUrl: randomString(),
     });
 
     t.is(record.timeToPreprocess, 0.123);
@@ -135,7 +135,7 @@ test(
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
-      executionUrl: randomString()
+      executionUrl: randomString(),
     });
 
     t.is(record.timeToPreprocess, 0);
@@ -153,7 +153,7 @@ test(
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
-      executionUrl: randomString()
+      executionUrl: randomString(),
     });
 
     t.is(record.timeToArchive, 0.123);
@@ -171,7 +171,7 @@ test(
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
-      executionUrl: randomString()
+      executionUrl: randomString(),
     });
 
     t.is(record.timeToArchive, 0);
@@ -192,7 +192,7 @@ test(
       granule,
       message: cumulusMessage,
       executionUrl: randomString(),
-      executionDescription: newFakeExecution
+      executionDescription: newFakeExecution,
     });
 
     t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
@@ -211,7 +211,7 @@ test(
       granule,
       message: cumulusMessage,
       executionUrl: randomString(),
-      executionDescription: fakeExecution
+      executionDescription: fakeExecution,
     });
 
     t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
@@ -229,7 +229,7 @@ test(
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
-      executionUrl: randomString()
+      executionUrl: randomString(),
     });
 
     t.falsy(record.processingStartDateTime);
@@ -250,7 +250,7 @@ test(
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
-      executionUrl: randomString()
+      executionUrl: randomString(),
     });
 
     t.is(record.status, 'running');
@@ -268,7 +268,7 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
     granule,
     message: granuleSuccess,
     executionUrl,
-    executionDescription: fakeExecution
+    executionDescription: fakeExecution,
   });
 
   t.deepEqual(
@@ -305,7 +305,7 @@ test('generateGranuleRecord() builds a failed granule record', async (t) => {
     granule,
     message: granuleFailure,
     executionUrl,
-    executionDescription: fakeExecution
+    executionDescription: fakeExecution,
   });
 
   t.deepEqual(

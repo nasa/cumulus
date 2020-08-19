@@ -8,7 +8,7 @@ const {
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
   waitForTestExecutionStart,
-  waitForCompletedExecution
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
@@ -17,7 +17,7 @@ const {
   s3GetObjectTagging,
   s3Join,
   s3ObjectExists,
-  parseS3Uri
+  parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -29,11 +29,11 @@ const {
   createTestDataPath,
   createTestSuffix,
   deleteFolder,
-  getFilesMetadata
+  getFilesMetadata,
 } = require('../../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdPathAndCollection
+  loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -67,7 +67,7 @@ describe('The Sync Granules workflow', () => {
 
     const s3data = [
       '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-      '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+      '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
     ];
 
     const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
@@ -88,12 +88,12 @@ describe('The Sync Granules workflow', () => {
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
     ]);
     await updateCollection({
       prefix: config.stackName,
       collection,
-      updateParams: { duplicateHandling: 'replace' }
+      updateParams: { duplicateHandling: 'replace' },
     });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -114,17 +114,17 @@ describe('The Sync Granules workflow', () => {
               {
                 bucket: config.buckets.internal.name,
                 filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
               },
               {
                 bucket: config.buckets.internal.name,
                 filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`
-              }
-            ]
-          }
-        ]
-      }
+                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
+              },
+            ],
+          },
+        ],
+      },
     });
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(
@@ -151,8 +151,8 @@ describe('The Sync Granules workflow', () => {
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
+        granuleId: inputPayload.granules[0].granuleId,
+      }),
     ]);
   });
 
@@ -181,7 +181,7 @@ describe('The Sync Granules workflow', () => {
 
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
-        s3ObjectExists({ Bucket: files[1].bucket, Key: key2 })
+        s3ObjectExists({ Bucket: files[1].bucket, Key: key2 }),
       ]);
       syncedTaggings = await Promise.all(files.map((file) => {
         const { Bucket, Key } = parseS3Uri(file.filename);
@@ -195,9 +195,9 @@ describe('The Sync Granules workflow', () => {
         granules: [
           {
             ...expectedPayload.granules[0],
-            sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
-          }
-        ]
+            sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+          },
+        ],
       };
 
       expect(lambdaOutput.payload).toEqual(thisExpectedPayload);
@@ -207,8 +207,8 @@ describe('The Sync Granules workflow', () => {
       const thisExpectedGranules = [
         {
           ...expectedPayload.granules[0],
-          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
-        }
+          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+        },
       ];
 
       expect(lambdaOutput.meta.input_granules).toEqual(thisExpectedGranules);
@@ -258,7 +258,7 @@ describe('The Sync Granules workflow', () => {
     beforeAll(async () => {
       const granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       });
       granule = JSON.parse(granuleResponse.body);
 
@@ -266,7 +266,7 @@ describe('The Sync Granules workflow', () => {
       oldExecution = granule.execution;
       const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
     });
@@ -287,7 +287,7 @@ describe('The Sync Granules workflow', () => {
         bucket: config.bucket,
         findExecutionFn: isReingestExecutionForGranuleId,
         findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
-        startTask: 'SyncGranule'
+        startTask: 'SyncGranule',
       });
 
       console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
@@ -311,7 +311,7 @@ describe('The Sync Granules workflow', () => {
 
       const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputPayload.granules[0].granuleId,
       });
 
       const updatedGranule = JSON.parse(updatedGranuleResponse.body);

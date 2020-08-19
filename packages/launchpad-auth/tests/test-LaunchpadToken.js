@@ -8,7 +8,7 @@ const {
   createBucket,
   deleteS3Object,
   recursivelyDeleteS3Bucket,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 
 const LaunchpadToken = require('../LaunchpadToken');
@@ -29,7 +29,7 @@ process.env.stackName = stackName;
 const config = {
   api,
   certificate,
-  passphrase: randomString()
+  passphrase: randomString(),
 };
 
 const getTokenResponse = {
@@ -38,7 +38,7 @@ const getTokenResponse = {
   session_idletimeout: 3600,
   session_maxtimeout: 3600,
   sm_token: randomString(),
-  status: 'success'
+  status: 'success',
 };
 
 const validateTokenResponse = {
@@ -48,7 +48,7 @@ const validateTokenResponse = {
   owner_groups: ['cn=cumulus_user_group,ou=Groups,dc=nasa,dc=gov'],
   session_maxtimeout: 3600,
   session_starttime: 1564067402,
-  status: 'success'
+  status: 'success',
 };
 
 test.before(async () => {
@@ -58,13 +58,13 @@ test.before(async () => {
   await s3PutObject({
     Bucket: bucket,
     Key: `${stackName}/crypto/${certificate}`,
-    Body: randomString()
+    Body: randomString(),
   });
 });
 
 test.after.always(async () => {
   await Promise.all([
-    recursivelyDeleteS3Bucket(bucket)
+    recursivelyDeleteS3Bucket(bucket),
   ]);
 });
 

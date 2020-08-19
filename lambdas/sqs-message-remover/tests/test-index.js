@@ -32,14 +32,14 @@ async function createSqsQueues(
   const deadLetterQueueParms = {
     QueueName: deadLetterQueueName,
     Attributes: {
-      VisibilityTimeout: visibilityTimeout
-    }
+      VisibilityTimeout: visibilityTimeout,
+    },
   };
   const { QueueUrl: deadLetterQueueUrl } = await awsServices.sqs()
     .createQueue(deadLetterQueueParms).promise();
   const qAttrParams = {
     QueueUrl: deadLetterQueueUrl,
-    AttributeNames: ['QueueArn']
+    AttributeNames: ['QueueArn'],
   };
   const { Attributes: { QueueArn: deadLetterQueueArn } } = await awsServices.sqs()
     .getQueueAttributes(qAttrParams).promise();
@@ -51,10 +51,10 @@ async function createSqsQueues(
     Attributes: {
       RedrivePolicy: JSON.stringify({
         deadLetterTargetArn: deadLetterQueueArn,
-        maxReceiveCount
+        maxReceiveCount,
       }),
-      VisibilityTimeout: visibilityTimeout
-    }
+      VisibilityTimeout: visibilityTimeout,
+    },
   };
 
   const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
@@ -71,17 +71,17 @@ async function createSqsQueues(
 async function getSqsQueueMessageCounts(queueUrl) {
   const qAttrParams = {
     QueueUrl: queueUrl,
-    AttributeNames: ['All']
+    AttributeNames: ['All'],
   };
   const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
   const {
     ApproximateNumberOfMessages: numberOfMessagesAvailable,
-    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible
+    ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible,
   } = attributes.Attributes;
 
   return {
     numberOfMessagesAvailable: Number.parseInt(numberOfMessagesAvailable, 10),
-    numberOfMessagesNotVisible: Number.parseInt(numberOfMessagesNotVisible, 10)
+    numberOfMessagesNotVisible: Number.parseInt(numberOfMessagesNotVisible, 10),
   };
 }
 
@@ -90,7 +90,7 @@ const createEventSource = ({
   queueUrl = randomString(),
   receiptHandle = randomString(),
   deleteCompletedMessage = true,
-  workflowName = randomString()
+  workflowName = randomString(),
 }) => ({
   type,
   messageId: randomString(),
@@ -98,7 +98,7 @@ const createEventSource = ({
   receiptHandle,
   receivedCount: 1,
   deleteCompletedMessage,
-  workflow_name: workflowName
+  workflow_name: workflowName,
 });
 
 const sfEventSource = 'aws.states';
@@ -106,16 +106,16 @@ const createCloudwatchEventMessage = ({
   status,
   eventSource,
   currentWorkflowName,
-  source = sfEventSource
+  source = sfEventSource,
 }) => {
   const message = JSON.stringify({
     cumulus_meta: {
-      execution_name: randomString()
+      execution_name: randomString(),
     },
     meta: {
       eventSource,
-      workflow_name: currentWorkflowName || get(eventSource, 'workflow_name', randomString())
-    }
+      workflow_name: currentWorkflowName || get(eventSource, 'workflow_name', randomString()),
+    },
   });
   const detail = { status, input: message };
   return { source, detail };
@@ -127,7 +127,7 @@ const assertInvalidSqsQueueUpdateEvent = (t, output) =>
 test('sqsMessageRemover lambda does nothing for an event with a RUNNING status', async (t) => {
   const output = await updateSqsQueue(
     createCloudwatchEventMessage({
-      status: 'RUNNING'
+      status: 'RUNNING',
     })
   );
 
@@ -137,7 +137,7 @@ test('sqsMessageRemover lambda does nothing for an event with a RUNNING status',
 test('sqsMessageRemover lambda does nothing for a workflow message when eventSource.type is not set to sqs', async (t) => {
   let output = await updateSqsQueue(
     createCloudwatchEventMessage({
-      status: 'SUCCEEDED'
+      status: 'SUCCEEDED',
     })
   );
 
@@ -147,7 +147,7 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
   output = await updateSqsQueue(
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
-      eventSource
+      eventSource,
     })
   );
 
@@ -159,7 +159,7 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
   const output = await updateSqsQueue(
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
-      eventSource
+      eventSource,
     })
   );
 
@@ -172,7 +172,7 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
       eventSource,
-      currentWorkflowName: randomString()
+      currentWorkflowName: randomString(),
     })
   );
 
@@ -182,7 +182,7 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
 test('sqsMessageRemover lambda removes message from queue when workflow succeeded', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
-    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
+    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() }),
   }).promise();
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
@@ -193,7 +193,7 @@ test('sqsMessageRemover lambda removes message from queue when workflow succeede
   await updateSqsQueue(
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
-      eventSource
+      eventSource,
     })
   );
 
@@ -207,7 +207,7 @@ test('sqsMessageRemover lambda removes message from queue when workflow succeede
 test('sqsMessageRemover lambda updates message visibilityTimeout when workflow failed', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
-    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() })
+    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() }),
   }).promise();
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
@@ -218,7 +218,7 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   await updateSqsQueue(
     createCloudwatchEventMessage({
       status: 'FAILED',
-      eventSource
+      eventSource,
     })
   );
 

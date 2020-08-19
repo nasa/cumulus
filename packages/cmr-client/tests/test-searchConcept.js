@@ -19,7 +19,7 @@ test.serial('searchConcept request includes CMR client id', async (t) => {
     type: 'granule',
     searchParams: {},
     previousResults: [],
-    headers: { 'Client-Id': clientId }
+    headers: { 'Client-Id': clientId },
   });
   t.is(request.headers['Client-Id'], clientId);
 
@@ -38,7 +38,7 @@ test.serial('searchConcept uses env variables', async (t) => {
     type: 'granule',
     searchParams: {},
     previousResults: [],
-    headers: { 'Client-Id': clientId }
+    headers: { 'Client-Id': clientId },
   });
   t.is(response.length, 2);
   t.is(request.headers['Client-Id'], clientId);

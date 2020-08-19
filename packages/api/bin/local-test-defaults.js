@@ -28,5 +28,5 @@ module.exports = {
   setLocalEsVariables,
   localStackName,
   localSystemBucket,
-  localUserName
+  localUserName,
 };

@@ -11,6 +11,8 @@
 import findKey from 'lodash/findKey';
 import get from 'lodash/get';
 import isNil from 'lodash/isNil';
+
+import * as util from '@cumulus/common/util';
 import { Message } from '@cumulus/types';
 
 /**
@@ -26,6 +28,7 @@ export const getQueueNameByUrl = (
   message: Message.CumulusMessage,
   queueUrl: string
 ) => {
+  util.deprecate('@cumulus/message/Queue.getQueueNameByUrl', '1.24.0');
   const queues = get(message, 'meta.queues', {});
   return findKey(queues, (value) => value === queueUrl);
 };
@@ -40,6 +43,7 @@ export const getQueueNameByUrl = (
  * @alias module:Queue
  */
 export const getQueueName = (message: Message.CumulusMessage) => {
+  util.deprecate('@cumulus/message/Queue.getQueueName', '1.24.0');
   const queueName = get(message, 'cumulus_meta.queueName');
   if (isNil(queueName)) {
     throw new Error('cumulus_meta.queueName not set in message');
@@ -48,10 +52,26 @@ export const getQueueName = (message: Message.CumulusMessage) => {
 };
 
 /**
+ * Get the queue URL from a workflow message.
+ *
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {string} A queue URL
+ *
+ * @alias module:Queue
+ */
+export const getQueueUrl = (message: Message.CumulusMessage): string => {
+  const queueUrl = message.cumulus_meta.queueUrl;
+  if (isNil(queueUrl)) {
+    throw new Error('Could not find queue URL at cumulus_meta.queueUrl in message');
+  }
+  return queueUrl;
+};
+
+/**
  * Get the maximum executions for a queue.
  *
  * @param {Message.CumulusMessage} message - A workflow message object
- * @param {string} queueName - A queue name
+ * @param {string} queueUrl - A queue URL
  * @returns {number} Count of the maximum executions for the queue
  * @throws {Error} if no maximum executions can be found
  *
@@ -59,11 +79,11 @@ export const getQueueName = (message: Message.CumulusMessage) => {
  */
 export const getMaximumExecutions = (
   message: Message.CumulusMessage,
-  queueName: string
-) => {
-  const maxExecutions = get(message, `meta.queueExecutionLimits.${queueName}`);
+  queueUrl: string
+): number => {
+  const maxExecutions = message.cumulus_meta.queueExecutionLimits?.[queueUrl];
   if (isNil(maxExecutions)) {
-    throw new Error(`Could not determine maximum executions for queue ${queueName}`);
+    throw new Error(`Could not determine maximum executions for queue ${queueUrl}`);
   }
   return maxExecutions;
 };
@@ -76,10 +96,12 @@ export const getMaximumExecutions = (
  *
  * @alias module:Queue
  */
-export const hasQueueAndExecutionLimit = (message: Message.CumulusMessage) => {
+export const hasQueueAndExecutionLimit = (
+  message: Message.CumulusMessage
+): boolean => {
   try {
-    const queueName = getQueueName(message);
-    getMaximumExecutions(message, queueName);
+    const queueUrl = getQueueUrl(message);
+    getMaximumExecutions(message, queueUrl);
   } catch (error) {
     return false;
   }

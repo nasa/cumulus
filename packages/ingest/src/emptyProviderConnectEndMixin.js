@@ -2,5 +2,5 @@
 
 exports.emptyProviderConnectEndMixin = {
   connect: () => Promise.resolve(),
-  end: () => Promise.resolve()
+  end: () => Promise.resolve(),
 };

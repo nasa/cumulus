@@ -114,7 +114,16 @@ module.exports = {
     'require-yield': 'off',
     'prefer-template': 'warn',
     'no-underscore-dangle': 'off',
-    'comma-dangle': ['warn', 'never'],
+    'comma-dangle': [
+      'error',
+      {
+        arrays: 'always-multiline',
+        objects: 'always-multiline',
+        imports: 'always-multiline',
+        exports: 'always-multiline',
+        functions: 'never'
+      }
+    ],
     strict: 'off',
     'guard-for-in': 'off',
     'object-shorthand': 'off',
@@ -180,7 +189,16 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
-        'comma-dangle': ['warn', 'never'],
+        'comma-dangle': [
+          'error',
+          {
+            arrays: 'always-multiline',
+            objects: 'always-multiline',
+            imports: 'always-multiline',
+            exports: 'always-multiline',
+            functions: 'never'
+          }
+        ],
         'import/no-extraneous-dependencies': 'off',
         'import/prefer-default-export': 'off',
         'lines-between-class-members': 'off',
@@ -219,6 +237,12 @@ module.exports = {
             ]
           }
         ]
+      }
+    },
+    {
+      files: ['lambdas/db-migration/src/migration-template.ts'],
+      rules: {
+        '@typescript-eslint/no-unused-vars': 'off'
       }
     }
   ]

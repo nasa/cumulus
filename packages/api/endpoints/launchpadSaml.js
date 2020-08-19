@@ -13,7 +13,7 @@ const {
   getS3Object,
   parseS3Uri,
   s3ObjectExists,
-  s3PutObject
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
@@ -157,12 +157,12 @@ const prepareSamlProviders = async () => {
     force_authn: false,
     nameid_format: 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
     sign_get_request: false,
-    allow_unencrypted_assertion: true
+    allow_unencrypted_assertion: true,
   };
 
   const idpOptions = {
     sso_login_url: process.env.IDP_LOGIN,
-    certificates: LaunchpadX509Certificate
+    certificates: LaunchpadX509Certificate,
   };
 
   const idp = new saml2.IdentityProvider(idpOptions);
@@ -286,5 +286,5 @@ module.exports = {
   auth,
   login,
   refreshEndpoint,
-  samlToken
+  samlToken,
 };

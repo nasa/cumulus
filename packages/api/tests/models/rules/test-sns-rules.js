@@ -5,7 +5,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   createBucket,
   putJsonS3Object,
-  recursivelyDeleteS3Bucket
+  recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
@@ -40,18 +40,18 @@ test.before(async () => {
       process.env.system_bucket,
       templateFile,
       {}
-    )
+    ),
   ]);
 
   sandbox = sinon.createSandbox();
   sandbox.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
-        promise: () => Promise.resolve()
+        promise: () => Promise.resolve(),
       }),
       removePermission: () => ({
-        promise: () => Promise.resolve()
-      })
+        promise: () => Promise.resolve(),
+      }),
     });
 });
 
@@ -68,9 +68,9 @@ test('creating a disabled SNS rule creates no event source mapping', async (t) =
     workflow,
     rule: {
       type: 'sns',
-      value: snsTopicArn
+      value: snsTopicArn,
     },
-    state: 'DISABLED'
+    state: 'DISABLED',
   });
 
   const rule = await rulesModel.create(item);
@@ -88,22 +88,22 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
         promise: () => Promise.resolve({
           Subscriptions: [{
             Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn
-          }]
-        })
+            SubscriptionArn: snsTopicArn,
+          }],
+        }),
       }),
       unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
+        promise: () => Promise.resolve(),
+      }),
     });
 
   const item = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'sns',
-      value: snsTopicArn
+      value: snsTopicArn,
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   });
 
   const rule = await rulesModel.create(item);
@@ -133,22 +133,22 @@ test.serial('enabling a disabled SNS rule and passing rule.arn throws specific e
         promise: () => Promise.resolve({
           Subscriptions: [{
             Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn
-          }]
-        })
+            SubscriptionArn: snsTopicArn,
+          }],
+        }),
       }),
       unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
+        promise: () => Promise.resolve(),
+      }),
     });
 
   const item = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'sns',
-      value: snsTopicArn
+      value: snsTopicArn,
     },
-    state: 'DISABLED'
+    state: 'DISABLED',
   });
 
   const rule = await rulesModel.create(item);
@@ -162,8 +162,8 @@ test.serial('enabling a disabled SNS rule and passing rule.arn throws specific e
     state: 'ENABLED',
     rule: {
       ...rule.rule,
-      arn: 'test-value'
-    }
+      arn: 'test-value',
+    },
   };
 
   // Should fail because a disabled rule should not have an ARN
@@ -186,22 +186,22 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
         promise: () => Promise.resolve({
           Subscriptions: [{
             Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString()
-          }]
-        })
+            SubscriptionArn: randomString(),
+          }],
+        }),
       }),
       unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
+        promise: () => Promise.resolve(),
+      }),
     });
 
   const item = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'sns',
-      value: snsTopicArn
+      value: snsTopicArn,
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   });
 
   const rule = await rulesModel.create(item);
@@ -229,13 +229,13 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
         promise: () => Promise.resolve({
           Subscriptions: [{
             Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString()
-          }]
-        })
+            SubscriptionArn: randomString(),
+          }],
+        }),
       }),
       unsubscribe: () => ({
-        promise: () => Promise.resolve()
-      })
+        promise: () => Promise.resolve(),
+      }),
     });
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
 
@@ -243,9 +243,9 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
     workflow,
     rule: {
       type: 'sns',
-      value: snsTopicArn
+      value: snsTopicArn,
     },
-    state: 'ENABLED'
+    state: 'ENABLED',
   });
 
   const rule = await rulesModel.create(item);
@@ -256,7 +256,7 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
 
   t.true(unsubscribeSpy.called);
   t.true(unsubscribeSpy.calledWith({
-    SubscriptionArn: rule.rule.arn
+    SubscriptionArn: rule.rule.arn,
   }));
 
   t.teardown(() => {
@@ -268,24 +268,24 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
 test.serial('multiple rules using same SNS topic can be created and deleted', async (t) => {
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
   const { TopicArn } = await awsServices.sns().createTopic({
-    Name: randomId('topic')
+    Name: randomId('topic'),
   }).promise();
 
   const rule1 = await rulesModel.create(fakeRuleFactoryV2({
     rule: {
       type: 'sns',
-      value: TopicArn
+      value: TopicArn,
     },
     workflow,
-    state: 'ENABLED'
+    state: 'ENABLED',
   }));
   const rule2 = await rulesModel.create(fakeRuleFactoryV2({
     rule: {
       type: 'sns',
-      value: TopicArn
+      value: TopicArn,
     },
     workflow,
-    state: 'ENABLED'
+    state: 'ENABLED',
   }));
 
   // rules share the same subscription
@@ -299,13 +299,13 @@ test.serial('multiple rules using same SNS topic can be created and deleted', as
   // Ensure that cleanup for SNS rule subscription was actually called
   t.true(unsubscribeSpy.called);
   t.true(unsubscribeSpy.calledWith({
-    SubscriptionArn: rule1.rule.arn
+    SubscriptionArn: rule1.rule.arn,
   }));
 
   t.teardown(async () => {
     unsubscribeSpy.restore();
     await awsServices.sns().deleteTopic({
-      TopicArn
+      TopicArn,
     });
   });
 });

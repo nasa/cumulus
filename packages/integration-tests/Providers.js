@@ -14,7 +14,7 @@ const buildProvider = (overrides = {}) => ({
   id: randomId('provider-'),
   globalConnectionLimit: 10,
   protocol: 's3',
-  ...overrides
+  ...overrides,
 });
 
 /**
@@ -36,7 +36,7 @@ const createProvider = async (prefix, overrides = {}) => {
   const provider = buildProvider(overrides);
 
   const createResponse = await providersApi.createProvider({
-    prefix, provider
+    prefix, provider,
   });
 
   if (createResponse.statusCode !== 200) {
@@ -47,5 +47,5 @@ const createProvider = async (prefix, overrides = {}) => {
 };
 
 module.exports = {
-  createProvider
+  createProvider,
 };

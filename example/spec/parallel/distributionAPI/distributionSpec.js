@@ -8,7 +8,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   getTEADistributionApiRedirect,
-  getTEARequestHeaders
+  getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 
 const {
@@ -16,12 +16,12 @@ const {
   createTestDataPath,
   createTimestampedTestId,
   uploadTestDataToBucket,
-  deleteFolder
+  deleteFolder,
 } = require('../../helpers/testUtils');
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 const s3Data = [
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
 ];
 
 describe('Distribution API', () => {
@@ -57,7 +57,7 @@ describe('Distribution API', () => {
 
       await Promise.all([
         uploadTestDataToBucket(protectedBucketName, s3Data, testDataFolder),
-        uploadTestDataToBucket(publicBucketName, s3Data, testDataFolder)
+        uploadTestDataToBucket(publicBucketName, s3Data, testDataFolder),
       ]);
     } catch (error) {
       console.log(error);
@@ -67,7 +67,7 @@ describe('Distribution API', () => {
   afterAll(async () => {
     await Promise.all([
       deleteFolder(protectedBucketName, testDataFolder),
-      deleteFolder(publicBucketName, testDataFolder)
+      deleteFolder(publicBucketName, testDataFolder),
     ]);
   });
 

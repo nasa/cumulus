@@ -26,7 +26,7 @@ async function list(req, res) {
       endDateTime: nextGranule.endingDateTime || '',
       status: nextGranule.status,
       updatedAt: new Date(nextGranule.updatedAt).toISOString(),
-      published: nextGranule.published
+      published: nextGranule.published,
     });
     await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
     nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop

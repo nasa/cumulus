@@ -9,14 +9,14 @@ import {
   getS3Object,
   s3Join,
   s3ObjectExists,
-  s3PutObject
+  s3PutObject,
 } from '@cumulus/aws-client/S3';
 import Logger from '@cumulus/logger';
 
 import {
   LaunchpadTokenParams,
   TokenObject,
-  ValidateTokenResult
+  ValidateTokenResult,
 } from './types';
 
 import LaunchpadToken from './LaunchpadToken';
@@ -39,7 +39,7 @@ function launchpadTokenBucketKey(): {
   const stackName = getEnvVar('stackName');
   return {
     Bucket: bucket,
-    Key: s3Join(stackName, 'launchpad/token.json')
+    Key: s3Join(stackName, 'launchpad/token.json'),
   };
 }
 
@@ -99,14 +99,14 @@ async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> 
     // add session_starttime to token object, assume token is generated 60s ago
     const tokenObject: TokenObject = {
       ...tokenResponse,
-      session_starttime: (Date.now() / 1000) - 60
+      session_starttime: (Date.now() / 1000) - 60,
     };
 
     const s3location = launchpadTokenBucketKey();
     await s3PutObject({
       Bucket: s3location.Bucket,
       Key: s3location.Key,
-      Body: JSON.stringify(tokenObject)
+      Body: JSON.stringify(tokenObject),
     });
 
     token = tokenObject.sm_token;
@@ -164,5 +164,5 @@ async function validateLaunchpadToken(
 
 module.exports = {
   getLaunchpadToken,
-  validateLaunchpadToken
+  validateLaunchpadToken,
 };

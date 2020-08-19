@@ -16,7 +16,7 @@ const logger = () => new Logger({
   parentArn: process.env.PARENTARN,
   sender: process.env.SENDER,
   stackName: process.env.STACKNAME,
-  version: process.env.TASKVERSION
+  version: process.env.TASKVERSION,
 });
 
 /**
@@ -37,7 +37,7 @@ const listFiles = async (params) => {
   const provider = buildProviderClient({
     ...providerConfig,
     useList,
-    httpRequestTimeout
+    httpRequestTimeout,
   });
 
   try {
@@ -150,7 +150,7 @@ const updateFileFromCollectionFileConfig = curry(
       ...file,
       bucket: buckets[fileConfig.bucket].name,
       url_path: fileConfig.url_path || collection.url_path || '',
-      type: fileConfig.type || ''
+      type: fileConfig.type || '',
     };
   }
 );
@@ -179,7 +179,7 @@ const buildGranule = curry(
       granuleId,
       dataType: config.collection.name,
       version: config.collection.version,
-      files: filesToReturn
+      files: filesToReturn,
     };
   }
 );
@@ -199,7 +199,7 @@ const buildGranule = curry(
 const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
   const response = await granules.getGranule({
     prefix: process.env.STACKNAME,
-    granuleId
+    granuleId,
   });
   const responseBody = JSON.parse(response.body);
   if (response.statusCode === 404 && responseBody.error === 'Not Found') {
@@ -276,7 +276,7 @@ const discoverGranules = async ({ config }) => {
     providerConfig: config.provider,
     useList: config.useList,
     httpRequestTimeout: config.httpRequestTimeout,
-    path: config.provider_path
+    path: config.provider_path,
   });
 
   let filesByGranuleId = groupFilesByGranuleId(
@@ -313,5 +313,5 @@ module.exports = {
   discoverGranules,
   handler,
   filterDuplicates, // exported to support testing
-  handleDuplicates // exported to support testing
+  handleDuplicates, // exported to support testing
 };
