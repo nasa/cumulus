@@ -20,7 +20,7 @@
     "directory": "packages/api-client"
   },
   "scripts": {
-    "clean": "rm -f ./*.js ./*.d.ts",
+    "clean": "git clean -d -x -e node_modules -f",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
