@@ -105,6 +105,16 @@ async function storeCollectionsToElasticsearch(collections) {
   await Promise.all(
     collections.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
   );
+
+  await Promise.all(
+    collections.map((collection) => indexer.indexGranule(
+      esClient,
+      fakeGranuleFactoryV2({
+        collectionId: constructCollectionId(collection.name, collection.version),
+      }),
+      esAlias
+    ))
+  );
 }
 
 /**
@@ -195,11 +205,14 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
     t.context.stackName
   );
 
+  const startTimestamp = new Date(1970, 0, 1);
+  const endTimestamp = moment().add(1, 'hour');
+
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
-    startTimestamp: randomId('startTimestamp'),
-    endTimestamp: randomId('endTimestamp'),
+    startTimestamp,
+    endTimestamp,
   };
 
   const reportRecord = await handler(event, {});
@@ -209,7 +222,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
@@ -217,8 +230,8 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
   t.true(createStartTime <= createEndTime);
-  t.is(report.reportStartTime, event.startTimestamp);
-  t.is(report.reportEndTime, event.endTimestamp);
+  t.is(report.reportStartTime, (new Date(startTimestamp)).toISOString());
+  t.is(report.reportEndTime, (new Date(endTimestamp)).toISOString());
 });
 
 test.serial('A valid reconciliation report is generated when everything is in sync', async (t) => {
@@ -275,7 +288,7 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   const filesInCumulus = report.filesInCumulus;
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
@@ -326,7 +339,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
@@ -388,7 +401,7 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
 
@@ -455,7 +468,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
@@ -489,18 +502,21 @@ test.serial('A valid reconciliation report is generated when there are both extr
   );
 
   // Create collections that are in sync
-  const matchingColls = range(10).map(() => ({
-    name: randomString(),
-    version: randomString(),
+  const matchingCollLength = 35;
+  const matchingColls = range(matchingCollLength).map((r) => ({
+    name: randomId(`name${r}-`),
+    version: randomId('vers'),
   }));
 
-  const extraDbColls = range(2).map(() => ({
-    name: randomString(),
-    version: randomString(),
+  const onlyInDbLength = 5;
+  const extraDbColls = range(onlyInDbLength).map((r) => ({
+    name: randomId(`extraDb${r}-`),
+    version: randomId('vers'),
   }));
-  const extraCmrColls = range(2).map(() => ({
-    name: randomString(),
-    version: randomString(),
+  const onlyInCmrLength = 25;
+  const extraCmrColls = range(onlyInCmrLength).map((r) => ({
+    name: randomId(`extraCmr${r}-`),
+    version: randomId('vers'),
   }));
 
   const cmrCollections = sortBy(matchingColls.concat(extraCmrColls), ['name', 'version'])
@@ -524,15 +540,15 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const report = await fetchCompletedReport(reportRecord);
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
 
-  t.is(collectionsInCumulusCmr.onlyInCumulus.length, 2);
+  t.is(collectionsInCumulusCmr.onlyInCumulus.length, onlyInDbLength);
   extraDbColls.map((collection) =>
     t.true(collectionsInCumulusCmr.onlyInCumulus
       .includes(constructCollectionId(collection.name, collection.version))));
 
-  t.is(collectionsInCumulusCmr.onlyInCmr.length, 2);
+  t.is(collectionsInCumulusCmr.onlyInCmr.length, onlyInCmrLength);
   extraCmrColls.map((collection) =>
     t.true(collectionsInCumulusCmr.onlyInCmr
       .includes(constructCollectionId(collection.name, collection.version))));
@@ -578,6 +594,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     collectionId,
     bucketsConfig: new BucketsConfig({}),
     distributionBucketMap: {},
+    recReportParams: {},
   });
 
   t.is(granulesReport.okCount, 10);

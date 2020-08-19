@@ -101,6 +101,7 @@ class Collection extends BaseSearch {
       collections: {
         terms: {
           field: 'collectionId',
+          size: 2147483647,
         },
       },
     };

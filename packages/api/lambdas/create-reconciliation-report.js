@@ -185,7 +185,6 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections only in CUMULUS
 
   const oneWayReport = isOneWayReport(recReportParams);
-  log.info(`is OneWay: ${oneWayReport}`);
 
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'Version' as sort_key
@@ -195,15 +194,12 @@ async function reconciliationReportForCollections(recReportParams) {
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
-  log.info(`CMR Collection Ids: ${JSON.stringify(cmrCollectionIds)}`);
   // Build a ESCollection and call the aggregateActiveGranuleCollections to get
   // list of Active CollectionIds
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
   const esCollection = new Collection({ queryStringParameters: esCollectionSearchParams }, 'collection', process.env.ES_INDEX);
   const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
   const esCollectionIds = esCollectionItems.sort();
-  log.info(`esCollectionIds: ${JSON.stringify(esCollectionIds)}`);
-  log.info(`esCollectionSearchParams: ${JSON.stringify(esCollectionSearchParams)}`);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
