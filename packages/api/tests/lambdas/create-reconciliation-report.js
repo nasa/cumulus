@@ -729,9 +729,12 @@ test.serial(
     const newCollectionsInCumulusCmr = newReport.collectionsInCumulusCmr;
     t.is(newReport.status, 'SUCCESS');
     t.is(newReport.error, undefined);
-    t.is(newCollectionsInCumulusCmr.okCount, matchingCollsLength + matchingCollOutsideRangeLength);
-
-    t.is(newCollectionsInCumulusCmr.onlyInCumulus.length, onlyInDbLength + onlyInDbOutOfRangeLength);
+    t.is(
+      newCollectionsInCumulusCmr.okCount, matchingCollsLength + matchingCollOutsideRangeLength
+    );
+    t.is(
+      newCollectionsInCumulusCmr.onlyInCumulus.length, onlyInDbLength + onlyInDbOutOfRangeLength
+    );
     extraDbColls.map((collection) =>
       t.true(newCollectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
