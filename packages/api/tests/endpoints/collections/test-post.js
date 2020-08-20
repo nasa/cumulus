@@ -1,5 +1,6 @@
 'use strict';
 
+const pick = require('lodash/pick');
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { knex } = require('@cumulus/db');
@@ -52,7 +53,7 @@ test('post() writes a record to the database', async (t) => {
 
   const dbRecords = await dbClient.select('name', 'version')
     .from('collections')
-    .where({ name: collection.name, version: collection.version });
+    .where(pick(collection, ['name', 'version']));
 
   t.is(dbRecords.length, 1);
 });
@@ -84,7 +85,7 @@ test('post() does not write to the database if writing to Dynamo fails', async (
 
   const dbRecords = await dbClient.select('name', 'version')
     .from('collections')
-    .where({ name: collection.name, version: collection.version });
+    .where(pick(collection, ['name', 'version']));
 
   t.is(dbRecords.length, 0);
 });
@@ -129,7 +130,7 @@ test('post() results in Dynamo and DB records with the same created_at and updat
 
   const dbRecord = await dbClient.table('collections')
     .first('created_at', 'updated_at')
-    .where({ name: collection.name, version: collection.version });
+    .where(pick(collection, ['name', 'version']));
 
   const dynamoRecord = await collectionsModel.get({
     name: collection.name,

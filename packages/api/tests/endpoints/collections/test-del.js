@@ -1,5 +1,6 @@
 'use strict';
 
+const pick = require('lodash/pick');
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { knex } = require('@cumulus/db');
@@ -8,7 +9,6 @@ const Collection = require('../../../models/collections');
 const RulesModel = require('../../../models/rules');
 const { del } = require('../../../endpoints/collections');
 const { fakeCollectionFactory } = require('../../../lib/testUtils');
-const bootstrap = require('../../../lambdas/bootstrap');
 const { buildFakeExpressResponse } = require('../utils');
 
 test.before(async (t) => {
@@ -20,22 +20,13 @@ test.before(async (t) => {
   process.env.RulesTable = randomString();
   const rulesModel = new RulesModel();
 
-  process.env.ES_INDEX = randomString();
-
   await Promise.all([
     S3.createBucket(process.env.system_bucket),
     t.context.collectionsModel.createTable(),
     rulesModel.createTable(),
-    bootstrap.bootstrapElasticSearch(
-      'fakehost',
-      randomString(),
-      process.env.ES_INDEX
-    ),
   ]);
 
   t.context.dbClient = knex.createLocalStackClient();
-
-  t.context.nullLogger = { error: () => undefined };
 });
 
 test.beforeEach(async (t) => {
@@ -77,7 +68,7 @@ test('del() deletes a record from the database', async (t) => {
 
   const dbRecord = await dbClient.first()
     .from('collections')
-    .where({ name: collection.name, version: collection.version });
+    .where(pick(collection, ['name', 'version']));
 
   t.is(dbRecord, undefined);
 });
