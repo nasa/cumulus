@@ -606,18 +606,17 @@ test.serial(
         createBucket(bucket)
           .then(() => t.context.bucketsToCleanup.push(bucket)))
     );
-
-    const startTimestamp = new Date('2020-06-01T00:00:00.000Z').getTime();
-    const monthEarlier = moment(startTimestamp).add(-1, 'month').valueOf();
-    const endTimestamp = new Date('2020-07-01T00:00:00.000Z').getTime();
-    const monthLater = moment(endTimestamp).add(1, 'month').valueOf();
-
     // Write the buckets config to S3
     await storeBucketsConfigToS3(
       dataBuckets,
       t.context.systemBucket,
       t.context.stackName
     );
+
+    const startTimestamp = new Date('2020-06-01T00:00:00.000Z').getTime();
+    const monthEarlier = moment(startTimestamp).add(-1, 'month').valueOf();
+    const endTimestamp = new Date('2020-07-01T00:00:00.000Z').getTime();
+    const monthLater = moment(endTimestamp).add(1, 'month').valueOf();
 
     // Create collections that are in sync during the time period
     const matchingCollsLength = 15;
