@@ -17,5 +17,5 @@ cp package.json dist
 
   rm -f package.json package-lock.json
 
-  zip -r ../lambda.zip node_modules index.js
+  zip -r lambda.zip node_modules index.js -x '*@cumulus/api/dist*'
 )
