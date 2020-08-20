@@ -195,7 +195,43 @@ test.serial('migrateCollections handles nullable fields on source collection dat
 
   const createdRecordIds = await migrateCollections(process.env, knex);
   t.is(createdRecordIds.length, 1);
+
+  const records = await knex().select().table('collections');
+  // timestamp fields should be set automatically if no value is provided
+  t.truthy(records[0].created_at);
+  t.truthy(records[0].updated_at);
+  t.deepEqual(
+    omit(records[0], ['cumulusId', 'created_at', 'updated_at']),
+    omit(
+      {
+        ...fakeCollection,
+        granuleIdValidationRegex: fakeCollection.granuleId,
+        url_path: null,
+        duplicateHandling: null,
+        process: null,
+        reportToEms: null,
+        ignoreFilesConfigForDiscovery: null,
+        meta: null,
+        tags: null,
+      },
+      ['granuleId']
+    )
+  );
 });
 
-test.todo('ignores extraneous fields');
-test.todo('JSONB fields are in expected state');
+test('migrateCollections ignores extraneous fields', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  // remove nullable fields
+  fakeCollection.dataType = 'data-type';
+  fakeCollection.foo = 'bar';
+
+  await createCollectionDynamoRecords([
+    fakeCollection,
+  ]);
+  t.teardown(() => destroyCollectionDynamoRecords([
+    fakeCollection,
+  ]));
+
+  await t.notThrowsAsync(migrateCollections(process.env, knex));
+});
