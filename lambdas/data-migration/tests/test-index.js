@@ -108,7 +108,33 @@ test.after.always(async () => {
   await knex.destroy();
 });
 
-test.serial('migrateCollections handles multiple collections', async (t) => {
+test.serial('migrateCollections correctly migrates collection record', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  await createCollectionDynamoRecords([
+    fakeCollection,
+  ]);
+  t.teardown(() => destroyCollectionDynamoRecords([
+    fakeCollection,
+  ]));
+
+  await migrateCollections(process.env, knex);
+
+  const records = await knex().select().table('collections');
+
+  t.deepEqual(
+    omit(records[0], ['cumulusId', 'created_at', 'updated_at']),
+    omit(
+      {
+        ...fakeCollection,
+        granuleIdValidationRegex: fakeCollection.granuleId,
+      },
+      ['granuleId', 'createdAt', 'updatedAt']
+    )
+  );
+});
+
+test.serial('migrateCollections processes multiple collections', async (t) => {
   const fakeCollection1 = generateFakeCollection();
   const fakeCollection2 = generateFakeCollection();
 
@@ -124,23 +150,7 @@ test.serial('migrateCollections handles multiple collections', async (t) => {
   await migrateCollections(process.env, knex);
 
   const records = await knex().select().table('collections');
-
-  t.deepEqual(
-    sortBy([
-      omit(records[0], ['cumulusId', 'created_at', 'updated_at']),
-      omit(records[1], ['cumulusId', 'created_at', 'updated_at']),
-    ], 'name'),
-    sortBy([
-      omit({
-        ...fakeCollection1,
-        granuleIdValidationRegex: fakeCollection1.granuleId,
-      }, ['granuleId', 'createdAt', 'updatedAt']),
-      omit({
-        ...fakeCollection2,
-        granuleIdValidationRegex: fakeCollection2.granuleId,
-      }, ['granuleId', 'createdAt', 'updatedAt']),
-    ], 'name')
-  );
+  t.is(records.length, 2);
 });
 
 test.serial('migrateCollections processes all non-failing records', async (t) => {
@@ -162,6 +172,30 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
   t.is(createdRecordIds.length, 1);
 });
 
-test.todo('handles nullable fields');
+test.serial('migrateCollections handles nullable fields on source collection data', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  // remove nullable fields
+  delete fakeCollection.url_path;
+  delete fakeCollection.duplicateHandling;
+  delete fakeCollection.process;
+  delete fakeCollection.reportToEms;
+  delete fakeCollection.ignoreFilesConfigForDiscovery;
+  delete fakeCollection.meta;
+  delete fakeCollection.tags;
+  delete fakeCollection.createdAt;
+  delete fakeCollection.updatedAt;
+
+  await createCollectionDynamoRecords([
+    fakeCollection,
+  ]);
+  t.teardown(() => destroyCollectionDynamoRecords([
+    fakeCollection,
+  ]));
+
+  const createdRecordIds = await migrateCollections(process.env, knex);
+  t.is(createdRecordIds.length, 1);
+});
+
 test.todo('ignores extraneous fields');
 test.todo('JSONB fields are in expected state');

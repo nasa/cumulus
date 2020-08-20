@@ -8,6 +8,24 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
 }
 
+export interface RDSCollectionRecord {
+  name: string
+  version: string
+  process: string
+  granuleIdValidationRegex: string
+  granuleIdExtraction: string
+  files: string
+  sampleFileName?: string
+  url_path?: string
+  duplicateHandling?: string
+  reportToEms?: boolean
+  ignoreFilesConfigForDiscovery?: boolean
+  meta?: object
+  tags?: string
+  created_at?: Date
+  updated_at?: Date
+}
+
 const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
   const value = env?.[name];
 
@@ -29,23 +47,25 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
     // TODO: use schema to validate record before processing
 
     // Map old record to new schema.
-    // should not spread old record properties - should map the properties
-    // i want directly
-    const updatedRecord: any = {
-      ...record,
+    const updatedRecord: RDSCollectionRecord = {
+      name: record.name,
+      version: record.version,
+      process: record.process,
+      url_path: record.url_path,
+      duplicateHandling: record.duplicateHandling,
       granuleIdValidationRegex: record.granuleId,
+      granuleIdExtraction: record.granuleIdExtraction,
+      // have to stringify on an array of values
       files: JSON.stringify(record.files),
-      meta: JSON.stringify(record.meta),
-      created_at: new Date(record.createdAt),
-      updated_at: new Date(record.updatedAt),
-      tags: JSON.stringify(record.tags),
+      reportToEms: record.reportToEms,
+      sampleFileName: record.sampleFileName,
+      ignoreFilesConfigForDiscovery: record.ignoreFilesConfigForDiscovery,
+      meta: record.meta ? record.meta : undefined,
+      // have to stringify on an array of values
+      tags: record.tags ? JSON.stringify(record.tags) : undefined,
+      created_at: record.createdAt ? new Date(record.createdAt) : undefined,
+      updated_at: record.updatedAt ? new Date(record.updatedAt) : undefined,
     };
-
-    // Remove field names that do not exist in new schema
-    delete updatedRecord.granuleId;
-    delete updatedRecord.createdAt;
-    delete updatedRecord.updatedAt;
-    delete updatedRecord.dataType;
 
     try {
       const [cumulusId] = await knex('collections')
