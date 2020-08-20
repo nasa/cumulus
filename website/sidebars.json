@@ -2,6 +2,7 @@
   "docs": {
     "About Cumulus": [
       "cumulus-docs-readme",
+      "getting-started",
       "architecture",
       "interfaces",
       "glossary",
@@ -19,7 +20,7 @@
       "workflows/workflow-configuration-how-to",
       "workflows/workflow-triggers"
     ],
-    "Tasks": [
+    "Workflow Tasks": [
       "tasks",
       "workflow_tasks/discover_granules",
       "workflow_tasks/files_to_granules",
@@ -39,10 +40,7 @@
     "Deployment Options": [
       "additional-deployment-options/api-gateway-logging",
       "additional-deployment-options/share-s3-access-logs",
-      "additional-deployment-options/cloudwatch-logs-delivery",
-      "additional-deployment-options/cmr_launchpad_authentication",
-      "additional-deployment-options/cumulus_api_launchpad_authentication",
-      "additional-deployment-options/cumulus_saml_launchpad_integration"
+      "additional-deployment-options/cloudwatch-logs-delivery"
     ],
     "Additional Features": [
       "features/backup_and_restore",
