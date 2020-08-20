@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "data_migration" {
 }
 
 resource "aws_iam_role_policy" "data_migration" {
-  name   = "${var.prefix}_db_migration"
+  name   = "${var.prefix}_data_migration"
   role   = aws_iam_role.data_migration.id
   policy = data.aws_iam_policy_document.data_migration.json
 }
