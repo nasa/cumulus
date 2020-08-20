@@ -20,15 +20,17 @@ export interface RDSCollectionRecord {
   granuleIdValidationRegex: string
   granuleIdExtraction: string
   files: string
+  // default will be set by schema validation
+  duplicateHandling: string
+  // default will be set by schema validation
+  reportToEms: boolean
   sampleFileName?: string
   url_path?: string
-  duplicateHandling?: string
-  reportToEms?: boolean
   ignoreFilesConfigForDiscovery?: boolean
   meta?: object
   tags?: string
-  created_at?: Date
-  updated_at?: Date
+  created_at: Date
+  updated_at: Date
 }
 
 const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
@@ -72,8 +74,8 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
         meta: record.meta ? record.meta : undefined,
         // have to stringify on an array of values
         tags: record.tags ? JSON.stringify(record.tags) : undefined,
-        created_at: record.createdAt ? new Date(record.createdAt) : undefined,
-        updated_at: record.updatedAt ? new Date(record.updatedAt) : undefined,
+        created_at: new Date(record.createdAt),
+        updated_at: new Date(record.updatedAt),
       };
 
       const [cumulusId] = await knex('collections')
