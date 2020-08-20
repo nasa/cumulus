@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const rewire = require('rewire');
+const range = require('lodash/range');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
@@ -80,10 +81,12 @@ test.serial('Stats returns one granule when a granule is indexed', async (t) => 
   t.is(queryResult.granules.value, 1);
 });
 
-test.serial('Stats returns correct granule errors', async (t) => {
+test.only('Stats returns correct granule errors', async (t) => {
+  await Promise.all(
+    range(10).map(() => indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias))
+  );
+
   await Promise.all([
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
   ]);
@@ -91,7 +94,7 @@ test.serial('Stats returns correct granule errors', async (t) => {
   const stats = new Stats({}, undefined, process.env.ES_INDEX);
   const queryResult = await stats.query();
 
-  t.is(queryResult.granules.value, 4);
+  t.is(queryResult.granules.value, 12);
   t.is(queryResult.errors.value, 2);
 });
 
@@ -103,10 +106,16 @@ test.serial('Count returns 0 if there are no granules', async (t) => {
 });
 
 test.serial('Count returns correct granule and collection count', async (t) => {
+  await Promise.all(
+    range(12).map(() =>
+      indexer.indexCollection(esClient, fakeCollectionFactory(), t.context.esAlias))
+  );
+
+  await Promise.all(
+    range(10).map(() => indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias))
+  );
+
   await Promise.all([
-    indexer.indexCollection(esClient, fakeCollectionFactory(), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
     indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
   ]);
@@ -114,16 +123,16 @@ test.serial('Count returns correct granule and collection count', async (t) => {
   const stats = new Stats({}, 'granule', process.env.ES_INDEX);
   const countResult = await stats.count();
 
-  t.is(countResult.meta.count, 4);
+  t.is(countResult.meta.count, 12);
   t.deepEqual(countResult.count, [
-    { key: 'completed', count: 2 },
+    { key: 'completed', count: 10 },
     { key: 'failed', count: 2 },
   ]);
 
   const collectionStats = new Stats({}, 'collection', process.env.ES_INDEX);
   const collectionCountResult = await collectionStats.count();
 
-  t.is(collectionCountResult.meta.count, 1);
+  t.is(collectionCountResult.meta.count, 12);
 });
 
 test.serial('Count returns correct count for date range', async (t) => {
