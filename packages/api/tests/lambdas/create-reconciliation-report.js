@@ -598,7 +598,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
 });
 
 test.serial(
-  'A valid reconciliation report is generated with Time Parameters input when there are extra cumulus/ES and CMR collections',
+  'A valid reconciliation report is generated with input TimeParams and there are extra cumulus/ES and CMR collections',
   async (t) => {
     const dataBuckets = range(2).map(() => randomString());
     await Promise.all(
