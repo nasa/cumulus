@@ -4,13 +4,13 @@ const router = require('express-promise-router')();
 
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
-  RecordDoesNotExist,
   InvalidRegexError,
   UnmatchedRegexError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
+const { knex } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -18,6 +18,17 @@ const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
+
+const getDbClient = () => (
+  inTestMode()
+    ? knex.createLocalStackClient()
+    : knex.createClient({
+      host: process.env.PG_HOST,
+      user: process.env.PG_USER,
+      password: process.env.PG_PASSWORD,
+      database: process.env.PG_DATABASE,
+    })
+);
 
 /**
  * List all collections.
@@ -84,32 +95,50 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  try {
-    const data = req.body;
-    const name = data.name;
-    const version = data.version;
+  const {
+    collectionsModel = new models.Collection(),
+    dbClient = getDbClient(),
+    logger = log,
+  } = req.context || {};
 
-    // make sure primary key is included
-    if (!name || !version) {
-      return res.boom.badRequest('Field name and/or version is missing');
-    }
-    const c = new models.Collection();
+  const collection = req.body || {};
+  const { name, version } = collection;
+
+  if (!name || !version) {
+    return res.boom.badRequest('Field name and/or version is missing');
+  }
+
+  if (await collectionsModel.exists(name, version)) {
+    return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
+  }
+
+  try {
+    const dynamoRecord = await collectionsModel.create(collection);
+
+    const dbRecord = {
+      ...collection,
+      granuleIdValidationRegex: collection.granuleId,
+      created_at: new Date(dynamoRecord.createdAt),
+      updated_at: new Date(dynamoRecord.updatedAt),
+    };
+    delete dbRecord.granuleId;
 
     try {
-      await c.get({ name, version });
-      return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
+      await dbClient('collections').insert(dbRecord, 'cumulusId');
     } catch (error) {
-      if (error instanceof RecordDoesNotExist) {
-        await c.create(data);
+      await collectionsModel.delete({ name, version });
 
-        if (inTestMode()) {
-          await addToLocalES(data, indexCollection);
-        }
-
-        return res.send({ message: 'Record saved', record: data });
-      }
       throw error;
     }
+
+    if (inTestMode()) {
+      await addToLocalES(collection, indexCollection);
+    }
+
+    return res.send({
+      message: 'Record saved',
+      record: collection,
+    });
   } catch (error) {
     if (
       isBadRequestError(error)
@@ -118,7 +147,9 @@ async function post(req, res) {
     ) {
       return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to create collection:', error);
+
+    logger.error('Error occurred while trying to create collection:', error);
+
     return res.boom.badImplementation(error.message);
   }
 }
@@ -145,6 +176,7 @@ async function put({ params: { name, version }, body }, res) {
     );
   }
 
+  // TODO CUMULUS-2126 Update this to also update RDS
   const record = await collectionModel.create(body);
 
   if (inTestMode()) {
@@ -167,6 +199,7 @@ async function del(req, res) {
   const collectionModel = new models.Collection();
 
   try {
+    // TODO CUMULUS-2126 Update this to also update RDS
     await collectionModel.delete({ name, version });
 
     if (inTestMode()) {
@@ -197,4 +230,7 @@ router.post('/', post);
 router.get('/', list);
 router.get('/active', activeList);
 
-module.exports = router;
+module.exports = {
+  post,
+  router,
+};

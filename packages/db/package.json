@@ -15,6 +15,7 @@
     "tsc": "../../node_modules/.bin/tsc"
   },
   "dependencies": {
+    "@cumulus/common": "2.0.1",
     "knex": "^0.21.5",
     "pg": "^8.3.0"
   }

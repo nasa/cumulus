@@ -30,6 +30,7 @@ process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
+const { knex } = require('@cumulus/db');
 
 const esIndex = randomString();
 let esClient;
@@ -106,18 +107,22 @@ test('POST with invalid authorization scheme returns an invalid token response',
   assertions.isInvalidAuthorizationResponse(t, res);
 });
 
-test('POST creates a new collection', async (t) => {
+test('POST creates a new collection in DynamoDB', async (t) => {
   const newCollection = fakeCollectionFactory();
-  const res = await request(app)
+
+  await request(app)
     .post('/collections')
     .send(newCollection)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { message, record } = res.body;
-  t.is(message, 'Record saved');
-  t.is(record.name, newCollection.name);
+  await t.notThrowsAsync(
+    collectionModel.get({
+      name: newCollection.name,
+      version: newCollection.version,
+    })
+  );
 });
 
 test('POST without a name returns a 400 error', async (t) => {
@@ -153,6 +158,7 @@ test('POST without a version returns a 400 error', async (t) => {
 test('POST for an existing collection returns a 409', async (t) => {
   const newCollection = fakeCollectionFactory();
 
+  // TODO CUMULUS-2126 Update this to also update RDS
   await collectionModel.create(newCollection);
 
   const res = await request(app)

@@ -18,3 +18,5 @@ export const dropAllTables = async ({
     tableNames.map((tableName) => knex.schema.dropTable(tableName))
   );
 };
+
+export * as knex from './knex';
