@@ -29,6 +29,7 @@
     "files": [
       "tests/**/*.js",
       "!tests/endpoints/fixtures/**/*.js",
+      "!tests/endpoints/utils.js",
       "!tests/es/helpers/**/*.js"
     ],
     "fail-fast": true,

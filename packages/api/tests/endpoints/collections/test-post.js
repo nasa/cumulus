@@ -1,44 +1,20 @@
 'use strict';
 
 const test = require('ava');
-const cryptoRandomString = require('crypto-random-string');
+const { randomString } = require('@cumulus/common/test-utils');
 const { knex } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
-const CollectionsModel = require('../../../models/collections');
+const Collection = require('../../../models/collections');
 const RulesModel = require('../../../models/rules');
 const { post } = require('../../../endpoints/collections');
 const { fakeCollectionFactory } = require('../../../lib/testUtils');
-
-const randomString = (length = 10) => cryptoRandomString({ length });
-
-const buildFakeExpressResponse = () => {
-  let boomBadImplementationMessage;
-  let boomBadRequestMessage;
-  let sendBody;
-
-  return {
-    boom: {
-      badImplementation: (message) => {
-        boomBadImplementationMessage = message;
-      },
-      badRequest: (message) => {
-        boomBadRequestMessage = message;
-      },
-    },
-    send: (body) => {
-      sendBody = body;
-    },
-    getSendBody: () => sendBody,
-    getBoomBadImplementationMessage: () => boomBadImplementationMessage,
-    getBoomBadRequestMessage: () => boomBadRequestMessage,
-  };
-};
+const { buildFakeExpressResponse } = require('../utils');
 
 test.before(async (t) => {
   process.env.system_bucket = randomString();
 
   process.env.CollectionsTable = randomString();
-  t.context.collectionsModel = new CollectionsModel();
+  t.context.collectionsModel = new Collection();
 
   process.env.RulesTable = randomString();
   const rulesModel = new RulesModel();
@@ -65,14 +41,14 @@ test('post() writes a record to the database', async (t) => {
 
   const request = {
     body: collection,
-    context: { dbClient },
+    testContext: { dbClient },
   };
 
   const response = buildFakeExpressResponse();
 
   await post(request, response);
 
-  t.is(response.getSendBody().message, 'Record saved');
+  t.true(response.send.calledWithMatch({ message: 'Record saved' }));
 
   const dbRecords = await dbClient.select('name', 'version')
     .from('collections')
@@ -93,7 +69,7 @@ test('post() does not write to the database if writing to Dynamo fails', async (
 
   const request = {
     body: collection,
-    context: {
+    testContext: {
       dbClient,
       collectionsModel: fakeCollectionsModel,
       logger: nullLogger,
@@ -104,11 +80,7 @@ test('post() does not write to the database if writing to Dynamo fails', async (
 
   await post(request, response);
 
-  t.not(response.getBoomBadImplementationMessage(), undefined);
-  t.true(
-    response.getBoomBadImplementationMessage().includes('something bad'),
-    `Actual error message: ${response.getBoomBadImplementationMessage()}`
-  );
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
   const dbRecords = await dbClient.select('name', 'version')
     .from('collections')
@@ -126,7 +98,7 @@ test('post() does not write to Dynamo if writing to the database fails', async (
 
   const request = {
     body: collection,
-    context: {
+    testContext: {
       dbClient: fakeDbClient,
       logger: nullLogger,
     },
@@ -136,11 +108,7 @@ test('post() does not write to Dynamo if writing to the database fails', async (
 
   await post(request, response);
 
-  t.not(response.getBoomBadImplementationMessage(), undefined);
-  t.true(
-    response.getBoomBadImplementationMessage().includes('something bad'),
-    `Actual error message: ${response.getBoomBadImplementationMessage()}`
-  );
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
   t.false(await collectionsModel.exists(collection.name, collection.version));
 });
@@ -150,14 +118,14 @@ test('post() results in Dynamo and DB records with the same created_at and updat
 
   const request = {
     body: collection,
-    context: { dbClient },
+    testContext: { dbClient },
   };
 
   const response = buildFakeExpressResponse();
 
   await post(request, response);
 
-  t.is(response.getSendBody().message, 'Record saved');
+  t.true(response.send.calledWithMatch({ message: 'Record saved' }));
 
   const dbRecord = await dbClient.table('collections')
     .first('created_at', 'updated_at')

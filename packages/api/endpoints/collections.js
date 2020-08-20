@@ -8,16 +8,38 @@ const {
   UnmatchedRegexError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { knex } = require('@cumulus/db');
-const { Search } = require('../es/search');
-const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
+
+const dynamoRecordToDbRecord = (dynamoRecord) => {
+  const dbRecord = {
+    ...dynamoRecord,
+    granuleIdValidationRegex: dynamoRecord.granuleId,
+    created_at: new Date(dynamoRecord.createdAt),
+    updated_at: new Date(dynamoRecord.updatedAt),
+  };
+
+  delete dbRecord.createdAt;
+  delete dbRecord.updatedAt;
+  delete dbRecord.granuleId;
+
+  // eslint-disable-next-line lodash/prefer-lodash-typecheck
+  if (typeof dynamoRecord.createdAt === 'number') {
+    dbRecord.created_at = new Date(dynamoRecord.createdAt);
+  }
+
+  // eslint-disable-next-line lodash/prefer-lodash-typecheck
+  if (typeof dynamoRecord.updatedAt === 'number') {
+    dbRecord.updated_at = new Date(dynamoRecord.updatedAt);
+  }
+
+  return dbRecord;
+};
 
 const getDbClient = () => (
   inTestMode()
@@ -99,7 +121,7 @@ async function post(req, res) {
     collectionsModel = new models.Collection(),
     dbClient = getDbClient(),
     logger = log,
-  } = req.context || {};
+  } = req.testContext || {};
 
   const collection = req.body || {};
   const { name, version } = collection;
@@ -115,13 +137,7 @@ async function post(req, res) {
   try {
     const dynamoRecord = await collectionsModel.create(collection);
 
-    const dbRecord = {
-      ...collection,
-      granuleIdValidationRegex: collection.granuleId,
-      created_at: new Date(dynamoRecord.createdAt),
-      updated_at: new Date(dynamoRecord.updatedAt),
-    };
-    delete dbRecord.granuleId;
+    const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
     try {
       await dbClient('collections').insert(dbRecord, 'cumulusId');
@@ -129,10 +145,6 @@ async function post(req, res) {
       await collectionsModel.delete({ name, version });
 
       throw error;
-    }
-
-    if (inTestMode()) {
-      await addToLocalES(collection, indexCollection);
     }
 
     return res.send({
@@ -161,11 +173,19 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put({ params: { name, version }, body }, res) {
-  if (name !== body.name || version !== body.version) {
+async function put(req, res) {
+  const {
+    collectionsModel = new models.Collection(),
+    dbClient = getDbClient(),
+  } = req.testContext || {};
+
+  const { name, version } = req.params;
+  const collection = req.body;
+
+  if (name !== collection.name || version !== collection.version) {
     return res.boom.badRequest('Expected collection name and version to be'
-      + ` '${name}' and '${version}', respectively, but found '${body.name}'`
-      + ` and '${body.version}' in payload`);
+      + ` '${name}' and '${version}', respectively, but found '${collection.name}'`
+      + ` and '${collection.version}' in payload`);
   }
 
   const collectionModel = new models.Collection();
@@ -176,14 +196,20 @@ async function put({ params: { name, version }, body }, res) {
     );
   }
 
-  // TODO CUMULUS-2126 Update this to also update RDS
-  const record = await collectionModel.create(body);
+  const dynamoRecord = await collectionsModel.create(collection);
 
-  if (inTestMode()) {
-    await addToLocalES(record, indexCollection);
+  const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
+
+  if (await dbClient('collections').first().where({ name, version })) {
+    delete dbRecord.name;
+    delete dbRecord.version;
+
+    await dbClient('collections').update(dbRecord).where({ name, version });
+  } else {
+    await dbClient('collections').insert(dbRecord);
   }
 
-  return res.send(record);
+  return res.send(dynamoRecord);
 }
 
 /**
@@ -194,23 +220,17 @@ async function put({ params: { name, version }, body }, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
+  const {
+    collectionsModel = new models.Collection(),
+    dbClient = getDbClient(),
+  } = req.testContext || {};
+
   const { name, version } = req.params;
 
-  const collectionModel = new models.Collection();
-
   try {
-    // TODO CUMULUS-2126 Update this to also update RDS
-    await collectionModel.delete({ name, version });
+    await collectionsModel.delete({ name, version });
 
-    if (inTestMode()) {
-      const collectionId = constructCollectionId(name, version);
-      const esClient = await Search.es(process.env.ES_HOST);
-      await esClient.delete({
-        id: collectionId,
-        index: process.env.ES_INDEX,
-        type: 'collection',
-      }, { ignore: [404] });
-    }
+    await dbClient('collections').where({ name, version }).del();
 
     return res.send({ message: 'Record deleted' });
   } catch (error) {
@@ -231,6 +251,8 @@ router.get('/', list);
 router.get('/active', activeList);
 
 module.exports = {
+  del,
   post,
+  put,
   router,
 };
