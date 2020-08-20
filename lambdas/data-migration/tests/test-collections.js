@@ -28,7 +28,7 @@ const generateFakeCollection = (params) => ({
   granuleId: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
   granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
   sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
-  files: [{ regex: 'fake-regex ', name: 'file.name' }],
+  files: [{ regex: 'fake-regex ', sampleFileName: 'file.name', bucket: 'bucket' }],
   meta: { foo: 'bar', key: { value: 'test' } },
   reportToEms: false,
   ignoreFilesConfigForDiscovery: false,
@@ -122,11 +122,13 @@ test.serial('migrateCollections correctly migrates collection record', async (t)
   const records = await knex().select().table('collections');
 
   t.deepEqual(
-    omit(records[0], ['cumulusId', 'created_at', 'updated_at']),
+    omit(records[0], ['cumulusId']),
     omit(
       {
         ...fakeCollection,
         granuleIdValidationRegex: fakeCollection.granuleId,
+        created_at: new Date(fakeCollection.createdAt),
+        updated_at: new Date(fakeCollection.updatedAt),
       },
       ['granuleId', 'createdAt', 'updatedAt']
     )
@@ -152,11 +154,29 @@ test.serial('migrateCollections processes multiple collections', async (t) => {
   t.is(records.length, 2);
 });
 
+test.serial('migrateCollections does not process invalid source data from Dynamo', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  // make source record invalid
+  delete fakeCollection.files;
+
+  await createCollectionDynamoRecords([
+    fakeCollection,
+  ]);
+  t.teardown(() => destroyCollectionDynamoRecords([
+    fakeCollection,
+  ]));
+
+  const createdRecordIds = await migrateCollections(process.env, knex);
+  t.is(createdRecordIds.length, 0);
+});
+
 test.serial('migrateCollections processes all non-failing records', async (t) => {
   const fakeCollection1 = generateFakeCollection();
   const fakeCollection2 = generateFakeCollection();
-  // change timestamp to string so that record will fail
-  fakeCollection2.createdAt = 'bad-value';
+
+  // remove required source field so that record will fail
+  delete fakeCollection1.sampleFileName;
 
   await createCollectionDynamoRecords([
     fakeCollection1,
@@ -183,8 +203,6 @@ test.serial('migrateCollections handles nullable fields on source collection dat
   delete fakeCollection.ignoreFilesConfigForDiscovery;
   delete fakeCollection.meta;
   delete fakeCollection.tags;
-  delete fakeCollection.createdAt;
-  delete fakeCollection.updatedAt;
 
   await createCollectionDynamoRecords([
     fakeCollection,
@@ -197,34 +215,33 @@ test.serial('migrateCollections handles nullable fields on source collection dat
   t.is(createdRecordIds.length, 1);
 
   const records = await knex().select().table('collections');
-  // timestamp fields should be set automatically if no value is provided
-  t.truthy(records[0].created_at);
-  t.truthy(records[0].updated_at);
   t.deepEqual(
-    omit(records[0], ['cumulusId', 'created_at', 'updated_at']),
+    omit(records[0], ['cumulusId']),
     omit(
       {
         ...fakeCollection,
         granuleIdValidationRegex: fakeCollection.granuleId,
         url_path: null,
-        duplicateHandling: null,
         process: null,
-        reportToEms: null,
         ignoreFilesConfigForDiscovery: null,
         meta: null,
         tags: null,
+        created_at: new Date(fakeCollection.createdAt),
+        updated_at: new Date(fakeCollection.updatedAt),
+        // schema validation will add default values
+        duplicateHandling: 'error',
+        reportToEms: true,
       },
-      ['granuleId']
+      ['granuleId', 'createdAt', 'updatedAt']
     )
   );
 });
 
-test('migrateCollections ignores extraneous fields', async (t) => {
+test.serial('migrateCollections ignores extraneous fields from Dynamo', async (t) => {
   const fakeCollection = generateFakeCollection();
 
-  // add extraneous fields that will not exist in RDS
+  // add extraneous fields from Dynamo that will not exist in RDS
   fakeCollection.dataType = 'data-type';
-  fakeCollection.foo = 'bar';
 
   await createCollectionDynamoRecords([
     fakeCollection,

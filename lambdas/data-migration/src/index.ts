@@ -2,6 +2,11 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import Logger from '@cumulus/logger';
 
+const {
+  Manager,
+} = require('@cumulus/api/models');
+const schemas = require('@cumulus/api/models/schemas');
+
 const logger = new Logger({ sender: '@cumulus/data-migration' });
 
 export interface HandlerEvent {
@@ -36,6 +41,8 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
 
 export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
   const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
+  // const collectionsModel = new Collection();
+
   const searchQueue = new DynamoDbSearchQueue({
     TableName: collectionsTable,
   });
@@ -44,30 +51,31 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
-    // TODO: use schema to validate record before processing
-
-    // Map old record to new schema.
-    const updatedRecord: RDSCollectionRecord = {
-      name: record.name,
-      version: record.version,
-      process: record.process,
-      url_path: record.url_path,
-      duplicateHandling: record.duplicateHandling,
-      granuleIdValidationRegex: record.granuleId,
-      granuleIdExtraction: record.granuleIdExtraction,
-      // have to stringify on an array of values
-      files: JSON.stringify(record.files),
-      reportToEms: record.reportToEms,
-      sampleFileName: record.sampleFileName,
-      ignoreFilesConfigForDiscovery: record.ignoreFilesConfigForDiscovery,
-      meta: record.meta ? record.meta : undefined,
-      // have to stringify on an array of values
-      tags: record.tags ? JSON.stringify(record.tags) : undefined,
-      created_at: record.createdAt ? new Date(record.createdAt) : undefined,
-      updated_at: record.updatedAt ? new Date(record.updatedAt) : undefined,
-    };
-
     try {
+      // Use schema to validate record before processing
+      Manager.recordIsValid(record, schemas.collection);
+
+      // Map old record to new schema.
+      const updatedRecord: RDSCollectionRecord = {
+        name: record.name,
+        version: record.version,
+        process: record.process,
+        url_path: record.url_path,
+        duplicateHandling: record.duplicateHandling,
+        granuleIdValidationRegex: record.granuleId,
+        granuleIdExtraction: record.granuleIdExtraction,
+        // have to stringify on an array of values
+        files: JSON.stringify(record.files),
+        reportToEms: record.reportToEms,
+        sampleFileName: record.sampleFileName,
+        ignoreFilesConfigForDiscovery: record.ignoreFilesConfigForDiscovery,
+        meta: record.meta ? record.meta : undefined,
+        // have to stringify on an array of values
+        tags: record.tags ? JSON.stringify(record.tags) : undefined,
+        created_at: record.createdAt ? new Date(record.createdAt) : undefined,
+        updated_at: record.updatedAt ? new Date(record.updatedAt) : undefined,
+      };
+
       const [cumulusId] = await knex('collections')
         .returning('cumulusId')
         .insert(updatedRecord);
