@@ -1,5 +1,4 @@
 import Knex, { PgConnectionConfig } from 'knex';
-import { inTestMode } from '@cumulus/common/test-utils';
 
 export const createClient = ({
   connectionConfig,
@@ -9,7 +8,7 @@ export const createClient = ({
   Knex({
     client: 'pg',
     connection: connectionConfig,
-    asyncStackTraces: inTestMode(),
+    asyncStackTraces: process.env.NODE_ENV === 'test',
   });
 
 const localStackConnectionConfig = (): PgConnectionConfig => ({

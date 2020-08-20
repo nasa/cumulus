@@ -12,10 +12,9 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prepare": "npm run tsc",
-    "tsc": "../../node_modules/.bin/tsc"
+    "tsc": "rm -rf dist && ../../node_modules/.bin/tsc"
   },
   "dependencies": {
-    "@cumulus/common": "2.0.1",
     "knex": "^0.21.5",
     "pg": "^8.3.0"
   }
