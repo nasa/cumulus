@@ -1,7 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
-const sortBy = require('lodash/sortBy');
 const Knex = require('knex');
 
 const {
@@ -176,6 +175,7 @@ test.serial('migrateCollections handles nullable fields on source collection dat
   const fakeCollection = generateFakeCollection();
 
   // remove nullable fields
+  delete fakeCollection.dataType;
   delete fakeCollection.url_path;
   delete fakeCollection.duplicateHandling;
   delete fakeCollection.process;
@@ -222,7 +222,7 @@ test.serial('migrateCollections handles nullable fields on source collection dat
 test('migrateCollections ignores extraneous fields', async (t) => {
   const fakeCollection = generateFakeCollection();
 
-  // remove nullable fields
+  // add extraneous fields that will not exist in RDS
   fakeCollection.dataType = 'data-type';
   fakeCollection.foo = 'bar';
 
