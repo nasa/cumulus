@@ -81,7 +81,7 @@ test.serial('Stats returns one granule when a granule is indexed', async (t) => 
   t.is(queryResult.granules.value, 1);
 });
 
-test.only('Stats returns correct granule errors', async (t) => {
+test.serial('Stats returns correct granule errors', async (t) => {
   await Promise.all(
     range(10).map(() => indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias))
   );
