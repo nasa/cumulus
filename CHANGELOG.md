@@ -63,6 +63,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is published, as expected.
 - **CUMULUS-2116**
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
+- **CUMULUS-1961**
+  - Fixed `activeCollections` query only returning 10 results
 
 ### Deprecated
 
