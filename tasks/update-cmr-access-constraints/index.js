@@ -1,8 +1,6 @@
 'use strict';
 
 const groupBy = require('lodash/groupBy');
-const isString = require('lodash/isString');
-const log = require('@cumulus/common/log');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { granulesToCmrFileObjects } = require('@cumulus/cmrjs');
@@ -15,13 +13,6 @@ const {
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
-
-function validateConfig(config) {
-  const { description, value } = config.accessConstraints;
-  if (!(Number.isInteger(value))) throw new Error(`AccessConstraint value must be an integer, but received: ${value}, type ${typeof value}`);
-  if (description === undefined) log.warn('No AccessConstraint description specified.');
-  else if (!isString(description)) log.error(`Description ${description} is not a string.`);
-}
 
 function isSameCmrFileObject(file, updatedFile) {
   if (file.filename) return file.filename === updatedFile.filename;
@@ -57,12 +48,12 @@ function setAccessConstraintValueInEcho10XMLMetadata(
   accessConstraintsObject
 ) {
   const { description, value } = accessConstraintsObject;
-  const UMMGAccessConstraintsObject = {
-    RestrictionComment: (isString(description)) ? description : 'None',
+  const echo10AccessConstraintsObject = {
+    RestrictionComment: description !== undefined ? description : 'None',
     RestrictionFlag: value,
   };
   const updatedGranule = Object.assign(
-    UMMGAccessConstraintsObject,
+    echo10AccessConstraintsObject,
     echo10XMLMetadataContentsObject.Granule
   );
   return { ...echo10XMLMetadataContentsObject, Granule: updatedGranule };
@@ -74,7 +65,7 @@ function setAccessConstraintValueInUMMGJSONMetadata(
 ) {
   const { description, value } = accessConstraintsObject;
   const UMMGAccessConstraintsObject = {
-    Description: (isString(description)) ? description : 'None',
+    Description: description !== undefined ? description : 'None',
     Value: value,
   };
   return { ...UMMGJSONMetadataContentsObject, AccessConstraints: UMMGAccessConstraintsObject };
@@ -118,7 +109,6 @@ async function updateCmrFileAccessConstraint(
 
 const updateCmrAccessConstraints = async (event) => {
   const { config, input } = event;
-  validateConfig(config);
   const cmrFileObjects = granulesToCmrFileObjects(input.granules);
   const updatedCmrFileObjectsWithEtags = await Promise.all(
     cmrFileObjects.map((f) => updateCmrFileAccessConstraint(f, config.accessConstraints))
@@ -131,5 +121,4 @@ const handler = (event, context) => runCumulusTask(updateCmrAccessConstraints, e
 module.exports = {
   handler,
   updateCmrAccessConstraints,
-  validateConfig,
 };
