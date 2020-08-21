@@ -15,8 +15,8 @@ resource "aws_db_subnet_group" "default" {
 }
 
 resource "aws_security_group" "rds_cluster_access" {
-  name   = var.security_group_name
-  vpc_id = var.vpc_id
+  name_prefix   = var.security_group_name
+  vpc_id        = var.vpc_id
 }
 
 resource "aws_secretsmanager_secret" "rds_login" {

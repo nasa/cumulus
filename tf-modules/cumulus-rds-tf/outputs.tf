@@ -6,8 +6,8 @@ output "rds_endpoint" {
   value = aws_rds_cluster.core_team_cluster.endpoint
 }
 
-output "secret_id" {
-  value = aws_secretsmanager_secret_version.rds_login.id
+output "secret_arn" {
+  value = aws_secretsmanager_secret_version.rds_login.arn
 }
 
 output "secret_version" {
