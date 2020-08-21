@@ -55,6 +55,12 @@ resource "aws_iam_role_policy" "db_provision" {
   policy      = data.aws_iam_policy_document.db_provision.json
 }
 
+resource "aws_secretsmanager_secret" "db_credentials" {
+  name_prefix = "${var.prefix}_db_login"
+  description = "Database Credentials Object for ${var.prefix} stack"
+  tags        = var.tags
+}
+
 data "aws_iam_policy_document" "lambda_assume_role_policy" {
   statement {
     principals {
@@ -84,15 +90,12 @@ data "aws_iam_policy_document" "db_provision" {
       "secretsmanager:CreateSecret",
       "secretsmanager:PutSecretValue"
     ]
-    resources = ["*"]
+    resources = [aws_secretsmanager_secret.db_credentials.arn]
   }
-}
-
-
-resource "aws_secretsmanager_secret" "db_credentials" {
-  name_prefix = "${var.prefix}_db_login"
-  description = "Database Credentials Object for ${var.prefix} stack"
-  tags        = var.tags
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [var.rds_access_secret_id]
+  }
 }
 
 data "aws_lambda_invocation" "provision_database" {
