@@ -55,6 +55,9 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.subnet_ids
 
+  database_security_group = var.database_security_group
+  database_credential_secret_id = var.rds_access_secret_id
+
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = var.subnet_ids
   ecs_cluster_min_size            = 2

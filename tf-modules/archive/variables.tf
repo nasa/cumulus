@@ -27,6 +27,14 @@ variable "cmr_username" {
   type = string
 }
 
+variable "database_security_group" {
+  type = string
+}
+
+variable "database_credential_secret_id" {
+  type = string
+}
+
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool

@@ -12,13 +12,12 @@ provider "aws" {
 module "db_migration" {
   source = "../../lambdas/db-migration"
 
+  rds_access_secret_id     = var.rds_access_secret_id
   permissions_boundary_arn = var.permissions_boundary_arn
-  pg_host                  = var.pg_host
-  pg_password              = var.pg_password
-  pg_user                  = var.pg_user
-  pg_database              = var.pg_database
   prefix                   = var.prefix
   subnet_ids               = var.subnet_ids
   tags                     = merge(var.tags, { Deployment = var.prefix })
   vpc_id                   = var.vpc_id
+  rds_security_group_id    = var.rds_security_group_id
+
 }

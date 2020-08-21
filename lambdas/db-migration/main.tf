@@ -33,6 +33,12 @@ data "aws_iam_policy_document" "db_migration" {
     ]
     resources = ["*"]
   }
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+    resources = [var.rds_access_secret_id]
+  }
 }
 
 resource "aws_iam_role_policy" "db_migration" {
@@ -69,10 +75,7 @@ resource "aws_lambda_function" "db_migration" {
 
   environment {
     variables = {
-      PG_HOST = var.pg_host
-      PG_USER = var.pg_user
-      PG_PASSWORD = var.pg_password
-      PG_DATABASE = var.pg_database
+      databaseCredentialSecretId = var.rds_access_secret_id
     }
   }
 
@@ -81,7 +84,8 @@ resource "aws_lambda_function" "db_migration" {
     content {
       subnet_ids = var.subnet_ids
       security_group_ids = [
-        aws_security_group.db_migration[0].id
+        aws_security_group.db_migration[0].id,
+        var.rds_security_group_id
       ]
     }
   }

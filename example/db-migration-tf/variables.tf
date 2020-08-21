@@ -7,24 +7,17 @@ variable "permissions_boundary_arn" {
   type = string
 }
 
+variable "rds_access_secret_id" {
+  type = string
+}
+
+variable "rds_security_group_id" {
+  type = string
+}
+
 variable "prefix" {
   type = string
-}
-
-variable "pg_host" {
-  type = string
-}
-
-variable "pg_user" {
-  type = string
-}
-
-variable "pg_password" {
-  type = string
-}
-
-variable "pg_database" {
-  type = string
+  default = null
 }
 
 variable "region" {

@@ -1,5 +1,17 @@
 # Required
 
+## RDS Database
+
+variable "rds_access_secret_id" {
+  description = "Secret ID for secret containing jsonified db credentials (username, password, host, port)"
+  type        = string
+}
+
+variable "database_security_group" {
+  type = string
+}
+
+## Core Configuration
 variable "cmr_client_id" {
   type = string
 }
