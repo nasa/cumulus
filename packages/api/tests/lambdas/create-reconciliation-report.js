@@ -614,7 +614,7 @@ test.serial(
     );
 
     const startTimestamp = new Date('2020-06-01T00:00:00.000Z').getTime();
-    const monthEarlier = moment(startTimestamp).add(-1, 'month').valueOf();
+    const monthEarlier = moment(startTimestamp).subtract(1, 'month').valueOf();
     const endTimestamp = new Date('2020-07-01T00:00:00.000Z').getTime();
     const monthLater = moment(endTimestamp).add(1, 'month').valueOf();
 
