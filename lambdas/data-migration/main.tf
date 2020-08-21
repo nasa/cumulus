@@ -33,6 +33,15 @@ data "aws_iam_policy_document" "data_migration" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    actions = [
+      "dynamodb:Scan",
+    ]
+    resources = [for k, table in var.dynamo_tables : table.arn]
+  }
+
+  # TODO: add RDS perms
 }
 
 resource "aws_iam_role_policy" "data_migration" {
@@ -69,10 +78,11 @@ resource "aws_lambda_function" "data_migration" {
 
   environment {
     variables = {
-      PG_HOST = var.pg_host
-      PG_USER = var.pg_user
-      PG_PASSWORD = var.pg_password
-      PG_DATABASE = var.pg_database
+      PG_HOST          = var.pg_host
+      PG_USER          = var.pg_user
+      PG_PASSWORD      = var.pg_password
+      PG_DATABASE      = var.pg_database
+      CollectionsTable = var.dynamo_tables.collections.name
     }
   }
 
@@ -80,6 +90,7 @@ resource "aws_lambda_function" "data_migration" {
     for_each = length(var.subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.subnet_ids
+      // TODO: should we be creating our own security group here?
       security_group_ids = [
         aws_security_group.data_migration[0].id
       ]

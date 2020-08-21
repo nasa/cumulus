@@ -6,6 +6,11 @@ variable "prefix" {
   type = string
 }
 
+variable "dynamo_tables" {
+  description = "A map of objects with the `arn` and `name` of every DynamoDB table for your Cumulus deployment."
+  type        = map(object({ name = string, arn = string }))
+}
+
 variable "pg_host" {
   type = string
 }
@@ -22,7 +27,7 @@ variable "pg_database" {
   type = string
 }
 
-variable "subnet_ids" {
+variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
 }
