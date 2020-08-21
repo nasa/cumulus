@@ -13,7 +13,7 @@ variable "prefix" {
 }
 
 variable "rds_access_secret_id" {
-  description = "Secret ID for secret containing jsonified db credentials for table creation/deletion"
+  description = "AWS Secrets Manager secret ID containing jsonified db credentials containing at least host, password, port"
   type        = string
 }
 

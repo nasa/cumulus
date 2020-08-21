@@ -19,8 +19,8 @@ output "elasticsearch_alarms" {
   value = module.data_persistence.elasticsearch_alarms
 }
 
-output "database_credentials" {
-  value = aws_secretsmanager_secret.db_credentials.arn
+output "database_credentials_secret_arn" {
+  value = module.provision_database.database_credentials_secret_arn
 }
 
 

@@ -52,23 +52,24 @@ const getConnectionConfig = async (env: NodeJS.ProcessEnv): Promise<Knex.PgConne
 };
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
-  const env = event?.env ?? process.env;
-  const connectionConfig = await getConnectionConfig(env);
-
-  console.log(`Connection config is ${JSON.stringify(connectionConfig)}`);
-  const knex = Knex({
-    client: 'pg',
-    connection: connectionConfig,
-    debug: env?.KNEX_DEBUG === 'true',
-    asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
-    migrations: {
-      directory: path.join(__dirname, 'migrations'),
-    },
-  });
-
-  const command = event?.command ?? 'latest';
-
+  let knex;
   try {
+    const env = event?.env ?? process.env;
+    const connectionConfig = await getConnectionConfig(env);
+
+    console.log(`Connection config is ${JSON.stringify(connectionConfig)}`);
+    knex = Knex({
+      client: 'pg',
+      connection: connectionConfig,
+      debug: env?.KNEX_DEBUG === 'true',
+      asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
+      migrations: {
+        directory: path.join(__dirname, 'migrations'),
+      },
+    });
+
+    const command = event?.command ?? 'latest';
+
     switch (command) {
       case 'latest':
         await knex.migrate.latest();
@@ -78,6 +79,8 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         throw new Error(`Invalid command: ${command}`);
     }
   } finally {
-    await knex.destroy();
+    if (knex) {
+      await knex.destroy();
+    }
   }
 };
