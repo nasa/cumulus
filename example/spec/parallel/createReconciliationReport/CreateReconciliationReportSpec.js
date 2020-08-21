@@ -2,13 +2,20 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
+const get = require('lodash/get');
+const pAll = require('p-all');
+const pick = require('lodash/pick');
+
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
-const { buildS3Uri, fileExists, getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
-const { dynamodb, s3 } = require('@cumulus/aws-client/services');
+const {
+  buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { findExecutionArn, getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { Granule } = require('@cumulus/api/models');
@@ -22,6 +29,14 @@ const {
   waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
 
+const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
+const { createCollection } = require('@cumulus/integration-tests/Collections');
+const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
+const { createProvider } = require('@cumulus/integration-tests/Providers');
+const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteProvider } = require('@cumulus/api-client/providers');
+const { deleteRule } = require('@cumulus/api-client/rules');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -36,8 +51,6 @@ const {
   waitForGranuleRecordsNotInList,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-
-const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
@@ -68,6 +81,112 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
   ]);
 }
+
+/**
+ * Creates a new test collection with associated granule for testing.
+ *
+ * @param {string} prefix - stack Prefix
+ * @param {string} sourceBucket - testing source bucket
+ * @returns {Promise<Object>} new collection Object
+ */
+const createActiveCollection = async (prefix, sourceBucket) => {
+  // The S3 path where granules will be ingested from
+  const sourcePath = `${prefix}/tmp/${randomId('test-')}`;
+
+  // Create the collection
+  const newCollection = await createCollection(
+    prefix,
+    {
+      duplicateHandling: 'error',
+      process: 'modis',
+    }
+  );
+
+  // Create the S3 provider
+  const provider = await createProvider(prefix, { host: sourceBucket });
+
+  // Stage the granule files to S3
+  const granFilename = `${randomId('junk-file-')}.txt`;
+  const granFileKey = `${sourcePath}/${granFilename}`;
+  await s3PutObject({
+    Bucket: sourceBucket,
+    Key: granFileKey,
+    Body: 'aoeu',
+  });
+
+  const granuleId = randomId('granule-id-');
+
+  const ingestTime = Date.now() - 1000 * 30;
+
+  // Ingest the granule.
+  const testExecutionId = randomId('test-execution-');
+  console.log('testExecutionId:', testExecutionId);
+  const ingestGranuleRule = await createOneTimeRule(
+    prefix,
+    {
+      workflow: 'IngestGranule',
+      collection: pick(newCollection, ['name', 'version']),
+      provider: provider.id,
+      payload: {
+        testExecutionId,
+        granules: [
+          {
+            granuleId,
+            dataType: newCollection.name,
+            version: newCollection.version,
+            files: [
+              {
+                name: granFilename,
+                path: sourcePath,
+              },
+            ],
+          },
+        ],
+      },
+    }
+  );
+
+  // Find the execution ARN
+  console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
+  const ingestGranuleExecutionArn = await findExecutionArn(
+    prefix,
+    (execution) => {
+      const executionId = get(execution, 'originalPayload.testExecutionId');
+      return executionId === ingestGranuleRule.payload.testExecutionId;
+    },
+    { timestamp__from: ingestTime },
+    { timeout: 15 }
+  );
+
+  // Wait for the execution to be completed
+  await getExecutionWithStatus({
+    prefix,
+    arn: ingestGranuleExecutionArn,
+    status: 'completed',
+  });
+
+  await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
+
+  const cleanupFunction = async () => {
+    try {
+      await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
+    } catch (error) {
+      console.error(error);
+    }
+    await pAll([
+      () => deleteS3Object(sourceBucket, granFileKey),
+      () => deleteGranule({ prefix, granuleId }),
+      () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
+      () => deleteCollection({
+        prefix,
+        collectionName: get(collection, 'name'),
+        collectionVersion: get(collection, 'version'),
+      }),
+    ]);
+  };
+
+  return [newCollection, cleanupFunction];
+};
 
 // ingest a granule and publish if requested
 async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true) {
@@ -149,6 +268,7 @@ describe('When there are granule differences and granule reconciliation is run',
   let config;
   let dbGranuleId;
   let extraCumulusCollection;
+  let extraCumulusCollectionCleanup;
   let extraFileInDb;
   let extraS3Object;
   let granuleModel;
@@ -191,16 +311,9 @@ describe('When there are granule differences and granule reconciliation is run',
       process.env.FilesTable = `${config.stackName}-FilesTable`;
       await GranuleFilesCache.put(extraFileInDb);
 
-      // Write an extra collection to the Collections table
-      extraCumulusCollection = {
-        name: { S: randomString() },
-        version: { S: randomString() },
-      };
-
-      await dynamodb().putItem({
-        TableName: collectionsTableName(config.stackName),
-        Item: extraCumulusCollection,
-      }).promise();
+      [extraCumulusCollection, extraCumulusCollectionCleanup] = await createActiveCollection(
+        config.stackName, config.bucket
+      );
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
@@ -278,7 +391,7 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates a report showing collections that are in Cumulus but not in CMR', () => {
-    const extraCollection = constructCollectionId(extraCumulusCollection.name.S, extraCumulusCollection.version.S);
+    const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
   });
@@ -355,17 +468,11 @@ describe('When there are granule differences and granule reconciliation is run',
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
+    await extraCumulusCollectionCleanup();
 
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
-      dynamodb().deleteItem({
-        TableName: collectionsTableName(config.stackName),
-        Key: {
-          name: extraCumulusCollection.name,
-          version: extraCumulusCollection.version,
-        },
-      }).promise(),
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
