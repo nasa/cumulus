@@ -9,6 +9,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getCollections } = require('@cumulus/api-client/collections');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { Granule } = require('@cumulus/api/models');
@@ -91,11 +92,13 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
   );
 
+  console.log(`waiting for granule id ${inputPayload.granules[0].granuleId} to complete`);
   await waitForModelStatus(
     new Granule(),
     { granuleId: inputPayload.granules[0].granuleId },
     'completed'
   );
+  console.log(`DONE waiting for granule id ${inputPayload.granules[0].granuleId} to complete`);
 
   if (!inputPayload.granules[0].granuleId) {
     throw new Error(`No granule id found in ${JSON.stringify(inputPayload)}`);
@@ -106,8 +109,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
 // ingest a granule to CMR and remove it from database
 // return granule object retrieved from database
-async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
-  const ingestTime = Date.now() - 1000 * 30;
+async function ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime) {
   const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, true);
 
   const response = await granulesApiTestUtils.getGranule({
@@ -115,8 +117,10 @@ async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
     granuleId,
   });
   const granule = JSON.parse(response.body);
+  console.log('Waiting for granule to appear in the list.');
   await waitForGranuleRecordsInList(config.stackName, [granuleId]);
   await (new Granule()).delete({ granuleId });
+  console.log('Waiting for granule not to appear in the list.');
   await waitForGranuleRecordsNotInList(config.stackName, [granuleId], { sort_by: 'timestamp', timestamp__from: ingestTime });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   return granule;
@@ -151,9 +155,10 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraCumulusCollection;
   let extraFileInDb;
   let extraS3Object;
-  let granuleModel;
-  let originalGranuleFile;
   let granuleBeforeUpdate;
+  let granuleModel;
+  let ingestTime;
+  let originalGranuleFile;
   let protectedBucket;
   let publishedGranuleId;
   let testDataFolder;
@@ -165,6 +170,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
   beforeAll(async () => {
     try {
+      ingestTime = Date.now() - 1000 * 30;
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
@@ -211,7 +217,7 @@ describe('When there are granule differences and granule reconciliation is run',
       [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
         ingestAndPublishGranule(config, testSuffix, testDataFolder),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-        ingestGranuleToCMR(config, testSuffix, testDataFolder),
+        ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime),
       ]);
 
       // update one of the granule files in database so that that file won't match with CMR
@@ -223,12 +229,20 @@ describe('When there are granule differences and granule reconciliation is run',
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
     } catch (error) {
       beforeAllFailed = true;
+      console.log(JSON.stringify(error));
       throw error;
     }
   });
 
   it('prepares the test suite successfully', async () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
+
+    // Verify the collection is returned when listing collections
+    const collsResp = await getCollections(
+      { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime } }
+    );
+    const colls = JSON.parse(collsResp.body).results;
+    expect(colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)).toBe(true);
   });
 
   it('generates an async operation through the Cumulus API', async () => {

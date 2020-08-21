@@ -32,33 +32,19 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
   pRetry(
     async () => {
       let execution;
-      let pageNumber = 1;
 
       try {
         const { body } = await executionsApi.getExecutions({
           prefix,
           query: {
             limit: EXECUTION_LIST_LIMIT,
-            page: pageNumber,
+            sort_by: 'timestamp',
+            order: 'desc',
             ...queryParameters,
           },
         });
-        let executions = JSON.parse(body);
+        const executions = JSON.parse(body);
         execution = executions.results.find(matcher);
-
-        while (isNil(execution) && executions.meta.count > (EXECUTION_LIST_LIMIT * pageNumber)) {
-          // eslint-disable-next-line no-await-in-loop
-          const response = await executionsApi.getExecutions({
-            prefix,
-            query: {
-              limit: EXECUTION_LIST_LIMIT,
-              page: pageNumber += 1,
-              ...queryParameters,
-            },
-          });
-          executions = JSON.parse(response.body);
-          execution = executions.results.find(matcher);
-        }
       } catch (error) {
         throw new pRetry.AbortError(error);
       }
