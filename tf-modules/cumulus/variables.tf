@@ -31,12 +31,12 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   default     = null
 }
 
-variable "database_security_group" {
+variable "rds_security_group" {
   description = "RDS Security Group used for access to RDS cluster"
   type        = string
 }
 
-variable "database_credential_secret_id" {
+variable "rds_credential_secret_id" {
   description = "RDS Database Login Credential Secret ID"
   type        = string
 }

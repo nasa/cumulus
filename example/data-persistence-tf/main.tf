@@ -8,6 +8,12 @@ provider "aws" {
   region = var.aws_region
 }
 
+resource "random_string" "db_pass" {
+  length  = 20
+  upper   = true
+  special = false
+}
+
 module "provision_database" {
   source                   = "../../lambdas/db-provision-user-database"
   prefix                   = var.prefix
@@ -17,7 +23,7 @@ module "provision_database" {
   tags                     = var.tags
   permissions_boundary_arn = var.permissions_boundary_arn
   vpc_id                   = var.vpc_id
-  rds_user_password        = var.rds_user_password
+  rds_user_password        = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
 }
 
 module "data_persistence" {

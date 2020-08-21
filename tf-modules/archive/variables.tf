@@ -27,11 +27,11 @@ variable "cmr_username" {
   type = string
 }
 
-variable "database_security_group" {
+variable "rds_security_group" {
   type = string
 }
 
-variable "database_credential_secret_id" {
+variable "rds_credential_secret_id" {
   type = string
 }
 

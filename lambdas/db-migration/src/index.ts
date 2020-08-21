@@ -19,7 +19,6 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
 };
 
 const getSecretConnectionConfig = async (SecretId: string): Promise<Knex.PgConnectionConfig> => {
-  console.log(`Getting secret connection config: ${SecretId}`);
   const secretsManager = new AWS.SecretsManager();
   const response = await secretsManager.getSecretValue(
     { SecretId } as AWS.SecretsManager.GetSecretValueRequest
@@ -27,7 +26,6 @@ const getSecretConnectionConfig = async (SecretId: string): Promise<Knex.PgConne
   if (response.SecretString === undefined) {
     throw new Error('Database credentials are undefined!');
   }
-  console.log(JSON.stringify(response));
   const dbAccessMeta = JSON.parse(response.SecretString);
   return {
     host: dbAccessMeta.host,
@@ -39,11 +37,9 @@ const getSecretConnectionConfig = async (SecretId: string): Promise<Knex.PgConne
 
 const getConnectionConfig = async (env: NodeJS.ProcessEnv): Promise<Knex.PgConnectionConfig> => {
   if (env?.databaseCredentialSecretId === undefined) {
-    console.log('Using environment credentials');
     return {
       host: getRequiredEnvVar('PG_HOST', env),
       user: getRequiredEnvVar('PG_USER', env),
-      // TODO Get this value from secrets manager
       password: getRequiredEnvVar('PG_PASSWORD', env),
       database: getRequiredEnvVar('PG_DATABASE', env),
     };
@@ -57,7 +53,6 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     const env = event?.env ?? process.env;
     const connectionConfig = await getConnectionConfig(env);
 
-    console.log(`Connection config is ${JSON.stringify(connectionConfig)}`);
     knex = Knex({
       client: 'pg',
       connection: connectionConfig,
@@ -66,6 +61,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       migrations: {
         directory: path.join(__dirname, 'migrations'),
       },
+      acquireConnectionTimeout: 60000,
     });
 
     const command = event?.command ?? 'latest';
@@ -75,7 +71,6 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         await knex.migrate.latest();
         break;
       default:
-        console.log(`Invalid command: ${command}`);
         throw new Error(`Invalid command: ${command}`);
     }
   } finally {

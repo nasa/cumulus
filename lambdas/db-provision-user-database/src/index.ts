@@ -38,7 +38,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   const knex = Knex({
     client: 'pg',
     connection: config,
-    acquireConnectionTimeout: 120000,
+    acquireConnectionTimeout: 60000,
   });
   try {
     const dbUser = event.prefix.replace('-', '_');

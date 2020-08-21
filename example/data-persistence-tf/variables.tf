@@ -20,6 +20,7 @@ variable "rds_access_secret_id" {
 variable "rds_user_password" {
   description = "Password to set for RDS db user"
   type = string
+  default = ""
 }
 
 variable "subnet_ids" {
