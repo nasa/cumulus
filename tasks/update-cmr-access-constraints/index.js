@@ -16,7 +16,11 @@ const {
 
 function isSameCmrFileObject(file, updatedFile) {
   if (file.filename) return file.filename === updatedFile.filename;
-  return file.key === parseS3Uri(updatedFile.filename).Key;
+  const { Bucket, Key } = parseS3Uri(updatedFile.filename);
+  return (
+    file.key === Key &&
+    file.bucket === Bucket
+  );
 }
 
 function updateGranuleCmrFileObjects(originalFiles, updatedFiles) {
@@ -31,7 +35,7 @@ function updateGranuleCmrFileObjects(originalFiles, updatedFiles) {
   return originalFiles;
 }
 
-function reconcileOutputs(input, updatedCmrFileObjectsWithEtags) {
+function reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) {
   const mapOfUpdatedCmrFileObjects = groupBy(updatedCmrFileObjectsWithEtags, 'granuleId');
   return input.granules.map((granule) => (
     {
@@ -43,7 +47,7 @@ function reconcileOutputs(input, updatedCmrFileObjectsWithEtags) {
     }));
 }
 
-function setAccessConstraintValueInEcho10XMLMetadata(
+function setRestrictionMetadataInEcho10XMLMetadata(
   echo10XMLMetadataContentsObject,
   accessConstraintsObject
 ) {
@@ -59,7 +63,7 @@ function setAccessConstraintValueInEcho10XMLMetadata(
   return { ...echo10XMLMetadataContentsObject, Granule: updatedGranule };
 }
 
-function setAccessConstraintValueInUMMGJSONMetadata(
+function setAccessConstraintMetadataInUMMGJSONMetadata(
   UMMGJSONMetadataContentsObject,
   accessConstraintsObject
 ) {
@@ -82,7 +86,7 @@ async function updateCmrFileAccessConstraint(
   );
   const { Bucket, Key } = parseS3Uri(cmrFileName);
   if (isECHO10File(cmrFileName)) {
-    const updatedCmrMetadataContentsObject = setAccessConstraintValueInEcho10XMLMetadata(
+    const updatedCmrMetadataContentsObject = setRestrictionMetadataInEcho10XMLMetadata(
       cmrMetadataContentsObject,
       accessConstraintsObject
     );
@@ -94,7 +98,7 @@ async function updateCmrFileAccessConstraint(
     return { ...cmrFileObject, etag: updatedCmrFile.ETag };
   }
   if (isUMMGFile(cmrFileName)) {
-    const updatedCmrMetadataContentsObject = setAccessConstraintValueInUMMGJSONMetadata(
+    const updatedCmrMetadataContentsObject = setAccessConstraintMetadataInUMMGJSONMetadata(
       cmrMetadataContentsObject,
       accessConstraintsObject
     );
@@ -113,7 +117,7 @@ const updateCmrAccessConstraints = async (event) => {
   const updatedCmrFileObjectsWithEtags = await Promise.all(
     cmrFileObjects.map((f) => updateCmrFileAccessConstraint(f, config.accessConstraints))
   );
-  return { ...input, granules: reconcileOutputs(input, updatedCmrFileObjectsWithEtags) };
+  return { ...input, granules: reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) };
 };
 
 const handler = (event, context) => runCumulusTask(updateCmrAccessConstraints, event, context);
