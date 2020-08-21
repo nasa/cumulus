@@ -35,9 +35,11 @@ echo "terraform {
 if [[ $NGAP_ENV = "SIT" ]]; then
   BASE_VAR_FILE="sit.tfvars"
   CMA_LAYER_VERSION=12
+  ROLE_BOUNDARY=NGAPShRoleBoundary
 else
   BASE_VAR_FILE="sandbox.tfvars"
   CMA_LAYER_VERSION=15
+  ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
 fi
 
 # Deploy data-persistence-tf via terraform
@@ -86,4 +88,4 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
-  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShRoleBoundary"
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
