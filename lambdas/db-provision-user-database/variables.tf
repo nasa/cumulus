@@ -1,6 +1,6 @@
-variable "db_security_groups" {
-  type = list(string)
-  description = "Security group(s) that allow access to the db cluster"
+variable "db_security_group" {
+  type = string
+  description = "Security group that allow access to the db cluster"
 }
 
 variable "vpc_id" {

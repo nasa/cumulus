@@ -19,7 +19,7 @@ resource "aws_lambda_function" "provision_database" {
     for_each = length(var.subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.subnet_ids
-      security_group_ids = concat(var.db_security_groups, [aws_security_group.db_provision[0].id])
+      security_group_ids = [var.db_security_group, aws_security_group.db_provision[0].id]
     }
   }
   tags = var.tags

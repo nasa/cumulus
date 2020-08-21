@@ -1,6 +1,6 @@
 # Required
-variable "db_security_groups" {
-  type = list(string)
+variable "db_security_group" {
+  type = string
 }
 
 variable "permissions_boundary_arn" {
