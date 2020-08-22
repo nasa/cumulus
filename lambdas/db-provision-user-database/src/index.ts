@@ -33,14 +33,15 @@ const getConnectionConfig = async (SecretId: string): Promise<Knex.PgConnectionC
 };
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
-  const secretsManager = new AWS.SecretsManager();
-  const config = await getConnectionConfig(event.rootLoginSecret);
-  const knex = Knex({
-    client: 'pg',
-    connection: config,
-    acquireConnectionTimeout: 60000,
-  });
+  let knex;
   try {
+    const secretsManager = new AWS.SecretsManager();
+    const config = await getConnectionConfig(event.rootLoginSecret);
+    knex = Knex({
+      client: 'pg',
+      connection: config,
+      acquireConnectionTimeout: 60000,
+    });
     const dbUser = event.prefix.replace('-', '_');
 
     const tableExists = await knex.select(1).as('result')
@@ -66,8 +67,9 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       }),
     }).promise();
     await knex.destroy();
-  } catch (error) {
-    await knex.destroy();
-    throw error;
+  } finally {
+    if (knex) {
+      await knex.destroy();
+    }
   }
 };

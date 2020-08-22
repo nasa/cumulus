@@ -39,7 +39,7 @@ variable "deletion_protection" {
 }
 
 variable "cluster_identifier" {
-  description = "DB Itentifier for the RDS cluster that will be created"
+  description = "DB identifier for the RDS cluster that will be created"
   type        = string
   default     = "cumulus-rds-serverless-default-cluster"
 }
