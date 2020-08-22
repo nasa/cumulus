@@ -1,4 +1,4 @@
-variable "db_security_group" {
+variable "rds_security_group" {
   type = string
   description = "Security group that allow access to the db cluster"
 }

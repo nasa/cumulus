@@ -48,7 +48,11 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var-file="../deployments/data-persistence/$BASE_VAR_FILE" \
   -var-file="../deployments/data-persistence/$DEPLOYMENT.tfvars" \
   -var "aws_region=$AWS_REGION" \
-  -var "subnet_ids=[\"$AWS_SUBNET\"]"
+  -var "subnet_ids=[\"$AWS_SUBNET\"]" \
+  -var "vpc_id=$VPC_ID" \
+  -var "rds_access_secret_id=$RDS_ACCESS_SECRET_ID" \
+  -var "rds_security_group=$RDS_SECURITY_GROUP"
+
 
 cd ../cumulus-tf
 # Ensure remote state is configured for the deployment

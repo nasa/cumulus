@@ -1,5 +1,5 @@
 # Required
-variable "db_security_group" {
+variable "rds_security_group" {
   type = string
 }
 

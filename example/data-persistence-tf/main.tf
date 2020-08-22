@@ -18,7 +18,7 @@ module "provision_database" {
   source                   = "../../lambdas/db-provision-user-database"
   prefix                   = var.prefix
   subnet_ids               = var.subnet_ids
-  db_security_group        = var.db_security_group
+  rds_security_group       = var.rds_security_group
   rds_access_secret_id     = var.rds_access_secret_id
   tags                     = var.tags
   permissions_boundary_arn = var.permissions_boundary_arn
