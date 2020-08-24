@@ -11,7 +11,6 @@ provider "aws" {
 
 module "rds_cluster" {
   source      = "../../tf-modules/cumulus-rds-tf"
-  profile     = var.profile
   db_username = var.db_username
   db_password = var.db_password
   region      = var.region

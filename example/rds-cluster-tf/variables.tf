@@ -1,9 +1,3 @@
-variable "profile" {
-  description = "AWS profile to use for authentication"
-  type        = string
-  default     = null
-}
-
 variable "db_username" {
   description = "Username for RDS database authentication"
   type = string
@@ -14,13 +8,11 @@ variable "db_password" {
   type = string
 }
 
-
 variable "region" {
   description = "Region to deploy to"
   type        = string
   default     = "us-east-1"
 }
-
 
 variable "vpc_id" {
   description = "VPC ID for the Cumulus Deployment"
