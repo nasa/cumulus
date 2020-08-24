@@ -1,6 +1,6 @@
 # db-provision-user-database
 
-This module deploys a bootstrap lambda that, given a 'root' db user secret containing 'host', 'user', 'password' keys will:
+This module deploys a bootstrap lambda that, given an AWS Secrets Manager secret specifying a 'root' database access credentials object containing 'host', 'user', 'password' keys, will:
 
 1) If configured database is not already created:
   a) Add a database user based on the prefix and set the configured password
