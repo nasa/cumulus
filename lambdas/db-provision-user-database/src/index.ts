@@ -11,11 +11,6 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv,
 }
 
-export interface getSecretValue extends
-  AWS.Request<AWS.SecretsManager.GetSecretValueResponse, AWS.AWSError> {
-  SecretString: string
-}
-
 const getConnectionConfig = async (SecretId: string): Promise<Knex.PgConnectionConfig> => {
   const secretsManager = new AWS.SecretsManager();
   const response = await secretsManager.getSecretValue(
