@@ -1,7 +1,4 @@
 # Required
-variable "rds_security_group" {
-  type = string
-}
 
 variable "permissions_boundary_arn" {
   type    = string
@@ -15,6 +12,10 @@ variable "prefix" {
 variable "rds_access_secret_id" {
   description = "AWS Secrets Manager secret ID containing jsonified db credentials containing at least host, password, port"
   type        = string
+}
+
+variable "rds_security_group" {
+  type = string
 }
 
 variable "rds_user_password" {
@@ -32,21 +33,10 @@ variable "vpc_id" {
 }
 
 # Optional
+
 variable "aws_region" {
   type    = string
   default = "us-east-1"
-}
-
-variable "enable_point_in_time_tables" {
-  description = "DynamoDB table names that should have point in time recovery enabled"
-  type        = list(string)
-  default     = []
-}
-
-variable "tags" {
-  description = "Tags to be applied to Cumulus resources that support tags"
-  type        = map(string)
-  default     = {}
 }
 
 variable "elasticsearch_config" {
@@ -66,3 +56,16 @@ variable "elasticsearch_config" {
     volume_size    = 10
   }
 }
+
+variable "enable_point_in_time_tables" {
+  description = "DynamoDB table names that should have point in time recovery enabled"
+  type        = list(string)
+  default     = []
+}
+
+variable "tags" {
+  description = "Tags to be applied to Cumulus resources that support tags"
+  type        = map(string)
+  default     = {}
+}
+
