@@ -83,10 +83,10 @@ resource "aws_lambda_function" "db_migration" {
     for_each = length(var.subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.subnet_ids
-      security_group_ids = [
+      security_group_ids = compact([
         aws_security_group.db_migration[0].id,
         var.rds_security_group_id
-      ]
+      ])
     }
   }
 

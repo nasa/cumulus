@@ -12,6 +12,7 @@ variable "rds_access_secret_id" {
 
 variable "rds_security_group_id" {
   type = string
+  default = ""
 }
 
 variable "subnet_ids" {
