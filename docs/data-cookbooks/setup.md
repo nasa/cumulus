@@ -1,12 +1,12 @@
 ---
 id: setup
-title: Data Cookbooks Setup
+title: Data Cookbooks Introduction
 hide_title: true
 ---
 
-# Setup
+# Introduction
 
-## Getting setup to work with data-cookboooks
+## Working with Data Cookbooks
 
 In the following data cookbooks we'll go through things like setting up workflows, making configuration changes, and interacting with CNM. The point of this section is to set up, or at least better understand, collections, providers, and rules and how they are configured.
 
@@ -54,17 +54,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 
 Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
-**Break down of [s3_provider.json](https://github.com/nasa/cumulus/blob/master/example/data/providers/s3/s3_provider.json):**
-
-|Key  |Value  |Required|Description|
-|:---:|:-----:|:------:|-----------|
-|id|`"s3_provider"`|Yes|Unique identifier for provider|
-|globalConnectionLimit|unlimited|No|Integer specifying the connection limit to the provider|
-|protocol|`s3`|Yes|<code>(http&#124;https&#124;ftp&#124;sftp&#124;s3)</code> are current valid entries|
-|host|`"cumulus-data-shared"`|Yes|Host where the files will exist or s3 bucket if "s3" provider|
-|port|`${port_number}`|No|Port to connect with the provider on|
-|username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
-|password|`${password}`|No|Password for acccess to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
+For more on Provider configuration see the [Provider section of the Operator Documentation](../operator-docs/provider).
 
 ## Rules
 
