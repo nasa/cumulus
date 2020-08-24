@@ -15,4 +15,4 @@ See [variables.tf](./variables.tf) for the input variables to this module and th
 
 ## Outputs
 
-**database_credentials** - ARN of the AWS secrets manager user credentials secret
+**database_credentials_secret_arn** - ARN of the AWS secrets manager user credentials secret
