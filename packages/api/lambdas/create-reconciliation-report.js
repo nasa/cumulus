@@ -180,7 +180,7 @@ async function reconciliationReportForCollections(recReportParams) {
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
   // Build a ESCollection and call the aggregateActiveGranuleCollections to get
-  // list of Active CollectionIds
+  // list of collection ids that have granules that have been updated
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
   const esCollection = new Collection({ queryStringParameters: esCollectionSearchParams }, 'collection', process.env.ES_INDEX);
   const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
