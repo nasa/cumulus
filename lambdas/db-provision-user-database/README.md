@@ -7,7 +7,7 @@ This module deploys a bootstrap lambda that, given an AWS Secrets Manager secret
   b) Add a database based on the passed in prefix and set the user to use that database
 2) If the configured database exists:
   a) Update the user password to the configured value
-3) Write a database configuration object containing (at least) 'host', 'user', 'password' and 'database'
+3) Write an AWS Secrets Manager secret containing an object specify access credentials for acquiring a database connection (at least 'host', 'user', 'password' and 'database')
 
 ## Input variables
 
