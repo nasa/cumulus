@@ -14,10 +14,9 @@ module "rds_cluster" {
   profile     = var.profile
   db_username = var.db_username
   db_password = var.db_password
-  region      = "us-east-1"
+  region      = var.region
   vpc_id      = var.vpc_id
   subnets     = var.subnets
   deletion_protection = true
   cluster_identifier = "cumulus-dev-rds-cluster"
 }
-
