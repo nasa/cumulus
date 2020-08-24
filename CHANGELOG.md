@@ -49,7 +49,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     converted to a date object, the inter-platform comparison between Cumulus and CMR will
     be one way.  That is, collections, granules, and files will be filtered by time for
     those found in Cumulus and only those compared to the CMR holdings. For the moment
-    there is not enough information to change the interal consistency check, and S3 vs
+    there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
