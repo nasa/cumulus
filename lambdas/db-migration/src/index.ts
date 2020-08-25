@@ -24,9 +24,15 @@ const getSecretConnectionConfig = async (SecretId: string): Promise<Knex.PgConne
     { SecretId } as AWS.SecretsManager.GetSecretValueRequest
   ).promise();
   if (response.SecretString === undefined) {
-    throw new Error('Database credentials are undefined!');
+    throw new Error(`AWS Secret did not contain a stored value: ${SecretId}`);
   }
   const dbAccessMeta = JSON.parse(response.SecretString);
+
+  ['host', 'user', 'password', 'database'].forEach((key) => {
+    if (!(key in dbAccessMeta)) {
+      throw new Error(`AWS Secret ${SecretId} is missing required key '${key}'`);
+    }
+  });
   return {
     host: dbAccessMeta.host,
     user: dbAccessMeta.username,
