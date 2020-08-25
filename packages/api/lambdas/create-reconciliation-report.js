@@ -57,11 +57,16 @@ async function createReconciliationReportForBucket(Bucket) {
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDynamoDb = [];
+  const okCountByGranule = {};
 
   let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
   while (nextS3Object && nextDynamoDbItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
     const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
+
+    if (!okCountByGranule[nextDynamoDbItem.granuleId]) {
+      okCountByGranule[nextDynamoDbItem.granuleId] = 0;
+    }
 
     if (nextS3Uri < nextDynamoDbUri) {
       // Found an item that is only in S3 and not in DynamoDB
@@ -77,6 +82,7 @@ async function createReconciliationReportForBucket(Bucket) {
     } else {
       // Found an item that is in both S3 and DynamoDB
       okCount += 1;
+      okCountByGranule[nextDynamoDbItem.granuleId] += 1;
       s3ObjectsQueue.shift();
       dynamoDbFilesLister.shift();
     }
@@ -103,6 +109,7 @@ async function createReconciliationReportForBucket(Bucket) {
     okCount,
     onlyInS3,
     onlyInDynamoDb,
+    okCountByGranule,
   };
 }
 
@@ -482,6 +489,7 @@ async function createReconciliationReport(params) {
   // Write an initial report to S3
   const filesInCumulus = {
     okCount: 0,
+    okCountByGranule: {},
     onlyInS3: [],
     onlyInDynamoDb: [],
   };
@@ -524,6 +532,14 @@ async function createReconciliationReport(params) {
     report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
       bucketReport.onlyInDynamoDb
     );
+
+    Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
+      const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
+      const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+
+      report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
+        + bucketGranuleCount;
+    });
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
