@@ -36,12 +36,12 @@ variable "cluster_identifier" {
 }
 
 variable "db_username" {
-  description = "Username for RDS database authentication"
+  description = "Username for RDS database administrator authentication"
   type = string
 }
 
 variable "db_password" {
-  description = "Password for RDS database authentication"
+  description = "Password for RDS database administrator authentication"
   type = string
 }
 
