@@ -89,8 +89,7 @@ test('dateToValue converts a string representation to a primitive date.', (t) =>
     '2017-07-14T02:40:00.000Z',
     'Fri, 14 Jul 2017 02:40:00 GMT',
   ];
-  testStrings.map((testVal) =>
-    t.is(dateToValue(testVal), primitiveValue));
+  testStrings.map((testVal) => t.is(dateToValue(testVal), primitiveValue));
 });
 
 test('dateToValue returns undefined for any string that cannot be converted to a date.', (t) => {

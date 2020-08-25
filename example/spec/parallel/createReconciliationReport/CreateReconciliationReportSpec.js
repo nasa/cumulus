@@ -4,7 +4,6 @@ const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
 const get = require('lodash/get');
 const pAll = require('p-all');
-const pick = require('lodash/pick');
 
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
@@ -31,12 +30,10 @@ const {
 
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
-const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
-const { deleteRule } = require('@cumulus/api-client/rules');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -87,7 +84,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
  *
  * @param {string} prefix - stack Prefix
  * @param {string} sourceBucket - testing source bucket
- * @returns {Promise<Object>} new collection Object
+ * @returns {Promise<Array>} A new collection with associated granule and a cleanup function to call after you are finished.
  */
 const createActiveCollection = async (prefix, sourceBucket) => {
   // The S3 path where granules will be ingested from
@@ -117,42 +114,41 @@ const createActiveCollection = async (prefix, sourceBucket) => {
   const granuleId = randomId('granule-id-');
 
   const ingestTime = Date.now() - 1000 * 30;
-
-  // Ingest the granule.
   const testExecutionId = randomId('test-execution-');
   console.log('testExecutionId:', testExecutionId);
-  const ingestGranuleRule = await createOneTimeRule(
-    prefix,
-    {
-      workflow: 'IngestGranule',
-      collection: pick(newCollection, ['name', 'version']),
-      provider: provider.id,
-      payload: {
-        testExecutionId,
-        granules: [
+  const inputPayload = {
+    testExecutionId,
+    granules: [
+      {
+        granuleId,
+        dataType: newCollection.name,
+        version: newCollection.version,
+        files: [
           {
-            granuleId,
-            dataType: newCollection.name,
-            version: newCollection.version,
-            files: [
-              {
-                name: granFilename,
-                path: sourcePath,
-              },
-            ],
+            name: granFilename,
+            path: sourcePath,
           },
         ],
       },
-    }
+    ],
+  };
+
+  await buildAndExecuteWorkflow(
+    prefix, sourceBucket, 'IngestGranule', newCollection, provider, inputPayload
+  );
+
+  await waitForModelStatus(
+    new Granule(),
+    { granuleId: inputPayload.granules[0].granuleId },
+    'completed'
   );
 
   // Find the execution ARN
-  console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
   const ingestGranuleExecutionArn = await findExecutionArn(
     prefix,
     (execution) => {
       const executionId = get(execution, 'originalPayload.testExecutionId');
-      return executionId === ingestGranuleRule.payload.testExecutionId;
+      return executionId === testExecutionId;
     },
     { timestamp__from: ingestTime },
     { timeout: 15 }
@@ -168,19 +164,18 @@ const createActiveCollection = async (prefix, sourceBucket) => {
   await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
   const cleanupFunction = async () => {
-    try {
-      await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
-    } catch (error) {
-      console.error(error);
-    }
+    console.log(`removing s3 object: ${sourceBucket}/${granFileKey}`);
+    console.log(`removing granule: ${granuleId}`);
+    console.log(`removing Provider: ${get(provider, 'id')}`);
+    console.log(`removing collection: ${JSON.stringify(newCollection)}`);
     await pAll([
       () => deleteS3Object(sourceBucket, granFileKey),
       () => deleteGranule({ prefix, granuleId }),
       () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
       () => deleteCollection({
         prefix,
-        collectionName: get(collection, 'name'),
-        collectionVersion: get(collection, 'version'),
+        collectionName: get(newCollection, 'name'),
+        collectionVersion: get(newCollection, 'version'),
       }),
     ]);
   };
@@ -288,7 +283,7 @@ describe('When there are granule differences and granule reconciliation is run',
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
-
+      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       granuleModel = new Granule();
 
@@ -311,9 +306,7 @@ describe('When there are granule differences and granule reconciliation is run',
       process.env.FilesTable = `${config.stackName}-FilesTable`;
       await GranuleFilesCache.put(extraFileInDb);
 
-      [extraCumulusCollection, extraCumulusCollectionCleanup] = await createActiveCollection(
-        config.stackName, config.bucket
-      );
+      const activeCollectionPromise = createActiveCollection(config.stackName, config.bucket);
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
@@ -321,10 +314,16 @@ describe('When there are granule differences and granule reconciliation is run',
 
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
 
-      [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
+      [
+        publishedGranuleId,
+        dbGranuleId,
+        cmrGranule,
+        [extraCumulusCollection, extraCumulusCollectionCleanup],
+      ] = await Promise.all([
         ingestAndPublishGranule(config, testSuffix, testDataFolder),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
         ingestGranuleToCMR(config, testSuffix, testDataFolder),
+        activeCollectionPromise,
       ]);
 
       // update one of the granule files in database so that that file won't match with CMR
@@ -468,7 +467,6 @@ describe('When there are granule differences and granule reconciliation is run',
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
-    await extraCumulusCollectionCleanup();
 
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
@@ -477,6 +475,7 @@ describe('When there are granule differences and granule reconciliation is run',
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+      extraCumulusCollectionCleanup(),
     ]);
 
     // need to add the cmr granule back to the table, so the granule can be removed from api
