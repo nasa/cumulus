@@ -227,6 +227,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
+      console.log('updated granule file');
     } catch (error) {
       beforeAllFailed = true;
       console.log(JSON.stringify(error));
@@ -237,11 +238,13 @@ describe('When there are granule differences and granule reconciliation is run',
   it('prepares the test suite successfully', async () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
 
+    console.log('Checking collection in list');
     // Verify the collection is returned when listing collections
     const collsResp = await getCollections(
       { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime } }
     );
     const colls = JSON.parse(collsResp.body).results;
+    console.log(JSON.stringify(colls, null, 2));
     expect(colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)).toBe(true);
   });
 
