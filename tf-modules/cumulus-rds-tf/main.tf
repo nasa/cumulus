@@ -26,8 +26,8 @@ resource "aws_secretsmanager_secret" "rds_login" {
 resource "aws_secretsmanager_secret_version" "rds_login" {
   secret_id     = aws_secretsmanager_secret.rds_login.id
   secret_string = jsonencode({
-    username            = var.db_username
-    password            = var.db_password
+    username            = var.db_admin_username
+    password            = var.db_admin_password
     engine              = "postgres"
     host                = aws_rds_cluster.core_team_cluster.endpoint
     port                = 5432
@@ -51,8 +51,8 @@ resource "aws_rds_cluster" "core_team_cluster" {
   engine                  = "aurora-postgresql"
   engine_version          = "10.7"
   database_name           = "postgres"
-  master_username         = var.db_username
-  master_password         = var.db_password
+  master_username         = var.db_admin_username
+  master_password         = var.db_admin_password
   backup_retention_period = var.backup_retention_period
   preferred_backup_window = var.backup_window
   db_subnet_group_name    = aws_db_subnet_group.default.id

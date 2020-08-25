@@ -35,12 +35,12 @@ variable "cluster_identifier" {
   default     = "cumulus-rds-serverless-default-cluster"
 }
 
-variable "db_username" {
+variable "db_admin_username" {
   description = "Username for RDS database administrator authentication"
   type = string
 }
 
-variable "db_password" {
+variable "db_admin_password" {
   description = "Password for RDS database administrator authentication"
   type = string
 }

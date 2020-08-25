@@ -1,9 +1,9 @@
-variable "db_username" {
+variable "db_admin_username" {
   description = "Username for RDS database authentication"
   type = string
 }
 
-variable "db_password" {
+variable "db_admin_password" {
   description = "Password for RDS database authentication"
   type = string
 }
