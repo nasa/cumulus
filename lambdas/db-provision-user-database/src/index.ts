@@ -11,9 +11,9 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv,
 }
 
-const validateDatabaseInput = async (
-  inputString: string, regexp: RegExp)
-: Promise<boolean> => regexp.test(inputString);
+const validateDatabaseInput = (
+  inputString: string, regexp: RegExp
+): boolean => regexp.test(inputString);
 
 const getConnectionConfig = async (SecretId: string): Promise<Knex.PgConnectionConfig> => {
   const secretsManager = new AWS.SecretsManager();
@@ -42,11 +42,13 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       connection: config,
       acquireConnectionTimeout: 120000,
     });
-    const dbUser = event.prefix.replace('-', '_');
+    const dbUser = event?.prefix.replace('-', '_');
 
-    if (!(validateDatabaseInput(dbUser, new RegExp(/^\w+$/)))) {
-      throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
-    }
+    [dbUser, event?.dbPassword].forEach((input) => {
+      if (!(validateDatabaseInput(input, new RegExp(/^\w+$/)))) {
+        throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
+      }
+    });
 
     const tableExists = await knex.select(1).as('result')
       .from('pg_database').where('datname', `${dbUser}_db`);
