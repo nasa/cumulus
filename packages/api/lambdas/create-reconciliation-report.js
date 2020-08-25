@@ -44,10 +44,11 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
 );
 
 /**
- * @param {string} datestring - ISO timestamp string
- * @returns {number} - primitive value of input date.
+ * @param {string} datestring - any Date.parse()able string value.
+ * @returns {number} - primitive value of input date string or undefined, if
+ *                     input string not convertable.
  */
-function ISODateToValue(datestring) {
+function dateStringToValue(datestring) {
   const primitiveDate = (new Date(datestring)).valueOf();
   return !Number.isNaN(primitiveDate) ? primitiveDate : undefined;
 }
@@ -59,8 +60,8 @@ function ISODateToValue(datestring) {
  */
 function convertToESCollectionSearchParams(params) {
   return {
-    updatedAt__from: ISODateToValue(params.startTimestamp),
-    updatedAt__to: ISODateToValue(params.endTimestamp),
+    updatedAt__from: dateStringToValue(params.startTimestamp),
+    updatedAt__to: dateStringToValue(params.endTimestamp),
   };
 }
 
@@ -71,8 +72,8 @@ function convertToESCollectionSearchParams(params) {
  */
 function convertToESGranuleSearchParams(params) {
   return {
-    updatedAt__from: ISODateToValue(params.startTimestamp),
-    updatedAt__to: ISODateToValue(params.endTimestamp),
+    updatedAt__from: dateStringToValue(params.startTimestamp),
+    updatedAt__to: dateStringToValue(params.endTimestamp),
   };
 }
 
