@@ -1,7 +1,8 @@
 'use strict';
 
 const groupBy = require('lodash/groupBy');
-const { parseS3Uri } = require('@cumulus/aws-client/S3');
+const keyBy = require('lodash/keyBy');
+const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { granulesToCmrFileObjects } = require('@cumulus/cmrjs');
 const {
@@ -14,25 +15,17 @@ const {
   uploadUMMGJSONCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
 
-function isSameCmrFileObject(file, updatedFile) {
-  if (file.filename) return file.filename === updatedFile.filename;
-  const { Bucket, Key } = parseS3Uri(updatedFile.filename);
-  return (
-    file.key === Key &&
-    file.bucket === Bucket
-  );
+function setCmrFileEtag(file, updatedFileMap) {
+  const filename = file.filename || buildS3Uri(file.bucket, file.key);
+  const updatedFile = updatedFileMap[filename];
+  return updatedFile === undefined ? file : { ...file, etag: updatedFile.etag };
 }
 
 function updateGranuleCmrFileObjects(originalFiles, updatedFiles) {
-  updatedFiles.forEach((updatedFile) => {
-    originalFiles.filter(isCMRFile).forEach((file) => {
-      if (isSameCmrFileObject(file, updatedFile)) {
-        // eslint-disable-next-line no-param-reassign
-        file.etag = updatedFile.etag;
-      }
-    });
-  });
-  return originalFiles;
+  const updatedFilesMap = keyBy(updatedFiles, 'filename');
+  return originalFiles.map(
+    (file) => (isCMRFile(file) ? setCmrFileEtag(file, updatedFilesMap) : file)
+  );
 }
 
 function reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) {
