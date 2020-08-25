@@ -44,6 +44,10 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
           },
         });
         const executions = JSON.parse(body);
+
+        console.log('EXECUTION RESULTS');
+        console.log(executions.results);
+
         execution = executions.results.find(matcher);
       } catch (error) {
         throw new pRetry.AbortError(error);
