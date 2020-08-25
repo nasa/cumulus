@@ -44,6 +44,7 @@ test(
       {}
     );
     t.false(isOneWayReport(allFalseKeys));
+    t.true(isOneWayReport({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
 
@@ -76,6 +77,7 @@ test(
       {}
     );
     t.false(shouldFilter(allFalseKeys));
+    t.true(shouldFilter({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
 

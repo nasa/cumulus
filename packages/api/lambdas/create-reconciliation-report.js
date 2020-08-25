@@ -96,7 +96,7 @@ function isOneWayReport(reportParams) {
 /**
  * Checks to see if the searchParams have any value that would require a
  * filtered search in ES
- * @param {any} searchParams
+ * @param {Object} searchParams
  * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
  */
 function shouldFilter(searchParams) {
