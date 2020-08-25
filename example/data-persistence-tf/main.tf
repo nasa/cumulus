@@ -9,7 +9,7 @@ provider "aws" {
 }
 
 resource "random_string" "db_pass" {
-  length  = 20
+  length  = 50
   upper   = true
   special = false
 }
