@@ -265,7 +265,7 @@ class Collection {
   }
 
   /**
-   * return the queue of the granules for a given collection and search params
+   * return the queue of the granules for a given collection and search params,
    * the items are ordered by granuleId
    *
    * @param {Object} searchParams - optional, search parameters
@@ -303,7 +303,7 @@ class Collection {
       ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
       FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
     };
-    console.log(params);
+
     return new DynamoDbSearchQueue(removeNilProperties(params), 'scan');
   }
 

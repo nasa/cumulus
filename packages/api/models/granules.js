@@ -397,7 +397,7 @@ class Granule extends Manager {
   }
 
   /**
-   * return the queue of the granules for a given collection and search params
+   * return the queue of the granules for a given collection and search params,
    * the items are ordered by granuleId
    *
    * @param {string} collectionId - collection id
@@ -410,6 +410,7 @@ class Granule extends Manager {
     const attributeValues = {};
     const filterArray = [];
     const projectionArray = [];
+    const keyConditionArray = [];
 
     Object.entries(searchParams).forEach(([key, value]) => {
       let field = key;
@@ -421,7 +422,12 @@ class Granule extends Manager {
 
       attributeNames[`#${field}`] = field;
       attributeValues[`:${key}`] = value;
-      filterArray.push(`#${field} ${operation} :${key}`);
+      const expression = `#${field} ${operation} :${key}`;
+      if (field === 'granuleId') {
+        keyConditionArray.push(expression);
+      } else {
+        filterArray.push(expression);
+      }
     });
 
     fields.forEach((field) => {
@@ -431,13 +437,14 @@ class Granule extends Manager {
 
     attributeNames['#collectionId'] = 'collectionId';
     attributeValues[':collectionId'] = collectionId;
+    keyConditionArray.push('#collectionId = :collectionId');
 
     const params = {
       TableName: this.tableName,
       IndexName: 'collectionId-granuleId-index',
       ExpressionAttributeNames: attributeNames,
       ExpressionAttributeValues: attributeValues,
-      KeyConditionExpression: '#collectionId = :collectionId',
+      KeyConditionExpression: keyConditionArray.join(' AND '),
       ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
       FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
     };

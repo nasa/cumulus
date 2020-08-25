@@ -55,7 +55,6 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections with different contents
 
   const searchParams = convertToCollectionSearchParams(recReportParams);
-  console.log('search param', searchParams);
   const esCollectionsIterator = new ESSearchQueue(
     { ...searchParams, sort_key: ['name', 'version'] }, 'collection', process.env.ES_INDEX
   );
@@ -76,7 +75,7 @@ async function reconciliationReportForCollections(recReportParams) {
   while (nextEsItem && nextDbItem) {
     const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
     const dbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
-    console.log(esCollectionId, dbCollectionId);
+
     if (esCollectionId < dbCollectionId) {
       // Found an item that is only in ES and not in DB
       onlyInEs.push(esCollectionId);
@@ -141,7 +140,6 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   //   Report granules with different contents
 
   const searchParams = convertToGranuleSearchParams(recReportParams);
-  console.log('search param', searchParams);
   const esGranulesIterator = new ESSearchQueue(
     { ...searchParams, collectionId, sort_key: ['granuleId'] }, 'granule', process.env.ES_INDEX
   );
@@ -200,6 +198,7 @@ exports.reportForGranulesByCollectionId = reportForGranulesByCollectionId;
 
 async function reconciliationReportForGranules(recReportParams) {
   log.debug('internal-reconciliation-report reconciliationReportForGranules');
+  // To avoid 'scan' granules table, we query GSI in granules table with collectionId.
   // compare granule holdings:
   //   Get all collections list from db and es or use the collectionId from the request
   //   For each collection,
@@ -230,7 +229,6 @@ async function reconciliationReportForGranules(recReportParams) {
 
   return report;
 }
-
 
 // export for testing
 exports.reconciliationReportForGranules = reconciliationReportForGranules;

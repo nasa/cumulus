@@ -8,33 +8,23 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const { fakeCollectionFactory } = require('../../lib/testUtils');
+const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const {
   reconciliationReportForCollections,
+  reconciliationReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
 
 const models = require('../../models');
 const indexer = require('../../es/indexer');
+const { deconstructCollectionId } = require('../../lib/utils');
 
 let esAlias;
 let esIndex;
 let esClient;
-
-/**
- * Index collections to ES for testing
- *
- * @param {Array<Object>} collections - list of collection objects
- * @returns {Promise} - Promise of collections indexed
- */
-async function storeCollectionsToElasticsearch(collections) {
-  await Promise.all(
-    collections.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
-  );
-}
 
 test.beforeEach(async (t) => {
   process.env.CollectionsTable = randomId('collectionTable');
@@ -74,10 +64,6 @@ test.afterEach.always(async (t) => {
 });
 
 test.serial('reconciliationReportForCollections reports discrepancy of collection holdings in ES and DB', async (t) => {
-  const searchParams = {
-    startTimestamp: moment.utc().format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-  };
   const matchingColls = range(10).map(() => fakeCollectionFactory());
   const extraDbColls = range(2).map(() => fakeCollectionFactory());
   const extraEsColls = range(2).map(() => fakeCollectionFactory());
@@ -85,40 +71,146 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
   const conflictCollInDb = fakeCollectionFactory({ meta: { flag: 'db' } });
   const conflictCollInEs = { ...conflictCollInDb, meta: { flag: 'es' } };
 
-  await storeCollectionsToElasticsearch(
-    matchingColls.concat(extraEsColls).concat(conflictCollInEs)
+  const esCollections = matchingColls.concat(extraEsColls, conflictCollInEs);
+  const dbCollections = matchingColls.concat(extraDbColls, conflictCollInDb);
+
+  await Promise.all(
+    esCollections.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
   );
+  await new models.Collection().create(dbCollections);
 
-  await new models.Collection().create(matchingColls.concat(extraDbColls).concat(conflictCollInDb));
+  // start/end time include all the collections
+  const searchParams = {
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+  let report = await reconciliationReportForCollections(searchParams);
 
-  let collectionReport = await reconciliationReportForCollections(searchParams);
+  t.is(report.okCount, 10);
+  t.is(report.onlyInEs.length, 2);
+  t.deepEqual(report.onlyInEs.sort(),
+    extraEsColls.map((coll) => constructCollectionId(coll.name, coll.version)).sort());
+  t.is(report.onlyInDb.length, 2);
+  t.deepEqual(report.onlyInDb.sort(),
+    extraDbColls.map((coll) => constructCollectionId(coll.name, coll.version)).sort());
+  t.is(report.withConflicts.length, 1);
+  t.deepEqual(report.withConflicts[0].es.collectionId, conflictCollInEs.collectionId);
+  t.deepEqual(report.withConflicts[0].db.collectionId, conflictCollInDb.collectionId);
 
-  t.is(collectionReport.okCount, 10);
-  t.is(collectionReport.onlyInEs.length, 2);
-  t.is(collectionReport.onlyInDb.length, 2);
-  t.is(collectionReport.conflicts.length, 1);
-
-  //TODO verify content of the report
-
+  // start/end time has no matching collections
   const paramsTimeOutOfRange = {
     startTimestamp: moment.utc().add(1, 'hour').format(),
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  collectionReport = await reconciliationReportForCollections(paramsTimeOutOfRange);
-  t.is(collectionReport.okCount, 0);
-  t.is(collectionReport.onlyInEs.length, 0);
-  t.is(collectionReport.onlyInDb.length, 0);
-  t.is(collectionReport.conflicts.length, 0);
+  report = await reconciliationReportForCollections(paramsTimeOutOfRange);
+  t.is(report.okCount, 0);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
+  t.is(report.withConflicts.length, 0);
 
-  const paramsCollectionId = {
-    ...searchParams,
-    collectionId: constructCollectionId(conflictCollInDb.name, conflictCollInDb.version),
+  // collectionId matches the collection with conflicts
+  const collectionId = constructCollectionId(conflictCollInDb.name, conflictCollInDb.version);
+  const paramsCollectionId = { ...searchParams, collectionId };
+
+  report = await reconciliationReportForCollections(paramsCollectionId);
+  t.is(report.okCount, 0);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
+  t.is(report.withConflicts.length, 1);
+});
+
+test.serial('reportForGranulesByCollectionId reports discrepancy of granule holdings in ES and DB for the given collection', async (t) => {
+  const collectionId = constructCollectionId(randomString(), randomString());
+  const provider = randomString();
+
+  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
+  const additionalMatchingGranus = range(10).map(() => fakeGranuleFactoryV2({ provider }));
+  const extraDbGrans = range(2).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
+  const additionalExtraDbGrans = range(2).map(() => fakeGranuleFactoryV2());
+  const extraEsGrans = range(2).map(() => fakeGranuleFactoryV2({ provider }));
+  const additionalExtraEsGrans = range(2)
+    .map(() => fakeGranuleFactoryV2({ collectionId, provider }));
+  const conflictGranInDb = fakeGranuleFactoryV2({ collectionId });
+  const conflictGranInEs = { ...conflictGranInDb, status: 'failed' };
+
+  const esGranules = matchingGrans
+    .concat(additionalMatchingGranus, extraEsGrans, additionalExtraEsGrans, conflictGranInEs);
+  const dbGranules = matchingGrans
+    .concat(additionalMatchingGranus, extraDbGrans, additionalExtraDbGrans, conflictGranInDb);
+
+  // add granules and related collections to es and db
+  await Promise.all(
+    esGranules.map(async (gran) => {
+      await indexer.indexGranule(esClient, gran, esAlias);
+      const collection = fakeCollectionFactory({ ...deconstructCollectionId(gran.collectionId) });
+      await indexer.indexCollection(esClient, collection, esAlias);
+      await new models.Collection().create(collection);
+    })
+  );
+
+  await new models.Granule().create(dbGranules);
+
+  // start/end time include all the granules
+  const searchParams = {
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+  let report = await reconciliationReportForGranules(searchParams);
+
+  t.is(report.okCount, 20);
+  t.is(report.onlyInEs.length, 4);
+  t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
+    extraEsGrans.concat(additionalExtraEsGrans).map((gran) => gran.granuleId).sort());
+  t.is(report.onlyInDb.length, 4);
+  t.deepEqual(report.onlyInDb.map((gran) => gran.granuleId).sort(),
+    extraDbGrans.concat(additionalExtraDbGrans).map((gran) => gran.granuleId).sort());
+  t.is(report.withConflicts.length, 1);
+  t.deepEqual(report.withConflicts[0].es.granuleId, conflictGranInEs.granuleId);
+  t.deepEqual(report.withConflicts[0].db.granuleId, conflictGranInDb.granuleId);
+
+  // start/end time has no matching collections
+  const outOfRangeParams = {
+    startTimestamp: moment.utc().add(1, 'hour').format(),
+    endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  collectionReport = await reconciliationReportForCollections(paramsCollectionId);
-  t.is(collectionReport.okCount, 0);
-  t.is(collectionReport.onlyInEs.length, 0);
-  t.is(collectionReport.onlyInDb.length, 0);
-  t.is(collectionReport.conflicts.length, 1);
+  report = await reconciliationReportForGranules(outOfRangeParams);
+  t.is(report.okCount, 0);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
+  t.is(report.withConflicts.length, 0);
+
+  // collectionId, provider parameters
+  const collectionProviderParams = { ...searchParams, collectionId, provider };
+  report = await reconciliationReportForGranules(collectionProviderParams);
+  t.is(report.okCount, 10);
+  t.is(report.onlyInEs.length, 2);
+  t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
+    additionalExtraEsGrans.map((gran) => gran.granuleId).sort());
+  t.is(report.onlyInDb.length, 2);
+  t.deepEqual(report.onlyInDb.map((gran) => gran.granuleId).sort(),
+    extraDbGrans.map((gran) => gran.granuleId).sort());
+  t.is(report.withConflicts.length, 0);
+
+  // provider parameter
+  const providerParams = { ...searchParams, provider };
+  report = await reconciliationReportForGranules(providerParams);
+  t.is(report.okCount, 20);
+  t.is(report.onlyInEs.length, 4);
+  t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
+    extraEsGrans.concat(additionalExtraEsGrans).map((gran) => gran.granuleId).sort());
+  t.is(report.onlyInDb.length, 2);
+  t.deepEqual(report.onlyInDb.map((gran) => gran.granuleId).sort(),
+    extraDbGrans.map((gran) => gran.granuleId).sort());
+  t.is(report.withConflicts.length, 0);
+
+  // granuleId parameter
+  const granuleId = conflictGranInDb.granuleId;
+  const granuleIdParams = { granuleId };
+  report = await reconciliationReportForGranules(granuleIdParams);
+  t.is(report.okCount, 0);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
+  t.is(report.withConflicts.length, 1);
 });
