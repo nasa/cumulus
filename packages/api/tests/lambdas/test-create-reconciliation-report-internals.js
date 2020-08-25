@@ -7,7 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
 const isOneWayReport = CRP.__get__('isOneWayReport');
-const dateStringToValue = CRP.__get__('dateStringToValue');
+const dateToValue = CRP.__get__('dateToValue');
 const convertToESCollectionSearchParams = CRP.__get__(
   'convertToESCollectionSearchParams'
 );
@@ -46,7 +46,7 @@ test(
   }
 );
 
-test('dateStringToValue converts a string representation to a primitive date.', (t) => {
+test('dateToValue converts a string representation to a primitive date.', (t) => {
   const primitiveValue = 1500000000000;
   const testStrings = [
     'Thu Jul 13 2017 20:40:00 GMT-0600',
@@ -55,12 +55,12 @@ test('dateStringToValue converts a string representation to a primitive date.', 
     'Fri, 14 Jul 2017 02:40:00 GMT',
   ];
   testStrings.map((testVal) =>
-    t.is(dateStringToValue(testVal), primitiveValue));
+    t.is(dateToValue(testVal), primitiveValue));
 });
 
-test('dateStringToValue returns undefined for any string that cannot be converted to a date.', (t) => {
+test('dateToValue returns undefined for any string that cannot be converted to a date.', (t) => {
   const testStrings = ['startTime', '20170713 20:40:00', '20170713T204000'];
-  testStrings.map((testVal) => t.is(dateStringToValue(testVal), undefined));
+  testStrings.map((testVal) => t.is(dateToValue(testVal), undefined));
 });
 
 test('convertToESCollectionSearchParams returns correct search object.', (t) => {
