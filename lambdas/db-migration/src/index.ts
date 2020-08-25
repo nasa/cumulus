@@ -67,7 +67,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       migrations: {
         directory: path.join(__dirname, 'migrations'),
       },
-      acquireConnectionTimeout: 60000,
+      acquireConnectionTimeout: 120000,
     });
 
     const command = event?.command ?? 'latest';

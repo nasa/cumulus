@@ -11,9 +11,9 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv,
 }
 
-const validateDatabaseInput = async (inputString: string, regexp: RegExp): Promise<boolean> => {
-  return regexp.test(inputString);
-};
+const validateDatabaseInput = async (
+  inputString: string, regexp: RegExp)
+: Promise<boolean> => regexp.test(inputString);
 
 const getConnectionConfig = async (SecretId: string): Promise<Knex.PgConnectionConfig> => {
   const secretsManager = new AWS.SecretsManager();
