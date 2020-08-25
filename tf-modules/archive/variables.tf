@@ -31,7 +31,7 @@ variable "rds_security_group" {
   type = string
 }
 
-variable "rds_credential_secret_id" {
+variable "rds_user_access_secret_id" {
   type = string
 }
 
