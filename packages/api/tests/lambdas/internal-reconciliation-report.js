@@ -79,12 +79,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
   );
   await new models.Collection().create(dbCollections);
 
-  // start/end time include all the collections
-  const searchParams = {
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-  };
-  let report = await reconciliationReportForCollections(searchParams);
+  let report = await reconciliationReportForCollections({});
 
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
@@ -96,6 +91,17 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
   t.is(report.withConflicts.length, 1);
   t.deepEqual(report.withConflicts[0].es.collectionId, conflictCollInEs.collectionId);
   t.deepEqual(report.withConflicts[0].db.collectionId, conflictCollInDb.collectionId);
+
+  // start/end time include all the collections
+  const searchParams = {
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+  report = await reconciliationReportForCollections(searchParams);
+  t.is(report.okCount, 10);
+  t.is(report.onlyInEs.length, 2);
+  t.is(report.onlyInDb.length, 2);
+  t.is(report.withConflicts.length, 1);
 
   // start/end time has no matching collections
   const paramsTimeOutOfRange = {
@@ -120,7 +126,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
   t.is(report.withConflicts.length, 1);
 });
 
-test.serial('reportForGranulesByCollectionId reports discrepancy of granule holdings in ES and DB for the given collection', async (t) => {
+test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
   const collectionId = constructCollectionId(randomString(), randomString());
   const provider = randomString();
 
@@ -151,13 +157,7 @@ test.serial('reportForGranulesByCollectionId reports discrepancy of granule hold
 
   await new models.Granule().create(dbGranules);
 
-  // start/end time include all the granules
-  const searchParams = {
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-  };
-  let report = await reconciliationReportForGranules(searchParams);
-
+  let report = await reconciliationReportForGranules({});
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -168,6 +168,17 @@ test.serial('reportForGranulesByCollectionId reports discrepancy of granule hold
   t.is(report.withConflicts.length, 1);
   t.deepEqual(report.withConflicts[0].es.granuleId, conflictGranInEs.granuleId);
   t.deepEqual(report.withConflicts[0].db.granuleId, conflictGranInDb.granuleId);
+
+  // start/end time include all the granules
+  const searchParams = {
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+  report = await reconciliationReportForGranules(searchParams);
+  t.is(report.okCount, 20);
+  t.is(report.onlyInEs.length, 4);
+  t.is(report.onlyInDb.length, 4);
+  t.is(report.withConflicts.length, 1);
 
   // start/end time has no matching collections
   const outOfRangeParams = {

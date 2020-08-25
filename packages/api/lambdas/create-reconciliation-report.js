@@ -16,6 +16,7 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
+const { createReconciliationReport: createInternalReconcileReport } = require('./internal-reconciliation-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
@@ -493,6 +494,7 @@ async function createReconciliationReport(params) {
   };
 
   let report = {
+    reportType: 'Inventory',
     createStartTime: createStartTime.toISOString(),
     createEndTime: null,
     reportStartTime: startTimestamp,
@@ -553,23 +555,28 @@ async function createReconciliationReport(params) {
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
-  const { systemBucket, stackName } = params;
+  const { reportType, reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
-  const reportRecordName = `inventoryReport-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const reportRecordName = reportName || `inventoryReport-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const type = reportType || 'Inventory';
   const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
   const reportRecord = {
     name: reportRecordName,
-    type: 'Inventory',
+    type,
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
   await reconciliationReportModel.create(reportRecord);
 
   try {
-    await createReconciliationReport({ ...params, createStartTime, reportKey });
+    if (type === 'Internal') {
+      await createInternalReconcileReport({ ...params, createStartTime, reportKey });
+    } else {
+      await createReconciliationReport({ ...params, createStartTime, reportKey });
+    }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
     log.error(JSON.stringify(error)); // helps debug ES errors
@@ -595,8 +602,7 @@ async function handler(event) {
   return processRequest({
     systemBucket: event.systemBucket || process.env.system_bucket,
     stackName: event.stackName || process.env.stackName,
-    startTimestamp: event.startTimestamp || null,
-    endTimestamp: event.endTimestamp || null,
+    ...event,
   });
 }
 exports.handler = handler;

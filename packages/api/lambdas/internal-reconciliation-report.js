@@ -1,14 +1,17 @@
 'use strict';
 
+const cloneDeep = require('lodash/cloneDeep');
 const pick = require('lodash/pick');
 const sortBy = require('lodash/sortBy');
 const isEqual = require('lodash/isEqual');
 const union = require('lodash/union');
 const omit = require('lodash/omit');
+const moment = require('moment');
 const pLimit = require('p-limit');
 const log = require('@cumulus/common/log');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeNilProperties } = require('@cumulus/common/util');
+const { s3 } = require('@cumulus/aws-client/services');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { Collection, Granule } = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
@@ -45,6 +48,14 @@ function convertToGranuleSearchParams(params) {
   return removeNilProperties(searchParams);
 }
 
+/**
+ * Compare the collection holdings in Elasticsearch with Database
+ *
+ * @param {Object} recReportParams - lambda's input filtering parameters to
+ *                                   narrow limit of report.
+ * @returns {Promise<Object>} an object with the okCount, onlyInEs, onlyInDb
+ * and withConfilcts
+ */
 async function reconciliationReportForCollections(recReportParams) {
   log.debug('internal-reconciliation-report reconciliationReportForCollections');
   // compare collection holdings:
@@ -112,7 +123,6 @@ async function reconciliationReportForCollections(recReportParams) {
   return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
 
-// export for testing
 exports.reconciliationReportForCollections = reconciliationReportForCollections;
 
 async function getAllCollections() {
@@ -127,8 +137,6 @@ async function getAllCollections() {
 
   return union(dbCollections, esCollectins);
 }
-
-exports.getAllCollections = getAllCollections;
 
 async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   log.debug('internal-reconciliation-report reportForGranulesByCollectionId');
@@ -194,8 +202,15 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
 
   return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
-exports.reportForGranulesByCollectionId = reportForGranulesByCollectionId;
 
+/**
+ * Compare the granule holdings in Elasticsearch with Database
+ *
+ * @param {Object} recReportParams - lambda's input filtering parameters to
+ *                                   narrow limit of report.
+ * @returns {Promise<Object>} an object with the okCount, onlyInEs, onlyInDb
+ * and withConfilcts
+ */
 async function reconciliationReportForGranules(recReportParams) {
   log.debug('internal-reconciliation-report reconciliationReportForGranules');
   // To avoid 'scan' granules table, we query GSI in granules table with collectionId.
@@ -230,5 +245,70 @@ async function reconciliationReportForGranules(recReportParams) {
   return report;
 }
 
-// export for testing
 exports.reconciliationReportForGranules = reconciliationReportForGranules;
+
+/**
+ * Create a Reconciliation report and save it to S3
+ *
+ * @param {Object} recReportParams - params
+ * @param {moment} recReportParams.createStartTime - when the report creation was begun
+ * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
+ * @param {string} recReportParams.reportKey - the s3 report key
+ * @param {string} recReportParams.stackName - the name of the CUMULUS stack
+ * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
+ * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
+ * @returns {Promise<null>} a Promise that resolves when the report has been
+ *   uploaded to S3
+ */
+async function createReconciliationReport(recReportParams) {
+  const {
+    createStartTime,
+    endTimestamp,
+    reportKey,
+    startTimestamp,
+    systemBucket,
+  } = recReportParams;
+
+  // Write an initial report to S3
+  const initialReportFormat = {
+    okCount: 0,
+    withConflicts: [],
+    onlyInEs: [],
+    onlyInDb: [],
+  };
+
+  let report = {
+    reportType: 'Internal',
+    createStartTime: createStartTime.toISOString(),
+    createEndTime: undefined,
+    reportStartTime: startTimestamp,
+    reportEndTime: endTimestamp,
+    status: 'RUNNING',
+    error: null,
+    collections: cloneDeep(initialReportFormat),
+    granules: cloneDeep(initialReportFormat),
+  };
+
+  await s3().putObject({
+    Bucket: systemBucket,
+    Key: reportKey,
+    Body: JSON.stringify(report),
+  }).promise();
+
+  const collectionsReport = await reconciliationReportForCollections({ recReportParams });
+  const granulesReport = await reconciliationReportForGranules({ recReportParams });
+  report = Object.assign(report, { collections: collectionsReport, granules: granulesReport });
+
+  // Create the full report
+  report.createEndTime = moment.utc().toISOString();
+  report.status = 'SUCCESS';
+
+  // Write the full report to S3
+  return s3().putObject({
+    Bucket: systemBucket,
+    Key: reportKey,
+    Body: JSON.stringify(report),
+  }).promise();
+}
+
+exports.createReconciliationReport = createReconciliationReport;
