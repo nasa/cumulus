@@ -24,7 +24,7 @@ variable "rds_user_password" {
 }
 
 variable "rds_admin_access_secret_id" {
-  description = "AWS Secrets Manager secret ID containing jsonified db credentials containing at least host, password, port"
+  description = "AWS Secrets Manager secret ID containing a JSON string of DB credentials (containing at least host, password, port as keys)"
   type = string
 }
 
