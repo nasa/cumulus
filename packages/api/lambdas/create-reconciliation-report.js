@@ -21,6 +21,7 @@ const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const Collection = require('../es/collections');
+const { ESSearchQueue } = require('../es/esSearchQueue');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
@@ -90,6 +91,43 @@ function isOneWayReport(reportParams) {
     'startTimestamp',
     'endTimestamp',
   ].some((e) => !!reportParams[e]);
+}
+
+/**
+ * Checks to see if the searchParams have any value that would require a
+ * filtered search in ES
+ * @param {any} searchParams
+ * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
+ */
+function shouldFilter(searchParams) {
+  return [
+    'updatedAt__from',
+    'updatedAt__to',
+  ].some((e) => !!searchParams[e]);
+}
+
+/**
+ * Fetch collections in Elasticsearch.
+ * @param {Object} esCollectionSearchParams - Object with possible valid filtering options.
+ * @returns {Promise<Array>} - list of collectionIds that match input paramaters
+ */
+async function fetchESCollections(esCollectionSearchParams) {
+  let esCollectionIds;
+  if (shouldFilter(esCollectionSearchParams)) {
+    // Build a ESCollection and call the aggregateActiveGranuleCollections to get
+    // list of collection ids that have granules that have been updated
+    const esCollection = new Collection({ queryStringParameters: esCollectionSearchParams }, 'collection', process.env.ES_INDEX);
+    const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
+    esCollectionIds = esCollectionItems.sort();
+  } else {
+    // return all collections
+    const esCollection = new ESSearchQueue({}, 'collection', process.env.ES_INDEX);
+    const esCollectionItems = await esCollection.empty();
+    esCollectionIds = esCollectionItems.map(
+      (item) => constructCollectionId(item.name, item.version)
+    ).sort();
+  }
+  return esCollectionIds;
 }
 
 /**
@@ -180,12 +218,8 @@ async function reconciliationReportForCollections(recReportParams) {
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
-  // Build a ESCollection and call the aggregateActiveGranuleCollections to get
-  // list of collection ids that have granules that have been updated
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
-  const esCollection = new Collection({ queryStringParameters: esCollectionSearchParams }, 'collection', process.env.ES_INDEX);
-  const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
-  const esCollectionIds = esCollectionItems.sort();
+  const esCollectionIds = await fetchESCollections(esCollectionSearchParams);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];

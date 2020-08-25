@@ -7,6 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
 const isOneWayReport = CRP.__get__('isOneWayReport');
+const shouldFilter = CRP.__get__('shouldFilter');
 const dateToValue = CRP.__get__('dateToValue');
 const convertToESCollectionSearchParams = CRP.__get__(
   'convertToESCollectionSearchParams'
@@ -43,6 +44,38 @@ test(
       {}
     );
     t.false(isOneWayReport(allFalseKeys));
+  }
+);
+
+test(
+  'shouldFilter returns true only when one or more specific parameters '
+    + ' are present on the reconciliation report object.',
+  (t) => {
+    const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
+    const paramsThatShouldReturnFalse = [
+      'stackName',
+      'systemBucket',
+      'startTimestamp',
+      'anythingAtAll',
+    ];
+
+    paramsThatShouldReturnTrue.map((p) =>
+      t.true(shouldFilter({ [p]: randomId('value') })));
+
+    paramsThatShouldReturnFalse.map((p) =>
+      t.false(shouldFilter({ [p]: randomId('value') })));
+
+    const allTrueKeys = paramsThatShouldReturnTrue.reduce(
+      (accum, current) => ({ ...accum, [current]: randomId('value') }),
+      {}
+    );
+    t.true(shouldFilter(allTrueKeys));
+
+    const allFalseKeys = paramsThatShouldReturnFalse.reduce(
+      (accum, current) => ({ ...accum, [current]: randomId('value') }),
+      {}
+    );
+    t.false(shouldFilter(allFalseKeys));
   }
 );
 
