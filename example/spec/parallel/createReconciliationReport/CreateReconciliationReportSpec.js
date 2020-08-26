@@ -112,11 +112,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
 
   const granuleId = randomId('granule-id-');
 
-  const ingestTime = Date.now() - 1000 * 30;
-  const testExecutionId = randomId('test-execution-');
-  console.log('testExecutionId:', testExecutionId);
   const inputPayload = {
-    testExecutionId,
     granules: [
       {
         granuleId,
@@ -132,7 +128,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     ],
   };
 
-  await buildAndExecuteWorkflow(
+  const { executionArn: ingestGranuleExecutionArn } = await buildAndExecuteWorkflow(
     prefix, sourceBucket, 'IngestGranule', newCollection, provider, inputPayload
   );
 
@@ -140,17 +136,6 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     new Granule(),
     { granuleId: inputPayload.granules[0].granuleId },
     'completed'
-  );
-
-  // Find the execution ARN
-  const ingestGranuleExecutionArn = await findExecutionArn(
-    prefix,
-    (execution) => {
-      const executionId = get(execution, 'originalPayload.testExecutionId');
-      return executionId === testExecutionId;
-    },
-    { timestamp__from: ingestTime },
-    { timeout: 15 }
   );
 
   // Wait for the execution to be completed
