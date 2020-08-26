@@ -3,7 +3,6 @@
 const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
 const get = require('lodash/get');
-const pAll = require('p-all');
 
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
