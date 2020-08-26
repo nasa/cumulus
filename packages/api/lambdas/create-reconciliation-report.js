@@ -16,7 +16,7 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
-const { createReconciliationReport: createInternalReconcileReport } = require('./internal-reconciliation-report');
+const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
@@ -573,7 +573,7 @@ async function processRequest(params) {
 
   try {
     if (type === 'Internal') {
-      await createInternalReconcileReport({ ...params, createStartTime, reportKey });
+      await createInternalReconciliationReport({ ...params, createStartTime, reportKey });
     } else {
       await createReconciliationReport({ ...params, createStartTime, reportKey });
     }

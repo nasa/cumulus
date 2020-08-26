@@ -8,13 +8,14 @@ const union = require('lodash/union');
 const omit = require('lodash/omit');
 const moment = require('moment');
 const pLimit = require('p-limit');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { s3 } = require('@cumulus/aws-client/services');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { Collection, Granule } = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
 /**
  * @param {string} datestring - ISO timestamp string
@@ -248,7 +249,7 @@ async function reconciliationReportForGranules(recReportParams) {
 exports.reconciliationReportForGranules = reconciliationReportForGranules;
 
 /**
- * Create a Reconciliation report and save it to S3
+ * Create a Internal Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
@@ -260,7 +261,8 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
-async function createReconciliationReport(recReportParams) {
+async function createInternalReconciliationReport(recReportParams) {
+  log.debug(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
   const {
     createStartTime,
     endTimestamp,
@@ -295,8 +297,8 @@ async function createReconciliationReport(recReportParams) {
     Body: JSON.stringify(report),
   }).promise();
 
-  const collectionsReport = await reconciliationReportForCollections({ recReportParams });
-  const granulesReport = await reconciliationReportForGranules({ recReportParams });
+  const collectionsReport = await reconciliationReportForCollections(recReportParams);
+  const granulesReport = await reconciliationReportForGranules(recReportParams);
   report = Object.assign(report, { collections: collectionsReport, granules: granulesReport });
 
   // Create the full report
@@ -311,4 +313,4 @@ async function createReconciliationReport(recReportParams) {
   }).promise();
 }
 
-exports.createReconciliationReport = createReconciliationReport;
+exports.createInternalReconciliationReport = createInternalReconciliationReport;

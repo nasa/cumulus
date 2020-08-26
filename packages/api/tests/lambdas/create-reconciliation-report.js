@@ -958,16 +958,22 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
     reportType: 'Internal',
+    reportName: randomId('reportName'),
+    collectionId,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
   };
 
   const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Generated');
+  t.is(reportRecord.name, event.reportName);
+  t.is(reportRecord.type, event.reportType);
 
   const report = await fetchCompletedReport(reportRecord);
   t.is(report.status, 'SUCCESS');
   t.is(report.error, null);
   t.is(report.reportType, 'Internal');
-  t.is(report.collections.okCount, 5);
+  t.is(report.collections.okCount, 1);
   t.is(report.collections.onlyInEs.length, 0);
   t.is(report.collections.onlyInDb.length, 0);
   t.is(report.collections.withConflicts.length, 0);

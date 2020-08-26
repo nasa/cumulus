@@ -1,6 +1,7 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const moment = require('moment');
 const fs = require('fs-extra');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const { buildS3Uri, fileExists, getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
@@ -8,7 +9,7 @@ const { dynamodb, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { Granule } = require('@cumulus/api/models');
@@ -350,6 +351,60 @@ describe('When there are granule differences and granule reconciliation is run',
 
     expect(response.statusCode).toBe(404);
     expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
+  });
+
+  describe('Internal Reconciliation Report', () => {
+    it('generates an async operation through the Cumulus API', async () => {
+      const request = {
+        reportType: 'Internal',
+        reportName: randomId('InternalReport'),
+        endTimestamp: moment.utc().format(),
+        collectionId,
+        provider: `s3_provider${testSuffix}`,
+      };
+      const response = await reconciliationReportsApi.createReconciliationReport({
+        prefix: config.stackName,
+        request,
+      });
+
+      const responseBody = JSON.parse(response.body);
+      asyncOperationId = responseBody.id;
+      expect(responseBody.operationType).toBe('Reconciliation Report');
+    });
+
+    it('generates reconciliation report through the Cumulus API', async () => {
+      const asyncOperation = await waitForAsyncOperationStatus({
+        id: asyncOperationId,
+        status: 'SUCCEEDED',
+        stackName: config.stackName,
+        retries: 100,
+      });
+
+      reportRecord = JSON.parse(asyncOperation.output);
+    });
+
+    it('fetches a reconciliation report through the Cumulus API', async () => {
+      const response = await reconciliationReportsApi.getReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      report = JSON.parse(response.body);
+    });
+
+    it('generates a report showing number of collections that are in both ES and DB', () => {
+      expect(report.collections.okCount).toB(1);
+      expect(report.granules.withConflicts.length).toBe(0);
+      expect(report.granules.onlyInEs.length).toBe(0);
+      expect(report.granules.onlyInDb.length).toBe(0);
+    });
+
+    it('generates a report showing number of granules that are in both ES and DB', () => {
+      expect(report.granules.okCount).toBe(2);
+      expect(report.granules.withConflicts.length).toBe(0);
+      expect(report.granules.onlyInEs.length).toBe(0);
+      expect(report.granules.onlyInDb.length).toBe(0);
+    });
   });
 
   afterAll(async () => {
