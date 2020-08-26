@@ -1,6 +1,6 @@
 {
-  "title": "PostToCmrInput",
-  "description": "Describes the input expected by the post-to-cmr task",
+  "title": "UpdateCmrAccessConstraintsInput",
+  "description": "Describes the input expected by the update-cmr-access-constraints task",
   "type": "object",
   "required": [
     "granules"

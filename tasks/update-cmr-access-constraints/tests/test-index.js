@@ -17,6 +17,7 @@ test.after.always(async (t) => {
   await S3.recursivelyDeleteS3Bucket(t.context.bucket);
 });
 
+// ECHO10 XML tests
 test('updateCmrAccessConstraints updates Echo10XML CMR metadata with access constraint', async (t) => {
   const key = `${randomString()}.cmr.xml`;
   const { ETag } = await S3.s3PutObject({
@@ -58,6 +59,47 @@ test('updateCmrAccessConstraints updates Echo10XML CMR metadata with access cons
   t.is(updatedMetadata.Granule.RestrictionComment, accessConstraints.description);
 });
 
+test('updateCmrAccessConstraints sets Echo10XML RestrictionComment to "None" if undefined', async (t) => {
+  const key = `${randomString()}.cmr.xml`;
+  const { ETag } = await S3.s3PutObject({
+    Bucket: t.context.bucket,
+    Key: key,
+    Body: fs.readFileSync(
+      path.join(__dirname, 'fixtures/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml')
+    ),
+  });
+  const payload = {
+    granules: [{
+      granuleId: 'abcd1234',
+      files: [{
+        bucket: t.context.bucket,
+        key: key,
+        etag: ETag,
+      }],
+    }],
+  };
+  const accessConstraints = {
+    value: 17,
+  };
+  const handlerResponse = await updateCmrAccessConstraints({
+    input: payload,
+    config: {
+      accessConstraints,
+    },
+  });
+  // ensure updated ETag
+  const newETag = handlerResponse.granules[0].files[0].etag;
+  t.not(newETag, ETag);
+  // ensure AccessConstraint is set in the metadata
+  const updatedMetadata = await metadataObjectFromCMRFile(
+    S3.buildS3Uri(t.context.bucket, key),
+    newETag
+  );
+  t.is(updatedMetadata.Granule.RestrictionFlag, accessConstraints.value.toString());
+  t.is(updatedMetadata.Granule.RestrictionComment, 'None');
+});
+
+// UMM-G JSON tests
 test('updateCmrAccessConstraints updates UMMG-JSON CMR metadata with access constraint', async (t) => {
   const key = `${randomString()}.cmr.json`;
   const { ETag } = await S3.s3PutObject({
@@ -99,7 +141,7 @@ test('updateCmrAccessConstraints updates UMMG-JSON CMR metadata with access cons
   t.is(updatedMetadata.AccessConstraints.Description, accessConstraints.description);
 });
 
-test('updateCmrAccessConstraints sets access constraint description to "None" if undefined', async (t) => {
+test('updateCmrAccessConstraints sets UMM-G JSON AccessConstraint Description to "None" if undefined', async (t) => {
   const key = `${randomString()}.cmr.json`;
   const { ETag } = await S3.s3PutObject({
     Bucket: t.context.bucket,

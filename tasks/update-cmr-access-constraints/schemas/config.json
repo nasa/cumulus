@@ -8,7 +8,7 @@
   "properties": {
     "accessConstraints": {
       "type": "object",
-      "description": "object containing access constraint value and description",
+      "description": "object containing CMR access constraint value and description",
       "required": [
         "value"
       ],

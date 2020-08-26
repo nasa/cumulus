@@ -108,7 +108,9 @@ const updateCmrAccessConstraints = async (event) => {
   const { config, input } = event;
   const cmrFileObjects = granulesToCmrFileObjects(input.granules);
   const updatedCmrFileObjectsWithEtags = await Promise.all(
-    cmrFileObjects.map((f) => updateCmrFileAccessConstraint(f, config.accessConstraints))
+    cmrFileObjects.map(
+      (cmrFileObject) => updateCmrFileAccessConstraint(cmrFileObject, config.accessConstraints)
+    )
   );
   return { ...input, granules: reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) };
 };

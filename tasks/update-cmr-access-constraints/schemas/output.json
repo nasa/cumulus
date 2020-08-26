@@ -1,6 +1,6 @@
 {
-  "title": "PostToCmrOutput",
-  "description": "Describes the output produced by the post-to-cmr task",
+  "title": "UpdateCmrAccessConstraintsOutput",
+  "description": "Describes the output produced by the update-cmr-access-constraints task",
   "type": "object",
   "properties": {
     "granules": {
