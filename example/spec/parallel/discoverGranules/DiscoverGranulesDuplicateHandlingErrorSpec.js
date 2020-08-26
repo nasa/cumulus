@@ -97,7 +97,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === ingestGranuleRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        { timestamp__from: ingestTime, limit: 20 },
         { timeout: 15 }
       );
 
@@ -135,7 +135,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        { timestamp__from: ingestTime, limit: 20 },
         { timeout: 15 }
       );
     } catch (error) {

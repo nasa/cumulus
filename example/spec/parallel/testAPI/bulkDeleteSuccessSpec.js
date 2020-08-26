@@ -133,7 +133,7 @@ describe('POST /granules/bulkDelete', () => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
-          { timestamp__from: ingestTime },
+          { timestamp__from: ingestTime, limit: 20 },
           { timeout: 15 }
         );
 

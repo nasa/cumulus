@@ -118,7 +118,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === firstIngestGranuleRule.payload.testExecutionId;
         },
-        { timestamp__from: ingestTime },
+        { timestamp__from: ingestTime, limit: 20 },
         { timeout: 15 }
       );
 
@@ -189,7 +189,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === secondIngestGranuleRule.payload.testExecutionId;
         },
-        { timestamp__from: ingestTime },
+        { timestamp__from: ingestTime, limit: 20 },
         { timeout: 15 }
       );
 
