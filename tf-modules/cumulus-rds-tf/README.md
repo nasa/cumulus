@@ -12,6 +12,6 @@ This module's outputs are listed in [ouputs.tf](./outputs.tf).   Notably:
 
 **rds_endpoint** - The cluster's endpoint.  This is used in later configuration values for the `data-persistence` module.
 
-**secret_arn** - The database administration login secret.    Used to provision user databases/logins/configure the cluster via ecosystem modules or manual administration.
+**admin_db_login_secret_arn** - The database administration login secret.    Used to provision user databases/logins/configure the cluster via ecosystem modules or manual administration.
 
 **security_group_id** - A security group created to allow access to the .database.  Lambdas/resources that require access to the database *must* be in the configured VPC/subnets and be configured as part of this security group.

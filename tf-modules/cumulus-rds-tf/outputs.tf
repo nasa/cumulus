@@ -6,11 +6,11 @@ output "rds_endpoint" {
   value = aws_rds_cluster.core_team_cluster.endpoint
 }
 
-output "secret_arn" {
+output "admin_db_login_secret_arn" {
   value = aws_secretsmanager_secret_version.rds_login.arn
 }
 
-output "secret_version" {
+output "admin_db_login_secret_version" {
   value = aws_secretsmanager_secret_version.rds_login.version_id
 }
 
