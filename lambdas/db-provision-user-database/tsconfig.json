@@ -4,7 +4,7 @@
     "outDir": "dist/lambda",
     "declaration": false,
     "declarationMap": false,
-    "sourceMap": false,
+    "sourceMap": true,
     "removeComments": true
   },
   "include": ["src"],
