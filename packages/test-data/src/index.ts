@@ -1,12 +1,11 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
-const { promisify } = require('util');
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
-const testDataPath = (name) => path.join(__dirname, name);
+const testDataPath = (name: string): string =>
+  path.join(__dirname, '..', name);
 
 /**
  * Read test data in as a string
@@ -14,7 +13,7 @@ const testDataPath = (name) => path.join(__dirname, name);
  * @param {string} name - the path to the test data
  * @returns {Promise<string>} the test data as a string
  */
-const loadTestData = (name) => {
+export const loadTestData = (name: string): Promise<string> => {
   const filePath = testDataPath(name);
   return readFile(filePath, 'utf8');
 };
@@ -23,9 +22,10 @@ const loadTestData = (name) => {
  * Read and parse JSON-formatted test data
  *
  * @param {string} name - the path to the test data
- * @returns {Promise} the test data parsed into Javascript
+ * @returns {Promise<unknown>} the test data parsed into Javascript
  */
-const loadJSONTestData = (name) => loadTestData(name).then(JSON.parse);
+export const loadJSONTestData = (name: string): Promise<unknown> =>
+  loadTestData(name).then(JSON.parse);
 
 /**
  * Get a stream containing test data
@@ -33,13 +33,7 @@ const loadJSONTestData = (name) => loadTestData(name).then(JSON.parse);
  * @param {string} name - the path to the test data
  * @returns {Stream} the test data as a writable stream
  */
-const streamTestData = (name) => {
+export const streamTestData = (name: string): fs.ReadStream => {
   const filePath = testDataPath(name);
   return fs.createReadStream(filePath);
-};
-
-module.exports = {
-  loadJSONTestData,
-  loadTestData,
-  streamTestData,
 };
