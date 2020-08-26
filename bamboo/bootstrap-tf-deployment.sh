@@ -52,7 +52,7 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "aws_region=$AWS_REGION" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]" \
   -var "vpc_id=$VPC_ID" \
-  -var "rds_access_secret_id=$RDS_ACCESS_SECRET_ID" \
+  -var "rds_admin_access_secret_id=$RDS_ADMIN_ACCESS_SECRET_ID" \
   -var "rds_security_group=$RDS_SECURITY_GROUP"\
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
 
