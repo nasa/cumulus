@@ -164,16 +164,18 @@ const createActiveCollection = async (prefix, sourceBucket) => {
   await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
   const cleanupFunction = async () => {
-    await pAll([
-      () => deleteS3Object(sourceBucket, granFileKey),
-      () => deleteGranule({ prefix, granuleId }),
-      () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
-      () => deleteCollection({
-        prefix,
-        collectionName: get(newCollection, 'name'),
-        collectionVersion: get(newCollection, 'version'),
-      }),
-    ]);
+    await Promise.allSettled(
+      [
+        deleteS3Object(sourceBucket, granFileKey),
+        deleteGranule({ prefix, granuleId }),
+        deleteProvider({ prefix, providerId: get(provider, 'id') }),
+        deleteCollection({
+          prefix,
+          collectionName: get(newCollection, 'name'),
+          collectionVersion: get(newCollection, 'version'),
+        }),
+      ]
+    );
   };
 
   return [newCollection, cleanupFunction];
