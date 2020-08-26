@@ -13,6 +13,10 @@ cp package.json dist/lambda
 (
   cd dist/lambda
 
+  mkdir -p node_modules
+
+  npm link "@cumulus/db"
+
   npm install --production
 
   rm -f package.json package-lock.json

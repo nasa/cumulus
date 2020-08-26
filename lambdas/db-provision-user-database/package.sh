@@ -13,6 +13,10 @@ cp package.json dist/lambda
 (
   cd dist/lambda
 
+  mkdir -p node_modules
+
+  npx lerna link  
+  
   npm install --production
 
   rm -f package.json package-lock.json
