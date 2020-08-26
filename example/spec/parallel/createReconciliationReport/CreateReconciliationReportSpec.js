@@ -240,8 +240,9 @@ describe('When there are granule differences and granule reconciliation is run',
 
     console.log('Checking collection in list');
     // Verify the collection is returned when listing collections
+    console.log(`Ingest time: ${ingestTime}`);
     const collsResp = await getCollections(
-      { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime } }
+      { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime, limit: 30 } }
     );
     const colls = JSON.parse(collsResp.body).results;
     console.log(JSON.stringify(colls, null, 2));
