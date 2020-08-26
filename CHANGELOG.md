@@ -43,6 +43,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/aws-client/S3.getObject` to get an AWS S3 object
   - Added `@cumulus/aws-client/S3.waitForObject` to get an AWS S3 object,
     retrying, if necessary
+- **CUMULUS-2107**
+  - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
+    Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
+    `RestrictionFlag/RestrictionComment`, respectively.
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
 
