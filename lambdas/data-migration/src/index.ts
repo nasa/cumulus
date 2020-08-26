@@ -43,7 +43,6 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
 
 export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
   const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
-  // const collectionsModel = new Collection();
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: collectionsTable,
