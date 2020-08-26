@@ -9,8 +9,8 @@ variable "prefix" {
   type = string
 }
 
-variable "rds_admin_access_secret_id" {
-  description = "AWS Secrets Manager secret ID containing a JSON string of DB credentials (containing at least host, password, port as keys)"
+variable "rds_admin_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
   type        = string
 }
 

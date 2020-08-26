@@ -7,7 +7,7 @@ variable "permissions_boundary_arn" {
   type = string
 }
 
-variable "rds_access_secret_id" {
+variable "rds_access_secret_arn" {
   type = string
   default = null
 }

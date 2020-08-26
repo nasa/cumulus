@@ -11,7 +11,7 @@ provider "aws" {
 
 locals {
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", var.rds_security_group)
-  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", var.rds_access_secret_id)
+  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", var.rds_access_secret_arn)
 }
 
 data "terraform_remote_state" "data_persistence" {

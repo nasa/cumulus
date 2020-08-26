@@ -94,7 +94,7 @@ data "aws_iam_policy_document" "db_provision" {
   }
   statement {
     actions = ["secretsmanager:GetSecretValue"]
-    resources = [var.rds_admin_access_secret_id]
+    resources = [var.rds_admin_access_secret_arn]
   }
 }
 
