@@ -11,7 +11,8 @@
     "package": "./package.sh",
     "test": "../../../node_modules/.bin/ava",
     "prepare": "npm run tsc",
-    "tsc": "../../../node_modules/.bin/tsc"
+    "tsc": "../../../node_modules/.bin/tsc",
+    "python-lint": true
   },
   "directories": {
     "test": "test"
