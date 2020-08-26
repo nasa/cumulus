@@ -2,7 +2,7 @@
 
 set -e
 
-export PATH="../../node_modules/.bin:${PATH}"
+export PATH="../../../node_modules/.bin:${PATH}"
 
 rm -rf dist
 
