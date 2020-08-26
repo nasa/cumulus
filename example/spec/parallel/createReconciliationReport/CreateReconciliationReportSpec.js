@@ -13,7 +13,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { findExecutionArn, getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
+const { getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { Granule } = require('@cumulus/api/models');
