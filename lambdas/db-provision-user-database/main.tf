@@ -102,7 +102,7 @@ data "aws_lambda_invocation" "provision_database" {
   depends_on                      = [aws_lambda_function.provision_database]
   function_name                   = aws_lambda_function.provision_database.function_name
   input                           = jsonencode({ prefix = var.prefix,
-                                                 rootLoginSecret = var.rds_admin_access_secret_id,
+                                                 rootLoginSecret = var.rds_admin_access_secret_arn,
                                                  userLoginSecret = aws_secretsmanager_secret.db_credentials.name
                                                  dbPassword = var.rds_user_password
                                                })
