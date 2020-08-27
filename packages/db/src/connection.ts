@@ -10,17 +10,6 @@ export interface knexConnectionConfigObject {
   database?: string,
 }
 
-interface knexConfigObject {
-  client: string,
-  connection: knexConnectionConfigObject,
-  acquireConnectionTimeout: number,
-  asyncStackTraces: boolean,
-  debug: boolean,
-  migrations?: {
-    directory: string
-  }
-}
-
 interface knexEnvironmentObject extends NodeJS.ProcessEnv {
   KNEX_DEBUG?: string
   KNEX_ASYNC_STACK_TRACES?: string,
@@ -44,7 +33,7 @@ const getConfiguredKnex = (
     debug: env.KNEX_DEBUG === 'true',
     asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
     acquireConnectionTimeout: env.timeout ? env.timeout : 60000,
-  } as knexConfigObject;
+  } as Knex.Config;
 
   if (env?.migrationDir) {
     knexConfig = {
