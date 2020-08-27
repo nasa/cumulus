@@ -8,10 +8,11 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",
-    "package": "npm run clean && npm run tsc && ../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
-    "test": "../../node_modules/.bin/ava",
+    "package": "npm run clean && npm run tsc && ../../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
+    "test": "../../../node_modules/.bin/ava",
     "prepare": "npm run tsc",
-    "tsc": "../../node_modules/.bin/tsc"
+    "tsc": "../../../node_modules/.bin/tsc",
+    "python-lint": "true"
   },
   "directories": {
     "test": "test"

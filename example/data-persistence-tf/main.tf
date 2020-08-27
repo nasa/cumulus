@@ -15,7 +15,7 @@ resource "random_string" "db_pass" {
 }
 
 module "provision_database" {
-  source                          = "../../lambdas/db-provision-user-database"
+  source                          = "../lambdas/db-provision-user-database"
   prefix                          = var.prefix
   subnet_ids                      = var.subnet_ids
   rds_security_group              = var.rds_security_group
