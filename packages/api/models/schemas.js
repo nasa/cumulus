@@ -359,7 +359,7 @@ module.exports.reconciliationReport = {
     name: { type: 'string' },
     type: {
       type: 'string',
-      enum: ['Inventory'],
+      enum: ['Inventory', 'Granule Not Found'],
     },
     status: {
       type: 'string',

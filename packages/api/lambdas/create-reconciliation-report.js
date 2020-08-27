@@ -2,6 +2,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
+const camelCase = require('lodash/camelCase');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
@@ -679,16 +680,16 @@ async function createReconciliationReport(recReportParams) {
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
-  const { systemBucket, stackName } = params;
+  const { systemBucket, stackName, reportType } = params;
   const createStartTime = moment.utc();
-  const reportRecordName = `inventoryReport-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const reportRecordName = `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
   const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
   const reportRecord = {
     name: reportRecordName,
-    type: 'Inventory',
+    type: reportType,
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
@@ -741,7 +742,15 @@ function normalizeEvent(event) {
   const stackName = event.stackName || process.env.stackName;
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
-  return { systemBucket, stackName, startTimestamp, endTimestamp };
+
+  let reportType = 'Inventory';
+  console.log(`Report Type: ${event.reportType}`);
+  console.log(`EVENT: ${JSON.stringify(event)}`);
+  if (event.reportType && event.reportType.toLowerCase() === 'granulenotfound') {
+    reportType = 'Granule Not Found';
+  }
+
+  return { systemBucket, stackName, startTimestamp, endTimestamp, reportType };
 }
 
 async function handler(event) {
