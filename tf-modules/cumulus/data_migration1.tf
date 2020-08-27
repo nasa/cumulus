@@ -1,5 +1,5 @@
-module "data_migration_lambda" {
-  source = "../../lambdas/data-migration"
+module "data_migration1" {
+  source = "../../lambdas/data-migration1"
 
   prefix = var.prefix
 
