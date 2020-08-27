@@ -27,13 +27,13 @@ const getConfiguredKnex = (
   connectionConfig: Knex.PgConnectionConfig,
   env: knexEnvironmentObject
 ): Knex => {
-  let knexConfig = {
+  const knexConfig: Knex.Config = {
     client: 'pg',
     connection: connectionConfig,
     debug: env.KNEX_DEBUG === 'true',
     asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
-    acquireConnectionTimeout: env.timeout ? env.timeout : 60000,
-  } as Knex.Config;
+    acquireConnectionTimeout: env.timeout ? Number(env.timeout) : 60000,
+  };
 
   if (env?.migrationDir) {
     knexConfig = {
