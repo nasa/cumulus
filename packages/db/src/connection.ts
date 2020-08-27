@@ -1,5 +1,5 @@
 import Knex from 'knex';
-import { getSecretConnectionConfig, getEnvConnectionConfig } from './config';
+import { getSecretConnectionConfig, getConnectionConfigEnv } from './config';
 
 import { envConectionConfigObject, knexSecretConnectionConfigObject } from './types';
 
@@ -78,7 +78,7 @@ export const getKnexFromSecret = async (
 /**
 * Returns a configured Knex object configured for connection to a postgres database
 * @summary If the description is long, write your summary here. Otherwise, feel free to remove this.
-* @param {getEnvConnectionConfigEnvironment} env - Object with database configuration environment
+* @param {getConnectionConfigEnvEnvironment} env - Object with database configuration environment
 *                                                  set
 * @param {string} env.PG_HOST       - Hostname database cluster
 * @param {string} env.PG_USER       - User to connect to the database
@@ -92,7 +92,7 @@ export const getKnexFromSecret = async (
 export const getKnexFromEnvironment = async (
   env: envConectionConfigObject
 ): Promise<Knex> => {
-  const config = await getEnvConnectionConfig(env);
+  const config = await getConnectionConfigEnv(env);
   return getConfiguredKnex(config, env);
 };
 

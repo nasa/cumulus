@@ -34,7 +34,7 @@ export const getSecretConnectionConfig = async (
   };
 };
 
-export const getEnvConnectionConfig = async (
+export const getConnectionConfigEnv = async (
   env: envConectionConfigObject
 ): Promise<Knex.PgConnectionConfig> => ({
   host: getRequiredEnvVar('PG_HOST', env),

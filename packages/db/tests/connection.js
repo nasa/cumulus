@@ -8,7 +8,7 @@ const fakeConnectionConfig = {
   host: 'localhost',
   password: 'fakepassword',
   user: 'someuser',
-  database: 'fakedbb',
+  database: 'fakeDb',
 };
 test.afterEach(async () => {
   sandbox.restore();
@@ -16,11 +16,11 @@ test.afterEach(async () => {
 
 test.before(async (t) => {
   t.context.getSecretConnectionConfigSpy = sandbox.fake.returns(fakeConnectionConfig);
-  t.context.getEnvConnectionConfigSpy = sandbox.fake.returns(fakeConnectionConfig);
+  t.context.getConnectionConfigEnvSpy = sandbox.fake.returns(fakeConnectionConfig);
 
   const { getKnexFromSecret, getKnexFromEnvironment } = proxyquire('../dist/connection.js', {
     './config': {
-      getEnvConnectionConfig: t.context.getEnvConnectionConfigSpy,
+      getConnectionConfigEnv: t.context.getConnectionConfigEnvSpy,
       getSecretConnectionConfig: t.context.getSecretConnectionConfigSpy,
     },
   });
