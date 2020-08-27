@@ -1,8 +1,5 @@
 version: "3"
 services:
-  postgres:
-    ports:
-      - 5432:5432
   sftp:
     environment:
       - CI=false
@@ -22,5 +19,6 @@ services:
       - 3030:3030
       - 2222:2222
       - 4550-4599:4550-4599
+      - 5432:5432
       - 8080:8080
       - 9200:9200
