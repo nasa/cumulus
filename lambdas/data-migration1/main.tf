@@ -12,15 +12,15 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
   }
 }
 
-resource "aws_iam_role" "data_migration" {
-  name                 = "${var.prefix}-data-migration"
+resource "aws_iam_role" "data_migration1" {
+  name                 = "${var.prefix}-data-migration1"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
 
   tags = var.tags
 }
 
-data "aws_iam_policy_document" "data_migration" {
+data "aws_iam_policy_document" "data_migration1" {
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -38,19 +38,21 @@ data "aws_iam_policy_document" "data_migration" {
     actions = [
       "dynamodb:Scan",
     ]
-    resources = [for k, table in var.dynamo_tables : table.arn]
+    resources = [
+      var.dynamo_tables.collections.arn
+    ]
   }
 
   # TODO: add RDS perms
 }
 
-resource "aws_iam_role_policy" "data_migration" {
-  name   = "${var.prefix}_data_migration"
-  role   = aws_iam_role.data_migration.id
-  policy = data.aws_iam_policy_document.data_migration.json
+resource "aws_iam_role_policy" "data_migration1" {
+  name   = "${var.prefix}_data_migration1"
+  role   = aws_iam_role.data_migration1.id
+  policy = data.aws_iam_policy_document.data_migration1.json
 }
 
-resource "aws_security_group" "data_migration" {
+resource "aws_security_group" "data_migration1" {
   count = length(var.subnet_ids) == 0 ? 0 : 1
 
   name   = "${var.prefix}-data-migration"
@@ -66,12 +68,12 @@ resource "aws_security_group" "data_migration" {
   tags = var.tags
 }
 
-resource "aws_lambda_function" "data_migration" {
-  function_name    = "${var.prefix}-data-migration"
+resource "aws_lambda_function" "data_migration1" {
+  function_name    = "${var.prefix}-data-migration1"
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
-  role             = aws_iam_role.data_migration.arn
+  role             = aws_iam_role.data_migration1.arn
   runtime          = "nodejs12.x"
   timeout          = 60
   memory_size      = 128

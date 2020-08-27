@@ -37,20 +37,6 @@ module.exports = {
     {'formidable': 'url'}
   ],
   module: {
-    // rules: [
-    //   {
-    //     test: /\.js$/,
-    //     exclude: /node_modules/,
-    //     use: [
-    //       {
-    //         loader: 'babel-loader',
-    //         options: {
-    //           cacheDirectory: true
-    //         },
-    //       },
-    //     ],
-    //   },
-    // ],
     rules: [
       {
         test: /\.tsx?$/,
