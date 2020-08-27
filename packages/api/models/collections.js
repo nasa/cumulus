@@ -11,7 +11,6 @@ const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
 const { AssociatedRulesError } = require('../lib/errors');
 
-
 /**
  * Test a regular expression against a sample filename.
  *
