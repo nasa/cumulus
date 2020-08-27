@@ -18,19 +18,18 @@ test.before(async (t) => {
   t.context.getSecretConnectionConfigSpy = sandbox.fake.returns(fakeConnectionConfig);
   t.context.getConnectionConfigEnvSpy = sandbox.fake.returns(fakeConnectionConfig);
 
-  const { getKnexFromSecret, getKnexFromEnvironment } = proxyquire('../dist/connection.js', {
+  const { knex } = proxyquire('../dist/connection.js', {
     './config': {
       getConnectionConfigEnv: t.context.getConnectionConfigEnvSpy,
       getSecretConnectionConfig: t.context.getSecretConnectionConfigSpy,
     },
   });
-  t.context.getKnexFromEnvironment = getKnexFromEnvironment;
-  t.context.getKnexFromSecret = getKnexFromSecret;
+  t.context.knex = knex;
 });
 
-test.serial('getKnexFromSecret returns expected Knex object with migration defined',
+test.serial('knex returns expected Knex object with migration defined',
   async (t) => {
-    const results = await t.context.getKnexFromSecret({
+    const results = await t.context.knex({
       migrationDir: 'testMigrationDir',
       databaseCredentialSecretArn: 'randomSecret',
       KNEX_ASYNC_STACK_TRACES: 'true',
@@ -45,9 +44,9 @@ test.serial('getKnexFromSecret returns expected Knex object with migration defin
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test.serial('getKnexFromSecret returns expected Knex object with optional config defined',
+test.serial('knex returns expected Knex object with optional config defined',
   async (t) => {
-    const results = await t.context.getKnexFromSecret({
+    const results = await t.context.knex({
       migrationDir: 'testMigrationDir',
       databaseCredentialSecretArn: 'randomSecret',
       KNEX_DEBUG: 'true',
@@ -57,21 +56,21 @@ test.serial('getKnexFromSecret returns expected Knex object with optional config
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test.serial('getKnexFromSecret returns Knex object with a default migration set when env.migrations is not defined',
+test.serial('knex returns Knex object with a default migration set when env.migrations is not defined',
   async (t) => {
-    const results = await t.context.getKnexFromSecret({
+    const results = await t.context.knex({
       databaseCredentialSecretArn: 'randomSecret',
     });
     t.is('./migrations', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test.serial('getKnexFromEnvironment returns expected Knex object with optional configuraiton and a migration defined',
+test.serial('knex returns expected Knex object with manual db configuraiton options set',
   async (t) => {
-    const results = await t.context.getKnexFromEnvironment({
+    const results = await t.context.knex({
       migrationDir: 'testMigrationDir',
       PG_HOST: 'localhost',
-      PG_USER: 'fakeIser',
+      PG_USER: 'fakeUser',
       PG_PASSWORD: 'fakePassword',
       PG_DATABASE: 'fakeDb',
       KNEX_ASYNC_STACK_TRACES: 'true',
@@ -83,17 +82,5 @@ test.serial('getKnexFromEnvironment returns expected Knex object with optional c
     t.is(true, results.client.config.debug);
     t.is(true, results.client.config.asyncStackTraces);
     t.is('pg', results.client.config.client);
-    t.is(10000, results.client.config.acquireConnectionTimeout);
-  });
-
-test.serial('getKnexFromEnvironment returns Knew object with a default migration set when env.migrations is not defined',
-  async (t) => {
-    const results = await t.context.getKnexFromEnvironment({
-      PG_HOST: 'localhost',
-      PG_USER: 'fakeIser',
-      PG_PASSWORD: 'fakePassword',
-      PG_DATABASE: 'fakeDb',
-    });
-    t.is('./migrations', results.migrate.config.directory);
-    t.is('knex_migrations', results.migrate.config.tableName);
+    t.is(60000, results.client.config.acquireConnectionTimeout);
   });

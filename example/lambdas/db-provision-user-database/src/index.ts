@@ -33,7 +33,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
   let knex;
   try {
-    knex = await connection.getKnexFromSecret(
+    knex = await connection.knex(
       { databaseCredentialSecretArn: event.rootLoginSecret }
     );
     const dbUser = event.prefix.replace(/-/g, '_');

@@ -31,7 +31,7 @@ const { handler } = proxyquire('../dist/lambda/index.js', {
   },
   '@cumulus/db': {
     connection: {
-      getKnexFromSecret: () => Promise.resolve(Knex({
+      knex: () => Promise.resolve(Knex({
         client: 'pg',
         connection: dbConnectionConfig,
       })),
