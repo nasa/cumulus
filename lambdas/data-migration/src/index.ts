@@ -18,7 +18,7 @@ export interface RDSCollectionRecord {
   version: string
   process: string
   granuleIdValidationRegex: string
-  granuleIdExtraction: string
+  granuleIdExtractionRegex: string
   files: string
   // default will be set by schema validation
   duplicateHandling: string
@@ -64,7 +64,7 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
         url_path: record.url_path,
         duplicateHandling: record.duplicateHandling,
         granuleIdValidationRegex: record.granuleId,
-        granuleIdExtraction: record.granuleIdExtraction,
+        granuleIdExtractionRegex: record.granuleIdExtraction,
         // have to stringify on an array of values
         files: JSON.stringify(record.files),
         reportToEms: record.reportToEms,

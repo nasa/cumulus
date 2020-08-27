@@ -79,7 +79,7 @@ test.serial('migrateCollections correctly migrates collection record', async (t)
 
   await migrateCollections(process.env, knex);
 
-  const records = await knex().select().table('collections');
+  const records = await knex.queryBuilder().select().table('collections');
 
   t.deepEqual(
     omit(records[0], ['cumulusId']),
@@ -87,10 +87,11 @@ test.serial('migrateCollections correctly migrates collection record', async (t)
       {
         ...createdRecord,
         granuleIdValidationRegex: createdRecord.granuleId,
+        granuleIdExtractionRegex: createdRecord.granuleIdExtraction,
         created_at: new Date(createdRecord.createdAt),
         updated_at: new Date(createdRecord.updatedAt),
       },
-      ['granuleId', 'createdAt', 'updatedAt']
+      ['granuleId', 'granuleIdExtraction', 'createdAt', 'updatedAt']
     )
   );
 });
@@ -110,7 +111,7 @@ test.serial('migrateCollections processes multiple collections', async (t) => {
 
   await migrateCollections(process.env, knex);
 
-  const records = await knex().select().table('collections');
+  const records = await knex.queryBuilder().select().table('collections');
   t.is(records.length, 2);
 });
 
@@ -177,13 +178,14 @@ test.serial('migrateCollections handles nullable fields on source collection dat
   const createdRecordIds = await migrateCollections(process.env, knex);
   t.is(createdRecordIds.length, 1);
 
-  const records = await knex().select().table('collections');
+  const records = await knex.queryBuilder().select().table('collections');
   t.deepEqual(
     omit(records[0], ['cumulusId']),
     omit(
       {
         ...createdRecord,
         granuleIdValidationRegex: createdRecord.granuleId,
+        granuleIdExtractionRegex: createdRecord.granuleIdExtraction,
         url_path: null,
         process: null,
         ignoreFilesConfigForDiscovery: null,
@@ -195,7 +197,7 @@ test.serial('migrateCollections handles nullable fields on source collection dat
         duplicateHandling: 'error',
         reportToEms: true,
       },
-      ['granuleId', 'createdAt', 'updatedAt']
+      ['granuleId', 'granuleIdExtraction', 'createdAt', 'updatedAt']
     )
   );
 });
