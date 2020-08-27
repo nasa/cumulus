@@ -10,9 +10,9 @@ export const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string 
 };
 
 export const getSecretConnectionConfig = async (
-  SecretId: string
+  SecretId: string,
+  secretsManager: AWS.SecretsManager
 ): Promise<Knex.PgConnectionConfig> => {
-  const secretsManager = new AWS.SecretsManager();
   const response = await secretsManager.getSecretValue(
     { SecretId } as AWS.SecretsManager.GetSecretValueRequest
   ).promise();

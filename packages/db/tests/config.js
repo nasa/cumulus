@@ -1,8 +1,7 @@
 const test = require('ava');
 const sinon = require('sinon');
-const proxyquire = require('proxyquire').noPreserveCache();
 
-const { getRequiredEnvVar, getConnectionConfigEnv } = require('../dist/config');
+const { getSecretConnectionConfig, getRequiredEnvVar, getConnectionConfigEnv } = require('../dist/config');
 
 const dbConnectionConfig = {
   username: 'postgres',
@@ -11,32 +10,32 @@ const dbConnectionConfig = {
   host: 'localhost',
 };
 
-const secretsManagerStub = sinon.stub().returns({
+const secretsManagerStub = {
   getSecretValue: (_value) => ({
     promise: () => Promise.resolve({
       SecretString: JSON.stringify(dbConnectionConfig),
     }),
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
-});
+};
 
-const undefinedSecretsManagerStub = sinon.stub().returns({
+const undefinedSecretsManagerStub = {
   getSecretValue: (_value) => ({
     promise: () => Promise.resolve({
       SecretString: undefined,
     }),
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
-});
+};
 
-const badSecretsManagerStub = sinon.stub().returns({
+const badSecretsManagerStub = {
   getSecretValue: (_value) => ({
     promise: () => Promise.resolve({
       SecretString: { test: 'value' },
     }),
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
-});
+};
 
 test('getRequiredEnvVar returns an environment value if defined', async (t) => {
   const result = getRequiredEnvVar('testVar', { testVar: 'testvalue' });
@@ -48,12 +47,10 @@ test('getRequiredEnvVar throws error if not defined', async (t) => {
 });
 
 test('getSecretConnectionConfig returns a Knex.PgConnectionConfig object', async (t) => {
-  const { getSecretConnectionConfig } = proxyquire('../dist/config.js', {
-    'aws-sdk': {
-      SecretsManager: secretsManagerStub,
-    },
-  });
-  const result = await getSecretConnectionConfig('fakeSecretId');
+  const result = await getSecretConnectionConfig(
+    'fakeSecretId',
+    secretsManagerStub
+  );
   const expectedConfig = {
     ...dbConnectionConfig,
     user: 'postgres',
@@ -63,21 +60,17 @@ test('getSecretConnectionConfig returns a Knex.PgConnectionConfig object', async
 });
 
 test('getSecretConnectionConfig throws an error on an undefined secret', async (t) => {
-  const { getSecretConnectionConfig } = proxyquire('../dist/config.js', {
-    'aws-sdk': {
-      SecretsManager: undefinedSecretsManagerStub,
-    },
-  });
-  await t.throwsAsync(getSecretConnectionConfig('fakeSecretId'));
+  await t.throwsAsync(getSecretConnectionConfig(
+    'fakeSecretId',
+    undefinedSecretsManagerStub
+  ));
 });
 
 test('getSecretConnectionConfig throws an error a secret that is missing required values', async (t) => {
-  const { getSecretConnectionConfig } = proxyquire('../dist/config.js', {
-    'aws-sdk': {
-      SecretsManager: badSecretsManagerStub,
-    },
-  });
-  await t.throwsAsync(getSecretConnectionConfig('fakeSecretId'));
+  await t.throwsAsync(getSecretConnectionConfig(
+    'fakeSecretId',
+    badSecretsManagerStub
+  ));
 });
 
 test('getConnectionConfigEnv returns the expected configuration from the passed in env object', async (t) => {

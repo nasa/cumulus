@@ -27,7 +27,7 @@ test.before(async (t) => {
   t.context.knex = knex;
 });
 
-test.serial('knex returns expected Knex object with migration defined',
+test('knex returns expected Knex object with migration defined',
   async (t) => {
     const results = await t.context.knex({
       migrationDir: 'testMigrationDir',
@@ -44,7 +44,7 @@ test.serial('knex returns expected Knex object with migration defined',
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test.serial('knex returns expected Knex object with optional config defined',
+test('knex returns expected Knex object with optional config defined',
   async (t) => {
     const results = await t.context.knex({
       migrationDir: 'testMigrationDir',
@@ -56,7 +56,7 @@ test.serial('knex returns expected Knex object with optional config defined',
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test.serial('knex returns Knex object with a default migration set when env.migrations is not defined',
+test('knex returns Knex object with a default migration set when env.migrations is not defined',
   async (t) => {
     const results = await t.context.knex({
       databaseCredentialSecretArn: 'randomSecret',
@@ -65,7 +65,7 @@ test.serial('knex returns Knex object with a default migration set when env.migr
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test.serial('knex returns expected Knex object with manual db configuraiton options set',
+test('knex returns expected Knex object with manual db configuraiton options set',
   async (t) => {
     const results = await t.context.knex({
       migrationDir: 'testMigrationDir',

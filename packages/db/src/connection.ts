@@ -1,3 +1,4 @@
+import AWS from 'aws-sdk';
 import Knex from 'knex';
 import { getSecretConnectionConfig, getConnectionConfigEnv } from './config';
 
@@ -86,7 +87,11 @@ export const knex = async (
 ): Promise<Knex> => {
   let connectionConfig;
   if (isKnexSecretConnectionConfigObject(env)) {
-    connectionConfig = await getSecretConnectionConfig(env.databaseCredentialSecretArn);
+    const secretsManager = new AWS.SecretsManager();
+    connectionConfig = await getSecretConnectionConfig(
+      env.databaseCredentialSecretArn,
+      secretsManager
+    );
   } else if (isenvConectionConfigObject(env)) {
     connectionConfig = await getConnectionConfigEnv(env);
   } else {
