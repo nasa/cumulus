@@ -1,8 +1,10 @@
 'use strict';
 
 const { Search } = require('./search');
-const defaultESScrollSize = 1000;
-const defaultESScrollDuration = '2m';
+const {
+  defaultESScrollSize,
+  defaultESScrollDuration,
+} = require('./esDefaults');
 
 /**
  * Scroll wrapper class for Search

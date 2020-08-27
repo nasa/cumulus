@@ -1,6 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const pick = require('lodash/pick');
 const {
   deleteS3Object,
   getS3Object,
@@ -100,10 +101,7 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-  const startTimestamp = req.body.startTimestamp || undefined;
-  const endTimestamp = req.body.endTimestamp || undefined;
-  const payload = { startTimestamp, endTimestamp };
-
+  const payload = pick(req.body, ['startTimestamp', 'endTimestamp']);
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,

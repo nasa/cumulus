@@ -191,7 +191,7 @@ describe('The TestPythonProcessing workflow', () => {
         const granuleId = await pRetry(
           async () => {
             const id = await GranuleFilesCache.getGranuleId(Bucket, Key);
-            if (id === null) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
+            if (id === undefined) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
             return id;
           },
           { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
