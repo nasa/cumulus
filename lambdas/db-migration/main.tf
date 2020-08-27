@@ -75,7 +75,7 @@ resource "aws_lambda_function" "db_migration" {
 
   environment {
     variables = {
-      databaseCredentialSecretId = var.rds_access_secret_arn
+      databaseCredentialSecretArn = var.rds_access_secret_arn
     }
   }
 

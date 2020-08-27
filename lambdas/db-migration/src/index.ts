@@ -1,4 +1,4 @@
-import { getConnectionFromEnvironment } from '@cumulus/db';
+import { connection } from '@cumulus/db';
 
 import * as path from 'path';
 export type Command = 'latest';
@@ -13,7 +13,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   try {
     const env = event?.env ?? process.env;
     env.migrationDir = path.join(__dirname, 'migrations');
-    knex = await getConnectionFromEnvironment(env);
+    knex = await connection.knex(env);
     const command = event?.command ?? 'latest';
 
     switch (command) {
