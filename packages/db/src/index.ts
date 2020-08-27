@@ -45,7 +45,7 @@ export const getConnectionFromEnvironment = async (
   if (env?.databaseCredentialSecretId === undefined) {
     connectionConfig = await getEnvConnectionConfig(env);
   } else {
-    connectionConfig = await getSecretConnectionConfig(env?.databaseCredentialSecretId);
+    connectionConfig = await getSecretConnectionConfig(env.databaseCredentialSecretId);
   }
 
   let knexConfig = {
