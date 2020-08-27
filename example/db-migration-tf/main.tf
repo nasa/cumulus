@@ -11,7 +11,7 @@ provider "aws" {
 
 locals {
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", var.rds_security_group)
-  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", var.rds_access_secret_arn)
+  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", var.rds_user_access_secret_arn)
 }
 
 data "terraform_remote_state" "data_persistence" {
@@ -23,7 +23,7 @@ data "terraform_remote_state" "data_persistence" {
 module "db_migration" {
   source = "../../lambdas/db-migration"
 
-  rds_access_secret_arn     = local.rds_credentials_secret_arn
+  rds_user_access_secret_arn     = local.rds_credentials_secret_arn
   permissions_boundary_arn = var.permissions_boundary_arn
   prefix                   = var.prefix
   subnet_ids               = var.subnet_ids
