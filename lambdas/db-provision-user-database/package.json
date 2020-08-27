@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",
-    "package": "./package.sh",
+    "package": "npm run clean && npm run tsc && ../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc"

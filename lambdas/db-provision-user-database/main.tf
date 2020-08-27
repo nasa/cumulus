@@ -7,7 +7,7 @@ terraform {
 resource "aws_lambda_function" "provision_database" {
   function_name    = "${var.prefix}-ProvisionDatabase"
   description      = "Bootstrap lambda that adds user/database to RDS database"
-  filename         = "${path.module}/dist/lambda.zip"
+  filename         = "${path.module}/dist/webpack/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.db_provision.arn
