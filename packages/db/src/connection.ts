@@ -10,22 +10,17 @@ export interface knexConnectionConfigObject {
   database?: string,
 }
 
-interface knexEnvironmentObject extends NodeJS.ProcessEnv {
-  KNEX_DEBUG?: string
-  KNEX_ASYNC_STACK_TRACES?: string,
-}
-
 /**
 * @summary Given a knexEnvironmentObject and a Knex.PgConnectionConfig, returns
 * a Knex instance with those confiugrations applied
 *
 * @param {Knex.PgConnectionConfig} connectionConfig - Knex connection configuration
-* @param {knexEnvironmentObject} env - environment object with knex configuration keys
+* @param {NodeJS.ProcessEnv} env - environment object with knex configuration keys
 * @returns {Knex} - configured Knex instance
 */
 const getConfiguredKnex = (
   connectionConfig: Knex.PgConnectionConfig,
-  env: knexEnvironmentObject
+  env: NodeJS.ProcessEnv
 ): Knex => {
   const knexConfig: Knex.Config = {
     client: 'pg',
