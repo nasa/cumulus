@@ -393,7 +393,7 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates a report showing number of collections that are in both ES and DB', () => {
-      expect(report.collections.okCount).toB(1);
+      expect(report.collections.okCount).toBe(1);
       expect(report.granules.withConflicts.length).toBe(0);
       expect(report.granules.onlyInEs.length).toBe(0);
       expect(report.granules.onlyInDb.length).toBe(0);
