@@ -102,7 +102,8 @@ export const knex = async (
     KNEX_ASYNC_STACK_TRACES: env.KNEX_ASYNC_STACK_TRACES,
     KNEX_DEBUG: env.KNEX_DEBUG,
     migrationDir: env.migrationDir,
-    timeout: env?.knexAcquireConnectionTimeout ? Number(env.knexAcquireConnectionTimeout) : 60000,
+    timeout: env?.knexAcquireConnectionTimeout === undefined
+      ? Number(env.knexAcquireConnectionTimeout) : 60000,
   });
   return Knex(knexConfig);
 };

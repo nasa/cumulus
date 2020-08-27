@@ -1,5 +1,4 @@
 const test = require('ava');
-const sinon = require('sinon');
 
 const { getSecretConnectionConfig, getRequiredEnvVar, getConnectionConfigEnv } = require('../dist/config');
 
