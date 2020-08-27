@@ -15,25 +15,25 @@ const knex = Knex({
 });
 
 const dbConnectionConfig = {
-  username: 'postgres',
+  user: 'postgres',
   password: 'password',
   database: 'postgres',
   host: 'localhost',
 };
 
 const secretsManagerStub = sinon.stub().returns({
-  getSecretValue: (_value) => ({
-    promise: () => Promise.resolve({
-      SecretString: JSON.stringify(dbConnectionConfig),
-    }),
-  }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 });
 
-// eslint-disable-next-line unicorn/import-index
 const { handler } = proxyquire('../dist/lambda/index.js', {
   'aws-sdk': {
     SecretsManager: secretsManagerStub,
+  },
+  '@cumulus/db': {
+    getConnectionFromEnvironment: () => Promise.resolve(Knex({
+      client: 'pg',
+      connection: dbConnectionConfig,
+    })),
   },
 });
 
