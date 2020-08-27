@@ -122,3 +122,11 @@ test('provision user updates the user password if the user already exists', asyn
   testUserKnex.destroy();
   t.is(heartBeat.rowCount, 1);
 });
+
+test('provision user fails event with no username or prefix is passed', async (t) => {
+  t.context.dbUser = 'user with bad chars <>$';
+  const handlerEvent = {
+    rootLoginSecret: 'bogusSecret',
+  };
+  await t.throwsAsync(handler(handlerEvent));
+});

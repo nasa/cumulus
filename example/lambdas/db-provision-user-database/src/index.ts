@@ -23,16 +23,22 @@ export const tableExists = async (tableName: string, knex: Knex) =>
 export const userExists = async (userName: string, knex: Knex) =>
   knex('pg_catalog.pg_user').where(knex.raw(`usename = CAST('${userName}' as name)`));
 
-export const handler = async (event: HandlerEvent): Promise<void> => {
-  let knex;
+const validateEvent = (event: HandlerEvent): void => {
+  if (event?.dbPassword === undefined || event?.prefix === undefined) {
+    throw new Error(`This lambda requires 'dbPassword' and 'prefix' to be defined on the event: ${event}`);
+  }
+};
 
+export const handler = async (event: HandlerEvent): Promise<void> => {
+  validateEvent(event);
+  let knex;
   try {
     knex = await connection.getKnexFromSecret(
       { databaseCredentialSecretArn: event.rootLoginSecret }
     );
-    const dbUser = event?.prefix.replace(/-/g, '_');
+    const dbUser = event.prefix.replace(/-/g, '_');
 
-    [dbUser, event?.dbPassword].forEach((input) => {
+    [dbUser, event.dbPassword].forEach((input) => {
       if (!(validateDatabaseInput(input, new RegExp(/^\w+$/)))) {
         throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
       }
