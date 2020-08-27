@@ -1,8 +1,5 @@
 const test = require('ava');
-const sinon = require('sinon');
 const proxyquire = require('proxyquire').noPreserveCache();
-
-const sandbox = sinon.createSandbox();
 
 const fakeConnectionConfig = {
   host: 'localhost',
@@ -10,15 +7,12 @@ const fakeConnectionConfig = {
   user: 'someuser',
   database: 'fakeDb',
 };
-test.afterEach(async () => {
-  sandbox.restore();
-});
 
 test.before(async (t) => {
   const { knex } = proxyquire('../dist/connection.js', {
     './config': {
-      getConnectionConfigEnv: sandbox.fake.returns(Promise.resolve(fakeConnectionConfig)),
-      getSecretConnectionConfig: sandbox.fake.returns(Promise.resolve(fakeConnectionConfig)),
+      getConnectionConfigEnv: () => Promise.resolve(fakeConnectionConfig),
+      getSecretConnectionConfig: () => Promise.resolve(fakeConnectionConfig),
     },
   });
   t.context.knex = knex;
