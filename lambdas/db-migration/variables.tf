@@ -6,20 +6,13 @@ variable "prefix" {
   type = string
 }
 
-variable "pg_host" {
+variable "rds_access_secret_id" {
   type = string
 }
 
-variable "pg_user" {
+variable "rds_security_group_id" {
   type = string
-}
-
-variable "pg_password" {
-  type = string
-}
-
-variable "pg_database" {
-  type = string
+  default = ""
 }
 
 variable "subnet_ids" {

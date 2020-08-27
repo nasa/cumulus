@@ -27,6 +27,14 @@ variable "cmr_username" {
   type = string
 }
 
+variable "rds_security_group" {
+  type = string
+}
+
+variable "rds_user_access_secret_id" {
+  type = string
+}
+
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
