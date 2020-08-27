@@ -41,9 +41,9 @@ const getConfiguredKnex = (
   let knexConfig = {
     client: 'pg',
     connection: connectionConfig,
-    debug: env?.KNEX_DEBUG === 'true',
+    debug: env.KNEX_DEBUG === 'true',
     asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
-    acquireConnectionTimeout: env?.timeout ? env.timeout : 60000,
+    acquireConnectionTimeout: env.timeout ? env.timeout : 60000,
   } as knexConfigObject;
 
   if (env?.migrationDir) {
