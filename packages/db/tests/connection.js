@@ -83,7 +83,7 @@ test.serial('getKnexFromEnvironment returns expected Knex object with optional c
     t.is(true, results.client.config.debug);
     t.is(true, results.client.config.asyncStackTraces);
     t.is('pg', results.client.config.client);
-    t.is(60000, results.client.config.acquireConnectionTimeout);
+    t.is(10000, results.client.config.acquireConnectionTimeout);
   });
 
 test.serial('getKnexFromEnvironment returns Knew object with a default migration set when env.migrations is not defined',

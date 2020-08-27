@@ -11,47 +11,64 @@ export interface knexConnectionConfigObject {
 }
 
 /**
-* @summary Given a knexEnvironmentObject and a Knex.PgConnectionConfig, returns
-* a Knex instance with those confiugrations applied
+* Builds a Knex.PgConnectionConfig
 *
-* @param {Knex.PgConnectionConfig} connectionConfig - Knex connection configuration
-* @param {NodeJS.ProcessEnv} env - environment object with knex configuration keys
-* @returns {Knex} - configured Knex instance
+* @param {NodeJS.ProcessEnv} params - parameter object with knex configuration
+* @returns {Knex.PgConnectionConfig} - KnexConfigObject
 */
-const getConfiguredKnex = (
-  connectionConfig: Knex.PgConnectionConfig,
-  env: NodeJS.ProcessEnv
-): Knex => {
+const buildKnexConfiguration = (
+  params: {
+    connectionConfig: Knex.PgConnectionConfig,
+    KNEX_DEBUG?: string,
+    KNEX_ASYNC_STACK_TRACES?: string,
+    timeout: number,
+    migrationDir?: string,
+  }
+): Knex.Config => {
   const knexConfig: Knex.Config = {
     client: 'pg',
-    connection: connectionConfig,
-    debug: env.KNEX_DEBUG === 'true',
-    asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
-    acquireConnectionTimeout: env.timeout ? Number(env.timeout) : 60000,
+    connection: params.connectionConfig,
+    debug: params.KNEX_DEBUG === 'true',
+    asyncStackTraces: params.KNEX_ASYNC_STACK_TRACES === 'true',
+    acquireConnectionTimeout: params.timeout,
   };
 
-  if (env?.migrationDir) {
-    knexConfig.migrations = { directory: env.migrationDir };
+  if (params.migrationDir !== undefined) {
+    knexConfig.migrations = { directory: params.migrationDir };
   }
-  return Knex(knexConfig);
+  return knexConfig;
 };
 
 /**
 * Returns a configured Knex object configured for connection to a postgres database
-* @param {getConnectionFromSecretEnv} env - Environment vars object with
-* databaseCredentialSecretArn key referencing a AWS SecretsManager Secret with required
+* @param {getConnectionFromSecretEnv} env         - Environment vars object with
+* @param {string} env.databaseCredentialSecretArn - key referencing a AWS SecretsManager
+*                                                   Secret with required
 * `databaseCredentialSecretArn` keys:
 *   host     - Hostname database cluster
 *   username - User to connect to the database
 *   password - Password to use to connect to the database
 *   database - Optional - postgres database to connect to on the db cluster
-* @returns {Promie<Knex>} Brief description of the returning value here.
+* @param {string} [env.KNEX_ASYNC_STACK_TRACES]  - If set to 'true' will enable knex async
+*                                                  stack traces.
+* @param {string} [env.KNEX_DEBUG]               - If set to 'true' will enable knex debugging
+* @param {string} [env.acquireConnectionTimeout] - Knex acquireConnectionTimeout connection timeout
+* @param {string} [env.migrationDir]             - Directory to look in for migrations
+*
+* @returns {Promise<Knex>} Brief description of the returning value here.
 */
 export const getKnexFromSecret = async (
   env: knexSecretConnectionConfigObject
 ): Promise<Knex> => {
-  const config = await getSecretConnectionConfig(env.databaseCredentialSecretArn);
-  return getConfiguredKnex(config, env);
+  const connectionConfig = await getSecretConnectionConfig(env.databaseCredentialSecretArn);
+  const knexConfig = buildKnexConfiguration({
+    connectionConfig,
+    KNEX_ASYNC_STACK_TRACES: env.KNEX_ASYNC_STACK_TRACES,
+    KNEX_DEBUG: env.KNEX_DEBUG,
+    migrationDir: env.migrationDir,
+    timeout: env?.knexAcquireConnectionTimeout ? Number(env.knexAcquireConnectionTimeout) : 60000,
+  });
+  return Knex(knexConfig);
 };
 
 /**
@@ -63,16 +80,26 @@ export const getKnexFromSecret = async (
 * @param {string} env.PG_USER       - User to connect to the database
 * @param {string} env.PG_PASSWORD   - Password to use to connect to the database
 * @param {string} [env.PG_DATABASE] - Optional - postgres database to connect to on the db cluster
-
-* @param {string} env.host     - Hostname database cluster
-
-* @returns {Promie<Knex>} Brief description of the returning value here.
+* @param {string} [env.KNEX_ASYNC_STACK_TRACES]  - If set to 'true' will enable knex async
+*                                                  stack traces.
+* @param {string} [env.KNEX_DEBUG]               - If set to 'true' will enable knex debugging
+* @param {string} [env.acquireConnectionTimeout] - Knex acquireConnectionTimeout connection timeout
+* @param {string} [env.migrationDir]             - Directory to look in for migrations
+*
+* @returns {Promise<Knex>} Brief description of the returning value here.
 */
 export const getKnexFromEnvironment = async (
   env: envConectionConfigObject
 ): Promise<Knex> => {
-  const config = await getConnectionConfigEnv(env);
-  return getConfiguredKnex(config, env);
+  const connectionConfig = await getConnectionConfigEnv(env);
+  const knexConfig = buildKnexConfiguration({
+    connectionConfig,
+    KNEX_ASYNC_STACK_TRACES: env.KNEX_ASYNC_STACK_TRACES,
+    KNEX_DEBUG: env.KNEX_DEBUG,
+    migrationDir: env.migrationDir,
+    timeout: env?.timeout ? Number(env.timeout) : 10000,
+  });
+  return Knex(knexConfig);
 };
 
 function isKnexSecretConnectionConfigObject(
