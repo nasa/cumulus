@@ -32,7 +32,7 @@ const undefinedSecretsManagerStub = sinon.stub().returns({
 const badSecretsManagerStub = sinon.stub().returns({
   getSecretValue: (_value) => ({
     promise: () => Promise.resolve({
-      SecretString: { test: 'value'},
+      SecretString: { test: 'value' },
     }),
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
