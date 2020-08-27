@@ -1,0 +1,32 @@
+{
+  "name": "@cumulus/db-provision-user-database-lambda",
+  "version": "2.0.1",
+  "description": "A Lambda function used for provisioning user databases",
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist",
+    "package": "./package.sh",
+    "test": "../../../node_modules/.bin/ava",
+    "prepare": "npm run tsc",
+    "tsc": "../../../node_modules/.bin/tsc",
+    "python-lint": "true"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "license": "Apache-2.0",
+  "ava": {
+    "timeout": "2m"
+  },
+  "dependencies": {
+    "@cumulus/common": "2.0.1",
+    "knex": "^0.21.5",
+    "pg": "^8.3.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^7.14.4"
+  }
+}
