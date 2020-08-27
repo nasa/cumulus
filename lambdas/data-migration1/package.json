@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/data-migration-lambda",
+  "name": "@cumulus/data-migration1",
   "description": "A Lambda function used for doing data migrations",
   "version": "2.0.1",
   "engines": {
@@ -9,8 +9,9 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",
-    "package": "./package.sh",
-    "prepare": "npm run tsc",
+    "build-lambda-zip": "cd dist/ && node ../../../bin/zip.js lambda.zip index.js index.d.ts.map index.d.ts",
+    "prepare": "../../node_modules/.bin/webpack",
+    "package": "npm run prepare && npm run build-lambda-zip",
     "tsc": "../../node_modules/.bin/tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test"
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/pg": "^7.14.4",
-    "aws-sdk": "^2.735.0"
+    "aws-sdk": "^2.735.0",
+    "ts-loader": "^8.0.3"
   }
 }
