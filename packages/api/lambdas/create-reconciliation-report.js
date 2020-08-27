@@ -21,6 +21,7 @@ const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
+const { convertToESGranuleSearchParams, convertToESCollectionSearchParams } = require('../lib/reconciliationReport');
 const Collection = require('../es/collections');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 
@@ -44,40 +45,6 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
   },
   'scan'
 );
-
-/**
- * @param {string} dateable - any input valid for a JS Date contstructor.
- * @returns {number} - primitive value of input date string or undefined, if
- *                     input string not convertable.
- */
-function dateToValue(dateable) {
-  const primitiveDate = (new Date(dateable)).valueOf();
-  return !Number.isNaN(primitiveDate) ? primitiveDate : undefined;
-}
-
-/**
- *
- * @param {Object} params - request params to convert to reconciliationReportForCollection params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESCollectionSearchParams(params) {
-  return {
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
-  };
-}
-
-/**
- *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESGranuleSearchParams(params) {
-  return {
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
-  };
-}
 
 /**
  * Checks to see if any of the included reportParams contains a value that

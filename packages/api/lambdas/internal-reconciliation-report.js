@@ -10,44 +10,11 @@ const moment = require('moment');
 const pLimit = require('p-limit');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { removeNilProperties } = require('@cumulus/common/util');
 const { s3 } = require('@cumulus/aws-client/services');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { Collection, Granule } = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const { convertToCollectionSearchParams, convertToGranuleSearchParams } = require('../lib/reconciliationReport');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
-
-/**
- * @param {string} datestring - ISO timestamp string
- * @returns {number} - primitive value of input date.
- */
-function ISODateToValue(datestring) {
-  const primitiveDate = (new Date(datestring)).valueOf();
-  return !Number.isNaN(primitiveDate) ? primitiveDate : undefined;
-}
-
-function convertToCollectionSearchParams(params) {
-  const { collectionId, startTimestamp, endTimestamp } = params;
-  const collection = collectionId ? deconstructCollectionId(collectionId) : {};
-  const searchParams = {
-    updatedAt__from: ISODateToValue(startTimestamp),
-    updatedAt__to: ISODateToValue(endTimestamp),
-    ...collection,
-  };
-  return removeNilProperties(searchParams);
-}
-
-function convertToGranuleSearchParams(params) {
-  const { collectionId, granuleId, provider, startTimestamp, endTimestamp } = params;
-  const searchParams = {
-    updatedAt__from: ISODateToValue(startTimestamp),
-    updatedAt__to: ISODateToValue(endTimestamp),
-    collectionId,
-    granuleId,
-    provider,
-  };
-  return removeNilProperties(searchParams);
-}
 
 /**
  * Compare the collection holdings in Elasticsearch with Database
