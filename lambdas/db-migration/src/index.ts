@@ -28,7 +28,7 @@ const getSecretConnectionConfig = async (SecretId: string): Promise<Knex.PgConne
   }
   const dbAccessMeta = JSON.parse(response.SecretString);
 
-  ['host', 'user', 'password', 'database'].forEach((key) => {
+  ['host', 'username', 'password', 'database'].forEach((key) => {
     if (!(key in dbAccessMeta)) {
       throw new Error(`AWS Secret ${SecretId} is missing required key '${key}'`);
     }
