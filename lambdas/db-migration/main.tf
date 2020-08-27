@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "db_migration" {
     actions = [
       "secretsmanager:GetSecretValue"
     ]
-    resources = [var.rds_access_secret_id]
+    resources = [var.rds_access_secret_arn]
   }
 }
 
@@ -75,7 +75,7 @@ resource "aws_lambda_function" "db_migration" {
 
   environment {
     variables = {
-      databaseCredentialSecretId = var.rds_access_secret_id
+      databaseCredentialSecretId = var.rds_access_secret_arn
     }
   }
 

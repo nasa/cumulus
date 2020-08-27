@@ -37,8 +37,8 @@ variable "rds_security_group" {
   default     = null
 }
 
-variable "rds_user_access_secret_id" {
-  description = "RDS User Database Login Credential Secret ID"
+variable "rds_user_access_secret_arn" {
+  description = "RDS User Database Login Credential Secret ARN"
   type        = string
 }
 
