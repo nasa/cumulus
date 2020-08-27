@@ -1,3 +1,5 @@
+import AWS from 'aws-sdk';
+
 import Knex from 'knex';
 import * as path from 'path';
 
@@ -16,30 +18,60 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
   throw new Error(`The ${name} environment variable must be set`);
 };
 
-const getConnectionConfig = (env: NodeJS.ProcessEnv): Knex.PgConnectionConfig => ({
-  host: getRequiredEnvVar('PG_HOST', env),
-  user: getRequiredEnvVar('PG_USER', env),
-  // TODO Get this value from secrets manager
-  password: getRequiredEnvVar('PG_PASSWORD', env),
-  database: getRequiredEnvVar('PG_DATABASE', env),
-});
+const getSecretConnectionConfig = async (SecretId: string): Promise<Knex.PgConnectionConfig> => {
+  const secretsManager = new AWS.SecretsManager();
+  const response = await secretsManager.getSecretValue(
+    { SecretId } as AWS.SecretsManager.GetSecretValueRequest
+  ).promise();
+  if (response.SecretString === undefined) {
+    throw new Error(`AWS Secret did not contain a stored value: ${SecretId}`);
+  }
+  const dbAccessMeta = JSON.parse(response.SecretString);
+
+  ['host', 'user', 'password', 'database'].forEach((key) => {
+    if (!(key in dbAccessMeta)) {
+      throw new Error(`AWS Secret ${SecretId} is missing required key '${key}'`);
+    }
+  });
+  return {
+    host: dbAccessMeta.host,
+    user: dbAccessMeta.username,
+    password: dbAccessMeta.password,
+    database: dbAccessMeta.database,
+  };
+};
+
+const getConnectionConfig = async (env: NodeJS.ProcessEnv): Promise<Knex.PgConnectionConfig> => {
+  if (env?.databaseCredentialSecretId === undefined) {
+    return {
+      host: getRequiredEnvVar('PG_HOST', env),
+      user: getRequiredEnvVar('PG_USER', env),
+      password: getRequiredEnvVar('PG_PASSWORD', env),
+      database: getRequiredEnvVar('PG_DATABASE', env),
+    };
+  }
+  return getSecretConnectionConfig(env?.databaseCredentialSecretId);
+};
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
-  const env = event?.env ?? process.env;
-
-  const knex = Knex({
-    client: 'pg',
-    connection: getConnectionConfig(env),
-    debug: env?.KNEX_DEBUG === 'true',
-    asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
-    migrations: {
-      directory: path.join(__dirname, 'migrations'),
-    },
-  });
-
-  const command = event?.command ?? 'latest';
-
+  let knex;
   try {
+    const env = event?.env ?? process.env;
+    const connectionConfig = await getConnectionConfig(env);
+
+    knex = Knex({
+      client: 'pg',
+      connection: connectionConfig,
+      debug: env?.KNEX_DEBUG === 'true',
+      asyncStackTraces: env?.KNEX_ASYNC_STACK_TRACES === 'true',
+      migrations: {
+        directory: path.join(__dirname, 'migrations'),
+      },
+      acquireConnectionTimeout: 120000,
+    });
+
+    const command = event?.command ?? 'latest';
+
     switch (command) {
       case 'latest':
         await knex.migrate.latest();
@@ -48,6 +80,8 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         throw new Error(`Invalid command: ${command}`);
     }
   } finally {
-    await knex.destroy();
+    if (knex) {
+      await knex.destroy();
+    }
   }
 };
