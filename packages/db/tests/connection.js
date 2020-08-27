@@ -15,13 +15,10 @@ test.afterEach(async () => {
 });
 
 test.before(async (t) => {
-  t.context.getSecretConnectionConfigSpy = sandbox.fake.returns(fakeConnectionConfig);
-  t.context.getConnectionConfigEnvSpy = sandbox.fake.returns(fakeConnectionConfig);
-
   const { knex } = proxyquire('../dist/connection.js', {
     './config': {
-      getConnectionConfigEnv: t.context.getConnectionConfigEnvSpy,
-      getSecretConnectionConfig: t.context.getSecretConnectionConfigSpy,
+      getConnectionConfigEnv: sandbox.fake.returns(Promise.resolve(fakeConnectionConfig)),
+      getSecretConnectionConfig: sandbox.fake.returns(Promise.resolve(fakeConnectionConfig)),
     },
   });
   t.context.knex = knex;

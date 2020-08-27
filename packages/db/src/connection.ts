@@ -97,13 +97,14 @@ export const knex = async (
   } else {
     throw new Error('"env" must contain either databaseCredentialSecretArn or postgres config');
   }
+  const timeout = env?.knexAcquireConnectionTimeout === undefined ? 60000 : Number(env.knexAcquireConnectionTimeout);
+
   const knexConfig = buildKnexConfiguration({
     connectionConfig,
     KNEX_ASYNC_STACK_TRACES: env.KNEX_ASYNC_STACK_TRACES,
     KNEX_DEBUG: env.KNEX_DEBUG,
     migrationDir: env.migrationDir,
-    timeout: env?.knexAcquireConnectionTimeout === undefined
-      ? Number(env.knexAcquireConnectionTimeout) : 60000,
+    timeout,
   });
   return Knex(knexConfig);
 };
