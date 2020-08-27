@@ -72,7 +72,7 @@ async function reconciliationReportForCollections(recReportParams) {
   );
 
   // get collections from database and sort them, since the scan result is not ordered
-  const dbCollectionsQueue = await (new Collection()).searchCollections(searchParams);
+  const dbCollectionsQueue = await (new Collection()).search(searchParams);
   const dbCollectionItems = sortBy(await dbCollectionsQueue.empty(), ['name', 'version']);
 
   let okCount = 0;
