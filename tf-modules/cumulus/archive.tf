@@ -94,5 +94,8 @@ module "archive" {
 
   log_destination_arn = var.log_destination_arn
 
+  rds_security_group = var.rds_security_group
+  rds_user_access_secret_id = var.rds_user_access_secret_id
+
   tags = var.tags
 }
