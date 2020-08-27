@@ -47,6 +47,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/aws-client/S3.getObject` to get an AWS S3 object
   - Added `@cumulus/aws-client/S3.waitForObject` to get an AWS S3 object,
     retrying, if necessary
+- **CUMULUS-1961**
+  - Adds `startTimestamp` and `endTimestamp` parameters to endpoint
+    `reconcilationReports`.  Setting these values will filter the returned
+    report to cumulus data that falls within the timestamps. It also causes the
+    report to be one directional, meaning cumulus is only reconciled with CMR,
+    but not the other direction. The Granules will be filtered by their
+    `updatedAt` values. Collections are filtered by the updatedAt time of their
+    granules, i.e. Collections with granules that are updatedAt a time between
+    the time parameters will be returned in the reconciliation reports.
+  - Adds `startTimestamp` and `endTimestamp` parameters to create-reconciliation-reports
+    lambda function. If either of these params is passed in with a value that can be
+    converted to a date object, the inter-platform comparison between Cumulus and CMR will
+    be one way.  That is, collections, granules, and files will be filtered by time for
+    those found in Cumulus and only those compared to the CMR holdings. For the moment
+    there is not enough information to change the internal consistency check, and S3 vs
+    Cumulus comparisons are unchanged by the timestamps.
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
 
