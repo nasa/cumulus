@@ -30,7 +30,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     knex = await getConnectionFromEnvironment(
       { databaseCredentialSecretId: event.rootLoginSecret }
     );
-    const dbUser = event?.prefix.replace('-', '_');
+    const dbUser = event?.prefix.replace(/-/g, '_');
 
     [dbUser, event?.dbPassword].forEach((input) => {
       if (!(validateDatabaseInput(input, new RegExp(/^\w+$/)))) {

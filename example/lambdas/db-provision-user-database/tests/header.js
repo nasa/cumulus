@@ -38,17 +38,21 @@ const { handler } = proxyquire('../dist/lambda/index.js', {
 });
 
 test.beforeEach(async (t) => {
-  t.context.dbUser = randomString(20);
-  t.context.testDb = `${t.context.dbUser}_db`;
+  const randomDbString = randomString(10);
+  t.context.dbUser = `${randomDbString}-${randomDbString}-test`;
+  t.context.expectedDbUser = `${randomDbString}_${randomDbString}_test`;
+  t.context.testDb = `${t.context.dbUser}-db`;
+  t.context.expectedTestDb = `${t.context.expectedDbUser}_db`;
 });
 
 test.afterEach(async (t) => {
-  await knex.raw(`drop database if exists "${t.context.testDb}"`);
-  await knex.raw(`drop user if exists "${t.context.dbUser}"`);
+  await knex.raw(`drop database if exists "${t.context.expectedTestDb}"`);
+  await knex.raw(`drop user if exists "${t.context.expectedDbUser}"`);
 });
 test('provision user database creates the expected database', async (t) => {
   const dbUser = t.context.dbUser;
-  const testDb = t.context.testDb;
+  const expectedDbUser = t.context.expectedDbUser;
+  const expectedTestDb = t.context.expectedTestDb;
   const handlerEvent = {
     rootLoginSecret: 'bogusSecret',
     dbPassword: 'testPassword',
@@ -58,14 +62,14 @@ test('provision user database creates the expected database', async (t) => {
   await handler(handlerEvent);
 
   const userResults = await knex('pg_catalog.pg_user')
-    .where(knex.raw(`usename = CAST('${dbUser}' as name)`));
+    .where(knex.raw(`usename = CAST('${expectedDbUser}' as name)`));
   const dbResults = await knex('pg_database')
     .select('datname')
-    .where(knex.raw(`datname = CAST('${testDb}' as name)`));
+    .where(knex.raw(`datname = CAST('${expectedTestDb}' as name)`));
   t.is(userResults.length, 1);
   t.is(dbResults.length, 1);
-  t.is(dbResults[0].datname, `${testDb}`);
-  t.is(userResults[0].usename, `${dbUser}`);
+  t.is(dbResults[0].datname, `${expectedTestDb}`);
+  t.is(userResults[0].usename, `${expectedDbUser}`);
 });
 
 test('provision user fails if invalid password string is used', async (t) => {
@@ -91,7 +95,8 @@ test('provision user fails if invalid user string is used', async (t) => {
 
 test('provision user updates the user password if the user already exists', async (t) => {
   const dbUser = t.context.dbUser;
-  const testDb = t.context.testDb;
+  const expectedDbUser = t.context.expectedDbUser;
+  const expectedTestDb = t.context.expectedTestDb;
   const handlerEvent = {
     rootLoginSecret: 'bogusSecret',
     dbPassword: 'testPassword',
@@ -106,9 +111,9 @@ test('provision user updates the user password if the user already exists', asyn
     client: 'pg',
     connection: {
       host: 'localhost',
-      user: dbUser,
+      user: expectedDbUser,
       password: 'newPassword',
-      database: testDb,
+      database: expectedTestDb,
     },
   });
   const heartBeat = await testUserKnex.raw('SELECT 1');
