@@ -8,17 +8,38 @@
       "glossary",
       "team"
     ],
-    "Cumulus Workflows": [
+    "Overviews": [
       "workflows/workflows-readme",
       "workflows/protocol",
       "workflows/input_output",
       "workflows/cumulus-task-message-flow",
+      "workflows/workflow-triggers"
+    ],
+    "Deployment": [
+      "deployment/deployment-readme",
+      "deployment/terraform-best-practices",
+      "deployment/upgrade-readme",
+      "deployment/components",
+      "deployment/create_bucket",
+      "deployment/thin_egress_app",
+      "additional-deployment-options/api-gateway-logging",
+      "additional-deployment-options/share-s3-access-logs",
+      "additional-deployment-options/cloudwatch-logs-delivery"
+    ],
+    "Configuration": [
+      "deployment/monitoring-readme",
+      "deployment/server_access_logging",
+      "data-cookbooks/cloudwatch-retention",
+      "operator-docs/lifecycle-policies",
+      "operator-docs/collection-storage-best-practices"
+    ],
+    "Development": [
       "workflows/developing-a-cumulus-workflow",
       "workflows/developing-workflow-tasks",
       "workflows/lambda",
       "workflows/docker",
       "workflows/workflow-configuration-how-to",
-      "workflows/workflow-triggers"
+      "adding-a-task"
     ],
     "Workflow Tasks": [
       "tasks",
@@ -27,22 +48,7 @@
       "workflow_tasks/move_granules",
       "workflow_tasks/parse_pdr"
     ],
-    "Deployment": [
-      "deployment/deployment-readme",
-      "deployment/monitoring-readme",
-      "deployment/terraform-best-practices",
-      "deployment/upgrade-readme",
-      "deployment/components",
-      "deployment/create_bucket",
-      "deployment/server_access_logging",
-      "deployment/thin_egress_app"
-    ],
-    "Deployment Options": [
-      "additional-deployment-options/api-gateway-logging",
-      "additional-deployment-options/share-s3-access-logs",
-      "additional-deployment-options/cloudwatch-logs-delivery"
-    ],
-    "Additional Features": [
+    "Features": [
       "features/backup_and_restore",
       "features/data_in_dynamodb",
       "features/dead_letter_queues",
@@ -51,15 +57,13 @@
       "features/lambda_versioning",
       "features/ancillary_metadata",
       "features/distribution-metrics",
-      "features/logging-esdis-metrics"
+      "features/logging-esdis-metrics",
+      "operator-docs/replay-kinesis-messages"
     ],
     "Troubleshooting": [
       "troubleshooting/troubleshooting-readme",
-      "troubleshooting/troubleshooting-deployment"
-    ],
-    "Cumulus Development": [
-      "adding-a-task",
-      "docs-how-to"
+      "troubleshooting/troubleshooting-deployment",
+      "operator-docs/rerunning-workflow-executions"
     ]
   },
   "Data Cookbooks": {
@@ -74,7 +78,6 @@
       "data-cookbooks/cnm-workflow",
       "data-cookbooks/error-handling",
       "data-cookbooks/choice-states",
-      "data-cookbooks/cloudwatch-retention",
       "data-cookbooks/browse-generation",
       "data-cookbooks/tracking-files",
       "data-cookbooks/run-tasks-in-lambda-or-docker",
@@ -86,16 +89,11 @@
       "operator-docs/about-operator-docs"
     ],
     "Configuration": [
-      "operator-docs/lifecycle-policies",
       "operator-docs/locating-access-logs",
-      "operator-docs/collection-storage-best-practices",
-      "operator-docs/serve-dashboard-from-cloudfront",
       "operator-docs/provider"
     ],
     "Operations": [
-      "operator-docs/discovery-filtering",
-      "operator-docs/rerunning-workflow-executions",
-      "operator-docs/replay-kinesis-messages"
+      "operator-docs/discovery-filtering"
     ],
     "Common Use Cases": [
       "operator-docs/common-use-cases",
