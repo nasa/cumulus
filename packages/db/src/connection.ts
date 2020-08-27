@@ -36,12 +36,7 @@ const getConfiguredKnex = (
   };
 
   if (env?.migrationDir) {
-    knexConfig = {
-      ...knexConfig,
-      migrations: {
-        directory: env.migrationDir,
-      },
-    };
+    knexConfig.migrations = { directory: env.migrationDir };
   }
   return Knex(knexConfig);
 };
