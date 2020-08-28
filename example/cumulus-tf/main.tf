@@ -58,7 +58,7 @@ module "cumulus" {
   lambda_subnet_ids = var.subnet_ids
 
   rds_security_group            = local.rds_security_group
-  rds_user_access_secret_id      = local.rds_credentials_secret_arn
+  rds_user_access_secret_arn      = local.rds_credentials_secret_arn
 
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = var.subnet_ids
