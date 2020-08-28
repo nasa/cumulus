@@ -35,3 +35,9 @@ variable "cluster_identifier" {
   type        = string
   default     = "cumulus-rds-serverless-default-cluster"
 }
+
+variable "tags" {
+  description = "Tags to be applied to RDS cluster resources that support tags"
+  type        = map(string)
+  default     = {}
+}
