@@ -25,11 +25,11 @@ module.exports = {
   entry: './src/index.ts',
   output: {
     libraryTarget: 'commonjs2',
-    filename: 'index.js',
-    devtoolModuleFilenameTemplate: (info) => {
-      const relativePath = path.relative(root, info.absoluteResourcePath)
-      return `webpack://${relativePath}`;
-    }
+    filename: 'index.js'
+    // devtoolModuleFilenameTemplate: (info) => {
+    //   const relativePath = path.relative(root, info.absoluteResourcePath)
+    //   return `webpack://${relativePath}`;
+    // }
   },
   externals: [
     'aws-sdk',

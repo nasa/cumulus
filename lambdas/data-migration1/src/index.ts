@@ -130,7 +130,11 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
 };
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
+  console.log(process.env.databaseCredentialSecretId);
+
   const env = event?.env ?? process.env;
+
+  console.log(env.databaseCredentialSecretId);
 
   const knex = Knex({
     client: 'pg',
