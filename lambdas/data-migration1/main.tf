@@ -89,9 +89,8 @@ resource "aws_lambda_function" "data_migration1" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      // TODO: should we be creating our own security group here?
       security_group_ids = [
-        aws_security_group.data_migration[0].id
+        aws_security_group.data_migration1[0].id
       ]
     }
   }
