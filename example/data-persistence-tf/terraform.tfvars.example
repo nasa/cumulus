@@ -1,3 +1,7 @@
 aws_region = "us-east-1"
+rds_admin_access_secret_arn = "arn:aws:secretsmanager:us-east-1:xxxxxxxxx:secret:secretId"
+"permissions_boundary_arn" = "arn:aws:iam::xxxxxxxxxxx:policy/someRoleBoundary:
+rds_security_group = "sg-somesecuritygroup"
 prefix     = "PREFIX"
 subnet_ids = ["subnet-12345"]
+vpc_id     = "vpc-somevpc"

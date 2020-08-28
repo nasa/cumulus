@@ -2,7 +2,6 @@
 
 variable "permissions_boundary_arn" {
   type    = string
-  default = null
 }
 
 variable "prefix" {
@@ -18,12 +17,6 @@ variable "rds_security_group" {
   type = string
 }
 
-variable "rds_user_password" {
-  description = "Password to set for RDS db user"
-  type = string
-  default = ""
-}
-
 variable "subnet_ids" {
   type = list(string)
 }
@@ -33,6 +26,12 @@ variable "vpc_id" {
 }
 
 # Optional
+
+variable "rds_user_password" {
+  description = "Password to set for RDS db user.   Password will be randomly generated if not specified"
+  type = string
+  default = ""
+}
 
 variable "aws_region" {
   type    = string
