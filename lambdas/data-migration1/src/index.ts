@@ -84,6 +84,7 @@ const getConnectionConfig = async (env: NodeJS.ProcessEnv): Promise<Knex.PgConne
  *   Source record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {number|false}
+ *   New record ID on success, false if record was skipped
  */
 export const migrateCollectionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
