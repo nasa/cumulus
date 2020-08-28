@@ -582,6 +582,7 @@ async function createReconciliationReport(recReportParams) {
     stackName,
     startTimestamp,
     systemBucket,
+    reportType,
   } = recReportParams;
 
   // Fetch the bucket names to reconcile
@@ -616,6 +617,7 @@ async function createReconciliationReport(recReportParams) {
     reportEndTime: endTimestamp,
     status: 'RUNNING',
     error: undefined,
+    reportType,
     filesInCumulus,
     collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
