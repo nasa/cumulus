@@ -47,10 +47,8 @@ data "aws_iam_policy_document" "data_migration1" {
     actions = [
       "secretsmanager:GetSecretValue"
     ]
-    resources = [var.rds_user_access_secret_id]
+    resources = [var.rds_user_access_secret_arn]
   }
-
-  # TODO: add RDS perms
 }
 
 resource "aws_iam_role_policy" "data_migration1" {
@@ -87,7 +85,7 @@ resource "aws_lambda_function" "data_migration1" {
 
   environment {
     variables = {
-      databaseCredentialSecretId = var.rds_user_access_secret_id
+      databaseCredentialSecretId = var.rds_user_access_secret_arn
       CollectionsTable = var.dynamo_tables.collections.name
     }
   }

@@ -1,0 +1,12 @@
+permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
+prefix = "PREFIX"
+rds_user_access_secret_arn = "arn:aws:secretsmanager:us-east-1:12345:secret:secret-name"
+rds_security_group = "security-group-id"
+subnet_ids = ["subnet-12345"]
+vpc_id = "vpc-12345"
+
+data_persistence_remote_state_config = {
+  bucket = "PREFIX-tf-state"
+  key    = "PREFIX/data-persistence/terraform.tfstate"
+  region = "us-east-1"
+}
