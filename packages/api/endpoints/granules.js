@@ -81,7 +81,8 @@ async function put(req, res) {
   if (action === 'applyWorkflow') {
     await granuleModelClient.applyWorkflow(
       granule,
-      body.workflow
+      body.workflow,
+      body.meta
     );
 
     return res.send({

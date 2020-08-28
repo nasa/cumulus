@@ -29,6 +29,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
+const { isCmrFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
@@ -847,6 +848,56 @@ describe('The S3 Ingest Granules workflow', () => {
         await waitForConceptExistsOutcome(cmrLink, true);
         const doesExist = await conceptExists(cmrLink);
         expect(doesExist).toEqual(true);
+      });
+
+      it('applyworkflow UpdateCmrAccessConstraints updates and publishes CMR metadata', async () => {
+        const existsInCMR = await conceptExists(cmrLink);
+        expect(existsInCMR).toEqual(true);
+        const originalGranuleCmrFile = granule.files.find(isCmrFile);
+
+        const accessConstraints = {
+          value: 17,
+          description: 'Test-UpdateCmrAccessConstraints',
+        };
+        // Publish the granule to CMR
+        await granulesApiTestUtils.applyWorkflow({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+          workflow: 'UpdateCmrAccessConstraints',
+          meta: {
+            accessConstraints,
+          },
+        });
+
+        const updateCmrAccessConstraintsExecution = await waitForTestExecutionStart({
+          workflowName: 'UpdateCmrAccessConstraints',
+          stackName: config.stackName,
+          bucket: config.bucket,
+          findExecutionFn: isExecutionForGranuleId,
+          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+          startTask: 'UpdateCmrAccessConstraints',
+        });
+
+        console.log(`Wait for completed execution ${updateCmrAccessConstraintsExecution.executionArn}`);
+
+        await waitForCompletedExecution(updateCmrAccessConstraintsExecution.executionArn);
+        await waitForModelStatus(
+          granuleModel,
+          { granuleId: granule.granuleId },
+          'completed'
+        );
+
+        const granuleResponse = await granulesApiTestUtils.getGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        });
+        const updatedGranuleRecord = JSON.parse(granuleResponse.body);
+        const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCmrFile);
+        expect(updatedGranuleCmrFile.etag).not.ToBe(originalGranuleCmrFile.etag);
+
+        const granuleCmrMetadata = metadataObjectFromCMRFile(updatedGranuleCmrFile.filename);
+        expect(granuleCmrMetadata.Granule.RestrictionFlag).toEqual(accessConstraints.value);
+        expect(granuleCmrMetadata.Granule.RestrictionComment).toEqual(accessConstraints.description);
       });
 
       describe('when moving a granule', () => {
