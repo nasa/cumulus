@@ -11,6 +11,12 @@ variable "dynamo_tables" {
   type        = map(object({ name = string, arn = string }))
 }
 
+variable "rds_security_group_id" {
+  description = "RDS Security Group used for access to RDS cluster"
+  type        = string
+  default     = ""
+}
+
 variable "rds_user_access_secret_id" {
   description = "RDS User Database Login Credential Secret ID"
   type        = string

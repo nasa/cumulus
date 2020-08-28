@@ -43,6 +43,13 @@ data "aws_iam_policy_document" "data_migration1" {
     ]
   }
 
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+    resources = [var.rds_user_access_secret_id]
+  }
+
   # TODO: add RDS perms
 }
 
@@ -75,7 +82,7 @@ resource "aws_lambda_function" "data_migration1" {
   handler          = "index.handler"
   role             = aws_iam_role.data_migration1.arn
   runtime          = "nodejs12.x"
-  timeout          = 60
+  timeout          = 300
   memory_size      = 128
 
   environment {
@@ -89,9 +96,10 @@ resource "aws_lambda_function" "data_migration1" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.data_migration1[0].id
-      ]
+      security_group_ids = compact([
+        aws_security_group.data_migration1[0].id,
+        var.rds_security_group_id
+      ])
     }
   }
 
