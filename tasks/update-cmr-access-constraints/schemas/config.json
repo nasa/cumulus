@@ -1,0 +1,25 @@
+{
+  "title": "UpdateCmrAccessConstraintsConfig",
+  "description": "Describes the config used by the update-cmr-access-constraints task",
+  "type": "object",
+  "required": [
+    "accessConstraints"
+  ],
+  "properties": {
+    "accessConstraints": {
+      "type": "object",
+      "description": "object containing CMR access constraint value and description",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
