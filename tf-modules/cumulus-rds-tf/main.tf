@@ -60,7 +60,7 @@ resource "aws_rds_cluster" "cumulus" {
   preferred_backup_window = var.backup_window
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
-  scaling_configuration  {
+  scaling_configuration {
     max_capacity = 4
     min_capacity = 2
   }
