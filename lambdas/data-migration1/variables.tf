@@ -11,20 +11,9 @@ variable "dynamo_tables" {
   type        = map(object({ name = string, arn = string }))
 }
 
-variable "pg_host" {
-  type = string
-}
-
-variable "pg_user" {
-  type = string
-}
-
-variable "pg_password" {
-  type = string
-}
-
-variable "pg_database" {
-  type = string
+variable "rds_user_access_secret_id" {
+  description = "RDS User Database Login Credential Secret ID"
+  type        = string
 }
 
 variable "lambda_subnet_ids" {

@@ -95,26 +95,6 @@ variable "elasticsearch_security_group_id" {
   default     = ""
 }
 
-variable "pg_host" {
-  description = "Host for Postgres database used by Cumulus"
-  type = string
-}
-
-variable "pg_user" {
-  description = "User for Postgres database used by Cumulus"
-  type = string
-}
-
-variable "pg_password" {
-  description = "Password for Postgres database used by Cumulus"
-  type = string
-}
-
-variable "pg_database" {
-  description = "Database name for Postgres database used by Cumulus"
-  type = string
-}
-
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
   type        = string

@@ -10,10 +10,7 @@ module "data_migration1" {
 
   dynamo_tables = var.dynamo_tables
 
-  pg_host     = var.pg_host
-  pg_password = var.pg_password
-  pg_user     = var.pg_user
-  pg_database = var.pg_database
+  rds_user_access_secret_id = var.rds_user_access_secret_id
 
   tags = var.tags
 }
