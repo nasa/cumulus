@@ -744,8 +744,6 @@ function normalizeEvent(event) {
   const endTimestamp = isoTimestamp(event.endTimestamp);
 
   let reportType = 'Inventory';
-  console.log(`Report Type: ${event.reportType}`);
-  console.log(`EVENT: ${JSON.stringify(event)}`);
   if (event.reportType && event.reportType.toLowerCase() === 'granulenotfound') {
     reportType = 'Granule Not Found';
   }
