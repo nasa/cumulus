@@ -77,6 +77,57 @@ const getConnectionConfig = async (env: NodeJS.ProcessEnv): Promise<Knex.PgConne
   return getSecretConnectionConfig(env?.databaseCredentialSecretId);
 };
 
+/**
+ * Migrate collection record from Dynamo to RDS.
+ *
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ *   Source record from DynamoDB
+ * @param {Knex} knex - Knex client for writing to RDS database
+ * @returns {number|false}
+ */
+export const migrateCollectionRecord = async (
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knex: Knex
+): Promise<number | false> => {
+  // Use schema to validate record before processing
+  Manager.recordIsValid(dynamoRecord, schemas.collection);
+
+  const [existingRecord] = await knex('collections')
+    .where('name', dynamoRecord.name)
+    .where('version', dynamoRecord.version);
+  // Skip record if it was already migrated.
+  if (existingRecord) {
+    logger.info(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
+    return false;
+  }
+
+  // Map old record to new schema.
+  const updatedRecord: RDSCollectionRecord = {
+    name: dynamoRecord.name,
+    version: dynamoRecord.version,
+    process: dynamoRecord.process,
+    url_path: dynamoRecord.url_path,
+    duplicateHandling: dynamoRecord.duplicateHandling,
+    granuleIdValidationRegex: dynamoRecord.granuleId,
+    granuleIdExtractionRegex: dynamoRecord.granuleIdExtraction,
+    // have to stringify on an array of values
+    files: JSON.stringify(dynamoRecord.files),
+    reportToEms: dynamoRecord.reportToEms,
+    sampleFileName: dynamoRecord.sampleFileName,
+    ignoreFilesConfigForDiscovery: dynamoRecord.ignoreFilesConfigForDiscovery,
+    meta: dynamoRecord.meta ? dynamoRecord.meta : undefined,
+    // have to stringify on an array of values
+    tags: dynamoRecord.tags ? JSON.stringify(dynamoRecord.tags) : undefined,
+    created_at: new Date(dynamoRecord.createdAt),
+    updated_at: new Date(dynamoRecord.updatedAt),
+  };
+
+  const [cumulusId] = await knex('collections')
+    .returning('cumulusId')
+    .insert(updatedRecord);
+  return <number>cumulusId;
+};
+
 export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
   const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
 
@@ -89,34 +140,8 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
   /* eslint-disable no-await-in-loop */
   while (record) {
     try {
-      // Use schema to validate record before processing
-      Manager.recordIsValid(record, schemas.collection);
-
-      // Map old record to new schema.
-      const updatedRecord: RDSCollectionRecord = {
-        name: record.name,
-        version: record.version,
-        process: record.process,
-        url_path: record.url_path,
-        duplicateHandling: record.duplicateHandling,
-        granuleIdValidationRegex: record.granuleId,
-        granuleIdExtractionRegex: record.granuleIdExtraction,
-        // have to stringify on an array of values
-        files: JSON.stringify(record.files),
-        reportToEms: record.reportToEms,
-        sampleFileName: record.sampleFileName,
-        ignoreFilesConfigForDiscovery: record.ignoreFilesConfigForDiscovery,
-        meta: record.meta ? record.meta : undefined,
-        // have to stringify on an array of values
-        tags: record.tags ? JSON.stringify(record.tags) : undefined,
-        created_at: new Date(record.createdAt),
-        updated_at: new Date(record.updatedAt),
-      };
-
-      const [cumulusId] = await knex('collections')
-        .returning('cumulusId')
-        .insert(updatedRecord);
-      createdRecordIds.push(cumulusId);
+      const createdRecordId = await migrateCollectionRecord(record, knex);
+      if (createdRecordId) createdRecordIds.push(createdRecordId);
     } catch (error) {
       logger.error('Could not create collection record:', error);
     }

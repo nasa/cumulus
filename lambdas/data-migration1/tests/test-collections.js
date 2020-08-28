@@ -11,7 +11,10 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 
-const { migrateCollections } = require('..');
+const {
+  migrateCollectionRecord,
+  migrateCollections,
+} = require('..');
 
 const knex = Knex({
   client: 'pg',
@@ -71,29 +74,105 @@ test.after.always(async () => {
   await knex.destroy();
 });
 
-test.serial('migrateCollections correctly migrates collection record', async (t) => {
+test.serial('migrateCollectionRecord correctly migrates collection record', async (t) => {
   const fakeCollection = generateFakeCollection();
 
-  const createdRecord = await collectionsModel.create(fakeCollection);
-  t.teardown(() => collectionsModel.delete(fakeCollection));
-
-  await migrateCollections(process.env, knex);
-
-  const records = await knex.queryBuilder().select().table('collections');
+  const cumulusId = await migrateCollectionRecord(fakeCollection, knex);
+  const [createdRecord] = await knex.queryBuilder()
+    .select()
+    .table('collections')
+    .where('cumulusId', cumulusId);
 
   t.deepEqual(
-    omit(records[0], ['cumulusId']),
+    omit(createdRecord, ['cumulusId']),
     omit(
       {
-        ...createdRecord,
-        granuleIdValidationRegex: createdRecord.granuleId,
-        granuleIdExtractionRegex: createdRecord.granuleIdExtraction,
-        created_at: new Date(createdRecord.createdAt),
-        updated_at: new Date(createdRecord.updatedAt),
+        ...fakeCollection,
+        granuleIdValidationRegex: fakeCollection.granuleId,
+        granuleIdExtractionRegex: fakeCollection.granuleIdExtraction,
+        created_at: new Date(fakeCollection.createdAt),
+        updated_at: new Date(fakeCollection.updatedAt),
       },
       ['granuleId', 'granuleIdExtraction', 'createdAt', 'updatedAt']
     )
   );
+});
+
+test.serial('migrateCollectionRecord throws error on invalid source data from Dynamo', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  // make source record invalid
+  delete fakeCollection.files;
+
+  await t.throwsAsync(migrateCollectionRecord(fakeCollection, knex));
+});
+
+test.serial('migrateCollectionRecord handles nullable fields on source collection data', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  // remove nullable fields
+  delete fakeCollection.dataType;
+  delete fakeCollection.url_path;
+  delete fakeCollection.duplicateHandling;
+  delete fakeCollection.process;
+  delete fakeCollection.reportToEms;
+  delete fakeCollection.ignoreFilesConfigForDiscovery;
+  delete fakeCollection.meta;
+  delete fakeCollection.tags;
+
+  const cumulusId = await migrateCollectionRecord(fakeCollection, knex);
+  const [createdRecord] = await knex.queryBuilder()
+    .select()
+    .table('collections')
+    .where('cumulusId', cumulusId);
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulusId']),
+    omit(
+      {
+        ...fakeCollection,
+        granuleIdValidationRegex: fakeCollection.granuleId,
+        granuleIdExtractionRegex: fakeCollection.granuleIdExtraction,
+        url_path: null,
+        process: null,
+        ignoreFilesConfigForDiscovery: null,
+        meta: null,
+        tags: null,
+        created_at: new Date(fakeCollection.createdAt),
+        updated_at: new Date(fakeCollection.updatedAt),
+        // schema validation will add default values
+        duplicateHandling: 'error',
+        reportToEms: true,
+      },
+      ['granuleId', 'granuleIdExtraction', 'createdAt', 'updatedAt']
+    )
+  );
+});
+
+test.serial('migrateCollectionRecord ignores extraneous fields from Dynamo', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  // add extraneous fields from Dynamo that will not exist in RDS
+  fakeCollection.dataType = 'data-type';
+
+  await t.notThrowsAsync(migrateCollectionRecord(fakeCollection, knex));
+});
+
+test.serial('migrateCollectionRecord returns false for already migrated record', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  await migrateCollectionRecord(fakeCollection, knex);
+  t.false(await migrateCollectionRecord(fakeCollection, knex));
+});
+
+test.serial('migrateCollections skips already migrated record', async (t) => {
+  const fakeCollection = generateFakeCollection();
+
+  await migrateCollectionRecord(fakeCollection, knex);
+  await collectionsModel.create(fakeCollection);
+  t.teardown(() => collectionsModel.delete(fakeCollection));
+  const createdIds = await migrateCollections(process.env, knex);
+  t.is(createdIds.length, 0);
 });
 
 test.serial('migrateCollections processes multiple collections', async (t) => {
@@ -113,25 +192,6 @@ test.serial('migrateCollections processes multiple collections', async (t) => {
 
   const records = await knex.queryBuilder().select().table('collections');
   t.is(records.length, 2);
-});
-
-test.serial('migrateCollections does not process invalid source data from Dynamo', async (t) => {
-  const fakeCollection = generateFakeCollection();
-
-  // make source record invalid
-  delete fakeCollection.files;
-
-  // Have to use Dynamo client directly because creating
-  // via model won't allow creation of an invalid record
-  await dynamodbDocClient().put({
-    TableName: process.env.CollectionsTable,
-    Item: fakeCollection,
-  });
-
-  t.teardown(() => collectionsModel.delete(fakeCollection));
-
-  const createdRecordIds = await migrateCollections(process.env, knex);
-  t.is(createdRecordIds.length, 0);
 });
 
 test.serial('migrateCollections processes all non-failing records', async (t) => {
@@ -157,59 +217,4 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
 
   const createdRecordIds = await migrateCollections(process.env, knex);
   t.is(createdRecordIds.length, 1);
-});
-
-test.serial('migrateCollections handles nullable fields on source collection data', async (t) => {
-  const fakeCollection = generateFakeCollection();
-
-  // remove nullable fields
-  delete fakeCollection.dataType;
-  delete fakeCollection.url_path;
-  delete fakeCollection.duplicateHandling;
-  delete fakeCollection.process;
-  delete fakeCollection.reportToEms;
-  delete fakeCollection.ignoreFilesConfigForDiscovery;
-  delete fakeCollection.meta;
-  delete fakeCollection.tags;
-
-  const createdRecord = await collectionsModel.create(fakeCollection);
-  t.teardown(() => collectionsModel.delete(fakeCollection));
-
-  const createdRecordIds = await migrateCollections(process.env, knex);
-  t.is(createdRecordIds.length, 1);
-
-  const records = await knex.queryBuilder().select().table('collections');
-  t.deepEqual(
-    omit(records[0], ['cumulusId']),
-    omit(
-      {
-        ...createdRecord,
-        granuleIdValidationRegex: createdRecord.granuleId,
-        granuleIdExtractionRegex: createdRecord.granuleIdExtraction,
-        url_path: null,
-        process: null,
-        ignoreFilesConfigForDiscovery: null,
-        meta: null,
-        tags: null,
-        created_at: new Date(createdRecord.createdAt),
-        updated_at: new Date(createdRecord.updatedAt),
-        // schema validation will add default values
-        duplicateHandling: 'error',
-        reportToEms: true,
-      },
-      ['granuleId', 'granuleIdExtraction', 'createdAt', 'updatedAt']
-    )
-  );
-});
-
-test.serial('migrateCollections ignores extraneous fields from Dynamo', async (t) => {
-  const fakeCollection = generateFakeCollection();
-
-  // add extraneous fields from Dynamo that will not exist in RDS
-  fakeCollection.dataType = 'data-type';
-
-  await collectionsModel.create(fakeCollection);
-  t.teardown(() => collectionsModel.delete(fakeCollection));
-
-  await t.notThrowsAsync(migrateCollections(process.env, knex));
 });
