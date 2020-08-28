@@ -19,5 +19,5 @@ module "data_migration1" {
   rds_security_group_id = data.terraform_remote_state.data_persistence.outputs.rds_security_group
   rds_user_access_secret_arn = data.terraform_remote_state.data_persistence.outputs.database_credentials_secret_arn
 
-  tags = var.tags
+  tags = merge(var.tags, { Deployment = var.prefix })
 }
