@@ -6,9 +6,8 @@ variable "permissions_boundary_arn" {
   type = string
 }
 
-variable "rds_user_access_secret_arn" {
-  type = string
-  default = null
+variable "subnet_ids" {
+  type = list(string)
 }
 
 variable "rds_security_group_id" {
@@ -24,10 +23,6 @@ variable "prefix" {
 variable "region" {
   type    = string
   default = "us-east-1"
-}
-
-variable "subnet_ids" {
-  type = list(string)
 }
 
 variable "tags" {
