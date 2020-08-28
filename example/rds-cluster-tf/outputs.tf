@@ -6,10 +6,10 @@ output "rds_endpoint" {
   value = module.rds_cluster.rds_endpoint
 }
 
-output "secret_arn" {
-  value = module.rds_cluster.secret_arn
+output "admin_db_login_secret_arn" {
+  value = module.rds_cluster.admin_db_login_secret_arn
 }
 
-output "secret_version" {
-  value = module.rds_cluster.secret_version
+output "admin_db_login_secret_version" {
+  value = module.rds_cluster.admin_db_login_secret_version
 }
