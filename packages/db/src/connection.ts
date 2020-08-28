@@ -5,7 +5,14 @@ import { getSecretConnectionConfig, getConnectionConfigEnv } from './config';
 /**
  * Builds a Knex.PgConnectionConfig
  *
- * @param {NodeJS.ProcessEnv} params - parameter object with knex configuration
+ * @param {NodeJS.ProcessEnv} params        - parameter object with knex configuration
+ * @param {boolean} params.connectionConfig - Knex.PgConnectionConfig Object (host, username,
+ *                                            port, etc)
+ * @param {boolean} params.debug            - If set to true, will enable Knex debugging
+ * @param {number} params.timeout           - Sets knex acquireConnectionTimeout value in
+ *                                            milliseconds
+ * @param {string} [params.migrationDir]    - The directory (relative path) knex will look in
+ *                                            for migrations
  * @returns {Knex.PgConnectionConfig} - KnexConfigObject
  */
 const buildKnexConfiguration = ({

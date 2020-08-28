@@ -13,10 +13,6 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv,
 }
 
-const validateDatabaseInput = (
-  inputString: string, regexp: RegExp
-): boolean => regexp.test(inputString);
-
 export const tableExists = async (tableName: string, knex: Knex) =>
   knex('pg_database').select('datname').where(knex.raw(`datname = CAST('${tableName}' as name)`));
 
@@ -39,7 +35,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     const dbUser = event.prefix.replace(/-/g, '_');
 
     [dbUser, event.dbPassword].forEach((input) => {
-      if (!(validateDatabaseInput(input, new RegExp(/^\w+$/)))) {
+      if (!(/^\w+$/.test(input))) {
         throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
       }
     });
