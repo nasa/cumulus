@@ -3,7 +3,7 @@ output "security_group_id" {
 }
 
 output "rds_endpoint" {
-  value = aws_rds_cluster.core_team_cluster.endpoint
+  value = aws_rds_cluster.cumulus.endpoint
 }
 
 output "admin_db_login_secret_arn" {

@@ -10,28 +10,31 @@ provider "aws" {
 }
 
 resource "aws_db_subnet_group" "default" {
-  name       = var.aws_db_subnet_group
-  subnet_ids = var.subnets
+  name_prefix = var.aws_db_subnet_group_prefix
+  subnet_ids  = var.subnets
+  tags        = var.tags
 }
 
 resource "aws_security_group" "rds_cluster_access" {
   name_prefix   = var.security_group_name
   vpc_id        = var.vpc_id
+  tags          = var.tags
 }
 
 resource "aws_secretsmanager_secret" "rds_login" {
   name_prefix = "cumulus_rds_db_cluster"
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "rds_login" {
-  secret_id     = aws_secretsmanager_secret.rds_login.id
-  secret_string = jsonencode({
+  secret_id             = aws_secretsmanager_secret.rds_login.id
+  secret_string         = jsonencode({
     username            = var.db_admin_username
     password            = var.db_admin_password
     engine              = "postgres"
-    host                = aws_rds_cluster.core_team_cluster.endpoint
+    host                = aws_rds_cluster.cumulus.endpoint
     port                = 5432
-    dbClusterIdentifier = aws_rds_cluster.core_team_cluster.id
+    dbClusterIdentifier = aws_rds_cluster.cumulus.id
   })
 }
 
@@ -44,7 +47,7 @@ resource "aws_security_group_rule" "rds_security_group_allow_postgres" {
   self            = true
 }
 
-resource "aws_rds_cluster" "core_team_cluster" {
+resource "aws_rds_cluster" "cumulus" {
   depends_on              = [aws_db_subnet_group.default]
   cluster_identifier      = var.cluster_identifier
   engine_mode             = "serverless"
@@ -62,7 +65,8 @@ resource "aws_rds_cluster" "core_team_cluster" {
     min_capacity = 2
   }
   skip_final_snapshot     = true
-  vpc_security_group_ids = [aws_security_group.rds_cluster_access.id]
+  vpc_security_group_ids  = [aws_security_group.rds_cluster_access.id]
   deletion_protection     = var.deletion_protection
-  enable_http_endpoint   = true
+  enable_http_endpoint    = true
+  tags                    = var.tags
 }
