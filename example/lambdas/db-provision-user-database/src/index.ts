@@ -48,7 +48,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       connection: config,
       acquireConnectionTimeout: 120000,
     });
-    const dbUser = event?.prefix.replace('-', '_');
+    const dbUser = event?.prefix.replace(/-/g, '_');
 
     [dbUser, event?.dbPassword].forEach((input) => {
       if (!(validateDatabaseInput(input, new RegExp(/^\w+$/)))) {
