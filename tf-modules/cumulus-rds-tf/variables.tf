@@ -1,6 +1,6 @@
 
-variable "aws_db_subnet_group" {
-  description = "Name for RDS database cluster subnet group"
+variable "aws_db_subnet_group_prefix" {
+  description = "Prefix for RDS database cluster subnet group"
   type        = string
   default     = "cumulus-rds-tf-subnet"
 }
@@ -66,6 +66,12 @@ variable "security_group_name" {
 variable "subnets" {
   description = "Subnets for database cluster.  Requires at least 2 across multiple AZs"
   type    = list(string)
+}
+
+variable "tags" {
+  description = "Tags to be applied to RDS cluster resources that support tags"
+  type        = map(string)
+  default     = {}
 }
 
 variable "vpc_id" {
