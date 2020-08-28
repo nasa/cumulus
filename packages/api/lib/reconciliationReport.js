@@ -69,9 +69,39 @@ function convertToGranuleSearchParams(params) {
   return removeNilProperties(searchParams);
 }
 
+/**
+ * create initial report header
+ *
+ * @param {Object} recReportParams - params
+ * @param {Object} recReportParams.reportType - the report type
+ * @param {moment} recReportParams.createStartTime - when the report creation was begun
+ * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
+ * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
+ * @returns {Object} report header
+ */
+function initialReportHeader(recReportParams) {
+  const {
+    reportType,
+    createStartTime,
+    endTimestamp,
+    startTimestamp,
+  } = recReportParams;
+
+  return {
+    reportType,
+    createStartTime: createStartTime.toISOString(),
+    createEndTime: undefined,
+    reportStartTime: startTimestamp,
+    reportEndTime: endTimestamp,
+    status: 'RUNNING',
+    error: undefined,
+  };
+}
+
 module.exports = {
   convertToCollectionSearchParams,
   convertToGranuleSearchParams,
   convertToESGranuleSearchParams,
   convertToESCollectionSearchParams,
+  initialReportHeader,
 };

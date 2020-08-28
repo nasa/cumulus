@@ -21,7 +21,11 @@ const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
-const { convertToESGranuleSearchParams, convertToESCollectionSearchParams } = require('../lib/reconciliationReport');
+const {
+  convertToESGranuleSearchParams,
+  convertToESCollectionSearchParams,
+  initialReportHeader,
+} = require('../lib/reconciliationReport');
 const Collection = require('../es/collections');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 
@@ -525,6 +529,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * Create a Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
+ * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
  * @param {string} recReportParams.reportKey - the s3 report key
@@ -536,11 +541,8 @@ async function reconciliationReportForCumulusCMR(params) {
  */
 async function createReconciliationReport(recReportParams) {
   const {
-    createStartTime,
-    endTimestamp,
     reportKey,
     stackName,
-    startTimestamp,
     systemBucket,
   } = recReportParams;
 
@@ -569,13 +571,7 @@ async function createReconciliationReport(recReportParams) {
   };
 
   let report = {
-    reportType: 'Inventory',
-    createStartTime: createStartTime.toISOString(),
-    createEndTime: undefined,
-    reportStartTime: startTimestamp,
-    reportEndTime: endTimestamp,
-    status: 'RUNNING',
-    error: undefined,
+    ...initialReportHeader(recReportParams),
     filesInCumulus,
     collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
@@ -632,27 +628,27 @@ async function createReconciliationReport(recReportParams) {
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
-  const { reportType, reportName, systemBucket, stackName } = params;
+  const { reportType = 'Inventory', reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName || `inventoryReport-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  const type = reportType || 'Inventory';
   const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
   const reportRecord = {
     name: reportRecordName,
-    type,
+    type: reportType,
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
   await reconciliationReportModel.create(reportRecord);
 
   try {
-    if (type === 'Internal') {
-      await createInternalReconciliationReport({ ...params, createStartTime, reportKey });
+    const recReportParams = { ...params, createStartTime, reportKey, reportType };
+    if (reportType === 'Internal') {
+      await createInternalReconciliationReport(recReportParams);
     } else {
-      await createReconciliationReport({ ...params, createStartTime, reportKey });
+      await createReconciliationReport(recReportParams);
     }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {

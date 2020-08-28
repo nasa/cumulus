@@ -13,7 +13,11 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { Collection, Granule } = require('../models');
-const { convertToCollectionSearchParams, convertToGranuleSearchParams } = require('../lib/reconciliationReport');
+const {
+  convertToCollectionSearchParams,
+  convertToGranuleSearchParams,
+  initialReportHeader,
+} = require('../lib/reconciliationReport');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
 /**
@@ -107,7 +111,6 @@ async function getAllCollections() {
 }
 
 async function reportForGranulesByCollectionId(collectionId, recReportParams) {
-  log.debug('internal-reconciliation-report reportForGranulesByCollectionId');
   //   For each collection,
   //     Get granule list in ES ordered by granuleId
   //     Get granule list in DynamoDB ordered by granuleId
@@ -129,7 +132,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   const onlyInDb = [];
   const fieldsIgnored = ['timestamp', 'updatedAt'];
 
-  const granuleFields = ['granuleId', 'collectionId', 'provider'];
+  const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt'];
   let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
 
   /* eslint-disable no-await-in-loop */
@@ -219,6 +222,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * Create a Internal Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
+ * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
  * @param {string} recReportParams.reportKey - the s3 report key
@@ -231,10 +235,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
 async function createInternalReconciliationReport(recReportParams) {
   log.debug(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
   const {
-    createStartTime,
-    endTimestamp,
     reportKey,
-    startTimestamp,
     systemBucket,
   } = recReportParams;
 
@@ -247,13 +248,7 @@ async function createInternalReconciliationReport(recReportParams) {
   };
 
   let report = {
-    reportType: 'Internal',
-    createStartTime: createStartTime.toISOString(),
-    createEndTime: undefined,
-    reportStartTime: startTimestamp,
-    reportEndTime: endTimestamp,
-    status: 'RUNNING',
-    error: null,
+    ...initialReportHeader(recReportParams),
     collections: cloneDeep(initialReportFormat),
     granules: cloneDeep(initialReportFormat),
   };

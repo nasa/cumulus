@@ -1187,7 +1187,7 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
 
   const report = await fetchCompletedReport(reportRecord);
   t.is(report.status, 'SUCCESS');
-  t.is(report.error, null);
+  t.is(report.error, undefined);
   t.is(report.reportType, 'Internal');
   t.is(report.collections.okCount, 1);
   t.is(report.collections.onlyInEs.length, 0);

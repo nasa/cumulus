@@ -257,9 +257,6 @@ describe('When there are granule differences and granule reconciliation is run',
   let testDataFolder;
   let testSuffix;
   let updatedGranuleFile;
-  // report record in db and report in s3
-  let reportRecord;
-  let report;
 
   beforeAll(async () => {
     try {
@@ -326,128 +323,137 @@ describe('When there are granule differences and granule reconciliation is run',
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
   });
 
-  it('generates an async operation through the Cumulus API', async () => {
-    const response = await reconciliationReportsApi.createReconciliationReport({
-      prefix: config.stackName,
+  describe('Create an Inventory Reconciliation Report to monitor inventory discrepancies', () => {
+    // report record in db and report in s3
+    let reportRecord;
+    let report;
+    it('generates an async operation through the Cumulus API', async () => {
+      const response = await reconciliationReportsApi.createReconciliationReport({
+        prefix: config.stackName,
+      });
+
+      const responseBody = JSON.parse(response.body);
+      asyncOperationId = responseBody.id;
+      expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
-    const responseBody = JSON.parse(response.body);
-    asyncOperationId = responseBody.id;
-    expect(responseBody.operationType).toBe('Reconciliation Report');
-  });
+    it('generates reconciliation report through the Cumulus API', async () => {
+      const asyncOperation = await waitForAsyncOperationStatus({
+        id: asyncOperationId,
+        status: 'SUCCEEDED',
+        stackName: config.stackName,
+        retries: 100,
+      });
 
-  it('generates reconciliation report through the Cumulus API', async () => {
-    const asyncOperation = await waitForAsyncOperationStatus({
-      id: asyncOperationId,
-      status: 'SUCCEEDED',
-      stackName: config.stackName,
-      retries: 100,
+      reportRecord = JSON.parse(asyncOperation.output);
     });
 
-    reportRecord = JSON.parse(asyncOperation.output);
-  });
+    it('fetches a reconciliation report through the Cumulus API', async () => {
+      const response = await reconciliationReportsApi.getReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
 
-  it('fetches a reconciliation report through the Cumulus API', async () => {
-    const response = await reconciliationReportsApi.getReconciliationReport({
-      prefix: config.stackName,
-      name: reportRecord.name,
+      report = JSON.parse(response.body);
+      expect(report.reportType).toBe('Inventory');
     });
 
-    report = JSON.parse(response.body);
-  });
-
-  it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
-    const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
-    expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
-  });
-
-  it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
-    const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
-    const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
-    expect(extraDbUris).toContain(extraFileUri);
-  });
-
-  it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
-    // MYD13Q1___006 is in both Cumulus and CMR
-    expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
-  });
-
-  it('generates a report showing collections that are in Cumulus but not in CMR', () => {
-    const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
-    expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
-    expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
-  });
-
-  it('generates a report showing collections that are in the CMR but not in Cumulus', () => {
-    // we know CMR has collections which are not in Cumulus
-    expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBeGreaterThanOrEqual(1);
-    expect(report.collectionsInCumulusCmr.onlyInCmr).not.toContain(collectionId);
-  });
-
-  it('generates a report showing number of granules that are in both Cumulus and CMR', () => {
-    // published granule should in both Cumulus and CMR
-    expect(report.granulesInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
-  });
-
-  it('generates a report showing granules that are in the Cumulus but not in CMR', () => {
-    // ingested (not published) granule should only in Cumulus
-    const cumulusGranuleIds = report.granulesInCumulusCmr.onlyInCumulus.map((gran) => gran.granuleId);
-    expect(cumulusGranuleIds).toContain(dbGranuleId);
-    expect(cumulusGranuleIds).not.toContain(publishedGranuleId);
-  });
-
-  it('generates a report showing granules that are in the CMR but not in Cumulus', () => {
-    const cmrGranuleIds = report.granulesInCumulusCmr.onlyInCmr.map((gran) => gran.GranuleUR);
-    expect(cmrGranuleIds.length).toBeGreaterThanOrEqual(1);
-    expect(cmrGranuleIds).toContain(cmrGranule.granuleId);
-    expect(cmrGranuleIds).not.toContain(dbGranuleId);
-    expect(cmrGranuleIds).not.toContain(publishedGranuleId);
-  });
-
-  it('generates a report showing number of granule files that are in both Cumulus and CMR', () => {
-    // published granule should have 2 files in both Cumulus and CMR
-    expect(report.filesInCumulusCmr.okCount).toBeGreaterThanOrEqual(2);
-  });
-
-  it('generates a report showing granule files that are in Cumulus but not in CMR', () => {
-    // published granule should have one file(renamed file) in Cumulus
-    const fileNames = report.filesInCumulusCmr.onlyInCumulus.map((file) => file.fileName);
-    expect(fileNames).toContain(updatedGranuleFile.fileName);
-    expect(fileNames).not.toContain(originalGranuleFile.fileName);
-    expect(report.filesInCumulusCmr.onlyInCumulus.filter((file) => file.granuleId === publishedGranuleId).length)
-      .toBe(1);
-  });
-
-  it('generates a report showing granule files that are in the CMR but not in Cumulus', () => {
-    const urls = report.filesInCumulusCmr.onlyInCmr;
-    expect(urls.find((url) => url.URL.endsWith(originalGranuleFile.fileName))).toBeTruthy();
-    expect(urls.find((url) => url.URL.endsWith(updatedGranuleFile.fileName))).toBeFalsy();
-    // TBD update to 1 after the s3credentials url has type 'VIEW RELATED INFORMATION' (CUMULUS-1182)
-    // Cumulus 670 has a fix for the issue noted above from 1182.  Setting to 1.
-    expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranuleId).length)
-      .toBe(2);
-  });
-
-  it('deletes a reconciliation report through the Cumulus API', async () => {
-    await reconciliationReportsApi.deleteReconciliationReport({
-      prefix: config.stackName,
-      name: reportRecord.name,
+    it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
+      const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
+      expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
     });
 
-    const parsed = parseS3Uri(reportRecord.location);
-    const exists = await fileExists(parsed.Bucket, parsed.Key);
-    expect(exists).toBeFalse();
-
-    const response = await reconciliationReportsApi.getReconciliationReport({
-      prefix: config.stackName,
-      name: reportRecord.name,
+    it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
+      const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
+      const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
+      expect(extraDbUris).toContain(extraFileUri);
     });
 
-    expect(response.statusCode).toBe(404);
-    expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
+    it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
+      // MYD13Q1___006 is in both Cumulus and CMR
+      expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
+    });
+
+    it('generates a report showing collections that are in Cumulus but not in CMR', () => {
+      const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+      expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
+      expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
+    });
+
+    it('generates a report showing collections that are in the CMR but not in Cumulus', () => {
+      // we know CMR has collections which are not in Cumulus
+      expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBeGreaterThanOrEqual(1);
+      expect(report.collectionsInCumulusCmr.onlyInCmr).not.toContain(collectionId);
+    });
+
+    it('generates a report showing number of granules that are in both Cumulus and CMR', () => {
+      // published granule should in both Cumulus and CMR
+      expect(report.granulesInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
+    });
+
+    it('generates a report showing granules that are in the Cumulus but not in CMR', () => {
+      // ingested (not published) granule should only in Cumulus
+      const cumulusGranuleIds = report.granulesInCumulusCmr.onlyInCumulus.map((gran) => gran.granuleId);
+      expect(cumulusGranuleIds).toContain(dbGranuleId);
+      expect(cumulusGranuleIds).not.toContain(publishedGranuleId);
+    });
+
+    it('generates a report showing granules that are in the CMR but not in Cumulus', () => {
+      const cmrGranuleIds = report.granulesInCumulusCmr.onlyInCmr.map((gran) => gran.GranuleUR);
+      expect(cmrGranuleIds.length).toBeGreaterThanOrEqual(1);
+      expect(cmrGranuleIds).toContain(cmrGranule.granuleId);
+      expect(cmrGranuleIds).not.toContain(dbGranuleId);
+      expect(cmrGranuleIds).not.toContain(publishedGranuleId);
+    });
+
+    it('generates a report showing number of granule files that are in both Cumulus and CMR', () => {
+      // published granule should have 2 files in both Cumulus and CMR
+      expect(report.filesInCumulusCmr.okCount).toBeGreaterThanOrEqual(2);
+    });
+
+    it('generates a report showing granule files that are in Cumulus but not in CMR', () => {
+      // published granule should have one file(renamed file) in Cumulus
+      const fileNames = report.filesInCumulusCmr.onlyInCumulus.map((file) => file.fileName);
+      expect(fileNames).toContain(updatedGranuleFile.fileName);
+      expect(fileNames).not.toContain(originalGranuleFile.fileName);
+      expect(report.filesInCumulusCmr.onlyInCumulus.filter((file) => file.granuleId === publishedGranuleId).length)
+        .toBe(1);
+    });
+
+    it('generates a report showing granule files that are in the CMR but not in Cumulus', () => {
+      const urls = report.filesInCumulusCmr.onlyInCmr;
+      expect(urls.find((url) => url.URL.endsWith(originalGranuleFile.fileName))).toBeTruthy();
+      expect(urls.find((url) => url.URL.endsWith(updatedGranuleFile.fileName))).toBeFalsy();
+      // TBD update to 1 after the s3credentials url has type 'VIEW RELATED INFORMATION' (CUMULUS-1182)
+      // Cumulus 670 has a fix for the issue noted above from 1182.  Setting to 1.
+      expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranuleId).length)
+        .toBe(2);
+    });
+
+    it('deletes a reconciliation report through the Cumulus API', async () => {
+      await reconciliationReportsApi.deleteReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      const parsed = parseS3Uri(reportRecord.location);
+      const exists = await fileExists(parsed.Bucket, parsed.Key);
+      expect(exists).toBeFalse();
+
+      const response = await reconciliationReportsApi.getReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
+    });
   });
 
-  describe('Internal Reconciliation Report', () => {
+  describe('Create an Internal Reconciliation Report to monitor internal discrepancies', () => {
+    // report record in db and report in s3
+    let reportRecord;
+    let report;
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Internal',
@@ -484,6 +490,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       report = JSON.parse(response.body);
+      expect(report.reportType).toBe('Internal');
     });
 
     it('generates a report showing number of collections that are in both ES and DB', () => {
