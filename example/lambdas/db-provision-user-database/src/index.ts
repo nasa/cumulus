@@ -24,7 +24,7 @@ export const userExists = async (userName: string, knex: Knex) =>
   knex('pg_catalog.pg_user').where(knex.raw(`usename = CAST('${userName}' as name)`));
 
 const validateEvent = (event: HandlerEvent): void => {
-  if (event?.dbPassword === undefined || event?.prefix === undefined) {
+  if (event.dbPassword === undefined || event.prefix === undefined) {
     throw new Error(`This lambda requires 'dbPassword' and 'prefix' to be defined on the event: ${event}`);
   }
 };
