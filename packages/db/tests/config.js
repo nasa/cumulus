@@ -72,14 +72,14 @@ test('getSecretConnectionConfig throws an error a secret that is missing require
   ));
 });
 
-test('getConnectionConfigEnv returns the expected configuration from the passed in env object', async (t) => {
+test('getConnectionConfigEnv returns the expected configuration from the passed in env object', (t) => {
   const envObject = {
     PG_HOST: 'PG_HOST',
     PG_USER: 'PG_USER',
     PG_PASSWORD: 'PG_PASSWORD',
     PG_DATABASE: 'PG_DATABASE',
   };
-  const result = await getConnectionConfigEnv(envObject);
+  const result = getConnectionConfigEnv(envObject);
   t.deepEqual(result, {
     host: 'PG_HOST',
     user: 'PG_USER',

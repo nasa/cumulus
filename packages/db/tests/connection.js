@@ -11,7 +11,7 @@ const fakeConnectionConfig = {
 test.before(async (t) => {
   const { knex } = proxyquire('../dist/connection.js', {
     './config': {
-      getConnectionConfigEnv: () => Promise.resolve(fakeConnectionConfig),
+      getConnectionConfigEnv: () => fakeConnectionConfig,
       getSecretConnectionConfig: () => Promise.resolve(fakeConnectionConfig),
     },
   });
