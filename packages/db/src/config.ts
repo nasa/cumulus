@@ -1,8 +1,6 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
 
-import { envConectionConfigObject } from './types';
-
 export const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
   const value = env[name];
   if (value) return value;
@@ -34,9 +32,9 @@ export const getSecretConnectionConfig = async (
   };
 };
 
-export const getConnectionConfigEnv = async (
-  env: envConectionConfigObject
-): Promise<Knex.PgConnectionConfig> => ({
+export const getConnectionConfigEnv = (
+  env: NodeJS.ProcessEnv
+): Knex.PgConnectionConfig => ({
   host: getRequiredEnvVar('PG_HOST', env),
   user: getRequiredEnvVar('PG_USER', env),
   password: getRequiredEnvVar('PG_PASSWORD', env),

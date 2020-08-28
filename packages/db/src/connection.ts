@@ -2,57 +2,38 @@ import AWS from 'aws-sdk';
 import Knex from 'knex';
 import { getSecretConnectionConfig, getConnectionConfigEnv } from './config';
 
-import { envConectionConfigObject, knexSecretConnectionConfigObject } from './types';
-
-export interface knexConnectionConfigObject {
-  host: string,
-  username: string,
-  password: string,
-  database?: string,
-}
-
 /**
-* Builds a Knex.PgConnectionConfig
-*
-* @param {NodeJS.ProcessEnv} params - parameter object with knex configuration
-* @returns {Knex.PgConnectionConfig} - KnexConfigObject
-*/
-const buildKnexConfiguration = (
-  params: {
-    connectionConfig: Knex.PgConnectionConfig,
-    KNEX_DEBUG?: string,
-    KNEX_ASYNC_STACK_TRACES?: string,
-    timeout: number,
-    migrationDir?: string,
-  }
-): Knex.Config => {
+ * Builds a Knex.PgConnectionConfig
+ *
+ * @param {NodeJS.ProcessEnv} params - parameter object with knex configuration
+ * @returns {Knex.PgConnectionConfig} - KnexConfigObject
+ */
+const buildKnexConfiguration = ({
+  connectionConfig,
+  debug = false,
+  asyncStackTraces = false,
+  timeout = 60000,
+  migrationDir,
+}: {
+  connectionConfig: Knex.PgConnectionConfig,
+  debug?: boolean,
+  asyncStackTraces?: boolean,
+  timeout?: number,
+  migrationDir?: string,
+}): Knex.Config => {
   const knexConfig: Knex.Config = {
     client: 'pg',
-    connection: params.connectionConfig,
-    debug: params.KNEX_DEBUG === 'true',
-    asyncStackTraces: params.KNEX_ASYNC_STACK_TRACES === 'true',
-    acquireConnectionTimeout: params.timeout,
+    connection: connectionConfig,
+    debug,
+    asyncStackTraces,
+    acquireConnectionTimeout: timeout,
   };
 
-  if (params.migrationDir !== undefined) {
-    knexConfig.migrations = { directory: params.migrationDir };
+  if (migrationDir !== undefined) {
+    knexConfig.migrations = { directory: migrationDir };
   }
   return knexConfig;
 };
-
-function isKnexSecretConnectionConfigObject(
-  env: envConectionConfigObject | knexSecretConnectionConfigObject | NodeJS.ProcessEnv
-): env is knexSecretConnectionConfigObject {
-  return (env as knexSecretConnectionConfigObject).databaseCredentialSecretArn !== undefined;
-}
-
-function isenvConectionConfigObject(
-  env: envConectionConfigObject | knexSecretConnectionConfigObject | NodeJS.ProcessEnv
-): env is envConectionConfigObject {
-  return ((env as envConectionConfigObject).PG_HOST !== undefined
-    && (env as envConectionConfigObject).PG_PASSWORD !== undefined
-    && (env as envConectionConfigObject).PG_USER !== undefined);
-}
 
 /**
 * Given a NodeJS.ProcessEnv with configuration values, build and return a
@@ -82,33 +63,31 @@ function isenvConectionConfigObject(
 *
 * @returns {Promise<Knex>} Returns a configured knex instance
 */
-export const knex = async (
-  env: envConectionConfigObject | knexSecretConnectionConfigObject | NodeJS.ProcessEnv
-): Promise<Knex> => {
-  let connectionConfig;
-  if (isKnexSecretConnectionConfigObject(env)) {
+export const knex = async (env: NodeJS.ProcessEnv): Promise<Knex> => {
+  let connectionConfig: Knex.PgConnectionConfig;
+
+  if (env.databaseCredentialSecretArn) {
     const secretsManager = new AWS.SecretsManager();
     connectionConfig = await getSecretConnectionConfig(
       env.databaseCredentialSecretArn,
       secretsManager
     );
-  } else if (isenvConectionConfigObject(env)) {
-    connectionConfig = await getConnectionConfigEnv(env);
   } else {
-    throw new Error('"env" must contain either databaseCredentialSecretArn or postgres config');
+    connectionConfig = getConnectionConfigEnv(env);
   }
 
-  let timeout = 60000;
-  if (env.knexAcquireConnectionTimeout !== undefined) {
+  let timeout;
+  if (env.knexAcquireConnectionTimeout) {
     timeout = Number(env.knexAcquireConnectionTimeout);
   }
 
   const knexConfig = buildKnexConfiguration({
     connectionConfig,
-    KNEX_ASYNC_STACK_TRACES: env.KNEX_ASYNC_STACK_TRACES,
-    KNEX_DEBUG: env.KNEX_DEBUG,
+    asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
+    debug: env.KNEX_DEBUG === 'true',
     migrationDir: env.migrationDir,
     timeout,
   });
+
   return Knex(knexConfig);
 };
