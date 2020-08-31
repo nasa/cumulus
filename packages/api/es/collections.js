@@ -4,6 +4,8 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
 const { BaseSearch } = require('./search');
 
+const ES_MAX_AGG = 2147483647;
+
 class Collection extends BaseSearch {
   constructor(event, type, index) {
     super(event, type || 'collection', index);
@@ -30,6 +32,7 @@ class Collection extends BaseSearch {
           hashes: {
             terms: {
               field: '_uid',
+              size: ES_MAX_AGG,
             },
             aggs: {
               stats: {
@@ -48,7 +51,6 @@ class Collection extends BaseSearch {
           },
         },
       },
-      size: 0,
     }).then((response) => response.body);
 
     // add aggs to res
@@ -93,7 +95,6 @@ class Collection extends BaseSearch {
 
     // granules
     const searchParams = this._buildSearch();
-    searchParams.size = 0;
     delete searchParams.from;
     searchParams.type = 'granule';
 
@@ -101,6 +102,7 @@ class Collection extends BaseSearch {
       collections: {
         terms: {
           field: 'collectionId',
+          size: ES_MAX_AGG,
         },
       },
     };

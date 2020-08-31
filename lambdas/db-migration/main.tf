@@ -1,5 +1,5 @@
 locals {
-  lambda_path = "${path.module}/dist/lambda.zip"
+  lambda_path = "${path.module}/dist/webpack/lambda.zip"
 }
 
 data "aws_iam_policy_document" "lambda_assume_role_policy" {
@@ -33,6 +33,12 @@ data "aws_iam_policy_document" "db_migration" {
     ]
     resources = ["*"]
   }
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+    resources = [var.rds_user_access_secret_arn]
+  }
 }
 
 resource "aws_iam_role_policy" "db_migration" {
@@ -64,15 +70,12 @@ resource "aws_lambda_function" "db_migration" {
   handler          = "index.handler"
   role             = aws_iam_role.db_migration.arn
   runtime          = "nodejs12.x"
-  timeout          = 60
+  timeout          = 120
   memory_size      = 128
 
   environment {
     variables = {
-      PG_HOST = var.pg_host
-      PG_USER = var.pg_user
-      PG_PASSWORD = var.pg_password
-      PG_DATABASE = var.pg_database
+      databaseCredentialSecretArn = var.rds_user_access_secret_arn
     }
   }
 
@@ -80,9 +83,10 @@ resource "aws_lambda_function" "db_migration" {
     for_each = length(var.subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.subnet_ids
-      security_group_ids = [
-        aws_security_group.db_migration[0].id
-      ]
+      security_group_ids = compact([
+        aws_security_group.db_migration[0].id,
+        var.rds_security_group_id
+      ])
     }
   }
 
