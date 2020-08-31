@@ -508,22 +508,6 @@ export const getS3ObjectReadStream = deprecate(
 );
 
 /**
- * Get a readable stream for an S3 object.
- *
- * Use `getS3Object()` before fetching stream to deal
- * with eventual consistency issues by checking for object
- * with retries.
- *
- * @param {string} bucket - the S3 object's bucket
- * @param {string} key - the S3 object's key
- * @returns {ReadableStream}
- * @throws {Error} if S3 object cannot be found
- */
-export const getS3ObjectReadStreamAsync = (bucket: string, key: string) =>
-  getS3Object(bucket, key, { retries: 3 })
-    .then(() => getObjectReadStream({ s3: s3(), bucket, key }));
-
-/**
 * Check if a file exists in an S3 object
 *
 * @param {string} bucket - name of the S3 bucket
@@ -814,7 +798,7 @@ export const calculateS3ObjectChecksum = deprecate(
     }
   ) => {
     const { algorithm, bucket, key, options } = params;
-    const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
+    const fileStream = getObjectReadStream({ s3: s3(), bucket, key });
     return generateChecksumFromStream(algorithm, fileStream, options);
   },
   buildDeprecationMessage(
@@ -845,7 +829,7 @@ export const validateS3ObjectChecksum = async (params: {
   options: TransformOptions
 }) => {
   const { algorithm, bucket, key, expectedSum, options } = params;
-  const fileStream = await getS3ObjectReadStreamAsync(bucket, key);
+  const fileStream = getObjectReadStream({ s3: s3(), bucket, key });
   if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
     return true;
   }

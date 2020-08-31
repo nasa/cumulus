@@ -294,27 +294,37 @@ describe('When there are granule differences and granule reconciliation is run',
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
+      console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      console.log('XXX Completed for setupCollectionAndTestData');
 
-      [
-        publishedGranuleId,
-        dbGranuleId,
-        cmrGranule,
-        [extraCumulusCollection, extraCumulusCollectionCleanup],
-      ] = await Promise.all([
-        ingestAndPublishGranule(config, testSuffix, testDataFolder),
-        ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-        ingestGranuleToCMR(config, testSuffix, testDataFolder),
-        activeCollectionPromise,
-      ]);
+      console.log('XXXXX Waiting for ingestAndPublishGranule(config, testSuffix, testDataFolder)');
+      publishedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
+      console.log('XXXXX Completed ingestAndPublishGranule(config, testSuffix, testDataFolder)');
+
+      console.log('XXXXX Waiting for ingestAndPublishGranule(config, testSuffix, testDataFolder, false)');
+      dbGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, false);
+      console.log('XXXXX Completed for ingestAndPublishGranule(config, testSuffix, testDataFolder, false)');
+
+      console.log('XXXXX Waiting for cmrGranule = await ingestGranuleToCMR(config, testSuffix, testDataFolder)');
+      cmrGranule = await ingestGranuleToCMR(config, testSuffix, testDataFolder);
+      console.log('XXXXX Completed for cmrGranule = await ingestGranuleToCMR(config, testSuffix, testDataFolder)');
+
+      console.log('XXXXX Waiting for activeCollectionPromise');
+      [extraCumulusCollection, extraCumulusCollectionCleanup] = await activeCollectionPromise;
+      console.log('XXXXX Completed for activeCollectionPromise');
 
       // update one of the granule files in database so that that file won't match with CMR
+      console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
       granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
       });
+      console.log('XXXXX Completed for granulesApiTestUtils.getGranule()');
 
+      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
+      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
     } catch (error) {
       beforeAllFailed = true;
       throw error;
