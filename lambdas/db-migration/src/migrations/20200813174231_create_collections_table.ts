@@ -7,7 +7,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table.string('version').notNullable();
     table.string('sampleFileName').notNullable();
     table.text('granuleIdValidationRegex').notNullable();
-    table.text('granuleIdExtractionRegex').notNullable();
+    table.text('granuleIdExtraction').notNullable();
     table.jsonb('files').notNullable();
     table.string('process');
     table.string('url_path');
