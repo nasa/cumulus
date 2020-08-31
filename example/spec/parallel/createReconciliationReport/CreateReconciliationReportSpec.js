@@ -506,6 +506,25 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.granules.onlyInEs.length).toBe(0);
       expect(report.granules.onlyInDb.length).toBe(0);
     });
+
+    it('deletes a reconciliation report through the Cumulus API', async () => {
+      await reconciliationReportsApi.deleteReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      const parsed = parseS3Uri(reportRecord.location);
+      const exists = await fileExists(parsed.Bucket, parsed.Key);
+      expect(exists).toBeFalse();
+
+      const response = await reconciliationReportsApi.getReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
+    });
   });
 
   afterAll(async () => {
