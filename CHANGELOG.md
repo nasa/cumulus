@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 #### CODE CHANGES
 
+- The `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync` function has been
+  removed. It read the entire S3 object into memory before returning a read
+  stream, which could cause Lambdas to run out of memory. Use
+  `@cumulus/aws-client/S3.getObjectReadStream` instead.
 - The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
   rather than `null` if the mime type could not be found.
 - The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
@@ -67,6 +71,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-2107**
+  - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
+    Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
+    `RestrictionFlag/RestrictionComment`, respectively.
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
 
