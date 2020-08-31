@@ -57,7 +57,7 @@ locals {
       provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
       ProvidersTable               = var.dynamo_tables.providers.name
       public_buckets               = join(",", var.public_buckets)
-      rds_user_access_secret_id     = var.rds_user_access_secret_id
+      rds_user_access_secret_arn     = var.rds_user_access_secret_arn
       ReconciliationReportsTable   = var.dynamo_tables.reconciliation_reports.name
       RulesTable                   = var.dynamo_tables.rules.name
       stackName                    = var.prefix
