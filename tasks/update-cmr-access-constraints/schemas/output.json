@@ -1,0 +1,42 @@
+{
+  "title": "UpdateCmrAccessConstraintsOutput",
+  "description": "Describes the output produced by the update-cmr-access-constraints task",
+  "type": "object",
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "bucket": {
+                  "type": "string"
+                },
+                "etag": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

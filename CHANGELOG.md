@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 #### CODE CHANGES
 
+- The `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync` function has been
+  removed. It read the entire S3 object into memory before returning a read
+  stream, which could cause Lambdas to run out of memory. Use
+  `@cumulus/aws-client/S3.getObjectReadStream` instead.
 - The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
   rather than `null` if the mime type could not be found.
 - The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
@@ -36,6 +40,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2123**
+  - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a severless RDS Aurora/ PostgreSQL database cluster to meet the PostgreSQL requirements for the 2.1.x release series
+  - Updated the default Cumulus module to take the following new required variables:
+    - rds_user_access_secret_arn:
+      AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)
+    - rds_security_group:
+      RDS Security Group that provides connection access to the RDS cluster
+  - Updated API lambdas and default ECS cluster to add them to the `rds_security_group` for database access
 - **CUMULUS-1855**
   - Fixed SyncGranule task to return an empty granules list when given an empty
     (or absent) granules list on input, rather than throwing an exception
@@ -59,6 +71,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-2107**
+  - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
+    Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
+    `RestrictionFlag/RestrictionComment`, respectively.
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
 

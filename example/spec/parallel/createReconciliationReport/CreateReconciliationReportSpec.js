@@ -296,7 +296,9 @@ describe('When there are granule differences and granule reconciliation is run',
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
+      console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      console.log('XXX Completed for setupCollectionAndTestData');
 
       [
         publishedGranuleId,
@@ -311,12 +313,16 @@ describe('When there are granule differences and granule reconciliation is run',
       ]);
 
       // update one of the granule files in database so that that file won't match with CMR
+      console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
       granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
       });
+      console.log('XXXXX Completed for granulesApiTestUtils.getGranule()');
 
+      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
+      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
     } catch (error) {
       beforeAllFailed = true;
       throw error;
