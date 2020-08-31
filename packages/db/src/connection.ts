@@ -36,7 +36,6 @@ const buildKnexConfiguration = ({
     acquireConnectionTimeout: timeout,
   };
 
-  console.log(migrationDir);
   if (migrationDir !== undefined) {
     knexConfig.migrations = { directory: migrationDir };
   }
