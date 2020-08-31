@@ -1,5 +1,5 @@
 locals {
-  lambda_path = "${path.module}/dist/lambda.zip"
+  lambda_path = "${path.module}/dist/webpack/lambda.zip"
 }
 
 data "aws_iam_policy_document" "lambda_assume_role_policy" {

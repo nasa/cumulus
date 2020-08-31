@@ -1,9 +1,6 @@
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
 
-// path to module root
-const root = path.resolve(__dirname);
-
 const ignoredPackages = [
   'mssql',
   'mssql/lib/base',
@@ -19,37 +16,36 @@ const ignoredPackages = [
 
 module.exports = {
   plugins: [
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`))
   ],
   mode: process.env.PRODUCTION ? 'production' : 'development',
-  entry: './src/index.ts',
+  entry: './dist/index.js',
   output: {
     libraryTarget: 'commonjs2',
-    filename: 'index.js'
-    // devtoolModuleFilenameTemplate: (info) => {
-    //   const relativePath = path.relative(root, info.absoluteResourcePath)
-    //   return `webpack://${relativePath}`;
-    // }
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'dist', 'webpack')
   },
-  externals: [
-    'aws-sdk',
-    'electron',
-    {'formidable': 'url'}
-  ],
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
+        test: /\.js$/,
         exclude: /node_modules/,
+        use: [
+          {
+            loader: 'source-map-loader'
+          },
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
       },
     ],
   },
-  resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ],
-  },
-  devtool: 'inline-source-map',
   target: 'node',
+  devtool: 'inline-source-map',
   optimization: {
     nodeEnv: false
   }
