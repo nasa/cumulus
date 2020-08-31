@@ -55,6 +55,8 @@ module.exports = {
       }
     ],
   },
+  // DO NOT REMOVE THIS. Otherwise __dirname in Node.js code will not behave
+  // as expected
   node: {
     __dirname: false
   },
