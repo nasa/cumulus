@@ -7,6 +7,13 @@ export const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string 
   throw new Error(`The ${name} environment variable must be set`);
 };
 
+const localStackConnectionConfig: Knex.PgConnectionConfig = {
+  host: 'localhost',
+  user: 'postgres',
+  password: 'password',
+  database: 'postgres',
+};
+
 export const getSecretConnectionConfig = async (
   SecretId: string,
   secretsManager: AWS.SecretsManager
@@ -40,3 +47,27 @@ export const getConnectionConfigEnv = (
   password: getRequiredEnvVar('PG_PASSWORD', env),
   database: getRequiredEnvVar('PG_DATABASE', env),
 });
+
+export const getConnectionConfig = async ({
+  env,
+  secretsManager = new AWS.SecretsManager(),
+}: {
+  env: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
+}): Promise<Knex.PgConnectionConfig> => {
+  // Using LocalStack
+  if (env.NODE_ENV === 'test') {
+    return localStackConnectionConfig;
+  }
+
+  // Storing credentials in Secrets Manager
+  if (env.databaseCredentialSecretArn) {
+    return getSecretConnectionConfig(
+      env.databaseCredentialSecretArn,
+      secretsManager
+    );
+  }
+
+  // Getting credentials from environment variables
+  return getConnectionConfigEnv(env);
+};

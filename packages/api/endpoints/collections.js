@@ -1,15 +1,13 @@
 'use strict';
 
 const router = require('express-promise-router')();
-
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   InvalidRegexError,
   UnmatchedRegexError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
-const { knex } = require('@cumulus/db');
+const db = require('@cumulus/db');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
@@ -40,17 +38,6 @@ const dynamoRecordToDbRecord = (dynamoRecord) => {
 
   return dbRecord;
 };
-
-const getDbClient = () => (
-  inTestMode()
-    ? knex.createLocalStackClient()
-    : knex.createClient({
-      host: process.env.PG_HOST,
-      user: process.env.PG_USER,
-      password: process.env.PG_PASSWORD,
-      database: process.env.PG_DATABASE,
-    })
-);
 
 /**
  * List all collections.
@@ -119,7 +106,7 @@ async function get(req, res) {
 async function post(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = getDbClient(),
+    dbClient = await db.connection.knex(),
     logger = log,
   } = req.testContext || {};
 
@@ -176,7 +163,7 @@ async function post(req, res) {
 async function put(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = getDbClient(),
+    dbClient = await db.connection.knex(),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -222,7 +209,7 @@ async function put(req, res) {
 async function del(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = getDbClient(),
+    dbClient = await db.connection.knex(),
   } = req.testContext || {};
 
   const { name, version } = req.params;

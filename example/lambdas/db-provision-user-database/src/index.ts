@@ -29,9 +29,9 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
   let knex;
   try {
-    knex = await connection.knex(
-      { databaseCredentialSecretArn: event.rootLoginSecret }
-    );
+    knex = await connection.knex({
+      env: { databaseCredentialSecretArn: event.rootLoginSecret },
+    });
     const dbUser = event.prefix.replace(/-/g, '_');
 
     [dbUser, event.dbPassword].forEach((input) => {

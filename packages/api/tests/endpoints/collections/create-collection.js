@@ -12,6 +12,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
+const RulesModel = require('../../../models/rules');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
@@ -23,6 +24,7 @@ const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
+process.env.RulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -37,6 +39,7 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
+let rulesModel;
 let publishStub;
 
 test.before(async () => {
@@ -55,6 +58,9 @@ test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
+  rulesModel = new RulesModel();
+  await rulesModel.createTable();
+
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
 
@@ -67,6 +73,7 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
+  await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   publishStub.restore();

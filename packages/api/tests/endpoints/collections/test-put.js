@@ -3,7 +3,7 @@
 const pick = require('lodash/pick');
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
-const { knex } = require('@cumulus/db');
+const db = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 const Collection = require('../../../models/collections');
 const RulesModel = require('../../../models/rules');
@@ -26,7 +26,7 @@ test.before(async (t) => {
     rulesModel.createTable(),
   ]);
 
-  t.context.dbClient = knex.createLocalStackClient();
+  t.context.dbClient = await db.connection.knex();
 });
 
 test.beforeEach(async (t) => {

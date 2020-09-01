@@ -9,7 +9,8 @@ import { ExecutionContext } from 'ava';
 
 export { readJsonFile as readJsonFixture } from './FileUtils';
 
-export const inTestMode = () => process.env.NODE_ENV === 'test';
+export const inTestMode = (env: NodeJS.ProcessEnv = process.env): boolean =>
+  env.NODE_ENV === 'test';
 
 /**
  * Helper function to throw error for unit test exports
