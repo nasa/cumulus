@@ -6,20 +6,14 @@ variable "prefix" {
   type = string
 }
 
-variable "pg_host" {
+variable "rds_user_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
   type = string
 }
 
-variable "pg_user" {
+variable "rds_security_group_id" {
   type = string
-}
-
-variable "pg_password" {
-  type = string
-}
-
-variable "pg_database" {
-  type = string
+  default = ""
 }
 
 variable "subnet_ids" {

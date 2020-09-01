@@ -2,13 +2,18 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const fs = require('fs-extra');
+const get = require('lodash/get');
+
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
-const { buildS3Uri, fileExists, getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
-const { dynamodb, s3 } = require('@cumulus/aws-client/services');
+const {
+  buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { Granule } = require('@cumulus/api/models');
@@ -21,6 +26,13 @@ const {
   granulesApi: granulesApiTestUtils,
   waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
+
+const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
+const { createCollection } = require('@cumulus/integration-tests/Collections');
+const { createProvider } = require('@cumulus/integration-tests/Providers');
+const { deleteCollection, getCollections } = require('@cumulus/api-client/collections');
+const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 
 const {
   loadConfig,
@@ -36,8 +48,6 @@ const {
   waitForGranuleRecordsNotInList,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-
-const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
@@ -68,6 +78,93 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
   ]);
 }
+
+/**
+ * Creates a new test collection with associated granule for testing.
+ *
+ * @param {string} prefix - stack Prefix
+ * @param {string} sourceBucket - testing source bucket
+ * @returns {Promise<Array>} A new collection with associated granule and a cleanup function to call after you are finished.
+ */
+const createActiveCollection = async (prefix, sourceBucket) => {
+  // The S3 path where granules will be ingested from
+  const sourcePath = `${prefix}/tmp/${randomId('test-')}`;
+
+  // Create the collection
+  const newCollection = await createCollection(
+    prefix,
+    {
+      duplicateHandling: 'error',
+      process: 'modis',
+    }
+  );
+
+  // Create the S3 provider
+  const provider = await createProvider(prefix, { host: sourceBucket });
+
+  // Stage the granule files to S3
+  const granFilename = `${randomId('junk-file-')}.txt`;
+  const granFileKey = `${sourcePath}/${granFilename}`;
+  await s3PutObject({
+    Bucket: sourceBucket,
+    Key: granFileKey,
+    Body: 'aoeu',
+  });
+
+  const granuleId = randomId('granule-id-');
+
+  const inputPayload = {
+    granules: [
+      {
+        granuleId,
+        dataType: newCollection.name,
+        version: newCollection.version,
+        files: [
+          {
+            name: granFilename,
+            path: sourcePath,
+          },
+        ],
+      },
+    ],
+  };
+
+  const { executionArn: ingestGranuleExecutionArn } = await buildAndExecuteWorkflow(
+    prefix, sourceBucket, 'IngestGranule', newCollection, provider, inputPayload
+  );
+
+  await waitForModelStatus(
+    new Granule(),
+    { granuleId: inputPayload.granules[0].granuleId },
+    'completed'
+  );
+
+  // Wait for the execution to be completed
+  await getExecutionWithStatus({
+    prefix,
+    arn: ingestGranuleExecutionArn,
+    status: 'completed',
+  });
+
+  await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
+
+  const cleanupFunction = async () => {
+    await Promise.allSettled(
+      [
+        deleteS3Object(sourceBucket, granFileKey),
+        deleteGranule({ prefix, granuleId }),
+        deleteProvider({ prefix, providerId: get(provider, 'id') }),
+        deleteCollection({
+          prefix,
+          collectionName: get(newCollection, 'name'),
+          collectionVersion: get(newCollection, 'version'),
+        }),
+      ]
+    );
+  };
+
+  return [newCollection, cleanupFunction];
+};
 
 // ingest a granule and publish if requested
 async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true) {
@@ -106,8 +203,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
 // ingest a granule to CMR and remove it from database
 // return granule object retrieved from database
-async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
-  const ingestTime = Date.now() - 1000 * 30;
+async function ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime) {
   const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, true);
 
   const response = await granulesApiTestUtils.getGranule({
@@ -149,11 +245,13 @@ describe('When there are granule differences and granule reconciliation is run',
   let config;
   let dbGranuleId;
   let extraCumulusCollection;
+  let extraCumulusCollectionCleanup;
   let extraFileInDb;
   let extraS3Object;
+  let ingestTime;
+  let granuleBeforeUpdate;
   let granuleModel;
   let originalGranuleFile;
-  let granuleBeforeUpdate;
   let protectedBucket;
   let publishedGranuleId;
   let testDataFolder;
@@ -165,10 +263,11 @@ describe('When there are granule differences and granule reconciliation is run',
 
   beforeAll(async () => {
     try {
+      ingestTime = Date.now() - 1000 * 30;
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
-
+      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       granuleModel = new Granule();
 
@@ -191,37 +290,41 @@ describe('When there are granule differences and granule reconciliation is run',
       process.env.FilesTable = `${config.stackName}-FilesTable`;
       await GranuleFilesCache.put(extraFileInDb);
 
-      // Write an extra collection to the Collections table
-      extraCumulusCollection = {
-        name: { S: randomString() },
-        version: { S: randomString() },
-      };
-
-      await dynamodb().putItem({
-        TableName: collectionsTableName(config.stackName),
-        Item: extraCumulusCollection,
-      }).promise();
+      const activeCollectionPromise = createActiveCollection(config.stackName, config.bucket);
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
+      console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      console.log('XXX Completed for setupCollectionAndTestData');
 
-      [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
+      [
+        publishedGranuleId,
+        dbGranuleId,
+        cmrGranule,
+        [extraCumulusCollection, extraCumulusCollectionCleanup],
+      ] = await Promise.all([
         ingestAndPublishGranule(config, testSuffix, testDataFolder),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-        ingestGranuleToCMR(config, testSuffix, testDataFolder),
+        ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime),
+        activeCollectionPromise,
       ]);
 
       // update one of the granule files in database so that that file won't match with CMR
+      console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
       granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
       });
+      console.log('XXXXX Completed for granulesApiTestUtils.getGranule()');
 
+      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
+      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
     } catch (error) {
+      console.log(error);
       beforeAllFailed = true;
       throw error;
     }
@@ -229,6 +332,14 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('prepares the test suite successfully', async () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
+
+    console.log('Checking collection in list');
+    // Verify the collection is returned when listing collections
+    const collsResp = await getCollections(
+      { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime, limit: 30 } }
+    );
+    const colls = JSON.parse(collsResp.body).results;
+    expect(colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)).toBe(true);
   });
 
   it('generates an async operation through the Cumulus API', async () => {
@@ -272,13 +383,21 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(extraDbUris).toContain(extraFileUri);
   });
 
+  it('generates a report showing the amount of files that match broken down by Granule', () => {
+    const okCount = report.filesInCumulus.okCount;
+    const totalOkCountByGranule = Object.values(report.filesInCumulus.okCountByGranule).reduce(
+      (total, currentOkCount) => total + currentOkCount
+    );
+    expect(totalOkCountByGranule).toEqual(okCount);
+  });
+
   it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
     // MYD13Q1___006 is in both Cumulus and CMR
     expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
   });
 
   it('generates a report showing collections that are in Cumulus but not in CMR', () => {
-    const extraCollection = constructCollectionId(extraCumulusCollection.name.S, extraCumulusCollection.version.S);
+    const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
   });
@@ -359,17 +478,11 @@ describe('When there are granule differences and granule reconciliation is run',
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
-      dynamodb().deleteItem({
-        TableName: collectionsTableName(config.stackName),
-        Key: {
-          name: extraCumulusCollection.name,
-          version: extraCumulusCollection.version,
-        },
-      }).promise(),
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+      extraCumulusCollectionCleanup(),
     ]);
 
     // need to add the cmr granule back to the table, so the granule can be removed from api
