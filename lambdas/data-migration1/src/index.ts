@@ -57,7 +57,7 @@ export const migrateCollectionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<number | false> => {
-  // Use schema to validate record before processing
+  // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.collection);
 
   const [existingRecord] = await knex('collections')
@@ -96,20 +96,23 @@ export const migrateCollectionRecord = async (
   return <number>cumulusId;
 };
 
-export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
+export const migrateCollections = async (
+  env: NodeJS.ProcessEnv,
+  knex: Knex
+): Promise<number> => {
   const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: collectionsTable,
   });
-  const createdRecordIds = [];
+  let migratedRecordsCount = 0;
 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
     try {
       const createdRecordId = await migrateCollectionRecord(record, knex);
-      if (createdRecordId) createdRecordIds.push(createdRecordId);
+      if (createdRecordId) migratedRecordsCount += 1;
     } catch (error) {
       logger.error('Could not create collection record:', error);
     }
@@ -118,17 +121,23 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`successfully migrated ${createdRecordIds.length} collection records`);
-  return createdRecordIds;
+  logger.info(`successfully migrated ${migratedRecordsCount} collection records`);
+  return migratedRecordsCount;
 };
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
   const env = event?.env ?? process.env;
   const knex = await connection.knex({ env });
 
+  let migratedCollectionsCount;
+
   try {
-    await migrateCollections(env, knex);
+    migratedCollectionsCount = await migrateCollections(env, knex);
   } finally {
     await knex.destroy();
+    logger.info(`
+      Migration report:
+        ${migratedCollectionsCount} collections migrated
+    `);
   }
 };

@@ -171,8 +171,10 @@ test.serial('migrateCollections skips already migrated record', async (t) => {
   await migrateCollectionRecord(fakeCollection, knex);
   await collectionsModel.create(fakeCollection);
   t.teardown(() => collectionsModel.delete(fakeCollection));
-  const createdIds = await migrateCollections(process.env, knex);
-  t.is(createdIds.length, 0);
+  const migratedRecordsCount = await migrateCollections(process.env, knex);
+  t.is(migratedRecordsCount, 0);
+  const records = await knex.queryBuilder().select().table('collections');
+  t.is(records.length, 1);
 });
 
 test.serial('migrateCollections processes multiple collections', async (t) => {
@@ -215,6 +217,7 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
     collectionsModel.delete(fakeCollection2),
   ]));
 
-  const createdRecordIds = await migrateCollections(process.env, knex);
-  t.is(createdRecordIds.length, 1);
+  await migrateCollections(process.env, knex);
+  const records = await knex.queryBuilder().select().table('collections');
+  t.is(records.length, 1);
 });
