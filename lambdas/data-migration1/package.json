@@ -25,6 +25,7 @@
   "dependencies": {
     "@cumulus/api": "2.0.1",
     "@cumulus/aws-client": "2.0.1",
+    "@cumulus/common": "2.0.1",
     "@cumulus/db": "2.0.1-alpha.1",
     "@cumulus/logger": "2.0.1",
     "knex": "0.21.5",

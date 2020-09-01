@@ -3,6 +3,7 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { connection } from '@cumulus/db';
+import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
 const {
@@ -35,14 +36,6 @@ export interface RDSCollectionRecord {
   created_at: Date
   updated_at: Date
 }
-
-const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
-  const value = env?.[name];
-
-  if (value) return value;
-
-  throw new Error(`The ${name} environment variable must be set`);
-};
 
 /**
  * Migrate collection record from Dynamo to RDS.
@@ -100,7 +93,7 @@ export const migrateCollections = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
 ): Promise<number> => {
-  const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
+  const collectionsTable = envUtils.getRequiredEnvVar('CollectionsTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: collectionsTable,
