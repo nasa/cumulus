@@ -1,7 +1,6 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const pick = require('lodash/pick');
 const {
   deleteS3Object,
   getS3Object,
@@ -101,7 +100,6 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-  const payload = pick(req.body, ['startTimestamp', 'endTimestamp']);
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -112,9 +110,9 @@ async function createReport(req, res) {
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.invokeReconcileLambda,
-    description: 'Create Inventory Report',
+    description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
-    payload,
+    payload: req.body,
     useLambdaEnvironmentVariables: true,
   });
 

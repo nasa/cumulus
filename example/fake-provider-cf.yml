@@ -199,7 +199,15 @@ Resources:
             #!/bin/sh
 
             dd if=/dev/zero bs=300M count=1 | aws s3 cp - s3://${S3ProviderBucket}/300M.dat
+            dd if=/dev/zero bs=512M count=2 > ~/1G.dat
             dd if=/dev/zero bs=512M count=22 | aws s3 cp - s3://${S3ProviderBucket}/11G.dat
+
+            sha256sum ~/1G.dat | awk '{printf "%s",$1}' > ~/1G.dat.sha256
+
+            aws s3 cp ~/1G.dat s3://${S3ProviderBucket}/1G.dat
+            aws s3 cp ~/1G.dat.sha256 s3://${S3ProviderBucket}/1G.dat.sha256
+
+            rm ~/1G.dat ~/1G.dat.sha256
             EOS
 
             chmod 0755 /usr/local/bin/stage-s3-provider-files
