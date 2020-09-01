@@ -552,7 +552,6 @@ async function createReconciliationReport(recReportParams) {
     reportKey,
     stackName,
     systemBucket,
-    reportType,
   } = recReportParams;
 
   // Fetch the bucket names to reconcile
@@ -715,7 +714,7 @@ function normalizeEvent(event) {
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
 
-  const reportType = event.reportType || 'Inventory';
+  let reportType = event.reportType || 'Inventory';
   if (reportType.toLowerCase() === 'granulenotfound') {
     reportType = 'Granule Not Found';
   }
