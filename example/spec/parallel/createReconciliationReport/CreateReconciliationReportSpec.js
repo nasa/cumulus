@@ -31,9 +31,10 @@ const {
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
-const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteCollection, getCollections } = require('@cumulus/api-client/collections');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -203,8 +204,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
 // ingest a granule to CMR and remove it from database
 // return granule object retrieved from database
-async function ingestGranuleToCMR(config, testSuffix, testDataFolder) {
-  const ingestTime = Date.now() - 1000 * 30;
+async function ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime) {
   const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, true);
 
   const response = await granulesApiTestUtils.getGranule({
@@ -249,9 +249,10 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraCumulusCollectionCleanup;
   let extraFileInDb;
   let extraS3Object;
+  let ingestTime;
+  let granuleBeforeUpdate;
   let granuleModel;
   let originalGranuleFile;
-  let granuleBeforeUpdate;
   let protectedBucket;
   let publishedGranuleId;
   let testDataFolder;
@@ -260,6 +261,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
   beforeAll(async () => {
     try {
+      ingestTime = Date.now() - 1000 * 30;
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
@@ -296,21 +298,17 @@ describe('When there are granule differences and granule reconciliation is run',
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
       console.log('XXX Completed for setupCollectionAndTestData');
 
-      console.log('XXXXX Waiting for ingestAndPublishGranule(config, testSuffix, testDataFolder)');
-      publishedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
-      console.log('XXXXX Completed ingestAndPublishGranule(config, testSuffix, testDataFolder)');
-
-      console.log('XXXXX Waiting for ingestAndPublishGranule(config, testSuffix, testDataFolder, false)');
-      dbGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, false);
-      console.log('XXXXX Completed for ingestAndPublishGranule(config, testSuffix, testDataFolder, false)');
-
-      console.log('XXXXX Waiting for cmrGranule = await ingestGranuleToCMR(config, testSuffix, testDataFolder)');
-      cmrGranule = await ingestGranuleToCMR(config, testSuffix, testDataFolder);
-      console.log('XXXXX Completed for cmrGranule = await ingestGranuleToCMR(config, testSuffix, testDataFolder)');
-
-      console.log('XXXXX Waiting for activeCollectionPromise');
-      [extraCumulusCollection, extraCumulusCollectionCleanup] = await activeCollectionPromise;
-      console.log('XXXXX Completed for activeCollectionPromise');
+      [
+        publishedGranuleId,
+        dbGranuleId,
+        cmrGranule,
+        [extraCumulusCollection, extraCumulusCollectionCleanup],
+      ] = await Promise.all([
+        ingestAndPublishGranule(config, testSuffix, testDataFolder),
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
+        ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime),
+        activeCollectionPromise,
+      ]);
 
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
@@ -324,6 +322,7 @@ describe('When there are granule differences and granule reconciliation is run',
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
     } catch (error) {
+      console.log(error);
       beforeAllFailed = true;
       throw error;
     }
@@ -331,6 +330,14 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('prepares the test suite successfully', async () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
+
+    console.log('Checking collection in list');
+    // Verify the collection is returned when listing collections
+    const collsResp = await getCollections(
+      { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime, limit: 30 } }
+    );
+    const colls = JSON.parse(collsResp.body).results;
+    expect(colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)).toBe(true);
   });
 
   describe('Create an Inventory Reconciliation Report to monitor inventory discrepancies', () => {
