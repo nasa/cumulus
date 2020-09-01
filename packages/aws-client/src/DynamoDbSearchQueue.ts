@@ -18,6 +18,24 @@ class DynamoDbSearchQueue {
   }
 
   /**
+   * Drain all values from the searchQueue, and return to the user.
+   * Warning: This can be very memory intensive.
+   *
+   * @returns {Promise<Array>} array of search results.
+   */
+  async empty() {
+    let result;
+    const results = [];
+    do {
+      result = await this.shift(); // eslint-disable-line no-await-in-loop
+      if (result) {
+        results.push(result);
+      }
+    } while (result);
+    return results;
+  }
+
+  /**
    * View the next item in the queue
    *
    * This does not remove the object from the queue.  When there are no more

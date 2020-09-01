@@ -391,29 +391,65 @@ class Granule extends Manager {
    * @returns {Array<Object>} the granules' queue for a given collection
    */
   getGranulesForCollection(collectionId, status) {
+    const fields = ['granuleId', 'collectionId', 'files', 'published', 'createdAt'];
+    const searchParams = status ? { status } : {};
+    return this.searchGranulesForCollection(collectionId, searchParams, fields);
+  }
+
+  /**
+   * return the queue of the granules for a given collection and search params,
+   * the items are ordered by granuleId
+   *
+   * @param {string} collectionId - collection id
+   * @param {Object} searchParams - optional, search parameters
+   * @param {Array<string>} fields - optional, fields to return
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
+    const attributeNames = {};
+    const attributeValues = {};
+    const filterArray = [];
+    const projectionArray = [];
+    const keyConditionArray = [];
+
+    Object.entries(searchParams).forEach(([key, value]) => {
+      let field = key;
+      let operation = '=';
+      if (key.includes('__')) {
+        field = key.split('__').shift();
+        operation = key.endsWith('__from') ? '>=' : '<=';
+      }
+
+      attributeNames[`#${field}`] = field;
+      attributeValues[`:${key}`] = value;
+      const expression = `#${field} ${operation} :${key}`;
+      if (field === 'granuleId') {
+        keyConditionArray.push(expression);
+      } else {
+        filterArray.push(expression);
+      }
+    });
+
+    fields.forEach((field) => {
+      attributeNames[`#${field}`] = field;
+      projectionArray.push(`#${field}`);
+    });
+
+    attributeNames['#collectionId'] = 'collectionId';
+    attributeValues[':collectionId'] = collectionId;
+    keyConditionArray.push('#collectionId = :collectionId');
+
     const params = {
       TableName: this.tableName,
       IndexName: 'collectionId-granuleId-index',
-      ExpressionAttributeNames: {
-        '#collectionId': 'collectionId',
-        '#granuleId': 'granuleId',
-        '#files': 'files',
-        '#published': 'published',
-        '#createdAt': 'createdAt',
-      },
-      ExpressionAttributeValues: { ':collectionId': collectionId },
-      KeyConditionExpression: '#collectionId = :collectionId',
-      ProjectionExpression: '#granuleId, #collectionId, #files, #published, #createdAt',
+      ExpressionAttributeNames: attributeNames,
+      ExpressionAttributeValues: attributeValues,
+      KeyConditionExpression: keyConditionArray.join(' AND '),
+      ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
+      FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
     };
 
-    // add status filter
-    if (status) {
-      params.ExpressionAttributeNames['#status'] = 'status';
-      params.ExpressionAttributeValues[':status'] = status;
-      params.FilterExpression = '#status = :status';
-    }
-
-    return new GranuleSearchQueue(params, 'query');
+    return new GranuleSearchQueue(removeNilProperties(params), 'query');
   }
 
   granuleAttributeScan() {

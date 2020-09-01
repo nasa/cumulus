@@ -23,12 +23,12 @@ class ESSearchQueue {
    */
   async empty() {
     let result;
-    let results = [];
+    const results = [];
     /* eslint-disable no-await-in-loop */
     do {
       result = await this.shift();
       if (result) {
-        results = results.concat(result);
+        results.push(result);
       }
     } while (result);
     /* eslint-enable no-await-in-loop */

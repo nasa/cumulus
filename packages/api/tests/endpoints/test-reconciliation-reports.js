@@ -299,7 +299,7 @@ test.serial('create a report starts an async operation', async (t) => {
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.invokeReconcileLambda,
-      description: 'Create Inventory Report',
+      description: 'Create Reconciliation Report',
       operationType: 'Reconciliation Report',
       payload: {},
       useLambdaEnvironmentVariables: true,
