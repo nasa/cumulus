@@ -324,6 +324,7 @@ describe('When there are granule differences and granule reconciliation is run',
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
     } catch (error) {
+      console.log(error);
       beforeAllFailed = true;
       throw error;
     }
