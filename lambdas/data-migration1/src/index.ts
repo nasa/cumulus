@@ -136,7 +136,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   } finally {
     await knex.destroy();
     logger.info(`
-      Migration report:
+      Migration summary:
         ${migratedCollectionsCount} collections migrated
     `);
   }
