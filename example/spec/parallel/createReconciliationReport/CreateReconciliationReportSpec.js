@@ -376,6 +376,14 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(extraDbUris).toContain(extraFileUri);
   });
 
+  it('generates a report showing the amount of files that match broken down by Granule', () => {
+    const okCount = report.filesInCumulus.okCount;
+    const totalOkCountByGranule = Object.values(report.filesInCumulus.okCountByGranule).reduce(
+      (total, currentOkCount) => total + currentOkCount
+    );
+    expect(totalOkCountByGranule).toEqual(okCount);
+  });
+
   it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
     // MYD13Q1___006 is in both Cumulus and CMR
     expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
