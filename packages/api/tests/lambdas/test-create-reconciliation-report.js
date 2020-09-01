@@ -327,6 +327,13 @@ test.serial('A valid reconciliation report is generated when everything is in sy
   const filesInCumulus = report.filesInCumulus;
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
+
+  const granuleIds = Object.keys(filesInCumulus.okCountByGranule);
+  granuleIds.forEach((granuleId) => {
+    const okCountForGranule = filesInCumulus.okCountByGranule[granuleId];
+    t.is(okCountForGranule, 1);
+  });
+
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
@@ -380,6 +387,12 @@ test.serial('A valid reconciliation report is generated when there are extra int
   t.is(report.status, 'SUCCESS');
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
+
+  const granuleIds = Object.keys(filesInCumulus.okCountByGranule);
+  granuleIds.forEach((granuleId) => {
+    const okCountForGranule = filesInCumulus.okCountByGranule[granuleId];
+    t.is(okCountForGranule, 1);
+  });
 
   t.is(filesInCumulus.onlyInS3.length, 2);
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
@@ -443,6 +456,11 @@ test.serial('A valid reconciliation report is generated when there are extra int
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
+
+  const totalOkCount = Object.values(filesInCumulus.okCountByGranule).reduce(
+    (total, currentOkCount) => total + currentOkCount
+  );
+  t.is(totalOkCount, filesInCumulus.okCount);
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
@@ -509,6 +527,11 @@ test.serial('A valid reconciliation report is generated when internally, there a
   t.is(report.status, 'SUCCESS');
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, matchingFiles.length);
+
+  const totalOkCount = Object.values(filesInCumulus.okCountByGranule).reduce(
+    (total, currentOkCount) => total + currentOkCount
+  );
+  t.is(totalOkCount, filesInCumulus.okCount);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));

@@ -121,9 +121,10 @@ export const getCollection = async (params: {
  */
 export const getCollections = async (params: {
   prefix: string,
+  query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, callback = invokeApi } = params;
+  const { prefix, query, callback = invokeApi } = params;
 
   return callback({
     prefix,
@@ -131,6 +132,7 @@ export const getCollections = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/collections/',
+      queryStringParameters: query,
     },
   });
 };
