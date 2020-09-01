@@ -8,14 +8,14 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
-const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const {
-  reconciliationReportForCollections,
-  reconciliationReportForGranules,
+  internalRecReportForCollections,
+  internalRecReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
 
 const models = require('../../models');
@@ -78,7 +78,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
   );
   await new models.Collection().create(dbCollections);
 
-  let report = await reconciliationReportForCollections({});
+  let report = await internalRecReportForCollections({});
 
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
@@ -96,7 +96,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await reconciliationReportForCollections(searchParams);
+  report = await internalRecReportForCollections(searchParams);
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.is(report.onlyInDb.length, 2);
@@ -108,7 +108,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await reconciliationReportForCollections(paramsTimeOutOfRange);
+  report = await internalRecReportForCollections(paramsTimeOutOfRange);
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -118,7 +118,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
   const collectionId = constructCollectionId(conflictCollInDb.name, conflictCollInDb.version);
   const paramsCollectionId = { ...searchParams, collectionId };
 
-  report = await reconciliationReportForCollections(paramsCollectionId);
+  report = await internalRecReportForCollections(paramsCollectionId);
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -126,23 +126,23 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
 });
 
 test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
-  const collectionId = constructCollectionId(randomString(), randomString());
-  const provider = randomString();
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
+  const provider = randomId('provider');
 
   const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
-  const additionalMatchingGranus = range(10).map(() => fakeGranuleFactoryV2({ provider }));
+  const additionalMatchingGrans = range(10).map(() => fakeGranuleFactoryV2({ provider }));
   const extraDbGrans = range(2).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
   const additionalExtraDbGrans = range(2).map(() => fakeGranuleFactoryV2());
   const extraEsGrans = range(2).map(() => fakeGranuleFactoryV2({ provider }));
   const additionalExtraEsGrans = range(2)
     .map(() => fakeGranuleFactoryV2({ collectionId, provider }));
-  const conflictGranInDb = fakeGranuleFactoryV2({ collectionId });
+  const conflictGranInDb = fakeGranuleFactoryV2({ collectionId, status: 'completed' });
   const conflictGranInEs = { ...conflictGranInDb, status: 'failed' };
 
   const esGranules = matchingGrans
-    .concat(additionalMatchingGranus, extraEsGrans, additionalExtraEsGrans, conflictGranInEs);
+    .concat(additionalMatchingGrans, extraEsGrans, additionalExtraEsGrans, conflictGranInEs);
   const dbGranules = matchingGrans
-    .concat(additionalMatchingGranus, extraDbGrans, additionalExtraDbGrans, conflictGranInDb);
+    .concat(additionalMatchingGrans, extraDbGrans, additionalExtraDbGrans, conflictGranInDb);
 
   // add granules and related collections to es and db
   await Promise.all(
@@ -156,7 +156,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   await new models.Granule().create(dbGranules);
 
-  let report = await reconciliationReportForGranules({});
+  let report = await internalRecReportForGranules({});
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -173,7 +173,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await reconciliationReportForGranules(searchParams);
+  report = await internalRecReportForGranules(searchParams);
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.is(report.onlyInDb.length, 4);
@@ -185,7 +185,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await reconciliationReportForGranules(outOfRangeParams);
+  report = await internalRecReportForGranules(outOfRangeParams);
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -193,7 +193,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   // collectionId, provider parameters
   const collectionProviderParams = { ...searchParams, collectionId, provider };
-  report = await reconciliationReportForGranules(collectionProviderParams);
+  report = await internalRecReportForGranules(collectionProviderParams);
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -205,7 +205,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   // provider parameter
   const providerParams = { ...searchParams, provider };
-  report = await reconciliationReportForGranules(providerParams);
+  report = await internalRecReportForGranules(providerParams);
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -218,7 +218,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
   // granuleId parameter
   const granuleId = conflictGranInDb.granuleId;
   const granuleIdParams = { granuleId };
-  report = await reconciliationReportForGranules(granuleIdParams);
+  report = await internalRecReportForGranules(granuleIdParams);
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);

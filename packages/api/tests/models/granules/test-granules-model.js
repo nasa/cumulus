@@ -522,24 +522,37 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   const granules = [
     fakeGranuleFactoryV2({ collectionId, provider, status }),
     fakeGranuleFactoryV2({ collectionId, provider, status }),
+    fakeGranuleFactoryV2({ collectionId, provider, status: 'completed' }),
     fakeGranuleFactoryV2({ collectionId, provider: randomString(), status: 'completed' }),
   ];
   await granuleModel.create(granules);
 
-  const searchParams = {
+  const fields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'status'];
+
+  let searchParams = {
     provider,
     status,
     updatedAt__from: Date.now() - 1000 * 30,
     updatedAt__to: Date.now(),
   };
-  const fields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'status'];
-  const granulesQueue = await granuleModel
+  let granulesQueue = await granuleModel
     .searchGranulesForCollection(collectionId, searchParams, fields);
 
-  const fetchedGranules = await granulesQueue.empty();
+  let fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 2);
   const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
   t.deepEqual(fetchedGranules, sortBy(expectedGranules, ['granuleId']));
+
+  // test when no granule falls within the search parameter range
+  searchParams = {
+    provider,
+    status,
+    updatedAt__from: Date.now(),
+  };
+  granulesQueue = await granuleModel
+    .searchGranulesForCollection(collectionId, searchParams, fields);
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 0);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {

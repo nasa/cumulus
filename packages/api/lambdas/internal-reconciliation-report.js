@@ -28,8 +28,8 @@ const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' }
  * @returns {Promise<Object>} an object with the okCount, onlyInEs, onlyInDb
  * and withConfilcts
  */
-async function reconciliationReportForCollections(recReportParams) {
-  log.debug('internal-reconciliation-report reconciliationReportForCollections');
+async function internalRecReportForCollections(recReportParams) {
+  log.debug('internal-reconciliation-report internalRecReportForCollections');
   // compare collection holdings:
   //   Get collection list in ES ordered by granuleId
   //   Get collection list in DynamoDB ordered by granuleId
@@ -53,7 +53,7 @@ async function reconciliationReportForCollections(recReportParams) {
 
   const fieldsIgnored = ['timestamp', 'updatedAt'];
   let nextEsItem = await esCollectionsIterator.peek();
-  let nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : null;
+  let nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : undefined;
 
   while (nextEsItem && nextDbItem) {
     const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
@@ -79,7 +79,7 @@ async function reconciliationReportForCollections(recReportParams) {
     }
 
     nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
-    nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : null;
+    nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : undefined;
   }
 
   // Add any remaining ES items to the report
@@ -95,7 +95,7 @@ async function reconciliationReportForCollections(recReportParams) {
   return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
 
-exports.reconciliationReportForCollections = reconciliationReportForCollections;
+exports.internalRecReportForCollections = internalRecReportForCollections;
 
 async function getAllCollections() {
   const dbCollections = (await new Collection().getAllCollections())
@@ -104,10 +104,10 @@ async function getAllCollections() {
   const esCollectionsIterator = new ESSearchQueue(
     { sort_key: ['name', 'version'], fields: ['name', 'version'] }, 'collection', process.env.ES_INDEX
   );
-  const esCollectins = (await esCollectionsIterator.empty())
+  const esCollections = (await esCollectionsIterator.empty())
     .map((item) => constructCollectionId(item.name, item.version));
 
-  return union(dbCollections, esCollectins);
+  return union(dbCollections, esCollections);
 }
 
 async function reportForGranulesByCollectionId(collectionId, recReportParams) {
@@ -182,9 +182,10 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
  * @returns {Promise<Object>} an object with the okCount, onlyInEs, onlyInDb
  * and withConfilcts
  */
-async function reconciliationReportForGranules(recReportParams) {
-  log.debug('internal-reconciliation-report reconciliationReportForGranules');
-  // To avoid 'scan' granules table, we query GSI in granules table with collectionId.
+async function internalRecReportForGranules(recReportParams) {
+  log.debug('internal-reconciliation-report internalRecReportForGranules');
+  // To avoid 'scan' granules table, we query a Global Secondary Index(GSI) in granules
+  // table with collectionId.
   // compare granule holdings:
   //   Get all collections list from db and es or use the collectionId from the request
   //   For each collection,
@@ -195,13 +196,13 @@ async function reconciliationReportForGranules(recReportParams) {
 
   const { collectionId, ...searchParams } = recReportParams;
   // get collections list in ES and dynamoDB combined
-  const collections = collectionId ? [collectionId] : await getAllCollections();
+  const collectionIds = collectionId ? [collectionId] : await getAllCollections();
 
   const concurrencyLimit = process.env.CONCURRENCY || 3;
   const limit = pLimit(concurrencyLimit);
 
-  const reports = await Promise.all(collections.map((collection) => limit(() =>
-    reportForGranulesByCollectionId(collection, searchParams))));
+  const reports = await Promise.all(collectionIds.map((collId) => limit(() =>
+    reportForGranulesByCollectionId(collId, searchParams))));
 
   const report = {};
   report.okCount = reports
@@ -216,7 +217,7 @@ async function reconciliationReportForGranules(recReportParams) {
   return report;
 }
 
-exports.reconciliationReportForGranules = reconciliationReportForGranules;
+exports.internalRecReportForGranules = internalRecReportForGranules;
 
 /**
  * Create a Internal Reconciliation report and save it to S3
@@ -259,8 +260,10 @@ async function createInternalReconciliationReport(recReportParams) {
     Body: JSON.stringify(report),
   }).promise();
 
-  const collectionsReport = await reconciliationReportForCollections(recReportParams);
-  const granulesReport = await reconciliationReportForGranules(recReportParams);
+  const [collectionsReport, granulesReport] = await Promise.all([
+    internalRecReportForCollections(recReportParams),
+    internalRecReportForGranules(recReportParams),
+  ]);
   report = Object.assign(report, { collections: collectionsReport, granules: granulesReport });
 
   // Create the full report
