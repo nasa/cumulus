@@ -1,11 +1,6 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
-
-export const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
-  const value = env[name];
-  if (value) return value;
-  throw new Error(`The ${name} environment variable must be set`);
-};
+import { envUtils } from '@cumulus/common';
 
 export const getSecretConnectionConfig = async (
   SecretId: string,
@@ -35,10 +30,10 @@ export const getSecretConnectionConfig = async (
 export const getConnectionConfigEnv = (
   env: NodeJS.ProcessEnv
 ): Knex.PgConnectionConfig => ({
-  host: getRequiredEnvVar('PG_HOST', env),
-  user: getRequiredEnvVar('PG_USER', env),
-  password: getRequiredEnvVar('PG_PASSWORD', env),
-  database: getRequiredEnvVar('PG_DATABASE', env),
+  host: envUtils.getRequiredEnvVar('PG_HOST', env),
+  user: envUtils.getRequiredEnvVar('PG_USER', env),
+  password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
+  database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
 });
 
 /**
