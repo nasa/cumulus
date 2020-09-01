@@ -4,7 +4,7 @@ import anyTest, { TestInterface } from 'ava';
 import sinon from 'sinon';
 
 import { randomString } from '@cumulus/common/test-utils';
-import { connection } from '@cumulus/db';
+import { config } from '@cumulus/db';
 import { handler, HandlerEvent } from '../src';
 
 const knex = Knex({
@@ -23,7 +23,7 @@ const dbConnectionConfig = {
   host: 'localhost',
 };
 
-sinon.stub(connection, 'getConnectionConfig').resolves(dbConnectionConfig);
+sinon.stub(config, 'getConnectionConfig').resolves(dbConnectionConfig);
 sinon.stub(AWS, 'SecretsManager').returns({
   putSecretValue: () => ({ promise: () => Promise.resolve() }),
 });
