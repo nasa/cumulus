@@ -18,28 +18,39 @@ module.exports = {
   plugins: [
     new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`))
   ],
-  mode: 'production',
-  entry: './dist/lambda/index.js',
+  mode: process.env.PRODUCTION ? 'production' : 'development',
+  entry: './src/index.ts',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist', 'webpack')
+    path: path.resolve(__dirname, 'dist'),
+    // necessary for source maps to work for debugging
+    devtoolModuleFilenameTemplate: '[absolute-resource-path]'
   },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.tsx?$/,
+        loader: 'ts-loader',
         exclude: /node_modules/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true
-            },
-          },
-        ],
+        options: {
+          // disable type checker - we will use it in fork plugin
+          transpileOnly: true
+        },
+      },
+      {
+        test: /\.js$/,
+        enforce: 'pre',
+        use: ['source-map-loader'],
       },
     ],
   },
-  target: 'node'
+  resolve: {
+    extensions: [ '.tsx', '.ts', '.js' ],
+  },
+  target: 'node',
+  devtool: 'source-map',
+  optimization: {
+    nodeEnv: false
+  }
 };
