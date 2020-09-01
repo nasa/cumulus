@@ -11,7 +11,7 @@
     "clean": "rm -rf dist",
     "db:local:schema": "env PGPASSWORD=password pg_dump -h localhost -U postgres --schema-only --no-owner | egrep -v '^--' | cat -s | tee schema.sql",
     "webpack": "../../node_modules/.bin/webpack",
-    "build-lambda-zip": "(cd dist/webpack && cp -R ../lambda/migrations . && zip -r lambda.zip index.js migrations)",
+    "build-lambda-zip": "(cd dist/webpack && cp -R ../lambda/migrations . && node ../../../../bin/zip.js lambda.zip index.js migrations/*)",
     "package": "npm run clean && npm run tsc && npm run webpack && npm run build-lambda-zip",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc"
