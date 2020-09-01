@@ -29,9 +29,5 @@
     "@cumulus/logger": "2.0.1",
     "knex": "0.21.5",
     "pg": "^8.3.0"
-  },
-  "devDependencies": {
-    "@types/pg": "^7.14.4",
-    "aws-sdk": "^2.735.0"
   }
 }
