@@ -79,11 +79,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
     unpublishes a granule from CMR and deletes it from Cumulus, but does not
     update the record to `published: false` before deletion
-- **CUMULUS-2126**
-  - The collections endpoint now writes to the RDS database
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
+- **CUMULUS-2126**
+  - The collections endpoint now writes to the RDS database
 
 ### Fixed
 
