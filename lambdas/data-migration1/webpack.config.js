@@ -42,6 +42,11 @@ module.exports = {
           transpileOnly: true
         }
       },
+      {
+        test: /\.js$/,
+        enforce: 'pre',
+        use: ['source-map-loader'],
+      },
     ],
   },
   resolve: {
