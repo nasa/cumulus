@@ -6,12 +6,12 @@
     "node": ">=12.18.0"
   },
   "private": true,
+  "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "package": "npm run clean && npm run tsc && ../../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
+    "package": "npm run clean && npm run prepare && (cd dist && zip lambda.zip index.js)",
     "test": "../../../node_modules/.bin/ava",
-    "prepare": "npm run tsc",
-    "tsc": "../../../node_modules/.bin/tsc",
+    "prepare": "../../../node_modules/.bin/webpack",
     "python-lint": "true"
   },
   "directories": {
@@ -19,7 +19,13 @@
   },
   "license": "Apache-2.0",
   "ava": {
-    "timeout": "2m"
+    "timeout": "2m",
+		"extensions": [
+			"ts"
+		],
+		"require": [
+			"ts-node/register"
+		]
   },
   "dependencies": {
     "@cumulus/common": "2.0.1",
