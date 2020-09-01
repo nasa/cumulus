@@ -5,7 +5,7 @@ import sinon from 'sinon';
 
 import { randomString } from '@cumulus/common/test-utils';
 import { connection } from '@cumulus/db';
-import { handler } from '../src';
+import { handler, HandlerEvent } from '../src';
 
 const knex = Knex({
   client: 'pg',
@@ -34,6 +34,7 @@ const test = anyTest as TestInterface<{
   expectedDbUser: string
   testDb: string
   expectedTestDb: string
+  handlerEvent: HandlerEvent
 }>;
 
 test.beforeEach(async (t) => {
@@ -45,6 +46,14 @@ test.beforeEach(async (t) => {
     expectedDbUser,
     testDb: `${dbUser}-db`,
     expectedTestDb: `${expectedDbUser}_db`,
+    handlerEvent: {
+      prefix: dbUser,
+      rootLoginSecret: 'bogusSecret',
+      userLoginSecret: 'bogus',
+      engine: 'pg',
+      dbPassword: 'testPassword',
+      dbClusterIdentifier: 'fake-cluster',
+    },
   };
 });
 
@@ -54,17 +63,11 @@ test.afterEach(async (t) => {
 });
 
 test('provision user database creates the expected database', async (t) => {
-  const dbUser = t.context.dbUser;
-  const expectedDbUser = t.context.expectedDbUser;
-  const expectedTestDb = t.context.expectedTestDb;
-  const handlerEvent = {
-    rootLoginSecret: 'bogusSecret',
-    userLoginSecret: 'bogus',
-    engine: 'pg',
-    dbPassword: 'testPassword',
-    dbClusterIdentifier: 'fake-cluster',
-    prefix: dbUser,
-  };
+  const {
+    expectedDbUser,
+    expectedTestDb,
+    handlerEvent,
+  } = t.context;
 
   await handler(handlerEvent);
 
@@ -79,59 +82,50 @@ test('provision user database creates the expected database', async (t) => {
   t.is(userResults[0].usename, `${expectedDbUser}`);
 });
 
-// test('provision user fails if invalid password string is used', async (t) => {
-//   const dbUser = t.context.dbUser;
-//   const handlerEvent = {
-//     rootLoginSecret: 'bogusSecret',
-//     dbPassword: 'badPassword<>$$ <>',
-//     prefix: dbUser,
-//   };
-//   await t.throwsAsync(handler(handlerEvent));
-// });
+test('provision user fails if invalid password string is used', async (t) => {
+  await t.throwsAsync(handler({
+    ...t.context.handlerEvent,
+    dbPassword: 'badPassword<>$$ <>',
+  }));
+});
 
-// test('provision user fails if invalid user string is used', async (t) => {
-//   t.context.dbUser = 'user with bad chars <>$';
-//   const dbUser = t.context.dbUser;
-//   const handlerEvent = {
-//     rootLoginSecret: 'bogusSecret',
-//     dbPassword: 'testPassword',
-//     prefix: dbUser,
-//   };
-//   await t.throwsAsync(handler(handlerEvent));
-// });
+test('provision user fails if invalid user string is used', async (t) => {
+  await t.throwsAsync(handler({
+    ...t.context.handlerEvent,
+    prefix: 'user with bad chars <>$',
+  }));
+});
 
-// test('provision user updates the user password if the user already exists', async (t) => {
-//   const dbUser = t.context.dbUser;
-//   const expectedDbUser = t.context.expectedDbUser;
-//   const expectedTestDb = t.context.expectedTestDb;
-//   const handlerEvent = {
-//     rootLoginSecret: 'bogusSecret',
-//     dbPassword: 'testPassword',
-//     prefix: dbUser,
-//   };
+test('provision user updates the user password if the user already exists', async (t) => {
+  const {
+    expectedDbUser,
+    expectedTestDb,
+    handlerEvent,
+  } = t.context;
 
-//   await handler(handlerEvent);
-//   handlerEvent.dbPassword = 'newPassword';
-//   await handler(handlerEvent);
+  await handler(handlerEvent);
+  handlerEvent.dbPassword = 'newPassword';
+  await handler(handlerEvent);
 
-//   const testUserKnex = Knex({
-//     client: 'pg',
-//     connection: {
-//       host: 'localhost',
-//       user: expectedDbUser,
-//       password: 'newPassword',
-//       database: expectedTestDb,
-//     },
-//   });
-//   const heartBeat = await testUserKnex.raw('SELECT 1');
-//   testUserKnex.destroy();
-//   t.is(heartBeat.rowCount, 1);
-// });
+  const testUserKnex = Knex({
+    client: 'pg',
+    connection: {
+      host: 'localhost',
+      user: expectedDbUser,
+      password: 'newPassword',
+      database: expectedTestDb,
+    },
+  });
+  const heartBeat = await testUserKnex.raw('SELECT 1');
+  testUserKnex.destroy();
+  t.is(heartBeat.rowCount, 1);
+});
 
-// test('provision user fails event with no username or prefix is passed', async (t) => {
-//   t.context.dbUser = 'user with bad chars <>$';
-//   const handlerEvent = {
-//     rootLoginSecret: 'bogusSecret',
-//   };
-//   await t.throwsAsync(handler(handlerEvent));
-// });
+test('provision user fails if event with no username or password is passed', async (t) => {
+  const {
+    handlerEvent,
+  } = t.context;
+  delete handlerEvent.prefix;
+  delete handlerEvent.dbPassword;
+  await t.throwsAsync(handler(handlerEvent));
+});
