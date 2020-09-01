@@ -124,7 +124,7 @@ export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => 
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
   const env = event?.env ?? process.env;
-  const knex = await connection.knex(env);
+  const knex = await connection.knex({ env });
 
   try {
     await migrateCollections(env, knex);
