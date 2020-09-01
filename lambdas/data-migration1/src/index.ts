@@ -114,7 +114,10 @@ export const migrateCollections = async (
       const createdRecordId = await migrateCollectionRecord(record, knex);
       if (createdRecordId) migratedRecordsCount += 1;
     } catch (error) {
-      logger.error('Could not create collection record:', error);
+      logger.error(
+        `Could not create collection record in RDS for Dynamo collection name ${record.name}, version ${record.version}:`,
+        error
+      );
     }
 
     await searchQueue.shift();
