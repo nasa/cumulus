@@ -15,7 +15,7 @@
     "python-lint": "true"
   },
   "directories": {
-    "test": "test"
+    "test": "tests"
   },
   "license": "Apache-2.0",
   "ava": {
