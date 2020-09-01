@@ -43,6 +43,6 @@ export const up = async (knex: Knex): Promise<void> => knex.schema
     table.timestamps(false, true);
   });
 
-export const down = async (knex: Knex): Promise<void> => {
-  knex.schema.dropTable('granules');
-};
+export const down = async (knex: Knex): Promise<void> => knex.schema
+  .dropTable('files')
+  .dropTable('granules');
