@@ -252,7 +252,6 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraCumulusCollectionCleanup;
   let extraFileInDb;
   let extraS3Object;
-  let ingestTime;
   let granuleBeforeUpdate;
   let granuleModel;
   let ingestTime;
@@ -304,6 +303,12 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
       console.log('XXX Completed for setupCollectionAndTestData');
+
+      const collsResp = await getCollections(
+        { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime, limit: 30 } }
+      );
+      const colls = JSON.parse(collsResp.body).results;
+      console.log(`collection in list: ${colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)}`);
 
       [
         publishedGranuleId,
