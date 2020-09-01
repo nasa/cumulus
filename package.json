@@ -135,6 +135,7 @@
     "simple-git": "^1.96.0",
     "sinon": "^9.0.2",
     "ssh2-streams": "^0.4.8",
+    "string-replace-loader": "^2.3.0",
     "supertest": "^4.0.2",
     "tsc-watch": "^4.2.8",
     "typescript": "^3.9.0",

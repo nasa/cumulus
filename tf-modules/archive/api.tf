@@ -18,6 +18,7 @@ locals {
       cmr_provider                 = var.cmr_provider
       cmr_username                 = var.cmr_username
       CollectionsTable             = var.dynamo_tables.collections.name
+      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
       DISTRIBUTION_ENDPOINT        = var.distribution_url
       distributionApiId            = var.distribution_api_id
       EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash

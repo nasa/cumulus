@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash/omit');
 const router = require('express-promise-router')();
 const {
   InvalidRegexError,
@@ -122,7 +123,9 @@ async function post(req, res) {
   }
 
   try {
-    const dynamoRecord = await collectionsModel.create(collection);
+    const dynamoRecord = await collectionsModel.create(
+      omit(collection, 'dataType')
+    );
 
     const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 

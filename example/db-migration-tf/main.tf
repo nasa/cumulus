@@ -23,7 +23,7 @@ data "terraform_remote_state" "data_persistence" {
 module "db_migration" {
   source = "../../lambdas/db-migration"
 
-  rds_user_access_secret_arn     = local.rds_credentials_secret_arn
+  rds_user_access_secret_arn = local.rds_credentials_secret_arn
   permissions_boundary_arn = var.permissions_boundary_arn
   prefix                   = var.prefix
   subnet_ids               = var.subnet_ids

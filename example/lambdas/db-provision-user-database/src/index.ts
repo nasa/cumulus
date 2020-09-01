@@ -60,7 +60,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         password: event.dbPassword,
         engine: 'postgres',
         database: `${dbUser}_db`,
-        host: knex.client.config.host,
+        host: knex.client.config.connection.host,
         port: 5432,
       }),
     }).promise();

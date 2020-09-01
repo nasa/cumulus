@@ -10,7 +10,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "db:local:schema": "env PGPASSWORD=password pg_dump -h localhost -U postgres --schema-only --no-owner | egrep -v '^--' | cat -s | tee schema.sql",
-    "package": "npm run clean && npm run tsc && ../../node_modules/.bin/webpack && (cd dist/webpack && zip lambda.zip index.js)",
+    "package": "npm run clean && npm run tsc && ../../node_modules/.bin/webpack && cp -R dist/lambda/migrations dist/webpack/migrations && (cd dist/webpack && zip lambda.zip index.js migrations/*)",
     "prepare": "npm run tsc",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc"
   },
