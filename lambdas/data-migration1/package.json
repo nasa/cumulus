@@ -32,8 +32,6 @@
   },
   "devDependencies": {
     "@types/pg": "^7.14.4",
-    "aws-sdk": "^2.735.0",
-    "fork-ts-checker-webpack-plugin": "^5.1.0",
-    "ts-loader": "^8.0.3"
+    "aws-sdk": "^2.735.0"
   }
 }
