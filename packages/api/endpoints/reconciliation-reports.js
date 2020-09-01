@@ -101,7 +101,7 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-  const payload = pick(req.body, ['startTimestamp', 'endTimestamp']);
+  const payload = pick(req.body, ['startTimestamp', 'endTimestamp', 'reportType']);
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
