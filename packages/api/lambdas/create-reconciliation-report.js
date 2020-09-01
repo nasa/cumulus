@@ -2,6 +2,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
+const camelCase = require('lodash/camelCase');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
@@ -116,11 +117,16 @@ async function createReconciliationReportForBucket(Bucket) {
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDynamoDb = [];
+  const okCountByGranule = {};
 
   let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
   while (nextS3Object && nextDynamoDbItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
     const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
+
+    if (!okCountByGranule[nextDynamoDbItem.granuleId]) {
+      okCountByGranule[nextDynamoDbItem.granuleId] = 0;
+    }
 
     if (nextS3Uri < nextDynamoDbUri) {
       // Found an item that is only in S3 and not in DynamoDB
@@ -136,6 +142,7 @@ async function createReconciliationReportForBucket(Bucket) {
     } else {
       // Found an item that is in both S3 and DynamoDB
       okCount += 1;
+      okCountByGranule[nextDynamoDbItem.granuleId] += 1;
       s3ObjectsQueue.shift();
       dynamoDbFilesLister.shift();
     }
@@ -162,6 +169,7 @@ async function createReconciliationReportForBucket(Bucket) {
     okCount,
     onlyInS3,
     onlyInDynamoDb,
+    okCountByGranule,
   };
 }
 
@@ -544,6 +552,7 @@ async function createReconciliationReport(recReportParams) {
     reportKey,
     stackName,
     systemBucket,
+    reportType,
   } = recReportParams;
 
   // Fetch the bucket names to reconcile
@@ -560,6 +569,7 @@ async function createReconciliationReport(recReportParams) {
   // Write an initial report to S3
   const filesInCumulus = {
     okCount: 0,
+    okCountByGranule: {},
     onlyInS3: [],
     onlyInDynamoDb: [],
   };
@@ -598,6 +608,14 @@ async function createReconciliationReport(recReportParams) {
     report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
       bucketReport.onlyInDynamoDb
     );
+
+    Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
+      const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
+      const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+
+      report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
+        + bucketGranuleCount;
+    });
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
@@ -628,9 +646,10 @@ async function createReconciliationReport(recReportParams) {
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
-  const { reportType = 'Inventory', reportName, systemBucket, stackName } = params;
+  const { reportType, reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
-  const reportRecordName = reportName || `inventoryReport-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const reportRecordName = reportName
+    || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
   const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
@@ -695,7 +714,13 @@ function normalizeEvent(event) {
   const stackName = event.stackName || process.env.stackName;
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
-  return { ...event, systemBucket, stackName, startTimestamp, endTimestamp };
+
+  const reportType = event.reportType || 'Inventory';
+  if (reportType.toLowerCase() === 'granulenotfound') {
+    reportType = 'Granule Not Found';
+  }
+
+  return { ...event, systemBucket, stackName, startTimestamp, endTimestamp, reportType };
 }
 
 async function handler(event) {
