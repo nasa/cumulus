@@ -201,6 +201,8 @@ class Collection {
     const associatedRuleNames = (await this.getAssociatedRules(name, version))
       .map((rule) => rule.name);
 
+    console.log(`DELETE COLLECTION ${name}`);
+
     if (associatedRuleNames.length > 0) {
       throw new AssociatedRulesError(
         'Cannot delete a collection that has associated rules',
