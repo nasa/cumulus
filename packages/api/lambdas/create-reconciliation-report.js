@@ -719,7 +719,9 @@ function normalizeEvent(event) {
     reportType = 'Granule Not Found';
   }
 
-  return { ...event, systemBucket, stackName, startTimestamp, endTimestamp, reportType };
+  return {
+    ...event, systemBucket, stackName, startTimestamp, endTimestamp, reportType,
+  };
 }
 
 async function handler(event) {
