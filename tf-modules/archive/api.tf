@@ -5,64 +5,65 @@ locals {
   api_redirect_uri          = "${local.api_uri}token"
   api_env_variables = {
       AccessTokensTable            = var.dynamo_tables.access_tokens.name
-      AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
+      ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
       AsyncOperationsTable         = var.dynamo_tables.async_operations.name
-      BulkOperationLambda          = aws_lambda_function.bulk_operation.arn
-      CMR_ENVIRONMENT              = var.cmr_environment
-      CollectionsTable             = var.dynamo_tables.collections.name
-      DISTRIBUTION_ENDPOINT        = var.distribution_url
-      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
-      EARTHDATA_CLIENT_ID          = var.urs_client_id
-      EARTHDATA_CLIENT_PASSWORD    = var.urs_client_password
-      ES_HOST                      = var.elasticsearch_hostname
-      EcsCluster                   = var.ecs_cluster_name
-      EmsDistributionReport        = aws_lambda_function.ems_distribution_report.arn
-      EmsIngestReport              = aws_lambda_function.ems_ingest_report.arn
-      EmsProductMetadataReport     = aws_lambda_function.ems_product_metadata_report.arn
-      ExecutionsTable              = var.dynamo_tables.executions.name
-      GranulesTable                = var.dynamo_tables.granules.name
-      IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
-      KinesisFallbackTopicArn      = var.kinesis_fallback_topic_arn
-      KinesisInboundEventLogger    = var.kinesis_inbound_event_logger_lambda_function_arn
-      OAUTH_PROVIDER               = var.oauth_provider
-      PdrsTable                    = var.dynamo_tables.pdrs.name
-      ProvidersTable               = var.dynamo_tables.providers.name
-      ReconciliationReportsTable   = var.dynamo_tables.reconciliation_reports.name
-      RulesTable                   = var.dynamo_tables.rules.name
-      oauth_user_group             = var.oauth_user_group
-      TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
-      TOKEN_SECRET                 = var.token_secret
+      AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
+      auth_mode                    = "public"
       backgroundQueueUrl           = var.background_queue_url
+      BulkOperationLambda          = aws_lambda_function.bulk_operation.arn
       cmr_client_id                = var.cmr_client_id
+      CMR_ENVIRONMENT              = var.cmr_environment
       cmr_oauth_provider           = var.cmr_oauth_provider
       cmr_password_secret_name     = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                 = var.cmr_provider
       cmr_username                 = var.cmr_username
+      CollectionsTable             = var.dynamo_tables.collections.name
+      DISTRIBUTION_ENDPOINT        = var.distribution_url
       distributionApiId            = var.distribution_api_id
+      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
+      EARTHDATA_CLIENT_ID          = var.urs_client_id
+      EARTHDATA_CLIENT_PASSWORD    = var.urs_client_password
+      EcsCluster                   = var.ecs_cluster_name
+      EmsDistributionReport        = aws_lambda_function.ems_distribution_report.arn
+      EmsIngestReport              = aws_lambda_function.ems_ingest_report.arn
+      EmsProductMetadataReport     = aws_lambda_function.ems_product_metadata_report.arn
+      ENTITY_ID                    = var.saml_entity_id
+      ES_CONCURRENCY               = var.es_request_concurrency
+      ES_HOST                      = var.elasticsearch_hostname
+      ES_INDEX_SHARDS              = var.es_index_shards
+      ExecutionsTable              = var.dynamo_tables.executions.name
+      GranulesTable                = var.dynamo_tables.granules.name
+      IDP_LOGIN                    = var.saml_idp_login
+      IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
       invoke                       = var.schedule_sf_function_arn
       invokeArn                    = var.schedule_sf_function_arn
       invokeReconcileLambda        = aws_lambda_function.create_reconciliation_report.arn
+      KinesisFallbackTopicArn      = var.kinesis_fallback_topic_arn
+      KinesisInboundEventLogger    = var.kinesis_inbound_event_logger_lambda_function_arn
       launchpad_api                = var.launchpad_api
       launchpad_certificate        = var.launchpad_certificate
+      LAUNCHPAD_METADATA_URL       = var.saml_launchpad_metadata_url
       launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
+      log_destination_arn          = var.log_destination_arn
       ManualConsumerLambda         = var.manual_consumer_function_arn
       messageConsumer              = var.message_consumer_function_arn
+      METRICS_ES_HOST              = var.metrics_es_host
+      METRICS_ES_PASS              = var.metrics_es_password
+      METRICS_ES_USER              = var.metrics_es_username
+      OAUTH_PROVIDER               = var.oauth_provider
+      oauth_user_group             = var.oauth_user_group
+      PdrsTable                    = var.dynamo_tables.pdrs.name
+      protected_buckets            = join(",", var.protected_buckets)
+      provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
+      ProvidersTable               = var.dynamo_tables.providers.name
+      public_buckets               = join(",", var.public_buckets)
+      rds_user_access_secret_arn     = var.rds_user_access_secret_arn
+      ReconciliationReportsTable   = var.dynamo_tables.reconciliation_reports.name
+      RulesTable                   = var.dynamo_tables.rules.name
       stackName                    = var.prefix
       system_bucket                = var.system_bucket
-      public_buckets               = join(",", var.public_buckets)
-      protected_buckets            = join(",", var.protected_buckets)
-      ENTITY_ID                    = var.saml_entity_id
-      ASSERT_ENDPOINT              = var.saml_assertion_consumer_service
-      IDP_LOGIN                    = var.saml_idp_login
-      LAUNCHPAD_METADATA_URL       = var.saml_launchpad_metadata_url
-      METRICS_ES_HOST              = var.metrics_es_host
-      METRICS_ES_USER              = var.metrics_es_username
-      METRICS_ES_PASS              = var.metrics_es_password
-      provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
-      log_destination_arn          = var.log_destination_arn
-      auth_mode                    = "public"
-      ES_CONCURRENCY               = var.es_request_concurrency
-      ES_INDEX_SHARDS              = var.es_index_shards
+      TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
+      TOKEN_SECRET                 = var.token_secret
     }
 }
 
@@ -129,7 +130,7 @@ resource "aws_lambda_function" "private_api" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = local.lambda_security_group_ids
+      security_group_ids =  concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
 }
@@ -154,7 +155,7 @@ resource "aws_lambda_function" "api" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = local.lambda_security_group_ids
+      security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
 }

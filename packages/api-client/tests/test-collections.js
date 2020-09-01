@@ -86,6 +86,7 @@ test('getCollections calls the callback with the expected object and returns the
       resource: '/{proxy+}',
       queryStringParameters: undefined,
       path: '/collections/',
+      queryStringParameters: undefined,
     },
   };
 

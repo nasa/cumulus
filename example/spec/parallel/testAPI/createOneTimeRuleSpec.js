@@ -68,7 +68,7 @@ describe('Creating a one-time rule via the Cumulus API', () => {
           prefix,
           (execution) =>
             get(execution, 'originalPayload.testExecutionId') === testExecutionId,
-          { timestamp__from: ingestTime, limit: 20 },
+          { timestamp__from: ingestTime },
           { timeout: 60 }
         )
       ).withContext('Could not find started execution').toBeResolved();

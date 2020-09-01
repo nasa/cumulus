@@ -2,7 +2,7 @@
 
 set -e
 
-export PATH="../../node_modules/.bin:${PATH}"
+export PATH="../../../node_modules/.bin:${PATH}"
 
 rm -rf dist
 
@@ -17,5 +17,5 @@ cp package.json dist/lambda
 
   rm -f package.json package-lock.json
 
-  zip -r ../lambda.zip migrations node_modules index.js
+  zip -r ../lambda.zip node_modules index.js
 )

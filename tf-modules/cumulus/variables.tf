@@ -31,6 +31,17 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   default     = null
 }
 
+variable "rds_security_group" {
+  description = "RDS Security Group used for access to RDS cluster"
+  type        = string
+  default     = null
+}
+
+variable "rds_user_access_secret_arn" {
+  description = "RDS User Database Login Credential Secret ARN"
+  type        = string
+}
+
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
