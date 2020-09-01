@@ -1,6 +1,6 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
-import { getSecretConnectionConfig, getConnectionConfigEnv } from './config';
+import { getConnectionConfig } from './config';
 
 /**
  * Builds a Knex.PgConnectionConfig
@@ -40,22 +40,6 @@ const buildKnexConfiguration = ({
     knexConfig.migrations = { directory: migrationDir };
   }
   return knexConfig;
-};
-
-export const getConnectionConfig = async (
-  env: NodeJS.ProcessEnv
-): Promise<Knex.PgConnectionConfig> => {
-  let connectionConfig: Knex.PgConnectionConfig;
-  if (env.databaseCredentialSecretArn) {
-    const secretsManager = new AWS.SecretsManager();
-    connectionConfig = await getSecretConnectionConfig(
-      env.databaseCredentialSecretArn,
-      secretsManager
-    );
-  } else {
-    connectionConfig = getConnectionConfigEnv(env);
-  }
-  return connectionConfig;
 };
 
 export const getKnexConfig = (
@@ -104,8 +88,27 @@ export const getKnexConfig = (
 *
 * @returns {Promise<Knex>} Returns a configured knex instance
 */
-export const knex = async (env: NodeJS.ProcessEnv): Promise<Knex> => {
-  const connectionConfig = await getConnectionConfig(env);
-  const knexConfig = getKnexConfig(env, connectionConfig);
+export const knex = async ({
+  env = process.env,
+  secretsManager = new AWS.SecretsManager(),
+}: {
+  env?: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
+} = {}): Promise<Knex> => {
+  const connectionConfig = await getConnectionConfig({ env, secretsManager });
+
+  let timeout;
+  if (env.knexAcquireConnectionTimeout) {
+    timeout = Number(env.knexAcquireConnectionTimeout);
+  }
+
+  const knexConfig = buildKnexConfiguration({
+    connectionConfig,
+    asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
+    debug: env.KNEX_DEBUG === 'true',
+    migrationDir: env.migrationDir,
+    timeout,
+  });
+
   return Knex(knexConfig);
 };

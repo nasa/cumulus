@@ -40,3 +40,33 @@ export const getConnectionConfigEnv = (
   password: getRequiredEnvVar('PG_PASSWORD', env),
   database: getRequiredEnvVar('PG_DATABASE', env),
 });
+
+/**
+ * Return configuration to make a database connection.
+ *
+ * @param {Object} params
+ * @param {NodeJS.ProcessEnv} params.env
+ *   Environment values for the operation
+ * @param {AWS.SecretsManager} params.secretsManager
+ *   An instance of an AWS Secrets Manager client
+ * @returns {Knex.PgConnectionConfig}
+ *   Configuration to make a Postgres database connection.
+ */
+export const getConnectionConfig = async ({
+  env,
+  secretsManager = new AWS.SecretsManager(),
+}: {
+  env: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
+}): Promise<Knex.PgConnectionConfig> => {
+  // Storing credentials in Secrets Manager
+  if (env.databaseCredentialSecretArn) {
+    return getSecretConnectionConfig(
+      env.databaseCredentialSecretArn,
+      secretsManager
+    );
+  }
+
+  // Getting credentials from environment variables
+  return getConnectionConfigEnv(env);
+};
