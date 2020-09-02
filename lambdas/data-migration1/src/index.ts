@@ -7,9 +7,7 @@ import { envUtils } from '@cumulus/common';
 import { createErrorType } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
-const {
-  Manager,
-} = require('@cumulus/api/models');
+const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
 
 const logger = new Logger({ sender: '@cumulus/data-migration' });
@@ -67,7 +65,7 @@ export const migrateCollectionRecord = async (
   const [existingRecord] = await knex('collections')
     .where('name', dynamoRecord.name)
     .where('version', dynamoRecord.version);
-  // Skip record if it was already migrated.
+  // Throw error if it was already migrated.
   if (existingRecord) {
     throw new RecordAlreadyMigrated(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
   }

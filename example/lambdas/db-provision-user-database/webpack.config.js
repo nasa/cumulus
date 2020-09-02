@@ -42,6 +42,7 @@ module.exports = {
         test: /\.js$/,
         enforce: 'pre',
         use: ['source-map-loader'],
+        include: /node_modules\/\@cumulus/
       },
     ],
   },

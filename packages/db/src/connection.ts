@@ -96,19 +96,6 @@ export const knex = async ({
   secretsManager?: AWS.SecretsManager
 } = {}): Promise<Knex> => {
   const connectionConfig = await getConnectionConfig({ env, secretsManager });
-
-  let timeout;
-  if (env.knexAcquireConnectionTimeout) {
-    timeout = Number(env.knexAcquireConnectionTimeout);
-  }
-
-  const knexConfig = buildKnexConfiguration({
-    connectionConfig,
-    asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
-    debug: env.KNEX_DEBUG === 'true',
-    migrationDir: env.migrationDir,
-    timeout,
-  });
-
+  const knexConfig = getKnexConfig(env, connectionConfig);
   return Knex(knexConfig);
 };
