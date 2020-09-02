@@ -6,9 +6,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v2.0.3]
+
+### Fixed
+
+- **CUMULUS-2039**
+
+- Fix issue causing SyncGranules task to run out of memory on large granules
+
+### CODE CHANGES
+
+- The `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync` function has been
+  removed. It read the entire S3 object into memory before returning a read
+  stream, which could cause Lambdas to run out of memory. Use
+  `@cumulus/aws-client/S3.getObjectReadStream` instead.
+
 ## [v2.0.2] 2020-08-17
 
-#### CODE CHANGES
+### CODE CHANGES
 
 - The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
   rather than `null` if the mime type could not be found.
@@ -23,7 +38,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2116**
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
-
 
 ## [v2.0.1] 2020-07-28
 
