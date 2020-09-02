@@ -227,6 +227,9 @@ function fakeCollectionFactory(options = {}) {
     granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
     sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
     files: [],
+    reportToEms: true,
+    createdAt: Date.now() - 180.5 * 1000,
+    updatedAt: Date.now(),
     ...options,
   };
 }

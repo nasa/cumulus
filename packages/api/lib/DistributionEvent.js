@@ -1,7 +1,7 @@
 'use strict';
 
 const moment = require('moment');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 const Granule = require('../models/granules');
 const { deconstructCollectionId } = require('./utils');
 const GranuleFilesCache = require('./GranuleFilesCache');

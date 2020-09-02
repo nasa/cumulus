@@ -1,6 +1,8 @@
 'use strict';
 
 const test = require('ava');
+const pick = require('lodash/pick');
+const sortBy = require('lodash/sortBy');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -301,4 +303,25 @@ test('Collection.getAllCollections() does not return the deprecated `provider_pa
   fetchedCollections.forEach((fetchedCollection) => {
     t.is(fetchedCollection.provider_path, undefined);
   });
+});
+
+test('Collection.search() returns the matching collections', async (t) => {
+  const name = randomString();
+  const collections = [
+    fakeCollectionFactory({ name, version: randomString() }),
+    fakeCollectionFactory({ name, version: randomString() }),
+    fakeCollectionFactory()];
+  await collectionsModel.create(collections);
+
+  const searchParams = {
+    name,
+    updatedAt__from: Date.now() - 1000 * 30,
+    updatedAt__to: Date.now(),
+  };
+  const fields = ['name', 'version', 'createdAt'];
+  const collectionsQueue = await collectionsModel.search(searchParams, fields);
+  const fetchedCollections = await collectionsQueue.empty();
+  t.is(fetchedCollections.length, 2);
+  const expectedCollections = collections.slice(0, 2).map((collection) => pick(collection, fields));
+  t.deepEqual(sortBy(fetchedCollections, fields), sortBy(expectedCollections, fields));
 });

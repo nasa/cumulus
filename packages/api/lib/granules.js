@@ -1,7 +1,7 @@
 'use strict';
 
 const awsClients = require('@cumulus/aws-client/services');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 
 const { buildDatabaseFiles } = require('./FileUtils');
 

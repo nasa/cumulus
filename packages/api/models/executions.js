@@ -7,7 +7,8 @@ const {
   getMessageExecutionArn,
   getMessageExecutionName,
 } = require('@cumulus/message/Executions');
-const { isNil, removeNilProperties } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const executionSchema = require('./schemas').execution;

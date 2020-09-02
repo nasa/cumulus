@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const test = require('ava');
+const { s3 } = require('@cumulus/aws-client/services');
 const KMS = require('@cumulus/aws-client/KMS');
 const S3 = require('@cumulus/aws-client/S3');
 const { promisify } = require('util');
@@ -188,7 +189,12 @@ test('Download remote file to s3 with correct content-type', async (t) => {
   t.truthy(s3uri, 'Missing s3uri');
   t.truthy(etag, 'Missing etag');
   t.truthy(S3.fileExists(process.env.system_bucket, key));
-  const sum = await S3.calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket: process.env.system_bucket, key });
+  const sum = await S3.calculateObjectHash({
+    s3: s3(),
+    algorithm: 'CKSUM',
+    bucket: process.env.system_bucket,
+    key,
+  });
   t.is(sum, 1435712144);
 
   const s3HeadResponse = await S3.headObject(process.env.system_bucket, key);
