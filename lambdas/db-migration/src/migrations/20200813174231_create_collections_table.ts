@@ -3,17 +3,17 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('collections', (table) => {
     table.increments('cumulusId').primary();
-    table.string('name').comment('Collection short_name registered with the CMR').notNullable();
-    table.string('version').comment('The version registered with the CMR').notNullable();
-    table.string('sampleFileName').comment('Example filename for this collection').notNullable();
-    table.string('granuleIdValidationRegex').notNullable().comment(
+    table.text('name').comment('Collection short_name registered with the CMR').notNullable();
+    table.text('version').comment('The version registered with the CMR').notNullable();
+    table.text('sampleFileName').comment('Example filename for this collection').notNullable();
+    table.text('granuleIdValidationRegex').notNullable().comment(
       'The regular expression used to validate the granule ID extracted from filenames '
       + 'according to the granuleIdExtraction'
     );
-    table.string('granuleIdExtractionRegex').comment('The regular expression used to extract the granule ID from filenames').notNullable();
+    table.text('granuleIdExtractionRegex').comment('The regular expression used to extract the granule ID from filenames').notNullable();
     table.jsonb('files').comment('List of collection file definitions').notNullable();
-    table.string('process').comment('Name of the docker process to be used, e.g. modis, aster');
-    table.string('url_path').comment('The folder (url) used to save granules on S3 buckets');
+    table.text('process').comment('Name of the docker process to be used, e.g. modis, aster');
+    table.text('url_path').comment('The folder (url) used to save granules on S3 buckets');
     table.enum('duplicateHandling', ['error', 'replace', 'skip', 'version']).comment(
       'Duplicate handling behavior for this collection'
     );
