@@ -215,9 +215,10 @@ async function ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime
   const granule = JSON.parse(response.body);
   console.log('Waiting for granule to appear in the list.');
   await waitForGranuleRecordsInList(config.stackName, [granuleId]);
-  await (new Granule()).delete({ granuleId });
+  const deleteRecord = await (new Granule()).delete({ granuleId });
+  console.log(`Granule delete record: ${JSON.stringify(deleteRecord, undefined, 2)}`);
   console.log('Waiting for granule not to appear in the list.');
-  await waitForGranuleRecordsNotInList(config.stackName, [granuleId], { sort_by: 'timestamp', timestamp__from: ingestTime });
+  await waitForGranuleRecordsNotInList(config.stackName, [granuleId], { timestamp__from: ingestTime });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   return granule;
 }
@@ -321,6 +322,8 @@ describe('When there are granule differences and granule reconciliation is run',
         ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime),
         activeCollectionPromise,
       ]);
+
+      console.log(`extra collection: ${JSON.stringify(extraCumulusCollection, undefined, 2)}`);
 
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
