@@ -17,12 +17,12 @@ export const up = async (knex: Knex): Promise<void> => knex.schema
     table.float('timeToProcess').comment('Number seconds granule took to complete "processing"');
     table.integer('productVolume');
     table.jsonb('error').comment('JSON error object');
+    table.text('boolean').comment('Flag that shows if the granule has been published in CMR');
     table.text('cmrLink').comment('Link to granule in the CMR API');
     table.text('execution').comment('Step Function Execution link');
     table.text('granuleId').comment('Granule ID');
     table.text('pdrName').comment('PDR associated with the granule');
     table.text('provider').comment('Provider granule is associated with');
-    table.text('published').comment('Flag that shows if the granule has been published in CMR');
     table.timestamps(false, true);
     table.unique(['granuleId', 'collectionCumulusId']);
   }).createTable('files', (table) => {
