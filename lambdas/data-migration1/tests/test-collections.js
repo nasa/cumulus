@@ -15,7 +15,7 @@ const {
   RecordAlreadyMigrated,
   migrateCollectionRecord,
   migrateCollections,
-} = require('..');
+} = require('../dist/lambda');
 
 const knex = Knex({
   client: 'pg',

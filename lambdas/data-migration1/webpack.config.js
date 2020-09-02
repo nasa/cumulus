@@ -1,6 +1,5 @@
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 const ignoredPackages = [
   'mssql',
@@ -18,40 +17,29 @@ const ignoredPackages = [
 module.exports = {
   plugins: [
     new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
-    // Force Webpack to use TS module resolution instead of Webpack
-    // See https://github.com/TypeStrong/ts-loader/issues/324
-    new ForkTsCheckerWebpackPlugin()
   ],
   mode: process.env.PRODUCTION ? 'production' : 'development',
-  entry: './src/index.ts',
+  entry: './dist/lambda/index.js',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist'),
-    // necessary for source maps to work for debugging
-    devtoolModuleFilenameTemplate: '[absolute-resource-path]'
+    path: path.resolve(__dirname, 'dist', 'webpack')
   },
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        loader: 'ts-loader',
-        exclude: /node_modules/,
-        options: {
-          // disable type checker - we will use it in fork plugin
-          transpileOnly: true
-        }
-      },
-      {
         test: /\.js$/,
-        enforce: 'pre',
-        use: ['source-map-loader'],
-        include: /node_modules\/\@cumulus/
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
       },
     ],
-  },
-  resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ],
   },
   target: 'node',
   devtool: 'inline-source-map',

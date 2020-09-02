@@ -6,7 +6,6 @@
     "node": ">=12.18.0"
   },
   "private": true,
-  "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run prepare && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
