@@ -9,26 +9,19 @@
   "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "package": "npm run clean && npm run prepare && (cd dist && zip lambda.zip index.js)",
+    "package": "npm run clean && npm run prepare && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../../node_modules/.bin/ava",
-    "prepare": "../../../node_modules/.bin/webpack",
-    "python-lint": "true"
+    "prepare": "npm run tsc",
+    "python-lint": "true",
+    "tsc": "../../../node_modules/.bin/tsc",
+    "webpack": "../../../node_modules/.bin/webpack"
   },
   "directories": {
-    "test": "test"
+    "test": "tests"
   },
   "license": "Apache-2.0",
   "ava": {
-    "timeout": "2m",
-    "files": [
-      "tests/*.ts"
-    ],
-		"extensions": [
-			"ts"
-		],
-		"require": [
-			"ts-node/register"
-		]
+    "timeout": "2m"
   },
   "dependencies": {
     "@cumulus/common": "2.0.1",

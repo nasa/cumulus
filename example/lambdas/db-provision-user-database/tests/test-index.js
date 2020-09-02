@@ -1,11 +1,11 @@
-import AWS from 'aws-sdk';
-import Knex from 'knex';
-import anyTest, { TestInterface } from 'ava';
-import sinon from 'sinon';
+const AWS = require('aws-sdk');
+const Knex = require('knex');
+const test = require('ava');
+const sinon = require('sinon');
 
-import { randomString } from '@cumulus/common/test-utils';
-import { config } from '@cumulus/db';
-import { handler, HandlerEvent } from '../src';
+const { randomString } = require('@cumulus/common/test-utils');
+const { config } = require('@cumulus/db');
+const { handler } = require('../dist/lambda');
 
 const knex = Knex({
   client: 'pg',
@@ -28,15 +28,6 @@ sinon.stub(AWS, 'SecretsManager').returns({
   putSecretValue: () => ({ promise: () => Promise.resolve() }),
 });
 
-// Typing t.context
-const test = anyTest as TestInterface<{
-  dbUser: string
-  expectedDbUser: string
-  testDb: string
-  expectedTestDb: string
-  handlerEvent: HandlerEvent
-}>;
-
 test.beforeEach(async (t) => {
   const randomDbString = randomString(10);
   const dbUser = `${randomDbString}-${randomDbString}-test`;
@@ -57,7 +48,7 @@ test.beforeEach(async (t) => {
   };
 });
 
-test.afterEach(async (t) => {
+test.afterEach.always(async (t) => {
   await knex.raw(`drop database if exists "${t.context.expectedTestDb}"`);
   await knex.raw(`drop user if exists "${t.context.expectedDbUser}"`);
 });
