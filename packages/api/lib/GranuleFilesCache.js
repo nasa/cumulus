@@ -17,7 +17,7 @@ const chunk = require('lodash/chunk');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const pMap = require('p-map');
-const { noop } = require('@cumulus/common/util');
+const noop = require('lodash/noop');
 const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
 
 /**

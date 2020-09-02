@@ -103,8 +103,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- The `@cumulus/ingest/granule.copyGranuleFile` function has been removed
-- The `@cumulus/ingest/granule.moveGranuleFile` function has been removed
+- `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
+- `@cumulus/aws-client/S3.getS3ObjectReadStream`
+- `@cumulus/cmrjs.getFullMetadata`
+- `@cumulus/cmrjs.getMetadata`
+- `@cumulus/common/util.isNil`
+- `@cumulus/common/util.isNull`
+- `@cumulus/common/util.isUndefined`
+- `@cumulus/common/util.lookupMimeType`
+- `@cumulus/common/util.mkdtempSync`
+- `@cumulus/common/util.negate`
+- `@cumulus/common/util.noop`
+- `@cumulus/common/util.omit`
+- `@cumulus/common/util.renameProperty`
+- `@cumulus/common/util.sleep`
+- `@cumulus/common/util.thread`
+- `@cumulus/ingest/granule.copyGranuleFile`
+- `@cumulus/ingest/granule.moveGranuleFile`
+- `@cumulus/integration-tests/api/rules.deleteRule`
+- `@cumulus/integration-tests/api/rules.getRule`
+- `@cumulus/integration-tests/api/rules.listRules`
+- `@cumulus/integration-tests/api/rules.postRule`
+- `@cumulus/integration-tests/api/rules.rerunRule`
+- `@cumulus/integration-tests/api/rules.updateRule`
+- `@cumulus/integration-tests/sfnStep.parseStepMessage`
+- `@cumulus/message/Queue.getQueueName`
+- `@cumulus/message/Queue.getQueueNameByUrl`
 
 ### Deprecated
 
