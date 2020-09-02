@@ -2,7 +2,7 @@
 
 const KMS = require('@cumulus/aws-client/KMS');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 
 const verifyProvider = async (provider) => {
   if (provider.encrypted === true) {
