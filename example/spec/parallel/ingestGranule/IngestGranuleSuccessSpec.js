@@ -907,6 +907,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           expect(moveGranuleResponse.statusCode).toEqual(200);
 
+          console.log(`Bucket: ${config.bucket}, Key: ${destinationKey}`);
           fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
           expect(fileExists).toBeTrue();
         });
