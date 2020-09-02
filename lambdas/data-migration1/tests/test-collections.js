@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 
 const {
+  RecordAlreadyMigrated,
   migrateCollectionRecord,
   migrateCollections,
 } = require('..');
@@ -158,11 +159,14 @@ test.serial('migrateCollectionRecord ignores extraneous fields from Dynamo', asy
   await t.notThrowsAsync(migrateCollectionRecord(fakeCollection, knex));
 });
 
-test.serial('migrateCollectionRecord returns false for already migrated record', async (t) => {
+test.serial('migrateCollectionRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const fakeCollection = generateFakeCollection();
 
   await migrateCollectionRecord(fakeCollection, knex);
-  t.false(await migrateCollectionRecord(fakeCollection, knex));
+  await t.throwsAsync(
+    migrateCollectionRecord(fakeCollection, knex),
+    { instanceOf: RecordAlreadyMigrated }
+  );
 });
 
 test.serial('migrateCollections skips already migrated record', async (t) => {
@@ -171,8 +175,13 @@ test.serial('migrateCollections skips already migrated record', async (t) => {
   await migrateCollectionRecord(fakeCollection, knex);
   await collectionsModel.create(fakeCollection);
   t.teardown(() => collectionsModel.delete(fakeCollection));
-  const migratedRecordsCount = await migrateCollections(process.env, knex);
-  t.is(migratedRecordsCount, 0);
+  const migrationSummary = await migrateCollections(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 1,
+    skipped: 1,
+    failed: 0,
+    success: 0,
+  });
   const records = await knex.queryBuilder().select().table('collections');
   t.is(records.length, 1);
 });
@@ -190,8 +199,13 @@ test.serial('migrateCollections processes multiple collections', async (t) => {
     collectionsModel.delete(fakeCollection2),
   ]));
 
-  await migrateCollections(process.env, knex);
-
+  const migrationSummary = await migrateCollections(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 0,
+    success: 2,
+  });
   const records = await knex.queryBuilder().select().table('collections');
   t.is(records.length, 2);
 });
@@ -209,7 +223,7 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
     dynamodbDocClient().put({
       TableName: process.env.CollectionsTable,
       Item: fakeCollection1,
-    }),
+    }).promise(),
     collectionsModel.create(fakeCollection2),
   ]);
   t.teardown(() => Promise.all([
@@ -217,7 +231,13 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
     collectionsModel.delete(fakeCollection2),
   ]));
 
-  await migrateCollections(process.env, knex);
+  const migrationSummary = await migrateCollections(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 1,
+    success: 1,
+  });
   const records = await knex.queryBuilder().select().table('collections');
   t.is(records.length, 1);
 });
