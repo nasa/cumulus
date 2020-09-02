@@ -23,7 +23,7 @@ export const up = async (knex: Knex): Promise<void> =>
       + 'When false, ingest only files that match a regex in the colletion files config list'
     );
     table.jsonb('meta').comment('Collection meta object');
-    table.jsonb('tags').comment('Collection tags object');
+    table.jsonb('tags').comment('JSON encoded array of collection tags');
     // adds "created_at" and "updated_at" columns automatically
     table.timestamps(false, true);
 
