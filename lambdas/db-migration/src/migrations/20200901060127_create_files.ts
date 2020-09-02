@@ -20,5 +20,4 @@ export const up = async (knex: Knex): Promise<void> => knex.schema
   });
 
 export const down = async (knex: Knex): Promise<void> => knex.schema
-  .dropTable('files')
-  .dropTable('granules');
+  .dropTable('files');
