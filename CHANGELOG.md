@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-1961**
+  - Fixed `activeCollections` query only returning 10 results
+
 ## [v2.0.2] 2020-08-17
 
 #### CODE CHANGES
