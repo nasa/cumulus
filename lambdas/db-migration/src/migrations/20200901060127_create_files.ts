@@ -4,6 +4,7 @@ export const up = async (knex: Knex): Promise<void> => knex.schema
   .createTable('files', (table) => {
     table.bigIncrements('cumulusId').comment('Internal Cumulus ID for a file').primary();
     table.integer('granuleCumulusId').references('cumulusId').inTable('granules').notNullable();
+    table.timestamps(false, true);
     table.integer('fileSize').comment('Deprecated - size of file');
     table.integer('size').comment('Size of file (bytes)');
     table.text('bucket').comment('AWS Bucket file is archived in');
@@ -15,7 +16,6 @@ export const up = async (knex: Knex): Promise<void> => knex.schema
     table.text('name');
     table.text('path').comment('Source file path');
     table.text('source').comment('Full source path s3/ftp/sftp/http URI to granule');
-    table.timestamps(false, true);
     table.unique(['bucket', 'key']);
   });
 
