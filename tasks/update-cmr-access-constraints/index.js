@@ -2,6 +2,7 @@
 
 const groupBy = require('lodash/groupBy');
 const keyBy = require('lodash/keyBy');
+const set = require('lodash/set');
 const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { granulesToCmrFileObjects } = require('@cumulus/cmrjs');
@@ -14,6 +15,34 @@ const {
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
+
+function createUpdatedEcho10XMLMetadataGranuleCopy(metadataGranule, accessConstraintsObject) {
+  const { description, value } = accessConstraintsObject;
+  const metadataGranuleCopy = { ...metadataGranule };
+  const granuleUpdateSequence = {
+    GranuleUR: metadataGranule.GranuleUR,
+    InsertTime: metadataGranule.InsertTime,
+    LastUpdate: metadataGranule.LastUpdate,
+  };
+  delete metadataGranuleCopy.GranuleUR;
+  delete metadataGranuleCopy.InsertTime;
+  delete metadataGranuleCopy.LastUpdate;
+  const deleteTime = metadataGranule.DeleteTime;
+  if (deleteTime !== undefined) {
+    set(granuleUpdateSequence, 'DeleteTime', deleteTime);
+    delete metadataGranuleCopy.deleteTime;
+  }
+  set(granuleUpdateSequence, 'Collection', metadataGranule.Collection);
+  delete metadataGranuleCopy.Collection;
+  set(granuleUpdateSequence, 'RestrictionFlag', value);
+  delete metadataGranuleCopy.RestrictionFlag;
+  set(granuleUpdateSequence, 'RestrictionComment', description !== undefined ? description : 'None');
+  delete metadataGranuleCopy.RestrictionComment;
+  return {
+    ...granuleUpdateSequence,
+    ...metadataGranuleCopy,
+  };
+}
 
 function setCmrFileEtag(file, updatedFileMap) {
   const filename = file.filename || buildS3Uri(file.bucket, file.key);
@@ -44,16 +73,12 @@ function setRestrictionMetadataInEcho10XMLMetadata(
   echo10XMLMetadataContentsObject,
   accessConstraintsObject
 ) {
-  const { description, value } = accessConstraintsObject;
-  const echo10AccessConstraintsObject = {
-    RestrictionComment: description !== undefined ? description : 'None',
-    RestrictionFlag: value,
-  };
-  const updatedGranule = Object.assign(
-    echo10AccessConstraintsObject,
-    echo10XMLMetadataContentsObject.Granule
+  const metadataGranule = echo10XMLMetadataContentsObject.Granule;
+  const updatedMetadataGranule = createUpdatedEcho10XMLMetadataGranuleCopy(
+    metadataGranule,
+    accessConstraintsObject
   );
-  return { ...echo10XMLMetadataContentsObject, Granule: updatedGranule };
+  return { ...echo10XMLMetadataContentsObject, Granule: updatedMetadataGranule };
 }
 
 function setAccessConstraintMetadataInUMMGJSONMetadata(

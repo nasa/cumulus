@@ -29,7 +29,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const { isCmrFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
+const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
@@ -853,7 +853,6 @@ describe('The S3 Ingest Granules workflow', () => {
       it('applyworkflow UpdateCmrAccessConstraints updates and publishes CMR metadata', async () => {
         const existsInCMR = await conceptExists(cmrLink);
         expect(existsInCMR).toEqual(true);
-        const originalGranuleCmrFile = granule.files.find(isCmrFile);
 
         const accessConstraints = {
           value: 17,
@@ -892,11 +891,10 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId,
         });
         const updatedGranuleRecord = JSON.parse(granuleResponse.body);
-        const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCmrFile);
-        expect(updatedGranuleCmrFile.etag).not.ToBe(originalGranuleCmrFile.etag);
+        const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCMRFile);
 
-        const granuleCmrMetadata = metadataObjectFromCMRFile(updatedGranuleCmrFile.filename);
-        expect(granuleCmrMetadata.Granule.RestrictionFlag).toEqual(accessConstraints.value);
+        const granuleCmrMetadata = await metadataObjectFromCMRFile(`s3://${updatedGranuleCmrFile.bucket}/${updatedGranuleCmrFile.key}`);
+        expect(granuleCmrMetadata.Granule.RestrictionFlag).toEqual(accessConstraints.value.toString());
         expect(granuleCmrMetadata.Granule.RestrictionComment).toEqual(accessConstraints.description);
       });
 
