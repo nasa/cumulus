@@ -9,6 +9,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { localStackConnectionEnv } = require('@cumulus/db');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
@@ -43,6 +44,8 @@ let rulesModel;
 let publishStub;
 
 test.before(async () => {
+  process.env = { ...process.env, ...localStackConnectionEnv };
+
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);

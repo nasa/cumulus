@@ -19,4 +19,5 @@ export const dropAllTables = async ({
   );
 };
 
+export { localStackConnectionEnv } from './config';
 export * as connection from './connection';

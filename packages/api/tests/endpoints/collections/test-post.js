@@ -26,7 +26,9 @@ test.before(async (t) => {
     rulesModel.createTable(),
   ]);
 
-  t.context.dbClient = await db.connection.knex();
+  t.context.dbClient = await db.connection.knex({
+    env: db.localStackConnectionEnv,
+  });
 
   t.context.nullLogger = {
     error: () => undefined,

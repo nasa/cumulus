@@ -93,22 +93,6 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
   });
 });
 
-test('getConnectionConfig returns the expected configuration when using LocalStack', async (t) => {
-  const result = await getConnectionConfig({
-    env: { NODE_ENV: 'test' },
-  });
-
-  t.deepEqual(
-    result,
-    {
-      host: 'localhost',
-      user: 'postgres',
-      password: 'password',
-      database: 'postgres',
-    }
-  );
-});
-
 test('getConnectionConfig returns the expected configuration when using Secrets Manager', async (t) => {
   const result = await getConnectionConfig({
     env: { databaseCredentialSecretArn: 'fakeSecretId' },
