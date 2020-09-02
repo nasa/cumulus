@@ -4,13 +4,13 @@ export const up = async (knex: Knex): Promise<void> => knex.schema
   .createTable('granules', (table) => {
     table.bigIncrements('cumulusId').comment('Internal Cumulus ID for a granule').primary();
     table.integer('collectionCumulusId').references('cumulusId').inTable('collections').notNullable();
-    table.date('beginningDateTime').comment('Date granule started');
-    table.date('endingDateTime').comment('Date granule completed');
-    table.date('lastUpdateDateTime').comment('Timestap for last update');
-    table.date('processingEndDateTime').comment('Date granule finished processing');
-    table.date('procvessingStartDateTime').comment('Date granule started processing');
-    table.date('productionDateTime').comment('Timestamp for granule production date/time');
-    table.date('timestamp');
+    table.timestamp('beginningDateTime').comment('Date granule started');
+    table.timestamp('endingDateTime').comment('Date granule completed');
+    table.timestamp('lastUpdateDateTime').comment('Timestap for last update');
+    table.timestamp('processingEndDateTime').comment('Date granule finished processing');
+    table.timestamp('procvessingStartDateTime').comment('Date granule started processing');
+    table.timestamp('productionDateTime').comment('Timestamp for granule production date/time');
+    table.timestamp('timestamp');
     table.enum('status', ['running', 'completed', 'failed']).comment('Ingest status of the granule');
     table.float('duration').comment('Ingest duration');
     table.float('timeToArchive').comment('Number of seconds granule took to archive');
