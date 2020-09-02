@@ -312,7 +312,6 @@ Invoke a Lambda function
     * [.getTextObject(bucket, key)](#module_S3.getTextObject) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getJsonS3Object(bucket, key)](#module_S3.getJsonS3Object) ⇒ <code>Promise.&lt;\*&gt;</code>
     * [.getObjectReadStream(params)](#module_S3.getObjectReadStream) ⇒ <code>Readable</code>
-    * [.getS3ObjectReadStreamAsync(bucket, key)](#module_S3.getS3ObjectReadStreamAsync) ⇒ <code>ReadableStream</code>
     * [.fileExists(bucket, key)](#module_S3.fileExists) ⇒ <code>Promise</code>
     * [.deleteS3Files(s3Objs)](#module_S3.deleteS3Files) ⇒ <code>Promise</code>
     * [.uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3.uploadS3FileStream) ⇒ <code>Promise</code>
@@ -636,26 +635,6 @@ Get a readable stream for an S3 object
 | params.s3 | <code>AWS.S3</code> | an AWS.S3 instance |
 | params.bucket | <code>string</code> | the bucket of the requested object |
 | params.key | <code>string</code> | the key of the requested object |
-
-<a name="module_S3.getS3ObjectReadStreamAsync"></a>
-
-### S3.getS3ObjectReadStreamAsync(bucket, key) ⇒ <code>ReadableStream</code>
-Get a readable stream for an S3 object.
-
-Use `getS3Object()` before fetching stream to deal
-with eventual consistency issues by checking for object
-with retries.
-
-**Kind**: static method of [<code>S3</code>](#module_S3)  
-**Throws**:
-
-- <code>Error</code> if S3 object cannot be found
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | the S3 object's bucket |
-| key | <code>string</code> | the S3 object's key |
 
 <a name="module_S3.fileExists"></a>
 
