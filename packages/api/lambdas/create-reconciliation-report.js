@@ -381,9 +381,9 @@ async function reconciliationReportForGranules(params) {
     format: 'umm_json',
   });
 
-  const esCollectionSearchParams = convertToESGranuleSearchParams(recReportParams);
+  const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(recReportParams);
   const esGranulesIterator = new ESCollectionGranuleQueue(
-    esCollectionSearchParams, process.env.ES_INDEX
+    esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
   );
   const oneWay = isOneWayReport(recReportParams);
 
