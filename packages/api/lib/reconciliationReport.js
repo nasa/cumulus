@@ -14,34 +14,10 @@ function dateToValue(dateable) {
 
 /**
  *
- * @param {Object} params - request params to convert to reconciliationReportForCollection params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
+ * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for Elasticsearch collection search
  */
 function convertToESCollectionSearchParams(params) {
-  return {
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
-  };
-}
-
-/**
- *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESGranuleSearchParams(params) {
-  return {
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
-  };
-}
-
-/**
- *
- * @param {Object} params - request params to convert to Elasticsearch/DB params
- * @returns {Object} object of desired parameters formated for Elasticsearch/DB
- */
-function convertToCollectionSearchParams(params) {
   const { collectionId, startTimestamp, endTimestamp } = params;
   const collection = collectionId ? deconstructCollectionId(collectionId) : {};
   const searchParams = {
@@ -50,6 +26,20 @@ function convertToCollectionSearchParams(params) {
     ...collection,
   };
   return removeNilProperties(searchParams);
+}
+
+/**
+ *
+ * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for Elasticsearch.
+ */
+function convertToESGranuleSearchParams(params) {
+  const { collectionId } = params;
+  return removeNilProperties({
+    updatedAt__from: dateToValue(params.startTimestamp),
+    updatedAt__to: dateToValue(params.endTimestamp),
+    collectionId,
+  });
 }
 
 /**
@@ -99,9 +89,8 @@ function initialReportHeader(recReportParams) {
 }
 
 module.exports = {
-  convertToCollectionSearchParams,
-  convertToGranuleSearchParams,
-  convertToESGranuleSearchParams,
   convertToESCollectionSearchParams,
+  convertToESGranuleSearchParams,
+  convertToGranuleSearchParams,
   initialReportHeader,
 };
