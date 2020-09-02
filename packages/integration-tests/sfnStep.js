@@ -3,7 +3,7 @@
 'use strict';
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { deprecate, isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 const log = require('@cumulus/common/log');
 const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
@@ -12,34 +12,6 @@ const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/St
  * Step Function for a specific execution.
 */
 class SfnStep {
-  /**
-   * Parse the step message.
-   *
-   * Merge possible keys from the CMA in the input and handle remote message
-   * retrieval if necessary.
-   *
-   * @param {Object} stepMessage - Details for the step
-   * @param {Object} stepMessage.input - Object containing input to the step
-   * @param {string} [stepName] - Name for the step being parsed. Optional.
-   * @returns {Object} - Parsed step input object
-   */
-  static async parseStepMessage(stepMessage, stepName) {
-    deprecate('@cumulus/integration-tests/sfnStep/SfnStep.parseStepMessage()', '1.21.0', '@cumulus/message/StepFunctions.parseStepMessage()');
-    let parsedStepMessage = stepMessage;
-    if (stepMessage.cma) {
-      parsedStepMessage = { ...stepMessage, ...stepMessage.cma, ...stepMessage.cma.event };
-      delete parsedStepMessage.cma;
-      delete parsedStepMessage.event;
-    }
-
-    if (parsedStepMessage.replace) {
-      // Message was too large and output was written to S3
-      log.info(`Retrieving ${stepName} output from ${JSON.stringify(parsedStepMessage.replace)}`);
-      parsedStepMessage = await pullStepFunctionEvent(parsedStepMessage);
-    }
-    return parsedStepMessage;
-  }
-
   /**
    * `getStartEvent` gets the "start" event for a step, given its schedule event
    *
@@ -80,14 +52,11 @@ class SfnStep {
    * event if exists for each execution of the step, null if cannot find the step
    */
   getStepExecutionInstance(executionHistory, scheduleEvent) {
-    let startEvent = null;
-    let completeEvent = null;
-
     if (scheduleEvent.type !== this.scheduleFailedEvent) {
-      startEvent = this.getStartEvent(executionHistory, scheduleEvent);
+      const startEvent = this.getStartEvent(executionHistory, scheduleEvent);
 
       if (startEvent && startEvent.type !== this.startFailedEvent) {
-        completeEvent = this.getCompletionEvent(executionHistory, startEvent);
+        const completeEvent = this.getCompletionEvent(executionHistory, startEvent);
         return { scheduleEvent, startEvent, completeEvent };
       }
     }
