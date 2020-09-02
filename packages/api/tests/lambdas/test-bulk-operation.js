@@ -404,3 +404,16 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
     ]
   );
 });
+
+test.serial('bulk operation BULK_GRANULE_DELETE does not throw error for granules that were already removed', async (t) => {
+  const { deletedGranules } = await bulkOperation.handler({
+    type: 'BULK_GRANULE_DELETE',
+    envVars,
+    payload: {
+      ids: [
+        'deleted-granule-id',
+      ],
+    },
+  });
+  t.deepEqual(deletedGranules, []);
+});
