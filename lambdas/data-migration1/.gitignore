@@ -1,3 +1,7 @@
 *.tfvars
+<<<<<<< CUMULUS-2122 -- Incoming Change
 .terraform
+=======
+.terraform/
+>>>>>>> master -- Current Change
 *.tfstate*

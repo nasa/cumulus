@@ -13,7 +13,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   try {
     const env = event?.env ?? process.env;
     env.migrationDir = path.join(__dirname, 'migrations');
-    knex = await connection.knex(env);
+    knex = await connection.knex({ env });
     const command = event?.command ?? 'latest';
 
     switch (command) {

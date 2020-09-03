@@ -1,5 +1,6 @@
 import * as errors from '@cumulus/errors';
 import moment from 'moment';
+import { s3 } from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 import { DuplicateHandling } from '@cumulus/types';
@@ -137,13 +138,15 @@ export async function moveGranuleFileWithVersioning(
 ): Promise<VersionedObject[]> {
   const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
-  const targetFileSum = await S3.calculateS3ObjectChecksum({
+  const targetFileSum = await S3.calculateObjectHash({
+    s3: s3(),
     algorithm: checksumType ?? 'CKSUM',
     bucket: target.Bucket,
     key: target.Key,
   });
 
-  const sourceFileSum = checksum ?? await S3.calculateS3ObjectChecksum({
+  const sourceFileSum = checksum ?? await S3.calculateObjectHash({
+    s3: s3(),
     algorithm: 'CKSUM',
     bucket: source.Bucket,
     key: source.Key,

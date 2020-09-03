@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 const get = require('lodash/get');
 const yaml = require('js-yaml');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 const { readFile, readFileSync } = require('fs-extra');
 
 /**

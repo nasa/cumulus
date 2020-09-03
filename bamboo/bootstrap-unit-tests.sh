@@ -87,4 +87,3 @@ while ! $docker_command 'nc -z 127.0.0.1 4574'; do
   sleep 2
 done
 echo 'Localstack Lambda service is started'
-

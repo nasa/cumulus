@@ -2,6 +2,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
+const camelCase = require('lodash/camelCase');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
@@ -16,10 +17,16 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
+const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
+const {
+  convertToESGranuleSearchParams,
+  convertToESCollectionSearchParams,
+  initialReportHeader,
+} = require('../lib/reconciliationReport');
 const Collection = require('../es/collections');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 
@@ -43,40 +50,6 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
   },
   'scan'
 );
-
-/**
- * @param {string} dateable - any input valid for a JS Date contstructor.
- * @returns {number} - primitive value of input date string or undefined, if
- *                     input string not convertable.
- */
-function dateToValue(dateable) {
-  const primitiveDate = (new Date(dateable)).valueOf();
-  return !Number.isNaN(primitiveDate) ? primitiveDate : undefined;
-}
-
-/**
- *
- * @param {Object} params - request params to convert to reconciliationReportForCollection params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESCollectionSearchParams(params) {
-  return {
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
-  };
-}
-
-/**
- *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESGranuleSearchParams(params) {
-  return {
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
-  };
-}
 
 /**
  * Checks to see if any of the included reportParams contains a value that
@@ -144,11 +117,16 @@ async function createReconciliationReportForBucket(Bucket) {
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDynamoDb = [];
+  const okCountByGranule = {};
 
   let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
   while (nextS3Object && nextDynamoDbItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
     const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
+
+    if (!okCountByGranule[nextDynamoDbItem.granuleId]) {
+      okCountByGranule[nextDynamoDbItem.granuleId] = 0;
+    }
 
     if (nextS3Uri < nextDynamoDbUri) {
       // Found an item that is only in S3 and not in DynamoDB
@@ -164,6 +142,7 @@ async function createReconciliationReportForBucket(Bucket) {
     } else {
       // Found an item that is in both S3 and DynamoDB
       okCount += 1;
+      okCountByGranule[nextDynamoDbItem.granuleId] += 1;
       s3ObjectsQueue.shift();
       dynamoDbFilesLister.shift();
     }
@@ -190,6 +169,7 @@ async function createReconciliationReportForBucket(Bucket) {
     okCount,
     onlyInS3,
     onlyInDynamoDb,
+    okCountByGranule,
   };
 }
 
@@ -557,6 +537,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * Create a Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
+ * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
  * @param {string} recReportParams.reportKey - the s3 report key
@@ -568,11 +549,8 @@ async function reconciliationReportForCumulusCMR(params) {
  */
 async function createReconciliationReport(recReportParams) {
   const {
-    createStartTime,
-    endTimestamp,
     reportKey,
     stackName,
-    startTimestamp,
     systemBucket,
   } = recReportParams;
 
@@ -590,6 +568,7 @@ async function createReconciliationReport(recReportParams) {
   // Write an initial report to S3
   const filesInCumulus = {
     okCount: 0,
+    okCountByGranule: {},
     onlyInS3: [],
     onlyInDynamoDb: [],
   };
@@ -601,12 +580,7 @@ async function createReconciliationReport(recReportParams) {
   };
 
   let report = {
-    createStartTime: createStartTime.toISOString(),
-    createEndTime: undefined,
-    reportStartTime: startTimestamp,
-    reportEndTime: endTimestamp,
-    status: 'RUNNING',
-    error: undefined,
+    ...initialReportHeader(recReportParams),
     filesInCumulus,
     collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
@@ -633,6 +607,14 @@ async function createReconciliationReport(recReportParams) {
     report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
       bucketReport.onlyInDynamoDb
     );
+
+    Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
+      const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
+      const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+
+      report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
+        + bucketGranuleCount;
+    });
   });
 
   // compare the CUMULUS holdings with the holdings in CMR
@@ -663,23 +645,29 @@ async function createReconciliationReport(recReportParams) {
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
-  const { systemBucket, stackName } = params;
+  const { reportType, reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
-  const reportRecordName = `inventoryReport-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  const reportRecordName = reportName
+    || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
   const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
   const reportRecord = {
     name: reportRecordName,
-    type: 'Inventory',
+    type: reportType,
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
   await reconciliationReportModel.create(reportRecord);
 
   try {
-    await createReconciliationReport({ ...params, createStartTime, reportKey });
+    const recReportParams = { ...params, createStartTime, reportKey, reportType };
+    if (reportType === 'Internal') {
+      await createInternalReconciliationReport(recReportParams);
+    } else {
+      await createReconciliationReport(recReportParams);
+    }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
     log.error(JSON.stringify(error)); // helps debug ES errors
@@ -725,7 +713,15 @@ function normalizeEvent(event) {
   const stackName = event.stackName || process.env.stackName;
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
-  return { systemBucket, stackName, startTimestamp, endTimestamp };
+
+  let reportType = event.reportType || 'Inventory';
+  if (reportType.toLowerCase() === 'granulenotfound') {
+    reportType = 'Granule Not Found';
+  }
+
+  return {
+    ...event, systemBucket, stackName, startTimestamp, endTimestamp, reportType,
+  };
 }
 
 async function handler(event) {
