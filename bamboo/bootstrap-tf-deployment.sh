@@ -67,6 +67,10 @@ echo "terraform {
   }
 }" >> ci_backend.tf
 
+# Initialize deployment
+../terraform init \
+  -input=false
+
 echo "Deploying the Cumulus data migratino module to $DEPLOYMENT"
 ../terraform apply \
   -auto-approve \
