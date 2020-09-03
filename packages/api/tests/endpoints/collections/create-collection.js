@@ -9,7 +9,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { localStackConnectionEnv } = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
@@ -43,7 +43,7 @@ let collectionModel;
 let rulesModel;
 let publishStub;
 
-test.before(async () => {
+test.before(async (t) => {
   process.env = { ...process.env, ...localStackConnectionEnv };
 
   const esAlias = randomString();
@@ -71,6 +71,8 @@ test.before(async () => {
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
     promise: async () => true,
   });
+
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.after.always(async () => {
@@ -116,7 +118,7 @@ test('POST with invalid authorization scheme returns an invalid token response',
   assertions.isInvalidAuthorizationResponse(t, res);
 });
 
-test('POST creates a new collection in DynamoDB', async (t) => {
+test('POST creates a new collection', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   await request(app)
@@ -126,12 +128,24 @@ test('POST creates a new collection in DynamoDB', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  await t.notThrowsAsync(
-    collectionModel.get({
+  const fetchedDynamoRecord = await collectionModel.get({
+    name: newCollection.name,
+    version: newCollection.version,
+  });
+
+  t.is(fetchedDynamoRecord.name, newCollection.name);
+  t.is(fetchedDynamoRecord.version, newCollection.version);
+
+  const fetchedDbRecord = await t.context.dbClient.first()
+    .from('collections')
+    .where({
       name: newCollection.name,
       version: newCollection.version,
-    })
-  );
+    });
+
+  t.not(fetchedDbRecord, undefined);
+  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST without a name returns a 400 error', async (t) => {

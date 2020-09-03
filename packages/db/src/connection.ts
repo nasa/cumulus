@@ -1,4 +1,4 @@
-import * as AWS from 'aws-sdk';
+import AWS from 'aws-sdk';
 import Knex from 'knex';
 import { getKnexConfig } from './config';
 

@@ -37,27 +37,6 @@ test.beforeEach((t) => {
   t.context.collection = fakeCollectionFactory();
 });
 
-test('post() writes a record to the database', async (t) => {
-  const { collection, dbClient } = t.context;
-
-  const request = {
-    body: collection,
-    testContext: { dbClient },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(request, response);
-
-  t.true(response.send.calledWithMatch({ message: 'Record saved' }));
-
-  const dbRecords = await dbClient.select('name', 'version')
-    .from('collections')
-    .where(pick(collection, ['name', 'version']));
-
-  t.is(dbRecords.length, 1);
-});
-
 test('post() does not write to the database if writing to Dynamo fails', async (t) => {
   const { collection, dbClient, nullLogger } = t.context;
 
@@ -112,31 +91,4 @@ test('post() does not write to Dynamo if writing to the database fails', async (
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
   t.false(await collectionsModel.exists(collection.name, collection.version));
-});
-
-test('post() results in Dynamo and DB records with the same created_at and updated_at times', async (t) => {
-  const { collection, collectionsModel, dbClient } = t.context;
-
-  const request = {
-    body: collection,
-    testContext: { dbClient },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(request, response);
-
-  t.true(response.send.calledWithMatch({ message: 'Record saved' }));
-
-  const dbRecord = await dbClient.table('collections')
-    .first('created_at', 'updated_at')
-    .where(pick(collection, ['name', 'version']));
-
-  const dynamoRecord = await collectionsModel.get({
-    name: collection.name,
-    version: collection.version,
-  });
-
-  t.is(dbRecord.created_at.getTime(), dynamoRecord.createdAt);
-  t.is(dbRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });

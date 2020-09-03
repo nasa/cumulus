@@ -48,8 +48,8 @@ export const getConnectionConfigEnv = (
  *
  * @param {Object} params
  * @param {NodeJS.ProcessEnv} params.env
- *    Environment values for the operation
- * @param {SecretsManager} params.secretsManager
+ *   Environment values for the operation
+ * @param {AWS.SecretsManager} params.secretsManager
  *   An instance of an AWS Secrets Manager client
  * @returns {Knex.PgConnectionConfig}
  *   Configuration to make a Postgres database connection.

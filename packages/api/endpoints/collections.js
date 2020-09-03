@@ -201,14 +201,10 @@ async function put(req, res) {
 
   const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
-  if (await dbClient('collections').first().where({ name, version })) {
-    delete dbRecord.name;
-    delete dbRecord.version;
-
-    await dbClient('collections').update(dbRecord).where({ name, version });
-  } else {
-    await dbClient('collections').insert(dbRecord);
-  }
+  await dbClient.transaction(async (trx) => {
+    await trx('collections').where({ name, version }).del();
+    await trx('collections').insert(dbRecord);
+  });
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);

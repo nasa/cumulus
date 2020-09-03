@@ -7,7 +7,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { localStackConnectionEnv } = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -19,6 +19,7 @@ const {
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+const { dynamoRecordToDbRecord } = require('../../../endpoints/collections');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -37,7 +38,7 @@ let accessTokenModel;
 let collectionModel;
 let ruleModel;
 
-test.before(async () => {
+test.before(async (t) => {
   process.env = { ...process.env, ...localStackConnectionEnv };
 
   const esAlias = randomString();
@@ -68,6 +69,8 @@ test.before(async () => {
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
   }).promise();
+
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.beforeEach(async (t) => {
@@ -112,6 +115,39 @@ test('Attempting to delete a collection with an invalid access token returns an 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
 test('Deleting a collection removes it', async (t) => {
+  const { dbClient } = t.context;
+
+  const collection = fakeCollectionFactory();
+  const createdCollectionRecord = await collectionModel.create(collection);
+
+  const dbRecord = dynamoRecordToDbRecord(createdCollectionRecord);
+  await dbClient('collections').insert(dbRecord);
+
+  await request(app)
+    .delete(`/collections/${collection.name}/${collection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const response = await request(app)
+    .get(`/collections/${collection.name}/${collection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  t.is(response.status, 404);
+
+  const fetchedDbRecord = await dbClient.first()
+    .from('collections')
+    .where({
+      name: collection.name,
+      version: collection.version,
+    });
+
+  t.is(fetchedDbRecord, undefined);
+});
+
+test('Deleting a collection without a record in RDS succeeds', async (t) => {
   const collection = fakeCollectionFactory();
   await collectionModel.create(collection);
 
