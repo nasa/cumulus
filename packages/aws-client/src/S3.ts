@@ -488,26 +488,6 @@ export const getObjectReadStream = (params: {
 };
 
 /**
- * Get a readable stream for an S3 object.
- *
- * @param {string} bucket - the S3 object's bucket
- * @param {string} key - the S3 object's key
- * @returns {ReadableStream}
- * @throws {Error} if S3 object cannot be found
- *
- * @deprecated
- */
-export const getS3ObjectReadStream = deprecate(
-  (bucket: string, key: string) =>
-    getObjectReadStream({ s3: s3(), bucket, key }),
-  buildDeprecationMessage(
-    '@cumulus/aws-client/S3.getS3ObjectReadStream',
-    '1.24.0',
-    '@cumulus/aws-client/S3.getObjectReadStream'
-  )
-);
-
-/**
 * Check if a file exists in an S3 object
 *
 * @param {string} bucket - name of the S3 bucket
@@ -774,39 +754,6 @@ export const calculateObjectHash = async (
 
   return generateChecksumFromStream(algorithm, stream);
 };
-
-/**
- * Calculate checksum for S3 Object
- *
- * @param {Object} params - params
- * @param {string} params.algorithm - checksum algorithm
- * @param {string} params.bucket - S3 bucket
- * @param {string} params.key - S3 key
- * @param {Object} [params.options] - crypto.createHash options
- *
- * @returns {Promise<number|string>} calculated checksum
- *
- * @deprecated
- */
-export const calculateS3ObjectChecksum = deprecate(
-  async (
-    params: {
-      algorithm: string,
-      bucket: string,
-      key: string,
-      options?: TransformOptions
-    }
-  ) => {
-    const { algorithm, bucket, key, options } = params;
-    const fileStream = getObjectReadStream({ s3: s3(), bucket, key });
-    return generateChecksumFromStream(algorithm, fileStream, options);
-  },
-  buildDeprecationMessage(
-    '@cumulus/aws-client/S3.calculateS3ObjectChecksum',
-    '1.24.0',
-    '@cumulus/aws-client/S3.calculateObjectHash'
-  )
-);
 
 /**
  * Validate S3 object checksum against expected sum
