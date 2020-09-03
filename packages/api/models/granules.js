@@ -17,10 +17,8 @@ const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { getMessageGranules } = require('@cumulus/message/Granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const {
-  isNil,
-  removeNilProperties,
-} = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
+const { removeNilProperties } = require('@cumulus/common/util');
 const {
   getBucketsConfigKey,
   getDistributionBucketMapKey,

@@ -4,7 +4,7 @@ const path = require('path');
 const test = require('ava');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  calculateS3ObjectChecksum,
+  calculateObjectHash,
   listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
@@ -539,7 +539,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
   try {
     await t.throwsAsync(
       () => syncGranule(t.context.event),
-      null,
+      undefined,
       'Source file not found'
     );
   } finally {
@@ -617,7 +617,8 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
-    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateObjectHash({
+      s3: s3(),
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key,
@@ -655,7 +656,8 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     });
 
     t.context.event.input.granules[0].files[0].size = newerContent.length;
-    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateObjectHash({
+      s3: s3(),
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key,
@@ -708,7 +710,8 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
-    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateObjectHash({
+      s3: s3(),
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key,
@@ -764,7 +767,8 @@ async function granuleFilesOverwrittenTest(t) {
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
-    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateObjectHash({
+      s3: s3(),
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key,
