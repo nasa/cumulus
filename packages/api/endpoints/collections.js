@@ -20,8 +20,6 @@ const dynamoRecordToDbRecord = (dynamoRecord) => {
     ...dynamoRecord,
     granuleIdExtractionRegex: dynamoRecord.granuleIdExtraction,
     granuleIdValidationRegex: dynamoRecord.granuleId,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
     files: JSON.stringify(dynamoRecord.files),
   };
 
@@ -38,10 +36,6 @@ const dynamoRecordToDbRecord = (dynamoRecord) => {
   // eslint-disable-next-line lodash/prefer-lodash-typecheck
   if (typeof dynamoRecord.updatedAt === 'number') {
     dbRecord.updated_at = new Date(dynamoRecord.updatedAt);
-  }
-
-  if (dynamoRecord.meta) {
-    dbRecord.meta = JSON.stringify(dynamoRecord.meta);
   }
 
   if (dynamoRecord.tags) {
@@ -160,9 +154,7 @@ async function post(req, res) {
     ) {
       return res.boom.badRequest(error.message);
     }
-
     logger.error('Error occurred while trying to create collection:', error);
-
     return res.boom.badImplementation(error.message);
   }
 }
