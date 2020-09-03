@@ -1,4 +1,4 @@
-import { SecretsManager } from 'aws-sdk';
+import * as AWS from 'aws-sdk';
 import Knex from 'knex';
 import { getKnexConfig } from './config';
 
@@ -39,7 +39,7 @@ import { getKnexConfig } from './config';
  */
 export const getKnexClient = async ({
   env = process.env,
-  secretsManager = new SecretsManager(),
+  secretsManager = new AWS.SecretsManager(),
 }: {
   env?: NodeJS.ProcessEnv,
   secretsManager?: AWS.SecretsManager

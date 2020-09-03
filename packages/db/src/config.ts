@@ -1,5 +1,4 @@
-import * as services from '@cumulus/aws-client/services';
-import * as AWS from 'aws-sdk';
+import AWS from 'aws-sdk';
 import Knex from 'knex';
 import { envUtils } from '@cumulus/common';
 
@@ -48,11 +47,12 @@ export const getConnectionConfigEnv = (
  * Return configuration to make a database connection.
  *
  * @param {Object} params
- * @param {NodeJS.ProcessEnv} params.env - Environment values for the operation
- * @param {SecretsManager} params.secretsManager - An instance of an AWS
- *   Secrets Manager client
- * @returns {Knex.PgConnectionConfig} Configuration to make a Postgres database
- *   connection
+ * @param {NodeJS.ProcessEnv} params.env
+ *    Environment values for the operation
+ * @param {SecretsManager} params.secretsManager
+ *   An instance of an AWS Secrets Manager client
+ * @returns {Knex.PgConnectionConfig}
+ *   Configuration to make a Postgres database connection.
  */
 export const getConnectionConfig = async ({
   env,
@@ -110,7 +110,7 @@ export const getConnectionConfig = async ({
  */
 export const getKnexConfig = async ({
   env = process.env,
-  secretsManager = services.secretsManager(),
+  secretsManager = new AWS.SecretsManager(),
 }: {
   env?: NodeJS.ProcessEnv,
   secretsManager?: AWS.SecretsManager
