@@ -29,11 +29,14 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
   let knex;
   try {
-    knex = await connection.knex(
-      { databaseCredentialSecretArn: event.rootLoginSecret }
-    );
-    const dbUser = event.prefix.replace(/-/g, '_');
+    const env = {
+      databaseCredentialSecretArn: event.rootLoginSecret,
+    };
+    const connectionConfig = await connection.getConnectionConfig(env);
+    const knexConfig = await connection.getKnexConfig(env, connectionConfig);
+    knex = Knex(knexConfig);
 
+    const dbUser = event.prefix.replace(/-/g, '_');
     [dbUser, event.dbPassword].forEach((input) => {
       if (!(/^\w+$/.test(input))) {
         throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
@@ -65,7 +68,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         password: event.dbPassword,
         engine: 'postgres',
         database: `${dbUser}_db`,
-        host: knex.client.config.host,
+        host: connectionConfig.host,
         port: 5432,
       }),
     }).promise();
