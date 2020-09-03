@@ -48,7 +48,7 @@ test.beforeEach(async (t) => {
   };
 });
 
-test.afterEach.always(async (t) => {
+test.afterEach(async (t) => {
   await knex.raw(`drop database if exists "${t.context.expectedTestDb}"`);
   await knex.raw(`drop user if exists "${t.context.expectedDbUser}"`);
 });
