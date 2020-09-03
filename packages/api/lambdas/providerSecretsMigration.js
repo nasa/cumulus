@@ -3,7 +3,7 @@
 const KMS = require('@cumulus/aws-client/KMS');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 const Provider = require('../models/providers');
 
 const getDecryptedField = async (provider, field) => {

@@ -3,7 +3,7 @@
 const get = require('lodash/get');
 const isInteger = require('lodash/isInteger');
 const isObject = require('lodash/isObject');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 
 function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));

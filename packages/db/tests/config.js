@@ -1,6 +1,6 @@
 const test = require('ava');
 
-const { getSecretConnectionConfig, getRequiredEnvVar, getConnectionConfigEnv } = require('../dist/config');
+const { getSecretConnectionConfig, getConnectionConfigEnv } = require('../dist/config');
 
 const dbConnectionConfig = {
   username: 'postgres',
@@ -35,15 +35,6 @@ const badSecretsManagerStub = {
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 };
-
-test('getRequiredEnvVar returns an environment value if defined', async (t) => {
-  const result = getRequiredEnvVar('testVar', { testVar: 'testvalue' });
-  t.is(result, 'testvalue');
-});
-
-test('getRequiredEnvVar throws error if not defined', async (t) => {
-  t.throws(() => getRequiredEnvVar('testVar', {}));
-});
 
 test('getSecretConnectionConfig returns a Knex.PgConnectionConfig object', async (t) => {
   const result = await getSecretConnectionConfig(
