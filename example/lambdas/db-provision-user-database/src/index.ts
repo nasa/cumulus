@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
 
-import { connection } from '@cumulus/db';
+import { config, connection } from '@cumulus/db';
 
 export interface HandlerEvent {
   rootLoginSecret: string,
@@ -32,7 +32,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     const env = {
       databaseCredentialSecretArn: event.rootLoginSecret,
     };
-    const connectionConfig = await connection.getConnectionConfig(env);
+    const connectionConfig = await config.getConnectionConfig({ env });
     const knexConfig = await connection.getKnexConfig(env, connectionConfig);
     knex = Knex(knexConfig);
 

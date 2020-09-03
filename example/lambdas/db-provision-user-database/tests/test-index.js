@@ -1,9 +1,11 @@
+const AWS = require('aws-sdk');
 const Knex = require('knex');
-
 const test = require('ava');
-const proxyquire = require('proxyquire').noPreserveCache();
 const sinon = require('sinon');
+
 const { randomString } = require('@cumulus/common/test-utils');
+const { config } = require('@cumulus/db');
+const { handler } = require('../dist/lambda');
 
 const knex = Knex({
   client: 'pg',
@@ -21,33 +23,32 @@ const dbConnectionConfig = {
   host: 'localhost',
 };
 
-const secretsManagerStub = sinon.stub().returns({
-  putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
-});
-
-const { handler } = proxyquire('../dist/lambda/index.js', {
-  'aws-sdk': {
-    SecretsManager: secretsManagerStub,
-  },
-  '@cumulus/db': {
-    connection: {
-      knex: () => Promise.resolve(Knex({
-        client: 'pg',
-        connection: dbConnectionConfig,
-      })),
-    },
-  },
+sinon.stub(config, 'getConnectionConfig').resolves(dbConnectionConfig);
+sinon.stub(AWS, 'SecretsManager').returns({
+  putSecretValue: () => ({ promise: () => Promise.resolve() }),
 });
 
 test.beforeEach(async (t) => {
   const randomDbString = randomString(10);
-  t.context.dbUser = `${randomDbString}-${randomDbString}-test`;
-  t.context.expectedDbUser = `${randomDbString}_${randomDbString}_test`;
-  t.context.testDb = `${t.context.dbUser}-db`;
-  t.context.expectedTestDb = `${t.context.expectedDbUser}_db`;
+  const dbUser = `${randomDbString}-${randomDbString}-test`;
+  const expectedDbUser = `${randomDbString}_${randomDbString}_test`;
+  t.context = {
+    dbUser,
+    expectedDbUser,
+    testDb: `${dbUser}-db`,
+    expectedTestDb: `${expectedDbUser}_db`,
+    handlerEvent: {
+      prefix: dbUser,
+      rootLoginSecret: 'bogusSecret',
+      userLoginSecret: 'bogus',
+      engine: 'pg',
+      dbPassword: 'testPassword',
+      dbClusterIdentifier: 'fake-cluster',
+    },
+  };
 });
 
-test.afterEach(async (t) => {
+test.afterEach.always(async (t) => {
   await knex.raw(`drop database if exists "${t.context.expectedTestDb}"`);
   await knex.raw(`drop user if exists "${t.context.expectedDbUser}"`);
 });
@@ -59,14 +60,11 @@ test.afterEach.always(async (t) => {
 });
 
 test('provision user database handler database creates the expected database', async (t) => {
-  const dbUser = t.context.dbUser;
-  const expectedDbUser = t.context.expectedDbUser;
-  const expectedTestDb = t.context.expectedTestDb;
-  const handlerEvent = {
-    rootLoginSecret: 'bogusSecret',
-    dbPassword: 'testPassword',
-    prefix: dbUser,
-  };
+  const {
+    expectedDbUser,
+    expectedTestDb,
+    handlerEvent,
+  } = t.context;
 
   await handler(handlerEvent);
 
@@ -81,36 +79,28 @@ test('provision user database handler database creates the expected database', a
   t.is(userResults[0].usename, `${expectedDbUser}`);
 });
 
-test('provision user database handler fails if invalid password string is used', async (t) => {
-  const dbUser = t.context.dbUser;
-  const handlerEvent = {
-    rootLoginSecret: 'bogusSecret',
+test('provision user fails if invalid password string is used', async (t) => {
+  await t.throwsAsync(handler({
+    ...t.context.handlerEvent,
     dbPassword: 'badPassword<>$$ <>',
-    prefix: dbUser,
-  };
-  await t.throwsAsync(handler(handlerEvent));
+  }));
 });
 
-test('provision user database handler fails if invalid user string is used', async (t) => {
-  t.context.dbUser = 'user with bad chars <>$';
-  const dbUser = t.context.dbUser;
-  const handlerEvent = {
-    rootLoginSecret: 'bogusSecret',
-    dbPassword: 'testPassword',
-    prefix: dbUser,
-  };
-  await t.throwsAsync(handler(handlerEvent));
+
+test('provision user fails if invalid user string is used', async (t) => {
+  await t.throwsAsync(handler({
+    ...t.context.handlerEvent,
+    prefix: 'user with bad chars <>$',
+  }));
 });
 
 test('provision user database handler updates the user password', async (t) => {
-  const dbUser = t.context.dbUser;
-  const expectedDbUser = t.context.expectedDbUser;
-  const expectedTestDb = t.context.expectedTestDb;
-  const handlerEvent = {
-    rootLoginSecret: 'bogusSecret',
-    dbPassword: 'testPassword',
-    prefix: dbUser,
-  };
+  const {
+    expectedDbUser,
+    expectedTestDb,
+    handlerEvent,
+  } = t.context;
+
   const knexConfig = {
     client: 'pg',
     connection: {
@@ -182,10 +172,11 @@ test('provision user database handler recreates the database if it exists and ha
   t.is(tableQuery.rowCount, 0);
 });
 
-test('provision user database handler fails event with no username or prefix is passed', async (t) => {
-  t.context.dbUser = 'user with bad chars <>$';
-  const handlerEvent = {
-    rootLoginSecret: 'bogusSecret',
-  };
+test('provision user fails if event with no username or password is passed', async (t) => {
+  const {
+    handlerEvent,
+  } = t.context;
+  delete handlerEvent.prefix;
+  delete handlerEvent.dbPassword;
   await t.throwsAsync(handler(handlerEvent));
 });

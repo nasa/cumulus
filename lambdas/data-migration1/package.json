@@ -1,20 +1,21 @@
 {
   "name": "@cumulus/data-migration1",
-  "description": "A Lambda function used for doing data migrations",
   "version": "2.0.1",
+  "description": "A Lambda function used for doing data migrations",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=12.18.0"
   },
-  "main": "dist/index.js",
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
-    "prepare": "npm run tsc && ../../node_modules/.bin/webpack",
-    "package": "npm run prepare && npm run build-lambda-zip",
-    "tsc": "../../node_modules/.bin/tsc",
+    "prepare": "npm run tsc",
+    "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test"
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "tsc": "../../node_modules/.bin/tsc",
+    "webpack": "../../node_modules/.bin/webpack"
   },
   "ava": {
     "files": [
@@ -25,15 +26,11 @@
   "dependencies": {
     "@cumulus/api": "2.0.1",
     "@cumulus/aws-client": "2.0.1",
+    "@cumulus/common": "2.0.1",
     "@cumulus/db": "2.0.1-alpha.1",
+    "@cumulus/errors": "2.0.1",
     "@cumulus/logger": "2.0.1",
     "knex": "0.21.5",
     "pg": "^8.3.0"
-  },
-  "devDependencies": {
-    "@types/pg": "^7.14.4",
-    "aws-sdk": "^2.735.0",
-    "source-map-loader": "^1.1.0",
-    "ts-loader": "^8.0.3"
   }
 }
