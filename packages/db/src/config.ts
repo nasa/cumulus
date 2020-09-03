@@ -1,5 +1,5 @@
 import * as services from '@cumulus/aws-client/services';
-import { SecretsManager } from 'aws-sdk';
+import * as AWS from 'aws-sdk';
 import Knex from 'knex';
 import { envUtils } from '@cumulus/common';
 
@@ -12,10 +12,10 @@ export const localStackConnectionEnv = {
 
 export const getSecretConnectionConfig = async (
   SecretId: string,
-  secretsManager: SecretsManager
+  secretsManager: AWS.SecretsManager
 ): Promise<Knex.PgConnectionConfig> => {
   const response = await secretsManager.getSecretValue(
-    { SecretId } as SecretsManager.GetSecretValueRequest
+    { SecretId } as AWS.SecretsManager.GetSecretValueRequest
   ).promise();
   if (response.SecretString === undefined) {
     throw new Error(`AWS Secret did not contain a stored value: ${SecretId}`);
@@ -56,10 +56,10 @@ export const getConnectionConfigEnv = (
  */
 export const getConnectionConfig = async ({
   env,
-  secretsManager = new SecretsManager(),
+  secretsManager = new AWS.SecretsManager(),
 }: {
   env: NodeJS.ProcessEnv,
-  secretsManager?: SecretsManager
+  secretsManager?: AWS.SecretsManager
 }): Promise<Knex.PgConnectionConfig> => {
   // Storing credentials in Secrets Manager
   if (env.databaseCredentialSecretArn) {
@@ -113,7 +113,7 @@ export const getKnexConfig = async ({
   secretsManager = services.secretsManager(),
 }: {
   env?: NodeJS.ProcessEnv,
-  secretsManager?: SecretsManager
+  secretsManager?: AWS.SecretsManager
 } = {}): Promise<Knex.Config> => {
   const knexConfig: Knex.Config = {
     client: 'pg',
