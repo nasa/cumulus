@@ -71,7 +71,7 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-echo "Deploying the Cumulus data migratino module to $DEPLOYMENT"
+echo "Deploying the Cumulus data migration module to $DEPLOYMENT"
 ../terraform apply \
   -auto-approve \
   -input=false \
