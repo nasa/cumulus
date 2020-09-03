@@ -99,7 +99,7 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await t.context.knex.destroy();
   await knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  knexAdmin.destroy();
+  await knexAdmin.destroy();
 });
 
 test.serial('migrateCollectionRecord correctly migrates collection record', async (t) => {
