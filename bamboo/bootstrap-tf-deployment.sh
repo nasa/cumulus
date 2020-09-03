@@ -56,7 +56,27 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "rds_security_group=$RDS_SECURITY_GROUP"\
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
 
+cd ../db-migration-tf
+# Ensure remote state is configured for the deployment
+echo "terraform {
+  backend \"s3\" {
+    bucket = \"$TFSTATE_BUCKET\"
+    key    = \"$DEPLOYMENT/db-migration/terraform.tfstate\"
+    region = \"$AWS_REGION\"
+    dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
+  }
+}" >> ci_backend.tf
 
+echo "Deploying the Cumulus data migratino module to $DEPLOYMENT"
+../terraform apply \
+  -auto-approve \
+  -input=false \
+  -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
+  -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
+  -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
+  -var "subnet_ids=[\"$AWS_SUBNET\"]" \
+  -var "vpc_id=$VPC_ID"
 
 cd ../cumulus-tf
 # Ensure remote state is configured for the deployment
