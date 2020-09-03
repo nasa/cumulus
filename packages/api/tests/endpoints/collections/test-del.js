@@ -3,11 +3,11 @@
 const pick = require('lodash/pick');
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
-const db = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 const Collection = require('../../../models/collections');
 const RulesModel = require('../../../models/rules');
-const { del } = require('../../../endpoints/collections');
+const { del, dynamoRecordToDbRecord } = require('../../../endpoints/collections');
 const { fakeCollectionFactory } = require('../../../lib/testUtils');
 const { buildFakeExpressResponse } = require('../utils');
 
@@ -26,9 +26,7 @@ test.before(async (t) => {
     rulesModel.createTable(),
   ]);
 
-  t.context.dbClient = await db.connection.knex({
-    env: db.localStackConnectionEnv,
-  });
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.beforeEach(async (t) => {
@@ -40,13 +38,7 @@ test.beforeEach(async (t) => {
     t.context.collection
   );
 
-  const dbRecord = {
-    ...t.context.collection,
-    granuleIdValidationRegex: t.context.collection.granuleId,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
-  };
-  delete dbRecord.granuleId;
+  const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
   await t.context.dbClient('collections').insert(dbRecord);
 });

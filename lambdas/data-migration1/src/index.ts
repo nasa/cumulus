@@ -2,7 +2,7 @@ import AWS from 'aws-sdk';
 import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-import { connection } from '@cumulus/db';
+import { getKnexClient } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import { createErrorType } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
@@ -144,8 +144,9 @@ export const migrateCollections = async (
 };
 
 export const handler = async (event: HandlerEvent): Promise<string> => {
-  const env = event?.env ?? process.env;
-  const knex = await connection.knex({ env });
+  const env = event.env ?? process.env;
+
+  const knex = await getKnexClient({ env });
 
   try {
     const collectionsMigrationSummary = await migrateCollections(env, knex);

@@ -8,7 +8,7 @@ const {
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
-const db = require('@cumulus/db');
+const { getKnexClient } = require('@cumulus/db');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
@@ -18,6 +18,7 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
 const dynamoRecordToDbRecord = (dynamoRecord) => {
   const dbRecord = {
     ...dynamoRecord,
+    granuleIdExtractionRegex: dynamoRecord.granuleIdExtraction,
     granuleIdValidationRegex: dynamoRecord.granuleId,
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: new Date(dynamoRecord.updatedAt),
@@ -25,8 +26,9 @@ const dynamoRecordToDbRecord = (dynamoRecord) => {
   };
 
   delete dbRecord.createdAt;
-  delete dbRecord.updatedAt;
   delete dbRecord.granuleId;
+  delete dbRecord.granuleIdExtraction;
+  delete dbRecord.updatedAt;
 
   // eslint-disable-next-line lodash/prefer-lodash-typecheck
   if (typeof dynamoRecord.createdAt === 'number') {
@@ -116,7 +118,7 @@ async function get(req, res) {
 async function post(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = await db.connection.knex(),
+    dbClient = await getKnexClient(),
     logger = log,
   } = req.testContext || {};
 
@@ -175,7 +177,7 @@ async function post(req, res) {
 async function put(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = await db.connection.knex(),
+    dbClient = await getKnexClient(),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -221,7 +223,7 @@ async function put(req, res) {
 async function del(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = await db.connection.knex(),
+    dbClient = await getKnexClient(),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -251,6 +253,7 @@ router.get('/active', activeList);
 
 module.exports = {
   del,
+  dynamoRecordToDbRecord,
   post,
   put,
   router,
