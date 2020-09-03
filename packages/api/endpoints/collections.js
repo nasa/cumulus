@@ -2,13 +2,17 @@
 
 const omit = require('lodash/omit');
 const router = require('express-promise-router')();
+const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   InvalidRegexError,
   UnmatchedRegexError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { getKnexClient } = require('@cumulus/db');
+const { Search } = require('../es/search');
+const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
@@ -142,6 +146,10 @@ async function post(req, res) {
       throw error;
     }
 
+    if (inTestMode()) {
+      await addToLocalES(collection, indexCollection);
+    }
+
     return res.send({
       message: 'Record saved',
       record: collection,
@@ -202,6 +210,10 @@ async function put(req, res) {
     await dbClient('collections').insert(dbRecord);
   }
 
+  if (inTestMode()) {
+    await addToLocalES(dynamoRecord, indexCollection);
+  }
+
   return res.send(dynamoRecord);
 }
 
@@ -224,6 +236,16 @@ async function del(req, res) {
     await collectionsModel.delete({ name, version });
 
     await dbClient('collections').where({ name, version }).del();
+
+    if (inTestMode()) {
+      const collectionId = constructCollectionId(name, version);
+      const esClient = await Search.es(process.env.ES_HOST);
+      await esClient.delete({
+        id: collectionId,
+        index: process.env.ES_INDEX,
+        type: 'collection',
+      }, { ignore: [404] });
+    }
 
     return res.send({ message: 'Record deleted' });
   } catch (error) {
