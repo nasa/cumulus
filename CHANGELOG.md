@@ -71,6 +71,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-1965**
+  - Adds `collectionId` parameter to the `/reconcilationReports`
+    endpoint. Setting this value will limit the scope of the reconcilation
+    report to only the input collectionId when comparing Cumulus and
+    CMR. Additionally, when this parameter is set, the report will be a
+    one-directional between Cumulus and the CMR holdings.
 - **CUMULUS-2107**
   - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
     Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and

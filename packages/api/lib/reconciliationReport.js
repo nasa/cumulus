@@ -75,6 +75,7 @@ function initialReportHeader(recReportParams) {
     createStartTime,
     endTimestamp,
     startTimestamp,
+    collectionId,
   } = recReportParams;
 
   return {
@@ -85,6 +86,7 @@ function initialReportHeader(recReportParams) {
     reportEndTime: endTimestamp,
     status: 'RUNNING',
     error: undefined,
+    collectionId,
   };
 }
 
