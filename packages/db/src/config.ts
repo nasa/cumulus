@@ -1,11 +1,6 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
-
-export const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
-  const value = env[name];
-  if (value) return value;
-  throw new Error(`The ${name} environment variable must be set`);
-};
+import { envUtils } from '@cumulus/common';
 
 export const localStackConnectionEnv = {
   PG_HOST: 'localhost',
@@ -42,12 +37,22 @@ export const getSecretConnectionConfig = async (
 export const getConnectionConfigEnv = (
   env: NodeJS.ProcessEnv
 ): Knex.PgConnectionConfig => ({
-  host: getRequiredEnvVar('PG_HOST', env),
-  user: getRequiredEnvVar('PG_USER', env),
-  password: getRequiredEnvVar('PG_PASSWORD', env),
-  database: getRequiredEnvVar('PG_DATABASE', env),
+  host: envUtils.getRequiredEnvVar('PG_HOST', env),
+  user: envUtils.getRequiredEnvVar('PG_USER', env),
+  password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
+  database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
 });
 
+/**
+ * Return configuration to make a database connection.
+ *
+ * @param {Object} params
+ * @param {NodeJS.ProcessEnv} params.env - Environment values for the operation
+ * @param {AWS.SecretsManager} params.secretsManager - An instance of an AWS
+ *   Secrets Manager client
+ * @returns {Knex.PgConnectionConfig} Configuration to make a Postgres database
+ *   connection
+ */
 export const getConnectionConfig = async ({
   env,
   secretsManager = new AWS.SecretsManager(),

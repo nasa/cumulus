@@ -1,4 +1,3 @@
-
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
 
@@ -17,9 +16,9 @@ const ignoredPackages = [
 
 module.exports = {
   plugins: [
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`))
+    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
   ],
-  mode: 'production',
+  mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './dist/lambda/index.js',
   output: {
     libraryTarget: 'commonjs2',
@@ -42,5 +41,9 @@ module.exports = {
       },
     ],
   },
-  target: 'node'
+  target: 'node',
+  devtool: 'inline-source-map',
+  optimization: {
+    nodeEnv: false
+  }
 };

@@ -10,7 +10,9 @@
   "scripts": {
     "clean": "rm -rf dist",
     "db:local:schema": "env PGPASSWORD=password pg_dump -h localhost -U postgres --schema-only --no-owner | egrep -v '^--' | cat -s | tee schema.sql",
-    "package": "npm run clean && npm run tsc && ../../node_modules/.bin/webpack && cp -R dist/lambda/migrations dist/webpack/migrations && (cd dist/webpack && zip lambda.zip index.js migrations/*)",
+    "webpack": "../../node_modules/.bin/webpack",
+    "build-lambda-zip": "(cd dist/webpack && cp -R ../lambda/migrations . && node ../../../../bin/zip.js lambda.zip index.js migrations/*)",
+    "package": "npm run clean && npm run tsc && npm run webpack && npm run build-lambda-zip",
     "prepare": "npm run tsc",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc"
   },
@@ -18,8 +20,5 @@
     "@cumulus/db": "2.0.1-alpha.1",
     "knex": "^0.21.5",
     "pg": "^8.3.0"
-  },
-  "devDependencies": {
-    "@types/pg": "^7.14.4"
   }
 }

@@ -1,16 +1,14 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
 
-import { connection } from '@cumulus/db';
+import { getKnexConfig } from '@cumulus/db';
 
 export interface HandlerEvent {
-  rootLoginSecret: string,
   userLoginSecret: string,
   prefix: string,
   dbPassword: string,
-  engine: string,
-  dbClusterIdentifier: string,
   env?: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
 }
 
 export const tableExists = async (tableName: string, knex: Knex) =>
@@ -27,11 +25,15 @@ const validateEvent = (event: HandlerEvent): void => {
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
+
+  const env = event.env ?? process.env;
+
+  const knexConfig = await getKnexConfig({ env });
+
   let knex;
   try {
-    knex = await connection.knex({
-      env: { databaseCredentialSecretArn: event.rootLoginSecret },
-    });
+    knex = Knex(knexConfig);
+
     const dbUser = event.prefix.replace(/-/g, '_');
 
     [dbUser, event.dbPassword].forEach((input) => {
@@ -52,7 +54,8 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
     }
 
-    const secretsManager = new AWS.SecretsManager();
+    const secretsManager = event.secretsManager ?? new AWS.SecretsManager();
+
     await secretsManager.putSecretValue({
       SecretId: event.userLoginSecret,
       SecretString: JSON.stringify({
@@ -60,7 +63,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         password: event.dbPassword,
         engine: 'postgres',
         database: `${dbUser}_db`,
-        host: knex.client.config.connection.host,
+        host: knexConfig,
         port: 5432,
       }),
     }).promise();
