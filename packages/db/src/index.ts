@@ -20,3 +20,4 @@ export const dropAllTables = async ({
 };
 
 export * as connection from './connection';
+export * as config from './config';
