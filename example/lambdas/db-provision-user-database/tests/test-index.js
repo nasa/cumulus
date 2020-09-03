@@ -114,7 +114,7 @@ test('provision user database handler updates the user password', async (t) => {
   t.context.testKnex = Knex(knexConfig);
   let heartBeat = await t.context.testKnex.raw('SELECT 1');
   t.is(heartBeat.rowCount, 1);
-  t.context.testKnex.destroy();
+  await t.context.testKnex.destroy();
 
   // Update password, then recreate the database
   handlerEvent.dbPassword = 'newPassword';
@@ -124,7 +124,7 @@ test('provision user database handler updates the user password', async (t) => {
   t.context.testKnex = Knex({ ...knexConfig, password: handlerEvent.dbPassword });
   heartBeat = await t.context.testKnex.raw('SELECT 1');
   t.is(heartBeat.rowCount, 1);
-  t.context.testKnex.destroy();
+  await t.context.testKnex.destroy();
 });
 
 test('provision user database handler recreates the database if it exists and has an open connection', async (t) => {
@@ -160,7 +160,7 @@ test('provision user database handler recreates the database if it exists and ha
   t.is(validateCreateTable.rows[0].tablename, 'testTable');
 
   await handler(handlerEvent);
-  t.context.testKnex.destroy();
+  await t.context.testKnex.destroy();
 
   t.context.testKnex = Knex(knexConfig);
   const heartBeat = await t.context.testKnex.raw('SELECT 1');
