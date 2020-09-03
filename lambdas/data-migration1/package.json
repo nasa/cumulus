@@ -1,11 +1,11 @@
 {
   "name": "@cumulus/data-migration1",
-  "description": "A Lambda function used for doing data migrations",
   "version": "2.0.1",
+  "description": "A Lambda function used for doing data migrations",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=12.18.0"
   },
-  "main": "dist/index.js",
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",

@@ -32,11 +32,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     const env = {
       databaseCredentialSecretArn: event.rootLoginSecret,
     };
-<<<<<<< CUMULUS-2122 -- Incoming Change
-    const connectionConfig = await connection.getConnectionConfig(env);
-=======
     const connectionConfig = await config.getConnectionConfig({ env });
->>>>>>> master -- Current Change
     const knexConfig = await connection.getKnexConfig(env, connectionConfig);
     knex = Knex(knexConfig);
 

@@ -3,11 +3,11 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { connection } from '@cumulus/db';
+import { envUtils } from '@cumulus/common';
+import { createErrorType } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
-const {
-  Manager,
-} = require('@cumulus/api/models');
+const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
 
 const logger = new Logger({ sender: '@cumulus/data-migration' });
@@ -36,13 +36,14 @@ export interface RDSCollectionRecord {
   updated_at: Date
 }
 
-const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
-  const value = env?.[name];
+interface MigrationSummary {
+  dynamoRecords: number
+  success: number
+  skipped: number
+  failed: number
+}
 
-  if (value) return value;
-
-  throw new Error(`The ${name} environment variable must be set`);
-};
+export const RecordAlreadyMigrated = createErrorType('RecordAlreadyMigrated');
 
 /**
  * Migrate collection record from Dynamo to RDS.
@@ -50,23 +51,23 @@ const getRequiredEnvVar = (name: string, env: NodeJS.ProcessEnv): string => {
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Source record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {number|false}
- *   New record ID on success, false if record was skipped
+ * @returns {Promise<number>} - Cumulus ID for record
+ * @throws {RecordAlreadyMigrated}
+ *   if record was already migrated
  */
 export const migrateCollectionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
-): Promise<number | false> => {
-  // Use schema to validate record before processing
+): Promise<number> => {
+  // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.collection);
 
   const [existingRecord] = await knex('collections')
     .where('name', dynamoRecord.name)
     .where('version', dynamoRecord.version);
-  // Skip record if it was already migrated.
+  // Throw error if it was already migrated.
   if (existingRecord) {
-    logger.info(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
-    return false;
+    throw new RecordAlreadyMigrated(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
   }
 
   // Map old record to new schema.
@@ -93,41 +94,69 @@ export const migrateCollectionRecord = async (
   const [cumulusId] = await knex('collections')
     .returning('cumulusId')
     .insert(updatedRecord);
-  return <number>cumulusId;
+  return cumulusId;
 };
 
-export const migrateCollections = async (env: NodeJS.ProcessEnv, knex: Knex) => {
-  const collectionsTable = getRequiredEnvVar('CollectionsTable', env);
+export const migrateCollections = async (
+  env: NodeJS.ProcessEnv,
+  knex: Knex
+): Promise<MigrationSummary> => {
+  const collectionsTable = envUtils.getRequiredEnvVar('CollectionsTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: collectionsTable,
   });
-  const createdRecordIds = [];
+
+  const migrationSummary = {
+    dynamoRecords: 0,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+  };
 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
+    migrationSummary.dynamoRecords += 1;
+
     try {
-      const createdRecordId = await migrateCollectionRecord(record, knex);
-      if (createdRecordId) createdRecordIds.push(createdRecordId);
+      await migrateCollectionRecord(record, knex);
+      migrationSummary.success += 1;
     } catch (error) {
-      logger.error('Could not create collection record:', error);
+      if (error instanceof RecordAlreadyMigrated) {
+        migrationSummary.skipped += 1;
+        logger.info(error);
+      } else {
+        migrationSummary.failed += 1;
+        logger.error(
+          `Could not create collection record in RDS for Dynamo collection name ${record.name}, version ${record.version}:`,
+          error
+        );
+      }
     }
 
     await searchQueue.shift();
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`successfully migrated ${createdRecordIds.length} collection records`);
-  return createdRecordIds;
+  logger.info(`successfully migrated ${migrationSummary.success} collection records`);
+  return migrationSummary;
 };
 
-export const handler = async (event: HandlerEvent): Promise<void> => {
+export const handler = async (event: HandlerEvent): Promise<string> => {
   const env = event?.env ?? process.env;
-  const knex = await connection.knex(env);
+  const knex = await connection.knex({ env });
 
   try {
-    await migrateCollections(env, knex);
+    const collectionsMigrationSummary = await migrateCollections(env, knex);
+    return `
+      Migration summary:
+        Collections:
+          Out of ${collectionsMigrationSummary.dynamoRecords} Dynamo records:
+            ${collectionsMigrationSummary.success} records migrated
+            ${collectionsMigrationSummary.skipped} records skipped
+            ${collectionsMigrationSummary.failed} records failed
+    `;
   } finally {
     await knex.destroy();
   }

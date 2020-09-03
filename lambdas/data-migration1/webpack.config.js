@@ -16,10 +16,10 @@ const ignoredPackages = [
 
 module.exports = {
   plugins: [
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`))
+    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
   ],
   mode: process.env.PRODUCTION ? 'production' : 'development',
-  entry: './dist/index.js',
+  entry: './dist/lambda/index.js',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
@@ -31,9 +31,6 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: [
-          {
-            loader: 'source-map-loader'
-          },
           {
             loader: 'babel-loader',
             options: {
