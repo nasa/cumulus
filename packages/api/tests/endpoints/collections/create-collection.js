@@ -22,6 +22,8 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const { post } = require('../../../endpoints/collections');
+const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -318,4 +320,61 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
 
   t.is(res.status, 400);
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
+});
+
+test('post() does not write to the database if writing to Dynamo fails', async (t) => {
+  const { dbClient } = t.context;
+
+  const collection = fakeCollectionFactory();
+
+  const fakeCollectionsModel = {
+    exists: () => false,
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    body: collection,
+    testContext: {
+      dbClient,
+      collectionsModel: fakeCollectionsModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  const dbRecords = await dbClient.select('name', 'version')
+    .from('collections')
+    .where({
+      name: collection.name,
+      version: collection.version,
+    });
+
+  t.is(dbRecords.length, 0);
+});
+
+test('post() does not write to Dynamo if writing to the database fails', async (t) => {
+  const collection = fakeCollectionFactory();
+
+  const fakeDbClient = () => ({
+    insert: () => Promise.reject(new Error('something bad')),
+  });
+
+  const expressRequest = {
+    body: collection,
+    testContext: { dbClient: fakeDbClient },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(await collectionModel.exists(collection.name, collection.version));
 });

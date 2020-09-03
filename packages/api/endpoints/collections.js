@@ -117,7 +117,6 @@ async function post(req, res) {
   const {
     collectionsModel = new models.Collection(),
     dbClient = await getKnexClient(),
-    logger = log,
   } = req.testContext || {};
 
   const collection = req.body || {};
@@ -162,7 +161,7 @@ async function post(req, res) {
     ) {
       return res.boom.badRequest(error.message);
     }
-    logger.error('Error occurred while trying to create collection:', error);
+    log.error('Error occurred while trying to create collection:', error);
     return res.boom.badImplementation(error.message);
   }
 }
