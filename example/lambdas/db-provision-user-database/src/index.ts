@@ -4,10 +4,10 @@ import Knex from 'knex';
 import { getKnexConfig } from '@cumulus/db';
 
 export interface HandlerEvent {
+  rootLoginSecret: string,
   userLoginSecret: string,
   prefix: string,
   dbPassword: string,
-  env?: NodeJS.ProcessEnv,
   secretsManager?: AWS.SecretsManager
 }
 
@@ -26,9 +26,14 @@ const validateEvent = (event: HandlerEvent): void => {
 export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
 
-  const env = event.env ?? process.env;
+  const secretsManager = event.secretsManager ?? new AWS.SecretsManager();
 
-  const knexConfig = await getKnexConfig({ env });
+  const knexConfig = await getKnexConfig({
+    env: {
+      databaseCredentialSecretArn: event.rootLoginSecret
+    },
+    secretsManager,
+  });
 
   let knex;
   try {
@@ -52,8 +57,6 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       await knex.raw(`alter user "${dbUser}" with encrypted password '${event.dbPassword}'`);
       await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
     }
-
-    const secretsManager = event.secretsManager ?? new AWS.SecretsManager();
 
     await secretsManager.putSecretValue({
       SecretId: event.userLoginSecret,

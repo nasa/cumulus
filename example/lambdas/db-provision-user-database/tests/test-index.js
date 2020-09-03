@@ -7,6 +7,22 @@ const { handler } = require('../dist/lambda');
 
 test.before(async (t) => {
   t.context.knex = await getKnexClient({ env: localStackConnectionEnv });
+
+  t.context.secretsManager = {
+    getSecretValue: () => ({
+      promise: () => Promise.resolve({
+        SecretString: JSON.stringify({
+          host: localStackConnectionEnv.PG_HOST,
+          username: localStackConnectionEnv.PG_USER,
+          password: localStackConnectionEnv.PG_PASSWORD,
+          database: localStackConnectionEnv.PG_DATABASE,
+        }),
+      }),
+    }),
+    putSecretValue: () => ({
+      promise: () => Promise.resolve(),
+    }),
+  };
 });
 
 test.beforeEach(async (t) => {
@@ -21,14 +37,10 @@ test.beforeEach(async (t) => {
     expectedTestDb: `${expectedDbUser}_db`,
     handlerEvent: {
       prefix: dbUser,
+      rootLoginSecret: 'bogusSecret',
       userLoginSecret: 'bogus',
       dbPassword: 'testPassword',
-      env: localStackConnectionEnv,
-      secretsManager: {
-        putSecretValue: () => ({
-          promise: () => Promise.resolve(),
-        }),
-      },
+      secretsManager: t.context.secretsManager,
     },
   };
 });
