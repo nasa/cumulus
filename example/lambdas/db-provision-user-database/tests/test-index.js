@@ -86,7 +86,6 @@ test('provision user fails if invalid password string is used', async (t) => {
   }));
 });
 
-
 test('provision user fails if invalid user string is used', async (t) => {
   await t.throwsAsync(handler({
     ...t.context.handlerEvent,
