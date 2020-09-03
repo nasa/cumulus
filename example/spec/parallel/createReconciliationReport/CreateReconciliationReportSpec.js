@@ -324,7 +324,6 @@ describe('When there are granule differences and granule reconciliation is run',
     } catch (error) {
       console.log(error);
       beforeAllFailed = true;
-      console.error(error);
       throw error;
     }
   });
