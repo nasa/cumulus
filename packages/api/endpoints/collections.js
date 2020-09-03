@@ -175,11 +175,6 @@ async function post(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
-  const {
-    collectionsModel = new models.Collection(),
-    dbClient = await getKnexClient(),
-  } = req.testContext || {};
-
   const { name, version } = req.params;
   const collection = req.body;
 
@@ -189,9 +184,9 @@ async function put(req, res) {
       + ` and '${collection.version}' in payload`);
   }
 
-  const collectionModel = new models.Collection();
+  const collectionsModel = new models.Collection();
 
-  if (!(await collectionModel.exists(name, version))) {
+  if (!(await collectionsModel.exists(name, version))) {
     return res.boom.notFound(
       `Collection '${name}' version '${version}' not found`
     );
@@ -201,6 +196,7 @@ async function put(req, res) {
 
   const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
+  const dbClient = await getKnexClient();
   await dbClient.transaction(async (trx) => {
     await trx('collections').where({ name, version }).del();
     await trx('collections').insert(dbRecord);
@@ -221,12 +217,10 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const {
-    collectionsModel = new models.Collection(),
-    dbClient = await getKnexClient(),
-  } = req.testContext || {};
-
   const { name, version } = req.params;
+
+  const collectionsModel = new models.Collection();
+  const dbClient = await getKnexClient();
 
   try {
     await collectionsModel.delete({ name, version });
