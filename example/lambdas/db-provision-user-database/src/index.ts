@@ -35,7 +35,6 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     knex = Knex(knexConfig);
 
     const dbUser = event.prefix.replace(/-/g, '_');
-
     [dbUser, event.dbPassword].forEach((input) => {
       if (!(/^\w+$/.test(input))) {
         throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
