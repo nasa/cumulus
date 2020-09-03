@@ -13,7 +13,7 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv,
 }
 
-export const tableExists = async (tableName: string, knex: Knex) =>
+export const dbExists = async (tableName: string, knex: Knex) =>
   knex('pg_database').select('datname').where(knex.raw(`datname = CAST('${tableName}' as name)`));
 
 export const userExists = async (userName: string, knex: Knex) =>
@@ -40,17 +40,22 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       }
     });
 
-    const tableResults = await tableExists(`${dbUser}_db`, knex);
-    const userResults = await userExists(dbUser, knex);
+    const userExistsResults = await userExists(dbUser, knex);
+    const dbExistsResults = await dbExists(`${dbUser}_db`, knex);
 
-    if (tableResults.length === 0 && userResults.length === 0) {
+    if (userExistsResults.length === 0) {
       await knex.raw(`create user "${dbUser}" with encrypted password '${event.dbPassword}'`);
-      await knex.raw(`create database "${dbUser}_db";`);
-      await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
     } else {
       await knex.raw(`alter user "${dbUser}" with encrypted password '${event.dbPassword}'`);
-      await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
     }
+
+    if (dbExistsResults.length !== 0) {
+      await knex.raw(`alter database "${dbUser}_db" connection limit 0;`);
+      await knex.raw(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbUser}_db'`);
+      await knex.raw(`drop database "${dbUser}_db";`);
+    }
+    await knex.raw(`create database "${dbUser}_db";`);
+    await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
 
     const secretsManager = new AWS.SecretsManager();
     await secretsManager.putSecretValue({
