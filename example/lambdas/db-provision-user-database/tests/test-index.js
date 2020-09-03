@@ -166,7 +166,7 @@ test('provision user database handler recreates the database if it exists and ha
   const heartBeat = await t.context.testKnex.raw('SELECT 1');
   const tableQuery = await t.context.testKnex.raw(tableExistsQuery);
 
-  t.context.testKnex.destroy();
+  await t.context.testKnex.destroy();
   t.is(heartBeat.rowCount, 1);
   t.is(tableQuery.rowCount, 0);
 });
