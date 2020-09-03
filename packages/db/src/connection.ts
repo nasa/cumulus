@@ -1,6 +1,6 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
-import { getSecretConnectionConfig, getConnectionConfigEnv } from './config';
+import { getConnectionConfig } from './config';
 
 /**
  * Builds a Knex.PgConnectionConfig
@@ -42,6 +42,24 @@ const buildKnexConfiguration = ({
   return knexConfig;
 };
 
+export const getKnexConfig = (
+  env: NodeJS.ProcessEnv,
+  connectionConfig: Knex.PgConnectionConfig
+): Knex.Config => {
+  let timeout;
+  if (env.knexAcquireConnectionTimeout) {
+    timeout = Number(env.knexAcquireConnectionTimeout);
+  }
+
+  return buildKnexConfiguration({
+    connectionConfig,
+    asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
+    debug: env.KNEX_DEBUG === 'true',
+    migrationDir: env.migrationDir,
+    timeout,
+  });
+};
+
 /**
 * Given a NodeJS.ProcessEnv with configuration values, build and return a
 * Knex instance
@@ -70,31 +88,14 @@ const buildKnexConfiguration = ({
 *
 * @returns {Promise<Knex>} Returns a configured knex instance
 */
-export const knex = async (env: NodeJS.ProcessEnv): Promise<Knex> => {
-  let connectionConfig: Knex.PgConnectionConfig;
-
-  if (env.databaseCredentialSecretArn) {
-    const secretsManager = new AWS.SecretsManager();
-    connectionConfig = await getSecretConnectionConfig(
-      env.databaseCredentialSecretArn,
-      secretsManager
-    );
-  } else {
-    connectionConfig = getConnectionConfigEnv(env);
-  }
-
-  let timeout;
-  if (env.knexAcquireConnectionTimeout) {
-    timeout = Number(env.knexAcquireConnectionTimeout);
-  }
-
-  const knexConfig = buildKnexConfiguration({
-    connectionConfig,
-    asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
-    debug: env.KNEX_DEBUG === 'true',
-    migrationDir: env.migrationDir,
-    timeout,
-  });
-
+export const knex = async ({
+  env = process.env,
+  secretsManager = new AWS.SecretsManager(),
+}: {
+  env?: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
+} = {}): Promise<Knex> => {
+  const connectionConfig = await getConnectionConfig({ env, secretsManager });
+  const knexConfig = getKnexConfig(env, connectionConfig);
   return Knex(knexConfig);
 };
