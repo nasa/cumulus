@@ -162,7 +162,7 @@ test('provision user database handler recreates the database if it exists and ha
   await handler(handlerEvent);
   t.context.testKnex.destroy();
 
-  t.context.testKnex = Knex({ ...knexConfig, password: handlerEvent.dbPassword });
+  t.context.testKnex = Knex(knexConfig);
   const heartBeat = await t.context.testKnex.raw('SELECT 1');
   const tableQuery = await t.context.testKnex.raw(tableExistsQuery);
 
