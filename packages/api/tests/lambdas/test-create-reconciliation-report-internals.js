@@ -16,7 +16,7 @@ test(
     const paramsThatShouldReturnTrue = [
       'startTimestamp',
       'endTimestamp',
-      'collectionIds',
+      'collectionId',
     ];
 
     const paramsThatShouldReturnFalse = [

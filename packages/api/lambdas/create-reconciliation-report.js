@@ -63,7 +63,7 @@ function isOneWayReport(reportParams) {
   return [
     'startTimestamp',
     'endTimestamp',
-    'collectionIds',
+    'collectionId',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -386,7 +386,6 @@ async function reconciliationReportForGranules(params) {
   const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
     { ...recReportParams, collectionId }
   );
-  log.debug(`esCollectionSearchParams ${JSON.stringify(esCollectionSearchParams)}`);
   const esGranulesIterator = new ESCollectionGranuleQueue(
     esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
   );
