@@ -130,14 +130,13 @@ test('provision user database handler updates the user password', async (t) => {
     heartBeat = await t.context.testKnex.raw('SELECT 1');
     t.is(heartBeat.rowCount, 1);
     t.context.testKnex.destroy();
-  } catch (e) {
+  } catch (error) {
     t.context.testKnex.destroy();
-    throw e;
+    throw error;
   }
 });
 
 test('provision user database handler recreates the database if it exists and has an open connection', async (t) => {
-
   const dbUser = t.context.dbUser;
   const expectedDbUser = t.context.expectedDbUser;
   const expectedTestDb = t.context.expectedTestDb;
@@ -181,9 +180,9 @@ test('provision user database handler recreates the database if it exists and ha
     t.context.testKnex.destroy();
     t.is(heartBeat.rowCount, 1);
     t.is(tableQuery.rowCount, 0);
-  } catch (e) {
+  } catch (error) {
     t.context.testKnex.destroy();
-    throw e;
+    throw error;
   }
 });
 
