@@ -271,11 +271,11 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', asy
   });
 
   t.deepEqual(
-    deletedGranules,
+    deletedGranules.sort(),
     [
       granules[0].granuleId,
       granules[1].granuleId,
-    ]
+    ].sort()
   );
 });
 
@@ -369,11 +369,11 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
 
   t.true(esSearchStub.called);
   t.deepEqual(
-    deletedGranules,
+    deletedGranules.sort(),
     [
       granules[0].granuleId,
       granules[1].granuleId,
-    ]
+    ].sort()
   );
 });
 
@@ -397,11 +397,11 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
   });
 
   t.deepEqual(
-    deletedGranules,
+    deletedGranules.sort(),
     [
       granules[0].granuleId,
       granules[1].granuleId,
-    ]
+    ].sort()
   );
 });
 
