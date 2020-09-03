@@ -122,9 +122,9 @@ export const getKnexConfig = async ({
     asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
   };
 
-  if (env.knexAcquireConnectionTimeout) {
-    knexConfig.acquireConnectionTimeout = Number(env.knexAcquireConnectionTimeout);
-  }
+  knexConfig.acquireConnectionTimeout = env.knexAcquireConnectionTimeout
+    ? Number(env.knexAcquireConnectionTimeout)
+    : 60000;
 
   if (env.migrationDir) {
     knexConfig.migrations = { directory: env.migrationDir };
