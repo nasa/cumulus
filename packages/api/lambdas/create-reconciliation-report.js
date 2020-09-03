@@ -83,6 +83,8 @@ function shouldFilterByTime(searchParams) {
 /**
  * Fetch collections in Elasticsearch.
  * @param {Object} esCollectionSearchParams - Object with possible valid filtering options.
+ * @param {Object} esGranuleSearchParams - Object with possible valid filtering options for
+                                           granule search (for aggregations).
  * @returns {Promise<Array>} - list of collectionIds that match input paramaters
  */
 async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParams) {
@@ -381,7 +383,10 @@ async function reconciliationReportForGranules(params) {
     format: 'umm_json',
   });
 
-  const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(recReportParams);
+  const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
+    { ...recReportParams, collectionId }
+  );
+  log.debug(`esCollectionSearchParams ${JSON.stringify(esCollectionSearchParams)}`);
   const esGranulesIterator = new ESCollectionGranuleQueue(
     esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
   );
