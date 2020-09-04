@@ -52,7 +52,13 @@ test.afterEach.always(async (t) => {
   await knex.raw(`drop user if exists "${t.context.expectedDbUser}"`);
 });
 
-test('provision user database creates the expected database', async (t) => {
+test.afterEach.always(async (t) => {
+  if (t.context.testKnex) {
+    await t.context.testKnex.destroy();
+  }
+});
+
+test('provision user database handler database creates the expected database', async (t) => {
   const {
     expectedDbUser,
     expectedTestDb,
@@ -87,29 +93,82 @@ test('provision user fails if invalid user string is used', async (t) => {
   }));
 });
 
-test('provision user updates the user password if the user already exists', async (t) => {
+test('provision user database handler updates the user password', async (t) => {
   const {
     expectedDbUser,
     expectedTestDb,
     handlerEvent,
   } = t.context;
 
-  await handler(handlerEvent);
-  handlerEvent.dbPassword = 'newPassword';
-  await handler(handlerEvent);
-
-  const testUserKnex = Knex({
+  const knexConfig = {
     client: 'pg',
     connection: {
       host: 'localhost',
       user: expectedDbUser,
-      password: 'newPassword',
+      password: 'testPassword',
       database: expectedTestDb,
     },
-  });
-  const heartBeat = await testUserKnex.raw('SELECT 1');
-  testUserKnex.destroy();
+  };
+
+  await handler(handlerEvent);
+  t.context.testKnex = Knex(knexConfig);
+  let heartBeat = await t.context.testKnex.raw('SELECT 1');
   t.is(heartBeat.rowCount, 1);
+  await t.context.testKnex.destroy();
+
+  // Update password, then recreate the database
+  handlerEvent.dbPassword = 'newPassword';
+  knexConfig.connection.password = handlerEvent.dbPassword;
+  await handler(handlerEvent);
+
+  t.context.testKnex = Knex({ ...knexConfig, password: handlerEvent.dbPassword });
+  heartBeat = await t.context.testKnex.raw('SELECT 1');
+  t.is(heartBeat.rowCount, 1);
+  await t.context.testKnex.destroy();
+});
+
+test('provision user database handler recreates the database if it exists and has an open connection', async (t) => {
+  const dbUser = t.context.dbUser;
+  const expectedDbUser = t.context.expectedDbUser;
+  const expectedTestDb = t.context.expectedTestDb;
+  const handlerEvent = {
+    rootLoginSecret: 'bogusSecret',
+    dbPassword: 'testPassword',
+    prefix: dbUser,
+  };
+  const testTable = 'testTable';
+  const knexConfig = {
+    client: 'pg',
+    connection: {
+      host: 'localhost',
+      user: expectedDbUser,
+      password: 'testPassword',
+      database: expectedTestDb,
+    },
+  };
+
+  const tableExistsQuery = `select * from pg_tables where tablename = '${testTable}'`;
+  await handler(handlerEvent);
+
+  t.context.testKnex = Knex(knexConfig);
+  await t.context.testKnex.schema.createTable(testTable, (table) => {
+    table.string('name').primary();
+  });
+
+  // Validate the table exists in the created database
+  const validateCreateTable = await t.context.testKnex.raw(tableExistsQuery);
+  t.is(validateCreateTable.rows[0].tablename, 'testTable');
+
+  await handler(handlerEvent);
+  await t.context.testKnex.destroy();
+
+  t.context.testKnex = Knex(knexConfig);
+  const heartBeat = await t.context.testKnex.raw('SELECT 1');
+  const tableQuery = await t.context.testKnex.raw(tableExistsQuery);
+
+  await t.context.testKnex.destroy();
+  t.is(heartBeat.rowCount, 1);
+  t.is(tableQuery.rowCount, 0);
 });
 
 test('provision user fails if event with no username or password is passed', async (t) => {
