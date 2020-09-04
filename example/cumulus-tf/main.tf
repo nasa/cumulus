@@ -151,6 +151,45 @@ module "cumulus" {
   tags = local.tags
 }
 
+resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
+  name_prefix = "${var.prefix}-tea-urs-creds-"
+  description = "URS credentials for the ${var.prefix} Thin Egress App"
+  tags        = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
+  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
+  secret_string = jsonencode({
+    UrsId       = var.urs_client_id
+    UrsAuth     = base64encode("${var.urs_client_id}:${var.urs_client_password}")
+  })
+}
+
+module "thin_egress_app" {
+  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.88.zip"
+
+  auth_base_url              = "https://uat.urs.earthdata.nasa.gov"
+  bucket_map_file            = "${var.prefix}/thin-egress-app/bucket_map.yaml"
+  bucketname_prefix          = ""
+  config_bucket              = var.system_bucket
+  domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
+  jwt_secret_name            = var.thin_egress_jwt_secret_name
+  permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
+  private_vpc                = var.vpc_id
+  thin_egress_stack_name     = "${var.prefix}-thin-egress-app"
+  stage_name                 = "DEV"
+  urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
+  vpc_subnet_ids             = var.subnet_ids
+
+  # Optional
+  # cookie_domain                      = var.thin_egress_cookie_domain
+  # domain_cert_arn                    = var.thin_egress_domain_cert_arn
+  # download_role_in_region_arn        = var.thin_egress_download_role_in_region_arn
+  # jwt_algo                           = var.thin_egress_jwt_algo
+  # lambda_code_dependency_archive_key = var.thin_egress_lambda_code_dependency_archive_key
+  # log_api_gateway_to_cloudwatch      = var.log_api_gateway_to_cloudwatch
+}
+
 resource "aws_security_group" "no_ingress_all_egress" {
   name   = "${var.prefix}-cumulus-tf-no-ingress-all-egress"
   vpc_id = var.vpc_id
