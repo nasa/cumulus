@@ -895,7 +895,9 @@ test.serial(
     const setupVars = await setupElasticAndCMRForTests({ t });
 
     const testCmrOnlyCollection = setupVars.extraCmrCollections[2];
-    const collectionId = constructCollectionId(testCmrOnlyCollection.name, testCmrOnlyCollection.version);
+    const collectionId = constructCollectionId(
+      testCmrOnlyCollection.name, testCmrOnlyCollection.version
+    );
 
     const event = {
       systemBucket: t.context.systemBucket,
@@ -939,7 +941,9 @@ test.serial(
     const setupVars = await setupElasticAndCMRForTests({ t });
 
     const testCumulusOnlyCollection = setupVars.extraESCollections[1];
-    const collectionId = constructCollectionId(testCumulusOnlyCollection.name, testCumulusOnlyCollection.version);
+    const collectionId = constructCollectionId(
+      testCumulusOnlyCollection.name, testCumulusOnlyCollection.version
+    );
 
     const event = {
       systemBucket: t.context.systemBucket,
