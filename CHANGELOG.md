@@ -98,8 +98,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
 - **CUMULUS-xxx**
-  - Reduced concurrency of `QueueGranules` task, defaulting to `3` and making it
-    configurable.
+  - Reduced concurrency of `QueueGranules` task. That task now has a
+    `config.concurrency` option that defaults to `3`.
 
 ### Deprecated
 
