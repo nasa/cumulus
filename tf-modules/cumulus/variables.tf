@@ -544,3 +544,15 @@ variable "es_index_shards" {
   type        = number
   default     = 2
 }
+
+variable "tea_internal_api_endpoint" {
+  description = "Thin Egress App Endpoint URL"
+  type        = string
+  default     = ""
+}
+
+variable "tea_rest_api_output" {
+  description = "Thin Egress App API gateway info"
+  type        = object
+  default     = {}
+}

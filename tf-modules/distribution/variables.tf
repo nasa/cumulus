@@ -144,3 +144,15 @@ variable "vpc_id" {
   description = "VPC used by Lambda functions"
   default     = null
 }
+
+variable "tea_internal_api_endpoint" {
+  description = "Thin Egress App Endpoint URL"
+  type        = string
+  default     = ""
+}
+
+variable "tea_rest_api_output" {
+  description = "Thin Egress App API gateway info"
+  type        = object
+  default     = {}
+}

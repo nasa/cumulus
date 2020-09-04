@@ -148,6 +148,9 @@ module "cumulus" {
   log_destination_arn           = var.log_destination_arn
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
+  tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
+  tea_rest_api_output = module.thin_egress_app.rest_api
+
   tags = local.tags
 }
 
