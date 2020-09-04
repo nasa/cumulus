@@ -176,7 +176,7 @@ module "thin_egress_app" {
   jwt_secret_name            = var.thin_egress_jwt_secret_name
   permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                = var.vpc_id
-  thin_egress_stack_name     = "${var.prefix}-thin-egress-app"
+  stack_name                 = "${var.prefix}-thin-egress-app"
   stage_name                 = "DEV"
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
   vpc_subnet_ids             = var.subnet_ids
