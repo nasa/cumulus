@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
@@ -25,8 +26,9 @@ async function queueGranules(event) {
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
 
-  const executionArns = await Promise.all(
-    granules.map(async (granule) => {
+  const executionArns = await pMap(
+    granules,
+    async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
       return enqueueGranuleIngestMessage({
         granule,
@@ -39,7 +41,8 @@ async function queueGranules(event) {
         stack: event.config.stackName,
         systemBucket: event.config.internalBucket,
       });
-    })
+    },
+    { concurrency: get(event, 'config.concurrency', 3) }
   );
 
   const result = { running: executionArns };
