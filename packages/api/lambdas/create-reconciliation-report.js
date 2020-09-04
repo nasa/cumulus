@@ -23,6 +23,7 @@ const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const {
+  cmrSearchParams,
   convertToESGranuleSearchParams,
   convertToESCollectionSearchParams,
   initialReportHeader,
@@ -63,7 +64,6 @@ function isOneWayReport(reportParams) {
   return [
     'startTimestamp',
     'endTimestamp',
-    'collectionId',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -199,7 +199,8 @@ async function reconciliationReportForCollections(recReportParams) {
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
+  const cmrParams = cmrSearchParams(recReportParams);
+  const cmrCollectionItems = await cmr.searchCollections(cmrParams, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 

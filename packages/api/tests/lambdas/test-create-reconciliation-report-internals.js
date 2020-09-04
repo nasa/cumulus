@@ -16,13 +16,13 @@ test(
     const paramsThatShouldReturnTrue = [
       'startTimestamp',
       'endTimestamp',
-      'collectionId',
     ];
 
     const paramsThatShouldReturnFalse = [
       'stackName',
       'systemBucket',
       'anythingAtAll',
+      'collectionId',
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
