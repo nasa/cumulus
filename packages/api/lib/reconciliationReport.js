@@ -93,7 +93,7 @@ function initialReportHeader(recReportParams) {
 /**
  * Simple converter from input reportParams to CMR searchCollection params.
  * e.g.:
- * {collectionId: "name__version"} => {short_name: 'name', version: 'verstion'}
+ * {collectionId: "name__version"} => {short_name: 'name', version: 'version'}
  * @param {Object} reportParams
  * @returns {Object} correct paremeters to call cmr.searchCollection with.
  */
