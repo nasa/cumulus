@@ -1,16 +1,14 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
 
-import { config, connection } from '@cumulus/db';
+import { getKnexConfig } from '@cumulus/db';
 
 export interface HandlerEvent {
   rootLoginSecret: string,
   userLoginSecret: string,
   prefix: string,
   dbPassword: string,
-  engine: string,
-  dbClusterIdentifier: string,
-  env?: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
 }
 
 export const dbExists = async (tableName: string, knex: Knex) =>
@@ -27,14 +25,19 @@ const validateEvent = (event: HandlerEvent): void => {
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
+
+  const secretsManager = event.secretsManager ?? new AWS.SecretsManager();
+
+  const rootKnexConfig = await getKnexConfig({
+    env: {
+      databaseCredentialSecretArn: event.rootLoginSecret,
+    },
+    secretsManager,
+  });
+
   let knex;
   try {
-    const env = {
-      databaseCredentialSecretArn: event.rootLoginSecret,
-    };
-    const connectionConfig = await config.getConnectionConfig({ env });
-    const knexConfig = await connection.getKnexConfig(env, connectionConfig);
-    knex = Knex(knexConfig);
+    knex = Knex(rootKnexConfig);
 
     const dbUser = event.prefix.replace(/-/g, '_');
     [dbUser, event.dbPassword].forEach((input) => {
@@ -60,16 +63,14 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     await knex.raw(`create database "${dbUser}_db";`);
     await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
 
-    const secretsManager = new AWS.SecretsManager();
     await secretsManager.putSecretValue({
       SecretId: event.userLoginSecret,
       SecretString: JSON.stringify({
         username: dbUser,
         password: event.dbPassword,
-        engine: 'postgres',
         database: `${dbUser}_db`,
-        host: connectionConfig.host,
-        port: 5432,
+        host: (rootKnexConfig.connection as Knex.PgConnectionConfig).host,
+        port: (rootKnexConfig.connection as Knex.PgConnectionConfig).port,
       }),
     }).promise();
   } finally {

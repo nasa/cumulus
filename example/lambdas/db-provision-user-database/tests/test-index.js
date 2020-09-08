@@ -1,31 +1,28 @@
-const AWS = require('aws-sdk');
 const Knex = require('knex');
 const test = require('ava');
-const sinon = require('sinon');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { config } = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { handler } = require('../dist/lambda');
 
-const knex = Knex({
-  client: 'pg',
-  connection: {
-    host: 'localhost',
-    user: 'postgres',
-    password: 'password',
-  },
-});
+test.before(async (t) => {
+  t.context.knex = await getKnexClient({ env: localStackConnectionEnv });
 
-const dbConnectionConfig = {
-  user: 'postgres',
-  password: 'password',
-  database: 'postgres',
-  host: 'localhost',
-};
-
-sinon.stub(config, 'getConnectionConfig').resolves(dbConnectionConfig);
-sinon.stub(AWS, 'SecretsManager').returns({
-  putSecretValue: () => ({ promise: () => Promise.resolve() }),
+  t.context.secretsManager = {
+    getSecretValue: () => ({
+      promise: () => Promise.resolve({
+        SecretString: JSON.stringify({
+          host: localStackConnectionEnv.PG_HOST,
+          username: localStackConnectionEnv.PG_USER,
+          password: localStackConnectionEnv.PG_PASSWORD,
+          database: localStackConnectionEnv.PG_DATABASE,
+        }),
+      }),
+    }),
+    putSecretValue: () => ({
+      promise: () => Promise.resolve(),
+    }),
+  };
 });
 
 test.beforeEach(async (t) => {
@@ -33,6 +30,7 @@ test.beforeEach(async (t) => {
   const dbUser = `${randomDbString}-${randomDbString}-test`;
   const expectedDbUser = `${randomDbString}_${randomDbString}_test`;
   t.context = {
+    ...t.context,
     dbUser,
     expectedDbUser,
     testDb: `${dbUser}-db`,
@@ -41,14 +39,15 @@ test.beforeEach(async (t) => {
       prefix: dbUser,
       rootLoginSecret: 'bogusSecret',
       userLoginSecret: 'bogus',
-      engine: 'pg',
       dbPassword: 'testPassword',
-      dbClusterIdentifier: 'fake-cluster',
+      secretsManager: t.context.secretsManager,
     },
   };
 });
 
-test.afterEach(async (t) => {
+test.afterEach.always(async (t) => {
+  const { knex } = t.context;
+
   await knex.raw(`drop database if exists "${t.context.expectedTestDb}"`);
   await knex.raw(`drop user if exists "${t.context.expectedDbUser}"`);
 });
@@ -64,6 +63,7 @@ test('provision user database handler database creates the expected database', a
     expectedDbUser,
     expectedTestDb,
     handlerEvent,
+    knex,
   } = t.context;
 
   await handler(handlerEvent);
@@ -128,13 +128,18 @@ test('provision user database handler updates the user password', async (t) => {
 });
 
 test('provision user database handler recreates the database if it exists and has an open connection', async (t) => {
-  const dbUser = t.context.dbUser;
-  const expectedDbUser = t.context.expectedDbUser;
-  const expectedTestDb = t.context.expectedTestDb;
+  const {
+    dbUser,
+    expectedDbUser,
+    expectedTestDb,
+    secretsManager,
+  } = t.context;
+
   const handlerEvent = {
     rootLoginSecret: 'bogusSecret',
     dbPassword: 'testPassword',
     prefix: dbUser,
+    secretsManager,
   };
   const testTable = 'testTable';
   const knexConfig = {
