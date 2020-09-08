@@ -37,7 +37,6 @@
     "@cumulus/common": "2.0.1",
     "@cumulus/errors": "2.0.1",
     "@cumulus/launchpad-auth": "2.0.1",
-    "got": "^8.3.0",
     "js2xmlparser": "^4.0.0",
     "lodash": "^4.17.15",
     "public-ip": "^3.0.0",

@@ -11,7 +11,7 @@
 import isString from 'lodash/isString';
 import urljoin from 'url-join';
 import { URL } from 'url';
-import { isNil } from './util';
+import isNil from 'lodash/isNil';
 
 /**
  * Build a URL

@@ -8,48 +8,8 @@
  * const Queue = require('@cumulus/message/Queue');
  */
 
-import findKey from 'lodash/findKey';
-import get from 'lodash/get';
 import isNil from 'lodash/isNil';
-
-import * as util from '@cumulus/common/util';
 import { Message } from '@cumulus/types';
-
-/**
- * Get queue name by URL from execution message.
- *
- * @param {Message.CumulusMessage} message - An execution message
- * @param {string} queueUrl - An SQS queue URL
- * @returns {string|undefined} An SQS queue name or undefined
- *
- * @alias module:Queue
- */
-export const getQueueNameByUrl = (
-  message: Message.CumulusMessage,
-  queueUrl: string
-) => {
-  util.deprecate('@cumulus/message/Queue.getQueueNameByUrl', '1.24.0');
-  const queues = get(message, 'meta.queues', {});
-  return findKey(queues, (value) => value === queueUrl);
-};
-
-/**
- * Get the queue name from a workflow message.
- *
- * @param {Message.CumulusMessage} message - A workflow message object
- * @returns {string} A queue name
- * @throws {Error} if no queue name in the message
- *
- * @alias module:Queue
- */
-export const getQueueName = (message: Message.CumulusMessage) => {
-  util.deprecate('@cumulus/message/Queue.getQueueName', '1.24.0');
-  const queueName = get(message, 'cumulus_meta.queueName');
-  if (isNil(queueName)) {
-    throw new Error('cumulus_meta.queueName not set in message');
-  }
-  return queueName;
-};
 
 /**
  * Get the queue URL from a workflow message.

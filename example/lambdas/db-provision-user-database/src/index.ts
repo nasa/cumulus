@@ -1,19 +1,17 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
 
-import { connection } from '@cumulus/db';
+import { getKnexConfig } from '@cumulus/db';
 
 export interface HandlerEvent {
   rootLoginSecret: string,
   userLoginSecret: string,
   prefix: string,
   dbPassword: string,
-  engine: string,
-  dbClusterIdentifier: string,
-  env?: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
 }
 
-export const tableExists = async (tableName: string, knex: Knex) =>
+export const dbExists = async (tableName: string, knex: Knex) =>
   knex('pg_database').select('datname').where(knex.raw(`datname = CAST('${tableName}' as name)`));
 
 export const userExists = async (userName: string, knex: Knex) =>
@@ -27,41 +25,52 @@ const validateEvent = (event: HandlerEvent): void => {
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
+
+  const secretsManager = event.secretsManager ?? new AWS.SecretsManager();
+
+  const rootKnexConfig = await getKnexConfig({
+    env: {
+      databaseCredentialSecretArn: event.rootLoginSecret,
+    },
+    secretsManager,
+  });
+
   let knex;
   try {
-    knex = await connection.knex(
-      { databaseCredentialSecretArn: event.rootLoginSecret }
-    );
-    const dbUser = event.prefix.replace(/-/g, '_');
+    knex = Knex(rootKnexConfig);
 
+    const dbUser = event.prefix.replace(/-/g, '_');
     [dbUser, event.dbPassword].forEach((input) => {
       if (!(/^\w+$/.test(input))) {
         throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
       }
     });
 
-    const tableResults = await tableExists(`${dbUser}_db`, knex);
-    const userResults = await userExists(dbUser, knex);
+    const userExistsResults = await userExists(dbUser, knex);
+    const dbExistsResults = await dbExists(`${dbUser}_db`, knex);
 
-    if (tableResults.length === 0 && userResults.length === 0) {
+    if (userExistsResults.length === 0) {
       await knex.raw(`create user "${dbUser}" with encrypted password '${event.dbPassword}'`);
-      await knex.raw(`create database "${dbUser}_db";`);
-      await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
     } else {
       await knex.raw(`alter user "${dbUser}" with encrypted password '${event.dbPassword}'`);
-      await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
     }
 
-    const secretsManager = new AWS.SecretsManager();
+    if (dbExistsResults.length !== 0) {
+      await knex.raw(`alter database "${dbUser}_db" connection limit 0;`);
+      await knex.raw(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbUser}_db'`);
+      await knex.raw(`drop database "${dbUser}_db";`);
+    }
+    await knex.raw(`create database "${dbUser}_db";`);
+    await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
+
     await secretsManager.putSecretValue({
       SecretId: event.userLoginSecret,
       SecretString: JSON.stringify({
         username: dbUser,
         password: event.dbPassword,
-        engine: 'postgres',
         database: `${dbUser}_db`,
-        host: knex.client.config.host,
-        port: 5432,
+        host: (rootKnexConfig.connection as Knex.PgConnectionConfig).host,
+        port: (rootKnexConfig.connection as Knex.PgConnectionConfig).port,
       }),
     }).promise();
   } finally {

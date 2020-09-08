@@ -1,5 +1,5 @@
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 
 const { translateGranule } = require('./granules');
 

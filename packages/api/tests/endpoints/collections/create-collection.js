@@ -9,9 +9,11 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
+const RulesModel = require('../../../models/rules');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
@@ -20,9 +22,12 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const { post } = require('../../../endpoints/collections');
+const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
+process.env.RulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -37,9 +42,12 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
+let rulesModel;
 let publishStub;
 
-test.before(async () => {
+test.before(async (t) => {
+  process.env = { ...process.env, ...localStackConnectionEnv };
+
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
@@ -55,6 +63,9 @@ test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
+  rulesModel = new RulesModel();
+  await rulesModel.createTable();
+
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
 
@@ -62,11 +73,14 @@ test.before(async () => {
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
     promise: async () => true,
   });
+
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
+  await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   publishStub.restore();
@@ -108,16 +122,32 @@ test('POST with invalid authorization scheme returns an invalid token response',
 
 test('POST creates a new collection', async (t) => {
   const newCollection = fakeCollectionFactory();
-  const res = await request(app)
+
+  await request(app)
     .post('/collections')
     .send(newCollection)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { message, record } = res.body;
-  t.is(message, 'Record saved');
-  t.is(record.name, newCollection.name);
+  const fetchedDynamoRecord = await collectionModel.get({
+    name: newCollection.name,
+    version: newCollection.version,
+  });
+
+  t.is(fetchedDynamoRecord.name, newCollection.name);
+  t.is(fetchedDynamoRecord.version, newCollection.version);
+
+  const fetchedDbRecord = await t.context.dbClient.first()
+    .from('collections')
+    .where({
+      name: newCollection.name,
+      version: newCollection.version,
+    });
+
+  t.not(fetchedDbRecord, undefined);
+  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST without a name returns a 400 error', async (t) => {
@@ -290,4 +320,61 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
 
   t.is(res.status, 400);
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
+});
+
+test('post() does not write to the database if writing to Dynamo fails', async (t) => {
+  const { dbClient } = t.context;
+
+  const collection = fakeCollectionFactory();
+
+  const fakeCollectionsModel = {
+    exists: () => false,
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    body: collection,
+    testContext: {
+      dbClient,
+      collectionsModel: fakeCollectionsModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  const dbRecords = await dbClient.select('name', 'version')
+    .from('collections')
+    .where({
+      name: collection.name,
+      version: collection.version,
+    });
+
+  t.is(dbRecords.length, 0);
+});
+
+test('post() does not write to Dynamo if writing to the database fails', async (t) => {
+  const collection = fakeCollectionFactory();
+
+  const fakeDbClient = () => ({
+    insert: () => Promise.reject(new Error('something bad')),
+  });
+
+  const expressRequest = {
+    body: collection,
+    testContext: { dbClient: fakeDbClient },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(await collectionModel.exists(collection.name, collection.version));
 });

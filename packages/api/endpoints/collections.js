@@ -1,16 +1,16 @@
 'use strict';
 
+const omit = require('lodash/omit');
 const router = require('express-promise-router')();
-
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
-  RecordDoesNotExist,
   InvalidRegexError,
   UnmatchedRegexError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
+const { getKnexClient } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -18,6 +18,36 @@ const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
+
+const dynamoRecordToDbRecord = (dynamoRecord) => {
+  const dbRecord = {
+    ...dynamoRecord,
+    granuleIdExtractionRegex: dynamoRecord.granuleIdExtraction,
+    granuleIdValidationRegex: dynamoRecord.granuleId,
+    files: JSON.stringify(dynamoRecord.files),
+  };
+
+  delete dbRecord.createdAt;
+  delete dbRecord.granuleId;
+  delete dbRecord.granuleIdExtraction;
+  delete dbRecord.updatedAt;
+
+  // eslint-disable-next-line lodash/prefer-lodash-typecheck
+  if (typeof dynamoRecord.createdAt === 'number') {
+    dbRecord.created_at = new Date(dynamoRecord.createdAt);
+  }
+
+  // eslint-disable-next-line lodash/prefer-lodash-typecheck
+  if (typeof dynamoRecord.updatedAt === 'number') {
+    dbRecord.updated_at = new Date(dynamoRecord.updatedAt);
+  }
+
+  if (dynamoRecord.tags) {
+    dbRecord.tags = JSON.stringify(dynamoRecord.tags);
+  }
+
+  return dbRecord;
+};
 
 /**
  * List all collections.
@@ -84,32 +114,45 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  try {
-    const data = req.body;
-    const name = data.name;
-    const version = data.version;
+  const {
+    collectionsModel = new models.Collection(),
+    dbClient = await getKnexClient(),
+  } = req.testContext || {};
 
-    // make sure primary key is included
-    if (!name || !version) {
-      return res.boom.badRequest('Field name and/or version is missing');
-    }
-    const c = new models.Collection();
+  const collection = req.body || {};
+  const { name, version } = collection;
+
+  if (!name || !version) {
+    return res.boom.badRequest('Field name and/or version is missing');
+  }
+
+  if (await collectionsModel.exists(name, version)) {
+    return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
+  }
+
+  try {
+    const dynamoRecord = await collectionsModel.create(
+      omit(collection, 'dataType')
+    );
+
+    const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
     try {
-      await c.get({ name, version });
-      return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
+      await dbClient('collections').insert(dbRecord, 'cumulusId');
     } catch (error) {
-      if (error instanceof RecordDoesNotExist) {
-        await c.create(data);
+      await collectionsModel.delete({ name, version });
 
-        if (inTestMode()) {
-          await addToLocalES(data, indexCollection);
-        }
-
-        return res.send({ message: 'Record saved', record: data });
-      }
       throw error;
     }
+
+    if (inTestMode()) {
+      await addToLocalES(collection, indexCollection);
+    }
+
+    return res.send({
+      message: 'Record saved',
+      record: collection,
+    });
   } catch (error) {
     if (
       isBadRequestError(error)
@@ -130,28 +173,39 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put({ params: { name, version }, body }, res) {
-  if (name !== body.name || version !== body.version) {
+async function put(req, res) {
+  const { name, version } = req.params;
+  const collection = req.body;
+
+  if (name !== collection.name || version !== collection.version) {
     return res.boom.badRequest('Expected collection name and version to be'
-      + ` '${name}' and '${version}', respectively, but found '${body.name}'`
-      + ` and '${body.version}' in payload`);
+      + ` '${name}' and '${version}', respectively, but found '${collection.name}'`
+      + ` and '${collection.version}' in payload`);
   }
 
-  const collectionModel = new models.Collection();
+  const collectionsModel = new models.Collection();
 
-  if (!(await collectionModel.exists(name, version))) {
+  if (!(await collectionsModel.exists(name, version))) {
     return res.boom.notFound(
       `Collection '${name}' version '${version}' not found`
     );
   }
 
-  const record = await collectionModel.create(body);
+  const dynamoRecord = await collectionsModel.create(collection);
+
+  const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
+
+  const dbClient = await getKnexClient();
+  await dbClient.transaction(async (trx) => {
+    await trx('collections').where({ name, version }).del();
+    await trx('collections').insert(dbRecord);
+  });
 
   if (inTestMode()) {
-    await addToLocalES(record, indexCollection);
+    await addToLocalES(dynamoRecord, indexCollection);
   }
 
-  return res.send(record);
+  return res.send(dynamoRecord);
 }
 
 /**
@@ -164,10 +218,13 @@ async function put({ params: { name, version }, body }, res) {
 async function del(req, res) {
   const { name, version } = req.params;
 
-  const collectionModel = new models.Collection();
+  const collectionsModel = new models.Collection();
+  const dbClient = await getKnexClient();
 
   try {
-    await collectionModel.delete({ name, version });
+    await collectionsModel.delete({ name, version });
+
+    await dbClient('collections').where({ name, version }).del();
 
     if (inTestMode()) {
       const collectionId = constructCollectionId(name, version);
@@ -197,4 +254,10 @@ router.post('/', post);
 router.get('/', list);
 router.get('/active', activeList);
 
-module.exports = router;
+module.exports = {
+  del,
+  dynamoRecordToDbRecord,
+  post,
+  put,
+  router,
+};

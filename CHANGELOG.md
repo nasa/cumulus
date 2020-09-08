@@ -35,8 +35,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `const { recursion } = require('@cumulus/ingest/recursion');`
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
-- **CUMULUS-2099**
-  - `meta.queues` has been removed from Cumulus core workflow messages.
 
 ### Added
 
@@ -75,11 +73,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
     Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
     `RestrictionFlag/RestrictionComment`, respectively.
+- **CUMULUS-2112**
+  - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
+    lambda can create `Internal` reconciliation report
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
+- **CUMULUS-2126**
+  - The collections endpoint now writes to the RDS database
+
+### Changed
+
+- Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
 
 ### Fixed
 
@@ -100,8 +107,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- The `@cumulus/ingest/granule.copyGranuleFile` function has been removed
-- The `@cumulus/ingest/granule.moveGranuleFile` function has been removed
+- `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
+- `@cumulus/aws-client/S3.getS3ObjectReadStream`
+- `@cumulus/cmrjs.getFullMetadata`
+- `@cumulus/cmrjs.getMetadata`
+- `@cumulus/common/util.isNil`
+- `@cumulus/common/util.isNull`
+- `@cumulus/common/util.isUndefined`
+- `@cumulus/common/util.lookupMimeType`
+- `@cumulus/common/util.mkdtempSync`
+- `@cumulus/common/util.negate`
+- `@cumulus/common/util.noop`
+- `@cumulus/common/util.omit`
+- `@cumulus/common/util.renameProperty`
+- `@cumulus/common/util.sleep`
+- `@cumulus/common/util.thread`
+- `@cumulus/ingest/granule.copyGranuleFile`
+- `@cumulus/ingest/granule.moveGranuleFile`
+- `@cumulus/integration-tests/api/rules.deleteRule`
+- `@cumulus/integration-tests/api/rules.getRule`
+- `@cumulus/integration-tests/api/rules.listRules`
+- `@cumulus/integration-tests/api/rules.postRule`
+- `@cumulus/integration-tests/api/rules.rerunRule`
+- `@cumulus/integration-tests/api/rules.updateRule`
+- `@cumulus/integration-tests/sfnStep.parseStepMessage`
+- `@cumulus/message/Queue.getQueueName`
+- `@cumulus/message/Queue.getQueueNameByUrl`
 
 ### Deprecated
 
