@@ -1,7 +1,7 @@
-const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
-const Knex = require('knex');
+const path = require('path');
+const test = require('ava');
 
 const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
@@ -10,6 +10,7 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const {
   RecordAlreadyMigrated,
@@ -17,20 +18,6 @@ const {
   migrateCollections,
 } = require('../dist/lambda');
 
-const knexAdminConfig = {
-  client: 'pg',
-  connection: {
-    host: 'localhost',
-    user: 'postgres',
-    password: 'password',
-    database: 'postgres',
-  },
-};
-
-// eslint-disable-next-line node/no-unpublished-require
-const { handler } = require('../../db-migration/dist/lambda');
-
-const knexAdmin = Knex(knexAdminConfig);
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
 
@@ -57,9 +44,10 @@ let collectionsModel;
 let rulesModel;
 
 test.before(async (t) => {
-  const knexConfig = { ...knexAdminConfig };
-  knexConfig.connection.database = testDbName;
-  t.context.knex = Knex(knexConfig);
+  t.context.knexAdmin = await getKnexClient({
+    ...localStackConnectionEnv,
+    migrationDir: path.join(__dirname, '..', '..', 'src', 'migrations'),
+  });
 
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
@@ -73,20 +61,16 @@ test.before(async (t) => {
 
   rulesModel = new Rule();
   await rulesModel.createTable();
-  await knexAdmin.raw(`create database "${testDbName}";`);
-  await knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
+  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
+  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
 
-  // Run the migration against the newly created database
-  await handler({
-    env: {
-      KNEX_ASYNC_STACK_TRACES: 'true',
-      KNEX_DEBUG: 'true',
-      PG_HOST: knexConfig.connection.host,
-      PG_USER: knexConfig.connection.user,
-      PG_PASSWORD: knexConfig.connection.password,
-      PG_DATABASE: testDbName,
-    },
+  t.context.knex = await getKnexClient({
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+    migrationDir: path.join(__dirname, '..', '..', 'src', 'migrations'),
   });
+
+  t.context.knex.migrate.latest();
 });
 
 test.afterEach.always(async (t) => {
@@ -98,8 +82,8 @@ test.after.always(async (t) => {
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await t.context.knex.destroy();
-  await knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await knexAdmin.destroy();
+  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
+  await t.context.knexAdmin.destroy();
 });
 
 test.serial('migrateCollectionRecord correctly migrates collection record', async (t) => {
