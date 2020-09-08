@@ -23,6 +23,7 @@ const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const {
+  cmrSearchParams,
   convertToESGranuleSearchParams,
   convertToESCollectionSearchParams,
   initialReportHeader,
@@ -72,7 +73,7 @@ function isOneWayReport(reportParams) {
  * @param {Object} searchParams
  * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
  */
-function shouldFilter(searchParams) {
+function shouldFilterByTime(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
@@ -82,19 +83,23 @@ function shouldFilter(searchParams) {
 /**
  * Fetch collections in Elasticsearch.
  * @param {Object} esCollectionSearchParams - Object with possible valid filtering options.
+ * @param {Object} esGranuleSearchParams - Object with possible valid filtering options for
+                                           granule search (for aggregations).
  * @returns {Promise<Array>} - list of collectionIds that match input paramaters
  */
-async function fetchESCollections(esCollectionSearchParams) {
+async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParams) {
   let esCollectionIds;
-  if (shouldFilter(esCollectionSearchParams)) {
-    // Build a ESCollection and call the aggregateActiveGranuleCollections to get
-    // list of collection ids that have granules that have been updated
-    const esCollection = new Collection({ queryStringParameters: esCollectionSearchParams }, 'collection', process.env.ES_INDEX);
+  // [MHS, 09/02/2020] We are doing these two because we can't use
+  // aggregations on scrolls yet until we update elasticsearch version.
+  if (shouldFilterByTime(esCollectionSearchParams)) {
+    // Build an ESCollection and call the aggregateActiveGranuleCollections to
+    // get list of collection ids that have granules that have been updated
+    const esCollection = new Collection({ queryStringParameters: esGranuleSearchParams }, 'collection', process.env.ES_INDEX);
     const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
     esCollectionIds = esCollectionItems.sort();
   } else {
     // return all collections
-    const esCollection = new ESSearchQueue({}, 'collection', process.env.ES_INDEX);
+    const esCollection = new ESSearchQueue(esCollectionSearchParams, 'collection', process.env.ES_INDEX);
     const esCollectionItems = await esCollection.empty();
     esCollectionIds = esCollectionItems.map(
       (item) => constructCollectionId(item.name, item.version)
@@ -194,12 +199,15 @@ async function reconciliationReportForCollections(recReportParams) {
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
+  const cmrParams = cmrSearchParams(recReportParams);
+  const cmrCollectionItems = await cmr.searchCollections(cmrParams, 'umm_json');
   const cmrCollectionIds = cmrCollectionItems.map((item) =>
     constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
 
+  // Array of collectionIds are possible.
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
-  const esCollectionIds = await fetchESCollections(esCollectionSearchParams);
+  const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
+  const esCollectionIds = await fetchESCollections(esCollectionSearchParams, esGranuleSearchParams);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
@@ -376,12 +384,11 @@ async function reconciliationReportForGranules(params) {
     format: 'umm_json',
   });
 
-  const esCollectionSearchParams = {
-    ...convertToESGranuleSearchParams(recReportParams),
-    collectionId,
-  };
+  const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
+    { ...recReportParams, collectionId }
+  );
   const esGranulesIterator = new ESCollectionGranuleQueue(
-    esCollectionSearchParams, process.env.ES_INDEX
+    esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
   );
   const oneWay = isOneWayReport(recReportParams);
 
@@ -486,10 +493,11 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @param {Object} params.bucketsConfig          - bucket configuration object
  * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
- * @param {Object} params.recReportParams         - optional Lambda endpoint's input params to
- *                                                  narrow report focus
- * @param {number} params.recReportParams.StartTimestamp
- * @param {number} params.recReportParams.EndTimestamp
+ * @param {Object} [params.recReportParams]      - optional Lambda endpoint's input params to
+ *                                                 narrow report focus
+ * @param {number} [params.recReportParams.StartTimestamp]
+ * @param {number} [params.recReportParams.EndTimestamp]
+ * @param {string} [params.recReportparams.collectionIds]
  * @returns {Promise<Object>}                    - a reconcilation report
  */
 async function reconciliationReportForCumulusCMR(params) {
@@ -599,6 +607,7 @@ async function createReconciliationReport(recReportParams) {
   const promisedBucketReports = dataBuckets.map(
     (bucket) => createReconciliationReportForBucket(bucket)
   );
+
   const bucketReports = await Promise.all(promisedBucketReports);
 
   bucketReports.forEach((bucketReport) => {
