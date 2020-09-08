@@ -153,8 +153,11 @@ module "cumulus" {
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
   deploy_tea = false
+  tea_distribution_url = module.thin_egress_app.api_endpoint
+  # tea_urs_redirect_url = module.thin_egress_app.urs_redirect_uri
   tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
   tea_rest_api_output = module.thin_egress_app.rest_api
+  tea_egress_log_group = module.thin_egress_app.egress_log_group
 
   tags = local.tags
 }

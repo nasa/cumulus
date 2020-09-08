@@ -151,8 +151,20 @@ variable "deploy_tea" {
   default     = true
 }
 
+variable "tea_distribution_url" {
+  description = "Thin Egress App public endpoint URL"
+  type        = string
+  default     = ""
+}
+
+variable "tea_egress_log_group" {
+  description = "Thin Egress App Cloudwatch log group ARN"
+  type        = string
+  default     = ""
+}
+
 variable "tea_internal_api_endpoint" {
-  description = "Thin Egress App Endpoint URL"
+  description = "Thin Egress App internal endpoint URL"
   type        = string
   default     = ""
 }

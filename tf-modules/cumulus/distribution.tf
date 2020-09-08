@@ -1,7 +1,11 @@
 module "distribution" {
   source = "../distribution"
 
-  deploy_tea                                     = var.deploy_tea
+  deploy_tea = var.deploy_tea
+  tea_rest_api_output = var.tea_rest_api_output
+  tea_internal_api_endpoint = var.tea_internal_api_endpoint
+  tea_egress_log_group = var.tea_egress_log_group
+
   api_gateway_stage                              = var.distribution_api_gateway_stage
   bucket_map_key                                 = var.bucket_map_key
   deploy_s3_credentials_endpoint                 = var.deploy_distribution_s3_credentials_endpoint
