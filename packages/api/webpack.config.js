@@ -2,7 +2,21 @@
 
 const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
-// path to module root
+const { IgnorePlugin } = require('webpack');
+
+const ignoredPackages = [
+  'mssql',
+  'mssql/lib/base',
+  'mssql/package.json',
+  'mysql',
+  'mysql2',
+  'oracledb',
+  'pg-native',
+  'pg-query-stream',
+  'sqlite3',
+  'tedious'
+];
+
 const root = path.resolve(__dirname);
 
 module.exports = {
@@ -55,7 +69,8 @@ module.exports = {
           to: 'app/templates'
         }
       ]
-    })
+    }),
+    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
   ],
   output: {
     libraryTarget: 'commonjs2',

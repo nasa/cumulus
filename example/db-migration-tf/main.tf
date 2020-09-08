@@ -31,7 +31,3 @@ module "db_migration" {
   vpc_id                      = var.vpc_id
   rds_security_group_id       = local.rds_security_group
 }
-
-output "db_migration" {
-  value = module.db_migration.db_migration_result
-}
