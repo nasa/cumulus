@@ -145,6 +145,12 @@ variable "vpc_id" {
   default     = null
 }
 
+variable "deploy_tea" {
+  description = "Whether to deploy the Thin Egress App"
+  type        = bool
+  default     = true
+}
+
 variable "tea_internal_api_endpoint" {
   description = "Thin Egress App Endpoint URL"
   type        = string
@@ -153,6 +159,9 @@ variable "tea_internal_api_endpoint" {
 
 variable "tea_rest_api_output" {
   description = "Thin Egress App API gateway info"
-  type        = object
-  default     = {}
+  type        = object({
+    id = string
+    root_resource_id = string
+  })
+  default = null
 }
