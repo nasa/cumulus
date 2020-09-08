@@ -725,10 +725,6 @@ test.serial(
     // Timestamps force ONE WAY comparison.
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
 
-    const createStartTime = moment(report.createStartTime);
-    const createEndTime = moment(report.createEndTime);
-    t.true(createStartTime <= createEndTime);
-
     const reportStartTime = report.reportStartTime;
     const reportEndTime = report.reportEndTime;
     t.is(
@@ -766,7 +762,7 @@ test.serial(
       setupVars.matchingCollections.length + setupVars.matchingCollectionsOutsideRange.length
     );
 
-    // all extra es collections are found
+    // all extra ES collections are found
     t.is(
       collectionsInCumulusCmr.onlyInCumulus.length,
       setupVars.extraESCollections.length + setupVars.extraESCollectionsOutOfRange.length
@@ -783,10 +779,6 @@ test.serial(
     setupVars.extraCmrCollections.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCmr
         .includes(constructCollectionId(collection.name, collection.version))));
-
-    const newCreateStartTime = moment(report.createStartTime);
-    const newCreateEndTime = moment(report.createEndTime);
-    t.true(newCreateStartTime <= newCreateEndTime);
 
     t.is(report.reportEndTime, undefined);
     t.is(report.reportStartTime, undefined);
@@ -924,10 +916,7 @@ test.serial(
     t.is(collectionsInCumulusCmr.okCount, 0);
     // Filtered by collectionId
     t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
-    t.true(
-      collectionsInCumulusCmr.onlyInCumulus.includes(event.collectionId)
-    );
-
+    t.true(collectionsInCumulusCmr.onlyInCumulus.includes(event.collectionId));
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
 
     const newCreateStartTime = moment(report.createStartTime);
