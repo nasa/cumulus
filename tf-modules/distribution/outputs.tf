@@ -11,7 +11,7 @@
 # }
 
 output "s3_credentials_redirect_uri" {
-  value = aws_api_gateway_resource.s3_credentials[0] ? aws_api_gateway_resource.s3_credentials[0].path : null
+  value = var.deploy_s3_credentials_endpoint ? aws_api_gateway_resource.s3_credentials[0].path : null
   # value = "${module.thin_egress_app.api_endpoint}redirect"
 }
 
