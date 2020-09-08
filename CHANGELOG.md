@@ -35,8 +35,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `const { recursion } = require('@cumulus/ingest/recursion');`
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
-- **CUMULUS-2099**
-  - `meta.queues` has been removed from Cumulus core workflow messages.
 
 ### Added
 
@@ -83,6 +81,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
+- **CUMULUS-2126**
+  - The collections endpoint now writes to the RDS database
+
+### Changed
+
+- Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
 
 ### Fixed
 

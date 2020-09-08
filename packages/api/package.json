@@ -29,6 +29,7 @@
     "files": [
       "tests/**/*.js",
       "!tests/endpoints/fixtures/**/*.js",
+      "!tests/endpoints/utils.js",
       "!tests/es/helpers/**/*.js"
     ],
     "fail-fast": true,
@@ -49,6 +50,7 @@
     "@cumulus/cmrjs": "2.0.2",
     "@cumulus/collection-config-store": "2.0.2",
     "@cumulus/common": "2.0.2",
+    "@cumulus/db": "2.0.1-alpha.1",
     "@cumulus/earthdata-login-client": "2.0.2",
     "@cumulus/errors": "2.0.2",
     "@cumulus/ingest": "2.0.2",

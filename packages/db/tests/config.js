@@ -1,6 +1,10 @@
 const test = require('ava');
 
-const { getSecretConnectionConfig, getConnectionConfigEnv } = require('../dist/config');
+const {
+  getConnectionConfig,
+  getConnectionConfigEnv,
+  getSecretConnectionConfig,
+} = require('../dist/config');
 
 const dbConnectionConfig = {
   username: 'postgres',
@@ -77,4 +81,40 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
     password: 'PG_PASSWORD',
     database: 'PG_DATABASE',
   });
+});
+
+test('getConnectionConfig returns the expected configuration when using Secrets Manager', async (t) => {
+  const result = await getConnectionConfig({
+    env: { databaseCredentialSecretArn: 'fakeSecretId' },
+    secretsManager: secretsManagerStub,
+  });
+
+  const expectedConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+  };
+  delete expectedConfig.username;
+
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getConnectionConfig returns the expected configuration when using environment variables', async (t) => {
+  const result = await getConnectionConfig({
+    env: {
+      PG_HOST: 'PG_HOST',
+      PG_USER: 'PG_USER',
+      PG_PASSWORD: 'PG_PASSWORD',
+      PG_DATABASE: 'PG_DATABASE',
+    },
+  });
+
+  t.deepEqual(
+    result,
+    {
+      host: 'PG_HOST',
+      user: 'PG_USER',
+      password: 'PG_PASSWORD',
+      database: 'PG_DATABASE',
+    }
+  );
 });
