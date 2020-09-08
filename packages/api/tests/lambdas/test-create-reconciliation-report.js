@@ -96,34 +96,17 @@ function storeFilesToS3(files) {
 }
 
 /**
- * Index collections to ES for testing
- *
- * @param {Array<Object>} collections - list of collection objects
- * @returns {Promise} - Promise of collections indexed
- */
-async function storeCollectionsToElasticsearch(collections) {
-  await Promise.all(
-    collections.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
-  );
-
-  await Promise.all(
-    collections.map((collection) => indexer.indexGranule(
-      esClient,
-      fakeGranuleFactoryV2({
-        collectionId: constructCollectionId(collection.name, collection.version),
-      }),
-      esAlias
-    ))
-  );
-}
-
-/**
- * Index a single collection setting any Date.now() calls to the updatedAt time.
- * @param {Object} collection object
-*  @returns {Promise} - promise of indexed collection with active granule.
+ * Index a single collection to elasticsearch. If the collection object has an
+ * updatedAt value, use a sinon stub to set the time of the granule to that
+ * input time.
+ * @param {Object} collection  - a collection object
+*  @returns {Promise} - promise of indexed collection with active granule
 */
-async function storeDatedCollection(collection) {
-  const stub = sinon.stub(Date, 'now').returns(collection.updatedAt);
+async function storeCollection(collection) {
+  let stub;
+  if (collection.updatedAt) {
+    stub = sinon.stub(Date, 'now').returns(collection.updatedAt);
+  }
   try {
     await indexer.indexCollection(esClient, collection, esAlias);
     return indexer.indexGranule(
@@ -135,7 +118,7 @@ async function storeDatedCollection(collection) {
       esAlias
     );
   } finally {
-    stub.restore();
+    if (collection.updatedAt) stub.restore();
   }
 }
 
@@ -146,10 +129,10 @@ async function storeDatedCollection(collection) {
  * @param {Array<Object>} collections - list of collection objects
  * @returns {Promise} - Promise of collections indexed
  */
-async function storeDatedCollectionsToElasticsearch(collections) {
+async function storeCollectionsToElasticsearch(collections) {
   let result = Promise.resolve();
   collections.forEach((collection) => {
-    result = result.then(() => storeDatedCollection(collection));
+    result = result.then(() => storeCollection(collection));
   });
   return result;
 }
@@ -182,7 +165,20 @@ const randomTimeBetween = (t1, t2) => randomBetween(t1, t2);
  * Also creates a number that are only in ES, as well as some that are only
  * "returned by CMR" (as a stubbed function)
  * @param {Object} t - AVA test context.
- * @returns {Object} - setupVars
+ * @returns {Object} setupVars - Object with information about the current
+ * state of elasticsearch and CMR mock.
+ * The object returned has:
+ *  + startTimestamp - beginning of matching timerange
+ *  + endTimestamp - end of matching timerange
+ *  + matchingCollections - active collections dated between the start and end
+ *      timestamps and included in the CMR mock
+ *  + matchingCollectionsOutsiderange - active collections dated not between the
+ *      start and end timestamps and included in the CMR mock
+ *  + extraESCollections - collections within the timestamp range, but excluded
+ *      from CMR mock. (only in ES)
+ *  + extraESCollectionsOutOfRange - collections outside the timestamp range and
+ *      excluded from CMR mock. (only in ES out of range)
+ *  + extraCmrCollections - collections not in ES but returned by the CMR mock.
  */
 const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
   const dataBuckets = range(2).map(() => randomId('bucket'));
@@ -197,6 +193,8 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
     t.context.systemBucket,
     t.context.stackName
   );
+
+  // Default values for input params.
   const {
     numMatchingCollections = randomBetween(10, 15),
     numMatchingCollectionsOutOfRange = randomBetween(5, 10),
@@ -210,31 +208,31 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
   const endTimestamp = new Date('2020-07-01T00:00:00.000Z').getTime();
   const monthLater = moment(endTimestamp).add(1, 'month').valueOf();
 
-  // Create collections that are in sync during the time period
+  // Create collections that are in sync ES/CMR during the time period
   const matchingCollections = range(numMatchingCollections).map((r) => ({
     name: randomId(`name${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
-
+  // Create collections in sync ES/CMR outside of the timestamps range
   const matchingCollectionsOutsideRange = range(numMatchingCollectionsOutOfRange).map((r) => ({
     name: randomId(`name${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
   }));
-
+  // Create collections in ES only within the timestamp range
   const extraESCollections = range(numExtraESCollections).map((r) => ({
     name: randomId(`extraES${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
-
+  // Create collections in ES only outside of the timestamp range
   const extraESCollectionsOutOfRange = range(numExtraESCollectionsOutOfRange).map((r) => ({
     name: randomId(`extraES${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(endTimestamp + 1, monthLater),
   }));
-
+  // create extra cmr collections that fall inside of the range.
   const extraCmrCollections = range(numExtraCmrCollections).map((r) => ({
     name: randomId(`extraCmr${r}-`),
     version: randomId('vers'),
@@ -250,6 +248,7 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
     umm: { ShortName: collection.name, Version: collection.version },
   }));
 
+  // Stub CMR searchCollection that filters on inputParams if present.
   CMR.prototype.searchCollections.restore();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake((inputParams) => {
     if (inputParams && inputParams.short_name) {
@@ -260,7 +259,7 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
     return cmrCollections;
   });
 
-  await storeDatedCollectionsToElasticsearch(
+  await storeCollectionsToElasticsearch(
     matchingCollections
       .concat(matchingCollectionsOutsideRange)
       .concat(extraESCollections)
@@ -656,11 +655,8 @@ test.serial('Generates valid reconciliation report when internally, there are bo
 
 test.serial('Generates valid reconciliation report when there are both extra ES and CMR collections', async (t) => {
   const params = {
-    numMatchingCollections: 35,
     numMatchingCollectionsOutOfRange: 0,
-    numExtraESCollections: 5,
     numExtraESCollectionsOutOfRange: 0,
-    numExtraCmrCollections: 25,
   };
 
   const setupVars = await setupElasticAndCMRForTests({ t, params });
@@ -695,7 +691,7 @@ test.serial('Generates valid reconciliation report when there are both extra ES 
 });
 
 test.serial(
-  'Generates valid (FILTERED) reconciliation report with input TimeParams and there are extra cumulus/ES and CMR collections',
+  'With input time params, generates a valid filtered reconcilation report, when there are extra cumulus/ES and CMR collections',
   async (t) => {
     const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
 
@@ -716,19 +712,18 @@ test.serial(
     t.is(collectionsInCumulusCmr.okCount, setupVars.matchingCollections.length);
 
     t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraESCollections.length);
+    // Each extra collection in timerange is included
     setupVars.extraESCollections.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
 
+    // No collections that were out of timestamp are included
     setupVars.extraESCollectionsOutOfRange.map((collection) =>
       t.false(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
 
-    // Timestamps force ONE WAY comparison
+    // Timestamps force ONE WAY comparison.
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
-    setupVars.extraCmrCollections.map((collection) =>
-      t.false(collectionsInCumulusCmr.onlyInCmr
-        .includes(constructCollectionId(collection.name, collection.version))));
 
     const createStartTime = moment(report.createStartTime);
     const createEndTime = moment(report.createEndTime);
@@ -748,7 +743,7 @@ test.serial(
 );
 
 test.serial(
-  'Generates valid (UNFILTERED) reconciliation report without TimeParams and there are extra cumulus/ES and CMR collections',
+  'Generates valid reconciliation report without time params and there are extra cumulus/ES and CMR collections',
   async (t) => {
     const setupVars = await setupElasticAndCMRForTests({ t });
 
@@ -764,10 +759,14 @@ test.serial(
     const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
     t.is(report.status, 'SUCCESS');
     t.is(report.error, undefined);
+
+    // ok collections include every matching collection
     t.is(
       collectionsInCumulusCmr.okCount,
       setupVars.matchingCollections.length + setupVars.matchingCollectionsOutsideRange.length
     );
+
+    // all extra es collections are found
     t.is(
       collectionsInCumulusCmr.onlyInCumulus.length,
       setupVars.extraESCollections.length + setupVars.extraESCollectionsOutOfRange.length
@@ -775,11 +774,11 @@ test.serial(
     setupVars.extraESCollections.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
-
     setupVars.extraESCollectionsOutOfRange.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
 
+    // all of the collections only in CMR are found.
     t.is(collectionsInCumulusCmr.onlyInCmr.length, setupVars.extraCmrCollections.length);
     setupVars.extraCmrCollections.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCmr
@@ -795,7 +794,7 @@ test.serial(
 );
 
 test.serial(
-  'Generates valid (FILTERED) reconciliation report and filters by collectionId when there are extra cumulus/ES and CMR collections',
+  'Generates valid ONE WAY reconciliation report with time params and filters by collectionId when there are extra cumulus/ES and CMR collections',
   async (t) => {
     const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
 
@@ -817,22 +816,14 @@ test.serial(
     const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
     t.is(report.status, 'SUCCESS');
     t.is(report.error, undefined);
+    // Only one collection id is searched.
     t.is(collectionsInCumulusCmr.okCount, 1);
 
+    // cumulus filters by collectionId and only returned the good one above.
     t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
-    setupVars.extraESCollections.map((collection) =>
-      t.false(collectionsInCumulusCmr.onlyInCumulus
-        .includes(constructCollectionId(collection.name, collection.version))));
 
-    setupVars.extraESCollectionsOutOfRange.map((collection) =>
-      t.false(collectionsInCumulusCmr.onlyInCumulus
-        .includes(constructCollectionId(collection.name, collection.version))));
-
-    // One Way only comparison
+    // ONE WAY only comparison because of input timestampes
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
-    setupVars.extraCmrCollections.map((collection) =>
-      t.false(collectionsInCumulusCmr.onlyInCmr
-        .includes(constructCollectionId(collection.name, collection.version))));
 
     const reportStartTime = report.reportStartTime;
     const reportEndTime = report.reportEndTime;
@@ -844,132 +835,107 @@ test.serial(
       (new Date(reportEndTime)).valueOf(),
       endTimestamp
     );
-
-    // Since we already have all of the ES and CMR Seeded, verify that running
-    // without timeRanges provides the expected data as well.
-    const eventNoTimeStamps = {
-      systemBucket: t.context.systemBucket,
-      stackName: t.context.stackName,
-    };
-
-    const reportNoTimeRecord = await handler(eventNoTimeStamps);
-    t.is(reportNoTimeRecord.status, 'Generated');
-
-    const newReport = await fetchCompletedReport(reportNoTimeRecord);
-    const newCollectionsInCumulusCmr = newReport.collectionsInCumulusCmr;
-    t.is(newReport.status, 'SUCCESS');
-    t.is(newReport.error, undefined);
-    t.is(
-      newCollectionsInCumulusCmr.okCount,
-      setupVars.matchingCollections.length + setupVars.matchingCollectionsOutsideRange.length
-    );
-    t.is(
-      newCollectionsInCumulusCmr.onlyInCumulus.length,
-      setupVars.extraESCollections.length + setupVars.extraESCollectionsOutOfRange.length
-    );
-    setupVars.extraESCollections.map((collection) =>
-      t.true(newCollectionsInCumulusCmr.onlyInCumulus
-        .includes(constructCollectionId(collection.name, collection.version))));
-
-    setupVars.extraESCollectionsOutOfRange.map((collection) =>
-      t.true(newCollectionsInCumulusCmr.onlyInCumulus
-        .includes(constructCollectionId(collection.name, collection.version))));
-
-    t.is(newCollectionsInCumulusCmr.onlyInCmr.length, setupVars.extraCmrCollections.length);
-    setupVars.extraCmrCollections.map((collection) =>
-      t.true(newCollectionsInCumulusCmr.onlyInCmr
-        .includes(constructCollectionId(collection.name, collection.version))));
-
-    const newCreateStartTime = moment(newReport.createStartTime);
-    const newCreateEndTime = moment(newReport.createEndTime);
-    t.true(newCreateStartTime <= newCreateEndTime);
-
-    t.is(newReport.reportEndTime, undefined);
-    t.is(newReport.reportStartTime, undefined);
   }
 );
 
 test.serial(
-  'Generates valid reconciliation report when searching for a collectionId only in CMR and there exist extra cumulus/ES and CMR collections',
+  'When a collectionId is in both CMR and Cumulus a valid bi-directional reconciliation report is created.',
   async (t) => {
     const setupVars = await setupElasticAndCMRForTests({ t });
 
-    const testCmrOnlyCollection = setupVars.extraCmrCollections[2];
-    const collectionId = constructCollectionId(
-      testCmrOnlyCollection.name, testCmrOnlyCollection.version
-    );
+    const testCollection = setupVars.matchingCollections[3];
+    console.log(`testCollection: ${JSON.stringify(testCollection)}`);
 
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
-      collectionId,
+      collectionId: constructCollectionId(testCollection.name, testCollection.version),
     };
 
     const reportRecord = await handler(event);
     t.is(reportRecord.status, 'Generated');
 
     const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
     t.is(report.status, 'SUCCESS');
     t.is(report.error, undefined);
-
-    // No collections in both CMR and Cumulus
-    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
-    t.is(collectionsInCumulusCmr.okCount, 0);
-
-    // Didn't find any colletsion in Cumulus only
+    t.is(collectionsInCumulusCmr.okCount, 1);
     t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
-    setupVars.extraESCollections.map((collection) =>
-      t.false(collectionsInCumulusCmr.onlyInCumulus
-        .includes(constructCollectionId(collection.name, collection.version))));
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
 
-    setupVars.extraESCollectionsOutOfRange.map((collection) =>
-      t.false(collectionsInCumulusCmr.onlyInCumulus
-        .includes(constructCollectionId(collection.name, collection.version))));
-
-    // Filter for collectionId only had CMR values.
-    t.is(collectionsInCumulusCmr.onlyInCmr.length, 1);
-    t.true(
-      collectionsInCumulusCmr.onlyInCmr
-        .includes(constructCollectionId(testCmrOnlyCollection.name, testCmrOnlyCollection.version))
-    );
+    t.is(report.reportEndTime, undefined);
+    t.is(report.reportStartTime, undefined);
   }
 );
 
 test.serial(
-  'Generates valid reconciliation report when searching for a collectionId only in Cumulus and there are extra cumulus/ES and CMR collections',
+  'When a filtered collectionId exists only in CMR, creates a valid bi-directional reconciliation report.',
   async (t) => {
     const setupVars = await setupElasticAndCMRForTests({ t });
 
-    const testCumulusOnlyCollection = setupVars.extraESCollections[1];
-    const collectionId = constructCollectionId(
-      testCumulusOnlyCollection.name, testCumulusOnlyCollection.version
-    );
+    const testCollection = setupVars.extraCmrCollections[3];
+    console.log(`testCollection: ${JSON.stringify(testCollection)}`);
 
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
-      collectionId,
+      collectionId: constructCollectionId(testCollection.name, testCollection.version),
     };
 
     const reportRecord = await handler(event);
     t.is(reportRecord.status, 'Generated');
 
     const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
     t.is(report.status, 'SUCCESS');
     t.is(report.error, undefined);
-
-    // No collections in both CMR and Cumulus
-    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    // Filtered by collectionId only in cmr
     t.is(collectionsInCumulusCmr.okCount, 0);
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, 1);
+    t.true(collectionsInCumulusCmr.onlyInCmr.includes(event.collectionId));
 
-    // searched for collection only in cumulus
+    t.is(report.reportEndTime, undefined);
+    t.is(report.reportStartTime, undefined);
+  }
+);
+
+test.serial(
+  'When a filtered collectionId exists only in Cumulus, generates a valid bi-directional reconciliation report.',
+  async (t) => {
+    const setupVars = await setupElasticAndCMRForTests({ t });
+
+    const testCollection = setupVars.extraESCollections[3];
+    console.log(`testCollection: ${JSON.stringify(testCollection)}`);
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      collectionId: constructCollectionId(testCollection.name, testCollection.version),
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    t.is(report.status, 'SUCCESS');
+    t.is(report.error, undefined);
+    t.is(collectionsInCumulusCmr.okCount, 0);
+    // Filtered by collectionId
     t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
     t.true(
-      collectionsInCumulusCmr.onlyInCumulus.includes(
-        constructCollectionId(testCumulusOnlyCollection.name, testCumulusOnlyCollection.version)
-      )
+      collectionsInCumulusCmr.onlyInCumulus.includes(event.collectionId)
     );
+
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
+
+    const newCreateStartTime = moment(report.createStartTime);
+    const newCreateEndTime = moment(report.createEndTime);
+    t.true(newCreateStartTime <= newCreateEndTime);
+
+    t.is(report.reportEndTime, undefined);
+    t.is(report.reportStartTime, undefined);
   }
 );
 
