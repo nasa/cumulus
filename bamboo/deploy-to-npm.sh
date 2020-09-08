@@ -17,15 +17,15 @@ export NPM_TAG=$(node ./bamboo/npm-tag.js);
 echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 export npm_config_unsafe_perm=true
 
-if [[ $SKIP_NPM_PUBLISH != true ]]; then
-  ./node_modules/.bin/lerna publish \
-    ${VERSION} \
-    --no-git-tag-version \
-    --no-push \
-    --yes \
-    --force-publish=* \
-    --dist-tag=${NPM_TAG} \
-    --exact
-fi
+# if [[ $SKIP_NPM_PUBLISH != true ]]; then
+#   ./node_modules/.bin/lerna publish \
+#     ${VERSION} \
+#     --no-git-tag-version \
+#     --no-push \
+#     --yes \
+#     --force-publish=* \
+#     --dist-tag=${NPM_TAG} \
+#     --exact
+# fi
 
 . ./bamboo/create-release.sh
