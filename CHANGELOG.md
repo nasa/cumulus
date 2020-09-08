@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v2.0.4] 2020-09-08
+
+### Changed
+
+- Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
+
 ## [v2.0.3] 2020-09-02
 
 ### Fixed
@@ -3243,7 +3249,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.3...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.4...HEAD
+[v2.0.4]:  https://github.com/nasa/cumulus/compare/v2.0.3...v2.0.4
 [v2.0.3]:  https://github.com/nasa/cumulus/compare/v2.0.2...v2.0.3
 [v2.0.2]:  https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.2
 [v2.0.1]:  https://github.com/nasa/cumulus/compare/v2.0.0...v2.0.1
