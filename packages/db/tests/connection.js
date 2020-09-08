@@ -1,5 +1,5 @@
 const test = require('ava');
-const proxyquire = require('proxyquire').noPreserveCache();
+const { getKnexClient } = require('../dist/connection');
 
 const fakeConnectionConfig = {
   host: 'localhost',
@@ -9,23 +9,30 @@ const fakeConnectionConfig = {
 };
 
 test.before(async (t) => {
-  const { knex } = proxyquire('../dist/connection.js', {
-    './config': {
-      getConnectionConfig: () => Promise.resolve(fakeConnectionConfig),
-    },
-  });
-  t.context.knex = knex;
+  t.context.secretsManager = {
+    getSecretValue: () => ({
+      promise: () => Promise.resolve({
+        SecretString: JSON.stringify({
+          host: fakeConnectionConfig.host,
+          username: fakeConnectionConfig.user,
+          password: fakeConnectionConfig.password,
+          database: fakeConnectionConfig.database,
+        }),
+      }),
+    }),
+  };
 });
 
-test('knex returns expected Knex object with migration defined',
+test('getKnexClient returns expected Knex object with migration defined',
   async (t) => {
-    const results = await t.context.knex({
+    const results = await getKnexClient({
       env: {
         migrationDir: 'testMigrationDir',
         databaseCredentialSecretArn: 'randomSecret',
         KNEX_ASYNC_STACK_TRACES: 'true',
         KNEX_DEBUG: 'true',
       },
+      secretsManager: t.context.secretsManager,
     });
     t.is('testMigrationDir', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
@@ -36,40 +43,42 @@ test('knex returns expected Knex object with migration defined',
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test('knex returns expected Knex object with optional config defined',
+test('getKnexClient returns expected Knex object with optional config defined',
   async (t) => {
-    const results = await t.context.knex({
+    const results = await getKnexClient({
       env: {
         migrationDir: 'testMigrationDir',
         databaseCredentialSecretArn: 'randomSecret',
         KNEX_DEBUG: 'true',
         KNEX_ASYNC_STACK_TRACES: 'true',
       },
+      secretsManager: t.context.secretsManager,
     });
     t.is('testMigrationDir', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test('knex returns Knex object with a default migration set when env.migrations is not defined',
+test('getKnexClient returns Knex object with a default migration set when env.migrations is not defined',
   async (t) => {
-    const results = await t.context.knex({
+    const results = await getKnexClient({
       env: {
         databaseCredentialSecretArn: 'randomSecret',
       },
+      secretsManager: t.context.secretsManager,
     });
     t.is('./migrations', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test('knex returns expected Knex object with manual db configuraiton options set',
+test('getKnexClient returns expected Knex object with manual db configuraiton options set',
   async (t) => {
-    const results = await t.context.knex({
+    const results = await getKnexClient({
       env: {
         migrationDir: 'testMigrationDir',
-        PG_HOST: 'localhost',
-        PG_USER: 'fakeUser',
-        PG_PASSWORD: 'fakePassword',
-        PG_DATABASE: 'fakeDb',
+        PG_HOST: fakeConnectionConfig.host,
+        PG_USER: fakeConnectionConfig.user,
+        PG_PASSWORD: fakeConnectionConfig.password,
+        PG_DATABASE: fakeConnectionConfig.database,
         KNEX_ASYNC_STACK_TRACES: 'true',
         KNEX_DEBUG: 'true',
       },

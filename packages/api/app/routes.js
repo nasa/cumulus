@@ -35,7 +35,7 @@ if (process.env.FAKE_AUTH === 'true') {
 }
 
 // collections endpoints
-router.use('/collections', ensureAuthorized, collections);
+router.use('/collections', ensureAuthorized, collections.router);
 
 // granules endpoints
 router.use('/granules', ensureAuthorized, granules);
