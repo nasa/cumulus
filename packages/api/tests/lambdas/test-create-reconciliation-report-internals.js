@@ -7,17 +7,22 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
 const isOneWayReport = CRP.__get__('isOneWayReport');
-const shouldFilter = CRP.__get__('shouldFilter');
+const shouldFilterByTime = CRP.__get__('shouldFilterByTime');
 
 test(
   'isOneWayReport returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
-    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
+    const paramsThatShouldReturnTrue = [
+      'startTimestamp',
+      'endTimestamp',
+    ];
+
     const paramsThatShouldReturnFalse = [
       'stackName',
       'systemBucket',
       'anythingAtAll',
+      'collectionId',
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
@@ -42,7 +47,7 @@ test(
 );
 
 test(
-  'shouldFilter returns true only when one or more specific parameters '
+  'shouldFilterByTime returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
@@ -54,22 +59,22 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldFilter({ [p]: randomId('value') })));
+      t.true(shouldFilterByTime({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldFilter({ [p]: randomId('value') })));
+      t.false(shouldFilterByTime({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.true(shouldFilter(allTrueKeys));
+    t.true(shouldFilterByTime(allTrueKeys));
 
     const allFalseKeys = paramsThatShouldReturnFalse.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.false(shouldFilter(allFalseKeys));
-    t.true(shouldFilter({ ...allTrueKeys, ...allFalseKeys }));
+    t.false(shouldFilterByTime(allFalseKeys));
+    t.true(shouldFilterByTime({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
