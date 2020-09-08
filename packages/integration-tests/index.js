@@ -334,6 +334,7 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
   // depends on this undocumented side effect
   setProcessEnvironment(stackName, bucket);
   const collections = await readJsonFilesFromDir(collectionsDirectory);
+  console.log(`Cleanup collections: ${collections.map((c) => `${c.name}___${c.version}`)}`);
   return deleteCollections(stackName, bucket, collections, postfix);
 }
 

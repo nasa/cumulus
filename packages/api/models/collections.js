@@ -309,6 +309,7 @@ class Collection {
   }
 
   async deleteCollections() {
+    console.log('DELETING all collections');
     const collections = await this.getAllCollections();
     return Promise.all(collections.map((collection) => {
       const name = collection.name;

@@ -60,6 +60,8 @@ export const deleteCollection = async (params: {
     callback = invokeApi,
   } = params;
 
+  console.log(`DELETING COLLECTION: ${collectionName}___${collectionVersion}`);
+
   return callback({
     prefix,
     payload: {
