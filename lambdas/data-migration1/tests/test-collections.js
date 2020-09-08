@@ -70,7 +70,7 @@ test.before(async (t) => {
     migrationDir: path.join(__dirname, '..', '..', 'src', 'migrations'),
   });
 
-  t.context.knex.migrate.latest();
+  await t.context.knex.migrate.latest();
 });
 
 test.afterEach.always(async (t) => {
