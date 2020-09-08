@@ -128,13 +128,18 @@ test('provision user database handler updates the user password', async (t) => {
 });
 
 test('provision user database handler recreates the database if it exists and has an open connection', async (t) => {
-  const dbUser = t.context.dbUser;
-  const expectedDbUser = t.context.expectedDbUser;
-  const expectedTestDb = t.context.expectedTestDb;
+  const {
+    dbUser,
+    expectedDbUser,
+    expectedTestDb,
+    secretsManager,
+  } = t.context;
+
   const handlerEvent = {
     rootLoginSecret: 'bogusSecret',
     dbPassword: 'testPassword',
     prefix: dbUser,
+    secretsManager,
   };
   const testTable = 'testTable';
   const knexConfig = {
