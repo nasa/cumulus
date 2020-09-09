@@ -250,14 +250,7 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
 
   // Stub CMR searchCollection that filters on inputParams if present.
   CMR.prototype.searchCollections.restore();
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake((inputParams) => {
-    if (inputParams && inputParams.short_name) {
-      return cmrCollections.filter((f) =>
-        f.umm.ShortName === inputParams.short_name
-          && f.umm.Version === inputParams.version);
-    }
-    return cmrCollections;
-  });
+  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
 
   await storeCollectionsToElasticsearch(
     matchingCollections
