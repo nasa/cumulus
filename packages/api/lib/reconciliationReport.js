@@ -83,10 +83,11 @@ function convertToDBCollectionSearchParams(params) {
  */
 function convertToESGranuleSearchParams(params) {
   const { collectionIds } = params;
+  const collectionIdIn = collectionIds ? collectionIds.join(',') : undefined;
   return removeNilProperties({
     updatedAt__from: dateToValue(params.startTimestamp),
     updatedAt__to: dateToValue(params.endTimestamp),
-    collectionId: collectionIds && collectionIds[0],
+    collectionId__in: collectionIdIn,
   });
 }
 
