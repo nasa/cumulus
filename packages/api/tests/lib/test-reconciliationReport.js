@@ -116,7 +116,6 @@ test('convertToDBCollectionSearchParams returns correct search object with colle
   t.deepEqual(actual, expected);
 });
 
-
 test('filterCMRCollections returns all collections if no collectionIds on recReportParams', (t) => {
   const collections = range(25).map(() => fakeCollectionFactory());
   const expectedCollectionsIds = sortBy(collections, [
