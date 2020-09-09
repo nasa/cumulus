@@ -432,3 +432,44 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     }
   );
 });
+
+test.serial('If a granule has a provider property, that provider is used', async (t) => {
+  const dataType = randomString();
+  const version = randomString();
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const provider = { host: randomString() };
+
+  const { event } = t.context;
+
+  event.input.granules = [
+    {
+      dataType,
+      version,
+      provider,
+      granuleId: randomString(),
+      files: [],
+    },
+  ];
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queueGranules(event);
+
+  await validateOutput(t, output);
+
+  // Get messages from the queue
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const parsedBody = JSON.parse(Messages[0].Body);
+
+  t.deepEqual(parsedBody.meta.provider, provider);
+});
