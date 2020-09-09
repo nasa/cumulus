@@ -28,7 +28,6 @@ const { Search } = require('../../es/search');
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
-
 const models = require('../../models');
 const indexer = require('../../es/indexer');
 

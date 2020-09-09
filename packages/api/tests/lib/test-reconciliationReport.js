@@ -6,6 +6,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const sortBy = require('lodash/sortBy');
 const {
+  convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
   filterCMRCollections,
@@ -70,6 +71,52 @@ test('convertToESGranuleSearchParams returns correct search object.', (t) => {
   t.deepEqual(actual, expected);
 });
 
+test('convertToESCollectionSearchParams returns correct search object with collectionIds.', (t) => {
+  const startTimestamp = '2000-10-31T15:00:00.000Z';
+  const endTimestamp = '2001-10-31T15:00:00.000Z';
+  const collectionIds = ['name___version', 'name2___version'];
+  const testObj = {
+    startTimestamp,
+    endTimestamp,
+    collectionIds,
+    anotherKey: 'anything',
+    anotherKey2: 'they are ignored',
+  };
+
+  const expected = {
+    updatedAt__from: 973004400000,
+    updatedAt__to: 1004540400000,
+    _id__in: 'name___version,name2___version',
+  };
+
+  const actual = convertToESCollectionSearchParams(testObj);
+  t.deepEqual(actual, expected);
+});
+
+test('convertToDBCollectionSearchParams returns correct search object with collectionIds.', (t) => {
+  const startTimestamp = '2000-10-31T15:00:00.000Z';
+  const endTimestamp = '2001-10-31T15:00:00.000Z';
+  const collectionId = 'name___version';
+  const testObj = {
+    startTimestamp,
+    endTimestamp,
+    collectionId,
+    anotherKey: 'anything',
+    anotherKey2: 'they are ignored',
+  };
+
+  const expected = {
+    updatedAt__from: 973004400000,
+    updatedAt__to: 1004540400000,
+    name: 'name',
+    version: 'version',
+  };
+
+  const actual = convertToDBCollectionSearchParams(testObj);
+  t.deepEqual(actual, expected);
+});
+
+
 test('filterCMRCollections returns all collections if no collectionIds on recReportParams', (t) => {
   const collections = range(25).map(() => fakeCollectionFactory());
   const expectedCollectionsIds = sortBy(collections, [
@@ -104,7 +151,7 @@ test("filterCMRCollections filters collections by recReportParams's collectionId
     collections[9],
   ];
 
-  const collectionId = targetCollections.map((c) =>
+  const collectionIds = sortBy(targetCollections, ['name', 'version']).map((c) =>
     constructCollectionId(c.name, c.version));
 
   const expected = sortBy(targetCollections, 'name', 'version').map(
@@ -115,7 +162,7 @@ test("filterCMRCollections filters collections by recReportParams's collectionId
     startTimestamp: 'any',
     endTimestamp: 'also any',
     otherUnusedParams: 'could be anything',
-    collectionId,
+    collectionIds,
   };
 
   const cmrCollections = sortBy(collections, ['name', 'version']).map(

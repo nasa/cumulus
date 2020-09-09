@@ -5,6 +5,17 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { deconstructCollectionId } = require('./utils');
 
 /**
+ * Prepare a list of collectionIds into an _id__in object
+ *
+ * @param {Array<string>} collectionIds - Array of collectionIds in the form 'name___ver'
+ * @returns {Object} - object that will return the correct terms search when
+ *                     passed to the query command.
+ */
+function searchParamsForCollectionIdArray(collectionIds) {
+  return { _id__in: collectionIds.join(',') };
+}
+
+/**
  * Simple converter from input reportParams to CMR searchCollection params.
  * e.g.:
  * {collectionId: "name__version"} => {short_name: 'name', version: 'version'}
@@ -37,11 +48,26 @@ function dateToValue(dateable) {
  */
 function convertToESCollectionSearchParams(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;
-  const collection =
-    collectionIds && collectionIds[0]
-      ? deconstructCollectionId(collectionIds[0])
-      : {};
+  const collection = collectionIds && collectionIds[0]
+    ? searchParamsForCollectionIdArray(collectionIds)
+    : undefined;
   // right now its {name:X,  version:Y}  TODO [MHS, 09/09/2020]  - make different search.
+  const searchParams = {
+    updatedAt__from: dateToValue(startTimestamp),
+    updatedAt__to: dateToValue(endTimestamp),
+    ...collection,
+  };
+  return removeNilProperties(searchParams);
+}
+
+/**
+ *
+ * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for Elasticsearch collection search
+ */
+function convertToDBCollectionSearchParams(params) {
+  const { collectionId, startTimestamp, endTimestamp } = params;
+  const collection = collectionId ? deconstructCollectionId(collectionId) : {};
   const searchParams = {
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
@@ -119,17 +145,6 @@ function initialReportHeader(recReportParams) {
 }
 
 /**
- * Prepare a list of collectionIds into an _id__in object
- *
- * @param {Array<string>} collectionIds - Array of collectionIds in the form 'name___ver'
- * @returns {Object} - object that will return the correct terms search when
- *                     passed to the query command.
- */
-function searchParamsForCollectionIdArray(collectionIds) {
-  return { _id__in: collectionIds.join(',') };
-}
-
-/**
  * filters the returned UMM CMR collections by the desired collectionIds
  *
  * @param {Array<Object>} collections - CMR.searchCollections result
@@ -151,6 +166,7 @@ function filterCMRCollections(collections, recReportParams) {
 
 module.exports = {
   cmrSearchParams,
+  convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
   convertToGranuleSearchParams,
