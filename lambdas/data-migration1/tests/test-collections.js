@@ -45,8 +45,10 @@ let rulesModel;
 
 test.before(async (t) => {
   t.context.knexAdmin = await getKnexClient({
-    ...localStackConnectionEnv,
-    migrationDir: path.join(__dirname, '..', '..', 'src', 'migrations'),
+    env: {
+      ...localStackConnectionEnv,
+      migrationDir: `${path.join(__dirname, '..', '..', 'db-migration', 'dist', 'lambda', 'migrations')}`,
+    },
   });
 
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -65,9 +67,11 @@ test.before(async (t) => {
   await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
 
   t.context.knex = await getKnexClient({
-    ...localStackConnectionEnv,
-    PG_DATABASE: testDbName,
-    migrationDir: path.join(__dirname, '..', '..', 'src', 'migrations'),
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: testDbName,
+      migrationDir: `${path.join(__dirname, '..', '..', 'db-migration', 'dist', 'lambda', 'migrations')}`,
+    },
   });
 
   await t.context.knex.migrate.latest();

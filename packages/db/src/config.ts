@@ -127,7 +127,10 @@ export const getKnexConfig = async ({
     : 60000;
 
   if (env.migrationDir) {
-    knexConfig.migrations = { directory: env.migrationDir };
+    knexConfig.migrations = {
+      directory: env.migrationDir,
+      loadExtensions: ['.js'],
+    };
   }
 
   return knexConfig;
