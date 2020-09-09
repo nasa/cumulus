@@ -16,22 +16,6 @@ function searchParamsForCollectionIdArray(collectionIds) {
 }
 
 /**
- * Simple converter from input reportParams to CMR searchCollection params.
- * e.g.:
- * {collectionId: "name__version"} => {short_name: 'name', version: 'version'}
- * @param {Object} reportParams
- * @returns {Object} correct paremeters to call cmr.searchCollection with.
- */
-function cmrSearchParams(reportParams) {
-  const { collectionId } = reportParams;
-  const { name, version } = collectionId
-    ? deconstructCollectionId(collectionId)
-    : {};
-  const collection = { short_name: name, version };
-  return removeNilProperties(collection);
-}
-
-/**
  * @param {string} dateable - any input valid for a JS Date contstructor.
  * @returns {number} - primitive value of input date string or undefined, if
  *                     input string not convertable.
@@ -48,14 +32,13 @@ function dateToValue(dateable) {
  */
 function convertToESCollectionSearchParams(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;
-  const collection = collectionIds && collectionIds[0]
+  const idsIn = collectionIds
     ? searchParamsForCollectionIdArray(collectionIds)
     : undefined;
-  // right now its {name:X,  version:Y}  TODO [MHS, 09/09/2020]  - make different search.
   const searchParams = {
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
-    ...collection,
+    ...idsIn,
   };
   return removeNilProperties(searchParams);
 }
@@ -166,7 +149,6 @@ function filterCMRCollections(collections, recReportParams) {
 }
 
 module.exports = {
-  cmrSearchParams,
   convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,

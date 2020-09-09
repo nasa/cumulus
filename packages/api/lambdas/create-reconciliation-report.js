@@ -731,10 +731,12 @@ function normalizeEvent(event) {
   }
 
   // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
-  // for now, internal reports will add a new duplicate key collectionIds with
-  // the value of [ collectionId] to handle the expectations of the shared
-  // library calls to convertToESGranuleSearchParams, and convertToEsCollectionSearchParams
-  let { collectionId, ...modifiedEvent } = { ...event };
+  // for now, move input collectionId to collectionIds as array
+  // internal reports will keep existing collectionId and copy it to collectionIds
+  let { collectionIds: anyCollectionIds, collectionId, ...modifiedEvent } = { ...event };
+  if (anyCollectionIds) {
+    throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report use `collectionId`.');
+  }
   if (collectionId) {
     if (reportType === 'Internal') {
       if (!isString(collectionId)) {
