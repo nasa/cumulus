@@ -1,5 +1,7 @@
 'use strict';
 
+/*eslint prefer-const: ["error", {"destructuring": "all"}]*/
+
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
 const isString = require('lodash/isString');
@@ -728,19 +730,24 @@ function normalizeEvent(event) {
     reportType = 'Granule Not Found';
   }
 
-  // TODO [MHS, 09/08/2020] remove this when CUMULUS-2156 is completed
-  if (reportType === 'Internal') {
-    if (event.collectionId && !isString(event.collectionId)) {
-      throw new TypeError(`${event.collectionId} is not valid input for an 'Internal' report.`);
-    }
-  }
-  // TODO [MHS, 09/08/2020] Start by renaming collectionId => collectionIds and putting them in an array.
-  // fix this
-  // const collectionIds = (event.collectionId && isString(event.collectionId))? [event.collectionId] : event.collectionId ;
+  // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
+  // for now, internal reports will add a new duplicate key collectionIds with
+  // the value of [ collectionId] to handle the expectations of the shared
+  // library calls to convertToESGranuleSearchParams, and convertToEsCollectionSearchParams
   let { collectionId, ...modifiedEvent } = { ...event };
-  const collectionIds = (collectionId && isString(collectionId)) ? [collectionId] : undefined;
-  if (collectionIds) {
-    modifiedEvent = { ...modifiedEvent, collectionIds };
+  if (collectionId) {
+    if (reportType === 'Internal') {
+      if (!isString(collectionId)) {
+        throw new TypeError(`${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
+      } else {
+        // include both collectionIds and collectionId for Internal Reports.
+        modifiedEvent = { ...event, collectionIds: [collectionId] };
+      }
+    } else {
+      // transform input collectionId into array on collectionIds
+      const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
+      modifiedEvent = { ...modifiedEvent, collectionIds };
+    }
   }
 
   return removeNilProperties({
@@ -750,7 +757,6 @@ function normalizeEvent(event) {
     startTimestamp,
     endTimestamp,
     reportType,
-    collectionIds,
   });
 }
 

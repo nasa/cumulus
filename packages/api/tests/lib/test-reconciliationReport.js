@@ -108,7 +108,8 @@ test("filterCMRCollections filters collections by recReportParams's collectionId
     constructCollectionId(c.name, c.version));
 
   const expected = sortBy(targetCollections, 'name', 'version').map(
-    (collection) => constructCollectionId(collection.name, collection.version));
+    (collection) => constructCollectionId(collection.name, collection.version)
+  );
 
   const reportParams = {
     startTimestamp: 'any',
