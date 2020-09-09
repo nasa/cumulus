@@ -160,6 +160,6 @@ test('normalizeEvent throws error if original input event contains collectionIds
   };
   t.throws(() => normalizeEvent(inputEvent), {
     message:
-      '`collectionIds` is not a valid input key for a reconciliation report use `collectionId`.',
+      '`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.',
   });
 });

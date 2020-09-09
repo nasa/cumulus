@@ -735,7 +735,7 @@ function normalizeEvent(event) {
   // internal reports will keep existing collectionId and copy it to collectionIds
   let { collectionIds: anyCollectionIds, collectionId, ...modifiedEvent } = { ...event };
   if (anyCollectionIds) {
-    throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report use `collectionId`.');
+    throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
   if (collectionId) {
     if (reportType === 'Internal') {
