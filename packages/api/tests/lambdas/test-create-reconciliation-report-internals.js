@@ -11,8 +11,8 @@ const shouldFilterByTime = CRP.__get__('shouldFilterByTime');
 const normalizeEvent = CRP.__get__('normalizeEvent');
 
 test(
-  'isOneWayReport returns true only when one or more specific parameters ' +
-    ' are present on the reconciliation report object.',
+  'isOneWayReport returns true only when one or more specific parameters '
+    + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
 
@@ -24,12 +24,10 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(isOneWayReport({ [p]: randomId('value') }))
-    );
+      t.true(isOneWayReport({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(isOneWayReport({ [p]: randomId('value') }))
-    );
+      t.false(isOneWayReport({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
@@ -47,8 +45,8 @@ test(
 );
 
 test(
-  'shouldFilterByTime returns true only when one or more specific parameters ' +
-    ' are present on the reconciliation report object.',
+  'shouldFilterByTime returns true only when one or more specific parameters '
+    + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
     const paramsThatShouldReturnFalse = [
@@ -59,12 +57,10 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldFilterByTime({ [p]: randomId('value') }))
-    );
+      t.true(shouldFilterByTime({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldFilterByTime({ [p]: randomId('value') }))
-    );
+      t.false(shouldFilterByTime({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
