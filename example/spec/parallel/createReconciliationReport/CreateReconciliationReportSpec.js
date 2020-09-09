@@ -534,6 +534,8 @@ describe('When there are granule differences and granule reconciliation is run',
         name: reportRecord.name,
       });
 
+      console.log(response.body);
+
       report = JSON.parse(response.body);
       expect(report.reportType).toBe('Internal');
     });
