@@ -17,6 +17,8 @@ const {
 } = require('@cumulus/cmrjs/cmr-utils');
 
 /**
+ * Generate an update Echo10XML Metadata Object populated with restriction fields.
+ *
  * Echo10XML is sensitive to key ordering as it uses <sequence> in the schema.
  * See the public Echo10 granule schema at:
  * https://git.earthdata.nasa.gov/projects/EMFD/repos/echo-schemas/browse/schemas/10.0/Granule.xsd
@@ -28,6 +30,8 @@ const {
  *
  * @param {Object} metadataGranule - Original CMR Metadata object
  * @param {Object} accessConstraintsObject - Access constraints config object
+ * @param {number} accessConstraintsObject.value - Access constraint value
+ * @param {string} [accessConstraintsObject.description] - Access constraint description
  * @returns {Object} Updated CMR Metadata object with Restriction fields set
  */
 function createUpdatedEcho10XMLMetadataGranuleCopy(metadataGranule, accessConstraintsObject) {
@@ -60,12 +64,26 @@ function createUpdatedEcho10XMLMetadataGranuleCopy(metadataGranule, accessConstr
   };
 }
 
+/**
+ * Add etag to a CMR file object.
+ *
+ * @param {Object} file - CMR file record object
+ * @param {Object} updatedFileMap - Map of CMR files by filename
+ * @returns {Object} Updated CMR file record object
+ */
 function setCmrFileEtag(file, updatedFileMap) {
   const filename = file.filename || buildS3Uri(file.bucket, file.key);
   const updatedFile = updatedFileMap[filename];
   return updatedFile === undefined ? file : { ...file, etag: updatedFile.etag };
 }
 
+/**
+ * Add etags to CMR file objects.
+ *
+ * @param {Array<Object>} originalFiles - Input list of CMR files
+ * @param {Array<Object>} updatedFiles - List of CMR files updated by this task
+ * @returns {Array<Object>} List of CMR files with updated etags
+ */
 function updateGranuleCmrFileObjects(originalFiles, updatedFiles) {
   const updatedFilesMap = keyBy(updatedFiles, 'filename');
   return originalFiles.map(
@@ -73,6 +91,13 @@ function updateGranuleCmrFileObjects(originalFiles, updatedFiles) {
   );
 }
 
+/**
+ * Reconcile task input granule with function CMR file outputs to create task output granule.
+ *
+ * @param {Object} input - Granule object task input
+ * @param {Array<Object>} updatedCmrFileObjectsWithEtags - List of update CMR file objects
+ * @returns {Object} Updated granule object
+ */
 function reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) {
   const mapOfUpdatedCmrFileObjects = groupBy(updatedCmrFileObjectsWithEtags, 'granuleId');
   return input.granules.map((granule) => (
@@ -85,6 +110,16 @@ function reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) {
     }));
 }
 
+/**
+ * Use accessConstraintsObject values to set RestrictionFlag and RestrictionComment in
+ * echo10XMLMetadataContentsObject.
+ *
+ * @param {Object} echo10XMLMetadataContentsObject - JSON representation of ECHO10XML metadata
+ * @param {Object} accessConstraintsObject - Access Constraints config object
+ * @param {number} accessConstraintsObject.value - Access constraint value
+ * @param {string} [accessConstraintsObject.description] - Access constraint description
+ * @returns {Updated} Updated echo10XMLMetadataContentsObject
+ */
 function setRestrictionMetadataInEcho10XMLMetadata(
   echo10XMLMetadataContentsObject,
   accessConstraintsObject
@@ -97,6 +132,16 @@ function setRestrictionMetadataInEcho10XMLMetadata(
   return { ...echo10XMLMetadataContentsObject, Granule: updatedMetadataGranule };
 }
 
+/**
+ * Use accessConstraintsObject values to set AccessConstraints.Value and
+ * AccessConstraints.Description in UMMGJSONMetadataContentsObject.
+ *
+ * @param {Object} UMMGJSONMetadataContentsObject - UMMG-JSON metadata object
+ * @param {Object} accessConstraintsObject - Access Constraints config object
+ * @param {number} accessConstraintsObject.value - Access constraint value
+ * @param {string} [accessConstraintsObject.description] - Access constraint description
+ * @returns {Object} Updated UMMGJSONMetadataContentsObject
+ */
 function setAccessConstraintMetadataInUMMGJSONMetadata(
   UMMGJSONMetadataContentsObject,
   accessConstraintsObject
@@ -109,6 +154,15 @@ function setAccessConstraintMetadataInUMMGJSONMetadata(
   return { ...UMMGJSONMetadataContentsObject, AccessConstraints: UMMGAccessConstraintsObject };
 }
 
+/**
+ * Update access constraints within CMR Metadata.
+ *
+ * @param {Object} cmrFileObject - CMR File Object from granule record
+ * @param {Object} accessConstraintsObject - Access Constraints config object
+ * @param {number} accessConstraintsObject.value - Access constraint value
+ * @param {string} [accessConstraintsObject.description] - Access constraint description
+ * @returns {Object} CMR File Object with etag for updated CMR File
+ */
 async function updateCmrFileAccessConstraint(
   cmrFileObject,
   accessConstraintsObject
@@ -119,6 +173,7 @@ async function updateCmrFileAccessConstraint(
     cmrFileObject.etag
   );
   const { Bucket, Key } = parseS3Uri(cmrFileName);
+  // ECHO10XML logic
   if (isECHO10File(cmrFileName)) {
     const updatedCmrMetadataContentsObject = setRestrictionMetadataInEcho10XMLMetadata(
       cmrMetadataContentsObject,
@@ -131,6 +186,7 @@ async function updateCmrFileAccessConstraint(
     );
     return { ...cmrFileObject, etag: updatedCmrFile.ETag };
   }
+  // UMMG-JSON logic
   if (isUMMGFile(cmrFileName)) {
     const updatedCmrMetadataContentsObject = setAccessConstraintMetadataInUMMGJSONMetadata(
       cmrMetadataContentsObject,
@@ -145,6 +201,18 @@ async function updateCmrFileAccessConstraint(
   throw new Error(`Unrecognized CMR File format: ${cmrFileName}`);
 }
 
+/**
+ * Update Access Constraints in CMR Files for granule record in input.
+ *
+ * @param {Object} event - AWS Lambda payload
+ * @param {Object} event.input - task input
+ * @param {Array<Object>} event.input.granules - list of granule records
+ * @param {Object} event.config - task config
+ * @param {Object} event.config.accessConstraints - access constraints value & description config
+ * @param {number} event.config.accessConstraints.value - access constraint value
+ * @param {string} [event.config.accessConstraints.description] - access constraint description
+ * @returns {Object} Input object with updated granules
+ */
 const updateCmrAccessConstraints = async (event) => {
   const { config, input } = event;
   const cmrFileObjects = granulesToCmrFileObjects(input.granules);
