@@ -26,6 +26,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     that provider. If `NODE_NAME` is set but a provider with that host cannot be
     found in the API, or if multiple providers are found with that same host,
     the task will fail.
+  - The `queue-granules` task has been updated to expect an optional
+    `granule.provider` property on each granule. If present, the granule will be
+    enqueued using that provider. If not present, the task's `config.provider`
+    will be used instead.
 
 #### CODE CHANGES
 
