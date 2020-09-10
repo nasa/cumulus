@@ -145,12 +145,6 @@ variable "vpc_id" {
   default     = null
 }
 
-variable "tea_distribution_url" {
-  description = "Thin Egress App public endpoint URL"
-  type        = string
-  default     = ""
-}
-
 variable "tea_egress_log_group" {
   description = "Thin Egress App Cloudwatch log group ARN"
   type        = string
@@ -163,11 +157,14 @@ variable "tea_internal_api_endpoint" {
   default     = ""
 }
 
-variable "tea_rest_api_output" {
-  description = "Thin Egress App API gateway info"
-  type        = object({
-    id = string
-    root_resource_id = string
-  })
+variable "tea_rest_api_id" {
+  description = "Thin Egress App API gateway ID"
+  type        = string
+  default = null
+}
+
+variable "tea_rest_api_root_resource_id" {
+  description = "Thin Egress App API gateway root resource ID"
+  type        = string
   default = null
 }

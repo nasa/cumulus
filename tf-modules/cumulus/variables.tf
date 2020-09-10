@@ -545,29 +545,7 @@ variable "es_index_shards" {
   default     = 2
 }
 
-variable "tea_distribution_url" {
-  description = "Thin Egress App public endpoint URL"
+variable "tea_stack_name" {
+  description = "Thin Egress App Cloudformation stack name"
   type        = string
-  default     = ""
-}
-
-variable "tea_egress_log_group" {
-  description = "Thin Egress App Cloudwatch log group ARN"
-  type        = string
-  default     = ""
-}
-
-variable "tea_internal_api_endpoint" {
-  description = "Thin Egress App internal endpoint URL"
-  type        = string
-  default     = ""
-}
-
-variable "tea_rest_api_output" {
-  description = "Thin Egress App API gateway info"
-  type        = object({
-    id = string
-    root_resource_id = string
-  })
-  default = null
 }

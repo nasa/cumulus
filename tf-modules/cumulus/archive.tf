@@ -84,8 +84,8 @@ module "archive" {
 
   background_queue_url = module.ingest.background_queue_url
 
-  distribution_api_id = var.tea_rest_api_output.id
-  distribution_url = var.tea_distribution_url
+  distribution_api_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiId"]
+  distribution_url = data.aws_cloudformation_stack.tea_stack.outputs["ExternalEndpoint"]
 
   users = var.archive_api_users
 

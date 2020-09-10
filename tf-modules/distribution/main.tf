@@ -193,15 +193,15 @@ resource "aws_lambda_permission" "lambda_permission" {
 
   # The /*/*/* part allows invocation from any stage, method and resource path
   # within API Gateway REST API.
-  source_arn = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.tea_rest_api_output.id}/*/*/*"
+  source_arn = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.tea_rest_api_id}/*/*/*"
 }
 
 # GET /s3credentials
 resource "aws_api_gateway_resource" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id = var.tea_rest_api_output.id
-  parent_id = var.tea_rest_api_output.root_resource_id
+  rest_api_id = var.tea_rest_api_id
+  parent_id = var.tea_rest_api_root_resource_id
   path_part   = "s3credentials"
 }
 
@@ -209,7 +209,7 @@ resource "aws_api_gateway_method" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   # rest_api_id   = module.thin_egress_app.rest_api.id
-  rest_api_id   = var.tea_rest_api_output.id
+  rest_api_id   = var.tea_rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials[0].id
   http_method   = "GET"
   authorization = "NONE"
@@ -219,7 +219,7 @@ resource "aws_api_gateway_integration" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   # rest_api_id             = module.thin_egress_app.rest_api.id
-  rest_api_id             = var.tea_rest_api_output.id
+  rest_api_id             = var.tea_rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials[0].id
   http_method             = aws_api_gateway_method.s3_credentials[0].http_method
   integration_http_method = "POST"
@@ -231,8 +231,8 @@ resource "aws_api_gateway_integration" "s3_credentials" {
 resource "aws_api_gateway_resource" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id = var.tea_rest_api_output.id
-  parent_id = var.tea_rest_api_output.root_resource_id
+  rest_api_id = var.tea_rest_api_id
+  parent_id = var.tea_rest_api_root_resource_id
   path_part   = "redirect"
 }
 
@@ -240,7 +240,7 @@ resource "aws_api_gateway_method" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   # rest_api_id   = module.thin_egress_app.rest_api.id
-  rest_api_id   = var.tea_rest_api_output.id
+  rest_api_id   = var.tea_rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials_redirect[0].id
   http_method   = "GET"
   authorization = "NONE"
@@ -250,7 +250,7 @@ resource "aws_api_gateway_integration" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   # rest_api_id             = module.thin_egress_app.rest_api.id
-  rest_api_id             = var.tea_rest_api_output.id
+  rest_api_id             = var.tea_rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials_redirect[0].id
   http_method             = aws_api_gateway_method.s3_credentials_redirect[0].http_method
   integration_http_method = "POST"
@@ -268,7 +268,7 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
   ]
 
   # rest_api_id = module.thin_egress_app.rest_api.id
-  rest_api_id = var.tea_rest_api_output.id
+  rest_api_id = var.tea_rest_api_id
   stage_name  = var.api_gateway_stage
 }
 
