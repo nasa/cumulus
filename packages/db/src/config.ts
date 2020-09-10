@@ -114,7 +114,8 @@ export const getConnectionConfig = async ({
  *                                                     acquire timeout
  * @param {string} [params.env.idleTimeoutMillis]    - tarn/knex pool object
  *                                                     idle timeout
- * @param {string} [params.env.dbMaxPool]            - tarn/knex max pool size
+ * @param {string} [params.env.dbMaxPool]            - tarn/knex max pool
+ *                                                     connections
  * @returns {Promise<Knex.Config>} a Knex configuration object
  */
 export const getKnexConfig = async ({

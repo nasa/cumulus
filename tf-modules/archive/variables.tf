@@ -271,7 +271,7 @@ variable "public_buckets" {
 }
 
 variable "rds_connection_heartbeat" {
-  description = "Sets if Core database code should send a query to verify db connection on creation/rety on connection timeout.  Disable if not using serverless"
+  description = "Sets if Core database code should send a query to verify db connection on creation/rety on connection timeout"
   type    = bool
   default = true
 }

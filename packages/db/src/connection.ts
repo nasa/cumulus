@@ -31,7 +31,7 @@ export const queryHeartbeat = async ({
 
 /**
  * Given a NodeJS.ProcessEnv with configuration values, build and return
- * active Knex client
+ * Knex client
  *
  * @param {Object} params
  * @param {NodeJS.ProcessEnv} params.env    - Object with configuration keys
