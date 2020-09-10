@@ -545,12 +545,6 @@ variable "es_index_shards" {
   default     = 2
 }
 
-variable "deploy_tea" {
-  description = "Whether to deploy the Thin Egress App"
-  type        = bool
-  default     = true
-}
-
 variable "tea_distribution_url" {
   description = "Thin Egress App public endpoint URL"
   type        = string
