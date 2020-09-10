@@ -55,13 +55,16 @@ module "cumulus" {
   bucket_map_key = var.bucket_map_key
 
   vpc_id            = var.vpc_id
-  lambda_subnet_ids = var.subnet_ids
+  lambda_subnet_ids = var.lambda_subnet_ids
 
   rds_security_group            = local.rds_security_group
   rds_user_access_secret_arn      = local.rds_credentials_secret_arn
 
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
-  ecs_cluster_instance_subnet_ids = var.subnet_ids
+  ecs_cluster_instance_subnet_ids = (var.ecs_cluster_instance_subnet_ids == null
+    ? var.lambda_subnet_ids
+    : var.ecs_cluster_instance_subnet_ids
+  )
   ecs_cluster_min_size            = 2
   ecs_cluster_desired_size        = 2
   ecs_cluster_max_size            = 3
