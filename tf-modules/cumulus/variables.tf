@@ -411,7 +411,7 @@ variable "private_archive_api_gateway" {
 variable "rds_connection_heartbeat" {
   description = "Sets if Core database code should send a query to verify db connection on creation/rety on connection timeout"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "saml_entity_id" {

@@ -34,7 +34,7 @@ variable "rds_security_group_id" {
 variable "rds_connection_heartbeat" {
   description = "Sets if Core database code should send a query to verify db connection on creation/rety on connection timeout"
   type    = bool
-  default = true
+  default = false
 }
 
 variable "tags" {
