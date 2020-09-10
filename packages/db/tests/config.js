@@ -4,6 +4,7 @@ const {
   getConnectionConfig,
   getConnectionConfigEnv,
   getSecretConnectionConfig,
+  getKnexConfig,
 } = require('../dist/config');
 
 const dbConnectionConfig = {
@@ -12,6 +13,14 @@ const dbConnectionConfig = {
   database: 'postgres',
   host: 'localhost',
   port: 5435,
+};
+
+const dbConnectionConfigEnv = {
+  PG_HOST: 'localhost',
+  PG_USER: 'postgres',
+  PG_DATABASE: 'postgres',
+  PG_PORT: 5435,
+  PG_PASSWORD: 'password',
 };
 
 const secretsManagerStub = {
@@ -49,6 +58,67 @@ const badSecretsManagerStub = {
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 };
+
+test('getKnexConfig returns an expected default configuration object', async (t) => {
+  const result = await getKnexConfig({ env: dbConnectionConfigEnv });
+  const connectionConfig = { ...dbConnectionConfig, user: 'postgres' };
+  delete connectionConfig.username;
+  const expectedConfig = {
+    acquireConnectionTimeout: 60000,
+    asyncStackTraces: false,
+    client: 'pg',
+    connection: connectionConfig,
+    debug: false,
+    pool: {
+      min: 0,
+      max: 2,
+      idleTimeoutMillis: 1000,
+      acquireTimeoutMillis: 60000,
+      createTimeoutMillis: 60000,
+    },
+  };
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getKnexConfig sets idleTimeoutMillis when env is set', async (t) => {
+  const result = await getKnexConfig({
+    env: {
+      ...dbConnectionConfigEnv,
+      idleTimeoutMillis: 2000,
+    },
+  });
+  t.deepEqual(result.pool.idleTimeoutMillis, 2000);
+});
+
+test('getKnexConfig sets maxPool size when env is set', async (t) => {
+  const result = await getKnexConfig({
+    env: {
+      ...dbConnectionConfigEnv,
+      dbMaxPool: 10,
+    },
+  });
+  t.deepEqual(result.pool.max, 10);
+});
+
+test('getKnexConfig sets acquireTimeoutMillis when env is set', async (t) => {
+  const result = await getKnexConfig({
+    env: {
+      ...dbConnectionConfigEnv,
+      acquireTimeoutMillis: 100000,
+    },
+  });
+  t.deepEqual(result.pool.acquireTimeoutMillis, 100000);
+});
+
+test('getKnexConfig sets createTimeoutMillis when env is set', async (t) => {
+  const result = await getKnexConfig({
+    env: {
+      ...dbConnectionConfigEnv,
+      createTimeoutMillis: 100000,
+    },
+  });
+  t.deepEqual(result.pool.createTimeoutMillis, 100000);
+});
 
 test('getSecretConnectionConfig returns a Knex.PgConnectionConfig object', async (t) => {
   const result = await getSecretConnectionConfig(
