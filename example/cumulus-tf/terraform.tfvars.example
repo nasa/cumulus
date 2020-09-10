@@ -101,5 +101,5 @@ additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
 # Optional - @cumulus/db will optionally run a 'heartbeat' query and retry if
-# a common Serverless spinup timeout occurs.  Should be disabled for non-serverless deployments
+# a knexTimeout occurs
 rds_connection_heartbeat = true
