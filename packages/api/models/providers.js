@@ -46,37 +46,6 @@ class Provider extends Manager {
     this.removeAdditional = 'all';
   }
 
-  async getByHost(host) {
-    const scanParams = {
-      TableName: this.tableName,
-      FilterExpression: 'host = :host',
-      ExpressionAttributeValues: { ':host': host },
-    };
-
-    const providers = [];
-
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      const result = await this.dynamodbDocClient.scan(scanParams).promise();
-
-      providers.push(...result.Items);
-
-      scanParams.ExclusiveStartKey = result.LastEvaluatedKey;
-    } while (scanParams.ExclusiveStartKey);
-
-    if (providers.length > 1) {
-      const providerIds = providers.map(({ id }) => id);
-
-      const providersString = providerIds.join(', ');
-
-      throw new Error(
-        `Multiple providers found for host ${host}: ${providersString}`
-      );
-    }
-
-    return providers[0];
-  }
-
   /**
    * Check if a given provider exists
    *
