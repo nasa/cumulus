@@ -102,4 +102,4 @@ additional_log_groups_to_elk = {
 }
 # Optional - @cumulus/db will optionally run a 'heartbeat' query and retry if
 # a knexTimeout occurs
-rds_connection_heartbeat = true
+rds_connection_heartbeat = false
