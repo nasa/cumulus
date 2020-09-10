@@ -110,8 +110,6 @@ export const getConnectionConfig = async ({
  *   migrations
  * @param {string} [params.env.createTimeoutMillis]  - tarn/knex pool object
  *                                                     creation timeout
- * @param {string} [params.env.acquireTimeoutMillis] - tarn/knex pool object
- *                                                     acquire timeout
  * @param {string} [params.env.idleTimeoutMillis]    - tarn/knex pool object
  *                                                     idle timeout
  * @param {string} [params.env.dbMaxPool]            - tarn/knex max pool
@@ -134,9 +132,8 @@ export const getKnexConfig = async ({
       min: 0,
       max: Number.parseInt(env.dbMaxPool ?? '2', 10),
       idleTimeoutMillis: Number.parseInt(env.idleTimeoutMillis ?? '1000', 10),
-      acquireTimeoutMillis: Number.parseInt(env.acquireTimeoutMillis ?? '60000', 10),
       // ts-ignore as https://github.com/knex/knex/blob/master/types/index.d.ts#L1886
-      // is improperly typed
+      // is improperly typed.
       //@ts-ignore
       createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '60000', 10),
     },

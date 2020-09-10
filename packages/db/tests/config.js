@@ -73,7 +73,6 @@ test('getKnexConfig returns an expected default configuration object', async (t)
       min: 0,
       max: 2,
       idleTimeoutMillis: 1000,
-      acquireTimeoutMillis: 60000,
       createTimeoutMillis: 60000,
     },
   };
@@ -98,16 +97,6 @@ test('getKnexConfig sets maxPool size when env is set', async (t) => {
     },
   });
   t.deepEqual(result.pool.max, 10);
-});
-
-test('getKnexConfig sets acquireTimeoutMillis when env is set', async (t) => {
-  const result = await getKnexConfig({
-    env: {
-      ...dbConnectionConfigEnv,
-      acquireTimeoutMillis: 100000,
-    },
-  });
-  t.deepEqual(result.pool.acquireTimeoutMillis, 100000);
 });
 
 test('getKnexConfig sets createTimeoutMillis when env is set', async (t) => {
