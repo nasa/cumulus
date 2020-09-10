@@ -18,9 +18,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2099**
   - `meta.queues` has been removed from Cumulus core workflow messages.
   - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
+- **CUMULUS-2141**
+  - The `parse-pdr` task has been updated to respect the `NODE_NAME` property in
+    a PDR's `FILE_GROUP`. If a `NODE_NAME` is present, the task will query the
+    Cumulus API for a provider with that host. If a provider is found, the
+    output granule from the task will contain a `provider` property containing
+    that provider. If `NODE_NAME` is set but a provider with that host cannot be
+    found in the API, or if multiple providers are found with that same host,
+    the task will fail.
 
 #### CODE CHANGES
 
+- The `@cumulus/api-client.providers.getProviders` function now takes a
+  `queryStringParameters` parameter which can be used to filter the providers
+  which are returned
 - The `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync` function has been
   removed. It read the entire S3 object into memory before returning a read
   stream, which could cause Lambdas to run out of memory. Use
