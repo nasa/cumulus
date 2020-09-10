@@ -98,7 +98,7 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test('getKnexClient with heartbeat check enabled and legit database returns Knex object',
+test('getKnexClient with heartbeat check enabled and configured database connection returns Knex object',
   async (t) => {
     const results = await getKnexClient({
       env: {
@@ -119,7 +119,7 @@ test('getKnexClient with heartbeat check enabled and legit database returns Knex
     t.deepEqual(expected, results.client.config.connection);
   });
 
-test('getKnexClient with heartbeat check enabled and inalid db_config throws error',
+test('getKnexClient with heartbeat check enabled and invalid db_config throws error',
   async (t) => {
     await t.throwsAsync(getKnexClient({
       env: {
@@ -133,7 +133,7 @@ test('getKnexClient with heartbeat check enabled and inalid db_config throws err
     }));
   });
 
-test.serial('queryHeartbeat retries and does not throw when KnexTimeOutError is thrown on the first attempt',
+test.serial('queryHeartbeat retries and does not throw error when KnexTimeOutError is thrown on the first attempt',
   async (t) => {
     const knexRawStub = sinon.stub();
     knexRawStub.onCall(0).throws(knexFakeError);
@@ -149,7 +149,7 @@ test.serial('queryHeartbeat throws when an error is thrown',
     await t.throwsAsync(async () => queryHeartbeat({ knex: { raw: knexRawStub } }));
   });
 
-test.serial('queryHeartbeat throws when KnexTimeOutError is thrown repeatedly',
+test.serial('queryHeartbeat throws error when KnexTimeOutError is thrown repeatedly',
   async (t) => {
     const knexRawStub = sinon.stub();
     knexRawStub.onCall(0).throws(knexFakeError);
