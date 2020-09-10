@@ -133,7 +133,7 @@ variable "distribution_url" {
 
 variable "ecs_cluster_instance_subnet_ids" {
   type = list(string)
-  default = null
+  default = []
 }
 
 variable "ems_datasource" {
