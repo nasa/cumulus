@@ -108,13 +108,13 @@ export const getConnectionConfig = async ({
  *   acquireConnectionTimeout connection timeout
  * @param {string} [params.env.migrationDir] - Directory to look in for
  *   migrations
- * @param {string} [params.env.createTimeoutMillis] - tarn/knex pool object
+ * @param {string} [params.env.createTimeoutMillis]  - tarn/knex pool object
  *                                                     creation timeout
  * @param {string} [params.env.acquireTimeoutMillis] - tarn/knex pool object
  *                                                     acquire timeout
- * @param {string} [params.env.idleTimeoutMillis] -    tarn/knex pool object
+ * @param {string} [params.env.idleTimeoutMillis]    - tarn/knex pool object
  *                                                     idle timeout
- * @param {string} [params.env.dbMaxPool]           -    tarn/knex max pool size
+ * @param {string} [params.env.dbMaxPool]            - tarn/knex max pool size
  * @returns {Promise<Knex.Config>} a Knex configuration object
  */
 export const getKnexConfig = async ({
