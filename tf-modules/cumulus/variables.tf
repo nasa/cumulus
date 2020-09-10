@@ -409,7 +409,7 @@ variable "private_archive_api_gateway" {
 }
 
 variable "rds_connection_heartbeat" {
-  description = "Sets if Core database code should send a query to verify db connection on creation/rety on connection timeout"
+  description = "Sets if Core database code should send a query to verify db connection on connection creation/retry on connection timeout"
   type        = bool
   default     = false
 }
