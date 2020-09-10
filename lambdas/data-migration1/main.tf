@@ -87,6 +87,7 @@ resource "aws_lambda_function" "data_migration1" {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
       CollectionsTable = var.dynamo_tables.collections.name
+      dbHeartbeat = var.rds_connection_heartbeat
     }
   }
 

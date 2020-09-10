@@ -76,6 +76,7 @@ resource "aws_lambda_function" "db_migration" {
   environment {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      dbHeartBeat                 = 'true'
     }
   }
 

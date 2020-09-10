@@ -408,6 +408,12 @@ variable "private_archive_api_gateway" {
   default     = true
 }
 
+variable "rds_connection_heartbeat" {
+  description = "Sets if Core database code should send a query to verify db connection on creation/rety on connection timeout.  Disable if not using serverless"
+  type        = bool
+  default     = true
+}
+
 variable "saml_entity_id" {
   description = "The endpoint EntityID from the Launchpad Integration Request"
   type        = string

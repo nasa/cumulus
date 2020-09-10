@@ -62,6 +62,12 @@ variable "rds_user_password" {
   default = ""
 }
 
+variable "rds_connection_heartbeat" {
+  description = "Sets if Core database code should send a query to verify db connection on creation/rety on connection timeout.  Disable if not using serverless"
+  type    = bool
+  default = true
+}
+
 variable "tags" {
   description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)

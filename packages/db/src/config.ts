@@ -7,6 +7,7 @@ export const localStackConnectionEnv = {
   PG_USER: 'postgres',
   PG_PASSWORD: 'password',
   PG_DATABASE: 'postgres',
+  PG_PORT: 5432,
 };
 
 export const getSecretConnectionConfig = async (
@@ -31,6 +32,7 @@ export const getSecretConnectionConfig = async (
     user: dbAccessMeta.username,
     password: dbAccessMeta.password,
     database: dbAccessMeta.database,
+    port: dbAccessMeta.port ?? 5432,
   };
 };
 
@@ -41,6 +43,7 @@ export const getConnectionConfigEnv = (
   user: envUtils.getRequiredEnvVar('PG_USER', env),
   password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
   database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
+  port: Number.parseInt(env.PG_PORT ?? '5432', 10),
 });
 
 /**
