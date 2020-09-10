@@ -267,7 +267,6 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
     aws_api_gateway_integration.s3_credentials[0]
   ]
 
-  # rest_api_id = module.thin_egress_app.rest_api.id
   rest_api_id = var.tea_rest_api_id
   stage_name  = var.api_gateway_stage
 }
