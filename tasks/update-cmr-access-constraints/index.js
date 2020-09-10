@@ -16,9 +16,24 @@ const {
   uploadUMMGJSONCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
 
+/**
+ * Unlike UMMG-JSON, Echo10XML is sensitive to key ordering as it uses <sequence> in the schema.
+ * See the public Echo10 granule schema at:
+ * https://git.earthdata.nasa.gov/projects/EMFD/repos/echo-schemas/browse/schemas/10.0/Granule.xsd
+ * For this reason, we need to generate an XML with the keys in the right place.
+ * This requires creating a partial sequence that we can append the restriction fields to,
+ * and merging that with the remaining metadata.
+ * There is special consideration given to every element that precedes the
+ * `RestrictionFlag` and `RestrictionComment elements in the code below.
+ *
+ * @param {Object} metadataGranule - Original CMR Metadata object
+ * @param {Object} accessConstraintsObject - Access constraints config object
+ * @returns {Object} Updated CMR Metadata object with Restriction fields set
+ */
 function createUpdatedEcho10XMLMetadataGranuleCopy(metadataGranule, accessConstraintsObject) {
   const { description, value } = accessConstraintsObject;
   const metadataGranuleCopy = { ...metadataGranule };
+  // create partial metadata sequence as per Echo10 Granule XSD.
   const granuleUpdateSequence = {
     GranuleUR: metadataGranule.GranuleUR,
     InsertTime: metadataGranule.InsertTime,
@@ -38,6 +53,7 @@ function createUpdatedEcho10XMLMetadataGranuleCopy(metadataGranule, accessConstr
   delete metadataGranuleCopy.RestrictionFlag;
   set(granuleUpdateSequence, 'RestrictionComment', description !== undefined ? description : 'None');
   delete metadataGranuleCopy.RestrictionComment;
+  // append remaining original metadata to partial metadata sequence
   return {
     ...granuleUpdateSequence,
     ...metadataGranuleCopy,
