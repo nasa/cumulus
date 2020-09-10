@@ -23,20 +23,6 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
   tags    = var.tags
 }
 
-resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
-  name_prefix = "${var.prefix}-tea-urs-creds-"
-  description = "URS credentials for the ${var.prefix} Thin Egress App"
-  tags        = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
-  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
-  secret_string = jsonencode({
-    UrsId       = var.urs_client_id
-    UrsAuth     = base64encode("${var.urs_client_id}:${var.urs_client_password}")
-  })
-}
-
 module "tea_map_cache" {
   prefix                     = var.prefix
   source                     = "../tea-map-cache"

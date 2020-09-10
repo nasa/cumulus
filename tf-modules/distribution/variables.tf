@@ -15,16 +15,6 @@ variable "system_bucket" {
   description = "A bucket to be used for staging deployment files"
 }
 
-variable "urs_client_id" {
-  type        = string
-  description = "The URS app ID"
-}
-
-variable "urs_client_password" {
-  type        = string
-  description = "The URS app password"
-}
-
 # Optional
 
 variable "api_gateway_stage" {
