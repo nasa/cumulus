@@ -2,6 +2,7 @@ import BucketsConfig = require('./BucketsConfig');
 export { BucketsConfig };
 
 export * as cliUtils from './cli-utils';
+export * as envUtils from './env';
 export * as http from './http';
 export * as keyPairProvider from './key-pair-provider';
 export * as log from './log';

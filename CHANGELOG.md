@@ -35,8 +35,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `const { recursion } = require('@cumulus/ingest/recursion');`
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
-- **CUMULUS-2099**
-  - `meta.queues` has been removed from Cumulus core workflow messages.
 
 ### Added
 
@@ -71,6 +69,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-1965**
+  - Adds `collectionId` parameter to the `/reconcilationReports`
+    endpoint. Setting this value will limit the scope of the reconcilation
+    report to only the input collectionId when comparing Cumulus and
+    CMR.
 - **CUMULUS-2107**
   - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
     Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
@@ -83,6 +86,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
+- **CUMULUS-2126**
+  - The collections endpoint now writes to the RDS database
+
+### Changed
+
+- Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
 
 ### Fixed
 
@@ -95,6 +104,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
+- **CUMULUS-2163**
+  - Remove the `public-read` ACL from the `move-granules` task
 
 ### Deprecated
 
