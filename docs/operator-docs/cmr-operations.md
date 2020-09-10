@@ -29,7 +29,7 @@ This will take an unpublished granule and publish it to CMR.
 
 Updating metadata access constraints can be accomplished using the applyWorkflow functionality.
 For this, we use a workflow composed of the `UpdateCmrAccessConstraints` and `PostToCmr` tasks.
-The `UpdateCmrAccessConstraints` will update CMR metadata file contents on S3, and `PostToCmr` will push the updates to CMR.
+`UpdateCmrAccessConstraints` will update CMR metadata file contents on S3, and `PostToCmr` will push the updates to CMR.
 Out of the box, Cumulus provides a workflow to do this named `UpdateCmrAccessConstraints`.
 
 An example invocation of the API to perform this action is:
@@ -54,7 +54,7 @@ Supported CMR metadata formats for the above operation are Echo10XML and UMMG-JS
 
 ## Additional Operations
 
-At this time Cumulus does not, out of the box, support additional operations on CMR metadata. However, given the examples shown above, we recommend working with your integrators to develop additional workflows that do the actions you require.
+At this time Cumulus does not, out of the box, support additional operations on CMR metadata. However, given the examples shown above, we recommend working with your integrators to develop additional workflows that perform any required operations.
 
 ## Bulk CMR operations
 

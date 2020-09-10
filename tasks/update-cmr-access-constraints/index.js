@@ -17,7 +17,7 @@ const {
 } = require('@cumulus/cmrjs/cmr-utils');
 
 /**
- * Unlike UMMG-JSON, Echo10XML is sensitive to key ordering as it uses <sequence> in the schema.
+ * Echo10XML is sensitive to key ordering as it uses <sequence> in the schema.
  * See the public Echo10 granule schema at:
  * https://git.earthdata.nasa.gov/projects/EMFD/repos/echo-schemas/browse/schemas/10.0/Granule.xsd
  * For this reason, we need to generate an XML with the keys in the right place.
