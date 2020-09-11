@@ -13,11 +13,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The steps for configuring queued execution throttling have changed. See the [updated documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
   - In addition to the configuration for execution throttling, the internal mechanism for tracking executions by queue has changed. As a result, you should **disable any rules or workflows scheduling executions via a throttled queue** before upgrading. Otherwise, you may be at risk of having **twice as many executions** as are configured for the queue while the updated tracking is deployed. You can re-enable these rules/workflows once the upgrade is complete.
 
+- **CUMULUS-2111**
+  - The [`thin-egress-app`][thin-egress-app] is no longer included by default as part of the `cumulus` module, so you must add it as a standalone module to your own deployment. To add TEA as a standalone module to your deployment:
+
+    1. Add the [`thin-egress-app`][thin-egress-app] module to your `cumulus-tf` deployment as shown in the [Cumulus example deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/main.tf).
+    2. Follow these instructions to modify your Terraform state so that your existing `thin-egress-app` API gateway will be preserved: <https://github.com/nasa/cumulus/wiki/Migrate-Thin-Egress-App-deployment-to-standalone-module>
+
+  - If you provide your own custom bucket map to TEA as a standalone module, **you must ensure that your custom bucket map includes mappings for the `protected` and `public` buckets specified in your `cumulus-tf/terraform.tfvars`, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors in your workflows.**
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2099**
   - `meta.queues` has been removed from Cumulus core workflow messages.
   - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
+- **CUMULUS-2111**
+  - The deployment of the `thin-egress-app` module has be removed from `tf-modules/distribution`, which is a part of the `tf-modules/cumulus` module. Thus, the `thin-egress-app` module is no longer deployed for you by default. See the migration steps for details about how to add deployment for the `thin-egress-app`.
 
 #### CODE CHANGES
 
@@ -3410,3 +3420,5 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v1.1.0]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/nasa/cumulus/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/nasa/cumulus/compare/pre-v1-release...v1.0.0
+
+[thin-egress-app]: <https://github.com/asfadmin/thin-egress-app> "Thin Egress App"
