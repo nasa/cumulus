@@ -75,7 +75,12 @@ async function getGranuleIdsForPayload(payload) {
   return uniqueGranuleIds;
 }
 
-function applyWorkflowToGranules(granuleIds, workflowName, meta, queueName) {
+function applyWorkflowToGranules({
+  granuleIds,
+  workflowName,
+  meta,
+  queueName,
+}) {
   const granuleModelClient = new GranuleModel();
 
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
@@ -149,7 +154,7 @@ async function bulkGranuleDelete(payload) {
 async function bulkGranule(payload) {
   const { queueName, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return applyWorkflowToGranules(granuleIds, workflowName, meta, queueName);
+  return applyWorkflowToGranules({ granuleIds, workflowName, meta, queueName });
 }
 
 function setEnvVarsForOperation(event) {
