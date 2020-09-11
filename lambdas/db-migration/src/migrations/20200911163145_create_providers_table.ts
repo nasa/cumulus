@@ -47,6 +47,7 @@ export const up = async (knex: Knex): Promise<void> => {
       .comment('S3 URI (e.g. s3://bucket/key) for custom or self-signed SSL (TLS) certificate to access provider');
     table
       .timestamps(false, true);
+    table.unique(['name']);
   });
 };
 
