@@ -116,7 +116,11 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
 
   // collectionId matches the collection with conflicts
   const collectionId = constructCollectionId(conflictCollInDb.name, conflictCollInDb.version);
-  const paramsCollectionId = { ...searchParams, collectionId };
+  // TODO [MHS, 09/09/2020] remove collectionIds after CUMULUS-2156 is worked
+  // (added because this test doesn't normalize the event) another alternative
+  // would be to rewire and __get__ the normalize function from
+  // create-reconciliation-report
+  const paramsCollectionId = { ...searchParams, collectionId, collectionIds: [collectionId] };
 
   report = await internalRecReportForCollections(paramsCollectionId);
   t.is(report.okCount, 0);
