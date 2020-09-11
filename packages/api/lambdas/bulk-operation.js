@@ -144,7 +144,7 @@ async function bulkGranuleDelete(payload) {
  * @param {Object} payload
  * @param {string} payload.workflowName - name of the workflow that will be applied to each granule.
  * @param {Object} [payload.meta] - Optional meta to add to workflow input
- * @param {string} [payload.queueName] - name of queue that will be used to start workflows
+ * @param {string} [payload.queueName] - Optional name of queue that will be used to start workflows
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
