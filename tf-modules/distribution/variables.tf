@@ -25,21 +25,11 @@ variable "tea_internal_api_endpoint" {
   type        = string
 }
 
-variable "tea_rest_api_id" {
-  description = "Thin Egress App API gateway ID"
-  type        = string
-}
-
-variable "tea_rest_api_root_resource_id" {
-  description = "Thin Egress App API gateway root resource ID"
-  type        = string
-}
-
 # Optional
 
 variable "api_gateway_stage" {
   type        = string
-  default     = "DEV"
+  default     = null
   description = "The API Gateway stage to create"
 }
 
@@ -89,6 +79,24 @@ variable "tags" {
   default     = {}
 }
 
+variable "tea_egress_log_group" {
+  description = "Thin Egress App Cloudwatch log group ARN"
+  type        = string
+  default     = null
+}
+
+variable "tea_rest_api_id" {
+  description = "Thin Egress App API gateway ID"
+  type        = string
+  default     = null
+}
+
+variable "tea_rest_api_root_resource_id" {
+  description = "Thin Egress App API gateway root resource ID"
+  type        = string
+  default     = null
+}
+
 variable "urs_client_id" {
   type        = string
   description = "The client ID for your Earthdata login (URS) application"
@@ -108,11 +116,5 @@ variable "urs_url" {
 variable "vpc_id" {
   type        = string
   description = "VPC used by Lambda functions"
-  default     = null
-}
-
-variable "tea_egress_log_group" {
-  description = "Thin Egress App Cloudwatch log group ARN"
-  type        = string
   default     = null
 }
