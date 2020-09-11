@@ -2,9 +2,11 @@ import AWS from 'aws-sdk';
 import Knex from 'knex';
 import pRetry from 'p-retry';
 
-import * as log from '@cumulus/common/log';
+import Logger from '@cumulus/logger';
 
 import { getKnexConfig } from './config';
+
+const log = new Logger({ sender: '@cumulus/db/connection' });
 
 export const queryHeartbeat = async ({
   knex,
