@@ -53,7 +53,7 @@ const { waitForModelStatus } = require('../../helpers/apiUtils');
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
-const onlyCMRCollection = {name: 'L2_HR_PIXC', version:'1'};
+const onlyCMRCollection = { name: 'L2_HR_PIXC', version: '1' };
 
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketsConfig = new BucketsConfig(
