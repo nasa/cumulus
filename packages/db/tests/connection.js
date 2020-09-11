@@ -145,7 +145,6 @@ test.serial('queryHeartbeat throws when non-KnexTimeOutError error is thrown',
   async (t) => {
     const knexRawStub = sinon.stub();
     knexRawStub.onCall(0).throws(new Error('some random error'));
-    knexRawStub.onCall(1).returns(Promise.resolve());
     await t.throwsAsync(async () => queryHeartbeat({ knex: { raw: knexRawStub } }));
   });
 
