@@ -75,6 +75,16 @@ variable "tags" {
   default     = {}
 }
 
+variable "urs_client_id" {
+  type        = string
+  description = "The client ID for your Earthdata login (URS) application"
+}
+
+variable "urs_client_password" {
+  type        = string
+  description = "The client password for your Earthdata login (URS) application"
+}
+
 variable "urs_url" {
   type        = string
   default     = "https://urs.earthdata.nasa.gov"
@@ -90,7 +100,7 @@ variable "vpc_id" {
 variable "tea_egress_log_group" {
   description = "Thin Egress App Cloudwatch log group ARN"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "tea_internal_api_endpoint" {

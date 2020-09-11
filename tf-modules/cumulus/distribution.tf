@@ -4,7 +4,7 @@ module "distribution" {
   tea_rest_api_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiId"]
   tea_rest_api_root_resource_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiRootResourceId"]
   tea_internal_api_endpoint = data.aws_cloudformation_stack.tea_stack.outputs["ApiEndpoint"]
-  tea_egress_log_group = data.aws_cloudformation_stack.tea_stack.outputs["ApiGatewayLogGroupEgress"]
+  tea_egress_log_group = lookup(data.aws_cloudformation_stack.tea_stack.outputs, "ApiGatewayLogGroupEgress", null)
 
   api_gateway_stage                              = var.distribution_api_gateway_stage
   bucket_map_key                                 = var.bucket_map_key
@@ -18,6 +18,8 @@ module "distribution" {
   sts_credentials_lambda_function_arn            = var.sts_credentials_lambda_function_arn
   subnet_ids                                     = var.lambda_subnet_ids
   system_bucket                                  = var.system_bucket
+  urs_client_id                                  = var.urs_client_id
+  urs_client_password                            = var.urs_client_password
   urs_url                                        = var.urs_url
   vpc_id                                         = var.vpc_id
 
