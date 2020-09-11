@@ -1,6 +1,7 @@
 module "distribution" {
   source = "../distribution"
 
+  tea_stack_name = var.tea_stack_name
   tea_rest_api_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiId"]
   tea_rest_api_root_resource_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiRootResourceId"]
   tea_internal_api_endpoint = data.aws_cloudformation_stack.tea_stack.outputs["ApiEndpoint"]

@@ -183,12 +183,12 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
   bucket  = var.system_bucket
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
   content = templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
-    protected_buckets = var.protected_bucket_names,
-    public_buckets = var.public_bucket_names
+    protected_buckets = local.protected_bucket_names,
+    public_buckets = local.public_bucket_names
   })
   etag    = md5(templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
-    protected_buckets = var.protected_bucket_names,
-    public_buckets = var.public_bucket_names
+    protected_buckets = local.protected_bucket_names,
+    public_buckets = local.public_bucket_names
   }))
   tags    = var.tags
 }

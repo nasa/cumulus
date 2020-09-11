@@ -15,6 +15,26 @@ variable "system_bucket" {
   description = "A bucket to be used for staging deployment files"
 }
 
+variable "tea_stack_name" {
+  description = "Thin Egress App Cloudformation stack name"
+  type        = string
+}
+
+variable "tea_internal_api_endpoint" {
+  description = "Thin Egress App internal endpoint URL"
+  type        = string
+}
+
+variable "tea_rest_api_id" {
+  description = "Thin Egress App API gateway ID"
+  type        = string
+}
+
+variable "tea_rest_api_root_resource_id" {
+  description = "Thin Egress App API gateway root resource ID"
+  type        = string
+}
+
 # Optional
 
 variable "api_gateway_stage" {
@@ -95,22 +115,4 @@ variable "tea_egress_log_group" {
   description = "Thin Egress App Cloudwatch log group ARN"
   type        = string
   default     = null
-}
-
-variable "tea_internal_api_endpoint" {
-  description = "Thin Egress App internal endpoint URL"
-  type        = string
-  default     = ""
-}
-
-variable "tea_rest_api_id" {
-  description = "Thin Egress App API gateway ID"
-  type        = string
-  default = null
-}
-
-variable "tea_rest_api_root_resource_id" {
-  description = "Thin Egress App API gateway root resource ID"
-  type        = string
-  default = null
 }
