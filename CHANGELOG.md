@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - In addition to the configuration for execution throttling, the internal mechanism for tracking executions by queue has changed. As a result, you should **disable any rules or workflows scheduling executions via a throttled queue** before upgrading. Otherwise, you may be at risk of having **twice as many executions** as are configured for the queue while the updated tracking is deployed. You can re-enable these rules/workflows once the upgrade is complete.
 
 - **CUMULUS-2111**
-  - The [`thin-egress-app`][thin-egress-app] is no longer included by default as part of the `cumulus` module, so you must add it as a standalone module to your own deployment. To add TEA as a standalone module to your deploymen, take the following steps **before re-deploying your `cumulus-tf` module**:
+  - The [`thin-egress-app`][thin-egress-app] is no longer deployed by default as part of the `cumulus` module, so you must add it as a standalone module to your own deployment. To add TEA as a standalone module to your deployment, take the following steps **before re-deploying your `cumulus-tf` module**:
 
     1. Add the [`thin-egress-app`][thin-egress-app] module to your `cumulus-tf` deployment as shown in the [Cumulus example deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/main.tf).
     2. Follow these instructions to modify your Terraform state so that your existing `thin-egress-app` API gateway will be preserved: <https://github.com/nasa/cumulus/wiki/Migrate-Thin-Egress-App-deployment-to-standalone-module>
