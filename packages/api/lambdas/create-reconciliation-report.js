@@ -387,7 +387,7 @@ async function reconciliationReportForGranules(params) {
   });
 
   const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
-    { ...recReportParams, collectionId }
+    { ...recReportParams, collectionIds: [collectionId] }
   );
   const esGranulesIterator = new ESCollectionGranuleQueue(
     esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
