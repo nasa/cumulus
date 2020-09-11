@@ -73,7 +73,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
     report to only the input collectionId when comparing Cumulus and
-    CMR.
+    CMR. `collectionId` is provided an array of strings e.g. `[shortname___version, shortname2___version2]`
 - **CUMULUS-2107**
   - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
     Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
