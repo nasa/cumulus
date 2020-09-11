@@ -12,24 +12,22 @@ export const queryHeartbeat = async ({
   knex,
 }: {
   knex: Knex
-}): Promise<void> => {
-  await pRetry(
-    async () => {
-      log.info('Sending Heartbeat Query');
-      await knex.raw('SELECT 1');
-      log.info('Heartbeat succeeded');
+}): Promise<void> => pRetry(
+  async () => {
+    log.info('Sending Heartbeat Query');
+    await knex.raw('SELECT 1');
+    log.info('Heartbeat succeeded');
+  },
+  {
+    onFailedAttempt: (error) => {
+      if (error.name !== 'KnexTimeoutError') {
+        throw error;
+      }
+      log.warn(`Failed intial attempt at RDS DB connection due to ${error.name}`);
     },
-    {
-      onFailedAttempt: (error) => {
-        if (error.name !== 'KnexTimeoutError') {
-          throw error;
-        }
-        log.warn(`Failed intial attempt at RDS DB connection due to ${error.name}`);
-      },
-      retries: 1,
-    }
-  );
-};
+    retries: 1,
+  }
+);
 
 /**
  * Given a NodeJS.ProcessEnv with configuration values, build and return
