@@ -33,6 +33,7 @@ locals {
   public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
 
   tea_stack_name = "${var.prefix}-thin-egress-app"
+  tea_stage_name = "DEV"
 }
 
 data "aws_caller_identity" "current" {}
@@ -149,7 +150,8 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
 
   # Thin Egress App settings
-  tea_stack_name =  local.tea_stack_name
+  tea_stack_name =  local.tea_stack_name # must match stack name for thin-egress-app
+  distribution_api_gateway_stage = local.tea_stage_name # must match stage name for thin-egress-app
   distribution_url = var.distribution_url
   thin_egress_jwt_secret_name = var.thin_egress_jwt_secret_name
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
@@ -180,11 +182,11 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
   bucket  = var.system_bucket
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
-  content = templatefile("${path.module}/bucket_map.yaml.tmpl", {
+  content = templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
     protected_buckets = var.protected_bucket_names,
     public_buckets = var.public_bucket_names
   })
-  etag    = md5(templatefile("${path.module}/bucket_map.yaml.tmpl", {
+  etag    = md5(templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
     protected_buckets = var.protected_bucket_names,
     public_buckets = var.public_bucket_names
   }))
@@ -203,7 +205,7 @@ module "thin_egress_app" {
   permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                = var.vpc_id
   stack_name                 = local.tea_stack_name
-  stage_name                 = "DEV"
+  stage_name                 = local.tea_stage_name
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
   vpc_subnet_ids             = var.subnet_ids
 
