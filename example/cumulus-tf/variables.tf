@@ -270,7 +270,7 @@ variable "es_index_shards" {
 }
 
 variable "rds_connection_heartbeat" {
-  description = "Sets if Core database code should send a query to verify db connection on connection creation/retry on connection timeout.  Disable if not using serverless"
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
   type        = bool
   default     = false
 }
