@@ -7,7 +7,6 @@ module "distribution" {
   tea_egress_log_group = lookup(data.aws_cloudformation_stack.tea_stack.outputs, "ApiGatewayLogGroupEgress", null)
 
   api_gateway_stage                              = var.distribution_api_gateway_stage
-  bucket_map_key                                 = var.bucket_map_key
   deploy_s3_credentials_endpoint                 = var.deploy_distribution_s3_credentials_endpoint
   lambda_processing_role_arn                     = aws_iam_role.lambda_processing.arn
   log_destination_arn                            = var.log_destination_arn

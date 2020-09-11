@@ -5,22 +5,12 @@ terraform {
 }
 
 locals {
-  thin_egress_stack_name = "${var.prefix}-thin-egress-app"
   lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 
   built_lambda_source_file = "${path.module}/lambda.zip"
   repo_lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
   lambda_source_file = fileexists(local.built_lambda_source_file) ? local.built_lambda_source_file : local.repo_lambda_source_file
-}
-
-resource "aws_s3_bucket_object" "bucket_map_yaml" {
-  count   = var.bucket_map_key == null ? 1 : 0
-  bucket  = var.system_bucket
-  key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
-  content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
-  etag    = md5(templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets }))
-  tags    = var.tags
 }
 
 module "tea_map_cache" {
@@ -32,7 +22,6 @@ module "tea_map_cache" {
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
 }
-
 
 data "aws_lambda_invocation" "tea_map_cache" {
   depends_on                      = [module.tea_map_cache.lambda_function_name]

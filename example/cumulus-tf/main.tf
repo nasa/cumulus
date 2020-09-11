@@ -28,6 +28,11 @@ locals {
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
   rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
+
+  protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
+  public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
+
+  tea_stack_name = "${var.prefix}-thin-egress-app"
 }
 
 data "aws_caller_identity" "current" {}
@@ -122,8 +127,8 @@ module "cumulus" {
 
   dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
 
+  # Archive API settings
   token_secret = var.token_secret
-
   archive_api_users = [
     "chuckwondo",
     "jennyhliu",
@@ -139,20 +144,21 @@ module "cumulus" {
     "brian.tennity",
     "jasmine"
   ]
-
-  distribution_url = var.distribution_url
-  thin_egress_jwt_secret_name = var.thin_egress_jwt_secret_name
-
-  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
-
   archive_api_port              = var.archive_api_port
   private_archive_api_gateway   = var.private_archive_api_gateway
   api_gateway_stage             = var.api_gateway_stage
+
+  # Thin Egress App settings
+  tea_stack_name =  local.tea_stack_name
+  distribution_url = var.distribution_url
+  thin_egress_jwt_secret_name = var.thin_egress_jwt_secret_name
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   log_destination_arn           = var.log_destination_arn
-  additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
-  tea_stack_name =  "${var.prefix}-thin-egress-app"
+  # S3 credentials endpoint
+  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+
+  additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
   tags = local.tags
 }
@@ -171,18 +177,32 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
   })
 }
 
+resource "aws_s3_bucket_object" "bucket_map_yaml" {
+  bucket  = var.system_bucket
+  key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
+  content = templatefile("${path.module}/bucket_map.yaml.tmpl", {
+    protected_buckets = var.protected_bucket_names,
+    public_buckets = var.public_bucket_names
+  })
+  etag    = md5(templatefile("${path.module}/bucket_map.yaml.tmpl", {
+    protected_buckets = var.protected_bucket_names,
+    public_buckets = var.public_bucket_names
+  }))
+  tags    = var.tags
+}
+
 module "thin_egress_app" {
   source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.88.zip"
 
   auth_base_url              = "https://uat.urs.earthdata.nasa.gov"
-  bucket_map_file            = "${var.prefix}/thin-egress-app/bucket_map.yaml"
+  bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.id
   bucketname_prefix          = ""
   config_bucket              = var.system_bucket
   domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
   jwt_secret_name            = var.thin_egress_jwt_secret_name
   permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                = var.vpc_id
-  stack_name                 = "${var.prefix}-thin-egress-app"
+  stack_name                 = local.tea_stack_name
   stage_name                 = "DEV"
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
   vpc_subnet_ids             = var.subnet_ids

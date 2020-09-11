@@ -23,12 +23,6 @@ variable "api_gateway_stage" {
   description = "The API Gateway stage to create"
 }
 
-variable "bucket_map_key" {
-  type        = string
-  default     = null
-  description = "Optional custom TEA Bucket Map location.  If not provided, Cumulus will generate one for you"
-}
-
 variable "deploy_s3_credentials_endpoint" {
   type    = bool
   default = true
