@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    aws  = ">= 2.31.0"
+    aws  = ">= 3.5.0"
     null = "~> 2.1"
   }
 }
@@ -8,6 +8,10 @@ terraform {
 provider "aws" {
   region  = var.region
   profile = var.aws_profile
+
+  ignore_tags {
+    key_prefixes = ["gsfc-ngap"]
+  }
 }
 
 provider "aws" {
