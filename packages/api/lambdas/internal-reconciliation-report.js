@@ -14,7 +14,8 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { Collection, Granule } = require('../models');
 const {
-  convertToCollectionSearchParams,
+  convertToDBCollectionSearchParams,
+  convertToESCollectionSearchParams,
   convertToGranuleSearchParams,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
@@ -37,13 +38,14 @@ async function internalRecReportForCollections(recReportParams) {
   //   Report collections only in DynamoDB
   //   Report collections with different contents
 
-  const searchParams = convertToCollectionSearchParams(recReportParams);
+  const searchParams = convertToESCollectionSearchParams(recReportParams);
   const esCollectionsIterator = new ESSearchQueue(
     { ...searchParams, sort_key: ['name', 'version'] }, 'collection', process.env.ES_INDEX
   );
 
   // get collections from database and sort them, since the scan result is not ordered
-  const dbCollectionsQueue = await (new Collection()).search(searchParams);
+  const dbSearchParams = convertToDBCollectionSearchParams(recReportParams);
+  const dbCollectionsQueue = await (new Collection()).search(dbSearchParams);
   const dbCollectionItems = sortBy(await dbCollectionsQueue.empty(), ['name', 'version']);
 
   let okCount = 0;
