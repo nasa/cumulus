@@ -18,12 +18,13 @@ function dateToValue(dateable) {
  * @returns {Object} object of desired parameters formated for Elasticsearch collection search
  */
 function convertToESCollectionSearchParams(params) {
-  const { collectionId, startTimestamp, endTimestamp } = params;
+  const { collectionId, startTimestamp, endTimestamp, provider } = params;
   const collection = collectionId ? deconstructCollectionId(collectionId) : {};
   const searchParams = {
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
     ...collection,
+    provider,
   };
   return removeNilProperties(searchParams);
 }
@@ -34,11 +35,12 @@ function convertToESCollectionSearchParams(params) {
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
 function convertToESGranuleSearchParams(params) {
-  const { collectionId } = params;
+  const { collectionId, provider } = params;
   return removeNilProperties({
     updatedAt__from: dateToValue(params.startTimestamp),
     updatedAt__to: dateToValue(params.endTimestamp),
     collectionId,
+    provider,
   });
 }
 

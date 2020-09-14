@@ -64,6 +64,7 @@ function isOneWayReport(reportParams) {
   return [
     'startTimestamp',
     'endTimestamp',
+    'provider',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -77,6 +78,7 @@ function shouldFilterByTime(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
+    'provider',
   ].some((e) => !!searchParams[e]);
 }
 
@@ -192,7 +194,6 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Get list of collections from CUMULUS
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
-
   const oneWayReport = isOneWayReport(recReportParams);
 
   // get all collections from CMR and sort them, since CMR query doesn't support
@@ -561,7 +562,6 @@ async function createReconciliationReport(recReportParams) {
     stackName,
     systemBucket,
   } = recReportParams;
-
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
   const distributionBucketMap = await getJsonS3Object(
