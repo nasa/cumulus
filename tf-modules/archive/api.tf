@@ -19,6 +19,7 @@ locals {
       cmr_username                 = var.cmr_username
       CollectionsTable             = var.dynamo_tables.collections.name
       databaseCredentialSecretArn  = var.rds_user_access_secret_arn
+      dbHeartBeat                  = var.rds_connection_heartbeat
       DISTRIBUTION_ENDPOINT        = var.distribution_url
       distributionApiId            = var.distribution_api_id
       EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
@@ -58,7 +59,6 @@ locals {
       provider_kms_key_id          = aws_kms_key.provider_kms_key.key_id
       ProvidersTable               = var.dynamo_tables.providers.name
       public_buckets               = join(",", var.public_buckets)
-      rds_user_access_secret_arn     = var.rds_user_access_secret_arn
       ReconciliationReportsTable   = var.dynamo_tables.reconciliation_reports.name
       RulesTable                   = var.dynamo_tables.rules.name
       stackName                    = var.prefix
