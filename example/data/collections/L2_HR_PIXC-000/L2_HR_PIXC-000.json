@@ -4,6 +4,7 @@
   "dataType": "L2_HR_PIXC",
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
+  "duplicateHandling": "replace",
   "reportToEms": false,
   "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.h5",
   "files": [
