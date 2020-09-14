@@ -3,6 +3,7 @@ const get = require('lodash/get');
 const pMap = require('p-map');
 
 const log = require('@cumulus/common/log');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const GranuleModel = require('../models/granules');
 const SCROLL_SIZE = 500; // default size in Kibana
@@ -118,16 +119,25 @@ async function bulkGranuleDelete(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
-  const deletedGranules = await pMap(
+  const deletedGranules = [];
+  await pMap(
     granuleIds,
     async (granuleId) => {
-      const granule = await granuleModel.getRecord({ granuleId });
-      if (granule.published && forceRemoveFromCmr) {
-        await granuleModel.unpublishAndDeleteGranule(granule);
-      } else {
-        await granuleModel.delete(granule);
+      try {
+        const granule = await granuleModel.getRecord({ granuleId });
+        if (granule.published && forceRemoveFromCmr) {
+          await granuleModel.unpublishAndDeleteGranule(granule);
+        } else {
+          await granuleModel.delete(granule);
+        }
+        deletedGranules.push(granuleId);
+      } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
+          return;
+        }
+        throw error;
       }
-      return granuleId;
     },
     {
       concurrency: 10, // is this necessary?

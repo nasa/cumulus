@@ -301,7 +301,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const granule = JSON.parse(granuleResponse.body);
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
-    expect(granule.status).toEqual('running');
+    expect((granule.status === 'running') || (granule.status === 'completed')).toBeTrue();
   });
 
   it('completes execution with success status', async () => {
@@ -361,7 +361,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const granuleId = await pRetry(
           async () => {
             const id = await GranuleFilesCache.getGranuleId(Bucket, Key);
-            if (id === null) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
+            if (id === undefined) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
             return id;
           },
           { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
@@ -1100,6 +1100,7 @@ describe('The S3 Ingest Granules workflow', () => {
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecutionArn.split(':');
         const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
+        console.log(`Log execution name: ${logsExecutionName}`);
         const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
         const logs = JSON.parse(logsResponse.body);
         expect(logs.meta.count).not.toEqual(0);

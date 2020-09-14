@@ -3,7 +3,7 @@
 const isValidHostname = require('is-valid-hostname');
 
 const KMS = require('@cumulus/aws-client/KMS');
-const { isNil } = require('@cumulus/common/util');
+const isNil = require('lodash/isNil');
 const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');

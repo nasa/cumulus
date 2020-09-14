@@ -8,7 +8,7 @@ const KMS = require('@cumulus/aws-client/KMS');
 const S3 = require('@cumulus/aws-client/S3');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const {
-  calculateS3ObjectChecksum,
+  calculateObjectHash,
   fileExists,
   recursivelyDeleteS3Bucket,
   headObject,
@@ -175,7 +175,12 @@ test('Download remote file to s3 with correct content-type', async (t) => {
     t.truthy(s3uri, 'Missing s3uri');
     t.truthy(etag, 'Missing etag');
     t.truthy(fileExists(bucket, key));
-    const sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key });
+    const sum = await calculateObjectHash({
+      s3: s3(),
+      algorithm: 'CKSUM',
+      bucket,
+      key,
+    });
     t.is(sum, 1435712144);
 
     const s3HeadResponse = await headObject(bucket, key);

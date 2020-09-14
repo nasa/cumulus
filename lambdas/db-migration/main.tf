@@ -71,11 +71,12 @@ resource "aws_lambda_function" "db_migration" {
   role             = aws_iam_role.db_migration.arn
   runtime          = "nodejs12.x"
   timeout          = 120
-  memory_size      = 128
+  memory_size      = 256
 
   environment {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      dbHeartBeat                 = "true"
     }
   }
 

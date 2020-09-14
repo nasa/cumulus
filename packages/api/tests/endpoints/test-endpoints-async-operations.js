@@ -6,7 +6,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { noop } = require('@cumulus/common/util');
+const noop = require('lodash/noop');
 const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');

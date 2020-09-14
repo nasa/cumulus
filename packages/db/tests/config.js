@@ -1,18 +1,41 @@
 const test = require('ava');
 
-const { getSecretConnectionConfig, getRequiredEnvVar, getConnectionConfigEnv } = require('../dist/config');
+const {
+  getConnectionConfig,
+  getConnectionConfigEnv,
+  getSecretConnectionConfig,
+  getKnexConfig,
+} = require('../dist/config');
 
 const dbConnectionConfig = {
   username: 'postgres',
   password: 'password',
   database: 'postgres',
   host: 'localhost',
+  port: 5435,
+};
+
+const dbConnectionConfigEnv = {
+  PG_HOST: 'localhost',
+  PG_USER: 'postgres',
+  PG_DATABASE: 'postgres',
+  PG_PORT: 5435,
+  PG_PASSWORD: 'password',
 };
 
 const secretsManagerStub = {
   getSecretValue: (_value) => ({
     promise: () => Promise.resolve({
       SecretString: JSON.stringify(dbConnectionConfig),
+    }),
+  }),
+  putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
+};
+
+const secretsManagerNoPortStub = {
+  getSecretValue: (_value) => ({
+    promise: () => Promise.resolve({
+      SecretString: JSON.stringify({ ...dbConnectionConfig, port: undefined }),
     }),
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
@@ -36,13 +59,54 @@ const badSecretsManagerStub = {
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 };
 
-test('getRequiredEnvVar returns an environment value if defined', async (t) => {
-  const result = getRequiredEnvVar('testVar', { testVar: 'testvalue' });
-  t.is(result, 'testvalue');
+test('getKnexConfig returns an expected default configuration object', async (t) => {
+  const result = await getKnexConfig({ env: dbConnectionConfigEnv });
+  const connectionConfig = { ...dbConnectionConfig, user: 'postgres' };
+  delete connectionConfig.username;
+  const expectedConfig = {
+    acquireConnectionTimeout: 60000,
+    asyncStackTraces: false,
+    client: 'pg',
+    connection: connectionConfig,
+    debug: false,
+    pool: {
+      min: 0,
+      max: 2,
+      idleTimeoutMillis: 1000,
+      createTimeoutMillis: 60000,
+    },
+  };
+  t.deepEqual(result, expectedConfig);
 });
 
-test('getRequiredEnvVar throws error if not defined', async (t) => {
-  t.throws(() => getRequiredEnvVar('testVar', {}));
+test('getKnexConfig sets idleTimeoutMillis when env is set', async (t) => {
+  const result = await getKnexConfig({
+    env: {
+      ...dbConnectionConfigEnv,
+      idleTimeoutMillis: 2000,
+    },
+  });
+  t.deepEqual(result.pool.idleTimeoutMillis, 2000);
+});
+
+test('getKnexConfig sets maxPool size when env is set', async (t) => {
+  const result = await getKnexConfig({
+    env: {
+      ...dbConnectionConfigEnv,
+      dbMaxPool: 10,
+    },
+  });
+  t.deepEqual(result.pool.max, 10);
+});
+
+test('getKnexConfig sets createTimeoutMillis when env is set', async (t) => {
+  const result = await getKnexConfig({
+    env: {
+      ...dbConnectionConfigEnv,
+      createTimeoutMillis: 100000,
+    },
+  });
+  t.deepEqual(result.pool.createTimeoutMillis, 100000);
 });
 
 test('getSecretConnectionConfig returns a Knex.PgConnectionConfig object', async (t) => {
@@ -78,6 +142,7 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
     PG_USER: 'PG_USER',
     PG_PASSWORD: 'PG_PASSWORD',
     PG_DATABASE: 'PG_DATABASE',
+    PG_PORT: 5435,
   };
   const result = getConnectionConfigEnv(envObject);
   t.deepEqual(result, {
@@ -85,5 +150,78 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
     user: 'PG_USER',
     password: 'PG_PASSWORD',
     database: 'PG_DATABASE',
+    port: 5435,
   });
+});
+
+test('getConnectionConfigEnv returns the expected configuration from the passed in env object with undefined port', (t) => {
+  const envObject = {
+    PG_HOST: 'PG_HOST',
+    PG_USER: 'PG_USER',
+    PG_PASSWORD: 'PG_PASSWORD',
+    PG_DATABASE: 'PG_DATABASE',
+  };
+  const result = getConnectionConfigEnv(envObject);
+  t.deepEqual(result, {
+    host: 'PG_HOST',
+    user: 'PG_USER',
+    password: 'PG_PASSWORD',
+    database: 'PG_DATABASE',
+    port: 5432,
+  });
+});
+
+test('getConnectionConfig returns the expected configuration when using Secrets Manager', async (t) => {
+  const result = await getConnectionConfig({
+    env: { databaseCredentialSecretArn: 'fakeSecretId' },
+    secretsManager: secretsManagerStub,
+  });
+
+  const expectedConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+  };
+  delete expectedConfig.username;
+
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getConnectionConfig returns the expected configuration when using Secrets Manager with no port defined', async (t) => {
+  const result = await getConnectionConfig({
+    env: { databaseCredentialSecretArn: 'fakeSecretId' },
+    secretsManager: secretsManagerNoPortStub
+    ,
+  });
+
+  const expectedConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+    port: 5432,
+  };
+  delete expectedConfig.username;
+
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getConnectionConfig returns the expected configuration when using environment variables', async (t) => {
+  const result = await getConnectionConfig({
+    env: {
+      PG_HOST: 'PG_HOST',
+      PG_USER: 'PG_USER',
+      PG_PASSWORD: 'PG_PASSWORD',
+      PG_DATABASE: 'PG_DATABASE',
+      PG_PORT: 5435,
+    },
+  });
+
+  t.deepEqual(
+    result,
+    {
+      host: 'PG_HOST',
+      user: 'PG_USER',
+      password: 'PG_PASSWORD',
+      database: 'PG_DATABASE',
+      port: 5435,
+    }
+  );
 });

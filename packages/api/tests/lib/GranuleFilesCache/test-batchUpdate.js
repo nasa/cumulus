@@ -7,7 +7,7 @@ const get = require('lodash/get');
 const range = require('lodash/range');
 const test = require('ava');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { noop } = require('@cumulus/common/util');
+const noop = require('lodash/noop');
 const { randomString } = require('@cumulus/common/test-utils');
 const GranuleFilesCache = require('../../../lib/GranuleFilesCache');
 

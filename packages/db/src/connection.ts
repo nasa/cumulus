@@ -1,100 +1,89 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
-import { getSecretConnectionConfig, getConnectionConfigEnv } from './config';
+import pRetry from 'p-retry';
 
-/**
- * Builds a Knex.PgConnectionConfig
- *
- * @param {NodeJS.ProcessEnv} params        - parameter object with knex configuration
- * @param {boolean} params.connectionConfig - Knex.PgConnectionConfig Object (host, username,
- *                                            port, etc)
- * @param {boolean} params.debug            - If set to true, will enable Knex debugging
- * @param {number} params.timeout           - Sets knex acquireConnectionTimeout value in
- *                                            milliseconds
- * @param {string} [params.migrationDir]    - The directory (relative path) knex will look in
- *                                            for migrations
- * @returns {Knex.PgConnectionConfig} - KnexConfigObject
- */
-const buildKnexConfiguration = ({
-  connectionConfig,
-  debug = false,
-  asyncStackTraces = false,
-  timeout = 60000,
-  migrationDir,
+import Logger from '@cumulus/logger';
+
+import { getKnexConfig } from './config';
+
+const log = new Logger({ sender: '@cumulus/db/connection' });
+
+export const queryHeartbeat = async ({
+  knex,
 }: {
-  connectionConfig: Knex.PgConnectionConfig,
-  debug?: boolean,
-  asyncStackTraces?: boolean,
-  timeout?: number,
-  migrationDir?: string,
-}): Knex.Config => {
-  const knexConfig: Knex.Config = {
-    client: 'pg',
-    connection: connectionConfig,
-    debug,
-    asyncStackTraces,
-    acquireConnectionTimeout: timeout,
-  };
-
-  if (migrationDir !== undefined) {
-    knexConfig.migrations = { directory: migrationDir };
+  knex: Knex
+}): Promise<void> => pRetry(
+  async () => {
+    log.info('Sending Heartbeat Query');
+    await knex.raw('SELECT 1');
+    log.info('Heartbeat succeeded');
+  },
+  {
+    onFailedAttempt: (error) => {
+      if (error.name !== 'KnexTimeoutError') {
+        throw error;
+      }
+      log.warn(`Failed intial attempt at RDS DB connection due to ${error.name}`);
+    },
+    retries: 1,
   }
-  return knexConfig;
-};
+);
 
 /**
-* Given a NodeJS.ProcessEnv with configuration values, build and return a
-* Knex instance
-* @param {NodeJS.ProcessEnv} env .  - Object with configuration keys
-*                                                  set
-* Requires either:
-* @param {string} env.PG_HOST       - Hostname database cluster
-* @param {string} env.PG_USER       - User to connect to the database
-* @param {string} env.PG_PASSWORD   - Password to use to connect to the database
-* @param {string} [env.PG_DATABASE] - Optional - postgres database to connect to on the db cluster
-* Or:
-* @param {string} env.databaseCredentialSecretArn - key referencing a AWS SecretsManager
-*                                                   Secret with required
-* `databaseCredentialSecretArn` keys:
-*   host     - Hostname database cluster
-*   username - User to connect to the database
-*   password - Password to use to connect to the database
-*   database - Optional - postgres database to connect to on the db cluster
-*
-* Additionally, the following are configuration options:
-* @param {string} [env.KNEX_ASYNC_STACK_TRACES]  - If set to 'true' will enable knex async
-*                                                  stack traces.
-* @param {string} [env.KNEX_DEBUG]               - If set to 'true' will enable knex debugging
-* @param {string} [env.acquireConnectionTimeout] - Knex acquireConnectionTimeout connection timeout
-* @param {string} [env.migrationDir]             - Directory to look in for migrations
-*
-* @returns {Promise<Knex>} Returns a configured knex instance
-*/
-export const knex = async (env: NodeJS.ProcessEnv): Promise<Knex> => {
-  let connectionConfig: Knex.PgConnectionConfig;
-
-  if (env.databaseCredentialSecretArn) {
-    const secretsManager = new AWS.SecretsManager();
-    connectionConfig = await getSecretConnectionConfig(
-      env.databaseCredentialSecretArn,
-      secretsManager
-    );
-  } else {
-    connectionConfig = getConnectionConfigEnv(env);
+ * Given a NodeJS.ProcessEnv with configuration values, build and return
+ * Knex client
+ *
+ * @param {Object} params
+ * @param {NodeJS.ProcessEnv} params.env    - Object with configuration keys
+ *
+ * Requires either:
+ * @param {string} params.env.PG_HOST       - Hostname database cluster
+ * @param {string} params.env.PG_USER       - User to connect to the database
+ * @param {string} params.env.PG_PASSWORD   - Password to use to connect to the database
+ * @param {string} [params.env.PG_DATABASE] - postgres database to connect to on the db
+ *   cluster
+ *
+ * Or:
+ * @param {string} params.env.databaseCredentialSecretArn - key referencing an
+ *   AWS SecretsManager Secret with required
+ * `databaseCredentialSecretArn` keys:
+ *   host     - Hostname database cluster
+ *   username - User to connect to the database
+ *   password - Password to use to connect to the database
+ *   database - Optional - postgres database to connect to on the db cluster
+ *
+ * Additionally, the following are configuration options:
+ * @param {string} [params.env.KNEX_ASYNC_STACK_TRACES] - If set to 'true' will
+ *   enable knex async stack traces.
+ * @param {string} [params.env.KNEX_DEBUG] - If set to 'true' will enable knex
+ *   debugging
+ * @param {string} [params.env.acquireConnectionTimeout] - Knex
+ *   acquireConnectionTimeout connection timeout
+ * @param {string} [params.env.migrationDir] - Directory to look in for
+ *   migrations
+ * @param {string} params.env.dbHeartBeat - Configuration option if set to 'true'
+ *                                          causes the method to test the connection
+ *                                          before returning a knex object.  Will retry
+ *                                          on KnexTimeOutError due possible RDS serverless
+ *                                          deployment architechtures
+ * @returns {Promise<Knex>} a Knex configuration object that has returned at least one query
+ */
+export const getKnexClient = async ({
+  env = process.env,
+  secretsManager = new AWS.SecretsManager(),
+}: {
+  env?: NodeJS.ProcessEnv,
+  secretsManager?: AWS.SecretsManager
+} = {}): Promise<Knex> => {
+  const knexConfig = await getKnexConfig({ env, secretsManager });
+  const knex = Knex(knexConfig);
+  if (env.dbHeartBeat === 'true') {
+    try {
+      await queryHeartbeat({ knex });
+    } catch (error) {
+      knex.destroy();
+      throw error;
+    }
   }
-
-  let timeout;
-  if (env.knexAcquireConnectionTimeout) {
-    timeout = Number(env.knexAcquireConnectionTimeout);
-  }
-
-  const knexConfig = buildKnexConfiguration({
-    connectionConfig,
-    asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
-    debug: env.KNEX_DEBUG === 'true',
-    migrationDir: env.migrationDir,
-    timeout,
-  });
-
-  return Knex(knexConfig);
+  return knex;
 };

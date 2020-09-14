@@ -24,6 +24,7 @@ module "provision_database" {
   permissions_boundary_arn        = var.permissions_boundary_arn
   vpc_id                          = var.vpc_id
   rds_user_password               = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
+  rds_connection_heartbeat        = var.rds_connection_heartbeat
 }
 
 module "data_persistence" {

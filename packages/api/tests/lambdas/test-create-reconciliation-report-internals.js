@@ -7,24 +7,20 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
 const isOneWayReport = CRP.__get__('isOneWayReport');
-const shouldFilter = CRP.__get__('shouldFilter');
-const dateToValue = CRP.__get__('dateToValue');
-const convertToESCollectionSearchParams = CRP.__get__(
-  'convertToESCollectionSearchParams'
-);
-const convertToESGranuleSearchParams = CRP.__get__(
-  'convertToESGranuleSearchParams'
-);
+const shouldFilterByTime = CRP.__get__('shouldFilterByTime');
+const normalizeEvent = CRP.__get__('normalizeEvent');
 
 test(
   'isOneWayReport returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
+
     const paramsThatShouldReturnFalse = [
       'stackName',
       'systemBucket',
       'anythingAtAll',
+      'collectionId',
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
@@ -49,7 +45,7 @@ test(
 );
 
 test(
-  'shouldFilter returns true only when one or more specific parameters '
+  'shouldFilterByTime returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
@@ -61,76 +57,105 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldFilter({ [p]: randomId('value') })));
+      t.true(shouldFilterByTime({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldFilter({ [p]: randomId('value') })));
+      t.false(shouldFilterByTime({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.true(shouldFilter(allTrueKeys));
+    t.true(shouldFilterByTime(allTrueKeys));
 
     const allFalseKeys = paramsThatShouldReturnFalse.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.false(shouldFilter(allFalseKeys));
-    t.true(shouldFilter({ ...allTrueKeys, ...allFalseKeys }));
+    t.false(shouldFilterByTime(allFalseKeys));
+    t.true(shouldFilterByTime({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
 
-test('dateToValue converts a string representation to a primitive date.', (t) => {
-  const primitiveValue = 1500000000000;
-  const testStrings = [
-    'Thu Jul 13 2017 20:40:00 GMT-0600',
-    'Fri Jul 14 2017 02:40:00 GMT+0000',
-    '2017-07-14T02:40:00.000Z',
-    'Fri, 14 Jul 2017 02:40:00 GMT',
-  ];
-  testStrings.map((testVal) => t.is(dateToValue(testVal), primitiveValue));
+test('normalizeEvent throws error if array of collectionIds passed to Internal report', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Internal',
+    collectionId: ['someCollection___version'],
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    message:
+      '["someCollection___version"] is not valid input for an \'Internal\' report.',
+  });
 });
 
-test('dateToValue returns undefined for any string that cannot be converted to a date.', (t) => {
-  const testStrings = ['startTime', '20170713 20:40:00', '20170713T204000'];
-  testStrings.map((testVal) => t.is(dateToValue(testVal), undefined));
+test('normalizeEvent converts input key collectionId string to length 1 array on collectionIds', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'NotInternal',
+    collectionId: 'someCollection___version',
+  };
+  const expect = { ...inputEvent, collectionIds: ['someCollection___version'] };
+  delete expect.collectionId;
+
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expect);
 });
 
-test('convertToESCollectionSearchParams returns correct search object.', (t) => {
-  const startTimestamp = '2000-10-31T15:00:00.000Z';
-  const endTimestamp = '2001-10-31T15:00:00.000Z';
-  const testObj = {
-    startTimestamp,
-    endTimestamp,
-    anotherKey: 'anything',
-    anotherKey2: 'they are ignored',
+test('normalizeEvent moves input key collectionId array to array on collectionIds', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'NotInternal',
+    collectionId: ['someCollection___version', 'secondcollection___version'],
   };
-
-  const expected = {
-    updatedAt__from: 973004400000,
-    updatedAt__to: 1004540400000,
+  const expect = {
+    ...inputEvent,
+    collectionIds: ['someCollection___version', 'secondcollection___version'],
   };
+  delete expect.collectionId;
 
-  const actual = convertToESCollectionSearchParams(testObj);
-  t.deepEqual(actual, expected);
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expect);
 });
 
-test('convertToESGranuleSearchParams returns correct search object.', (t) => {
-  const startTimestamp = '2010-01-01T00:00:00.000Z';
-  const endTimestamp = '2011-10-01T12:00:00.000Z';
-  const testObj = {
-    startTimestamp,
-    endTimestamp,
-    anotherKey: 'anything',
-    anotherKey2: 'they are ignored',
+test('normalizeEvent adds new collectionIds key when collectionId passed to Internal report', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Internal',
+    collectionId: 'someCollection___version',
+  };
+  const expect = {
+    ...inputEvent,
+    collectionIds: ['someCollection___version'],
   };
 
-  const expected = {
-    updatedAt__from: 1262304000000,
-    updatedAt__to: 1317470400000,
-  };
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expect);
+});
 
-  const actual = convertToESGranuleSearchParams(testObj);
-  t.deepEqual(actual, expected);
+test('normalizeEvent throws error if original input event contains collectionIds key', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Internal',
+    collectionIds: ['someCollection___version'],
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    message:
+      '`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.',
+  });
 });
