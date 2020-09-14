@@ -14,6 +14,12 @@ resource "aws_lambda_function" "provision_database" {
   runtime          = "nodejs12.x"
   memory_size      = 256
   timeout          = 500
+  environment {
+    variables = {
+      dbHeartBeat                 = var.rds_connection_heartbeat
+    }
+  }
+
 
   dynamic "vpc_config" {
     for_each = length(var.subnet_ids) == 0 ? [] : [1]

@@ -7,6 +7,7 @@ export const localStackConnectionEnv = {
   PG_USER: 'postgres',
   PG_PASSWORD: 'password',
   PG_DATABASE: 'postgres',
+  PG_PORT: 5432,
 };
 
 export const getSecretConnectionConfig = async (
@@ -31,6 +32,7 @@ export const getSecretConnectionConfig = async (
     user: dbAccessMeta.username,
     password: dbAccessMeta.password,
     database: dbAccessMeta.database,
+    port: dbAccessMeta.port ?? 5432,
   };
 };
 
@@ -41,6 +43,7 @@ export const getConnectionConfigEnv = (
   user: envUtils.getRequiredEnvVar('PG_USER', env),
   password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
   database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
+  port: Number.parseInt(env.PG_PORT ?? '5432', 10),
 });
 
 /**
@@ -105,7 +108,12 @@ export const getConnectionConfig = async ({
  *   acquireConnectionTimeout connection timeout
  * @param {string} [params.env.migrationDir] - Directory to look in for
  *   migrations
- *
+ * @param {string} [params.env.createTimeoutMillis]  - tarn/knex pool object
+ *                                                     creation timeout
+ * @param {string} [params.env.idleTimeoutMillis]    - tarn/knex pool object
+ *                                                     idle timeout
+ * @param {string} [params.env.dbMaxPool]            - tarn/knex max pool
+ *                                                     connections
  * @returns {Promise<Knex.Config>} a Knex configuration object
  */
 export const getKnexConfig = async ({
@@ -120,6 +128,15 @@ export const getKnexConfig = async ({
     connection: await getConnectionConfig({ env, secretsManager }),
     debug: env.KNEX_DEBUG === 'true',
     asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
+    pool: {
+      min: 0,
+      max: Number.parseInt(env.dbMaxPool ?? '2', 10),
+      idleTimeoutMillis: Number.parseInt(env.idleTimeoutMillis ?? '1000', 10),
+      // ts-ignore as https://github.com/knex/knex/blob/master/types/index.d.ts#L1886
+      // is improperly typed.
+      //@ts-ignore
+      createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '60000', 10),
+    },
   };
 
   knexConfig.acquireConnectionTimeout = env.knexAcquireConnectionTimeout
