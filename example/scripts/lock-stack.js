@@ -1,3 +1,5 @@
+// *** Note - updates to dynamodbDocClient may not be reflected in this script in CI
+// see: https://github.com/nasa/cumulus/blob/master/bamboo/cleanup-integration-tests.sh
 /* eslint no-console: "off" */
 
 'use strict';
