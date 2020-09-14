@@ -53,6 +53,7 @@ const { waitForModelStatus } = require('../../helpers/apiUtils');
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
+const onlyCMRCollection = { name: 'L2_HR_PIXC', version: '1' };
 
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketsConfig = new BucketsConfig(
@@ -363,6 +364,11 @@ describe('When there are granule differences and granule reconciliation is run',
     it('generates an async operation through the Cumulus API', async () => {
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
+        request: { collectionId: [
+          constructCollectionId(collection.name, collection.version),
+          constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+          constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
+        ] },
       });
 
       const responseBody = JSON.parse(response.body);
@@ -427,7 +433,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
     it('generates a report showing collections that are in the CMR but not in Cumulus', () => {
       // we know CMR has collections which are not in Cumulus
-      expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBeGreaterThanOrEqual(1);
+      expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBe(1);
       expect(report.collectionsInCumulusCmr.onlyInCmr).not.toContain(collectionId);
     });
 
