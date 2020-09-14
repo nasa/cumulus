@@ -92,9 +92,6 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
 
-      nodeName = `${config.stackName}-pdr-node-name-provider`;
-      nodeNameProviderId = `provider-${nodeName}`;
-
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
@@ -107,6 +104,9 @@ describe('Ingesting from PDR', () => {
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
 
       provider = { id: `s3_provider${testSuffix}` };
+
+      nodeName = `${config.stackName}-pdr-node-name-provider`;
+      nodeNameProviderId = `provider-${nodeName}`;
 
       const createProviderResponse = await providersApi.createProvider({
         prefix: config.stackName,

@@ -1,3 +1,6 @@
+# This bucket is used in the "ingest PDR" tests that specify a "NODE_NAME" for
+# the granule in the PDR.
+
 resource "aws_s3_bucket" "pdr_node_name_provider" {
   bucket = "${var.prefix}-pdr-node-name-provider"
 
