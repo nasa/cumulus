@@ -99,7 +99,7 @@ Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-d
 
 We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
 
-**Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) in Github so that you can add your workflows and other modules to source control:
+**Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) on Github so that you can add your workflows and other modules to source control:
 
 ```bash
   git remote set-url origin https://github.com/nasa/<repository-name>
