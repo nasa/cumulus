@@ -77,7 +77,7 @@ function isOneWayReport(reportParams) {
  * @param {Object} searchParams
  * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
  */
-function shouldFilterByTime(searchParams) {
+function shouldAggregateGranules(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
@@ -95,7 +95,7 @@ async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParam
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
-  if (shouldFilterByTime(esCollectionSearchParams)) {
+  if (shouldAggregateGranules(esCollectionSearchParams)) {
     // Build an ESCollection and call the aggregateActiveGranuleCollections to
     // get list of collection ids that have granules that have been updated
     const esCollection = new Collection({ queryStringParameters: esGranuleSearchParams }, 'collection', process.env.ES_INDEX);
@@ -733,7 +733,7 @@ function normalizeEvent(event) {
   // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
   // for now, move input collectionId to collectionIds as array
   // internal reports will keep existing collectionId and copy it to collectionIds
-  let { collectionIds: anyCollectionIds, collectionId, ...modifiedEvent } = { ...event };
+  let { collectionIds: anyCollectionIds, collectionId, granuleId, ...modifiedEvent } = { ...event };
   if (anyCollectionIds) {
     throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
@@ -746,10 +746,15 @@ function normalizeEvent(event) {
         modifiedEvent = { ...event, collectionIds: [collectionId] };
       }
     } else {
-      // transform input collectionId into array on collectionIds
+      // transform input collectionId into an array on collectionIds
       const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
       modifiedEvent = { ...modifiedEvent, collectionIds };
     }
+  }
+  if (granuleId) {
+    // transform input granuleId into an array on granuleIds
+    const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
+    modifiedEvent = { ...modifiedEvent, granuleIds, granuleId: undefined };
   }
 
   return removeNilProperties({

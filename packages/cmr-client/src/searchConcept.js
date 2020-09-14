@@ -41,8 +41,19 @@ async function searchConcept({
 
   const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
 
+  let query;
   // if requested, recursively retrieve all the search results for collections or granules
-  const query = { ...defaultParams, ...searchParams, page_num: pageNum };
+  if (searchParams instanceof URLSearchParams) {
+    query = new URLSearchParams(defaultParams);
+    searchParams.forEach((value, name) => {
+      query.append(name, value);
+    });
+    query.append('page_num', pageNum);
+    console.log(`query: => ${query.toString()}`);
+  } else {
+    query = { ...defaultParams, ...searchParams, page_num: pageNum };
+  }
+
   const response = await got.get(url, { json: format.endsWith('json'), query, headers });
 
   const responseItems = (format === 'echo10')

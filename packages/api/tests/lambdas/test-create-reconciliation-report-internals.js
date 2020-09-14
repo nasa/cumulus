@@ -7,7 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
 const isOneWayReport = CRP.__get__('isOneWayReport');
-const shouldFilterByTime = CRP.__get__('shouldFilterByTime');
+const shouldAggregateGranules = CRP.__get__('shouldAggregateGranules');
 const normalizeEvent = CRP.__get__('normalizeEvent');
 
 test(
@@ -45,7 +45,7 @@ test(
 );
 
 test(
-  'shouldFilterByTime returns true only when one or more specific parameters '
+  'shouldAggregateGranules returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
@@ -57,23 +57,23 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldFilterByTime({ [p]: randomId('value') })));
+      t.true(shouldAggregateGranules({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldFilterByTime({ [p]: randomId('value') })));
+      t.false(shouldAggregateGranules({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.true(shouldFilterByTime(allTrueKeys));
+    t.true(shouldAggregateGranules(allTrueKeys));
 
     const allFalseKeys = paramsThatShouldReturnFalse.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.false(shouldFilterByTime(allFalseKeys));
-    t.true(shouldFilterByTime({ ...allTrueKeys, ...allFalseKeys }));
+    t.false(shouldAggregateGranules(allFalseKeys));
+    t.true(shouldAggregateGranules({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
 
@@ -158,4 +158,43 @@ test('normalizeEvent throws error if original input event contains collectionIds
     message:
       '`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.',
   });
+});
+
+test('normalizeEvent moves string on granuleId to array on granuleIds', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Not Internal',
+    granuleId: 'someGranule___version',
+  };
+  const expect = {
+    ...inputEvent,
+    granuleIds: ['someGranule___version'],
+  };
+  delete expect.granuleId;
+
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expect);
+});
+
+test('normalizeEvent moves array on granuleId to granuleIds', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Not Internal',
+    granuleId: ['someGranule___version', 'someGranule___version2'],
+  };
+
+  const expect = {
+    ...inputEvent,
+    granuleIds: ['someGranule___version', 'someGranule___version2'],
+  };
+  delete expect.granuleId;
+
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expect);
 });

@@ -65,12 +65,14 @@ function convertToDBCollectionSearchParams(params) {
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
 function convertToESGranuleSearchParams(params) {
-  const { collectionIds } = params;
+  const { collectionIds, granuleIds } = params;
   const collectionIdIn = collectionIds ? collectionIds.join(',') : undefined;
+  const granuleIdIn = granuleIds ? granuleIds.join(',') : undefined;
   return removeNilProperties({
     updatedAt__from: dateToValue(params.startTimestamp),
     updatedAt__to: dateToValue(params.endTimestamp),
     collectionId__in: collectionIdIn,
+    granuleIdIn__in: granuleIdIn,
   });
 }
 
