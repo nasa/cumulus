@@ -23,7 +23,7 @@ buckets = {
     type = "public"
   }
 }
-subnet_ids    = ["subnet-12345"]
+lambda_subnet_ids    = ["subnet-12345"]
 system_bucket = "PREFIX-internal"
 vpc_id        = "vpc-12345"
 
