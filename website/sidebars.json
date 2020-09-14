@@ -22,16 +22,16 @@
       "deployment/components",
       "deployment/create_bucket",
       "deployment/thin_egress_app",
-      "additional-deployment-options/api-gateway-logging",
-      "additional-deployment-options/share-s3-access-logs",
-      "additional-deployment-options/cloudwatch-logs-delivery"
+      "deployment/api-gateway-logging",
+      "deployment/share-s3-access-logs",
+      "deployment/cloudwatch-logs-delivery"
     ],
     "Configuration": [
-      "deployment/monitoring-readme",
-      "deployment/server_access_logging",
-      "data-cookbooks/cloudwatch-retention",
-      "operator-docs/lifecycle-policies",
-      "operator-docs/collection-storage-best-practices"
+      "configuration/monitoring-readme",
+      "configuration/server_access_logging",
+      "configuration/cloudwatch-retention",
+      "configuration/lifecycle-policies",
+      "configuration/collection-storage-best-practices"
     ],
     "Development": [
       "workflows/developing-a-cumulus-workflow",
@@ -59,12 +59,12 @@
       "features/ancillary_metadata",
       "features/distribution-metrics",
       "features/logging-esdis-metrics",
-      "operator-docs/replay-kinesis-messages"
+      "features/replay-kinesis-messages"
     ],
     "Troubleshooting": [
       "troubleshooting/troubleshooting-readme",
       "troubleshooting/troubleshooting-deployment",
-      "operator-docs/rerunning-workflow-executions"
+      "troubleshooting/rerunning-workflow-executions"
     ]
   },
   "Data Cookbooks": {
