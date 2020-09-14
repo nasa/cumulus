@@ -100,10 +100,6 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-  const startTimestamp = req.body.startTimestamp || undefined;
-  const endTimestamp = req.body.endTimestamp || undefined;
-  const payload = { startTimestamp, endTimestamp };
-
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -114,9 +110,9 @@ async function createReport(req, res) {
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.invokeReconcileLambda,
-    description: 'Create Inventory Report',
+    description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
-    payload,
+    payload: req.body,
     useLambdaEnvironmentVariables: true,
   });
 

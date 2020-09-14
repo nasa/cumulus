@@ -16,26 +16,32 @@ configuring Terraform, deploying the two root modules, and running your tests.
 
 ## Install Terraform
 
-If you are using a Mac and [Homebrew](https://brew.sh), installing Terraform is
+In order to manage your installed Terraform versions, we recommend using [`tfenv`](https://github.com/tfutils/tfenv).
+
+If you are using a Mac and [Homebrew](https://brew.sh), installing `tfenv` is
 as simple as:
 
 ```shell
 brew update
-brew install terraform
+brew install tfenv
 ```
 
-For other cases,
-[installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html)
-are available.
+In order to prevent state corruption and other issues, you **should only install and use the version of Terraform specified in the `example/.tfversion` file**:
 
-Verify that the version of Terraform installed is at least v0.12.0.
+```shell
+tfenv install $(cat example/.tfversion)
+```
+
+Verify that the correct version of Terraform is installed (version number should match `example/.tfversion`):
 
 ```shell
 $ terraform --version
-Terraform v0.12.2
+Terraform v0.12.12
 ```
 
-**Note:** The version of terraform used in Bamboo is specified in the `example/.tfversion` file. It is recommended to use the same version locally to prevent inconsistencies and `upgrade to Terraform v<newer> or greater to work with this state` errors when working with deployments created or updated through Bamboo
+If you want to install Terraform manually,
+[installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html)
+are available.
 
 ## Clone and build Cumulus
 

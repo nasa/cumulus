@@ -3,7 +3,7 @@
 const test = require('ava');
 const attr = require('dynamodb-data-types').AttributeValue;
 const { randomString } = require('@cumulus/common/test-utils');
-const { noop } = require('@cumulus/common/util');
+const noop = require('lodash/noop');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { handler } = require('../../lambdas/granuleFilesCacheUpdater');

@@ -27,6 +27,14 @@ variable "cmr_username" {
   type = string
 }
 
+variable "rds_security_group" {
+  type = string
+}
+
+variable "rds_user_access_secret_arn" {
+  type = string
+}
+
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
@@ -260,6 +268,12 @@ variable "protected_buckets" {
 variable "public_buckets" {
   type    = list(string)
   default = []
+}
+
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type    = bool
+  default = false
 }
 
 variable "saml_entity_id" {

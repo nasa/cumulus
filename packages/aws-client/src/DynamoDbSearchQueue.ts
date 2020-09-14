@@ -1,3 +1,4 @@
+import * as AWS from 'aws-sdk';
 import { dynamodbDocClient } from './services';
 
 /**
@@ -15,6 +16,24 @@ class DynamoDbSearchQueue {
     this.params = params;
     this.dynamodbDocClient = dynamodbDocClient();
     this.searchType = searchType;
+  }
+
+  /**
+   * Drain all values from the searchQueue, and return to the user.
+   * Warning: This can be very memory intensive.
+   *
+   * @returns {Promise<Array>} array of search results.
+   */
+  async empty() {
+    let result;
+    const results = [];
+    do {
+      result = await this.shift(); // eslint-disable-line no-await-in-loop
+      if (result) {
+        results.push(result);
+      }
+    } while (result);
+    return results;
   }
 
   /**

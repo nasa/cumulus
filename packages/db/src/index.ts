@@ -18,3 +18,6 @@ export const dropAllTables = async ({
     tableNames.map((tableName) => knex.schema.dropTable(tableName))
   );
 };
+
+export { getKnexClient } from './connection';
+export { getKnexConfig, localStackConnectionEnv } from './config';

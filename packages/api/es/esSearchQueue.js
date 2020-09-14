@@ -3,9 +3,6 @@
 const { defaultIndexAlias } = require('./search');
 const ESScrollSearch = require('./esScrollSearch');
 
-// TODO [MHS, ]  leave until you find out if you need it.
-const buildResponse = (response) => response;
-
 /**
  * Class to create a queuable elasticsearch query.  It creates and manages a
  * scollSearch. Providing peek(), and shift() operations.
@@ -26,12 +23,12 @@ class ESSearchQueue {
    */
   async empty() {
     let result;
-    let results = [];
+    const results = [];
     /* eslint-disable no-await-in-loop */
     do {
       result = await this.shift();
       if (result) {
-        results = results.concat(result);
+        results.push(result);
       }
     } while (result);
     /* eslint-enable no-await-in-loop */
@@ -78,8 +75,7 @@ class ESSearchQueue {
         this.index
       );
     }
-    const response = await this.scrollClient.query();
-    this.items = buildResponse(response);
+    this.items = await this.scrollClient.query();
   }
 }
 

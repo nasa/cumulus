@@ -928,4 +928,6 @@ module.exports = {
   publish2CMR,
   reconcileCMRMetadata,
   updateCMRMetadata,
+  uploadEcho10CMRFile,
+  uploadUMMGJSONCMRFile,
 };

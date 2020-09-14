@@ -1,6 +1,8 @@
 'use strict';
 
 const test = require('ava');
+const pick = require('lodash/pick');
+const sortBy = require('lodash/sortBy');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -509,6 +511,48 @@ test('getGranulesForCollection() filters by status', async (t) => {
   const { granuleId } = await granules.shift();
   t.is(granuleId, expectedGranule.granuleId);
   t.is(await granules.shift(), null);
+});
+
+test('searchGranulesForCollection() returns matching granules ordered by granuleId', async (t) => {
+  const { granuleModel } = t.context;
+
+  const collectionId = randomString();
+  const provider = randomString();
+  const status = 'running';
+  const granules = [
+    fakeGranuleFactoryV2({ collectionId, provider, status }),
+    fakeGranuleFactoryV2({ collectionId, provider, status }),
+    fakeGranuleFactoryV2({ collectionId, provider, status: 'completed' }),
+    fakeGranuleFactoryV2({ collectionId, provider: randomString(), status: 'completed' }),
+  ];
+  await granuleModel.create(granules);
+
+  const fields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'status'];
+
+  let searchParams = {
+    provider,
+    status,
+    updatedAt__from: Date.now() - 1000 * 30,
+    updatedAt__to: Date.now(),
+  };
+  let granulesQueue = await granuleModel
+    .searchGranulesForCollection(collectionId, searchParams, fields);
+
+  let fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 2);
+  const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
+  t.deepEqual(fetchedGranules, sortBy(expectedGranules, ['granuleId']));
+
+  // test when no granule falls within the search parameter range
+  searchParams = {
+    provider,
+    status,
+    updatedAt__from: Date.now(),
+  };
+  granulesQueue = await granuleModel
+    .searchGranulesForCollection(collectionId, searchParams, fields);
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 0);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {

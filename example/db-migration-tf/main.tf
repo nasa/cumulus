@@ -9,16 +9,25 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+locals {
+  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", var.rds_security_group)
+  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", var.rds_user_access_secret_arn)
+}
+
+data "terraform_remote_state" "data_persistence" {
+  backend   = "s3"
+  config    = var.data_persistence_remote_state_config
+  workspace = terraform.workspace
+}
+
 module "db_migration" {
   source = "../../lambdas/db-migration"
 
-  permissions_boundary_arn = var.permissions_boundary_arn
-  pg_host                  = var.pg_host
-  pg_password              = var.pg_password
-  pg_user                  = var.pg_user
-  pg_database              = var.pg_database
-  prefix                   = var.prefix
-  subnet_ids               = var.subnet_ids
-  tags                     = merge(var.tags, { Deployment = var.prefix })
-  vpc_id                   = var.vpc_id
+  rds_user_access_secret_arn  = local.rds_credentials_secret_arn
+  permissions_boundary_arn    = var.permissions_boundary_arn
+  prefix                      = var.prefix
+  subnet_ids                  = var.subnet_ids
+  tags                        = merge(var.tags, { Deployment = var.prefix })
+  vpc_id                      = var.vpc_id
+  rds_security_group_id       = local.rds_security_group
 }
