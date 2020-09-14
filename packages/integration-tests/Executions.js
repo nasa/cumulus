@@ -69,6 +69,7 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
     },
     {
       retries: options.timeout,
+      minTimeout: 1000,
       maxTimeout: 1000,
     }
   );

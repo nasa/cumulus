@@ -28,7 +28,6 @@ const { Search } = require('../../es/search');
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
-
 const models = require('../../models');
 const indexer = require('../../es/indexer');
 
@@ -250,14 +249,7 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
 
   // Stub CMR searchCollection that filters on inputParams if present.
   CMR.prototype.searchCollections.restore();
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake((inputParams) => {
-    if (inputParams && inputParams.short_name) {
-      return cmrCollections.filter((f) =>
-        f.umm.ShortName === inputParams.short_name
-          && f.umm.Version === inputParams.version);
-    }
-    return cmrCollections;
-  });
+  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
 
   await storeCollectionsToElasticsearch(
     matchingCollections
@@ -786,19 +778,26 @@ test.serial(
 );
 
 test.serial(
-  'Generates valid ONE WAY reconciliation report with time params and filters by collectionId when there are extra cumulus/ES and CMR collections',
+  'Generates valid ONE WAY reconciliation report with time params and filters by collectionIds when there are extra cumulus/ES and CMR collections',
   async (t) => {
     const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
 
-    const testCollection = setupVars.matchingCollections[3];
-    console.log(`testCollection: ${JSON.stringify(testCollection)}`);
+    const testCollection = [
+      setupVars.matchingCollections[3],
+      setupVars.extraCmrCollections[1],
+      setupVars.extraESCollections[1],
+      setupVars.extraESCollectionsOutOfRange[0],
+    ];
+    const collectionId = testCollection.map((c) => constructCollectionId(c.name, c.version));
+
+    console.log(`collectionId: ${JSON.stringify(collectionId)}`);
 
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
       startTimestamp,
       endTimestamp,
-      collectionId: constructCollectionId(testCollection.name, testCollection.version),
+      collectionId,
     };
 
     const reportRecord = await handler(event);
@@ -812,7 +811,8 @@ test.serial(
     t.is(collectionsInCumulusCmr.okCount, 1);
 
     // cumulus filters by collectionId and only returned the good one above.
-    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
+    t.true(collectionsInCumulusCmr.onlyInCumulus.includes(collectionId[2]));
 
     // ONE WAY only comparison because of input timestampes
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
@@ -841,7 +841,7 @@ test.serial(
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
-      collectionId: constructCollectionId(testCollection.name, testCollection.version),
+      collectionId: [constructCollectionId(testCollection.name, testCollection.version)],
     };
 
     const reportRecord = await handler(event);
@@ -861,17 +861,22 @@ test.serial(
 );
 
 test.serial(
-  'When a filtered collectionId exists only in CMR, creates a valid bi-directional reconciliation report.',
+  'When an array of collectionId exists only in CMR, creates a valid bi-directional reconciliation report.',
   async (t) => {
     const setupVars = await setupElasticAndCMRForTests({ t });
 
-    const testCollection = setupVars.extraCmrCollections[3];
-    console.log(`testCollection: ${JSON.stringify(testCollection)}`);
+    const testCollection = [
+      setupVars.extraCmrCollections[3],
+      setupVars.matchingCollections[2],
+      setupVars.extraESCollections[1],
+    ];
+    const collectionId = testCollection.map((c) => constructCollectionId(c.name, c.version));
+    console.log(`testCollection: ${JSON.stringify(collectionId)}`);
 
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
-      collectionId: constructCollectionId(testCollection.name, testCollection.version),
+      collectionId,
     };
 
     const reportRecord = await handler(event);
@@ -882,10 +887,11 @@ test.serial(
     t.is(report.status, 'SUCCESS');
     t.is(report.error, undefined);
     // Filtered by collectionId only in cmr
-    t.is(collectionsInCumulusCmr.okCount, 0);
-    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
+    t.is(collectionsInCumulusCmr.okCount, 1);
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
+    t.true(collectionsInCumulusCmr.onlyInCumulus.includes(collectionId[2]));
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 1);
-    t.true(collectionsInCumulusCmr.onlyInCmr.includes(event.collectionId));
+    t.true(collectionsInCumulusCmr.onlyInCmr.includes(collectionId[0]));
 
     t.is(report.reportEndTime, undefined);
     t.is(report.reportStartTime, undefined);

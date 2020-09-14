@@ -31,6 +31,8 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
       ingestTime = Date.now() - 1000 * 30;
 
+      console.log(`Creating rule for HelloWorldWorkflow with testExecutionId ${testExecutionId}`);
+
       rule = await createOneTimeRule(
         prefix,
         {

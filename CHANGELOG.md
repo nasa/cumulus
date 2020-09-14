@@ -48,14 +48,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2155**
+  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
+    modules.  If set to true, this diagnostic variable instructs Core's database
+    code to fire off a connection 'heartbeat' query and log the timing/results
+    for diagnostic purposes, and retry certain connection timeouts once.
+    This option is disabled by default
 - **CUMULUS-2123**
-  - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a severless RDS Aurora/ PostgreSQL database cluster to meet the PostgreSQL requirements for the 2.1.x release series
+  - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
+    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    requirements for the 2.1.x release series
   - Updated the default Cumulus module to take the following new required variables:
     - rds_user_access_secret_arn:
-      AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)
+      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
+      (containing at least host, password, port as keys)
     - rds_security_group:
       RDS Security Group that provides connection access to the RDS cluster
-  - Updated API lambdas and default ECS cluster to add them to the `rds_security_group` for database access
+  - Updated API lambdas and default ECS cluster to add them to the
+    `rds_security_group` for database access
 - **CUMULUS-1855**
   - Fixed SyncGranule task to return an empty granules list when given an empty
     (or absent) granules list on input, rather than throwing an exception
@@ -83,7 +93,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
     report to only the input collectionId when comparing Cumulus and
-    CMR.
+    CMR. `collectionId` is provided an array of strings e.g. `[shortname___version, shortname2___version2]`
 - **CUMULUS-2107**
   - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
     Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
@@ -114,6 +124,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
+- **CUMULUS-2163**
+  - Remove the `public-read` ACL from the `move-granules` task
 
 ### Deprecated
 

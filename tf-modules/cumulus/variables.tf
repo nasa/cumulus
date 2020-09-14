@@ -408,6 +408,12 @@ variable "private_archive_api_gateway" {
   default     = true
 }
 
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type        = bool
+  default     = false
+}
+
 variable "saml_entity_id" {
   description = "The endpoint EntityID from the Launchpad Integration Request"
   type        = string
