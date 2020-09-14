@@ -274,3 +274,9 @@ variable "es_index_shards" {
   type        = number
   default     = 2
 }
+
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type        = bool
+  default     = false
+}

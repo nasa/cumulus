@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC1091
+
 set -ex
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
@@ -15,5 +17,6 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull
 fi
 npm install
 npm --version
-(npm run bootstrap-no-build || true) && npm run bootstrap-no-build && cd example && node ./scripts/lock-stack.js lock $GIT_SHA $DEPLOYMENT false
-exit $RESULT
+## Bootstrapping is only required if updates to dynamodbDocClient relevant to lock-stack.js are made
+# (npm run bootstrap-no-build || true) && npm run bootstrap-no-build && cd example && node ./scripts/lock-stack.js lock $GIT_SHA $DEPLOYMENT false
+cd example && npm install && node ./scripts/lock-stack.js lock "$GIT_SHA" "$DEPLOYMENT" false

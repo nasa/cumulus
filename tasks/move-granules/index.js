@@ -162,8 +162,6 @@ async function moveFileRequest(
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
-  const ACL = bucketsConfig.type(file.bucket) === 'public' ? 'public-read' : undefined;
-
   let versionedFiles = [];
   if (s3ObjAlreadyExists) {
     if (markDuplicates) fileMoved.duplicate_found = true;
@@ -172,7 +170,6 @@ async function moveFileRequest(
       source,
       target,
       duplicateHandling,
-      ACL,
     });
   } else {
     await moveObject({
@@ -181,7 +178,6 @@ async function moveFileRequest(
       destinationBucket: target.Bucket,
       destinationKey: target.Key,
       copyTags: true,
-      ACL,
     });
   }
 
