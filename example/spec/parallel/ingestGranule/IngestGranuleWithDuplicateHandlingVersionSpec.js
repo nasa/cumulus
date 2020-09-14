@@ -119,7 +119,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
           return executionId === firstIngestGranuleRule.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
-        { timeout: 15 }
+        { timeout: 30 }
       );
 
       // Wait for the execution to be completed
@@ -190,7 +190,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
           return executionId === secondIngestGranuleRule.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
-        { timeout: 15 }
+        { timeout: 30 }
       );
 
       // Wait for the execution to be completed
