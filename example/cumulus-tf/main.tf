@@ -157,8 +157,6 @@ module "cumulus" {
   tea_stack_name =  local.tea_stack_name # must match stack name for thin-egress-app
   distribution_api_gateway_stage = local.tea_stage_name # must match stage name for thin-egress-app
   distribution_url = var.distribution_url
-  # thin_egress_jwt_secret_name = var.thin_egress_jwt_secret_name
-  # log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   log_destination_arn           = var.log_destination_arn
 
   # S3 credentials endpoint
@@ -211,7 +209,7 @@ module "thin_egress_app" {
   stack_name                 = local.tea_stack_name
   stage_name                 = local.tea_stage_name
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
-  vpc_subnet_ids             = var.subnet_ids
+  vpc_subnet_ids             = var.lambda_subnet_ids
 
   # Optional
   # cookie_domain                      = var.thin_egress_cookie_domain

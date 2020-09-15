@@ -41,7 +41,7 @@ variable "deploy_s3_credentials_endpoint" {
 variable "log_destination_arn" {
   type        = string
   default     = null
-  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true for TEA module."
 }
 
 variable "permissions_boundary_arn" {

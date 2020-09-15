@@ -357,16 +357,10 @@ variable "launchpad_passphrase" {
   default     = ""
 }
 
-variable "log_api_gateway_to_cloudwatch" {
-  type        = bool
-  default     = false
-  description = "Boolean switch to enable/disable logging of API Gateway distribution traffic to CloudWatch."
-}
-
 variable "log_destination_arn" {
   type        = string
   default     = null
-  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true for TEA module."
 }
 
 variable "metrics_es_host" {
@@ -442,41 +436,6 @@ variable "tags" {
   description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)
   default     = {}
-}
-
-variable "thin_egress_cookie_domain" {
-  type        = string
-  default     = null
-  description = "Valid domain for Thin Egress App cookie"
-}
-
-variable "thin_egress_domain_cert_arn" {
-  type        = string
-  default     = null
-  description = "Certificate Manager SSL Cert ARN for Thin Egress App if deployed outside NGAP/CloudFront"
-}
-
-variable "thin_egress_download_role_in_region_arn" {
-  type        = string
-  default     = null
-  description = "ARN for reading of Thin Egress App data buckets for in-region requests"
-}
-
-variable "thin_egress_jwt_algo" {
-  type        = string
-  default     = null
-  description = "Algorithm with which to encode the Thin Egress App JWT cookie"
-}
-
-variable "thin_egress_jwt_secret_name" {
-  type        = string
-  description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
-}
-
-variable "thin_egress_lambda_code_dependency_archive_key" {
-  type        = string
-  default     = null
-  description = "Thin Egress App - S3 Key of packaged python modules for lambda dependency layer"
 }
 
 variable "thin_egress_stack_name" {
