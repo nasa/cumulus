@@ -59,7 +59,7 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
 
 /**
  * Checks to see if any of the included reportParams contains a value that
- * would turn a Cumulus Vs CMR comparison into a one way report.
+ * would turn a Cumulus Vs CMR collection comparison into a one way report.
  *
  * @param {Object} reportParams
  * @returns {boolean} Returns true if any tested key exists on the input
@@ -75,7 +75,7 @@ function isOneWayCollectionReport(reportParams) {
 
 /**
  * Checks to see if any of the included reportParams contains a value that
- * would turn a Cumulus Vs CMR comparison into a one way report.
+ * would turn a Cumulus Vs CMR granule comparison into a one way report.
  *
  * @param {Object} reportParams
  * @returns {boolean} Returns true if any tested key exists on the input
@@ -221,7 +221,7 @@ async function reconciliationReportForCollections(recReportParams) {
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  const cmrCollectionItems = await cmr.searchConcept('collection', {}, 'umm_json');
+  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
 
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
