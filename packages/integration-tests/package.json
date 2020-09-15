@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -27,14 +27,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "2.0.4",
-    "@cumulus/api-client": "2.0.4",
-    "@cumulus/aws-client": "2.0.4",
-    "@cumulus/cmrjs": "2.0.4",
-    "@cumulus/common": "2.0.4",
-    "@cumulus/earthdata-login-client": "2.0.4",
-    "@cumulus/launchpad-auth": "2.0.4",
-    "@cumulus/message": "2.0.4",
+    "@cumulus/api": "2.0.5",
+    "@cumulus/api-client": "2.0.5",
+    "@cumulus/aws-client": "2.0.5",
+    "@cumulus/cmrjs": "2.0.5",
+    "@cumulus/common": "2.0.5",
+    "@cumulus/earthdata-login-client": "2.0.5",
+    "@cumulus/launchpad-auth": "2.0.5",
+    "@cumulus/message": "2.0.5",
     "aws-sdk": "^2.585.0",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",

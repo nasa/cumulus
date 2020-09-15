@@ -1,7 +1,8 @@
 ---
-id: tasks
+id: version-v2.0.5-tasks
 title: Cumulus Tasks
 hide_title: true
+original_id: tasks
 ---
 
 # Cumulus Tasks

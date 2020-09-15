@@ -5,8 +5,6 @@
 
 'use strict';
 
-const ES_MAX_AGG = 2147483647;
-
 function date(field) {
   return {
     scenes_by_date: {
@@ -25,8 +23,7 @@ function term(field) {
 
   aggs[`terms_${field}`] = {
     terms: {
-      field: field,
-      size: ES_MAX_AGG,
+      field: field
     }
   };
 

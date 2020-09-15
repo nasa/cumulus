@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v2.0.5] 2020-09-15
+
+### Added
+
+- Added `thin_egress_stack_name` variable to `cumulus` and `distribution` Terraform modules to allow overriding the default Cloudformation stack name used for the `thin-egress-app`. **Please note that if you change/set this value for an existing deployment, it will destroy and re-create your API gateway for the `thin-egress-app`.**
+
+### Fixed
+
+- Fix collection list queries. Removed fixes to collection stats, which break queries for a large number of granules.
+
 ## [v2.0.4] 2020-09-08
 
 ### Changed
@@ -3249,7 +3259,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.4...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.5...HEAD
+[v2.0.5]:  https://github.com/nasa/cumulus/compare/v2.0.4...v2.0.5
 [v2.0.4]:  https://github.com/nasa/cumulus/compare/v2.0.3...v2.0.4
 [v2.0.3]:  https://github.com/nasa/cumulus/compare/v2.0.2...v2.0.3
 [v2.0.2]:  https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.2
