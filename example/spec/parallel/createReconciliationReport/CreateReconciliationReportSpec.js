@@ -310,17 +310,22 @@ describe('When there are granule differences and granule reconciliation is run',
       const colls = JSON.parse(collsResp.body).results;
       console.log(`collection in list: ${colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)}`);
 
-      [
-        publishedGranuleId,
-        dbGranuleId,
-        cmrGranule,
-        [extraCumulusCollection, extraCumulusCollectionCleanup],
-      ] = await Promise.all([
-        ingestAndPublishGranule(config, testSuffix, testDataFolder),
-        ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-        ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime),
-        activeCollectionPromise,
-      ]);
+      // [
+      //   publishedGranuleId,
+      //   dbGranuleId,
+      //   cmrGranule,
+      //   [extraCumulusCollection, extraCumulusCollectionCleanup],
+      // ] = await Promise.all([
+      //   ingestAndPublishGranule(config, testSuffix, testDataFolder),
+      //   ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
+      //   ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime),
+      //   activeCollectionPromise,
+      // ]);
+
+      publishedGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder);
+      dbGranuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, false);
+      cmrGranule = await ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime);
+      [extraCumulusCollection, extraCumulusCollectionCleanup] = await activeCollectionPromise;
 
       console.log(`extra collection: ${JSON.stringify(extraCumulusCollection, undefined, 2)}`);
 
