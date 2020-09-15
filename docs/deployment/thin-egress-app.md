@@ -106,7 +106,7 @@ Pass `api_distribution_url` to your `archive` module's `distribution_url` var.
 You will also need to configure the `tea_urs_redirect_uri` value as a Redirect
 URI in your URS application configuration.
 
-### Cumulus Configuration
+### Notes about Cumulus integration
 
 The default Cumulus module generates a file at `s3://${system_bucket}/distribution_bucket_map.json`.
 
