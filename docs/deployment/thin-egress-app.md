@@ -13,7 +13,9 @@ The [Thin Egress App (TEA)](https://github.com/asfadmin/thin-egress-app) is an a
 TEA is deployed using [Terraform](https://terraform.io) modules. Refer to [these instructions](./components) for guidance on how to integrate new components with your deployment.
 
 The TEA module provides [these instructions](https://github.com/asfadmin/thin-egress-app/blob/devel/NGAP-DEPLOY-README.MD)
-showing how to add it to your deployment. Below are some Cumulus-specific tips:
+showing how to add it to your deployment.
+
+Below are some Cumulus-specific tips:
 
 ### bucket_map.yaml
 
