@@ -98,7 +98,7 @@ function shouldAggregateGranules(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
-    'granuleIds',
+    'granuleId__in',
   ].some((e) => !!searchParams[e]);
 }
 
@@ -113,9 +113,12 @@ async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParam
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
-  if (shouldAggregateGranules(esCollectionSearchParams)) {
+  log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
+  log.debug(`esCollectionSearchParams ${JSON.stringify(esCollectionSearchParams)}`);
+  if (shouldAggregateGranules(esGranuleSearchParams)) {
     // Build an ESCollection and call the aggregateActiveGranuleCollections to
     // get list of collection ids that have granules that have been updated
+    log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
     const esCollection = new Collection({ queryStringParameters: esGranuleSearchParams }, 'collection', process.env.ES_INDEX);
     const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
     esCollectionIds = esCollectionItems.sort();
@@ -398,7 +401,7 @@ async function reconciliationReportForGranules(params) {
   const cmrSettings = await getCmrSettings();
   const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: ['granule_ur'] });
   cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
-    searchParams.add(paramName, paramValue);
+    searchParams.append(paramName, paramValue);
   });
 
   const cmrGranulesIterator = new CMRSearchConceptQueue({

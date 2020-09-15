@@ -15,7 +15,7 @@ test(
   'isOneWayCollectionReport returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
-    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
+    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp', 'granuleIds'];
 
     const paramsThatShouldReturnFalse = [
       'stackName',
@@ -56,6 +56,8 @@ test(
       'systemBucket',
       'anythingAtAll',
       'collectionId',
+      'collectionIds',
+      'granuleIds',
     ];
 
     paramsThatShouldReturnTrue.map((p) =>

@@ -78,14 +78,14 @@ function convertToDBCollectionSearchParams(params) {
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
 function convertToESGranuleSearchParams(params) {
-  const { collectionIds, granuleIds } = params;
+  const { collectionIds, granuleIds, startTimestamp, endTimestamp } = params;
   const collectionIdIn = collectionIds ? collectionIds.join(',') : undefined;
   const granuleIdIn = granuleIds ? granuleIds.join(',') : undefined;
   return removeNilProperties({
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
+    updatedAt__from: dateToValue(startTimestamp),
+    updatedAt__to: dateToValue(endTimestamp),
     collectionId__in: collectionIdIn,
-    granuleIdIn__in: granuleIdIn,
+    granuleId__in: granuleIdIn,
   });
 }
 
@@ -129,6 +129,8 @@ function initialReportHeader(recReportParams) {
     endTimestamp,
     startTimestamp,
     collectionId,
+    collectionIds,
+    granuleIds,
   } = recReportParams;
 
   return {
@@ -140,6 +142,8 @@ function initialReportHeader(recReportParams) {
     status: 'RUNNING',
     error: undefined,
     collectionId,
+    collectionIds,
+    granuleIds,
   };
 }
 
