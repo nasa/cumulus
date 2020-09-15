@@ -8,6 +8,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const isNil = require('lodash/isNil');
 const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -51,6 +52,22 @@ async function findMissingMappings(esClient, index, newMappings) {
   });
 }
 
+async function removeIndexAsAlias(esClient, alias) {
+  // If the alias already exists as an index, remove it
+  // We can't do a simple exists check here, because it'll return true if the alias
+  // is actually an alias assigned to an index. We do a get and check that the alias
+  // name is not the key, which would indicate it's an index
+  const { body: existingIndex } = await esClient.indices.get(
+    { index: alias },
+    { ignore: [404] }
+  );
+
+  if (existingIndex && existingIndex[alias]) {
+    log.info(`Deleting alias as index: ${alias}`);
+    await esClient.indices.delete({ index: alias });
+  }
+}
+
 /**
  * Initialize elastic search. If the index does not exist, create it with an alias.
  * If an index exists but is not aliased, alias the index.
@@ -72,82 +89,55 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     },
   });
 
-  // If the alias already exists as an index, remove it
-  // We can't do a simple exists check here, because it'll return true if the alias
-  // is actually an alias assigned to an index. We do a get and check that the alias
-  // name is not the key, which would indicate it's an index
-  const { body: existingIndex } = await esClient.indices.get(
-    { index: alias },
-    { ignore: [404] }
-  );
-  if (existingIndex && existingIndex[alias]) {
-    log.info(`Deleting alias as index: ${alias}`);
-    await esClient.indices.delete({ index: alias });
-  }
+  await removeIndexAsAlias(esClient, alias);
 
-  let exists = false;
+  let aliasedIndex = index;
 
-  try {
-    await createIndex(esClient, index);
-  } catch (error) {
-    if (error instanceof IndexExistsError) {
-      exists = true;
-    } else {
-      throw error;
+  const indices = await esClient.indices.getAlias({ name: alias }, { ignore: [404] })
+    .then((response) => response.body);
+
+  const aliasExists = !isNil(indices) && !indices.error;
+
+  if (aliasExists) {
+    aliasedIndex = Object.keys(indices)[0];
+
+    if (indices.length > 1) {
+      log.info(`Multiple indices found for alias ${alias}, using index ${aliasedIndex}.`);
     }
-  }
+  } else {
+    try {
+      await createIndex(esClient, index);
+      log.info(`Created index ${index}`);
+    } catch (error) {
+      if (!(error instanceof IndexExistsError)) {
+        throw error;
+      }
+    }
 
-  if (!exists) {
     await esClient.indices.putAlias({
       index: index,
       name: alias,
     });
 
     log.info(`Created alias ${alias} for index ${index}`);
-  } else {
-    log.info(`index ${index} already exists`);
+  }
 
-    let aliasedIndex = index;
+  const missingTypes = await findMissingMappings(esClient, aliasedIndex, mappings);
 
-    const aliasExists = await esClient.indices.existsAlias({
-      name: alias,
-    }).then((response) => response.body);
+  if (missingTypes.length > 0) {
+    log.info(`Updating mappings for ${missingTypes}`);
+    const concurrencyLimit = inTestMode() ? 1 : 3;
+    const limit = pLimit(concurrencyLimit);
+    const addMissingTypesPromises = missingTypes.map((type) =>
+      limit(() => esClient.indices.putMapping({
+        index: aliasedIndex,
+        type,
+        body: get(mappings, type),
+      })));
 
-    if (!aliasExists) {
-      await esClient.indices.putAlias({
-        index: index,
-        name: alias,
-      });
+    await Promise.all(addMissingTypesPromises);
 
-      log.info(`Created alias ${alias} for index ${index}`);
-    } else {
-      const indices = await esClient.indices.getAlias({ name: alias })
-        .then((response) => response.body);
-
-      aliasedIndex = Object.keys(indices)[0];
-
-      if (indices.length > 1) {
-        log.info(`Multiple indices found for alias ${alias}, using index ${aliasedIndex}.`);
-      }
-    }
-
-    const missingTypes = await findMissingMappings(esClient, aliasedIndex, mappings);
-
-    if (missingTypes.length > 0) {
-      log.info(`Updating mappings for ${missingTypes}`);
-      const concurrencyLimit = inTestMode() ? 1 : 3;
-      const limit = pLimit(concurrencyLimit);
-      const addMissingTypesPromises = missingTypes.map((type) =>
-        limit(() => esClient.indices.putMapping({
-          index: aliasedIndex,
-          type,
-          body: get(mappings, type),
-        })));
-
-      await Promise.all(addMissingTypesPromises);
-
-      log.info(`Added missing types to index ${aliasedIndex}: ${missingTypes}`);
-    }
+    log.info(`Added missing types to index ${aliasedIndex}: ${missingTypes}`);
   }
 }
 
