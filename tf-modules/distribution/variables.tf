@@ -133,6 +133,12 @@ variable "thin_egress_lambda_code_dependency_archive_key" {
   description = "S3 Key of packaged python modules for lambda dependency layer."
 }
 
+variable "thin_egress_stack_name" {
+  type        = string
+  default     = null
+  description = "Name to use for Thin Egress App Cloudformation stack"
+}
+
 variable "urs_url" {
   type        = string
   default     = "https://urs.earthdata.nasa.gov"
