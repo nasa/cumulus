@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/checksum",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Cumulus checksum utilities",
   "engines": {
     "node": ">=12.18.0"

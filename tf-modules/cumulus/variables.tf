@@ -462,6 +462,12 @@ variable "thin_egress_lambda_code_dependency_archive_key" {
   description = "Thin Egress App - S3 Key of packaged python modules for lambda dependency layer"
 }
 
+variable "thin_egress_stack_name" {
+  type        = string
+  default     = null
+  description = "Name to use for Thin Egress App Cloudformation stack"
+}
+
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type        = list(object({ id = string, url = string, execution_limit = number }))
