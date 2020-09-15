@@ -738,23 +738,34 @@ function normalizeEvent(event) {
     throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
   if (collectionId) {
+    const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
     if (reportType === 'Internal') {
       if (!isString(collectionId)) {
-        throw new TypeError(`${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
+        throw new TypeError(`collectionId: ${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
       } else {
         // include both collectionIds and collectionId for Internal Reports.
-        modifiedEvent = { ...event, collectionIds: [collectionId] };
+        modifiedEvent = { ...modifiedEvent, collectionId, collectionIds: [collectionId] };
       }
     } else {
-      // transform input collectionId into an array on collectionIds
-      const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
+      // add array of collectionIds
       modifiedEvent = { ...modifiedEvent, collectionIds };
     }
   }
+  // TODO [MHS, 09/15/2020] Same here, remove/cleanup when internal reports
+  // supports array of granuleIds
   if (granuleId) {
     // transform input granuleId into an array on granuleIds
     const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
-    modifiedEvent = { ...modifiedEvent, granuleIds, granuleId: undefined };
+    if (reportType === 'Internal') {
+      if (!isString(granuleId)) {
+        throw new TypeError(`granuleId: ${JSON.stringify(granuleId)} is not valid input for an 'Internal' report.`);
+      } else {
+        // include both granuleId and granuleIds for Internal Reports.
+        modifiedEvent = { ...modifiedEvent, granuleId, granuleIds: [granuleId] };
+      }
+    } else {
+      modifiedEvent = { ...modifiedEvent, granuleIds };
+    }
   }
 
   return removeNilProperties({

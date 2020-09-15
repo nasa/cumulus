@@ -88,7 +88,7 @@ test('normalizeEvent throws error if array of collectionIds passed to Internal r
   };
   t.throws(() => normalizeEvent(inputEvent), {
     message:
-      '["someCollection___version"] is not valid input for an \'Internal\' report.',
+      'collectionId: ["someCollection___version"] is not valid input for an \'Internal\' report.',
   });
 });
 
@@ -197,4 +197,19 @@ test('normalizeEvent moves array on granuleId to granuleIds', (t) => {
 
   const actual = normalizeEvent(inputEvent);
   t.deepEqual(actual, expect);
+});
+
+test('normalizeEvent throws error if array of granuleIds is passed to Internal report', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Internal',
+    granuleId: ['someCollectionId1'],
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    message:
+      'granuleId: ["someCollectionId1"] is not valid input for an \'Internal\' report.',
+  });
 });
