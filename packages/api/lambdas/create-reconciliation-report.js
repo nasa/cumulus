@@ -27,10 +27,11 @@ const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const {
-  convertToESGranuleSearchParams,
+  cmrGranuleSearchParams,
   convertToESCollectionSearchParams,
-  initialReportHeader,
+  convertToESGranuleSearchParams,
   filterCMRCollections,
+  initialReportHeader,
 } = require('../lib/reconciliationReport');
 const Collection = require('../es/collections');
 const { ESSearchQueue } = require('../es/esSearchQueue');
@@ -64,7 +65,23 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
  * @returns {boolean} Returns true if any tested key exists on the input
  *                    object and the key references a defined value.
  */
-function isOneWayReport(reportParams) {
+function isOneWayCollectionReport(reportParams) {
+  return [
+    'startTimestamp',
+    'endTimestamp',
+    'granuleIds',
+  ].some((e) => !!reportParams[e]);
+}
+
+/**
+ * Checks to see if any of the included reportParams contains a value that
+ * would turn a Cumulus Vs CMR comparison into a one way report.
+ *
+ * @param {Object} reportParams
+ * @returns {boolean} Returns true if any tested key exists on the input
+ *                    object and the key references a defined value.
+ */
+function isOneWayGranuleReport(reportParams) {
   return [
     'startTimestamp',
     'endTimestamp',
@@ -81,6 +98,7 @@ function shouldAggregateGranules(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
+    'granuleIds',
   ].some((e) => !!searchParams[e]);
 }
 
@@ -197,16 +215,15 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
 
-  const oneWayReport = isOneWayReport(recReportParams);
+  const oneWayReport = isOneWayCollectionReport(recReportParams);
 
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
+  const cmrCollectionItems = await cmr.searchConcept('collection', {}, 'umm_json');
   const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
 
-  // Array of collectionIds are possible.
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
   const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
   const esCollectionIds = await fetchESCollections(esCollectionSearchParams, esGranuleSearchParams);
@@ -379,10 +396,15 @@ async function reconciliationReportForGranules(params) {
   const { name, version } = deconstructCollectionId(collectionId);
 
   const cmrSettings = await getCmrSettings();
+  const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: ['granule_ur'] });
+  cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
+    searchParams.add(paramName, paramValue);
+  });
+
   const cmrGranulesIterator = new CMRSearchConceptQueue({
     cmrSettings,
     type: 'granules',
-    searchParams: { short_name: name, version: version, sort_key: ['granule_ur'] },
+    searchParams,
     format: 'umm_json',
   });
 
@@ -392,7 +414,7 @@ async function reconciliationReportForGranules(params) {
   const esGranulesIterator = new ESCollectionGranuleQueue(
     esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
   );
-  const oneWay = isOneWayReport(recReportParams);
+  const oneWay = isOneWayGranuleReport(recReportParams);
 
   const granulesReport = {
     okCount: 0,

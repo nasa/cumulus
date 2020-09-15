@@ -3,6 +3,23 @@
 const CMR = require('./CMR');
 
 /**
+ * Shim to correctly add a default provider_short_name to the input searchParams
+ *
+ * @param {Object} params
+ * @param {Object|URLSearchParams} params.searchParams - input search
+ *  parameters for searchConceptQueue. This parameter can be either a
+ *  URLSearchParam object or a plain Object.
+ * @returns {Object|URLSearchParams} - input object appeneded with a default provider_short_name
+ */
+const provideParams = (params = { searchParams: {} }) => {
+  if (params.searchParams instanceof URLSearchParams) {
+    if (!params.searchParams.has('provider_short_name')) params.searchParams.append('provider_short_name', params.cmrSettings.provider);
+    return params.searchParams;
+  }
+  return { provider_short_name: params.cmrSettings.provider, ...params.searchParams };
+};
+
+/**
  * A class to efficiently list all of the concepts (collections/granules) from
  * CMR search, without loading them all into memory at once.  Handles paging.
  *
@@ -32,7 +49,7 @@ class CMRSearchConceptQueue {
    */
   constructor(params = { searchParams: {} }) {
     this.type = params.type;
-    this.params = { provider_short_name: params.cmrSettings.provider, ...params.searchParams };
+    this.params = provideParams(params);
     this.format = params.format;
     this.items = [];
 

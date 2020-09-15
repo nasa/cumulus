@@ -6,12 +6,13 @@ const rewire = require('rewire');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
-const isOneWayReport = CRP.__get__('isOneWayReport');
+const isOneWayCollectionReport = CRP.__get__('isOneWayCollectionReport');
+const isOneWayGranuleReport = CRP.__get__('isOneWayGranuleReport');
 const shouldAggregateGranules = CRP.__get__('shouldAggregateGranules');
 const normalizeEvent = CRP.__get__('normalizeEvent');
 
 test(
-  'isOneWayReport returns true only when one or more specific parameters '
+  'isOneWayCollectionReport returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
@@ -24,23 +25,57 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(isOneWayReport({ [p]: randomId('value') })));
+      t.true(isOneWayCollectionReport({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(isOneWayReport({ [p]: randomId('value') })));
+      t.false(isOneWayCollectionReport({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.true(isOneWayReport(allTrueKeys));
+    t.true(isOneWayCollectionReport(allTrueKeys));
 
     const allFalseKeys = paramsThatShouldReturnFalse.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.false(isOneWayReport(allFalseKeys));
-    t.true(isOneWayReport({ ...allTrueKeys, ...allFalseKeys }));
+    t.false(isOneWayCollectionReport(allFalseKeys));
+    t.true(isOneWayCollectionReport({ ...allTrueKeys, ...allFalseKeys }));
+  }
+);
+
+test(
+  'isOneWayGranuleReport returns true only when one or more specific parameters '
+    + ' are present on the reconciliation report object.',
+  (t) => {
+    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
+
+    const paramsThatShouldReturnFalse = [
+      'stackName',
+      'systemBucket',
+      'anythingAtAll',
+      'collectionId',
+    ];
+
+    paramsThatShouldReturnTrue.map((p) =>
+      t.true(isOneWayGranuleReport({ [p]: randomId('value') })));
+
+    paramsThatShouldReturnFalse.map((p) =>
+      t.false(isOneWayGranuleReport({ [p]: randomId('value') })));
+
+    const allTrueKeys = paramsThatShouldReturnTrue.reduce(
+      (accum, current) => ({ ...accum, [current]: randomId('value') }),
+      {}
+    );
+    t.true(isOneWayGranuleReport(allTrueKeys));
+
+    const allFalseKeys = paramsThatShouldReturnFalse.reduce(
+      (accum, current) => ({ ...accum, [current]: randomId('value') }),
+      {}
+    );
+    t.false(isOneWayGranuleReport(allFalseKeys));
+    t.true(isOneWayGranuleReport({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
 

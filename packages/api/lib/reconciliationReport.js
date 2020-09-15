@@ -5,6 +5,19 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { deconstructCollectionId } = require('./utils');
 
 /**
+ * Extra search params to add to the cmrGranules  searchConceptQueue
+ * @param {Object} recReportParams
+ * @returns {Array[Array]} array of name/value pairs to add to the search params
+ */
+function cmrGranuleSearchParams(recReportParams) {
+  const { granuleIds } = recReportParams;
+  if (granuleIds) {
+    return granuleIds.map((gid) => ['readable_granule_name[]', gid]);
+  }
+  return [];
+}
+
+/**
  * Prepare a list of collectionIds into an _id__in object
  *
  * @param {Array<string>} collectionIds - Array of collectionIds in the form 'name___ver'
@@ -151,6 +164,7 @@ function filterCMRCollections(collections, recReportParams) {
 }
 
 module.exports = {
+  cmrGranuleSearchParams,
   convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
