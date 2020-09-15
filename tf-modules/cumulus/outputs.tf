@@ -64,6 +64,10 @@ output "hello_world_task" {
   value = module.ingest.hello_world_task
 }
 
+output "hyrax_metadata_updates_task" {
+  value = module.ingest.hyrax_metadata_updates_task
+}
+
 output "move_granules_task" {
   value = module.ingest.move_granules_task
 }
@@ -92,8 +96,8 @@ output "sync_granule_task" {
   value = module.ingest.sync_granule_task
 }
 
-output "hyrax_metadata_updates_task" {
-  value = module.ingest.hyrax_metadata_updates_task
+output "update_cmr_access_constraints_task" {
+  value = module.ingest.update_cmr_access_constraints_task
 }
 
 # Workflow config outputs

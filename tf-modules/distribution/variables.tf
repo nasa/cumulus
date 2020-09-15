@@ -107,6 +107,12 @@ variable "urs_client_password" {
   description = "The client password for your Earthdata login (URS) application"
 }
 
+variable "thin_egress_stack_name" {
+  type        = string
+  default     = null
+  description = "Name to use for Thin Egress App Cloudformation stack"
+}
+
 variable "urs_url" {
   type        = string
   default     = "https://urs.earthdata.nasa.gov"

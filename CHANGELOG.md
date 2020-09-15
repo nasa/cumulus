@@ -49,6 +49,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `thin_egress_stack_name` variable to `cumulus` and `distribution` Terraform modules to allow overriding the default Cloudformation stack name used for the `thin-egress-app`. **Please note that if you change/set this value for an existing deployment, it will destroy and re-create your API gateway for the `thin-egress-app`.**
 - **CUMULUS-2155**
   - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
     modules.  If set to true, this diagnostic variable instructs Core's database
@@ -99,6 +100,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
     Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
     `RestrictionFlag/RestrictionComment`, respectively.
+  - Added an operator doc on how to configure and run the access constraint update workflow, which will update the metadata using the new task, and then publish the updated metadata to CMR.
+  - Added an operator doc on bulk operations.
 - **CUMULUS-2112**
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
@@ -113,6 +116,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
+- **CUMULUS-2107**
+  - Updated the `applyWorkflow` functionality on the granules endpoint to take a `meta` property to pass into the workflow message.
+  - Updated the `BULK_GRANULE` functionality on the granules endpoint to support the above `applyWorkflow` change.
 
 ### Fixed
 
