@@ -44,7 +44,7 @@ In your `cumulus-tf` directory:
 2. Find the URL for your `<prefix>-thin-egress-app-EgressGateway` API gateway. Confirm that you can access it in the browser and that it is functional.
 3. Run `terraform plan`. You should see output like (edited for readability):
 
-    ```
+    ```shell
     # module.thin_egress_app.aws_cloudformation_stack.thin_egress_app will be created
       + resource "aws_cloudformation_stack" "thin_egress_app" {
 
@@ -111,7 +111,7 @@ In your `cumulus-tf` directory:
 
 5. Run `terraform plan` again. You may still see a few additions/modifications pending like below, but you should not see any deletion of Thin Egress App resources pending:
 
-    ```
+    ```shell
     # module.thin_egress_app.aws_cloudformation_stack.thin_egress_app will be updated in-place
       ~ resource "aws_cloudformation_stack" "thin_egress_app" {
 
@@ -125,8 +125,7 @@ In your `cumulus-tf` directory:
       ~ resource "aws_s3_bucket_object" "lambda_source" {
     ```
 
-If you still see deletion of `module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app` pending, then something went wrong and you need to restore your [previous remote state](#switch-from-local-to-remote-state) and start over from step 1. Otherwise, proceed to step 7.
-
+    If you still see deletion of `module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app` pending, then something went wrong and you need to restore your [previous remote state](#switch-from-local-to-remote-state) and start over from step 1. Otherwise, proceed to step 7.
 
 6. Once you have confirmed that everything looks as expected, run `terraform apply`.
 7. Visit the same API gateway from step 1 and confirm that it still works.
