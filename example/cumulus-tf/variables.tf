@@ -93,10 +93,6 @@ variable "saml_launchpad_metadata_url" {
   default = "N/A"
 }
 
-variable "subnet_ids" {
-  type = list(string)
-}
-
 variable "system_bucket" {
   type = string
 }
@@ -133,6 +129,11 @@ variable "buckets" {
 variable "distribution_url" {
   type    = string
   default = null
+}
+
+variable "ecs_cluster_instance_subnet_ids" {
+  type = list(string)
+  default = []
 }
 
 variable "ems_datasource" {
@@ -207,6 +208,11 @@ variable "permissions_boundary_arn" {
 variable "aws_profile" {
   type    = string
   default = null
+}
+
+variable "lambda_subnet_ids" {
+  type = list(string)
+  default = []
 }
 
 variable "log_api_gateway_to_cloudwatch" {
