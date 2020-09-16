@@ -38,7 +38,11 @@ In your `cumulus-tf` directory:
    - Answer "yes" if your changes to local state all applied as expected and you want to sync them to your remote state
    - Answer "no" if something when wrong when editing your local state and you want to revert back to your remote state before any changes were made
 
+![Screenshot of terminal showing output from "terraform init" to switch from local state to remote state](assets/switch-to-remote-state.png)
+
 ## Migration instructions
+
+> Please note: these instructions assume that you are deploying the Thin Egress App as shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf)
 
 1. Ensure that you are working with [local state](#switch-from-remote-to-local-state)
 2. Find the URL for your `<prefix>-thin-egress-app-EgressGateway` API gateway. Confirm that you can access it in the browser and that it is functional.
@@ -84,7 +88,7 @@ In your `cumulus-tf` directory:
       - resource "aws_security_group" "egress_lambda" {
     ```
 
-4. Run the state modification commands. They must be run in exactly this order:
+4. Run the state modification commands. The commands must be run in exactly this order:
 
    ```shell
     # Move security group
@@ -103,7 +107,14 @@ In your `cumulus-tf` directory:
     terraform state mv module.cumulus.module.distribution.module.thin_egress_app.aws_s3_bucket_object.cloudformation_template module.thin_egress_app.aws_s3_bucket_object.cloudformation_template
 
     # Move bucket map
+    # This is only necessary if you were not supplying a `bucket_map_key` variable to the distribution module
     terraform state mv module.cumulus.module.distribution.aws_s3_bucket_object.bucket_map_yaml[0] aws_s3_bucket_object.bucket_map_yaml
+
+    # Move URS creds secret version
+    terraform state mv module.cumulus.module.distribution.aws_secretsmanager_secret_version.thin_egress_urs_creds aws_secretsmanager_secret_version.thin_egress_urs_creds
+
+    # Move URS creds secret
+    terraform state mv module.cumulus.module.distribution.aws_secretsmanager_secret.thin_egress_urs_creds aws_secretsmanager_secret.thin_egress_urs_creds
 
     # Move TEA Cloudformation stack
     terraform state mv module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app module.thin_egress_app.aws_cloudformation_stack.thin_egress_app
