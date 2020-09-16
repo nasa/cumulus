@@ -204,14 +204,14 @@ On-demand backups help with long-term archival requirements for regulatory compl
 
 By default, the Cumulus [data-persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence) enables PITR on the default tables listed in the [module's variable defaults](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for `enable_point_in_time_tables`. At the time of writing, that list includes:
 
-- AsyncOperationsTable
-- CollectionsTable
-- ExecutionsTable
-- FilesTable
-- GranulesTable
-- PdrsTable
-- ProvidersTable
-- RulesTable
+* AsyncOperationsTable
+* CollectionsTable
+* ExecutionsTable
+* FilesTable
+* GranulesTable
+* PdrsTable
+* ProvidersTable
+* RulesTable
 
 If you wish to change this list, simply update your deployment's `data_persistence` module ([here](https://github.com/nasa/cumulus-template-deploy/blob/master/data-persistence-tf/main.tf) in the `template-deploy` repository) to pass the correct list of tables.
 
