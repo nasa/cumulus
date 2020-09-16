@@ -22,8 +22,7 @@ Below are some Cumulus-specific tips:
 The Thin Egress App uses a `bucket_map.yaml` file to determine which buckets to
 serve. Documentation of the file format is available [here](https://github.com/asfadmin/thin-egress-app#bucket-map).
 
-A simple config, which would use the same URL scheme that we are using now,
-would look something like this:
+A simple config would look something like this:
 
 **bucket_map.yaml:**
 
@@ -37,6 +36,14 @@ PUBLIC_BUCKETS:
 ```
 
 > Please note: your custom bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors
+
+### Integration with cumulus module
+
+The `cumulus` module deploys certain components that interact with TEA. As a result, the `cumulus` module requires a `tea_stack_name` variable which is the name of the TEA Cloudformation stack. To get this value, you can specify the `stack_name` variable to the TEA module and then use the same value for the `tea_stack_name` variable to the `cumulus` module.
+
+Also, if you are specifying a `stage_name` variable to the TEA module, you must use the same value for the `distribution_api_gateway_stage` variable to the `cumulus` module.
+
+This approach is shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
 
 ### Earthdata Login credentials
 
@@ -102,8 +109,6 @@ like this:
 tea_api_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
 ```
-
-Pass `api_distribution_url` to your `archive` module's `distribution_url` var.
 
 You will also need to configure the `tea_urs_redirect_uri` value as a Redirect
 URI in your URS application configuration.

@@ -154,8 +154,10 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
 
   # Thin Egress App settings
-  tea_stack_name =  local.tea_stack_name # must match stack name for thin-egress-app
-  distribution_api_gateway_stage = local.tea_stage_name # must match stage name for thin-egress-app
+  # must match stack_name for thin-egress-app module
+  tea_stack_name =  local.tea_stack_name
+  # must match stage_name for thin-egress-app module
+  distribution_api_gateway_stage = local.tea_stage_name
   distribution_url = var.distribution_url
   log_destination_arn           = var.log_destination_arn
 
