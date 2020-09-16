@@ -116,11 +116,11 @@ async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParam
   log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
   log.debug(`esCollectionSearchParams ${JSON.stringify(esCollectionSearchParams)}`);
   if (shouldAggregateGranules(esGranuleSearchParams)) {
-    // Build an ESCollection and call the aggregateActiveGranuleCollections to
+    // Build an ESCollection and call the aggregateGranuleCollections to
     // get list of collection ids that have granules that have been updated
     log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
     const esCollection = new Collection({ queryStringParameters: esGranuleSearchParams }, 'collection', process.env.ES_INDEX);
-    const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
+    const esCollectionItems = await esCollection.aggregateGranuleCollections();
     esCollectionIds = esCollectionItems.sort();
   } else {
     // return all collections
