@@ -35,6 +35,13 @@ output "hello_world_task" {
   }
 }
 
+output "hyrax_metadata_updates_task" {
+  value = {
+    task_arn = aws_lambda_function.hyrax_metadata_updates_task.arn
+    task_log_group = aws_cloudwatch_log_group.hyrax_metadata_updates_task.name
+  }
+}
+
 output "kinesis_fallback_topic_arn" {
   value = aws_sns_topic.kinesis_fallback.arn
 }
@@ -119,10 +126,10 @@ output "sync_granule_task" {
   }
 }
 
-output "hyrax_metadata_updates_task" {
+output "update_cmr_access_constraints_task" {
   value = {
-    task_arn = aws_lambda_function.hyrax_metadata_updates_task.arn
-    task_log_group = aws_cloudwatch_log_group.hyrax_metadata_updates_task.name
+    task_arn = aws_lambda_function.update_cmr_access_constraints_task.arn
+    task_log_group = aws_cloudwatch_log_group.update_cmr_access_constraints_task.name
   }
 }
 
