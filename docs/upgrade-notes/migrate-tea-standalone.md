@@ -125,7 +125,7 @@ In your `cumulus-tf` directory:
       ~ resource "aws_s3_bucket_object" "lambda_source" {
     ```
 
-    If you still see deletion of `module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app` pending, then something went wrong and you need to restore your [previous remote state](#switch-from-local-to-remote-state) and start over from step 1. Otherwise, proceed to step 7.
+    If you still see deletion of `module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app` pending, then something went wrong and you need to restore your [previous remote state](#switch-from-local-to-remote-state) and start over from step 1. Otherwise, proceed to step 6.
 
 6. Once you have confirmed that everything looks as expected, run `terraform apply`.
 7. Visit the same API gateway from step 1 and confirm that it still works.
