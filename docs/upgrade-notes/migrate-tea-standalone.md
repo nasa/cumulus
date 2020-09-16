@@ -106,10 +106,6 @@ In your `cumulus-tf` directory:
     # Move TEA Cloudformation template
     terraform state mv module.cumulus.module.distribution.module.thin_egress_app.aws_s3_bucket_object.cloudformation_template module.thin_egress_app.aws_s3_bucket_object.cloudformation_template
 
-    # Move bucket map
-    # This is only necessary if you were not supplying a `bucket_map_key` variable to the distribution module
-    terraform state mv module.cumulus.module.distribution.aws_s3_bucket_object.bucket_map_yaml[0] aws_s3_bucket_object.bucket_map_yaml
-
     # Move URS creds secret version
     terraform state mv module.cumulus.module.distribution.aws_secretsmanager_secret_version.thin_egress_urs_creds aws_secretsmanager_secret_version.thin_egress_urs_creds
 
@@ -119,6 +115,13 @@ In your `cumulus-tf` directory:
     # Move TEA Cloudformation stack
     terraform state mv module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app module.thin_egress_app.aws_cloudformation_stack.thin_egress_app
    ```
+
+    Depending on how you were supplying a bucket map to TEA, there may be an additional step. If you were specifying the `bucket_map_key` variable to the `cumulus` module to use a custom bucket map, then you can ignore this step and just ensure that the `bucket_map_file` variable to the TEA module uses that same S3 key. Otherwise, if you were letting Cumulus generate a bucket map for you, then you need to take this step to migrate that bucket map:
+
+    ```shell
+    # Move bucket map
+    terraform state mv module.cumulus.module.distribution.aws_s3_bucket_object.bucket_map_yaml[0] aws_s3_bucket_object.bucket_map_yaml
+    ```
 
 5. Run `terraform plan` again. You may still see a few additions/modifications pending like below, but you should not see any deletion of Thin Egress App resources pending:
 
