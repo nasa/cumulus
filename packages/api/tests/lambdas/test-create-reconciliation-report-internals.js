@@ -9,7 +9,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const CRP = rewire('../../lambdas/create-reconciliation-report');
 const isOneWayCollectionReport = CRP.__get__('isOneWayCollectionReport');
 const isOneWayGranuleReport = CRP.__get__('isOneWayGranuleReport');
-const shouldAggregateGranules = CRP.__get__('shouldAggregateGranules');
+const shouldAggregateGranulesForCollections = CRP.__get__('shouldAggregateGranulesForCollections');
 const normalizeEvent = CRP.__get__('normalizeEvent');
 
 test(
@@ -91,7 +91,7 @@ test(
 );
 
 test(
-  'shouldAggregateGranules returns true only when one or more specific parameters ' +
+  'shouldAggregateGranulesForCollections returns true only when one or more specific parameters ' +
     ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
@@ -103,25 +103,25 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldAggregateGranules({ [p]: randomId('value') }))
+      t.true(shouldAggregateGranulesForCollections({ [p]: randomId('value') }))
     );
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldAggregateGranules({ [p]: randomId('value') }))
+      t.false(shouldAggregateGranulesForCollections({ [p]: randomId('value') }))
     );
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.true(shouldAggregateGranules(allTrueKeys));
+    t.true(shouldAggregateGranulesForCollections(allTrueKeys));
 
     const allFalseKeys = paramsThatShouldReturnFalse.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
       {}
     );
-    t.false(shouldAggregateGranules(allFalseKeys));
-    t.true(shouldAggregateGranules({ ...allTrueKeys, ...allFalseKeys }));
+    t.false(shouldAggregateGranulesForCollections(allFalseKeys));
+    t.true(shouldAggregateGranulesForCollections({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
 

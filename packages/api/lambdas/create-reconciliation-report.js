@@ -95,7 +95,7 @@ function isOneWayGranuleReport(reportParams) {
  * @param {Object} searchParams
  * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
  */
-function shouldAggregateGranules(searchParams) {
+function shouldAggregateGranulesForCollections(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
@@ -105,18 +105,19 @@ function shouldAggregateGranules(searchParams) {
 
 /**
  * Fetch collections in Elasticsearch.
- * @param {Object} esCollectionSearchParams - Object with possible valid filtering options.
- * @param {Object} esGranuleSearchParams - Object with possible valid filtering options for
-                                           granule search (for aggregations).
+ * @param {Object} recReportParams - input report params.
  * @returns {Promise<Array>} - list of collectionIds that match input paramaters
  */
-async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParams) {
+async function fetchESCollections(recReportParams) {
+  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
+  const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
+
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
   log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
   log.debug(`esCollectionSearchParams ${JSON.stringify(esCollectionSearchParams)}`);
-  if (shouldAggregateGranules(esGranuleSearchParams)) {
+  if (shouldAggregateGranulesForCollections(esGranuleSearchParams)) {
     // Build an ESCollection and call the aggregateGranuleCollections to
     // get list of collection ids that have granules that have been updated
     log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
@@ -124,7 +125,7 @@ async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParam
     const esCollectionItems = await esCollection.aggregateGranuleCollections();
     esCollectionIds = esCollectionItems.sort();
   } else {
-    // return all collections
+    // return all ES collections
     const esCollection = new ESSearchQueue(esCollectionSearchParams, 'collection', process.env.ES_INDEX);
     const esCollectionItems = await esCollection.empty();
     esCollectionIds = esCollectionItems.map(
@@ -228,9 +229,7 @@ async function reconciliationReportForCollections(recReportParams) {
   const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
 
-  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
-  const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
-  const esCollectionIds = await fetchESCollections(esCollectionSearchParams, esGranuleSearchParams);
+  const esCollectionIds = await fetchESCollections(recReportParams);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];

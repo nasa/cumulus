@@ -5,9 +5,10 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { deconstructCollectionId } = require('./utils');
 
 /**
- * Extra search params to add to the cmrGranules  searchConceptQueue
- * @param {Object} recReportParams
- * @returns {Array[Array]} array of name/value pairs to add to the search params
+ * Extra search params to add to the cmrGranules searchConceptQueue
+ *
+ * @param {Object} recReportParams - input report params
+ * @returns {Array<Array>} array of name/value pairs to add to the search params
  */
 function cmrGranuleSearchParams(recReportParams) {
   const { granuleIds } = recReportParams;
@@ -128,22 +129,24 @@ function initialReportHeader(recReportParams) {
     createStartTime,
     endTimestamp,
     startTimestamp,
-    collectionId,
-    collectionIds,
     granuleIds,
+    granuleId,
+    collectionIds,
+    collectionId,
   } = recReportParams;
 
   return {
-    reportType,
-    createStartTime: createStartTime.toISOString(),
-    createEndTime: undefined,
-    reportStartTime: startTimestamp,
-    reportEndTime: endTimestamp,
-    status: 'RUNNING',
-    error: undefined,
     collectionId,
     collectionIds,
+    createEndTime: undefined,
+    createStartTime: createStartTime.toISOString(),
+    error: undefined,
+    granuleId,
     granuleIds,
+    reportEndTime: endTimestamp,
+    reportStartTime: startTimestamp,
+    reportType,
+    status: 'RUNNING',
   };
 }
 
