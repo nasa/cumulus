@@ -13,8 +13,8 @@ const shouldAggregateGranulesForCollections = CRP.__get__('shouldAggregateGranul
 const normalizeEvent = CRP.__get__('normalizeEvent');
 
 test(
-  'isOneWayCollectionReport returns true only when one or more specific parameters ' +
-    ' are present on the reconciliation report object.',
+  'isOneWayCollectionReport returns true only when one or more specific parameters '
+    + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = [
       'startTimestamp',
@@ -30,12 +30,10 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(isOneWayCollectionReport({ [p]: randomId('value') }))
-    );
+      t.true(isOneWayCollectionReport({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(isOneWayCollectionReport({ [p]: randomId('value') }))
-    );
+      t.false(isOneWayCollectionReport({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
@@ -53,8 +51,8 @@ test(
 );
 
 test(
-  'isOneWayGranuleReport returns true only when one or more specific parameters ' +
-    ' are present on the reconciliation report object.',
+  'isOneWayGranuleReport returns true only when one or more specific parameters '
+    + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
 
@@ -68,12 +66,10 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(isOneWayGranuleReport({ [p]: randomId('value') }))
-    );
+      t.true(isOneWayGranuleReport({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(isOneWayGranuleReport({ [p]: randomId('value') }))
-    );
+      t.false(isOneWayGranuleReport({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
@@ -91,8 +87,8 @@ test(
 );
 
 test(
-  'shouldAggregateGranulesForCollections returns true only when one or more specific parameters ' +
-    ' are present on the reconciliation report object.',
+  'shouldAggregateGranulesForCollections returns true only when one or more specific parameters '
+    + ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
     const paramsThatShouldReturnFalse = [
@@ -103,12 +99,10 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldAggregateGranulesForCollections({ [p]: randomId('value') }))
-    );
+      t.true(shouldAggregateGranulesForCollections({ [p]: randomId('value') })));
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldAggregateGranulesForCollections({ [p]: randomId('value') }))
-    );
+      t.false(shouldAggregateGranulesForCollections({ [p]: randomId('value') })));
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
