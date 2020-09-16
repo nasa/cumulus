@@ -63,7 +63,8 @@ To recover a Cumulus Postgres database in a disaster or data-loss scenario, you 
 
 * If the Postgres database cluster exists/is still online, take it
   offline/remove access.
-* If needed, recover the DynamoDB tables as noted in the [DyanmoDb](./backup_and_restore#dynamodb) section.
+* If needed, recover the DynamoDB tables as noted in the
+  [DyanmoDb](./backup_and_restore#dynamodb) section of this document.
 * Redeploy a new database cluster from your backup, matching as closely as possible to the DynamoDB
   restore time.   See [AWS's
   PIT recovery
@@ -76,7 +77,7 @@ To recover a Cumulus Postgres database in a disaster or data-loss scenario, you 
 
 ##### cumulus-rds-tf examples
 
-Below we've provided a few recovery scenarios for the provided `cumulus-rds-tf`
+The following sections provide a walk through of a few recovery scenarios for the provided `cumulus-rds-tf`
 serverless module.
 
 ***Point In Time Recovery***
@@ -131,22 +132,22 @@ that it has the tables/data you expect, then proceed.
 Run the following commands to bring the new cluster into the
 terraform state file, where {module_name} is the title you've assigned to the module:
 
- *Removes the old cluster from your deployment*:
+* Remove the old cluster from your terraform state:
 
 ```bash
 terraform state {module_name}.aws_rds_cluster.cumulus
 ```
 
- *Adds the restored cluster to your deployment*:
+* Add the restored cluster to your terraform state:
 
 ```bash
 terraform import {module_name}.aws_rds_cluster.cumulus <new cluster identifier>
 ```
 
-4) Update module `terraform.tfvars` such that the cluster_identifier matches the
+4) Update module `terraform.tfvars` such that the cluster_identifier variable matches the
    *new* database cluster.
 
-5) Once this is done, run a terraform plan.   ***Be very careful*** to ensure
+5) Run a terraform plan.   ***Be very careful*** to ensure
    that the `module.rds_cluster.aws_rds_cluster.cumulus` resource is not being recreated
    as this will wipe the postgres database.    You should expect to see the
    cluster be modified, not replaced, and the rds_login secret *version*
@@ -171,12 +172,19 @@ terraform  module supports the variable `snapshot identifier` - this
 variable, when set, will on cluster creation utilize an existing snapshot to
 create a new cluster.
 
-To restore a snapshot as a new cluster, simply set the `snapshot_identifier`
-variable to the snapshot you wish to create, and configure the module like a new
-deployment.
+To restore a snapshot as a new cluster:
 
-Once deployed, update Core to utilize the new cluster/security
-groups and redeploy.
+1) Halt all ingest and remove access to the database to prevent Core processes from
+   writing to the old cluster.
+
+2) Set the `snapshot_identifier`
+variable to the snapshot you wish to create, and configure the module like a new
+deployment, with a unique `cluster_identifier`
+
+3) Deploy the module using `terraform apply`
+
+4) Once deployed, verify the cluster has the expected data, then update Core to
+   utilize the new cluster/security groups and redeploy.
 
 ## DynamoDB
 
