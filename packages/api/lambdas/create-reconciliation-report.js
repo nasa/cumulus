@@ -115,12 +115,9 @@ async function fetchESCollections(recReportParams) {
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
-  log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
-  log.debug(`esCollectionSearchParams ${JSON.stringify(esCollectionSearchParams)}`);
   if (shouldAggregateGranulesForCollections(esGranuleSearchParams)) {
     // Build an ESCollection and call the aggregateGranuleCollections to
     // get list of collection ids that have granules that have been updated
-    log.debug(`esGranuleSearchParams ${JSON.stringify(esGranuleSearchParams)}`);
     const esCollection = new Collection({ queryStringParameters: esGranuleSearchParams }, 'collection', process.env.ES_INDEX);
     const esCollectionItems = await esCollection.aggregateGranuleCollections();
     esCollectionIds = esCollectionItems.sort();
