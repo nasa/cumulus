@@ -21,6 +21,7 @@ module "distribution" {
   thin_egress_jwt_algo                           = var.thin_egress_jwt_algo
   thin_egress_jwt_secret_name                    = var.thin_egress_jwt_secret_name
   thin_egress_lambda_code_dependency_archive_key = var.thin_egress_lambda_code_dependency_archive_key
+  thin_egress_stack_name                         = var.thin_egress_stack_name
   urs_client_id                                  = var.urs_client_id
   urs_client_password                            = var.urs_client_password
   urs_url                                        = var.urs_url

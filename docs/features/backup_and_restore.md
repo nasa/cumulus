@@ -23,7 +23,7 @@ logs and Step Function executions in the AWS console will be irrecoverable.
   our reference implementation utilizes a serverless Aurora/RDS database - as
   such this reference provides AWS RDS Aurora Serverless backup options.
 
-* As of Core version 2.1+ Cumulus is transitioning from use of a DynamoDB backed
+* As of Core version 3.0.0 Cumulus is transitioning from use of a DynamoDB backed
   primary database to a Postgres instance with a reference Aurora/RDS Postgres
   compatible module.     In this mode, the primary data records are still being
   written to DynamoDB (and replicated to Elastic Search), however replicated
