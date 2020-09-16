@@ -93,10 +93,6 @@ variable "saml_launchpad_metadata_url" {
   default = "N/A"
 }
 
-variable "subnet_ids" {
-  type = list(string)
-}
-
 variable "system_bucket" {
   type = string
 }
@@ -133,6 +129,11 @@ variable "buckets" {
 variable "distribution_url" {
   type    = string
   default = null
+}
+
+variable "ecs_cluster_instance_subnet_ids" {
+  type = list(string)
+  default = []
 }
 
 variable "ems_datasource" {
@@ -209,6 +210,11 @@ variable "aws_profile" {
   default = null
 }
 
+variable "lambda_subnet_ids" {
+  type = list(string)
+  default = []
+}
+
 variable "log_api_gateway_to_cloudwatch" {
   type        = bool
   default     = false
@@ -267,4 +273,10 @@ variable "es_index_shards" {
   description = "The number of shards for the Elasticsearch index"
   type        = number
   default     = 2
+}
+
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type        = bool
+  default     = false
 }

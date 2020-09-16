@@ -270,6 +270,12 @@ variable "public_buckets" {
   default = []
 }
 
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type    = bool
+  default = false
+}
+
 variable "saml_entity_id" {
   type    = string
   default = "N/A"

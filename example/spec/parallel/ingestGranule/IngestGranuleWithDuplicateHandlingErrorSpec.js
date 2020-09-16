@@ -106,7 +106,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
           return executionId === firstIngestGranuleRule.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
-        { timeout: 15 }
+        { timeout: 30 }
       );
 
       // Wait for the execution to be completed
@@ -154,7 +154,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
           return executionId === secondIngestGranuleRule.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
-        { timeout: 15 }
+        { timeout: 30 }
       );
 
       // Wait for the execution to be completed

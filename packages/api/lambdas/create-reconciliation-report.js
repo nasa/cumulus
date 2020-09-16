@@ -1,7 +1,10 @@
 'use strict';
 
+/*eslint prefer-const: ["error", {"destructuring": "all"}]*/
+
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
+const isString = require('lodash/isString');
 const camelCase = require('lodash/camelCase');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -17,16 +20,17 @@ const CMR = require('@cumulus/cmr-client/CMR');
 const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
+const { removeNilProperties } = require('@cumulus/common/util');
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const {
-  cmrSearchParams,
   convertToESGranuleSearchParams,
   convertToESCollectionSearchParams,
   initialReportHeader,
+  filterCMRCollections,
 } = require('../lib/reconciliationReport');
 const Collection = require('../es/collections');
 const { ESSearchQueue } = require('../es/esSearchQueue');
@@ -200,10 +204,8 @@ async function reconciliationReportForCollections(recReportParams) {
   // 'Version' as sort_key
   const cmrSettings = await getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  const cmrParams = cmrSearchParams(recReportParams);
-  const cmrCollectionItems = await cmr.searchCollections(cmrParams, 'umm_json');
-  const cmrCollectionIds = cmrCollectionItems.map((item) =>
-    constructCollectionId(item.umm.ShortName, item.umm.Version)).sort();
+  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
+  const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
 
   // Array of collectionIds are possible.
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
@@ -386,7 +388,7 @@ async function reconciliationReportForGranules(params) {
   });
 
   const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
-    { ...recReportParams, collectionId }
+    { ...recReportParams, collectionIds: [collectionId] }
   );
   const esGranulesIterator = new ESCollectionGranuleQueue(
     esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
@@ -728,9 +730,36 @@ function normalizeEvent(event) {
     reportType = 'Granule Not Found';
   }
 
-  return {
-    ...event, systemBucket, stackName, startTimestamp, endTimestamp, reportType,
-  };
+  // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
+  // for now, move input collectionId to collectionIds as array
+  // internal reports will keep existing collectionId and copy it to collectionIds
+  let { collectionIds: anyCollectionIds, collectionId, ...modifiedEvent } = { ...event };
+  if (anyCollectionIds) {
+    throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
+  }
+  if (collectionId) {
+    if (reportType === 'Internal') {
+      if (!isString(collectionId)) {
+        throw new TypeError(`${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
+      } else {
+        // include both collectionIds and collectionId for Internal Reports.
+        modifiedEvent = { ...event, collectionIds: [collectionId] };
+      }
+    } else {
+      // transform input collectionId into array on collectionIds
+      const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
+      modifiedEvent = { ...modifiedEvent, collectionIds };
+    }
+  }
+
+  return removeNilProperties({
+    ...modifiedEvent,
+    systemBucket,
+    stackName,
+    startTimestamp,
+    endTimestamp,
+    reportType,
+  });
 }
 
 async function handler(event) {

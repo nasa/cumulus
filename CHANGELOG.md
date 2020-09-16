@@ -38,14 +38,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `thin_egress_stack_name` variable to `cumulus` and `distribution` Terraform modules to allow overriding the default Cloudformation stack name used for the `thin-egress-app`. **Please note that if you change/set this value for an existing deployment, it will destroy and re-create your API gateway for the `thin-egress-app`.**
+- **CUMULUS-2155**
+  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
+    modules.  If set to true, this diagnostic variable instructs Core's database
+    code to fire off a connection 'heartbeat' query and log the timing/results
+    for diagnostic purposes, and retry certain connection timeouts once.
+    This option is disabled by default
 - **CUMULUS-2123**
-  - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a severless RDS Aurora/ PostgreSQL database cluster to meet the PostgreSQL requirements for the 2.1.x release series
+  - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
+    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    requirements for the 2.1.x release series
   - Updated the default Cumulus module to take the following new required variables:
     - rds_user_access_secret_arn:
-      AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)
+      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
+      (containing at least host, password, port as keys)
     - rds_security_group:
       RDS Security Group that provides connection access to the RDS cluster
-  - Updated API lambdas and default ECS cluster to add them to the `rds_security_group` for database access
+  - Updated API lambdas and default ECS cluster to add them to the
+    `rds_security_group` for database access
 - **CUMULUS-1855**
   - Fixed SyncGranule task to return an empty granules list when given an empty
     (or absent) granules list on input, rather than throwing an exception
@@ -73,11 +84,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
     report to only the input collectionId when comparing Cumulus and
-    CMR.
+    CMR. `collectionId` is provided an array of strings e.g. `[shortname___version, shortname2___version2]`
 - **CUMULUS-2107**
   - Added a new task, `update-cmr-access-constraints`, that will set access constraints in CMR Metadata.
     Currently supports UMMG-JSON and Echo10XML, where it will configure `AccessConstraints` and
     `RestrictionFlag/RestrictionComment`, respectively.
+  - Added an operator doc on how to configure and run the access constraint update workflow, which will update the metadata using the new task, and then publish the updated metadata to CMR.
+  - Added an operator doc on bulk operations.
 - **CUMULUS-2112**
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
@@ -92,6 +105,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
+- **CUMULUS-2107**
+  - Updated the `applyWorkflow` functionality on the granules endpoint to take a `meta` property to pass into the workflow message.
+  - Updated the `BULK_GRANULE` functionality on the granules endpoint to support the above `applyWorkflow` change.
 
 ### Fixed
 
@@ -104,6 +120,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
+- **CUMULUS-2163**
+  - Remove the `public-read` ACL from the `move-granules` task
 
 ### Deprecated
 
