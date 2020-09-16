@@ -3,6 +3,7 @@
 const test = require('ava');
 const rewire = require('rewire');
 
+const { InvalidArgument } = require('@cumulus/errors');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
@@ -12,10 +13,14 @@ const shouldAggregateGranules = CRP.__get__('shouldAggregateGranules');
 const normalizeEvent = CRP.__get__('normalizeEvent');
 
 test(
-  'isOneWayCollectionReport returns true only when one or more specific parameters '
-    + ' are present on the reconciliation report object.',
+  'isOneWayCollectionReport returns true only when one or more specific parameters ' +
+    ' are present on the reconciliation report object.',
   (t) => {
-    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp', 'granuleIds'];
+    const paramsThatShouldReturnTrue = [
+      'startTimestamp',
+      'endTimestamp',
+      'granuleIds',
+    ];
 
     const paramsThatShouldReturnFalse = [
       'stackName',
@@ -25,10 +30,12 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(isOneWayCollectionReport({ [p]: randomId('value') })));
+      t.true(isOneWayCollectionReport({ [p]: randomId('value') }))
+    );
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(isOneWayCollectionReport({ [p]: randomId('value') })));
+      t.false(isOneWayCollectionReport({ [p]: randomId('value') }))
+    );
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
@@ -46,8 +53,8 @@ test(
 );
 
 test(
-  'isOneWayGranuleReport returns true only when one or more specific parameters '
-    + ' are present on the reconciliation report object.',
+  'isOneWayGranuleReport returns true only when one or more specific parameters ' +
+    ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
 
@@ -61,10 +68,12 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(isOneWayGranuleReport({ [p]: randomId('value') })));
+      t.true(isOneWayGranuleReport({ [p]: randomId('value') }))
+    );
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(isOneWayGranuleReport({ [p]: randomId('value') })));
+      t.false(isOneWayGranuleReport({ [p]: randomId('value') }))
+    );
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
@@ -82,8 +91,8 @@ test(
 );
 
 test(
-  'shouldAggregateGranules returns true only when one or more specific parameters '
-    + ' are present on the reconciliation report object.',
+  'shouldAggregateGranules returns true only when one or more specific parameters ' +
+    ' are present on the reconciliation report object.',
   (t) => {
     const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
     const paramsThatShouldReturnFalse = [
@@ -94,10 +103,12 @@ test(
     ];
 
     paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldAggregateGranules({ [p]: randomId('value') })));
+      t.true(shouldAggregateGranules({ [p]: randomId('value') }))
+    );
 
     paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldAggregateGranules({ [p]: randomId('value') })));
+      t.false(shouldAggregateGranules({ [p]: randomId('value') }))
+    );
 
     const allTrueKeys = paramsThatShouldReturnTrue.reduce(
       (accum, current) => ({ ...accum, [current]: randomId('value') }),
@@ -204,11 +215,11 @@ test('normalizeEvent moves string on granuleId to array on granuleIds', (t) => {
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
     reportType: 'Not Internal',
-    granuleId: 'someGranule___version',
+    granuleId: 'someGranule',
   };
   const expect = {
     ...inputEvent,
-    granuleIds: ['someGranule___version'],
+    granuleIds: ['someGranule'],
   };
   delete expect.granuleId;
 
@@ -223,12 +234,12 @@ test('normalizeEvent moves array on granuleId to granuleIds', (t) => {
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
     reportType: 'Not Internal',
-    granuleId: ['someGranule___version', 'someGranule___version2'],
+    granuleId: ['someGranule', 'someGranule2'],
   };
 
   const expect = {
     ...inputEvent,
-    granuleIds: ['someGranule___version', 'someGranule___version2'],
+    granuleIds: ['someGranule', 'someGranule2'],
   };
   delete expect.granuleId;
 
@@ -243,10 +254,48 @@ test('normalizeEvent throws error if array of granuleIds is passed to Internal r
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
     reportType: 'Internal',
-    granuleId: ['someCollectionId1'],
+    granuleId: ['someGranuleId'],
   };
   t.throws(() => normalizeEvent(inputEvent), {
     message:
-      'granuleId: ["someCollectionId1"] is not valid input for an \'Internal\' report.',
+      'granuleId: ["someGranuleId"] is not valid input for an \'Internal\' report.',
   });
+});
+
+test('normalizeEvent throws error if granuleIds and collectionIds are passed to non-Internal report', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'notInternal',
+    granuleId: ['someGranuleId'],
+    collectionId: ['someCollectionId1'],
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    instanceOf: InvalidArgument,
+    message:
+      'notInternal reports cannot be launched with both granuleId and collectionId input.',
+  });
+});
+
+test('normalizeEvent correctly handles granuleIds and collectionIds if reportType is Internal', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Internal',
+    granuleId: 'someGranuleId',
+    collectionId: 'someCollectionId1',
+  };
+
+  const expected = {
+    ...inputEvent,
+    granuleIds: ['someGranuleId'],
+    collectionIds: ['someCollectionId1'],
+  };
+
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expected);
 });

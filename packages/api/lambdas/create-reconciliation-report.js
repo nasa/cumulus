@@ -21,6 +21,7 @@ const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { removeNilProperties } = require('@cumulus/common/util');
+const { InvalidArgument } = require('@cumulus/errors');
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
@@ -738,6 +739,58 @@ function isoTimestamp(dateable) {
 }
 
 /**
+ * Transforms input collectionId into correct parameters for
+ * @param {Array<string>|string} granuleId - list of granule Ids
+ * @param {string} reportType - report type
+ * @param {Object} modifiedEvent - input event
+ * @returns {Object} updated input even with correct granuleId and granuleIds values.
+ */
+function updateGranuleIds(granuleId, reportType, modifiedEvent) {
+  let returnEvent = { ...modifiedEvent };
+  if (granuleId) {
+    // transform input granuleId into an array on granuleIds
+    const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
+    if (reportType === 'Internal') {
+      if (!isString(granuleId)) {
+        throw new InvalidArgument(`granuleId: ${JSON.stringify(granuleId)} is not valid input for an 'Internal' report.`);
+      } else {
+        // include both granuleId and granuleIds for Internal Reports.
+        returnEvent = { ...modifiedEvent, granuleId, granuleIds: [granuleId] };
+      }
+    } else {
+      returnEvent = { ...modifiedEvent, granuleIds };
+    }
+  }
+  return returnEvent;
+}
+
+/**
+ * Transforms input collectionId into correct parameters for
+ * @param {Array<string>|string} collectionId - list of collection Ids
+ * @param {string} reportType - report type
+ * @param {Object} modifiedEvent - input event
+ * @returns {Object} updated input even with correct collectionId and collectionIds values.
+ */
+function updateCollectionIds(collectionId, reportType, modifiedEvent) {
+  let returnEvent = { ...modifiedEvent };
+  if (collectionId) {
+    const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
+    if (reportType === 'Internal') {
+      if (!isString(collectionId)) {
+        throw new InvalidArgument(`collectionId: ${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
+      } else {
+        // include both collectionIds and collectionId for Internal Reports.
+        returnEvent = { ...modifiedEvent, collectionId, collectionIds: [collectionId] };
+      }
+    } else {
+      // add array of collectionIds
+      returnEvent = { ...modifiedEvent, collectionIds };
+    }
+  }
+  return returnEvent;
+}
+
+/**
  * Converts input parameters to normalized versions to pass on to the report
  * functions.  Ensures any input dates are formatted as ISO strings.
  *
@@ -760,38 +813,13 @@ function normalizeEvent(event) {
   // internal reports will keep existing collectionId and copy it to collectionIds
   let { collectionIds: anyCollectionIds, collectionId, granuleId, ...modifiedEvent } = { ...event };
   if (anyCollectionIds) {
-    throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
+    throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
-  if (collectionId) {
-    const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
-    if (reportType === 'Internal') {
-      if (!isString(collectionId)) {
-        throw new TypeError(`collectionId: ${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
-      } else {
-        // include both collectionIds and collectionId for Internal Reports.
-        modifiedEvent = { ...modifiedEvent, collectionId, collectionIds: [collectionId] };
-      }
-    } else {
-      // add array of collectionIds
-      modifiedEvent = { ...modifiedEvent, collectionIds };
-    }
+  if (granuleId && collectionId && reportType !== 'Internal') {
+    throw new InvalidArgument(`${reportType} reports cannot be launched with both granuleId and collectionId input.`);
   }
-  // TODO [MHS, 09/15/2020] Same here, remove/cleanup when internal reports
-  // supports array of granuleIds
-  if (granuleId) {
-    // transform input granuleId into an array on granuleIds
-    const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
-    if (reportType === 'Internal') {
-      if (!isString(granuleId)) {
-        throw new TypeError(`granuleId: ${JSON.stringify(granuleId)} is not valid input for an 'Internal' report.`);
-      } else {
-        // include both granuleId and granuleIds for Internal Reports.
-        modifiedEvent = { ...modifiedEvent, granuleId, granuleIds: [granuleId] };
-      }
-    } else {
-      modifiedEvent = { ...modifiedEvent, granuleIds };
-    }
-  }
+  modifiedEvent = updateCollectionIds(collectionId, reportType, modifiedEvent);
+  modifiedEvent = updateGranuleIds(granuleId, reportType, modifiedEvent);
 
   return removeNilProperties({
     ...modifiedEvent,
