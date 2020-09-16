@@ -8,23 +8,23 @@ hide_title: false
 
 > This document is only relevant for upgrades of Cumulus from versions < 3.x.x to versions > 3.x.x
 
-Previous versions of Cumulus included deployment of the Thin Egress App (TEA) by default in the `distribution` module. As a result, this forced Cumulus users who wanted to deploy a new version of TEA to wait on a new release of Cumulus that incorporated that release.
+Previous versions of Cumulus included deployment of the Thin Egress App (TEA) by default in the `distribution` module. As a result, Cumulus users who wanted to deploy a new version of TEA to wait on a new release of Cumulus that incorporated that release.
 
-In order to give Cumulus users the flexibility to deploy newer versions of TEA whenever they want, deployment of TEA has been removed from the `distribution` module and **Cumulus users must now add the TEA module to their deployment**. [Guidance on integrating the TEA module to your deployment is provided](deployment/thin-egress-app.md), or you can refer to [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
+In order to give Cumulus users the flexibility to deploy newer versions of TEA whenever they want, deployment of TEA has been removed from the `distribution` module and **Cumulus users must now add the TEA module to their deployment**. [Guidance on integrating the TEA module to your deployment is provided](deployment/thin-egress-app.md), or you can refer to [Cumulus core example deployment code for the `thin_egress_app` module](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
 
 By default, when upgrading Cumulus and moving from TEA deployed via the `distribution` module to deployed as a separate module, your API gateway for TEA would be destroyed and re-created, which could cause outages for any Cloudfront endpoints pointing at that API gateway.
 
-These instructions outline how to modify your state to preserve your existing Thin Egress App (TEA) API gateway when upgrading Cumulus and moving deployment of TEA to a standalone module. **If you do not care about preserving your API gateway when upgrading your Cumulus deployment, you can skip these instructions.**
+These instructions outline how to modify your state to preserve your existing Thin Egress App (TEA) API gateway when upgrading Cumulus and moving deployment of TEA to a standalone module. **If you do not care about preserving your API gateway for TEA when upgrading your Cumulus deployment, you can skip these instructions.**
 
 ## Prerequisites
 
-- You **must have** [bucket versioning enabled for the Terraform state bucket used by your `cumulus` deployment](../deployment/terraform-best-practices#enable-bucket-versioning)
+- You [**must have bucket versioning enabled** for the Terraform state bucket used by your `cumulus` deployment](../deployment/terraform-best-practices#enable-bucket-versioning)
 
 ## Notes about state management
 
 These instructions will involve manipulating your Terraform state via `terraform state mv` commands. These operations are **extremely dangerous**, since a mistake in editing your Terraform state can leave your stack in a corrupted state where deployment may be impossible or may result in unanticipated resource deletion.
 
-Since bucket versioning preserves a separate version of your state file each time it is written, and the Terraform state modification commands overwrite the state file, we can mitigate the risk of these operations by downloading the most recent state file before starting the upgrade process. Then, if anything goes wrong during teh upgrade, we can restore that previous state version. Guidance on how to perform both operations is provided below.
+Since bucket versioning preserves a separate version of your state file each time it is written, and the Terraform state modification commands overwrite the state file, we can mitigate the risk of these operations by downloading the most recent state file before starting the upgrade process. Then, if anything goes wrong during the upgrade, we can restore that previous state version. Guidance on how to perform both operations is provided below.
 
 ### Download your most recent state version
 
@@ -39,7 +39,16 @@ $ aws s3api list-object-versions \
 <some-state-version-id>
 ```
 
-Then use the returned version ID to get the most recent state file object, replacing `<some-state-version-id>` with the output from the previous command:
+If `None` was returned for the version ID because you previously did not have bucket versioning enabled, then just download the state file without a version specified:
+
+```shell
+aws s3api get-object \
+  --bucket BUCKET \
+  --key KEY \
+  /path/to/terraform.tfstate
+```
+
+Otherwise, use the returned version ID to get the most recent state file object, replacing `<some-state-version-id>` with the output from the previous command:
 
 ```shell
 aws s3api get-object \

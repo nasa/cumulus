@@ -39,11 +39,11 @@ PUBLIC_BUCKETS:
 
 ### Integration with cumulus module
 
-The `cumulus` module deploys certain components that interact with TEA. As a result, the `cumulus` module requires a `tea_stack_name` variable which is the name of the TEA Cloudformation stack. To get this value, you can specify the `stack_name` variable to the TEA module and then use the same value for the `tea_stack_name` variable to the `cumulus` module.
+The `cumulus` module deploys certain components that interact with TEA. As a result, the `cumulus` module requires a `tea_stack_name` variable which is the name of the TEA Cloudformation stack. **This value must match the actual stack name for TEA Cloudformation stack**. One way to keep these values in sync is to use a Terraform local variable to specify the `stack_name` variable to the TEA module and the `tea_stack_name` variable to the `cumulus` module.
 
 Also, if you are specifying a `stage_name` variable to the TEA module, you must use the same value for the `distribution_api_gateway_stage` variable to the `cumulus` module.
 
-This approach is shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
+The [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf) demonstrates the use of local variables to keep these variables in sync across the modules.
 
 ### Earthdata Login credentials
 
