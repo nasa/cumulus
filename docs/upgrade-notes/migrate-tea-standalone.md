@@ -6,45 +6,80 @@ hide_title: false
 
 ## Background
 
+> This document is only relevant for upgrades of Cumulus from versions < 3.x.x to versions > 3.x.x
+
 Previous versions of Cumulus included deployment of the Thin Egress App (TEA) by default in the `distribution` module. As a result, this forced Cumulus users who wanted to deploy a new version of TEA to wait on a new release of Cumulus that incorporated that release.
 
 In order to give Cumulus users the flexibility to deploy newer versions of TEA whenever they want, deployment of TEA has been removed from the `distribution` module and **Cumulus users must now add the TEA module to their deployment**. [Guidance on integrating the TEA module to your deployment is provided](deployment/thin-egress-app.md), or you can refer to [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
 
 By default, when upgrading Cumulus and moving from TEA deployed via the `distribution` module to deployed as a separate module, your API gateway for TEA would be destroyed and re-created, which could cause outages for any Cloudfront endpoints pointing at that API gateway.
 
-These instructions outline how to modify your state to preserve your existing Thin Egress App (TEA) API gateway when upgrading Cumulus and moving deployment of TEA to a standalone module.
+These instructions outline how to modify your state to preserve your existing Thin Egress App (TEA) API gateway when upgrading Cumulus and moving deployment of TEA to a standalone module. **If you do not care about preserving your API gateway when upgrading your Cumulus deployment, you can skip these instructions.**
+
+## Prerequisites
+
+- You **must have** [bucket versioning enabled for the Terraform state bucket used by your `cumulus` deployment](../deployment/terraform-best-practices#enable-bucket-versioning)
 
 ## Notes about state management
 
 These instructions will involve manipulating your Terraform state via `terraform state mv` commands. These operations are **extremely dangerous**, since a mistake in editing your Terraform state can leave your stack in a corrupted state where deployment may be impossible or may result in unanticipated resource deletion.
 
-To mitigate the risk of having to edit your state, we **recommend temporarily switching your deployment to read from local state**. Switching to local state means that changes to Terraform state are only tracked locally, not on your remote state stored in S3. Thus, if you make a mistake, you can abandon the state changes by switching your deployment to read from its remote state.
+Since bucket versioning preserves a separate version of your state file each time it is written, and the Terraform state modification commands overwrite the state file, we can mitigate the risk of these operations by downloading the most recent state file before starting the upgrade process. Then, if anything goes wrong during teh upgrade, we can restore that previous state version. Guidance on how to perform both operations is provided below.
 
-### Switch from remote to local state
+### Download your most recent state version
 
-In your `cumulus-tf` directory:
+Get the version ID of your most recent cumulus deployment state file, replacing `BUCKET` and `KEY` with the correct values from `cumulus-tf/terraform.tf`:
 
-1. Edit `terraform.tf` to comment out your backend settings
-2. Re-run `terraform init` and answer "yes" when asked to copy backend configuration
+```shell
+$ aws s3api list-object-versions \
+  --bucket BUCKET \
+  --prefix KEY \
+  --query "Versions[?IsLatest].VersionId" \
+  --output text
+<some-state-version-id>
+```
 
-![Screenshot of terminal showing output from "terraform init" to switch from remote state to local state](assets/switch-to-local-state.png)
+Then use the returned version ID to get the most recent state file object, replacing `<some-state-version-id>` with the output from the previous command:
 
-### Switch from local to remote state
+```shell
+aws s3api get-object \
+  --bucket BUCKET \
+  --key KEY \
+  --version-id <some-state-version-id> \
+  /path/to/terraform.tfstate
+```
 
-In your `cumulus-tf` directory:
+### Restore a previous state version
 
-1. Edit `terraform.tf` to un-comment your backend settings
-2. Re-run `terraform init` and answer "yes"/"no":
-   - Answer "yes" if your changes to local state all applied as expected and you want to sync them to your remote state
-   - Answer "no" if something when wrong when editing your local state and you want to revert back to your remote state before any changes were made
+Follow the instructions for ["To copy a previous version of your state file into the same bucket"](../deployment/terraform-best-practices#how-to-recover-from-a-corrupted-state-file) and use the state file that was previously downloaded.
 
-![Screenshot of terminal showing output from "terraform init" to switch from local state to remote state](assets/switch-to-remote-state.png)
+Then run `terraform plan`, which will give an error because we manually overwrote the state file and it is now out of sync with the lock table Terraform uses to track your state file:
+
+```shell
+Error: Error loading state: state data in S3 does not have the expected content.
+
+This may be caused by unusually long delays in S3 processing a previous state
+update.  Please wait for a minute or two and try again. If this problem
+persists, and neither S3 nor DynamoDB are experiencing an outage, you may need
+to manually verify the remote state and update the Digest value stored in the
+DynamoDB table to the following value: <some-digest-value>
+```
+
+To resolve this error:
+
+  1. Use the AWS console to view the items in the DynamoDB table named in `dynamodb_table` from `cumulus-tf/terraform.tf`.
+  2. Locate the entry for your deployment, where `LockID` should be `<your-state-bucket>/<your-key>-md5`
+  3. Update the `Digest` value for the record to the digest value from the previous error message and save.
+
+![Screenshot showing an edit screen for a DynamoDB entry in the Terraform locks table](assets/edit-state-lock.png)
+
+Now, if you re-run `terraform plan`, it should work as expected.
 
 ## Migration instructions
 
-> Please note: these instructions assume that you are deploying the Thin Egress App as shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf)
+> **Please note:** These instructions assume that you are deploying the `thin_egress_app` module as shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf)
 
-1. Ensure that you are working with [local state](#switch-from-remote-to-local-state)
+1. Ensure that you have [downloaded the latest version of your state file for your cumulus deployment](#download-your-most-recent-state-version)
 2. Find the URL for your `<prefix>-thin-egress-app-EgressGateway` API gateway. Confirm that you can access it in the browser and that it is functional.
 3. Run `terraform plan`. You should see output like (edited for readability):
 
@@ -139,10 +174,9 @@ In your `cumulus-tf` directory:
       ~ resource "aws_s3_bucket_object" "lambda_source" {
     ```
 
-    If you still see deletion of `module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app` pending, then something went wrong and you need to restore your [previous remote state](#switch-from-local-to-remote-state) and start over from step 1. Otherwise, proceed to step 6.
+    If you still see deletion of `module.cumulus.module.distribution.module.thin_egress_app.aws_cloudformation_stack.thin_egress_app` pending, then something went wrong and you should [restore the previously downloaded state file version](#restore-a-previous-state-version) and start over from step 1. Otherwise, proceed to step 6.
 
 6. Once you have confirmed that everything looks as expected, run `terraform apply`.
 7. Visit the same API gateway from step 1 and confirm that it still works.
-8. [Re-enable your remote state and copy the local state to your remote to sync the changes](#switch-from-local-to-remote-state)
 
 Your TEA deployment has now been migrated to a standalone module, which gives you the ability to upgrade the deployed version of TEA independently of Cumulus releases.
