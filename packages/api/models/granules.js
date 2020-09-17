@@ -304,15 +304,17 @@ class Granule extends Manager {
   /**
    * apply a workflow to a given granule object
    *
-   * @param {Object} g - the granule object
+   * @param {Object} granule - the granule object
    * @param {string} workflow - the workflow name
+   * @param {Object} meta - optional meta object to insert in workflow message
    * @param {string} [queueName] - specify queue to append message to
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(
-    g,
+    granule,
     workflow,
+    meta = undefined,
     queueName = undefined,
     asyncOperationId = undefined
   ) {
@@ -320,23 +322,24 @@ class Granule extends Manager {
       throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
     }
 
-    const { name, version } = deconstructCollectionId(g.collectionId);
+    const { name, version } = deconstructCollectionId(granule.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
       workflow,
       payload: {
-        granules: [g],
+        granules: [granule],
       },
-      provider: g.provider,
+      provider: granule.provider,
       collection: {
         name,
         version,
       },
+      meta,
       queueName,
       asyncOperationId,
     });
 
-    await this.updateStatus({ granuleId: g.granuleId }, 'running');
+    await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
     await Lambda.invoke(process.env.invoke, lambdaPayload);
   }
