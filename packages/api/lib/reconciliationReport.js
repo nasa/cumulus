@@ -45,7 +45,7 @@ function dateToValue(dateable) {
  * @returns {Object} object of desired parameters formated for Elasticsearch collection search
  */
 function convertToESCollectionSearchParams(params) {
-  const { collectionIds, startTimestamp, endTimestamp, providers } = params;
+  const { collectionIds, startTimestamp, endTimestamp } = params;
   const idsIn = collectionIds
     ? searchParamsForCollectionIdArray(collectionIds)
     : undefined;
@@ -53,7 +53,6 @@ function convertToESCollectionSearchParams(params) {
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
     ...idsIn,
-    providers,
   };
   return removeNilProperties(searchParams);
 }

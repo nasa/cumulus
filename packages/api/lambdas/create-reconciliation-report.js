@@ -67,10 +67,12 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
  *                    object and the key references a defined value.
  */
 function isOneWayCollectionReport(reportParams) {
+  console.log(`PARAMS 4: ${JSON.stringify(reportParams)}`);
   return [
     'startTimestamp',
     'endTimestamp',
     'granuleIds',
+    'providers',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -83,6 +85,7 @@ function isOneWayCollectionReport(reportParams) {
  *                    object and the key references a defined value.
  */
 function isOneWayGranuleReport(reportParams) {
+  console.log(`PARAMS 5: ${JSON.stringify(reportParams)}`);
   return [
     'startTimestamp',
     'endTimestamp',
@@ -97,11 +100,12 @@ function isOneWayGranuleReport(reportParams) {
  * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
  */
 function shouldAggregateGranulesForCollections(searchParams) {
+  console.log(`PARAMS 6: ${JSON.stringify(searchParams)}`);
   return [
     'updatedAt__from',
     'updatedAt__to',
     'granuleId__in',
-    'providers',
+    'provider__in',
   ].some((e) => !!searchParams[e]);
 }
 
@@ -111,9 +115,11 @@ function shouldAggregateGranulesForCollections(searchParams) {
  * @returns {Promise<Array>} - list of collectionIds that match input paramaters
  */
 async function fetchESCollections(recReportParams) {
+  console.log(`PARAMS 7: ${JSON.stringify(recReportParams)}`);
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
   const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
-
+  console.log(`esCollectionSearchParams: ${JSON.stringify(esCollectionSearchParams)}`);
+  console.log(`esGranuleSearchParams: ${JSON.stringify(esGranuleSearchParams)}`);
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
@@ -213,6 +219,7 @@ async function createReconciliationReportForBucket(Bucket) {
  * onlyInCmr
  */
 async function reconciliationReportForCollections(recReportParams) {
+  console.log(`PARAMS 3: ${JSON.stringify(recReportParams)}`);
   // compare collection holdings:
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
@@ -697,6 +704,7 @@ async function processRequest(params) {
 
   try {
     const recReportParams = { ...params, createStartTime, reportKey, reportType };
+    console.log(`PARAMS 2: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
       await createInternalReconciliationReport(recReportParams);
     } else {
@@ -790,6 +798,33 @@ function updateCollectionIds(collectionId, reportType, modifiedEvent) {
 }
 
 /**
+ * Transforms input collectionId into correct parameters for use in the
+ * Reconciliation Report lambda.
+ * @param {Array<string>|string} provider - list of providers
+ * @param {string} reportType - report type
+ * @param {Object} modifiedEvent - input event
+ * @returns {Object} updated input even with correct collectionId and collectionIds values.
+ */
+function updateProviders(provider, reportType, modifiedEvent) {
+  let returnEvent = { ...modifiedEvent };
+  if (provider) {
+    const providers = isString(provider) ? [provider] : provider;
+    if (reportType === 'Internal') {
+      if (!isString(provider)) {
+        throw new InvalidArgument(`provider: ${JSON.stringify(provider)} is not a valid input for an 'Internal' report.`);
+      } else {
+        // include both providers and provider for Internal Reports.
+        returnEvent = { ...modifiedEvent, provider, providers: [provider] };
+      }
+    } else {
+      // add array of providers
+      returnEvent = { ...modifiedEvent, providers };
+    }
+  }
+  return returnEvent;
+}
+
+/**
  * Converts input parameters to normalized versions to pass on to the report
  * functions.  Ensures any input dates are formatted as ISO strings.
  *
@@ -810,7 +845,14 @@ function normalizeEvent(event) {
   // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
   // for now, move input collectionId to collectionIds as array
   // internal reports will keep existing collectionId and copy it to collectionIds
-  let { collectionIds: anyCollectionIds, collectionId, granuleId, provider, ...modifiedEvent } = { ...event };
+  let {
+    collectionIds: anyCollectionIds,
+    collectionId,
+    granuleId,
+    provider,
+    ...modifiedEvent
+  } = { ...event };
+
   if (anyCollectionIds) {
     throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
@@ -819,20 +861,7 @@ function normalizeEvent(event) {
   }
   modifiedEvent = updateCollectionIds(collectionId, reportType, modifiedEvent);
   modifiedEvent = updateGranuleIds(granuleId, reportType, modifiedEvent);
-
-  if (provider) {
-    if (reportType === 'Internal') {
-      if (!isString(provider)) {
-        throw new TypeError(`${JSON.stringify(provider)} is not a valid input for an 'Internal' report.`);
-      } else {
-        modifiedEvent = { ...event, providers: [provider] };
-      }
-    } else {
-      // transform input provider into array on providers
-      const providers = isString(provider) ? [provider] : provider;
-      modifiedEvent = { ...modifiedEvent, providers };
-    }
-  }
+  modifiedEvent = updateProviders(provider, reportType, modifiedEvent);
 
   return removeNilProperties({
     ...modifiedEvent,
@@ -850,6 +879,7 @@ async function handler(event) {
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
   const reportParams = normalizeEvent(event);
+  console.log(`PARAMS 1: ${JSON.stringify(reportParams)}`);
   return processRequest(reportParams);
 }
 exports.handler = handler;
