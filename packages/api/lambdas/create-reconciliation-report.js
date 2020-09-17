@@ -68,7 +68,7 @@ function isOneWayReport(reportParams) {
   return [
     'startTimestamp',
     'endTimestamp',
-    'provider',
+    'providers',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -82,7 +82,7 @@ function shouldFilterByTime(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
-    'provider',
+    'providers',
   ].some((e) => !!searchParams[e]);
 }
 
@@ -733,7 +733,7 @@ function normalizeEvent(event) {
   // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
   // for now, move input collectionId to collectionIds as array
   // internal reports will keep existing collectionId and copy it to collectionIds
-  let { collectionIds: anyCollectionIds, collectionId, ...modifiedEvent } = { ...event };
+  let { collectionIds: anyCollectionIds, collectionId, provider, ...modifiedEvent } = { ...event };
   if (anyCollectionIds) {
     throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
@@ -749,6 +749,20 @@ function normalizeEvent(event) {
       // transform input collectionId into array on collectionIds
       const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
       modifiedEvent = { ...modifiedEvent, collectionIds };
+    }
+  }
+
+  if (provider) {
+    if (reportType === 'Internal') {
+      if (!isString(provider)) {
+        throw new TypeError(`${JSON.stringify(provider)} is not a valid input for an 'Internal' report.`);
+      } else {
+        modifiedEvent = { ...event, providers: [provider] };
+      }
+    } else {
+      // transform input provider into array on providers
+      const providers = isString(provider) ? [provider] : provider;
+      modifiedEvent = { ...modifiedEvent, providers };
     }
   }
 
