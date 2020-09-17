@@ -730,26 +730,14 @@ function normalizeEvent(event) {
     reportType = 'Granule Not Found';
   }
 
-  // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
-  // for now, move input collectionId to collectionIds as array
-  // internal reports will keep existing collectionId and copy it to collectionIds
   let { collectionIds: anyCollectionIds, collectionId, ...modifiedEvent } = { ...event };
   if (anyCollectionIds) {
     throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
   if (collectionId) {
-    if (reportType === 'Internal') {
-      if (!isString(collectionId)) {
-        throw new TypeError(`${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
-      } else {
-        // include both collectionIds and collectionId for Internal Reports.
-        modifiedEvent = { ...event, collectionIds: [collectionId] };
-      }
-    } else {
-      // transform input collectionId into array on collectionIds
-      const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
-      modifiedEvent = { ...modifiedEvent, collectionIds };
-    }
+    // transform input collectionId into array on collectionIds
+    const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
+    modifiedEvent = { ...modifiedEvent, collectionIds };
   }
 
   return removeNilProperties({

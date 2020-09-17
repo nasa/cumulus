@@ -4,6 +4,7 @@ const test = require('ava');
 const moment = require('moment');
 const flatten = require('lodash/flatten');
 const range = require('lodash/range');
+const rewire = require('rewire');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
@@ -21,6 +22,9 @@ const {
 const models = require('../../models');
 const indexer = require('../../es/indexer');
 const { deconstructCollectionId } = require('../../lib/utils');
+
+const CRP = rewire('../../lambdas/create-reconciliation-report');
+const normalizeEvent = CRP.__get__('normalizeEvent');
 
 let esAlias;
 let esIndex;
@@ -62,7 +66,7 @@ test.afterEach.always(async (t) => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test.serial('reconciliationReportForCollections reports discrepancy of collection holdings in ES and DB', async (t) => {
+test.serial('internalRecReportForCollections reports discrepancy of collection holdings in ES and DB', async (t) => {
   const matchingColls = range(10).map(() => fakeCollectionFactory());
   const extraDbColls = range(2).map(() => fakeCollectionFactory());
   const extraEsColls = range(2).map(() => fakeCollectionFactory());
@@ -116,11 +120,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
 
   // collectionId matches the collection with conflicts
   const collectionId = constructCollectionId(conflictCollInDb.name, conflictCollInDb.version);
-  // TODO [MHS, 09/09/2020] remove collectionIds after CUMULUS-2156 is worked
-  // (added because this test doesn't normalize the event) another alternative
-  // would be to rewire and __get__ the normalize function from
-  // create-reconciliation-report
-  const paramsCollectionId = { ...searchParams, collectionId, collectionIds: [collectionId] };
+  const paramsCollectionId = normalizeEvent({ ...searchParams, collectionId: [collectionId, randomId('collectionId')] });
 
   report = await internalRecReportForCollections(paramsCollectionId);
   t.is(report.okCount, 0);
@@ -129,7 +129,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
   t.is(report.withConflicts.length, 1);
 });
 
-test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
+test.serial('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
   const collectionId = constructCollectionId(randomId('name'), randomId('version'));
   const provider = randomId('provider');
 
