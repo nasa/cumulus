@@ -2,7 +2,6 @@
  * with some alterations.
  * source: https://raw.githubusercontent.com/sat-utils/sat-api-lib/master/libs/search.js
  */
-/* eslint-disable max-classes-per-file */
 
 'use strict';
 

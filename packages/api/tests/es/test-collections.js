@@ -4,7 +4,6 @@ const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
-const range = require('lodash/range');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
@@ -74,27 +73,6 @@ test.before(async () => {
       status: 'completed',
     }), esAlias),
   ]);
-
-  // Adding a bunch of collections with granules to test more than 10 collections
-  // can be returned
-  await Promise.all(range(9).map((i) =>
-    indexer.indexCollection(esClient, fakeCollectionFactory({
-      name: 'coll4',
-      version: i.toString(),
-    }), esAlias)));
-
-  await Promise.all(range(9).map((i) =>
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
-      collectionId: `coll4___${i}`,
-      status: 'completed',
-    }), esAlias)));
-
-  // Add more than 10 granules to `coll4___0`
-  await Promise.all(range(10).map(() =>
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
-      collectionId: 'coll4___0',
-      status: 'completed',
-    }), esAlias)));
 
   // Indexing using Date.now() to generate the timestamp
   const stub = sinon.stub(Date, 'now').returns((new Date(2020, 0, 29)).getTime());
@@ -257,21 +235,16 @@ test.serial('addStatsToCollection returns empty list for no collections', async 
 });
 
 test.serial('query returns all collections with stats by default', async (t) => {
-  const collectionSearch = new Collection(
-    { queryStringParameters: { limit: 13 } },
-    undefined,
-    process.env.ES_INDEX
-  );
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
   const queryResult = await collectionSearch.query();
 
-  t.is(queryResult.meta.count, 13);
+  t.is(queryResult.meta.count, 4);
 
   const collections = queryResult.results.map((c) => ({
     name: c.name,
     version: c.version,
     stats: c.stats,
   }));
-
   const orderedCollections = sortBy(collections, ['name', 'version']);
   t.deepEqual(orderedCollections, [
     {
@@ -314,26 +287,7 @@ test.serial('query returns all collections with stats by default', async (t) => 
         total: 1,
       },
     },
-    {
-      name: 'coll4',
-      version: '0',
-      stats: {
-        running: 0,
-        completed: 11,
-        failed: 0,
-        total: 11,
-      },
-    },
-  ].concat(range(1, 9).map((i) => ({
-    name: 'coll4',
-    version: i.toString(),
-    stats: {
-      running: 0,
-      completed: 1,
-      failed: 0,
-      total: 1,
-    },
-  }))));
+  ]);
 });
 
 test.serial('query correctly queries collection by date', async (t) => {
@@ -353,13 +307,7 @@ test.serial('aggregateActiveGranuleCollections returns only collections with gra
   const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
   const queryResult = await collectionSearch.aggregateActiveGranuleCollections();
 
-  const orderedResult = queryResult.sort();
-
-  t.deepEqual(
-    orderedResult,
-    ['coll1___1', 'coll3___1']
-      .concat(range(9).map((i) => `coll4___${i}`))
-  );
+  t.deepEqual(queryResult, ['coll1___1', 'coll3___1']);
 });
 
 test.serial('aggregateActiveGranuleCollections respects date range for granules', async (t) => {
@@ -375,24 +323,17 @@ test.serial('aggregateActiveGranuleCollections respects date range for granules'
 });
 
 test.serial('queryCollectionsWithActiveGranules returns collection info and stats', async (t) => {
-  const collectionSearch = new Collection(
-    { queryStringParameters: { limit: 11 } },
-    undefined,
-    process.env.ES_INDEX
-  );
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
   const queryResult = await collectionSearch.queryCollectionsWithActiveGranules();
 
-  t.is(queryResult.meta.count, 11);
+  t.is(queryResult.meta.count, 2);
 
   const collections = queryResult.results.map((c) => ({
     name: c.name,
     version: c.version,
     stats: c.stats,
   }));
-
-  const orderedCollections = sortBy(collections, ['name', 'version']);
-
-  t.deepEqual(orderedCollections, [
+  t.deepEqual(collections, [
     {
       name: 'coll1',
       version: '1',
@@ -413,26 +354,7 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
         total: 1,
       },
     },
-    {
-      name: 'coll4',
-      version: '0',
-      stats: {
-        running: 0,
-        completed: 11,
-        failed: 0,
-        total: 11,
-      },
-    },
-  ].concat(range(1, 9).map((i) => ({
-    name: 'coll4',
-    version: i.toString(),
-    stats: {
-      running: 0,
-      completed: 1,
-      failed: 0,
-      total: 1,
-    },
-  }))));
+  ]);
 });
 
 test.serial('queryCollectionsWithActiveGranules respects granule update times, but not collection', async (t) => {
