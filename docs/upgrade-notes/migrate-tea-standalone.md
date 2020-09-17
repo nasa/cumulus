@@ -36,7 +36,11 @@ Run this command to download the most recent cumulus deployment state file, repl
 
 ### Restore a previous state version
 
-Follow the instructions for ["To copy a previous version of your state file into the same bucket"](../deployment/terraform-best-practices#how-to-recover-from-a-corrupted-state-file) and use the state file that was previously downloaded.
+Upload the state file that was previously downloaded to the bucket/key for your state file, replacing `BUCKET` and `KEY` with the correct values from `cumulus-tf/terraform.tf`:
+
+```shell
+ aws s3 cp /path/to/terraform.tfstate s3://BUCKET/KEY
+```
 
 Then run `terraform plan`, which will give an error because we manually overwrote the state file and it is now out of sync with the lock table Terraform uses to track your state file:
 
