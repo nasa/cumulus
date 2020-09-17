@@ -19,5 +19,6 @@ export const dropAllTables = async ({
   );
 };
 
+export * as dbTypes from './dbTypes';
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';

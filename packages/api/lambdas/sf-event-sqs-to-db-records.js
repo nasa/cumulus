@@ -4,6 +4,7 @@ const get = require('lodash/get');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const { getKnexClient } = require('@cumulus/db');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
@@ -31,11 +32,14 @@ const savePdrToDb = async (cumulusMessage) => {
   }
 };
 
-const saveGranulesToDb = async (cumulusMessage) => {
+const saveGranulesToDb = async ({ db, cumulusMessage }) => {
   const granuleModel = new Granule();
 
   try {
-    await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
+    await granuleModel.storeGranulesFromCumulusMessage({
+      db,
+      cumulusMessage,
+    });
   } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     log.fatal(`Failed to create/update granule records for execution ${executionArn}: ${error.message}`);
@@ -49,9 +53,12 @@ const handler = async (event) => {
   return Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+
+    const db = await getKnexClient();
+
     const results = await Promise.allSettled([
       saveExecutionToDb(cumulusMessage),
-      saveGranulesToDb(cumulusMessage),
+      saveGranulesToDb({ db, cumulusMessage }),
       savePdrToDb(cumulusMessage),
     ]);
     if (results.some((result) => result.status === 'rejected')) {

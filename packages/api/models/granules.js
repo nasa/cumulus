@@ -1,11 +1,11 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const difference = require('lodash/difference');
 const get = require('lodash/get');
 const partial = require('lodash/partial');
 const path = require('path');
 const pMap = require('p-map');
-
 const awsClients = require('@cumulus/aws-client/services');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -30,6 +30,7 @@ const {
   generateMoveFileParams,
   moveGranuleFiles,
 } = require('@cumulus/ingest/granule');
+const { dbTypes } = require('@cumulus/db');
 
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
@@ -51,6 +52,125 @@ const renameProperty = (from, to, obj) => {
   const newObj = { ...obj, [to]: obj[from] };
   delete newObj[from];
   return newObj;
+};
+
+const getCollectionFromDb = async ({ db, collectionId }) => {
+  const {
+    name: collectionName,
+    version: collectionVersion,
+  } = deconstructCollectionId(collectionId);
+
+  const collection = await db.first()
+    .from('collections')
+    .where({
+      name: collectionName,
+      version: collectionVersion,
+    });
+
+  if (!collection) {
+    throw new Error(`Unable to find collection in DB: ${collectionName}.${collectionVersion}`);
+  }
+
+  return collection;
+};
+
+const buildDbRecord = ({ granule, collection }) => ({
+  collectionCumulusId: collection.cumulusId,
+  created_at: dbTypes.timestampOrNull(granule.createdAt),
+  updated_at: dbTypes.timestampOrNull(granule.updatedAt),
+  published: dbTypes.booleanOrNull(granule.published),
+  status: granule.status,
+  duration: dbTypes.numberOrNull(granule.duration),
+  timeToArchive: dbTypes.numberOrNull(granule.timeToArchive),
+  timeToProcess: dbTypes.numberOrNull(granule.timeToProcess),
+  productVolume: dbTypes.numberOrNull(granule.productVolume),
+  error: granule.error || null, // eslint-disable-line unicorn/no-null
+  cmrLink: dbTypes.stringOrNull(granule.cmrLink),
+  execution: granule.execution,
+  granuleId: granule.granuleId,
+  pdrName: dbTypes.stringOrNull(granule.pdrName),
+  provider: dbTypes.stringOrNull(granule.provider),
+  beginningDateTime: dbTypes.timestampOrNull(granule.beginningDateTime),
+  endingDateTime: dbTypes.timestampOrNull(granule.endingDateTime),
+  lastUpdateDateTime: dbTypes.timestampOrNull(granule.lastUpdateDateTime),
+  processingEndDateTime: dbTypes.timestampOrNull(granule.processingEndDateTime),
+  processingStartDateTime: dbTypes.timestampOrNull(
+    granule.processingStartDateTime
+  ),
+  productionDateTime: dbTypes.timestampOrNull(granule.productionDateTime),
+  timestamp: dbTypes.timestampOrNull(granule.timestamp),
+});
+
+const dbFields = [
+  'collectionCumulusId',
+  'created_at',
+  'updated_at',
+  'published',
+  'status',
+  'duration',
+  'timeToArchive',
+  'timeToProcess',
+  'productVolume',
+  'error',
+  'cmrLink',
+  'execution',
+  'granuleId',
+  'pdrName',
+  'provider',
+  'beginningDateTime',
+  'endingDateTime',
+  'lastUpdateDateTime',
+  'processingEndDateTime',
+  'processingStartDateTime',
+  'productionDateTime',
+  'timestamp',
+];
+
+const storeRunningGranuleRecordToDb = async ({ db, granuleRecord }) => {
+  const mutableFields = ['updated_at', 'timestamp', 'status', 'execution'];
+  const immutableFields = difference(dbFields, mutableFields);
+
+  await db.raw(
+    `
+    INSERT INTO granules (${dbFields.map((x) => `"${x}"`).join(', ')})
+    VALUES (${dbFields.map((x) => `:${x}`).join(', ')})
+    ON CONFLICT ("granuleId", "collectionCumulusId") DO
+      UPDATE
+        SET
+        ${mutableFields.map((x) => `"${x}" = EXCLUDED."${x}"`).join(', ')},
+        ${immutableFields.map((x) => `"${x}" = granules."${x}"`).join(', ')}
+      WHERE granules.execution != :execution;
+    `,
+    granuleRecord
+  );
+};
+
+const storeFinishedGranuleRecordToDb = async ({ db, granuleRecord }) =>
+  db.raw(
+    `
+    INSERT INTO granules (${dbFields.map((x) => `"${x}"`).join(', ')})
+    VALUES (${dbFields.map((x) => `:${x}`).join(', ')})
+    ON CONFLICT ("granuleId", "collectionCumulusId") DO
+      UPDATE
+        SET
+        ${dbFields.map((x) => `"${x}" = EXCLUDED."${x}"`).join(', ')};
+    `,
+    granuleRecord
+  );
+
+const storeGranuleRecordToDb = async ({ db, granule }) => {
+  const collection = await getCollectionFromDb({
+    db,
+    collectionId: granule.collectionId,
+  });
+
+  const granuleRecord = buildDbRecord({ granule, collection });
+
+  if (granule.status === 'running') {
+    await storeRunningGranuleRecordToDb({ db, granuleRecord });
+  } else {
+    await storeFinishedGranuleRecordToDb({ db, granuleRecord });
+  }
 };
 
 class Granule extends Manager {
@@ -598,37 +718,42 @@ class Granule extends Manager {
     return granuleRecords.filter((r) => !isNil(r));
   }
 
+  /* @private */
+  storeGranuleToDynamo(granule) {
+    const mutableFieldNames = this._getMutableFieldNames(granule);
+
+    const updateParams = this._buildDocClientUpdateParams({
+      item: granule,
+      itemKey: { granuleId: granule.granuleId },
+      mutableFieldNames,
+    });
+
+    // Only allow "running" granule to replace completed/failed
+    // granule if the execution has changed
+    if (granule.status === 'running') {
+      updateParams.ConditionExpression = '#execution <> :execution';
+    }
+
+    return this.dynamodbDocClient.update(updateParams).promise();
+  }
+
   /**
    * Validate and store a granule record.
    *
    * @param {Object} granuleRecord - A granule record.
    * @returns {Promise}
    */
-  async _validateAndStoreGranuleRecord(granuleRecord) {
+  async _validateAndStoreGranuleRecord({ db, granule }) {
     try {
       // TODO: Refactor this all to use model.update() to avoid having to manually call
       // schema validation and the actual client.update() method.
-      await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
+      await this.constructor.recordIsValid(granule, this.schema, this.removeAdditional);
 
-      const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
-      const updateParams = this._buildDocClientUpdateParams({
-        item: granuleRecord,
-        itemKey: { granuleId: granuleRecord.granuleId },
-        mutableFieldNames,
-      });
+      await this.storeGranuleToDynamo(granule);
 
-      // Only allow "running" granule to replace completed/failed
-      // granule if the execution has changed
-      if (granuleRecord.status === 'running') {
-        updateParams.ConditionExpression = '#execution <> :execution';
-      }
-
-      await this.dynamodbDocClient.update(updateParams).promise();
+      await storeGranuleRecordToDb({ db, granule });
     } catch (error) {
-      log.error(
-        'Could not store granule record: ', granuleRecord,
-        error
-      );
+      log.error('Could not store granule record: ', granule, error);
     }
   }
 
@@ -638,10 +763,18 @@ class Granule extends Manager {
    * @param {Object} cumulusMessage - Cumulus workflow message
    * @returns {Promise}
    */
-  async storeGranulesFromCumulusMessage(cumulusMessage) {
+  async storeGranulesFromCumulusMessage({ cumulusMessage, db }) {
     const granuleRecords = await this.constructor
       ._getGranuleRecordsFromCumulusMessage(cumulusMessage);
-    return Promise.all(granuleRecords.map(this._validateAndStoreGranuleRecord, this));
+
+    return Promise.all(
+      granuleRecords.map(
+        (granule) => this._validateAndStoreGranuleRecord({
+          db,
+          granule,
+        })
+      )
+    );
   }
 }
 
