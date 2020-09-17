@@ -60,8 +60,8 @@ For further information on RDS backup procedures, see the [AWS documentation](ht
 
 To recover a Cumulus Postgres database in a disaster or data-loss scenario, you should perform the following steps:
 
-* If the Postgres database cluster exists/is still online, take it
-  offline/remove access.
+* If the Postgres database cluster exists/is still online, halt workflow
+  activity, then take the cluster offline/remove access.
 * If needed, recover the DynamoDB tables as noted in the
   [DynamoDb](./backup_and_restore#dynamodb) section of this document.
 * Redeploy a new database cluster from your backup, matching as closely as possible to the DynamoDB
@@ -91,11 +91,19 @@ this requires a manual procedure.
 
 If you are using the `cumulus-rds-tf` module to deploy an RDS Aurora Serverless
 Postgres instance, the following procedure can be used to successfully spin up a duplicate
-cluster from backup in recovery scenarios:
+cluster from backup in recovery scenarios where the database cluster is still viable:
 
-#### **1. Halt all ingest and remove access to the database to prevent Core processes from writing to the old cluster.**
+#### **1. Halt all ingest/remove access to the database to prevent Core processes from writing to the old cluster.**
 
-Depending on your cluster/setup, there are several ways to limit access to the
+##### Halt Ingest
+
+Deactivate all Cumulus Rules, halt all clients that access the archive API and
+stop any other database accessor processes.   Ensure all active executions have
+completed before proceeding.
+
+##### Remove Database Cluster Access
+
+Depending on your database cluster/setup, there are several ways to limit access to the
 database.   One example:
 
 Log in as the administrative user to your database cluster and run:
@@ -105,7 +113,9 @@ alter database my_database connection limit 0;
 select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = 'database';
 ```
 
-This should block new connections to the Core database from the database user.
+This should block new connections to the Core database from the database user
+and cause database writes to fail.
+
 Take care that you aren't using the admin user (e.g. postgres) with a default
 database or you may inadvertently limit connections by your administrative
 tasks.
@@ -165,10 +175,9 @@ terraform import {module_name}.aws_rds_cluster.cumulus <new cluster identifier>
 terraform apply
 ```
 
-6. Redeploy Cumulus - you shouldn't need to reconfigure Core,
-   as the secret ARN and the security group should not change, however
-   double-check the configured values are as expected.
+#### 6. Redeploy Cumulus - you shouldn't need to reconfigure Core, as the secret ARN and the security group should not change, however double-check the configured values are as expected.
 
+&nbsp;\
 ***Snapshot Recovery***
 
 A RDS cluster can be recreated from a manually created snapshot
