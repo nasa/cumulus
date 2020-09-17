@@ -7,6 +7,8 @@
         <ShortName>MOD09GQ</ShortName>
         <VersionId>006</VersionId>
     </Collection>
+    <RestrictionFlag>83</RestrictionFlag>
+    <RestrictionComment>incorrect original value</RestrictionComment>
     <DataGranule>
         <ReprocessingPlanned>further update is anticipated</ReprocessingPlanned>
         <ReprocessingActual>processed once</ReprocessingActual>

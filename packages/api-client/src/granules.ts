@@ -181,12 +181,14 @@ export const applyWorkflow = async (params: {
   prefix: string,
   granuleId: GranuleId,
   workflow: string,
+  meta?: object,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
     workflow,
+    meta,
     callback = invokeApi,
   } = params;
 
@@ -199,7 +201,7 @@ export const applyWorkflow = async (params: {
         'Content-Type': 'application/json',
       },
       path: `/granules/${granuleId}`,
-      body: JSON.stringify({ action: 'applyWorkflow', workflow }),
+      body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
     },
   });
 };
