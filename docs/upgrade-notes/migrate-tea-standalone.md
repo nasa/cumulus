@@ -28,34 +28,10 @@ Since bucket versioning preserves a separate version of your state file each tim
 
 ### Download your most recent state version
 
-Get the version ID of your most recent cumulus deployment state file, replacing `BUCKET` and `KEY` with the correct values from `cumulus-tf/terraform.tf`:
+Run this command to download the most recent cumulus deployment state file, replacing `BUCKET` and `KEY` with the correct values from `cumulus-tf/terraform.tf`:
 
 ```shell
-$ aws s3api list-object-versions \
-  --bucket BUCKET \
-  --prefix KEY \
-  --query "Versions[?IsLatest].VersionId" \
-  --output text
-<some-state-version-id>
-```
-
-If `None` was returned for the version ID because you previously did not have bucket versioning enabled, then just download the state file without a version specified:
-
-```shell
-aws s3api get-object \
-  --bucket BUCKET \
-  --key KEY \
-  /path/to/terraform.tfstate
-```
-
-Otherwise, use the returned version ID to get the most recent state file object, replacing `<some-state-version-id>` with the output from the previous command:
-
-```shell
-aws s3api get-object \
-  --bucket BUCKET \
-  --key KEY \
-  --version-id <some-state-version-id> \
-  /path/to/terraform.tfstate
+ aws s3 cp s3://BUCKET/KEY /path/to/terraform.tfstate
 ```
 
 ### Restore a previous state version
@@ -74,13 +50,16 @@ to manually verify the remote state and update the Digest value stored in the
 DynamoDB table to the following value: <some-digest-value>
 ```
 
-To resolve this error:
+To resolve this error, run this command and replace `DYNAMO_LOCK_TABLE`, `BUCKET` and `KEY` with the correct values from `cumulus-tf/terraform.tf`, and use the digest value from the previous error output:
 
-  1. Use the AWS console to view the items in the DynamoDB table named in `dynamodb_table` from `cumulus-tf/terraform.tf`.
-  2. Locate the entry for your deployment, where `LockID` should be `<your-state-bucket>/<your-key>-md5`
-  3. Update the `Digest` value for the record to the digest value from the previous error message and save.
-
-![Screenshot showing an edit screen for a DynamoDB entry in the Terraform locks table](assets/edit-state-lock.png)
+```shell
+ aws dynamodb put-item \
+    --table-name DYNAMO_LOCK_TABLE \
+    --item '{
+        "LockID": {"S": "BUCKET/KEY-md5"},
+        "Digest": {"S": "some-digest-value"}
+      }'
+```
 
 Now, if you re-run `terraform plan`, it should work as expected.
 
