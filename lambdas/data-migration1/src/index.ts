@@ -142,6 +142,7 @@ export const migrateProviderRecord = async (
     name: dynamoRecord.id,
     protocol: dynamoRecord.protocol,
     host: dynamoRecord.host,
+    port: dynamoRecord.port,
     username: dynamoRecord.username,
     password: dynamoRecord.password,
     encrypted: dynamoRecord.encrypted,
