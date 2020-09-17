@@ -72,7 +72,7 @@ To recover a Cumulus Postgres database in a disaster or data-loss scenario, you 
   and [DB Snapshot recovery
   instructions](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_RestoreFromSnapshot.html),
   or the examples below for more information.
-* Configure your Cumulus deployment to utilize the new database cluster and re-deploy
+* Configure your Cumulus deployment to utilize the new database cluster and re-deploy.
 * Run DynamoDB/RDS reconciliation tools and resolve any discrepancies.
 
 ##### cumulus-rds-tf examples
