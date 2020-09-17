@@ -67,7 +67,6 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
  *                    object and the key references a defined value.
  */
 function isOneWayCollectionReport(reportParams) {
-  console.log(`PARAMS 4: ${JSON.stringify(reportParams)}`);
   return [
     'startTimestamp',
     'endTimestamp',
@@ -85,7 +84,6 @@ function isOneWayCollectionReport(reportParams) {
  *                    object and the key references a defined value.
  */
 function isOneWayGranuleReport(reportParams) {
-  console.log(`PARAMS 5: ${JSON.stringify(reportParams)}`);
   return [
     'startTimestamp',
     'endTimestamp',
@@ -100,7 +98,6 @@ function isOneWayGranuleReport(reportParams) {
  * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
  */
 function shouldAggregateGranulesForCollections(searchParams) {
-  console.log(`PARAMS 6: ${JSON.stringify(searchParams)}`);
   return [
     'updatedAt__from',
     'updatedAt__to',
@@ -115,11 +112,8 @@ function shouldAggregateGranulesForCollections(searchParams) {
  * @returns {Promise<Array>} - list of collectionIds that match input paramaters
  */
 async function fetchESCollections(recReportParams) {
-  console.log(`PARAMS 7: ${JSON.stringify(recReportParams)}`);
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
   const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
-  console.log(`esCollectionSearchParams: ${JSON.stringify(esCollectionSearchParams)}`);
-  console.log(`esGranuleSearchParams: ${JSON.stringify(esGranuleSearchParams)}`);
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
@@ -219,7 +213,6 @@ async function createReconciliationReportForBucket(Bucket) {
  * onlyInCmr
  */
 async function reconciliationReportForCollections(recReportParams) {
-  console.log(`PARAMS 3: ${JSON.stringify(recReportParams)}`);
   // compare collection holdings:
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
@@ -704,7 +697,6 @@ async function processRequest(params) {
 
   try {
     const recReportParams = { ...params, createStartTime, reportKey, reportType };
-    console.log(`PARAMS 2: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
       await createInternalReconciliationReport(recReportParams);
     } else {
@@ -879,7 +871,6 @@ async function handler(event) {
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
   const reportParams = normalizeEvent(event);
-  console.log(`PARAMS 1: ${JSON.stringify(reportParams)}`);
   return processRequest(reportParams);
 }
 exports.handler = handler;
