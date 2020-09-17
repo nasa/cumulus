@@ -3,7 +3,6 @@ id: backup_and_restore
 title: Cumulus Backup and Restore
 hide_title: true
 ---
-<!-- markdownlint-disable MD029 -->
 # Cumulus Backup and Restore
 
 ## Deployment Backup and Restore
@@ -94,24 +93,36 @@ If you are using the `cumulus-rds-tf` module to deploy an RDS Aurora Serverless
 Postgres instance, the following procedure can be used to successfully spin up a duplicate
 cluster from backup in recovery scenarios:
 
-1. Halt all ingest and remove access to the database to prevent Core processes from
-   writing to the old cluster.
-2. Using the AWS CLI (see [AWS PITR
-   documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_PIT.html)
-   for console instructions), run the following command, making *certain* to use
-   the same subnet groups and vpc-security-group IDs from your Core deployment:
+#### **1. Halt all ingest and remove access to the database to prevent Core processes from writing to the old cluster.**
 
-```bash
-aws rds restore-db-cluster-to-point-in-time --source-db-cluster-identifier "<cluster_needing_restoration>" --restore-to-time "<time>" --vpc-security-group-ids "<security group 1>" "<security group 2>" --copy-tags-to-snapshot --db-cluster-identifier "<new cluster identifier>" --db-subnet-group-name "<db-subnet-group>"
+Depending on your cluster/setup, there are several ways to limit access to the
+database.   One example:
+
+Log in as the administrative user to your database cluster and run:
+
+```sql
+alter database my_database connection limit 0;
+select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = 'database';
 ```
 
-You can get the configuration vales from the [RDS
-console](https://console.aws.amazon.com/rds/) *or* by running the following
-command and parsing the outputs:
+This should block new connections to the Core database from the database user.
+Take care that you aren't using the admin user (e.g. postgres) with a default
+database or you may inadvertently limit connections by your administrative
+tasks.
 
-```bash
-aws rds describe-db-clusters
-```
+#### **2. Using the AWS CLI (see [AWS PITR documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_PIT.html) for console instructions), run the following command, making *certain* to use the same subnet groups and vpc-security-group IDs from your Core deployment:**
+
+  ```bash
+  aws rds restore-db-cluster-to-point-in-time --source-db-cluster-identifier "<cluster_needing_restoration>" --restore-to-time "<time>" --vpc-security-group-ids "<security group 1>" "<security group 2>" --copy-tags-to-snapshot --db-cluster-identifier "<new cluster identifier>" --db-subnet-group-name "<db-subnet-group>"
+  ```
+
+  You can get the configuration vales from the [RDS
+  console](https://console.aws.amazon.com/rds/) *or* by running the following
+  command and parsing the outputs:
+
+  ```bash
+  aws rds describe-db-clusters
+  ```
 
 * cluster_needing_restoration -- the name of the database cluster you're
   restoring *from* (`DBClusterIdentifier` from the AWS RDS CLI output)
@@ -122,12 +133,12 @@ aws rds describe-db-clusters
 * db-subnet-group - The db subnet group created for the original cluster
   (`DBSubnetGroup` from the AWS RDS CLI output)
 
-Once this command is run, you should see the cluster appear in the RDS cluster
-list with a `Creating` status.  Verify the creating cluster has a
-reasonable configuration.   Once the cluster is online, manually validate
-that it has the tables/data you expect, then proceed.
+  Once this command is run, you should see the cluster appear in the RDS cluster
+  list with a `Creating` status.  Verify the creating cluster has a
+  reasonable configuration.   Once the cluster is online, manually validate
+  that it has the tables/data you expect, then proceed.
 
-3. Import cluster into terraform state
+#### 3. Import cluster into terraform state
 
 Run the following commands to bring the new cluster into the
 terraform state file, where {module_name} is the title you've assigned to the module:
@@ -144,14 +155,9 @@ terraform state {module_name}.aws_rds_cluster.cumulus
 terraform import {module_name}.aws_rds_cluster.cumulus <new cluster identifier>
 ```
 
-4. Update module `terraform.tfvars` such that the cluster_identifier variable matches the
-   *new* database cluster.
+#### 4. Update module `terraform.tfvars` such that the cluster_identifier variable matches the *new* database cluster.
 
-5. Run a terraform plan.   ***Be very careful*** to ensure
-   that the `module.rds_cluster.aws_rds_cluster.cumulus` resource is not being recreated
-   as this will wipe the postgres database.    You should expect to see the
-   cluster be modified, not replaced, and the rds_login secret *version*
-   will be replaced, as the host name will change.
+#### 5. Run a terraform plan.   ***Be very careful*** to ensure that the `module.rds_cluster.aws_rds_cluster.cumulus` resource is not being recreated as this will wipe the postgres database.    You should expect to see the cluster be modified, not replaced, and the rds_login secret *version* will be replaced, as the host name will change.
 
    Once everything looks acceptable, run:
 
