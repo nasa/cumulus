@@ -84,7 +84,7 @@ serverless module.
 
 If you need recovery that exceeds the 1-day granularity of AWS's snapshots, you
 either must create and manually manage snapshots, or use Point In Time
-Recovery(PITR) if you still have the original cluster available.
+Recovery (PITR) if you still have the original cluster available.
 
 Unfortunately as terraform does not yet support RDS PITR (see:
 [github terraform-provider issue #5286](https://github.com/terraform-providers/terraform-provider-aws/issues/5286)),
