@@ -31,7 +31,6 @@ const {
 } = require('../lib/reconciliationReport');
 const Collection = require('../es/collections');
 const { ESSearchQueue } = require('../es/esSearchQueue');
-const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
@@ -719,7 +718,6 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  const reportParams = normalizeEvent(event);
-  return processRequest(reportParams);
+  return processRequest(event);
 }
 exports.handler = handler;
