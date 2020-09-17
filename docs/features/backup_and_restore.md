@@ -22,8 +22,8 @@ logs and Step Function executions in the AWS console will be irrecoverable.
   our reference implementation utilizes a serverless Aurora/RDS database - as
   such this reference provides AWS RDS Aurora Serverless backup options.
 
-* As of Core version 3.0.0 Cumulus is transitioning from use of a DynamoDB backed
-  primary database to a Postgres instance with a reference Aurora/RDS Postgres
+* As of Cumulus version 3, data storage is transitioning from the use of a
+  DynamoDB backed primary database to a Postgres instance with a reference Aurora/RDS Postgres
   compatible module.     In this mode, the primary data records are still being
   written to DynamoDB (and replicated to Elastic Search), however replicated
   writes are being written to the required Postgres instance.  As such, the
@@ -34,8 +34,8 @@ logs and Step Function executions in the AWS console will be irrecoverable.
 
 #### Re-migration
 
-In Cumulus v3.0.0+ the Postgres database is not the primary data store - as
-such, the simplest recovery approach  is to re-deploy your database instance
+In Cumulus version 3 the Postgres database is not the primary data store - as
+such, the simplest recovery approach is to re-deploy your database instance
 (e.g. your RDS cluster) and re-run the database data migration
 module to migrate Collections, Providers, etc, from a (possibly recovered
 DynamoDB instance) then begin active migration of Files and Granules records.
