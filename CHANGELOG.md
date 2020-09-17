@@ -113,6 +113,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `tea_rest_api_id`
     - `tea_rest_api_root_resource_id`
     - `tea_stack_name`
+  - Added variables to `distribution` module:
+    - `tea_api_egress_log_group`
+    - `tea_external_api_endpoint`
+    - `tea_internal_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `tea_stack_name`
 - **CUMULUS-2112**
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
@@ -132,6 +139,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `BULK_GRANULE` functionality on the granules endpoint to support the above `applyWorkflow` change.
 - **CUMULUS-2111**
   - Changed `distribution_api_gateway_stage` variable for `cumulus` module to `tea_api_gateway_stage`
+  - Changed `api_gateway_stage` variable for `distribution` module to `tea_api_gateway_stage`
 
 ### Fixed
 
@@ -168,6 +176,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `thin_egress_jwt_secret_name`
     - `thin_egress_lambda_code_dependency_archive_key`
     - `thin_egress_stack_name`
+  - Removed outputs from the `distribution` module:
+    - `distribution_url`
+    - `internal_tea_api`
+    - `rest_api_id`
+    - `thin_egress_app_redirect_uri`
+  - Removed variables from the `distribution` module:
+    - `bucket_map_key`
+    - `distribution_url`
+    - `log_api_gateway_to_cloudwatch`
+    - `thin_egress_cookie_domain`
+    - `thin_egress_domain_cert_arn`
+    - `thin_egress_download_role_in_region_arn`
+    - `thin_egress_jwt_algo`
+    - `thin_egress_jwt_secret_name`
+    - `thin_egress_lambda_code_dependency_archive_key`
 - `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
 - `@cumulus/aws-client/S3.getS3ObjectReadStream`
 - `@cumulus/cmrjs.getFullMetadata`
