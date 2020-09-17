@@ -111,7 +111,7 @@ variable "system_bucket" {
 }
 
 variable "tea_external_api_endpoint" {
-  description = "Thin Egress App internal endpoint URL"
+  description = "Thin Egress App external endpoint URL"
   type        = string
 }
 
@@ -537,8 +537,3 @@ variable "es_index_shards" {
   type        = number
   default     = 2
 }
-
-# variable "tea_stack_name" {
-#   description = "Thin Egress App Cloudformation stack name"
-#   type        = string
-# }

@@ -80,6 +80,12 @@ variable "tea_api_egress_log_group" {
   default     = null
 }
 
+variable "tea_external_api_endpoint" {
+  description = "Thin Egress App external endpoint URL"
+  type        = string
+  default     = null
+}
+
 variable "tea_rest_api_id" {
   description = "Thin Egress App API gateway ID"
   type        = string
@@ -106,12 +112,6 @@ variable "urs_client_id" {
 variable "urs_client_password" {
   type        = string
   description = "The client password for your Earthdata login (URS) application"
-}
-
-variable "thin_egress_stack_name" {
-  type        = string
-  default     = null
-  description = "Name to use for Thin Egress App Cloudformation stack"
 }
 
 variable "urs_url" {

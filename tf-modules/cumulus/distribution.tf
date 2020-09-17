@@ -3,6 +3,7 @@ module "distribution" {
 
   tea_api_egress_log_group      = var.tea_api_egress_log_group
   tea_api_gateway_stage         = var.tea_api_gateway_stage
+  tea_external_api_endpoint     = var.tea_external_api_endpoint
   tea_internal_api_endpoint     = var.tea_internal_api_endpoint
   tea_rest_api_id               = var.tea_rest_api_id
   tea_rest_api_root_resource_id = var.tea_rest_api_root_resource_id

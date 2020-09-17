@@ -144,8 +144,8 @@ resource "aws_lambda_function" "s3_credentials" {
 
   environment {
     variables = {
-      DISTRIBUTION_ENDPOINT          = var.tea_internal_api_endpoint
-      DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_internal_api_endpoint}redirect"
+      DISTRIBUTION_ENDPOINT          = var.tea_external_api_endpoint
+      DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_external_api_endpoint}redirect"
       public_buckets                 = join(",", var.public_buckets)
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
@@ -183,7 +183,6 @@ resource "aws_api_gateway_resource" "s3_credentials" {
 resource "aws_api_gateway_method" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  # rest_api_id   = module.thin_egress_app.rest_api.id
   rest_api_id   = var.tea_rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials[0].id
   http_method   = "GET"
@@ -193,7 +192,6 @@ resource "aws_api_gateway_method" "s3_credentials" {
 resource "aws_api_gateway_integration" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  # rest_api_id             = module.thin_egress_app.rest_api.id
   rest_api_id             = var.tea_rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials[0].id
   http_method             = aws_api_gateway_method.s3_credentials[0].http_method
