@@ -63,7 +63,7 @@ To recover a Cumulus Postgres database in a disaster or data-loss scenario, you 
 * If the Postgres database cluster exists/is still online, take it
   offline/remove access.
 * If needed, recover the DynamoDB tables as noted in the
-  [DyanmoDb](./backup_and_restore#dynamodb) section of this document.
+  [DynamoDb](./backup_and_restore#dynamodb) section of this document.
 * Redeploy a new database cluster from your backup, matching as closely as possible to the DynamoDB
   restore time.   See [AWS's
   PIT recovery
@@ -71,7 +71,7 @@ To recover a Cumulus Postgres database in a disaster or data-loss scenario, you 
   and [DB Snapshot recovery
   instructions](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_RestoreFromSnapshot.html),
   or the examples below for more information.
-* Configure your Cumulus deployment to utilize the new database cluster and re-deploy
+* Configure your Cumulus deployment to utilize the new database cluster and re-deploy.
 * Run DynamoDB/RDS reconciliation tools and resolve any discrepancies.
 
 ##### cumulus-rds-tf examples
@@ -83,7 +83,7 @@ serverless module.
 
 If you need recovery that exceeds the 1-day granularity of AWS's snapshots, you
 either must create and manually manage snapshots, or use Point In Time
-Recovery(PITR) if you still have the original cluster available.
+Recovery (PITR) if you still have the original cluster available.
 
 Unfortunately as terraform does not yet support RDS PITR (see:
 [github terraform-provider issue #5286](https://github.com/terraform-providers/terraform-provider-aws/issues/5286)),
