@@ -105,6 +105,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `RestrictionFlag/RestrictionComment`, respectively.
   - Added an operator doc on how to configure and run the access constraint update workflow, which will update the metadata using the new task, and then publish the updated metadata to CMR.
   - Added an operator doc on bulk operations.
+- **CUMULUS-2111**
+  - Added variables to `cumulus` module:
+    - `tea_api_egress_log_group`
+    - `tea_external_api_endpoint`
+    - `tea_internal_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `tea_stack_name`
 - **CUMULUS-2112**
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
@@ -122,6 +130,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2107**
   - Updated the `applyWorkflow` functionality on the granules endpoint to take a `meta` property to pass into the workflow message.
   - Updated the `BULK_GRANULE` functionality on the granules endpoint to support the above `applyWorkflow` change.
+- **CUMULUS-2111**
+  - Changed `distribution_api_gateway_stage` variable for `cumulus` module to `tea_api_gateway_stage`
 
 ### Fixed
 
@@ -141,9 +151,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1955**
   - `@cumulus/aws-client/S3.getS3Object()`
+- `@cumulus/message/Queue.getQueueNameByUrl()`
+- `@cumulus/message/Queue.getQueueName()`
 
 ### Removed
 
+- **CUMULUS-2111**
+  - Removed `distribution_url` and `distribution_redirect_uri` outputs from the `cumulus` module
+  - Removed variables from the `cumulus` module:
+    - `distribution_url`
+    - `log_api_gateway_to_cloudwatch`
+    - `thin_egress_cookie_domain`
+    - `thin_egress_domain_cert_arn`
+    - `thin_egress_download_role_in_region_arn`
+    - `thin_egress_jwt_algo`
+    - `thin_egress_jwt_secret_name`
+    - `thin_egress_lambda_code_dependency_archive_key`
+    - `thin_egress_stack_name`
 - `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
 - `@cumulus/aws-client/S3.getS3ObjectReadStream`
 - `@cumulus/cmrjs.getFullMetadata`
@@ -170,11 +194,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/integration-tests/sfnStep.parseStepMessage`
 - `@cumulus/message/Queue.getQueueName`
 - `@cumulus/message/Queue.getQueueNameByUrl`
-
-### Deprecated
-
-- `@cumulus/message/Queue.getQueueNameByUrl()`
-- `@cumulus/message/Queue.getQueueName()`
 
 ## [v2.0.1] 2020-07-28
 
