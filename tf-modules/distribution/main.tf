@@ -5,8 +5,7 @@ terraform {
 }
 
 locals {
-  # TODO: fix ME
-  lambda_log_group_name  = "/aws/lambda/${var.prefix}-thin-egress-app-EgressLambda"
+  lambda_log_group_name  = "/aws/lambda/${var.tea_stack_name}-EgressLambda"
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 
   built_lambda_source_file = "${path.module}/lambda.zip"
@@ -215,7 +214,6 @@ resource "aws_api_gateway_resource" "s3_credentials_redirect" {
 resource "aws_api_gateway_method" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  # rest_api_id   = module.thin_egress_app.rest_api.id
   rest_api_id   = var.tea_rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials_redirect[0].id
   http_method   = "GET"
@@ -225,7 +223,6 @@ resource "aws_api_gateway_method" "s3_credentials_redirect" {
 resource "aws_api_gateway_integration" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  # rest_api_id             = module.thin_egress_app.rest_api.id
   rest_api_id             = var.tea_rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials_redirect[0].id
   http_method             = aws_api_gateway_method.s3_credentials_redirect[0].http_method
@@ -244,17 +241,17 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
   ]
 
   rest_api_id = var.tea_rest_api_id
-  stage_name  = var.api_gateway_stage
+  stage_name  = var.tea_api_gateway_stage
 }
 
 # Egress Api Gateway Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  count           = var.tea_egress_log_group != null ? 1 : 0
+  count           = var.tea_api_egress_log_group != null ? 1 : 0
   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
   distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
-  log_group_name  = var.tea_egress_log_group
+  log_group_name  = var.tea_api_egress_log_group
 }
 
 # Egress Lambda Log Group

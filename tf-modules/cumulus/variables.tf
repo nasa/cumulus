@@ -197,12 +197,6 @@ variable "deploy_distribution_s3_credentials_endpoint" {
   default     = true
 }
 
-variable "distribution_api_gateway_stage" {
-  description = "The distribution API Gateway stage to create"
-  type        = string
-  default     = "DEV"
-}
-
 variable "ecs_container_stop_timeout" {
   description = "Time duration to wait from when a task is stopped before its containers are forcefully killed if they do not exit normally on their own"
   type        = string
@@ -442,8 +436,14 @@ variable "tags" {
   default     = {}
 }
 
-variable "tea_egress_log_group" {
-  description = "Thin Egress App Cloudwatch log group ARN"
+variable "tea_api_gateway_stage" {
+  description = "The name of the API Gateway stage to create for the Thin Egress App"
+  type        = string
+  default     = "DEV"
+}
+
+variable "tea_api_egress_log_group" {
+  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
   type        = string
   default     = null
 }
@@ -456,6 +456,12 @@ variable "tea_rest_api_id" {
 
 variable "tea_rest_api_root_resource_id" {
   description = "Thin Egress App API gateway root resource ID"
+  type        = string
+  default     = null
+}
+
+variable "tea_stack_name" {
+  description = "Thin Egress App Cloudformation stack name"
   type        = string
   default     = null
 }

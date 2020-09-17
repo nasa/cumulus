@@ -27,11 +27,12 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 - **sts_credentials_lambda_function_arn** (string) - The ARN of the Lambda
   function for the S3 credentials endpoint to invoke, which whill return AWS API
   keys.
-- **tea_stack_name** (string) - Stack name for the Thin Egress App (TEA) Cloudformation stack
+- **tea_api_egress_log_group** (string) - Name of the Cloudwatch log group for the Thin Egress App (TEA) Lambda
+- **tea_api_gateway_stage** (string) - Name of the API gateway stage for Thin Egress App (TEA)
+- **tea_internal_api_endpoint** (string) - URL for the Thin Egress App (TEA) API gateway
 - **tea_rest_api_id** (string) - API Gateway ID for the Thin Egress App (TEA)
 - **tea_rest_api_root_resource_id** (string) - Root resource ID for the Thin Egress App (TEA) API gateway
-- **tea_internal_api_endpoint** (string) - URL for the Thin Egress App (TEA) API gateway
-- **tea_egress_log_group** (string) - Name of the Cloudwatch log group for the Thin Egress App (TEA) Lambda
+- **tea_stack_name** (string) - Stack name for the Thin Egress App (TEA) Cloudformation stack-
 - **tags** (list(string)) - AWS tags to be assigned to resources managed by this
   module
 - **urs_url** (string) - The URL of the Earthdata Login site, defaults to

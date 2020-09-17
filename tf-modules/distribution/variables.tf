@@ -22,12 +22,6 @@ variable "tea_internal_api_endpoint" {
 
 # Optional
 
-variable "api_gateway_stage" {
-  type        = string
-  default     = null
-  description = "The API Gateway stage to create"
-}
-
 variable "deploy_s3_credentials_endpoint" {
   type    = bool
   default = true
@@ -74,8 +68,14 @@ variable "tags" {
   default     = {}
 }
 
-variable "tea_egress_log_group" {
-  description = "Thin Egress App Cloudwatch log group ARN"
+variable "tea_api_gateway_stage" {
+  type        = string
+  default     = null
+  description = "The API Gateway stage name for the Thin Egress App"
+}
+
+variable "tea_api_egress_log_group" {
+  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
   type        = string
   default     = null
 }
@@ -88,6 +88,12 @@ variable "tea_rest_api_id" {
 
 variable "tea_rest_api_root_resource_id" {
   description = "Thin Egress App API gateway root resource ID"
+  type        = string
+  default     = null
+}
+
+variable "tea_stack_name" {
+  description = "Thin Egress App Cloudformation stack name"
   type        = string
   default     = null
 }

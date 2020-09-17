@@ -154,15 +154,16 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
 
   # Thin Egress App settings
-  # must match stack_name for thin-egress-app module
-  # tea_stack_name =  local.tea_stack_name
-  # must match stage_name for thin-egress-app module
-  # distribution_api_gateway_stage = local.tea_stage_name
+  # must match stack_name variable for thin-egress-app module
+  tea_stack_name = local.tea_stack_name
+  # must match stage_name variable for thin-egress-app module
+  tea_api_gateway_stage = local.tea_stage_name
+
   tea_rest_api_id = module.thin_egress_app.rest_api.id
   tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
   tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
   tea_external_api_endpoint = module.thin_egress_app.api_endpoint
-  tea_egress_log_group = module.thin_egress_app.egress_log_group
+  tea_api_egress_log_group = module.thin_egress_app.egress_log_group
 
   log_destination_arn = var.log_destination_arn
 
@@ -217,14 +218,6 @@ module "thin_egress_app" {
   stage_name                 = local.tea_stage_name
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
   vpc_subnet_ids             = var.lambda_subnet_ids
-
-  # Optional
-  # cookie_domain                      = var.thin_egress_cookie_domain
-  # domain_cert_arn                    = var.thin_egress_domain_cert_arn
-  # download_role_in_region_arn        = var.thin_egress_download_role_in_region_arn
-  # jwt_algo                           = var.thin_egress_jwt_algo
-  # lambda_code_dependency_archive_key = var.thin_egress_lambda_code_dependency_archive_key
-  # log_api_gateway_to_cloudwatch      = var.log_api_gateway_to_cloudwatch
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
