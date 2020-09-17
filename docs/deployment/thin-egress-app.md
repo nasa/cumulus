@@ -39,7 +39,7 @@ PUBLIC_BUCKETS:
 
 ### Integration with cumulus module
 
-The `cumulus` module deploys certain components that interact with TEA. As a result, the `cumulus` module requires a `tea_stack_name` variable which is the name of the TEA Cloudformation stack. **This value must match the `stack_name` variable for `thin_egress_app` module**.
+The `cumulus` module deploys certain components that interact with TEA. As a result, the `cumulus` module requires a `tea_stack_name` variable which is the name of the TEA Cloudformation stack. **This value must match the value of the `stack_name` variable for the TEA module**.
 
 Also, if you are specifying a value for the `stage_name` variable to the TEA module, you **must use the same value for the `tea_api_gateway_stage` variable to the `cumulus` module**.
 
