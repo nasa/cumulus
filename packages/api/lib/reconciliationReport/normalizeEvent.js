@@ -1,4 +1,5 @@
 'use strict';
+
 /*eslint prefer-const: ["error", {"destructuring": "all"}]*/
 const isString = require('lodash/isString');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -33,13 +34,11 @@ function updateGranuleIds(granuleId, reportType, modifiedEvent) {
     if (reportType === 'Internal') {
       if (!isString(granuleId)) {
         throw new InvalidArgument(`granuleId: ${JSON.stringify(granuleId)} is not valid input for an 'Internal' report.`);
-      }
-      else {
+      } else {
         // include both granuleId and granuleIds for Internal Reports.
         returnEvent = { ...modifiedEvent, granuleId, granuleIds: [granuleId] };
       }
-    }
-    else {
+    } else {
       returnEvent = { ...modifiedEvent, granuleIds };
     }
   }
@@ -59,13 +58,11 @@ function updateCollectionIds(collectionId, reportType, modifiedEvent) {
     if (reportType === 'Internal') {
       if (!isString(collectionId)) {
         throw new InvalidArgument(`collectionId: ${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
-      }
-      else {
+      } else {
         // include both collectionIds and collectionId for Internal Reports.
         returnEvent = { ...modifiedEvent, collectionId, collectionIds: [collectionId] };
       }
-    }
-    else {
+    } else {
       // add array of collectionIds
       returnEvent = { ...modifiedEvent, collectionIds };
     }

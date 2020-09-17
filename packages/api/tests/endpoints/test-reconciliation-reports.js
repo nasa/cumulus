@@ -15,10 +15,7 @@ const {
   parseS3Uri,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const {
-  randomId,
-  randomString,
-} = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken,
   fakeReconciliationReportFactory,
