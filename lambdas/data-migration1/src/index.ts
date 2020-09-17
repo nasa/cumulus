@@ -36,6 +36,22 @@ export interface RDSCollectionRecord {
   updated_at: Date
 }
 
+export interface RDSProvidernRecord {
+  name: string
+  protocol: string
+  host: string
+  port?: number
+  username?: string
+  password?: string
+  encrypted?: boolean
+  globalConnectionLimit?: number
+  privateKey?: string
+  cmKeyId?: string
+  certificateUri?: string
+  created_at: Date
+  updated_at: Date
+}
+
 interface MigrationSummary {
   dynamoRecords: number
   success: number
@@ -97,6 +113,52 @@ export const migrateCollectionRecord = async (
   return cumulusId;
 };
 
+/**
+ * Migrate provider record from Dynamo to RDS.
+ *
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ *   Source record from DynamoDB
+ * @param {Knex} knex - Knex client for writing to RDS database
+ * @returns {Promise<number>} - Cumulus ID for record
+ * @throws {RecordAlreadyMigrated}
+ *   if record was already migrated
+ */
+export const migrateProviderRecord = async (
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knex: Knex
+): Promise<number> => {
+  // Use API model schema to validate record before processing
+  Manager.recordIsValid(dynamoRecord, schemas.provider);
+
+  const [existingRecord] = await knex('providers')
+    .where('name', dynamoRecord.id);
+  // Throw error if it was already migrated.
+  if (existingRecord) {
+    throw new RecordAlreadyMigrated(`Provider name ${dynamoRecord.id} was already migrated, skipping`);
+  }
+
+  // Map old record to new schema.
+  const updatedRecord:RDSProvidernRecord = {
+    name: dynamoRecord.id,
+    protocol: dynamoRecord.protocol,
+    host: dynamoRecord.host,
+    username: dynamoRecord.username,
+    password: dynamoRecord.password,
+    encrypted: dynamoRecord.encrypted,
+    globalConnectionLimit: dynamoRecord.globalConnectionLimit,
+    privateKey: dynamoRecord.privateKey,
+    cmKeyId: dynamoRecord.cmKeyId,
+    certificateUri: dynamoRecord.certificateUri,
+    created_at: new Date(dynamoRecord.createdAt),
+    updated_at: new Date(dynamoRecord.updatedAt),
+  };
+
+  const [cumulusId] = await knex('providers')
+    .returning('cumulusId')
+    .insert(updatedRecord);
+  return cumulusId;
+};
+
 export const migrateCollections = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
@@ -143,6 +205,52 @@ export const migrateCollections = async (
   return migrationSummary;
 };
 
+export const migrateProviders = async (
+  env: NodeJS.ProcessEnv,
+  knex: Knex
+): Promise<MigrationSummary> => {
+  const providersTable = envUtils.getRequiredEnvVar('ProvidersTable', env);
+
+  const searchQueue = new DynamoDbSearchQueue({
+    TableName: providersTable,
+  });
+
+  const migrationSummary = {
+    dynamoRecords: 0,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+  };
+
+  let record = await searchQueue.peek();
+  /* eslint-disable no-await-in-loop */
+  while (record) {
+    migrationSummary.dynamoRecords += 1;
+
+    try {
+      await migrateProviderRecord(record, knex);
+      migrationSummary.success += 1;
+    } catch (error) {
+      if (error instanceof RecordAlreadyMigrated) {
+        migrationSummary.skipped += 1;
+        logger.info(error);
+      } else {
+        migrationSummary.failed += 1;
+        logger.error(
+          `Could not create provider record in RDS for Dynamo provider name ${record.id}:`,
+          error
+        );
+      }
+    }
+
+    await searchQueue.shift();
+    record = await searchQueue.peek();
+  }
+  /* eslint-enable no-await-in-loop */
+  logger.info(`successfully migrated ${migrationSummary.success} provider records`);
+  return migrationSummary;
+};
+
 export const handler = async (event: HandlerEvent): Promise<string> => {
   const env = event.env ?? process.env;
 
@@ -150,6 +258,7 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
 
   try {
     const collectionsMigrationSummary = await migrateCollections(env, knex);
+    const providersMigrationSummary = await migrateProviders(env, knex);
     return `
       Migration summary:
         Collections:
@@ -157,6 +266,11 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
             ${collectionsMigrationSummary.success} records migrated
             ${collectionsMigrationSummary.skipped} records skipped
             ${collectionsMigrationSummary.failed} records failed
+        Providers:
+          Out of ${providersMigrationSummary.dynamoRecords} Dynamo records:
+            ${providersMigrationSummary.success} records migrated
+            ${providersMigrationSummary.skipped} records skipped
+            ${providersMigrationSummary.failed} records failed
     `;
   } finally {
     await knex.destroy();

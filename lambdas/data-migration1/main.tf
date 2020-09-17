@@ -39,7 +39,8 @@ data "aws_iam_policy_document" "data_migration1" {
       "dynamodb:Scan",
     ]
     resources = [
-      var.dynamo_tables.collections.arn
+      var.dynamo_tables.collections.arn,
+      var.dynamo_tables.providers.arn
     ]
   }
 
@@ -87,6 +88,7 @@ resource "aws_lambda_function" "data_migration1" {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
       CollectionsTable = var.dynamo_tables.collections.name
+      ProvidersTable = var.dynamo_tables.providers.name
       dbHeartBeat = var.rds_connection_heartbeat
     }
   }
