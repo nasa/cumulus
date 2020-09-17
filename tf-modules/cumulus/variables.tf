@@ -110,6 +110,16 @@ variable "system_bucket" {
   type        = string
 }
 
+variable "tea_external_api_endpoint" {
+  description = "Thin Egress App internal endpoint URL"
+  type        = string
+}
+
+variable "tea_internal_api_endpoint" {
+  description = "Thin Egress App internal endpoint URL"
+  type        = string
+}
+
 variable "token_secret" {
   description = "A string value used for signing and verifying JSON Web Tokens (JWTs) issued by the archive API. Should be a 32-character string for security"
   type        = string
@@ -430,16 +440,6 @@ variable "tags" {
   description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)
   default     = {}
-}
-
-variable "tea_internal_api_endpoint" {
-  description = "Thin Egress App internal endpoint URL"
-  type        = string
-}
-
-variable "tea_external_api_endpoint" {
-  description = "Thin Egress App internal endpoint URL"
-  type        = string
 }
 
 variable "tea_egress_log_group" {

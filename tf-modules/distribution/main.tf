@@ -5,7 +5,6 @@ terraform {
 }
 
 locals {
-  # lambda_log_group_name  = "/aws/lambda/${var.tea_stack_name}-EgressLambda"
   # TODO: fix ME
   lambda_log_group_name  = "/aws/lambda/${var.prefix}-thin-egress-app-EgressLambda"
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
