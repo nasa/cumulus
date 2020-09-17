@@ -12,6 +12,17 @@ variable "prefix" {
   default = null
 }
 
+variable "rds_security_group" {
+  type = string
+  default = null
+}
+
+variable "rds_user_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
+  type = string
+  default = null
+}
+
 variable "region" {
   type    = string
   default = "us-east-1"
