@@ -9,6 +9,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
@@ -21,9 +22,16 @@ const { handler } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: async (queue, message) => [queue, message],
   },
+  '@cumulus/db': {
+    getKnexClient: () => getKnexClient({ env: localStackConnectionEnv }),
+  },
 });
 
-const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  fakeFileFactory,
+  fakeGranuleFactoryV2,
+} = require('../../lib/testUtils');
 
 const loadFixture = (filename) =>
   fs.readJson(
@@ -93,18 +101,42 @@ test.before(async (t) => {
 
   sinon.stub(StepFunctions, 'describeExecution')
     .callsFake(() => Promise.resolve({}));
+
+  const collectionRecord = fakeCollectionFactory();
+
+  collectionRecord.created_at = new Date(collectionRecord.createdAt);
+  collectionRecord.updated_at = new Date(collectionRecord.updatedAt);
+  collectionRecord.granuleIdValidationRegex = collectionRecord.granuleId;
+  collectionRecord.granuleIdExtractionRegex = collectionRecord.granuleIdExtraction;
+
+  delete collectionRecord.createdAt;
+  delete collectionRecord.updatedAt;
+  delete collectionRecord.granuleId;
+  delete collectionRecord.granuleIdExtraction;
+
+  t.context.db = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      KNEX_DEBUG: 'true',
+      KNEX_ASYNC_STACK_TRACES: 'true',
+    },
+  });
+  await t.context.db('collections').insert(collectionRecord);
+
+  t.context.collectionName = collectionRecord.name;
+  t.context.collectionVersion = collectionRecord.version;
 });
 
 test.beforeEach(async (t) => {
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122,
+      workflow_start_time: Date.now(),
     },
     meta: {
       status: 'running',
       collection: {
-        name: 'my-collection',
-        version: 5,
+        name: t.context.collectionName,
+        version: t.context.collectionVersion,
       },
       provider: {
         id: 'test-provider',
@@ -124,7 +156,12 @@ test.after.always(async (t) => {
 });
 
 test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
-  const { cumulusMessage, executionModel } = t.context;
+  const {
+    collectionName,
+    collectionVersion,
+    cumulusMessage,
+    executionModel,
+  } = t.context;
 
   const stateMachineName = randomString();
   const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
@@ -142,9 +179,9 @@ test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
     t.is(fetchedExecution.name, executionName);
     t.is(fetchedExecution.arn, executionArn);
     t.is(fetchedExecution.execution, `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`);
-    t.is(fetchedExecution.collectionId, 'my-collection___5');
+    t.is(fetchedExecution.collectionId, `${collectionName}___${collectionVersion}`);
     t.is(fetchedExecution.status, 'running');
-    t.is(fetchedExecution.createdAt, 122);
+    t.is(fetchedExecution.createdAt, cumulusMessage.cumulus_meta.workflow_start_time);
     t.deepEqual(fetchedExecution.originalPayload, { key: 'my-payload' });
   } catch (error) {
     t.fail('Failed to fetch execution');
@@ -167,7 +204,13 @@ test.serial('saveExecutionToDb() throws an exception if storeExecutionFromCumulu
 });
 
 test('saveGranulesToDb() saves a granule record to the database', async (t) => {
-  const { cumulusMessage, granuleModel } = t.context;
+  const {
+    collectionName,
+    collectionVersion,
+    cumulusMessage,
+    db,
+    granuleModel,
+  } = t.context;
 
   const stateMachineName = randomString();
   const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
@@ -187,29 +230,78 @@ test('saveGranulesToDb() saves a granule record to the database', async (t) => {
   delete granule.dataType;
   cumulusMessage.payload.granules = [granule];
 
-  await saveGranulesToDb(cumulusMessage);
+  await saveGranulesToDb({ cumulusMessage, db });
 
-  const fetchedGranule = await granuleModel.get({ granuleId });
-  const expectedGranule = {
-    ...granule,
-    collectionId: 'my-collection___5',
-    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
-    productVolume: 250,
-    provider: 'test-provider',
-    status: 'running',
-    createdAt: 122,
-    error: {},
-    timeToArchive: 0,
-    timeToPreprocess: 0,
-    duration: fetchedGranule.duration,
-    timestamp: fetchedGranule.timestamp,
-    updatedAt: fetchedGranule.updatedAt,
-  };
-  t.deepEqual(fetchedGranule, expectedGranule);
+  const fetchedDynamoGranule = await granuleModel.get({ granuleId });
+
+  t.deepEqual(
+    fetchedDynamoGranule,
+    {
+      cmrLink: granule.cmrLink,
+      collectionId: `${collectionName}___${collectionVersion}`,
+      createdAt: cumulusMessage.cumulus_meta.workflow_start_time,
+      duration: fetchedDynamoGranule.duration,
+      error: {},
+      execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
+      files,
+      granuleId: granule.granuleId,
+      productVolume: 250,
+      provider: 'test-provider',
+      published: granule.published,
+      status: 'running',
+      timestamp: fetchedDynamoGranule.timestamp,
+      timeToArchive: 0,
+      timeToPreprocess: 0,
+      updatedAt: fetchedDynamoGranule.updatedAt,
+    }
+  );
+
+  const fetchedDbGranule = await db.first()
+    .from('granules')
+    .where({ granuleId: granule.granuleId });
+
+  const { cumulusId: collectionCumulusId } = await db('collections')
+    .first('cumulusId')
+    .where({
+      name: collectionName,
+      version: collectionVersion,
+    });
+
+  /* eslint-disable unicorn/no-null */
+  t.deepEqual(
+    fetchedDbGranule,
+    {
+      // files,
+      beginningDateTime: null,
+      cmrLink: granule.cmrLink,
+      collectionCumulusId,
+      created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
+      cumulusId: fetchedDbGranule.cumulusId,
+      duration: fetchedDynamoGranule.duration,
+      endingDateTime: null,
+      error: {},
+      execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
+      granuleId: granule.granuleId,
+      lastUpdateDateTime: null,
+      pdrName: null,
+      processingEndDateTime: null,
+      processingStartDateTime: null,
+      productionDateTime: null,
+      productVolume: 250,
+      provider: 'test-provider',
+      published: granule.published,
+      status: 'running',
+      timestamp: new Date(fetchedDynamoGranule.timestamp),
+      timeToArchive: 0,
+      timeToPreprocess: 0,
+      updated_at: new Date(fetchedDynamoGranule.updatedAt),
+    }
+  );
+  /* eslint-enable unicorn/no-null */
 });
 
 test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusMessage() throws an exception', async (t) => {
-  const { cumulusMessage } = t.context;
+  const { cumulusMessage, db } = t.context;
 
   const storeGranuleStub = sinon.stub(Granule.prototype, 'storeGranulesFromCumulusMessage')
     .callsFake(() => {
@@ -217,7 +309,7 @@ test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusM
     });
 
   try {
-    await t.throwsAsync(saveGranulesToDb(cumulusMessage));
+    await t.throwsAsync(saveGranulesToDb({ cumulusMessage, db }));
   } finally {
     storeGranuleStub.restore();
   }

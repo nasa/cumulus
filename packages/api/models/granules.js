@@ -82,7 +82,7 @@ const buildDbRecord = ({ granule, collection }) => ({
   status: granule.status,
   duration: dbTypes.numberOrNull(granule.duration),
   timeToArchive: dbTypes.numberOrNull(granule.timeToArchive),
-  timeToProcess: dbTypes.numberOrNull(granule.timeToProcess),
+  timeToPreprocess: dbTypes.numberOrNull(granule.timeToPreprocess),
   productVolume: dbTypes.numberOrNull(granule.productVolume),
   error: granule.error || null, // eslint-disable-line unicorn/no-null
   cmrLink: dbTypes.stringOrNull(granule.cmrLink),
@@ -109,7 +109,7 @@ const dbFields = [
   'status',
   'duration',
   'timeToArchive',
-  'timeToProcess',
+  'timeToPreprocess',
   'productVolume',
   'error',
   'cmrLink',

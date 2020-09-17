@@ -27,8 +27,8 @@ export const up = async (knex: Knex): Promise<void> =>
       .float('timeToArchive')
       .comment('Number of seconds granule took to archive');
     table
-      .float('timeToProcess')
-      .comment('Number seconds granule took to complete "processing"');
+      .float('timeToPreprocess')
+      .comment('Number seconds granule took to sync granule');
     table
       .integer('productVolume');
     table
