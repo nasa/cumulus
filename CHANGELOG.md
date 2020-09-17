@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **Before you re-deploy your `cumulus-tf` module**, note that the [`thin-egress-app`][thin-egress-app] is no longer deployed by default as part of the `cumulus` module, so you must add the TEA module to your deployment and manually modify your state **to avoid losing your API gateway and impacting any Cloudfront endpoints pointing to those gateways**. If you don't care about losing your API gateway and impacting Cloudfront endpoints, you can ignore the migration instructions.
 
     - Add the [`thin-egress-app`][thin-egress-app] module to your `cumulus-tf` deployment as shown in the [Cumulus example deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/main.tf).
+      - Note that the values for `tea_stack_name` variable to the `cumulus` module and the `stack_name` variable to the `thin_egress_app` module **must match**
+      - Also, if you are specifying the `stage_name` variable to the `thin_egress_app` module, **the value of the `tea_api_gateway_stage` variable to the `cumulus` module must match it**
     - **If you want to preserve your existing `thin-egress-app` API gateway and avoid having to update your Cloudfront endpoint for distribution, then you must follow these instructions**: <https://nasa.github.io/cumulus/docs/upgrade-notes/migrate_tea_standalone>
 
   - If you provide your own custom bucket map to TEA as a standalone module, **you must ensure that your custom bucket map includes mappings for the `protected` and `public` buckets specified in your `cumulus-tf/terraform.tfvars`, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors**
