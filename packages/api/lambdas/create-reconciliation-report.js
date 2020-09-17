@@ -735,7 +735,8 @@ function isoTimestamp(dateable) {
 }
 
 /**
- * Transforms input collectionId into correct parameters for
+ * Transforms input granuleId into correct parameters for use in the
+ * Reconciliation Report lambda.
  * @param {Array<string>|string} granuleId - list of granule Ids
  * @param {string} reportType - report type
  * @param {Object} modifiedEvent - input event
@@ -761,7 +762,8 @@ function updateGranuleIds(granuleId, reportType, modifiedEvent) {
 }
 
 /**
- * Transforms input collectionId into correct parameters for
+ * Transforms input collectionId into correct parameters for use in the
+ * Reconciliation Report lambda.
  * @param {Array<string>|string} collectionId - list of collection Ids
  * @param {string} reportType - report type
  * @param {Object} modifiedEvent - input event
