@@ -80,6 +80,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-1963**
+  - Adds `granuleId` as input parameter to `/reconcilationReports`
+    endpoint. Limits inputs parameters to either `collectionId` or `granuleId`
+    and will fail to create the report if both are provided.  Adding granuleId
+    will find collections in Cumulus by granuleId and compare those one way
+    with those in CMR.
 - **CUMULUS-1965**
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation

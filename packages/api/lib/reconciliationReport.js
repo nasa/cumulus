@@ -8,6 +8,20 @@ const { Granule } = require('../models');
 const { deconstructCollectionId } = require('./utils');
 
 /**
+ * Extra search params to add to the cmrGranules searchConceptQueue
+ *
+ * @param {Object} recReportParams - input report params
+ * @returns {Array<Array>} array of name/value pairs to add to the search params
+ */
+function cmrGranuleSearchParams(recReportParams) {
+  const { granuleIds } = recReportParams;
+  if (granuleIds) {
+    return granuleIds.map((gid) => ['readable_granule_name[]', gid]);
+  }
+  return [];
+}
+
+/**
  * Prepare a list of collectionIds into an _id__in object
  *
  * @param {Array<string>} collectionIds - Array of collectionIds in the form 'name___ver'
@@ -70,12 +84,14 @@ function convertToDBCollectionSearchParams(params) {
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
 function convertToESGranuleSearchParams(params) {
-  const { collectionIds } = params;
+  const { collectionIds, granuleIds, startTimestamp, endTimestamp } = params;
   const collectionIdIn = collectionIds ? collectionIds.join(',') : undefined;
+  const granuleIdIn = granuleIds ? granuleIds.join(',') : undefined;
   return removeNilProperties({
-    updatedAt__from: dateToValue(params.startTimestamp),
-    updatedAt__to: dateToValue(params.endTimestamp),
+    updatedAt__from: dateToValue(startTimestamp),
+    updatedAt__to: dateToValue(endTimestamp),
     collectionId__in: collectionIdIn,
+    granuleId__in: granuleIdIn,
   });
 }
 
@@ -118,18 +134,24 @@ function initialReportHeader(recReportParams) {
     createStartTime,
     endTimestamp,
     startTimestamp,
+    granuleIds,
+    granuleId,
+    collectionIds,
     collectionId,
   } = recReportParams;
 
   return {
-    reportType,
-    createStartTime: createStartTime.toISOString(),
-    createEndTime: undefined,
-    reportStartTime: startTimestamp,
-    reportEndTime: endTimestamp,
-    status: 'RUNNING',
-    error: undefined,
     collectionId,
+    collectionIds,
+    createEndTime: undefined,
+    createStartTime: createStartTime.toISOString(),
+    error: undefined,
+    granuleId,
+    granuleIds,
+    reportEndTime: endTimestamp,
+    reportStartTime: startTimestamp,
+    reportType,
+    status: 'RUNNING',
   };
 }
 
@@ -220,6 +242,7 @@ class DbGranuleSearchQueues {
 
 module.exports = {
   DbGranuleSearchQueues,
+  cmrGranuleSearchParams,
   convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,

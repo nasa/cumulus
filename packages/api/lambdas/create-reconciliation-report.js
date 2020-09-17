@@ -21,16 +21,18 @@ const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { removeNilProperties } = require('@cumulus/common/util');
+const { InvalidArgument } = require('@cumulus/errors');
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
 const {
-  convertToESGranuleSearchParams,
+  cmrGranuleSearchParams,
   convertToESCollectionSearchParams,
-  initialReportHeader,
+  convertToESGranuleSearchParams,
   filterCMRCollections,
+  initialReportHeader,
 } = require('../lib/reconciliationReport');
 const Collection = require('../es/collections');
 const { ESSearchQueue } = require('../es/esSearchQueue');
@@ -58,13 +60,29 @@ const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
 
 /**
  * Checks to see if any of the included reportParams contains a value that
- * would turn a Cumulus Vs CMR comparison into a one way report.
+ * would turn a Cumulus Vs CMR collection comparison into a one way report.
  *
  * @param {Object} reportParams
  * @returns {boolean} Returns true if any tested key exists on the input
  *                    object and the key references a defined value.
  */
-function isOneWayReport(reportParams) {
+function isOneWayCollectionReport(reportParams) {
+  return [
+    'startTimestamp',
+    'endTimestamp',
+    'granuleIds',
+  ].some((e) => !!reportParams[e]);
+}
+
+/**
+ * Checks to see if any of the included reportParams contains a value that
+ * would turn a Cumulus Vs CMR granule comparison into a one way report.
+ *
+ * @param {Object} reportParams
+ * @returns {boolean} Returns true if any tested key exists on the input
+ *                    object and the key references a defined value.
+ */
+function isOneWayGranuleReport(reportParams) {
   return [
     'startTimestamp',
     'endTimestamp',
@@ -77,32 +95,34 @@ function isOneWayReport(reportParams) {
  * @param {Object} searchParams
  * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
  */
-function shouldFilterByTime(searchParams) {
+function shouldAggregateGranulesForCollections(searchParams) {
   return [
     'updatedAt__from',
     'updatedAt__to',
+    'granuleId__in',
   ].some((e) => !!searchParams[e]);
 }
 
 /**
  * Fetch collections in Elasticsearch.
- * @param {Object} esCollectionSearchParams - Object with possible valid filtering options.
- * @param {Object} esGranuleSearchParams - Object with possible valid filtering options for
-                                           granule search (for aggregations).
+ * @param {Object} recReportParams - input report params.
  * @returns {Promise<Array>} - list of collectionIds that match input paramaters
  */
-async function fetchESCollections(esCollectionSearchParams, esGranuleSearchParams) {
+async function fetchESCollections(recReportParams) {
+  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
+  const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
+
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
-  if (shouldFilterByTime(esCollectionSearchParams)) {
-    // Build an ESCollection and call the aggregateActiveGranuleCollections to
+  if (shouldAggregateGranulesForCollections(esGranuleSearchParams)) {
+    // Build an ESCollection and call the aggregateGranuleCollections to
     // get list of collection ids that have granules that have been updated
     const esCollection = new Collection({ queryStringParameters: esGranuleSearchParams }, 'collection', process.env.ES_INDEX);
-    const esCollectionItems = await esCollection.aggregateActiveGranuleCollections();
+    const esCollectionItems = await esCollection.aggregateGranuleCollections();
     esCollectionIds = esCollectionItems.sort();
   } else {
-    // return all collections
+    // return all ES collections
     const esCollection = new ESSearchQueue(esCollectionSearchParams, 'collection', process.env.ES_INDEX);
     const esCollectionItems = await esCollection.empty();
     esCollectionIds = esCollectionItems.map(
@@ -197,7 +217,7 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
 
-  const oneWayReport = isOneWayReport(recReportParams);
+  const oneWayReport = isOneWayCollectionReport(recReportParams);
 
   // get all collections from CMR and sort them, since CMR query doesn't support
   // 'Version' as sort_key
@@ -206,10 +226,7 @@ async function reconciliationReportForCollections(recReportParams) {
   const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
   const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
 
-  // Array of collectionIds are possible.
-  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
-  const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
-  const esCollectionIds = await fetchESCollections(esCollectionSearchParams, esGranuleSearchParams);
+  const esCollectionIds = await fetchESCollections(recReportParams);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
@@ -379,10 +396,15 @@ async function reconciliationReportForGranules(params) {
   const { name, version } = deconstructCollectionId(collectionId);
 
   const cmrSettings = await getCmrSettings();
+  const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: ['granule_ur'] });
+  cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
+    searchParams.append(paramName, paramValue);
+  });
+
   const cmrGranulesIterator = new CMRSearchConceptQueue({
     cmrSettings,
     type: 'granules',
-    searchParams: { short_name: name, version: version, sort_key: ['granule_ur'] },
+    searchParams,
     format: 'umm_json',
   });
 
@@ -392,7 +414,7 @@ async function reconciliationReportForGranules(params) {
   const esGranulesIterator = new ESCollectionGranuleQueue(
     esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
   );
-  const oneWay = isOneWayReport(recReportParams);
+  const oneWay = isOneWayGranuleReport(recReportParams);
 
   const granulesReport = {
     okCount: 0,
@@ -713,6 +735,41 @@ function isoTimestamp(dateable) {
 }
 
 /**
+ * Transforms input granuleId into correct parameters for use in the
+ * Reconciliation Report lambda.
+ * @param {Array<string>|string} granuleId - list of granule Ids
+ * @param {string} reportType - report type
+ * @param {Object} modifiedEvent - input event
+ * @returns {Object} updated input even with correct granuleId and granuleIds values.
+ */
+function updateGranuleIds(granuleId, reportType, modifiedEvent) {
+  let returnEvent = { ...modifiedEvent };
+  if (granuleId) {
+    // transform input granuleId into an array on granuleIds
+    const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
+    returnEvent = { ...modifiedEvent, granuleIds };
+  }
+  return returnEvent;
+}
+
+/**
+ * Transforms input collectionId into correct parameters for use in the
+ * Reconciliation Report lambda.
+ * @param {Array<string>|string} collectionId - list of collection Ids
+ * @param {string} reportType - report type
+ * @param {Object} modifiedEvent - input event
+ * @returns {Object} updated input even with correct collectionId and collectionIds values.
+ */
+function updateCollectionIds(collectionId, reportType, modifiedEvent) {
+  let returnEvent = { ...modifiedEvent };
+  if (collectionId) {
+    const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
+    returnEvent = { ...modifiedEvent, collectionIds };
+  }
+  return returnEvent;
+}
+
+/**
  * Converts input parameters to normalized versions to pass on to the report
  * functions.  Ensures any input dates are formatted as ISO strings.
  *
@@ -730,15 +787,18 @@ function normalizeEvent(event) {
     reportType = 'Granule Not Found';
   }
 
-  let { collectionIds: anyCollectionIds, collectionId, ...modifiedEvent } = { ...event };
+  // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
+  // for now, move input collectionId to collectionIds as array
+  // internal reports will keep existing collectionId and copy it to collectionIds
+  let { collectionIds: anyCollectionIds, collectionId, granuleId, ...modifiedEvent } = { ...event };
   if (anyCollectionIds) {
-    throw new TypeError('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
+    throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
-  if (collectionId) {
-    // transform input collectionId into array on collectionIds
-    const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
-    modifiedEvent = { ...modifiedEvent, collectionIds };
+  if (granuleId && collectionId && reportType !== 'Internal') {
+    throw new InvalidArgument(`${reportType} reports cannot be launched with both granuleId and collectionId input.`);
   }
+  modifiedEvent = updateCollectionIds(collectionId, reportType, modifiedEvent);
+  modifiedEvent = updateGranuleIds(granuleId, reportType, modifiedEvent);
 
   return removeNilProperties({
     ...modifiedEvent,
