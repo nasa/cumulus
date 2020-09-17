@@ -193,12 +193,6 @@ variable "distribution_api_gateway_stage" {
   default     = "DEV"
 }
 
-variable "distribution_url" {
-  description = " URL for the distribution API"
-  type        = string
-  default     = null
-}
-
 variable "ecs_container_stop_timeout" {
   description = "Time duration to wait from when a task is stopped before its containers are forcefully killed if they do not exit normally on their own"
   type        = string
@@ -438,10 +432,32 @@ variable "tags" {
   default     = {}
 }
 
-variable "thin_egress_stack_name" {
+variable "tea_internal_api_endpoint" {
+  description = "Thin Egress App internal endpoint URL"
+  type        = string
+}
+
+variable "tea_external_api_endpoint" {
+  description = "Thin Egress App internal endpoint URL"
+  type        = string
+}
+
+variable "tea_egress_log_group" {
+  description = "Thin Egress App Cloudwatch log group ARN"
   type        = string
   default     = null
-  description = "Name to use for Thin Egress App Cloudformation stack"
+}
+
+variable "tea_rest_api_id" {
+  description = "Thin Egress App API gateway ID"
+  type        = string
+  default     = null
+}
+
+variable "tea_rest_api_root_resource_id" {
+  description = "Thin Egress App API gateway root resource ID"
+  type        = string
+  default     = null
 }
 
 variable "throttled_queues" {
@@ -516,7 +532,7 @@ variable "es_index_shards" {
   default     = 2
 }
 
-variable "tea_stack_name" {
-  description = "Thin Egress App Cloudformation stack name"
-  type        = string
-}
+# variable "tea_stack_name" {
+#   description = "Thin Egress App Cloudformation stack name"
+#   type        = string
+# }

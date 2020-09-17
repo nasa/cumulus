@@ -15,11 +15,6 @@ variable "system_bucket" {
   description = "A bucket to be used for staging deployment files"
 }
 
-variable "tea_stack_name" {
-  description = "Thin Egress App Cloudformation stack name"
-  type        = string
-}
-
 variable "tea_internal_api_endpoint" {
   description = "Thin Egress App internal endpoint URL"
   type        = string

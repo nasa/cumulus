@@ -1,11 +1,16 @@
 module "distribution" {
   source = "../distribution"
 
-  tea_stack_name = var.tea_stack_name
-  tea_rest_api_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiId"]
-  tea_rest_api_root_resource_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiRootResourceId"]
-  tea_internal_api_endpoint = data.aws_cloudformation_stack.tea_stack.outputs["ApiEndpoint"]
-  tea_egress_log_group = lookup(data.aws_cloudformation_stack.tea_stack.outputs, "ApiGatewayLogGroupEgress", null)
+  # tea_stack_name = var.tea_stack_name
+  # tea_rest_api_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiId"]
+  # tea_rest_api_root_resource_id = data.aws_cloudformation_stack.tea_stack.outputs["RestApiRootResourceId"]
+  # tea_internal_api_endpoint = data.aws_cloudformation_stack.tea_stack.outputs["ApiEndpoint"]
+  # tea_egress_log_group = lookup(data.aws_cloudformation_stack.tea_stack.outputs, "ApiGatewayLogGroupEgress", null)
+
+  tea_rest_api_id = var.tea_rest_api_id
+  tea_rest_api_root_resource_id = var.tea_rest_api_root_resource_id
+  tea_internal_api_endpoint = var.tea_internal_api_endpoint
+  tea_egress_log_group = var.tea_egress_log_group
 
   api_gateway_stage                              = var.distribution_api_gateway_stage
   deploy_s3_credentials_endpoint                 = var.deploy_distribution_s3_credentials_endpoint

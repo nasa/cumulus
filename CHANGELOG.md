@@ -14,11 +14,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - In addition to the configuration for execution throttling, the internal mechanism for tracking executions by queue has changed. As a result, you should **disable any rules or workflows scheduling executions via a throttled queue** before upgrading. Otherwise, you may be at risk of having **twice as many executions** as are configured for the queue while the updated tracking is deployed. You can re-enable these rules/workflows once the upgrade is complete.
 
 - **CUMULUS-2111**
-  - The [`thin-egress-app`][thin-egress-app] is no longer deployed by default as part of the `cumulus` module, so you must add it as a standalone module to your own deployment. To add TEA as a standalone module to your deployment, take the following steps **before re-deploying your `cumulus-tf` module**:
+  - **Before you re-deploy your `cumulus-tf` module**, note that the [`thin-egress-app`][thin-egress-app] is no longer deployed by default as part of the `cumulus` module, so you must add the TEA module to your deployment and manually modify your state **to avoid losing your API gateway and impacting any Cloudfront endpoints pointing to those gateways**. If you don't care about losing your API gateway and impacting Cloudfront endpoints, you can ignore the migration instructions.
 
-    1. Add the [`thin-egress-app`][thin-egress-app] module to your `cumulus-tf` deployment as shown in the [Cumulus example deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/main.tf).
-    2. **If you want to preserve your existing `thin-egress-app` API gateway and avoid having to update your Cloudfront endpoint for distribution, then you must follow these instructions**: <https://nasa.github.io/cumulus/docs/upgrade-notes/migrate_tea_standalone>
-    3. If you don't care about losing your API gateway, you can update and re-deploy as normal.
+    - Add the [`thin-egress-app`][thin-egress-app] module to your `cumulus-tf` deployment as shown in the [Cumulus example deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/main.tf).
+    - **If you want to preserve your existing `thin-egress-app` API gateway and avoid having to update your Cloudfront endpoint for distribution, then you must follow these instructions**: <https://nasa.github.io/cumulus/docs/upgrade-notes/migrate_tea_standalone>
 
   - If you provide your own custom bucket map to TEA as a standalone module, **you must ensure that your custom bucket map includes mappings for the `protected` and `public` buckets specified in your `cumulus-tf/terraform.tfvars`, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors**
 
