@@ -88,7 +88,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     with those in CMR.
   - `/reconciliationReports` now validates any input json before starting the
     async operation and the lambda handler no longer validates input
-    parameters..
+    parameters.
 - **CUMULUS-1965**
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
