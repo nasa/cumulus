@@ -64,7 +64,7 @@ To recover a Cumulus Postgres database in a disaster or data-loss scenario, you 
 * If the Postgres database cluster exists/is still online, take it
   offline/remove access.
 * If needed, recover the DynamoDB tables as noted in the
-  [DyanmoDb](./backup_and_restore#dynamodb) section of this document.
+  [DynamoDb](./backup_and_restore#dynamodb) section of this document.
 * Redeploy a new database cluster from your backup, matching as closely as possible to the DynamoDB
   restore time.   See [AWS's
   PIT recovery
