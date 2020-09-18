@@ -108,7 +108,10 @@ const addCollection = async (stackName, collection) => {
     collectionName: collection.name,
     collectionVersion: collection.version,
   });
-  await CollectionsApi.createCollection({ prefix: stackName, collection });
+  const response = await CollectionsApi.createCollection({ prefix: stackName, collection });
+  if (response.statusCode !== 200) {
+    throw new Error(`Collections API did not return 200: ${JSON.stringify(response)}`);
+  }
 };
 
 /**
@@ -193,6 +196,7 @@ const createCollection = async (prefix, overrides = {}) => {
 
 module.exports = {
   addCollections,
+  addCollection,
   buildCollection,
   createCollection,
 };
