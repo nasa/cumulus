@@ -86,6 +86,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     and will fail to create the report if both are provided.  Adding granuleId
     will find collections in Cumulus by granuleId and compare those one way
     with those in CMR.
+  - `/reconciliationReports` now validates any input json before starting the
+    async operation and the lambda handler no longer validates input
+    parameters.
 - **CUMULUS-1965**
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
