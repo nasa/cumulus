@@ -32,6 +32,7 @@ const isCumulusLogEntry = (e) => !isLambdaStatusLogEntry(e);
 describe('The Discover Granules workflow with http Protocol', () => {
   const collectionsDir = './data/collections/http_testcollection_001/';
 
+  let beforeAllFailed = false;
   let config;
   let executionModel;
   let httpWorkflowExecution;
@@ -43,44 +44,49 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let provider;
 
   beforeAll(async () => {
-    config = await loadConfig();
+    try {
+      config = await loadConfig();
 
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
+      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+      executionModel = new Execution();
 
-    testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
-    testSuffix = createTestSuffix(testId);
-    collection = { name: `http_testcollection${testSuffix}`, version: '001' };
-    provider = await buildHttpOrHttpsProvider(testSuffix);
+      testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
+      testSuffix = createTestSuffix(testId);
+      collection = { name: `http_testcollection${testSuffix}`, version: '001' };
+      provider = await buildHttpOrHttpsProvider(testSuffix);
 
-    // populate collections and providers
-    await Promise.all([
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      createProvider(config.stackName, provider),
-    ]);
+      // populate collections and providers
+      await Promise.all([
+        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+        createProvider(config.stackName, provider),
+      ]);
 
-    collection = JSON.parse((await apiTestUtils.getCollection({
-      prefix: config.stackName,
-      collectionName: collection.name,
-      collectionVersion: collection.version,
-    })).body);
+      collection = JSON.parse((await apiTestUtils.getCollection({
+        prefix: config.stackName,
+        collectionName: collection.name,
+        collectionVersion: collection.version,
+      })).body);
 
-    httpWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      collection,
-      provider,
-      undefined,
-      { provider_path: 'granules/fake_granules' }
-    );
+      httpWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        undefined,
+        { provider_path: 'granules/fake_granules' }
+      );
 
-    lambdaStep = new LambdaStep();
+      lambdaStep = new LambdaStep();
 
-    queueGranulesOutput = await lambdaStep.getStepOutput(
-      httpWorkflowExecution.executionArn,
-      'QueueGranules'
-    );
+      queueGranulesOutput = await lambdaStep.getStepOutput(
+        httpWorkflowExecution.executionArn,
+        'QueueGranules'
+      );
+    } catch (error) {
+      beforeAllFailed = true;
+      throw error;
+    }
   });
 
   afterAll(async () => {
@@ -92,11 +98,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   it('executes successfully', () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
+
     expect(httpWorkflowExecution.status).toEqual('SUCCEEDED');
   });
 
   describe('the DiscoverGranules Lambda', () => {
-    let lambdaOutput = null;
+    let lambdaOutput;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(

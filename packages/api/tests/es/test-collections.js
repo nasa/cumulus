@@ -349,9 +349,9 @@ test.serial('query correctly queries collection by date', async (t) => {
   t.is(queryResult.results[0].name, 'coll3');
 });
 
-test.serial('aggregateActiveGranuleCollections returns only collections with granules', async (t) => {
+test.serial('aggregateGranuleCollections returns only collections with granules', async (t) => {
   const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
-  const queryResult = await collectionSearch.aggregateActiveGranuleCollections();
+  const queryResult = await collectionSearch.aggregateGranuleCollections();
 
   const orderedResult = queryResult.sort();
 
@@ -362,14 +362,14 @@ test.serial('aggregateActiveGranuleCollections returns only collections with gra
   );
 });
 
-test.serial('aggregateActiveGranuleCollections respects date range for granules', async (t) => {
+test.serial('aggregateGranuleCollections respects date range for granules', async (t) => {
   const collectionSearch = new Collection({
     queryStringParameters: {
       updatedAt__from: (new Date(2020, 1, 25)).getTime(),
       updatedAt__to: (new Date(2020, 1, 30)).getTime(),
     },
   }, undefined, process.env.ES_INDEX);
-  const queryResult = await collectionSearch.aggregateActiveGranuleCollections();
+  const queryResult = await collectionSearch.aggregateGranuleCollections();
 
   t.deepEqual(queryResult, ['coll3___1']);
 });

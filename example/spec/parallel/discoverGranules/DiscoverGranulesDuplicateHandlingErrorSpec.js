@@ -98,7 +98,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === ingestGranuleRule.payload.testExecutionId,
         { timestamp__from: ingestTime },
-        { timeout: 15 }
+        { timeout: 30 }
       );
 
       // Wait for the "IngestGranule" execution to be completed
@@ -136,7 +136,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
         { timestamp__from: ingestTime },
-        { timeout: 15 }
+        { timeout: 30 }
       );
     } catch (error) {
       console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);

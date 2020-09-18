@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    aws  = ">= 2.31.0"
+    aws  = ">= 3.5.0"
     null = "~> 2.1"
   }
 }
@@ -8,6 +8,10 @@ terraform {
 provider "aws" {
   region  = var.region
   profile = var.aws_profile
+
+  ignore_tags {
+    key_prefixes = ["gsfc-ngap"]
+  }
 }
 
 provider "aws" {
@@ -55,14 +59,17 @@ module "cumulus" {
   bucket_map_key = var.bucket_map_key
 
   vpc_id            = var.vpc_id
-  lambda_subnet_ids = var.subnet_ids
+  lambda_subnet_ids = var.lambda_subnet_ids
 
   rds_security_group            = local.rds_security_group
   rds_user_access_secret_arn    = local.rds_credentials_secret_arn
   rds_connection_heartbeat      = var.rds_connection_heartbeat
 
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
-  ecs_cluster_instance_subnet_ids = var.subnet_ids
+  ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
+    ? var.lambda_subnet_ids
+    : var.ecs_cluster_instance_subnet_ids
+  )
   ecs_cluster_min_size            = 2
   ecs_cluster_desired_size        = 2
   ecs_cluster_max_size            = 3
