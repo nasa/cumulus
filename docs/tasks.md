@@ -151,3 +151,12 @@ Fake processing task used for integration tests
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/test-processing/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/test-processing) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/test-processing)
+
+---
+
+### [@cumulus/update-cmr-access-constraints](https://github.com/nasa/cumulus/tree/master/tasks/update-cmr-access-constraints#readme)
+
+Updates CMR metadata to set access constraints
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/update-cmr-access-constraints#readme/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/update-cmr-access-constraints) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/update-cmr-access-constraints#readme)
