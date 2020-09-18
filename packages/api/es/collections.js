@@ -82,13 +82,13 @@ class Collection extends BaseSearch {
   }
 
   /**
-   * Get a list of collection ids that have granules. If time params
+   * Get a list of collection ids from found granules. If time params
    * are specified the query will return collections that have granules that have been updated
-   * in that time frame.
+   * in that time frame.  If granuleIds are provided, it will filter those as well.
    *
    * @returns {Promise<Array<string>>} - list of collection ids with active granules
    */
-  async aggregateActiveGranuleCollections() {
+  async aggregateGranuleCollections() {
     if (!this.client) {
       this.client = await this.constructor.es();
     }
@@ -133,7 +133,7 @@ class Collection extends BaseSearch {
    * @returns {Promise<Object>} - query result object containing collections and their granule stats
    */
   async queryCollectionsWithActiveGranules() {
-    const collectionIds = await this.aggregateActiveGranuleCollections();
+    const collectionIds = await this.aggregateGranuleCollections();
 
     const searchParams = this._buildSearch();
     searchParams.body.query = {

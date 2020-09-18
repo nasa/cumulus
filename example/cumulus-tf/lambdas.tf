@@ -8,9 +8,12 @@ resource "aws_lambda_function" "async_operation_fail" {
 
   tags = local.tags
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    }
   }
 }
 
@@ -24,9 +27,12 @@ resource "aws_lambda_function" "async_operation_success" {
 
   tags = local.tags
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    }
   }
 }
 
@@ -47,9 +53,12 @@ resource "aws_lambda_function" "sns_s3_executions_test" {
 
   tags = local.tags
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    }
   }
 }
 
@@ -70,9 +79,12 @@ resource "aws_lambda_function" "sns_s3_granules_test" {
 
   tags = local.tags
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    }
   }
 }
 
@@ -93,9 +105,12 @@ resource "aws_lambda_function" "sns_s3_pdrs_test" {
 
   tags = local.tags
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    }
   }
 }
 
@@ -116,8 +131,11 @@ resource "aws_lambda_function" "sns_s3_collections_test" {
 
   tags = local.tags
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    }
   }
 }

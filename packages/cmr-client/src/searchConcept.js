@@ -35,19 +35,24 @@ async function searchConcept({
   const recordsLimit = cmrLimit || 100;
   const pageSize = searchParams.pageSize || cmrPageSize || 50;
 
-  const defaultParams = { page_size: pageSize };
+  const query =
+    searchParams instanceof URLSearchParams
+      ? searchParams
+      : new URLSearchParams(searchParams);
 
-  const url = `${getUrl('search', null, cmrEnvironment)}${type}.${format.toLowerCase()}`;
+  const pageNum = query.has('page_num') ? +query.get('page_num') + 1 : 1;
+  query.delete('page_num');
+  query.append('page_num', pageNum);
 
-  const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
+  if (!query.has('page_size')) query.append('page_size', pageSize);
 
-  // if requested, recursively retrieve all the search results for collections or granules
-  const query = { ...defaultParams, ...searchParams, page_num: pageNum };
+  const url = `${getUrl('search', undefined, cmrEnvironment)}${type}.${format.toLowerCase()}`;
   const response = await got.get(url, { json: format.endsWith('json'), query, headers });
 
-  const responseItems = (format === 'echo10')
-    ? (await parseXMLString(response.body)).results.result || []
-    : (response.body.items || response.body.feed.entry);
+  const responseItems =
+    format === 'echo10'
+      ? (await parseXMLString(response.body)).results.result || []
+      : response.body.items || response.body.feed.entry;
 
   const fetchedResults = previousResults.concat(responseItems || []);
 

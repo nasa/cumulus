@@ -74,7 +74,7 @@ module "thin_egress_app" {
   log_api_gateway_to_cloudwatch      = var.log_api_gateway_to_cloudwatch
   permissions_boundary_name          = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                        = var.vpc_id
-  stack_name                         = local.thin_egress_stack_name
+  stack_name                         = var.thin_egress_stack_name != null ? var.thin_egress_stack_name : local.thin_egress_stack_name
   stage_name                         = var.api_gateway_stage
   urs_auth_creds_secret_name         = aws_secretsmanager_secret.thin_egress_urs_creds.name
   vpc_subnet_ids                     = var.subnet_ids
