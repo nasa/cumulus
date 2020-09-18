@@ -93,6 +93,10 @@ export const getProvider = (params: {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} [params.queryStringParameters] - query string parameters to
+ *   include in the request
+ * @param {Function} [params.callback=invokeApi] - async function to invoke the
+ *   api lambda that takes a prefix / user payload.
  * @returns {Promise<Object>} - the list of providers fetched by the API
  */
 export const getProviders = (params: {
