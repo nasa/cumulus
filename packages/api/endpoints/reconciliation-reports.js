@@ -9,12 +9,15 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 
 const models = require('../models');
+const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
+const logger = new Logger({ sender: '@cumulus/api' });
 /**
  * List all reconciliation reports
  *
@@ -100,6 +103,14 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
+  let validatedInput;
+  try {
+    validatedInput = normalizeEvent(req.body);
+  } catch (error) {
+    logger.error(error);
+    return res.boom.badRequest(error.message, error);
+  }
+
   const asyncOperationModel = new models.AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -112,7 +123,7 @@ async function createReport(req, res) {
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
-    payload: req.body,
+    payload: validatedInput,
     useLambdaEnvironmentVariables: true,
   });
 

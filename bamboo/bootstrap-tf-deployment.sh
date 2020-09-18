@@ -75,8 +75,8 @@ echo "Deploying the Cumulus database schema migration module to $DEPLOYMENT"
 ../terraform apply \
   -auto-approve \
   -input=false \
-  -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
-  -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
+  -var-file="../deployments/db-migration/$BASE_VAR_FILE" \
+  -var-file="../deployments/db-migration/$DEPLOYMENT.tfvars" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
   -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]" \

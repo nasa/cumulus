@@ -1,11 +1,15 @@
 terraform {
   required_providers {
-    aws = ">= 2.31.0"
+    aws  = ">= 3.5.0"
   }
 }
 
 provider "aws" {
   region = var.aws_region
+
+  ignore_tags {
+    key_prefixes = ["gsfc-ngap"]
+  }
 }
 
 resource "random_string" "db_pass" {
