@@ -1,29 +1,72 @@
 'use strict';
 
 const test = require('ava');
+const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const s3Utils = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   DeletePublishedGranule,
 } = require('@cumulus/errors');
 
-const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
-const models = require('../../../models');
+const { fakeFileFactory, fakeGranuleFactoryV2, fakeCollectionFactory } = require('../../../lib/testUtils');
+
+const Manager = require('../../../models/base');
+
+const GranulesModel = proxyquire(
+  '../../../models/granules',
+  {
+    '@cumulus/db': {
+      getKnexClient: () => getKnexClient({ env: localStackConnectionEnv }),
+    },
+  }
+);
 
 const bucket = randomId('bucket');
 let granuleModel;
 let removeGranuleFromCmrStub;
 
-test.before(async () => {
+const dynamoCollectionToDbCollection = (dynamoCollection) => {
+  const dbCollection = {
+    ...dynamoCollection,
+    created_at: new Date(dynamoCollection.createdAt),
+    updated_at: new Date(dynamoCollection.updatedAt),
+    granuleIdValidationRegex: dynamoCollection.granuleId,
+    granuleIdExtractionRegex: dynamoCollection.granuleIdExtraction,
+  };
+
+  delete dbCollection.createdAt;
+  delete dbCollection.updatedAt;
+  delete dbCollection.granuleId;
+  delete dbCollection.granuleIdExtraction;
+
+  return dbCollection;
+};
+
+test.before(async (t) => {
   await s3Utils.createBucket(bucket);
 
   process.env.GranulesTable = randomId('granule');
-  granuleModel = new models.Granule();
+  granuleModel = new GranulesModel();
   await granuleModel.createTable();
 
-  removeGranuleFromCmrStub = sinon.stub(models.Granule.prototype, '_removeGranuleFromCmr').resolves();
+  removeGranuleFromCmrStub = sinon.stub(GranulesModel.prototype, '_removeGranuleFromCmr').resolves();
+
+  t.context.db = await getKnexClient({ env: localStackConnectionEnv });
+
+  const collectionRecord = dynamoCollectionToDbCollection(
+    fakeCollectionFactory()
+  );
+
+  await t.context.db('collections').insert(collectionRecord);
+
+  t.context.granuleCollectionFields = {
+    dataType: collectionRecord.name,
+    version: collectionRecord.version,
+    collectionId: `${collectionRecord.name}___${collectionRecord.version}`,
+  };
 });
 
 test.after.always(async () => {
@@ -34,8 +77,11 @@ test.after.always(async () => {
   removeGranuleFromCmrStub.restore();
 });
 
-test('granule.delete() removes granule files from S3 and record from Dynamo', async (t) => {
+test('granule.delete() removes granule files from S3 and record from Dynamo and RDS', async (t) => {
+  const { db, granuleCollectionFields } = t.context;
+
   const granule = fakeGranuleFactoryV2({
+    ...granuleCollectionFields,
     files: [
       fakeFileFactory({ bucket }),
       fakeFileFactory({ bucket }),
@@ -49,6 +95,8 @@ test('granule.delete() removes granule files from S3 and record from Dynamo', as
   })));
 
   await granuleModel.create(granule);
+
+  // Verify that the granule does exist in the DB
   t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
   t.deepEqual(
     await Promise.all(granule.files.map((file) => s3Utils.s3ObjectExists({
@@ -58,7 +106,13 @@ test('granule.delete() removes granule files from S3 and record from Dynamo', as
     [true, true]
   );
 
-  await granuleModel.delete(granule);
+  t.not(
+    await db('granules').first().where({ granuleId: granule.granuleId }),
+    undefined
+  );
+
+  await granuleModel.delete({ db, granule });
+
   t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
   t.deepEqual(
     await Promise.all(granule.files.map((file) => s3Utils.s3ObjectExists({
@@ -67,28 +121,39 @@ test('granule.delete() removes granule files from S3 and record from Dynamo', as
     }))),
     [false, false]
   );
+
+  t.is(
+    await db('granules').first().where({ granuleId: granule.granuleId }),
+    undefined
+  );
 });
 
 test('granule.delete() for deleted record should not throw error', async (t) => {
+  const { db, granuleCollectionFields } = t.context;
+
   const granule = fakeGranuleFactoryV2({
+    ...granuleCollectionFields,
     published: false,
   });
 
   await granuleModel.create(granule);
   t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
 
-  await granuleModel.delete(granule);
+  await granuleModel.delete({ db, granule });
   t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
-  await t.notThrowsAsync(granuleModel.delete(granule));
+  await t.notThrowsAsync(granuleModel.delete({ db, granule }));
 });
 
 test('granule.delete() throws error if granule is published', async (t) => {
+  const { db, granuleCollectionFields } = t.context;
+
   const granule = fakeGranuleFactoryV2({
+    ...granuleCollectionFields,
     published: true,
   });
 
   await t.throwsAsync(
-    granuleModel.delete(granule),
+    granuleModel.delete({ db, granule }),
     {
       instanceOf: DeletePublishedGranule,
       message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first',
@@ -97,10 +162,13 @@ test('granule.delete() throws error if granule is published', async (t) => {
 });
 
 test('granule.delete() with the old file format succeeds', async (t) => {
+  const { db, granuleCollectionFields } = t.context;
+
   const granuleBucket = randomId('granuleBucket');
 
   const key = randomId('key');
   const newGranule = fakeGranuleFactoryV2({
+    ...granuleCollectionFields,
     published: false,
     files: [
       {
@@ -119,7 +187,7 @@ test('granule.delete() with the old file format succeeds', async (t) => {
   });
 
   // create a new unpublished granule
-  const baseModel = new models.Manager({
+  const baseModel = new Manager({
     tableName: process.env.GranulesTable,
     tableHash: { name: 'granuleId', type: 'S' },
     tableAttributes: [{ name: 'collectionId', type: 'S' }],
@@ -128,7 +196,7 @@ test('granule.delete() with the old file format succeeds', async (t) => {
 
   await baseModel.create(newGranule);
 
-  await granuleModel.delete(newGranule);
+  await granuleModel.delete({ db, granule: newGranule });
 
   t.false(await granuleModel.exists({ granuleId: newGranule.granuleId }));
   // verify the file is deleted
@@ -139,25 +207,41 @@ test('granule.delete() with the old file format succeeds', async (t) => {
 });
 
 test('granule.unpublishAndDeleteGranule() deletes published granule', async (t) => {
+  const { db, granuleCollectionFields } = t.context;
+
   const granule = fakeGranuleFactoryV2({
+    ...granuleCollectionFields,
     published: true,
   });
 
   await granuleModel.create(granule);
 
   t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
+  t.not(
+    await db('granules').first().where({ granuleId: granule.granuleId }),
+    undefined
+  );
+
   await t.notThrowsAsync(
     granuleModel.unpublishAndDeleteGranule(granule)
   );
   t.true(removeGranuleFromCmrStub.called);
   t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
+
+  t.is(
+    await db('granules').first().where({ granuleId: granule.granuleId }),
+    undefined
+  );
 });
 
 test.serial('granule.unpublishAndDeleteGranule() leaves granule.published = true if delete fails', async (t) => {
-  const deleteStub = sinon.stub(models.Granule.prototype, '_deleteRecord').throws();
+  const { granuleCollectionFields } = t.context;
+
+  const deleteStub = sinon.stub(GranulesModel.prototype, '_deleteRecord').throws();
   t.teardown(() => deleteStub.restore());
 
   const granule = fakeGranuleFactoryV2({
+    ...granuleCollectionFields,
     published: true,
   });
 

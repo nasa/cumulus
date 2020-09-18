@@ -1,5 +1,6 @@
 'use strict';
 
+const proxyquire = require('proxyquire');
 const pMap = require('p-map');
 const test = require('ava');
 const moment = require('moment');
@@ -21,6 +22,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
@@ -28,8 +30,18 @@ const { Search } = require('../../es/search');
 const {
   handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
-const models = require('../../models');
+const Collection = require('../../models/collections');
+const ReconciliationReport = require('../../models/reconciliation-reports');
 const indexer = require('../../es/indexer');
+
+const Granule = proxyquire(
+  '../../models/granules',
+  {
+    '@cumulus/db': {
+      getKnexClient: () => getKnexClient({ env: localStackConnectionEnv }),
+    },
+  }
+);
 
 let esAlias;
 let esIndex;
@@ -305,10 +317,10 @@ test.beforeEach(async (t) => {
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
-  await new models.Collection().createTable();
-  await new models.Granule().createTable();
+  await new Collection().createTable();
+  await new Granule().createTable();
   await GranuleFilesCache.createCacheTable();
-  await new models.ReconciliationReport().createTable();
+  await new ReconciliationReport().createTable();
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
@@ -325,10 +337,10 @@ test.afterEach.always(async (t) => {
   await Promise.all(
     flatten([
       t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-      new models.Collection().deleteTable(),
-      new models.Granule().deleteTable(),
+      new Collection().deleteTable(),
+      new Granule().deleteTable(),
       GranuleFilesCache.deleteCacheTable(),
-      new models.ReconciliationReport().deleteTable(),
+      new ReconciliationReport().deleteTable(),
     ])
   );
   CMR.prototype.searchCollections.restore();
@@ -1443,19 +1455,19 @@ test.serial('When report creation fails, reconciliation report status is set to 
   t.truthy(reportRecord.error);
 });
 
-test.serial('A valid internal reconciliation report is generated when ES and DB are in sync', async (t) => {
+test.serial.only('A valid internal reconciliation report is generated when ES and DB are in sync', async (t) => {
   const matchingColls = range(5).map(() => fakeCollectionFactory());
   const collectionId = constructCollectionId(matchingColls[0].name, matchingColls[0].version);
   const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId }));
   await Promise.all(
     matchingColls.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
   );
-  await new models.Collection().create(matchingColls);
+  await new Collection().create(matchingColls);
   await Promise.all(
     matchingGrans.map((gran) => indexer.indexGranule(esClient, gran, esAlias))
   );
 
-  await new models.Granule().create(matchingGrans);
+  await new Granule().create(matchingGrans);
 
   const event = {
     systemBucket: t.context.systemBucket,

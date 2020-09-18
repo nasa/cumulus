@@ -30,7 +30,7 @@ const {
   generateMoveFileParams,
   moveGranuleFiles,
 } = require('@cumulus/ingest/granule');
-const { dbTypes } = require('@cumulus/db');
+const { dbTypes, getKnexClient } = require('@cumulus/db');
 
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
@@ -101,6 +101,15 @@ const buildDbRecord = ({ granule, collection }) => ({
   timestamp: dbTypes.timestampOrNull(granule.timestamp),
 });
 
+const dynamoGranuleToDbGranule = async ({ db, granule }) => {
+  const collection = await getCollectionFromDb({
+    db,
+    collectionId: granule.collectionId,
+  });
+
+  return buildDbRecord({ granule, collection });
+};
+
 const dbFields = [
   'collectionCumulusId',
   'created_at',
@@ -145,7 +154,7 @@ const storeRunningGranuleRecordToDb = async ({ db, granuleRecord }) => {
   );
 };
 
-const storeFinishedGranuleRecordToDb = async ({ db, granuleRecord }) =>
+const insertOrReplaceGranuleInDb = async ({ db, granuleRecord }) =>
   db.raw(
     `
     INSERT INTO granules (${dbFields.map((x) => `"${x}"`).join(', ')})
@@ -159,17 +168,12 @@ const storeFinishedGranuleRecordToDb = async ({ db, granuleRecord }) =>
   );
 
 const storeGranuleRecordToDb = async ({ db, granule }) => {
-  const collection = await getCollectionFromDb({
-    db,
-    collectionId: granule.collectionId,
-  });
-
-  const granuleRecord = buildDbRecord({ granule, collection });
+  const granuleRecord = await dynamoGranuleToDbGranule({ db, granule });
 
   if (granule.status === 'running') {
     await storeRunningGranuleRecordToDb({ db, granuleRecord });
   } else {
-    await storeFinishedGranuleRecordToDb({ db, granuleRecord });
+    await insertOrReplaceGranuleInDb({ db, granuleRecord });
   }
 };
 
@@ -203,6 +207,27 @@ class Granule extends Manager {
       tableIndexes: { GlobalSecondaryIndexes: globalSecondaryIndexes },
       schema: granuleSchema,
     });
+  }
+
+  async create(items) {
+    const createResponse = await super.create(items);
+
+    const dynamoRecords = Array.isArray(createResponse)
+      ? createResponse
+      : [createResponse];
+
+    const db = await getKnexClient();
+
+    await pMap(
+      dynamoRecords,
+      async (granule) => {
+        const granuleRecord = await dynamoGranuleToDbGranule({ db, granule });
+
+        await insertOrReplaceGranuleInDb({ db, granuleRecord });
+      }
+    );
+
+    return dynamoRecords;
   }
 
   async get(...args) {
@@ -622,6 +647,24 @@ class Granule extends Manager {
    */
   async unpublishAndDeleteGranule(granule) {
     await this._removeGranuleFromCmr(granule);
+
+    // Remove granule from DB
+    const db = await getKnexClient();
+
+    const [collectionName, collectionVersion] = granule.collectionId.split('___');
+
+    const collection = await db('collections')
+      .first('cumulusId')
+      .where({
+        name: collectionName,
+        version: collectionVersion,
+      });
+
+    await db('granules').where({
+      granuleId: granule.granuleId,
+      collectionCumulusId: collection.cumulusId,
+    }).del();
+
     // Intentionally do not update the record to set `published: false`.
     // So if _deleteRecord fails, the record is still in a state where this
     // operation can be retried.
@@ -634,10 +677,24 @@ class Granule extends Manager {
    * @param {Object} granule record
    * @returns {Promise}
    */
-  async delete(granule) {
+  async delete({ db, granule }) {
     if (granule.published) {
       throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
     }
+
+    const [collectionName, collectionVersion] = granule.collectionId.split('___');
+
+    const collection = await db('collections')
+      .first('cumulusId')
+      .where({
+        name: collectionName,
+        version: collectionVersion,
+      });
+
+    await db('granules').where({
+      granuleId: granule.granuleId,
+      collectionCumulusId: collection.cumulusId,
+    }).del();
 
     return this._deleteRecord(granule);
   }
