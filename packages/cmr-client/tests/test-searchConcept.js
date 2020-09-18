@@ -31,7 +31,10 @@ test.serial('searchConcept uses env variables', async (t) => {
   process.env.CMR_LIMIT = 2;
   const stub = sinon.stub(got, 'get').callsFake((_url, opt) => {
     request = { headers: opt.headers };
-    return { body: { feed: { entry: ['first', 'second', 'third'] } }, headers: { 'cmr-hits': 0 } };
+    return {
+      body: { feed: { entry: ['first', 'second', 'third'] } },
+      headers: { 'cmr-hits': 0 },
+    };
   });
 
   const response = await searchConcept({
@@ -45,3 +48,66 @@ test.serial('searchConcept uses env variables', async (t) => {
 
   stub.restore();
 });
+
+test.serial(
+  'searchConcept calls "got" with correct query when searchParams are URLSearchParams.',
+  async (t) => {
+    const stub = sinon.stub(got, 'get').callsFake((_url, _opt) => ({
+      body: { feed: { entry: [] } },
+      headers: { 'cmr-hits': 0 },
+    }));
+
+    const searchParams = new URLSearchParams([
+      ['arrayKey', 'value1'],
+      ['arrayKey', 'value2'],
+      ['otherKey', 'otherValue'],
+    ]);
+
+    const expectedParams
+          = 'arrayKey=value1&arrayKey=value2&otherKey=otherValue&page_num=1&page_size=50';
+
+    await searchConcept({
+      type: 'granule',
+      searchParams,
+      previousResults: [],
+      headers: { 'Client-Id': 'any' },
+    });
+
+    const call = stub.getCall(0);
+    // Validate query object passed to GOT.get is what is expected.
+    t.is(call.args[1].query.toString(), expectedParams);
+
+    stub.restore();
+  }
+);
+
+test.serial(
+  'searchConcept calls "got" with correct query when searchParams are an object.',
+  async (t) => {
+    const stub = sinon.stub(got, 'get').callsFake((_url, _opt) => ({
+      body: { feed: { entry: [] } },
+      headers: { 'cmr-hits': 0 },
+    }));
+
+    const searchParams = {
+      arrayKey: 'value1',
+      otherKey: 'otherValue',
+    };
+
+    const expectedParams
+          = 'arrayKey=value1&otherKey=otherValue&page_num=1&page_size=50';
+
+    await searchConcept({
+      type: 'granule',
+      searchParams,
+      previousResults: [],
+      headers: { 'Client-Id': 'any' },
+    });
+
+    const call = stub.getCall(0);
+    // Validate query object passed to GOT.get is what is expected.
+    t.is(call.args[1].query.toString(), expectedParams);
+
+    stub.restore();
+  }
+);
