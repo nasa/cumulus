@@ -108,6 +108,12 @@ describe('Ingesting from PDR', () => {
       nodeName = config.pdrNodeNameProviderBucket;
       nodeNameProviderId = `provider-${nodeName}`;
 
+      // Make sure that the provider doesn't exist before creating it
+      await providersApi.deleteProvider({
+        prefix: config.stackName,
+        providerId: nodeNameProviderId,
+      });
+
       const createProviderResponse = await providersApi.createProvider({
         prefix: config.stackName,
         provider: {
