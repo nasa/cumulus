@@ -7,8 +7,7 @@ variable "permissions_boundary_arn" {
   type = string
 }
 
-variable "rds_user_access_secret_arn" {
-  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
+variable "prefix" {
   type = string
   default = null
 }
@@ -18,7 +17,8 @@ variable "rds_security_group" {
   default = null
 }
 
-variable "prefix" {
+variable "rds_user_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
   type = string
   default = null
 }

@@ -7,7 +7,7 @@ output "archive_api_redirect_uri" {
 }
 
 output "distribution_url" {
-  value = module.cumulus.distribution_url
+  value = module.thin_egress_app.api_endpoint
 }
 
 output "s3_credentials_redirect_uri" {
@@ -15,7 +15,7 @@ output "s3_credentials_redirect_uri" {
 }
 
 output "distribution_redirect_uri" {
-  value = module.cumulus.distribution_redirect_uri
+  value = module.thin_egress_app.urs_redirect_uri
 }
 
 # Workflow reporting SQS queue and SNS topics
