@@ -9,8 +9,10 @@ const KMS = require('@cumulus/aws-client/KMS');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const {
   createBucket,
+  putFile,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const {
@@ -57,6 +59,18 @@ test.before(async (t) => {
 
   await createBucket(process.env.system_bucket);
 
+  await putFile(
+    process.env.system_bucket,
+    `${process.env.stackName}/crypto/public.pub`,
+    require.resolve('@cumulus/test-data/keys/s3_key_pair_provider_public.pub')
+  );
+
+  await putFile(
+    process.env.system_bucket,
+    `${process.env.stackName}/crypto/private.pem`,
+    require.resolve('@cumulus/test-data/keys/s3_key_pair_provider_private.pem')
+  );
+
   const createKeyResponse = await KMS.createKey();
   process.env.provider_kms_key_id = createKeyResponse.KeyMetadata.KeyId;
 
@@ -102,17 +116,103 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
     .where('cumulusId', cumulusId);
 
   t.deepEqual(
-    omit(createdRecord, ['cumulusId']),
+    omit(
+      {
+        ...createdRecord,
+        username: await KMS.decryptBase64String(createdRecord.username),
+        password: await KMS.decryptBase64String(createdRecord.password),
+      },
+      ['cumulusId']
+    ),
     omit(
       {
         ...fakeProvider,
         name: fakeProvider.id,
         created_at: new Date(fakeProvider.createdAt),
         updated_at: new Date(fakeProvider.updatedAt),
+        encrypted: true,
       },
       ['id', 'createdAt', 'updatedAt']
     )
   );
+});
+
+test.serial('migrateProviderRecord correctly encrypts plaintext credentials', async (t) => {
+  const username = 'my-username';
+  const password = 'my-password';
+
+  const fakeProvider = generateFakeProvider({
+    encrypted: false,
+    username,
+    password,
+  });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.ProvidersTable,
+    Item: { ...fakeProvider, createdAt: Date.now() },
+  }).promise();
+
+  const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
+  const [createdRecord] = await t.context.knex.queryBuilder()
+    .select()
+    .table('providers')
+    .where('cumulusId', cumulusId);
+
+  t.is(createdRecord.encrypted, true);
+  t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
+  t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
+});
+
+test.serial('migrateProviderRecord correctly encrypts S3KeyPairProvider-encrypted credentials', async (t) => {
+  const username = await S3KeyPairProvider.encrypt('my-username');
+  const password = await S3KeyPairProvider.encrypt('my-password');
+
+  const s3EncryptedProvider = generateFakeProvider({
+    encrypted: true,
+    username,
+    password,
+  });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.ProvidersTable,
+    Item: { ...s3EncryptedProvider, createdAt: Date.now() },
+  }).promise();
+
+  const cumulusId = await migrateProviderRecord(s3EncryptedProvider, t.context.knex);
+  const [createdRecord] = await t.context.knex.queryBuilder()
+    .select()
+    .table('providers')
+    .where('cumulusId', cumulusId);
+
+  t.is(createdRecord.encrypted, true);
+  t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
+  t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
+});
+
+test.serial('migrateProviderRecord correctly preserves KMS-encrypted credentials', async (t) => {
+  const username = await KMS.encrypt(process.env.provider_kms_key_id, 'my-username');
+  const password = await KMS.encrypt(process.env.provider_kms_key_id, 'my-password');
+
+  const KMSEncryptedProvider = generateFakeProvider({
+    encrypted: true,
+    username,
+    password,
+  });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.ProvidersTable,
+    Item: { ...KMSEncryptedProvider, createdAt: Date.now() },
+  }).promise();
+
+  const cumulusId = await migrateProviderRecord(KMSEncryptedProvider, t.context.knex);
+  const [createdRecord] = await t.context.knex.queryBuilder()
+    .select()
+    .table('providers')
+    .where('cumulusId', cumulusId);
+
+  t.is(createdRecord.encrypted, true);
+  t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
+  t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
 });
 
 test.serial('migrateProviderRecord throws error on invalid source data from Dynamo', async (t) => {

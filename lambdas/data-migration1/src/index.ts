@@ -1,9 +1,11 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
+import isNil from 'lodash/isNil';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+import * as KMS from '@cumulus/aws-client/KMS';
 import { getKnexClient } from '@cumulus/db';
-import { envUtils } from '@cumulus/common';
+import { envUtils, keyPairProvider } from '@cumulus/common';
 import { createErrorType } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
@@ -113,6 +115,27 @@ export const migrateCollectionRecord = async (
   return cumulusId;
 };
 
+const encryptProviderCredential = async (
+  value: string,
+  encrypted?: boolean
+) => {
+  if (isNil(value)) return undefined;
+
+  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id');
+
+  if (encrypted) {
+    return keyPairProvider.S3KeyPairProvider
+      .decrypt(value)
+      .then(
+        (decryptedValue) => KMS.encrypt(providerKmsKeyId, decryptedValue),
+        // If S3 keypair decryption failed, then assume we already have a KMS encrypted value
+        () => value
+      );
+  }
+
+  return KMS.encrypt(providerKmsKeyId, value);
+};
+
 /**
  * Migrate provider record from Dynamo to RDS.
  *
@@ -137,15 +160,22 @@ export const migrateProviderRecord = async (
     throw new RecordAlreadyMigrated(`Provider name ${dynamoRecord.id} was already migrated, skipping`);
   }
 
+  let { username, password, encrypted } = dynamoRecord;
+  if (username || password) {
+    username = await encryptProviderCredential(username, encrypted);
+    password = await encryptProviderCredential(password, encrypted);
+    encrypted = true;
+  }
+
   // Map old record to new schema.
   const updatedRecord: RDSProviderRecord = {
     name: dynamoRecord.id,
     protocol: dynamoRecord.protocol,
     host: dynamoRecord.host,
     port: dynamoRecord.port,
-    username: dynamoRecord.username,
-    password: dynamoRecord.password,
-    encrypted: dynamoRecord.encrypted,
+    username,
+    password,
+    encrypted,
     globalConnectionLimit: dynamoRecord.globalConnectionLimit,
     privateKey: dynamoRecord.privateKey,
     cmKeyId: dynamoRecord.cmKeyId,
