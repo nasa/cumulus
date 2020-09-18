@@ -27,28 +27,20 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 - **sts_credentials_lambda_function_arn** (string) - The ARN of the Lambda
   function for the S3 credentials endpoint to invoke, which whill return AWS API
   keys.
+- **tea_api_egress_log_group** (string) - Name of the Cloudwatch log group for the Thin Egress App (TEA) Lambda
+- **tea_api_gateway_stage** (string) - Name of the API gateway stage for Thin Egress App (TEA)
+- **tea_internal_api_endpoint** (string) - URL for the Thin Egress App (TEA) API gateway
+- **tea_rest_api_id** (string) - API Gateway ID for the Thin Egress App (TEA)
+- **tea_rest_api_root_resource_id** (string) - Root resource ID for the Thin Egress App (TEA) API gateway
+- **tea_stack_name** (string) - Stack name for the Thin Egress App (TEA) Cloudformation stack-
 - **tags** (list(string)) - AWS tags to be assigned to resources managed by this
   module
-- **thin_egress_cookie_domain** (string) - Valid domain for Thin Egress App
-  cookie
-- **thin_egress_domain_cert_arn** (string) - Certificate Manager SSL Cert
-  ARN if deployed outside NGAP/CloudFront
-- **thin_egress_download_role_in_region_arn** (string) - ARN for reading of
-  data buckets for in-region requests
-- **thin_egress_jwt_algo** (string) - Algorithm with which to encode the JWT
-  cookie
-- **thin_egress_jwt_secret_name** (string) - Name of AWS secret where keys
-  for JWT encode/decode are stored
-- **thin_egress_lambda_code_dependency_archive_key** (string) - S3 Key of
-  packaged python modules for lambda dependency layer
 - **urs_url** (string) - The URL of the Earthdata Login site, defaults to
   <https://urs.earthdata.nasa.gov>
 
 ## Output variables
 
-- **distribution_url** (string) - the URL of the distribution API
-- **thin_egress_app_redirect_uri** (string) - the redirect URL used by the Thin
-  Egress App
+- **distribution_bucket_map** (object) - the contents of the distribution bucket map
 - **s3_credentials_redirect_uri** (string) - the redirect URL used by the S3
   credentials endpoint
 
