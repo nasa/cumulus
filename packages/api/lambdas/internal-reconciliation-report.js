@@ -18,7 +18,8 @@ const {
   DbGranuleSearchQueues,
   convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
-  convertToGranuleSearchParams,
+  convertToESGranuleSearchParams,
+  convertToDBGranuleSearchParams,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
@@ -152,9 +153,10 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   //   Report granules only in DynamoDB
   //   Report granules with different contents
 
-  const searchParams = convertToGranuleSearchParams(recReportParams);
+  const esSearchParams = convertToESGranuleSearchParams(recReportParams);
+  const searchParams = convertToDBGranuleSearchParams(recReportParams);
   const esGranulesIterator = new ESSearchQueue(
-    { ...searchParams, collectionId, sort_key: ['granuleId'] }, 'granule', process.env.ES_INDEX
+    { ...esSearchParams, collectionId, sort_key: ['granuleId'] }, 'granule', process.env.ES_INDEX
   );
 
   const dbGranulesIterator = new DbGranuleSearchQueues(collectionId, searchParams);

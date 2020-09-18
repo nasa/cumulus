@@ -100,7 +100,7 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await internalRecReportForCollections(searchParams);
+  report = await internalRecReportForCollections(normalizeEvent(searchParams));
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.is(report.onlyInDb.length, 2);
@@ -112,7 +112,7 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await internalRecReportForCollections(paramsTimeOutOfRange);
+  report = await internalRecReportForCollections(normalizeEvent(paramsTimeOutOfRange));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -120,9 +120,9 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
 
   // collectionId matches the collection with conflicts
   const collectionId = constructCollectionId(conflictCollInDb.name, conflictCollInDb.version);
-  const paramsCollectionId = normalizeEvent({ ...searchParams, collectionId: [collectionId, randomId('collectionId')] });
+  const paramsCollectionId = { ...searchParams, collectionId: [collectionId, randomId('collectionId')] };
 
-  report = await internalRecReportForCollections(paramsCollectionId);
+  report = await internalRecReportForCollections(normalizeEvent(paramsCollectionId));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -177,7 +177,7 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await internalRecReportForGranules(searchParams);
+  report = await internalRecReportForGranules(normalizeEvent(searchParams));
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.is(report.onlyInDb.length, 4);
@@ -189,7 +189,7 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await internalRecReportForGranules(outOfRangeParams);
+  report = await internalRecReportForGranules(normalizeEvent(outOfRangeParams));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -197,7 +197,7 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   // collectionId, provider parameters
   const collectionProviderParams = { ...searchParams, collectionId, provider };
-  report = await internalRecReportForGranules(collectionProviderParams);
+  report = await internalRecReportForGranules(normalizeEvent(collectionProviderParams));
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -209,7 +209,7 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   // provider parameter
   const providerParams = { ...searchParams, provider };
-  report = await internalRecReportForGranules(providerParams);
+  report = await internalRecReportForGranules(normalizeEvent(providerParams));
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -222,7 +222,7 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   // granuleId parameter
   const granuleId = conflictGranInDb.granuleId;
   const granuleIdParams = { granuleId };
-  report = await internalRecReportForGranules(granuleIdParams);
+  report = await internalRecReportForGranules(normalizeEvent(granuleIdParams));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);

@@ -84,14 +84,16 @@ function convertToDBCollectionSearchParams(params) {
  * @returns {Object} object of desired parameters formated for Elasticsearch.
  */
 function convertToESGranuleSearchParams(params) {
-  const { collectionIds, granuleIds, startTimestamp, endTimestamp } = params;
+  const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;
   const collectionIdIn = collectionIds ? collectionIds.join(',') : undefined;
   const granuleIdIn = granuleIds ? granuleIds.join(',') : undefined;
+  const providerIn = providers ? providers.join(',') : undefined;
   return removeNilProperties({
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
     collectionId__in: collectionIdIn,
     granuleId__in: granuleIdIn,
+    provider__in: providerIn,
   });
 }
 
@@ -100,11 +102,11 @@ function convertToESGranuleSearchParams(params) {
  * @param {Object} params - request params to convert to Elasticsearch/DB params
  * @returns {Object} object of desired parameters formated for Elasticsearch/DB
  */
-function convertToGranuleSearchParams(params) {
+function convertToDBGranuleSearchParams(params) {
   const {
-    collectionId,
-    granuleId,
-    provider,
+    collectionIds: collectionId,
+    granuleIds: granuleId,
+    providers: provider,
     startTimestamp,
     endTimestamp,
   } = params;
@@ -196,7 +198,7 @@ class DbGranuleSearchQueues {
   }
 
   /**
-   * retrive the queue which has items
+   * retrieve the queue which has items
    *
    * @returns {Promise<Object>} the granules' queue
    */
@@ -246,7 +248,7 @@ module.exports = {
   convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
-  convertToGranuleSearchParams,
+  convertToDBGranuleSearchParams,
   filterCMRCollections,
   initialReportHeader,
   searchParamsForCollectionIdArray,
