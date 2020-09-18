@@ -12,16 +12,17 @@ const pLimit = require('p-limit');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { ESSearchQueue } = require('../es/esSearchQueue');
 const { Collection, Granule } = require('../models');
 const {
-  DbGranuleSearchQueues,
   convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
   convertToDBGranuleSearchParams,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
+const { DbGranuleSearchQueues } = require('../lib/reconciliationReport/DbGranuleSearchQueues');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
 const filterCollections = (collectionIdsToFilter, collections) => {
@@ -133,14 +134,20 @@ async function getCollectionsForGranules(granuleIds) {
   const dbCollections = Promise.all(
     granuleIds.map((granuleId) => limit(() =>
       new Granule().get({ granuleId })
-        .then((granule) => granule.collectionId)))
+        .then((granule) => (granule ? granule.collectionId : undefined))
+        .catch((error) => {
+          if (error instanceof RecordDoesNotExist) {
+            return undefined;
+          }
+          throw error;
+        })))
   );
 
-  const esCollectionsIterator = new ESSearchQueue(
+  const esGranulesIterator = new ESSearchQueue(
     { granuleId__in: granuleIds.join(','), sort_key: ['collectionId'], fields: ['collectionId'] }, 'granule', process.env.ES_INDEX
   );
-  const esCollections = (await esCollectionsIterator.empty())
-    .map((item) => constructCollectionId(item.name, item.version));
+  const esCollections = (await esGranulesIterator.empty())
+    .map((granule) => (granule ? granule.collectionId : undefined));
 
   return union(dbCollections, esCollections);
 }

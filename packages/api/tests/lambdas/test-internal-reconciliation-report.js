@@ -4,7 +4,6 @@ const test = require('ava');
 const moment = require('moment');
 const flatten = require('lodash/flatten');
 const range = require('lodash/range');
-const rewire = require('rewire');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
@@ -18,13 +17,10 @@ const {
   internalRecReportForCollections,
   internalRecReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
-
+const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const models = require('../../models');
 const indexer = require('../../es/indexer');
 const { deconstructCollectionId } = require('../../lib/utils');
-
-const CRP = rewire('../../lambdas/create-reconciliation-report');
-const normalizeEvent = CRP.__get__('normalizeEvent');
 
 let esAlias;
 let esIndex;
@@ -120,7 +116,7 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
 
   // collectionId matches the collection with conflicts
   const collectionId = constructCollectionId(conflictCollInDb.name, conflictCollInDb.version);
-  const paramsCollectionId = { ...searchParams, collectionId: [collectionId, randomId('collectionId')] };
+  const paramsCollectionId = { ...searchParams, collectionId: [collectionId, randomId('c')] };
 
   report = await internalRecReportForCollections(normalizeEvent(paramsCollectionId));
   t.is(report.okCount, 0);
@@ -172,8 +168,9 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   t.deepEqual(report.withConflicts[0].es.granuleId, conflictGranInEs.granuleId);
   t.deepEqual(report.withConflicts[0].db.granuleId, conflictGranInDb.granuleId);
 
-  // start/end time include all the granules
+  // start/end time include all the collections and granules
   const searchParams = {
+    reportType: 'Internal',
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
@@ -183,7 +180,7 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   t.is(report.onlyInDb.length, 4);
   t.is(report.withConflicts.length, 1);
 
-  // start/end time has no matching collections
+  // start/end time has no matching collections and granules
   const outOfRangeParams = {
     startTimestamp: moment.utc().add(1, 'hour').format(),
     endTimestamp: moment.utc().add(2, 'hour').format(),
@@ -208,7 +205,7 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   t.is(report.withConflicts.length, 0);
 
   // provider parameter
-  const providerParams = { ...searchParams, provider };
+  const providerParams = { ...searchParams, provider: [randomId('p'), provider] };
   report = await internalRecReportForGranules(normalizeEvent(providerParams));
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
@@ -219,9 +216,13 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     extraDbGrans.map((gran) => gran.granuleId).sort());
   t.is(report.withConflicts.length, 0);
 
-  // granuleId parameter
+  // collectionId, granuleId parameters
   const granuleId = conflictGranInDb.granuleId;
-  const granuleIdParams = { granuleId };
+  const granuleIdParams = {
+    ...searchParams,
+    granuleId: [granuleId, randomId('g')],
+    collectionId: [collectionId, extraEsGrans[0].collectionId],
+  };
   report = await internalRecReportForGranules(normalizeEvent(granuleIdParams));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);

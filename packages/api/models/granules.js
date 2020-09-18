@@ -411,7 +411,11 @@ class Granule extends Manager {
   searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
     // Key Condition Expression does not support IN operators
     if (searchParams.granuleId && !isString(searchParams.granuleId)) {
-      throw new CumulusModelError('Could not search granule record, granuleId is not string');
+      throw new CumulusModelError('Could not search granule records for collection, granuleId is not string');
+    }
+    // Filter Expression can't contain key attributes
+    if (searchParams.collectionId) {
+      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in search params');
     }
 
     const attributeNames = {};
