@@ -63,6 +63,9 @@
     "Cumulus Development": [
       "adding-a-task",
       "docs-how-to"
+    ],
+    "Upgrade Notes": [
+      "upgrade-notes/migrate_tea_standalone"
     ]
   },
   "Data Cookbooks": {

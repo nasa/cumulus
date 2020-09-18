@@ -8,32 +8,21 @@ hide_title: true
 
 The [Thin Egress App (TEA)](https://github.com/asfadmin/thin-egress-app) is an app running in Lambda that allows retrieving data from S3 using temporary links and provides URS integration.
 
-## Cumulus "Packaged" Deployment
-
-If you are using the `cumulus` module or the core `distribution` module, you will not need to manually deploy TEA. Cumulus packages TEA within its `distribution` tf-module, which is pre-configured and included in our releases.
-
-By default, Core provides a one-to-one mapping where each protected and public bucket map to a path of the same name as the bucket.
-
-The `cumulus` and `distribution` modules provide a `bucket_map_key` input variable which allows you to specify the path to a custom [bucket map YAML](https://github.com/asfadmin/thin-egress-app#buckets-and-bucket-map) that's stored in the bucket defined in the `system bucket` cumulus/distribution module input variable.
-
-**Note: Cumulus only supports a one-to-one mapping of bucket->path name. Mapping multiple paths to the same bucket will result in a deployment failure.**
-
-## Manual Deployment
-
-If you are using individual Cumulus modules in your own Terraform configuration, or wish to configure TEA on your own, the information below is important to set up distribution manually.
+## Configuring a TEA deployment
 
 TEA is deployed using [Terraform](https://terraform.io) modules. Refer to [these instructions](./components) for guidance on how to integrate new components with your deployment.
 
 The TEA module provides [these instructions](https://github.com/asfadmin/thin-egress-app/blob/devel/NGAP-DEPLOY-README.MD)
-showing how to add it to your deployment. Below are some Cumulus-specific tips:
+showing how to add it to your deployment.
+
+Below are some Cumulus-specific tips:
 
 ### bucket_map.yaml
 
 The Thin Egress App uses a `bucket_map.yaml` file to determine which buckets to
 serve. Documentation of the file format is available [here](https://github.com/asfadmin/thin-egress-app#bucket-map).
 
-A simple config, which would use the same URL scheme that we are using now,
-would look something like this:
+A simple config would look something like this:
 
 **bucket_map.yaml:**
 
@@ -45,6 +34,16 @@ MAP:
 PUBLIC_BUCKETS:
   - my-public
 ```
+
+> Please note: your custom bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors
+
+### Integration with cumulus module
+
+The `cumulus` module deploys certain components that interact with TEA. As a result, the `cumulus` module requires a `tea_stack_name` variable which is the name of the TEA Cloudformation stack. **This value must match the value of the `stack_name` variable for the TEA module**.
+
+Also, if you are specifying a value for the `stage_name` variable to the TEA module, you **must use the same value for the `tea_api_gateway_stage` variable to the `cumulus` module**.
+
+One way to keep these variable values in sync across the modules is to use [Terraform local values](https://www.terraform.io/docs/configuration/locals.html) to define values to use for the variables for both modules. This approach is shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
 
 ### Earthdata Login credentials
 
@@ -111,14 +110,12 @@ tea_api_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
 ```
 
-Pass `api_distribution_url` to your `archive` module's `distribution_url` var.
-
 You will also need to configure the `tea_urs_redirect_uri` value as a Redirect
-URI in your app's URS configuration.
+URI in your URS application configuration.
 
-### Cumulus Configuration
+### Notes about Cumulus integration
 
-The default Cumulus module generates a file at `s3://${system_bucket}/distribution_bucket_map.json`. If you've manually deployed TEA outside the `cumulus` module, you'll need to provide this configuration file as part of your Terraform deployment.
+The default Cumulus module generates a file at `s3://${system_bucket}/distribution_bucket_map.json`.
 
 The configuration file is a simple json mapping of the form:
 
