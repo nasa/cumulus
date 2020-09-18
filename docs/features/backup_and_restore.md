@@ -165,9 +165,9 @@ terraform state {module_name}.aws_rds_cluster.cumulus
 terraform import {module_name}.aws_rds_cluster.cumulus <new cluster identifier>
 ```
 
-#### 4. Update module `terraform.tfvars` such that the cluster_identifier variable matches the *new* database cluster.
+#### 4. Update module `terraform.tfvars` such that the cluster_identifier variable matches the *new* database cluster
 
-#### 5. Run a terraform plan.   ***Be very careful*** to ensure that the `module.rds_cluster.aws_rds_cluster.cumulus` resource is not being recreated as this will wipe the postgres database.    You should expect to see the cluster be modified, not replaced, and the rds_login secret *version* will be replaced, as the host name will change.
+#### 5. Run a terraform plan.   ***Be very careful*** to ensure that the `module.rds_cluster.aws_rds_cluster.cumulus` resource is not being recreated as this will wipe the postgres database.    You should expect to see the cluster be modified, not replaced, and the rds_login secret *version* will be replaced, as the host name will change
 
    Once everything looks acceptable, run:
 
@@ -175,7 +175,7 @@ terraform import {module_name}.aws_rds_cluster.cumulus <new cluster identifier>
 terraform apply
 ```
 
-#### 6. Redeploy Cumulus - you shouldn't need to reconfigure Core, as the secret ARN and the security group should not change, however double-check the configured values are as expected.
+#### 6. Redeploy Cumulus - you shouldn't need to reconfigure Core, as the secret ARN and the security group should not change, however double-check the configured values are as expected
 
 &nbsp;\
 ***Snapshot Recovery***
