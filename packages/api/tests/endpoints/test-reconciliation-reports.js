@@ -15,10 +15,7 @@ const {
   parseS3Uri,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const {
-  randomId,
-  randomString,
-} = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken,
   fakeReconciliationReportFactory,
@@ -49,6 +46,7 @@ process.env.EcsCluster = randomId('ecsCluster');
 const {
   app,
 } = require('../../app');
+const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 
 let esClient;
 const esIndex = randomId('esindex');
@@ -93,7 +91,7 @@ test.before(async () => {
     username,
   });
 
-  const reportNames = [randomString(), randomString(), randomString()];
+  const reportNames = [randomId('report1'), randomId('report2'), randomId('report3')];
   const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
 
   fakeReportRecords = reportNames.map((reportName) => fakeReconciliationReportFactory({
@@ -301,7 +299,7 @@ test.serial('create a report starts an async operation', async (t) => {
       lambdaName: process.env.invokeReconcileLambda,
       description: 'Create Reconciliation Report',
       operationType: 'Reconciliation Report',
-      payload: {},
+      payload: normalizeEvent({}),
       useLambdaEnvironmentVariables: true,
     }));
   } finally {
@@ -339,5 +337,37 @@ test.serial('POST returns a 503 when there is an ecs error', async (t) => {
     t.is(response.status, 503);
   } finally {
     asyncOperationStartStub.restore();
+  }
+});
+
+test.serial('create a report with invalid payload errors immediately', async (t) => {
+  const stub = sinon.stub(models.AsyncOperation.prototype, 'start');
+  const payload = {
+    startTimestamp: '2020-09-17T16:38:23.973Z',
+    collectionId: ['a-collectionId'],
+    granuleId: ['a-granuleId'],
+  };
+
+  try {
+    const response = await request(app)
+      .post('/reconciliationReports')
+      .send(payload)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(400);
+
+    t.deepEqual(
+      response.body,
+      {
+        error: 'Bad Request',
+        message: 'Inventory reports cannot be launched with both granuleId and collectionId input.',
+        name: 'InvalidArgument',
+        statusCode: 400,
+      }
+    );
+
+    t.true(stub.notCalled);
+  } finally {
+    stub.restore();
   }
 });
