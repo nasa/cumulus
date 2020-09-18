@@ -4,6 +4,9 @@ const path = require('path');
 const test = require('ava');
 
 const Provider = require('@cumulus/api/models/providers');
+const Rule = require('@cumulus/api/models/rules');
+const KMS = require('@cumulus/aws-client/KMS');
+const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
@@ -11,7 +14,9 @@ const {
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const {
-  migrateProviderRecord
+  RecordAlreadyMigrated,
+  migrateProviderRecord,
+  migrateProviders,
 } = require('../dist/lambda');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
@@ -35,6 +40,7 @@ const generateFakeProvider = (params) => ({
 });
 
 let providersModel;
+let rulesModel;
 
 test.before(async (t) => {
   t.context.knexAdmin = await getKnexClient({
@@ -47,11 +53,18 @@ test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
   process.env.ProvidersTable = cryptoRandomString({ length: 10 });
+  process.env.RulesTable = cryptoRandomString({ length: 10 });
 
   await createBucket(process.env.system_bucket);
 
+  const createKeyResponse = await KMS.createKey();
+  process.env.provider_kms_key_id = createKeyResponse.KeyMetadata.KeyId;
+
   providersModel = new Provider();
   await providersModel.createTable();
+
+  rulesModel = new Rule();
+  await rulesModel.createTable();
 
   await t.context.knexAdmin.raw(`create database "${testDbName}";`);
   await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
@@ -73,6 +86,7 @@ test.afterEach.always(async (t) => {
 
 test.after.always(async (t) => {
   await providersModel.deleteTable();
+  await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
@@ -149,4 +163,87 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
       ['id', 'createdAt', 'updatedAt']
     )
   );
+});
+
+test.serial('migrateProviderRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+  const fakeProvider = generateFakeProvider();
+
+  await migrateProviderRecord(fakeProvider, t.context.knex);
+  await t.throwsAsync(
+    migrateProviderRecord(fakeProvider, t.context.knex),
+    { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial('migrateProviders skips already migrated record', async (t) => {
+  const fakeProvider = generateFakeProvider();
+
+  await migrateProviderRecord(fakeProvider, t.context.knex);
+  await providersModel.create(fakeProvider);
+  t.teardown(() => providersModel.delete(fakeProvider));
+  const migrationSummary = await migrateProviders(process.env, t.context.knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 1,
+    skipped: 1,
+    failed: 0,
+    success: 0,
+  });
+  const records = await t.context.knex.queryBuilder().select().table('providers');
+  t.is(records.length, 1);
+});
+
+test.serial('migrateProviders processes multiple providers', async (t) => {
+  const fakeProvider1 = generateFakeProvider();
+  const fakeProvider2 = generateFakeProvider();
+
+  await Promise.all([
+    providersModel.create(fakeProvider1),
+    providersModel.create(fakeProvider2),
+  ]);
+  t.teardown(() => Promise.all([
+    providersModel.delete(fakeProvider1),
+    providersModel.delete(fakeProvider2),
+  ]));
+
+  const migrationSummary = await migrateProviders(process.env, t.context.knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 0,
+    success: 2,
+  });
+  const records = await t.context.knex.queryBuilder().select().table('providers');
+  t.is(records.length, 2);
+});
+
+test.serial('migrateProviders processes all non-failing records', async (t) => {
+  const fakeProvider1 = generateFakeProvider();
+  const fakeProvider2 = generateFakeProvider();
+
+  // remove required source field so that record will fail
+  delete fakeProvider1.host;
+
+  await Promise.all([
+    // Have to use Dynamo client directly because creating
+    // via model won't allow creation of an invalid record
+    dynamodbDocClient().put({
+      TableName: process.env.ProvidersTable,
+      Item: fakeProvider1,
+    }).promise(),
+    providersModel.create(fakeProvider2),
+  ]);
+  t.teardown(() => Promise.all([
+    providersModel.delete(fakeProvider1),
+    providersModel.delete(fakeProvider2),
+  ]));
+
+  const migrationSummary = await migrateProviders(process.env, t.context.knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 1,
+    success: 1,
+  });
+  const records = await t.context.knex.queryBuilder().select().table('providers');
+  t.is(records.length, 1);
 });
