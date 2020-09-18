@@ -100,3 +100,53 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
     )
   );
 });
+
+test.serial('migrateProviderRecord throws error on invalid source data from Dynamo', async (t) => {
+  const fakeProvider = generateFakeProvider();
+
+  // make source record invalid
+  delete fakeProvider.id;
+
+  await t.throwsAsync(migrateProviderRecord(fakeProvider, t.context.knex));
+});
+
+test.serial('migrateProviderRecord handles nullable fields on source collection data', async (t) => {
+  const fakeProvider = generateFakeProvider();
+
+  // remove nullable fields
+  delete fakeProvider.port;
+  delete fakeProvider.username;
+  delete fakeProvider.password;
+  delete fakeProvider.encrypted;
+  delete fakeProvider.privateKey;
+  delete fakeProvider.cmKeyId;
+  delete fakeProvider.certificateUri;
+  delete fakeProvider.updatedAt;
+
+  const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
+  const [createdRecord] = await t.context.knex.queryBuilder()
+    .select()
+    .table('providers')
+    .where('cumulusId', cumulusId);
+
+  // ensure updated_at was set
+  t.false(Number.isNaN(Date.parse(createdRecord.updated_at)));
+  t.deepEqual(
+    omit(createdRecord, ['cumulusId', 'updated_at']),
+    omit(
+      {
+        ...fakeProvider,
+        name: fakeProvider.id,
+        port: null,
+        username: null,
+        password: null,
+        encrypted: null,
+        privateKey: null,
+        cmKeyId: null,
+        certificateUri: null,
+        created_at: new Date(fakeProvider.createdAt),
+      },
+      ['id', 'createdAt', 'updatedAt']
+    )
+  );
+});

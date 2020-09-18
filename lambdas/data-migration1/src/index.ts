@@ -36,7 +36,7 @@ export interface RDSCollectionRecord {
   updated_at: Date
 }
 
-export interface RDSProvidernRecord {
+export interface RDSProviderRecord {
   name: string
   protocol: string
   host: string
@@ -49,7 +49,7 @@ export interface RDSProvidernRecord {
   cmKeyId?: string
   certificateUri?: string
   created_at: Date
-  updated_at: Date
+  updated_at?: Date
 }
 
 interface MigrationSummary {
@@ -138,7 +138,7 @@ export const migrateProviderRecord = async (
   }
 
   // Map old record to new schema.
-  const updatedRecord:RDSProvidernRecord = {
+  const updatedRecord: RDSProviderRecord = {
     name: dynamoRecord.id,
     protocol: dynamoRecord.protocol,
     host: dynamoRecord.host,
@@ -151,7 +151,7 @@ export const migrateProviderRecord = async (
     cmKeyId: dynamoRecord.cmKeyId,
     certificateUri: dynamoRecord.certificateUri,
     created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
+    updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined
   };
 
   const [cumulusId] = await knex('providers')
