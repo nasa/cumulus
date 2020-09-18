@@ -1,25 +1,12 @@
-# This bucket is used in the "ingest PDR" tests that specify a "NODE_NAME" for
-# the granule in the PDR.
-
-resource "aws_s3_bucket" "pdr_node_name_provider" {
-  bucket = "${var.prefix}-pdr-node-name-provider"
-
-  tags = local.tags
-}
-
 data "aws_iam_policy_document" "lambda_processing_pdr_node_name_provider_policy" {
   statement {
-    actions = [
-      "s3:ListBucket"
-    ]
-    resources = [aws_s3_bucket.pdr_node_name_provider.arn]
+    actions = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::${var.pdr_node_name_provider_bucket}"]
   }
 
   statement {
-    actions = [
-      "s3:GetObject*"
-    ]
-    resources = ["${aws_s3_bucket.pdr_node_name_provider.arn}/*"]
+    actions = ["s3:GetObject*"]
+    resources = ["arn:aws:s3:::${var.pdr_node_name_provider_bucket}/*"]
   }
 }
 

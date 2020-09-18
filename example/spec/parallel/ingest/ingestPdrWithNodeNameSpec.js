@@ -105,7 +105,7 @@ describe('Ingesting from PDR', () => {
 
       provider = { id: `s3_provider${testSuffix}` };
 
-      nodeName = `${config.stackName}-pdr-node-name-provider`;
+      nodeName = config.pdrNodeNameProviderBucket;
       nodeNameProviderId = `provider-${nodeName}`;
 
       const createProviderResponse = await providersApi.createProvider({
