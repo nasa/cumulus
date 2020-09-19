@@ -5,8 +5,7 @@ terraform {
 }
 
 locals {
-  thin_egress_stack_name = "${var.prefix}-thin-egress-app"
-  lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
+  lambda_log_group_name  = "/aws/lambda/${var.tea_stack_name}-EgressLambda"
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 
   built_lambda_source_file = "${path.module}/lambda.zip"
@@ -14,39 +13,15 @@ locals {
   lambda_source_file = fileexists(local.built_lambda_source_file) ? local.built_lambda_source_file : local.repo_lambda_source_file
 }
 
-resource "aws_s3_bucket_object" "bucket_map_yaml" {
-  count   = var.bucket_map_key == null ? 1 : 0
-  bucket  = var.system_bucket
-  key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
-  content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
-  etag    = md5(templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets }))
-  tags    = var.tags
-}
-
-resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
-  name_prefix = "${var.prefix}-tea-urs-creds-"
-  description = "URS credentials for the ${var.prefix} Thin Egress App"
-  tags        = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
-  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
-  secret_string = jsonencode({
-    UrsId       = var.urs_client_id
-    UrsAuth     = base64encode("${var.urs_client_id}:${var.urs_client_password}")
-  })
-}
-
 module "tea_map_cache" {
   prefix                     = var.prefix
   source                     = "../tea-map-cache"
   lambda_processing_role_arn = var.lambda_processing_role_arn
-  tea_api_url                = module.thin_egress_app.internal_api_endpoint
+  tea_api_url                = var.tea_internal_api_endpoint
   tags                       = var.tags
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
 }
-
 
 data "aws_lambda_invocation" "tea_map_cache" {
   depends_on                      = [module.tea_map_cache.lambda_function_name]
@@ -55,29 +30,6 @@ data "aws_lambda_invocation" "tea_map_cache" {
                                                  s3Bucket = var.system_bucket
                                                  s3Key = "${var.prefix}/distribution_bucket_map.json"
   })
-}
-
-module "thin_egress_app" {
-  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.88.zip"
-
-  auth_base_url                      = var.urs_url
-  bucket_map_file                    = var.bucket_map_key == null ? aws_s3_bucket_object.bucket_map_yaml[0].key : var.bucket_map_key
-  bucketname_prefix                  = ""
-  config_bucket                      = var.system_bucket
-  cookie_domain                      = var.thin_egress_cookie_domain
-  domain_cert_arn                    = var.thin_egress_domain_cert_arn
-  domain_name                        = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
-  download_role_in_region_arn        = var.thin_egress_download_role_in_region_arn
-  jwt_algo                           = var.thin_egress_jwt_algo
-  jwt_secret_name                    = var.thin_egress_jwt_secret_name
-  lambda_code_dependency_archive_key = var.thin_egress_lambda_code_dependency_archive_key
-  log_api_gateway_to_cloudwatch      = var.log_api_gateway_to_cloudwatch
-  permissions_boundary_name          = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
-  private_vpc                        = var.vpc_id
-  stack_name                         = var.thin_egress_stack_name != null ? var.thin_egress_stack_name : local.thin_egress_stack_name
-  stage_name                         = var.api_gateway_stage
-  urs_auth_creds_secret_name         = aws_secretsmanager_secret.thin_egress_urs_creds.name
-  vpc_subnet_ids                     = var.subnet_ids
 }
 
 data "aws_caller_identity" "current" {}
@@ -192,8 +144,8 @@ resource "aws_lambda_function" "s3_credentials" {
 
   environment {
     variables = {
-      DISTRIBUTION_ENDPOINT          = module.thin_egress_app.api_endpoint
-      DISTRIBUTION_REDIRECT_ENDPOINT = "${module.thin_egress_app.api_endpoint}redirect"
+      DISTRIBUTION_ENDPOINT          = var.tea_external_api_endpoint
+      DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_external_api_endpoint}redirect"
       public_buckets                 = join(",", var.public_buckets)
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
@@ -216,22 +168,22 @@ resource "aws_lambda_permission" "lambda_permission" {
 
   # The /*/*/* part allows invocation from any stage, method and resource path
   # within API Gateway REST API.
-  source_arn = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${module.thin_egress_app.rest_api.id}/*/*/*"
+  source_arn = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.tea_rest_api_id}/*/*/*"
 }
 
 # GET /s3credentials
 resource "aws_api_gateway_resource" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id = module.thin_egress_app.rest_api.id
-  parent_id   = module.thin_egress_app.rest_api.root_resource_id
+  rest_api_id = var.tea_rest_api_id
+  parent_id = var.tea_rest_api_root_resource_id
   path_part   = "s3credentials"
 }
 
 resource "aws_api_gateway_method" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id   = module.thin_egress_app.rest_api.id
+  rest_api_id   = var.tea_rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials[0].id
   http_method   = "GET"
   authorization = "NONE"
@@ -240,7 +192,7 @@ resource "aws_api_gateway_method" "s3_credentials" {
 resource "aws_api_gateway_integration" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id             = module.thin_egress_app.rest_api.id
+  rest_api_id             = var.tea_rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials[0].id
   http_method             = aws_api_gateway_method.s3_credentials[0].http_method
   integration_http_method = "POST"
@@ -252,15 +204,15 @@ resource "aws_api_gateway_integration" "s3_credentials" {
 resource "aws_api_gateway_resource" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id = module.thin_egress_app.rest_api.id
-  parent_id   = module.thin_egress_app.rest_api.root_resource_id
+  rest_api_id = var.tea_rest_api_id
+  parent_id = var.tea_rest_api_root_resource_id
   path_part   = "redirect"
 }
 
 resource "aws_api_gateway_method" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id   = module.thin_egress_app.rest_api.id
+  rest_api_id   = var.tea_rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials_redirect[0].id
   http_method   = "GET"
   authorization = "NONE"
@@ -269,7 +221,7 @@ resource "aws_api_gateway_method" "s3_credentials_redirect" {
 resource "aws_api_gateway_integration" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
-  rest_api_id             = module.thin_egress_app.rest_api.id
+  rest_api_id             = var.tea_rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials_redirect[0].id
   http_method             = aws_api_gateway_method.s3_credentials_redirect[0].http_method
   integration_http_method = "POST"
@@ -286,18 +238,18 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
     aws_api_gateway_integration.s3_credentials[0]
   ]
 
-  rest_api_id = module.thin_egress_app.rest_api.id
-  stage_name  = var.api_gateway_stage
+  rest_api_id = var.tea_rest_api_id
+  stage_name  = var.tea_api_gateway_stage
 }
 
 # Egress Api Gateway Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  count           = var.log_destination_arn != null && var.log_api_gateway_to_cloudwatch ? 1 : 0
+  count           = var.tea_api_egress_log_group != null ? 1 : 0
   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
   distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
-  log_group_name  = module.thin_egress_app.egress_log_group
+  log_group_name  = var.tea_api_egress_log_group
 }
 
 # Egress Lambda Log Group
