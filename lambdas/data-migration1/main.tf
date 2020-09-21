@@ -2,16 +2,8 @@ locals {
   lambda_path = "${path.module}/dist/webpack/lambda.zip"
 }
 
-# Not a great implementation, but there is no other easy way
-# to get at the KMS key used for provider credentials by the
-# cumulus module. Can't get the value as an output from cumulus
-# because this module has to be deployed first.
-data "aws_lambda_function" "api_lambda" {
-  function_name = "${var.prefix}-ApiEndpoints"
-}
-
 data "aws_kms_key" "provider_kms_key" {
-  key_id = aws_lambda_function.api_lambda.environment.provider_kms_key_id
+  key_id = var.provider_kms_key_id
 }
 
 data "aws_iam_policy_document" "lambda_assume_role_policy" {
@@ -110,6 +102,7 @@ resource "aws_lambda_function" "data_migration1" {
       CollectionsTable = var.dynamo_tables.collections.name
       ProvidersTable = var.dynamo_tables.providers.name
       dbHeartBeat = var.rds_connection_heartbeat
+      provider_kms_key_id = var.provider_kms_key_id
     }
   }
 
