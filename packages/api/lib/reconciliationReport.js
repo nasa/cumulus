@@ -135,6 +135,8 @@ function initialReportHeader(recReportParams) {
     granuleId,
     collectionIds,
     collectionId,
+    provider,
+    providers,
   } = recReportParams;
 
   return {
@@ -145,6 +147,8 @@ function initialReportHeader(recReportParams) {
     error: undefined,
     granuleId,
     granuleIds,
+    provider,
+    providers,
     reportEndTime: endTimestamp,
     reportStartTime: startTimestamp,
     reportType,
