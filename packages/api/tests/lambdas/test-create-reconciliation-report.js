@@ -113,6 +113,7 @@ async function storeCollection(collection) {
       fakeGranuleFactoryV2({
         collectionId: constructCollectionId(collection.name, collection.version),
         updatedAt: collection.updatedAt,
+        provider: randomString(),
       }),
       esAlias
     );
@@ -167,6 +168,21 @@ async function granuleIdsFromCollectionIds(collectionIds) {
     esAlias
   )).query();
   return esValues.results.map((value) => value.granuleId);
+}
+
+/**
+ * Looks up and returns the providers given a list of collectionIds.
+ * @param {Array<string>} collectionIds - list of collectionIds
+ * @returns {Array<string>} list of matching providers
+ */
+async function providersFromCollectionIds(collectionIds) {
+  const esValues = await (new Search(
+    { queryStringParameters: { collectionId__in: collectionIds.join(',') } },
+    'granule',
+    esAlias
+  )).query();
+
+  return esValues.results.map((value) => value.provider);
 }
 
 const randomBetween = (a, b) => Math.floor(Math.random() * (b - a + 1) + a);
@@ -1039,6 +1055,53 @@ test.serial(
     t.true(collectionsInCumulusCmr.onlyInCumulus.includes(testCollectionIds[2]));
     // one way
     t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
+
+    t.is(report.reportEndTime, undefined);
+    t.is(report.reportStartTime, undefined);
+  }
+);
+
+test.serial(
+  'When an array of providers exists, creates a valid one-way reconciliation report.',
+  async (t) => {
+    const setupVars = await setupElasticAndCMRForTests({ t });
+
+    const testCollection = [
+      setupVars.extraCmrCollections[3],
+      setupVars.matchingCollections[2],
+      setupVars.extraESCollections[1],
+    ];
+
+    const testCollectionIds = testCollection.map((c) => constructCollectionId(c.name, c.version));
+    const testProviders = await providersFromCollectionIds(testCollectionIds);
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      provider: testProviders,
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    const granulesInCumulusCmr = report.granulesInCumulusCmr;
+
+    t.is(report.status, 'SUCCESS');
+    t.is(report.error, undefined);
+
+    // Filtered by input provider
+    t.is(collectionsInCumulusCmr.okCount, 1);
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
+    t.true(collectionsInCumulusCmr.onlyInCumulus.includes(testCollectionIds[2]));
+
+    t.is(granulesInCumulusCmr.okCount, 0);
+    t.is(granulesInCumulusCmr.onlyInCumulus.length, 1);
+
+    // one way
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
+    t.is(granulesInCumulusCmr.onlyInCmr.length, 0);
 
     t.is(report.reportEndTime, undefined);
     t.is(report.reportStartTime, undefined);
