@@ -32,9 +32,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
 - **CUMULUS-2111**
   - The deployment of the `thin-egress-app` module has be removed from `tf-modules/distribution`, which is a part of the `tf-modules/cumulus` module. Thus, the `thin-egress-app` module is no longer deployed for you by default. See the migration steps for details about how to add deployment for the `thin-egress-app`.
+- **CUMULUS-2141**
+  - The `parse-pdr` task has been updated to respect the `NODE_NAME` property in
+    a PDR's `FILE_GROUP`. If a `NODE_NAME` is present, the task will query the
+    Cumulus API for a provider with that host. If a provider is found, the
+    output granule from the task will contain a `provider` property containing
+    that provider. If `NODE_NAME` is set but a provider with that host cannot be
+    found in the API, or if multiple providers are found with that same host,
+    the task will fail.
+  - The `queue-granules` task has been updated to expect an optional
+    `granule.provider` property on each granule. If present, the granule will be
+    enqueued using that provider. If not present, the task's `config.provider`
+    will be used instead.
 
 #### CODE CHANGES
 
+- The `@cumulus/api-client.providers.getProviders` function now takes a
+  `queryStringParameters` parameter which can be used to filter the providers
+  which are returned
 - The `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync` function has been
   removed. It read the entire S3 object into memory before returning a read
   stream, which could cause Lambdas to run out of memory. Use
@@ -161,6 +176,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
+- **CUMULUS-2015**
+  - Reduced concurrency of `QueueGranules` task. That task now has a
+    `config.concurrency` option that defaults to `3`.
 - **CUMULUS-2163**
   - Remove the `public-read` ACL from the `move-granules` task
 
