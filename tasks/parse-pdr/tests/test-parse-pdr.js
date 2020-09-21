@@ -15,7 +15,18 @@ const {
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { PDRParsingError } = require('@cumulus/errors');
 const { streamTestData } = require('@cumulus/test-data');
-const { parsePdr } = require('..');
+const proxyquire = require('proxyquire');
+
+const fakeProvidersApi = {};
+
+const { parsePdr } = proxyquire(
+  '..',
+  {
+    '@cumulus/api-client': {
+      providers: fakeProvidersApi,
+    },
+  }
+);
 
 async function setUpTestPdrAndValidate(t) {
   return Promise.all([
@@ -67,6 +78,12 @@ test.before(async (t) => {
   };
 });
 
+test.beforeEach(() => {
+  fakeProvidersApi.getProviders = () => Promise.resolve({
+    body: JSON.stringify({ results: [] }),
+  });
+});
+
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.payload.config.bucket);
 });
@@ -85,8 +102,9 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
 
   const granule = result.granules[0];
   t.is(granule.dataType, 'MOD09GQ');
+  t.is(granule.provider, undefined);
 
-  const hdfFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
+  const hdfFile = granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(hdfFile);
   t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(hdfFile.size, 17865615);
@@ -94,7 +112,7 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   t.is(hdfFile.checksum, 4208254019);
   t.is(hdfFile.type, 'data');
 
-  const metFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
+  const metFile = granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(metFile);
   t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(metFile.size, 44118);
@@ -224,4 +242,77 @@ test.serial('parsePdr throws an exception if the a FILE_TYPE in the evaluated PD
       message: 'INVALID FILE_TYPE PARAMETER : INVALID',
     }
   );
+});
+
+test.serial('parse-pdr sets the provider of a granule with NODE_NAME set', async (t) => {
+  t.context.payload.input.pdr.name = 'MOD09GQ-with-NODE_NAME.PDR';
+  await setUpTestPdrAndValidate(t).catch(t.fail);
+
+  const provider = { host: 'modpdr01' };
+
+  fakeProvidersApi.getProviders = async ({ prefix, queryStringParameters }) => {
+    t.is(prefix, t.context.stackName);
+    t.deepEqual(queryStringParameters, { host: provider.host });
+
+    return {
+      body: JSON.stringify({
+        results: [
+          provider,
+        ],
+      }),
+    };
+  };
+
+  const result = await parsePdr(t.context.payload);
+  await validateOutput(t, result).catch(t.fail);
+
+  t.is(result.granulesCount, 1);
+  t.is(result.granules.length, 1);
+
+  const granule = result.granules[0];
+
+  t.deepEqual(granule.provider, provider);
+});
+
+test.serial('parse-pdr throws an exception if the provider specified in NODE_NAME does not exist', async (t) => {
+  t.context.payload.input.pdr.name = 'MOD09GQ-with-NODE_NAME.PDR';
+  await setUpTestPdrAndValidate(t).catch(t.fail);
+
+  const provider = { host: 'modpdr01' };
+
+  fakeProvidersApi.getProviders = async ({ prefix, queryStringParameters }) => {
+    t.is(prefix, t.context.stackName);
+    t.deepEqual(queryStringParameters, { host: provider.host });
+
+    return {
+      body: JSON.stringify({
+        results: [],
+      }),
+    };
+  };
+
+  await t.throwsAsync(parsePdr(t.context.payload));
+});
+
+test.serial('parse-pdr throws an exception if multiple providers for the specified NODE_NAME exist', async (t) => {
+  t.context.payload.input.pdr.name = 'MOD09GQ-with-NODE_NAME.PDR';
+  await setUpTestPdrAndValidate(t).catch(t.fail);
+
+  const host = 'modpdr01';
+
+  fakeProvidersApi.getProviders = async ({ prefix, queryStringParameters }) => {
+    t.is(prefix, t.context.stackName);
+    t.deepEqual(queryStringParameters, { host });
+
+    return {
+      body: JSON.stringify({
+        results: [
+          { id: 'z', host },
+          { id: 'y', host },
+        ],
+      }),
+    };
+  };
+
+  await t.throwsAsync(parsePdr(t.context.payload));
 });

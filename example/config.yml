@@ -1,6 +1,7 @@
 default:
   bucket: cumulus-test-sandbox-internal
   apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sandbox-pdr-node-name-provider
 
 cumulus-sit:
   bucket: cumulus-sit-internal

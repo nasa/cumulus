@@ -69,6 +69,11 @@ variable "s3_replicator_config" {
   description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
 
+variable "pdr_node_name_provider_bucket" {
+  type = string
+  description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
+}
+
 variable "prefix" {
   type = string
 }

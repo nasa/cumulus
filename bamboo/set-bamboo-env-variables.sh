@@ -11,6 +11,7 @@ declare -a param_list=(
   "bamboo_METRICS_ES_HOST"
   "bamboo_METRICS_ES_USER"
   "bamboo_NGAP_ENV"
+  "bamboo_PDR_NODE_NAME_PROVIDER_BUCKET"
   "bamboo_PUBLISH_FLAG"
   "bamboo_REPORT_BUILD_STATUS"
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
@@ -117,6 +118,7 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export TF_VAR_distribution_url=$bamboo_SIT_TEA_CLOUDFRONT_URL
   export RDS_SECURITY_GROUP=$bamboo_SECRET_SIT_RDS_SECURITY_GROUP
   export RDS_ADMIN_ACCESS_SECRET_ARN=$bamboo_SECRET_SIT_RDS_ADMIN_ACCESS_SECRET_ARN
+  export PDR_NODE_NAME_PROVIDER_BUCKET=$bamboo_SIT_PDR_NODE_NAME_PROVIDER_BUCKET
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 
