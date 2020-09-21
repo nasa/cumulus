@@ -20,18 +20,11 @@ const {
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
   convertToDBGranuleSearchParams,
+  filterDBCollections,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
 const { DbGranuleSearchQueues } = require('../lib/reconciliationReport/DbGranuleSearchQueues');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
-
-const filterCollections = (collectionIdsToFilter, collections) => {
-  if (collectionIdsToFilter) {
-    return collections.filter((collection) =>
-      collectionIdsToFilter.includes(constructCollectionId(collection.name, collection.version)));
-  }
-  return collections;
-};
 
 /**
  * Compare the collection holdings in Elasticsearch with Database
@@ -60,7 +53,7 @@ async function internalRecReportForCollections(recReportParams) {
   const dbCollectionsQueue = await (new Collection()).search(dbSearchParams);
   const dbCollectionsSearched = await dbCollectionsQueue.empty();
   const dbCollectionItems = sortBy(
-    filterCollections(recReportParams.collectionIds, dbCollectionsSearched),
+    filterDBCollections(dbCollectionsSearched, recReportParams),
     ['name', 'version']
   );
 

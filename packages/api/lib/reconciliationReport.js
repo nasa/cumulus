@@ -174,6 +174,24 @@ function filterCMRCollections(collections, recReportParams) {
   return CMRCollectionIds.filter((item) => collectionIds.includes(item));
 }
 
+/**
+ * filters the returned database collections by the desired collectionIds
+ *
+ * @param {Array<Object>} collections - CMR.searchCollections result
+ * @param {Object} recReportParams
+ * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
+ * @returns {Array<string>} filtered list of collectionIds returned from database
+ */
+function filterDBCollections(collections, recReportParams) {
+  const { collectionIds } = recReportParams;
+
+  if (collectionIds) {
+    return collections.filter((collection) =>
+      collectionIds.includes(constructCollectionId(collection.name, collection.version)));
+  }
+  return collections;
+}
+
 module.exports = {
   cmrGranuleSearchParams,
   convertToDBCollectionSearchParams,
@@ -181,6 +199,7 @@ module.exports = {
   convertToESGranuleSearchParams,
   convertToDBGranuleSearchParams,
   filterCMRCollections,
+  filterDBCollections,
   initialReportHeader,
   searchParamsForCollectionIdArray,
 };
