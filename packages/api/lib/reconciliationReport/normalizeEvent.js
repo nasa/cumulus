@@ -75,6 +75,33 @@ function updateCollectionIds(collectionId, reportType, modifiedEvent) {
 }
 
 /**
+ * Transforms input provider into correct parameters for use in the
+ * Reconciliation Report lambda.
+ * @param {Array<string>|string} provider - list of providers
+ * @param {string} reportType - report type
+ * @param {Object} modifiedEvent - input event
+ * @returns {Object} updated input even with correct provider and providers values.
+ */
+function updateProviders(provider, reportType, modifiedEvent) {
+  let returnEvent = { ...modifiedEvent };
+  if (provider) {
+    const providers = isString(provider) ? [provider] : provider;
+    if (reportType === 'Internal') {
+      if (!isString(provider)) {
+        throw new InvalidArgument(`provider: ${JSON.stringify(provider)} is not a valid input for an 'Internal' report.`);
+      } else {
+        // include both providers and provider for Internal Reports.
+        returnEvent = { ...modifiedEvent, provider, providers: [provider] };
+      }
+    } else {
+      // add array of providers
+      returnEvent = { ...modifiedEvent, providers };
+    }
+  }
+  return returnEvent;
+}
+
+/**
  * Converts input parameters to normalized versions to pass on to the report
  * functions.  Ensures any input dates are formatted as ISO strings.
  *
@@ -95,15 +122,28 @@ function normalizeEvent(event) {
   // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
   // for now, move input collectionId to collectionIds as array
   // internal reports will keep existing collectionId and copy it to collectionIds
-  let { collectionIds: anyCollectionIds, collectionId, granuleId, ...modifiedEvent } = { ...event };
+  let {
+    collectionIds: anyCollectionIds,
+    collectionId,
+    granuleId,
+    provider,
+    ...modifiedEvent
+  } = { ...event };
+
   if (anyCollectionIds) {
     throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
-  if (granuleId && collectionId && reportType !== 'Internal') {
-    throw new InvalidArgument(`${reportType} reports cannot be launched with both granuleId and collectionId input.`);
+
+  const tooManyInputs = (collectionId && provider)
+    || (granuleId && provider)
+    || (granuleId && collectionId);
+
+  if (tooManyInputs && reportType !== 'Internal') {
+    throw new InvalidArgument(`${reportType} reports cannot be launched with more than one input (granuleId, collectionId, or provider).`);
   }
   modifiedEvent = updateCollectionIds(collectionId, reportType, modifiedEvent);
   modifiedEvent = updateGranuleIds(granuleId, reportType, modifiedEvent);
+  modifiedEvent = updateProviders(provider, reportType, modifiedEvent);
 
   return removeNilProperties({
     ...modifiedEvent,
