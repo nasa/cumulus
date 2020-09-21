@@ -147,11 +147,6 @@ test.serial('migrateProviderRecord correctly encrypts plaintext credentials', as
     password,
   });
 
-  await dynamodbDocClient().put({
-    TableName: process.env.ProvidersTable,
-    Item: { ...fakeProvider, createdAt: Date.now() },
-  }).promise();
-
   const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
   const [createdRecord] = await t.context.knex.queryBuilder()
     .select()
@@ -173,11 +168,6 @@ test.serial('migrateProviderRecord correctly encrypts S3KeyPairProvider-encrypte
     password,
   });
 
-  await dynamodbDocClient().put({
-    TableName: process.env.ProvidersTable,
-    Item: { ...s3EncryptedProvider, createdAt: Date.now() },
-  }).promise();
-
   const cumulusId = await migrateProviderRecord(s3EncryptedProvider, t.context.knex);
   const [createdRecord] = await t.context.knex.queryBuilder()
     .select()
@@ -198,11 +188,6 @@ test.serial('migrateProviderRecord correctly preserves KMS-encrypted credentials
     username,
     password,
   });
-
-  await dynamodbDocClient().put({
-    TableName: process.env.ProvidersTable,
-    Item: { ...KMSEncryptedProvider, createdAt: Date.now() },
-  }).promise();
 
   const cumulusId = await migrateProviderRecord(KMSEncryptedProvider, t.context.knex);
   const [createdRecord] = await t.context.knex.queryBuilder()
