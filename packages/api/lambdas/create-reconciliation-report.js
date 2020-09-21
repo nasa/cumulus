@@ -790,12 +790,12 @@ function updateCollectionIds(collectionId, reportType, modifiedEvent) {
 }
 
 /**
- * Transforms input collectionId into correct parameters for use in the
+ * Transforms input provider into correct parameters for use in the
  * Reconciliation Report lambda.
  * @param {Array<string>|string} provider - list of providers
  * @param {string} reportType - report type
  * @param {Object} modifiedEvent - input event
- * @returns {Object} updated input even with correct collectionId and collectionIds values.
+ * @returns {Object} updated input even with correct provider and providers values.
  */
 function updateProviders(provider, reportType, modifiedEvent) {
   let returnEvent = { ...modifiedEvent };
