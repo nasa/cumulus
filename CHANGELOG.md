@@ -143,6 +143,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     code to fire off a connection 'heartbeat' query and log the timing/results
     for diagnostic purposes, and retry certain connection timeouts once.
     This option is disabled by default
+- **CUMULUS-2157**
+  - Added `provider_kms_key_id` output to `archive` and `cumulus` modules
 
 ### Changed
 
