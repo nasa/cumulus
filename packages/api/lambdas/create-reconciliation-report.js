@@ -848,8 +848,13 @@ function normalizeEvent(event) {
   if (anyCollectionIds) {
     throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
-  if (granuleId && collectionId && reportType !== 'Internal') {
-    throw new InvalidArgument(`${reportType} reports cannot be launched with both granuleId and collectionId input.`);
+
+  const tooManyInputs = (collectionId && provider)
+    || (granuleId && provider)
+    || (granuleId && collectionId);
+
+  if (tooManyInputs && reportType !== 'Internal') {
+    throw new InvalidArgument(`${reportType} reports cannot be launched with more than one input (granuleId, collectionId, or provider).`);
   }
   modifiedEvent = updateCollectionIds(collectionId, reportType, modifiedEvent);
   modifiedEvent = updateGranuleIds(granuleId, reportType, modifiedEvent);

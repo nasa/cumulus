@@ -20,6 +20,7 @@ test(
       'startTimestamp',
       'endTimestamp',
       'granuleIds',
+      'providers',
     ];
 
     const paramsThatShouldReturnFalse = [
@@ -54,7 +55,7 @@ test(
   'isOneWayGranuleReport returns true only when one or more specific parameters '
     + ' are present on the reconciliation report object.',
   (t) => {
-    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
+    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp', 'providers'];
 
     const paramsThatShouldReturnFalse = [
       'stackName',
@@ -269,11 +270,11 @@ test('normalizeEvent throws error if granuleIds and collectionIds are passed to 
   t.throws(() => normalizeEvent(inputEvent), {
     instanceOf: InvalidArgument,
     message:
-      'notInternal reports cannot be launched with both granuleId and collectionId input.',
+      'notInternal reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
   });
 });
 
-test('normalizeEvent correctly handles granuleIds and collectionIds if reportType is Internal', (t) => {
+test('normalizeEvent correctly handles granuleIds, collectionIds, and providers if reportType is Internal', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
     stackName: 'stackName',
@@ -282,14 +283,104 @@ test('normalizeEvent correctly handles granuleIds and collectionIds if reportTyp
     reportType: 'Internal',
     granuleId: 'someGranuleId',
     collectionId: 'someCollectionId1',
+    provider: 'someProvider1',
   };
 
   const expected = {
     ...inputEvent,
     granuleIds: ['someGranuleId'],
     collectionIds: ['someCollectionId1'],
+    providers: ['someProvider1'],
   };
 
   const actual = normalizeEvent(inputEvent);
   t.deepEqual(actual, expected);
+});
+
+test('normalizeEvent moves string on provider to array on providers', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Not Internal',
+    provider: 'someProvider',
+  };
+  const expect = {
+    ...inputEvent,
+    providers: ['someProvider'],
+  };
+  delete expect.provider;
+
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expect);
+});
+
+test('normalizeEvent moves array on provider to providers', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Not Internal',
+    provider: ['provider1', 'provider2'],
+  };
+
+  const expect = {
+    ...inputEvent,
+    providers: ['provider1', 'provider2'],
+  };
+  delete expect.provider;
+
+  const actual = normalizeEvent(inputEvent);
+  t.deepEqual(actual, expect);
+});
+
+test('normalizeEvent throws error if array of providers is passed to Internal report', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Internal',
+    provider: ['someProvider'],
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    message:
+      'provider: ["someProvider"] is not a valid input for an \'Internal\' report.',
+  });
+});
+
+test('normalizeEvent throws error if providers and collectionIds are passed to non-Internal report', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'notInternal',
+    provider: ['someProvider'],
+    collectionId: ['someCollectionId1'],
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    instanceOf: InvalidArgument,
+    message:
+      'notInternal reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
+  });
+});
+
+test('normalizeEvent throws error if providers and granuleIds are passed to non-Internal report', (t) => {
+  const inputEvent = {
+    systemBucket: 'systemBucket',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+    endTimestamp: new Date().toISOString(),
+    reportType: 'notInternal',
+    provider: ['someProvider'],
+    granuleId: ['someGranuleId'],
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    instanceOf: InvalidArgument,
+    message:
+      'notInternal reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
+  });
 });
