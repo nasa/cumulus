@@ -110,6 +110,16 @@ variable "system_bucket" {
   type        = string
 }
 
+variable "tea_external_api_endpoint" {
+  description = "Thin Egress App external endpoint URL"
+  type        = string
+}
+
+variable "tea_internal_api_endpoint" {
+  description = "Thin Egress App internal endpoint URL"
+  type        = string
+}
+
 variable "token_secret" {
   description = "A string value used for signing and verifying JSON Web Tokens (JWTs) issued by the archive API. Should be a 32-character string for security"
   type        = string
@@ -185,18 +195,6 @@ variable "deploy_distribution_s3_credentials_endpoint" {
   description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
   type        = bool
   default     = true
-}
-
-variable "distribution_api_gateway_stage" {
-  description = "The distribution API Gateway stage to create"
-  type        = string
-  default     = "DEV"
-}
-
-variable "distribution_url" {
-  description = " URL for the distribution API"
-  type        = string
-  default     = null
 }
 
 variable "ecs_container_stop_timeout" {
@@ -357,16 +355,10 @@ variable "launchpad_passphrase" {
   default     = ""
 }
 
-variable "log_api_gateway_to_cloudwatch" {
-  type        = bool
-  default     = false
-  description = "Boolean switch to enable/disable logging of API Gateway distribution traffic to CloudWatch."
-}
-
 variable "log_destination_arn" {
   type        = string
   default     = null
-  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true for TEA module."
 }
 
 variable "metrics_es_host" {
@@ -444,39 +436,34 @@ variable "tags" {
   default     = {}
 }
 
-variable "thin_egress_cookie_domain" {
+variable "tea_api_gateway_stage" {
+  description = "The name of the API Gateway stage to create for the Thin Egress App"
   type        = string
-  default     = null
-  description = "Valid domain for Thin Egress App cookie"
+  default     = "DEV"
 }
 
-variable "thin_egress_domain_cert_arn" {
+variable "tea_api_egress_log_group" {
+  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
   type        = string
   default     = null
-  description = "Certificate Manager SSL Cert ARN for Thin Egress App if deployed outside NGAP/CloudFront"
 }
 
-variable "thin_egress_download_role_in_region_arn" {
+variable "tea_rest_api_id" {
+  description = "Thin Egress App API gateway ID"
   type        = string
   default     = null
-  description = "ARN for reading of Thin Egress App data buckets for in-region requests"
 }
 
-variable "thin_egress_jwt_algo" {
+variable "tea_rest_api_root_resource_id" {
+  description = "Thin Egress App API gateway root resource ID"
   type        = string
   default     = null
-  description = "Algorithm with which to encode the Thin Egress App JWT cookie"
 }
 
-variable "thin_egress_jwt_secret_name" {
-  type        = string
-  description = "Name of AWS secret where keys for the Thin Egress App JWT encode/decode are stored"
-}
-
-variable "thin_egress_lambda_code_dependency_archive_key" {
+variable "tea_stack_name" {
+  description = "Thin Egress App Cloudformation stack name"
   type        = string
   default     = null
-  description = "Thin Egress App - S3 Key of packaged python modules for lambda dependency layer"
 }
 
 variable "throttled_queues" {

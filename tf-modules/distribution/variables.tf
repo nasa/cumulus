@@ -15,51 +15,22 @@ variable "system_bucket" {
   description = "A bucket to be used for staging deployment files"
 }
 
-variable "urs_client_id" {
+variable "tea_internal_api_endpoint" {
+  description = "Thin Egress App internal endpoint URL"
   type        = string
-  description = "The URS app ID"
-}
-
-variable "urs_client_password" {
-  type        = string
-  description = "The URS app password"
 }
 
 # Optional
-
-variable "api_gateway_stage" {
-  type        = string
-  default     = "DEV"
-  description = "The API Gateway stage to create"
-}
-
-variable "bucket_map_key" {
-  type        = string
-  default     = null
-  description = "Optional custom TEA Bucket Map location.  If not provided, Cumulus will generate one for you"
-}
 
 variable "deploy_s3_credentials_endpoint" {
   type    = bool
   default = true
 }
 
-variable "distribution_url" {
-  type        = string
-  default     = null
-  description = "An alternative URL used for distribution"
-}
-
-variable "log_api_gateway_to_cloudwatch" {
-  type        = bool
-  default     = false
-  description = "Boolean switch to enable/disable logging of API Gateway distribution traffic to CloudWatch."
-}
-
 variable "log_destination_arn" {
   type        = string
   default     = null
-  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true for TEA module."
 }
 
 variable "permissions_boundary_arn" {
@@ -97,40 +68,50 @@ variable "tags" {
   default     = {}
 }
 
-variable "thin_egress_cookie_domain" {
+variable "tea_api_gateway_stage" {
   type        = string
   default     = null
-  description = "Valid domain for cookie"
+  description = "The API Gateway stage name for the Thin Egress App"
 }
 
-variable "thin_egress_domain_cert_arn" {
+variable "tea_api_egress_log_group" {
+  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
   type        = string
   default     = null
-  description = "Certificate Manager SSL Cert ARN if deployed outside NGAP/CloudFront"
 }
 
-variable "thin_egress_download_role_in_region_arn" {
+variable "tea_external_api_endpoint" {
+  description = "Thin Egress App external endpoint URL"
   type        = string
   default     = null
-  description = "ARN for reading of data buckets for in-region requests"
 }
 
-variable "thin_egress_jwt_algo" {
+variable "tea_rest_api_id" {
+  description = "Thin Egress App API gateway ID"
   type        = string
   default     = null
-  description = "Algorithm with which to encode the JWT cookie"
 }
 
-variable "thin_egress_jwt_secret_name" {
+variable "tea_rest_api_root_resource_id" {
+  description = "Thin Egress App API gateway root resource ID"
   type        = string
   default     = null
-  description = "Name of AWS secret where keys for JWT encode/decode are stored"
 }
 
-variable "thin_egress_lambda_code_dependency_archive_key" {
+variable "tea_stack_name" {
+  description = "Thin Egress App Cloudformation stack name"
   type        = string
   default     = null
-  description = "S3 Key of packaged python modules for lambda dependency layer."
+}
+
+variable "urs_client_id" {
+  type        = string
+  description = "The client ID for your Earthdata login (URS) application"
+}
+
+variable "urs_client_password" {
+  type        = string
+  description = "The client password for your Earthdata login (URS) application"
 }
 
 variable "urs_url" {

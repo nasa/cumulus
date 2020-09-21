@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-
+const proxyquire = require('proxyquire');
 const {
   s3,
   sqs,
@@ -17,10 +17,16 @@ const {
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
+const sinon = require('sinon');
+const pMap = require('p-map');
 
-const { queueGranules } = require('..');
+const pMapSpy = sinon.spy(pMap);
+
+const { queueGranules } = proxyquire('..', { 'p-map': pMapSpy });
 
 test.beforeEach(async (t) => {
+  pMapSpy.resetHistory();
+
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.workflow = randomString();
@@ -431,4 +437,59 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       },
     }
   );
+});
+
+test.serial('A default concurrency of 3 is used', async (t) => {
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+  ];
+
+  await queueGranules(event);
+
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 3 })
+  ));
+});
+
+test.serial('A configured concurrency is used', async (t) => {
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const { event } = t.context;
+
+  event.config.concurrency = 99;
+
+  event.input.granules = [
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+  ];
+
+  await queueGranules(event);
+
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 99 })
+  ));
 });

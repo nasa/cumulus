@@ -26,10 +26,14 @@ const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testU
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const { Search } = require('../../es/search');
 const {
-  handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
+  handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 const indexer = require('../../es/indexer');
+const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
+
+// Call normalize event on all input events before calling the handler.
+const handler = (event) => unwrappedHandler(normalizeEvent(event));
 
 let esAlias;
 let esIndex;
@@ -153,6 +157,20 @@ async function fetchCompletedReport(reportRecord) {
     .getObject(parseS3Uri(reportRecord.location)).promise()
     .then((response) => response.Body.toString())
     .then(JSON.parse);
+}
+
+/**
+ * Looks up and returns the granulesIds given a list of collectionIds.
+ * @param {Array<string>} collectionIds - list of collectionIds
+ * @returns {Array<string>} list of matching granuleIds
+ */
+async function granuleIdsFromCollectionIds(collectionIds) {
+  const esValues = await (new Search(
+    { queryStringParameters: { collectionId__in: collectionIds.join(',') } },
+    'granule',
+    esAlias
+  )).query();
+  return esValues.results.map((value) => value.granuleId);
 }
 
 const randomBetween = (a, b) => Math.floor(Math.random() * (b - a + 1) + a);
@@ -928,6 +946,103 @@ test.serial(
     const newCreateStartTime = moment(report.createStartTime);
     const newCreateEndTime = moment(report.createEndTime);
     t.true(newCreateStartTime <= newCreateEndTime);
+
+    t.is(report.reportEndTime, undefined);
+    t.is(report.reportStartTime, undefined);
+  }
+);
+
+test.serial(
+  'Generates valid ONE WAY reconciliation report with time params and filters by granuleIds when there are extra cumulus/ES and CMR collections',
+  async (t) => {
+    const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
+
+    const testCollection = [
+      setupVars.matchingCollections[3],
+      setupVars.extraCmrCollections[1],
+      setupVars.extraESCollections[1],
+      setupVars.extraESCollectionsOutOfRange[0],
+    ];
+
+    const testCollectionIds = testCollection.map((c) => constructCollectionId(c.name, c.version));
+    const testGranuleIds = await granuleIdsFromCollectionIds(testCollectionIds);
+
+    console.log(`granuleIds: ${JSON.stringify(testGranuleIds)}`);
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      startTimestamp,
+      endTimestamp,
+      granuleId: testGranuleIds,
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    t.is(report.status, 'SUCCESS');
+    t.is(report.error, undefined);
+
+    t.is(collectionsInCumulusCmr.okCount, 1);
+
+    // cumulus filters collections by granuleId and only returned test one
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
+    t.true(collectionsInCumulusCmr.onlyInCumulus.includes(testCollectionIds[2]));
+
+    // ONE WAY only comparison because of input timestampes
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
+
+    const reportStartTime = report.reportStartTime;
+    const reportEndTime = report.reportEndTime;
+    t.is(
+      (new Date(reportStartTime)).valueOf(),
+      startTimestamp
+    );
+    t.is(
+      (new Date(reportEndTime)).valueOf(),
+      endTimestamp
+    );
+  }
+);
+
+test.serial(
+  'When an array of granuleId exists, creates a valid one-way reconciliation report.',
+  async (t) => {
+    const setupVars = await setupElasticAndCMRForTests({ t });
+
+    const testCollection = [
+      setupVars.extraCmrCollections[3],
+      setupVars.matchingCollections[2],
+      setupVars.extraESCollections[1],
+    ];
+
+    const testCollectionIds = testCollection.map((c) => constructCollectionId(c.name, c.version));
+    const testGranuleIds = await granuleIdsFromCollectionIds(testCollectionIds);
+
+    console.log(`testGranuleIds: ${JSON.stringify(testGranuleIds)}`);
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      granuleId: testGranuleIds,
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    t.is(report.status, 'SUCCESS');
+    t.is(report.error, undefined);
+
+    // Filtered by input granuleIds
+    t.is(collectionsInCumulusCmr.okCount, 1);
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
+    t.true(collectionsInCumulusCmr.onlyInCumulus.includes(testCollectionIds[2]));
+    // one way
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
 
     t.is(report.reportEndTime, undefined);
     t.is(report.reportStartTime, undefined);
