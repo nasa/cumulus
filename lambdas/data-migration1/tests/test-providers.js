@@ -137,6 +137,25 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
   );
 });
 
+test.serial('migrateProviderRecord correctly migrates record without credentials', async (t) => {
+  const fakeProvider = generateFakeProvider({
+    encrypted: false,
+  });
+
+  delete fakeProvider.username;
+  delete fakeProvider.password;
+
+  const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
+  const [createdRecord] = await t.context.knex.queryBuilder()
+    .select()
+    .table('providers')
+    .where('cumulusId', cumulusId);
+
+  t.is(createdRecord.encrypted, false);
+  t.is(createdRecord.username, null);
+  t.is(createdRecord.password, null);
+});
+
 test.serial('migrateProviderRecord correctly encrypts plaintext credentials', async (t) => {
   const username = 'my-username';
   const password = 'my-password';
