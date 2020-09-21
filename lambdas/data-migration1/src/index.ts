@@ -128,8 +128,13 @@ const encryptProviderCredential = async (
       .decrypt(value)
       .then(
         (decryptedValue) => KMS.encrypt(providerKmsKeyId, decryptedValue),
-        // If S3 keypair decryption failed, then assume we already have a KMS encrypted value
-        () => value
+        async (error) => {
+          // If we already have a KMS encrypted value, return it.
+          if ((await KMS.decryptBase64String(value))) {
+            return value;
+          }
+          throw error;
+        }
       );
   }
 

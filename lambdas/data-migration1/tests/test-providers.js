@@ -156,6 +156,16 @@ test.serial('migrateProviderRecord correctly migrates record without credentials
   t.is(createdRecord.password, null);
 });
 
+test.serial('migrateProviderRecord throws error for un-decryptable credentials', async (t) => {
+  const fakeProvider = generateFakeProvider({
+    encrypted: true,
+    username: 'not-encrypted',
+    password: 'not-encrypted',
+  });
+
+  await t.throwsAsync(migrateProviderRecord(fakeProvider, t.context.knex));
+});
+
 test.serial('migrateProviderRecord correctly encrypts plaintext credentials', async (t) => {
   const username = 'my-username';
   const password = 'my-password';
