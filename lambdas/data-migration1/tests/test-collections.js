@@ -13,10 +13,10 @@ const {
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const {
-  RecordAlreadyMigrated,
   migrateCollectionRecord,
   migrateCollections,
-} = require('../dist/lambda');
+} = require('../dist/lambda/collections');
+const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';

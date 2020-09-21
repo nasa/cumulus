@@ -16,10 +16,10 @@ const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const {
-  RecordAlreadyMigrated,
   migrateProviderRecord,
   migrateProviders,
-} = require('../dist/lambda');
+} = require('../dist/lambda/providers');
+const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
