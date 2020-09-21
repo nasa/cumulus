@@ -157,6 +157,6 @@ output "start_sf_queue_url" {
 
 # KMS keys
 
-output "provider_kms_key_arn" {
-  value = module.archive.provider_kms_key_arn
+output "provider_kms_key_id" {
+  value = module.archive.provider_kms_key_id
 }
