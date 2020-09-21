@@ -491,7 +491,8 @@ describe('When there are granule differences and granule reconciliation is run',
         reportName: randomId('InternalReport'),
         endTimestamp: moment.utc().format(),
         collectionId,
-        provider: `s3_provider${testSuffix}`,
+        granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
+        provider: [randomId('provider'), `s3_provider${testSuffix}`],
       };
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,

@@ -21,7 +21,7 @@ class DbGranuleSearchQueues {
     } else {
       this.queues = [new Granule().searchGranulesForCollection(collectionId, searchParams)];
     }
-    this.currentQueue = this.queues.shift();
+    this.currentQueue = undefined;
   }
 
   /**
@@ -29,7 +29,11 @@ class DbGranuleSearchQueues {
    *
    * @returns {Promise<Object>} the granules' queue
    */
-  async retrieveQueue() {
+  async _retrieveQueue() {
+    if (isNil(this.currentQueue)) {
+      this.currentQueue = this.queues.shift();
+    }
+
     let item = await this.currentQueue.peek();
     while (isNil(item) && this.queues.length > 0) {
       this.currentQueue = this.queues.shift();
@@ -44,7 +48,7 @@ class DbGranuleSearchQueues {
    * @returns {Promise<Object>} an item from the table
    */
   async peek() {
-    const queue = await this.retrieveQueue();
+    const queue = await this._retrieveQueue();
     return queue ? queue.peek() : undefined;
   }
 
@@ -54,7 +58,7 @@ class DbGranuleSearchQueues {
    * @returns {Promise<Object>} an item from the table
    */
   async shift() {
-    const queue = await this.retrieveQueue();
+    const queue = await this._retrieveQueue();
     return queue ? queue.shift() : undefined;
   }
 
@@ -64,7 +68,9 @@ class DbGranuleSearchQueues {
    * @returns {Promise<Array>} array of search results.
    */
   async empty() {
-    const items = await Promise.all(this.queues.map((queue) => queue.empty()));
+    const items = await Promise.all(
+      [this.currentQueue].concat(this.queues).map((queue) => queue.empty())
+    );
     return flatten(items);
   }
 }

@@ -220,12 +220,13 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   const granuleId = conflictGranInDb.granuleId;
   const granuleIdParams = {
     ...searchParams,
-    granuleId: [granuleId, randomId('g')],
-    collectionId: [collectionId, extraEsGrans[0].collectionId],
+    granuleId: [granuleId, extraEsGrans[0].granuleId, randomId('g')],
+    collectionId: [collectionId, extraEsGrans[0].collectionId, extraEsGrans[1].collectionId],
   };
   report = await internalRecReportForGranules(normalizeEvent(granuleIdParams));
   t.is(report.okCount, 0);
-  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInEs.length, 1);
+  t.is(report.onlyInEs[0].granuleId, extraEsGrans[0].granuleId);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 1);
 });
