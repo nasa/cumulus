@@ -32,22 +32,6 @@ export interface RDSCollectionRecord {
   updated_at: Date
 }
 
-export interface RDSProviderRecord {
-  name: string
-  protocol: string
-  host: string
-  port?: number
-  username?: string
-  password?: string
-  encrypted?: boolean
-  globalConnectionLimit?: number
-  privateKey?: string
-  cmKeyId?: string
-  certificateUri?: string
-  created_at: Date
-  updated_at?: Date
-}
-
 /**
  * Migrate collection record from Dynamo to RDS.
  *
