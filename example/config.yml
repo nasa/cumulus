@@ -6,6 +6,7 @@ default:
 cumulus-sit:
   bucket: cumulus-sit-internal
   apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
 mvd-tf:
   bucket: mvd-internal
