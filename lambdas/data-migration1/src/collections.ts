@@ -45,13 +45,16 @@ export interface RDSCollectionRecord {
 export const migrateCollectionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
-): Promise<number> => {
+): Promise<void> => {
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.collection);
 
-  const [existingRecord] = await knex('collections')
-    .where('name', dynamoRecord.name)
-    .where('version', dynamoRecord.version);
+  const existingRecord = await knex<RDSCollectionRecord>('collections')
+    .where({
+      name: dynamoRecord.name,
+      version: dynamoRecord.version,
+    })
+    .first();
   // Throw error if it was already migrated.
   if (existingRecord) {
     throw new RecordAlreadyMigrated(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
@@ -78,10 +81,7 @@ export const migrateCollectionRecord = async (
     updated_at: new Date(dynamoRecord.updatedAt),
   };
 
-  const [cumulusId] = await knex('collections')
-    .returning('cumulusId')
-    .insert(updatedRecord);
-  return cumulusId;
+  return knex('collections').insert(updatedRecord);
 };
 
 export const migrateCollections = async (

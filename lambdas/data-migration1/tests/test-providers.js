@@ -109,11 +109,12 @@ test.after.always(async (t) => {
 
 test.serial('migrateProviderRecord correctly migrates provider record', async (t) => {
   const fakeProvider = generateFakeProvider();
-  const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateProviderRecord(fakeProvider, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('providers')
-    .where('cumulusId', cumulusId);
+    .where('name', fakeProvider.id)
+    .first();
 
   t.deepEqual(
     omit(
@@ -145,11 +146,12 @@ test.serial('migrateProviderRecord correctly migrates record without credentials
   delete fakeProvider.username;
   delete fakeProvider.password;
 
-  const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateProviderRecord(fakeProvider, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('providers')
-    .where('cumulusId', cumulusId);
+    .where('name', fakeProvider.id)
+    .first();
 
   t.is(createdRecord.encrypted, false);
   t.is(createdRecord.username, null);
@@ -176,11 +178,12 @@ test.serial('migrateProviderRecord correctly encrypts plaintext credentials', as
     password,
   });
 
-  const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateProviderRecord(fakeProvider, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('providers')
-    .where('cumulusId', cumulusId);
+    .where('name', fakeProvider.id)
+    .first();
 
   t.is(createdRecord.encrypted, true);
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
@@ -197,11 +200,12 @@ test.serial('migrateProviderRecord correctly encrypts S3KeyPairProvider-encrypte
     password,
   });
 
-  const cumulusId = await migrateProviderRecord(s3EncryptedProvider, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateProviderRecord(s3EncryptedProvider, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('providers')
-    .where('cumulusId', cumulusId);
+    .where('name', s3EncryptedProvider.id)
+    .first();
 
   t.is(createdRecord.encrypted, true);
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
@@ -218,11 +222,12 @@ test.serial('migrateProviderRecord correctly preserves KMS-encrypted credentials
     password,
   });
 
-  const cumulusId = await migrateProviderRecord(KMSEncryptedProvider, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateProviderRecord(KMSEncryptedProvider, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('providers')
-    .where('cumulusId', cumulusId);
+    .where('name', KMSEncryptedProvider.id)
+    .first();
 
   t.is(createdRecord.encrypted, true);
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
@@ -251,11 +256,12 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
   delete fakeProvider.certificateUri;
   delete fakeProvider.updatedAt;
 
-  const cumulusId = await migrateProviderRecord(fakeProvider, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateProviderRecord(fakeProvider, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('providers')
-    .where('cumulusId', cumulusId);
+    .where('name', fakeProvider.id)
+    .first();
 
   // ensure updated_at was set
   t.false(Number.isNaN(Date.parse(createdRecord.updated_at)));

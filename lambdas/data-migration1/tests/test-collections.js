@@ -92,11 +92,12 @@ test.after.always(async (t) => {
 
 test.serial('migrateCollectionRecord correctly migrates collection record', async (t) => {
   const fakeCollection = generateFakeCollection();
-  const cumulusId = await migrateCollectionRecord(fakeCollection, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateCollectionRecord(fakeCollection, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('collections')
-    .where('cumulusId', cumulusId);
+    .where({ name: fakeCollection.name, version: fakeCollection.version })
+    .first();
 
   t.deepEqual(
     omit(createdRecord, ['cumulusId']),
@@ -135,11 +136,12 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
   delete fakeCollection.meta;
   delete fakeCollection.tags;
 
-  const cumulusId = await migrateCollectionRecord(fakeCollection, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateCollectionRecord(fakeCollection, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('collections')
-    .where('cumulusId', cumulusId);
+    .where({ name: fakeCollection.name, version: fakeCollection.version })
+    .first();
 
   t.deepEqual(
     omit(createdRecord, ['cumulusId']),

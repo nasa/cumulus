@@ -69,12 +69,13 @@ const encryptProviderCredential = async (
 export const migrateProviderRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
-): Promise<number> => {
+): Promise<void> => {
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.provider);
 
-  const [existingRecord] = await knex('providers')
-    .where('name', dynamoRecord.id);
+  const existingRecord = await knex<RDSProviderRecord>('providers')
+    .where('name', dynamoRecord.id)
+    .first();
   // Throw error if it was already migrated.
   if (existingRecord) {
     throw new RecordAlreadyMigrated(`Provider name ${dynamoRecord.id} was already migrated, skipping`);
@@ -104,10 +105,7 @@ export const migrateProviderRecord = async (
     updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  const [cumulusId] = await knex('providers')
-    .returning('cumulusId')
-    .insert(updatedRecord);
-  return cumulusId;
+  return knex('providers').insert(updatedRecord);
 };
 
 export const migrateProviders = async (
