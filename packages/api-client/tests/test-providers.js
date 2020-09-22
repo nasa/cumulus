@@ -83,7 +83,7 @@ test('getProviders calls the callback with the expected object', async (t) => {
   };
 
   const callback = async (configObject) => {
-    t.deepEqual(configObject, expected);
+    t.like(configObject, expected);
   };
 
   await t.notThrowsAsync(providersApi.getProviders({
