@@ -14,14 +14,6 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
     }
     actions = ["sts:AssumeRole"]
   }
-
-  statement {
-    actions   = [
-      "kms:Encrypt",
-      "kms:Decrypt"
-    ]
-    resources = [data.aws_kms_key.provider_kms_key.arn]
-  }
 }
 
 resource "aws_iam_role" "data_migration1" {
@@ -61,6 +53,14 @@ data "aws_iam_policy_document" "data_migration1" {
       "secretsmanager:GetSecretValue"
     ]
     resources = [var.rds_user_access_secret_arn]
+  }
+
+  statement {
+    actions   = [
+      "kms:Encrypt",
+      "kms:Decrypt"
+    ]
+    resources = [data.aws_kms_key.provider_kms_key.arn]
   }
 }
 
