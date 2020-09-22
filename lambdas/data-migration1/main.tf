@@ -94,7 +94,7 @@ resource "aws_lambda_function" "data_migration1" {
   role             = aws_iam_role.data_migration1.arn
   runtime          = "nodejs12.x"
   timeout          = 300
-  memory_size      = 256
+  memory_size      = 512
 
   environment {
     variables = {

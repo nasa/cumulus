@@ -16,10 +16,6 @@ data "terraform_remote_state" "data_persistence" {
   workspace = terraform.workspace
 }
 
-# data "aws_lambda_function" "api_lambda" {
-#   function_name = "${var.prefix}-ApiEndpoints"
-# }
-
 module "data_migration1" {
   source = "../../lambdas/data-migration1"
 
@@ -36,7 +32,6 @@ module "data_migration1" {
   rds_user_access_secret_arn = data.terraform_remote_state.data_persistence.outputs.database_credentials_secret_arn
 
   provider_kms_key_id = var.provider_kms_key_id
-  # provider_kms_key_id = data.aws_lambda_function.api_lambda.environment.provider_kms_key_id
 
   tags = merge(var.tags, { Deployment = var.prefix })
 }
