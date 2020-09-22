@@ -34,7 +34,7 @@ async function queueGranules(event) {
         granule,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
-        provider: event.config.provider,
+        provider: granule.provider || event.config.provider,
         collection: collectionConfig,
         pdr: event.input.pdr,
         parentExecutionArn: arn,
