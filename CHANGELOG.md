@@ -143,6 +143,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     code to fire off a connection 'heartbeat' query and log the timing/results
     for diagnostic purposes, and retry certain connection timeouts once.
     This option is disabled by default
+- **CUMULUS-2157**
+  - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
+    - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead
 
 ### Changed
 
