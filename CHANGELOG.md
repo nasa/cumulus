@@ -135,7 +135,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2127**
   - Added migration to create collections relation for RDS database
 - **CUMULUS-2129**
-  - Added `data-migration1` Lambda to migrate data from Dynamo to RDS
+  - Added `data-migration1` Terraform module and Lambda to migrate data from Dynamo to RDS
     - Added support to Lambda for migrating collections data from Dynamo to RDS
 - **CUMULUS-2155**
   - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
