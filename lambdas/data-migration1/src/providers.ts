@@ -32,11 +32,10 @@ export interface RDSProviderRecord {
 
 const encryptProviderCredential = async (
   value: string,
+  providerKmsKeyId: string,
   encrypted?: boolean
 ) => {
   if (isNil(value)) return undefined;
-
-  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id');
 
   if (encrypted) {
     return keyPairProvider.S3KeyPairProvider
@@ -61,6 +60,7 @@ const encryptProviderCredential = async (
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Source record from DynamoDB
+ * @param {string} providerKmsKeyId - KMS key ID for encrypting provider credentials
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordAlreadyMigrated}
@@ -68,6 +68,7 @@ const encryptProviderCredential = async (
  */
 export const migrateProviderRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  providerKmsKeyId: string,
   knex: Knex
 ): Promise<void> => {
   // Use API model schema to validate record before processing
@@ -83,8 +84,8 @@ export const migrateProviderRecord = async (
 
   let { username, password, encrypted } = dynamoRecord;
   if (username || password) {
-    username = await encryptProviderCredential(username, encrypted);
-    password = await encryptProviderCredential(password, encrypted);
+    username = await encryptProviderCredential(username, providerKmsKeyId, encrypted);
+    password = await encryptProviderCredential(password, providerKmsKeyId, encrypted);
     encrypted = true;
   }
 
@@ -113,6 +114,7 @@ export const migrateProviders = async (
   knex: Knex
 ): Promise<MigrationSummary> => {
   const providersTable = envUtils.getRequiredEnvVar('ProvidersTable', env);
+  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id', env);
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: providersTable,
@@ -131,7 +133,7 @@ export const migrateProviders = async (
     migrationSummary.dynamoRecords += 1;
 
     try {
-      await migrateProviderRecord(record, knex);
+      await migrateProviderRecord(record, providerKmsKeyId, knex);
       migrationSummary.success += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
