@@ -10,6 +10,32 @@ const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/provider
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { PDRParsingError } = require('@cumulus/errors');
 const { pvlToJS } = require('@cumulus/pvl/t');
+const { providers: providersApi } = require('@cumulus/api-client');
+
+const getProviderByHost = async ({ prefix, host }) => {
+  const { body } = await providersApi.getProviders({
+    prefix,
+    queryStringParameters: { host },
+  });
+
+  const { results: providers } = JSON.parse(body);
+
+  if (providers.length === 0) {
+    throw new Error(`Provider for host ${host} not found`);
+  }
+
+  if (providers.length > 1) {
+    const providerIds = providers.map(({ id }) => id);
+
+    const providersString = providerIds.join(', ');
+
+    throw new Error(
+      `Multiple providers found for host ${host}: ${providersString}`
+    );
+  }
+
+  return providers[0];
+};
 
 const supportedChecksumTypes = ['CKSUM', 'MD5'];
 
@@ -39,7 +65,7 @@ const getItem = (spec, pdrName, name, must = true) => {
     throw new PDRParsingError(name, pdrName);
   }
 
-  return null;
+  return undefined;
 };
 
 /**
@@ -81,7 +107,7 @@ const validateChecksumInfo = (checksum, checksumType) => {
  * @returns {Object} throws error if failed
  */
 const parseSpec = (pdrName, spec) => {
-  const getter = getItem.bind(null, spec, pdrName);
+  const getter = getItem.bind(undefined, spec, pdrName);
 
   // check each file_spec has DIRECTORY_ID, FILE_ID, FILE_SIZE
   const dirPath = getter('DIRECTORY_ID');
@@ -137,12 +163,19 @@ const extractGranuleId = (fileName, regex) => {
 /**
  * Convert PDR FILE_GROUP to granule object.
  *
- * @param {Object} fileGroup - PDR FILE_GROUP object
- * @param {string} pdrName - name of the PDR for error reporting
- * @param {Object} collectionConfigStore - collectionConfigStore
+ * @param {Object} params
+ * @param {string} params.prefix - stack prefix
+ * @param {Object} params.fileGroup - PDR FILE_GROUP object
+ * @param {string} params.pdrName - name of the PDR for error reporting
+ * @param {Object} params.collectionConfigStore - collectionConfigStore
  * @returns {Object} granule object
  */
-const convertFileGroupToGranule = async (fileGroup, pdrName, collectionConfigStore) => {
+const convertFileGroupToGranule = async ({
+  prefix,
+  fileGroup,
+  pdrName,
+  collectionConfigStore,
+}) => {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
 
@@ -156,14 +189,22 @@ const convertFileGroupToGranule = async (fileGroup, pdrName, collectionConfigSto
   const specs = fileGroup.objects('FILE_SPEC');
   if (specs.length === 0) throw new Error('No FILE_SPEC sections found.');
 
-  const files = specs.map(parseSpec.bind(null, pdrName));
+  const files = specs.map(parseSpec.bind(undefined, pdrName));
 
   const collectionConfig = await collectionConfigStore.get(dataType, version);
+
+  let provider;
+  if (fileGroup.get('NODE_NAME')) {
+    const host = fileGroup.get('NODE_NAME').value;
+
+    provider = await getProviderByHost({ prefix, host });
+  }
 
   return {
     dataType,
     version,
     files,
+    provider,
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
     granuleSize: files.reduce((total, file) => total + file.size, 0),
   };
@@ -213,7 +254,12 @@ const parsePdr = async ({ config, input }) => {
 
   const allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
-      convertFileGroupToGranule(fileGroup, input.pdr.name, collectionConfigStore))
+      convertFileGroupToGranule({
+        prefix: config.stack,
+        fileGroup,
+        pdrName: input.pdr.name,
+        collectionConfigStore,
+      }))
   );
 
   await S3.s3PutObject({

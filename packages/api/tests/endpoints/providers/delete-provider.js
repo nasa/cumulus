@@ -119,6 +119,15 @@ test('Deleting a provider removes the provider', async (t) => {
   t.false(await providerModel.exists(testProvider.id));
 });
 
+test('Deleting a provider that does not exist succeeds', async (t) => {
+  const { status } = await request(app)
+    .delete(`/providers/${randomString}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(status, 200);
+});
+
 test('Attempting to delete a provider with an associated rule returns a 409 response', async (t) => {
   const { testProvider } = t.context;
 
