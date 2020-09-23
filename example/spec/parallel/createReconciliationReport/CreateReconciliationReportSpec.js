@@ -559,6 +559,67 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
+  describe('Creates \'Granule Inventory\' reports.', () => {
+    let reportRecord;
+    let reportArray;
+    it('generates an async operation through the Cumulus API', async () => {
+      const request = {
+        reportType: 'Granule Inventory',
+        reportName: randomId('granuleInventory'),
+        endTimestamp: moment.utc().format(),
+      };
+      const response = await reconciliationReportsApi.createReconciliationReport({
+        prefix: config.stackName,
+        request,
+      });
+
+      const responseBody = JSON.parse(response.body);
+      asyncOperationId = responseBody.id;
+      expect(responseBody.operationType).toBe('Reconciliation Report');
+    });
+
+    it('generates reconciliation report through the Cumulus API', async () => {
+      const asyncOperation = await waitForAsyncOperationStatus({
+        id: asyncOperationId,
+        status: 'SUCCEEDED',
+        stackName: config.stackName,
+        retries: 100,
+      });
+
+      reportRecord = JSON.parse(asyncOperation.output);
+    });
+
+    it('fetches a Granule Inventory report through the Cumulus API', async () => {
+      const response = await reconciliationReportsApi.getReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      reportArray = response.body.split('\n');
+      [
+        'granuleUr',
+        'collectionId',
+        'createdAt',
+        'startDateTime',
+        'endDateTime',
+        'status',
+        'updatedAt',
+        'published',
+      ].forEach((field) => expect(reportArray[0]).toMatch(field));
+    });
+
+    it('includes correct records', () => {
+      [
+        constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+        dbGranuleId,
+        publishedGranuleId,
+      ].forEach((testStr) => {
+        // found in reportl
+        expect(reportArray.some((record) => record.includes(testStr))).toBe(true);
+      });
+    });
+  });
+
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });

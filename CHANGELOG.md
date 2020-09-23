@@ -156,6 +156,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The collections endpoint now writes to the RDS database
 - **CUMULUS-2156**
   - Support array inputs parameters for `Internal` reconciliation report
+- **CUMULUS-2162**
+  - Adds new report type to `/reconciliationReport` endpoint.  The new report
+    is `Granule Inventory`. This report is a CSV file of all the granules in
+    the Cumulus DB. This report will eventually replace the existing
+    `granules-csv` endpoint which has been deprecated.
 
 ### Changed
 
@@ -190,8 +195,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-1955**
   - `@cumulus/aws-client/S3.getS3Object()`
-- `@cumulus/message/Queue.getQueueNameByUrl()`
-- `@cumulus/message/Queue.getQueueName()`
+  - `@cumulus/message/Queue.getQueueNameByUrl()`
+  - `@cumulus/message/Queue.getQueueName()`
+- **CUMULUS-2162**
+  - `@cumulus/api/endpoints/granules-csv/list()`
 
 ### Removed
 
