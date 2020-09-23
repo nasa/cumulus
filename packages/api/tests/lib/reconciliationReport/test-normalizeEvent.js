@@ -119,7 +119,7 @@ test('normalizeEvent correctly handles granuleIds, collectionIds, and providers 
   };
 
   const expected = {
-    ...omit(inputEvent, ['collectionId', 'granuleId']),
+    ...omit(inputEvent, ['collectionId', 'granuleId', 'provider']),
     granuleIds: ['someGranuleId'],
     collectionIds: ['someCollectionId1'],
     providers: ['someProvider1'],
@@ -181,7 +181,7 @@ test('normalizeEvent throws error if providers and collectionIds are passed to n
   t.throws(() => normalizeEvent(inputEvent), {
     instanceOf: InvalidArgument,
     message:
-      'notInternal reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
+      'anytype reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
   });
 });
 
