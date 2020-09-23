@@ -168,28 +168,13 @@ test('normalizeEvent moves array on provider to providers', (t) => {
   t.deepEqual(actual, expect);
 });
 
-test('normalizeEvent throws error if array of providers is passed to Internal report', (t) => {
-  const inputEvent = {
-    systemBucket: 'systemBucket',
-    stackName: 'stackName',
-    startTimestamp: new Date().toISOString(),
-    endTimestamp: new Date().toISOString(),
-    reportType: 'Internal',
-    provider: ['someProvider'],
-  };
-  t.throws(() => normalizeEvent(inputEvent), {
-    message:
-      'provider: ["someProvider"] is not a valid input for an \'Internal\' report.',
-  });
-});
-
 test('normalizeEvent throws error if providers and collectionIds are passed to non-Internal report', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'notInternal',
+    reportType: 'anytype',
     provider: ['someProvider'],
     collectionId: ['someCollectionId1'],
   };
