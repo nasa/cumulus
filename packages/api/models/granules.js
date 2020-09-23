@@ -415,7 +415,7 @@ class Granule extends Manager {
     }
     // Filter Expression can't contain key attributes
     if (searchParams.collectionId) {
-      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in search params');
+      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in searchParams');
     }
 
     const attributeNames = {};

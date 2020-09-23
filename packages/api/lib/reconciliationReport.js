@@ -158,7 +158,7 @@ function initialReportHeader(recReportParams) {
  * filters the returned UMM CMR collections by the desired collectionIds
  *
  * @param {Array<Object>} collections - CMR.searchCollections result
- * @param {Object} recReportParams
+ * @param {Object} recReportParams - input report params
  * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
  * @returns {Array<string>} filtered list of collectionIds returned from CMR
  */
@@ -177,8 +177,8 @@ function filterCMRCollections(collections, recReportParams) {
 /**
  * filters the returned database collections by the desired collectionIds
  *
- * @param {Array<Object>} collections - CMR.searchCollections result
- * @param {Object} recReportParams
+ * @param {Array<Object>} collections - database collections
+ * @param {Object} recReportParams - input report params
  * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
  * @returns {Array<string>} filtered list of collectionIds returned from database
  */

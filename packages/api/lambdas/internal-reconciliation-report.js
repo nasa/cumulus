@@ -111,7 +111,7 @@ exports.internalRecReportForCollections = internalRecReportForCollections;
 /**
  * Get all collectionIds from ES and database combined
  *
- * @returns {Promise<string>} list of collectionIds
+ * @returns {Promise<Array<string>>} list of collectionIds
  */
 async function getAllCollections() {
   const dbCollections = (await new Collection().getAllCollections())
@@ -130,12 +130,12 @@ async function getAllCollections() {
  * Get list of collections for the given granuleIds
  *
  * @param {Array<string>} granuleIds - list of granuleIds
- * @returns {Promise<string>} list of collectionIds
+ * @returns {Promise<Array<string>>} list of collectionIds
  */
 async function getCollectionsForGranules(granuleIds) {
   const limit = pLimit(process.env.CONCURRENCY || 3);
 
-  const dbCollections = Promise.all(
+  const dbCollections = await Promise.all(
     granuleIds.map((granuleId) => limit(() =>
       new Granule().get({ granuleId })
         .then((granule) => (granule ? granule.collectionId : undefined))
@@ -160,7 +160,7 @@ async function getCollectionsForGranules(granuleIds) {
  * Get list of collections for granule search based on input filtering parameters
  *
  * @param {Object} recReportParams - lambda's input filtering parameters
- * @returns {Promise<string>} list of collectionIds
+ * @returns {Promise<Array<string>>} list of collectionIds
  */
 async function getCollectionsForGranuleSearch(recReportParams) {
   const { collectionIds, granuleIds } = recReportParams;

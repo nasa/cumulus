@@ -8,8 +8,8 @@ const { Granule } = require('../../models');
  * Class to create granule search queues and iterate the items in the queues, items retrieved
  * are ordered by granuleId.
  *
- * If there are granuleIds in the filter, create search queues for each granuleId in order to
- * 'query' the table, otherwise, create only one queue.  The queue created with the granuleId
+ * If there are granuleIds in the searchParams, create search queues for each granuleId in order
+ * to 'query' the table, otherwise, create only one queue.  The queue created with the granuleId
  * has 0 or 1 item.
  */
 class DbGranuleSearchQueues {

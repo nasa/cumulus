@@ -57,7 +57,7 @@ function updateCollectionIds(collectionId, modifiedEvent) {
 function updateProviders(provider, modifiedEvent) {
   let returnEvent = { ...modifiedEvent };
   if (provider) {
-    // transform input collectionId into an array on collectionIds
+    // transform input provider into an array on providers
     const providers = isString(provider) ? [provider] : provider;
     returnEvent = { ...modifiedEvent, providers };
   }

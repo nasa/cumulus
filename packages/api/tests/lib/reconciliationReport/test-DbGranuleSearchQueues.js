@@ -7,7 +7,7 @@ const { DbGranuleSearchQueues } = require('../../../lib/reconciliationReport/DbG
 
 class StubGranuleSearchQueue {
   constructor(items) {
-    this.items = items || [];
+    this.items = items ? [...items] : [];
   }
 
   async empty() {
@@ -52,7 +52,7 @@ test('constructor creates queues for each granuleId when searchParams have multi
 test('peek() and shift() get and remove the next available item when there is only one queue', async (t) => {
   const collectionId = 'name___version';
   const queueItems = [randomId('queue2'), randomId('queue2'), randomId('queue2')];
-  const queues = [new StubGranuleSearchQueue(queueItems.slice())];
+  const queues = [new StubGranuleSearchQueue(queueItems)];
 
   const granuleSearchQueue = new DbGranuleSearchQueues(collectionId, {});
   granuleSearchQueue.queues = queues;
