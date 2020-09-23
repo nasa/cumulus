@@ -1,22 +1,10 @@
 const test = require('ava');
+const omit = require('lodash/omit');
 const { InvalidArgument } = require('@cumulus/errors');
 const { randomId } = require('@cumulus/common/test-utils');
 const { normalizeEvent } = require('../../../lib/reconciliationReport/normalizeEvent');
 const { reconciliationReport } = require('../../../models/schemas');
 
-test('normalizeEvent throws error if array of collectionIds passed to Internal report', (t) => {
-  const inputEvent = {
-    systemBucket: 'systemBucket',
-    stackName: 'stackName',
-    startTimestamp: new Date().toISOString(),
-    endTimestamp: new Date().toISOString(),
-    reportType: 'Internal',
-    collectionId: ['someCollection___version'],
-  };
-  t.throws(() => normalizeEvent(inputEvent), {
-    message: 'collectionId: ["someCollection___version"] is not valid input for an \'Internal\' report.',
-  });
-});
 test('normalizeEvent converts input key collectionId string to length 1 array on collectionIds', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
@@ -50,30 +38,13 @@ test('normalizeEvent moves input key collectionId array to array on collectionId
   const actual = normalizeEvent(inputEvent);
   t.deepEqual(actual, expect);
 });
-test('normalizeEvent adds new collectionIds key when collectionId passed to Internal report', (t) => {
-  const inputEvent = {
-    systemBucket: 'systemBucket',
-    stackName: 'stackName',
-    startTimestamp: new Date().toISOString(),
-    endTimestamp: new Date().toISOString(),
-    reportType: 'Internal',
-    collectionId: 'someCollection___version',
-  };
-  const expect = {
-    ...inputEvent,
-    collectionIds: ['someCollection___version'],
-  };
-
-  const actual = normalizeEvent(inputEvent);
-  t.deepEqual(actual, expect);
-});
 test('normalizeEvent throws error if original input event contains collectionIds key', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'Internal',
+    reportType: 'anytype',
     collectionIds: ['someCollection___version'],
   };
   t.throws(() => normalizeEvent(inputEvent), {
@@ -117,19 +88,6 @@ test('normalizeEvent moves array on granuleId to granuleIds', (t) => {
   const actual = normalizeEvent(inputEvent);
   t.deepEqual(actual, expect);
 });
-test('normalizeEvent throws error if array of granuleIds is passed to Internal report', (t) => {
-  const inputEvent = {
-    systemBucket: 'systemBucket',
-    stackName: 'stackName',
-    startTimestamp: new Date().toISOString(),
-    endTimestamp: new Date().toISOString(),
-    reportType: 'Internal',
-    granuleId: ['someGranuleId'],
-  };
-  t.throws(() => normalizeEvent(inputEvent), {
-    message: 'granuleId: ["someGranuleId"] is not valid input for an \'Internal\' report.',
-  });
-});
 test('normalizeEvent throws error if granuleIds and collectionIds are passed to non-Internal report', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
@@ -157,7 +115,7 @@ test('normalizeEvent correctly handles granuleIds and collectionIds if reportTyp
   };
 
   const expected = {
-    ...inputEvent,
+    ...omit(inputEvent, ['collectionId', 'granuleId']),
     granuleIds: ['someGranuleId'],
     collectionIds: ['someCollectionId1'],
   };
