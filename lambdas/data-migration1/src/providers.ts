@@ -37,22 +37,26 @@ const encryptProviderCredential = async (
 ) => {
   if (isNil(value)) return undefined;
 
+  let valueToEncrypt = value;
+  let isKMSEncrypted = false;
+
   if (encrypted) {
-    return keyPairProvider.S3KeyPairProvider
-      .decrypt(value)
-      .then(
-        (decryptedValue) => KMS.encrypt(providerKmsKeyId, decryptedValue),
-        async (error) => {
-          // If we already have a KMS encrypted value, return it.
-          if ((await KMS.decryptBase64String(value))) {
-            return value;
-          }
-          throw error;
-        }
-      );
+    try {
+      valueToEncrypt = await keyPairProvider.S3KeyPairProvider
+        .decrypt(value);
+    } catch (error) {
+      // Check to see if we already have a KMS encrypted value
+      if ((await KMS.decryptBase64String(value))) {
+        isKMSEncrypted = true;
+      } else {
+        throw error;
+      }
+    }
   }
 
-  return KMS.encrypt(providerKmsKeyId, value);
+  return isKMSEncrypted
+    ? value
+    : KMS.encrypt(providerKmsKeyId, valueToEncrypt);
 };
 
 /**
