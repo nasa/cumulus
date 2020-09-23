@@ -24,25 +24,15 @@ function isoTimestamp(dateable) {
  * Transforms input granuleId into correct parameters for use in the
  * Reconciliation Report lambda.
  * @param {Array<string>|string} granuleId - list of granule Ids
- * @param {string} reportType - report type
  * @param {Object} modifiedEvent - input event
  * @returns {Object} updated input even with correct granuleId and granuleIds values.
  */
-function updateGranuleIds(granuleId, reportType, modifiedEvent) {
+function updateGranuleIds(granuleId, modifiedEvent) {
   let returnEvent = { ...modifiedEvent };
   if (granuleId) {
     // transform input granuleId into an array on granuleIds
     const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
-    if (reportType === 'Internal') {
-      if (!isString(granuleId)) {
-        throw new InvalidArgument(`granuleId: ${JSON.stringify(granuleId)} is not valid input for an 'Internal' report.`);
-      } else {
-        // include both granuleId and granuleIds for Internal Reports.
-        returnEvent = { ...modifiedEvent, granuleId, granuleIds: [granuleId] };
-      }
-    } else {
-      returnEvent = { ...modifiedEvent, granuleIds };
-    }
+    returnEvent = { ...modifiedEvent, granuleIds };
   }
   return returnEvent;
 }
@@ -51,52 +41,25 @@ function updateGranuleIds(granuleId, reportType, modifiedEvent) {
  * Transforms input collectionId into correct parameters for use in the
  * Reconciliation Report lambda.
  * @param {Array<string>|string} collectionId - list of collection Ids
- * @param {string} reportType - report type
  * @param {Object} modifiedEvent - input event
  * @returns {Object} updated input even with correct collectionId and collectionIds values.
  */
-function updateCollectionIds(collectionId, reportType, modifiedEvent) {
+function updateCollectionIds(collectionId, modifiedEvent) {
   let returnEvent = { ...modifiedEvent };
   if (collectionId) {
+    // transform input collectionId into an array on collectionIds
     const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
-    if (reportType === 'Internal') {
-      if (!isString(collectionId)) {
-        throw new InvalidArgument(`collectionId: ${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
-      } else {
-        // include both collectionIds and collectionId for Internal Reports.
-        returnEvent = { ...modifiedEvent, collectionId, collectionIds: [collectionId] };
-      }
-    } else {
-      // add array of collectionIds
-      returnEvent = { ...modifiedEvent, collectionIds };
-    }
+    returnEvent = { ...modifiedEvent, collectionIds };
   }
   return returnEvent;
 }
 
-/**
- * Transforms input provider into correct parameters for use in the
- * Reconciliation Report lambda.
- * @param {Array<string>|string} provider - list of providers
- * @param {string} reportType - report type
- * @param {Object} modifiedEvent - input event
- * @returns {Object} updated input even with correct provider and providers values.
- */
-function updateProviders(provider, reportType, modifiedEvent) {
+function updateProviders(provider, modifiedEvent) {
   let returnEvent = { ...modifiedEvent };
   if (provider) {
+    // transform input provider into an array on providers
     const providers = isString(provider) ? [provider] : provider;
-    if (reportType === 'Internal') {
-      if (!isString(provider)) {
-        throw new InvalidArgument(`provider: ${JSON.stringify(provider)} is not a valid input for an 'Internal' report.`);
-      } else {
-        // include both providers and provider for Internal Reports.
-        returnEvent = { ...modifiedEvent, provider, providers: [provider] };
-      }
-    } else {
-      // add array of providers
-      returnEvent = { ...modifiedEvent, providers };
-    }
+    returnEvent = { ...modifiedEvent, providers };
   }
   return returnEvent;
 }
@@ -119,17 +82,9 @@ function normalizeEvent(event) {
     reportType = 'Granule Not Found';
   }
 
-  // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
-  // for now, move input collectionId to collectionIds as array
-  // internal reports will keep existing collectionId and copy it to collectionIds
   let {
-    collectionIds: anyCollectionIds,
-    collectionId,
-    granuleId,
-    provider,
-    ...modifiedEvent
+    collectionIds: anyCollectionIds, collectionId, granuleId, provider, ...modifiedEvent
   } = { ...event };
-
   if (anyCollectionIds) {
     throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
@@ -141,9 +96,9 @@ function normalizeEvent(event) {
   if (tooManyInputs && reportType !== 'Internal') {
     throw new InvalidArgument(`${reportType} reports cannot be launched with more than one input (granuleId, collectionId, or provider).`);
   }
-  modifiedEvent = updateCollectionIds(collectionId, reportType, modifiedEvent);
-  modifiedEvent = updateGranuleIds(granuleId, reportType, modifiedEvent);
-  modifiedEvent = updateProviders(provider, reportType, modifiedEvent);
+  modifiedEvent = updateCollectionIds(collectionId, modifiedEvent);
+  modifiedEvent = updateGranuleIds(granuleId, modifiedEvent);
+  modifiedEvent = updateProviders(provider, modifiedEvent);
 
   return removeNilProperties({
     ...modifiedEvent,

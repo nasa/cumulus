@@ -118,6 +118,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `/reconciliationReports` now validates any input json before starting the
     async operation and the lambda handler no longer validates input
     parameters.
+- **CUMULUS-1964**
+  - Reports can now be filtered on provider
 - **CUMULUS-1965**
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
@@ -154,8 +156,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2126**
   - The collections endpoint now writes to the RDS database
-- **CUMULUS-1964**
-  - Reports can now be filtered on provider
+- **CUMULUS-2156**
+  - Support array inputs parameters for `Internal` reconciliation report
 
 ### Changed
 

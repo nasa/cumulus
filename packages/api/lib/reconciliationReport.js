@@ -59,12 +59,14 @@ function convertToESCollectionSearchParams(params) {
 
 /**
  *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch collection search
+ * @param {Object} params - request params to convert to database params
+ * @returns {Object} object of desired parameters formated for database collection search
  */
 function convertToDBCollectionSearchParams(params) {
-  const { collectionId, startTimestamp, endTimestamp } = params;
-  const collection = collectionId ? deconstructCollectionId(collectionId) : {};
+  const { collectionIds, startTimestamp, endTimestamp } = params;
+  // doesn't support search with multiple collections
+  const collection = collectionIds && collectionIds.length === 1
+    ? deconstructCollectionId(collectionIds[0]) : {};
   const searchParams = {
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
@@ -82,26 +84,26 @@ function convertToESGranuleSearchParams(params) {
   const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;
   const collectionIdIn = collectionIds ? collectionIds.join(',') : undefined;
   const granuleIdIn = granuleIds ? granuleIds.join(',') : undefined;
-  const providersIn = providers ? providers.join(',') : undefined;
+  const providerIn = providers ? providers.join(',') : undefined;
   return removeNilProperties({
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
     collectionId__in: collectionIdIn,
     granuleId__in: granuleIdIn,
-    provider__in: providersIn,
+    provider__in: providerIn,
   });
 }
 
 /**
  *
- * @param {Object} params - request params to convert to Elasticsearch/DB params
- * @returns {Object} object of desired parameters formated for Elasticsearch/DB
+ * @param {Object} params - request params to convert to database params
+ * @returns {Object} object of desired parameters formated for database granule search
  */
-function convertToGranuleSearchParams(params) {
+function convertToDBGranuleSearchParams(params) {
   const {
-    collectionId,
-    granuleId,
-    provider,
+    collectionIds: collectionId,
+    granuleIds: granuleId,
+    providers: provider,
     startTimestamp,
     endTimestamp,
   } = params;
@@ -160,7 +162,7 @@ function initialReportHeader(recReportParams) {
  * filters the returned UMM CMR collections by the desired collectionIds
  *
  * @param {Array<Object>} collections - CMR.searchCollections result
- * @param {Object} recReportParams
+ * @param {Object} recReportParams - input report params
  * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
  * @returns {Array<string>} filtered list of collectionIds returned from CMR
  */
@@ -176,13 +178,32 @@ function filterCMRCollections(collections, recReportParams) {
   return CMRCollectionIds.filter((item) => collectionIds.includes(item));
 }
 
+/**
+ * filters the returned database collections by the desired collectionIds
+ *
+ * @param {Array<Object>} collections - database collections
+ * @param {Object} recReportParams - input report params
+ * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
+ * @returns {Array<string>} filtered list of collectionIds returned from database
+ */
+function filterDBCollections(collections, recReportParams) {
+  const { collectionIds } = recReportParams;
+
+  if (collectionIds) {
+    return collections.filter((collection) =>
+      collectionIds.includes(constructCollectionId(collection.name, collection.version)));
+  }
+  return collections;
+}
+
 module.exports = {
   cmrGranuleSearchParams,
   convertToDBCollectionSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
-  convertToGranuleSearchParams,
+  convertToDBGranuleSearchParams,
   filterCMRCollections,
+  filterDBCollections,
   initialReportHeader,
   searchParamsForCollectionIdArray,
 };
