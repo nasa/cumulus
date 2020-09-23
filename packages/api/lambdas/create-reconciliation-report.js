@@ -618,16 +618,14 @@ async function createReconciliationReport(recReportParams) {
       ...initialReportHeader(recReportParams),
       filesInCumulus,
     };
-  }
-  else if (location === 'CMR') {
+  } else if (location === 'CMR') {
     report = {
       ...initialReportHeader(recReportParams),
       collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
       granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
       filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
     };
-  }
-  else {
+  } else {
     report = {
       ...initialReportHeader(recReportParams),
       filesInCumulus,
@@ -645,7 +643,7 @@ async function createReconciliationReport(recReportParams) {
 
   // Internal consistency check S3 vs Cumulus DBs
   // --------------------------------------------
-  if (location != 'CMR') {
+  if (location !== 'CMR') {
     // Create a report for each bucket
     const promisedBucketReports = dataBuckets.map(
       (bucket) => createReconciliationReportForBucket(bucket)
@@ -672,7 +670,7 @@ async function createReconciliationReport(recReportParams) {
 
   // compare the CUMULUS holdings with the holdings in CMR
   // -----------------------------------------------------
-  if (location !='S3') {
+  if (location !== 'S3') {
     const cumulusCmrReport = await reconciliationReportForCumulusCMR({
       bucketsConfig, distributionBucketMap, recReportParams,
     });
