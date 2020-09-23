@@ -1,6 +1,5 @@
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
-const path = require('path');
 const test = require('ava');
 
 const Provider = require('@cumulus/api/models/providers');
@@ -20,6 +19,8 @@ const {
   migrateProviders,
 } = require('../dist/lambda/providers');
 const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
+// eslint-disable-next-line node/no-unpublished-require
+const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
@@ -45,13 +46,6 @@ let providersModel;
 let rulesModel;
 
 test.before(async (t) => {
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir: `${path.join(__dirname, '..', '..', 'db-migration', 'dist', 'lambda', 'migrations')}`,
-    },
-  });
-
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
   process.env.ProvidersTable = cryptoRandomString({ length: 10 });
@@ -81,6 +75,12 @@ test.before(async (t) => {
   rulesModel = new Rule();
   await rulesModel.createTable();
 
+  t.context.knexAdmin = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      migrationDir,
+    },
+  });
   await t.context.knexAdmin.raw(`create database "${testDbName}";`);
   await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
 
@@ -88,7 +88,7 @@ test.before(async (t) => {
     env: {
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
-      migrationDir: `${path.join(__dirname, '..', '..', 'db-migration', 'dist', 'lambda', 'migrations')}`,
+      migrationDir,
     },
   });
 
