@@ -776,14 +776,6 @@ test.serial(
       GranuleFilesCache.batchUpdate({ puts: files }),
     ]);
 
-    // Create collections that are in sync
-    const matchingColls = range(10).map(() => ({
-      name: randomId('name'),
-      version: randomId('vers'),
-    }));
-
-    await storeCollectionsToElasticsearch(matchingColls);
-
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
@@ -807,7 +799,10 @@ test.serial(
     t.is(filesInCumulus.okCount, files.length);
     t.is(filesInCumulus.onlyInS3.length, 0);
     t.is(filesInCumulus.onlyInDynamoDb.length, 0);
-    t.is(report.collectionsInCumulusCmr, undefined);
+    t.is(report.collectionsInCumulusCmr.okCount, 0);
+    t.is(report.granulesInCumulusCmr.okCount, 0);
+    t.is(report.filesInCumulusCmr.okCount, 0);
+
   }
 );
 
@@ -835,7 +830,7 @@ test.serial(
     t.is(report.status, 'SUCCESS');
     t.is(report.error, undefined);
     t.is(collectionsInCumulusCmr.okCount, setupVars.matchingCollections.length);
-    t.is(report.filesInCumulus, undefined);
+    t.is(report.filesInCumulus.okCount, 0);
 
     t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraESCollections.length);
     setupVars.extraESCollections.map((collection) =>

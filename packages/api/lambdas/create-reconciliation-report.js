@@ -608,27 +608,13 @@ async function createReconciliationReport(recReportParams) {
     onlyInCmr: [],
   };
   let report;
-  if (location === 'S3') {
-    report = {
-      ...initialReportHeader(recReportParams),
-      filesInCumulus,
-    };
-  } else if (location === 'CMR') {
-    report = {
-      ...initialReportHeader(recReportParams),
-      collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-      granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-      filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-    };
-  } else {
-    report = {
-      ...initialReportHeader(recReportParams),
-      filesInCumulus,
-      collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-      granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-      filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-    };
-  }
+  report = {
+    ...initialReportHeader(recReportParams),
+    filesInCumulus,
+    collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
+    granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
+    filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
+  };
 
   await s3().putObject({
     Bucket: systemBucket,
