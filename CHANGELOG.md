@@ -80,6 +80,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-1962**
+  - Adds `location` as parameter to `/reconciliationReports` endpoint. Options are `S3`
+    resulting in a S3 vs. Dynamo DB search or `CMR` resulting in CMR vs. Cumulus search.
 - **CUMULUS-1963**
   - Adds `granuleId` as input parameter to `/reconcilationReports`
     endpoint. Limits inputs parameters to either `collectionId` or `granuleId`
