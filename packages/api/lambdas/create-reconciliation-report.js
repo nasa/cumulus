@@ -607,8 +607,7 @@ async function createReconciliationReport(recReportParams) {
     onlyInCumulus: [],
     onlyInCmr: [],
   };
-  let report;
-  report = {
+  let report = {
     ...initialReportHeader(recReportParams),
     filesInCumulus,
     collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
