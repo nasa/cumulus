@@ -802,7 +802,6 @@ test.serial(
     t.is(report.collectionsInCumulusCmr.okCount, 0);
     t.is(report.granulesInCumulusCmr.okCount, 0);
     t.is(report.filesInCumulusCmr.okCount, 0);
-
   }
 );
 
