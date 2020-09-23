@@ -93,20 +93,26 @@ export const getProvider = (params: {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} [params.queryStringParameters] - query string parameters to
+ *   include in the request
+ * @param {Function} [params.callback=invokeApi] - async function to invoke the
+ *   api lambda that takes a prefix / user payload.
  * @returns {Promise<Object>} - the list of providers fetched by the API
  */
 export const getProviders = (params: {
   prefix: string,
+  queryStringParameters?: {[key: string]: string},
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, callback = invokeApi } = params;
+  const { prefix, queryStringParameters, callback = invokeApi } = params;
 
   return callback({
-    prefix: prefix,
+    prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/providers',
+      queryStringParameters,
     },
   });
 };

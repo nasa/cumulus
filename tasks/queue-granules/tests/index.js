@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-
+const proxyquire = require('proxyquire');
 const {
   s3,
   sqs,
@@ -17,10 +17,16 @@ const {
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
+const sinon = require('sinon');
+const pMap = require('p-map');
 
-const { queueGranules } = require('..');
+const pMapSpy = sinon.spy(pMap);
+
+const { queueGranules } = proxyquire('..', { 'p-map': pMapSpy });
 
 test.beforeEach(async (t) => {
+  pMapSpy.resetHistory();
+
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.workflow = randomString();
@@ -431,4 +437,100 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       },
     }
   );
+});
+
+test.serial('If a granule has a provider property, that provider is used', async (t) => {
+  const dataType = randomString();
+  const version = randomString();
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const provider = { host: randomString() };
+
+  const { event } = t.context;
+
+  event.input.granules = [
+    {
+      dataType,
+      version,
+      provider,
+      granuleId: randomString(),
+      files: [],
+    },
+  ];
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queueGranules(event);
+
+  await validateOutput(t, output);
+
+  // Get messages from the queue
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const parsedBody = JSON.parse(Messages[0].Body);
+
+  t.deepEqual(parsedBody.meta.provider, provider);
+});
+
+test.serial('A default concurrency of 3 is used', async (t) => {
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+  ];
+
+  await queueGranules(event);
+
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 3 })
+  ));
+});
+
+test.serial('A configured concurrency is used', async (t) => {
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const { event } = t.context;
+
+  event.config.concurrency = 99;
+
+  event.input.granules = [
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+  ];
+
+  await queueGranules(event);
+
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 99 })
+  ));
 });

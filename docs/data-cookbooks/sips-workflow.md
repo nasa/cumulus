@@ -26,13 +26,11 @@ We need to build a collection. Details on collections can be found
 
 ```json
 {
-  "queriedAt": "2018-08-03T16:44:25.919Z",
   "name": "MOD09GQ",
   "version": "006",
   "process": "modis",
   "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
   "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
-  "createdAt": 1531324194001,
   "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
   "files": [
     {
@@ -58,40 +56,18 @@ We need to build a collection. Details on collections can be found
     }
   ],
   "duplicateHandling": "replace",
-  "updatedAt": 1533313794693,
   "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
-  "timestamp": 1533313798525,
-  "stats": {
-    "running": 0,
-    "completed": 0,
-    "failed": 2,
-    "total": 2
-  }
 }
 ```
 
 ### Rule
 
-Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndQueuePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
+Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example
+we're just going to create a `onetime` throw-away rule that will be easy to test
+with. This rule will kick off the `DiscoverAndQueuePdrs` workflow, which is the
+beginning of a Cumulus SIPS workflow:
 
-```json
-{
-  "name": "s3_provider_rule",
-  "workflow": "DiscoverAndQueuePdrs",
-  "provider": "s3_provider",
-  "collection": {
-    "name": "MOD09GQ",
-    "version": "006"
-  },
-  "rule": {
-    "type": "onetime"
-  },
-  "state": "ENABLED",
-  "tags": [
-    "test"
-  ]
-}
-```
+![Screenshot of a Cumulus rule configuration](assets/add_rule.png)
 
 **Note:** A list of configured workflows exists under the "Workflows" in the navigation bar on the Cumulus dashboard. Additionally, one can find a list of executions and their respective status in the "Executions" tab in the navigation bar.
 

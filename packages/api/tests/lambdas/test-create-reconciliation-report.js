@@ -26,10 +26,14 @@ const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testU
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const { Search } = require('../../es/search');
 const {
-  handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
+  handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 const indexer = require('../../es/indexer');
+const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
+
+// Call normalize event on all input events before calling the handler.
+const handler = (event) => unwrappedHandler(normalizeEvent(event));
 
 let esAlias;
 let esIndex;
