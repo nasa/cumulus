@@ -183,6 +183,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `config.concurrency` option that defaults to `3`.
 - **CUMULUS-2163**
   - Remove the `public-read` ACL from the `move-granules` task
+- **CUMULUS-2164**
+  - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
 
 ### Deprecated
 
