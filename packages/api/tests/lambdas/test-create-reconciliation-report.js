@@ -787,7 +787,7 @@ test.serial(
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
-      location: 'S3'
+      location: 'S3',
     };
 
     const reportRecord = await handler(event);
@@ -824,7 +824,7 @@ test.serial(
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
-      location: 'CMR'
+      location: 'CMR',
     };
 
     const reportRecord = await handler(event);
