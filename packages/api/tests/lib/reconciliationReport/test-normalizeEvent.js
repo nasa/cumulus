@@ -1,6 +1,8 @@
 const test = require('ava');
 const { InvalidArgument } = require('@cumulus/errors');
+const { randomId } = require('@cumulus/common/test-utils');
 const { normalizeEvent } = require('../../../lib/reconciliationReport/normalizeEvent');
+const { reconciliationReport } = require('../../../models/schemas');
 
 test('normalizeEvent throws error if array of collectionIds passed to Internal report', (t) => {
   const inputEvent = {
@@ -21,7 +23,7 @@ test('normalizeEvent converts input key collectionId string to length 1 array on
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'NotInternal',
+    reportType: 'Inventory',
     collectionId: 'someCollection___version',
   };
   const expect = { ...inputEvent, collectionIds: ['someCollection___version'] };
@@ -36,7 +38,7 @@ test('normalizeEvent moves input key collectionId array to array on collectionId
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'NotInternal',
+    reportType: 'Inventory',
     collectionId: ['someCollection___version', 'secondcollection___version'],
   };
   const expect = {
@@ -84,7 +86,7 @@ test('normalizeEvent moves string on granuleId to array on granuleIds', (t) => {
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'Not Internal',
+    reportType: 'Inventory',
     granuleId: 'someGranule',
   };
   const expect = {
@@ -102,7 +104,7 @@ test('normalizeEvent moves array on granuleId to granuleIds', (t) => {
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'Not Internal',
+    reportType: 'Inventory',
     granuleId: ['someGranule', 'someGranule2'],
   };
 
@@ -134,13 +136,13 @@ test('normalizeEvent throws error if granuleIds and collectionIds are passed to 
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'notInternal',
+    reportType: 'Inventory',
     granuleId: ['someGranuleId'],
     collectionId: ['someCollectionId1'],
   };
   t.throws(() => normalizeEvent(inputEvent), {
     instanceOf: InvalidArgument,
-    message: 'notInternal reports cannot be launched with both granuleId and collectionId input.',
+    message: 'Inventory reports cannot be launched with both granuleId and collectionId input.',
   });
 });
 test('normalizeEvent correctly handles granuleIds and collectionIds if reportType is Internal', (t) => {
@@ -162,4 +164,21 @@ test('normalizeEvent correctly handles granuleIds and collectionIds if reportTyp
 
   const actual = normalizeEvent(inputEvent);
   t.deepEqual(actual, expected);
+});
+
+test('Invalid report type throws InvalidArgument error', (t) => {
+  const reportType = randomId('badType');
+  const inputEvent = { reportType };
+
+  t.throws(() => normalizeEvent(inputEvent), {
+    instanceOf: InvalidArgument,
+    message: `${reportType} is not a valid report type. Please use one of ["Granule Inventory","Granule Not Found","Internal","Inventory"].`,
+  });
+});
+
+test('valid Reports types from reconciliation schema do not throw an error.', (t) => {
+  const validReportTypes = reconciliationReport.properties.type.enum;
+  validReportTypes.forEach((reportType) => {
+    t.notThrows(() => normalizeEvent({ reportType }));
+  });
 });

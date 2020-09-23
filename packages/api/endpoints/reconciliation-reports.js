@@ -51,7 +51,13 @@ async function getReport(req, res) {
     const result = await reconciliationReportModel.get({ name });
     const { Bucket, Key } = parseS3Uri(result.location);
     const file = await getS3Object(Bucket, Key);
-    return res.send(JSON.parse(file.Body.toString()));
+    if (Key.endsWith('.json')) {
+      return res.json(JSON.parse(file.Body.toString()));
+    }
+    if (Key.endsWith('.csv')) {
+      res.header('Content-Type', 'text/csv');
+      return res.send(file.Body.toString());
+    }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
@@ -61,6 +67,7 @@ async function getReport(req, res) {
     }
     throw error;
   }
+  return res.boom.badImplementation('should never get here');
 }
 
 /**

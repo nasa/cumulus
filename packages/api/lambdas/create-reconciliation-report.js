@@ -18,6 +18,7 @@ const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
+const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
@@ -677,7 +678,8 @@ async function processRequest(params) {
   const createStartTime = moment.utc();
   const reportRecordName = reportName
     || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  const reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
+  let reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
+  if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database
   const reconciliationReportModel = new ReconciliationReport();
@@ -693,13 +695,16 @@ async function processRequest(params) {
     const recReportParams = { ...params, createStartTime, reportKey, reportType };
     if (reportType === 'Internal') {
       await createInternalReconciliationReport(recReportParams);
+    } else if (reportType === 'Granule Inventory') {
+      await createGranuleInventoryReport(recReportParams);
     } else {
+      // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);
     }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
     log.error(JSON.stringify(error)); // helps debug ES errors
-    log.error(`Error creating reconciliation report ${reportRecordName}`, error);
+    log.error(`Error creating ${reportType} report ${reportRecordName}`, error);
     const updates = {
       status: 'Failed',
       error: {

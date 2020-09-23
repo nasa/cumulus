@@ -4,6 +4,29 @@
 const isString = require('lodash/isString');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { InvalidArgument } = require('@cumulus/errors');
+
+/**
+ * ensures input reportType can be handled by the lambda code.
+ *
+ * @param {string} reportType
+ * @returns {undefined} - if reportType is valid
+ * @throws {InvalidArgument} - otherwise
+ */
+function validateReportType(reportType) {
+  // List of valid report types handled by the lambda.
+  const validReportTypes = [
+    'Granule Inventory',
+    'Granule Not Found',
+    'Internal',
+    'Inventory',
+  ];
+  if (!validReportTypes.includes(reportType)) {
+    throw new InvalidArgument(
+      `${reportType} is not a valid report type. Please use one of ${JSON.stringify(validReportTypes)}.`
+    );
+  }
+}
+
 /**
  * Convert input to an ISO timestamp.
  * @param {any} dateable - any type convertable to JS Date
@@ -87,10 +110,8 @@ function normalizeEvent(event) {
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
 
-  let reportType = event.reportType || 'Inventory';
-  if (reportType.toLowerCase() === 'granulenotfound') {
-    reportType = 'Granule Not Found';
-  }
+  const reportType = event.reportType || 'Inventory';
+  validateReportType(reportType);
 
   // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
   // for now, move input collectionId to collectionIds as array
