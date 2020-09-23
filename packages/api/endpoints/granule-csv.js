@@ -27,7 +27,7 @@ async function list(req, res) {
 
   const readable = new Stream.Readable({ objectMode: true });
   readable._read = noop;
-  const fields = ['granuleUr', 'collectionId', 'status', 'published'];
+  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime', 'status', 'updatedAt', 'published'];
   const transformOpts = { objectMode: true };
 
   const json2csv = new Transform({ fields }, transformOpts);
