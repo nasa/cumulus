@@ -13,14 +13,43 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The steps for configuring queued execution throttling have changed. See the [updated documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
   - In addition to the configuration for execution throttling, the internal mechanism for tracking executions by queue has changed. As a result, you should **disable any rules or workflows scheduling executions via a throttled queue** before upgrading. Otherwise, you may be at risk of having **twice as many executions** as are configured for the queue while the updated tracking is deployed. You can re-enable these rules/workflows once the upgrade is complete.
 
+- **CUMULUS-2111**
+  - **Before you re-deploy your `cumulus-tf` module**, note that the [`thin-egress-app`][thin-egress-app] is no longer deployed by default as part of the `cumulus` module, so you must add the TEA module to your deployment and manually modify your Terraform state **to avoid losing your API gateway and impacting any Cloudfront endpoints pointing to those gateways**. If you don't care about losing your API gateway and impacting Cloudfront endpoints, you can ignore the instructions for manually modifying state.
+
+    1. Add the [`thin-egress-app`][thin-egress-app] module to your `cumulus-tf` deployment as shown in the [Cumulus example deployment](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/main.tf).
+
+         - Note that the values for `tea_stack_name` variable to the `cumulus` module and the `stack_name` variable to the `thin_egress_app` module **must match**
+         - Also, if you are specifying the `stage_name` variable to the `thin_egress_app` module, **the value of the `tea_api_gateway_stage` variable to the `cumulus` module must match it**
+
+    2. **If you want to preserve your existing `thin-egress-app` API gateway and avoid having to update your Cloudfront endpoint for distribution, then you must follow these instructions**: <https://nasa.github.io/cumulus/docs/upgrade-notes/migrate_tea_standalone>. Otherwise, you can re-deploy as usual.
+
+  - If you provide your own custom bucket map to TEA as a standalone module, **you must ensure that your custom bucket map includes mappings for the `protected` and `public` buckets specified in your `cumulus-tf/terraform.tfvars`, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors**
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2099**
   - `meta.queues` has been removed from Cumulus core workflow messages.
   - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
+- **CUMULUS-2111**
+  - The deployment of the `thin-egress-app` module has be removed from `tf-modules/distribution`, which is a part of the `tf-modules/cumulus` module. Thus, the `thin-egress-app` module is no longer deployed for you by default. See the migration steps for details about how to add deployment for the `thin-egress-app`.
+- **CUMULUS-2141**
+  - The `parse-pdr` task has been updated to respect the `NODE_NAME` property in
+    a PDR's `FILE_GROUP`. If a `NODE_NAME` is present, the task will query the
+    Cumulus API for a provider with that host. If a provider is found, the
+    output granule from the task will contain a `provider` property containing
+    that provider. If `NODE_NAME` is set but a provider with that host cannot be
+    found in the API, or if multiple providers are found with that same host,
+    the task will fail.
+  - The `queue-granules` task has been updated to expect an optional
+    `granule.provider` property on each granule. If present, the granule will be
+    enqueued using that provider. If not present, the task's `config.provider`
+    will be used instead.
 
 #### CODE CHANGES
 
+- The `@cumulus/api-client.providers.getProviders` function now takes a
+  `queryStringParameters` parameter which can be used to filter the providers
+  which are returned
 - The `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync` function has been
   removed. It read the entire S3 object into memory before returning a read
   stream, which could cause Lambdas to run out of memory. Use
@@ -89,6 +118,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     and will fail to create the report if both are provided.  Adding granuleId
     will find collections in Cumulus by granuleId and compare those one way
     with those in CMR.
+  - `/reconciliationReports` now validates any input json before starting the
+    async operation and the lambda handler no longer validates input
+    parameters.
 - **CUMULUS-1965**
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
@@ -100,6 +132,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `RestrictionFlag/RestrictionComment`, respectively.
   - Added an operator doc on how to configure and run the access constraint update workflow, which will update the metadata using the new task, and then publish the updated metadata to CMR.
   - Added an operator doc on bulk operations.
+- **CUMULUS-2111**
+  - Added variables to `cumulus` module:
+    - `tea_api_egress_log_group`
+    - `tea_external_api_endpoint`
+    - `tea_internal_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `tea_stack_name`
+  - Added variables to `distribution` module:
+    - `tea_api_egress_log_group`
+    - `tea_external_api_endpoint`
+    - `tea_internal_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `tea_stack_name`
 - **CUMULUS-2112**
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
@@ -117,6 +164,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2107**
   - Updated the `applyWorkflow` functionality on the granules endpoint to take a `meta` property to pass into the workflow message.
   - Updated the `BULK_GRANULE` functionality on the granules endpoint to support the above `applyWorkflow` change.
+- **CUMULUS-2111**
+  - Changed `distribution_api_gateway_stage` variable for `cumulus` module to `tea_api_gateway_stage`
+  - Changed `api_gateway_stage` variable for `distribution` module to `tea_api_gateway_stage`
 
 ### Fixed
 
@@ -129,16 +179,50 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
+- **CUMULUS-2015**
+  - Reduced concurrency of `QueueGranules` task. That task now has a
+    `config.concurrency` option that defaults to `3`.
 - **CUMULUS-2163**
   - Remove the `public-read` ACL from the `move-granules` task
+- **CUMULUS-2164**
+  - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
 
 ### Deprecated
 
 - **CUMULUS-1955**
   - `@cumulus/aws-client/S3.getS3Object()`
+- `@cumulus/message/Queue.getQueueNameByUrl()`
+- `@cumulus/message/Queue.getQueueName()`
 
 ### Removed
 
+- **CUMULUS-2111**
+  - Removed `distribution_url` and `distribution_redirect_uri` outputs from the `cumulus` module
+  - Removed variables from the `cumulus` module:
+    - `distribution_url`
+    - `log_api_gateway_to_cloudwatch`
+    - `thin_egress_cookie_domain`
+    - `thin_egress_domain_cert_arn`
+    - `thin_egress_download_role_in_region_arn`
+    - `thin_egress_jwt_algo`
+    - `thin_egress_jwt_secret_name`
+    - `thin_egress_lambda_code_dependency_archive_key`
+    - `thin_egress_stack_name`
+  - Removed outputs from the `distribution` module:
+    - `distribution_url`
+    - `internal_tea_api`
+    - `rest_api_id`
+    - `thin_egress_app_redirect_uri`
+  - Removed variables from the `distribution` module:
+    - `bucket_map_key`
+    - `distribution_url`
+    - `log_api_gateway_to_cloudwatch`
+    - `thin_egress_cookie_domain`
+    - `thin_egress_domain_cert_arn`
+    - `thin_egress_download_role_in_region_arn`
+    - `thin_egress_jwt_algo`
+    - `thin_egress_jwt_secret_name`
+    - `thin_egress_lambda_code_dependency_archive_key`
 - `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
 - `@cumulus/aws-client/S3.getS3ObjectReadStream`
 - `@cumulus/cmrjs.getFullMetadata`
@@ -165,11 +249,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/integration-tests/sfnStep.parseStepMessage`
 - `@cumulus/message/Queue.getQueueName`
 - `@cumulus/message/Queue.getQueueNameByUrl`
-
-### Deprecated
-
-- `@cumulus/message/Queue.getQueueNameByUrl()`
-- `@cumulus/message/Queue.getQueueName()`
 
 ## [v2.0.1] 2020-07-28
 
@@ -3437,3 +3516,5 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v1.1.0]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/nasa/cumulus/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/nasa/cumulus/compare/pre-v1-release...v1.0.0
+
+[thin-egress-app]: <https://github.com/asfadmin/thin-egress-app> "Thin Egress App"

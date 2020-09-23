@@ -115,11 +115,9 @@ async function enqueueGranuleIngestMessage({
   };
 
   const message = buildQueueMessageFromTemplate({
-    // collection,
     messageTemplate,
     parentExecutionArn,
     payload,
-    // provider,
     queueUrl,
     workflow,
     customMeta: {
