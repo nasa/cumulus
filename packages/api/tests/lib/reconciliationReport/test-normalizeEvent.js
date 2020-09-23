@@ -90,7 +90,7 @@ test('normalizeEvent moves array on granuleId to granuleIds', (t) => {
   const actual = normalizeEvent(inputEvent);
   t.deepEqual(actual, expect);
 });
-test('normalizeEvent throws error if granuleIds and collectionIds are passed to non-Internal report', (t) => {
+test('normalizeEvent throws error if granuleId and collectionId are passed to non-Internal report', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
     stackName: 'stackName',
@@ -168,36 +168,35 @@ test('normalizeEvent moves array on provider to providers', (t) => {
   t.deepEqual(actual, expect);
 });
 
-test('normalizeEvent throws error if providers and collectionIds are passed to non-Internal report', (t) => {
+test('normalizeEvent throws error if provider and collectionId are passed to non-Internal report', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'anytype',
+    reportType: 'Granule Not Found',
     provider: ['someProvider'],
     collectionId: ['someCollectionId1'],
   };
   t.throws(() => normalizeEvent(inputEvent), {
     instanceOf: InvalidArgument,
     message:
-      'anytype reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
+      'Granule Not Found reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
   });
 });
 
-test('normalizeEvent throws error if providers and granuleIds are passed to non-Internal report', (t) => {
+test('normalizeEvent throws error if provider and granuleId are passed to non-Internal report', (t) => {
   const inputEvent = {
     systemBucket: 'systemBucket',
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'notInternal',
     provider: ['someProvider'],
     granuleId: ['someGranuleId'],
   };
   t.throws(() => normalizeEvent(inputEvent), {
     instanceOf: InvalidArgument,
     message:
-      'notInternal reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
+      'Inventory reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
   });
 });
