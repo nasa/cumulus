@@ -491,7 +491,8 @@ describe('When there are granule differences and granule reconciliation is run',
         reportName: randomId('InternalReport'),
         endTimestamp: moment.utc().format(),
         collectionId,
-        provider: `s3_provider${testSuffix}`,
+        granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
+        provider: [randomId('provider'), `s3_provider${testSuffix}`],
       };
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
@@ -526,9 +527,9 @@ describe('When there are granule differences and granule reconciliation is run',
 
     it('generates a report showing number of collections that are in both ES and DB', () => {
       expect(report.collections.okCount).toBe(1);
-      expect(report.granules.withConflicts.length).toBe(0);
-      expect(report.granules.onlyInEs.length).toBe(0);
-      expect(report.granules.onlyInDb.length).toBe(0);
+      expect(report.collections.withConflicts.length).toBe(0);
+      expect(report.collections.onlyInEs.length).toBe(0);
+      expect(report.collections.onlyInDb.length).toBe(0);
     });
 
     it('generates a report showing number of granules that are in both ES and DB', () => {

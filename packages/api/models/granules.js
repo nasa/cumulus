@@ -2,6 +2,8 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
+const isArray = require('lodash/isArray');
+const isString = require('lodash/isString');
 const partial = require('lodash/partial');
 const path = require('path');
 const pMap = require('p-map');
@@ -407,6 +409,15 @@ class Granule extends Manager {
    * @returns {Array<Object>} the granules' queue for a given collection
    */
   searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
+    // Key Condition Expression does not support IN operators
+    if (searchParams.granuleId && !isString(searchParams.granuleId)) {
+      throw new CumulusModelError('Could not search granule records for collection, granuleId is not string');
+    }
+    // Filter Expression can't contain key attributes
+    if (searchParams.collectionId) {
+      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in searchParams');
+    }
+
     const attributeNames = {};
     const attributeValues = {};
     const filterArray = [];
@@ -414,16 +425,28 @@ class Granule extends Manager {
     const keyConditionArray = [];
 
     Object.entries(searchParams).forEach(([key, value]) => {
-      let field = key;
-      let operation = '=';
-      if (key.includes('__')) {
-        field = key.split('__').shift();
-        operation = key.endsWith('__from') ? '>=' : '<=';
+      const field = key.includes('__') ? key.split('__').shift() : key;
+      attributeNames[`#${field}`] = field;
+
+      let expression;
+      if (key.endsWith('__from') || key.endsWith('__to')) {
+        const operation = key.endsWith('__from') ? '>=' : '<=';
+        attributeValues[`:${key}`] = value;
+        expression = `#${field} ${operation} :${key}`;
+      } else if (isArray(value)) {
+        const operation = 'IN';
+        const keyValues = [];
+        value.forEach((val, index) => {
+          attributeValues[`:${key}${index}`] = val;
+          keyValues.push(`:${key}${index}`);
+        });
+        expression = `#${field} ${operation} (${keyValues.join(', ')})`;
+      } else {
+        const operation = '=';
+        attributeValues[`:${key}`] = value;
+        expression = `#${field} ${operation} :${key}`;
       }
 
-      attributeNames[`#${field}`] = field;
-      attributeValues[`:${key}`] = value;
-      const expression = `#${field} ${operation} :${key}`;
       if (field === 'granuleId') {
         keyConditionArray.push(expression);
       } else {
