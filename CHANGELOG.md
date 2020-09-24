@@ -90,6 +90,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-1962**
+  - Adds `location` as parameter to `/reconciliationReports` endpoint. Options are `S3`
+    resulting in a S3 vs. Cumulus database search or `CMR` resulting in CMR vs. Cumulus database search.
 - **CUMULUS-1963**
   - Adds `granuleId` as input parameter to `/reconcilationReports`
     endpoint. Limits inputs parameters to either `collectionId` or `granuleId`
@@ -99,6 +102,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `/reconciliationReports` now validates any input json before starting the
     async operation and the lambda handler no longer validates input
     parameters.
+- **CUMULUS-1964**
+  - Reports can now be filtered on provider
 - **CUMULUS-1965**
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
@@ -158,6 +163,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     code to fire off a connection 'heartbeat' query and log the timing/results
     for diagnostic purposes, and retry certain connection timeouts once.
     This option is disabled by default
+- **CUMULUS-2156**
+  - Support array inputs parameters for `Internal` reconciliation report
 - **CUMULUS-2157**
   - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
     - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead

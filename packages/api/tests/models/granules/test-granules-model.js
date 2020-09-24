@@ -10,7 +10,7 @@ const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
@@ -542,6 +542,19 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   t.is(fetchedGranules.length, 2);
   const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
   t.deepEqual(fetchedGranules, sortBy(expectedGranules, ['granuleId']));
+
+  // array parameters
+  searchParams = {
+    ...searchParams,
+    provider: [provider, randomId('provider')],
+    granuleId: granules[0].granuleId,
+  };
+  granulesQueue = await granuleModel
+    .searchGranulesForCollection(collectionId, searchParams, fields);
+
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 1);
+  t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
 
   // test when no granule falls within the search parameter range
   searchParams = {
