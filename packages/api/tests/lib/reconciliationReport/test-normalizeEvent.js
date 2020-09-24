@@ -44,7 +44,7 @@ test('normalizeEvent throws error if original input event contains collectionIds
     stackName: 'stackName',
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
-    reportType: 'anytype',
+    reportType: 'Inventory',
     collectionIds: ['someCollection___version'],
   };
   t.throws(() => normalizeEvent(inputEvent), {
