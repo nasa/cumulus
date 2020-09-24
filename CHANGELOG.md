@@ -167,6 +167,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2168**
+  - Fixed issue where large number of documents (generally logs) in the
+    `cumulus` elasticsearch index results in the collection granule stats
+    queries failing for the collections list api endpoint
 - **CUMULUS-1955**
   - Due to AWS's eventual consistency model, it was possible for PostToCMR to
     publish an earlier version of a CMR metadata file, rather than the latest
