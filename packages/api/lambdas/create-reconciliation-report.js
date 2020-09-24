@@ -66,6 +66,7 @@ function isOneWayCollectionReport(reportParams) {
     'startTimestamp',
     'endTimestamp',
     'granuleIds',
+    'providers',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -81,6 +82,7 @@ function isOneWayGranuleReport(reportParams) {
   return [
     'startTimestamp',
     'endTimestamp',
+    'providers',
   ].some((e) => !!reportParams[e]);
 }
 
@@ -95,6 +97,7 @@ function shouldAggregateGranulesForCollections(searchParams) {
     'updatedAt__from',
     'updatedAt__to',
     'granuleId__in',
+    'provider__in',
   ].some((e) => !!searchParams[e]);
 }
 
@@ -106,7 +109,6 @@ function shouldAggregateGranulesForCollections(searchParams) {
 async function fetchESCollections(recReportParams) {
   const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
   const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
-
   let esCollectionIds;
   // [MHS, 09/02/2020] We are doing these two because we can't use
   // aggregations on scrolls yet until we update elasticsearch version.
@@ -582,7 +584,6 @@ async function createReconciliationReport(recReportParams) {
     systemBucket,
     location,
   } = recReportParams;
-
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
   const distributionBucketMap = await getJsonS3Object(
