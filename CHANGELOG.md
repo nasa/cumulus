@@ -109,6 +109,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     those found in Cumulus and only those compared to the CMR holdings. For the moment
     there is not enough information to change the internal consistency check, and S3 vs
     Cumulus comparisons are unchanged by the timestamps.
+- **CUMULUS-1962**
+  - Adds `location` as parameter to `/reconciliationReports` endpoint. Options are `S3`
+    resulting in a S3 vs. Cumulus database search or `CMR` resulting in CMR vs. Cumulus database search.
 - **CUMULUS-1963**
   - Adds `granuleId` as input parameter to `/reconcilationReports`
     endpoint. Limits inputs parameters to either `collectionId` or `granuleId`
@@ -118,6 +121,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `/reconciliationReports` now validates any input json before starting the
     async operation and the lambda handler no longer validates input
     parameters.
+- **CUMULUS-1964**
+  - Reports can now be filtered on provider
 - **CUMULUS-1965**
   - Adds `collectionId` parameter to the `/reconcilationReports`
     endpoint. Setting this value will limit the scope of the reconcilation
@@ -154,6 +159,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2126**
   - The collections endpoint now writes to the RDS database
+- **CUMULUS-2156**
+  - Support array inputs parameters for `Internal` reconciliation report
 
 ### Changed
 
@@ -185,6 +192,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `config.concurrency` option that defaults to `3`.
 - **CUMULUS-2163**
   - Remove the `public-read` ACL from the `move-granules` task
+- **CUMULUS-2164**
+  - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
 
 ### Deprecated
 

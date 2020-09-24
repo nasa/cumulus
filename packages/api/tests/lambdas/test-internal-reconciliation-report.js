@@ -17,7 +17,7 @@ const {
   internalRecReportForCollections,
   internalRecReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
-
+const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const models = require('../../models');
 const indexer = require('../../es/indexer');
 const { deconstructCollectionId } = require('../../lib/utils');
@@ -62,7 +62,7 @@ test.afterEach.always(async (t) => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test.serial('reconciliationReportForCollections reports discrepancy of collection holdings in ES and DB', async (t) => {
+test.serial('internalRecReportForCollections reports discrepancy of collection holdings in ES and DB', async (t) => {
   const matchingColls = range(10).map(() => fakeCollectionFactory());
   const extraDbColls = range(2).map(() => fakeCollectionFactory());
   const extraEsColls = range(2).map(() => fakeCollectionFactory());
@@ -96,7 +96,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await internalRecReportForCollections(searchParams);
+  report = await internalRecReportForCollections(normalizeEvent(searchParams));
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.is(report.onlyInDb.length, 2);
@@ -108,7 +108,7 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await internalRecReportForCollections(paramsTimeOutOfRange);
+  report = await internalRecReportForCollections(normalizeEvent(paramsTimeOutOfRange));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -116,20 +116,16 @@ test.serial('reconciliationReportForCollections reports discrepancy of collectio
 
   // collectionId matches the collection with conflicts
   const collectionId = constructCollectionId(conflictCollInDb.name, conflictCollInDb.version);
-  // TODO [MHS, 09/09/2020] remove collectionIds after CUMULUS-2156 is worked
-  // (added because this test doesn't normalize the event) another alternative
-  // would be to rewire and __get__ the normalize function from
-  // create-reconciliation-report
-  const paramsCollectionId = { ...searchParams, collectionId, collectionIds: [collectionId] };
+  const paramsCollectionId = { ...searchParams, collectionId: [collectionId, randomId('c')] };
 
-  report = await internalRecReportForCollections(paramsCollectionId);
+  report = await internalRecReportForCollections(normalizeEvent(paramsCollectionId));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 1);
 });
 
-test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
+test.serial('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
   const collectionId = constructCollectionId(randomId('name'), randomId('version'));
   const provider = randomId('provider');
 
@@ -172,24 +168,25 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
   t.deepEqual(report.withConflicts[0].es.granuleId, conflictGranInEs.granuleId);
   t.deepEqual(report.withConflicts[0].db.granuleId, conflictGranInDb.granuleId);
 
-  // start/end time include all the granules
+  // start/end time include all the collections and granules
   const searchParams = {
+    reportType: 'Internal',
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await internalRecReportForGranules(searchParams);
+  report = await internalRecReportForGranules(normalizeEvent(searchParams));
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.is(report.onlyInDb.length, 4);
   t.is(report.withConflicts.length, 1);
 
-  // start/end time has no matching collections
+  // start/end time has no matching collections and granules
   const outOfRangeParams = {
     startTimestamp: moment.utc().add(1, 'hour').format(),
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await internalRecReportForGranules(outOfRangeParams);
+  report = await internalRecReportForGranules(normalizeEvent(outOfRangeParams));
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -197,7 +194,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   // collectionId, provider parameters
   const collectionProviderParams = { ...searchParams, collectionId, provider };
-  report = await internalRecReportForGranules(collectionProviderParams);
+  report = await internalRecReportForGranules(normalizeEvent(collectionProviderParams));
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -208,8 +205,8 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
   t.is(report.withConflicts.length, 0);
 
   // provider parameter
-  const providerParams = { ...searchParams, provider };
-  report = await internalRecReportForGranules(providerParams);
+  const providerParams = { ...searchParams, provider: [randomId('p'), provider] };
+  report = await internalRecReportForGranules(normalizeEvent(providerParams));
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -219,12 +216,17 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     extraDbGrans.map((gran) => gran.granuleId).sort());
   t.is(report.withConflicts.length, 0);
 
-  // granuleId parameter
+  // collectionId, granuleId parameters
   const granuleId = conflictGranInDb.granuleId;
-  const granuleIdParams = { granuleId };
-  report = await internalRecReportForGranules(granuleIdParams);
+  const granuleIdParams = {
+    ...searchParams,
+    granuleId: [granuleId, extraEsGrans[0].granuleId, randomId('g')],
+    collectionId: [collectionId, extraEsGrans[0].collectionId, extraEsGrans[1].collectionId],
+  };
+  report = await internalRecReportForGranules(normalizeEvent(granuleIdParams));
   t.is(report.okCount, 0);
-  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInEs.length, 1);
+  t.is(report.onlyInEs[0].granuleId, extraEsGrans[0].granuleId);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 1);
 });
