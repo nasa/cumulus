@@ -2,8 +2,7 @@
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
-// eslint-disable-next-line lodash/import-scope
-const { get } = require('lodash');
+const get = require('lodash/get');
 const { BaseSearch } = require('./search');
 
 const ES_MAX_AGG = 2147483647;
@@ -103,9 +102,7 @@ class Collection extends BaseSearch {
   }
 
   _filterAggBuckets(buckets, filter) {
-    // This case is needed in the instance that the collection aggregation query
-    // returns a 0 count aggregation (e.g. a new deployment without collections)
-    if (buckets === undefined || buckets.length === 0) {
+    if (buckets === undefined) {
       return undefined;
     }
 
