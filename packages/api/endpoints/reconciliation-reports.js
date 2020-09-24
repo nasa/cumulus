@@ -7,6 +7,8 @@ const {
   fileExists,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
+
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
@@ -50,14 +52,16 @@ async function getReport(req, res) {
   try {
     const result = await reconciliationReportModel.get({ name });
     const { Bucket, Key } = parseS3Uri(result.location);
-    const file = await getS3Object(Bucket, Key);
     if (Key.endsWith('.json')) {
+      const file = await getS3Object(Bucket, Key);
+      logger.debug(`Sending file contentLength ${file.ContentLength}`);
       return res.json(JSON.parse(file.Body.toString()));
     }
     if (Key.endsWith('.csv')) {
-      res.header('Content-Type', 'text/csv');
-      return res.send(file.Body.toString());
+      const downloadURL = s3().getSignedUrl('getObject', { Bucket, Key });
+      return res.redirect(303, downloadURL);
     }
+    logger.debug('Unhandled report type.');
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
@@ -67,7 +71,7 @@ async function getReport(req, res) {
     }
     throw error;
   }
-  return res.boom.badImplementation('should never get here');
+  return res.boom.badImplementation('Should never get here');
 }
 
 /**
