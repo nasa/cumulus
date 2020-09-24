@@ -38,13 +38,11 @@ class Collection extends BaseSearch {
               name: {
                 terms: {
                   field: 'name',
-                  size: ES_MAX_AGG,
                 },
                 aggs: {
                   version: {
                     terms: {
                       field: 'version',
-                      size: ES_MAX_AGG,
                     },
                     aggs: {
                       stats: {
@@ -55,7 +53,6 @@ class Collection extends BaseSearch {
                           count: {
                             terms: {
                               field: 'status',
-                              size: ES_MAX_AGG,
                             },
                           },
                         },
