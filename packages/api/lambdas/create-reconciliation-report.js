@@ -567,6 +567,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
+ * @param {string} recReportParams.location - location to invetory for report
  * @param {string} recReportParams.reportKey - the s3 report key
  * @param {string} recReportParams.stackName - the name of the CUMULUS stack
  * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
@@ -579,6 +580,7 @@ async function createReconciliationReport(recReportParams) {
     reportKey,
     stackName,
     systemBucket,
+    location,
   } = recReportParams;
 
   // Fetch the bucket names to reconcile
@@ -605,7 +607,6 @@ async function createReconciliationReport(recReportParams) {
     onlyInCumulus: [],
     onlyInCmr: [],
   };
-
   let report = {
     ...initialReportHeader(recReportParams),
     filesInCumulus,
@@ -622,35 +623,39 @@ async function createReconciliationReport(recReportParams) {
 
   // Internal consistency check S3 vs Cumulus DBs
   // --------------------------------------------
-  // Create a report for each bucket
-  const promisedBucketReports = dataBuckets.map(
-    (bucket) => createReconciliationReportForBucket(bucket)
-  );
-
-  const bucketReports = await Promise.all(promisedBucketReports);
-
-  bucketReports.forEach((bucketReport) => {
-    report.filesInCumulus.okCount += bucketReport.okCount;
-    report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
-    report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
-      bucketReport.onlyInDynamoDb
+  if (location !== 'CMR') {
+    // Create a report for each bucket
+    const promisedBucketReports = dataBuckets.map(
+      (bucket) => createReconciliationReportForBucket(bucket)
     );
 
-    Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
-      const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
-      const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+    const bucketReports = await Promise.all(promisedBucketReports);
 
-      report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
-        + bucketGranuleCount;
+    bucketReports.forEach((bucketReport) => {
+      report.filesInCumulus.okCount += bucketReport.okCount;
+      report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
+      report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
+        bucketReport.onlyInDynamoDb
+      );
+
+      Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
+        const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
+        const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+
+        report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
+          + bucketGranuleCount;
+      });
     });
-  });
+  }
 
   // compare the CUMULUS holdings with the holdings in CMR
   // -----------------------------------------------------
-  const cumulusCmrReport = await reconciliationReportForCumulusCMR({
-    bucketsConfig, distributionBucketMap, recReportParams,
-  });
-  report = Object.assign(report, cumulusCmrReport);
+  if (location !== 'S3') {
+    const cumulusCmrReport = await reconciliationReportForCumulusCMR({
+      bucketsConfig, distributionBucketMap, recReportParams,
+    });
+    report = Object.assign(report, cumulusCmrReport);
+  }
 
   // Create the full report
   report.createEndTime = moment.utc().toISOString();

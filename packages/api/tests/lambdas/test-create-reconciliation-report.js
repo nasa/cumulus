@@ -749,6 +749,101 @@ test.serial(
 );
 
 test.serial(
+  'With location param as S3, generates a valid reconcilation report for only S3 and DynamoDB',
+  async (t) => {
+    const dataBuckets = range(2).map(() => randomId('bucket'));
+    await Promise.all(dataBuckets.map((bucket) =>
+      createBucket(bucket)
+        .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+    // Write the buckets config to S3
+    await storeBucketsConfigToS3(
+      dataBuckets,
+      t.context.systemBucket,
+      t.context.stackName
+    );
+
+    // Create random files
+    const files = range(10).map((i) => ({
+      bucket: dataBuckets[i % dataBuckets.length],
+      key: randomId('key'),
+      granuleId: randomId('granuleId'),
+    }));
+
+    // Store the files to S3 and DynamoDB
+    await Promise.all([
+      storeFilesToS3(files),
+      GranuleFilesCache.batchUpdate({ puts: files }),
+    ]);
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      location: 'S3',
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const filesInCumulus = report.filesInCumulus;
+    t.is(report.status, 'SUCCESS');
+
+    const granuleIds = Object.keys(filesInCumulus.okCountByGranule);
+    granuleIds.forEach((granuleId) => {
+      const okCountForGranule = filesInCumulus.okCountByGranule[granuleId];
+      t.is(okCountForGranule, 1);
+    });
+
+    t.is(report.error, undefined);
+    t.is(filesInCumulus.okCount, files.length);
+    t.is(filesInCumulus.onlyInS3.length, 0);
+    t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+    t.is(report.collectionsInCumulusCmr.okCount, 0);
+    t.is(report.granulesInCumulusCmr.okCount, 0);
+    t.is(report.filesInCumulusCmr.okCount, 0);
+  }
+);
+
+test.serial(
+  'With location param as CMR, generates a valid reconcilation report for only Cumulus and CMR',
+  async (t) => {
+    const params = {
+      numMatchingCollectionsOutOfRange: 0,
+      numExtraESCollectionsOutOfRange: 0,
+    };
+
+    const setupVars = await setupElasticAndCMRForTests({ t, params });
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      location: 'CMR',
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    t.is(report.status, 'SUCCESS');
+    t.is(report.error, undefined);
+    t.is(collectionsInCumulusCmr.okCount, setupVars.matchingCollections.length);
+    t.is(report.filesInCumulus.okCount, 0);
+
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraESCollections.length);
+    setupVars.extraESCollections.map((collection) =>
+      t.true(collectionsInCumulusCmr.onlyInCumulus
+        .includes(constructCollectionId(collection.name, collection.version))));
+
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, setupVars.extraCmrCollections.length);
+    setupVars.extraCmrCollections.map((collection) =>
+      t.true(collectionsInCumulusCmr.onlyInCmr
+        .includes(constructCollectionId(collection.name, collection.version))));
+  }
+);
+
+test.serial(
   'Generates valid reconciliation report without time params and there are extra cumulus/ES and CMR collections',
   async (t) => {
     const setupVars = await setupElasticAndCMRForTests({ t });
