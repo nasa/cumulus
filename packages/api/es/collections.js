@@ -31,39 +31,39 @@ class Collection extends BaseSearch {
           collections: {
             filter: {
               term: {
-                _type: 'collection',
+                _type: 'collection'
               },
             },
             aggs: {
               name: {
                 terms: {
-                  field: 'name',
+                  field: 'name'
                 },
                 aggs: {
                   version: {
                     terms: {
-                      field: 'version',
+                      field: 'version'
                     },
                     aggs: {
                       stats: {
                         children: {
-                          type: 'granule',
+                          type: 'granule'
                         },
                         aggs: {
                           count: {
                             terms: {
-                              field: 'status',
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                              field: 'status'
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       size: 0
     }).then((response) => response.body);
