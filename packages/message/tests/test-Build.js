@@ -64,6 +64,20 @@ test('buildCumulusMeta returns expected object', (t) => {
   });
 });
 
+test('buildCumulusMeta uses executionName if provided', (t) => {
+  const stateMachine = randomId('states');
+  const queueUrl = randomId('queue');
+  const executionName = randomId('execution-name');
+
+  const cumulusMeta = buildCumulusMeta({
+    stateMachine,
+    queueUrl,
+    executionName,
+  });
+
+  t.is(cumulusMeta.execution_name, executionName);
+});
+
 test('buildQueueMessageFromTemplate does not overwrite contents from message template', (t) => {
   const queueUrl = randomId('queue');
   const messageTemplate = {
@@ -328,4 +342,36 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
   };
 
   t.deepEqual(actualMessage, expectedMessage);
+});
+
+test('buildQueueMessageFromTemplate uses executionName if provided', (t) => {
+  const messageTemplate = {};
+  const workflow = {
+    name: randomId('workflow'),
+    arn: randomId('arn:aws:states:wf'),
+  };
+  const queueUrl = randomId('queue');
+
+  const parentExecutionArn = randomId('parentArn');
+
+  const granules = [{
+    granule1: 'granule1',
+  }];
+  const payload = {
+    foo: 'bar',
+    granules: granules,
+  };
+
+  const executionName = randomId('execution-name');
+
+  const actualMessage = buildQueueMessageFromTemplate({
+    parentExecutionArn,
+    queueUrl,
+    messageTemplate,
+    payload,
+    workflow,
+    executionName,
+  });
+
+  t.is(actualMessage.cumulus_meta.execution_name, executionName);
 });

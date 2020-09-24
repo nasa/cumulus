@@ -23,7 +23,8 @@
           "dataType": { "type": "string" },
           "version": { "type": "string" },
           "provider": { "type": "object" },
-          "files": { "type": "array" }
+          "files": { "type": "array" },
+          "executionName": { "type": "string" }
         }
       }
     }

@@ -33,6 +33,7 @@ const createExecutionName = (): string => uuidv4();
  * @param {Object} params
  * @param {string} [params.queueUrl] - An SQS queue URL
  * @param {string} params.stateMachine - State machine name
+ * @param {string} [params.executionName] - Execution name
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {string} [params.parentExecutionArn] - Parent execution ARN
  * @returns {Message.CumulusMeta}
@@ -43,18 +44,20 @@ export const buildCumulusMeta = ({
   queueUrl,
   stateMachine,
   asyncOperationId,
+  executionName,
   parentExecutionArn,
   templateCumulusMeta,
 }: {
   queueUrl: string
   stateMachine: string,
   asyncOperationId?: string,
+  executionName?: string,
   parentExecutionArn?: string,
   templateCumulusMeta: WorkflowMessageTemplateCumulusMeta
 }): Message.CumulusMeta => {
   const cumulusMeta: Message.CumulusMeta = {
     ...templateCumulusMeta,
-    execution_name: createExecutionName(),
+    execution_name: executionName ?? createExecutionName(),
     queueUrl,
     state_machine: stateMachine,
   };
@@ -77,6 +80,7 @@ export const buildCumulusMeta = ({
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {Object} [params.customCumulusMeta] - Custom data for message.cumulus_meta
  * @param {Object} [params.customMeta] - Custom data for message.meta
+ * @param {string} [params.executionName] - Execution name
  *
  * @returns {Message.CumulusMessage} A Cumulus message object
  *
@@ -91,6 +95,7 @@ export const buildQueueMessageFromTemplate = ({
   workflow,
   customCumulusMeta = {},
   customMeta = {},
+  executionName,
 }: {
   parentExecutionArn: string,
   messageTemplate: WorkflowMessageTemplate,
@@ -99,10 +104,12 @@ export const buildQueueMessageFromTemplate = ({
   queueUrl: string,
   asyncOperationId?: string,
   customCumulusMeta?: object
-  customMeta?: object
+  customMeta?: object,
+  executionName?: string,
 }): Message.CumulusMessage => {
   const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
+    executionName,
     parentExecutionArn,
     queueUrl,
     stateMachine: workflow.arn,

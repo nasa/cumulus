@@ -23,6 +23,7 @@ const {
  * @param {Object} params.collection - the collection config to be attached to the
  *   message
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
+ * @param {string} [params.executionName] - execution name
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueParsePdrMessage({
@@ -34,6 +35,7 @@ async function enqueueParsePdrMessage({
   stack,
   systemBucket,
   queueUrl,
+  executionName,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: parsePdrArn } = await getJsonS3Object(
@@ -47,17 +49,16 @@ async function enqueueParsePdrMessage({
   };
 
   const message = buildQueueMessageFromTemplate({
-    // collection,
     messageTemplate,
     parentExecutionArn,
     payload,
-    // provider,
     queueUrl,
     workflow,
     customMeta: {
       collection,
       provider,
     },
+    executionName,
   });
 
   const arn = buildExecutionArn(
@@ -84,6 +85,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  *   message
  * @param {Object} params.pdr - an optional PDR to be configured in the message payload
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
+ * @param {string} [params.executionName] - execution name
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueGranuleIngestMessage({
@@ -96,6 +98,7 @@ async function enqueueGranuleIngestMessage({
   stack,
   systemBucket,
   queueUrl,
+  executionName,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: ingestGranuleArn } = await getJsonS3Object(
@@ -124,6 +127,7 @@ async function enqueueGranuleIngestMessage({
       collection,
       provider,
     },
+    executionName,
   });
 
   if (pdr) message.meta.pdr = pdr;

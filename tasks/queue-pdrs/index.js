@@ -1,6 +1,8 @@
 'use strict';
 
 const get = require('lodash/get');
+const omit = require('lodash/omit');
+const { v4: uuidv4 } = require('uuid');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueParsePdrMessage } = require('@cumulus/ingest/queue');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
@@ -18,16 +20,26 @@ async function queuePdrs(event) {
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
   const executionArns = await Promise.all(
-    pdrs.map((pdr) => enqueueParsePdrMessage({
-      pdr,
-      queueUrl: event.config.queueUrl,
-      parsePdrWorkflow: event.config.parsePdrWorkflow,
-      provider: event.config.provider,
-      collection: event.config.collection,
-      parentExecutionArn: arn,
-      stack: event.config.stackName,
-      systemBucket: event.config.internalBucket,
-    }))
+    pdrs.map((pdr) => {
+      let executionName;
+      if (pdr.executionName) {
+        executionName = pdr.executionName;
+      } else if (event.config.executionNamePrefix) {
+        executionName = `${event.config.executionNamePrefix}-${uuidv4()}`;
+      }
+
+      return enqueueParsePdrMessage({
+        pdr: omit(pdr, 'executionName'),
+        queueUrl: event.config.queueUrl,
+        parsePdrWorkflow: event.config.parsePdrWorkflow,
+        provider: event.config.provider,
+        collection: event.config.collection,
+        parentExecutionArn: arn,
+        stack: event.config.stackName,
+        systemBucket: event.config.internalBucket,
+        executionName,
+      });
+    })
   );
 
   return { running: executionArns, pdrs_queued: pdrs.length };

@@ -10,6 +10,7 @@
       "items": {
         "type": "object",
         "properties": {
+          "executionName": { "type": "string" },
           "name": { "type": "string" },
           "path": { "type": "string" }
         }
