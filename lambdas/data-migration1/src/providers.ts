@@ -69,7 +69,8 @@ export const migrateProviderRecord = async (
     throw new RecordAlreadyMigrated(`Provider name ${dynamoRecord.id} was already migrated, skipping`);
   }
 
-  let { username, password, encrypted } = dynamoRecord;
+  let { username, password } = dynamoRecord;
+  const { encrypted } = dynamoRecord;
 
   if (username) {
     const plaintext = encrypted ? await decrypt(username) : username;
@@ -97,7 +98,7 @@ export const migrateProviderRecord = async (
     updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  return knex('providers').insert(updatedRecord);
+  await knex('providers').insert(updatedRecord);
 };
 
 export const migrateProviders = async (

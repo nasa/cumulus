@@ -81,7 +81,7 @@ export const migrateCollectionRecord = async (
     updated_at: new Date(dynamoRecord.updatedAt),
   };
 
-  return knex('collections').insert(updatedRecord);
+  await knex('collections').insert(updatedRecord);
 };
 
 export const migrateCollections = async (
