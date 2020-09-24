@@ -27,9 +27,6 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('password')
       .comment('password for acessing the provider');
     table
-      .boolean('encrypted')
-      .comment('Whether the username/password are stored as encrypted values');
-    table
       .integer('globalConnectionLimit')
       .comment('Maximum number of allowed concurrent connections to this provider');
     table
