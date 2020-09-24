@@ -58,7 +58,10 @@ async function getReport(req, res) {
       return res.json(JSON.parse(file.Body.toString()));
     }
     if (Key.endsWith('.csv')) {
-      const downloadURL = s3().getSignedUrl('getObject', { Bucket, Key });
+      const downloadFile = Key.split('/').pop();
+      const downloadURL = s3().getSignedUrl('getObject', {
+        Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
+      });
       return res.redirect(303, downloadURL);
     }
     logger.debug('Unhandled report type.');
