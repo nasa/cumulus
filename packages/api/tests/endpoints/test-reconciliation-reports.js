@@ -360,7 +360,7 @@ test.serial('create a report with invalid payload errors immediately', async (t)
       response.body,
       {
         error: 'Bad Request',
-        message: 'Inventory reports cannot be launched with both granuleId and collectionId input.',
+        message: 'Inventory reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
         name: 'InvalidArgument',
         statusCode: 400,
       }
