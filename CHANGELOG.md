@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v2.0.6] 2020-09-26
+
+### Fixed
+
+- **CUMULUS-2168**
+  - Fixed issue where large number of documents (generally logs) in the
+    `cumulus` elasticsearch index results in the collection granule stats
+    queries failing for the collections list api endpoint
+
 ## [v2.0.5] 2020-09-15
 
 ### Added
