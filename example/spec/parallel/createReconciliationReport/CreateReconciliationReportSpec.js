@@ -562,6 +562,7 @@ describe('When there are granule differences and granule reconciliation is run',
   describe('Creates \'Granule Inventory\' reports.', () => {
     let reportRecord;
     let reportArray;
+    let redirectResponse;
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Granule Inventory',
@@ -589,13 +590,31 @@ describe('When there are granule differences and granule reconciliation is run',
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
-    it('fetches a Granule Inventory report through the Cumulus API', async () => {
-      const response = await reconciliationReportsApi.getReconciliationReport({
+    it('Fetches a signed URL to the Granule Inventory report through the Cumulus API', async () => {
+      redirectResponse = await reconciliationReportsApi.getReconciliationReport({
         prefix: config.stackName,
         name: reportRecord.name,
       });
 
-      reportArray = response.body.split('\n');
+      expect(redirectResponse.statusCode).toBe(303);
+      expect(redirectResponse.headers.location).toMatch(`reconciliation-reports/${reportRecord.name}.csv?`);
+      expect(redirectResponse.headers.location).toMatch('AWSAccessKeyId');
+      expect(redirectResponse.headers.location).toMatch('Signature');
+      expect(redirectResponse.body).toMatch('See Other. Redirecting to');
+    });
+
+    it('Wrote correct data to the S3 location.', async () => {
+      const pieces = new RegExp('https://(.*)\.s3.amazonaws.com/(.*)\\?.*', 'm');
+      const [, Bucket, Key] = redirectResponse.headers.location.match(pieces);
+      let response;
+      try {
+        response = await s3().getObject({ Bucket, Key }).promise();
+      } catch (error) {
+        console.error(error);
+      }
+
+      reportArray = response.Body.toString().split('\n');
+
       [
         'granuleUr',
         'collectionId',
@@ -617,6 +636,25 @@ describe('When there are granule differences and granule reconciliation is run',
         // found in reportl
         expect(reportArray.some((record) => record.includes(testStr))).toBe(true);
       });
+    });
+
+    it('deletes a reconciliation report through the Cumulus API', async () => {
+      await reconciliationReportsApi.deleteReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      const parsed = parseS3Uri(reportRecord.location);
+      const exists = await fileExists(parsed.Bucket, parsed.Key);
+      expect(exists).toBeFalse();
+
+      const response = await reconciliationReportsApi.getReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
     });
   });
 
