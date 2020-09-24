@@ -154,6 +154,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2126**
   - The collections endpoint now writes to the RDS database
+- **CUMULUS-2156**
+  - Support array inputs parameters for `Internal` reconciliation report
 
 ### Changed
 
@@ -181,6 +183,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `config.concurrency` option that defaults to `3`.
 - **CUMULUS-2163**
   - Remove the `public-read` ACL from the `move-granules` task
+- **CUMULUS-2164**
+  - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
 
 ### Deprecated
 

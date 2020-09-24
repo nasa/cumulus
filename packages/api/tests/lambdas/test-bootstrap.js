@@ -154,7 +154,6 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   });
 
   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
 
   // Get the index and make sure `testAlias` is not a key which would mean it's an index
   // If you use indices.exist on testAlias it'll return true because the alias is
@@ -164,4 +163,23 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   t.falsy(index[testAlias]);
 
   await esClient.indices.delete({ index: indexName });
+});
+
+test('If an alias exists that index is used and a new one is not created', async (t) => {
+  const indexName = randomId('index');
+  const existingIndex = randomId('index');
+  const existingAlias = randomId('esalias');
+
+  esClient = await Search.es();
+  await bootstrap.bootstrapElasticSearch('fakehost', existingIndex, existingAlias);
+
+  // Try bootstrapping with a different index name
+  await bootstrap.bootstrapElasticSearch('fakehost', indexName, existingAlias);
+
+  const indexExists = await esClient.indices.exists({ index: indexName })
+    .then((response) => response.body);
+
+  t.false(indexExists);
+
+  await esClient.indices.delete({ index: existingIndex });
 });
