@@ -2,6 +2,8 @@
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
+// eslint-disable-next-line lodash/import-scope
+const { get } = require('lodash');
 const { BaseSearch } = require('./search');
 
 const ES_MAX_AGG = 2147483647;
@@ -29,20 +31,38 @@ class Collection extends BaseSearch {
           },
         },
         aggs: {
-          hashes: {
-            terms: {
-              field: '_uid',
-              size: ES_MAX_AGG,
+          collections: {
+            filter: {
+              term: {
+                _type: 'collection',
+              },
             },
             aggs: {
-              stats: {
-                children: {
-                  type: 'granule',
+              name: {
+                terms: {
+                  field: 'name',
+                  size: ES_MAX_AGG,
                 },
                 aggs: {
-                  count: {
+                  version: {
                     terms: {
-                      field: 'status',
+                      field: 'version',
+                      size: ES_MAX_AGG,
+                    },
+                    aggs: {
+                      stats: {
+                        children: {
+                          type: 'granule',
+                        },
+                        aggs: {
+                          count: {
+                            terms: {
+                              field: 'status',
+                              size: ES_MAX_AGG,
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -53,7 +73,6 @@ class Collection extends BaseSearch {
       },
     }).then((response) => response.body);
 
-    // add aggs to res
     return records.map((record) => {
       const updatedRecord = cloneDeep(record);
 
@@ -64,21 +83,40 @@ class Collection extends BaseSearch {
         total: 0,
       };
 
-      // Can't aggregate on the _id but can on the _uid which is collection#_id
-      const esUid = `collection#${constructCollectionId(updatedRecord.name, updatedRecord.version)}`;
+      const aggregations = get(aggs, 'aggregations.collections');
+      const nameBucket = this._filterAggBuckets(
+        aggregations.name.buckets, (agg) => agg.key === updatedRecord.name
+      );
+      const versionBucket = this._filterAggBuckets(
+        get(nameBucket, 'version.buckets'), (agg) => agg.key === updatedRecord.version
+      );
 
-      const matchingBucket = aggs.aggregations.hashes.buckets
-        .find((bucket) => bucket.key === esUid);
-
-      if (matchingBucket) {
-        updatedRecord.stats.total = matchingBucket.stats.doc_count;
-        matchingBucket.stats.count.buckets.forEach((s) => {
+      if (versionBucket) {
+        const stats = versionBucket.stats;
+        updatedRecord.stats.total = stats.doc_count;
+        stats.count.buckets.forEach((s) => {
           updatedRecord.stats[s.key] = s.doc_count;
         });
       }
-
       return updatedRecord;
     });
+  }
+
+  _filterAggBuckets(buckets, filter) {
+    // This case is needed in the instance that the collection aggregation query
+    // returns a 0 count aggregation (e.g. a new deployment without collections)
+    if (buckets === undefined || buckets.length === 0) {
+      return undefined;
+    }
+
+    const result = buckets.filter((agg) => filter(agg));
+    if (result.length === 1) {
+      return result[0];
+    }
+    if (result.length === 0) {
+      return undefined;
+    }
+    throw new Error(`Statistics aggregation failed due to duplicate filter return ${JSON.stringify(buckets)}: ${JSON.stringify(result)}`);
   }
 
   /**
@@ -92,7 +130,6 @@ class Collection extends BaseSearch {
     if (!this.client) {
       this.client = await this.constructor.es();
     }
-
     // granules
     const searchParams = this._buildSearch();
     delete searchParams.from;
