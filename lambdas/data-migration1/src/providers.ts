@@ -1,5 +1,4 @@
 import Knex from 'knex';
-import isNil from 'lodash/isNil';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import * as KMS from '@cumulus/aws-client/KMS';
@@ -30,33 +29,18 @@ export interface RDSProviderRecord {
   updated_at?: Date
 }
 
-const encryptProviderCredential = async (
-  value: string,
-  providerKmsKeyId: string,
-  encrypted?: boolean
-) => {
-  if (isNil(value)) return undefined;
+const decrypt = async (value: string): Promise<string> => {
+  try {
+    const plaintext = await KMS.decryptBase64String(value);
 
-  let valueToEncrypt = value;
-  let isKMSEncrypted = false;
-
-  if (encrypted) {
-    try {
-      valueToEncrypt = await keyPairProvider.S3KeyPairProvider
-        .decrypt(value);
-    } catch (error) {
-      // Check to see if we already have a KMS encrypted value
-      if ((await KMS.decryptBase64String(value))) {
-        isKMSEncrypted = true;
-      } else {
-        throw error;
-      }
+    if (plaintext === undefined) {
+      throw new Error('Unable to decrypt');
     }
-  }
 
-  return isKMSEncrypted
-    ? value
-    : KMS.encrypt(providerKmsKeyId, valueToEncrypt);
+    return plaintext;
+  } catch (error) {
+    return keyPairProvider.S3KeyPairProvider.decrypt(value);
+  }
 };
 
 /**
@@ -87,11 +71,20 @@ export const migrateProviderRecord = async (
   }
 
   let { username, password, encrypted } = dynamoRecord;
-  if (username || password) {
-    username = await encryptProviderCredential(username, providerKmsKeyId, encrypted);
-    password = await encryptProviderCredential(password, providerKmsKeyId, encrypted);
-    encrypted = true;
+
+  if (username) {
+    const plaintext = encrypted ? await decrypt(username) : username;
+    username = await KMS.encrypt(providerKmsKeyId, plaintext);
   }
+
+  if (password) {
+    const plaintext = encrypted ? await decrypt(password) : password;
+    password = await KMS.encrypt(providerKmsKeyId, plaintext);
+  }
+
+  encrypted = typeof encrypted === 'boolean'
+    ? Boolean(username || password)
+    : undefined;
 
   // Map old record to new schema.
   const updatedRecord: RDSProviderRecord = {
