@@ -139,6 +139,7 @@ function initialReportHeader(recReportParams) {
     collectionId,
     provider,
     providers,
+    location,
   } = recReportParams;
 
   return {
@@ -151,6 +152,7 @@ function initialReportHeader(recReportParams) {
     granuleIds,
     provider,
     providers,
+    location,
     reportEndTime: endTimestamp,
     reportStartTime: startTimestamp,
     reportType,
