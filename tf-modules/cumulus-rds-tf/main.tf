@@ -31,6 +31,7 @@ resource "aws_secretsmanager_secret_version" "rds_login" {
   secret_string         = jsonencode({
     username            = var.db_admin_username
     password            = var.db_admin_password
+    database            = "postgres"
     engine              = "postgres"
     host                = aws_rds_cluster.cumulus.endpoint
     port                = 5432

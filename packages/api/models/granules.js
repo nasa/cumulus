@@ -2,6 +2,8 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
+const isArray = require('lodash/isArray');
+const isString = require('lodash/isString');
 const partial = require('lodash/partial');
 const path = require('path');
 const pMap = require('p-map');
@@ -184,15 +186,17 @@ class Granule extends Manager {
   /**
    * apply a workflow to a given granule object
    *
-   * @param {Object} g - the granule object
+   * @param {Object} granule - the granule object
    * @param {string} workflow - the workflow name
+   * @param {Object} meta - optional meta object to insert in workflow message
    * @param {string} [queueName] - specify queue to append message to
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(
-    g,
+    granule,
     workflow,
+    meta = undefined,
     queueName = undefined,
     asyncOperationId = undefined
   ) {
@@ -200,23 +204,24 @@ class Granule extends Manager {
       throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
     }
 
-    const { name, version } = deconstructCollectionId(g.collectionId);
+    const { name, version } = deconstructCollectionId(granule.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
       workflow,
       payload: {
-        granules: [g],
+        granules: [granule],
       },
-      provider: g.provider,
+      provider: granule.provider,
       collection: {
         name,
         version,
       },
+      meta,
       queueName,
       asyncOperationId,
     });
 
-    await this.updateStatus({ granuleId: g.granuleId }, 'running');
+    await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
     await Lambda.invoke(process.env.invoke, lambdaPayload);
   }
@@ -404,6 +409,15 @@ class Granule extends Manager {
    * @returns {Array<Object>} the granules' queue for a given collection
    */
   searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
+    // Key Condition Expression does not support IN operators
+    if (searchParams.granuleId && !isString(searchParams.granuleId)) {
+      throw new CumulusModelError('Could not search granule records for collection, granuleId is not string');
+    }
+    // Filter Expression can't contain key attributes
+    if (searchParams.collectionId) {
+      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in searchParams');
+    }
+
     const attributeNames = {};
     const attributeValues = {};
     const filterArray = [];
@@ -411,16 +425,28 @@ class Granule extends Manager {
     const keyConditionArray = [];
 
     Object.entries(searchParams).forEach(([key, value]) => {
-      let field = key;
-      let operation = '=';
-      if (key.includes('__')) {
-        field = key.split('__').shift();
-        operation = key.endsWith('__from') ? '>=' : '<=';
+      const field = key.includes('__') ? key.split('__').shift() : key;
+      attributeNames[`#${field}`] = field;
+
+      let expression;
+      if (key.endsWith('__from') || key.endsWith('__to')) {
+        const operation = key.endsWith('__from') ? '>=' : '<=';
+        attributeValues[`:${key}`] = value;
+        expression = `#${field} ${operation} :${key}`;
+      } else if (isArray(value)) {
+        const operation = 'IN';
+        const keyValues = [];
+        value.forEach((val, index) => {
+          attributeValues[`:${key}${index}`] = val;
+          keyValues.push(`:${key}${index}`);
+        });
+        expression = `#${field} ${operation} (${keyValues.join(', ')})`;
+      } else {
+        const operation = '=';
+        attributeValues[`:${key}`] = value;
+        expression = `#${field} ${operation} :${key}`;
       }
 
-      attributeNames[`#${field}`] = field;
-      attributeValues[`:${key}`] = value;
-      const expression = `#${field} ${operation} :${key}`;
       if (field === 'granuleId') {
         keyConditionArray.push(expression);
       } else {

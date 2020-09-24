@@ -69,6 +69,11 @@ variable "s3_replicator_config" {
   description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
 
+variable "pdr_node_name_provider_bucket" {
+  type = string
+  description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
+}
+
 variable "prefix" {
   type = string
 }
@@ -91,10 +96,6 @@ variable "saml_idp_login" {
 variable "saml_launchpad_metadata_url" {
   type    = string
   default = "N/A"
-}
-
-variable "subnet_ids" {
-  type = list(string)
 }
 
 variable "system_bucket" {
@@ -133,6 +134,11 @@ variable "buckets" {
 variable "distribution_url" {
   type    = string
   default = null
+}
+
+variable "ecs_cluster_instance_subnet_ids" {
+  type = list(string)
+  default = []
 }
 
 variable "ems_datasource" {
@@ -207,6 +213,11 @@ variable "permissions_boundary_arn" {
 variable "aws_profile" {
   type    = string
   default = null
+}
+
+variable "lambda_subnet_ids" {
+  type = list(string)
+  default = []
 }
 
 variable "log_api_gateway_to_cloudwatch" {

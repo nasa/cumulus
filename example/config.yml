@@ -1,10 +1,12 @@
 default:
   bucket: cumulus-test-sandbox-internal
   apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sandbox-pdr-node-name-provider
 
 cumulus-sit:
   bucket: cumulus-sit-internal
   apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
 mvd-tf:
   bucket: mvd-internal
@@ -15,8 +17,8 @@ mvd-dev-tf:
 jl-tf:
   bucket: jl-test-integration-internal
 
-kk-tf:
-  bucket: kk-tf-internal
+kk1-tf:
+  bucket: kk1-tf-internal
 
 lf-test-tf:
   bucket: lf-internal

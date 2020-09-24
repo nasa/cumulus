@@ -154,6 +154,7 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
 
 test('applyWorkflow calls the callback with the expected object', async (t) => {
   const workflow = 'Test Workflow';
+  const meta = { test: 'Test Meta Value' };
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -163,7 +164,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
         'Content-Type': 'application/json',
       },
       path: `/granules/${t.context.granuleId}`,
-      body: JSON.stringify({ action: 'applyWorkflow', workflow }),
+      body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
     },
   };
 
@@ -175,6 +176,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     workflow,
+    meta,
     callback,
   }));
 });

@@ -64,7 +64,15 @@
     "Troubleshooting": [
       "troubleshooting/troubleshooting-readme",
       "troubleshooting/troubleshooting-deployment",
-      "troubleshooting/rerunning-workflow-executions"
+      "troubleshooting/rerunning-workflow-executions",
+      "troubleshooting/troubleshooting-deployment"
+    ],
+    "Cumulus Development": [
+      "adding-a-task",
+      "docs-how-to"
+    ],
+    "Upgrade Notes": [
+      "upgrade-notes/migrate_tea_standalone"
     ]
   },
   "Data Cookbooks": {
@@ -94,7 +102,12 @@
       "operator-docs/provider"
     ],
     "Operations": [
-      "operator-docs/discovery-filtering"
+      "operator-docs/discovery-filtering",
+      "operator-docs/bulk-operations",
+      "operator-docs/cmr-operations",
+      "operator-docs/discovery-filtering",
+      "operator-docs/rerunning-workflow-executions",
+      "operator-docs/replay-kinesis-messages"
     ],
     "Common Use Cases": [
       "operator-docs/common-use-cases",
