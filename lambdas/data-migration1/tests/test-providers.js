@@ -133,9 +133,8 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
         name: fakeProvider.id,
         created_at: new Date(fakeProvider.createdAt),
         updated_at: new Date(fakeProvider.updatedAt),
-        encrypted: true,
       },
-      ['id', 'createdAt', 'updatedAt']
+      ['id', 'encrypted', 'createdAt', 'updatedAt']
     )
   );
 });
@@ -156,7 +155,6 @@ test.serial('migrateProviderRecord correctly migrates record without credentials
     .where('name', fakeProvider.id)
     .first();
 
-  t.is(createdRecord.encrypted, false);
   t.is(createdRecord.username, null);
   t.is(createdRecord.password, null);
 });
@@ -190,7 +188,6 @@ test.serial('migrateProviderRecord correctly encrypts plaintext credentials', as
     .where('name', fakeProvider.id)
     .first();
 
-  t.is(createdRecord.encrypted, true);
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
   t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
 });
@@ -213,7 +210,6 @@ test.serial('migrateProviderRecord correctly encrypts S3KeyPairProvider-encrypte
     .where('name', s3EncryptedProvider.id)
     .first();
 
-  t.is(createdRecord.encrypted, true);
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
   t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
 });
@@ -236,7 +232,6 @@ test.serial('migrateProviderRecord correctly preserves KMS-encrypted credentials
     .where('name', KMSEncryptedProvider.id)
     .first();
 
-  t.is(createdRecord.encrypted, true);
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
   t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
 });
@@ -283,7 +278,6 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
         port: null,
         username: null,
         password: null,
-        encrypted: null,
         privateKey: null,
         cmKeyId: null,
         certificateUri: null,

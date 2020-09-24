@@ -20,7 +20,6 @@ export interface RDSProviderRecord {
   port?: number
   username?: string
   password?: string
-  encrypted?: boolean
   globalConnectionLimit?: number
   privateKey?: string
   cmKeyId?: string
@@ -82,10 +81,6 @@ export const migrateProviderRecord = async (
     password = await KMS.encrypt(providerKmsKeyId, plaintext);
   }
 
-  encrypted = typeof encrypted === 'boolean'
-    ? Boolean(username || password)
-    : undefined;
-
   // Map old record to new schema.
   const updatedRecord: RDSProviderRecord = {
     name: dynamoRecord.id,
@@ -94,7 +89,6 @@ export const migrateProviderRecord = async (
     port: dynamoRecord.port,
     username,
     password,
-    encrypted,
     globalConnectionLimit: dynamoRecord.globalConnectionLimit,
     privateKey: dynamoRecord.privateKey,
     cmKeyId: dynamoRecord.cmKeyId,
