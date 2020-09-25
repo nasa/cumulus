@@ -23,10 +23,10 @@ We will cover Cumulus file types, file type configuration, effects on CMR metada
 
 Cumulus follows the Cloud Notification Mechanism (CNM) file type conventions. Under this schema, there are four data types:
 
-* `data`
-* `browse`
-* `metadata`
-* `qa`
+- `data`
+- `browse`
+- `metadata`
+- `qa`
 
 In Cumulus, these data types are mapped to the `Type` attribute on `RelatedURL`s for UMM-G metadata, or used to map
 resources to one of `OnlineAccessURL`, `OnlineResource` or `AssociatedBrowseImages` for ECHO10 XML metadata.
