@@ -15,6 +15,11 @@ variable "prefix" {
   default = null
 }
 
+variable "provider_kms_key_id" {
+  description = "KMS key ID for encrypting provider credentials"
+  type        = string
+}
+
 variable "region" {
   type    = string
   default = "us-east-1"
