@@ -6,6 +6,8 @@
   "engines": {
     "node": ">=12.18.0"
   },
+  "main": "./dist/lambda/index.js",
+  "types": "./dist/lambda/index.d.ts",
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",

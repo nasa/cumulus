@@ -87,22 +87,22 @@ Terraform v0.12.12
 
 ## Installation
 
-### Prepare DAAC deployment repository
+### Prepare deployment repository
 
-_If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
+_If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
 
-Clone the `cumulus-template-deploy` repo and name appropriately for your DAAC or organization:
+Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-deploy) repo and name appropriately for your organization:
 
 ```bash
-  git clone https://github.com/nasa/cumulus-template-deploy <daac>-deploy
+  git clone https://github.com/nasa/cumulus-template-deploy <repository-name>
 ```
 
 We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
 
-**Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can add your workflows and other modules to source control:
+**Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) on Github so that you can add your workflows and other modules to source control:
 
 ```bash
-  git remote set-url origin https://github.com/nasa/<daac>-deploy
+  git remote set-url origin https://github.com/nasa/<repository-name>
   git push origin master
 ```
 

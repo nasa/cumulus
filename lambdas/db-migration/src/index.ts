@@ -8,12 +8,14 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
 }
 
+export const migrationDir = path.join(__dirname, 'migrations');
+
 export const handler = async (event: HandlerEvent): Promise<void> => {
   let knex;
   try {
     const env = event.env ?? process.env;
 
-    env.migrationDir = path.join(__dirname, 'migrations');
+    env.migrationDir = migrationDir;
 
     knex = await getKnexClient({ env });
 

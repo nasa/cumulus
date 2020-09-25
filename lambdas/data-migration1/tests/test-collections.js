@@ -1,6 +1,5 @@
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
-const path = require('path');
 const test = require('ava');
 
 const Collection = require('@cumulus/api/models/collections');
@@ -13,10 +12,12 @@ const {
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const {
-  RecordAlreadyMigrated,
   migrateCollectionRecord,
   migrateCollections,
-} = require('../dist/lambda');
+} = require('../dist/lambda/collections');
+const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
+// eslint-disable-next-line node/no-unpublished-require
+const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
@@ -44,13 +45,6 @@ let collectionsModel;
 let rulesModel;
 
 test.before(async (t) => {
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir: `${path.join(__dirname, '..', '..', 'db-migration', 'dist', 'lambda', 'migrations')}`,
-    },
-  });
-
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
@@ -63,6 +57,13 @@ test.before(async (t) => {
 
   rulesModel = new Rule();
   await rulesModel.createTable();
+
+  t.context.knexAdmin = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      migrationDir,
+    },
+  });
   await t.context.knexAdmin.raw(`create database "${testDbName}";`);
   await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
 
@@ -70,7 +71,7 @@ test.before(async (t) => {
     env: {
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
-      migrationDir: `${path.join(__dirname, '..', '..', 'db-migration', 'dist', 'lambda', 'migrations')}`,
+      migrationDir,
     },
   });
 
@@ -92,11 +93,12 @@ test.after.always(async (t) => {
 
 test.serial('migrateCollectionRecord correctly migrates collection record', async (t) => {
   const fakeCollection = generateFakeCollection();
-  const cumulusId = await migrateCollectionRecord(fakeCollection, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateCollectionRecord(fakeCollection, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('collections')
-    .where('cumulusId', cumulusId);
+    .where({ name: fakeCollection.name, version: fakeCollection.version })
+    .first();
 
   t.deepEqual(
     omit(createdRecord, ['cumulusId']),
@@ -135,11 +137,12 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
   delete fakeCollection.meta;
   delete fakeCollection.tags;
 
-  const cumulusId = await migrateCollectionRecord(fakeCollection, t.context.knex);
-  const [createdRecord] = await t.context.knex.queryBuilder()
+  await migrateCollectionRecord(fakeCollection, t.context.knex);
+  const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('collections')
-    .where('cumulusId', cumulusId);
+    .where({ name: fakeCollection.name, version: fakeCollection.version })
+    .first();
 
   t.deepEqual(
     omit(createdRecord, ['cumulusId']),
