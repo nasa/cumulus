@@ -67,25 +67,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `thin_egress_stack_name` variable to `cumulus` and `distribution` Terraform modules to allow overriding the default Cloudformation stack name used for the `thin-egress-app`. **Please note that if you change/set this value for an existing deployment, it will destroy and re-create your API gateway for the `thin-egress-app`.**
-- **CUMULUS-2155**
-  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
-    modules.  If set to true, this diagnostic variable instructs Core's database
-    code to fire off a connection 'heartbeat' query and log the timing/results
-    for diagnostic purposes, and retry certain connection timeouts once.
-    This option is disabled by default
-- **CUMULUS-2123**
-  - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
-    requirements for the 2.1.x release series
-  - Updated the default Cumulus module to take the following new required variables:
-    - rds_user_access_secret_arn:
-      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
-      (containing at least host, password, port as keys)
-    - rds_security_group:
-      RDS Security Group that provides connection access to the RDS cluster
-  - Updated API lambdas and default ECS cluster to add them to the
-    `rds_security_group` for database access
 - **CUMULUS-1855**
   - Fixed SyncGranule task to return an empty granules list when given an empty
     (or absent) granules list on input, rather than throwing an exception
@@ -157,10 +138,36 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
+- **CUMULUS-2123**
+  - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
+    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    requirements for the 2.1.x release series
+  - Updated the default Cumulus module to take the following new required variables:
+    - rds_user_access_secret_arn:
+      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
+      (containing at least host, password, port as keys)
+    - rds_security_group:
+      RDS Security Group that provides connection access to the RDS cluster
+  - Updated API lambdas and default ECS cluster to add them to the
+    `rds_security_group` for database access
 - **CUMULUS-2126**
   - The collections endpoint now writes to the RDS database
+- **CUMULUS-2127**
+  - Added migration to create collections relation for RDS database
+- **CUMULUS-2129**
+  - Added `data-migration1` Terraform module and Lambda to migrate data from Dynamo to RDS
+    - Added support to Lambda for migrating collections data from Dynamo to RDS
+- **CUMULUS-2155**
+  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
+    modules.  If set to true, this diagnostic variable instructs Core's database
+    code to fire off a connection 'heartbeat' query and log the timing/results
+    for diagnostic purposes, and retry certain connection timeouts once.
+    This option is disabled by default
 - **CUMULUS-2156**
   - Support array inputs parameters for `Internal` reconciliation report
+- **CUMULUS-2157**
+  - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
+    - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead
 
 ### Changed
 
@@ -179,13 +186,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     publish an earlier version of a CMR metadata file, rather than the latest
     version created in a workflow.  This fix guarantees that the latest version
     is published, as expected.
-- **CUMULUS-2116**
-  - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
 - **CUMULUS-2015**
   - Reduced concurrency of `QueueGranules` task. That task now has a
     `config.concurrency` option that defaults to `3`.
+- **CUMULUS-2116**
+  - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
 - **CUMULUS-2163**
   - Remove the `public-read` ACL from the `move-granules` task
 - **CUMULUS-2164**
@@ -227,32 +234,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `thin_egress_jwt_algo`
     - `thin_egress_jwt_secret_name`
     - `thin_egress_lambda_code_dependency_archive_key`
-- `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
-- `@cumulus/aws-client/S3.getS3ObjectReadStream`
-- `@cumulus/cmrjs.getFullMetadata`
-- `@cumulus/cmrjs.getMetadata`
-- `@cumulus/common/util.isNil`
-- `@cumulus/common/util.isNull`
-- `@cumulus/common/util.isUndefined`
-- `@cumulus/common/util.lookupMimeType`
-- `@cumulus/common/util.mkdtempSync`
-- `@cumulus/common/util.negate`
-- `@cumulus/common/util.noop`
-- `@cumulus/common/util.omit`
-- `@cumulus/common/util.renameProperty`
-- `@cumulus/common/util.sleep`
-- `@cumulus/common/util.thread`
-- `@cumulus/ingest/granule.copyGranuleFile`
-- `@cumulus/ingest/granule.moveGranuleFile`
-- `@cumulus/integration-tests/api/rules.deleteRule`
-- `@cumulus/integration-tests/api/rules.getRule`
-- `@cumulus/integration-tests/api/rules.listRules`
-- `@cumulus/integration-tests/api/rules.postRule`
-- `@cumulus/integration-tests/api/rules.rerunRule`
-- `@cumulus/integration-tests/api/rules.updateRule`
-- `@cumulus/integration-tests/sfnStep.parseStepMessage`
-- `@cumulus/message/Queue.getQueueName`
-- `@cumulus/message/Queue.getQueueNameByUrl`
+- **CUMULUS-2157**
+  - Removed `providerSecretsMigration` and `verifyProviderSecretsMigration` lambdas
+- Removed code:
+  - `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
+  - `@cumulus/aws-client/S3.getS3ObjectReadStream`
+  - `@cumulus/cmrjs.getFullMetadata`
+  - `@cumulus/cmrjs.getMetadata`
+  - `@cumulus/common/util.isNil`
+  - `@cumulus/common/util.isNull`
+  - `@cumulus/common/util.isUndefined`
+  - `@cumulus/common/util.lookupMimeType`
+  - `@cumulus/common/util.mkdtempSync`
+  - `@cumulus/common/util.negate`
+  - `@cumulus/common/util.noop`
+  - `@cumulus/common/util.omit`
+  - `@cumulus/common/util.renameProperty`
+  - `@cumulus/common/util.sleep`
+  - `@cumulus/common/util.thread`
+  - `@cumulus/ingest/granule.copyGranuleFile`
+  - `@cumulus/ingest/granule.moveGranuleFile`
+  - `@cumulus/integration-tests/api/rules.deleteRule`
+  - `@cumulus/integration-tests/api/rules.getRule`
+  - `@cumulus/integration-tests/api/rules.listRules`
+  - `@cumulus/integration-tests/api/rules.postRule`
+  - `@cumulus/integration-tests/api/rules.rerunRule`
+  - `@cumulus/integration-tests/api/rules.updateRule`
+  - `@cumulus/integration-tests/sfnStep.parseStepMessage`
+  - `@cumulus/message/Queue.getQueueName`
+  - `@cumulus/message/Queue.getQueueNameByUrl`
 
 ## [v2.0.1] 2020-07-28
 
