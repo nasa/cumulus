@@ -1,10 +1,8 @@
 ---
 id: cloudwatch-logs-delivery
 title: Configure Cloudwatch Logs Delivery
-hide_title: true
+hide_title: false
 ---
-
-# Configure Cloudwatch Logs Delivery
 
 As an optional configuration step, it is possible to deliver CloudWatch logs to a cross-account shared AWS::Logs::Destination. An operator does this by configuring the `cumulus` module for [your deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module) as shown below. The value of the `log_destination_arn` variable is the ARN of a writeable log destination.
 

@@ -1,10 +1,8 @@
 ---
 id: adding-a-task
 title: Contributing a Task
-hide_title: true
+hide_title: false
 ---
-
-# Contributing a task
 
 We're tracking reusable Cumulus tasks [in this list](tasks.md) and, if you've got one you'd like to share with others, you can add it!
 

@@ -1,10 +1,8 @@
 ---
 id: cmr-operations
 title: CMR Operations
-hide_title: true
+hide_title: false
 ---
-
-# CMR Operations
 
 This document will outline basic procedures to interact with CMR on a per-granule basis.
 We rely on the Cumulus API's `ApplyWorkflow` functionality to accomplish these actions.

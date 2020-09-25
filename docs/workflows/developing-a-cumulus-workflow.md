@@ -1,10 +1,8 @@
 ---
 id: developing-a-cumulus-workflow
-title: Developing A Cumulus Workflow
-hide_title: true
+title: Creating a Cumulus Workflow
+hide_title: false
 ---
-
-# Creating a Cumulus workflow
 
 ## The Cumulus workflow module
 

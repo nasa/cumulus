@@ -1,10 +1,8 @@
 ---
 id: dead_letter_queues
 title: Dead Letter Queues
-hide_title: true
+hide_title: false
 ---
-
-# Cumulus Dead Letter Queues
 
 ## startSF SQS queue
 

@@ -1,10 +1,8 @@
 ---
 id: discover_granules
 title: Discover Granules
-hide_title: true
+hide_title: false
 ---
-
-# Discover Granules
 
 This task utilizes the Cumulus Message Adapter to interpret and construct incoming and outgoing messages.
 

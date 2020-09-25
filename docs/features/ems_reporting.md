@@ -1,10 +1,8 @@
 ---
 id: ems_reporting
 title: EMS Reporting
-hide_title: true
+hide_title: false
 ---
-
-# EMS Reporting
 
 Cumulus reports usage statistics to the [ESDIS Metrics System (EMS)](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/esdis-metrics-system-ems).
 

@@ -1,10 +1,8 @@
 ---
 id: common-use-cases
 title: Common Use Cases
-hide_title: true
+hide_title: false
 ---
-
-# Common Use Cases
 
 Listed below are some example use cases that you may encounter during your onboarding process and daily activities.
 

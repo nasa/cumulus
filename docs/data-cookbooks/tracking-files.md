@@ -1,18 +1,17 @@
 ---
 id: tracking-files
 title: Tracking Ancillary Files
-hide_title: true
+hide_title: false
 ---
-
-# Tracking Files
 
 ## Contents
 
-* [Introduction](#introduction)
-* [File Types](#file-types)
-* [File Type Configuration](#file-type-configuration)
-* [CMR Metadata](#cmr-metadata)
-* [Common Use Cases](#common-use-cases)
+- [Contents](#contents)
+  - [Introduction](#introduction)
+  - [File types](#file-types)
+  - [File Type Configuration](#file-type-configuration)
+  - [CMR Metadata](#cmr-metadata)
+  - [Common Use Cases](#common-use-cases)
 
 ### Introduction
 
@@ -66,7 +65,7 @@ Configuring browse imagery:
   "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\_[\\d]{1}.jpg$",
   "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_1.jpg",
   "type": "browse"
-}  
+}
 ```
 
 Configuring a documentation entry:
