@@ -40,7 +40,6 @@ module.exports = {
     manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
-    providerSecretsMigration: './lambdas/providerSecretsMigration.js',
     publishCollections: './lambdas/publish-collections.js',
     publishExecutions: './lambdas/publish-executions.js',
     publishGranules: './lambdas/publish-granules.js',
@@ -49,7 +48,6 @@ module.exports = {
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js',
     sqsMessageConsumer: './lambdas/sqs-message-consumer.js',
-    verifyProviderSecretsMigration: './lambdas/verifyProviderSecretsMigration.js'
   },
   devtool: 'inline-source-map',
   resolve: {
