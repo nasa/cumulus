@@ -1,8 +1,10 @@
 'use strict';
 
-const { Parser } = require('json2csv');
+const { Transform } = require('json2csv');
+const noop = require('lodash/noop');
+const Stream = require('stream');
 const Logger = require('@cumulus/logger');
-const { s3 } = require('@cumulus/aws-client/services');
+const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { Granule } = require('../../models');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 
@@ -23,9 +25,26 @@ async function createGranuleInventoryReport(recReportParams) {
   const granuleScanner = new Granule().granuleAttributeScan();
   let nextGranule = await granuleScanner.peek();
 
-  const granulesArray = [];
+  const readable = new Stream.Readable({ objectMode: true });
+  const pass = new Stream.PassThrough();
+  readable._read = noop;
+  const fields = [
+    'granuleUr',
+    'collectionId',
+    'createdAt',
+    'startDateTime',
+    'endDateTime',
+    'status',
+    'updatedAt',
+    'published',
+  ];
+  const transformOpts = { objectMode: true };
+
+  const json2csv = new Transform({ fields }, transformOpts);
+  readable.pipe(json2csv).pipe(pass);
+
   while (nextGranule) {
-    granulesArray.push({
+    readable.push({
       granuleUr: nextGranule.granuleId,
       collectionId: nextGranule.collectionId,
       createdAt: new Date(nextGranule.createdAt).toISOString(),
@@ -38,28 +57,13 @@ async function createGranuleInventoryReport(recReportParams) {
     await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
     nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
   }
+  readable.push(null);
 
-  const fields = [
-    'granuleUr',
-    'collectionId',
-    'createdAt',
-    'startDateTime',
-    'endDateTime',
-    'status',
-    'updatedAt',
-    'published',
-  ];
-  const parser = new Parser({ fields });
-  const csv = parser.parse(granulesArray);
-
-  // Write the full report to S3
-  return s3()
-    .putObject({
-      Bucket: systemBucket,
-      Key: reportKey,
-      Body: csv,
-    })
-    .promise();
+  return promiseS3Upload({
+    Bucket: systemBucket,
+    Key: reportKey,
+    Body: pass,
+  });
 }
 
 exports.createGranuleInventoryReport = createGranuleInventoryReport;
