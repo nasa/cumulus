@@ -33,4 +33,3 @@ There are plenty of workflow examples using Cumulus tasks [here](https://github.
 There is a list of Cumulus tasks already included in your deployment [here](tasks).
 
 After configuring your workflow and redeploying, you can configure and run your workflow using the same steps as in step 2.
-
