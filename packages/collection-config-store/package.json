@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/collection-config-store",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Utility for persisting collection configuration to S3 and retrieving it",
   "keywords": [
     "CUMULUS",
@@ -32,8 +32,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "2.0.5",
-    "@cumulus/common": "2.0.5",
-    "@cumulus/message": "2.0.5"
+    "@cumulus/aws-client": "2.0.6",
+    "@cumulus/common": "2.0.6",
+    "@cumulus/message": "2.0.6"
   }
 }
