@@ -217,42 +217,6 @@ test.serial('The correct message is enqueued', async (t) => {
   });
 });
 
-test.serial('A PDR with executionName is handled as expected', async (t) => {
-  const { event } = t.context;
-
-  const executionName = randomString();
-
-  event.input.pdrs = [
-    {
-      executionName,
-      name: randomString(),
-      path: randomString(),
-    },
-  ];
-
-  await validateConfig(t, event.config);
-  await validateInput(t, event.input);
-
-  const output = await queuePdrs(event);
-
-  await validateOutput(t, output);
-
-  // Get messages from the queue
-  const receiveMessageResponse = await sqs().receiveMessage({
-    QueueUrl: event.config.queueUrl,
-    MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1,
-  }).promise();
-
-  t.is(receiveMessageResponse.Messages.length, 1);
-
-  const message = JSON.parse(receiveMessageResponse.Messages[0].Body);
-
-  t.is(message.payload.pdr.executionName, undefined);
-
-  t.is(message.cumulus_meta.execution_name, executionName);
-});
-
 test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
   const { event } = t.context;
 
@@ -295,43 +259,4 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
   t.true(
     message.cumulus_meta.execution_name.length > executionNamePrefix.length
   );
-});
-
-test.serial('A PDR with executionName and config.executionNamePrefix is handled as expected', async (t) => {
-  const { event } = t.context;
-
-  const executionNamePrefix = randomString(3);
-  event.config.executionNamePrefix = executionNamePrefix;
-
-  const executionName = randomString();
-
-  event.input.pdrs = [
-    {
-      executionName,
-      name: randomString(),
-      path: randomString(),
-    },
-  ];
-
-  await validateConfig(t, event.config);
-  await validateInput(t, event.input);
-
-  const output = await queuePdrs(event);
-
-  await validateOutput(t, output);
-
-  // Get messages from the queue
-  const receiveMessageResponse = await sqs().receiveMessage({
-    QueueUrl: event.config.queueUrl,
-    MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1,
-  }).promise();
-
-  t.is(receiveMessageResponse.Messages.length, 1);
-
-  const message = JSON.parse(receiveMessageResponse.Messages[0].Body);
-
-  t.is(message.payload.pdr.executionName, undefined);
-
-  t.is(message.cumulus_meta.execution_name, executionName);
 });

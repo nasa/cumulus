@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const omit = require('lodash/omit');
 const pMap = require('p-map');
 const { v4: uuidv4 } = require('uuid');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -33,15 +32,12 @@ async function queueGranules(event) {
     async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
 
-      let executionName;
-      if (granule.executionName) {
-        executionName = granule.executionName;
-      } else if (event.config.executionNamePrefix) {
-        executionName = `${event.config.executionNamePrefix}-${uuidv4()}`;
-      }
+      const executionName = event.config.executionNamePrefix
+        ? `${event.config.executionNamePrefix}-${uuidv4()}`
+        : undefined;
 
       return enqueueGranuleIngestMessage({
-        granule: omit(granule, 'executionName'),
+        granule,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
         provider: granule.provider || event.config.provider,

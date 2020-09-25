@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const omit = require('lodash/omit');
 const { v4: uuidv4 } = require('uuid');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueParsePdrMessage } = require('@cumulus/ingest/queue');
@@ -21,15 +20,12 @@ async function queuePdrs(event) {
   );
   const executionArns = await Promise.all(
     pdrs.map((pdr) => {
-      let executionName;
-      if (pdr.executionName) {
-        executionName = pdr.executionName;
-      } else if (event.config.executionNamePrefix) {
-        executionName = `${event.config.executionNamePrefix}-${uuidv4()}`;
-      }
+      const executionName = event.config.executionNamePrefix
+        ? `${event.config.executionNamePrefix}-${uuidv4()}`
+        : undefined;
 
       return enqueueParsePdrMessage({
-        pdr: omit(pdr, 'executionName'),
+        pdr,
         queueUrl: event.config.queueUrl,
         parsePdrWorkflow: event.config.parsePdrWorkflow,
         provider: event.config.provider,
