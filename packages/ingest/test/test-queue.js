@@ -233,7 +233,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
   t.deepEqual(actualMessage.payload, expectedPayload);
 });
 
-test.serial('enqueueGranuleIngestMessage sets the executionName if specified', async (t) => {
+test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specified', async (t) => {
   const {
     queueUrl,
     templateBucket,
@@ -252,7 +252,7 @@ test.serial('enqueueGranuleIngestMessage sets the executionName if specified', a
     files: [],
   };
 
-  const executionName = randomId('execution-name');
+  const executionNamePrefix = randomId('prefix');
 
   await queue.enqueueGranuleIngestMessage({
     granule,
@@ -262,7 +262,7 @@ test.serial('enqueueGranuleIngestMessage sets the executionName if specified', a
     collection,
     systemBucket: templateBucket,
     stack: stackName,
-    executionName,
+    executionNamePrefix,
   });
 
   const receiveMessageResponse = await sqs().receiveMessage({
@@ -273,7 +273,10 @@ test.serial('enqueueGranuleIngestMessage sets the executionName if specified', a
 
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
 
-  t.is(actualMessage.cumulus_meta.execution_name, executionName);
+  const executionName = actualMessage.cumulus_meta.execution_name;
+
+  t.true(executionName.startsWith(executionNamePrefix));
+  t.true(executionName.length > executionNamePrefix.length);
 });
 
 test.serial('enqueueParsePdrMessage sets the executionName if specified', async (t) => {
@@ -284,7 +287,7 @@ test.serial('enqueueParsePdrMessage sets the executionName if specified', async 
     workflow,
   } = t.context;
 
-  const executionName = randomId('execution-name');
+  const executionNamePrefix = randomId('prefix');
 
   await queue.enqueueParsePdrMessage({
     parentExecutionArn: randomId(),
@@ -293,7 +296,7 @@ test.serial('enqueueParsePdrMessage sets the executionName if specified', async 
     stack: stackName,
     systemBucket: templateBucket,
     queueUrl,
-    executionName,
+    executionNamePrefix,
   });
 
   const receiveMessageResponse = await sqs().receiveMessage({
@@ -304,5 +307,8 @@ test.serial('enqueueParsePdrMessage sets the executionName if specified', async 
 
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
 
-  t.is(actualMessage.cumulus_meta.execution_name, executionName);
+  const executionName = actualMessage.cumulus_meta.execution_name;
+
+  t.true(executionName.startsWith(executionNamePrefix));
+  t.true(executionName.length > executionNamePrefix.length);
 });
