@@ -168,6 +168,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2157**
   - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
     - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead
+- **CUMULUS-2161**
+  - Rules now support an `executionNamePrefix` property. If set, any executions
+    triggered as a result of that rule will use that prefix in the name of the
+    execution.
+  - The `QueueGranules` task now supports an `executionNamePrefix` property. Any
+    executions queued by that task will use that prefix in the name of the
+    execution.
+  - The `QueuePdrs` task now supports an `executionNamePrefix` property. Any
+    executions queued by that task will use that prefix in the name of the
+    execution.
 
 ### Changed
 
