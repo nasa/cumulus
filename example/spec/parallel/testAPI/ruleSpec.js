@@ -11,6 +11,8 @@ const {
 
 const rulesApi = require('@cumulus/api-client/rules');
 
+const { randomId } = require('@cumulus/common/test-utils');
+
 const {
   createTestSuffix,
   createTimestampedTestId,
@@ -232,5 +234,67 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         }
       )
     ).toBeResolved();
+  });
+});
+
+describe('When I create a one-time rule with an executionNamePrefix via the Cumulus API', () => {
+  let config;
+  let createdCheck;
+  let helloWorldRule;
+  let executionNamePrefix;
+  let execution;
+  let executionName;
+
+  beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+
+    const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
+    createdCheck = timestampedName('Created');
+
+    executionNamePrefix = randomId('prefix');
+
+    helloWorldRule = {
+      name: oneTimeRuleName,
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'onetime',
+      },
+      meta: {
+        triggerRule: createdCheck, // used to detect that we're looking at the correct execution
+      },
+      executionNamePrefix,
+    };
+
+    // Create a one-time rule
+    await rulesApi.postRule({
+      prefix: config.stackName,
+      rule: helloWorldRule,
+    });
+
+    console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
+
+    execution = await waitForTestExecutionStart({
+      workflowName: helloWorldRule.workflow,
+      stackName: config.stackName,
+      bucket: config.bucket,
+      findExecutionFn: isWorkflowTriggeredByRule,
+      findExecutionFnParams: { rule: createdCheck },
+      startTask: 'HelloWorld',
+    });
+
+    executionName = execution.executionArn.split(':').reverse()[0];
+  });
+
+  afterAll(async () => {
+    console.log(`deleting rule ${helloWorldRule.name}`);
+    await rulesApi.deleteRule({
+      prefix: config.stackName,
+      ruleName: helloWorldRule.name,
+    });
+  });
+
+  it('the triggered execution has the requested prefix', async () => {
+    expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });
