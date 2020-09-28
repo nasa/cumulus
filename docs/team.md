@@ -7,7 +7,7 @@ hide_title: true
 ### Cumulus Core Team
 
 - Brian Tennity ([@bt6453](https://github.com/bt8453))
-- Daniel Peters ([@dopeters](https://github.com/dopeters))
+- Danielle Peters ([@dopeters](https://github.com/dopeters))
 - Jenny Liu ([@jennyhliu](https://github.com/jennyhliu))
 - Jonathan Kovarik ([@jkovarik](https://github.com/Jkovarik))
 - Juanisa McCoy ([@jjmccoy](https://github.com/jjmccoy))

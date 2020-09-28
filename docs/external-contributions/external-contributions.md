@@ -1,14 +1,14 @@
 ---
 id: external-contributions
 title: External Contributions
-hide_title: true
+hide_title: false
 ---
 
 # External Contributions
 
 Contributions to Cumulus may be made in the form of [PRs to the repositories directly](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md) or through externally developed tasks and components. Cumulus is designed as an ecosystem that leverages Terraform deployments and AWS Step Functions to easily integrate external components.
 
-This list may not be exhaustive and represents components that are open source and owned externally and that have been tested with the Cumulus system. For more information and contributing guidelines, visit the respective GitHub repositories.
+This list may not be exhaustive and represents components that are open source, owned externally,  and that have been tested with the Cumulus system. For more information and contributing guidelines, visit the respective GitHub repositories.
 
 ## Distribution
 
@@ -24,4 +24,4 @@ See the [CNM workflow data cookbook](../data-cookbooks/cnm-workflow) for an exam
 
 ### DMR++ Generation
 
-GHRC has provided a [DMR++ Generation](https://github.com/ghrcdaac/dmrpp-generator#overview) wokrflow task. This is meant to be used in conjunction with Cumulus' [Hyrax Metadata Updates workflow task](https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates#cumulushyrax-metadata-updates).
+GHRC has provided a [DMR++ Generation](https://github.com/ghrcdaac/dmrpp-generator#overview) wokrflow task. This task is meant to be used in conjunction with Cumulus' [Hyrax Metadata Updates workflow task](https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates#cumulushyrax-metadata-updates).
