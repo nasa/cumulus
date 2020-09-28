@@ -116,6 +116,78 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   });
 });
 
+describe('When I create a scheduled rule with an executionNamePrefix via the Cumulus API', () => {
+  let config;
+  let execution;
+  let executionName;
+  let executionNamePrefix;
+  let scheduledRuleName;
+  let scheduledHelloWorldRule;
+  let testSuffix;
+
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+
+  beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+
+    executionNamePrefix = randomId('prefix');
+
+    const testId = createTimestampedTestId(config.stackName, 'Rule');
+    testSuffix = createTestSuffix(testId);
+    scheduledRuleName = timestampedName('SchedHelloWorldTest');
+    scheduledHelloWorldRule = {
+      name: scheduledRuleName,
+      collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'scheduled',
+        value: 'rate(2 minutes)',
+      },
+      meta: {
+        triggerRule: scheduledRuleName,
+      },
+      executionNamePrefix,
+    };
+
+    await addCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix, testId);
+    // Create a scheduled rule
+    console.log(`post rule ${scheduledRuleName}`);
+    await rulesApi.postRule({
+      prefix: config.stackName,
+      rule: scheduledHelloWorldRule,
+    });
+
+    execution = await waitForTestExecutionStart({
+      workflowName: scheduledHelloWorldRule.workflow,
+      stackName: config.stackName,
+      bucket: config.bucket,
+      findExecutionFn: (taskInput, params) =>
+        taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
+      findExecutionFnParams: { ruleName: scheduledRuleName },
+      startTask: 'HelloWorld',
+    });
+
+    executionName = execution.executionArn.split(':').reverse()[0];
+  });
+
+  afterAll(async () => {
+    console.log(`deleting rule ${scheduledRuleName}`);
+
+    await rulesApi.deleteRule({
+      prefix: config.stackName,
+      ruleName: scheduledRuleName,
+    });
+    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix);
+  });
+
+  it('the triggered execution has the requested prefix', async () => {
+    expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
+  });
+});
+
 describe('When I create a one-time rule via the Cumulus API', () => {
   let config;
   let createdCheck;
@@ -240,10 +312,10 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 describe('When I create a one-time rule with an executionNamePrefix via the Cumulus API', () => {
   let config;
   let createdCheck;
-  let helloWorldRule;
-  let executionNamePrefix;
   let execution;
   let executionName;
+  let executionNamePrefix;
+  let helloWorldRule;
 
   beforeAll(async () => {
     config = await loadConfig();
