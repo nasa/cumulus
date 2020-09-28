@@ -54,7 +54,7 @@ async function getReport(req, res) {
     const { Bucket, Key } = parseS3Uri(result.location);
     if (Key.endsWith('.json')) {
       const file = await getS3Object(Bucket, Key);
-      logger.debug(`Sending file contentLength ${file.ContentLength}`);
+      logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
       return res.json(JSON.parse(file.Body.toString()));
     }
     if (Key.endsWith('.csv')) {
@@ -64,7 +64,7 @@ async function getReport(req, res) {
       });
       return res.redirect(303, downloadURL);
     }
-    logger.debug('Unhandled report type.');
+    logger.debug('reconciliation report getReport received an unhandled report type.');
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
@@ -74,7 +74,7 @@ async function getReport(req, res) {
     }
     throw error;
   }
-  return res.boom.badImplementation('Should never get here');
+  return res.boom.badImplementation('reconciliation report getReport failed in an indeterminate manner.');
 }
 
 /**
