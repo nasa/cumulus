@@ -125,7 +125,7 @@ fi
 # Target master by default.
 # Update with appropriate conditional
 # when creating a feature branch.
-export PR_BRANCH=master
+export PR_BRANCH=feature-rds
 
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the
