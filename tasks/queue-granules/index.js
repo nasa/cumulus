@@ -2,7 +2,6 @@
 
 const get = require('lodash/get');
 const pMap = require('p-map');
-const { v4: uuidv4 } = require('uuid');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
@@ -31,11 +30,6 @@ async function queueGranules(event) {
     granules,
     async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
-
-      const executionName = event.config.executionNamePrefix
-        ? `${event.config.executionNamePrefix}-${uuidv4()}`
-        : undefined;
-
       return enqueueGranuleIngestMessage({
         granule,
         queueUrl: event.config.queueUrl,
@@ -46,7 +40,7 @@ async function queueGranules(event) {
         parentExecutionArn: arn,
         stack: event.config.stackName,
         systemBucket: event.config.internalBucket,
-        executionName,
+        executionNamePrefix: event.config.executionNamePrefix,
       });
     },
     { concurrency: get(event, 'config.concurrency', 3) }

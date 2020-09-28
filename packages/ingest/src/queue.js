@@ -23,7 +23,8 @@ const {
  * @param {Object} params.collection - the collection config to be attached to the
  *   message
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
- * @param {string} [params.executionName] - execution name
+ * @param {string} [params.executionNamePrefix] - the prefix to apply to the
+ *   name of the enqueued execution
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueParsePdrMessage({
@@ -35,7 +36,7 @@ async function enqueueParsePdrMessage({
   stack,
   systemBucket,
   queueUrl,
-  executionName,
+  executionNamePrefix,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: parsePdrArn } = await getJsonS3Object(
@@ -58,7 +59,7 @@ async function enqueueParsePdrMessage({
       collection,
       provider,
     },
-    executionName,
+    executionNamePrefix,
   });
 
   const arn = buildExecutionArn(
@@ -85,7 +86,8 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  *   message
  * @param {Object} params.pdr - an optional PDR to be configured in the message payload
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
- * @param {string} [params.executionName] - execution name
+ * @param {string} [params.executionNamePrefix] - the prefix to apply to the
+ *   name of the enqueued execution
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueGranuleIngestMessage({
@@ -98,7 +100,7 @@ async function enqueueGranuleIngestMessage({
   stack,
   systemBucket,
   queueUrl,
-  executionName,
+  executionNamePrefix,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: ingestGranuleArn } = await getJsonS3Object(
@@ -127,7 +129,7 @@ async function enqueueGranuleIngestMessage({
       collection,
       provider,
     },
-    executionName,
+    executionNamePrefix,
   });
 
   if (pdr) message.meta.pdr = pdr;

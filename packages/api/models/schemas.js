@@ -474,6 +474,10 @@ module.exports.rule = {
         type: 'string',
       },
     },
+    executionNamePrefix: {
+      title: 'Execution name prefix',
+      type: 'string',
+    },
   },
   required: [
     'name', 'workflow', 'rule', 'state', 'createdAt', 'updatedAt',
