@@ -43,6 +43,12 @@ async function createGranuleInventoryReport(recReportParams) {
   const json2csv = new Transform({ fields }, transformOpts);
   readable.pipe(json2csv).pipe(pass);
 
+  const promisedObject = promiseS3Upload({
+    Bucket: systemBucket,
+    Key: reportKey,
+    Body: pass,
+  });
+
   while (nextGranule) {
     readable.push({
       granuleUr: nextGranule.granuleId,
@@ -59,11 +65,7 @@ async function createGranuleInventoryReport(recReportParams) {
   }
   readable.push(null);
 
-  return promiseS3Upload({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: pass,
-  });
+  return promisedObject;
 }
 
 exports.createGranuleInventoryReport = createGranuleInventoryReport;
