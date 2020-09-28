@@ -64,19 +64,6 @@ test('buildCumulusMeta returns expected object', (t) => {
   });
 });
 
-test('buildCumulusMeta uses executionNamePrefix', (t) => {
-  const executionNamePrefix = randomId('prefix');
-
-  const cumulusMeta = buildCumulusMeta({
-    stateMachine: randomId('stateMachine'),
-    queueUrl: randomId('queueUrl'),
-    executionNamePrefix,
-  });
-
-  t.true(cumulusMeta.execution_name.startsWith(executionNamePrefix));
-  t.true(cumulusMeta.execution_name.length > executionNamePrefix.length);
-});
-
 test('buildQueueMessageFromTemplate does not overwrite contents from message template', (t) => {
   const queueUrl = randomId('queue');
   const messageTemplate = {
