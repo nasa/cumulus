@@ -279,7 +279,7 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
   t.true(executionName.length > executionNamePrefix.length);
 });
 
-test.serial('enqueueParsePdrMessage sets the executionName if specified', async (t) => {
+test.serial('enqueueParsePdrMessage uses the executionNamePrefix if specified', async (t) => {
   const {
     queueUrl,
     templateBucket,
