@@ -4,8 +4,6 @@ title: External Contributions
 hide_title: false
 ---
 
-# External Contributions
-
 Contributions to Cumulus may be made in the form of [PRs to the repositories directly](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md) or through externally developed tasks and components. Cumulus is designed as an ecosystem that leverages Terraform deployments and AWS Step Functions to easily integrate external components.
 
 This list may not be exhaustive and represents components that are open source, owned externally,  and that have been tested with the Cumulus system. For more information and contributing guidelines, visit the respective GitHub repositories.
