@@ -21,6 +21,10 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
 fi
 echo "***Deploying stack with built source"
 
+ls -l example/lambdas/
+
+exit 1
+
 npm install
 ## Double bootstrapping required as workaround to
 ## lerna re-bootstrapping issue in older releases
