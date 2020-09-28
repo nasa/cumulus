@@ -32,15 +32,3 @@ additional_log_groups_to_elk = {
   "MyCustomTask" = "my-custom-task-log-group"
 }
 ```
-
-## ESDIS Metrics
-
-For NASA/NGAP deployments an operator should make a request to the metrics team for write access and the correct shared Logs Destination for further processing in their [ELK](https://www.elastic.co/elk-stack) stack.
-
-To be able to access logs sent to the Metrics ELK stack through the `/logs` endpoint, be sure to also configure the metrics variables.
-
-```hcl
-metrics_es_host = "metricshost.cloudfront.net"
-metrics_es_username = "user"
-metrics_es_password = "password"
-```

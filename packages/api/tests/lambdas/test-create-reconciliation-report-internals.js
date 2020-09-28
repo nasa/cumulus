@@ -18,6 +18,7 @@ test(
       'startTimestamp',
       'endTimestamp',
       'granuleIds',
+      'providers',
     ];
 
     const paramsThatShouldReturnFalse = [
@@ -52,7 +53,7 @@ test(
   'isOneWayGranuleReport returns true only when one or more specific parameters '
   + ' are present on the reconciliation report object.',
   (t) => {
-    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp'];
+    const paramsThatShouldReturnTrue = ['startTimestamp', 'endTimestamp', 'providers'];
 
     const paramsThatShouldReturnFalse = [
       'stackName',

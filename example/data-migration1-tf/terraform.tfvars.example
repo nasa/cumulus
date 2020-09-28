@@ -8,3 +8,4 @@ data_persistence_remote_state_config = {
   key    = "PREFIX/data-persistence/terraform.tfstate"
   region = "us-east-1"
 }
+provider_kms_key_id = "abc-1234-abcd-1234-abcd"
