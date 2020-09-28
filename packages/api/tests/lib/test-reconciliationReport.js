@@ -10,6 +10,7 @@ const {
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
   filterCMRCollections,
+  filterDBCollections,
   searchParamsForCollectionIdArray,
 } = require('../../lib/reconciliationReport');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
@@ -96,11 +97,11 @@ test('convertToESCollectionSearchParams returns correct search object with colle
 test('convertToDBCollectionSearchParams returns correct search object with collectionIds.', (t) => {
   const startTimestamp = '2000-10-31T15:00:00.000Z';
   const endTimestamp = '2001-10-31T15:00:00.000Z';
-  const collectionId = 'name___version';
+  const collectionIds = ['name___version'];
   const testObj = {
     startTimestamp,
     endTimestamp,
-    collectionId,
+    collectionIds,
     anotherKey: 'anything',
     anotherKey2: 'they are ignored',
   };
@@ -110,6 +111,27 @@ test('convertToDBCollectionSearchParams returns correct search object with colle
     updatedAt__to: 1004540400000,
     name: 'name',
     version: 'version',
+  };
+
+  const actual = convertToDBCollectionSearchParams(testObj);
+  t.deepEqual(actual, expected);
+});
+
+test('convertToDBCollectionSearchParams ignores collectionIds when there are multiple collectionIds.', (t) => {
+  const startTimestamp = '2000-10-31T15:00:00.000Z';
+  const endTimestamp = '2001-10-31T15:00:00.000Z';
+  const collectionIds = ['name___version', 'name2___version'];
+  const testObj = {
+    startTimestamp,
+    endTimestamp,
+    collectionIds,
+    anotherKey: 'anything',
+    anotherKey2: 'they are ignored',
+  };
+
+  const expected = {
+    updatedAt__from: 973004400000,
+    updatedAt__to: 1004540400000,
   };
 
   const actual = convertToDBCollectionSearchParams(testObj);
@@ -171,6 +193,50 @@ test("filterCMRCollections filters collections by recReportParams's collectionId
   );
 
   const actual = filterCMRCollections(cmrCollections, reportParams);
+
+  t.deepEqual(actual, expected);
+});
+
+test('filterDBCollections returns all collections if no collectionIds on recReportParams', (t) => {
+  let collections = range(25).map(() => fakeCollectionFactory());
+  collections = sortBy(collections, 'name', 'version');
+  const reportParams = {
+    startTimestamp: 'any',
+    endTimestamp: 'also any',
+    otherUnusedParams: 'could be anything',
+  };
+
+  const actual = filterDBCollections(collections, reportParams);
+
+  t.deepEqual(actual, collections);
+});
+
+test("filterDBCollections filters collections by recReportParams's collectionIds", (t) => {
+  let collections = range(25).map(() => fakeCollectionFactory());
+  collections = sortBy(collections, 'name', 'version');
+  const nonDbCollection = fakeCollectionFactory();
+
+  const targetCollections = [
+    collections[7],
+    collections[9],
+    nonDbCollection,
+    collections[3],
+    collections[5],
+  ];
+
+  const collectionIds = targetCollections.map((c) => constructCollectionId(c.name, c.version));
+
+  const expected = sortBy(targetCollections, 'name', 'version')
+    .filter((c) => !(c.name === nonDbCollection.name && c.version === nonDbCollection.version));
+
+  const reportParams = {
+    startTimestamp: 'any',
+    endTimestamp: 'also any',
+    otherUnusedParams: 'could be anything',
+    collectionIds,
+  };
+
+  const actual = filterDBCollections(collections, reportParams);
 
   t.deepEqual(actual, expected);
 });
