@@ -230,23 +230,6 @@ const auth = async (req, res) => {
 };
 
 /**
- * Helper to pull the url the client sent from a request that has been updated
- * with middleware to include the event context.
- * @param {Object} req - express request object
- * @returns {Object} - The url the client visited to generate the request.
- */
-const urlFromRequest = (req) =>
-  `${req.protocol}://${req.get('host')}${req.apiGateway.event.requestContext.path}`;
-
-/**
- * helper to grab stageName
- *
- * @param {Object} req - express request object
- * @returns {string} - stage name of apigateway
- */
-const stageNameFromRequest = (req) => req.apiGateway.event.requestContext.stage;
-
-/**
  * SAML Token endpoint.
  *
  * Simply returns the token received as a query parameter or redirects to saml
@@ -257,22 +240,20 @@ const stageNameFromRequest = (req) => req.apiGateway.event.requestContext.stage;
  * request or a redirect back to saml/login endpoing to receive the token.
  */
 const samlToken = async (req, res) => {
-  let relayState;
-  let stageName;
-  try {
-    relayState = encodeURIComponent(urlFromRequest(req));
-    stageName = stageNameFromRequest(req);
-    if (!relayState || !stageName) {
-      throw new Error('Incorrect relayState or stageName information in express request.');
-    }
-  } catch (error) {
-    return res.boom.expectationFailed(
-      `Could not retrieve necessary information from express request object. ${error.message}`
-    );
+  if (req.query.token) return res.send({ message: { token: req.query.token } });
+
+  const launchpadRedirectEndpoint = process.env.LAUNCHPAD_REDIRECT_ENDPOINT;
+  if (!launchpadRedirectEndpoint) {
+    return res.boom.badImplementation('LAUNCHPAD_REDIRECT_ENDPOINT environment variable is required');
   }
 
-  if (req.query.token) return res.send({ message: { token: req.query.token } });
-  return res.redirect(`/${stageName}/saml/login?RelayState=${relayState}`);
+  let relayState = req.query.RelayState;
+  if (!relayState) {
+    return res.boom.badImplementation('Could not determine RelayState from incoming URL');
+  }
+  relayState = encodeURIComponent(relayState);
+
+  return res.redirect(`${launchpadRedirectEndpoint}?RelayState=${relayState}`);
 };
 
 const notImplemented = async (req, res) =>
