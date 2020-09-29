@@ -1,10 +1,8 @@
 ---
 id: share-s3-access-logs
 title: Share S3 Access Logs
-hide_title: true
+hide_title: false
 ---
-
-# Sharing S3 Access Logs
 
 It is possible through Cumulus to share S3 access logs across multiple S3 packages using the S3 replicator package.
 

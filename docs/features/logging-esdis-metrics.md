@@ -1,10 +1,8 @@
 ---
 id: logging-esdis-metrics
 title: Writing logs for ESDIS Metrics
-hide_title: true
+hide_title: false
 ---
-
-# Writing logs for ESDIS Metrics
 
 > **Note:** This feature is only available for Cumulus deployments in NGAP environments.
 >

@@ -1,10 +1,8 @@
 ---
 id: distribution-metrics
 title: Cumulus Distribution Metrics
-hide_title: true
+hide_title: false
 ---
-
-# Cumulus Distribution Metrics
 
 It is possible to configure Cumulus and the Cumulus Dashboard to display information about the successes and failures of requests for data.  This requires the Cumulus instance to deliver Cloudwatch Logs and S3 Server Access logs to an ELK stack.
 

@@ -1,10 +1,8 @@
 ---
 id: api-gateway-logging
 title: API Gateway Logging
-hide_title: true
+hide_title: false
 ---
-
-# API Gateway Logging
 
 ## Enabling API Gateway logging
 

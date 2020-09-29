@@ -1,10 +1,8 @@
 ---
 id: setup
 title: Data Cookbooks Introduction
-hide_title: true
+hide_title: false
 ---
-
-# Introduction
 
 ## Working with Data Cookbooks
 
