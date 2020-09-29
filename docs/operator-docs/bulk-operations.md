@@ -40,7 +40,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
     ![Screenshot of Kibana user interface showing details of an example request](assets/kibana-inspect-request.png)
 
-6. In the slide out tab that appears on the right side of the page, click the "Request" link near the top and scroll down until you see the `query` property.
+6. In the slide out tab that appears on the right side of the page, click the "Request" link near the top and scroll down until you see the `query` property:
 
     ![Screenshot of Kibana user interface showing the Elasticsearch data request made for a given Kibana query](assets/kibana-inspect-query.png)
 
