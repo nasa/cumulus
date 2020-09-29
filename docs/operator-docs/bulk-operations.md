@@ -32,7 +32,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
     ![Screenshot of Kibana user interface showing the "Discover" page for running queries](assets/kibana-discover-page.png)
 
-4. Enter a query that returns the granule records that you want to use for bulk operations
+4. Enter a query that returns the granule records that you want to use for bulk operations:
 
     ![Screenshot of Kibana user interface showing an example Kibana query and results](assets/kibana-discover-query.png)
 
