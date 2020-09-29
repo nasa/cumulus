@@ -180,7 +180,7 @@ const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIs
   },
   {
     interval: 10000,
-    timeout: 480 * 1000,
+    timeout: 360 * 1000,
   }
 );
 

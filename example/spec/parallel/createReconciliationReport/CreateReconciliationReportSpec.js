@@ -4,6 +4,8 @@ const cloneDeep = require('lodash/cloneDeep');
 const moment = require('moment');
 const fs = require('fs-extra');
 const get = require('lodash/get');
+const isEqual = require('lodash/isEqual');
+const pWaitFor = require('p-wait-for');
 
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
@@ -239,6 +241,23 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
   return { originalGranuleFile, updatedGranuleFile };
 }
 
+// wait for collection in list
+const waitForCollectionRecordsInList = async (stackName, collectionIds) => pWaitFor(
+  async () => {
+    // Verify the collection is returned when listing collections
+    const collsResp = await getCollections(
+      { prefix: stackName, query: { _id__in: collectionIds.join(','), limit: 30 } }
+    );
+    const ids = JSON.parse(collsResp.body).results.map((c) => constructCollectionId(c.name, c.version));
+    return isEqual(ids.sort(), collectionIds.sort());
+  },
+  {
+    interval: 10000,
+    timeout: 360 * 1000,
+  }
+);
+
+
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
   let beforeAllFailed = false;
@@ -311,6 +330,13 @@ describe('When there are granule differences and granule reconciliation is run',
         activeCollectionPromise,
       ]);
 
+      console.log('XXXXX Waiting for collections in list');
+      const collectionIds = [
+        collectionId,
+        constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+      ];
+      await waitForCollectionRecordsInList(config.stackName, collectionIds);
+
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
       granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
@@ -331,14 +357,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('prepares the test suite successfully', async () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
-
-    console.log('Checking collection in list');
-    // Verify the collection is returned when listing collections
-    const collsResp = await getCollections(
-      { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime, limit: 30 } }
-    );
-    const colls = JSON.parse(collsResp.body).results;
-    expect(colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)).toBe(true);
   });
 
   describe('Create an Inventory Reconciliation Report to monitor inventory discrepancies', () => {
