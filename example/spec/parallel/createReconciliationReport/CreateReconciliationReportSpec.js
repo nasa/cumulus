@@ -239,7 +239,8 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
   return { originalGranuleFile, updatedGranuleFile };
 }
 
-describe('When there are granule differences and granule reconciliation is run', () => {
+// Temporarily disable this test pending further investigation
+xdescribe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
   let beforeAllFailed = false;
   let cmrGranule;
