@@ -17,7 +17,7 @@ test.serial('searchConcept request includes CMR client id', async (t) => {
 
   await searchConcept({
     type: 'granule',
-    searchParams: {},
+    searchParams: new URLSearchParams(),
     previousResults: [],
     headers: { 'Client-Id': clientId },
   });
@@ -39,7 +39,7 @@ test.serial('searchConcept uses env variables', async (t) => {
 
   const response = await searchConcept({
     type: 'granule',
-    searchParams: {},
+    searchParams: new URLSearchParams(),
     previousResults: [],
     headers: { 'Client-Id': clientId },
   });
@@ -89,10 +89,10 @@ test.serial(
       headers: { 'cmr-hits': '0' },
     }));
 
-    const searchParams = {
+    const searchParams = new URLSearchParams({
       arrayKey: 'value1',
       otherKey: 'otherValue',
-    };
+    });
 
     const expectedParams
           = 'arrayKey=value1&otherKey=otherValue&page_num=1&page_size=50';

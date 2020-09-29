@@ -58,7 +58,7 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
       password: 'fakePassword',
     },
     type: 'granules',
-    searchParams: {},
+    searchParams: new URLSearchParams(),
     format: 'umm_json',
   });
   for (let i = 0; i < 6; i += 1) {
@@ -77,10 +77,10 @@ test('cmrSearchQueue provides correct initial params when SearchParams are an in
 });
 
 test('cmrSearchQueue provides correct initial params when SearchParams are a plain object.', (t) => {
-  const searchParams = { key: 'param' };
+  const searchParams = new URLSearchParams({ key: 'param' });
   const defaultParams = { cmrSettings: { provider: 'cmrprovider' } };
   const test1Params = { ...defaultParams, searchParams };
   const actual = provideParams(test1Params);
-  const expected = { key: 'param', provider_short_name: 'cmrprovider' };
+  const expected = new URLSearchParams({ key: 'param', provider_short_name: 'cmrprovider' });
   t.deepEqual(actual, expected);
 });

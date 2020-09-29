@@ -52,7 +52,7 @@ export async function searchConcept({
   cmrPageSize,
 }: {
   type: string,
-  searchParams: URLSearchParams | string | Record<string, string>,
+  searchParams: URLSearchParams,
   previousResults?: unknown[],
   headers?: Headers,
   format?: string,
@@ -70,9 +70,11 @@ export async function searchConcept({
     recordsLimit = 100;
   }
 
-  let pageSize;
-  if (typeof searchParams === 'object' && !(searchParams instanceof URLSearchParams) && typeof searchParams.pageSize === 'number') {
-    pageSize = searchParams.pageSize;
+  const searchParamsPageSize = searchParams.get('pageSize');
+
+  let pageSize: number;
+  if (searchParamsPageSize) {
+    pageSize = Number(searchParamsPageSize);
   } else if (typeof cmrPageSize === 'number') {
     pageSize = cmrPageSize;
   } else if (process.env.CMR_PAGE_SIZE) {
@@ -81,10 +83,7 @@ export async function searchConcept({
     pageSize = 50;
   }
 
-  const query
-    = searchParams instanceof URLSearchParams
-      ? searchParams
-      : new URLSearchParams(searchParams);
+  const query = new URLSearchParams(searchParams);
 
   const queryPageNum = query.get('page_num');
   const pageNum = queryPageNum === null ? 1 : (Number(queryPageNum) + 1);

@@ -310,10 +310,10 @@ export class CMR {
 
   async searchConcept(
     type: string,
-    searchParams: URLSearchParams | string | Record<string, string>,
+    searchParams: URLSearchParams,
     format = 'json',
     recursive = true
-  ): Promise<unknown> {
+  ): Promise<unknown[]> {
     const headers = this.getReadHeaders({ token: await this.getToken() });
     return searchConcept({
       type,
@@ -333,10 +333,14 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(
-    params: {[key: string]: string},
+    params: { [key: string]: string },
     format = 'json'
-  ): Promise<unknown> {
-    const searchParams = { provider_short_name: this.provider, ...params };
+  ): Promise<unknown[]> {
+    const searchParams = new URLSearchParams({
+      provider_short_name: this.provider,
+      ...params,
+    });
+
     return this.searchConcept(
       'collections',
       searchParams,
@@ -352,10 +356,14 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchGranules(
-    params: {[key: string]: string},
+    params: { [key: string]: string },
     format = 'json'
-  ): Promise<unknown> {
-    const searchParams = { provider_short_name: this.provider, ...params };
+  ): Promise<unknown[]> {
+    const searchParams = new URLSearchParams({
+      provider_short_name: this.provider,
+      ...params,
+    });
+
     return this.searchConcept(
       'granules',
       searchParams,
