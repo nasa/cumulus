@@ -1,10 +1,8 @@
 ---
 id: throttling-queued-executions
 title: Throttling queued executions
-hide_title: true
+hide_title: false
 ---
-
-# Throttling queued executions
 
 In this entry, we will walkthrough how to create an SQS queue for scheduling executions which will be used to limit those executions to a maximum concurrency. And we will see how to configure our Cumulus workflows/rules to use this queue.
 
