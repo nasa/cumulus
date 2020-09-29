@@ -48,7 +48,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
     ![Screenshot of Cumulus dashboard showing modal window for triggering bulk granule operations with query information populated](assets/bulk-granules-query-1.png)
 
-8. Add values for the `index` and `workflowName` to the bulk granules request payload. The value for `index` will vary based on your Elasticsearch setup, but it is good to target an index specifically for granule data if possible.
+8. Add values for the `index` and `workflowName` to the bulk granules request payload. The value for `index` will vary based on your Elasticsearch setup, but it is good to target an index specifically for granule data if possible:
 
     ![Screenshot of Cumulus dashboard showing modal window for triggering bulk granule operations with query, index, and workflow information populated](assets/bulk-granules-query-2.png)
 
