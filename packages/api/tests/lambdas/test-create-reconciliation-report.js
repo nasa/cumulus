@@ -9,8 +9,7 @@ const range = require('lodash/range');
 const sample = require('lodash/sample');
 const sortBy = require('lodash/sortBy');
 const sinon = require('sinon');
-const CMR = require('@cumulus/cmr-client/CMR');
-const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
+const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const {
   buildS3Uri,
   parseS3Uri,

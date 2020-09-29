@@ -22,7 +22,7 @@ const launchpad = require('@cumulus/launchpad-auth');
 const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const errors = require('@cumulus/errors');
-const CMR = require('@cumulus/cmr-client/CMR');
+const { CMR } = require('@cumulus/cmr-client/CMR');
 const { ummVersion } = require('@cumulus/cmr-client/UmmUtils');
 
 const {
