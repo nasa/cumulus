@@ -47,8 +47,8 @@ function getHost(cmrEnvironment?: string, cmrHost?: string): string {
 function getUrl(
   type: string,
   cmrProvider: string,
-  cmrEnvironment: string,
-  cmrHost: string
+  cmrEnvironment?: string,
+  cmrHost?: string
 ): string | null {
   const cmrEnv = cmrEnvironment ?? process.env.CMR_ENVIRONMENT;
 

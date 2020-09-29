@@ -1,9 +1,7 @@
-'use strict';
-
-const got = require('got');
-const ValidationError = require('./ValidationError');
-const getUrl = require('./getUrl');
-const { parseXMLString } = require('./Utils');
+import got from 'got';
+import ValidationError from './ValidationError';
+import getUrl from './getUrl';
+import { parseXMLString } from './Utils';
 
 /**
  * Posts a given xml string to the validate endpoint of the CMR
@@ -15,7 +13,12 @@ const { parseXMLString } = require('./Utils');
  * @param {string} provider - the CMR provider
  * @returns {Promise.<boolean>} returns true if the document is valid
  */
-async function validate(type, xml, identifier, provider) {
+async function validate(
+  type: string,
+  xml: string,
+  identifier: string,
+  provider: string
+): Promise<true> {
   let result;
   try {
     result = await got.post(`${getUrl('validate', provider)}${type}/${identifier}`, {
@@ -32,11 +35,11 @@ async function validate(type, xml, identifier, provider) {
     result = error.response;
   }
 
-  const parsed = await parseXMLString(result.body);
+  const parsed = <{errors: {error: string}}>(await parseXMLString(result.body));
 
   throw new ValidationError(
     `Validation was not successful, CMR error message: ${JSON.stringify(parsed.errors.error)}`
   );
 }
 
-module.exports = validate;
+export = validate;

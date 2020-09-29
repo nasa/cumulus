@@ -30,8 +30,8 @@ const validateUMMG = async (ummMetadata, identifier, provider) => {
   const { statusCode, body } = await got.post(
     `${getUrl('validate', provider)}granule/${identifier}`,
     {
-      json: true,
-      body: ummMetadata,
+      json: ummMetadata,
+      responseType: 'json',
       headers: {
         Accept: 'application/json',
         'Content-type': `application/vnd.nasa.cmr.umm+json;version=${version}`,

@@ -47,7 +47,14 @@ async function searchConcept({
   if (!query.has('page_size')) query.append('page_size', pageSize);
 
   const url = `${getUrl('search', undefined, cmrEnvironment)}${type}.${format.toLowerCase()}`;
-  const response = await got.get(url, { json: format.endsWith('json'), query, headers });
+  const response = await got.get(
+    url,
+    {
+      responseType: format.endsWith('json') ? 'json' : undefined,
+      searchParams: query,
+      headers,
+    }
+  );
 
   const responseItems =
     format === 'echo10'

@@ -48,8 +48,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
 
   try {
     response = await got.post(getUrl('token'), {
-      json: true,
-      body: {
+      json: {
         token: {
           username: username,
           password: password,
@@ -58,6 +57,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
           provider: cmrProvider,
         },
       },
+      responseType: 'json',
     });
   } catch (error) {
     if (get(error, 'response.body.errors')) {
@@ -226,8 +226,8 @@ class CMR {
       response = await got.put(
         `${getUrl('ingest', this.provider)}granules/${granuleId}`,
         {
-          json: true,
-          body: ummgMetadata,
+          json: ummgMetadata,
+          responseType: 'json',
           headers,
         }
       );

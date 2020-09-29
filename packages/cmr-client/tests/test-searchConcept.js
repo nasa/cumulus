@@ -74,8 +74,8 @@ test.serial(
     });
 
     const call = stub.getCall(0);
-    // Validate query object passed to GOT.get is what is expected.
-    t.is(call.args[1].query.toString(), expectedParams);
+    // Validate searchParams object passed to GOT.get is what is expected.
+    t.is(call.args[1].searchParams.toString(), expectedParams);
 
     stub.restore();
   }
@@ -105,8 +105,8 @@ test.serial(
     });
 
     const call = stub.getCall(0);
-    // Validate query object passed to GOT.get is what is expected.
-    t.is(call.args[1].query.toString(), expectedParams);
+    // Validate searchParams object passed to GOT.get is what is expected.
+    t.is(call.args[1].searchParams.toString(), expectedParams);
 
     stub.restore();
   }
