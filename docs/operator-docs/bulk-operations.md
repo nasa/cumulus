@@ -44,7 +44,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
     ![Screenshot of Kibana user interface showing the Elasticsearch data request made for a given Kibana query](assets/kibana-inspect-query.png)
 
-7. Highlight and copy the `query` contents from Kibana. Go back to the Cumulus dashboard and paste the `query` contents from Kibana **inside of the `query` property in the bulk granules request payload**. **It is expected** that you should have a property of `query` nested inside of the existing `query` property.
+7. Highlight and copy the `query` contents from Kibana. Go back to the Cumulus dashboard and paste the `query` contents from Kibana **inside of the `query` property in the bulk granules request payload**. **It is expected** that you should have a property of `query` nested inside of the existing `query` property:
 
     ![Screenshot of Cumulus dashboard showing modal window for triggering bulk granule operations with query information populated](assets/bulk-granules-query-1.png)
 
