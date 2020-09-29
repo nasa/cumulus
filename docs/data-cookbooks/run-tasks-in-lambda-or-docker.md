@@ -1,10 +1,8 @@
 ---
 id: run-tasks-in-lambda-or-docker
-title: Run Step Function Tasks in Lambda or Docker
-hide_title: true
+title: Run Step Function Tasks in AWS Lambda or Docker
+hide_title: false
 ---
-
-# Running Step Function Tasks in AWS Lambda or Docker
 
 ## Overview
 

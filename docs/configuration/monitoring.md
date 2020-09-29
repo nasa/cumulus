@@ -1,10 +1,8 @@
 ---
 id: monitoring-readme
 title: Monitoring Best Practices
-hide_title: true
+hide_title: false
 ---
-
-# Cumulus Monitoring Best Practices
 
 This document intends to provide a set of recommendations and best practices for monitoring the state of a deployed Cumulus and diagnosing any issues.
 

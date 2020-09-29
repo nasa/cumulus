@@ -1,10 +1,8 @@
 ---
 id: error-handling
 title: Error Handling in Workflows
-hide_title: true
+hide_title: false
 ---
-
-# Error Handling in Workflows
 
 Cumulus Workflow error handling is configurable via AWS Step Function
 definitions, which enable users to configure what the state machine does next

@@ -1,10 +1,8 @@
 ---
 id: terraform-best-practices
 title: Terraform Best Practices
-hide_title: true
+hide_title: false
 ---
-
-# Terraform Best Practices
 
 ## How to Manage the Terraform State Bucket
 

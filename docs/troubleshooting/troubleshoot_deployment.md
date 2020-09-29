@@ -1,10 +1,8 @@
 ---
 id: troubleshooting-deployment
 title: Troubleshooting Deployment
-hide_title: true
+hide_title: false
 ---
-
-# Troubleshooting Deployment
 
 This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
 
