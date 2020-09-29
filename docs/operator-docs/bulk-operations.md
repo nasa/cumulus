@@ -58,7 +58,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
 #### Creating an index pattern for Kibana
 
-1. Define the index pattern for the indices that your Kibana queries should use. A wildcard character, `*`, will match across multiple indices. Once you are satisfied with your index pattern, click the "Next step" button.
+1. Define the index pattern for the indices that your Kibana queries should use. A wildcard character, `*`, will match across multiple indices. Once you are satisfied with your index pattern, click the "Next step" button:
 
     ![Screenshot of Kibana user interface for defining an index pattern](assets/kibana-create-index-pattern-1.png)
 
