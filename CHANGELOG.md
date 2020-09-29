@@ -175,7 +175,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `QueueGranules` task now supports an `executionNamePrefix` property. Any
     executions queued by that task will use that prefix in the name of the
     execution.
-  - The `QueuePdrs` task now supports an `executionNamePrefix` property. Any
+  - The `QueuePdrs` task now supports an `executionNamePrefix` config property. Any
     executions queued by that task will use that prefix in the name of the
     execution.
 
