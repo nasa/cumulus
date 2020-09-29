@@ -62,7 +62,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
     ![Screenshot of Kibana user interface for defining an index pattern](assets/kibana-create-index-pattern-1.png)
 
-2. Choose whether to use a Time Filter for your data, which is not required. Then click the "Create index pattern" button.
+2. Choose whether to use a Time Filter for your data, which is not required. Then click the "Create index pattern" button:
 
     ![Screenshot of Kibana user interface for configuring the settings of an index pattern](assets/kibana-create-index-pattern-2.png)
 
