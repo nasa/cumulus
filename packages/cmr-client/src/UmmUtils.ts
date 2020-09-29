@@ -4,6 +4,7 @@ import getUrl from './getUrl';
 import ValidationError from './ValidationError';
 
 export interface UmmMetadata {
+  GranuleUR?: string,
   MetadataSpecification?: {
     Version?: string
   }

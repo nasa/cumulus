@@ -1,6 +1,6 @@
 'use strict';
 
-const CMR = require('./CMR');
+const { CMR } = require('./CMR');
 
 /**
  * Shim to correctly add a default provider_short_name to the input searchParams

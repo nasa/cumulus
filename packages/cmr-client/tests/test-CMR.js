@@ -6,7 +6,7 @@ const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
 
-const CMR = require('../CMR');
+const { CMR } = require('../CMR');
 const ValidationError = require('../ValidationError');
 
 test.before(() => {

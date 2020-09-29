@@ -19,7 +19,7 @@ async function deleteConcept(
   type: string,
   identifier: string,
   provider: string,
-  headers: Headers
+  headers?: Headers
 ): Promise<unknown> {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
   log.info(`deleteConcept ${url}`);
