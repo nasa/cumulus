@@ -36,7 +36,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
     ![Screenshot of Kibana user interface showing an example Kibana query and results](assets/kibana-discover-query.png)
 
-5. Once the Kibana query is returning the results you want, click the "Inspect" link near the top of the page. A slide out tab with request details will appear on the right side of the page.
+5. Once the Kibana query is returning the results you want, click the "Inspect" link near the top of the page. A slide out tab with request details will appear on the right side of the page:
 
     ![Screenshot of Kibana user interface showing details of an example request](assets/kibana-inspect-request.png)
 
