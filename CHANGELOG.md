@@ -284,7 +284,8 @@ security/requested feature patches and will not be ported forward to future
 releases unless there is acorresponding CHANGELOG entry.
 
 For up-to-date CHANGELOG for the maintenance release branch see
-[CHANGELOG.md](https://github.com/nasa/cumulus/blob/release-2.0.x/CHANGELOG.md).
+[CHANGELOG.md](https://github.com/nasa/cumulus/blob/release-2.0.x/CHANGELOG.md)
+from the 2.0.x branch.
 
 For the most recent release information for the maintenance branch please see
 the [release page](https://github.com/nasa/cumulus/releases)
