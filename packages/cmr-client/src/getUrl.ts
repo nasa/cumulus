@@ -1,18 +1,18 @@
-'use strict';
-
-const get = require('lodash/get');
-
 /**
  * Returns the environment specific identifier for the input cmr environment.
  * @param {string} env - cmr environment ['OPS', 'SIT', 'UAT']
  * @returns {string} - value to use to build correct cmr url for environment.
  */
-function hostId(env) {
-  return get(
-    { OPS: '', SIT: 'sit', UAT: 'uat' },
-    env,
-    'sit'
-  );
+function hostId(env?: string): string {
+  switch (env) {
+    case 'OPS':
+      return '';
+    case 'UAT':
+      return 'uat';
+    case 'SIT':
+    default:
+      return 'sit';
+  }
 }
 
 /**
@@ -27,11 +27,10 @@ function hostId(env) {
  *              this has a value, it overrides any values for cmrEnvironment
  * @returns {string} the cmr host address
  */
-function getHost(cmrEnvironment, cmrHost) {
+function getHost(cmrEnvironment?: string, cmrHost?: string): string {
   if (cmrHost) return cmrHost;
 
-  const host = ['cmr', hostId(cmrEnvironment), 'earthdata.nasa.gov'].filter((d) => d).join('.');
-  return host;
+  return ['cmr', hostId(cmrEnvironment), 'earthdata.nasa.gov'].filter((d) => d).join('.');
 }
 
 /**
@@ -45,34 +44,31 @@ function getHost(cmrEnvironment, cmrHost) {
  * @param {string} cmrHost - CMR host
  * @returns {string} the cmr url
  */
-function getUrl(type, cmrProvider, cmrEnvironment, cmrHost) {
-  let url;
-  const cmrEnv = cmrEnvironment || process.env.CMR_ENVIRONMENT || null;
+function getUrl(
+  type: string,
+  cmrProvider: string,
+  cmrEnvironment: string,
+  cmrHost: string
+): string | null {
+  const cmrEnv = cmrEnvironment ?? process.env.CMR_ENVIRONMENT;
+
   const host = getHost(cmrEnv, cmrHost);
-  const provider = cmrProvider;
 
   switch (type) {
-  case 'token':
-    if (cmrEnv === 'OPS') {
-      url = 'https://cmr.earthdata.nasa.gov/legacy-services/rest/tokens';
-    } else {
-      url = 'https://cmr.uat.earthdata.nasa.gov/legacy-services/rest/tokens';
-    }
-    break;
-  case 'search':
-    url = `https://${host}/search/`;
-    break;
-  case 'validate':
-    url = `https://${host}/ingest/providers/${provider}/validate/`;
-    break;
-  case 'ingest':
-    url = `https://${host}/ingest/providers/${provider}/`;
-    break;
-  default:
-    url = null;
+    case 'token':
+      if (cmrEnv === 'OPS') {
+        return 'https://cmr.earthdata.nasa.gov/legacy-services/rest/tokens';
+      }
+      return 'https://cmr.uat.earthdata.nasa.gov/legacy-services/rest/tokens';
+    case 'search':
+      return `https://${host}/search/`;
+    case 'validate':
+      return `https://${host}/ingest/providers/${cmrProvider}/validate/`;
+    case 'ingest':
+      return `https://${host}/ingest/providers/${cmrProvider}/`;
+    default:
+      return null; // eslint-disable-line unicorn/no-null
   }
-
-  return url;
 }
 
-module.exports = getUrl;
+export = getUrl;
