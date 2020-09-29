@@ -240,20 +240,19 @@ const auth = async (req, res) => {
  * request or a redirect back to saml/login endpoing to receive the token.
  */
 const samlToken = async (req, res) => {
-  if (req.query.token) return res.send({ message: { token: req.query.token } });
+  const { RelayState, token } = req.query;
+  if (token) return res.send({ message: { token } });
 
   const launchpadRedirectEndpoint = process.env.LAUNCHPAD_REDIRECT_ENDPOINT;
   if (!launchpadRedirectEndpoint) {
     return res.boom.badImplementation('LAUNCHPAD_REDIRECT_ENDPOINT environment variable is required');
   }
 
-  let relayState = req.query.RelayState;
-  if (!relayState) {
+  if (!RelayState) {
     return res.boom.badImplementation('Could not determine RelayState from incoming URL');
   }
-  relayState = encodeURIComponent(relayState);
 
-  return res.redirect(`${launchpadRedirectEndpoint}?RelayState=${relayState}`);
+  return res.redirect(`${launchpadRedirectEndpoint}?RelayState=${encodeURIComponent(RelayState)}`);
 };
 
 const notImplemented = async (req, res) =>
