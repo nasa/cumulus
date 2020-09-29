@@ -29,7 +29,7 @@
   "dependencies": {
     "@cumulus/common": "2.0.1",
     "@cumulus/logger": "2.0.1",
-    "knex": "^0.21.5",
+    "knex": "0.21.6",
     "pg": "^8.3.0"
   }
 }
