@@ -230,6 +230,15 @@ const auth = async (req, res) => {
 };
 
 /**
+ * Helper to pull the referring URL from an incoming Express request.
+ *
+ * @param {Object} req - express request object
+ * @returns {Object} - The url the client visited to generate the request.
+ */
+const urlFromRequest = (req) =>
+  new URL(req.url, `${req.protocol}://${req.get('host')}`).toString();
+
+/**
  * SAML Token endpoint.
  *
  * Simply returns the token received as a query parameter or redirects to saml
@@ -240,16 +249,23 @@ const auth = async (req, res) => {
  * request or a redirect back to saml/login endpoing to receive the token.
  */
 const samlToken = async (req, res) => {
-  const { RelayState, token } = req.query;
+  const { token } = req.query;
   if (token) return res.send({ message: { token } });
 
-  const launchpadRedirectEndpoint = process.env.LAUNCHPAD_REDIRECT_ENDPOINT;
-  if (!launchpadRedirectEndpoint) {
-    return res.boom.badImplementation('LAUNCHPAD_REDIRECT_ENDPOINT environment variable is required');
-  }
+  let launchpadRedirectEndpoint;
+  let RelayState;
+  try {
+    launchpadRedirectEndpoint = process.env.LAUNCHPAD_REDIRECT_ENDPOINT;
+    if (!launchpadRedirectEndpoint) {
+      throw new Error('LAUNCHPAD_REDIRECT_ENDPOINT environment variable is required');
+    }
 
-  if (!RelayState) {
-    return res.boom.badImplementation('Could not determine RelayState from incoming URL');
+    RelayState = urlFromRequest(req);
+    if (!RelayState) {
+      throw new Error('Could not determine RelayState from incoming URL');
+    }
+  } catch (error) {
+    return res.boom.badImplementation(error.message);
   }
 
   return res.redirect(`${launchpadRedirectEndpoint}?RelayState=${encodeURIComponent(RelayState)}`);

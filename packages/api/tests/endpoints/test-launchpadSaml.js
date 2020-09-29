@@ -69,9 +69,6 @@ const gotLaunchpadMetadataResponse = {
 
 let accessTokenModel;
 test.before(async (t) => {
-  t.context.launchpadRedirectEndpoint = 'http://api.com/saml/login';
-  process.env.LAUNCHPAD_REDIRECT_ENDPOINT = t.context.launchpadRedirectEndpoint;
-
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
@@ -289,6 +286,9 @@ test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
 });
 
 test.serial('/token endpoint with a token query parameter returns the parameter.', async (t) => {
+  process.env.LAUNCHPAD_REDIRECT_ENDPOINT = 'http://api.com/saml/login';
+  t.teardown(() => delete process.env.LAUNCHPAD_REDIRECT_ENDPOINT);
+
   const returnedToken = await request(app)
     .get('/token?token=SomeRandomJWToken')
     .set('Accept', 'application/json')
@@ -297,37 +297,23 @@ test.serial('/token endpoint with a token query parameter returns the parameter.
   t.is(returnedToken.text, JSON.stringify({ message: { token: 'SomeRandomJWToken' } }));
 });
 
-test.serial('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {
-  const { launchpadRedirectEndpoint } = t.context;
-  const RelayState = 'http://fake-test.com/auth';
+test.serial.only('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {
+  const launchpadRedirectEndpoint = 'http://api.com:7000/dev/saml/login';
+  process.env.LAUNCHPAD_REDIRECT_ENDPOINT = launchpadRedirectEndpoint;
+  t.teardown(() => delete process.env.LAUNCHPAD_REDIRECT_ENDPOINT);
+
   const redirect = await request(app)
     .get('/token')
     .set('Accept', 'application/json')
-    .query({
-      RelayState,
-    })
     .expect(302);
 
-  t.is(redirect.header.location, `${launchpadRedirectEndpoint}?RelayState=${encodeURIComponent(RelayState)}`);
-});
-
-test.serial('/token endpoint without RelayState query paramter returns 500 error', async (t) => {
-  const response = await request(app)
-    .get('/token')
-    .set('Accept', 'application/json')
-    .expect(500);
-
-  t.is(response.statusCode, 500);
+  // Have to get URL of Express app for test
+  const appURL = new URL('token', `${redirect.request.protocol}//${redirect.request.host}`).toString();
+  t.is(redirect.header.location, `${launchpadRedirectEndpoint}?RelayState=${encodeURIComponent(appURL)}`);
 });
 
 test.serial('/token endpoint without LAUNCHPAD_REDIRECT_ENDPOINT environment variable returns 500 error', async (t) => {
-  const { launchpadRedirectEndpoint } = t.context;
-
   delete process.env.LAUNCHPAD_REDIRECT_ENDPOINT;
-  t.teardown(() => {
-    process.env.LAUNCHPAD_REDIRECT_ENDPOINT = launchpadRedirectEndpoint;
-  });
-
   const response = await request(app)
     .get('/token')
     .set('Accept', 'application/json')
