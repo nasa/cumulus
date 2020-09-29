@@ -52,7 +52,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
     ![Screenshot of Cumulus dashboard showing modal window for triggering bulk granule operations with query, index, and workflow information populated](assets/bulk-granules-query-2.png)
 
-9. Click the "Run Bulk Operations" button. You should see a confirmation message, including an ID for the async operation that was started to handle your bulk action. You can [track the status of this async operation on the Operations dashboard page](#status-tracking), which can be visited by click the "Go To Operations" button.
+9. Click the "Run Bulk Operations" button. You should see a confirmation message, including an ID for the async operation that was started to handle your bulk action. You can [track the status of this async operation on the Operations dashboard page](#status-tracking), which can be visited by click the "Go To Operations" button:
 
     ![Screenshot of Cumulus dashboard showing confirmation message with async operation ID for bulk granules request](assets/bulk-granules-submitted.png)
 
