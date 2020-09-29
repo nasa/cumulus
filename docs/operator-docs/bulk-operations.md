@@ -20,7 +20,7 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
 1. From the Granules dashboard page, click on the "Run Bulk Granules" button, then select what type of action you would like to perform
     - Note: the rest of the process is the same regardless of what type of bulk action you perform
-2. From the bulk granules modal, click the "Open Kibana" link
+2. From the bulk granules modal, click the "Open Kibana" link:
 
     ![Screenshot of Cumulus dashboard showing modal window for triggering bulk granule operations](assets/bulk-granules-modal.png)
 
