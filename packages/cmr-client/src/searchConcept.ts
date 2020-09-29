@@ -1,5 +1,5 @@
 import got, { Headers } from 'got';
-import getUrl from './getUrl';
+import { getSearchUrl } from './getUrl';
 import { parseXMLString } from './Utils';
 
 export interface Echo10Response {
@@ -93,9 +93,8 @@ export async function searchConcept({
 
   if (!query.has('page_size')) query.append('page_size', String(pageSize));
 
-  const url = `${getUrl('search', undefined, cmrEnvironment)}${type}.${format.toLowerCase()}`;
   const response = await got.get(
-    url,
+    `${getSearchUrl({ cmrEnv: cmrEnvironment })}${type}.${format.toLowerCase()}`,
     {
       responseType: format.endsWith('json') ? 'json' : undefined,
       searchParams: query,

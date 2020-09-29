@@ -1,6 +1,6 @@
 import get from 'lodash/get';
 import got from 'got';
-import getUrl from './getUrl';
+import { getValidateUrl } from './getUrl';
 import ValidationError from './ValidationError';
 
 export interface UmmMetadata {
@@ -38,7 +38,7 @@ export const validateUMMG = async (
   const version = ummVersion(ummMetadata);
 
   const { statusCode, body } = await got.post(
-    `${getUrl('validate', provider)}granule/${identifier}`,
+    `${getValidateUrl({ provider })}granule/${identifier}`,
     {
       json: ummMetadata,
       responseType: 'json',

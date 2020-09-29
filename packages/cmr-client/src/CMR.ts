@@ -8,7 +8,7 @@ import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
 import deleteConcept from './deleteConcept';
 import getConcept from './getConcept';
-import getUrl from './getUrl';
+import { getIngestUrl, getTokenUrl } from './getUrl';
 import { UmmMetadata, ummVersion, validateUMMG } from './UmmUtils';
 
 const log = new Logger({ sender: 'cmr-client' });
@@ -40,10 +40,7 @@ async function updateToken(
   username: string,
   password: string
 ): Promise<string> {
-  const url = getUrl('token');
-  if (!url) {
-    throw new Error('Unable to determine token URL');
-  }
+  const url = getTokenUrl();
 
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
@@ -268,7 +265,7 @@ export class CMR {
       await validateUMMG(ummgMetadata, granuleId, this.provider);
 
       response = await got.put(
-        `${getUrl('ingest', this.provider)}granules/${granuleId}`,
+        `${getIngestUrl({ provider: this.provider })}granules/${granuleId}`,
         {
           json: ummgMetadata,
           responseType: 'json',

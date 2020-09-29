@@ -29,6 +29,8 @@ const gotResponses = {
 };
 
 test.serial('ingestConcept request includes CMR client id', async (t) => {
+  process.env.CMR_ENVIRONMENT = 'SIT';
+
   let request;
   const stub = sinon.stub(got, 'put').callsFake((_url, opt) => {
     request = { headers: opt.headers };

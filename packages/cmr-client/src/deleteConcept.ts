@@ -2,7 +2,7 @@ import Logger from '@cumulus/logger';
 import got, { Headers } from 'got';
 import { parseXMLString } from './Utils';
 
-import getUrl from './getUrl';
+import { getIngestUrl } from './getUrl';
 
 const log = new Logger({ sender: 'cmr-client' });
 
@@ -21,7 +21,7 @@ async function deleteConcept(
   provider: string,
   headers?: Headers
 ): Promise<unknown> {
-  const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
+  const url = `${getIngestUrl({ provider })}${type}/${identifier}`;
   log.info(`deleteConcept ${url}`);
 
   let result;

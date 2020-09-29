@@ -1,6 +1,6 @@
 import got from 'got';
 import ValidationError from './ValidationError';
-import getUrl from './getUrl';
+import { getValidateUrl } from './getUrl';
 import { parseXMLString } from './Utils';
 
 /**
@@ -21,7 +21,7 @@ async function validate(
 ): Promise<true> {
   let result;
   try {
-    result = await got.post(`${getUrl('validate', provider)}${type}/${identifier}`, {
+    result = await got.post(`${getValidateUrl({ provider })}${type}/${identifier}`, {
       body: xml,
       headers: {
         'Content-type': 'application/echo10+xml',

@@ -3,7 +3,7 @@ import property from 'lodash/property';
 import Logger from '@cumulus/logger';
 
 import validate from './validate';
-import getUrl from './getUrl';
+import { getIngestUrl } from './getUrl';
 import { parseXMLString } from './Utils';
 
 const log = new Logger({ sender: 'cmr-client' });
@@ -39,7 +39,7 @@ async function ingestConcept(
     await validate(type, xmlString, identifier, provider);
 
     const response = await got.put(
-      `${getUrl('ingest', provider)}${type}s/${identifier}`,
+      `${getIngestUrl({ provider })}${type}s/${identifier}`,
       {
         body: xmlString,
         headers,

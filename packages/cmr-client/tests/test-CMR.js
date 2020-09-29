@@ -131,8 +131,6 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
     .post(`/ingest/providers/${cmrSearch.provider}/validate/granule/${ummgMetadata.GranuleUR}`)
     .reply(422, ummValidationError);
 
-  delete process.env.CMR_ENVIRONMENT;
-
   await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata),
     { instanceOf: ValidationError }

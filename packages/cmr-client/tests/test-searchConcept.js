@@ -6,6 +6,8 @@ const test = require('ava');
 
 const { searchConcept } = require('../searchConcept');
 
+process.env.CMR_ENVIRONMENT = 'SIT';
+
 const clientId = 'cumulus-test-client';
 
 test.serial('searchConcept request includes CMR client id', async (t) => {
