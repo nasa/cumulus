@@ -46,7 +46,7 @@ function getHost(cmrEnvironment?: string, cmrHost?: string): string {
  */
 function getUrl(
   type: string,
-  cmrProvider: string,
+  cmrProvider?: string,
   cmrEnvironment?: string,
   cmrHost?: string
 ): string | null {

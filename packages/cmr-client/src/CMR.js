@@ -6,7 +6,7 @@ const publicIp = require('public-ip');
 const Logger = require('@cumulus/logger');
 const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 
-const searchConcept = require('./searchConcept');
+const { searchConcept } = require('./searchConcept');
 const ingestConcept = require('./ingestConcept');
 const deleteConcept = require('./deleteConcept');
 const getConcept = require('./getConcept');
