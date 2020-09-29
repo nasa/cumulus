@@ -1,10 +1,8 @@
 ---
 id: thin_egress_app
-title: Thin Egress App
-hide_title: true
+title: Using the Thin Egress App for Cumulus distribution
+hide_title: false
 ---
-
-# Using the Thin Egress App for Cumulus distribution
 
 The [Thin Egress App (TEA)](https://github.com/asfadmin/thin-egress-app) is an app running in Lambda that allows retrieving data from S3 using temporary links and provides URS integration.
 

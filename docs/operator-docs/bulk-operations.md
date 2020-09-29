@@ -1,10 +1,8 @@
 ---
 id: bulk-operations
 title: Bulk Operations
-hide_title: true
+hide_title: false
 ---
-
-# Bulk Operations
 
 Cumulus implements bulk operations through the use of `AsyncOperations`, which are long-running processes executed on an AWS ECS cluster.
 

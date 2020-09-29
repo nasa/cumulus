@@ -1,10 +1,10 @@
 ---
 id: protocol
 title: Workflow Protocol
-hide_title: true
+hide_title: false
 ---
 
-# Configuration and Message Use Diagram
+## Configuration and Message Use Diagram
 
 ![A diagram showing at which point in a workflow the Cumulus message is checked for conformity with the message schema and where the configuration is checked for conformity with the configuration schema](assets/cumulus_configuration_and_message_schema_diagram.png)
 

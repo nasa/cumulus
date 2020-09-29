@@ -1,10 +1,8 @@
 ---
 id: components
-title: Cumulus Components
-hide_title: true
+title: Component-based Cumulus Deployment
+hide_title: false
 ---
-
-# Component-based Cumulus Deployment
 
 Cumulus is now released in a modular architecture, which will allow users to
 pick and choose the individual components that they want to deploy. These
@@ -21,7 +19,7 @@ able to make use of the large number of publicly available modules on the [Terra
 * [ECS service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
 * [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution)
 * [Thin Egress App](./thin_egress_app)
-* [Workflow](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
+* [Workflow](https://github.com/nasa/cumulus/tree/master/tf-modules/workflow)
 
 ## Adding components to your Terraform deployment
 

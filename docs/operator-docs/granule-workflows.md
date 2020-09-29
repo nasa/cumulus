@@ -1,10 +1,8 @@
 ---
 id: granule-workflows
 title: Granule Workflows
-hide_title: true
+hide_title: false
 ---
-
-# Granule Workflows
 
 ## Failed Granule
 

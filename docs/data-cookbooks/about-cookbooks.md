@@ -1,10 +1,8 @@
 ---
 id: about-cookbooks
 title: About Cookbooks
-hide_title: true
+hide_title: false
 ---
-
-# About
 
 ## Introduction
 
