@@ -275,7 +275,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/message/Queue.getQueueName`
   - `@cumulus/message/Queue.getQueueNameByUrl`
 
-## [v2.0.1+ Backport releases
+## v2.0.2+ Backport releases
 
 Release v2.0.1 was the last release on the 2.0.x release series.
 
@@ -289,7 +289,7 @@ For up-to-date CHANGELOG for the maintenance release branch see
 For the most recent release information for the maintenance branch please see
 the [release page](https://github.com/nasa/cumulus/releases)
 
-### [v2.0.6] 2020-09-25
+### [v2.0.6] 2020-09-25 - [BACKPORT]
 
 ### Fixed
 
@@ -298,7 +298,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
     `cumulus` elasticsearch index results in the collection granule stats
     queries failing for the collections list api endpoint
 
-### [v2.0.5] 2020-09-15
+### [v2.0.5] 2020-09-15 - [BACKPORT]
 
 #### Added
 
@@ -308,13 +308,13 @@ the [release page](https://github.com/nasa/cumulus/releases)
 
 - Fix collection list queries. Removed fixes to collection stats, which break queries for a large number of granules.
 
-### [v2.0.4] 2020-09-08
+### [v2.0.4] 2020-09-08 - [BACKPORT]
 
 #### Changed
 
 - Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
 
-### [v2.0.3] 2020-09-02
+### [v2.0.3] 2020-09-02 - [BACKPORT]
 
 #### Fixed
 
@@ -331,7 +331,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   stream, which could cause Lambdas to run out of memory. Use
   `@cumulus/aws-client/S3.getObjectReadStream` instead.
 
-### [v2.0.2] 2020-08-17
+### [v2.0.2] 2020-08-17 - [BACKPORT]
 
 #### CODE CHANGES
 
