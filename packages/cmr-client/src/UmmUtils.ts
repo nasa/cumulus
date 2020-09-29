@@ -1,9 +1,13 @@
-'use strict';
+import get from 'lodash/get';
+import got from 'got';
+import getUrl from './getUrl';
+import ValidationError from './ValidationError';
 
-const get = require('lodash/get');
-const got = require('got');
-const getUrl = require('./getUrl');
-const ValidationError = require('./ValidationError');
+export interface UmmMetadata {
+  MetadataSpecification?: {
+    Version?: string
+  }
+}
 
 /**
  * Find the UMM version as a decimal string.
@@ -13,18 +17,23 @@ const ValidationError = require('./ValidationError');
  * @param {Object} umm - UMM metadata object
  * @returns {string} UMM version for the given object
  */
-const ummVersion = (umm) => get(umm, 'MetadataSpecification.Version', '1.4');
+export const ummVersion = (umm: UmmMetadata): string =>
+  get(umm, 'MetadataSpecification.Version', '1.4');
 
 /**
  * Posts a given XML string to the validate endpoint of CMR and throws an
  * exception if it is not valid
  *
- * @param {string} ummMetadata - the UMM object
+ * @param {Object} ummMetadata - the UMM object
  * @param {string} identifier - the document identifier
  * @param {string} provider - the CMR provider
  * @returns {Promise<undefined>}
  */
-const validateUMMG = async (ummMetadata, identifier, provider) => {
+export const validateUMMG = async (
+  ummMetadata: UmmMetadata,
+  identifier: string,
+  provider: string
+): Promise<void> => {
   const version = ummVersion(ummMetadata);
 
   const { statusCode, body } = await got.post(
@@ -42,10 +51,5 @@ const validateUMMG = async (ummMetadata, identifier, provider) => {
 
   if (statusCode === 200) return;
 
-  throw new ValidationError(`Validation was not successful, CMR error message: ${JSON.stringify(body.errors)}`);
-};
-
-module.exports = {
-  ummVersion,
-  validateUMMG,
+  throw new ValidationError(`Validation was not successful, CMR error message: ${JSON.stringify((<{errors: unknown}>body).errors)}`);
 };
