@@ -1,10 +1,8 @@
-'use strict';
+import Logger from '@cumulus/logger';
+import got, { Headers } from 'got';
+import { parseXMLString } from './Utils';
 
-const Logger = require('@cumulus/logger');
-const got = require('got');
-const { parseXMLString } = require('./Utils');
-
-const getUrl = require('./getUrl');
+import getUrl from './getUrl';
 
 const log = new Logger({ sender: 'cmr-client' });
 
@@ -17,7 +15,12 @@ const log = new Logger({ sender: 'cmr-client' });
  * @param {Object} headers - the CMR headers
  * @returns {Promise.<Object>} the CMR response object
  */
-async function deleteConcept(type, identifier, provider, headers) {
+async function deleteConcept(
+  type: string,
+  identifier: string,
+  provider: string,
+  headers: Headers
+): Promise<unknown> {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
   log.info(`deleteConcept ${url}`);
 
@@ -34,8 +37,8 @@ async function deleteConcept(type, identifier, provider, headers) {
   let errorMessage;
   if (result.statusCode !== 200) {
     errorMessage = `Failed to delete, statusCode: ${result.statusCode}, statusMessage: ${result.statusMessage}`;
-    if (xmlObject.errors) {
-      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`;
+    if ((<{errors: {error: unknown}}>xmlObject).errors) {
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify((<{errors: {error: unknown}}>xmlObject).errors.error)}`;
     }
     log.info(errorMessage);
   }
@@ -47,4 +50,4 @@ async function deleteConcept(type, identifier, provider, headers) {
   return xmlObject;
 }
 
-module.exports = deleteConcept;
+export = deleteConcept;
