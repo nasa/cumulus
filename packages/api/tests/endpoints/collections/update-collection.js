@@ -16,8 +16,6 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
-const { dynamoRecordToDbRecord } = require('../../../endpoints/collections');
-
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
 process.env.stackName = randomString();
@@ -90,7 +88,6 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT replaces an existing collection', async (t) => {
-
   const originalCollection = fakeCollectionFactory({
     duplicateHandling: 'replace',
     process: randomString(),
@@ -134,7 +131,7 @@ test('PUT returns 404 for non-existent collection', async (t) => {
     .expect(404);
   const { message, record } = response.body;
 
-  t.truthy(message);t
+  t.truthy(message);
   t.falsy(record);
 });
 

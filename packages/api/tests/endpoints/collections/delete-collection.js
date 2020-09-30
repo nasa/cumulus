@@ -18,7 +18,6 @@ const {
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
-const { dynamoRecordToDbRecord } = require('../../../endpoints/collections');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
