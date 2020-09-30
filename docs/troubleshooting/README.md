@@ -1,10 +1,8 @@
 ---
 id: troubleshooting-readme
-title: Troubleshooting Cumulus
-hide_title: true
+title: How to Troubleshoot and Fix Issues
+hide_title: false
 ---
-
-# How to Troubleshoot and Fix Issues
 
 While Cumulus is a complex system, there is a focus on maintaining the integrity and availability of the system and data. Should you encounter errors or issues while using this system, this section will help troubleshoot and solve those issues.
 

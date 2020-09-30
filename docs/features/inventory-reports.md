@@ -1,10 +1,8 @@
 ---
 id: inventory_reports
 title: Inventory Reports
-hide_title: true
+hide_title: false
 ---
-
-# Inventory Reports
 
 This feature provides a detailed report of collections, granules and files in Cumulus and CMR.
 These reports show the following data:

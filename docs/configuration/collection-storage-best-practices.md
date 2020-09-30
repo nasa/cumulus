@@ -1,10 +1,8 @@
 ---
 id: collection-storage-best-practices
-title: Collection Storage Best Practices
-hide_title: true
+title: Collection Cost Tracking and Storage Best Practices
+hide_title: false
 ---
-
-# Collection Cost Tracking and Storage Best Practices
 
 Organizing your data is important for metrics you may want to collect. AWS S3 storage and cost metrics are calculated at the bucket level, so it is easy to get metrics by bucket. You can get storage metrics at the key prefix level, but that is done through the CLI, which can be very slow for large buckets. It is very difficult to estimate costs at the prefix level.
 

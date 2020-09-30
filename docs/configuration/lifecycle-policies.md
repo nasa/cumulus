@@ -1,10 +1,8 @@
 ---
 id: lifecycle-policies
-title: Lifecycle Policies
-hide_title: true
+title: Setting S3 Lifecycle Policies
+hide_title: false
 ---
-
-# Setting S3 Lifecycle Policies
 
 This document will outline, in brief, how to set data lifecycle policies so that you are more easily able to control data storage costs while keeping your data accessible.   For more information on why you might want to do this, see the 'Additional Information' section at the end of the document.
 

@@ -1,10 +1,8 @@
 ---
 id: deployment-readme
 title: How to Deploy Cumulus
-hide_title: true
+hide_title: false
 ---
-
-# How to Deploy Cumulus
 
 ## Overview
 

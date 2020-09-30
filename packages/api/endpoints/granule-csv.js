@@ -1,7 +1,10 @@
 'use strict';
 
-const { Parser } = require('json2csv');
+const { Transform } = require('json2csv');
+const noop = require('lodash/noop');
+const Stream = require('stream');
 const router = require('express-promise-router')();
+const { deprecate } = require('@cumulus/common/util');
 
 const { Granule } = require('../models');
 
@@ -13,12 +16,25 @@ const { Granule } = require('../models');
  * @returns {Object} the csv file of granules
  */
 async function list(req, res) {
+  deprecate(
+    '@cumulus/endpoints/granule-csv/list',
+    '2.0.5',
+    '@cumulus/endpoints/reconciliationReport'
+  );
+
   const granuleScanner = new Granule().granuleAttributeScan();
   let nextGranule = await granuleScanner.peek();
 
-  const granulesArray = [];
+  const readable = new Stream.Readable({ objectMode: true });
+  readable._read = noop;
+  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime', 'status', 'updatedAt', 'published'];
+  const transformOpts = { objectMode: true };
+
+  const json2csv = new Transform({ fields }, transformOpts);
+  readable.pipe(json2csv).pipe(res);
+
   while (nextGranule) {
-    granulesArray.push({
+    readable.push({
       granuleUr: nextGranule.granuleId,
       collectionId: nextGranule.collectionId,
       createdAt: new Date(nextGranule.createdAt).toISOString(),
@@ -31,12 +47,7 @@ async function list(req, res) {
     await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
     nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
   }
-
-  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime', 'status', 'updatedAt', 'published'];
-  const parser = new Parser({ fields });
-  const csv = parser.parse(granulesArray);
-
-  return res.send(csv);
+  readable.push(null);
 }
 
 router.get('/', list);

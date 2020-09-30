@@ -1,10 +1,8 @@
 ---
 id: rerunning-workflow-executions
 title: Re-running workflow executions
-hide_title: true
+hide_title: false
 ---
-
-# Re-running workflow executions
 
 To re-run a Cumulus workflow execution from the AWS console:
 
