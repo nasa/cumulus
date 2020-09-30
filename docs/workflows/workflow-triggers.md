@@ -1,10 +1,8 @@
 ---
 id: workflow-triggers
 title: Workflow Triggers
-hide_title: true
+hide_title: false
 ---
-
-# Workflow Triggers
 
 For a workflow to run, it needs to be associated with a rule (see [rule configuration](data-cookbooks/setup.md#rules)). The rule configuration determines how and when a workflow execution is triggered. Rules can be triggered one time, on a schedule, or by new data written to a kinesis stream.
 

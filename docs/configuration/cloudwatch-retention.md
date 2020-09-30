@@ -1,10 +1,8 @@
 ---
 id: cloudwatch-retention
 title: Cloudwatch Retention
-hide_title: true
+hide_title: false
 ---
-
-# Cloudwatch Retention
 
 Our lambdas dump logs to [AWS CloudWatch](https://aws.amazon.com/cloudwatch/). By default, these logs exist indefinitely. However, there are ways to specify a duration for log retention.
 

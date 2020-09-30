@@ -1,10 +1,8 @@
 ---
 id: parse_pdr
 title: Parse PDR
-hide_title: true
+hide_title: false
 ---
-
-# Parse PDR
 
 This task utilizes the Cumulus Message Adapter to interpret and construct incoming and outgoing messages.
 
