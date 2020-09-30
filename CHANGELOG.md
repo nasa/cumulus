@@ -281,7 +281,7 @@ Release v2.0.1 was the last release on the 2.0.x release series.
 
 Changes after this version on the 2.0.x release series are limited
 security/requested feature patches and will not be ported forward to future
-releases unless there is acorresponding CHANGELOG entry.
+releases unless there is a corresponding CHANGELOG entry.
 
 For up-to-date CHANGELOG for the maintenance release branch see
 [CHANGELOG.md](https://github.com/nasa/cumulus/blob/release-2.0.x/CHANGELOG.md)
