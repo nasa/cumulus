@@ -1,10 +1,8 @@
 ---
 id: files_to_granules
 title: Files To Granules
-hide_title: true
+hide_title: false
 ---
-
-# Files To Granules
 
 This task utilizes the Cumulus Message Adapter to interpret and construct incoming and outgoing messages.
 

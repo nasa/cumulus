@@ -1,10 +1,8 @@
 ---
 id: create-rule-in-cumulus
 title: Create Rule In Cumulus
-hide_title: true
+hide_title: false
 ---
-
-# Create Rule In Cumulus
 
 Once the above files are in place and the entries created in CMR and Cumulus, we are ready to begin ingesting data. Depending on the type of ingestion (FTP/Kinesis, etc) the values below will change, but for the most part they are all similar. Rules tell Cumulus how to associate providers and collections, and when/how to start processing a workflow.
 

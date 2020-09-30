@@ -1,10 +1,8 @@
 ---
 id: choice-states
 title: Choice States
-hide_title: true
+hide_title: false
 ---
-
-# Choice States
 
 Cumulus supports AWS Step Function [`Choice`](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html) states. A `Choice` state enables branching logic in Cumulus workflows.
 
