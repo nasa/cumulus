@@ -102,6 +102,3 @@ log_destination_arn = "arn:aws:logs:us-east-1:1234567890:destination:LogsDestina
 additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
-# Optional - @cumulus/db will optionally run a 'heartbeat' query and retry if
-# a knexTimeout occurs
-rds_connection_heartbeat = false

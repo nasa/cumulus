@@ -7,7 +7,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
@@ -35,8 +34,8 @@ let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 
-test.before(async (t) => {
-  process.env = { ...process.env, ...localStackConnectionEnv };
+test.before(async () => {
+  process.env = { ...process.env };
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -55,8 +54,6 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
-
-  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.beforeEach(async (t) => {
@@ -128,51 +125,6 @@ test('PUT replaces an existing collection', async (t) => {
   t.is(fetchedDynamoRecord.version, originalCollection.version);
   t.is(fetchedDynamoRecord.duplicateHandling, 'error');
   t.is(fetchedDynamoRecord.process, undefined);
-
-  const fetchedDbRecord = await dbClient.first()
-    .from('collections')
-    .where({
-      name: originalCollection.name,
-      version: originalCollection.version,
-    });
-
-  t.is(fetchedDbRecord.name, originalCollection.name);
-  t.is(fetchedDbRecord.version, originalCollection.version);
-  t.is(fetchedDbRecord.duplicateHandling, 'error');
-  // eslint-disable-next-line unicorn/no-null
-  t.is(fetchedDbRecord.process, null);
-  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
-});
-
-test('PUT creates a new record in RDS if one does not exist', async (t) => {
-  const { dbClient } = t.context;
-
-  const originalCollection = fakeCollectionFactory({
-    duplicateHandling: 'replace',
-    process: randomString(),
-  });
-
-  await collectionModel.create(originalCollection);
-
-  const updatedCollection = {
-    ...originalCollection,
-    duplicateHandling: 'error',
-  };
-
-  delete updatedCollection.process;
-
-  await request(app)
-    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(updatedCollection)
-    .expect(200);
-
-  const fetchedDynamoRecord = await collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
 
   const fetchedDbRecord = await dbClient.first()
     .from('collections')

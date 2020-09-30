@@ -7,7 +7,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -38,8 +37,8 @@ let accessTokenModel;
 let collectionModel;
 let ruleModel;
 
-test.before(async (t) => {
-  process.env = { ...process.env, ...localStackConnectionEnv };
+test.before(async () => {
+  process.env = { ...process.env };
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -69,8 +68,6 @@ test.before(async (t) => {
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
   }).promise();
-
-  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.beforeEach(async (t) => {
@@ -145,25 +142,6 @@ test('Deleting a collection removes it', async (t) => {
     });
 
   t.is(fetchedDbRecord, undefined);
-});
-
-test('Deleting a collection without a record in RDS succeeds', async (t) => {
-  const collection = fakeCollectionFactory();
-  await collectionModel.create(collection);
-
-  await request(app)
-    .delete(`/collections/${collection.name}/${collection.version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const response = await request(app)
-    .get(`/collections/${collection.name}/${collection.version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
-
-  t.is(response.status, 404);
 });
 
 test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
