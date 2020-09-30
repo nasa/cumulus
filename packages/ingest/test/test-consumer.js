@@ -1,12 +1,9 @@
 'use strict';
 
 const delay = require('delay');
-const rewire = require('rewire');
+const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 const test = require('ava');
-
-const consumer = rewire('../consumer');
-const Consumer = consumer.Consumer;
 
 const timeToReceiveMessages = 200; // ms
 const timeLimitModifier = 50;
@@ -14,10 +11,20 @@ let testConsumer;
 
 async function stubReceiveSQSMessages(_url, { numOfMessages }) {
   await delay(timeToReceiveMessages);
-  return Array.apply(null, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
+  return Array.apply(undefined, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
 }
-consumer.__set__('receiveSQSMessages', stubReceiveSQSMessages);
-consumer.__set__('deleteSQSMessage', async () => true);
+
+const consumer = proxyquire(
+  '../consumer',
+  {
+    '@cumulus/aws-client/SQS': {
+      deleteSQSMessage: async () => true,
+      receiveSQSMessages: stubReceiveSQSMessages,
+    },
+  }
+);
+const Consumer = consumer.Consumer;
+
 function processFn() {}
 
 const sandbox = sinon.createSandbox();

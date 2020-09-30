@@ -1,16 +1,32 @@
-'use strict';
+import { receiveSQSMessages, deleteSQSMessage, Message } from '@cumulus/aws-client/SQS';
+import * as log from '@cumulus/common/log';
 
-const { receiveSQSMessages, deleteSQSMessage } = require('@cumulus/aws-client/SQS');
-const log = require('@cumulus/common/log');
+export type MessageConsumerFunction = (message: Message) => Promise<void>;
 
-class Consumer {
+export interface ConsumerConstructorParams {
+  queueUrl: string,
+  messageLimit?: number,
+  timeLimit?: number,
+  visibilityTimeout: number,
+  deleteProcessedMessage?: boolean
+}
+
+export class Consumer {
+  private readonly deleteProcessedMessage: boolean;
+  private readonly messageLimit: number;
+  private readonly now: number;
+  private readonly queueUrl: string;
+  private timeLapsed: boolean;
+  private readonly timeLimit: number;
+  private readonly visibilityTimeout: number;
+
   constructor({
     queueUrl,
     messageLimit = 1,
     timeLimit = 90,
     visibilityTimeout,
     deleteProcessedMessage = true,
-  }) {
+  }: ConsumerConstructorParams) {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
     this.visibilityTimeout = visibilityTimeout;
@@ -20,7 +36,7 @@ class Consumer {
     this.deleteProcessedMessage = deleteProcessedMessage;
   }
 
-  async processMessage(message, fn) {
+  private async processMessage(message: Message, fn: MessageConsumerFunction): Promise<0 | 1> {
     try {
       await fn(message);
       if (this.deleteProcessedMessage) await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
@@ -31,7 +47,11 @@ class Consumer {
     }
   }
 
-  async processMessages(fn, messageLimit, visibilityTimeout) {
+  private async processMessages(
+    fn: MessageConsumerFunction,
+    messageLimit: number,
+    visibilityTimeout: number
+  ): Promise<number> {
     if (messageLimit > 10) throw new Error(`Cannot process more than 10 messages per function call. Received limit: ${messageLimit}`);
 
     let counter = 0;
@@ -43,12 +63,12 @@ class Consumer {
       log.info(`processing ${messages.length} messages`);
       const processes = messages.map((message) => this.processMessage(message, fn));
       const results = await Promise.all(processes);
-      counter = results.reduce((s, v) => s + v, 0);
+      counter = results.reduce((s: number, v) => s + v, 0);
     }
     return counter;
   }
 
-  async consume(fn) {
+  async consume(fn: MessageConsumerFunction): Promise<number> {
     let messageLimit = this.messageLimit;
     log.info(`Attempting to process up to ${messageLimit} messages...`);
 
@@ -56,7 +76,7 @@ class Consumer {
     /* eslint-disable no-await-in-loop */
     // Only request up to the original messageLimit messages on subsequent `processMessages` calls
     while (messageLimit > 0 && !this.timeLapsed) {
-      let results;
+      let results = 0;
       if (messageLimit > 10) {
         results = await this.processMessages(fn, 10, this.visibilityTimeout);
         messageLimit -= 10;
@@ -78,7 +98,3 @@ class Consumer {
     return sum;
   }
 }
-
-module.exports = {
-  Consumer,
-};
