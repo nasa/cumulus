@@ -90,17 +90,13 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT replaces an existing collection', async (t) => {
-  const { dbClient } = t.context;
 
   const originalCollection = fakeCollectionFactory({
     duplicateHandling: 'replace',
     process: randomString(),
   });
 
-  const originalDynamoRecord = await collectionModel.create(originalCollection);
-
-  const dbRecord = dynamoRecordToDbRecord(originalDynamoRecord);
-  await dbClient('collections').insert(dbRecord);
+  await collectionModel.create(originalCollection);
 
   const updatedCollection = {
     ...originalCollection,
@@ -125,21 +121,6 @@ test('PUT replaces an existing collection', async (t) => {
   t.is(fetchedDynamoRecord.version, originalCollection.version);
   t.is(fetchedDynamoRecord.duplicateHandling, 'error');
   t.is(fetchedDynamoRecord.process, undefined);
-
-  const fetchedDbRecord = await dbClient.first()
-    .from('collections')
-    .where({
-      name: originalCollection.name,
-      version: originalCollection.version,
-    });
-
-  t.is(fetchedDbRecord.name, originalCollection.name);
-  t.is(fetchedDbRecord.version, originalCollection.version);
-  t.is(fetchedDbRecord.duplicateHandling, 'error');
-  // eslint-disable-next-line unicorn/no-null
-  t.is(fetchedDbRecord.process, null);
-  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('PUT returns 404 for non-existent collection', async (t) => {
@@ -153,7 +134,7 @@ test('PUT returns 404 for non-existent collection', async (t) => {
     .expect(404);
   const { message, record } = response.body;
 
-  t.truthy(message);
+  t.truthy(message);t
   t.falsy(record);
 });
 

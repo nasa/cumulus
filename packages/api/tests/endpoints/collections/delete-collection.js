@@ -112,13 +112,8 @@ test('Attempting to delete a collection with an invalid access token returns an 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
 test('Deleting a collection removes it', async (t) => {
-  const { dbClient } = t.context;
-
   const collection = fakeCollectionFactory();
-  const createdCollectionRecord = await collectionModel.create(collection);
-
-  const dbRecord = dynamoRecordToDbRecord(createdCollectionRecord);
-  await dbClient('collections').insert(dbRecord);
+  await collectionModel.create(collection);
 
   await request(app)
     .delete(`/collections/${collection.name}/${collection.version}`)
@@ -133,15 +128,6 @@ test('Deleting a collection removes it', async (t) => {
     .expect(404);
 
   t.is(response.status, 404);
-
-  const fetchedDbRecord = await dbClient.first()
-    .from('collections')
-    .where({
-      name: collection.name,
-      version: collection.version,
-    });
-
-  t.is(fetchedDbRecord, undefined);
 });
 
 test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {

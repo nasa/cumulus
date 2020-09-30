@@ -132,17 +132,6 @@ test('POST creates a new collection', async (t) => {
 
   t.is(fetchedDynamoRecord.name, newCollection.name);
   t.is(fetchedDynamoRecord.version, newCollection.version);
-
-  const fetchedDbRecord = await t.context.dbClient.first()
-    .from('collections')
-    .where({
-      name: newCollection.name,
-      version: newCollection.version,
-    });
-
-  t.not(fetchedDbRecord, undefined);
-  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST without a name returns a 400 error', async (t) => {
