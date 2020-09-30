@@ -289,5 +289,5 @@ variable "rds_connection_heartbeat" {
 variable "ems_deploy" {
   description = "If true, deploys the EMS reporting module"
   type        = bool
-  default     = false
+  default     = true
 }
