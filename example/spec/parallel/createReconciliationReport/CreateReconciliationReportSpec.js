@@ -215,8 +215,10 @@ async function ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime
     granuleId,
   });
   const granule = JSON.parse(response.body);
+  console.log(`XXX Waiting for waitForGranuleRecordsInList ${granuleId}`);
   await waitForGranuleRecordsInList(config.stackName, [granuleId]);
   await (new Granule()).delete({ granuleId });
+  console.log(`XXX Waiting for waitForGranuleRecordsNotInList ${granuleId}`);
   await waitForGranuleRecordsNotInList(config.stackName, [granuleId], { sort_by: 'timestamp', timestamp__from: ingestTime });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   return granule;
