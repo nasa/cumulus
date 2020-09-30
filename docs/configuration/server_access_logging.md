@@ -1,10 +1,8 @@
 ---
 id: server_access_logging
 title: S3 Server Access Logging
-hide_title: true
+hide_title: false
 ---
-
-# S3 Server Access Logging
 
 **Note:** To support [EMS Reporting](../features/ems_reporting), you need to enable [Amazon S3 server access logging][awslogging] on all protected and public buckets.
 

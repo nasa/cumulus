@@ -1,10 +1,8 @@
 ---
 id: replay-kinesis-messages
-title: Replay Kinesis Messages
-hide_title: true
+title: How to replay Kinesis messages after an outage
+hide_title: false
 ---
-
-# How to replay Kinesis messages after an outage
 
 After a period of outage, it may be necessary for a Cumulus operator to reprocess or 'replay' messages that arrived on an AWS Kinesis Data Stream but did not trigger an ingest. This document serves as an outline on how to start a replay operation, and how to perform status tracking. Cumulus supports replay of all Kinesis messages on a stream (subject to the normal RetentionPeriod constraints), or all messages within a given time slice delimited by start and end timestamps.
 
