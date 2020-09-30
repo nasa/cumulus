@@ -275,6 +275,81 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `@cumulus/message/Queue.getQueueName`
   - `@cumulus/message/Queue.getQueueNameByUrl`
 
+## v2.0.2+ Backport releases
+
+Release v2.0.1 was the last release on the 2.0.x release series.
+
+Changes after this version on the 2.0.x release series are limited
+security/requested feature patches and will not be ported forward to future
+releases unless there is a corresponding CHANGELOG entry.
+
+For up-to-date CHANGELOG for the maintenance release branch see
+[CHANGELOG.md](https://github.com/nasa/cumulus/blob/release-2.0.x/CHANGELOG.md)
+from the 2.0.x branch.
+
+For the most recent release information for the maintenance branch please see
+the [release page](https://github.com/nasa/cumulus/releases)
+
+### [v2.0.6] 2020-09-25 - [BACKPORT]
+
+### Fixed
+
+- **CUMULUS-2168**
+  - Fixed issue where large number of documents (generally logs) in the
+    `cumulus` elasticsearch index results in the collection granule stats
+    queries failing for the collections list api endpoint
+
+### [v2.0.5] 2020-09-15 - [BACKPORT]
+
+#### Added
+
+- Added `thin_egress_stack_name` variable to `cumulus` and `distribution` Terraform modules to allow overriding the default Cloudformation stack name used for the `thin-egress-app`. **Please note that if you change/set this value for an existing deployment, it will destroy and re-create your API gateway for the `thin-egress-app`.**
+
+#### Fixed
+
+- Fix collection list queries. Removed fixes to collection stats, which break queries for a large number of granules.
+
+### [v2.0.4] 2020-09-08 - [BACKPORT]
+
+#### Changed
+
+- Upgraded version of [TEA](https://github.com/asfadmin/thin-egress-app/) deployed with Cumulus to build 88.
+
+### [v2.0.3] 2020-09-02 - [BACKPORT]
+
+#### Fixed
+
+- **CUMULUS-1961**
+  - Fixed `activeCollections` query only returning 10 results
+
+- **CUMULUS-2039**
+  - Fix issue causing SyncGranules task to run out of memory on large granules
+
+#### CODE CHANGES
+
+- The `@cumulus/aws-client/S3.getS3ObjectReadStreamAsync` function has been
+  removed. It read the entire S3 object into memory before returning a read
+  stream, which could cause Lambdas to run out of memory. Use
+  `@cumulus/aws-client/S3.getObjectReadStream` instead.
+
+### [v2.0.2] 2020-08-17 - [BACKPORT]
+
+#### CODE CHANGES
+
+- The `@cumulus/ingest/util.lookupMimeType` function now returns `undefined`
+  rather than `null` if the mime type could not be found.
+- The `@cumulus/ingest/lock.removeLock` function now returns `undefined`
+
+#### Added
+
+- **CUMULUS-2116**
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+
+### Fixed
+
+- **CUMULUS-2116**
+  - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
+
 ## [v2.0.1] 2020-07-28
 
 ### Added
@@ -3482,6 +3557,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v2.0.1...HEAD
+[v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.6
+[v2.0.5]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.5
+[v2.0.4]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.4
+[v2.0.3]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.3
+[v2.0.2]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.2
 [v2.0.1]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.1
 [v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
 [v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
