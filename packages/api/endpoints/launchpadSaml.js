@@ -2,6 +2,7 @@
 
 const saml2 = require('saml2-js');
 const got = require('got');
+const path = require('path');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
@@ -230,13 +231,19 @@ const auth = async (req, res) => {
 };
 
 /**
- * Helper to pull the referring URL from an incoming Express request.
+ * Helper to pull the incoming URL.
  *
- * @param {Object} req - express request object
- * @returns {Object} - The url the client visited to generate the request.
+ * @param {string} apiBaseUrl - API base URL
+ * @param {string} requestPath - Request path for incoming request
+ * @returns {string} - The URL the client visited to generate the request.
  */
-const urlFromRequest = (req) =>
-  new URL(req.url, `${req.protocol}://${req.get('host')}`).toString();
+const getIncomingUrlFromRequest = (apiBaseUrl, requestPath) => {
+  const apiBaseUrlObject = new URL(apiBaseUrl);
+  // apiBaseUrlObject.pathname is necessary to handle API URLs that
+  // may/may not have an API gateway stage name
+  const fullRequestPath = path.join(apiBaseUrlObject.pathname, requestPath);
+  return new URL(fullRequestPath, apiBaseUrl).toString();
+};
 
 /**
  * SAML Token endpoint.
@@ -252,15 +259,15 @@ const samlToken = async (req, res) => {
   const { token } = req.query;
   if (token) return res.send({ message: { token } });
 
-  let launchpadRedirectEndpoint;
+  let apiBaseUrl;
   let RelayState;
   try {
-    launchpadRedirectEndpoint = process.env.LAUNCHPAD_REDIRECT_ENDPOINT;
-    if (!launchpadRedirectEndpoint) {
-      throw new Error('LAUNCHPAD_REDIRECT_ENDPOINT environment variable is required');
+    apiBaseUrl = process.env.API_BASE_URL;
+    if (!apiBaseUrl) {
+      throw new Error('API_BASE_URL environment variable is required');
     }
 
-    RelayState = urlFromRequest(req);
+    RelayState = getIncomingUrlFromRequest(apiBaseUrl, req.path);
     if (!RelayState) {
       throw new Error('Could not determine RelayState from incoming URL');
     }
@@ -268,7 +275,12 @@ const samlToken = async (req, res) => {
     return res.boom.badImplementation(error.message);
   }
 
-  return res.redirect(`${launchpadRedirectEndpoint}?RelayState=${encodeURIComponent(RelayState)}`);
+  const redirectUrl = new URL('saml/login', apiBaseUrl);
+  redirectUrl.searchParams.append(
+    'RelayState',
+    RelayState
+  );
+  return res.redirect(redirectUrl.toString());
 };
 
 const notImplemented = async (req, res) =>
@@ -283,4 +295,6 @@ module.exports = {
   login,
   refreshEndpoint,
   samlToken,
+  // exported for testing
+  getIncomingUrlFromRequest,
 };

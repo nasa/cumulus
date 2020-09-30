@@ -285,6 +285,21 @@ test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
   t.is(decodedToken.accessToken, t.context.validIndex);
 });
 
+test.serial('getIncomingUrlFromRequest returns correct URL for API base URL with stage name', (t) => {
+  const incomingUrl = launchpadSaml.getIncomingUrlFromRequest('http://api.com/dev/', '/fake-path');
+  t.is(incomingUrl, 'http://api.com/dev/fake-path');
+});
+
+test.serial('getIncomingUrlFromRequest returns correct URL for API base URL without stage name', (t) => {
+  const incomingUrl = launchpadSaml.getIncomingUrlFromRequest('http://api.com', '/fake-path');
+  t.is(incomingUrl, 'http://api.com/fake-path');
+});
+
+test.serial('getIncomingUrlFromRequest returns correct URL for API base URL with port', (t) => {
+  const incomingUrl = launchpadSaml.getIncomingUrlFromRequest('http://api.com:7000', '/fake-path');
+  t.is(incomingUrl, 'http://api.com:7000/fake-path');
+});
+
 test.serial('/token endpoint with a token query parameter returns the parameter.', async (t) => {
   process.env.LAUNCHPAD_REDIRECT_ENDPOINT = 'http://api.com/saml/login';
   t.teardown(() => delete process.env.LAUNCHPAD_REDIRECT_ENDPOINT);
@@ -297,23 +312,32 @@ test.serial('/token endpoint with a token query parameter returns the parameter.
   t.is(returnedToken.text, JSON.stringify({ message: { token: 'SomeRandomJWToken' } }));
 });
 
-test.serial.only('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {
-  const launchpadRedirectEndpoint = 'http://api.com:7000/dev/saml/login';
-  process.env.LAUNCHPAD_REDIRECT_ENDPOINT = launchpadRedirectEndpoint;
-  t.teardown(() => delete process.env.LAUNCHPAD_REDIRECT_ENDPOINT);
+test.serial('/token endpoint for API with stage name redirects to saml/login with correct RelayState', async (t) => {
+  process.env.API_BASE_URL = 'http://api.com:7000/dev/';
+  t.teardown(() => delete process.env.API_BASE_URL);
 
   const redirect = await request(app)
     .get('/token')
     .set('Accept', 'application/json')
     .expect(302);
 
-  // Have to get URL of Express app for test
-  const appURL = new URL('token', `${redirect.request.protocol}//${redirect.request.host}`).toString();
-  t.is(redirect.header.location, `${launchpadRedirectEndpoint}?RelayState=${encodeURIComponent(appURL)}`);
+  t.is(redirect.header.location, `http://api.com:7000/dev/saml/login?RelayState=${encodeURIComponent('http://api.com:7000/dev/token')}`);
 });
 
-test.serial('/token endpoint without LAUNCHPAD_REDIRECT_ENDPOINT environment variable returns 500 error', async (t) => {
-  delete process.env.LAUNCHPAD_REDIRECT_ENDPOINT;
+test.serial('/token endpoint for API without stage name redirects to saml/login with correct RelayState', async (t) => {
+  process.env.API_BASE_URL = 'http://api.com/';
+  t.teardown(() => delete process.env.API_BASE_URL);
+
+  const redirect = await request(app)
+    .get('/token')
+    .set('Accept', 'application/json')
+    .expect(302);
+
+  t.is(redirect.header.location, `http://api.com/saml/login?RelayState=${encodeURIComponent('http://api.com/token')}`);
+});
+
+test.serial('/token endpoint without API_BASE_URL environment variable returns 500 error', async (t) => {
+  delete process.env.API_BASE_URL;
   const response = await request(app)
     .get('/token')
     .set('Accept', 'application/json')

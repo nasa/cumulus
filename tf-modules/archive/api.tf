@@ -3,9 +3,9 @@ locals {
   api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}token"
-  launchpad_redirect_uri    = "${local.api_uri}saml/login"
   api_env_variables = {
       AccessTokensTable                = var.dynamo_tables.access_tokens.name
+      API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationsTable             = var.dynamo_tables.async_operations.name
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
@@ -47,7 +47,6 @@ locals {
       launchpad_certificate            = var.launchpad_certificate
       LAUNCHPAD_METADATA_URL           = var.saml_launchpad_metadata_url
       launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
-      LAUNCHPAD_REDIRECT_ENDPOINT      = local.launchpad_redirect_uri
       log_destination_arn              = var.log_destination_arn
       ManualConsumerLambda             = var.manual_consumer_function_arn
       messageConsumer                  = var.message_consumer_function_arn
