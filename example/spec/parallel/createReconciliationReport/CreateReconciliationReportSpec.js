@@ -257,7 +257,6 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds) => pWait
   }
 );
 
-
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
   let beforeAllFailed = false;
