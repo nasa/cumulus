@@ -206,6 +206,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove the `public-read` ACL from the `move-granules` task
 - **CUMULUS-2164**
   - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
+- **CUMULUS-2195**
+  - Fixed issue with redirect from `/token` not working when using a Cloudfront endpoint to access the Cumulus API with Launchpad authentication enabled. The redirect should now work properly whether you are using a plain API gateway URL or a Cloudfront endpoint pointing at an API gateway URL.
 
 ### Deprecated
 
