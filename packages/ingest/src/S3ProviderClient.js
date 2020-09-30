@@ -6,8 +6,8 @@ const errors = require('@cumulus/errors');
 const isString = require('lodash/isString');
 const { basename, dirname } = require('path');
 const {
-  emptyProviderConnectEndMixin,
-} = require('./emptyProviderConnectEndMixin');
+  default: EmptyProviderConnectEndMixin,
+} = require('./EmptyProviderConnectEndMixin');
 
 class S3ProviderClient {
   constructor({ bucket } = {}) {
@@ -94,9 +94,4 @@ class S3ProviderClient {
   }
 }
 
-Object.assign(
-  S3ProviderClient.prototype,
-  emptyProviderConnectEndMixin
-);
-
-module.exports = S3ProviderClient;
+module.exports = EmptyProviderConnectEndMixin(S3ProviderClient);

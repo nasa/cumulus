@@ -10,8 +10,8 @@ const isNil = require('lodash/isNil');
 const { recursion } = require('./recursion');
 const { lookupMimeType, decrypt } = require('./util');
 const {
-  emptyProviderConnectEndMixin,
-} = require('./emptyProviderConnectEndMixin');
+  default: EmptyProviderConnectEndMixin,
+} = require('./EmptyProviderConnectEndMixin');
 
 class FtpProviderClient {
   // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP
@@ -200,9 +200,4 @@ class FtpProviderClient {
   }
 }
 
-Object.assign(
-  FtpProviderClient.prototype,
-  emptyProviderConnectEndMixin
-);
-
-module.exports = FtpProviderClient;
+module.exports = EmptyProviderConnectEndMixin(FtpProviderClient);

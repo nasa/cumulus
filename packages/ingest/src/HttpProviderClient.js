@@ -22,8 +22,8 @@ const errors = require('@cumulus/errors');
 
 const { lookupMimeType, decrypt } = require('./util');
 const {
-  emptyProviderConnectEndMixin,
-} = require('./emptyProviderConnectEndMixin');
+  default: EmptyProviderConnectEndMixin,
+} = require('./EmptyProviderConnectEndMixin');
 
 const validateHost = (host) => {
   if (isValidHostname(host) || isIp(host)) return;
@@ -248,9 +248,4 @@ class HttpProviderClient {
   }
 }
 
-Object.assign(
-  HttpProviderClient.prototype,
-  emptyProviderConnectEndMixin
-);
-
-module.exports = HttpProviderClient;
+module.exports = EmptyProviderConnectEndMixin(HttpProviderClient);
