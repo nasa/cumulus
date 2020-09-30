@@ -91,7 +91,7 @@ export interface CMRConstructorParams {
  * @typicalname cmrClient
  *
  * @example
- * const { CMR } from '@cumulus/cmr-client');
+ * const { CMR } = require('@cumulus/cmr-client');
  *
  * const cmrClient = new CMR({
  *  provider: 'my-provider',

@@ -9,7 +9,7 @@ import { CMR, CMRConstructorParams } from './CMR';
  *  URLSearchParam object or a plain Object.
  * @returns {URLSearchParams} - input object appeneded with a default provider_short_name
  */
-const provideParams = ({
+const providerParams = ({
   searchParams = new URLSearchParams(),
   cmrSettings,
 }: {
@@ -63,12 +63,12 @@ class CMRSearchConceptQueue {
    * @param {string} params.cmrSettings - the CMR settings for the requests - the provider,
    * clientId, and either launchpad token or EDL username and password
    * @param {string} params.type - the type of search 'granule' or 'collection'
-   * @param {Object} [params.searchParams={}] - the search parameters
+   * @param {URLSearchParams} [params.searchParams={}] - the search parameters
    * @param {string} params.format - the result format
    */
   constructor(params: CMRSearchConceptQueueConstructorParams) {
     this.type = params.type;
-    this.params = provideParams({
+    this.params = providerParams({
       searchParams: params.searchParams,
       cmrSettings: params.cmrSettings,
     });
