@@ -1,17 +1,15 @@
-'use strict';
-
-const S3 = require('@cumulus/aws-client/S3');
-const log = require('@cumulus/common/log');
-const errors = require('@cumulus/errors');
-const isString = require('lodash/isString');
-const { basename, dirname } = require('path');
-const {
-  default: EmptyProviderConnectEndMixin,
-} = require('./EmptyProviderConnectEndMixin');
+import * as S3 from '@cumulus/aws-client/S3';
+import * as log from '@cumulus/common/log';
+import * as errors from '@cumulus/errors';
+import { basename, dirname } from 'path';
+import EmptyProviderConnectEndMixin from './EmptyProviderConnectEndMixin';
+import { S3ProviderClientListItem } from './types';
 
 class S3ProviderClient {
-  constructor({ bucket } = {}) {
-    if (!isString(bucket)) throw new TypeError('bucket is required');
+  private readonly bucket: string;
+
+  constructor({ bucket }: { bucket?: string } = {}) {
+    if (!bucket) throw new TypeError('bucket is required');
     this.bucket = bucket;
   }
 
@@ -22,7 +20,7 @@ class S3ProviderClient {
    * @param {string} localPath - the full local destination file path
    * @returns {Promise<string>} - the path that the file was saved to
    */
-  async download(remotePath, localPath) {
+  async download(remotePath: string, localPath: string): Promise<string> {
     const remoteUrl = `s3://${this.bucket}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
@@ -44,7 +42,7 @@ class S3ProviderClient {
    * @returns {Promise<Array>} a list of files
    * @private
    */
-  async list(path) {
+  async list(path: string): Promise<S3ProviderClientListItem[]> {
     const objects = await S3.listS3ObjectsV2({
       Bucket: this.bucket,
       FetchOwner: true,
@@ -70,7 +68,11 @@ class S3ProviderClient {
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
-  async sync(sourceKey, destinationBucket, destinationKey) {
+  async sync(
+    sourceKey: string,
+    destinationBucket: string,
+    destinationKey: string
+  ): Promise<{s3uri: string, etag: string}> {
     try {
       const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
       const { etag } = await S3.multipartCopyObject({
@@ -94,4 +96,4 @@ class S3ProviderClient {
   }
 }
 
-module.exports = EmptyProviderConnectEndMixin(S3ProviderClient);
+export = EmptyProviderConnectEndMixin(S3ProviderClient);
