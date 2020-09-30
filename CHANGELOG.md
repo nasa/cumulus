@@ -174,10 +174,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     execution.
   - The `QueueGranules` task now supports an `executionNamePrefix` property. Any
     executions queued by that task will use that prefix in the name of the
-    execution.
-  - The `QueuePdrs` task now supports an `executionNamePrefix` config property. Any
-    executions queued by that task will use that prefix in the name of the
-    execution.
+    execution. See the
+    [example workflow](./example/cumulus-tf/discover_granules_with_execution_name_prefix_workflow.asl.json)
+    for usage.
+  - The `QueuePdrs` task now supports an `executionNamePrefix` config property.
+    Any executions queued by that task will use that prefix in the name of the
+    execution. See the
+    [example workflow](./example/cumulus-tf/discover_and_queue_pdrs_with_execution_name_prefix_workflow.asl.json)
+    for usage.
 
 ### Changed
 
