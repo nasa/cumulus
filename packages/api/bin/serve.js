@@ -215,7 +215,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
   // Set env variable to mark this as a local run of the API
   process.env.CUMULUS_ENV = 'local';
 
-  process.env.LAUNCHPAD_REDIRECT_ENDPOINT = `http://localhost:${port}/saml/login`;
+  process.env.API_BASE_URL = `http://localhost:${port}`;
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
   process.env.TOKEN_SECRET = randomId('tokensecret');
 
