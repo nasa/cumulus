@@ -1,4 +1,4 @@
-function getHost(cmrEnvironment?: string): string {
+function getCmrHost(cmrEnvironment?: string): string {
   switch (cmrEnvironment) {
     case 'OPS':
       return 'cmr.earthdata.nasa.gov';
@@ -20,7 +20,7 @@ export function getIngestUrl({
   cmrEnv?: string,
   provider: string,
 }): string {
-  return `https://${host ?? getHost(cmrEnv)}/ingest/providers/${provider}/`;
+  return `https://${host ?? getCmrHost(cmrEnv)}/ingest/providers/${provider}/`;
 }
 
 export function getSearchUrl({
@@ -30,7 +30,7 @@ export function getSearchUrl({
   host?: string,
   cmrEnv?: string,
 } = {}): string {
-  return `https://${host ?? getHost(cmrEnv)}/search/`;
+  return `https://${host ?? getCmrHost(cmrEnv)}/search/`;
 }
 
 export function getTokenUrl({
@@ -40,7 +40,7 @@ export function getTokenUrl({
   host?: string,
   cmrEnv?: string,
 } = {}): string {
-  return `https://${host ?? getHost(cmrEnv)}/legacy-services/rest/tokens`;
+  return `https://${host ?? getCmrHost(cmrEnv)}/legacy-services/rest/tokens`;
 }
 
 export function getValidateUrl({
@@ -52,5 +52,5 @@ export function getValidateUrl({
   cmrEnv?: string,
   provider: string,
 }): string {
-  return `https://${host ?? getHost(cmrEnv)}/ingest/providers/${provider}/validate/`;
+  return `https://${host ?? getCmrHost(cmrEnv)}/ingest/providers/${provider}/validate/`;
 }
