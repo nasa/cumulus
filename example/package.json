@@ -65,7 +65,8 @@
     "@cumulus/sf-sqs-report": "2.0.1",
     "@cumulus/sync-granule": "2.0.1",
     "@cumulus/test-processing": "2.0.1",
-    "ajv": "^5.5.2"
+    "ajv": "^5.5.2",
+    "json-bigint": "^0.3.1"
   },
   "devDependencies": {
     "@cumulus/test-data": "2.0.1"
