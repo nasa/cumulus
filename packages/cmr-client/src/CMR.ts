@@ -291,7 +291,7 @@ export class CMR {
    */
   async deleteCollection(datasetID: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return deleteConcept('collection', datasetID, this.provider, headers);
+    return deleteConcept('collections', datasetID, this.provider, headers);
   }
 
   /**

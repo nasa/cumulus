@@ -1,13 +1,3 @@
-/**
- * Determines the appropriate CMR host endpoint based on a given
- * value for CMR_ENVIRONMENT environment variable. Defaults
- * to the uat cmr
- *
- * @param {string} cmrEnvironment - [optional] CMR environment to
- *              use valid arguments are ['OPS', 'SIT', 'UAT'], anything that is
- *              not 'OPS' or 'SIT' will be interpreted as 'UAT'
- * @returns {string} the cmr host address
- */
 function getHost(cmrEnvironment?: string): string {
   switch (cmrEnvironment) {
     case 'OPS':
