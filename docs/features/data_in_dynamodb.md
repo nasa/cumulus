@@ -1,10 +1,8 @@
 ---
 id: data_in_dynamodb
 title: Cumulus Metadata in DynamoDB
-hide_title: true
+hide_title: false
 ---
-
-# Cumulus Metadata in DynamoDB
 
 - [DynamoDB Auto Scaling](#dynamodb-auto-scaling)
 

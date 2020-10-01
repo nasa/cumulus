@@ -112,7 +112,7 @@
     "jasmine-reporters": "^2.3.2",
     "js-yaml": "^3.13.1",
     "jsdoc-to-markdown": "^5.0.3",
-    "knex": "^0.21.5",
+    "knex": "0.21.6",
     "latest-version": "^4.0.0",
     "lerna": "3.20.2",
     "lodash": "^4.17.15",

@@ -1,10 +1,8 @@
 ---
 id: sips-workflow
 title: Science Investigator-led Processing Systems (SIPS)
-hide_title: true
+hide_title: false
 ---
-
-# Science Investigator-led Processing Systems (SIPS)
 
 The Cumulus ingest workflow supports the SIPS workflow. In the following document, we'll discuss what a SIPS workflow is and how to set one up in a Cumulus instance.
 

@@ -1,10 +1,8 @@
 ---
 id: discovery-filtering
 title: Discovery Filtering
-hide_title: true
+hide_title: false
 ---
-
-# Discovery Filtering
 
 Discovery filtering is an advanced feature of the `discover-granules` and `discover-pdrs` tasks.
 It is a configurable option for discovery that allows an operator to manipulate which parts of a

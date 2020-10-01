@@ -1,10 +1,8 @@
 ---
 id: move_granules
 title: Move Granules
-hide_title: true
+hide_title: false
 ---
-
-# Move Granules
 
 This task utilizes the Cumulus Message Adapter to interpret and construct incoming and outgoing messages.
 

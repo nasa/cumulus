@@ -1,10 +1,8 @@
 ---
 id: execution_payload_retention
 title: Execution Payload Retention
-hide_title: true
+hide_title: false
 ---
-
-# Execution Payload Retention
 
 In addition to CloudWatch logs and AWS StepFunction API records, Cumulus automatically stores the initial and 'final' (the last update to the execution record) payload values as part of the Execution record in DynamoDB and Elasticsearch.
 
