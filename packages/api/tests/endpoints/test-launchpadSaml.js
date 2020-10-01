@@ -67,7 +67,7 @@ const gotLaunchpadMetadataResponse = {
 };
 
 let accessTokenModel;
-test.before(async (t) => {
+test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
