@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v2.0.7] 2020-10-1
+
+### Fixed
+
+- CVE-2020-7720
+  - Updated common `node-forge` dependency to 0.10.0 to address CVE finding
+
 ## [v2.0.6] 2020-09-25
 
 ### Fixed
