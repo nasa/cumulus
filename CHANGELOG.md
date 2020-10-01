@@ -259,6 +259,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `thin_egress_lambda_code_dependency_archive_key`
 - **CUMULUS-2157**
   - Removed `providerSecretsMigration` and `verifyProviderSecretsMigration` lambdas
+- Removed deprecated `@cumulus/sf-sns-report` task
 - Removed code:
   - `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
   - `@cumulus/aws-client/S3.getS3ObjectReadStream`
