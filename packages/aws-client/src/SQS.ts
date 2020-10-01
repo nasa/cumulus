@@ -127,7 +127,7 @@ type receiveSQSMessagesOptions = {
 export const receiveSQSMessages = async (
   queueUrl: string,
   options: receiveSQSMessagesOptions
-): Promise<Message[]> => {
+): Promise<SQSMessage[]> => {
   const params = {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
@@ -139,7 +139,7 @@ export const receiveSQSMessages = async (
 
   const messages = await sqs().receiveMessage(params).promise();
 
-  return <Message[]>(messages.Messages ?? []);
+  return <SQSMessage[]>(messages.Messages ?? []);
 };
 
 export const parseSQSMessageBody = (message: any): unknown =>

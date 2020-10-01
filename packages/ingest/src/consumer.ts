@@ -1,7 +1,7 @@
-import { receiveSQSMessages, deleteSQSMessage, Message } from '@cumulus/aws-client/SQS';
+import { receiveSQSMessages, deleteSQSMessage, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as log from '@cumulus/common/log';
 
-export type MessageConsumerFunction = (message: Message) => Promise<void>;
+export type MessageConsumerFunction = (message: SQSMessage) => Promise<void>;
 
 export interface ConsumerConstructorParams {
   queueUrl: string,
@@ -36,7 +36,10 @@ export class Consumer {
     this.deleteProcessedMessage = deleteProcessedMessage;
   }
 
-  private async processMessage(message: Message, fn: MessageConsumerFunction): Promise<0 | 1> {
+  private async processMessage(
+    message: SQSMessage,
+    fn: MessageConsumerFunction
+  ): Promise<0 | 1> {
     try {
       await fn(message);
       if (this.deleteProcessedMessage) await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
