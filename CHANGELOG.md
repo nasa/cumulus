@@ -140,34 +140,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
-    requirements for the 2.1.x release series
-  - Updated the default Cumulus module to take the following new required variables:
-    - rds_user_access_secret_arn:
-      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
-      (containing at least host, password, port as keys)
-    - rds_security_group:
-      RDS Security Group that provides connection access to the RDS cluster
-  - Updated API lambdas and default ECS cluster to add them to the
-    `rds_security_group` for database access
-- **CUMULUS-2126**
-  - The collections endpoint now writes to the RDS database
-- **CUMULUS-2127**
-  - Added migration to create collections relation for RDS database
-- **CUMULUS-2129**
-  - Added `data-migration1` Terraform module and Lambda to migrate data from Dynamo to RDS
-    - Added support to Lambda for migrating collections data from Dynamo to RDS
-- **CUMULUS-2155**
-  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
-    modules.  If set to true, this diagnostic variable instructs Core's database
-    code to fire off a connection 'heartbeat' query and log the timing/results
-    for diagnostic purposes, and retry certain connection timeouts once.
-    This option is disabled by default
+    severless RDS Aurora/ PostgreSQL database cluster to meet the PostgreSQL
+    requirements for future releases
 - **CUMULUS-2156**
   - Support array inputs parameters for `Internal` reconciliation report
-- **CUMULUS-2157**
-  - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
-    - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead
 - **CUMULUS-2162**
   - Adds new report type to `/reconciliationReport` endpoint.  The new report
     is `Granule Inventory`. This report is a CSV file of all the granules in
