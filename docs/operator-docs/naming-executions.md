@@ -1,6 +1,6 @@
 ---
 id: naming-executions
-title: Naming Executinons
+title: Naming Executions
 hide_title: true
 ---
 
