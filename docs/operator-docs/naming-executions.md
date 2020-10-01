@@ -28,6 +28,17 @@ property is set using the value configured in the workflow's
 
 **Example**
 
+If you wanted to use a prefix of "my-prefix", you would create a rule with meta
+similar to this:
+
+```json
+{
+  "executionNamePrefix": "my-prefix"
+}
+```
+
+The workflow could contain a "QueueGranules" step with the following state:
+
 ```json
 {
   "QueueGranules": {
