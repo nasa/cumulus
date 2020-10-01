@@ -50,11 +50,18 @@ declare module 'jsftp' {
     size: 0 | string
   }
 
+  export interface ListError {
+    code: 451,
+    text: string,
+    isMark: false,
+    isError: true
+  }
+
   export type ErrorCallback = (err: Error) => void;
   export type RawCallback = (err: Error, data: { code: number, text: string }) => void;
-  export type ListCallback = (err: Error, dirContents: string) => void;
+  export type ListCallback = (err: Error | ListError, dirContents: string) => void;
   export type GetCallback = (err: Error, socket: Socket) => void;
-  export type LsCallback = (err: Error, res: Array<MsDosLsEntry | UnixLsEntry>) => void;
+  export type LsCallback = (err: Error | ListError, res: Array<MsDosLsEntry | UnixLsEntry>) => void;
 
   export default class Ftp extends EventEmitter {
     constructor(opts: JsftpOpts);

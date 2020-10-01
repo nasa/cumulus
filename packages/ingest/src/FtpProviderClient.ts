@@ -1,4 +1,4 @@
-import JSFtp from 'jsftp';
+import JSFtp, { ListError } from 'jsftp';
 import { PassThrough } from 'stream';
 import log from '@cumulus/common/log';
 import S3 from '@cumulus/aws-client/S3';
@@ -17,13 +17,8 @@ interface FtpProviderClientConstructorParams {
   encrypted?: boolean;
 }
 
-interface JSFtpError {
-  code: string,
-  text: string
-}
-
-function isJSFtpError(error: Error | JSFtpError): error is JSFtpError {
-  return (error as JSFtpError).text !== undefined && !(error as Error).message;
+function isJSFtpError(error: Error | ListError): error is ListError {
+  return (error as ListError).text !== undefined && !(error as Error).message;
 }
 
 class FtpProviderClient {
@@ -90,7 +85,7 @@ class FtpProviderClient {
     return this.ftpClient;
   }
 
-  errorHandler(rejectFn: (reason?: any) => void, error: Error|JSFtpError): void {
+  errorHandler(rejectFn: (reason?: any) => void, error: Error | ListError): void {
     let normalizedError = error;
     // error.text is a product of jsftp returning an object with a `text` field to the callback's
     // `err` param, but normally javascript errors have a `message` field. We want to normalize
@@ -145,10 +140,9 @@ class FtpProviderClient {
     const client = await this.buildFtpClient();
     return new Promise<FtpProviderClientListItem[]>((resolve, reject) => {
       client.on('error', this.errorHandler.bind(this, reject));
-      client.ls(path, (err, data) => {
+      client.ls(path, (err: Error | ListError, data) => {
         if (err) {
-          // @ts-expect-error
-          const message = <string | undefined>(err.message || err.text);
+          const message = isJSFtpError(err) ? err.text : err.message;
           if (message && message.includes('Timed out') && counter < 3) {
             log.error(`Connection timed out while listing ${path}. Retrying...`);
             return this._list(path, counter + 1).then((r) => {
