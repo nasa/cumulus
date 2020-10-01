@@ -28,7 +28,7 @@ property is set using the value configured in the workflow's
 
 **Example**
 
-If you wanted to use a prefix of "my-prefix", you would create a rule with meta
+If you wanted to use a prefix of "my-prefix", you would create a rule with a `meta` property
 similar to this:
 
 ```json
