@@ -1,6 +1,6 @@
 ---
 id: naming-executions
-title: Naming Executinons
+title: Naming Executions
 hide_title: false
 ---
 
@@ -9,7 +9,7 @@ desired, though, a configurable prefix can be added to those execution names.
 
 ## Naming executions triggered by rules
 
-Rules now have an optional `executionNamePrefix`. If set, any workflows
+Rules now have an optional `executionNamePrefix` property. If set, any workflows
 triggered directly by that rule will have an execution name that starts with
 that prefix.
 
