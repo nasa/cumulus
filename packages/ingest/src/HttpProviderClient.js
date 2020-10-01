@@ -21,9 +21,6 @@ const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/errors');
 
 const { lookupMimeType, decrypt } = require('./util');
-const {
-  default: EmptyProviderConnectEndMixin,
-} = require('./EmptyProviderConnectEndMixin');
 
 const validateHost = (host) => {
   if (isValidHostname(host) || isIp(host)) return;
@@ -246,6 +243,12 @@ class HttpProviderClient {
     log.info('Uploading to s3 is complete (http)', s3uri);
     return { s3uri, etag };
   }
+
+  /* eslint-disable no-empty-function */
+  async connect() {}
+
+  async end() {}
+  /* eslint-enable no-empty-function */
 }
 
-module.exports = EmptyProviderConnectEndMixin(HttpProviderClient);
+module.exports = HttpProviderClient;

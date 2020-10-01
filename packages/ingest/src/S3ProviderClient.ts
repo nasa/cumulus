@@ -2,10 +2,9 @@ import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 import * as errors from '@cumulus/errors';
 import { basename, dirname } from 'path';
-import EmptyProviderConnectEndMixin from './EmptyProviderConnectEndMixin';
-import { S3ProviderClientListItem } from './types';
+import { ProviderClient, S3ProviderClientListItem } from './types';
 
-class S3ProviderClient {
+class S3ProviderClient implements ProviderClient {
   private readonly bucket: string;
 
   constructor({ bucket }: { bucket?: string } = {}) {
@@ -94,6 +93,12 @@ class S3ProviderClient {
       throw error;
     }
   }
+
+  /* eslint-disable @typescript-eslint/no-empty-function */
+  async connect(): Promise<void> {}
+
+  async end(): Promise<void> {}
+  /* eslint-enable @typescript-eslint/no-empty-function */
 }
 
-export = EmptyProviderConnectEndMixin(S3ProviderClient);
+export = S3ProviderClient;
