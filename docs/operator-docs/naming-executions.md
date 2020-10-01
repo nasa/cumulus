@@ -1,10 +1,8 @@
 ---
 id: naming-executions
 title: Naming Executinons
-hide_title: true
+hide_title: false
 ---
-
-# Naming executions
 
 By default, Cumulus will assign a random name to workflow executions. If
 desired, though, a configurable prefix can be added to those execution names.
