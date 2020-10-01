@@ -32,7 +32,6 @@ process.env.stackName = randomId('stackname');
 process.env.TOKEN_SECRET = randomId('token_secret');
 process.env.system_bucket = randomId('systembucket');
 process.env.LAUNCHPAD_METADATA_URL = 'http://example.com/launchpad.idp.xml';
-process.env.LAUNCHPAD_REDIRECT_ENDPOINT = 'http://api.com/saml/login';
 
 const { app } = require('../../app');
 
