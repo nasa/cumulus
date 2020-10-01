@@ -1,6 +1,5 @@
 {
     "high": true,
     "pass-enoaudit": true,
-    "retry-count": 20,
-    "whitelist": ["node-forge"]
+    "retry-count": 20
 }
