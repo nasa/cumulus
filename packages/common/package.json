@@ -63,7 +63,7 @@
   "devDependencies": {
     "@types/fs-extra": "^5.0.0",
     "@types/got": "^9.6.11",
-    "@types/node-forge": "^0.9.4",
+    "@types/node-forge": "^0.9.5",
     "@types/url-join": "^4.0.0"
   }
 }
