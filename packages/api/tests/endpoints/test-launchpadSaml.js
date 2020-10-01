@@ -301,9 +301,6 @@ test.serial('getIncomingUrlFromRequest returns correct URL for API base URL with
 });
 
 test.serial('/token endpoint with a token query parameter returns the parameter.', async (t) => {
-  process.env.LAUNCHPAD_REDIRECT_ENDPOINT = 'http://api.com/saml/login';
-  t.teardown(() => delete process.env.LAUNCHPAD_REDIRECT_ENDPOINT);
-
   const returnedToken = await request(app)
     .get('/token?token=SomeRandomJWToken')
     .set('Accept', 'application/json')
