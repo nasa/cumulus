@@ -63,7 +63,7 @@ export class Consumer {
       log.info(`processing ${messages.length} messages`);
       const processes = messages.map((message) => this.processMessage(message, fn));
       const results = await Promise.all(processes);
-      counter = results.reduce((s: number, v) => s + v, 0);
+      counter = results.reduce((total: number, value) => total + value, 0);
     }
     return counter;
   }
