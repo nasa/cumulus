@@ -12,7 +12,7 @@ import { sqs } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
-export interface Message extends AWS.SQS.Message {
+export interface SQSMessage extends AWS.SQS.Message {
   ReceiptHandle: string
 }
 
