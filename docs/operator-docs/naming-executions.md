@@ -37,7 +37,9 @@ similar to this:
 }
 ```
 
-The workflow could contain a "QueueGranules" step with the following state:
+The value of `meta.executionNamePrefix` from the rule will be set as `meta.executionNamePrefix`  in the workflow message.
+
+Then, the workflow could contain a "QueueGranules" step with the following state, which uses `meta.executionNamePrefix` from the message as the value for the `executionNamePrefix` config to the "QueueGranules" step:
 
 ```json
 {
