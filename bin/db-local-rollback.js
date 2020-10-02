@@ -11,5 +11,5 @@ const { getKnexClient, localStackConnectionEnv } = require('../packages/db');
     },
   });
 
-  await db.migrate.latest();
+  await db.migrate.rollback(undefined, process.argv[2] === '--all');
 })();

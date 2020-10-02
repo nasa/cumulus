@@ -4,7 +4,7 @@
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
     "audit": "audit-ci --config ./audit-ci.json && lerna exec -- audit-ci --config $(pwd)/audit-ci.json",
-    "db:local:drop": "node bin/db-local-drop.js",
+    "db:local:drop": "node bin/db-local-rollback.js --all",
     "db:local:migrate": "node bin/db-local-migrate.js",
     "db:local:reset": "npm run db:local:drop && npm run db:local:migrate",
     "docs-build-packages": "lerna run build-docs",
@@ -112,7 +112,7 @@
     "jasmine-reporters": "^2.3.2",
     "js-yaml": "^3.13.1",
     "jsdoc-to-markdown": "^5.0.3",
-    "knex": "0.21.6",
+    "knex": "^0.21.5",
     "latest-version": "^4.0.0",
     "lerna": "3.20.2",
     "lodash": "^4.17.15",
