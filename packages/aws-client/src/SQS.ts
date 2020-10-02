@@ -12,6 +12,10 @@ import { sqs } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
+export interface SQSMessage extends AWS.SQS.Message {
+  ReceiptHandle: string
+}
+
 export const getQueueUrl = (sourceArn: string, queueName: string) => {
   const arnParts = sourceArn.split(':');
   return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
@@ -120,7 +124,10 @@ type receiveSQSMessagesOptions = {
  * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise<Array>} an array of messages
  */
-export const receiveSQSMessages = async (queueUrl: string, options: receiveSQSMessagesOptions) => {
+export const receiveSQSMessages = async (
+  queueUrl: string,
+  options: receiveSQSMessagesOptions
+): Promise<SQSMessage[]> => {
   const params = {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
@@ -132,7 +139,7 @@ export const receiveSQSMessages = async (queueUrl: string, options: receiveSQSMe
 
   const messages = await sqs().receiveMessage(params).promise();
 
-  return get(messages, 'Messages', []);
+  return <SQSMessage[]>(messages.Messages ?? []);
 };
 
 export const parseSQSMessageBody = (message: any): unknown =>
