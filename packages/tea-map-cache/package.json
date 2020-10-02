@@ -28,7 +28,7 @@
   "dependencies": {
     "@cumulus/aws-client": "2.0.1",
     "@cumulus/logger": "2.0.1",
-    "got": "^11.5.1",
+    "got": "^11.7.0",
     "p-retry": "^4.2.0"
   },
   "private": true
