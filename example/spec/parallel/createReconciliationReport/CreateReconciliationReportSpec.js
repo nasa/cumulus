@@ -255,7 +255,7 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds) => pWait
   },
   {
     interval: 10000,
-    timeout: 360 * 1000,
+    timeout: 600 * 1000,
   }
 );
 
