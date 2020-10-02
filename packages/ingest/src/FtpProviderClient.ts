@@ -187,8 +187,6 @@ class FtpProviderClient {
       size: file.size,
       time: file.time,
     }));
-
-    // return files.map((file) => omit(file, 'type'));
   }
 
   /**
