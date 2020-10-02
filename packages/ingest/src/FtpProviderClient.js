@@ -9,9 +9,6 @@ const S3 = require('@cumulus/aws-client/S3');
 const isNil = require('lodash/isNil');
 const { recursion } = require('./recursion');
 const { lookupMimeType, decrypt } = require('./util');
-const {
-  emptyProviderConnectEndMixin,
-} = require('./emptyProviderConnectEndMixin');
 
 class FtpProviderClient {
   // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP
@@ -198,11 +195,12 @@ class FtpProviderClient {
       client.destroy();
     }
   }
-}
 
-Object.assign(
-  FtpProviderClient.prototype,
-  emptyProviderConnectEndMixin
-);
+  /* eslint-disable no-empty-function */
+  async connect() {}
+
+  async end() {}
+  /* eslint-enable no-empty-function */
+}
 
 module.exports = FtpProviderClient;
