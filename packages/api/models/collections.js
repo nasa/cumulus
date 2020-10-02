@@ -6,6 +6,7 @@ const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { removeNilProperties } = require('@cumulus/common/util');
+const log = require('@cumulus/common/log');
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
@@ -159,6 +160,7 @@ class Collection {
    * @see CollectionConfigStore#put
    */
   async createItem(item) {
+    log.debug(`collections createItem ${item.name}___${item.version}`);
     validateCollection(item);
 
     const { name, version } = item;
@@ -199,6 +201,7 @@ class Collection {
    * @see CollectionConfigStore#delete
    */
   async delete(item) {
+    log.debug(`collections delete ${item.name}___${item.version}`);
     const { name, version } = item;
     const associatedRuleNames = (await this.getAssociatedRules(name, version))
       .map((rule) => rule.name);

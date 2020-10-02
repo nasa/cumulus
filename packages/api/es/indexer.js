@@ -165,6 +165,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
   const indexResponse = await actualEsClient.index(params);
+  log.debug(`genericRecordUpdate ${type} ${id}`);
   return indexResponse.body;
 }
 
@@ -352,6 +353,7 @@ async function deleteRecord({
       parent
     );
   }
+  log.debug(`deleteRecord record deleted from es ${type} ${id}`);
   return deleteResponse.body;
 }
 

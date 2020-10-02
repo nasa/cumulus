@@ -504,6 +504,7 @@ class Granule extends Manager {
    * @private
    */
   async _deleteRecord(granule) {
+    log.debug(`granule _deleteRecord ${granule.granuleId}`);
     // Delete granule files
     await pMap(
       get(granule, 'files', []),
@@ -631,6 +632,7 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async _validateAndStoreGranuleRecord(granuleRecord) {
+    log.debug(`_validateAndStoreGranuleRecord ${granuleRecord.granuleId}`);
     try {
       // TODO: Refactor this all to use model.update() to avoid having to manually call
       // schema validation and the actual client.update() method.

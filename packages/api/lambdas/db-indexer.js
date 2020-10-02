@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const pick = require('lodash/pick');
 const pMap = require('p-map');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -125,6 +126,8 @@ function getParentId(type, record) {
  * @returns {Promise<Object>} elasticsearch response
  */
 function performIndex(indexFnName, esClient, data) {
+  const record = pick(data, ['id', 'granuleId', 'name', 'version']);
+  log.debug(`performIndex ${indexFnName} ${JSON.stringify(record)}`);
   return indexer[indexFnName](esClient, data, process.env.ES_INDEX);
 }
 
@@ -138,6 +141,7 @@ function performIndex(indexFnName, esClient, data) {
  * @returns {Promise<Object>} elasticsearch response
  */
 function performDelete(esClient, type, id, parentId) {
+  log.debug(`performDelete ${type} ${id}`);
   return indexer
     .deleteRecord({
       esClient,
