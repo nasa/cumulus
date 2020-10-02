@@ -46,7 +46,7 @@
     "delay": "^4.3.0",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
-    "got": "^9.2.1",
+    "got": "^11.7.0",
     "is-ip": "^2.0.0",
     "is-valid-hostname": "^0.0.1",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
