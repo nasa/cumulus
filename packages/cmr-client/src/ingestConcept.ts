@@ -46,10 +46,10 @@ async function ingestConcept(
       }
     );
 
-    const xmlErrorObject = <{errors?: {error: string}}>(await parseXMLString(response.body));
+    const ingestResponseBody = <{errors?: {error: string}}>(await parseXMLString(response.body));
 
-    if (xmlErrorObject.errors) {
-      const xmlObjectError = JSON.stringify(xmlErrorObject.errors.error);
+    if (ingestResponseBody.errors) {
+      const xmlObjectError = JSON.stringify(ingestResponseBody.errors.error);
       throw new Error(`Failed to ingest, CMR error message: ${xmlObjectError}`);
     }
 
