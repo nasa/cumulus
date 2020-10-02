@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const got = require('got');
-const test = require('ava').serial;
+const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
 const request = require('supertest');
@@ -127,6 +127,7 @@ test.beforeEach(async (t) => {
   const badSamlResponse = { user: {} };
 
   t.context = {
+    ...t.context,
     validIndex,
     validUser,
     unauthorizedIndex,
@@ -147,7 +148,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test(
+test.serial(
   'launchpadPublicCertificate returns a certificate from valid file.',
   async (t) => {
     const parsedCertificate = await launchpadPublicCertificate(
@@ -158,7 +159,7 @@ test(
   }
 );
 
-test(
+test.serial(
   'launchpadPublicCertificate throws error with invalid file.',
   async (t) => {
     await t.throwsAsync(
@@ -171,7 +172,7 @@ test(
   }
 );
 
-test(
+test.serial(
   'launchpadPublicCertificate downloads the metadata file to s3 when metadata is missing.',
   async (t) => {
     const stub = sinon.stub(got, 'get').callsFake(() => gotLaunchpadMetadataResponse);
@@ -181,7 +182,7 @@ test(
   }
 );
 
-test(
+test.serial(
   'launchpadPublicCertificate throws error with missing bucket.',
   async (t) => {
     const stub = sinon.stub(got, 'get').callsFake(() => gotLaunchpadMetadataResponse);
@@ -193,7 +194,7 @@ test(
   }
 );
 
-test(
+test.serial(
   'authorizedUserGroup returns true if samlUserGroup contains authorized group',
   (t) => {
     const samlUserGroup = 'cn=GSFC-Cumulus-Dev,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
@@ -203,7 +204,7 @@ test(
   }
 );
 
-test(
+test.serial(
   'authorizedUserGroup returns false if samlUserGroup does not contain authorized group',
   (t) => {
     const samlUserGroup = 'cn=wrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
@@ -213,7 +214,7 @@ test(
   }
 );
 
-test(
+test.serial(
   'authorizedUserGroup returns false if authorizeGroup undefined (unconfigured)',
   (t) => {
     const samlUserGroup = 'cn=wrongUserGroup,ou=254886,ou=ROLES,ou=Groups,dc=nasa,dc=gov';
@@ -221,7 +222,7 @@ test(
   }
 );
 
-test('buildLaunchpadJwt returns a valid JWT with correct SAML information.', async (t) => {
+test.serial('buildLaunchpadJwt returns a valid JWT with correct SAML information.', async (t) => {
   const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
   const decodedToken = verifyJwtToken(jwt);
 
@@ -235,21 +236,21 @@ test('buildLaunchpadJwt returns a valid JWT with correct SAML information.', asy
   t.is(modelToken.username, t.context.validUser);
 });
 
-test('buildLaunchpadJwt throws with bad SAML return value.', async (t) => {
+test.serial('buildLaunchpadJwt throws with bad SAML return value.', async (t) => {
   await t.throwsAsync(buildLaunchpadJwt(t.context.badSamlResponse), {
     instanceOf: Error,
     message: 'invalid SAML response received {"user":{}}',
   });
 });
 
-test('buildLaunchpadJwt throws with unauthorized user.', async (t) => {
+test.serial('buildLaunchpadJwt throws with unauthorized user.', async (t) => {
   await t.throwsAsync(buildLaunchpadJwt(t.context.unauthorizedSamlResponse), {
     instanceOf: Error,
     message: `User not authorized for this application ${t.context.unauthorizedUser} not a member of userGroup: ${t.context.userGroup}`,
   });
 });
 
-test('/saml/auth with bad metadata returns Bad Request.', async (t) => {
+test.serial('/saml/auth with bad metadata returns Bad Request.', async (t) => {
   const callback = sandbox.fake.yields('post_assert callsback with Error', undefined);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
@@ -264,7 +265,7 @@ test('/saml/auth with bad metadata returns Bad Request.', async (t) => {
   t.is(redirect.body.error, 'Bad Request');
 });
 
-test('/saml/auth with good metadata returns redirect.', async (t) => {
+test.serial('/saml/auth with good metadata returns redirect.', async (t) => {
   const callback = sandbox.fake.yields(undefined, t.context.successfulSamlResponse);
   const mockExample = sandbox.stub();
   mockExample.ServiceProvider = sandbox.stub().returns({ post_assert: callback });
@@ -283,42 +284,63 @@ test('/saml/auth with good metadata returns redirect.', async (t) => {
   t.is(decodedToken.accessToken, t.context.validIndex);
 });
 
-test('/token endpoint with a token query parameter returns the parameter.', async (t) => {
+test.serial('getIncomingUrlFromRequest returns correct URL for API base URL with stage name', (t) => {
+  const incomingUrl = launchpadSaml.getIncomingUrlFromRequest('http://api.com/dev/', '/fake-path');
+  t.is(incomingUrl, 'http://api.com/dev/fake-path');
+});
+
+test.serial('getIncomingUrlFromRequest returns correct URL for API base URL without stage name', (t) => {
+  const incomingUrl = launchpadSaml.getIncomingUrlFromRequest('http://api.com', '/fake-path');
+  t.is(incomingUrl, 'http://api.com/fake-path');
+});
+
+test.serial('getIncomingUrlFromRequest returns correct URL for API base URL with port', (t) => {
+  const incomingUrl = launchpadSaml.getIncomingUrlFromRequest('http://api.com:7000', '/fake-path');
+  t.is(incomingUrl, 'http://api.com:7000/fake-path');
+});
+
+test.serial('/token endpoint with a token query parameter returns the parameter.', async (t) => {
   const returnedToken = await request(app)
     .get('/token?token=SomeRandomJWToken')
-    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: '/irrelevant/', stage: 'anything' } })))
-    .set('x-apigateway-context', encodeURIComponent(JSON.stringify({})))
     .set('Accept', 'application/json')
     .expect(200);
 
   t.is(returnedToken.text, JSON.stringify({ message: { token: 'SomeRandomJWToken' } }));
 });
 
-test('/token endpoint without a token query parameter redirects to saml/login.', async (t) => {
+test.serial('/token endpoint for API with stage name redirects to saml/login with correct RelayState', async (t) => {
+  process.env.API_BASE_URL = 'http://api.com:7000/dev/';
+  t.teardown(() => delete process.env.API_BASE_URL);
+
   const redirect = await request(app)
     .get('/token')
-    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: '/token', stage: 'stagename' } })))
-    .set('x-apigateway-context', encodeURIComponent(JSON.stringify({})))
     .set('Accept', 'application/json')
     .expect(302);
 
-  t.regex(redirect.header.location, /\/stagename\/saml\/login\?RelayState=.*%2Ftoken/);
+  t.is(redirect.header.location, `http://api.com:7000/dev/saml/login?RelayState=${encodeURIComponent('http://api.com:7000/dev/token')}`);
 });
 
-test('/token endpoint without proper context headers returns expectation failed.', async (t) => {
-  const expectedError = {
-    error: 'Expectation Failed',
-    message: ('Could not retrieve necessary information from express request object. '
-              + 'Incorrect relayState or stageName information in express request.'),
-    statusCode: 417,
-  };
+test.serial('/token endpoint for API without stage name redirects to saml/login with correct RelayState', async (t) => {
+  process.env.API_BASE_URL = 'http://api.com/';
+  t.teardown(() => delete process.env.API_BASE_URL);
 
-  const badHeaders = await request(app)
+  const redirect = await request(app)
     .get('/token')
-    .set('x-apigateway-event', encodeURIComponent(JSON.stringify({ requestContext: { path: 'apath' } })))
-    .set('x-apigateway-context', encodeURIComponent(JSON.stringify({})))
     .set('Accept', 'application/json')
-    .expect(417);
+    .expect(302);
 
-  t.deepEqual(expectedError, JSON.parse(badHeaders.error.text));
+  t.is(redirect.header.location, `http://api.com/saml/login?RelayState=${encodeURIComponent('http://api.com/token')}`);
+});
+
+test.serial('/token endpoint without API_BASE_URL environment variable returns 500 error', async (t) => {
+  delete process.env.API_BASE_URL;
+  const response = await request(app)
+    .get('/token')
+    .set('Accept', 'application/json')
+    .query({
+      RelayState: 'fake-relay-state',
+    })
+    .expect(500);
+
+  t.is(response.statusCode, 500);
 });
