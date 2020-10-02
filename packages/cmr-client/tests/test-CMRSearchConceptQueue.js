@@ -2,10 +2,10 @@
 
 const test = require('ava');
 const nock = require('nock');
-const rewire = require('rewire');
-const CMRSearchConceptQueue = require('../CMRSearchConceptQueue');
-const CSCQ = rewire('../CMRSearchConceptQueue');
-const provideParams = CSCQ.__get__('provideParams');
+const {
+  CMRSearchConceptQueue,
+  providerParams,
+} = require('../CMRSearchConceptQueue');
 
 test.before(() => {
   nock.cleanAll();
@@ -71,7 +71,7 @@ test('cmrSearchQueue provides correct initial params when SearchParams are an in
   const searchParams = new URLSearchParams([['key', 'param'], ['key', 'param2']]);
   const defaultParams = { cmrSettings: { provider: 'cmrprovider' } };
   const test1Params = { ...defaultParams, searchParams: searchParams };
-  const actual = provideParams(test1Params);
+  const actual = providerParams(test1Params);
   const expected = new URLSearchParams([['key', 'param'], ['key', 'param2'], ['provider_short_name', 'cmrprovider']]);
   t.deepEqual(actual, expected);
 });
@@ -80,7 +80,7 @@ test('cmrSearchQueue provides correct initial params when SearchParams are a pla
   const searchParams = new URLSearchParams({ key: 'param' });
   const defaultParams = { cmrSettings: { provider: 'cmrprovider' } };
   const test1Params = { ...defaultParams, searchParams };
-  const actual = provideParams(test1Params);
+  const actual = providerParams(test1Params);
   const expected = new URLSearchParams({ key: 'param', provider_short_name: 'cmrprovider' });
   t.deepEqual(actual, expected);
 });

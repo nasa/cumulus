@@ -9,7 +9,7 @@ import { CMR, CMRConstructorParams } from './CMR';
  *  URLSearchParam object or a plain Object.
  * @returns {URLSearchParams} - input object appeneded with a default provider_short_name
  */
-const providerParams = ({
+export const providerParams = ({
   searchParams = new URLSearchParams(),
   cmrSettings,
 }: {
@@ -49,7 +49,7 @@ export interface CMRSearchConceptQueueConstructorParams {
  *   format: 'json'
  * });
  */
-class CMRSearchConceptQueue {
+export class CMRSearchConceptQueue {
   type: string;
   params: URLSearchParams;
   format?: string;
@@ -125,5 +125,3 @@ class CMRSearchConceptQueue {
     if (results.length === 0) this.items.push(null);
   }
 }
-
-module.exports = CMRSearchConceptQueue;
