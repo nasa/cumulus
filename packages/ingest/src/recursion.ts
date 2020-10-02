@@ -81,7 +81,7 @@ export async function recursion<T extends RecursionFile>(
       .split('/') // split on divider
       .filter((segment) => segment.trim() !== ''); // filter out empty strings from split
     const startingPath = isAbsolutePath ? '/' : '.';
-    return recurOnDirectory<T>(fn, startingPath, segments, -1);
+    return await recurOnDirectory<T>(fn, startingPath, segments, -1);
   } catch (error) {
     log.error(`Encountered error during recursive list filtering: ${error}`);
     log.info('Falling back to unfiltered directory listing...');
