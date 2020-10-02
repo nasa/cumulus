@@ -43,3 +43,4 @@ website/i18n/en.json
 .idea/
 cumulus-message-adapter.zip
 .terraform*
+tsconfig.tsbuildinfo
