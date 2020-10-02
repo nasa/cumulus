@@ -1,10 +1,8 @@
 ---
 id: serve-dashboard-from-cloudfront
-title: Serve Dashboard with CloudFront
-hide_title: true
+title: Serve Cumulus Dashboard with CloudFront
+hide_title: false
 ---
-
-# Serve Cumulus Dashboard behind CloudFront
 
 This document will briefly outline how to set up a [CloudFront](https://aws.amazon.com/cloudfront/) endpoint to serve the Cumulus Dashboard in an NASA/NGAP environment. Including, which [NASD](https://bugs.earthdata.nasa.gov/servicedesk/customer/portal/7) tickets are needed to request and configure a CloudFront endpoint.
 

@@ -1,10 +1,8 @@
 ---
 id: lambda
 title: Develop Lambda Functions
-hide_title: true
+hide_title: false
 ---
-
-# Develop Lambda Functions
 
 ## Develop a new Cumulus Lambda
 

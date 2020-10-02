@@ -1,10 +1,8 @@
 ---
 id: workflows-readme
 title: Workflows
-hide_title: true
+hide_title: false
 ---
-
-# Workflows
 
 Workflows are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.
 

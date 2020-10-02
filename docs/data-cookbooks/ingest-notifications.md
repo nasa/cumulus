@@ -1,10 +1,8 @@
 ---
 id: ingest-notifications
 title: Ingest Notification in Workflows
-hide_title: true
+hide_title: false
 ---
-
-# Ingest Notification in Workflows
 
 On deployment, an [SQS queue](https://aws.amazon.com/sqs/) and three [SNS topics](https://aws.amazon.com/sns/) are created and used for handling notification messages related to the workflow.
 

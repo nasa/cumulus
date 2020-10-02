@@ -1,10 +1,8 @@
 ---
 id: cnm-workflow
 title: CNM Workflow
-hide_title: true
+hide_title: false
 ---
-
-# CNM Workflow
 
 This entry documents how to setup a workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
 

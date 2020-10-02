@@ -2,6 +2,7 @@
 
 const saml2 = require('saml2-js');
 const got = require('got');
+const path = require('path');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
@@ -230,21 +231,19 @@ const auth = async (req, res) => {
 };
 
 /**
- * Helper to pull the url the client sent from a request that has been updated
- * with middleware to include the event context.
- * @param {Object} req - express request object
- * @returns {Object} - The url the client visited to generate the request.
- */
-const urlFromRequest = (req) =>
-  `${req.protocol}://${req.get('host')}${req.apiGateway.event.requestContext.path}`;
-
-/**
- * helper to grab stageName
+ * Helper to pull the incoming URL.
  *
- * @param {Object} req - express request object
- * @returns {string} - stage name of apigateway
+ * @param {string} apiBaseUrl - API base URL
+ * @param {string} requestPath - Request path for incoming request
+ * @returns {string} - The URL the client visited to generate the request.
  */
-const stageNameFromRequest = (req) => req.apiGateway.event.requestContext.stage;
+const getIncomingUrlFromRequest = (apiBaseUrl, requestPath) => {
+  const apiBaseUrlObject = new URL(apiBaseUrl);
+  // apiBaseUrlObject.pathname is necessary to handle API URLs that
+  // may/may not have an API gateway stage name
+  const fullRequestPath = path.join(apiBaseUrlObject.pathname, requestPath);
+  return new URL(fullRequestPath, apiBaseUrl).toString();
+};
 
 /**
  * SAML Token endpoint.
@@ -257,22 +256,31 @@ const stageNameFromRequest = (req) => req.apiGateway.event.requestContext.stage;
  * request or a redirect back to saml/login endpoing to receive the token.
  */
 const samlToken = async (req, res) => {
-  let relayState;
-  let stageName;
+  const { token } = req.query;
+  if (token) return res.send({ message: { token } });
+
+  let apiBaseUrl;
+  let RelayState;
   try {
-    relayState = encodeURIComponent(urlFromRequest(req));
-    stageName = stageNameFromRequest(req);
-    if (!relayState || !stageName) {
-      throw new Error('Incorrect relayState or stageName information in express request.');
+    apiBaseUrl = process.env.API_BASE_URL;
+    if (!apiBaseUrl) {
+      throw new Error('API_BASE_URL environment variable is required');
+    }
+
+    RelayState = getIncomingUrlFromRequest(apiBaseUrl, req.path);
+    if (!RelayState) {
+      throw new Error('Could not determine RelayState from incoming URL');
     }
   } catch (error) {
-    return res.boom.expectationFailed(
-      `Could not retrieve necessary information from express request object. ${error.message}`
-    );
+    return res.boom.badImplementation(error.message);
   }
 
-  if (req.query.token) return res.send({ message: { token: req.query.token } });
-  return res.redirect(`/${stageName}/saml/login?RelayState=${relayState}`);
+  const redirectUrl = new URL('saml/login', apiBaseUrl);
+  redirectUrl.searchParams.append(
+    'RelayState',
+    RelayState
+  );
+  return res.redirect(redirectUrl.toString());
 };
 
 const notImplemented = async (req, res) =>
@@ -287,4 +295,6 @@ module.exports = {
   login,
   refreshEndpoint,
   samlToken,
+  // exported for testing
+  getIncomingUrlFromRequest,
 };

@@ -1,10 +1,8 @@
 ---
 id: input_output
-title: Workflows Input & Output
-hide_title: true
+title: Workflow Inputs & Outputs
+hide_title: false
 ---
-
-# Workflow Inputs and Return Values
 
 ## General Structure
 

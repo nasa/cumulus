@@ -1,10 +1,8 @@
 ---
 id: browse-generation
 title: Ingest Browse Generation
-hide_title: true
+hide_title: false
 ---
-
-# Browse Generation
 
 This entry documents how to setup a workflow that utilizes Cumulus's built-in granule file type configuration such that on ingest the browse data is exported to CMR.
 

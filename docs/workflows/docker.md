@@ -1,10 +1,8 @@
 ---
 id: docker
 title: Dockerizing Data Processing
-hide_title: true
+hide_title: false
 ---
-
-# Dockerizing Data Processing
 
 The software used for processing data amongst DAAC's is developed in a variety of languages, and with different sets of dependencies and build environments. To standardize processing, Docker allows us to provide an environment (called an image) to meet the needs of any processing software, while running on the kernel of the host server (in this case, an EC2 instance). This lightweight virtualization does not carry the overhead of any additional VM, providing near-instant startup and the ability to run any dockerized process as a command-line call.
 
