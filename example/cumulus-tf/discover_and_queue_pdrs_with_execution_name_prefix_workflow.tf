@@ -2,7 +2,7 @@ module "discover_and_queue_pdrs_with_execution_name_prefix_workflow" {
   source = "../../tf-modules/workflow"
 
   prefix          = var.prefix
-  name            = "DiscoverAndQueuePdrsWithExecutionNamePrefix"
+  name            = "DiscoverAndQueuePdrsExecutionPrefix"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
   tags            = local.tags
