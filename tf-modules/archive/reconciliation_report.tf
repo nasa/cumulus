@@ -21,6 +21,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
       cmr_client_id                    = var.cmr_client_id
+      cmr_oauth_provider               = var.cmr_oauth_provider
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
