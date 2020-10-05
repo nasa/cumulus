@@ -280,9 +280,3 @@ variable "pdr_node_name_provider_bucket" {
   description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
   default = "cumulus-sandbox-pdr-node-name-provider"
 }
-
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type        = bool
-  default     = false
-}
