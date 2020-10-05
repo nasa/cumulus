@@ -27,6 +27,7 @@ async function queuePdrs(event) {
       parentExecutionArn: arn,
       stack: event.config.stackName,
       systemBucket: event.config.internalBucket,
+      executionNamePrefix: event.config.executionNamePrefix,
     }))
   );
 

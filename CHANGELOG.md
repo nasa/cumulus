@@ -186,6 +186,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is published, as expected.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
+- **CUMULUS-2101**
+  - Fix Reconciliation Report integration test failures
 - **CUMULUS-2015**
   - Reduced concurrency of `QueueGranules` task. That task now has a
     `config.concurrency` option that defaults to `3`.
@@ -195,6 +197,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove the `public-read` ACL from the `move-granules` task
 - **CUMULUS-2164**
   - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
+- **CUMULUS-2195**
+  - Fixed issue with redirect from `/token` not working when using a Cloudfront endpoint to access the Cumulus API with Launchpad authentication enabled. The redirect should now work properly whether you are using a plain API gateway URL or a Cloudfront endpoint pointing at an API gateway URL.
 
 ### Deprecated
 
@@ -236,6 +240,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `thin_egress_lambda_code_dependency_archive_key`
 - **CUMULUS-2157**
   - Removed `providerSecretsMigration` and `verifyProviderSecretsMigration` lambdas
+- Removed deprecated `@cumulus/sf-sns-report` task
 - Removed code:
   - `@cumulus/aws-client/S3.calculateS3ObjectChecksum`
   - `@cumulus/aws-client/S3.getS3ObjectReadStream`

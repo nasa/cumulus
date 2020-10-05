@@ -21,6 +21,8 @@ const {
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 
+const { randomId } = require('@cumulus/common/test-utils');
+
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -105,7 +107,8 @@ const waitForQueueMessageCount = (queueUrl, expectedCount) =>
   );
 
 describe('The SQS rule', () => {
-  let ruleList = [];
+  let ruleList;
+  let executionNamePrefix;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -115,6 +118,9 @@ describe('The SQS rule', () => {
     const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     const provider = { id: `s3_provider${testSuffix}` };
     ruleSuffix = replace(testSuffix, /-/g, '_');
+
+    executionNamePrefix = randomId('prefix');
+
     ruleOverride = {
       name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
       collection: {
@@ -126,6 +132,7 @@ describe('The SQS rule', () => {
       meta: {
         retries: 1,
       },
+      executionNamePrefix,
     };
 
     await setupCollectionAndTestData();
@@ -165,16 +172,27 @@ describe('The SQS rule', () => {
     });
 
     describe('If the message is processable by the workflow', () => {
-      it('workflow is kicked off, and the granule from the message is successfully ingested', async () => {
+      let record;
+
+      beforeAll(async () => {
         process.env.GranulesTable = `${config.stackName}-GranulesTable`;
         const granuleModel = new Granule();
-        const record = await waitForModelStatus(
+        record = await waitForModelStatus(
           granuleModel,
           { granuleId },
           'completed'
         );
+      });
+
+      it('workflow is kicked off, and the granule from the message is successfully ingested', () => {
         expect(record.granuleId).toBe(granuleId);
         expect(record.execution).toContain(workflowName);
+      });
+
+      it('the execution name starts with the expected prefix', () => {
+        const executionName = record.execution.split(':').reverse()[0];
+
+        expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
       });
     });
 

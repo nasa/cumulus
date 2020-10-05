@@ -232,3 +232,83 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
   const actualMessage = JSON.parse(response.Messages[0].Body);
   t.deepEqual(actualMessage.payload, expectedPayload);
 });
+
+test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specified', async (t) => {
+  const {
+    queueUrl,
+    templateBucket,
+    stackName,
+    workflow,
+  } = t.context;
+
+  const collection = { name: 'test-collection', version: '0.0.0' };
+  const provider = { id: 'test-provider' };
+
+  const granule = {
+    granuleId: randomId(),
+    dataType: collection.name,
+    version: collection.version,
+    collectionId: `${collection.name}___${collection.version}`,
+    files: [],
+  };
+
+  const executionNamePrefix = randomId('prefix');
+
+  await queue.enqueueGranuleIngestMessage({
+    granule,
+    queueUrl,
+    granuleIngestWorkflow: workflow,
+    provider,
+    collection,
+    systemBucket: templateBucket,
+    stack: stackName,
+    executionNamePrefix,
+  });
+
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
+
+  const executionName = actualMessage.cumulus_meta.execution_name;
+
+  t.true(executionName.startsWith(executionNamePrefix));
+  t.true(executionName.length > executionNamePrefix.length);
+});
+
+test.serial('enqueueParsePdrMessage uses the executionNamePrefix if specified', async (t) => {
+  const {
+    queueUrl,
+    templateBucket,
+    stackName,
+    workflow,
+  } = t.context;
+
+  const executionNamePrefix = randomId('prefix');
+
+  await queue.enqueueParsePdrMessage({
+    parentExecutionArn: randomId(),
+    parsePdrWorkflow: workflow,
+    pdr: {},
+    stack: stackName,
+    systemBucket: templateBucket,
+    queueUrl,
+    executionNamePrefix,
+  });
+
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
+
+  const executionName = actualMessage.cumulus_meta.execution_name;
+
+  t.true(executionName.startsWith(executionNamePrefix));
+  t.true(executionName.length > executionNamePrefix.length);
+});

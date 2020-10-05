@@ -14,6 +14,7 @@ const {
 
 const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const {
   createTestSuffix,
@@ -41,6 +42,7 @@ async function shouldCatchPolicyError(consumerName) {
 describe('The SNS-type rule', () => {
   let config;
   let consumerName;
+  let executionNamePrefix;
   let lambdaStep;
   let newTopicArn;
   let newValueTopicName;
@@ -66,10 +68,14 @@ describe('The SNS-type rule', () => {
     newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
     consumerName = `${config.stackName}-messageConsumer`;
 
+    executionNamePrefix = randomId('prefix');
+
     snsMessage = JSON.stringify({ Data: {} });
     snsRuleDefinition = await readJson(path.join(__dirname, 'snsRuleDef.json'));
     snsRuleDefinition.name = ruleName;
     snsRuleDefinition.meta.triggerRule = ruleName;
+    snsRuleDefinition.executionNamePrefix = executionNamePrefix;
+
     process.env.stackName = config.stackName;
 
     snsRuleDefinition.collection = {
@@ -161,6 +167,12 @@ describe('The SNS-type rule', () => {
     it('passes the message as payload', async () => {
       const executionInput = await lambdaStep.getStepInput(execution.executionArn, 'HelloWorld');
       expect(executionInput.payload).toEqual(JSON.parse(snsMessage));
+    });
+
+    it('results in an execution with the correct prefix', () => {
+      const executionName = execution.executionArn.split(':').reverse()[0];
+
+      expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
   });
 
