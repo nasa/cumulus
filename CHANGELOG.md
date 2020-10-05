@@ -134,7 +134,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
 - **CUMULUS-2116**
-  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
+    unpublishes a  granule from CMR and deletes it from Cumulus, but does not
+    update the record to `published: false` before deletion
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
@@ -144,6 +146,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     requirements for future releases
 - **CUMULUS-2156**
   - Support array inputs parameters for `Internal` reconciliation report
+- **CUMULUS-2161**
+  - Rules now support an executionNamePrefix property. If set, any executions
+    triggered as a result of that rule will use that prefix in the name of the
+    execution.
+  - The QueueGranules task now supports an executionNamePrefix property. Any
+    executions queued by that task will use that prefix in the name of the
+    execution.  See the example workflow for usage.
+  - The QueuePdrs task now supports an executionNamePrefix config property. Any
+    executions queued by that task will use that prefix in the name of the
+    execution. See the example workflow for usage.
+
 - **CUMULUS-2162**
   - Adds new report type to `/reconciliationReport` endpoint.  The new report
     is `Granule Inventory`. This report is a CSV file of all the granules in
