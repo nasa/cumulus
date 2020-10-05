@@ -958,6 +958,9 @@ the [release page](https://github.com/nasa/cumulus/releases)
 - **CUMULUS-1974**
   - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
 
+- **CUMULUS-2210**
+  - Fixed `cmr_oauth_provider` variable not being propogated to reconciliation reports
+
 ### Deprecated
 
 - **CUMULUS-1799** - Deprecated the following code. For cases where the code was moved into another package, the new code location is noted:
