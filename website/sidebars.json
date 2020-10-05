@@ -73,6 +73,9 @@
     ],
     "Upgrade Notes": [
       "upgrade-notes/migrate_tea_standalone"
+    ],
+    "External Contributions": [
+      "external-contributions/external-contributions"
     ]
   },
   "Data Cookbooks": {
