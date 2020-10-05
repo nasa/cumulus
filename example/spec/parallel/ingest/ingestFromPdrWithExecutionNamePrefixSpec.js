@@ -47,7 +47,7 @@ const {
 } = require('../../helpers/testUtils');
 
 const lambdaStep = new LambdaStep();
-const workflowName = 'DiscoverAndQueuePdrsWithExecutionNamePrefix';
+const workflowName = 'DiscoverAndQueuePdrsExecutionPrefix';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 const s3data = [
@@ -59,7 +59,7 @@ const unmodifiedS3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
 
-describe('The DiscoverAndQueuePdrsWithExecutionNamePrefix workflow', () => {
+describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
