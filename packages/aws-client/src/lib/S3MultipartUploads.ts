@@ -3,6 +3,10 @@
 import range from 'lodash/range';
 import { s3 } from '../services';
 
+export interface CompleteMultipartUploadOutput extends AWS.S3.CompleteMultipartUploadOutput {
+  ETag: string
+}
+
 type Chunk = {
   start: number,
   end: number
@@ -37,9 +41,13 @@ export const createMultipartUpload = async (
   params: AWS.S3.CreateMultipartUploadRequest
 ) => s3().createMultipartUpload(params).promise();
 
-export const completeMultipartUpload = (
+export const completeMultipartUpload = async (
   params: AWS.S3.CompleteMultipartUploadRequest
-) => s3().completeMultipartUpload(params).promise();
+): Promise<CompleteMultipartUploadOutput> => {
+  const result = await s3().completeMultipartUpload(params).promise();
+
+  return <CompleteMultipartUploadOutput>result;
+};
 
 export const abortMultipartUpload = (
   params: AWS.S3.AbortMultipartUploadRequest
