@@ -31,17 +31,6 @@ variable "cumulus_message_adapter_lambda_layer_arn" {
   default     = null
 }
 
-variable "rds_security_group" {
-  description = "RDS Security Group used for access to RDS cluster"
-  type        = string
-  default     = null
-}
-
-variable "rds_user_access_secret_arn" {
-  description = "RDS User Database Login Credential Secret ARN"
-  type        = string
-}
-
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
@@ -398,12 +387,6 @@ variable "private_archive_api_gateway" {
   description = "Whether to deploy the archive API as a private API gateway"
   type        = bool
   default     = true
-}
-
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type        = bool
-  default     = false
 }
 
 variable "saml_entity_id" {
