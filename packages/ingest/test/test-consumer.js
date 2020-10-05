@@ -1,12 +1,12 @@
 'use strict';
 
 const delay = require('delay');
-const rewire = require('rewire');
 const sinon = require('sinon');
 const test = require('ava');
 
-const consumer = rewire('../consumer');
-const Consumer = consumer.Consumer;
+const SQS = require('@cumulus/aws-client/SQS');
+
+const { Consumer } = require('../consumer');
 
 const timeToReceiveMessages = 200; // ms
 const timeLimitModifier = 50;
@@ -14,10 +14,12 @@ let testConsumer;
 
 async function stubReceiveSQSMessages(_url, { numOfMessages }) {
   await delay(timeToReceiveMessages);
-  return Array.apply(null, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
+  return Array.apply(undefined, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
 }
-consumer.__set__('receiveSQSMessages', stubReceiveSQSMessages);
-consumer.__set__('deleteSQSMessage', async () => true);
+
+sinon.stub(SQS, 'deleteSQSMessage').resolves();
+sinon.stub(SQS, 'receiveSQSMessages').callsFake(stubReceiveSQSMessages);
+
 function processFn() {}
 
 const sandbox = sinon.createSandbox();

@@ -534,3 +534,54 @@ test.serial('A configured concurrency is used', async (t) => {
     sinon.match({ concurrency: 99 })
   ));
 });
+
+test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
+  const { event } = t.context;
+
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const executionNamePrefix = randomString(3);
+  event.config.executionNamePrefix = executionNamePrefix;
+
+  event.input.granules = [
+    {
+      dataType,
+      version,
+      granuleId: randomString(),
+      files: [],
+    },
+  ];
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queueGranules(event);
+
+  await validateOutput(t, output);
+
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: t.context.event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  const messages = receiveMessageResponse.Messages;
+
+  t.is(messages.length, 1);
+
+  const message = JSON.parse(messages[0].Body);
+
+  t.true(
+    message.cumulus_meta.execution_name.startsWith(executionNamePrefix),
+    `Expected "${message.cumulus_meta.execution_name}" to start with "${executionNamePrefix}"`
+  );
+
+  // Make sure that the execution name isn't _just_ the prefix
+  t.true(
+    message.cumulus_meta.execution_name.length > executionNamePrefix.length
+  );
+});
