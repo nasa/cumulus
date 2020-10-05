@@ -30,6 +30,7 @@ locals {
       EmsDistributionReport            = var.ems_deploy ? aws_lambda_function.ems_distribution_report[0].arn : null
       EmsIngestReport                  = var.ems_deploy ? aws_lambda_function.ems_ingest_report[0].arn : null
       EmsProductMetadataReport         = var.ems_deploy ? aws_lambda_function.ems_product_metadata_report[0].arn : null
+      EmsConfigured                    = var.ems_deploy
       ENTITY_ID                        = var.saml_entity_id
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname
