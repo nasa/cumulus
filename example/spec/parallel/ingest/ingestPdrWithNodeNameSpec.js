@@ -27,6 +27,7 @@ const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { providers: providersApi } = require('@cumulus/api-client');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const {
   addCollections,
@@ -106,13 +107,7 @@ describe('Ingesting from PDR', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       nodeName = config.pdrNodeNameProviderBucket;
-      nodeNameProviderId = `provider-${nodeName}`;
-
-      // Make sure that the provider doesn't exist before creating it
-      await providersApi.deleteProvider({
-        prefix: config.stackName,
-        providerId: nodeNameProviderId,
-      });
+      nodeNameProviderId = `provider-${randomString(4)}`;
 
       const createProviderResponse = await providersApi.createProvider({
         prefix: config.stackName,
