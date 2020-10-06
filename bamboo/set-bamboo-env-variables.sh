@@ -62,9 +62,6 @@ done
 ## Get the current git SHA
 export GIT_SHA=$(git rev-parse HEAD)
 
-# Create env vars file
-touch .bamboo_env_vars
-
 ## Always set GIT_PR true if master branch
 if [[ $BRANCH == master ]]; then
   export GIT_PR=true
