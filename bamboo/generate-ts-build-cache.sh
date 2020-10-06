@@ -19,6 +19,5 @@ cd packages/checksum
 npm run prepare
 
 # Get a list of TS compiled files and generate a cache artifact
-npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}'
-# | sed "s,$PWD/,,g"
+npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$PWD/,,g"
 # tar cf ts-build-cache.tgz -T -
