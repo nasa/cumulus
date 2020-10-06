@@ -348,3 +348,9 @@ variable "es_index_shards" {
   type        = number
   default     = 2
 }
+
+variable "ems_deploy" {
+  description = "If true, deploys the EMS reporting module"
+  type        = bool
+  default     = false
+}

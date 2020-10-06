@@ -94,5 +94,7 @@ module "archive" {
 
   log_destination_arn = var.log_destination_arn
 
+  ems_deploy = var.ems_deploy
+
   tags = var.tags
 }

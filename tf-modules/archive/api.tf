@@ -25,9 +25,10 @@ locals {
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
       EcsCluster                       = var.ecs_cluster_name
-      EmsDistributionReport            = aws_lambda_function.ems_distribution_report.arn
-      EmsIngestReport                  = aws_lambda_function.ems_ingest_report.arn
-      EmsProductMetadataReport         = aws_lambda_function.ems_product_metadata_report.arn
+      EmsDistributionReport            = var.ems_deploy ? aws_lambda_function.ems_distribution_report[0].arn : null
+      EmsIngestReport                  = var.ems_deploy ? aws_lambda_function.ems_ingest_report[0].arn : null
+      EmsProductMetadataReport         = var.ems_deploy ? aws_lambda_function.ems_product_metadata_report[0].arn : null
+      EmsConfigured                    = var.ems_deploy
       ENTITY_ID                        = var.saml_entity_id
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname

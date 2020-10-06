@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   - If you provide your own custom bucket map to TEA as a standalone module, **you must ensure that your custom bucket map includes mappings for the `protected` and `public` buckets specified in your `cumulus-tf/terraform.tfvars`, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors**
 
+- **CUMULUS-2197**
+  - EMS resources are now optional, and `ems_deploy` is set to `false` by default, which will delete your EMS resources.
+  - If you would like to keep any deployed EMS resources, add the `ems_deploy` variable set to `true` in your `cumulus-tf/terraform.tfvars`
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2099**
@@ -44,6 +48,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `granule.provider` property on each granule. If present, the granule will be
     enqueued using that provider. If not present, the task's `config.provider`
     will be used instead.
+- **CUMULUS-2197**
+  - EMS resources are now optional and will not be deployed by default. See migration steps for information
+    about how to deploy EMS resources.
 
 #### CODE CHANGES
 
@@ -164,6 +171,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is `Granule Inventory`. This report is a CSV file of all the granules in
     the Cumulus DB. This report will eventually replace the existing
     `granules-csv` endpoint which has been deprecated.
+- **CUMULUS-2197**
+  - Added `ems_deploy` variable to the `cumulus` module. This is set to false by default, except
+    for our example deployment, where it is needed for integration tests.
 
 ### Changed
 

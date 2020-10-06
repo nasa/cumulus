@@ -166,6 +166,8 @@ module "cumulus" {
 
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
+  ems_deploy = var.ems_deploy
+
   tags = local.tags
 }
 
