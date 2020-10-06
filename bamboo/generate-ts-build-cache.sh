@@ -2,7 +2,6 @@
 set -ex
 
 PWD=$(pwd)
-echo "present working directory is $PWD"
 
 # Bootstrap to generate the compiled files from TS
 npm run bootstrap-no-build
