@@ -1434,7 +1434,12 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
   },
   {
     URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml`,
-    Type: 'GET DATA',
+    Type: 'EXTENDED METADATA',
+    Description: 'File to download',
+  },
+  {
+    URL: 'http://example.com/thisFileIsIgnoredBecauseOfTheRelatedUrlType.exe',
+    Type: 'DOWNLOAD SOFTWARE',
     Description: 'File to download',
   }];
 
