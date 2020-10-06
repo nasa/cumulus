@@ -62,6 +62,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   let cnmResponseStreamName;
   let executionModel;
+  let executionNamePrefix;
   let executionStatus;
   let expectedSyncGranulesPayload;
   let expectedTranslatePayload;
@@ -184,6 +185,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       ],
     };
 
+    executionNamePrefix = randomString(3);
+
     ruleDirectory = './spec/parallel/kinesisTests/data/rules';
     ruleOverride = {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
@@ -192,6 +195,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         version: '000',
       },
       provider: record.provider,
+      executionNamePrefix,
     };
 
     const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
@@ -257,6 +261,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     it('executes successfully', () => {
       expect(executionStatus).toEqual('SUCCEEDED');
+    });
+
+    it('creates an execution with the correct prefix', () => {
+      const executionName = workflowExecution.executionArn.split(':').reverse()[0];
+      expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
 
     describe('the TranslateMessage Lambda', () => {
