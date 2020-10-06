@@ -13,7 +13,10 @@ else
 fi
 
 # Bootstrap to generate the compiled files from TS
-npm run bootstrap-no-build
+# npm run bootstrap-no-build
+
+cd packages/checksum
+npm run prepare
 
 # Get a list of TS compiled files and generate a cache artifact
 npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$PWD/,,g" >> .ts-build-cache-files
