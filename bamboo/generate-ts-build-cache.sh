@@ -3,6 +3,15 @@ set -ex
 
 PWD=$(pwd)
 
+if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
+  echo "*** Using cached bootstrap build dir"
+  cd /cumulus/
+  git fetch --all
+  git checkout "$GIT_SHA"
+else
+  npm install
+fi
+
 # Bootstrap to generate the compiled files from TS
 npm run bootstrap-no-build
 
