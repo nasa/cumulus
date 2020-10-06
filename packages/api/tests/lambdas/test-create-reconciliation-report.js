@@ -1436,16 +1436,17 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml`,
     Type: 'EXTENDED METADATA',
     Description: 'File to download',
-  },
-  {
-    URL: 'http://example.com/thisFileIsIgnoredBecauseOfTheRelatedUrlType.exe',
-    Type: 'DOWNLOAD SOFTWARE',
-    Description: 'File to download',
   }];
 
   const filesOnlyInCmr = [{
     URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
     Type: 'GET DATA',
+    Description: 'File to download',
+  }];
+
+  const urlsIgnoredInCmr = [{
+    URL: 'http://example.com/thisFileIsIgnoredBecauseOfTheRelatedUrlType.exe',
+    Type: 'DOWNLOAD SOFTWARE',
     Description: 'File to download',
   }];
 
@@ -1455,11 +1456,13 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
   }];
 
+  const allCmrFiles = matchingFilesInCmr
+    .concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr).concat(urlsIgnoredInCmr);
   const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
-    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr),
+    RelatedUrls: allCmrFiles,
   };
 
   const report = await reconciliationReportForGranuleFiles({
