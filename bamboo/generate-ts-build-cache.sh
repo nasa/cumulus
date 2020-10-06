@@ -19,5 +19,5 @@ npm run bootstrap-no-build
 npm run tsc:listEmittedFiles --silent \
   | grep TSFILE \
   | awk '{print $2}' \
-  | sed "s,$PWD/,,g"
+  | sed "s,$PWD/,,g" \
   | tar cf ts-build-cache.tgz -T -
