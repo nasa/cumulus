@@ -280,3 +280,9 @@ variable "pdr_node_name_provider_bucket" {
   description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
   default = "cumulus-sandbox-pdr-node-name-provider"
 }
+
+variable "ems_deploy" {
+  description = "If true, deploys the EMS reporting module"
+  type        = bool
+  default     = true
+}
