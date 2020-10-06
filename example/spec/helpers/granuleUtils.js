@@ -4,6 +4,8 @@ const flow = require('lodash/flow');
 const fs = require('fs-extra');
 const replace = require('lodash/fp/replace');
 const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
+const omit = require('lodash/omit');
 const path = require('path');
 const pWaitFor = require('p-wait-for');
 
@@ -198,6 +200,28 @@ const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQuer
   granuleIds.map((id) => waitForGranuleRecordInList(stackName, id, additionalQueryParams))
 );
 
+const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQueryParams = {}) => pWaitFor(
+  async () => {
+    const fieldsIgnored = ['timestamp', 'updatedAt'];
+    const resp = await listGranules({
+      prefix: stackName,
+      query: {
+        granuleId: granule.granuleId,
+        ...additionalQueryParams,
+      },
+    });
+    const results = JSON.parse(resp.body).results;
+    if (results.length === 1) {
+      return isEqual(omit(results[0], fieldsIgnored), omit(granule, fieldsIgnored));
+    }
+    return false;
+  },
+  {
+    interval: 10000,
+    timeout: 600 * 1000,
+  }
+);
+
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
@@ -205,4 +229,5 @@ module.exports = {
   setupTestGranuleForIngest,
   waitForGranuleRecordsInList,
   waitForGranuleRecordsNotInList,
+  waitForGranuleRecordUpdatedInList,
 };
