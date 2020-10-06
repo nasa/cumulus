@@ -2,6 +2,7 @@
 set -ex
 
 PWD=$(pwd)
+echo "present working directory is $PWD"
 
 # Bootstrap to generate the compiled files from TS
 npm run bootstrap-no-build
@@ -10,5 +11,5 @@ npm run bootstrap-no-build
 npm run tsc:listEmittedFiles --silent \
   | grep TSFILE \
   | awk '{print $2}' \
-  | sed "s,$PWD/,,g" \
-  | tar cf ts-build-cache.tgz -T -
+  | sed "s,$PWD/,,g"
+  # | tar cf ts-build-cache.tgz -T -
