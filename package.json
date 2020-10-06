@@ -20,6 +20,7 @@
     "test:ci": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test",
     "test:coverage": "rm -rf .nyc_output coverage && env NYC_CLEAN=false NYC_SILENT=true lerna run --concurrency 1 test:coverage && nyc report --reporter=text --reporter=html",
     "tsc": "lerna run tsc",
+    "tsc:listEmittedFiles": " npx lerna run tsc:listEmittedFiles --stream --no-prefix | grep TSFILE | awk '{print $2}",
     "package": "lerna run package",
     "bootstrap": "lerna bootstrap --no-ci --force-local && npm run package",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local",
