@@ -49,6 +49,7 @@
     "@cumulus/aws-client": "2.0.1",
     "@cumulus/checksum": "2.0.1",
     "@cumulus/cmrjs": "2.0.1",
+    "@cumulus/cmr-client": "2.0.1",
     "@cumulus/common": "2.0.1",
     "@cumulus/discover-granules": "2.0.1",
     "@cumulus/discover-pdrs": "2.0.1",

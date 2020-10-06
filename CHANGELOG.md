@@ -198,8 +198,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is published, as expected.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
-- **CUMULUS-2101**
-  - Fix Reconciliation Report integration test failures
+- **CUMULUS-2201**
+  - Fix Reconciliation Report integration test failures by waiting for collections appear
+    in es list and ingesting a fake granule xml file to CMR
 - **CUMULUS-2015**
   - Reduced concurrency of `QueueGranules` task. That task now has a
     `config.concurrency` option that defaults to `3`.
