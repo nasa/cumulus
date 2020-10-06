@@ -15,6 +15,7 @@ fi
 # Bootstrap to generate the compiled files from TS
 # npm run bootstrap-no-build
 
+# Debugging
 cd packages/checksum
 npm run prepare
 
@@ -25,4 +26,16 @@ cat .ts-build-cache-files
 # Generate TS build cache artifact
 tar cf ts-build-cache.tgz -T .ts-build-cache-files
 
+# Debugging - go back to paraent
+cd ../../
+
 ls -lah .
+
+# if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
+#   echo "*** Using cached bootstrap build dir"
+#   cd /cumulus/
+#   git fetch --all
+#   git checkout "$GIT_SHA"
+# else
+#   npm install
+# fi
