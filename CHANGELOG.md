@@ -184,6 +184,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2111**
   - Changed `distribution_api_gateway_stage` variable for `cumulus` module to `tea_api_gateway_stage`
   - Changed `api_gateway_stage` variable for `distribution` module to `tea_api_gateway_stage`
+- **CUMULUS-2224**
+  - Updated `/reconciliationReport`'s file reconciliation to include `"EXTENDED METADATA"` as a valid CMR relatedUrls Type.
 
 ### Fixed
 
