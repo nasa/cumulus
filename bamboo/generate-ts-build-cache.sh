@@ -27,7 +27,7 @@ cat .ts-build-cache-files
 tar cf ts-build-cache.tgz -T .ts-build-cache-files
 
 # Debugging - go back to paraent
-# cd ../../
+cd ../../
 # ls -lah .
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
