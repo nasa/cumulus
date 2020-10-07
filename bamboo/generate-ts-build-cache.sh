@@ -26,10 +26,10 @@ cat .ts-build-cache-files
 # Generate TS build cache artifact
 tar cf ts-build-cache.tgz -T .ts-build-cache-files
 
-# Debugging - go back to paraent
-cd ../../
-# ls -lah .
-
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   cp ts-build-cache.tgz "$NONCACHE_WORKING_DIR"
 fi
+
+# Debugging - go back to paraent
+cd ../../
+# ls -lah .
