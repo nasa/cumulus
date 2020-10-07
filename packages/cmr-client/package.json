@@ -8,7 +8,6 @@
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 2 --template templates/API.hbs CMR.js CMRSearchConceptQueue.js > API.md",
     "clean": "git clean -d -x -e node_modules -f",
-    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
