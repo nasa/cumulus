@@ -141,7 +141,7 @@ const build = {
       const field = i.name.match(regex)[1];
       return {
         terms: {
-          [field]: i.value.replace(' ', '').split(','),
+          [field]: i.value.split(','),
         },
       };
     });
@@ -154,7 +154,7 @@ const build = {
       const field = i.name.match(regex)[1];
       return {
         terms: {
-          [field]: i.value.replace(' ', '').split(','),
+          [field]: i.value.split(','),
         },
       };
     });
