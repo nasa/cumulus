@@ -14,14 +14,10 @@ else
   npm install
 fi
 
-# Bootstrap to generate the compiled files from TS
+# Bootstrap to install/link packages
 npm run bootstrap-no-build-no-scripts-ci
+# Compile TS files
 npm run tsc
-# npm run bootstrap-no-build
-
-# Debugging
-# cd packages/checksum
-# npm run prepare
 
 # Get a list of TS compiled files
 npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$CURRENT_WORKING_DIR/,,g" >> .ts-build-cache-files
@@ -33,6 +29,3 @@ tar cf ts-build-cache.tgz -T .ts-build-cache-files
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   cp ts-build-cache.tgz "$NONCACHE_WORKING_DIR"
 fi
-
-# Debugging - go back to paraent
-# cd ../../
