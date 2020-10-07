@@ -18,7 +18,7 @@ fi
 npm run bootstrap-no-build-no-scripts-ci
 
 # Testing
-cd packages/checksum
+# cd packages/checksum
 
 # Compile TS files
 npm run tsc
@@ -28,11 +28,11 @@ npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,
 cat .ts-build-cache-files
 
 # Testing
-cd ../..
-tar cf ts-build-cache.tgz -T packages/checksum/.ts-build-cache-files
+# cd ../..
+# tar cf ts-build-cache.tgz -T packages/checksum/.ts-build-cache-files
 
 # Generate TS build cache artifact
-# tar cf ts-build-cache.tgz -T .ts-build-cache-files
+tar cf ts-build-cache.tgz -T .ts-build-cache-files
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   cp ts-build-cache.tgz "$NONCACHE_WORKING_DIR"
