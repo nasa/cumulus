@@ -28,7 +28,7 @@ while ! docker container inspect ${container_id}\_build_env_1; do
 done
 
 ## Setup the build env container once it's started
-$docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA; npm install --error --no-progress; npm run bootstrap-no-build-quiet || true; npm run bootstrap-no-build-quiet"
+$docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA; npm install --error --no-progress; npm run bootstrap-no-build-quiet-ci"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
 
 # Wait for the FTP server to be available
