@@ -218,7 +218,7 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
   },
   {
     interval: 10000,
-    timeout: 600 * 1000,
+    timeout: 1000 * 1000,
   }
 );
 
