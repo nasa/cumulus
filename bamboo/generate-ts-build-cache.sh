@@ -13,7 +13,9 @@ else
 fi
 
 # Bootstrap to generate the compiled files from TS
-npm run bootstrap-no-build
+npm run bootstrap-no-build-no-scripts-ci
+npm run tsc
+# npm run bootstrap-no-build
 
 # Debugging
 # cd packages/checksum

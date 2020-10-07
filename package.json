@@ -26,6 +26,7 @@
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local && npm run tsc",
     "bootstrap-no-build-ci": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build-no-scripts": "lerna bootstrap --no-ci --force-local --ignore-scripts && npm run tsc",
+    "bootstrap-no-build-no-scripts-ci": "lerna bootstrap --no-ci --force-local --ignore-scripts",
     "bootstrap-no-build-no-concurrency": "lerna bootstrap --no-ci --force-local --concurrency 1 && npm run tsc",
     "bootstrap-no-build-quiet": "lerna bootstrap --no-ci --force-local --loglevel=error && npm run tsc",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
