@@ -16,6 +16,10 @@ fi
 
 # Bootstrap to install/link packages
 npm run bootstrap-no-build-no-scripts-ci
+
+# Testing
+cd packages/checksum
+
 # Compile TS files
 npm run tsc
 
