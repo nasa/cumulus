@@ -29,9 +29,10 @@ cat .ts-build-cache-files
 
 # Testing
 cd ../..
+tar cf ts-build-cache.tgz -T packages/checksum/.ts-build-cache-files
 
 # Generate TS build cache artifact
-tar cf ts-build-cache.tgz -T .ts-build-cache-files
+# tar cf ts-build-cache.tgz -T .ts-build-cache-files
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   cp ts-build-cache.tgz "$NONCACHE_WORKING_DIR"
