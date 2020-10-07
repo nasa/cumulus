@@ -2,9 +2,10 @@
   "docs": {
     "About Cumulus": [
       "cumulus-docs-readme",
-      "getting-started",
       "architecture",
       "interfaces",
+      "getting-started",
+      "helpful-tips",
       "glossary",
       "team"
     ],
@@ -61,6 +62,12 @@
       "features/logging-esdis-metrics",
       "features/replay-kinesis-messages"
     ],
+    "Common Use Cases": [
+      "int-common-use-cases",
+      "create-cumulus-data-mgmt-type",
+      "workflow-add-new-lambda",
+      "workflow-ts-failed-step"
+    ],
     "Troubleshooting": [
       "troubleshooting/troubleshooting-readme",
       "troubleshooting/troubleshooting-deployment",
@@ -113,7 +120,7 @@
       "operator-docs/replay-kinesis-messages"
     ],
     "Common Use Cases": [
-      "operator-docs/common-use-cases",
+      "operator-docs/ops-common-use-cases",
       "operator-docs/kinesis-stream-for-ingest",
       "operator-docs/create-rule-in-cumulus",
       "operator-docs/granule-workflows"
