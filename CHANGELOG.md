@@ -303,6 +303,13 @@ from the 2.0.x branch.
 For the most recent release information for the maintenance branch please see
 the [release page](https://github.com/nasa/cumulus/releases)
 
+## [v2.0.7] 2020-10-1 - [BACKPORT]
+
+### Fixed
+
+- CVE-2020-7720
+  - Updated common `node-forge` dependency to 0.10.0 to address CVE finding
+
 ### [v2.0.6] 2020-09-25 - [BACKPORT]
 
 ### Fixed
@@ -3574,6 +3581,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v3.0.0...HEAD
 [v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
+[v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.7
 [v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.6
 [v2.0.5]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.5
 [v2.0.4]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.4
