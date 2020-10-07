@@ -13,11 +13,11 @@ else
 fi
 
 # Bootstrap to generate the compiled files from TS
-# npm run bootstrap-no-build
+npm run bootstrap-no-build
 
 # Debugging
-cd packages/checksum
-npm run prepare
+# cd packages/checksum
+# npm run prepare
 
 # Get a list of TS compiled files
 npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$NONCACHE_WORKING_DIR/,,g" >> .ts-build-cache-files
@@ -31,5 +31,4 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
 fi
 
 # Debugging - go back to paraent
-cd ../../
-# ls -lah .
+# cd ../../
