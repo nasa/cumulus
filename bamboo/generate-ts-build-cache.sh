@@ -27,6 +27,9 @@ npm run tsc
 npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$CURRENT_WORKING_DIR/,,g" >> .ts-build-cache-files
 cat .ts-build-cache-files
 
+# Testing
+cd ../..
+
 # Generate TS build cache artifact
 tar cf ts-build-cache.tgz -T .ts-build-cache-files
 
