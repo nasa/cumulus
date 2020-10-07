@@ -356,17 +356,15 @@ describe('When there are granule differences and granule reconciliation is run',
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
 
-      const dbGranule = await granulesApiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: dbGranuleId,
-      });
-      const granuleAfterUpdate = await granulesApiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: publishedGranuleId,
-      });
+      const [dbGranule, granuleAfterUpdate] = await Promise.all([
+        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+      ]);
       console.log('XXXX Waiting for granules updated in list');
-      await waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(dbGranule.body));
-      await waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleAfterUpdate.body));
+      await Promise.all([
+        waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(dbGranule.body)),
+        waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleAfterUpdate.body)),
+      ]);
     } catch (error) {
       console.log(error);
       beforeAllFailed = true;
