@@ -45,14 +45,17 @@ async function ingestConcept(
         headers,
       }
     );
+    console.log('response', response);
 
     const ingestResponseBody = <{errors?: {error: string}}>(await parseXMLString(response.body));
+    console.log('ingestResponseBody', ingestResponseBody);
 
     if (ingestResponseBody.errors) {
       const xmlObjectError = JSON.stringify(ingestResponseBody.errors.error);
       throw new Error(`Failed to ingest, CMR error message: ${xmlObjectError}`);
     }
 
+    console.log('xmlObject', xmlObject);
     return xmlObject;
   } catch (error) {
     log.error(error, logDetails);
