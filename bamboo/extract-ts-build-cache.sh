@@ -2,11 +2,10 @@
 set -ex
 
 # . ./bamboo/set-bamboo-env-variables.sh
-# . ./bamboo/abort-if-not-pr.sh
-# if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-#   echo "*** Using cached bootstrap build dir"
-#   cd /cumulus/
-# fi
+if [[ -z $TS_BUILD_CACHE_FILE ]]; then
+  echo "Name of TS build cache file cannot be found. Exiting"
+  exit 1
+fi
 
 echo "***Extracting build cache of compiled TS code"
 
