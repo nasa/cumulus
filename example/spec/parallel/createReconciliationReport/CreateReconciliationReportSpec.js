@@ -49,7 +49,7 @@ const {
   createTestSuffix,
 } = require('../../helpers/testUtils');
 const {
-  setupTestGranuleForIngest,
+  setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
@@ -248,12 +248,11 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
 }
 
 // wait for collection in list
-const waitForCollectionRecordsInList = async (stackName, collectionIds) => pWaitFor(
+const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => pWaitFor(
   async () => {
     // Verify the collection is returned when listing collections
-    const collsResp = await getCollections(
-      { prefix: stackName, query: { _id__in: collectionIds.join(','), limit: 30 } }
-    );
+    const collsResp = await getCollections({ prefix: stackName,
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
     const ids = JSON.parse(collsResp.body).results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
   },
@@ -283,6 +282,7 @@ describe('When there are granule differences and granule reconciliation is run',
   let testDataFolder;
   let testSuffix;
   let updatedGranuleFile;
+  const ingestTime = Date.now() - 1000 * 30;
 
   beforeAll(async () => {
     try {
@@ -341,7 +341,8 @@ describe('When there are granule differences and granule reconciliation is run',
         collectionId,
         constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
       ];
-      await waitForCollectionRecordsInList(config.stackName, collectionIds);
+
+      await waitForCollectionRecordsInList(config.stackName, collectionIds, { timestamp__from: ingestTime });
 
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
@@ -354,6 +355,16 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
+
+      const [dbGranule, granuleAfterUpdate] = await Promise.all([
+        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+      ]);
+      console.log('XXXX Waiting for granules updated in list');
+      await Promise.all([
+        waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(dbGranule.body)),
+        waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleAfterUpdate.body)),
+      ]);
     } catch (error) {
       console.log(error);
       beforeAllFailed = true;
