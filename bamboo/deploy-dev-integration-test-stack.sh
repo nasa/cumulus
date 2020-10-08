@@ -21,6 +21,9 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
 fi
 echo "***Deploying stack with built source"
 
+# Extract cache of compiled TS files
+./bamboo/extract-ts-build-cache.sh
+
 npm install
 ## Double bootstrapping required as workaround to
 ## lerna re-bootstrapping issue in older releases

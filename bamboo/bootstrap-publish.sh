@@ -3,6 +3,9 @@ set -e
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-publish.sh
 
+# Extract cache of compiled TS files
+./bamboo/extract-ts-build-cache.sh
+
 npm install
 rm -rf website/build
 npm run docs-install
