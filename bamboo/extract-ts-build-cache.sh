@@ -9,4 +9,4 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   cd /cumulus/
 fi
 
-tar xvf ts-build-cache.tgz
+tar xvf $TS_BUILD_CACHE_FILE

@@ -30,9 +30,9 @@ done
 ## Setup the build env container once it's started
 $docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA"
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-  $docker_command "cp /source/cumulus/ts-build-cache.tgz $UNIT_TEST_BUILD_DIR"
+  $docker_command "cp /source/cumulus/$TS_BUILD_CACHE_FILE $UNIT_TEST_BUILD_DIR"
 fi
-$docker_command "cd $UNIT_TEST_BUILD_DIR; tar xvf ts-build-cache.tgz"
+$docker_command "cd $UNIT_TEST_BUILD_DIR; tar xvf $TS_BUILD_CACHE_FILE"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run bootstrap-no-build-quiet-ci"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
 
