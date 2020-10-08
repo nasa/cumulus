@@ -36,7 +36,7 @@ hide_title: false
 
 ![Screenshot of Add Collection form](assets/cd_add_collection.png)
 
-* Once you submit the form, you should be able to verify your new collection in the list.
+* Once you submit the form, you should be able to verify that your new collection is in the list.
 
 ### Create A Rule
 
