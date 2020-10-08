@@ -14,10 +14,10 @@ The following steps are to help you along as you write a new Lambda that integra
 
 2. Add Task in JSON Object
 
-For details on how to set up a workflow via CMA go to the [CMA Tasks: Message Flow](../workflows/cumulus-task-message-flow). 
+    For details on how to set up a workflow via CMA go to the [CMA Tasks: Message Flow](../workflows/cumulus-task-message-flow).
 
-You will need to assign input and output for the new task and follow the CMA contract [here](https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md). This contract defines how libraries should call the cumulus-message-adapter to integrate a task into an existing Cumulus Workflow.
+    You will need to assign input and output for the new task and follow the CMA contract [here](https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md). This contract defines how libraries should call the cumulus-message-adapter to integrate a task into an existing Cumulus Workflow.
 
 3. Verify New Task
 
-Check the updated workflow in AWS and in Cumulus.
+    Check the updated workflow in AWS and in Cumulus.

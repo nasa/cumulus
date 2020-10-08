@@ -7,19 +7,21 @@ hide_title: false
 ## Steps
 
 1. Locate Step
+<!-- markdownlint-disable MD029 -->
 
-* Go to Cumulus dashboard
-* Find granule
-* Go to Executions to determine the failed step
+* Go to `Cumulus` dashboard
+* Find the granule
+* Go to `Executions` to determine the failed step
 
 2. Investigate in Cloudwatch
 
-* Go to Cloudwatch
+* Go to `Cloudwatch`
 * Locate lambda
-* Search Cloudwatch logs
+* Search `Cloudwatch` logs
 
 3. Recreate Error
 
-In your sandbox environment, try to recreate the error
+    In your sandbox environment, try to recreate the error.
 
 4. Resolution
+<!-- markdownlint-enable MD029 -->

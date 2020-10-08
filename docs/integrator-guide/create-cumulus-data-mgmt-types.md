@@ -4,7 +4,7 @@ title: Creating Cumulus Data Management Types
 hide_title: false
 ---
 
-## What Is A Cumulus Data Management Type?
+## What Is A Cumulus Data Management Type
 
 * `Collections`: Collections are logical sets of data objects of the same data type and version. They provide contextual information used by Cumulus ingest.
 * `Granules`: Granules are the smallest aggregation of data that can be independently managed. They are always associated with a collection, which is a grouping of granules.
