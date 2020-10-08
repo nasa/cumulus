@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   - If you provide your own custom bucket map to TEA as a standalone module, **you must ensure that your custom bucket map includes mappings for the `protected` and `public` buckets specified in your `cumulus-tf/terraform.tfvars`, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors**
 
+- **CUMULUS-2197**
+  - EMS resources are now optional, and `ems_deploy` is set to `false` by default, which will delete your EMS resources.
+  - If you would like to keep any deployed EMS resources, add the `ems_deploy` variable set to `true` in your `cumulus-tf/terraform.tfvars`
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2099**
@@ -44,6 +48,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `granule.provider` property on each granule. If present, the granule will be
     enqueued using that provider. If not present, the task's `config.provider`
     will be used instead.
+- **CUMULUS-2197**
+  - EMS resources are now optional and will not be deployed by default. See migration steps for information
+    about how to deploy EMS resources.
 
 #### CODE CHANGES
 
@@ -134,59 +141,39 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
 - **CUMULUS-2116**
-  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
+    unpublishes a  granule from CMR and deletes it from Cumulus, but does not
+    update the record to `published: false` before deletion
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
-    requirements for the 2.1.x release series
-  - Updated the default Cumulus module to take the following new required variables:
-    - rds_user_access_secret_arn:
-      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
-      (containing at least host, password, port as keys)
-    - rds_security_group:
-      RDS Security Group that provides connection access to the RDS cluster
-  - Updated API lambdas and default ECS cluster to add them to the
-    `rds_security_group` for database access
-- **CUMULUS-2126**
-  - The collections endpoint now writes to the RDS database
-- **CUMULUS-2127**
-  - Added migration to create collections relation for RDS database
-- **CUMULUS-2129**
-  - Added `data-migration1` Terraform module and Lambda to migrate data from Dynamo to RDS
-    - Added support to Lambda for migrating collections data from Dynamo to RDS
-- **CUMULUS-2155**
-  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
-    modules.  If set to true, this diagnostic variable instructs Core's database
-    code to fire off a connection 'heartbeat' query and log the timing/results
-    for diagnostic purposes, and retry certain connection timeouts once.
-    This option is disabled by default
+    severless RDS Aurora/ PostgreSQL database cluster to meet the PostgreSQL
+    requirements for future releases
 - **CUMULUS-2156**
   - Support array inputs parameters for `Internal` reconciliation report
-- **CUMULUS-2157**
-  - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
-    - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead
 - **CUMULUS-2161**
   - Rules now support an `executionNamePrefix` property. If set, any executions
     triggered as a result of that rule will use that prefix in the name of the
     execution.
   - The `QueueGranules` task now supports an `executionNamePrefix` property. Any
     executions queued by that task will use that prefix in the name of the
-    execution. See the
-    [example workflow](./example/cumulus-tf/discover_granules_with_execution_name_prefix_workflow.asl.json)
+    execution.  See the [example workflow](./example/cumulus-tf/discover_granules_with_execution_name_prefix_workflow.asl.json)
     for usage.
-  - The `QueuePdrs` task now supports an `executionNamePrefix` config property.
-    Any executions queued by that task will use that prefix in the name of the
-    execution. See the
-    [example workflow](./example/cumulus-tf/discover_and_queue_pdrs_with_execution_name_prefix_workflow.asl.json)
+  - The `QueuePdrs` task now supports an `executionNamePrefix` config property. Any
+    executions queued by that task will use that prefix in the name of the
+    execution.  See the [example workflow](./example/cumulus-tf/discover_and_queue_pdrs_with_execution_name_prefix_workflow.asl.json)
     for usage.
+
 - **CUMULUS-2162**
   - Adds new report type to `/reconciliationReport` endpoint.  The new report
     is `Granule Inventory`. This report is a CSV file of all the granules in
     the Cumulus DB. This report will eventually replace the existing
     `granules-csv` endpoint which has been deprecated.
+- **CUMULUS-2197**
+  - Added `ems_deploy` variable to the `cumulus` module. This is set to false by default, except
+    for our example deployment, where it is needed for integration tests.
 
 ### Changed
 
@@ -197,6 +184,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2111**
   - Changed `distribution_api_gateway_stage` variable for `cumulus` module to `tea_api_gateway_stage`
   - Changed `api_gateway_stage` variable for `distribution` module to `tea_api_gateway_stage`
+- **CUMULUS-2224**
+  - Updated `/reconciliationReport`'s file reconciliation to include `"EXTENDED METADATA"` as a valid CMR relatedUrls Type.
 
 ### Fixed
 
@@ -211,8 +200,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is published, as expected.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
-- **CUMULUS-2101**
-  - Fix Reconciliation Report integration test failures
+- **CUMULUS-2201**
+  - Fix Reconciliation Report integration test failures by waiting for collections appear
+    in es list and ingesting a fake granule xml file to CMR
 - **CUMULUS-2015**
   - Reduced concurrency of `QueueGranules` task. That task now has a
     `config.concurrency` option that defaults to `3`.
@@ -224,6 +214,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
 - **CUMULUS-2195**
   - Fixed issue with redirect from `/token` not working when using a Cloudfront endpoint to access the Cumulus API with Launchpad authentication enabled. The redirect should now work properly whether you are using a plain API gateway URL or a Cloudfront endpoint pointing at an API gateway URL.
+- **CUMULUS-2200**
+  - Fixed issue where __in and __not queries were stripping spaces from values
 
 ### Deprecated
 

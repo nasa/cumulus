@@ -10,7 +10,6 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { getKnexClient } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -18,36 +17,6 @@ const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
-
-const dynamoRecordToDbRecord = (dynamoRecord) => {
-  const dbRecord = {
-    ...dynamoRecord,
-    granuleIdExtractionRegex: dynamoRecord.granuleIdExtraction,
-    granuleIdValidationRegex: dynamoRecord.granuleId,
-    files: JSON.stringify(dynamoRecord.files),
-  };
-
-  delete dbRecord.createdAt;
-  delete dbRecord.granuleId;
-  delete dbRecord.granuleIdExtraction;
-  delete dbRecord.updatedAt;
-
-  // eslint-disable-next-line lodash/prefer-lodash-typecheck
-  if (typeof dynamoRecord.createdAt === 'number') {
-    dbRecord.created_at = new Date(dynamoRecord.createdAt);
-  }
-
-  // eslint-disable-next-line lodash/prefer-lodash-typecheck
-  if (typeof dynamoRecord.updatedAt === 'number') {
-    dbRecord.updated_at = new Date(dynamoRecord.updatedAt);
-  }
-
-  if (dynamoRecord.tags) {
-    dbRecord.tags = JSON.stringify(dynamoRecord.tags);
-  }
-
-  return dbRecord;
-};
 
 /**
  * List all collections.
@@ -116,7 +85,6 @@ async function get(req, res) {
 async function post(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = await getKnexClient(),
   } = req.testContext || {};
 
   const collection = req.body || {};
@@ -131,19 +99,9 @@ async function post(req, res) {
   }
 
   try {
-    const dynamoRecord = await collectionsModel.create(
+    await collectionsModel.create(
       omit(collection, 'dataType')
     );
-
-    const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
-
-    try {
-      await dbClient('collections').insert(dbRecord, 'cumulusId');
-    } catch (error) {
-      await collectionsModel.delete({ name, version });
-
-      throw error;
-    }
 
     if (inTestMode()) {
       await addToLocalES(collection, indexCollection);
@@ -193,14 +151,6 @@ async function put(req, res) {
 
   const dynamoRecord = await collectionsModel.create(collection);
 
-  const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
-
-  const dbClient = await getKnexClient();
-  await dbClient.transaction(async (trx) => {
-    await trx('collections').where({ name, version }).del();
-    await trx('collections').insert(dbRecord);
-  });
-
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);
   }
@@ -219,12 +169,9 @@ async function del(req, res) {
   const { name, version } = req.params;
 
   const collectionsModel = new models.Collection();
-  const dbClient = await getKnexClient();
 
   try {
     await collectionsModel.delete({ name, version });
-
-    await dbClient('collections').where({ name, version }).del();
 
     if (inTestMode()) {
       const collectionId = constructCollectionId(name, version);
@@ -256,7 +203,6 @@ router.get('/active', activeList);
 
 module.exports = {
   del,
-  dynamoRecordToDbRecord,
   post,
   put,
   router,

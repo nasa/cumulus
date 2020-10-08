@@ -284,7 +284,7 @@ async function reconciliationReportForGranuleFiles(params) {
   const granuleFiles = keyBy(granuleInDb.files, 'fileName');
 
   // URL types for downloading granule files
-  const cmrGetDataTypes = ['GET DATA', 'GET RELATED VISUALIZATION'];
+  const cmrGetDataTypes = ['GET DATA', 'GET RELATED VISUALIZATION', 'EXTENDED METADATA'];
   const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
 
   const bucketTypes = Object.values(bucketsConfig.buckets)
