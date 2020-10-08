@@ -32,11 +32,12 @@ $docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_D
 # Copy build cache of compiled TS code into cached bootstrap dir, if necessary
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   $docker_command "cp /source/cumulus/$TS_BUILD_CACHE_FILE $UNIT_TEST_BUILD_DIR"
-  $docker_command "ls /source/cumulus/bamboo"
-  $docker_command "cp /source/cumulus/bamboo/extract-ts-build-cache.sh $UNIT_TEST_BUILD_DIR/bamboo"
+  # TODO: why is this failing?
+  # $docker_command "cp /source/cumulus/bamboo/extract-ts-build-cache.sh $UNIT_TEST_BUILD_DIR/bamboo"
 fi
 # Extract build cache of compiled TS files
-$docker_command "cd $UNIT_TEST_BUILD_DIR; ./bamboo/extract-ts-build-cache.sh"
+# TODO: replace tar command with use of extract-ts-build-cache.sh script
+$docker_command "cd $UNIT_TEST_BUILD_DIR; tar xvf $TS_BUILD_CACHE_FILE"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run bootstrap-no-build-quiet-ci"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
 
