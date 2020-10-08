@@ -1,6 +1,6 @@
 ---
-id: create-cumulus-data-mgmt-type
-title: How To Create A Cumulus Data Management Type
+id: create-cumulus-data-mgmt-types
+title: Creating Cumulus Data Management Types
 hide_title: false
 ---
 
@@ -21,7 +21,7 @@ hide_title: false
 ![Screenshot of Create Provider form](assets/cd_provider_page.png)
 
 * Click on `Add Provider`.
-* Fill in the form.
+* Fill in the form and then submit it.
 
 ![Screenshot of Create Provider form](assets/cd_add_provider_form.png)
 
@@ -35,6 +35,8 @@ hide_title: false
 * Copy and paste or fill in the collection JSON object form.
 
 ![Screenshot of Add Collection form](assets/cd_add_collection.png)
+
+* Once you submit the form, you should be able to verify your new collection in the list.
 
 ### Create A Rule
 
