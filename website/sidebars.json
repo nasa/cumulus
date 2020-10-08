@@ -73,6 +73,7 @@
       "docs-how-to"
     ],
     "Integrator Guide": [
+      "integrator-guide/about-int-guide",
       "integrator-guide/int-common-use-cases",
       "integrator-guide/create-cumulus-data-mgmt-types",
       "integrator-guide/workflow-add-new-lambda",
