@@ -96,7 +96,7 @@ test.before(async () => {
 
   fakeReportRecords = reportNames.map((reportName) => fakeReconciliationReportFactory({
     name: reportName,
-    location: buildS3Uri(process.env.system_bucket, `${reportDirectory}/${reportName}`),
+    location: buildS3Uri(process.env.system_bucket, `${reportDirectory}/${reportName}.json`),
   }));
 
   // add report records to database and report files go to s3
@@ -360,7 +360,7 @@ test.serial('create a report with invalid payload errors immediately', async (t)
       response.body,
       {
         error: 'Bad Request',
-        message: 'Inventory reports cannot be launched with both granuleId and collectionId input.',
+        message: 'Inventory reports cannot be launched with more than one input (granuleId, collectionId, or provider).',
         name: 'InvalidArgument',
         statusCode: 400,
       }

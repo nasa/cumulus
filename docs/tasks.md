@@ -1,10 +1,8 @@
 ---
 id: tasks
 title: Cumulus Tasks
-hide_title: true
+hide_title: false
 ---
-
-# Cumulus Tasks
 
 A list of reusable Cumulus tasks. [Add your own.](adding-a-task.md)
 
@@ -115,15 +113,6 @@ Add discovered PDRs to a queue
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/queue-pdrs) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
-
----
-
-### [@cumulus/sf-sns-report](https://github.com/nasa/cumulus/tree/master/tasks/sf-sns-report)
-
-[DEPRECATED] Broadcasts an incoming Cumulus message to SNS
-
-- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/sf-sns-report/schemas).
-- Resources: [npm](https://npmjs.com/package/@cumulus/sf-sns-report) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/sf-sns-report)
 
 ---
 

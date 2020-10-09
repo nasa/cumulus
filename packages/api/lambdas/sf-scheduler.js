@@ -57,6 +57,7 @@ async function handleScheduleEvent(event) {
     },
     payload: get(event, 'payload', {}),
     workflow,
+    executionNamePrefix: event.executionNamePrefix,
   });
 
   return SQS.sendSQSMessage(queueUrl, message);

@@ -1,9 +1,8 @@
 ---
 id: backup_and_restore
 title: Cumulus Backup and Restore
-hide_title: true
+hide_title: false
 ---
-# Cumulus Backup and Restore
 
 ## Deployment Backup and Restore
 

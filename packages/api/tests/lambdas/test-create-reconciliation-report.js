@@ -117,6 +117,7 @@ async function storeCollection(collection) {
       fakeGranuleFactoryV2({
         collectionId: constructCollectionId(collection.name, collection.version),
         updatedAt: collection.updatedAt,
+        provider: randomString(),
       }),
       esAlias
     );
@@ -171,6 +172,21 @@ async function granuleIdsFromCollectionIds(collectionIds) {
     esAlias
   )).query();
   return esValues.results.map((value) => value.granuleId);
+}
+
+/**
+ * Looks up and returns the providers given a list of collectionIds.
+ * @param {Array<string>} collectionIds - list of collectionIds
+ * @returns {Array<string>} list of matching providers
+ */
+async function providersFromCollectionIds(collectionIds) {
+  const esValues = await (new Search(
+    { queryStringParameters: { collectionId__in: collectionIds.join(',') } },
+    'granule',
+    esAlias
+  )).query();
+
+  return esValues.results.map((value) => value.provider);
 }
 
 const randomBetween = (a, b) => Math.floor(Math.random() * (b - a + 1) + a);
@@ -749,6 +765,101 @@ test.serial(
 );
 
 test.serial(
+  'With location param as S3, generates a valid reconcilation report for only S3 and DynamoDB',
+  async (t) => {
+    const dataBuckets = range(2).map(() => randomId('bucket'));
+    await Promise.all(dataBuckets.map((bucket) =>
+      createBucket(bucket)
+        .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+    // Write the buckets config to S3
+    await storeBucketsConfigToS3(
+      dataBuckets,
+      t.context.systemBucket,
+      t.context.stackName
+    );
+
+    // Create random files
+    const files = range(10).map((i) => ({
+      bucket: dataBuckets[i % dataBuckets.length],
+      key: randomId('key'),
+      granuleId: randomId('granuleId'),
+    }));
+
+    // Store the files to S3 and DynamoDB
+    await Promise.all([
+      storeFilesToS3(files),
+      GranuleFilesCache.batchUpdate({ puts: files }),
+    ]);
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      location: 'S3',
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const filesInCumulus = report.filesInCumulus;
+    t.is(report.status, 'SUCCESS');
+
+    const granuleIds = Object.keys(filesInCumulus.okCountByGranule);
+    granuleIds.forEach((granuleId) => {
+      const okCountForGranule = filesInCumulus.okCountByGranule[granuleId];
+      t.is(okCountForGranule, 1);
+    });
+
+    t.is(report.error, undefined);
+    t.is(filesInCumulus.okCount, files.length);
+    t.is(filesInCumulus.onlyInS3.length, 0);
+    t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+    t.is(report.collectionsInCumulusCmr.okCount, 0);
+    t.is(report.granulesInCumulusCmr.okCount, 0);
+    t.is(report.filesInCumulusCmr.okCount, 0);
+  }
+);
+
+test.serial(
+  'With location param as CMR, generates a valid reconcilation report for only Cumulus and CMR',
+  async (t) => {
+    const params = {
+      numMatchingCollectionsOutOfRange: 0,
+      numExtraESCollectionsOutOfRange: 0,
+    };
+
+    const setupVars = await setupElasticAndCMRForTests({ t, params });
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      location: 'CMR',
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    t.is(report.status, 'SUCCESS');
+    t.is(report.error, undefined);
+    t.is(collectionsInCumulusCmr.okCount, setupVars.matchingCollections.length);
+    t.is(report.filesInCumulus.okCount, 0);
+
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraESCollections.length);
+    setupVars.extraESCollections.map((collection) =>
+      t.true(collectionsInCumulusCmr.onlyInCumulus
+        .includes(constructCollectionId(collection.name, collection.version))));
+
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, setupVars.extraCmrCollections.length);
+    setupVars.extraCmrCollections.map((collection) =>
+      t.true(collectionsInCumulusCmr.onlyInCmr
+        .includes(constructCollectionId(collection.name, collection.version))));
+  }
+);
+
+test.serial(
   'Generates valid reconciliation report without time params and there are extra cumulus/ES and CMR collections',
   async (t) => {
     const setupVars = await setupElasticAndCMRForTests({ t });
@@ -1049,6 +1160,53 @@ test.serial(
   }
 );
 
+test.serial(
+  'When an array of providers exists, creates a valid one-way reconciliation report.',
+  async (t) => {
+    const setupVars = await setupElasticAndCMRForTests({ t });
+
+    const testCollection = [
+      setupVars.extraCmrCollections[3],
+      setupVars.matchingCollections[2],
+      setupVars.extraESCollections[1],
+    ];
+
+    const testCollectionIds = testCollection.map((c) => constructCollectionId(c.name, c.version));
+    const testProviders = await providersFromCollectionIds(testCollectionIds);
+
+    const event = {
+      systemBucket: t.context.systemBucket,
+      stackName: t.context.stackName,
+      provider: testProviders,
+    };
+
+    const reportRecord = await handler(event);
+    t.is(reportRecord.status, 'Generated');
+
+    const report = await fetchCompletedReport(reportRecord);
+    const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+    const granulesInCumulusCmr = report.granulesInCumulusCmr;
+
+    t.is(report.status, 'SUCCESS');
+    t.is(report.error, undefined);
+
+    // Filtered by input provider
+    t.is(collectionsInCumulusCmr.okCount, 1);
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, 1);
+    t.true(collectionsInCumulusCmr.onlyInCumulus.includes(testCollectionIds[2]));
+
+    t.is(granulesInCumulusCmr.okCount, 0);
+    t.is(granulesInCumulusCmr.onlyInCumulus.length, 1);
+
+    // one way
+    t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
+    t.is(granulesInCumulusCmr.onlyInCmr.length, 0);
+
+    t.is(report.reportEndTime, undefined);
+    t.is(report.reportStartTime, undefined);
+  }
+);
+
 test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in CUMULUS and CMR', async (t) => {
   const shortName = randomString();
   const version = randomString();
@@ -1276,7 +1434,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
   },
   {
     URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml`,
-    Type: 'GET DATA',
+    Type: 'EXTENDED METADATA',
     Description: 'File to download',
   }];
 
@@ -1286,17 +1444,25 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'File to download',
   }];
 
+  const urlsIgnoredInCmr = [{
+    URL: 'http://example.com/thisFileIsIgnoredBecauseOfTheRelatedUrlType.exe',
+    Type: 'DOWNLOAD SOFTWARE',
+    Description: 'File to download',
+  }];
+
   const urlsShouldOnlyInCmr = [{
     URL: `${process.env.DISTRIBUTION_ENDPOINT}s3credentials`,
     Type: 'VIEW RELATED INFORMATION',
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
   }];
 
+  const allCmrFiles = matchingFilesInCmr
+    .concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr).concat(urlsIgnoredInCmr);
   const granuleInCmr = {
     GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
     ShortName: 'MOD09GQ',
     Version: '006',
-    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr),
+    RelatedUrls: allCmrFiles,
   };
 
   const report = await reconciliationReportForGranuleFiles({

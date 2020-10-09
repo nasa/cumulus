@@ -4,6 +4,29 @@
 const isString = require('lodash/isString');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { InvalidArgument } = require('@cumulus/errors');
+
+/**
+ * ensures input reportType can be handled by the lambda code.
+ *
+ * @param {string} reportType
+ * @returns {undefined} - if reportType is valid
+ * @throws {InvalidArgument} - otherwise
+ */
+function validateReportType(reportType) {
+  // List of valid report types handled by the lambda.
+  const validReportTypes = [
+    'Granule Inventory',
+    'Granule Not Found',
+    'Internal',
+    'Inventory',
+  ];
+  if (!validReportTypes.includes(reportType)) {
+    throw new InvalidArgument(
+      `${reportType} is not a valid report type. Please use one of ${JSON.stringify(validReportTypes)}.`
+    );
+  }
+}
+
 /**
  * Convert input to an ISO timestamp.
  * @param {any} dateable - any type convertable to JS Date
@@ -24,25 +47,15 @@ function isoTimestamp(dateable) {
  * Transforms input granuleId into correct parameters for use in the
  * Reconciliation Report lambda.
  * @param {Array<string>|string} granuleId - list of granule Ids
- * @param {string} reportType - report type
  * @param {Object} modifiedEvent - input event
  * @returns {Object} updated input even with correct granuleId and granuleIds values.
  */
-function updateGranuleIds(granuleId, reportType, modifiedEvent) {
+function updateGranuleIds(granuleId, modifiedEvent) {
   let returnEvent = { ...modifiedEvent };
   if (granuleId) {
     // transform input granuleId into an array on granuleIds
     const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
-    if (reportType === 'Internal') {
-      if (!isString(granuleId)) {
-        throw new InvalidArgument(`granuleId: ${JSON.stringify(granuleId)} is not valid input for an 'Internal' report.`);
-      } else {
-        // include both granuleId and granuleIds for Internal Reports.
-        returnEvent = { ...modifiedEvent, granuleId, granuleIds: [granuleId] };
-      }
-    } else {
-      returnEvent = { ...modifiedEvent, granuleIds };
-    }
+    returnEvent = { ...modifiedEvent, granuleIds };
   }
   return returnEvent;
 }
@@ -51,25 +64,25 @@ function updateGranuleIds(granuleId, reportType, modifiedEvent) {
  * Transforms input collectionId into correct parameters for use in the
  * Reconciliation Report lambda.
  * @param {Array<string>|string} collectionId - list of collection Ids
- * @param {string} reportType - report type
  * @param {Object} modifiedEvent - input event
  * @returns {Object} updated input even with correct collectionId and collectionIds values.
  */
-function updateCollectionIds(collectionId, reportType, modifiedEvent) {
+function updateCollectionIds(collectionId, modifiedEvent) {
   let returnEvent = { ...modifiedEvent };
   if (collectionId) {
+    // transform input collectionId into an array on collectionIds
     const collectionIds = isString(collectionId) ? [collectionId] : collectionId;
-    if (reportType === 'Internal') {
-      if (!isString(collectionId)) {
-        throw new InvalidArgument(`collectionId: ${JSON.stringify(collectionId)} is not valid input for an 'Internal' report.`);
-      } else {
-        // include both collectionIds and collectionId for Internal Reports.
-        returnEvent = { ...modifiedEvent, collectionId, collectionIds: [collectionId] };
-      }
-    } else {
-      // add array of collectionIds
-      returnEvent = { ...modifiedEvent, collectionIds };
-    }
+    returnEvent = { ...modifiedEvent, collectionIds };
+  }
+  return returnEvent;
+}
+
+function updateProviders(provider, modifiedEvent) {
+  let returnEvent = { ...modifiedEvent };
+  if (provider) {
+    // transform input provider into an array on providers
+    const providers = isString(provider) ? [provider] : provider;
+    returnEvent = { ...modifiedEvent, providers };
   }
   return returnEvent;
 }
@@ -87,23 +100,26 @@ function normalizeEvent(event) {
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
 
-  let reportType = event.reportType || 'Inventory';
-  if (reportType.toLowerCase() === 'granulenotfound') {
-    reportType = 'Granule Not Found';
-  }
+  const reportType = event.reportType || 'Inventory';
+  validateReportType(reportType);
 
-  // TODO [MHS, 09/08/2020] Clean this up when CUMULUS-2156 is worked/completed
-  // for now, move input collectionId to collectionIds as array
-  // internal reports will keep existing collectionId and copy it to collectionIds
-  let { collectionIds: anyCollectionIds, collectionId, granuleId, ...modifiedEvent } = { ...event };
+  let {
+    collectionIds: anyCollectionIds, collectionId, granuleId, provider, ...modifiedEvent
+  } = { ...event };
   if (anyCollectionIds) {
     throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
   }
-  if (granuleId && collectionId && reportType !== 'Internal') {
-    throw new InvalidArgument(`${reportType} reports cannot be launched with both granuleId and collectionId input.`);
+
+  const tooManyInputs = (collectionId && provider)
+    || (granuleId && provider)
+    || (granuleId && collectionId);
+
+  if (tooManyInputs && reportType !== 'Internal') {
+    throw new InvalidArgument(`${reportType} reports cannot be launched with more than one input (granuleId, collectionId, or provider).`);
   }
-  modifiedEvent = updateCollectionIds(collectionId, reportType, modifiedEvent);
-  modifiedEvent = updateGranuleIds(granuleId, reportType, modifiedEvent);
+  modifiedEvent = updateCollectionIds(collectionId, modifiedEvent);
+  modifiedEvent = updateGranuleIds(granuleId, modifiedEvent);
+  modifiedEvent = updateProviders(provider, modifiedEvent);
 
   return removeNilProperties({
     ...modifiedEvent,
