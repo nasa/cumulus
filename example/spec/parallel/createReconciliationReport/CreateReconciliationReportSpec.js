@@ -625,22 +625,22 @@ describe('When there are granule differences and granule reconciliation is run',
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
-    it('Fetches a signed URL to the Granule Inventory report through the Cumulus API', async () => {
+    it('Fetches a object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
       redirectResponse = await reconciliationReportsApi.getReconciliationReport({
         prefix: config.stackName,
         name: reportRecord.name,
       });
 
-      expect(redirectResponse.statusCode).toBe(303);
-      expect(redirectResponse.headers.location).toMatch(`reconciliation-reports/${reportRecord.name}.csv?`);
-      expect(redirectResponse.headers.location).toMatch('AWSAccessKeyId');
-      expect(redirectResponse.headers.location).toMatch('Signature');
-      expect(redirectResponse.body).toMatch('See Other. Redirecting to');
+      expect(redirectResponse.statusCode).toBe(200);
+      const redirectUrl = JSON.parse(redirectResponse.body).url;
+      expect(redirectUrl).toMatch(`reconciliation-reports/${reportRecord.name}.csv?`);
+      expect(redirectUrl).toMatch('AWSAccessKeyId');
+      expect(redirectUrl).toMatch('Signature');
     });
 
     it('Wrote correct data to the S3 location.', async () => {
       const pieces = new RegExp('https://(.*)\.s3.amazonaws.com/(.*)\\?.*', 'm');
-      const [, Bucket, Key] = redirectResponse.headers.location.match(pieces);
+      const [, Bucket, Key] = JSON.parse(redirectResponse.body).url.match(pieces);
       let response;
       try {
         response = await s3().getObject({ Bucket, Key }).promise();
