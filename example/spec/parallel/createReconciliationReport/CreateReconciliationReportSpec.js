@@ -625,7 +625,7 @@ describe('When there are granule differences and granule reconciliation is run',
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
-    it('Fetches a object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
+    it('Fetches an object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
       redirectResponse = await reconciliationReportsApi.getReconciliationReport({
         prefix: config.stackName,
         name: reportRecord.name,
