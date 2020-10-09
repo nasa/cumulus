@@ -122,7 +122,7 @@ tasks.
 #### **2. Using the AWS CLI (see [AWS PITR documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_PIT.html) for console instructions), run the following command, making *certain* to use the same subnet groups and vpc-security-group IDs from your Core deployment:**
 
   ```bash
-  aws rds restore-db-cluster-to-point-in-time --source-db-cluster-identifier "<cluster_needing_restoration>" --restore-to-time "<time>" --vpc-security-group-ids "<security group 1>" "<security group 2>" --copy-tags-to-snapshot --db-cluster-identifier "<new cluster identifier>" --db-subnet-group-name "<db-subnet-group>"
+  aws rds restore-db-cluster-to-point-in-time --source-db-cluster-identifier "<cluster-needing-restoration>" --restore-to-time "<time>" --vpc-security-group-ids "<security-group-1>" "<security-group-2>" --copy-tags-to-snapshot --db-cluster-identifier "<new-cluster-identifier>" --db-subnet-group-name "<db-subnet-group>"
   ```
 
   You can get the configuration vales from the [RDS
@@ -133,11 +133,11 @@ tasks.
   aws rds describe-db-clusters
   ```
 
-* cluster_needing_restoration -- the name of the database cluster you're
+* cluster-needing-restoration -- the name of the database cluster you're
   restoring *from* (`DBClusterIdentifier` from the AWS RDS CLI output)
 * time - The time in UTC format (e.g. 2015-03-07T23:45:00Z)
-* security_group_n - the security group IDs from your original deployment
-* new cluster identifier - The cluster name for the backup replica.   This
+* security-group-# - the security group IDs from your original deployment
+* new-cluster-identifier - The cluster name for the backup replica.   This
   *must* be different than the original
 * db-subnet-group - The db subnet group created for the original cluster
   (`DBSubnetGroup` from the AWS RDS CLI output)
