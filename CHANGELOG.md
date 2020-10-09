@@ -519,6 +519,10 @@ the [release page](https://github.com/nasa/cumulus/releases)
 
 ### Added
 
+- **CUMULUS-2081**
+  - Add Integrator Guide section for onboarding
+  - Add helpful tips documentation
+
 - **CUMULUS-1902**
   - Add Common Use Cases section under Operator Docs
 
