@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
+    `/reconciliationReport` returns.  The user (dashboard) must read the value
+    of `url` from the return to get the s3SignedURL and then download the report.
+
 ### MIGRATION STEPS
 
 - **CUMULUS-2099**
