@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
+    `/reconciliationReport` returns.  The user (dashboard) must read the value
+    of `url` from the return to get the s3SignedURL and then download the report.
+    
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS
@@ -521,6 +526,10 @@ the [release page](https://github.com/nasa/cumulus/releases)
   apply`.
 
 ### Added
+
+- **CUMULUS-2081**
+  - Add Integrator Guide section for onboarding
+  - Add helpful tips documentation
 
 - **CUMULUS-1902**
   - Add Common Use Cases section under Operator Docs
