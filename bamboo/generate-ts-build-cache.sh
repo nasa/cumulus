@@ -3,7 +3,7 @@ set -ex
 
 NONCACHE_WORKING_DIR=$(pwd)
 echo $NONCACHE_WORKING_DIR
-CURRENT_WORKING_DIR=NONCACHE_WORKING_DIR
+CURRENT_WORKING_DIR=$NONCACHE_WORKING_DIR
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   echo "*** Using cached bootstrap build dir"
