@@ -2,6 +2,7 @@
 set -ex
 
 NONCACHE_WORKING_DIR=$(pwd)
+echo $NONCACHE_WORKING_DIR
 CURRENT_WORKING_DIR=NONCACHE_WORKING_DIR
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
@@ -21,6 +22,7 @@ npm run bootstrap-no-build-no-scripts-ci
 npm run tsc
 
 # Get a list of TS compiled files
+echo $CURRENT_WORKING_DIR
 npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$CURRENT_WORKING_DIR/,,g" >> .ts-build-cache-files
 cat .ts-build-cache-files
 
