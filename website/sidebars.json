@@ -2,9 +2,10 @@
   "docs": {
     "About Cumulus": [
       "cumulus-docs-readme",
-      "getting-started",
       "architecture",
       "interfaces",
+      "getting-started",
+      "helpful-tips",
       "glossary",
       "team"
     ],
@@ -71,6 +72,13 @@
       "adding-a-task",
       "docs-how-to"
     ],
+    "Integrator Guide": [
+      "integrator-guide/about-int-guide",
+      "integrator-guide/int-common-use-cases",
+      "integrator-guide/create-cumulus-data-mgmt-types",
+      "integrator-guide/workflow-add-new-lambda",
+      "integrator-guide/workflow-ts-failed-step"
+    ],
     "Upgrade Notes": [
       "upgrade-notes/migrate_tea_standalone"
     ],
@@ -113,7 +121,7 @@
       "operator-docs/replay-kinesis-messages"
     ],
     "Common Use Cases": [
-      "operator-docs/common-use-cases",
+      "operator-docs/ops-common-use-cases",
       "operator-docs/kinesis-stream-for-ingest",
       "operator-docs/create-rule-in-cumulus",
       "operator-docs/granule-workflows"
