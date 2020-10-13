@@ -7,6 +7,8 @@ const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 
+let cmr;
+
 /**
  * Returns the MMT URL string for collection based on conceptId and Cumulus
  * environment.
@@ -31,7 +33,6 @@ const buildMMTLink = (conceptId, cmrEnv = process.env.CMR_ENVIRONMENT) => {
  * @returns {Promise<Object>} Promise of an updated object
  */
 const updateObjectWithMMT = async (responseObj) => {
-  const cmr = new CMR(await getCmrSettings());
   const result = await cmr.searchCollections({
     short_name: responseObj.name,
     version: responseObj.version,
@@ -52,6 +53,7 @@ const updateObjectWithMMT = async (responseObj) => {
  */
 const insertMMTLinks = async (inputResponse) => {
   const response = cloneDeep(inputResponse);
+  cmr = new CMR(await getCmrSettings());
 
   response.results = await Promise.all(
     inputResponse.results.map(updateObjectWithMMT)
