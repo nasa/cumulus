@@ -52,7 +52,7 @@ else
   ## Double bootstrapping required as workaround to
   ## lerna re-bootstrapping issue in older releases
   ## (similiar to  https://github.com/lerna/lerna/issues/1457)
-  (npm run bootstrap-no-build-no-scripts-ci || true) && npm run bootstrap-no-build-ci
+  (npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap
   exit 0
 fi
 

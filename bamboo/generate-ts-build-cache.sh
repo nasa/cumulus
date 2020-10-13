@@ -15,7 +15,7 @@ else
 fi
 
 # Bootstrap to install/link packages
-npm run bootstrap-no-build-no-scripts-ci
+npm run ci:bootstrap-no-scripts
 
 # Compile TS files
 npm run tsc
