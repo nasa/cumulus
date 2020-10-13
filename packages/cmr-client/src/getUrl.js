@@ -1,19 +1,6 @@
 'use strict';
 
-const get = require('lodash/get');
-
-/**
- * Returns the environment specific identifier for the input cmr environment.
- * @param {string} env - cmr environment ['OPS', 'SIT', 'UAT']
- * @returns {string} - value to use to build correct cmr url for environment.
- */
-function hostId(env) {
-  return get(
-    { OPS: '', SIT: 'sit', UAT: 'uat' },
-    env,
-    'sit'
-  );
-}
+const hostId = require('./hostId');
 
 /**
  * Determines the appropriate CMR host endpoint based on a given
@@ -29,7 +16,6 @@ function hostId(env) {
  */
 function getHost(cmrEnvironment, cmrHost) {
   if (cmrHost) return cmrHost;
-
   const host = ['cmr', hostId(cmrEnvironment), 'earthdata.nasa.gov'].filter((d) => d).join('.');
   return host;
 }
