@@ -1,5 +1,6 @@
-// @ts-expect-error
+import { Context } from 'aws-lambda';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
+import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import * as awsClients from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import { Granule, GranuleFile, HandlerEvent, HandlerInput } from './types';
@@ -115,5 +116,7 @@ export const handler = async (event: HandlerEvent) => {
   };
 };
 
-export const cmaHandler = (event: unknown, context: unknown) =>
-  runCumulusTask(handler, event, context);
+export const cmaHandler: any = async (
+  event: CumulusMessage | CumulusRemoteMessage,
+  context: Context
+) => runCumulusTask(handler, event, context);

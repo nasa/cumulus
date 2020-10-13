@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -31,8 +31,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "2.0.7",
-    "@cumulus/common": "2.0.7",
-    "@cumulus/cumulus-message-adapter-js": "1.2.0"
+    "@cumulus/aws-client": "2.0.8",
+    "@cumulus/common": "2.0.8",
+    "@cumulus/cumulus-message-adapter-js": "1.3.2"
   }
 }
