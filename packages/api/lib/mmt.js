@@ -25,8 +25,9 @@ const buildMMTLink = (conceptId, cmrEnv = process.env.CMR_ENVIRONMENT) => {
 };
 
 /**
- * Looks up the CMR collectionId of the input object, returns a shallow copy of
- * the object with the collectionId added as a key.
+ * Looks up the CMR collectionId of the input object, and returns a shallow copy of
+ * the input object updated to include a link to the collection MMT on the 'MMTlink' key.
+ *
  * @param {Object} responseObj - input collection response object
  * @param {string} responseObj.name - collection short name
  * @param {string} responseObj.version - collection version

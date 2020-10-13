@@ -83,7 +83,7 @@ test.serial(
     };
 
     CMR.prototype.searchCollections.restore();
-    sinon.stub(CMR.prototype, 'searchCollections').callsFake((obj) => [{}]);
+    sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => [{}]);
     const expected = {
       meta: {},
       results: [
