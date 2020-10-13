@@ -49,7 +49,10 @@ else
   ./bamboo/extract-ts-build-cache.sh
 
   npm install
-  npm run bootstrap-no-build-no-scripts-ci
+  ## Double bootstrapping required as workaround to
+  ## lerna re-bootstrapping issue in older releases
+  ## (similiar to  https://github.com/lerna/lerna/issues/1457)
+  (npm run bootstrap-no-build-no-scripts-ci || true) && npm run bootstrap-no-build-ci
   exit 0
 fi
 

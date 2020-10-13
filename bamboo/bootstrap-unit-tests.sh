@@ -36,7 +36,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
 fi
 # Extract build cache of compiled TS files
 $docker_command "cd $UNIT_TEST_BUILD_DIR; TS_BUILD_CACHE_FILE=$TS_BUILD_CACHE_FILE ./bamboo/extract-ts-build-cache.sh"
-$docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run bootstrap-no-build-quiet-ci"
+$docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run bootstrap-no-build-quiet-ci || true; npm run bootstrap-no-build-quiet-ci"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
 
 # Wait for the FTP server to be available
