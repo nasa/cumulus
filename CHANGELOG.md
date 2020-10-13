@@ -6,11 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-2063**
+  - Adds a new, optional query parameter to the `/collection` and
+    `/collection/active` endpoints. When a user provides a value for `getMMT`
+    in the query parameters, the endpoint will search CMR and update each
+    collection's results with new key `MMTLink` containing a link to the MMT
+    (Metadata Management Tool) if a CMR collection id is found.
+
+### Changed
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
     `/reconciliationReport` returns.  The user (dashboard) must read the value
     of `url` from the return to get the s3SignedURL and then download the report.
-    
+
+
+
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS
