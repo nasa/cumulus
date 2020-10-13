@@ -21,7 +21,7 @@ const addChecksumToFile = async (providerClient, dataFile, checksumFile) => {
   const checksum = (await fetchTextFile(
     providerClient,
     path.join(checksumFile.path, checksumFile.name)
-  )).split(' ').shift();
+  )).split(' ').shift().trim();
 
   return { ...dataFile, checksum, checksumType };
 };
@@ -383,6 +383,7 @@ class GranuleFetcher {
         await this.verifyFile(file, destinationBucket, destinationKey);
       }
     } finally {
+      log.debug('ending provider client');
       await providerClient.end();
     }
 

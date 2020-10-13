@@ -39,7 +39,7 @@
     "@cumulus/aws-client": "2.0.7",
     "@cumulus/cmrjs": "2.0.7",
     "@cumulus/common": "2.0.7",
-    "@cumulus/cumulus-message-adapter-js": "1.2.0",
+    "@cumulus/cumulus-message-adapter-js": "1.3.2",
     "@cumulus/errors": "2.0.7",
     "@cumulus/ingest": "2.0.7",
     "lodash": "^4.17.15"

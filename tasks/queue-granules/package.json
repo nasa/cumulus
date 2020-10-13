@@ -33,7 +33,7 @@
     "@cumulus/aws-client": "2.0.7",
     "@cumulus/collection-config-store": "2.0.7",
     "@cumulus/common": "2.0.7",
-    "@cumulus/cumulus-message-adapter-js": "1.2.0",
+    "@cumulus/cumulus-message-adapter-js": "1.3.2",
     "@cumulus/ingest": "2.0.7",
     "@cumulus/message": "2.0.7",
     "lodash": "4.17.15"
