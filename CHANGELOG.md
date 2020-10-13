@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
     `/reconciliationReport` returns.  The user (dashboard) must read the value
     of `url` from the return to get the s3SignedURL and then download the report.
-    
+
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS
@@ -307,6 +307,16 @@ from the 2.0.x branch.
 
 For the most recent release information for the maintenance branch please see
 the [release page](https://github.com/nasa/cumulus/releases)
+
+## [v2.0.8] 2020-10-13 - [BACKPORT]
+
+### Fixed
+
+- **CUMULUS-2203**
+  - Update Core tasks use cma-js v1.3.2 to resolve memory leak/lambda ENOMEM
+    constant failure issue.   This issue caused lambdas to slowly use all memory
+    in the run environment and prevented AWS from halting/restarting warmed
+    instances when task code was throwing consistent errors under load.
 
 ## [v2.0.7] 2020-10-1 - [BACKPORT]
 
