@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-2203**
-  - Update Core tasks use
+  - Update Core tasks to use
     [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
     v1.3.2 to resolve memory leak/lambda ENOMEM constant failure issue.   This
     issue caused lambdas to slowly use all memory in the run environment and
