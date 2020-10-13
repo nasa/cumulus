@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/parse-pdr",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Download and Parse a given PDR",
   "license": "Apache-2.0",
   "main": "index.js",
@@ -29,16 +29,16 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/aws-client": "2.0.7",
-    "@cumulus/collection-config-store": "2.0.7",
-    "@cumulus/common": "2.0.7",
+    "@cumulus/aws-client": "2.0.8",
+    "@cumulus/collection-config-store": "2.0.8",
+    "@cumulus/common": "2.0.8",
     "@cumulus/cumulus-message-adapter-js": "1.3.2",
-    "@cumulus/errors": "2.0.7",
-    "@cumulus/ingest": "2.0.7",
-    "@cumulus/pvl": "2.0.7",
+    "@cumulus/errors": "2.0.8",
+    "@cumulus/ingest": "2.0.8",
+    "@cumulus/pvl": "2.0.8",
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@cumulus/test-data": "2.0.7"
+    "@cumulus/test-data": "2.0.8"
   }
 }
