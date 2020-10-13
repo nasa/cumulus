@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [v2.0.7] 2020-10-1
+## [v2.0.8] 2020-10-13
+
+### Fixed
+
+- **CUMULUS-2203**
+  - Update Core tasks use cma-js v1.3.2 to resolve memory leak/lambda ENOMEM
+    constant failure issue.   This issue caused lambdas to slowly use all memory
+    in the run environment and prevented AWS from halting/restarting warmed
+    instances when task code was throwing consistent errors under load.
+
+## [v2.0.7] 2020-10-01
 
 ### Fixed
 
