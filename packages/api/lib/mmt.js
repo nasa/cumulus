@@ -1,6 +1,7 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
 
 const { CMR } = require('@cumulus/cmr-client');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
