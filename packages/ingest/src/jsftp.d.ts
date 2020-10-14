@@ -14,7 +14,10 @@ declare module 'jsftp' {
     port?: number;
     user?: string;
     pass?: string;
-    createSocket?: ({ port, host }: { port: number, host: string }, firstAction: () => {}) => Socket;
+    createSocket?: (
+      { port, host }: { port: number, host: string },
+      firstAction: () => {}
+    ) => Socket;
     useList?: boolean;
   }
 
@@ -73,7 +76,11 @@ declare module 'jsftp' {
     get(remotePath: string, callback: GetCallback): void;
     get(remotePath: string, localPath: string, callback: ErrorCallback): void;
 
-    put(source: string | Buffer | NodeJS.ReadableStream, remotePath: string, callback: ErrorCallback): void;
+    put(
+      source: string | Buffer | NodeJS.ReadableStream,
+      remotePath: string,
+      callback: ErrorCallback
+    ): void;
 
     rename(from: string, to: string, callback: ErrorCallback): void;
 
