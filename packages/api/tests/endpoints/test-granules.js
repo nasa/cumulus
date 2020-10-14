@@ -115,6 +115,8 @@ let collectionModel;
 let jwtAuthToken;
 
 test.before(async (t) => {
+  process.env.CMR_ENVIRONMENT = 'SIT';
+
   esIndex = randomId('esindex');
   t.context.esAlias = randomId('esAlias');
   process.env.ES_INDEX = t.context.esAlias;
