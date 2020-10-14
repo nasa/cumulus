@@ -36,8 +36,8 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('value')
       .comment(`
-        Value is multi-use. For a kinesis rule this is the target stream arn, for
-        a scheduled event it's the schedule pattern (e.g. cron), for a one-time rule.
+        Value is multi-use. For a kinesis rule this is the target stream arn,
+        for a scheduled event it is the schedule pattern (e.g. cron), for a one-time rule.
       `);
     table
       .text('arn')

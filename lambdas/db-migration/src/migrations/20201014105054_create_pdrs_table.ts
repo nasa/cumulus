@@ -20,6 +20,11 @@ export const up = async (knex: Knex): Promise<void> =>
       .inTable('providers')
       .notNullable();
     table
+      .integer('executionCumulusId')
+      .references('cumulusId')
+      .inTable('executions')
+      .notNullable();
+    table
       .timestamps(false, true);
     table.unique(['name']);
   });
