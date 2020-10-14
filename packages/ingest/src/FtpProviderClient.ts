@@ -1,8 +1,8 @@
 import JSFtp, { ListError } from 'jsftp';
 import { PassThrough } from 'stream';
-import log from '@cumulus/common/log';
-import S3 from '@cumulus/aws-client/S3';
 import isNil from 'lodash/isNil';
+import * as S3 from '@cumulus/aws-client/S3';
+import Logger from '@cumulus/logger';
 import { Socket } from 'net';
 import { recursion } from './recursion';
 import { lookupMimeType, decrypt } from './util';
@@ -20,6 +20,8 @@ interface FtpProviderClientConstructorParams {
 function isJSFtpError(error: Error | ListError): error is ListError {
   return (error as ListError).text !== undefined && !(error as Error).message;
 }
+
+const logger = new Logger({ sender: '@cumulus/ingest/FtpProviderClient' });
 
 class FtpProviderClient {
   private readonly providerConfig: FtpProviderClientConstructorParams;
@@ -99,7 +101,7 @@ class FtpProviderClient {
     if (!isNil(this.ftpClient)) {
       this.ftpClient.destroy();
     }
-    log.error('FtpProviderClient encountered error: ', normalizedError);
+    logger.error('FtpProviderClient encountered error: ', normalizedError);
     return rejectFn(normalizedError);
   }
 
@@ -112,7 +114,7 @@ class FtpProviderClient {
    */
   async download(remotePath: string, localPath: string): Promise<string> {
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
-    log.info(`Downloading ${remoteUrl} to ${localPath}`);
+    logger.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     const client = await this.buildFtpClient();
 
@@ -122,7 +124,7 @@ class FtpProviderClient {
         if (err) {
           return this.errorHandler(reject, err);
         }
-        log.info(`Finishing downloading ${remoteUrl}`);
+        logger.info(`Finishing downloading ${remoteUrl}`);
         client.destroy();
         return resolve(localPath);
       });
@@ -144,9 +146,9 @@ class FtpProviderClient {
         if (err) {
           const message = isJSFtpError(err) ? err.text : err.message;
           if (message && message.includes('Timed out') && counter < 3) {
-            log.error(`Connection timed out while listing ${path}. Retrying...`);
+            logger.error(`Connection timed out while listing ${path}. Retrying...`);
             return this._list(path, counter + 1).then((r) => {
-              log.info(`${counter + 1} retry succeeded`);
+              logger.info(`${counter + 1} retry succeeded`);
               return resolve(r);
             }).catch(this.errorHandler.bind(this, reject));
           }
@@ -177,7 +179,7 @@ class FtpProviderClient {
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, path);
 
-    log.info(`${files.length} files were found on ${this.host}`);
+    logger.info(`${files.length} files were found on ${this.host}`);
 
     // Type 'type' field is required to support recursive file listing, but
     // should not be part of the returned result.
@@ -205,7 +207,7 @@ class FtpProviderClient {
   ): Promise<{s3uri: string, etag: string}> {
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
     const s3uri = S3.buildS3Uri(bucket, key);
-    log.info(`Sync ${remoteUrl} to ${s3uri}`);
+    logger.info(`Sync ${remoteUrl} to ${s3uri}`);
 
     const client = await this.buildFtpClient();
 
@@ -231,7 +233,7 @@ class FtpProviderClient {
 
     try {
       const { ETag: etag } = await S3.promiseS3Upload(params);
-      log.info('Uploading to s3 is complete(ftp)', s3uri);
+      logger.info('Uploading to s3 is complete(ftp)', s3uri);
 
       return { s3uri, etag };
     } finally {
