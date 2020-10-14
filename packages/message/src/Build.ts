@@ -22,10 +22,12 @@ import {
 /**
  * Generate an execution name.
  *
+ * @param {string} [prefix]
  * @returns {string}
  * @private
  */
-const createExecutionName = (): string => uuidv4();
+const createExecutionName = (prefix?: string): string =>
+  (prefix ? `${prefix}-${uuidv4()}` : uuidv4());
 
 /**
  * Build base message.cumulus_meta for a queued execution.
@@ -35,6 +37,8 @@ const createExecutionName = (): string => uuidv4();
  * @param {string} params.stateMachine - State machine name
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {string} [params.parentExecutionArn] - Parent execution ARN
+ * @param {string} [params.executionNamePrefix] - Prefix to apply to the name
+ *   of the enqueued execution
  * @returns {Message.CumulusMeta}
  *
  * @private
@@ -45,16 +49,18 @@ export const buildCumulusMeta = ({
   asyncOperationId,
   parentExecutionArn,
   templateCumulusMeta,
+  executionNamePrefix,
 }: {
   queueUrl: string
   stateMachine: string,
   asyncOperationId?: string,
   parentExecutionArn?: string,
   templateCumulusMeta: WorkflowMessageTemplateCumulusMeta
+  executionNamePrefix?: string,
 }): Message.CumulusMeta => {
   const cumulusMeta: Message.CumulusMeta = {
     ...templateCumulusMeta,
-    execution_name: createExecutionName(),
+    execution_name: createExecutionName(executionNamePrefix),
     queueUrl,
     state_machine: stateMachine,
   };
@@ -77,6 +83,8 @@ export const buildCumulusMeta = ({
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {Object} [params.customCumulusMeta] - Custom data for message.cumulus_meta
  * @param {Object} [params.customMeta] - Custom data for message.meta
+ * @param {string} [params.executionNamePrefix] - Prefix to apply to the name
+ *   of the enqueued execution
  *
  * @returns {Message.CumulusMessage} A Cumulus message object
  *
@@ -91,6 +99,7 @@ export const buildQueueMessageFromTemplate = ({
   workflow,
   customCumulusMeta = {},
   customMeta = {},
+  executionNamePrefix,
 }: {
   parentExecutionArn: string,
   messageTemplate: WorkflowMessageTemplate,
@@ -99,7 +108,8 @@ export const buildQueueMessageFromTemplate = ({
   queueUrl: string,
   asyncOperationId?: string,
   customCumulusMeta?: object
-  customMeta?: object
+  customMeta?: object,
+  executionNamePrefix?: string
 }): Message.CumulusMessage => {
   const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
@@ -107,6 +117,7 @@ export const buildQueueMessageFromTemplate = ({
     queueUrl,
     stateMachine: workflow.arn,
     templateCumulusMeta: messageTemplate.cumulus_meta,
+    executionNamePrefix,
   });
 
   const message = {

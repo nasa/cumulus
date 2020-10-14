@@ -69,11 +69,6 @@ variable "s3_replicator_config" {
   description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
 
-variable "pdr_node_name_provider_bucket" {
-  type = string
-  description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
-}
-
 variable "prefix" {
   type = string
 }
@@ -278,6 +273,12 @@ variable "es_index_shards" {
   description = "The number of shards for the Elasticsearch index"
   type        = number
   default     = 2
+}
+
+variable "pdr_node_name_provider_bucket" {
+  type = string
+  description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
+  default = "cumulus-sandbox-pdr-node-name-provider"
 }
 
 variable "rds_connection_heartbeat" {

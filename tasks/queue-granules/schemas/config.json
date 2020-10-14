@@ -16,6 +16,7 @@
     "provider": { "type": "object" },
     "queueUrl": { "type": "string" },
     "stackName": { "type": "string" },
-    "concurrency": { "type": "number" }
+    "concurrency": { "type": "number" },
+    "executionNamePrefix": { "type": "string" }
   }
 }
