@@ -2,11 +2,9 @@ import path from 'path';
 import * as log from '@cumulus/common/log';
 
 export interface RecursionFile {
-  name: string,
-  type: string
+  type: number,
+  name: string
 }
-
-export type RecursionFunction = (path: string) => RecursionFile[];
 
 /**
  * Recur on directory, list all files, and recur into any further directories,
@@ -18,18 +16,18 @@ export type RecursionFunction = (path: string) => RecursionFile[];
  * @param {number} position - current position in the segment list
  * @returns {Array<Object>} - filtered contents of directory
  */
-async function recurOnDirectory(
-  fn: RecursionFunction,
+async function recurOnDirectory<T extends RecursionFile>(
+  fn: (path: string) => Promise<T[]>,
   currentPath: string,
   segments: string[],
   position: number
-): Promise<RecursionFile[]> {
+): Promise<T[]> {
   // interpret the next path segment as a regex for filtering, and
   // recursively list everything when we've run out of segments
   const filterExpr = segments[position + 1] || '.*';
   const filterRegex = new RegExp(filterExpr);
   const contents = await fn(currentPath);
-  let files: RecursionFile[] = [];
+  let files: T[] = [];
 
   for (let ctr = 0; ctr < contents.length; ctr += 1) {
     const item = contents[ctr];
@@ -72,10 +70,10 @@ async function recurOnDirectory(
  * @returns {Promise} the promise of an object that has the path is the key and
  *   list of files as values
  */
-export async function recursion(
-  fn: RecursionFunction,
+export async function recursion<T extends RecursionFile>(
+  fn: (path: string) => Promise<T[]>,
   configuredPath: string
-): Promise<RecursionFile[]> {
+): Promise<T[]> {
   const normalizedPath = path.normalize(configuredPath);
   const isAbsolutePath = path.isAbsolute(normalizedPath);
   try {
@@ -83,7 +81,7 @@ export async function recursion(
       .split('/') // split on divider
       .filter((segment) => segment.trim() !== ''); // filter out empty strings from split
     const startingPath = isAbsolutePath ? '/' : '.';
-    return await recurOnDirectory(fn, startingPath, segments, -1);
+    return await recurOnDirectory<T>(fn, startingPath, segments, -1);
   } catch (error) {
     log.error(`Encountered error during recursive list filtering: ${error}`);
     log.info('Falling back to unfiltered directory listing...');
