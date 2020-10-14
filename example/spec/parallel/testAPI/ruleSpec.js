@@ -11,6 +11,8 @@ const {
 
 const rulesApi = require('@cumulus/api-client/rules');
 
+const { randomId } = require('@cumulus/common/test-utils');
+
 const {
   createTestSuffix,
   createTimestampedTestId,
@@ -111,6 +113,78 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       }).catch((error) =>
         expect(error.message).toEqual('Never found started workflow.'));
     });
+  });
+});
+
+describe('When I create a scheduled rule with an executionNamePrefix via the Cumulus API', () => {
+  let config;
+  let execution;
+  let executionName;
+  let executionNamePrefix;
+  let scheduledRuleName;
+  let scheduledHelloWorldRule;
+  let testSuffix;
+
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+
+  beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+
+    executionNamePrefix = randomId('prefix');
+
+    const testId = createTimestampedTestId(config.stackName, 'Rule');
+    testSuffix = createTestSuffix(testId);
+    scheduledRuleName = timestampedName('SchedHelloWorldTest');
+    scheduledHelloWorldRule = {
+      name: scheduledRuleName,
+      collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'scheduled',
+        value: 'rate(2 minutes)',
+      },
+      meta: {
+        triggerRule: scheduledRuleName,
+      },
+      executionNamePrefix,
+    };
+
+    await addCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix, testId);
+    // Create a scheduled rule
+    console.log(`post rule ${scheduledRuleName}`);
+    await rulesApi.postRule({
+      prefix: config.stackName,
+      rule: scheduledHelloWorldRule,
+    });
+
+    execution = await waitForTestExecutionStart({
+      workflowName: scheduledHelloWorldRule.workflow,
+      stackName: config.stackName,
+      bucket: config.bucket,
+      findExecutionFn: (taskInput, params) =>
+        taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
+      findExecutionFnParams: { ruleName: scheduledRuleName },
+      startTask: 'HelloWorld',
+    });
+
+    executionName = execution.executionArn.split(':').reverse()[0];
+  });
+
+  afterAll(async () => {
+    console.log(`deleting rule ${scheduledRuleName}`);
+
+    await rulesApi.deleteRule({
+      prefix: config.stackName,
+      ruleName: scheduledRuleName,
+    });
+    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+      testSuffix);
+  });
+
+  it('the triggered execution has the requested prefix', async () => {
+    expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });
 
@@ -232,5 +306,67 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         }
       )
     ).toBeResolved();
+  });
+});
+
+describe('When I create a one-time rule with an executionNamePrefix via the Cumulus API', () => {
+  let config;
+  let createdCheck;
+  let execution;
+  let executionName;
+  let executionNamePrefix;
+  let helloWorldRule;
+
+  beforeAll(async () => {
+    config = await loadConfig();
+    process.env.stackName = config.stackName;
+
+    const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
+    createdCheck = timestampedName('Created');
+
+    executionNamePrefix = randomId('prefix');
+
+    helloWorldRule = {
+      name: oneTimeRuleName,
+      workflow: 'HelloWorldWorkflow',
+      rule: {
+        type: 'onetime',
+      },
+      meta: {
+        triggerRule: createdCheck, // used to detect that we're looking at the correct execution
+      },
+      executionNamePrefix,
+    };
+
+    // Create a one-time rule
+    await rulesApi.postRule({
+      prefix: config.stackName,
+      rule: helloWorldRule,
+    });
+
+    console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
+
+    execution = await waitForTestExecutionStart({
+      workflowName: helloWorldRule.workflow,
+      stackName: config.stackName,
+      bucket: config.bucket,
+      findExecutionFn: isWorkflowTriggeredByRule,
+      findExecutionFnParams: { rule: createdCheck },
+      startTask: 'HelloWorld',
+    });
+
+    executionName = execution.executionArn.split(':').reverse()[0];
+  });
+
+  afterAll(async () => {
+    console.log(`deleting rule ${helloWorldRule.name}`);
+    await rulesApi.deleteRule({
+      prefix: config.stackName,
+      ruleName: helloWorldRule.name,
+    });
+  });
+
+  it('the triggered execution has the requested prefix', async () => {
+    expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });

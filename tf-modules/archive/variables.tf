@@ -27,14 +27,6 @@ variable "cmr_username" {
   type = string
 }
 
-variable "rds_security_group" {
-  type = string
-}
-
-variable "rds_user_access_secret_arn" {
-  type = string
-}
-
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
@@ -270,12 +262,6 @@ variable "public_buckets" {
   default = []
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type    = bool
-  default = false
-}
-
 variable "saml_entity_id" {
   type    = string
   default = "N/A"
@@ -361,4 +347,10 @@ variable "es_index_shards" {
   description = "The number of shards for the Elasticsearch index"
   type        = number
   default     = 2
+}
+
+variable "ems_deploy" {
+  description = "If true, deploys the EMS reporting module"
+  type        = bool
+  default     = false
 }

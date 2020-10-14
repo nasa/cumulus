@@ -13,8 +13,7 @@ const Logger = require('@cumulus/logger');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const CMR = require('@cumulus/cmr-client/CMR');
-const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
+const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
@@ -285,7 +284,7 @@ async function reconciliationReportForGranuleFiles(params) {
   const granuleFiles = keyBy(granuleInDb.files, 'fileName');
 
   // URL types for downloading granule files
-  const cmrGetDataTypes = ['GET DATA', 'GET RELATED VISUALIZATION'];
+  const cmrGetDataTypes = ['GET DATA', 'GET RELATED VISUALIZATION', 'EXTENDED METADATA'];
   const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
 
   const bucketTypes = Object.values(bucketsConfig.buckets)

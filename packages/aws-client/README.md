@@ -297,9 +297,7 @@ Invoke a Lambda function
     * [.s3GetObjectTagging](#module_S3.s3GetObjectTagging) ⇒ <code>Promise.&lt;AWS.S3.GetObjectTaggingOutput&gt;</code>
     * [.s3PutObjectTagging](#module_S3.s3PutObjectTagging) ⇒ <code>Promise</code>
     * ~~[.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>~~
-    * ~~[.getS3ObjectReadStream](#module_S3.getS3ObjectReadStream) ⇒ <code>ReadableStream</code>~~
     * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒ <code>Promise</code>
-    * ~~[.calculateS3ObjectChecksum](#module_S3.calculateS3ObjectChecksum) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>~~
     * [.s3Join(args)](#module_S3.s3Join) ⇒ <code>string</code>
     * [.parseS3Uri(uri)](#module_S3.parseS3Uri) ⇒ <code>Object</code>
     * [.buildS3Uri(bucket, key)](#module_S3.buildS3Uri) ⇒ <code>string</code>
@@ -314,7 +312,6 @@ Invoke a Lambda function
     * [.getTextObject(bucket, key)](#module_S3.getTextObject) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getJsonS3Object(bucket, key)](#module_S3.getJsonS3Object) ⇒ <code>Promise.&lt;\*&gt;</code>
     * [.getObjectReadStream(params)](#module_S3.getObjectReadStream) ⇒ <code>Readable</code>
-    * [.getS3ObjectReadStreamAsync(bucket, key)](#module_S3.getS3ObjectReadStreamAsync) ⇒ <code>ReadableStream</code>
     * [.fileExists(bucket, key)](#module_S3.fileExists) ⇒ <code>Promise</code>
     * [.deleteS3Files(s3Objs)](#module_S3.deleteS3Files) ⇒ <code>Promise</code>
     * [.uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3.uploadS3FileStream) ⇒ <code>Promise</code>
@@ -434,24 +431,6 @@ Gets an object from S3.
 | Key | <code>string</code> | key for object (filepath + filename) |
 | retryOptions | <code>Object</code> | options to control retry behavior when an   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions   By default, retries will not be performed |
 
-<a name="module_S3.getS3ObjectReadStream"></a>
-
-### ~~S3.getS3ObjectReadStream ⇒ <code>ReadableStream</code>~~
-***Deprecated***
-
-Get a readable stream for an S3 object.
-
-**Kind**: static property of [<code>S3</code>](#module_S3)  
-**Throws**:
-
-- <code>Error</code> if S3 object cannot be found
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | the S3 object's bucket |
-| key | <code>string</code> | the S3 object's key |
-
 <a name="module_S3.recursivelyDeleteS3Bucket"></a>
 
 ### S3.recursivelyDeleteS3Bucket ⇒ <code>Promise</code>
@@ -463,24 +442,6 @@ Delete a bucket and all of its objects from S3
 | Param | Type | Description |
 | --- | --- | --- |
 | bucket | <code>string</code> | name of the bucket |
-
-<a name="module_S3.calculateS3ObjectChecksum"></a>
-
-### ~~S3.calculateS3ObjectChecksum ⇒ <code>Promise.&lt;(number\|string)&gt;</code>~~
-***Deprecated***
-
-Calculate checksum for S3 Object
-
-**Kind**: static property of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;(number\|string)&gt;</code> - calculated checksum  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> | params |
-| params.algorithm | <code>string</code> | checksum algorithm |
-| params.bucket | <code>string</code> | S3 bucket |
-| params.key | <code>string</code> | S3 key |
-| [params.options] | <code>Object</code> | crypto.createHash options |
 
 <a name="module_S3.s3Join"></a>
 
@@ -672,26 +633,6 @@ Get a readable stream for an S3 object
 | params.s3 | <code>AWS.S3</code> | an AWS.S3 instance |
 | params.bucket | <code>string</code> | the bucket of the requested object |
 | params.key | <code>string</code> | the key of the requested object |
-
-<a name="module_S3.getS3ObjectReadStreamAsync"></a>
-
-### S3.getS3ObjectReadStreamAsync(bucket, key) ⇒ <code>ReadableStream</code>
-Get a readable stream for an S3 object.
-
-Use `getS3Object()` before fetching stream to deal
-with eventual consistency issues by checking for object
-with retries.
-
-**Kind**: static method of [<code>S3</code>](#module_S3)  
-**Throws**:
-
-- <code>Error</code> if S3 object cannot be found
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | the S3 object's bucket |
-| key | <code>string</code> | the S3 object's key |
 
 <a name="module_S3.fileExists"></a>
 
@@ -1066,9 +1007,18 @@ memory at once.  Handles paging.
 **Kind**: global class  
 
 * [DynamoDbSearchQueue](#DynamoDbSearchQueue)
+    * [.empty()](#DynamoDbSearchQueue+empty) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.peek()](#DynamoDbSearchQueue+peek) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.shift()](#DynamoDbSearchQueue+shift) ⇒ <code>Promise.&lt;Object&gt;</code>
 
+<a name="DynamoDbSearchQueue+empty"></a>
+
+### dynamoDbSearchQueue.empty() ⇒ <code>Promise.&lt;Array&gt;</code>
+Drain all values from the searchQueue, and return to the user.
+Warning: This can be very memory intensive.
+
+**Kind**: instance method of [<code>DynamoDbSearchQueue</code>](#DynamoDbSearchQueue)  
+**Returns**: <code>Promise.&lt;Array&gt;</code> - array of search results.  
 <a name="DynamoDbSearchQueue+peek"></a>
 
 ### dynamoDbSearchQueue.peek() ⇒ <code>Promise.&lt;Object&gt;</code>
