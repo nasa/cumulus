@@ -135,9 +135,9 @@ module "cumulus" {
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
-    "chuckwondo",
+    "brian.tennity",
+    "dopeters",
     "jennyhliu",
-    "jmcampbell",
     "kbaynes",
     "kkelly",
     "kovarik",
@@ -145,8 +145,6 @@ module "cumulus" {
     "matthewsavoie",
     "mboyd",
     "menno.vandiermen",
-    "mhuffnagle2",
-    "brian.tennity",
     "jasmine"
   ]
   archive_api_port              = var.archive_api_port
@@ -171,6 +169,8 @@ module "cumulus" {
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
+
+  ems_deploy = var.ems_deploy
 
   tags = local.tags
 }

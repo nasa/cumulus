@@ -1,7 +1,5 @@
 const { ValidationError } = require('@cumulus/cmr-client');
 
-// getUrl is not part of the public cmr-client API
-const getUrl = require('@cumulus/cmr-client/getUrl');
 // validate is not part of the public cmr-client API
 const { validate } = require('@cumulus/cmr-client/ingestConcept');
 
@@ -24,7 +22,6 @@ function ummVersionToMetadataFormat(versionNumber, ummFormat = 'json') {
 
 module.exports = {
   ValidationError,
-  getUrl,
   ummVersionToMetadataFormat,
   validate,
   xmlParseOptions,
