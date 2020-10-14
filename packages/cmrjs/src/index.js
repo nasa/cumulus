@@ -2,7 +2,6 @@
 
 const {
   ValidationError,
-  getUrl,
 } = require('./utils');
 const {
   constructOnlineAccessUrl,
@@ -19,7 +18,6 @@ module.exports = {
   constructOnlineAccessUrl,
   ValidationError,
   getGranuleTemporalInfo,
-  getUrl,
   isCMRFile,
   metadataObjectFromCMRFile,
   publish2CMR,
