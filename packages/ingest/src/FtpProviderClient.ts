@@ -155,7 +155,7 @@ class FtpProviderClient {
 
         client.destroy();
 
-        resolve(
+        return resolve(
           data.map((d) => ({
             name: d.name,
             path: path,

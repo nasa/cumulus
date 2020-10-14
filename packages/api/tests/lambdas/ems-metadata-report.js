@@ -13,8 +13,7 @@ const {
   getS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const CMR = require('@cumulus/cmr-client/CMR');
-const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
+const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 const { generateReport } = require('../../lambdas/ems-metadata-report');
 const models = require('../../models');

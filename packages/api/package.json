@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "2.0.3-alpha.0",
+  "version": "3.0.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -45,20 +45,19 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "2.0.2",
-    "@cumulus/cmr-client": "2.0.2",
-    "@cumulus/cmrjs": "2.0.2",
-    "@cumulus/collection-config-store": "2.0.2",
-    "@cumulus/common": "2.0.2",
-    "@cumulus/db": "2.0.1-alpha.1",
-    "@cumulus/earthdata-login-client": "2.0.2",
-    "@cumulus/errors": "2.0.2",
-    "@cumulus/ingest": "2.0.2",
-    "@cumulus/launchpad-auth": "2.0.2",
-    "@cumulus/logger": "2.0.2",
-    "@cumulus/message": "2.0.2",
-    "@cumulus/pvl": "2.0.2",
-    "@cumulus/sftp-client": "2.0.2",
+    "@cumulus/aws-client": "3.0.0",
+    "@cumulus/cmr-client": "3.0.0",
+    "@cumulus/cmrjs": "3.0.0",
+    "@cumulus/collection-config-store": "3.0.0",
+    "@cumulus/common": "3.0.0",
+    "@cumulus/earthdata-login-client": "3.0.0",
+    "@cumulus/errors": "3.0.0",
+    "@cumulus/ingest": "3.0.0",
+    "@cumulus/launchpad-auth": "3.0.0",
+    "@cumulus/logger": "3.0.0",
+    "@cumulus/message": "3.0.0",
+    "@cumulus/pvl": "3.0.0",
+    "@cumulus/sftp-client": "3.0.0",
     "@elastic/elasticsearch": "^5.6.20",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.0.1",
@@ -99,6 +98,6 @@
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "@cumulus/test-data": "2.0.2"
+    "@cumulus/test-data": "3.0.0"
   }
 }
