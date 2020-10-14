@@ -1,13 +1,28 @@
 'use strict';
 
+const cloneDeep = require('lodash/cloneDeep');
+
 const { CMR } = require('@cumulus/cmr-client');
-const hostId = require('@cumulus/cmr-client/hostId');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
-const cloneDeep = require('lodash/cloneDeep');
-const get = require('lodash/get');
-
 let cmr;
+
+/**
+ * Returns the environment specific identifier for the input cmr environment.
+ * @param {string} env - cmr environment ['OPS', 'SIT', 'UAT']
+ * @returns {string} - value to use to build correct cmr url for environment.
+ */
+function hostId(env) {
+  switch (env) {
+  case 'OPS':
+    return '';
+  case 'UAT':
+    return 'uat';
+  case 'SIT':
+  default:
+    return 'sit';
+  }
+}
 
 /**
  * Returns the MMT URL string for collection based on conceptId and Cumulus
