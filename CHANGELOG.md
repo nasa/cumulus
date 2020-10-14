@@ -6,11 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-2203**
+  - Update Core tasks to use
+    [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
+    v1.3.2 to resolve memory leak/lambda ENOMEM constant failure issue.   This
+    issue caused lambdas to slowly use all memory in the run environment and
+    prevented AWS from halting/restarting warmed instances when task code was
+    throwing consistent errors under load.
+
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
     `/reconciliationReport` returns.  The user (dashboard) must read the value
     of `url` from the return to get the s3SignedURL and then download the report.
-    
+
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS
