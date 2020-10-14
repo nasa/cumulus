@@ -3,7 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
-const CMR = require('@cumulus/cmr-client/CMR');
+const { CMR } = require('@cumulus/cmr-client');
 const { randomId } = require('@cumulus/common/test-utils');
 const mmt = rewire('../../lib/mmt');
 
