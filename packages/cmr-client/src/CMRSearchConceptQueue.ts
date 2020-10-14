@@ -1,23 +1,36 @@
-'use strict';
-
-const CMR = require('./CMR');
+import { CMR, CMRConstructorParams } from './CMR';
 
 /**
  * Shim to correctly add a default provider_short_name to the input searchParams
  *
  * @param {Object} params
- * @param {Object|URLSearchParams} params.searchParams - input search
+ * @param {URLSearchParams} params.searchParams - input search
  *  parameters for searchConceptQueue. This parameter can be either a
  *  URLSearchParam object or a plain Object.
- * @returns {Object|URLSearchParams} - input object appeneded with a default provider_short_name
+ * @returns {URLSearchParams} - input object appeneded with a default provider_short_name
  */
-const provideParams = (params = { searchParams: {} }) => {
-  if (params.searchParams instanceof URLSearchParams) {
-    if (!params.searchParams.has('provider_short_name')) params.searchParams.append('provider_short_name', params.cmrSettings.provider);
-    return params.searchParams;
+export const providerParams = ({
+  searchParams = new URLSearchParams(),
+  cmrSettings,
+}: {
+  searchParams: URLSearchParams,
+  cmrSettings: {
+    provider: string
   }
-  return { provider_short_name: params.cmrSettings.provider, ...params.searchParams };
+}): URLSearchParams => {
+  if (!searchParams.has('provider_short_name')) {
+    searchParams.append('provider_short_name', cmrSettings.provider);
+  }
+
+  return searchParams;
 };
+
+export interface CMRSearchConceptQueueConstructorParams {
+  cmrSettings: CMRConstructorParams,
+  type: string,
+  searchParams: URLSearchParams,
+  format?: string
+}
 
 /**
  * A class to efficiently list all of the concepts (collections/granules) from
@@ -36,7 +49,13 @@ const provideParams = (params = { searchParams: {} }) => {
  *   format: 'json'
  * });
  */
-class CMRSearchConceptQueue {
+export class CMRSearchConceptQueue {
+  type: string;
+  params: URLSearchParams;
+  format?: string;
+  items: unknown[];
+  CMR: CMR;
+
   /**
    * The constructor for the CMRSearchConceptQueue class
    *
@@ -44,12 +63,15 @@ class CMRSearchConceptQueue {
    * @param {string} params.cmrSettings - the CMR settings for the requests - the provider,
    * clientId, and either launchpad token or EDL username and password
    * @param {string} params.type - the type of search 'granule' or 'collection'
-   * @param {string} [params.searchParams={}] - the search parameters
+   * @param {URLSearchParams} [params.searchParams={}] - the search parameters
    * @param {string} params.format - the result format
    */
-  constructor(params = { searchParams: {} }) {
+  constructor(params: CMRSearchConceptQueueConstructorParams) {
     this.type = params.type;
-    this.params = provideParams(params);
+    this.params = providerParams({
+      searchParams: params.searchParams,
+      cmrSettings: params.cmrSettings,
+    });
     this.format = params.format;
     this.items = [];
 
@@ -64,7 +86,7 @@ class CMRSearchConceptQueue {
    *
    * @returns {Promise<Object>} an item from the CMR search
    */
-  async peek() {
+  async peek(): Promise<unknown> {
     if (this.items.length === 0) await this.fetchItems();
     return this.items[0];
   }
@@ -76,7 +98,7 @@ class CMRSearchConceptQueue {
    *
    * @returns {Promise<Object>} an item from the CMR search
    */
-  async shift() {
+  async shift(): Promise<unknown> {
     if (this.items.length === 0) await this.fetchItems();
     return this.items.shift();
   }
@@ -87,7 +109,7 @@ class CMRSearchConceptQueue {
    * @returns {Promise<undefined>} resolves when the queue has been updated
    * @private
    */
-  async fetchItems() {
+  async fetchItems(): Promise<void> {
     const results = await this.CMR.searchConcept(
       this.type,
       this.params,
@@ -95,9 +117,11 @@ class CMRSearchConceptQueue {
       false
     );
     this.items = results;
-    this.params.page_num = (this.params.page_num) ? this.params.page_num + 1 : 1;
+
+    const paramsPageNum = this.params.get('page_num') ?? '0';
+    this.params.set('page_num', String(Number(paramsPageNum) + 1));
+
+    // eslint-disable-next-line unicorn/no-null
     if (results.length === 0) this.items.push(null);
   }
 }
-
-module.exports = CMRSearchConceptQueue;

@@ -6,7 +6,7 @@ const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
 
-const CMR = require('../CMR');
+const { CMR } = require('../CMR');
 const ValidationError = require('../ValidationError');
 
 test.before(() => {
@@ -130,8 +130,6 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
   nock('https://cmr.sit.earthdata.nasa.gov')
     .post(`/ingest/providers/${cmrSearch.provider}/validate/granule/${ummgMetadata.GranuleUR}`)
     .reply(422, ummValidationError);
-
-  delete process.env.CMR_ENVIRONMENT;
 
   await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata),

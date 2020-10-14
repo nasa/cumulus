@@ -11,7 +11,7 @@ const reconciliationReportsApi = require('@cumulus/api-client/reconciliationRepo
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
 } = require('@cumulus/aws-client/S3');
-const CMR = require('@cumulus/cmr-client/CMR');
+const { CMR } = require('@cumulus/cmr-client');
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
