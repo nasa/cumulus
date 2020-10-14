@@ -3,7 +3,6 @@
 const {
   ValidationError,
   updateToken,
-  getUrl,
   getHost,
   hostId,
 } = require('./utils');
@@ -23,7 +22,6 @@ module.exports = {
   ValidationError,
   getGranuleTemporalInfo,
   getHost,
-  getUrl,
   hostId,
   isCMRFile,
   metadataObjectFromCMRFile,
