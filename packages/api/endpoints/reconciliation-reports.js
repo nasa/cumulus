@@ -62,7 +62,7 @@ async function getReport(req, res) {
       const downloadURL = s3().getSignedUrl('getObject', {
         Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
       });
-      return res.redirect(303, downloadURL);
+      return res.json({ url: downloadURL });
     }
     logger.debug('reconciliation report getReport received an unhandled report type.');
   } catch (error) {

@@ -12,6 +12,14 @@ CMR search, without loading them all into memory at once.  Handles paging.</p>
 </dd>
 </dl>
 
+## Functions
+
+<dl>
+<dt><a href="#provideParams">provideParams(params)</a> ⇒ <code>Object</code> | <code>URLSearchParams</code></dt>
+<dd><p>Shim to correctly add a default provider_short_name to the input searchParams</p>
+</dd>
+</dl>
+
 <a name="CMR"></a>
 
 ## CMR
@@ -266,6 +274,19 @@ When there are no more items in the queue, returns `null`.
 
 **Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
+<a name="provideParams"></a>
+
+## provideParams(params) ⇒ <code>Object</code> \| <code>URLSearchParams</code>
+Shim to correctly add a default provider_short_name to the input searchParams
+
+**Kind**: global function  
+**Returns**: <code>Object</code> \| <code>URLSearchParams</code> - - input object appeneded with a default provider_short_name  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.searchParams | <code>Object</code> \| <code>URLSearchParams</code> | input search  parameters for searchConceptQueue. This parameter can be either a  URLSearchParam object or a plain Object. |
+
 
 ---
 
