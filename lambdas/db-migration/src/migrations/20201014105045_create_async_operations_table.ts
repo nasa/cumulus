@@ -7,7 +7,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .primary();
     table
       .uuid('id')
-      .comment('Unique ID for async operation')
+      .comment('Unique ID for async operation');
     table
       .timestamps(false, true);
     table.unique(['id']);
