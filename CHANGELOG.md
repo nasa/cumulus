@@ -134,14 +134,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/lambdas/internal-reconciliation-report`, so create-reconciliation-report
     lambda can create `Internal` reconciliation report
 - **CUMULUS-2116**
-  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
+  unpublishes a granule from CMR and deletes it from Cumulus, but does not
+  update the record to `published: false` before deletion
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
     severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
-    requirements for the 2.1.x release series
+    requirements for future releases.
   - Updated the default Cumulus module to take the following new required variables:
     - rds_user_access_secret_arn:
       AWS Secrets Manager secret ARN containing a JSON string of DB credentials
@@ -362,7 +364,9 @@ the [release page](https://github.com/nasa/cumulus/releases)
 #### Added
 
 - **CUMULUS-2116**
-  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
+  unpublishes a granule from CMR and deletes it from Cumulus, but does not
+  update the record to `published: false` before deletion
 
 ### Fixed
 
