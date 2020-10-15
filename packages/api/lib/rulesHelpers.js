@@ -60,6 +60,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
     collection,
     meta: eventSource ? { ...rule.meta, eventSource } : rule.meta,
     payload: eventObject,
+    executionNamePrefix: rule.executionNamePrefix,
   };
 
   const payload = await Rule.buildPayload(item);

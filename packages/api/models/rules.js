@@ -218,6 +218,7 @@ class Rule extends Manager {
       payload: get(item, 'payload', {}),
       queueUrl: item.queueUrl,
       asyncOperationId: item.asyncOperationId,
+      executionNamePrefix: item.executionNamePrefix,
     };
   }
 

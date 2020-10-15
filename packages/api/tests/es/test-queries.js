@@ -17,6 +17,12 @@ const granules = [
   fakeGranuleFactoryV2({ collectionId: collectionIds[1], granuleId: randomId('granprefix'), status: 'failed' }),
   fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'failed' }),
 ];
+const reconciliationReports = [
+  { type: 'Inventory' },
+  { type: 'Granule Inventory' },
+  { type: 'Granule Not Found' },
+  { type: 'Internal' },
+];
 
 let esClient;
 const esIndex = randomId('esindex');
@@ -30,6 +36,12 @@ test.before(async () => {
 
   await Promise.all(
     granules.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
+  );
+
+  await Promise.all(
+    reconciliationReports.map(
+      (report) => indexer.indexReconciliationReport(esClient, report, esAlias)
+    )
   );
 });
 
@@ -151,4 +163,44 @@ test('Search with sort_by and order returns correctly ordered granules', async (
   t.is(queryResult.meta.count, 4);
   t.is(queryResult.results.length, 4);
   t.deepEqual(queryResult.results.map((g) => g.granuleId), sortedGranules.map((g) => g.granuleId));
+});
+
+test('Search with __not returns correct number of reports', async (t) => {
+  const params = {
+    limit: 50,
+    page: 1,
+    type__not: 'Granule Not Found',
+  };
+
+  const es = new Search(
+    { queryStringParameters: params },
+    'reconciliationReport',
+    process.env.ES_INDEX
+  );
+
+  const queryResult = await es.query();
+
+  t.is(queryResult.meta.count, 3);
+  t.is(queryResult.results.length, 3);
+  t.is(queryResult.results.filter((report) => report.type === 'Granule Not Found').length, 0);
+});
+
+test('Search with __in returns correct number of reports', async (t) => {
+  const params = {
+    limit: 50,
+    page: 1,
+    type__in: 'Inventory, Granule Not Found, Internal',
+  };
+
+  const es = new Search(
+    { queryStringParameters: params },
+    'reconciliationReport',
+    process.env.ES_INDEX
+  );
+
+  const queryResult = await es.query();
+
+  t.is(queryResult.meta.count, 1);
+  t.is(queryResult.results.length, 1);
+  t.is(queryResult.results.filter((report) => report.type === 'Granule Inventory').length, 0);
 });

@@ -149,6 +149,27 @@ async function getExecutionStatus(executionArn) {
 }
 
 /**
+ * Wait for a given execution to start
+ *
+ * @param {string} executionArn - ARN of the execution
+ * @param {number} [timeout=600] - the time, in seconds, to wait for the
+ *   execution to reach a terminal state
+ * @returns {string} status
+ */
+async function waitForStartedExecution(executionArn, timeout = 600) {
+  await pWaitFor(
+    async () => {
+      const status = await getExecutionStatus(executionArn);
+      return status !== 'STARTING';
+    },
+    {
+      interval: 2000,
+      timeout: timeout * 1000,
+    }
+  );
+}
+
+/**
  * Wait for a given execution to complete, then return the status
  *
  * @param {string} executionArn - ARN of the execution
@@ -899,6 +920,7 @@ module.exports = {
   waitForAllTestSf,
   waitForAsyncOperationStatus,
   waitForCompletedExecution,
+  waitForStartedExecution,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitForDeploymentHandler: waitForDeployment.handler,
   waitForTestExecutionStart,

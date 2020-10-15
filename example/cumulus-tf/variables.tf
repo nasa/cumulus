@@ -69,11 +69,6 @@ variable "s3_replicator_config" {
   description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
 
-variable "pdr_node_name_provider_bucket" {
-  type = string
-  description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
-}
-
 variable "prefix" {
   type = string
 }
@@ -280,8 +275,20 @@ variable "es_index_shards" {
   default     = 2
 }
 
+variable "pdr_node_name_provider_bucket" {
+  type = string
+  description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
+  default = "cumulus-sandbox-pdr-node-name-provider"
+}
+
 variable "rds_connection_heartbeat" {
   description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
   type        = bool
   default     = false
+}
+
+variable "ems_deploy" {
+  description = "If true, deploys the EMS reporting module"
+  type        = bool
+  default     = true
 }
