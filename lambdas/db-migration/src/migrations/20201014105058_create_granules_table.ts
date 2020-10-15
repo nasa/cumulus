@@ -64,7 +64,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .timestamp('processingEndDateTime')
       .comment('Date granule finished processing');
     table
-      .timestamp('procvessingStartDateTime')
+      .timestamp('processingStartDateTime')
       .comment('Date granule started processing');
     table
       .timestamp('productionDateTime')
