@@ -179,8 +179,8 @@ const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIs
     return granuleIsIncluded ? ids.includes(granuleId) : !ids.includes(granuleId);
   },
   {
-    interval: 3000,
-    timeout: 240 * 1000,
+    interval: 10000,
+    timeout: 600 * 1000,
   }
 );
 
