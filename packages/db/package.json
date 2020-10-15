@@ -27,8 +27,8 @@
     "node": ">=12.18.0"
   },
   "dependencies": {
-    "@cumulus/common": "2.0.1",
-    "@cumulus/logger": "2.0.1",
+    "@cumulus/common": "3.0.0",
+    "@cumulus/logger": "3.0.0",
     "knex": "0.21.6",
     "pg": "^8.3.0"
   }
