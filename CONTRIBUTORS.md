@@ -8,6 +8,7 @@
 * Brian Tennity
 * Chuck Daniels
 * Dan Pilone
+* Danielle Peters
 * Drew Bollinger
 * Gary Sieling
 * Jacob Campbell

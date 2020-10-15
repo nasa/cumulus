@@ -10,7 +10,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
-const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
+const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const {
   determineReportKey, getExpiredS3Objects, submitReports,
 } = require('../lib/ems');

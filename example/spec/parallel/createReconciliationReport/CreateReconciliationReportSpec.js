@@ -11,7 +11,7 @@ const reconciliationReportsApi = require('@cumulus/api-client/reconciliationRepo
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
 } = require('@cumulus/aws-client/S3');
-const CMR = require('@cumulus/cmr-client/CMR');
+const { CMR } = require('@cumulus/cmr-client');
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -49,7 +49,7 @@ const {
   createTestSuffix,
 } = require('../../helpers/testUtils');
 const {
-  setupTestGranuleForIngest,
+  setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
@@ -248,12 +248,11 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
 }
 
 // wait for collection in list
-const waitForCollectionRecordsInList = async (stackName, collectionIds) => pWaitFor(
+const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => pWaitFor(
   async () => {
     // Verify the collection is returned when listing collections
-    const collsResp = await getCollections(
-      { prefix: stackName, query: { _id__in: collectionIds.join(','), limit: 30 } }
-    );
+    const collsResp = await getCollections({ prefix: stackName,
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
     const ids = JSON.parse(collsResp.body).results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
   },
@@ -283,6 +282,7 @@ describe('When there are granule differences and granule reconciliation is run',
   let testDataFolder;
   let testSuffix;
   let updatedGranuleFile;
+  const ingestTime = Date.now() - 1000 * 30;
 
   beforeAll(async () => {
     try {
@@ -341,7 +341,8 @@ describe('When there are granule differences and granule reconciliation is run',
         collectionId,
         constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
       ];
-      await waitForCollectionRecordsInList(config.stackName, collectionIds);
+
+      await waitForCollectionRecordsInList(config.stackName, collectionIds, { timestamp__from: ingestTime });
 
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
@@ -354,6 +355,16 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
+
+      const [dbGranule, granuleAfterUpdate] = await Promise.all([
+        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+      ]);
+      console.log('XXXX Waiting for granules updated in list');
+      await Promise.all([
+        waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(dbGranule.body)),
+        waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleAfterUpdate.body)),
+      ]);
     } catch (error) {
       console.log(error);
       beforeAllFailed = true;
@@ -614,22 +625,22 @@ describe('When there are granule differences and granule reconciliation is run',
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
-    it('Fetches a signed URL to the Granule Inventory report through the Cumulus API', async () => {
+    it('Fetches an object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
       redirectResponse = await reconciliationReportsApi.getReconciliationReport({
         prefix: config.stackName,
         name: reportRecord.name,
       });
 
-      expect(redirectResponse.statusCode).toBe(303);
-      expect(redirectResponse.headers.location).toMatch(`reconciliation-reports/${reportRecord.name}.csv?`);
-      expect(redirectResponse.headers.location).toMatch('AWSAccessKeyId');
-      expect(redirectResponse.headers.location).toMatch('Signature');
-      expect(redirectResponse.body).toMatch('See Other. Redirecting to');
+      expect(redirectResponse.statusCode).toBe(200);
+      const redirectUrl = JSON.parse(redirectResponse.body).url;
+      expect(redirectUrl).toMatch(`reconciliation-reports/${reportRecord.name}.csv?`);
+      expect(redirectUrl).toMatch('AWSAccessKeyId');
+      expect(redirectUrl).toMatch('Signature');
     });
 
     it('Wrote correct data to the S3 location.', async () => {
       const pieces = new RegExp('https://(.*)\.s3.amazonaws.com/(.*)\\?.*', 'm');
-      const [, Bucket, Key] = redirectResponse.headers.location.match(pieces);
+      const [, Bucket, Key] = JSON.parse(redirectResponse.body).url.match(pieces);
       let response;
       try {
         response = await s3().getObject({ Bucket, Key }).promise();
