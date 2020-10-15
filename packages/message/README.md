@@ -46,11 +46,11 @@ const Build = require('@cumulus/message/Build');
 ```
 <a name="exp_module_Build--exports.buildQueueMessageFromTemplate"></a>
 
-#### exports.buildQueueMessageFromTemplate(params) ⇒ <code>CumulusMessage</code> ⏏
+#### exports.buildQueueMessageFromTemplate(params) ⇒ <code>Message.CumulusMessage</code> ⏏
 Build an SQS message from a workflow template for queueing executions.
 
 **Kind**: Exported function  
-**Returns**: <code>CumulusMessage</code> - A Cumulus message object  
+**Returns**: <code>Message.CumulusMessage</code> - A Cumulus message object  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -61,10 +61,11 @@ Build an SQS message from a workflow template for queueing executions.
 | params.messageTemplate | <code>Object</code> | Message template for the workflow |
 | params.payload | <code>Object</code> | Payload for the workflow |
 | params.workflow | <code>Object</code> | workflow name & arn object |
-| [params.queueName] | <code>string</code> | SQS queue name |
+| [params.queueUrl] | <code>string</code> | SQS queue URL |
 | [params.asyncOperationId] | <code>string</code> | Async operation ID |
 | [params.customCumulusMeta] | <code>Object</code> | Custom data for message.cumulus_meta |
 | [params.customMeta] | <code>Object</code> | Custom data for message.meta |
+| [params.executionNamePrefix] | <code>string</code> | Prefix to apply to the name   of the enqueued execution |
 
 <a name="module_Collections"></a>
 
@@ -241,35 +242,17 @@ const Queue = require('@cumulus/message/Queue');
 ```
 
 * [Queue](#module_Queue)
-    * [exports.getQueueNameByUrl(message, queueUrl)](#exp_module_Queue--exports.getQueueNameByUrl) ⇒ <code>string</code> \| <code>undefined</code> ⏏
-    * [exports.getQueueName(message)](#exp_module_Queue--exports.getQueueName) ⇒ <code>string</code> ⏏
-    * [exports.getMaximumExecutions(message, queueName)](#exp_module_Queue--exports.getMaximumExecutions) ⇒ <code>number</code> ⏏
+    * [exports.getQueueUrl(message)](#exp_module_Queue--exports.getQueueUrl) ⇒ <code>string</code> ⏏
+    * [exports.getMaximumExecutions(message, queueUrl)](#exp_module_Queue--exports.getMaximumExecutions) ⇒ <code>number</code> ⏏
     * [exports.hasQueueAndExecutionLimit(message)](#exp_module_Queue--exports.hasQueueAndExecutionLimit) ⇒ <code>boolean</code> ⏏
 
-<a name="exp_module_Queue--exports.getQueueNameByUrl"></a>
+<a name="exp_module_Queue--exports.getQueueUrl"></a>
 
-#### exports.getQueueNameByUrl(message, queueUrl) ⇒ <code>string</code> \| <code>undefined</code> ⏏
-Get queue name by URL from execution message.
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> \| <code>undefined</code> - An SQS queue name or undefined  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | An execution message |
-| queueUrl | <code>string</code> | An SQS queue URL |
-
-<a name="exp_module_Queue--exports.getQueueName"></a>
-
-#### exports.getQueueName(message) ⇒ <code>string</code> ⏏
-Get the queue name from a workflow message.
+#### exports.getQueueUrl(message) ⇒ <code>string</code> ⏏
+Get the queue URL from a workflow message.
 
 **Kind**: Exported function  
-**Returns**: <code>string</code> - A queue name  
-**Throws**:
-
-- <code>Error</code> if no queue name in the message
-
+**Returns**: <code>string</code> - A queue URL  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -277,7 +260,7 @@ Get the queue name from a workflow message.
 
 <a name="exp_module_Queue--exports.getMaximumExecutions"></a>
 
-#### exports.getMaximumExecutions(message, queueName) ⇒ <code>number</code> ⏏
+#### exports.getMaximumExecutions(message, queueUrl) ⇒ <code>number</code> ⏏
 Get the maximum executions for a queue.
 
 **Kind**: Exported function  
@@ -290,7 +273,7 @@ Get the maximum executions for a queue.
 | Param | Type | Description |
 | --- | --- | --- |
 | message | <code>Message.CumulusMessage</code> | A workflow message object |
-| queueName | <code>string</code> | A queue name |
+| queueUrl | <code>string</code> | A queue URL |
 
 <a name="exp_module_Queue--exports.hasQueueAndExecutionLimit"></a>
 
