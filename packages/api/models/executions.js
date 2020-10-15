@@ -6,6 +6,7 @@ const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getMessageExecutionName,
+  getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -47,7 +48,7 @@ class Execution extends Manager {
       name: getMessageExecutionName(cumulusMessage),
       arn,
       asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
-      parentArn: get(cumulusMessage, 'cumulus_meta.parentExecutionArn'),
+      parentArn: getMessageExecutionParentArn(cumulusMessage),
       execution: StepFunctionUtils.getExecutionUrl(arn),
       tasks: get(cumulusMessage, 'meta.workflow_tasks'),
       error: parseException(cumulusMessage.exception),

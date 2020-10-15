@@ -13,7 +13,8 @@ const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const {
-  saveExecutionToDb,
+  isPostRDSDeploymentExecution,
+  saveExecutionToDynamoDb,
   saveGranulesToDb,
   savePdrToDb,
 } = require('../../lambdas/sf-event-sqs-to-db-records');
@@ -123,7 +124,24 @@ test.after.always(async (t) => {
   await executionModel.deleteTable();
 });
 
-test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
+test('isPostRDSDeploymentExecution correctly returns true if Cumulus version is >= 3.0.0', (t) => {
+  t.true(isPostRDSDeploymentExecution({
+    cumulus_meta: {
+      cumulus_version: '3.0.0',
+    },
+  }));
+});
+
+test('isPostRDSDeploymentExecution correctly returns false if Cumulus version is < 3.0.0 or missing', (t) => {
+  t.false(isPostRDSDeploymentExecution({
+    cumulus_meta: {
+      cumulus_version: '2.0.0',
+    },
+  }));
+  t.false(isPostRDSDeploymentExecution({}));
+});
+
+test('saveExecutionToDynamoDb() creates an execution item in Dynamo', async (t) => {
   const { cumulusMessage, executionModel } = t.context;
 
   const stateMachineName = randomString();
@@ -134,7 +152,7 @@ test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
   cumulusMessage.cumulus_meta.execution_name = executionName;
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  await saveExecutionToDb(cumulusMessage);
+  await saveExecutionToDynamoDb(cumulusMessage);
 
   try {
     const fetchedExecution = await executionModel.get({ arn: executionArn });
@@ -151,7 +169,7 @@ test('saveExecutionToDb() creates an execution item in Dynamo', async (t) => {
   }
 });
 
-test.serial('saveExecutionToDb() throws an exception if storeExecutionFromCumulusMessage() throws an exception', async (t) => {
+test.serial('saveExecutionToDynamoDb() throws an exception if storeExecutionFromCumulusMessage() throws an exception', async (t) => {
   const { cumulusMessage } = t.context;
 
   const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
@@ -160,7 +178,7 @@ test.serial('saveExecutionToDb() throws an exception if storeExecutionFromCumulu
     });
 
   try {
-    await t.throwsAsync(saveExecutionToDb(cumulusMessage));
+    await t.throwsAsync(saveExecutionToDynamoDb(cumulusMessage));
   } finally {
     saveExecutionStub.restore();
   }
@@ -320,6 +338,23 @@ test('The sf-event-sqs-to-db-records Lambda adds records to the granule, executi
     granuleModel,
     pdrModel,
   } = t.context;
+
+  const { executionArn, granuleId, pdrName } = await runHandler(cumulusMessage);
+
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await pdrModel.exists({ pdrName }));
+});
+
+test.skip('Lambda writes records to Dynamo if cumulus version < 3.0.0', async (t) => {
+  const {
+    cumulusMessage,
+    executionModel,
+    granuleModel,
+    pdrModel,
+  } = t.context;
+
+  cumulusMessage.cumulus_meta.cumulus_version = '2.0.1';
 
   const { executionArn, granuleId, pdrName } = await runHandler(cumulusMessage);
 

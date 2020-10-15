@@ -1,15 +1,24 @@
 'use strict';
 
 const get = require('lodash/get');
+const semver = require('semver');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
-const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const {
+  getMessageExecutionArn,
+} = require('@cumulus/message/Executions');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
 
-const saveExecutionToDb = async (cumulusMessage) => {
+const isPostRDSDeploymentExecution = (cumulusMessage) => {
+  const cumulusVersion = get(cumulusMessage, 'cumulus_meta.cumulus_version', '0.0.0');
+  // TODO: don't hardcode 3.0.0?
+  return semver.gte(cumulusVersion, '3.0.0');
+};
+
+const saveExecutionToDynamoDb = async (cumulusMessage) => {
   const executionModel = new Execution();
   try {
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
@@ -17,6 +26,22 @@ const saveExecutionToDb = async (cumulusMessage) => {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     log.fatal(`Failed to create/update database record for execution ${executionArn}: ${error.message}`);
     throw error;
+  }
+};
+
+const saveExecutionToRDS = async () => true;
+
+const saveExecutions = async (cumulusMessage) => {
+  const executionModel = new Execution();
+  const executionArn = getMessageExecutionArn(cumulusMessage);
+  try {
+    return await Promise.allSettled([
+      saveExecutionToDynamoDb(cumulusMessage),
+      saveExecutionToRDS(),
+    ]);
+  } catch (error) {
+    log.error('Failed to write execution records:', error);
+    await executionModel.delete({ arn: executionArn });
   }
 };
 
@@ -50,7 +75,7 @@ const handler = async (event) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
     const results = await Promise.allSettled([
-      saveExecutionToDb(cumulusMessage),
+      saveExecutionToDynamoDb(cumulusMessage),
       saveGranulesToDb(cumulusMessage),
       savePdrToDb(cumulusMessage),
     ]);
@@ -64,7 +89,8 @@ const handler = async (event) => {
 
 module.exports = {
   handler,
-  saveExecutionToDb,
+  isPostRDSDeploymentExecution,
+  saveExecutionToDynamoDb,
   saveGranulesToDb,
   savePdrToDb,
 };
