@@ -13,8 +13,7 @@ const Logger = require('@cumulus/logger');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const CMR = require('@cumulus/cmr-client/CMR');
-const CMRSearchConceptQueue = require('@cumulus/cmr-client/CMRSearchConceptQueue');
+const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
