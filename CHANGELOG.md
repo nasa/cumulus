@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   - If you provide your own custom bucket map to TEA as a standalone module, **you must ensure that your custom bucket map includes mappings for the `protected` and `public` buckets specified in your `cumulus-tf/terraform.tfvars`, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors**
 
+- **CUMULUS-2197**
+  - EMS resources are now optional, and `ems_deploy` is set to `false` by default, which will delete your EMS resources.
+  - If you would like to keep any deployed EMS resources, add the `ems_deploy` variable set to `true` in your `cumulus-tf/terraform.tfvars`
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2099**
@@ -44,6 +48,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `granule.provider` property on each granule. If present, the granule will be
     enqueued using that provider. If not present, the task's `config.provider`
     will be used instead.
+- **CUMULUS-2197**
+  - EMS resources are now optional and will not be deployed by default. See migration steps for information
+    about how to deploy EMS resources.
 
 #### CODE CHANGES
 
@@ -189,6 +196,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is `Granule Inventory`. This report is a CSV file of all the granules in
     the Cumulus DB. This report will eventually replace the existing
     `granules-csv` endpoint which has been deprecated.
+- **CUMULUS-2197**
+  - Added `ems_deploy` variable to the `cumulus` module. This is set to false by default, except
+    for our example deployment, where it is needed for integration tests.
 
 ### Changed
 
@@ -199,6 +209,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2111**
   - Changed `distribution_api_gateway_stage` variable for `cumulus` module to `tea_api_gateway_stage`
   - Changed `api_gateway_stage` variable for `distribution` module to `tea_api_gateway_stage`
+- **CUMULUS-2224**
+  - Updated `/reconciliationReport`'s file reconciliation to include `"EXTENDED METADATA"` as a valid CMR relatedUrls Type.
 
 ### Fixed
 
@@ -213,8 +225,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is published, as expected.
 - **CUMULUS-1961**
   - Fixed `activeCollections` query only returning 10 results
-- **CUMULUS-2101**
-  - Fix Reconciliation Report integration test failures
+- **CUMULUS-2201**
+  - Fix Reconciliation Report integration test failures by waiting for collections appear
+    in es list and ingesting a fake granule xml file to CMR
 - **CUMULUS-2015**
   - Reduced concurrency of `QueueGranules` task. That task now has a
     `config.concurrency` option that defaults to `3`.
@@ -226,6 +239,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fix issue where `cumulus` index is recreated and attached to an alias if it has been previously deleted
 - **CUMULUS-2195**
   - Fixed issue with redirect from `/token` not working when using a Cloudfront endpoint to access the Cumulus API with Launchpad authentication enabled. The redirect should now work properly whether you are using a plain API gateway URL or a Cloudfront endpoint pointing at an API gateway URL.
+- **CUMULUS-2200**
+  - Fixed issue where __in and __not queries were stripping spaces from values
 
 ### Deprecated
 
