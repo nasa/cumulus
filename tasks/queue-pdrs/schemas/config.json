@@ -17,6 +17,7 @@
     "queueUrl": { "type": "string" },
     "parsePdrWorkflow": { "type": "string" },
     "internalBucket": { "type": "string" },
-    "stackName": { "type": "string" }
+    "stackName": { "type": "string" },
+    "executionNamePrefix": { "type": "string" }
   }
 }

@@ -329,3 +329,22 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
 
   t.deepEqual(actualMessage, expectedMessage);
 });
+
+test('buildQueueMessageFromTemplate uses executionNamePrefix', (t) => {
+  const executionNamePrefix = randomId('prefix');
+
+  const messageTemplate = {};
+  const workflow = {
+    name: randomId('workflow'),
+    arn: randomId('arn:aws:states:wf'),
+  };
+
+  const actualMessage = buildQueueMessageFromTemplate({
+    executionNamePrefix,
+    messageTemplate,
+    workflow,
+  });
+
+  t.true(actualMessage.cumulus_meta.execution_name.startsWith(executionNamePrefix));
+  t.true(actualMessage.cumulus_meta.execution_name.length > executionNamePrefix.length);
+});

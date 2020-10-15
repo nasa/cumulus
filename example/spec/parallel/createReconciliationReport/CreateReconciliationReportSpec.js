@@ -4,16 +4,19 @@ const cloneDeep = require('lodash/cloneDeep');
 const moment = require('moment');
 const fs = require('fs-extra');
 const get = require('lodash/get');
+const isEqual = require('lodash/isEqual');
+const pWaitFor = require('p-wait-for');
 
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
 } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
+const CMR = require('@cumulus/cmr-client/CMR');
+const { lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { randomString, randomId, randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
@@ -24,6 +27,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
+  generateCmrXml,
   granulesApi: granulesApiTestUtils,
   waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
@@ -34,6 +38,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection, getCollections } = require('@cumulus/api-client/collections');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const {
   loadConfig,
@@ -45,8 +50,6 @@ const {
 } = require('../../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
-  waitForGranuleRecordsInList,
-  waitForGranuleRecordsNotInList,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
@@ -54,6 +57,8 @@ const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
 const onlyCMRCollection = { name: 'L2_HR_PIXC', version: '1' };
+
+const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketsConfig = new BucketsConfig(
@@ -181,7 +186,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
   const inputPayload = await setupTestGranuleForIngest(
     config.bucket,
     inputPayloadJson,
-    '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$',
+    granuleRegex,
     '',
     testDataFolder
   );
@@ -203,21 +208,24 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
   return inputPayload.granules[0].granuleId;
 }
 
-// ingest a granule to CMR and remove it from database
-// return granule object retrieved from database
-async function ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime) {
-  const granuleId = await ingestAndPublishGranule(config, testSuffix, testDataFolder, true);
-
-  const response = await granulesApiTestUtils.getGranule({
-    prefix: config.stackName,
-    granuleId,
+const createCmrClient = async (config) => {
+  const lambdaFunction = `${config.stackName}-CreateReconciliationReport`;
+  const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: lambdaFunction })
+    .promise();
+  Object.entries(lambdaConfig.Environment.Variables).forEach(([key, value]) => {
+    process.env[key] = value;
   });
-  const granule = JSON.parse(response.body);
-  await waitForGranuleRecordsInList(config.stackName, [granuleId]);
-  await (new Granule()).delete({ granuleId });
-  await waitForGranuleRecordsNotInList(config.stackName, [granuleId], { sort_by: 'timestamp', timestamp__from: ingestTime });
+  const cmrSettings = await getCmrSettings();
+  return new CMR(cmrSettings);
+};
+
+// ingest a granule xml to CMR
+async function ingestGranuleToCMR(cmrClient) {
+  const granuleId = randomStringFromRegex(granuleRegex);
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
-  return granule;
+  const xml = generateCmrXml({ granuleId }, collection);
+  await cmrClient.ingestGranule(xml);
+  return { granuleId };
 }
 
 // update granule file which matches the regex
@@ -239,9 +247,26 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
   return { originalGranuleFile, updatedGranuleFile };
 }
 
+// wait for collection in list
+const waitForCollectionRecordsInList = async (stackName, collectionIds) => pWaitFor(
+  async () => {
+    // Verify the collection is returned when listing collections
+    const collsResp = await getCollections(
+      { prefix: stackName, query: { _id__in: collectionIds.join(','), limit: 30 } }
+    );
+    const ids = JSON.parse(collsResp.body).results.map((c) => constructCollectionId(c.name, c.version));
+    return isEqual(ids.sort(), collectionIds.sort());
+  },
+  {
+    interval: 10000,
+    timeout: 600 * 1000,
+  }
+);
+
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
   let beforeAllFailed = false;
+  let cmrClient;
   let cmrGranule;
   let collectionId;
   let config;
@@ -250,7 +275,6 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraCumulusCollectionCleanup;
   let extraFileInDb;
   let extraS3Object;
-  let ingestTime;
   let granuleBeforeUpdate;
   let granuleModel;
   let originalGranuleFile;
@@ -262,7 +286,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
   beforeAll(async () => {
     try {
-      ingestTime = Date.now() - 1000 * 30;
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
@@ -272,6 +295,8 @@ describe('When there are granule differences and granule reconciliation is run',
 
       process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
       process.env.CMR_ENVIRONMENT = 'UAT';
+
+      cmrClient = await createCmrClient(config);
 
       // Find a protected bucket
       protectedBucket = await findProtectedBucket(config.bucket, config.stackName);
@@ -307,9 +332,16 @@ describe('When there are granule differences and granule reconciliation is run',
       ] = await Promise.all([
         ingestAndPublishGranule(config, testSuffix, testDataFolder),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-        ingestGranuleToCMR(config, testSuffix, testDataFolder, ingestTime),
+        ingestGranuleToCMR(cmrClient),
         activeCollectionPromise,
       ]);
+
+      console.log('XXXXX Waiting for collections in list');
+      const collectionIds = [
+        collectionId,
+        constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+      ];
+      await waitForCollectionRecordsInList(config.stackName, collectionIds);
 
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
@@ -331,14 +363,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('prepares the test suite successfully', async () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
-
-    console.log('Checking collection in list');
-    // Verify the collection is returned when listing collections
-    const collsResp = await getCollections(
-      { prefix: config.stackName, query: { sort_by: 'timestamp', order: 'desc', timestamp__from: ingestTime, limit: 30 } }
-    );
-    const colls = JSON.parse(collsResp.body).results;
-    expect(colls.map((c) => constructCollectionId(c.name, c.version)).includes(collectionId)).toBe(true);
   });
 
   describe('Create an Inventory Reconciliation Report to monitor inventory discrepancies', () => {
@@ -670,12 +694,8 @@ describe('When there are granule differences and granule reconciliation is run',
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
       extraCumulusCollectionCleanup(),
+      cmrClient.deleteGranule(cmrGranule),
     ]);
-
-    // need to add the cmr granule back to the table, so the granule can be removed from api
-    await granuleModel.create(cmrGranule);
-    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
 
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });

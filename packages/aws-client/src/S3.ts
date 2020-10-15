@@ -262,7 +262,10 @@ export const promiseS3Upload = improveStackTrace(
  * @param {string} filepath - The filepath of the file that is downloaded
  * @returns {Promise<string>} returns filename if successful
  */
-export const downloadS3File = (s3Obj: AWS.S3.GetObjectRequest, filepath: string) => {
+export const downloadS3File = (
+  s3Obj: AWS.S3.GetObjectRequest,
+  filepath: string
+): Promise<string> => {
   const fileWriteStream = fs.createWriteStream(filepath);
 
   return new Promise((resolve, reject) => {
@@ -909,7 +912,7 @@ export const multipartCopyObject = async (
     copyTags?: boolean,
     copyMetadata?: boolean
   }
-) => {
+): Promise<{etag: string}> => {
   const {
     sourceBucket,
     sourceKey,
