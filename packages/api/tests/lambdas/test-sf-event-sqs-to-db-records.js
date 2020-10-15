@@ -6,6 +6,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -70,6 +71,7 @@ const runHandler = async (cumulusMessage = {}) => {
       eventSource: 'aws:sqs',
       body: JSON.stringify(fixture),
     }],
+    env: localStackConnectionEnv,
   };
   const handlerResponse = await handler(sqsEvent);
   return { executionArn, granuleId, pdrName, handlerResponse, sqsEvent };

@@ -4,6 +4,7 @@ const get = require('lodash/get');
 const semver = require('semver');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
+const { getKnexClient } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
 } = require('@cumulus/message/Executions');
@@ -35,7 +36,7 @@ const saveExecutions = async (cumulusMessage) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
   try {
-    return await Promise.allSettled([
+    await Promise.allSettled([
       saveExecutionToDynamoDb(cumulusMessage),
       saveExecutionToRDS(),
     ]);
@@ -69,13 +70,17 @@ const saveGranulesToDb = async (cumulusMessage) => {
 };
 
 const handler = async (event) => {
+  const env = event.env ? event.env : process.env;
+
+  const knex = await getKnexClient({ env });
+
   const sqsMessages = get(event, 'Records', []);
 
   return Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
     const results = await Promise.allSettled([
-      saveExecutionToDynamoDb(cumulusMessage),
+      saveExecutions(cumulusMessage, knex),
       saveGranulesToDb(cumulusMessage),
       savePdrToDb(cumulusMessage),
     ]);
