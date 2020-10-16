@@ -42,7 +42,7 @@
   "dependencies": {
     "@cumulus/errors": "3.0.0",
     "@cumulus/logger": "3.0.0",
-    "ajv": "^5.2.2",
+    "ajv": "^6.12.3",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
