@@ -104,16 +104,16 @@ test.serial(
   async (t) => {
     const fakeESResponse = {
       meta: {
-        crazyNess: 'happens here',
+        irrelevant: 'information',
       },
       results: [
-        { thisIs: 'a bad result' },
+        { thisData: 'Can be anything' },
       ],
     };
 
     const expected = cloneDeep(fakeESResponse);
     CMR.prototype.searchCollections.restore();
-    sinon.stub(CMR.prototype, 'searchCollections').throws(new Error('CMR is hosed today'));
+    sinon.stub(CMR.prototype, 'searchCollections').throws(new Error('CMR is down today'));
     const actual = await insertMMTLinks(fakeESResponse);
     t.deepEqual(actual, expected);
   }
