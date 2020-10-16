@@ -59,8 +59,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "^1.23.1",
-    "archiver": "^4.0.1",
+    "@cumulus/aws-client": "^1.24.0",
+    "archiver": "^4.0.2",
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
