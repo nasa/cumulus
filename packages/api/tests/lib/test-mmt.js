@@ -5,6 +5,7 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 const { CMR } = require('@cumulus/cmr-client');
 const { randomId } = require('@cumulus/common/test-utils');
+const { cloneDeep } = require('lodash');
 const mmt = rewire('../../lib/mmt');
 
 const insertMMTLinks = mmt.__get__('insertMMTLinks');
@@ -93,6 +94,26 @@ test.serial(
       ],
     };
 
+    const actual = await insertMMTLinks(fakeESResponse);
+    t.deepEqual(actual, expected);
+  }
+);
+
+test.serial(
+  'insertMMTLinks returns the input unchanged if an error occurs with CMR.',
+  async (t) => {
+    const fakeESResponse = {
+      meta: {
+        crazyNess: 'happens here',
+      },
+      results: [
+        { thisIs: 'a bad result' },
+      ],
+    };
+
+    const expected = cloneDeep(fakeESResponse);
+    CMR.prototype.searchCollections.restore();
+    sinon.stub(CMR.prototype, 'searchCollections').throws(new Error('CMR is hosed today'));
     const actual = await insertMMTLinks(fakeESResponse);
     t.deepEqual(actual, expected);
   }
