@@ -21,11 +21,16 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
   return semver.gte(cumulusVersion, '3.0.0');
 };
 
-const saveExecutionToDynamoDb = async (cumulusMessage, executionModel) => {
-  return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
-};
+const saveExecutionToDynamoDb = async (cumulusMessage, executionModel) =>
+  executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-const deleteExecutionFromRDS = async () => true;
+const deleteExecutionFromRDS = async (executionArn, knex) => {
+  return knex('executions')
+    .where({
+      arn: executionArn,
+    })
+    .delete();
+};
 
 // Just a stub for write functionality
 const saveExecutionToRDS = async (cumulusMessage, knex) => {
@@ -35,13 +40,13 @@ const saveExecutionToRDS = async (cumulusMessage, knex) => {
   });
 };
 
-const saveExecutions = async (cumulusMessage) => {
+const saveExecutions = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
   try {
     await pAll([
-      saveExecutionToDynamoDb(cumulusMessage, executionModel),
-      saveExecutionToRDS(),
+      () => saveExecutionToDynamoDb(cumulusMessage, executionModel),
+      () => saveExecutionToRDS(cumulusMessage, knex),
     ], {
       // let all promises settle before throwing error
       stopOnError: false,
@@ -50,7 +55,7 @@ const saveExecutions = async (cumulusMessage) => {
     log.error(`Failed to write execution records for ${executionArn}`, error);
     await Promise.all([
       executionModel.delete({ arn: executionArn }),
-      deleteExecutionFromRDS(),
+      deleteExecutionFromRDS(executionArn, knex),
     ]);
   }
 };

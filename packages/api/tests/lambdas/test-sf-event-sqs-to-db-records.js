@@ -207,7 +207,7 @@ test.serial('saveExecutionToDynamoDb() throws an exception if storeExecutionFrom
 
 test.todo('saveExecutionToRDS saves correct execution record to RDS');
 
-test.only('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
+test('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -219,9 +219,36 @@ test.only('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
 
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  await saveExecutions(cumulusMessage);
+  await saveExecutions(cumulusMessage, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
   t.truthy(
+    await knex('executions')
+      .where('arn', executionArn)
+      .first()
+  );
+});
+
+test.serial('saveExecutions() removes record from Dynamo and RDS if either write fails', async (t) => {
+  const { cumulusMessage, executionModel, knex } = t.context;
+
+  const stateMachineName = randomString();
+  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+
+  const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
+
+  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+
+  const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
+    .callsFake(() => {
+      throw new Error('fake error');
+    });
+  t.teardown(() => saveExecutionStub.restore());
+
+  await saveExecutions(cumulusMessage, knex);
+  t.false(await executionModel.exists({ arn: executionArn }));
+  t.falsy(
     await knex('executions')
       .where('arn', executionArn)
       .first()
