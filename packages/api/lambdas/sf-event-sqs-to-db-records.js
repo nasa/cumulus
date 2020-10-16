@@ -2,6 +2,8 @@
 
 const get = require('lodash/get');
 const semver = require('semver');
+const pAll = require('p-all');
+
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
 const { getKnexClient } = require('@cumulus/db');
@@ -19,30 +21,37 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
   return semver.gte(cumulusVersion, '3.0.0');
 };
 
-const saveExecutionToDynamoDb = async (cumulusMessage) => {
-  const executionModel = new Execution();
-  try {
-    await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
-  } catch (error) {
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    log.fatal(`Failed to create/update database record for execution ${executionArn}: ${error.message}`);
-    throw error;
-  }
+const saveExecutionToDynamoDb = async (cumulusMessage, executionModel) => {
+  return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 };
 
-const saveExecutionToRDS = async () => true;
+const deleteExecutionFromRDS = async () => true;
+
+// Just a stub for write functionality
+const saveExecutionToRDS = async (cumulusMessage, knex) => {
+  const executionArn = getMessageExecutionArn(cumulusMessage);
+  return knex('executions').insert({
+    arn: executionArn,
+  });
+};
 
 const saveExecutions = async (cumulusMessage) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
   try {
-    await Promise.allSettled([
-      saveExecutionToDynamoDb(cumulusMessage),
+    await pAll([
+      saveExecutionToDynamoDb(cumulusMessage, executionModel),
       saveExecutionToRDS(),
-    ]);
+    ], {
+      // let all promises settle before throwing error
+      stopOnError: false,
+    });
   } catch (error) {
-    log.error('Failed to write execution records:', error);
-    await executionModel.delete({ arn: executionArn });
+    log.error(`Failed to write execution records for ${executionArn}`, error);
+    await Promise.all([
+      executionModel.delete({ arn: executionArn }),
+      deleteExecutionFromRDS(),
+    ]);
   }
 };
 
@@ -96,6 +105,8 @@ module.exports = {
   handler,
   isPostRDSDeploymentExecution,
   saveExecutionToDynamoDb,
+  saveExecutionToRDS,
+  saveExecutions,
   saveGranulesToDb,
   savePdrToDb,
 };

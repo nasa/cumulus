@@ -6,7 +6,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { localStackConnectionEnv } = require('@cumulus/db');
+const { localStackConnectionEnv, getKnexClient } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -15,6 +15,7 @@ const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const {
   isPostRDSDeploymentExecution,
+  saveExecutions,
   saveExecutionToDynamoDb,
   saveGranulesToDb,
   savePdrToDb,
@@ -96,6 +97,14 @@ test.before(async (t) => {
 
   sinon.stub(StepFunctions, 'describeExecution')
     .callsFake(() => Promise.resolve({}));
+
+  t.context.knex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      // PG_DATABASE: testDbName,
+      // migrationDir,
+    },
+  });
 });
 
 test.beforeEach(async (t) => {
@@ -154,7 +163,7 @@ test('saveExecutionToDynamoDb() creates an execution item in Dynamo', async (t) 
   cumulusMessage.cumulus_meta.execution_name = executionName;
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  await saveExecutionToDynamoDb(cumulusMessage);
+  await saveExecutionToDynamoDb(cumulusMessage, executionModel);
 
   try {
     const fetchedExecution = await executionModel.get({ arn: executionArn });
@@ -172,18 +181,51 @@ test('saveExecutionToDynamoDb() creates an execution item in Dynamo', async (t) 
 });
 
 test.serial('saveExecutionToDynamoDb() throws an exception if storeExecutionFromCumulusMessage() throws an exception', async (t) => {
-  const { cumulusMessage } = t.context;
+  const { cumulusMessage, executionModel } = t.context;
+
+  const stateMachineName = randomString();
+  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+
+  const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
 
   const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
     .callsFake(() => {
-      throw new Error('error');
+      throw new Error('fake error');
     });
 
   try {
-    await t.throwsAsync(saveExecutionToDynamoDb(cumulusMessage));
+    await t.throwsAsync(
+      saveExecutionToDynamoDb(cumulusMessage, executionModel),
+      { message: 'fake error' }
+    );
   } finally {
     saveExecutionStub.restore();
   }
+});
+
+test.todo('saveExecutionToRDS saves correct execution record to RDS');
+
+test.only('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
+  const { cumulusMessage, executionModel, knex } = t.context;
+
+  const stateMachineName = randomString();
+  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+
+  const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
+
+  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+
+  await saveExecutions(cumulusMessage);
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.truthy(
+    await knex('executions')
+      .where('arn', executionArn)
+      .first()
+  );
 });
 
 test('saveGranulesToDb() saves a granule record to the database', async (t) => {
