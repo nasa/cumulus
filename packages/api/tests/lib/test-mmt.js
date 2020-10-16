@@ -99,7 +99,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   'insertMMTLinks returns the input unchanged if an error occurs with CMR.',
   async (t) => {
     const fakeESResponse = {
