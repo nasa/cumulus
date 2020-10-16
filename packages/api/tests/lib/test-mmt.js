@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 const { CMR } = require('@cumulus/cmr-client');
 const { randomId } = require('@cumulus/common/test-utils');
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash/cloneDeep');
 const mmt = rewire('../../lib/mmt');
 
 const insertMMTLinks = mmt.__get__('insertMMTLinks');
@@ -99,7 +99,7 @@ test.serial(
   }
 );
 
-test.serial(
+test.serial.only(
   'insertMMTLinks returns the input unchanged if an error occurs with CMR.',
   async (t) => {
     const fakeESResponse = {
