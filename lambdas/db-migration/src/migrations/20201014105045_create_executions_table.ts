@@ -12,18 +12,15 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .integer('asyncOperationsCumulusId')
       .references('cumulusId')
-      .inTable('asyncOperations')
-      .notNullable();
+      .inTable('asyncOperations');
     table
       .integer('collectionCumulusId')
       .references('cumulusId')
-      .inTable('collections')
-      .notNullable();
+      .inTable('collections');
     table
       .integer('parentCumulusId')
       .references('cumulusId')
-      .inTable('executions')
-      .notNullable();
+      .inTable('executions');
     table
       .timestamps(false, true);
     table.unique(['arn']);
