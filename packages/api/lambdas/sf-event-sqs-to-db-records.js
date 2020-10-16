@@ -24,13 +24,12 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
 const saveExecutionToDynamoDb = async (cumulusMessage, executionModel) =>
   executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-const deleteExecutionFromRDS = async (executionArn, knex) => {
-  return knex('executions')
+const deleteExecutionFromRDS = async (executionArn, knex) =>
+  knex('executions')
     .where({
       arn: executionArn,
     })
     .delete();
-};
 
 // Just a stub for write functionality
 const saveExecutionToRDS = async (cumulusMessage, knex) => {
@@ -48,7 +47,8 @@ const saveExecutions = async (cumulusMessage, knex) => {
       () => saveExecutionToDynamoDb(cumulusMessage, executionModel),
       () => saveExecutionToRDS(cumulusMessage, knex),
     ], {
-      // let all promises settle before throwing error
+      // let all promises settle before throwing error so that we know
+      // all writes have either failed/succeeded
       stopOnError: false,
     });
   } catch (error) {

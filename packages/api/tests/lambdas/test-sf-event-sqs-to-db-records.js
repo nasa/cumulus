@@ -194,15 +194,12 @@ test.serial('saveExecutionToDynamoDb() throws an exception if storeExecutionFrom
     .callsFake(() => {
       throw new Error('fake error');
     });
+  t.teardown(() => saveExecutionStub.restore());
 
-  try {
-    await t.throwsAsync(
-      saveExecutionToDynamoDb(cumulusMessage, executionModel),
-      { message: 'fake error' }
-    );
-  } finally {
-    saveExecutionStub.restore();
-  }
+  await t.throwsAsync(
+    saveExecutionToDynamoDb(cumulusMessage, executionModel),
+    { message: 'fake error' }
+  );
 });
 
 test.todo('saveExecutionToRDS saves correct execution record to RDS');
@@ -228,7 +225,7 @@ test('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
   );
 });
 
-test.serial('saveExecutions() removes record from Dynamo and RDS if either write fails', async (t) => {
+test.serial('saveExecutions() removes record from Dynamo and RDS if Dynamo write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -247,6 +244,36 @@ test.serial('saveExecutions() removes record from Dynamo and RDS if either write
   t.teardown(() => saveExecutionStub.restore());
 
   await saveExecutions(cumulusMessage, knex);
+  t.false(await executionModel.exists({ arn: executionArn }));
+  t.falsy(
+    await knex('executions')
+      .where('arn', executionArn)
+      .first()
+  );
+});
+
+test.serial('saveExecutions() removes record from Dynamo and RDS if RDS write fails', async (t) => {
+  const { cumulusMessage, executionModel, knex } = t.context;
+
+  const stateMachineName = randomString();
+  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
+  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
+
+  const executionName = randomString();
+  cumulusMessage.cumulus_meta.execution_name = executionName;
+
+  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+
+  const fakeKnex = sinon.stub().returns({
+    insert: () => {
+      throw new Error('bad insert');
+    },
+    where: () => ({
+      delete: () => Promise.resolve(),
+    }),
+  });
+
+  await saveExecutions(cumulusMessage, fakeKnex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.falsy(
     await knex('executions')
