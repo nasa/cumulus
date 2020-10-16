@@ -167,6 +167,27 @@ async function bulkGranule(payload) {
   return applyWorkflowToGranules({ granuleIds, workflowName, meta, queueName });
 }
 
+async function bulkGranuleReingest(payload) {
+  const granuleIds = await getGranuleIdsForPayload(payload);
+  const granuleModel = new GranuleModel();
+  return pMap(
+    granuleIds,
+    async (granuleId) => {
+      try {
+        const granule = await granuleModel.getRecord({ granuleId });
+        await granuleModel.reingest(granule, process.env.asyncOperationId);
+        return granuleId;
+      } catch (error) {
+        return { granuleId, err: error };
+      }
+    },
+    {
+      concurrency: 10,
+      stopOnError: false,
+    }
+  );
+}
+
 function setEnvVarsForOperation(event) {
   const envVars = get(event, 'envVars', {});
   Object.keys(envVars).forEach((envVarKey) => {
@@ -184,6 +205,9 @@ async function handler(event) {
   }
   if (event.type === 'BULK_GRANULE_DELETE') {
     return bulkGranuleDelete(event.payload);
+  }
+  if (event.type === 'BULK_GRANULE_REINGEST') {
+    return bulkGranuleReingest(event.payload);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);
