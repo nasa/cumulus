@@ -5,10 +5,12 @@ const semver = require('semver');
 const pAll = require('p-all');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const { getKnexClient } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
+  getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
@@ -19,6 +21,26 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
   const cumulusVersion = get(cumulusMessage, 'cumulus_meta.cumulus_version', '0.0.0');
   // TODO: don't hardcode 3.0.0?
   return semver.gte(cumulusVersion, '3.0.0');
+};
+
+/**
+ * Get the initial execution message for a chain of workflows.
+ *
+ * @param {Object} cumulusMessage - A Cumulus workflow message
+ * @returns {Object}
+ *   Cumulus workflow message for the parent execution initiating
+ *   this chain of executions.
+ */
+const getInitialExecutionMessage = async (cumulusMessage) => {
+  const parentArn = getMessageExecutionParentArn(cumulusMessage);
+  if (!parentArn) {
+    return cumulusMessage;
+  }
+  const executionArn = getMessageExecutionArn(cumulusMessage);
+  const response = await StepFunctions.describeExecution({
+    executionArn,
+  });
+  return getInitialExecutionMessage(JSON.parse(response.input));
 };
 
 const saveExecutionToDynamoDb = async (cumulusMessage, executionModel) =>
@@ -108,6 +130,7 @@ const handler = async (event) => {
 
 module.exports = {
   handler,
+  getInitialExecutionMessage,
   isPostRDSDeploymentExecution,
   saveExecutionToDynamoDb,
   saveExecutionToRDS,

@@ -14,6 +14,7 @@ const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const {
+  getInitialExecutionMessage,
   isPostRDSDeploymentExecution,
   saveExecutions,
   saveExecutionToDynamoDb,
@@ -95,7 +96,7 @@ test.before(async (t) => {
   await pdrModel.createTable();
   t.context.pdrModel = pdrModel;
 
-  sinon.stub(StepFunctions, 'describeExecution')
+  t.context.describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution')
     .callsFake(() => Promise.resolve({}));
 
   t.context.knex = await getKnexClient({
@@ -150,6 +151,57 @@ test('isPostRDSDeploymentExecution correctly returns false if Cumulus version is
     },
   }));
   t.false(isPostRDSDeploymentExecution({}));
+});
+
+test('getInitialExecutionMessage returns cumulus message input if there is no parent execution', async (t) => {
+  const cumulusMessage = {
+    foo: 'bar',
+    cumulus_meta: {},
+  };
+  t.deepEqual(
+    await getInitialExecutionMessage(cumulusMessage),
+    cumulusMessage
+  );
+});
+
+test.serial('getInitialExecutionMessage returns initial parent execution message', async (t) => {
+  const { describeExecutionStub } = t.context;
+
+  describeExecutionStub.restore();
+  const stub = sinon.stub(StepFunctions, 'describeExecution');
+  t.teardown(() => stub.restore());
+
+  stub.onCall(0).resolves({
+    input: JSON.stringify({
+      cumulus_meta: {
+        state_machine: 'machine2',
+        execution_name: 'execution2',
+        parentExecutionArn: 'parent2',
+      },
+    }),
+  });
+  const initialExecutionMessage = {
+    cumulus_meta: {
+      state_machine: 'machine3',
+      execution_name: 'execution3',
+      cumulus_version: 'x.x.x',
+    },
+  };
+  stub.onCall(1).resolves({
+    input: JSON.stringify(initialExecutionMessage),
+  });
+
+  const cumulusMessage = {
+    cumulus_meta: {
+      state_machine: 'machine1',
+      execution_name: 'execution1',
+      parentExecutionArn: 'parent1',
+    },
+  };
+  t.deepEqual(
+    await getInitialExecutionMessage(cumulusMessage),
+    initialExecutionMessage
+  );
 });
 
 test('saveExecutionToDynamoDb() creates an execution item in Dynamo', async (t) => {
@@ -444,7 +496,7 @@ test('The sf-event-sqs-to-db-records Lambda adds records to the granule, executi
   t.true(await pdrModel.exists({ pdrName }));
 });
 
-test.skip('Lambda writes records to Dynamo if cumulus version < 3.0.0', async (t) => {
+test.skip('Lambda writes records to Dynamo and not RDS if cumulus version < 3.0.0', async (t) => {
   const {
     cumulusMessage,
     executionModel,
