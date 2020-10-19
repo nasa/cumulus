@@ -16,6 +16,7 @@ const Pdr = require('../../models/pdrs');
 const {
   getInitialExecutionMessage,
   isPostRDSDeploymentExecution,
+  shouldWriteToRDS,
   saveExecutions,
   saveExecutionToDynamoDb,
   saveGranulesToDb,
@@ -208,6 +209,22 @@ test.serial('getInitialExecutionMessage returns initial parent execution message
   );
 });
 
+test('shouldWriteToRDS returns true for post-RDS deployment execution message', async (t) => {
+  t.true(await shouldWriteToRDS({
+    cumulus_meta: {
+      cumulus_version: '3.0.0',
+    },
+  }));
+});
+
+test('shouldWriteToRDS returns false for pre-RDS deployment execution message', async (t) => {
+  t.false(await shouldWriteToRDS({
+    cumulus_meta: {
+      cumulus_version: '2.99.1',
+    },
+  }));
+});
+
 test('saveExecutionToDynamoDb() creates an execution item in Dynamo', async (t) => {
   const { cumulusMessage, executionModel } = t.context;
 
@@ -260,7 +277,7 @@ test.serial('saveExecutionToDynamoDb() throws an exception if storeExecutionFrom
 
 test.todo('saveExecutionToRDS saves correct execution record to RDS');
 
-test('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
+test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -272,7 +289,7 @@ test('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
 
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  await saveExecutions(cumulusMessage, knex);
+  await saveExecutions(cumulusMessage, true, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
   t.truthy(
     await knex('executions')
@@ -299,7 +316,7 @@ test.serial('saveExecutions() removes records from Dynamo and RDS if Dynamo writ
     });
   t.teardown(() => saveExecutionStub.restore());
 
-  await saveExecutions(cumulusMessage, knex);
+  await saveExecutions(cumulusMessage, true, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.falsy(
     await knex('executions')
@@ -327,7 +344,7 @@ test.serial('saveExecutions() removes records from Dynamo and RDS if RDS write f
     where: (params) => knex('executions').where(params),
   });
 
-  await saveExecutions(cumulusMessage, fakeKnex);
+  await saveExecutions(cumulusMessage, true, fakeKnex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.falsy(
     await knex('executions')

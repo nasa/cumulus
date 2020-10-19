@@ -43,31 +43,39 @@ const getInitialExecutionMessage = async (cumulusMessage) => {
   return getInitialExecutionMessage(JSON.parse(response.input));
 };
 
+const shouldWriteToRDS = async (cumulusMessage) => {
+  const initialMessage = await getInitialExecutionMessage(cumulusMessage);
+  return isPostRDSDeploymentExecution(initialMessage);
+};
+
 const saveExecutionToDynamoDb = async (cumulusMessage, executionModel) =>
   executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-const deleteExecutionFromRDS = async (executionArn, knex) =>
-  knex('executions')
+const deleteExecutionFromRDS = async (isRDSWriteEnabled, executionArn, knex) => {
+  if (!isRDSWriteEnabled) return true;
+  return knex('executions')
     .where({
       arn: executionArn,
     })
     .delete();
+};
 
 // Just a stub for write functionality
-const saveExecutionToRDS = async (cumulusMessage, knex) => {
+const saveExecutionToRDS = async (isRDSWriteEnabled, cumulusMessage, knex) => {
+  if (!isRDSWriteEnabled) return true;
   const executionArn = getMessageExecutionArn(cumulusMessage);
   return knex('executions').insert({
     arn: executionArn,
   });
 };
 
-const saveExecutions = async (cumulusMessage, knex) => {
+const saveExecutions = async (cumulusMessage, isRDSWriteEnabled, knex) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
   try {
     await pAll([
       () => saveExecutionToDynamoDb(cumulusMessage, executionModel),
-      () => saveExecutionToRDS(cumulusMessage, knex),
+      () => saveExecutionToRDS(isRDSWriteEnabled, cumulusMessage, knex),
     ], {
       // let all promises settle before throwing error so that we know
       // all writes have either failed/succeeded
@@ -77,7 +85,7 @@ const saveExecutions = async (cumulusMessage, knex) => {
     log.error(`Failed to write execution records for ${executionArn}`, error);
     await Promise.all([
       executionModel.delete({ arn: executionArn }),
-      deleteExecutionFromRDS(executionArn, knex),
+      deleteExecutionFromRDS(isRDSWriteEnabled, executionArn, knex),
     ]);
   }
 };
@@ -115,8 +123,9 @@ const handler = async (event) => {
   return Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+    const isRDSWriteEnabled = await shouldWriteToRDS(cumulusMessage);
     const results = await Promise.allSettled([
-      saveExecutions(cumulusMessage, knex),
+      saveExecutions(cumulusMessage, isRDSWriteEnabled, knex),
       saveGranulesToDb(cumulusMessage),
       savePdrToDb(cumulusMessage),
     ]);
@@ -132,6 +141,7 @@ module.exports = {
   handler,
   getInitialExecutionMessage,
   isPostRDSDeploymentExecution,
+  shouldWriteToRDS,
   saveExecutionToDynamoDb,
   saveExecutionToRDS,
   saveExecutions,
