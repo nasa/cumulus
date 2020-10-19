@@ -42,7 +42,7 @@
     "@cumulus/logger": "3.0.0",
     "@cumulus/types": "3.0.0",
     "jsonpath-plus": "^3.0.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "uuid": "^8.2.0"
   },
   "devDependencies": {
