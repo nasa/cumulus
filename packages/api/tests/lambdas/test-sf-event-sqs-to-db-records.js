@@ -281,7 +281,7 @@ test('saveExecutions() saves execution to Dynamo and RDS', async (t) => {
   );
 });
 
-test.serial('saveExecutions() removes record from Dynamo and RDS if Dynamo write fails', async (t) => {
+test.serial('saveExecutions() removes records from Dynamo and RDS if Dynamo write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -308,7 +308,7 @@ test.serial('saveExecutions() removes record from Dynamo and RDS if Dynamo write
   );
 });
 
-test.serial('saveExecutions() removes record from Dynamo and RDS if RDS write fails', async (t) => {
+test.serial('saveExecutions() removes records from Dynamo and RDS if RDS write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -324,9 +324,7 @@ test.serial('saveExecutions() removes record from Dynamo and RDS if RDS write fa
     insert: () => {
       throw new Error('bad insert');
     },
-    where: () => ({
-      delete: () => Promise.resolve(),
-    }),
+    where: (params) => knex('executions').where(params),
   });
 
   await saveExecutions(cumulusMessage, fakeKnex);
