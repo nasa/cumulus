@@ -24,7 +24,7 @@ variable "tea_internal_api_endpoint" {
 
 variable "deploy_s3_credentials_endpoint" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "log_destination_arn" {
@@ -124,4 +124,13 @@ variable "vpc_id" {
   type        = string
   description = "VPC used by Lambda functions"
   default     = null
+}
+
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}
+
+variable "region" {
+  type    = string
 }

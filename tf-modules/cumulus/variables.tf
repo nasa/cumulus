@@ -526,3 +526,8 @@ variable "ems_deploy" {
   type        = bool
   default     = false
 }
+
+variable "region" {
+  type    = string
+  default = "us-east-1"
+}
