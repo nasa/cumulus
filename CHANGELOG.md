@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-2063**
+  - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
+
+### Changed
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
+
+## [v3.0.0] 2020-10-7
+
 ### MIGRATION STEPS
 
 - **CUMULUS-2099**
@@ -142,30 +152,55 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     lambda can create `Internal` reconciliation report
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
-    unpublishes a  granule from CMR and deletes it from Cumulus, but does not
-    update the record to `published: false` before deletion
+  unpublishes a granule from CMR and deletes it from Cumulus, but does not
+  update the record to `published: false` before deletion
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL database cluster to meet the PostgreSQL
-    requirements for future releases
+    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    requirements for future releases.
+  - Updated the default Cumulus module to take the following new required variables:
+    - rds_user_access_secret_arn:
+      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
+      (containing at least host, password, port as keys)
+    - rds_security_group:
+      RDS Security Group that provides connection access to the RDS cluster
+  - Updated API lambdas and default ECS cluster to add them to the
+    `rds_security_group` for database access
+- **CUMULUS-2126**
+  - The collections endpoint now writes to the RDS database
+- **CUMULUS-2127**
+  - Added migration to create collections relation for RDS database
+- **CUMULUS-2129**
+  - Added `data-migration1` Terraform module and Lambda to migrate data from Dynamo to RDS
+    - Added support to Lambda for migrating collections data from Dynamo to RDS
+- **CUMULUS-2155**
+  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
+    modules.  If set to true, this diagnostic variable instructs Core's database
+    code to fire off a connection 'heartbeat' query and log the timing/results
+    for diagnostic purposes, and retry certain connection timeouts once.
+    This option is disabled by default
 - **CUMULUS-2156**
   - Support array inputs parameters for `Internal` reconciliation report
+- **CUMULUS-2157**
+  - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
+    - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead
 - **CUMULUS-2161**
   - Rules now support an `executionNamePrefix` property. If set, any executions
     triggered as a result of that rule will use that prefix in the name of the
     execution.
   - The `QueueGranules` task now supports an `executionNamePrefix` property. Any
     executions queued by that task will use that prefix in the name of the
-    execution.  See the [example workflow](./example/cumulus-tf/discover_granules_with_execution_name_prefix_workflow.asl.json)
+    execution. See the
+    [example workflow](./example/cumulus-tf/discover_granules_with_execution_name_prefix_workflow.asl.json)
     for usage.
-  - The `QueuePdrs` task now supports an `executionNamePrefix` config property. Any
-    executions queued by that task will use that prefix in the name of the
-    execution.  See the [example workflow](./example/cumulus-tf/discover_and_queue_pdrs_with_execution_name_prefix_workflow.asl.json)
+  - The `QueuePdrs` task now supports an `executionNamePrefix` config property.
+    Any executions queued by that task will use that prefix in the name of the
+    execution. See the
+    [example workflow](./example/cumulus-tf/discover_and_queue_pdrs_with_execution_name_prefix_workflow.asl.json)
     for usage.
-
 - **CUMULUS-2162**
   - Adds new report type to `/reconciliationReport` endpoint.  The new report
     is `Granule Inventory`. This report is a CSV file of all the granules in
@@ -301,6 +336,13 @@ from the 2.0.x branch.
 For the most recent release information for the maintenance branch please see
 the [release page](https://github.com/nasa/cumulus/releases)
 
+## [v2.0.7] 2020-10-1 - [BACKPORT]
+
+### Fixed
+
+- CVE-2020-7720
+  - Updated common `node-forge` dependency to 0.10.0 to address CVE finding
+
 ### [v2.0.6] 2020-09-25 - [BACKPORT]
 
 ### Fixed
@@ -354,7 +396,9 @@ the [release page](https://github.com/nasa/cumulus/releases)
 #### Added
 
 - **CUMULUS-2116**
-  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
+  unpublishes a granule from CMR and deletes it from Cumulus, but does not
+  update the record to `published: false` before deletion
 
 ### Fixed
 
@@ -512,6 +556,10 @@ the [release page](https://github.com/nasa/cumulus/releases)
   apply`.
 
 ### Added
+
+- **CUMULUS-2081**
+  - Add Integrator Guide section for onboarding
+  - Add helpful tips documentation
 
 - **CUMULUS-1902**
   - Add Common Use Cases section under Operator Docs
@@ -3570,14 +3618,16 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.1...HEAD
-[v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.6
-[v2.0.5]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.5
-[v2.0.4]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.4
-[v2.0.3]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.3
+[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.0...HEAD
+[v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
+[v2.0.7]: https://github.com/nasa/cumulus/compare/v2.0.6...v2.0.7
+[v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.5...v2.0.6
+[v2.0.5]: https://github.com/nasa/cumulus/compare/v2.0.4...v2.0.5
+[v2.0.4]: https://github.com/nasa/cumulus/compare/v2.0.3...v2.0.4
+[v2.0.3]: https://github.com/nasa/cumulus/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.2
-[v2.0.1]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.1
-[v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
+[v2.0.1]: https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.1
+[v2.0.0]: https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
 [v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
 [v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1

@@ -26,6 +26,8 @@ locals {
   elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
   elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
+  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
+  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 
   protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
@@ -64,6 +66,10 @@ module "cumulus" {
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
+
+  rds_security_group            = local.rds_security_group
+  rds_user_access_secret_arn    = local.rds_credentials_secret_arn
+  rds_connection_heartbeat      = var.rds_connection_heartbeat
 
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
@@ -129,9 +135,9 @@ module "cumulus" {
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
-    "chuckwondo",
+    "brian.tennity",
+    "dopeters",
     "jennyhliu",
-    "jmcampbell",
     "kbaynes",
     "kkelly",
     "kovarik",
@@ -139,8 +145,6 @@ module "cumulus" {
     "matthewsavoie",
     "mboyd",
     "menno.vandiermen",
-    "mhuffnagle2",
-    "brian.tennity",
     "jasmine"
   ]
   archive_api_port              = var.archive_api_port

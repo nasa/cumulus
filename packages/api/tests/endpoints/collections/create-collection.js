@@ -9,6 +9,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
@@ -21,6 +22,8 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const { post } = require('../../../endpoints/collections');
+const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -42,8 +45,8 @@ let collectionModel;
 let rulesModel;
 let publishStub;
 
-test.before(async () => {
-  process.env = { ...process.env };
+test.before(async (t) => {
+  process.env = { ...process.env, ...localStackConnectionEnv };
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -70,6 +73,8 @@ test.before(async () => {
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
     promise: async () => true,
   });
+
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.after.always(async () => {
@@ -132,6 +137,17 @@ test('POST creates a new collection', async (t) => {
 
   t.is(fetchedDynamoRecord.name, newCollection.name);
   t.is(fetchedDynamoRecord.version, newCollection.version);
+
+  const fetchedDbRecord = await t.context.dbClient.first()
+    .from('collections')
+    .where({
+      name: newCollection.name,
+      version: newCollection.version,
+    });
+
+  t.not(fetchedDbRecord, undefined);
+  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST without a name returns a 400 error', async (t) => {
@@ -304,4 +320,61 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
 
   t.is(res.status, 400);
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
+});
+
+test('post() does not write to the database if writing to Dynamo fails', async (t) => {
+  const { dbClient } = t.context;
+
+  const collection = fakeCollectionFactory();
+
+  const fakeCollectionsModel = {
+    exists: () => false,
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    body: collection,
+    testContext: {
+      dbClient,
+      collectionsModel: fakeCollectionsModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  const dbRecords = await dbClient.select('name', 'version')
+    .from('collections')
+    .where({
+      name: collection.name,
+      version: collection.version,
+    });
+
+  t.is(dbRecords.length, 0);
+});
+
+test('post() does not write to Dynamo if writing to the database fails', async (t) => {
+  const collection = fakeCollectionFactory();
+
+  const fakeDbClient = () => ({
+    insert: () => Promise.reject(new Error('something bad')),
+  });
+
+  const expressRequest = {
+    body: collection,
+    testContext: { dbClient: fakeDbClient },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(await collectionModel.exists(collection.name, collection.version));
 });
