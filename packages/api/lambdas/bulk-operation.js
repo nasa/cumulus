@@ -178,6 +178,7 @@ async function bulkGranuleReingest(payload) {
         await granuleModel.reingest(granule, process.env.asyncOperationId);
         return granuleId;
       } catch (error) {
+        log.debug(`Granule ${granuleId} encounters error`, error);
         return { granuleId, err: error };
       }
     },
@@ -199,7 +200,7 @@ function setEnvVarsForOperation(event) {
 
 async function handler(event) {
   setEnvVarsForOperation(event);
-
+  log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}`);
   if (event.type === 'BULK_GRANULE') {
     return bulkGranule(event.payload);
   }

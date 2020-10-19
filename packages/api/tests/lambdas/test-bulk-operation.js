@@ -18,6 +18,7 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
 });
 
 let applyWorkflowStub;
+let reingestStub;
 const envVars = {
   cmr_client_id: randomId('cmr_client'),
   CMR_ENVIRONMENT: randomId('env'),
@@ -44,6 +45,7 @@ test.before(async () => {
   await new Granule().createTable();
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');
+  reingestStub = sandbox.stub(Granule.prototype, 'reingest');
   sandbox.stub(Granule.prototype, '_removeGranuleFromCmr').resolves();
 });
 
@@ -416,4 +418,76 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not throw error for granule
     },
   });
   t.deepEqual(deletedGranules, []);
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs', async (t) => {
+  const granuleModel = new Granule();
+  const granules = await Promise.all([
+    granuleModel.create(fakeGranuleFactoryV2()),
+    granuleModel.create(fakeGranuleFactoryV2()),
+  ]);
+
+  await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload: {
+      ids: [
+        granules[0].granuleId,
+        granules[1].granuleId,
+      ],
+    },
+  });
+
+  t.is(reingestStub.callCount, 2);
+  reingestStub.args.forEach((callArgs) => {
+    const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
+    t.deepEqual(matchingGranule, callArgs[0]);
+    //TODO
+    t.is(callArgs[1], process.env.asyncOperationId);
+  });
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned by query', async (t) => {
+  const granuleModel = new Granule();
+  const granules = await Promise.all([
+    granuleModel.create(fakeGranuleFactoryV2()),
+    granuleModel.create(fakeGranuleFactoryV2()),
+  ]);
+
+  esSearchStub.resolves({
+    body: {
+      hits: {
+        hits: [{
+          _source: {
+            granuleId: granules[0].granuleId,
+          },
+        }, {
+          _source: {
+            granuleId: granules[1].granuleId,
+          },
+        }],
+        total: {
+          value: 2,
+        },
+      },
+    },
+  });
+
+  await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload: {
+      query: 'fake-query',
+      index: randomId('index'),
+    },
+  });
+
+  t.true(esSearchStub.called);
+  t.is(reingestStub.callCount, 2);
+  reingestStub.args.forEach((callArgs) => {
+    const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
+    t.deepEqual(matchingGranule, callArgs[0]);
+    //TODO
+    t.is(callArgs[1], process.env.asyncOperationId);
+  });
 });
