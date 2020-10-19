@@ -399,29 +399,10 @@ class Granule extends Manager {
     return this.searchGranulesForCollection(collectionId, searchParams, fields);
   }
 
-  /**
-   * return the queue of the granules for a given collection and search params,
-   * the items are ordered by granuleId
-   *
-   * @param {string} collectionId - collection id
-   * @param {Object} searchParams - optional, search parameters
-   * @param {Array<string>} fields - optional, fields to return
-   * @returns {Array<Object>} the granules' queue for a given collection
-   */
-  searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
-    // Key Condition Expression does not support IN operators
-    if (searchParams.granuleId && !isString(searchParams.granuleId)) {
-      throw new CumulusModelError('Could not search granule records for collection, granuleId is not string');
-    }
-    // Filter Expression can't contain key attributes
-    if (searchParams.collectionId) {
-      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in searchParams');
-    }
-
+  getDynamoDbSearchParams(searchParams = {}, query = true) {
     const attributeNames = {};
     const attributeValues = {};
     const filterArray = [];
-    const projectionArray = [];
     const keyConditionArray = [];
 
     Object.entries(searchParams).forEach(([key, value]) => {
@@ -447,12 +428,50 @@ class Granule extends Manager {
         expression = `#${field} ${operation} :${key}`;
       }
 
-      if (field === 'granuleId') {
+      if (query && field === 'granuleId') {
         keyConditionArray.push(expression);
       } else {
         filterArray.push(expression);
       }
     });
+
+    return {
+      attributeNames,
+      attributeValues,
+      filterArray,
+      filterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
+      keyConditionArray,
+      keyExpression: keyConditionArray.join(' AND '),
+    };
+  }
+
+  /**
+   * return the queue of the granules for a given collection and search params,
+   * the items are ordered by granuleId
+   *
+   * @param {string} collectionId - collection id
+   * @param {Object} searchParams - optional, search parameters
+   * @param {Array<string>} fields - optional, fields to return
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
+    // Key Condition Expression does not support IN operators
+    if (searchParams.granuleId && !isString(searchParams.granuleId)) {
+      throw new CumulusModelError('Could not search granule records for collection, granuleId is not string');
+    }
+    // Filter Expression can't contain key attributes
+    if (searchParams.collectionId) {
+      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in searchParams');
+    }
+
+    const {
+      attributeNames,
+      attributeValues,
+      filterExpression,
+      keyConditionArray,
+    } = this.getDynamoDbSearchParams(searchParams);
+
+    const projectionArray = [];
 
     fields.forEach((field) => {
       attributeNames[`#${field}`] = field;
@@ -470,13 +489,15 @@ class Granule extends Manager {
       ExpressionAttributeValues: attributeValues,
       KeyConditionExpression: keyConditionArray.join(' AND '),
       ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
-      FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
+      FilterExpression: filterExpression,
     };
 
     return new GranuleSearchQueue(removeNilProperties(params), 'query');
   }
 
-  granuleAttributeScan() {
+  granuleAttributeScan(searchParams) {
+    const { attributeValues, filterExpression } = this.getDynamoDbSearchParams(searchParams, false);
+
     const params = {
       TableName: this.tableName,
       ExpressionAttributeNames:
@@ -490,10 +511,12 @@ class Granule extends Manager {
         '#updatedAt': 'updatedAt',
         '#published': 'published',
       },
+      ExpressionAttributeValues: attributeValues,
       ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
+      FilterExpression: filterExpression,
     };
 
-    return new GranuleSearchQueue(params);
+    return new GranuleSearchQueue(removeNilProperties(params));
   }
 
   /**

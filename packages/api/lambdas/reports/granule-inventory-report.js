@@ -22,7 +22,7 @@ async function createGranuleInventoryReport(recReportParams) {
 
   const { reportKey, systemBucket } = recReportParams;
 
-  const granuleScanner = new Granule().granuleAttributeScan();
+  const granuleScanner = new Granule().granuleAttributeScan(recReportParams);
   let nextGranule = await granuleScanner.peek();
 
   const readable = new Stream.Readable({ objectMode: true });
