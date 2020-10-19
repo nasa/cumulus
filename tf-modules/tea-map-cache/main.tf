@@ -15,7 +15,6 @@ resource "aws_vpc_endpoint" "config" {
   tags                = var.tags
 }
 
-
 resource "aws_lambda_function" "tea_cache" {
   function_name    = "${var.prefix}-TeaCache"
   description      = "Bootstrap lambda to write tea cache file"
