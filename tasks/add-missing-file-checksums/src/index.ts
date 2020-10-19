@@ -115,7 +115,7 @@ export const handler = async (event: HandlerEvent) => {
   };
 };
 
-export const cmaHandler: any = async (
+export const cmaHandler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
 ) => runCumulusTask(handler, event, context);
