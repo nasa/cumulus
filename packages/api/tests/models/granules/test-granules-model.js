@@ -583,15 +583,21 @@ test('granuleAttributeScan returns granules filtered by search params', async (t
 
   const fields = ['granuleId', 'collectionId', 'beginningDateTime', 'endingDateTime', 'createdAt', 'status', 'updatedAt', 'published'];
 
+  // no search params
+  let granulesQueue = await granuleModel.granuleAttributeScan();
+
+  let fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 4);
+  t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId']));
+
   let searchParams = {
     status,
     updatedAt__from: Date.now() - 1000 * 30,
     updatedAt__to: Date.now(),
   };
-  let granulesQueue = await granuleModel
-    .granuleAttributeScan(searchParams);
+  granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
-  let fetchedGranules = await granulesQueue.empty();
+  fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 2);
   const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
   t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(expectedGranules, ['granuleId']));

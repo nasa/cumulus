@@ -511,7 +511,7 @@ class Granule extends Manager {
         '#updatedAt': 'updatedAt',
         '#published': 'published',
       },
-      ExpressionAttributeValues: attributeValues,
+      ExpressionAttributeValues: filterExpression ? attributeValues : undefined,
       ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
       FilterExpression: filterExpression,
     };
