@@ -45,7 +45,7 @@
     "handlebars": "^4.0.11",
     "js-yaml": "^3.13.1",
     "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "moment": "2.27.0",
     "p-map": "^2.1.0",
     "p-retry": "^2.0.0",
