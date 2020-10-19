@@ -18,9 +18,12 @@ const Pdr = require('../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
 
 const isPostRDSDeploymentExecution = (cumulusMessage) => {
+  const minimumSupportedRDSVersion = process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
+  if (!minimumSupportedRDSVersion) {
+    throw new Error('RDS_DEPLOYMENT_CUMULUS_VERSION environment variable must be set');
+  }
   const cumulusVersion = get(cumulusMessage, 'cumulus_meta.cumulus_version', '0.0.0');
-  // TODO: don't hardcode 3.0.0?
-  return semver.gte(cumulusVersion, '3.0.0');
+  return semver.gte(cumulusVersion, minimumSupportedRDSVersion);
 };
 
 /**

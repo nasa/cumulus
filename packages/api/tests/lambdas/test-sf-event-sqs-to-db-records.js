@@ -110,6 +110,8 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
+  process.env.RDS_DEPLOYMENT_CUMULUS_VERSION = '3.0.0';
+
   t.context.cumulusMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
@@ -137,7 +139,7 @@ test.after.always(async (t) => {
   await executionModel.deleteTable();
 });
 
-test('isPostRDSDeploymentExecution correctly returns true if Cumulus version is >= 3.0.0', (t) => {
+test('isPostRDSDeploymentExecution correctly returns true if Cumulus version is >= RDS deployment version', (t) => {
   t.true(isPostRDSDeploymentExecution({
     cumulus_meta: {
       cumulus_version: '3.0.0',
@@ -145,13 +147,22 @@ test('isPostRDSDeploymentExecution correctly returns true if Cumulus version is 
   }));
 });
 
-test('isPostRDSDeploymentExecution correctly returns false if Cumulus version is < 3.0.0 or missing', (t) => {
+test('isPostRDSDeploymentExecution correctly returns false if Cumulus version is < RDS deployment version or missing', (t) => {
   t.false(isPostRDSDeploymentExecution({
     cumulus_meta: {
       cumulus_version: '2.0.0',
     },
   }));
   t.false(isPostRDSDeploymentExecution({}));
+});
+
+test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', (t) => {
+  delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
+  t.throws(() => isPostRDSDeploymentExecution({
+    cumulus_meta: {
+      cumulus_version: '2.0.0',
+    },
+  }));
 });
 
 test('getInitialExecutionMessage returns cumulus message input if there is no parent execution', async (t) => {
