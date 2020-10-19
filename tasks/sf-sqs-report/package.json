@@ -33,7 +33,7 @@
   "dependencies": {
     "@cumulus/aws-client": "3.0.0",
     "@cumulus/cumulus-message-adapter-js": "1.3.1",
-    "lodash": "4.17.15"
+    "lodash": "4.17.20"
   },
   "devDependencies": {
     "@cumulus/common": "3.0.0"
