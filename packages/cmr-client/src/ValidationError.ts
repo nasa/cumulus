@@ -1,9 +1,8 @@
-'use strict';
-
 class ValidationError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = this.constructor.name;
   }
 }
-module.exports = ValidationError;
+
+export = ValidationError;

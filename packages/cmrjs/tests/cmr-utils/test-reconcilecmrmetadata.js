@@ -9,6 +9,8 @@ const { randomId } = require('@cumulus/common/test-utils');
 const cmrUtils = rewire('../../cmr-utils');
 
 test.before(async (t) => {
+  process.env.CMR_ENVIRONMENT = 'SIT';
+
   // Store the CMR password
   t.context.cmrPassword = randomId('cmr_password');
   t.context.cmrPasswordSecretName = randomId('cmr_password_secret_name');
