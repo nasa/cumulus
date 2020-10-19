@@ -171,7 +171,9 @@ test.serial('getInitialExecutionMessage returns initial parent execution message
   const stub = sinon.stub(StepFunctions, 'describeExecution');
   t.teardown(() => stub.restore());
 
-  stub.onCall(0).resolves({
+  stub.withArgs({
+    executionArn: 'machine1:execution1',
+  }).resolves({
     input: JSON.stringify({
       cumulus_meta: {
         state_machine: 'machine2',
@@ -187,7 +189,9 @@ test.serial('getInitialExecutionMessage returns initial parent execution message
       cumulus_version: 'x.x.x',
     },
   };
-  stub.onCall(1).resolves({
+  stub.withArgs({
+    executionArn: 'machine2:execution2',
+  }).resolves({
     input: JSON.stringify(initialExecutionMessage),
   });
 
