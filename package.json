@@ -59,8 +59,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "^1.23.1",
-    "archiver": "^4.0.1",
+    "@cumulus/aws-client": "^1.24.0",
+    "archiver": "^4.0.2",
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
@@ -74,6 +74,7 @@
     "@types/pg": "^7.14.4",
     "@types/pump": "^1.1.0",
     "@types/sinon": "^9.0.4",
+    "@types/xml2js": "^0.4.5",
     "@typescript-eslint/eslint-plugin": "^2.29.0",
     "@typescript-eslint/parser": "^2.29.0",
     "audit-ci": "^2.4.2",
@@ -112,7 +113,7 @@
     "knex": "0.21.6",
     "latest-version": "^4.0.0",
     "lerna": "3.20.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "markdownlint-cli": "^0.19.0",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",

@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 - Added resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
 
+### Added
+- **CUMULUS-2063**
+  - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
+
+### Changed
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
+- **CUMULUS-2232**
+  - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
+
+## [v3.0.0] 2020-10-7
+
 ### MIGRATION STEPS
 
 - **CUMULUS-2099**
@@ -303,6 +315,13 @@ from the 2.0.x branch.
 For the most recent release information for the maintenance branch please see
 the [release page](https://github.com/nasa/cumulus/releases)
 
+## [v2.0.7] 2020-10-1 - [BACKPORT]
+
+### Fixed
+
+- CVE-2020-7720
+  - Updated common `node-forge` dependency to 0.10.0 to address CVE finding
+
 ### [v2.0.6] 2020-09-25 - [BACKPORT]
 
 ### Fixed
@@ -514,6 +533,10 @@ the [release page](https://github.com/nasa/cumulus/releases)
   apply`.
 
 ### Added
+
+- **CUMULUS-2081**
+  - Add Integrator Guide section for onboarding
+  - Add helpful tips documentation
 
 - **CUMULUS-1902**
   - Add Common Use Cases section under Operator Docs
@@ -3572,14 +3595,16 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v2.0.1...HEAD
-[v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.6
-[v2.0.5]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.5
-[v2.0.4]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.4
-[v2.0.3]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.3
+[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.0...HEAD
+[v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
+[v2.0.7]: https://github.com/nasa/cumulus/compare/v2.0.6...v2.0.7
+[v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.5...v2.0.6
+[v2.0.5]: https://github.com/nasa/cumulus/compare/v2.0.4...v2.0.5
+[v2.0.4]: https://github.com/nasa/cumulus/compare/v2.0.3...v2.0.4
+[v2.0.3]: https://github.com/nasa/cumulus/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.2
-[v2.0.1]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.1
-[v2.0.0]:  https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
+[v2.0.1]: https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.1
+[v2.0.0]: https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
 [v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
 [v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
 [v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
