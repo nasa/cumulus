@@ -568,7 +568,7 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   t.is(fetchedGranules.length, 0);
 });
 
-test('granuleAttributeScan returns granules filtered by search params', async (t) => {
+test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
   const { granuleModel } = t.context;
 
   const collectionId = randomString();
@@ -587,7 +587,7 @@ test('granuleAttributeScan returns granules filtered by search params', async (t
   let granulesQueue = await granuleModel.granuleAttributeScan();
 
   let fetchedGranules = await granulesQueue.empty();
-  t.is(fetchedGranules.length, 4);
+  // t.is(fetchedGranules.length, 4);
   t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId']));
 
   let searchParams = {
@@ -607,8 +607,7 @@ test('granuleAttributeScan returns granules filtered by search params', async (t
     ...searchParams,
     collectionId: [collectionId, randomId('collection')],
   };
-  granulesQueue = await granuleModel
-    .granuleAttributeScan(searchParams);
+  granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
   fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 1);
@@ -619,8 +618,7 @@ test('granuleAttributeScan returns granules filtered by search params', async (t
     ...searchParams,
     granuleId: granules[0].granuleId,
   };
-  granulesQueue = await granuleModel
-    .granuleAttributeScan(searchParams);
+  granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
   fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 1);
@@ -631,8 +629,7 @@ test('granuleAttributeScan returns granules filtered by search params', async (t
     status,
     updatedAt__from: Date.now(),
   };
-  granulesQueue = await granuleModel
-    .granuleAttributeScan(searchParams, fields);
+  granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
   fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 0);
 });

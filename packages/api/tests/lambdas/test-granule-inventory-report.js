@@ -40,15 +40,17 @@ test('Writes a file containing all granules to S3.', async (t) => {
   await new models.Granule().create(testGranules);
   const reportRecordName = randomId('recordName');
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportRecordName}.csv`;
+  const systemBucket = t.context.systemBucket;
   const reportParams = {
     ...normalizeEvent({ reportType: 'Granule Inventory' }),
     reportKey,
+    systemBucket,
   };
 
   await createGranuleInventoryReport(reportParams);
 
   const reportOnS3 = await getObject(s3(), {
-    Bucket: t.context.systemBucket,
+    Bucket: systemBucket,
     Key: reportKey,
   });
 

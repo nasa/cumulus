@@ -20,14 +20,6 @@ async function createGranuleInventoryReport(recReportParams) {
     `createGranuleInventoryReport parameters ${JSON.stringify(recReportParams)}`
   );
 
-  const { reportKey, systemBucket } = recReportParams;
-
-  const granuleScanner = new Granule().granuleAttributeScan(recReportParams);
-  let nextGranule = await granuleScanner.peek();
-
-  const readable = new Stream.Readable({ objectMode: true });
-  const pass = new Stream.PassThrough();
-  readable._read = noop;
   const fields = [
     'granuleUr',
     'collectionId',
@@ -38,6 +30,22 @@ async function createGranuleInventoryReport(recReportParams) {
     'updatedAt',
     'published',
   ];
+
+  const { reportKey, systemBucket, ...params } = recReportParams;
+  const searchParams = {};
+  fields.forEach((field) => {
+    const fieldValue = params[field];
+    if (fieldValue) {
+      searchParams[field] = fieldValue;
+    }
+  });
+
+  const granuleScanner = new Granule().granuleAttributeScan(searchParams);
+  let nextGranule = await granuleScanner.peek();
+
+  const readable = new Stream.Readable({ objectMode: true });
+  const pass = new Stream.PassThrough();
+  readable._read = noop;
   const transformOpts = { objectMode: true };
 
   const json2csv = new Transform({ fields }, transformOpts);
