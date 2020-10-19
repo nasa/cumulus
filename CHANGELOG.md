@@ -9,8 +9,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
     `/reconciliationReport` returns.  The user (dashboard) must read the value
-    of `url` from the return to get the s3SignedURL and then download the report.
-    
+    of `url` from the return to get the s3SignedURL and then download the
+    report.
+
+- **CUMULUS-2232**
+  - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
+
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS
