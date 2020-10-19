@@ -166,7 +166,7 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
   }
 });
 
-test.serial.only('parse PDR from SFTP endpoint', async (t) => {
+test.serial('parse PDR from SFTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -353,16 +353,16 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
 
 test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR
-  await Promise.all([
-    t.context.collectionConfigStore.put(
-      'MYG29_S1D_SIR', '006',
-      { name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    ),
-    t.context.collectionConfigStore.put(
-      'MYG29_N1D_SIR', '006',
-      { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    ),
-  ]);
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.payload.config.stack,
+    collectionName: 'MYG29_S1D_SIR',
+    collectionVersion: '006',
+  }).resolves({ name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' });
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.payload.config.stack,
+    collectionName: 'MYG29_N1D_SIR',
+    collectionVersion: '006',
+  }).resolves({ name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' });
 
   // Set up the task config
   t.context.payload.config.provider = {
