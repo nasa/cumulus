@@ -526,12 +526,13 @@ test('The sf-event-sqs-to-db-records Lambda adds records to the granule, executi
   t.true(await pdrModel.exists({ pdrName }));
 });
 
-test.skip('Lambda writes records to Dynamo and not RDS if cumulus version < 3.0.0', async (t) => {
+test('Lambda writes records to Dynamo and not RDS if cumulus version is less than RDS deployment version', async (t) => {
   const {
     cumulusMessage,
     executionModel,
     granuleModel,
     pdrModel,
+    knex,
   } = t.context;
 
   cumulusMessage.cumulus_meta.cumulus_version = '2.0.1';
@@ -541,4 +542,11 @@ test.skip('Lambda writes records to Dynamo and not RDS if cumulus version < 3.0.
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await granuleModel.exists({ granuleId }));
   t.true(await pdrModel.exists({ pdrName }));
+
+  t.falsy(
+    await knex('executions')
+      .where('arn', executionArn)
+      .first()
+  );
+  // Add assertions for granule, PDR
 });
