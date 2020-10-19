@@ -2,6 +2,8 @@
 set -ex
 
 # . ./bamboo/set-bamboo-env-variables.sh
+echo "here";
+echo $TS_BUILD_CACHE_FILE;
 if [[ -z $TS_BUILD_CACHE_FILE ]]; then
   echo "Name of TS build cache file cannot be found. Exiting"
   exit 1
