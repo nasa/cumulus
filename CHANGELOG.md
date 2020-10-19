@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- Added resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
 
 ### MIGRATION STEPS
 
