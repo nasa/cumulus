@@ -53,39 +53,46 @@ cmr_oauth_provider = "earthdata"
 archive_api_port = 8000
 private_archive_api_gateway = true
 
-# Optional. Required if using cmr_oauth_provider = "launchpad"
+# Optional, uncomment if needed. Required if using cmr_oauth_provider = "launchpad".
+/* 
 launchpad_api = "launchpadApi"
 launchpad_certificate = "certificate"
 launchpad_passphrase = "passphrase"
+*/
 
 oauth_provider   = "earthdata"
 
-# Optional. Oauth user group to validate the user against when using oauth_provider = "launchpad"
-oauth_user_group = "usergroup"
+# Optional, uncomment if needed. Oauth user group to validate the user against when using oauth_provider = "launchpad".
+# oauth_user_group = "usergroup"
 
-# Optional.  When using oauth_provider = "launchpad", and if you are configuring Cumulus to authenticate
+# Optional, uncomment if needed.  When using oauth_provider = "launchpad", and if you are configuring Cumulus to authenticate
 # the dashboard via NASA's Launchpad SAML implementation.
 # see Wiki: https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+SAML+Launchpad+Integration
+/*
 saml_entity_id                  = "Configured SAML entity-id"
 saml_assertion_consumer_service = "<Cumulus API endpoint>/saml/auth, e.g. https://example.com/saml/auth"
+*/
 
-# Sandbox Launchpad saml2sso: https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso
+# Optional, uncomment if needed. Sandbox Launchpad saml2sso: https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso
 # Production Launchpad saml2sso: https://auth.launchpad.nasa.gov/affwebservices/public/saml2sso
-saml_idp_login                  = "nasa's saml2sso endpoint, e.g. https://example.gov/affwebservices/public/saml2sso"
+# saml_idp_login                  = "nasa's saml2sso endpoint, e.g. https://example.gov/affwebservices/public/saml2sso"
 
-# Sandbox Launchpad IDP metadata: https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml
+# Optional, uncomment if needed. Sandbox Launchpad IDP metadata: https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml
 # Production Launchpad IDP Metadata: https://auth.launchpad.nasa.gov/unauth/metadata/launchpad.idp.xml
-saml_launchpad_metadata_url     = "url of the identity provider public metadata xml file"
+# saml_launchpad_metadata_url     = "url of the identity provider public metadata xml file"
 
-# Optional
-key_name      = "MY-KEY"
+# Optional, uncomment if needed.
+# key_name      = "MY-KEY"
 
-# Optional
+# Optional, uncomment if needed.
+/*
 metrics_es_host = "xxxxxxxxxx.cloudfront.net"
 metrics_es_username = "user"
 metrics_es_password = "password"
+*/
 
-# Optional. Required to send EMS ingest/distribution reports.
+# Optional, uncomment if needed. Required to send EMS ingest/distribution reports.
+/*
 ems_host              = "ems-host.nasa.gov"
 ems_port              = 22
 ems_path              = "/"
@@ -95,10 +102,13 @@ ems_provider          = "CUMULUS"
 ems_retention_in_days = 30
 ems_submit_report     = true
 ems_username          = "user"
+*/
 
-# Optional. Required to send logs to the Metrics ELK stack
+# Optional, uncomment if needed. Required to send logs to the Metrics ELK stack
+/*
 log_api_gateway_to_cloudwatch = false
 log_destination_arn = "arn:aws:logs:us-east-1:1234567890:destination:LogsDestination"
 additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
+*/
