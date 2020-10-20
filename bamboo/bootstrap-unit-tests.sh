@@ -34,7 +34,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   # echo "here"
   docker cp $TS_BUILD_CACHE_FILE "${container_id}_build_env_1:$UNIT_TEST_BUILD_DIR"
   # $docker_command "cp /source/cumulus/$TS_BUILD_CACHE_FILE $UNIT_TEST_BUILD_DIR;"
-  docker cp .bamboo/extract-ts-build-cache.sh "${container_id}_build_env_1:$UNIT_TEST_BUILD_DIR/bamboo"
+  docker cp bamboo/extract-ts-build-cache.sh "${container_id}_build_env_1:$UNIT_TEST_BUILD_DIR/bamboo"
   # $docker_command "cp /source/cumulus/bamboo/extract-ts-build-cache.sh $UNIT_TEST_BUILD_DIR/bamboo;"
 fi
 # Extract build cache of compiled TS files
