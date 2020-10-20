@@ -495,7 +495,7 @@ class Granule extends Manager {
     return new GranuleSearchQueue(removeNilProperties(params), 'query');
   }
 
-  granuleAttributeScan(searchParams) {
+  granuleAttributeScan(searchParams = {}) {
     const { attributeValues, filterExpression } = this.getDynamoDbSearchParams(searchParams, false);
 
     const params = {

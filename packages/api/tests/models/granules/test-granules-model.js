@@ -513,7 +513,7 @@ test('getGranulesForCollection() filters by status', async (t) => {
   t.is(await granules.shift(), null);
 });
 
-test('searchGranulesForCollection() returns matching granules ordered by granuleId', async (t) => {
+test.serial('searchGranulesForCollection() returns matching granules ordered by granuleId', async (t) => {
   const { granuleModel } = t.context;
 
   const collectionId = randomString();
@@ -568,8 +568,7 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   t.is(fetchedGranules.length, 0);
 });
 
-/*
-test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
+test.serial('granuleAttributeScan() returns granules filtered by search params', async (t) => {
   const { granuleModel } = t.context;
 
   const collectionId = randomString();
@@ -590,7 +589,7 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
     'createdAt',
     'status',
     'updatedAt',
-    'published'
+    'published',
   ];
 
   // no search params
@@ -600,7 +599,8 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
   t.is(fetchedGranules.length, 4);
   t.deepEqual(
     sortBy(fetchedGranules, ['granuleId']),
-    sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId']));
+    sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId'])
+  );
 
   let searchParams = {
     status,
@@ -644,7 +644,7 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
   granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
   fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 0);
-}); */
+});
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
   const granule = fakeGranuleFactoryV2({ published: false });
