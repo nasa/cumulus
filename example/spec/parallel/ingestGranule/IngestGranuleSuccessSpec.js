@@ -737,6 +737,7 @@ describe('The S3 Ingest Granules workflow', () => {
         let reingestGranuleId;
         let fakeGranuleId;
         let asyncOperationId;
+        let reingestExecutionArn;
 
         beforeAll(async () => {
           startTime = new Date();
@@ -759,7 +760,7 @@ describe('The S3 Ingest Granules workflow', () => {
           expect(responseBody.operationType).toBe('Bulk Granule Reingest');
         });
 
-        it('executes successfully', async () => {
+        it('executes async operation successfully', async () => {
           const asyncOperation = await waitForAsyncOperationStatus({
             id: asyncOperationId,
             status: 'SUCCEEDED',
@@ -786,12 +787,13 @@ describe('The S3 Ingest Granules workflow', () => {
             startTask: 'SyncGranule',
           });
 
-          console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+          reingestExecutionArn = reingestGranuleExecution.executionArn;
+          console.log(`Wait for completed execution ${reingestExecutionArn}`);
 
-          await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+          await waitForCompletedExecution(reingestExecutionArn);
 
           const moveGranuleOutput = await lambdaStep.getStepOutput(
-            reingestGranuleExecution.executionArn,
+            reingestExecutionArn,
             'MoveGranule'
           );
 
@@ -824,6 +826,15 @@ describe('The S3 Ingest Granules workflow', () => {
           currentFiles.forEach((cf) => {
             expect(cf.LastModified).toBeGreaterThan(startTime);
           });
+        });
+
+        it('saves asyncOperationId to execution record', async () => {
+          const reingestExecution = await waitForModelStatus(
+            executionModel,
+            { arn: reingestExecutionArn },
+            'completed'
+          );
+          expect(reingestExecution.asyncOperationId).toEqual(asyncOperationId);
         });
       });
 
