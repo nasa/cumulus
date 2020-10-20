@@ -4,10 +4,12 @@ terraform {
   }
 }
 
+data "aws_region" "current" {}
+
 resource "aws_vpc_endpoint" "config" {
   count = var.deploy_to_ngap && (var.vpc_id == null || var.lambda_subnet_ids == null) ? 0 : 1
   vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${var.region}.execute-api"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.execute-api"
   vpc_endpoint_type = "Interface"
 
   security_group_ids  = [aws_security_group.no_ingress_all_egress[0].id]

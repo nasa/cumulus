@@ -21,7 +21,6 @@ module "tea_map_cache" {
   tags                       = var.tags
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
-  region                     = var.region
   deploy_to_ngap             = var.deploy_to_ngap
 }
 

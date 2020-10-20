@@ -31,8 +31,3 @@ variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
 }
-
-variable "region" {
-  type    = string
-  default = "us-east-1"
-}
