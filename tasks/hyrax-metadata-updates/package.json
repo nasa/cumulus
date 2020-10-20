@@ -43,7 +43,7 @@
     "@cumulus/cumulus-message-adapter-js": "2.0.0",
     "@cumulus/errors": "3.0.0",
     "libxmljs": "^0.19.7",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "nock": "^12.0.1",
     "rewire": "^4.0.1",
     "xml2js": "^0.4.23"

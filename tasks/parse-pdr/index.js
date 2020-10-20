@@ -7,10 +7,12 @@ const isNumber = require('lodash/isNumber');
 const isString = require('lodash/isString');
 const S3 = require('@cumulus/aws-client/S3');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
-const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { PDRParsingError } = require('@cumulus/errors');
 const { pvlToJS } = require('@cumulus/pvl/t');
-const { providers: providersApi } = require('@cumulus/api-client');
+const {
+  collections: collectionsApi,
+  providers: providersApi,
+} = require('@cumulus/api-client');
 
 const getProviderByHost = async ({ prefix, host }) => {
   const { body } = await providersApi.getProviders({
@@ -174,7 +176,6 @@ const convertFileGroupToGranule = async ({
   prefix,
   fileGroup,
   pdrName,
-  collectionConfigStore,
 }) => {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
@@ -191,7 +192,11 @@ const convertFileGroupToGranule = async ({
 
   const files = specs.map(parseSpec.bind(undefined, pdrName));
 
-  const collectionConfig = await collectionConfigStore.get(dataType, version);
+  const collectionConfig = await collectionsApi.getCollection({
+    prefix,
+    collectionName: dataType,
+    collectionVersion: version,
+  });
 
   let provider;
   if (fileGroup.get('NODE_NAME')) {
@@ -250,15 +255,12 @@ const parsePdr = async ({ config, input }) => {
 
   const pdrDocument = buildPdrDocument(rawPdr);
 
-  const collectionConfigStore = new CollectionConfigStore(config.bucket, config.stack);
-
   const allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
       convertFileGroupToGranule({
         prefix: config.stack,
         fileGroup,
         pdrName: input.pdr.name,
-        collectionConfigStore,
       }))
   );
 

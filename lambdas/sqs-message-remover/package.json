@@ -38,6 +38,6 @@
     "@cumulus/aws-client": "3.0.0",
     "@cumulus/common": "3.0.0",
     "@cumulus/logger": "3.0.0",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.20"
   }
 }
