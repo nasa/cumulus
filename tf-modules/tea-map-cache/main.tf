@@ -5,7 +5,7 @@ terraform {
 }
 
 resource "aws_vpc_endpoint" "config" {
-  count = var.deploy_to_ngap ? 0 : 1
+  count = var.deploy_to_ngap && (var.vpc_id == null || subnet_ids == null) ? 0 : 1
   vpc_id            = var.vpc_id
   service_name      = "com.amazonaws.${var.region}.execute-api"
   vpc_endpoint_type = "Interface"
