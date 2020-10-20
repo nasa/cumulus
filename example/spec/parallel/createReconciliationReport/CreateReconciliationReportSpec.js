@@ -352,7 +352,7 @@ describe('When there are granule differences and granule reconciliation is run',
         granuleId: publishedGranuleId,
       });
       console.log('XXXXX Completed for granulesApiTestUtils.getGranule()');
-
+      await waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleBeforeUpdate.body));
       console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
