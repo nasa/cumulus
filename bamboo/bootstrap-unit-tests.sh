@@ -31,12 +31,11 @@ done
 $docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA"
 # Copy build cache of compiled TS code into cached bootstrap dir, if necessary
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-  $docker_command "ls /source/cumulus"
+echo "here"
   $docker_command "cp /source/cumulus/$TS_BUILD_CACHE_FILE $UNIT_TEST_BUILD_DIR"
   $docker_command "cp /source/cumulus/bamboo/extract-ts-build-cache.sh $UNIT_TEST_BUILD_DIR/bamboo"
 fi
 # Extract build cache of compiled TS files
-echo "here"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; TS_BUILD_CACHE_FILE=$TS_BUILD_CACHE_FILE ./bamboo/extract-ts-build-cache.sh"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run ci:bootstrap-no-scripts-quiet || true; npm run ci:bootstrap-no-scripts-quiet"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
