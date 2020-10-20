@@ -51,14 +51,14 @@ locals {
   message_template_key = "${var.prefix}/workflow_template.json"
 
   message_template = jsonencode({
-    cumulus_meta = {
+    cumulus_meta = merge({
       message_source          = "sfn"
       system_bucket           = var.system_bucket
       state_machine           = null
       execution_name          = null
       workflow_start_time     = null
       queueExecutionLimits    = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
-    }
+    }, file("${path.module}/cumulus_version.json"))
     meta = {
       workflow_name  = null
       workflow_tasks = {}
