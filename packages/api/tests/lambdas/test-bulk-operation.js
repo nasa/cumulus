@@ -20,6 +20,7 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
 let applyWorkflowStub;
 let reingestStub;
 const envVars = {
+  asyncOperationId: randomId('asyncOperationId'),
   cmr_client_id: randomId('cmr_client'),
   CMR_ENVIRONMENT: randomId('env'),
   cmr_oauth_provider: randomId('cmr_oauth'),
@@ -442,7 +443,6 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs'
   reingestStub.args.forEach((callArgs) => {
     const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
     t.deepEqual(matchingGranule, callArgs[0]);
-    //TODO
     t.is(callArgs[1], process.env.asyncOperationId);
   });
 });
@@ -487,7 +487,6 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
   reingestStub.args.forEach((callArgs) => {
     const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
     t.deepEqual(matchingGranule, callArgs[0]);
-    //TODO
     t.is(callArgs[1], process.env.asyncOperationId);
   });
 });

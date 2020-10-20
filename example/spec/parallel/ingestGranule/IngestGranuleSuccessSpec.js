@@ -10,6 +10,7 @@ const difference = require('lodash/difference');
 const get = require('lodash/get');
 const includes = require('lodash/includes');
 const intersection = require('lodash/intersection');
+const isObject = require('lodash/isObject');
 
 const {
   Execution,
@@ -29,6 +30,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
+const { randomId } = require('@cumulus/common/test-utils');
 const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -38,6 +40,7 @@ const {
   conceptExists,
   getExecutionOutput,
   getOnlineResources,
+  waitForAsyncOperationStatus,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
   waitForCompletedExecution,
@@ -730,26 +733,46 @@ describe('The S3 Ingest Granules workflow', () => {
       describe('when a reingest granule is triggered via the API', () => {
         let oldExecution;
         let oldUpdatedAt;
-        let reingestResponse;
         let startTime;
+        let reingestGranuleId;
+        let fakeGranuleId;
+        let asyncOperationId;
 
         beforeAll(async () => {
           startTime = new Date();
           oldUpdatedAt = granule.updatedAt;
           oldExecution = granule.execution;
-          const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
+          reingestGranuleId = inputPayload.granules[0].granuleId;
+          fakeGranuleId = randomId('fakeGranuleId');
+        });
+
+        it('generates an async operation through the Cumulus API', async () => {
+          const response = await granulesApiTestUtils.bulkReingestGranules({
             prefix: config.stackName,
-            granuleId: inputPayload.granules[0].granuleId,
+            body: {
+              ids: [reingestGranuleId, fakeGranuleId],
+            },
           });
-          reingestResponse = JSON.parse(reingestGranuleResponse.body);
+
+          const responseBody = JSON.parse(response.body);
+          asyncOperationId = responseBody.id;
+          expect(responseBody.operationType).toBe('Bulk Granule Reingest');
         });
 
-        it('executes successfully', () => {
-          expect(reingestResponse.status).toEqual('SUCCESS');
-        });
+        it('executes successfully', async () => {
+          const asyncOperation = await waitForAsyncOperationStatus({
+            id: asyncOperationId,
+            status: 'SUCCEEDED',
+            stackName: config.stackName,
+            retries: 100,
+          });
 
-        it('returns a warning that data may be overwritten when duplicateHandling is "error"', () => {
-          expect(get(reingestResponse, 'warning', '')).toContain('overwritten');
+          const reingestOutput = JSON.parse(asyncOperation.output);
+          expect(reingestOutput.length).toBe(2);
+          expect(reingestOutput.includes(reingestGranuleId)).toBe(true);
+          const fakeGranResult = reingestOutput.filter((result) => isObject(result));
+          expect(fakeGranResult.length).toBe(1);
+          expect(get(fakeGranResult[0], 'granuleId')).toEqual(fakeGranuleId);
         });
 
         it('overwrites granule files', async () => {
@@ -778,13 +801,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
           await waitForModelStatus(
             granuleModel,
-            { granuleId: inputPayload.granules[0].granuleId },
+            { granuleId: reingestGranuleId },
             'completed'
           );
 
           const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
             prefix: config.stackName,
-            granuleId: inputPayload.granules[0].granuleId,
+            granuleId: reingestGranuleId,
           });
 
           const updatedGranule = JSON.parse(updatedGranuleResponse.body);
