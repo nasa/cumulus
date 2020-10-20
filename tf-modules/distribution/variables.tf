@@ -24,7 +24,7 @@ variable "tea_internal_api_endpoint" {
 
 variable "deploy_s3_credentials_endpoint" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "log_destination_arn" {
