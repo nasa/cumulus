@@ -593,7 +593,7 @@ test.serial('granuleAttributeScan() returns granules filtered by search params',
   ];
 
   // no search params
-  const granulesQueue = await granuleModel.granuleAttributeScan();
+  const granulesQueue = granuleModel.granuleAttributeScan();
 
   const fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 4);
