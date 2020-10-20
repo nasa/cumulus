@@ -412,7 +412,7 @@ test('batchGet() will translate old-style granule files into the new schema', as
   );
 });
 
-test('scan() will translate old-style granule files into the new schema', async (t) => {
+test.serial('scan() will translate old-style granule files into the new schema', async (t) => {
   const oldFile = {
     bucket: 'my-bucket',
     filename: 's3://my-bucket/path/to/file.txt',
@@ -452,7 +452,7 @@ test('scan() will translate old-style granule files into the new schema', async 
   );
 });
 
-test('getGranulesForCollection() only returns granules belonging to the specified collection', async (t) => {
+test.serial('getGranulesForCollection() only returns granules belonging to the specified collection', async (t) => {
   const { granuleModel } = t.context;
 
   const expectedGranule = fakeGranuleFactoryV2({ collectionId: 'good-collection' });
@@ -469,7 +469,7 @@ test('getGranulesForCollection() only returns granules belonging to the specifie
   t.is(await granules.shift(), null);
 });
 
-test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
+test.serial('getGranulesForCollection() sorts its results by granuleId', async (t) => {
   const { granuleModel } = t.context;
 
   const collectionId = randomString();
@@ -495,7 +495,7 @@ test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
   );
 });
 
-test('getGranulesForCollection() filters by status', async (t) => {
+test.serial('getGranulesForCollection() filters by status', async (t) => {
   const { granuleModel } = t.context;
 
   const collectionId = randomString();
@@ -569,7 +569,7 @@ test.serial('searchGranulesForCollection() returns matching granules ordered by 
 });
 
 test.serial('granuleAttributeScan() returns granules filtered by search params', async (t) => {
-  const { granuleModel } = t.context;
+  const granuleModel = new Granule();
 
   const collectionId = randomString();
   const status = 'running';
