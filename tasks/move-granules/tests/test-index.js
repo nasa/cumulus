@@ -217,18 +217,6 @@ test.serial('Should move renamed files in staging area to final location.', asyn
   t.true(check);
 });
 
-test.serial('Should add etag to each CMR metadata file', async (t) => {
-  const newPayload = buildPayload(t);
-  const filesToUpload = cloneDeep(t.context.filesToUpload);
-  await uploadFiles(filesToUpload, t.context.stagingBucket);
-
-  const output = await moveGranules(newPayload);
-
-  output.granules[0].files
-    .filter(isCMRFile)
-    .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/));
-});
-
 test.serial('Should add metadata type to CMR granule files.', async (t) => {
   const newPayload = buildPayload(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
@@ -629,18 +617,4 @@ test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is 
 test.serial('when duplicateHandling is specified as "replace" via collection, do overwrite files', async (t) => {
   const payload = setupDuplicateHandlingCollection(t, 'replace');
   await granuleFilesOverwrittenTest(t, payload);
-});
-
-test.serial('Move granules throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
-  const newPayload = buildPayload(t);
-  delete newPayload.config.distribution_endpoint;
-
-  const filesToUpload = cloneDeep(t.context.filesToUpload);
-  await uploadFiles(filesToUpload, t.context.stagingBucket);
-
-  const error = await t.throwsAsync(
-    () => moveGranules(newPayload)
-  );
-
-  t.is(error.message, 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
 });

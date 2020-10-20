@@ -5,13 +5,10 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const flatten = require('lodash/flatten');
 const keyBy = require('lodash/keyBy');
-const mapValues = require('lodash/mapValues');
 const path = require('path');
-const set = require('lodash/set');
 
 const {
   buildS3Uri,
-  getJsonS3Object,
   moveObject,
   s3Join,
   s3ObjectExists,
@@ -30,14 +27,12 @@ const {
   isCMRFile,
   metadataObjectFromCMRFile,
   granulesToCmrFileObjects,
-  updateCMRMetadata,
 } = require('@cumulus/cmrjs');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
 /**
  * Validates the file matched only one collection.file and has a valid bucket
@@ -253,22 +248,14 @@ async function moveGranules(event) {
   // We have to post the meta-xml file of all output granules
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
-  const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
-    .map(({ name, type }) => [name, type]));
 
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
-  const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'distribution');
 
   const duplicateHandling = duplicateHandlingType(event);
 
   const granulesInput = event.input.granules;
   const cmrFiles = granulesToCmrFileObjects(granulesInput);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
-
-  const distributionBucketMap = await getJsonS3Object(
-    process.env.system_bucket,
-    getDistributionBucketMapKey(process.env.stackName)
-  );
 
   let movedGranulesByGranuleId;
 
