@@ -37,7 +37,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .notNullable();
     table
       .jsonb('tasks')
-      .comment('TODO');
+      .comment('List of completed workflow tasks');
     table
       .jsonb('error')
       .comment('Error details in case of a failed execution');
