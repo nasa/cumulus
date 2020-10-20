@@ -253,7 +253,8 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
     // Verify the collection is returned when listing collections
     const collsResp = await getCollections({ prefix: stackName,
       query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
-    const ids = JSON.parse(collsResp.body).results.map((c) => constructCollectionId(c.name, c.version));
+    const results = JSON.parse(collsResp.body).results;
+    const ids = results ? JSON.parse(collsResp.body).results.map((c) => constructCollectionId(c.name, c.version)) : [];
     return isEqual(ids.sort(), collectionIds.sort());
   },
   {
