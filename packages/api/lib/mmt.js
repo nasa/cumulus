@@ -5,6 +5,9 @@ const get = require('lodash/get');
 
 const { CMR } = require('@cumulus/cmr-client');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const Logger = require('@cumulus/logger');
+
+const log = new Logger({ sender: 'api/lib/mmt' });
 
 let cmr;
 
@@ -70,11 +73,17 @@ const updateObjectWithMMT = async (responseObj) => {
  */
 const insertMMTLinks = async (inputResponse) => {
   const response = cloneDeep(inputResponse);
-  cmr = new CMR(await getCmrSettings());
+  try {
+    cmr = new CMR(await getCmrSettings());
 
-  response.results = await Promise.all(
-    inputResponse.results.map(updateObjectWithMMT)
-  );
+    response.results = await Promise.all(
+      inputResponse.results.map(updateObjectWithMMT)
+    );
+  } catch (error) {
+    log.error('Unable to update inputResponse with MMT Links');
+    log.error(error);
+    return inputResponse;
+  }
 
   return response;
 };
