@@ -233,66 +233,6 @@ async function moveFilesForAllGranules(
 }
 
 /**
- * Update each of the CMR files' OnlineAccessURL fields to represent the new
- * file locations.
- *
- * @param {Array<Object>} cmrFiles       - array of objects that include CMR xmls uris and
- *                                         granuleIds
- * @param {Object} granulesObject        - an object of the granules where the key is the granuleId
- * @param {string} cmrGranuleUrlType .   - type of granule CMR url
- * @param {string} distEndpoint          - the api distribution endpoint
- * @param {Object} bucketTypes           - map of bucket names to bucket types
- * @param {Object} distributionBucketMap - mapping of bucket->distirubtion path values
- *                                         (e.g. { bucket: distribution path })
- * @returns {Promise<Object[]>} array of updated CMR files with etags
- */
-async function updateEachCmrFileAccessURLs(
-  cmrFiles,
-  granulesObject,
-  cmrGranuleUrlType,
-  distEndpoint,
-  bucketTypes,
-  distributionBucketMap
-) {
-  return Promise.all(cmrFiles.map((cmrFile) => {
-    const granuleId = cmrFile.granuleId;
-    const granule = granulesObject[granuleId];
-
-    return updateCMRMetadata({
-      granuleId,
-      cmrFile: granule.files.find(isCMRFile),
-      files: granule.files,
-      distEndpoint,
-      published: false, // Do the publish in publish-to-cmr step
-      bucketTypes,
-      cmrGranuleUrlType,
-      distributionBucketMap,
-    });
-  }));
-}
-
-/**
- * Adds etag values to the specified granules' CMR files.
- *
- * @param {Object} granulesByGranuleId - mapping of granule IDs to granules,
- *    each containing a list of `files`
- * @param {Object[]} cmrFiles - array of CMR file objects with `filename` and
- *    `etag` properties
- * @returns {Object} granule mapping identical to input granule mapping, but
- *    with CMR file objects updated with the `etag` values supplied via the
- *    array of CMR file objects, matched by `filename`
- */
-function addCmrFileEtags(granulesByGranuleId, cmrFiles) {
-  const etagsByFilename = Object.fromEntries(cmrFiles
-    .map(({ filename, etag }) => [filename, etag]));
-  const addEtag = (file) => set(file, 'etag', etagsByFilename[file.filename]);
-  const addEtags = (files) => files.map((f) => (isCMRFile(f) ? addEtag(f) : f));
-
-  return mapValues(granulesByGranuleId,
-    (granule) => ({ ...granule, files: addEtags(granule.files) }));
-}
-
-/**
  * Move Granule files to final location.
  * See the schemas directory for detailed input and output schemas.
  *
@@ -344,20 +284,6 @@ async function moveGranules(event) {
     movedGranulesByGranuleId = await moveFilesForAllGranules(
       granulesToMove, config.bucket, duplicateHandling, bucketsConfig
     );
-
-    // Update cmr metadata files with correct online access urls and etags
-    const updatedCmrFiles = await updateEachCmrFileAccessURLs(
-      cmrFiles,
-      movedGranulesByGranuleId,
-      cmrGranuleUrlType,
-      config.distribution_endpoint,
-      bucketTypes,
-      distributionBucketMap
-    );
-
-    // Transfer etag info to granules' CMR files
-    movedGranulesByGranuleId = addCmrFileEtags(movedGranulesByGranuleId,
-      updatedCmrFiles);
   } else {
     movedGranulesByGranuleId = granulesByGranuleId;
   }

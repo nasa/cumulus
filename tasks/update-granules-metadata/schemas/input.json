@@ -1,0 +1,44 @@
+{
+  "title": "UpdateGranulesMetadataInput",
+  "description": "Describes the input expected by the update-granules-metadata task",
+  "type": "object",
+  "required": [
+    "granules"
+  ],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "bucket": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
