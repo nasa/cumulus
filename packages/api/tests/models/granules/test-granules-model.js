@@ -1,8 +1,8 @@
 'use strict';
 
 const test = require('ava');
-// const pick = require('lodash/pick');
-// const sortBy = require('lodash/sortBy');
+const pick = require('lodash/pick');
+const sortBy = require('lodash/sortBy');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -10,7 +10,7 @@ const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
-const { randomString/*, randomId */ } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
@@ -21,10 +21,27 @@ const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtil
 let fakeExecution;
 let testCumulusMessage;
 let sandbox;
+let granuleModel;
+let fakeGranules;
+const collectionId = randomString();
+const provider = randomString();
+const status = 'running';
 
 test.before(async () => {
   process.env.GranulesTable = randomString();
-  await new Granule().createTable();
+  granuleModel = new Granule();
+  await granuleModel.createTable();
+
+  fakeGranules = [
+    fakeGranuleFactoryV2({ collectionId, provider, status }),
+    fakeGranuleFactoryV2({ collectionId, provider, status }),
+    fakeGranuleFactoryV2({ collectionId, provider, status: 'completed' }),
+    fakeGranuleFactoryV2({ collectionId, provider: randomString(), status: 'completed' }),
+    fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
+    fakeGranuleFactoryV2({ collectionId, status: 'failed' }),
+  ];
+
+  await granuleModel.create(fakeGranules);
 
   testCumulusMessage = {
     cumulus_meta: {
@@ -77,10 +94,6 @@ test.before(async () => {
     Name: process.env.launchpad_passphrase_secret_name,
     SecretString: randomString(),
   }).promise();
-});
-
-test.beforeEach((t) => {
-  t.context.granuleModel = new Granule();
 });
 
 test.after.always(async () => {
@@ -306,8 +319,8 @@ test('get() will translate an old-style granule file into the new schema', async
     Item: granule,
   }).promise();
 
-  const granuleModel = new Granule();
-  const fetchedGranule = await granuleModel.get({ granuleId: granule.granuleId });
+  const newGranuleModel = new Granule();
+  const fetchedGranule = await newGranuleModel.get({ granuleId: granule.granuleId });
 
   t.deepEqual(
     fetchedGranule.files[0],
@@ -339,8 +352,8 @@ test('get() will correctly return a granule file stored using the new schema', a
     Item: granule,
   }).promise();
 
-  const granuleModel = new Granule();
-  const fetchedGranule = await granuleModel.get({ granuleId: granule.granuleId });
+  const newGranuleModel = new Granule();
+  const fetchedGranule = await newGranuleModel.get({ granuleId: granule.granuleId });
 
   t.deepEqual(
     fetchedGranule.files[0],
@@ -363,9 +376,9 @@ test('getRecord() returns a granule record from the database', async (t) => {
     Item: granule,
   }).promise();
 
-  const granuleModel = new Granule();
+  const newGranuleModel = new Granule();
 
-  const fetchedGranule = await granuleModel.getRecord({
+  const fetchedGranule = await newGranuleModel.getRecord({
     granuleId: granule.granuleId,
   });
 
@@ -392,8 +405,8 @@ test('batchGet() will translate old-style granule files into the new schema', as
     Item: granule,
   }).promise();
 
-  const granuleModel = new Granule();
-  const batchGetResponse = await granuleModel.batchGet([
+  const newGranuleModel = new Granule();
+  const batchGetResponse = await newGranuleModel.batchGet([
     { granuleId: granule.granuleId },
   ]);
 
@@ -432,8 +445,8 @@ test('scan() will translate old-style granule files into the new schema', async 
     Item: granule,
   }).promise();
 
-  const granuleModel = new Granule();
-  const scanResponse = await granuleModel.scan({
+  const newGranuleModel = new Granule();
+  const scanResponse = await newGranuleModel.scan({
     names: { '#granuleId': 'granuleId' },
     filter: '#granuleId = :granuleId',
     values: { ':granuleId': granule.granuleId },
@@ -453,8 +466,6 @@ test('scan() will translate old-style granule files into the new schema', async 
 });
 
 test('getGranulesForCollection() only returns granules belonging to the specified collection', async (t) => {
-  const { granuleModel } = t.context;
-
   const expectedGranule = fakeGranuleFactoryV2({ collectionId: 'good-collection' });
 
   await granuleModel.create([
@@ -470,18 +481,26 @@ test('getGranulesForCollection() only returns granules belonging to the specifie
 });
 
 test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
-  const { granuleModel } = t.context;
-
-  const collectionId = randomString();
-  const granules = [
-    fakeGranuleFactoryV2({ collectionId }),
-    fakeGranuleFactoryV2({ collectionId }),
-  ];
-
-  await granuleModel.create(granules);
-
   const granulesQueue = await granuleModel.getGranulesForCollection(collectionId);
 
+  const fetchedGranules = [
+    await granulesQueue.shift(),
+    await granulesQueue.shift(),
+    await granulesQueue.shift(),
+    await granulesQueue.shift(),
+    await granulesQueue.shift(),
+  ];
+
+  t.is(await granulesQueue.shift(), null);
+
+  t.deepEqual(
+    fetchedGranules.map((g) => g.granuleId).sort(),
+    fakeGranules.map((g) => g.granuleId).sort()
+  );
+});
+
+test('getGranulesForCollection() filters by status', async (t) => {
+  const granulesQueue = await granuleModel.getGranulesForCollection(collectionId, 'completed');
   const fetchedGranules = [
     await granulesQueue.shift(),
     await granulesQueue.shift(),
@@ -491,120 +510,74 @@ test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
 
   t.deepEqual(
     fetchedGranules.map((g) => g.granuleId).sort(),
-    granules.map((g) => g.granuleId).sort()
+    fakeGranules.map((g) => g.granuleId).sort()
   );
 });
 
-test('getGranulesForCollection() filters by status', async (t) => {
-  const { granuleModel } = t.context;
+test('searchGranulesForCollection() returns matching granules ordered by granuleId', async (t) => {
+  const fields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'status'];
 
-  const collectionId = randomString();
-  const expectedGranule = fakeGranuleFactoryV2({ collectionId, status: 'completed' });
+  let searchParams = {
+    provider,
+    status,
+    updatedAt__from: Date.now() - 1000 * 30,
+    updatedAt__to: Date.now(),
+  };
+  let granulesQueue = await granuleModel
+    .searchGranulesForCollection(collectionId, searchParams, fields);
 
-  await granuleModel.create([
-    expectedGranule,
-    fakeGranuleFactoryV2({ collectionId, status: 'failed' }),
-  ]);
+  let fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 2);
+  const expectedGranules = fakeGranules.slice(0, 2).map((granule) => pick(granule, fields));
+  t.deepEqual(fetchedGranules, sortBy(expectedGranules, ['granuleId']));
 
-  const granules = await granuleModel.getGranulesForCollection(collectionId, 'completed');
+  // array parameters
+  searchParams = {
+    ...searchParams,
+    provider: [provider, randomId('provider')],
+    granuleId: fakeGranules[0].granuleId,
+  };
+  granulesQueue = await granuleModel
+    .searchGranulesForCollection(collectionId, searchParams, fields);
 
-  const { granuleId } = await granules.shift();
-  t.is(granuleId, expectedGranule.granuleId);
-  t.is(await granules.shift(), null);
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 1);
+  t.deepEqual(fetchedGranules[0], pick(fakeGranules[0], fields));
+
+  // test when no granule falls within the search parameter range
+  searchParams = {
+    provider,
+    status,
+    updatedAt__from: Date.now(),
+  };
+  granulesQueue = await granuleModel
+    .searchGranulesForCollection(collectionId, searchParams, fields);
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 0);
 });
 
-// test('searchGranulesForCollection() returns matching granules ordered by granuleId',
-//   async (t) => {
-//   const { granuleModel } = t.context;
-
-//   const collectionId = randomString();
-//   const provider = randomString();
-//   const status = 'running';
-//   const granules = [
-//     fakeGranuleFactoryV2({ collectionId, provider, status }),
-//     fakeGranuleFactoryV2({ collectionId, provider, status }),
-//     fakeGranuleFactoryV2({ collectionId, provider, status: 'completed' }),
-//     fakeGranuleFactoryV2({ collectionId, provider: randomString(), status: 'completed' }),
-//   ];
-//   await granuleModel.create(granules);
-
-//   const fields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'status'];
-
-//   let searchParams = {
-//     provider,
-//     status,
-//     updatedAt__from: Date.now() - 1000 * 30,
-//     updatedAt__to: Date.now(),
-//   };
-//   let granulesQueue = await granuleModel
-//     .searchGranulesForCollection(collectionId, searchParams, fields);
-
-//   let fetchedGranules = await granulesQueue.empty();
-//   t.is(fetchedGranules.length, 2);
-//   const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
-//   t.deepEqual(fetchedGranules, sortBy(expectedGranules, ['granuleId']));
-
-//   // array parameters
-//   searchParams = {
-//     ...searchParams,
-//     provider: [provider, randomId('provider')],
-//     granuleId: granules[0].granuleId,
-//   };
-//   granulesQueue = await granuleModel
-//     .searchGranulesForCollection(collectionId, searchParams, fields);
-
-//   fetchedGranules = await granulesQueue.empty();
-//   t.is(fetchedGranules.length, 1);
-//   t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
-
-//   // test when no granule falls within the search parameter range
-//   searchParams = {
-//     provider,
-//     status,
-//     updatedAt__from: Date.now(),
-//   };
-//   granulesQueue = await granuleModel
-//     .searchGranulesForCollection(collectionId, searchParams, fields);
-//   fetchedGranules = await granulesQueue.empty();
-//   t.is(fetchedGranules.length, 0);
-// });
-
 test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
-  const { granuleModel } = t.context;
-  t.timeout(10000);
-
-  const collectionId = randomString();
-  const status = 'running';
-  const granules = [
-    fakeGranuleFactoryV2({ collectionId, status }),
-    fakeGranuleFactoryV2({ collectionId: randomString(), status }),
-    fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
-    fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
+  const fields = [
+    'granuleId',
+    'collectionId',
+    'beginningDateTime',
+    'endingDateTime',
+    'createdAt',
+    'status',
+    'updatedAt',
+    'published',
   ];
-  await granuleModel.create(granules);
-  console.log(granuleModel);
 
-  // const fields = [
-  //   'granuleId',
-  //   'collectionId',
-  //   'beginningDateTime',
-  //   'endingDateTime',
-  //   'createdAt',
-  //   'status',
-  //   'updatedAt',
-  //   'published',
-  // ];
+  // no search params
+  const granulesQueue = await granuleModel.granuleAttributeScan();
 
-  // // no search params
-  // const granulesQueue = await granuleModel.granuleAttributeScan({});
-
-  // const fetchedGranules = await granulesQueue.empty();
-  // console.log(fetchedGranules);
-  // t.is(fetchedGranules.length, 4);
-  // t.deepEqual(
-  //   sortBy(fetchedGranules, ['granuleId']),
-  //   sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId'])
-  // );
+  const fetchedGranules = await granulesQueue.empty();
+  console.log(fetchedGranules);
+  t.is(fetchedGranules.length, 6);
+  t.deepEqual(
+    sortBy(fetchedGranules, ['granuleId']),
+    sortBy(fakeGranules.map((granule) => pick(granule, fields)), ['granuleId'])
+  );
 
   // const searchParams = {
   //   status,
@@ -642,14 +615,14 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
   // t.is(fetchedGranules.length, 1);
   // t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
 
-  // // test when no granule falls within the search parameter range
-  // searchParams = {
-  //   status,
-  //   updatedAt__from: Date.now(),
-  // };
-  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
-  // fetchedGranules = await granulesQueue.empty();
-  // t.is(fetchedGranules.length, 0);
+// // test when no granule falls within the search parameter range
+// searchParams = {
+//   status,
+//   updatedAt__from: Date.now(),
+// };
+// granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+// fetchedGranules = await granulesQueue.empty();
+// t.is(fetchedGranules.length, 0);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
@@ -660,10 +633,10 @@ test('removing a granule from CMR fails if the granule is not in CMR', async (t)
     Item: granule,
   }).promise();
 
-  const granuleModel = new Granule();
+  const newGranuleModel = new Granule();
 
   try {
-    await granuleModel.removeGranuleFromCmrByGranule(granule);
+    await newGranuleModel.removeGranuleFromCmrByGranule(granule);
   } catch (error) {
     t.is(error.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
   }
@@ -693,9 +666,9 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
       Item: granule,
     }).promise();
 
-    const granuleModel = new Granule();
+    const newGranuleModel = new Granule();
 
-    await granuleModel.removeGranuleFromCmrByGranule(granule);
+    await newGranuleModel.removeGranuleFromCmrByGranule(granule);
   } finally {
     CMR.prototype.deleteGranule.restore();
     DefaultProvider.decrypt.restore();
@@ -730,9 +703,9 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
       Item: granule,
     }).promise();
 
-    const granuleModel = new Granule();
+    const newGranuleModel = new Granule();
 
-    await granuleModel.removeGranuleFromCmrByGranule(granule);
+    await newGranuleModel.removeGranuleFromCmrByGranule(granule);
 
     t.is(launchpadStub.calledOnce, true);
   } finally {
@@ -747,7 +720,6 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 test.serial(
   'reingest pushes a message with the correct queueUrl',
   async (t) => {
-    const { granuleModel } = t.context;
     const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
     const queueUrl = 'testqueueUrl';
     const granule = {
@@ -775,8 +747,6 @@ test.serial(
 );
 
 test('_getMutableFieldNames() returns correct fields for running status', async (t) => {
-  const { granuleModel } = t.context;
-
   const updatedItem = {
     granuleId: randomString(),
     status: 'running',
@@ -790,8 +760,6 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
 });
 
 test('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
-  const { granuleModel } = t.context;
-
   const item = {
     granuleId: randomString(),
     status: 'completed',
@@ -805,8 +773,6 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
 });
 
 test('applyWorkflow throws error if workflow argument is missing', async (t) => {
-  const { granuleModel } = t.context;
-
   const granule = {
     granuleId: randomString(),
   };
@@ -820,8 +786,6 @@ test('applyWorkflow throws error if workflow argument is missing', async (t) => 
 });
 
 test('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
-  const { granuleModel } = t.context;
-
   const granule = fakeGranuleFactoryV2();
   const workflow = randomString();
   const lambdaPayload = {
@@ -841,8 +805,8 @@ test('applyWorkflow updates granule status and invokes Lambda to schedule workfl
 
   await granuleModel.applyWorkflow(granule, workflow);
 
-  const { status } = await granuleModel.get({ granuleId: granule.granuleId });
-  t.is(status, 'running');
+  const { status: granuleStatus } = await granuleModel.get({ granuleId: granule.granuleId });
+  t.is(granuleStatus, 'running');
 
   t.true(lambdaInvokeStub.called);
   t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
