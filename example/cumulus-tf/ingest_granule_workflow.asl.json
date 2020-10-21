@@ -173,6 +173,32 @@
           "BackoffRate": 2
         }
       ],
+      "UpdateGranulesMetadataStep": {
+        "Parameters": {
+          "cma": {
+            "event.$": "$",
+            "task_config": {
+              "bucket": "{$.meta.buckets.internal.name}",
+              "buckets": "{$.meta.buckets}",
+              "distribution_endpoint": "{$.meta.distribution_endpoint}",
+              "collection": "{$.meta.collection}"
+            }
+          }
+        },
+        "Type": "Task",
+        "Resource": "${update_granules_metadata_task_arn}",
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
       "Catch": [
         {
           "ErrorEquals": [
