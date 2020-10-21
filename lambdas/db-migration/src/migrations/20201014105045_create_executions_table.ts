@@ -22,6 +22,9 @@ export const up = async (knex: Knex): Promise<void> =>
       .references('cumulusId')
       .inTable('executions');
     table
+      .text('cumulusVersion')
+      .comment('Cumulus version for the execution');
+    table
       .timestamps(false, true);
     table.unique(['arn']);
   });
