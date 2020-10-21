@@ -593,9 +593,15 @@ test.serial('granuleAttributeScan() returns granules filtered by search params',
   ];
 
   // no search params
-  const granulesQueue = granuleModel.granuleAttributeScan();
+  const granuleScanner = granuleModel.granuleAttributeScan();
 
-  const fetchedGranules = await granulesQueue.empty();
+  const fetchedGranules = [];
+  let nextGranule = await granuleScanner.peek();
+  while (nextGranule) {
+    fetchedGranules.push(nextGranule);
+    await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
+    nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
+  }
   t.is(fetchedGranules.length, 4);
   t.deepEqual(
     sortBy(fetchedGranules, ['granuleId']),
