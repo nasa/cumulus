@@ -96,7 +96,6 @@ async function updateGranulesMetadata(event) {
     process.env.system_bucket,
     getDistributionBucketMapKey(process.env.stackName)
   );
-
   const updatedCmrFiles = await updateEachCmrFileAccessURLs(
     cmrFiles,
     granulesByGranuleId,

@@ -3,7 +3,6 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
-const keyBy = require('lodash/keyBy');
 const cloneDeep = require('lodash/cloneDeep');
 
 const {
