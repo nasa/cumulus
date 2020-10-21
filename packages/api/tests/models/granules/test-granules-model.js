@@ -513,6 +513,84 @@ test.serial('getGranulesForCollection() filters by status', async (t) => {
   t.is(await granules.shift(), null);
 });
 
+test.serial('granuleAttributeScan() returns granules filtered by search params', async (t) => {
+  const granuleModel = new Granule();
+
+  const collectionId = randomString();
+  const status = 'running';
+  const granules = [
+    fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ collectionId: randomString(), status }),
+    fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
+    fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
+  ];
+  await granuleModel.create(granules);
+
+  const fields = [
+    'granuleId',
+    'collectionId',
+    'beginningDateTime',
+    'endingDateTime',
+    'createdAt',
+    'status',
+    'updatedAt',
+    'published',
+  ];
+
+  // no search params
+  const granulesQueue = await granuleModel.granuleAttributeScan({});
+
+  const fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 4);
+  t.deepEqual(
+    sortBy(fetchedGranules, ['granuleId']),
+    sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId'])
+  );
+
+  // let searchParams = {
+  //   status,
+  //   updatedAt__from: Date.now() - 1000 * 30,
+  //   updatedAt__to: Date.now(),
+  // };
+  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+
+  // fetchedGranules = await granulesQueue.empty();
+  // t.is(fetchedGranules.length, 2);
+  // const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
+  // t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(expectedGranules, ['granuleId']));
+
+  // // array parameters
+  // searchParams = {
+  //   ...searchParams,
+  //   collectionId: [collectionId, randomId('collection')],
+  // };
+  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+
+  // fetchedGranules = await granulesQueue.empty();
+  // t.is(fetchedGranules.length, 1);
+  // t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
+
+  // // granuleId
+  // searchParams = {
+  //   ...searchParams,
+  //   granuleId: granules[0].granuleId,
+  // };
+  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+
+  // fetchedGranules = await granulesQueue.empty();
+  // t.is(fetchedGranules.length, 1);
+  // t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
+
+  // // test when no granule falls within the search parameter range
+  // searchParams = {
+  //   status,
+  //   updatedAt__from: Date.now(),
+  // };
+  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+  // fetchedGranules = await granulesQueue.empty();
+  // t.is(fetchedGranules.length, 0);
+});
+
 test.serial('searchGranulesForCollection() returns matching granules ordered by granuleId', async (t) => {
   const { granuleModel } = t.context;
 
@@ -566,90 +644,6 @@ test.serial('searchGranulesForCollection() returns matching granules ordered by 
     .searchGranulesForCollection(collectionId, searchParams, fields);
   fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 0);
-});
-
-test.serial('granuleAttributeScan() returns granules filtered by search params', async (t) => {
-  const granuleModel = new Granule();
-
-  const collectionId = randomString();
-  const status = 'running';
-  const granules = [
-    fakeGranuleFactoryV2({ collectionId, status }),
-    fakeGranuleFactoryV2({ collectionId: randomString(), status }),
-    fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
-    fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
-  ];
-  await granuleModel.create(granules);
-
-  const fields = [
-    'granuleId',
-    'collectionId',
-    'beginningDateTime',
-    'endingDateTime',
-    'createdAt',
-    'status',
-    'updatedAt',
-    'published',
-  ];
-
-  // no search params
-  const granuleScanner = granuleModel.granuleAttributeScan();
-
-  const fetchedGranules = [];
-  let nextGranule = await granuleScanner.peek();
-  while (nextGranule) {
-    fetchedGranules.push(nextGranule);
-    await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
-    nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
-  }
-  t.is(fetchedGranules.length, 4);
-  t.deepEqual(
-    sortBy(fetchedGranules, ['granuleId']),
-    sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId'])
-  );
-
-  // let searchParams = {
-  //   status,
-  //   updatedAt__from: Date.now() - 1000 * 30,
-  //   updatedAt__to: Date.now(),
-  // };
-  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
-
-  // fetchedGranules = await granulesQueue.empty();
-  // t.is(fetchedGranules.length, 2);
-  // const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
-  // t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(expectedGranules, ['granuleId']));
-
-  // // array parameters
-  // searchParams = {
-  //   ...searchParams,
-  //   collectionId: [collectionId, randomId('collection')],
-  // };
-  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
-
-  // fetchedGranules = await granulesQueue.empty();
-  // t.is(fetchedGranules.length, 1);
-  // t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
-
-  // // granuleId
-  // searchParams = {
-  //   ...searchParams,
-  //   granuleId: granules[0].granuleId,
-  // };
-  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
-
-  // fetchedGranules = await granulesQueue.empty();
-  // t.is(fetchedGranules.length, 1);
-  // t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
-
-  // // test when no granule falls within the search parameter range
-  // searchParams = {
-  //   status,
-  //   updatedAt__from: Date.now(),
-  // };
-  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
-  // fetchedGranules = await granulesQueue.empty();
-  // t.is(fetchedGranules.length, 0);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
