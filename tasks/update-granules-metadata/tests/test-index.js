@@ -102,7 +102,6 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await updateGranulesMetadata(newPayload);
-  console.log(output.granules[0].files.filter(isCMRFile));
   output.granules[0].files
     .filter(isCMRFile)
     .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/));

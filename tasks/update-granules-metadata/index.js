@@ -22,7 +22,7 @@ const {
 
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
- * file locations.
+ * file locations. This function assumes that there will only ever be a single CMR file per granule.
  *
  * @param {Array<Object>} cmrFiles       - array of objects that include CMR xmls uris and
  *                                         granuleIds
@@ -48,7 +48,7 @@ async function updateEachCmrFileAccessURLs(
     const granule = granulesObject[granuleId];
     return updateCMRMetadata({
       granuleId,
-      cmrFile: granule.files.find((file) => cmrFile.filename === file.filename),
+      cmrFile: granule.files.find(isCMRFile),
       files: granule.files,
       distEndpoint,
       published: false,
