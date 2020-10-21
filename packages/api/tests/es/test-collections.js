@@ -12,6 +12,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const indexer = rewire('../../es/indexer');
 const Collection = require('../../es/collections');
+const BaseCollection = require('../../es/BaseCollection');
 const { Search } = require('../../es/search');
 const models = require('../../models');
 const { fakeGranuleFactoryV2, fakeCollectionFactory } = require('../../lib/testUtils');
@@ -336,6 +337,56 @@ test.serial('query returns all collections with stats by default', async (t) => 
   }))));
 });
 
+test.serial('BaseCollection query returns all collections without stats', async (t) => {
+  const collectionSearch = new BaseCollection(
+    { queryStringParameters: { limit: 13 } },
+    undefined,
+    process.env.ES_INDEX
+  );
+  const queryResult = await collectionSearch.query();
+
+  t.is(queryResult.meta.count, 13);
+
+  const collections = queryResult.results.map((c) => ({
+    name: c.name,
+    version: c.version,
+    stats: c.stats,
+  }));
+
+  const orderedCollections = sortBy(collections, ['name', 'version']);
+  t.deepEqual(orderedCollections, [
+    {
+      name: 'coll1',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll1',
+      version: '2',
+      stats: undefined,
+    },
+    {
+      name: 'coll2',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll3',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll4',
+      version: '0',
+      stats: undefined,
+    },
+  ].concat(range(1, 9).map((i) => ({
+    name: 'coll4',
+    version: i.toString(),
+    stats: undefined,
+  }))));
+});
+
 test.serial('query correctly queries collection by date', async (t) => {
   const collectionSearch = new Collection({
     queryStringParameters: {
@@ -432,6 +483,47 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
       failed: 0,
       total: 1,
     },
+  }))));
+});
+
+test.serial('BaseCollection queryCollectionsWithActiveGranules returns collection info without statistics', async (t) => {
+  const collectionSearch = new BaseCollection(
+    { queryStringParameters: { limit: 11 } },
+    undefined,
+    process.env.ES_INDEX
+  );
+  const queryResult = await collectionSearch.queryCollectionsWithActiveGranules();
+
+  t.is(queryResult.meta.count, 11);
+
+  const collections = queryResult.results.map((c) => ({
+    name: c.name,
+    version: c.version,
+    stats: c.stats,
+  }));
+
+  const orderedCollections = sortBy(collections, ['name', 'version']);
+
+  t.deepEqual(orderedCollections, [
+    {
+      name: 'coll1',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll3',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll4',
+      version: '0',
+      stats: undefined,
+    },
+  ].concat(range(1, 9).map((i) => ({
+    name: 'coll4',
+    version: i.toString(),
+    stats: undefined,
   }))));
 });
 
