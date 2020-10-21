@@ -14,6 +14,9 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull
   rm -f package-lock.json
 fi
 
+# Extract cache of compiled TS files
+./bamboo/extract-ts-build-cache.sh
+
 npm install --ignore-scripts --no-package-lock
 npm run install-python-deps
 ln -s /dev/stdout ./lerna-debug.log
