@@ -14,12 +14,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     prevented AWS from halting/restarting warmed instances when task code was
     throwing consistent errors under load.
 
-- **CUMULUS-2200**
-  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
-    `/reconciliationReport` returns.  The user (dashboard) must read the value
-    of `url` from the return to get the s3SignedURL and then download the
-    report.
-
 - **CUMULUS-2232**
   - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and
     `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
@@ -51,6 +45,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
+    `/reconciliationReport` returns.  The user (dashboard) must read the value
+    of `url` from the return to get the s3SignedURL and then download the report.
 - **CUMULUS-2099**
   - `meta.queues` has been removed from Cumulus core workflow messages.
   - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
