@@ -3,11 +3,12 @@
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
-const { BaseSearch } = require('./search');
+const BaseCollection = require('./BaseCollection');
 
-const ES_MAX_AGG = 2147483647;
-
-class Collection extends BaseSearch {
+/**
+* A Collection Class returns collection searches appended with statistical aggregations
+*/
+class Collection extends BaseCollection {
   constructor(event, type, index) {
     super(event, type || 'collection', index);
 
@@ -40,13 +41,13 @@ class Collection extends BaseSearch {
               name: {
                 terms: {
                   field: 'name',
-                  size: ES_MAX_AGG,
+                  size: this.ES_MAX_AGG,
                 },
                 aggs: {
                   version: {
                     terms: {
                       field: 'version',
-                      size: ES_MAX_AGG,
+                      size: this.ES_MAX_AGG,
                     },
                     aggs: {
                       stats: {
@@ -57,7 +58,7 @@ class Collection extends BaseSearch {
                           count: {
                             terms: {
                               field: 'status',
-                              size: ES_MAX_AGG,
+                              size: this.ES_MAX_AGG,
                             },
                           },
                         },
@@ -117,37 +118,6 @@ class Collection extends BaseSearch {
   }
 
   /**
-   * Get a list of collection ids from found granules. If time params
-   * are specified the query will return collections that have granules that have been updated
-   * in that time frame.  If granuleIds are provided, it will filter those as well.
-   *
-   * @returns {Promise<Array<string>>} - list of collection ids with active granules
-   */
-  async aggregateGranuleCollections() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
-    }
-    // granules
-    const searchParams = this._buildSearch();
-    delete searchParams.from;
-    searchParams.type = 'granule';
-
-    searchParams.body.aggs = {
-      collections: {
-        terms: {
-          field: 'collectionId',
-          size: ES_MAX_AGG,
-        },
-      },
-    };
-
-    const searchResults = await this.client.search(searchParams)
-      .then((response) => response.body);
-
-    return searchResults.aggregations.collections.buckets.map((b) => b.key);
-  }
-
-  /**
    * Add collection granule stats to collection query results
    *
    * @param {Array<Object>} collectionResults - collection query results
@@ -157,32 +127,6 @@ class Collection extends BaseSearch {
     const ids = collectionResults.filter((r) => r.name && r.version)
       .map((c) => constructCollectionId(c.name, c.version));
     return this.getStats(collectionResults, ids);
-  }
-
-  /**
-   * Perform a collection query to return collections that have granules. If time params
-   * are specified the query will return collections that have granules that have been updated
-   * in that time frame.
-   *
-   * @returns {Promise<Object>} - query result object containing collections and their granule stats
-   */
-  async queryCollectionsWithActiveGranules() {
-    const collectionIds = await this.aggregateGranuleCollections();
-
-    const searchParams = this._buildSearch();
-    searchParams.body.query = {
-      constant_score: {
-        filter: {
-          terms: {
-            _id: collectionIds,
-          },
-        },
-      },
-    };
-
-    const res = await this.query(searchParams);
-
-    return res;
   }
 
   async query(searchParamsOverride) {

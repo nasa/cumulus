@@ -14,6 +14,7 @@ const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
+const BaseCollection = require('../es/BaseCollection');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 
@@ -27,14 +28,16 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const { getMMT, ...queryStringParameters } = req.query;
-  const collection = new Collection(
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
+  const CollectionClass = includeStats === 'true' ? Collection : BaseCollection;
+
+  const collection = new CollectionClass(
     { queryStringParameters },
     undefined,
     process.env.ES_INDEX
   );
   let result = await collection.query();
-  if (getMMT && getMMT === 'true') {
+  if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
   return res.send(result);
@@ -50,9 +53,10 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
-  const { getMMT, ...queryStringParameters } = req.query;
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
+  const CollectionClass = includeStats === 'true' ? Collection : BaseCollection;
 
-  const collection = new Collection(
+  const collection = new CollectionClass(
     { queryStringParameters },
     undefined,
     process.env.ES_INDEX
