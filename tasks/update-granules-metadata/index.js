@@ -43,13 +43,12 @@ async function updateEachCmrFileAccessURLs(
   bucketTypes,
   distributionBucketMap
 ) {
-  return Promise.all(cmrFiles.map( (cmrFile) => {
+  return Promise.all(cmrFiles.map((cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
     return updateCMRMetadata({
       granuleId,
-      // must be determined from granules because cmrFiles is of a different, condensed shape
-      cmrFile: granule.files.find(isCMRFile),
+      cmrFile: granule.files.find((file) => cmrFile.filename === file.filename),
       files: granule.files,
       distEndpoint,
       published: false,
@@ -85,7 +84,7 @@ async function updateGranulesMetadata(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
   const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
-  .map(({ name, type }) => [name, type]));
+    .map(({ name, type }) => [name, type]));
 
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'distribution');
 
@@ -97,7 +96,7 @@ async function updateGranulesMetadata(event) {
     process.env.system_bucket,
     getDistributionBucketMapKey(process.env.stackName)
   );
-    
+
   const updatedCmrFiles = await updateEachCmrFileAccessURLs(
     cmrFiles,
     granulesByGranuleId,
@@ -106,12 +105,11 @@ async function updateGranulesMetadata(event) {
     bucketTypes,
     distributionBucketMap
   );
-  console.log(updatedCmrFiles)
 
-   // Transfer etag info to granules' CMR files
-   const result = addCmrFileEtags(granulesByGranuleId, updatedCmrFiles);
+  // Transfer etag info to granules' CMR files
+  const result = addCmrFileEtags(granulesByGranuleId, updatedCmrFiles);
 
-   return { granules: Object.values(result) }
+  return { granules: Object.values(result) };
 }
 
 /**

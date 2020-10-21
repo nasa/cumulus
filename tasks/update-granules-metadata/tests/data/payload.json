@@ -43,6 +43,11 @@
             "bucket": "public"
           },
           {
+            "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.json$",
+            "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json",
+            "bucket": "public"
+          },
+          {
             "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
             "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
             "bucket": "public"
@@ -94,6 +99,13 @@
               "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
               "bucket": "cumulus-internal",
               "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+              "type": "metadata",
+              "fileStagingDir": "file-staging/subdir"
+            },
+            {
+              "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json",
+              "bucket": "cumulus-internal",
+              "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json",
               "type": "metadata",
               "fileStagingDir": "file-staging/subdir"
             }

@@ -3,7 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
-const { s3 } = require('@cumulus/aws-client/services');
+const keyBy = require('lodash/keyBy');
+const cloneDeep = require('lodash/cloneDeep');
+
 const {
   buildS3Uri,
   recursivelyDeleteS3Bucket,
@@ -11,23 +13,24 @@ const {
   promiseS3Upload,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
-const cloneDeep = require('lodash/cloneDeep');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { isCMRFile } = require('@cumulus/cmrjs');
+const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
 const { updateGranulesMetadata } = require('..');
 
+function cmrReadStream(file) {
+  return file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : fs.createReadStream('tests/data/ummg-meta.json');
+}
+
 async function uploadFiles(files, bucket) {
-  const upload = await Promise.all(files.map((file) => promiseS3Upload({
+  await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key,
+    Body: !(file.endsWith('.cmr.xml') || file.endsWith('.cmr.json'))
+      ? parseS3Uri(file).Key : cmrReadStream(file),
   })));
-  console.log("UPLOAD")
-  console.log(upload)
-  return upload
 }
 
 function granulesToFileURIs(granules) {
@@ -67,7 +70,7 @@ test.beforeEach(async (t) => {
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
-  const x = putJsonS3Object(
+  putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
     {
@@ -94,14 +97,28 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('Should add etag to each CMR metadata file', async (t) => {
+test.serial('Should add etag to each CMR metadata file by checking that etag is one of more characters not whitespace', async (t) => {
   const newPayload = buildPayload(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await updateGranulesMetadata(newPayload);
-
+  console.log(output.granules[0].files.filter(isCMRFile));
   output.granules[0].files
     .filter(isCMRFile)
     .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/));
+});
+
+test.serial('Updated-granules-metadata throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
+  const newPayload = buildPayload(t);
+  delete newPayload.config.distribution_endpoint;
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const error = await t.throwsAsync(
+    () => updateGranulesMetadata(newPayload)
+  );
+
+  t.is(error.message, 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
 });
