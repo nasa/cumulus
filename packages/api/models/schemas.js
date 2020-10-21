@@ -694,6 +694,7 @@ module.exports.execution = {
     duration: { type: 'number' },
     parentArn: { type: 'string' },
     asyncOperationId: { type: 'string' },
+    cumulusVersion: { type: 'string' },
   },
   required: [
     'arn',
