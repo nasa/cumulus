@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v3.0.1] 2020-10-21
+
 - **CUMULUS-2203**
   - Update Core tasks to use
     [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
@@ -3599,7 +3601,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.1...HEAD
+[v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
 [v2.0.7]: https://github.com/nasa/cumulus/compare/v2.0.6...v2.0.7
 [v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.5...v2.0.6
