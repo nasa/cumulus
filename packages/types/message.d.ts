@@ -11,6 +11,7 @@ export interface CumulusMeta {
   parentExecutionArn?: string
   asyncOperationId?: string
   queueExecutionLimits: QueueExecutionLimits
+  cumulus_version?: string
 }
 
 export interface ReplaceConfig {
