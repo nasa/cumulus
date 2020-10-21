@@ -569,6 +569,17 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
 });
 
 test('granuleAttributeScan() placeholder', async (t) => {
+  const { granuleModel } = t.context;
+
+  const collectionId = randomString();
+  const status = 'running';
+  const granules = [
+    fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
+    fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
+  ];
+  await granuleModel.create(granules);
   t.is(true, true);
 });
 
