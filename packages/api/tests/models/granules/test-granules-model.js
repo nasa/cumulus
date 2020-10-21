@@ -568,6 +568,10 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   t.is(fetchedGranules.length, 0);
 });
 
+test('granuleAttributeScan() placeholder', async (t) => {
+  t.is(true, true);
+});
+
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
   const granule = fakeGranuleFactoryV2({ published: false });
 
