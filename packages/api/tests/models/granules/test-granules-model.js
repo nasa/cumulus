@@ -515,6 +515,7 @@ test.serial('getGranulesForCollection() filters by status', async (t) => {
 
 test.serial('searchGranulesForCollection() returns matching granules ordered by granuleId', async (t) => {
   const { granuleModel } = t.context;
+  t.timeout(5000);
 
   const collectionId = randomString();
   const provider = randomString();
@@ -580,6 +581,7 @@ test.serial('granuleAttributeScan() returns granules filtered by search params',
     fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
   ];
   await granuleModel.create(granules);
+  console.log(granuleModel);
 
   const fields = [
     'granuleId',
@@ -609,8 +611,10 @@ test.serial('granuleAttributeScan() returns granules filtered by search params',
     updatedAt__to: Date.now(),
   };
   const granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+  console.log(granulesQueue);
 
   const fetchedGranules = await granulesQueue.empty();
+  console.log(fetchedGranules);
   t.is(fetchedGranules.length, 2);
   const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
   t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(expectedGranules, ['granuleId']));
