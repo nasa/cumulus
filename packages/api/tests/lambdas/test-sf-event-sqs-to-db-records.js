@@ -144,12 +144,15 @@ test('isPostRDSDeploymentExecution correctly returns true if Cumulus version is 
   }));
 });
 
-test('isPostRDSDeploymentExecution correctly returns false if Cumulus version is < RDS deployment version or missing', (t) => {
+test('isPostRDSDeploymentExecution correctly returns false if Cumulus version is < RDS deployment version', (t) => {
   t.false(isPostRDSDeploymentExecution({
     cumulus_meta: {
       cumulus_version: '2.0.0',
     },
   }));
+});
+
+test('isPostRDSDeploymentExecution correctly returns false if Cumulus version is missing', (t) => {
   t.false(isPostRDSDeploymentExecution({}));
 });
 

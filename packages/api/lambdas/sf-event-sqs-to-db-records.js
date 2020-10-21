@@ -10,6 +10,7 @@ const { getKnexClient } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
   getMessageExecutionParentArn,
+  getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
@@ -21,7 +22,8 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
   if (!minimumSupportedRDSVersion) {
     throw new Error('RDS_DEPLOYMENT_CUMULUS_VERSION environment variable must be set');
   }
-  const cumulusVersion = get(cumulusMessage, 'cumulus_meta.cumulus_version', '0.0.0');
+  const cumulusVersion = getMessageCumulusVersion(cumulusMessage);
+  if (!cumulusVersion) return false;
   return semver.gte(cumulusVersion, minimumSupportedRDSVersion);
 };
 
