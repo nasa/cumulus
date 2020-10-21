@@ -4,6 +4,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
+const isEmpty = require('lodash/isEmpty');
 const partial = require('lodash/partial');
 const path = require('path');
 const pMap = require('p-map');
@@ -496,27 +497,49 @@ class Granule extends Manager {
   }
 
   granuleAttributeScan(searchParams = {}) {
-    const { attributeValues, filterExpression } = this.getDynamoDbSearchParams(searchParams, false);
+    const fields = [
+      'granuleId',
+      'collectionId',
+      'beginningDateTime',
+      'endingDateTime',
+      'createdAt',
+      'status',
+      'updatedAt',
+      'published',
+    ];
+
+    const attributeNames = {};
+    const attributeValues = {};
+    const filterArray = [];
+    const projectionArray = [];
+
+    Object.entries(searchParams).forEach(([key, value]) => {
+      let field = key;
+      let operation = '=';
+      if (key.includes('__')) {
+        field = key.split('__').shift();
+        operation = key.endsWith('__from') ? '>=' : '<=';
+      }
+
+      attributeNames[`#${field}`] = field;
+      attributeValues[`:${key}`] = value;
+      filterArray.push(`#${field} ${operation} :${key}`);
+    });
+
+    fields.forEach((field) => {
+      attributeNames[`#${field}`] = field;
+      projectionArray.push(`#${field}`);
+    });
 
     const params = {
       TableName: this.tableName,
-      ExpressionAttributeNames:
-      {
-        '#granuleId': 'granuleId',
-        '#collectionId': 'collectionId',
-        '#beginningDateTime': 'beginningDateTime',
-        '#endingDateTime': 'endingDateTime',
-        '#createdAt': 'createdAt',
-        '#status': 'status',
-        '#updatedAt': 'updatedAt',
-        '#published': 'published',
-      },
-      ExpressionAttributeValues: filterExpression ? attributeValues : undefined,
-      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
-      FilterExpression: filterExpression,
+      ExpressionAttributeNames: !isEmpty(attributeNames) ? attributeNames : undefined,
+      ExpressionAttributeValues: !isEmpty(attributeValues) ? attributeValues : undefined,
+      ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
+      FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
     };
 
-    return new GranuleSearchQueue(removeNilProperties(params));
+    return new GranuleSearchQueue(removeNilProperties(params), 'scan');
   }
 
   /**
