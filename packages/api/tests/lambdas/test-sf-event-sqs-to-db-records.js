@@ -18,7 +18,6 @@ const {
   isPostRDSDeploymentExecution,
   shouldWriteToRDS,
   saveExecutions,
-  saveExecutionToDynamoDb,
   saveGranulesToDb,
   savePdrToDb,
 } = require('../../lambdas/sf-event-sqs-to-db-records');
@@ -99,14 +98,6 @@ test.before(async (t) => {
 
   t.context.describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution')
     .callsFake(() => Promise.resolve({}));
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      // PG_DATABASE: testDbName,
-      // migrationDir,
-    },
-  });
 });
 
 test.beforeEach(async (t) => {
@@ -132,6 +123,12 @@ test.beforeEach(async (t) => {
       key: 'my-payload',
     },
   };
+
+  t.context.knex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+    },
+  });
 });
 
 test.after.always(async (t) => {
@@ -236,56 +233,6 @@ test('shouldWriteToRDS returns false for pre-RDS deployment execution message', 
   }));
 });
 
-test('saveExecutionToDynamoDb() creates an execution item in Dynamo', async (t) => {
-  const { cumulusMessage, executionModel } = t.context;
-
-  const stateMachineName = randomString();
-  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
-
-  const executionName = randomString();
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
-
-  await saveExecutionToDynamoDb(cumulusMessage, executionModel);
-
-  try {
-    const fetchedExecution = await executionModel.get({ arn: executionArn });
-
-    t.is(fetchedExecution.name, executionName);
-    t.is(fetchedExecution.arn, executionArn);
-    t.is(fetchedExecution.execution, `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`);
-    t.is(fetchedExecution.collectionId, 'my-collection___5');
-    t.is(fetchedExecution.status, 'running');
-    t.is(fetchedExecution.createdAt, 122);
-    t.deepEqual(fetchedExecution.originalPayload, { key: 'my-payload' });
-  } catch (error) {
-    t.fail('Failed to fetch execution');
-  }
-});
-
-test.serial('saveExecutionToDynamoDb() throws an exception if storeExecutionFromCumulusMessage() throws an exception', async (t) => {
-  const { cumulusMessage, executionModel } = t.context;
-
-  const stateMachineName = randomString();
-  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
-
-  const executionName = randomString();
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-
-  const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
-    .callsFake(() => {
-      throw new Error('fake error');
-    });
-  t.teardown(() => saveExecutionStub.restore());
-
-  await t.throwsAsync(
-    saveExecutionToDynamoDb(cumulusMessage, executionModel),
-    { message: 'fake error' }
-  );
-});
-
 test.todo('saveExecutionToRDS saves correct execution record to RDS');
 
 test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
@@ -309,7 +256,7 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
   );
 });
 
-test.serial('saveExecutions() removes records from Dynamo and RDS if Dynamo write fails', async (t) => {
+test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -336,7 +283,7 @@ test.serial('saveExecutions() removes records from Dynamo and RDS if Dynamo writ
   );
 });
 
-test.serial('saveExecutions() removes records from Dynamo and RDS if RDS write fails', async (t) => {
+test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -348,14 +295,17 @@ test.serial('saveExecutions() removes records from Dynamo and RDS if RDS write f
 
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  const fakeKnex = sinon.stub().returns({
-    insert: () => {
-      throw new Error('bad insert');
-    },
-    where: (params) => knex('executions').where(params),
-  });
+  const fakeTrxCallback = (cb) => {
+    const fakeTrx = sinon.stub().returns({
+      insert: () => {
+        throw new Error('fake insert error');
+      },
+    });
+    return cb(fakeTrx);
+  };
+  sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
 
-  await saveExecutions(cumulusMessage, true, fakeKnex);
+  await saveExecutions(cumulusMessage, true, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.falsy(
     await knex('executions')
@@ -474,7 +424,7 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
   t.deepEqual(fetchedPdr, expectedPdr);
 });
 
-test.serial('savePdrsToDb() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
+test.serial('savePdrToDb() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
   const { cumulusMessage } = t.context;
 
   const storeGranuleStub = sinon.stub(Pdr.prototype, 'storePdrFromCumulusMessage')
