@@ -16,6 +16,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const EsCollection = require('../../../es/collections');
+const EsBaseCollection = require('../../../es/BaseCollection');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
@@ -88,8 +89,9 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial('default returns list of collections', async (t) => {
-  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
+test.serial('default returns list of collections from query', async (t) => {
+  const stub = sinon.stub(EsBaseCollection.prototype, 'query').returns({ results: [t.context.testCollection] });
+  const spy = sinon.stub(EsCollection.prototype, 'getStats');
 
   const response = await request(app)
     .get('/collections')
@@ -98,7 +100,24 @@ test.serial('default returns list of collections', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  stub.restore();
   t.is(results.length, 1);
   t.is(results[0].name, t.context.testCollection.name);
+  t.true(spy.notCalled);
+  stub.restore();
+  spy.restore();
+});
+
+test.serial('returns list of collections with stats when requested', async (t) => {
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
+
+  const response = await request(app)
+    .get('/collections?includeStats=true')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  t.is(results.length, 1);
+  t.is(results[0].name, t.context.testCollection.name);
+  stub.restore();
 });
