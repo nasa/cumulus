@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
+const cryptoRandomString = require('crypto-random-string');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { localStackConnectionEnv, getKnexClient } = require('@cumulus/db');
@@ -14,9 +15,8 @@ const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const {
-  getInitialExecutionMessage,
   isPostRDSDeploymentExecution,
-  shouldWriteToRDS,
+  shouldWriteExecutionToRDS,
   saveExecutions,
   saveGranulesToDb,
   savePdrToDb,
@@ -106,6 +106,7 @@ test.beforeEach(async (t) => {
   t.context.cumulusMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
+      cumulus_version: '4.0.0',
     },
     meta: {
       status: 'running',
@@ -165,75 +166,51 @@ test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS
   }));
 });
 
-test('getInitialExecutionMessage returns cumulus message input if there is no parent execution', async (t) => {
-  const cumulusMessage = {
-    foo: 'bar',
-    cumulus_meta: {},
-  };
-  t.deepEqual(
-    await getInitialExecutionMessage(cumulusMessage),
-    cumulusMessage
-  );
-});
-
-test.serial('getInitialExecutionMessage returns initial parent execution message', async (t) => {
-  const { describeExecutionStub } = t.context;
-
-  describeExecutionStub.restore();
-  const stub = sinon.stub(StepFunctions, 'describeExecution');
-  t.teardown(() => stub.restore());
-
-  stub.withArgs({
-    executionArn: 'machine1:execution1',
-  }).resolves({
-    input: JSON.stringify({
-      cumulus_meta: {
-        state_machine: 'machine2',
-        execution_name: 'execution2',
-        parentExecutionArn: 'parent2',
-      },
-    }),
-  });
-  const initialExecutionMessage = {
-    cumulus_meta: {
-      state_machine: 'machine3',
-      execution_name: 'execution3',
-      cumulus_version: 'x.x.x',
-    },
-  };
-  stub.withArgs({
-    executionArn: 'machine2:execution2',
-  }).resolves({
-    input: JSON.stringify(initialExecutionMessage),
-  });
-
-  const cumulusMessage = {
-    cumulus_meta: {
-      state_machine: 'machine1',
-      execution_name: 'execution1',
-      parentExecutionArn: 'parent1',
-    },
-  };
-  t.deepEqual(
-    await getInitialExecutionMessage(cumulusMessage),
-    initialExecutionMessage
-  );
-});
-
-test('shouldWriteToRDS returns true for post-RDS deployment execution message', async (t) => {
-  t.true(await shouldWriteToRDS({
+test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with no parent execution', async (t) => {
+  t.true(await shouldWriteExecutionToRDS({
     cumulus_meta: {
       cumulus_version: '3.0.0',
     },
   }));
 });
 
-test('shouldWriteToRDS returns false for pre-RDS deployment execution message', async (t) => {
-  t.false(await shouldWriteToRDS({
+test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
+  t.false(await shouldWriteExecutionToRDS({
     cumulus_meta: {
       cumulus_version: '2.99.1',
     },
   }));
+});
+
+test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with parent execution in RDS', async (t) => {
+  const { knex } = t.context;
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  await knex('executions').insert({
+    arn: parentExecutionArn,
+  });
+
+  t.true(
+    await shouldWriteExecutionToRDS({
+      cumulus_meta: {
+        cumulus_version: '3.0.0',
+        parentExecutionArn,
+      },
+    }, knex)
+  );
+});
+
+test('shouldWriteExecutionToRDS returns false for post-RDS deployment execution message with missing parent execution', async (t) => {
+  const { knex } = t.context;
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+
+  t.false(
+    await shouldWriteExecutionToRDS({
+      cumulus_meta: {
+        cumulus_version: '3.0.0',
+        parentExecutionArn,
+      },
+    }, knex)
+  );
 });
 
 test.todo('saveExecutionToRDS saves correct execution record to RDS');
@@ -250,7 +227,7 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
 
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  await saveExecutions(cumulusMessage, true, knex);
+  await saveExecutions(cumulusMessage, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
   t.truthy(
     await knex('executions')
@@ -277,7 +254,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynam
     });
   t.teardown(() => saveExecutionStub.restore());
 
-  await saveExecutions(cumulusMessage, true, knex);
+  await saveExecutions(cumulusMessage, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.falsy(
     await knex('executions')
@@ -308,7 +285,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS w
   };
   sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
 
-  await saveExecutions(cumulusMessage, true, knex);
+  await saveExecutions(cumulusMessage, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.falsy(
     await knex('executions')

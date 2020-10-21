@@ -4,7 +4,6 @@ const get = require('lodash/get');
 const semver = require('semver');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const { getKnexClient } = require('@cumulus/db');
 const {
@@ -23,42 +22,31 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
     throw new Error('RDS_DEPLOYMENT_CUMULUS_VERSION environment variable must be set');
   }
   const cumulusVersion = getMessageCumulusVersion(cumulusMessage);
-  if (!cumulusVersion) return false;
-  return semver.gte(cumulusVersion, minimumSupportedRDSVersion);
+  return cumulusVersion
+    ? semver.gte(cumulusVersion, minimumSupportedRDSVersion)
+    : false;
 };
 
-/**
- * Get the initial execution message for a chain of workflows.
- *
- * @param {Object} cumulusMessage - A Cumulus workflow message
- * @returns {Object}
- *   Cumulus workflow message for the parent execution initiating
- *   this chain of executions.
- */
-const getInitialExecutionMessage = async (cumulusMessage) => {
+const doesExecutionExistInRDS = async (params, knex) =>
+  await knex('executions').where(params).first() !== undefined;
+
+const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
+  const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   const parentArn = getMessageExecutionParentArn(cumulusMessage);
-  if (!parentArn) {
-    return cumulusMessage;
-  }
-  const executionArn = getMessageExecutionArn(cumulusMessage);
-  const response = await StepFunctions.describeExecution({
-    executionArn,
-  });
-  return getInitialExecutionMessage(JSON.parse(response.input));
-};
-
-const shouldWriteToRDS = async (cumulusMessage) => {
-  const initialMessage = await getInitialExecutionMessage(cumulusMessage);
-  return isPostRDSDeploymentExecution(initialMessage);
+  if (!executionIsPostDeployment || !parentArn) return executionIsPostDeployment;
+  return doesExecutionExistInRDS({
+    arn: parentArn,
+  }, knex);
 };
 
 // Just a stub for write functionality
 const saveExecutionToRDS = async (executionRecord, knexOrTransaction) =>
   knexOrTransaction('executions').insert(executionRecord);
 
-const saveExecutions = async (cumulusMessage, isRDSWriteEnabled, knex) => {
+const saveExecutions = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
+  const isRDSWriteEnabled = await shouldWriteExecutionToRDS(cumulusMessage, knex);
 
   if (!isRDSWriteEnabled) {
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
@@ -111,9 +99,8 @@ const handler = async (event) => {
   return Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
-    const isRDSWriteEnabled = await shouldWriteToRDS(cumulusMessage);
     const results = await Promise.allSettled([
-      saveExecutions(cumulusMessage, isRDSWriteEnabled, knex),
+      saveExecutions(cumulusMessage, knex),
       saveGranulesToDb(cumulusMessage),
       savePdrToDb(cumulusMessage),
     ]);
@@ -127,9 +114,8 @@ const handler = async (event) => {
 
 module.exports = {
   handler,
-  getInitialExecutionMessage,
   isPostRDSDeploymentExecution,
-  shouldWriteToRDS,
+  shouldWriteExecutionToRDS,
   saveExecutionToRDS,
   saveExecutions,
   saveGranulesToDb,
