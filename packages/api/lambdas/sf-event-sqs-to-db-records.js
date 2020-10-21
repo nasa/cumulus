@@ -5,7 +5,10 @@ const semver = require('semver');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
-const { getKnexClient } = require('@cumulus/db');
+const {
+  getKnexClient,
+  clients,
+} = require('@cumulus/db');
 const {
   getMessageExecutionArn,
   getMessageExecutionParentArn,
@@ -27,26 +30,29 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
     : false;
 };
 
-const doesExecutionExistInRDS = async (params, knex) =>
-  await knex('executions').where(params).first() !== undefined;
+const doesExecutionExistInRDS = async (params, executionDbClient) =>
+  await executionDbClient.where(params).first() !== undefined;
 
-const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
+const shouldWriteExecutionToRDS = async (cumulusMessage, executionDbClient) => {
   const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   const parentArn = getMessageExecutionParentArn(cumulusMessage);
   if (!executionIsPostDeployment || !parentArn) return executionIsPostDeployment;
   return doesExecutionExistInRDS({
     arn: parentArn,
-  }, knex);
+  }, executionDbClient);
 };
 
 // Just a stub for write functionality
+// TODO: make this use executionDBClient
 const saveExecutionToRDS = async (executionRecord, knexOrTransaction) =>
   knexOrTransaction('executions').insert(executionRecord);
 
 const saveExecutions = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
-  const isRDSWriteEnabled = await shouldWriteExecutionToRDS(cumulusMessage, knex);
+  const executionDbClient = await clients.getExecutionDbClient(knex);
+
+  const isRDSWriteEnabled = await shouldWriteExecutionToRDS(cumulusMessage, executionDbClient);
 
   if (!isRDSWriteEnabled) {
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
