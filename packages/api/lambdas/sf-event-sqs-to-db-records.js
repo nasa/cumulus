@@ -66,7 +66,10 @@ const saveExecutions = async (cumulusMessage, isRDSWriteEnabled, knex) => {
 
   try {
     return await knex.transaction(async (trx) => {
-      await saveExecutionToRDS({ arn: executionArn }, trx);
+      await saveExecutionToRDS({
+        arn: executionArn,
+        cumulusVersion: getMessageCumulusVersion(cumulusMessage),
+      }, trx);
       return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
     });
   } catch (error) {
