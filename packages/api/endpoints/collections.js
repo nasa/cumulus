@@ -62,7 +62,7 @@ async function activeList(req, res) {
     process.env.ES_INDEX
   );
   let result = await collection.queryCollectionsWithActiveGranules();
-  if (getMMT && getMMT === 'true') {
+  if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
   return res.send(result);
