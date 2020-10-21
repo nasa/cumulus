@@ -556,64 +556,64 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   t.is(fetchedGranules.length, 0);
 });
 
-test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
-  const fields = [
-    'granuleId',
-    'collectionId',
-    'beginningDateTime',
-    'endingDateTime',
-    'createdAt',
-    'status',
-    'updatedAt',
-    'published',
-  ];
+// test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
+//   const fields = [
+//     'granuleId',
+//     'collectionId',
+//     'beginningDateTime',
+//     'endingDateTime',
+//     'createdAt',
+//     'status',
+//     'updatedAt',
+//     'published',
+//   ];
 
-  // no search params
-  const granulesQueue = await granuleModel.granuleAttributeScan();
+//   // no search params
+//   const granulesQueue = await granuleModel.granuleAttributeScan();
 
-  const fetchedGranules = await granulesQueue.empty();
-  console.log(fetchedGranules);
-  t.is(fetchedGranules.length, 6);
-  t.deepEqual(
-    sortBy(fetchedGranules, ['granuleId']),
-    sortBy(fakeGranules.map((granule) => pick(granule, fields)), ['granuleId'])
-  );
+//   const fetchedGranules = await granulesQueue.empty();
+//   console.log(fetchedGranules);
+//   t.is(fetchedGranules.length, 6);
+//   t.deepEqual(
+//     sortBy(fetchedGranules, ['granuleId']),
+//     sortBy(fakeGranules.map((granule) => pick(granule, fields)), ['granuleId'])
+//   );
 
-  // const searchParams = {
-  //   status,
-  //   updatedAt__from: Date.now() - 1000 * 30,
-  //   updatedAt__to: Date.now(),
-  // };
-  // const granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
-  // console.log(granulesQueue);
+// const searchParams = {
+//   status,
+//   updatedAt__from: Date.now() - 1000 * 30,
+//   updatedAt__to: Date.now(),
+// };
+// const granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+// console.log(granulesQueue);
 
-  // const fetchedGranules = await granulesQueue.empty();
-  // console.log(fetchedGranules);
-  // t.is(fetchedGranules.length, 2);
-  // const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
-  // t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(expectedGranules, ['granuleId']));
+// const fetchedGranules = await granulesQueue.empty();
+// console.log(fetchedGranules);
+// t.is(fetchedGranules.length, 2);
+// const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
+// t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(expectedGranules, ['granuleId']));
 
-  // // array parameters
-  // searchParams = {
-  //   ...searchParams,
-  //   collectionId: [collectionId, randomId('collection')],
-  // };
-  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+// // array parameters
+// searchParams = {
+//   ...searchParams,
+//   collectionId: [collectionId, randomId('collection')],
+// };
+// granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
-  // fetchedGranules = await granulesQueue.empty();
-  // t.is(fetchedGranules.length, 1);
-  // t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
+// fetchedGranules = await granulesQueue.empty();
+// t.is(fetchedGranules.length, 1);
+// t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
 
-  // // granuleId
-  // searchParams = {
-  //   ...searchParams,
-  //   granuleId: granules[0].granuleId,
-  // };
-  // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+// // granuleId
+// searchParams = {
+//   ...searchParams,
+//   granuleId: granules[0].granuleId,
+// };
+// granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
-  // fetchedGranules = await granulesQueue.empty();
-  // t.is(fetchedGranules.length, 1);
-  // t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
+// fetchedGranules = await granulesQueue.empty();
+// t.is(fetchedGranules.length, 1);
+// t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
 
 // // test when no granule falls within the search parameter range
 // searchParams = {
@@ -623,7 +623,7 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
 // granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 // fetchedGranules = await granulesQueue.empty();
 // t.is(fetchedGranules.length, 0);
-});
+// });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
   const granule = fakeGranuleFactoryV2({ published: false });
