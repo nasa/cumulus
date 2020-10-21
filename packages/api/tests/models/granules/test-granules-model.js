@@ -580,7 +580,24 @@ test('granuleAttributeScan() placeholder', async (t) => {
     fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
   ];
   await granuleModel.create(granules);
-  t.is(true, true);
+
+  const fields = [
+    'granuleId',
+    'collectionId',
+    'beginningDateTime',
+    'endingDateTime',
+    'createdAt',
+    'status',
+    'updatedAt',
+    'published',
+  ];
+
+  // no search params
+  const granulesQueue = await granuleModel.granuleAttributeScan();
+
+  const fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 4);
+  t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(granules.map((granule) => pick(granule, fields)), ['granuleId']));
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
