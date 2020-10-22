@@ -14,9 +14,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist",
-    "prepare": "npm run tsc",
     "test:coverage": "../../node_modules/.bin/nyc true",
-    "tsc": "../../node_modules/.bin/tsc"
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/test-data",
   "repository": {
