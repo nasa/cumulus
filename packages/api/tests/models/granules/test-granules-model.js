@@ -603,7 +603,7 @@ test('granuleAttributeScan() placeholder', async (t) => {
   ];
   t.is(await granulesQueue.shift(), null);
   const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
-  t.deepEqual(sortBy(fetchedGranules, ['granuleId']), sortBy(expectedGranules, ['granuleId']));
+  t.deepEqual(fetchedGranules, sortBy(expectedGranules, ['granuleId']));
   t.is(true, true);
 });
 
