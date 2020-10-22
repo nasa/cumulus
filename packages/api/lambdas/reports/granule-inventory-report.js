@@ -34,7 +34,9 @@ async function createGranuleInventoryReport(recReportParams) {
   const { reportKey, systemBucket, ...params } = recReportParams;
   const searchParams = {};
   fields.forEach((field) => {
-    const fieldValue = params[field];
+    let searchField = field;
+    if (field === 'granuleUr') searchField = 'granuleId';
+    const fieldValue = params[searchField];
     if (fieldValue) {
       searchParams[field] = fieldValue;
     }
