@@ -568,7 +568,7 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   t.is(fetchedGranules.length, 0);
 });
 
-test('granuleAttributeScan() placeholder', async (t) => {
+test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
   const { granuleModel } = t.context;
 
   const collectionId = randomString();
@@ -580,15 +580,6 @@ test('granuleAttributeScan() placeholder', async (t) => {
     fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
   ];
   await granuleModel.create(granules);
-
-  // const fields = [
-  //   'granuleId',
-  //   'collectionId',
-  //   'createdAt',
-  //   'status',
-  //   'published',
-  //   'updatedAt',
-  // ];
 
   const searchParams = {
     collectionId,

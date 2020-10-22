@@ -4,7 +4,6 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
-const isEmpty = require('lodash/isEmpty');
 const partial = require('lodash/partial');
 const path = require('path');
 const pMap = require('p-map');
@@ -387,20 +386,13 @@ class Granule extends Manager {
   }
 
   /**
-   * return the queue of the granules for a given collection,
-   * the items are ordered by granuleId
-   *
-   * @param {string} collectionId - collection id
-   * @param {string} status - granule status, optional
+   * Returns the params to pass to GranulesSeachQueue
+   * either as an object/array or a joined expression
+   * @param {Object} searchParams - optional, search parameters
+   * @param {boolean} isQuery - optional, true if the params are for a query
    * @returns {Array<Object>} the granules' queue for a given collection
    */
-  getGranulesForCollection(collectionId, status) {
-    const fields = ['granuleId', 'collectionId', 'files', 'published', 'createdAt'];
-    const searchParams = status ? { status } : {};
-    return this.searchGranulesForCollection(collectionId, searchParams, fields);
-  }
-
-  getDynamoDbSearchParams(searchParams = {}, query = true) {
+  getDynamoDbSearchParams(searchParams = {}, isQuery = true) {
     const attributeNames = {};
     const attributeValues = {};
     const filterArray = [];
@@ -429,7 +421,7 @@ class Granule extends Manager {
         expression = `#${field} ${operation} :${key}`;
       }
 
-      if (query && field === 'granuleId') {
+      if (isQuery && field === 'granuleId') {
         keyConditionArray.push(expression);
       } else {
         filterArray.push(expression);
@@ -444,6 +436,20 @@ class Granule extends Manager {
       keyConditionArray,
       keyExpression: keyConditionArray.join(' AND '),
     };
+  }
+
+  /**
+   * return the queue of the granules for a given collection,
+   * the items are ordered by granuleId
+   *
+   * @param {string} collectionId - collection id
+   * @param {string} status - granule status, optional
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  getGranulesForCollection(collectionId, status) {
+    const fields = ['granuleId', 'collectionId', 'files', 'published', 'createdAt'];
+    const searchParams = status ? { status } : {};
+    return this.searchGranulesForCollection(collectionId, searchParams, fields);
   }
 
   /**
@@ -496,50 +502,34 @@ class Granule extends Manager {
     return new GranuleSearchQueue(removeNilProperties(params), 'query');
   }
 
-  granuleAttributeScan(searchParams = {}) {
-    const fields = [
-      'granuleId',
-      'collectionId',
-      'beginningDateTime',
-      'endingDateTime',
-      'createdAt',
-      'status',
-      'updatedAt',
-      'published',
-    ];
-
-    const attributeNames = {};
-    const attributeValues = {};
-    const filterArray = [];
-    const projectionArray = [];
-
-    Object.entries(searchParams).forEach(([key, value]) => {
-      let field = key;
-      let operation = '=';
-      if (key.includes('__')) {
-        field = key.split('__').shift();
-        operation = key.endsWith('__from') ? '>=' : '<=';
-      }
-
-      attributeNames[`#${field}`] = field;
-      attributeValues[`:${key}`] = value;
-      filterArray.push(`#${field} ${operation} :${key}`);
-    });
-
-    fields.forEach((field) => {
-      attributeNames[`#${field}`] = field;
-      projectionArray.push(`#${field}`);
-    });
+  /**
+   * return all granules filtered by given search params
+   *
+   * @param {Object} searchParams - optional, search parameters
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  granuleAttributeScan(searchParams) {
+    const { attributeValues, filterExpression } = this.getDynamoDbSearchParams(searchParams, false);
 
     const params = {
       TableName: this.tableName,
-      ExpressionAttributeNames: !isEmpty(attributeNames) ? attributeNames : undefined,
-      ExpressionAttributeValues: !isEmpty(attributeValues) ? attributeValues : undefined,
-      ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
-      FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
+      ExpressionAttributeNames:
+      {
+        '#granuleId': 'granuleId',
+        '#collectionId': 'collectionId',
+        '#beginningDateTime': 'beginningDateTime',
+        '#endingDateTime': 'endingDateTime',
+        '#createdAt': 'createdAt',
+        '#status': 'status',
+        '#updatedAt': 'updatedAt',
+        '#published': 'published',
+      },
+      ExpressionAttributeValues: filterExpression ? attributeValues : undefined,
+      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
+      FilterExpression: filterExpression,
     };
 
-    return new GranuleSearchQueue(removeNilProperties(params), 'scan');
+    return new GranuleSearchQueue(removeNilProperties(params));
   }
 
   /**
