@@ -54,7 +54,7 @@ const saveExecutions = async (cumulusMessage, knex) => {
       await Executions.getDbTransaction(trx)
         .insert({
           arn: executionArn,
-          cumulusVersion: getMessageCumulusVersion(cumulusMessage),
+          cumulus_version: getMessageCumulusVersion(cumulusMessage),
         });
       return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
     });
