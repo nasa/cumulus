@@ -30,24 +30,20 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
     : false;
 };
 
-const doesExecutionExistInRDS = async (params, executionDbClient) =>
-  await executionDbClient.where(params).first() !== undefined;
-
-const shouldWriteExecutionToRDS = async (cumulusMessage, executionDbClient) => {
+const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
   const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   const parentArn = getMessageExecutionParentArn(cumulusMessage);
   if (!executionIsPostDeployment || !parentArn) return executionIsPostDeployment;
-  return doesExecutionExistInRDS({
+  return Executions.doesExecutionExist({
     arn: parentArn,
-  }, executionDbClient);
+  }, knex);
 };
 
 const saveExecutions = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
-  const executionDbClient = Executions.getDbClient(knex);
 
-  const isRDSWriteEnabled = await shouldWriteExecutionToRDS(cumulusMessage, executionDbClient);
+  const isRDSWriteEnabled = await shouldWriteExecutionToRDS(cumulusMessage, knex);
 
   if (!isRDSWriteEnabled) {
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);

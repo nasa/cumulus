@@ -10,7 +10,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   localStackConnectionEnv,
   getKnexClient,
-  Executions
+  Executions,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
@@ -134,6 +134,8 @@ test.beforeEach(async (t) => {
       ...localStackConnectionEnv,
     },
   });
+
+  t.context.executionDbClient = Executions.getDbClient(t.context.knex);
 });
 
 test.after.always(async (t) => {
@@ -176,7 +178,7 @@ test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution m
     cumulus_meta: {
       cumulus_version: '3.0.0',
     },
-  }, Executions.getDbClient(knex)));
+  }, knex));
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
@@ -185,13 +187,13 @@ test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution m
     cumulus_meta: {
       cumulus_version: '2.99.1',
     },
-  }, Executions.getDbClient(knex)));
+  }, knex));
 });
 
 test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with parent execution in RDS', async (t) => {
-  const { knex } = t.context;
+  const { knex, executionDbClient } = t.context;
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  await knex('executions').insert({
+  await executionDbClient.insert({
     arn: parentExecutionArn,
   });
 
@@ -201,7 +203,7 @@ test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution m
         cumulus_version: '3.0.0',
         parentExecutionArn,
       },
-    }, Executions.getDbClient(knex))
+    }, knex)
   );
 });
 
@@ -215,7 +217,7 @@ test('shouldWriteExecutionToRDS returns false for post-RDS deployment execution 
         cumulus_version: '3.0.0',
         parentExecutionArn,
       },
-    }, Executions.getDbClient(knex))
+    }, knex)
   );
 });
 
@@ -233,10 +235,10 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
 
   await saveExecutions(cumulusMessage, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
-  t.truthy(
-    await knex('executions')
-      .where('arn', executionArn)
-      .first()
+  t.true(
+    await Executions.doesExecutionExist({
+      arn: executionArn,
+    }, knex)
   );
 });
 
@@ -260,10 +262,10 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynam
 
   await saveExecutions(cumulusMessage, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
-  t.falsy(
-    await knex('executions')
-      .where('arn', executionArn)
-      .first()
+  t.false(
+    await Executions.doesExecutionExist({
+      arn: executionArn,
+    }, knex)
   );
 });
 
@@ -291,10 +293,10 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS w
 
   await saveExecutions(cumulusMessage, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
-  t.falsy(
-    await knex('executions')
-      .where('arn', executionArn)
-      .first()
+  t.false(
+    await Executions.doesExecutionExist({
+      arn: executionArn,
+    }, knex)
   );
 });
 
