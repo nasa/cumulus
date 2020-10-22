@@ -27,14 +27,15 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const { getMMT, ...queryStringParameters } = req.query;
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
   const collection = new Collection(
     { queryStringParameters },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    includeStats
   );
   let result = await collection.query();
-  if (getMMT && getMMT === 'true') {
+  if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
   return res.send(result);
@@ -50,15 +51,16 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
-  const { getMMT, ...queryStringParameters } = req.query;
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
 
   const collection = new Collection(
     { queryStringParameters },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    includeStats
   );
   let result = await collection.queryCollectionsWithActiveGranules();
-  if (getMMT && getMMT === 'true') {
+  if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
   return res.send(result);
