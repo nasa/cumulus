@@ -2,10 +2,11 @@
 
 const errors = require('@cumulus/errors');
 const test = require('ava');
+const sinon = require('sinon');
 
+const { collections: collectionsApi } = require('@cumulus/api-client');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const CollectionConfigStore = require('@cumulus/collection-config-store');
 const {
   randomString,
   validateConfig,
@@ -16,6 +17,11 @@ const {
 const { streamTestData } = require('@cumulus/test-data');
 
 const { parsePdr } = require('..');
+
+test.before((t) => {
+  t.context.sandbox = sinon.createSandbox();
+  t.context.getCollectionsStub = sinon.stub(collectionsApi, 'getCollection');
+});
 
 test.beforeEach(async (t) => {
   t.context.payload = {
@@ -39,11 +45,15 @@ test.beforeEach(async (t) => {
     granuleIdExtraction: '^(.*)\.hdf',
   };
 
-  t.context.collectionConfigStore = new CollectionConfigStore(
-    t.context.payload.config.bucket,
-    t.context.payload.config.stack
-  );
-  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.payload.config.stack,
+    collectionName: 'MOD09GQ',
+    collectionVersion: '006',
+  }).resolves(collectionConfig);
+});
+
+test.after.always((t) => {
+  t.context.sandbox.restore();
 });
 
 const testGranule = {
@@ -251,16 +261,16 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
 
 test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR
-  await Promise.all([
-    t.context.collectionConfigStore.put(
-      'MYG29_S1D_SIR', '006',
-      { name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    ),
-    t.context.collectionConfigStore.put(
-      'MYG29_N1D_SIR', '006',
-      { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    ),
-  ]);
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.payload.config.stack,
+    collectionName: 'MYG29_S1D_SIR',
+    collectionVersion: '006',
+  }).resolves({ name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' });
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.payload.config.stack,
+    collectionName: 'MYG29_N1D_SIR',
+    collectionVersion: '006',
+  }).resolves({ name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' });
 
   // Set up the task config
   t.context.payload.config.provider = {
@@ -343,16 +353,16 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
 
 test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR
-  await Promise.all([
-    t.context.collectionConfigStore.put(
-      'MYG29_S1D_SIR', '006',
-      { name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    ),
-    t.context.collectionConfigStore.put(
-      'MYG29_N1D_SIR', '006',
-      { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
-    ),
-  ]);
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.payload.config.stack,
+    collectionName: 'MYG29_S1D_SIR',
+    collectionVersion: '006',
+  }).resolves({ name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' });
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.payload.config.stack,
+    collectionName: 'MYG29_N1D_SIR',
+    collectionVersion: '006',
+  }).resolves({ name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' });
 
   // Set up the task config
   t.context.payload.config.provider = {

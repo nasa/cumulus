@@ -25,10 +25,10 @@
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs URLUtils.js util.js > docs/API.md",
     "clean": "rm -f *.d.ts *.map",
-    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
@@ -42,14 +42,14 @@
   "dependencies": {
     "@cumulus/errors": "3.0.0",
     "@cumulus/logger": "3.0.0",
-    "ajv": "^5.2.2",
+    "ajv": "^6.12.3",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
     "js-yaml": "^3.11.0",
     "jsonpath-plus": "^3.0.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "node-forge": "^0.10.0",
     "p-limit": "^2.0.0",
     "p-map": "^1.2.0",
