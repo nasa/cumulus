@@ -27,7 +27,7 @@
   "scripts": {
     "test:coverage": "../../node_modules/.bin/nyc true",
     "tsc": "../../node_modules/.bin/tsc",
-    "prepare": "npm run tsc"
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

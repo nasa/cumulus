@@ -28,7 +28,15 @@ while ! docker container inspect ${container_id}\_build_env_1; do
 done
 
 ## Setup the build env container once it's started
-$docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA; npm install --error --no-progress; npm run bootstrap-no-build-quiet || true; npm run bootstrap-no-build-quiet"
+$docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA"
+# Copy build cache of compiled TS code into cached bootstrap dir, if necessary
+if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
+  docker cp $TS_BUILD_CACHE_FILE "${container_id}_build_env_1:$UNIT_TEST_BUILD_DIR"
+  docker cp bamboo/extract-ts-build-cache.sh "${container_id}_build_env_1:$UNIT_TEST_BUILD_DIR/bamboo"
+fi
+# Extract build cache of compiled TS files
+$docker_command "cd $UNIT_TEST_BUILD_DIR; TS_BUILD_CACHE_FILE=$TS_BUILD_CACHE_FILE ./bamboo/extract-ts-build-cache.sh"
+$docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run ci:bootstrap-no-scripts-quiet || true; npm run ci:bootstrap-no-scripts-quiet"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
 
 # Wait for the FTP server to be available

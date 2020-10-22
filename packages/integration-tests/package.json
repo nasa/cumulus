@@ -30,6 +30,7 @@
     "@cumulus/api": "3.0.1",
     "@cumulus/api-client": "3.0.1",
     "@cumulus/aws-client": "3.0.1",
+    "@cumulus/cmr-client": "3.0.1",
     "@cumulus/cmrjs": "3.0.1",
     "@cumulus/common": "3.0.1",
     "@cumulus/earthdata-login-client": "3.0.1",

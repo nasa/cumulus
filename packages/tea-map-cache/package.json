@@ -8,11 +8,11 @@
   },
   "scripts": {
     "clean": "rm -f ./dist/*.js ./dist/*.d.ts ./dist/lambda.zip",
-    "package": "npm run clean || true && npm run prepare && cd dist && zip -r -q ./lambda.zip * && cd .. && zip -r -q ./dist/lambda.zip node_modules",
-    "prepare": "npm run tsc",
+    "package": "cd dist && zip -r -q ./lambda.zip * && cd .. && zip -r -q ./dist/lambda.zip node_modules",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
