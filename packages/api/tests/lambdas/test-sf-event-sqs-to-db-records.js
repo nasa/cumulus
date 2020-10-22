@@ -7,7 +7,11 @@ const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { localStackConnectionEnv, getKnexClient } = require('@cumulus/db');
+const {
+  localStackConnectionEnv,
+  getKnexClient,
+  Executions
+} = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -167,19 +171,21 @@ test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS
 });
 
 test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with no parent execution', async (t) => {
+  const { knex } = t.context;
   t.true(await shouldWriteExecutionToRDS({
     cumulus_meta: {
       cumulus_version: '3.0.0',
     },
-  }));
+  }, Executions.getDbClient(knex)));
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
+  const { knex } = t.context;
   t.false(await shouldWriteExecutionToRDS({
     cumulus_meta: {
       cumulus_version: '2.99.1',
     },
-  }));
+  }, Executions.getDbClient(knex)));
 });
 
 test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with parent execution in RDS', async (t) => {
@@ -195,7 +201,7 @@ test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution m
         cumulus_version: '3.0.0',
         parentExecutionArn,
       },
-    }, knex)
+    }, Executions.getDbClient(knex))
   );
 });
 
@@ -209,11 +215,9 @@ test('shouldWriteExecutionToRDS returns false for post-RDS deployment execution 
         cumulus_version: '3.0.0',
         parentExecutionArn,
       },
-    }, knex)
+    }, Executions.getDbClient(knex))
   );
 });
-
-test.todo('saveExecutionToRDS saves correct execution record to RDS');
 
 test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;

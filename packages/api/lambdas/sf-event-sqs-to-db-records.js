@@ -7,7 +7,7 @@ const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS
 const log = require('@cumulus/common/log');
 const {
   getKnexClient,
-  clients,
+  Executions,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
@@ -42,15 +42,10 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, executionDbClient) => {
   }, executionDbClient);
 };
 
-// Just a stub for write functionality
-// TODO: make this use executionDBClient
-const saveExecutionToRDS = async (executionRecord, knexOrTransaction) =>
-  knexOrTransaction('executions').insert(executionRecord);
-
 const saveExecutions = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
-  const executionDbClient = await clients.getExecutionDbClient(knex);
+  const executionDbClient = Executions.getDbClient(knex);
 
   const isRDSWriteEnabled = await shouldWriteExecutionToRDS(cumulusMessage, executionDbClient);
 
@@ -60,10 +55,11 @@ const saveExecutions = async (cumulusMessage, knex) => {
 
   try {
     return await knex.transaction(async (trx) => {
-      await saveExecutionToRDS({
-        arn: executionArn,
-        cumulusVersion: getMessageCumulusVersion(cumulusMessage),
-      }, trx);
+      await Executions.getDbTransaction(trx)
+        .insert({
+          arn: executionArn,
+          cumulusVersion: getMessageCumulusVersion(cumulusMessage),
+        });
       return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
     });
   } catch (error) {
@@ -122,7 +118,6 @@ module.exports = {
   handler,
   isPostRDSDeploymentExecution,
   shouldWriteExecutionToRDS,
-  saveExecutionToRDS,
   saveExecutions,
   saveGranulesToDb,
   savePdrToDb,
