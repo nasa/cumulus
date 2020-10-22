@@ -148,3 +148,9 @@ output "background_queue_url" {
 output "start_sf_queue_url" {
   value = aws_sqs_queue.start_sf.id
 }
+
+output "update_granules_metadata_task" {
+  value = {
+    task_arn = aws_lambda_function.update_granules_metadata_task.arn
+  }
+}

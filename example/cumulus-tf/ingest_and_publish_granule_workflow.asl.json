@@ -214,7 +214,7 @@
       },
       "Type": "Task",
       "Resource": "${move_granules_task_arn}",
-      "Next": "HyraxMetadataUpdatesTask",
+      "Next": "UpdateGranulesMetadataStep",
       "Catch": [
         {
           "ErrorEquals": [
@@ -251,6 +251,7 @@
       },
       "Type": "Task",
       "Resource": "${update_granules_metadata_task_arn}",
+      "Next": "HyraxMetadataUpdateTask",
       "Retry": [
         {
           "ErrorEquals": [
@@ -262,7 +263,8 @@
           "MaxAttempts": 6,
           "BackoffRate": 2
         }
-      ],
+      ]
+    },
     "HyraxMetadataUpdatesTask": {
       "Parameters": {
         "cma": {
