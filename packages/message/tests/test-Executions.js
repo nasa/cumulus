@@ -9,6 +9,7 @@ const {
   getMessageStateMachineArn,
   getStateMachineArnFromExecutionArn,
   getMessageExecutionParentArn,
+  getMessageCumulusVersion
 } = require('../Executions');
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
@@ -94,4 +95,20 @@ test('getMessageExecutionParentArn returns undefined if there is no parent execu
     cumulus_meta: {},
   });
   t.is(executionArn, undefined);
+});
+
+test('getMessageCumulusVersion returns correct Cumulus version', (t) => {
+  const cumulusVersion = getMessageCumulusVersion({
+    cumulus_meta: {
+      cumulus_version: '1.2.3',
+    },
+  });
+  t.is(cumulusVersion, '1.2.3');
+});
+
+test('getMessageCumulusVersion returns undefined if there is no cumulus version', (t) => {
+  const cumulusVersion = getMessageCumulusVersion({
+    cumulus_meta: {},
+  });
+  t.is(cumulusVersion, undefined);
 });

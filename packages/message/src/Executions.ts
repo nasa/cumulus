@@ -128,7 +128,7 @@ export const getMessageExecutionArn = (
  * Get the parent execution ARN from a workflow message, if any.
  *
  * @param {Message.CumulusMessage} message - A workflow message object
- * @returns {null|string} A state machine execution ARN
+ * @returns {undefined|string} A state machine execution ARN
  *
  * @alias module:Executions
  */
@@ -137,10 +137,10 @@ export const getMessageExecutionParentArn = (
 ) => message.cumulus_meta?.parentExecutionArn;
 
 /**
- * Get the parent execution ARN from a workflow message, if any.
+ * Get the Cumulus version from a workflow message, if any.
  *
  * @param {Message.CumulusMessage} message - A workflow message object
- * @returns {null|string} A state machine execution ARN
+ * @returns {undefined|string} The cumulus version
  *
  * @alias module:Executions
  */
