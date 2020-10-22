@@ -5,10 +5,12 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 const { CMR } = require('@cumulus/cmr-client');
 const { randomId } = require('@cumulus/common/test-utils');
+const cloneDeep = require('lodash/cloneDeep');
 const mmt = rewire('../../lib/mmt');
 
 const insertMMTLinks = mmt.__get__('insertMMTLinks');
 const buildMMTLink = mmt.__get__('buildMMTLink');
+const log = mmt.__get__('log');
 
 test.beforeEach(async (t) => {
   t.context.env = process.env.CMR_ENVIRONMENT;
@@ -95,6 +97,34 @@ test.serial(
 
     const actual = await insertMMTLinks(fakeESResponse);
     t.deepEqual(actual, expected);
+  }
+);
+
+test.serial(
+  'insertMMTLinks returns the input unchanged if an error occurs with CMR.',
+  async (t) => {
+    const fakeESResponse = {
+      meta: {
+        irrelevant: 'information',
+      },
+      results: [
+        { thisData: 'Can be anything' },
+      ],
+    };
+    sinon.spy(log, 'error');
+    const expected = cloneDeep(fakeESResponse);
+
+    CMR.prototype.searchCollections.restore();
+    const stubError = new Error('CMR is down today');
+    sinon.stub(CMR.prototype, 'searchCollections').throws(stubError);
+
+    const actual = await insertMMTLinks(fakeESResponse);
+
+    t.deepEqual(actual, expected);
+    t.true(log.error.calledWith('Unable to update inputResponse with MMT Links'));
+    t.true(log.error.calledWith(stubError));
+
+    log.error.restore();
   }
 );
 
