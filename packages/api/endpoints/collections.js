@@ -32,7 +32,7 @@ async function list(req, res) {
     { queryStringParameters },
     undefined,
     process.env.ES_INDEX,
-    includeStats
+    includeStats === 'true'
   );
   let result = await collection.query();
   if (getMMT === 'true') {
@@ -57,7 +57,7 @@ async function activeList(req, res) {
     { queryStringParameters },
     undefined,
     process.env.ES_INDEX,
-    includeStats
+    includeStats === 'true'
   );
   let result = await collection.queryCollectionsWithActiveGranules();
   if (getMMT === 'true') {

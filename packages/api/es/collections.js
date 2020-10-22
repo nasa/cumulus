@@ -8,9 +8,9 @@ const { BaseSearch } = require('./search');
 const ES_MAX_AGG = 2147483647;
 
 class Collection extends BaseSearch {
-  constructor(event, type, index, includeStats = 'true') {
+  constructor(event, type, index, includeStats = true) {
     super(event, type || 'collection', index);
-    this.includeStats = includeStats === 'true';
+    this.includeStats = includeStats === true;
     // decrease the limit to 50
     this.size = this.size > 50 ? 50 : this.size;
   }
