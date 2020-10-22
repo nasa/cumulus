@@ -330,6 +330,44 @@ async function bulkDelete(req, res) {
   return res.status(202).send(asyncOperation);
 }
 
+async function bulkReingest(req, res) {
+  const payload = req.body;
+
+  const asyncOperationModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable,
+  });
+
+  const numOfGranules = (payload.query && payload.query.size)
+    || (payload.ids && payload.ids.length);
+  const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;
+
+  const asyncOperation = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    lambdaName: process.env.BulkOperationLambda,
+    description,
+    operationType: 'Bulk Granule Reingest',
+    payload: {
+      payload,
+      type: 'BULK_GRANULE_REINGEST',
+      envVars: {
+        GranulesTable: process.env.GranulesTable,
+        system_bucket: process.env.system_bucket,
+        stackName: process.env.stackName,
+        invoke: process.env.invoke,
+        METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+      },
+    },
+    esHost: process.env.ES_HOST,
+  });
+
+  return res.status(202).send(asyncOperation);
+}
+
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);
@@ -343,6 +381,12 @@ router.post(
   '/bulkDelete',
   validateBulkGranulesRequest,
   bulkDelete,
+  asyncOperationEndpointErrorHandler
+);
+router.post(
+  '/bulkReingest',
+  validateBulkGranulesRequest,
+  bulkReingest,
   asyncOperationEndpointErrorHandler
 );
 router.delete('/:granuleName', del);

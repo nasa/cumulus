@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
@@ -12,17 +13,18 @@ const {
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
-const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { PDRParsingError } = require('@cumulus/errors');
 const { streamTestData } = require('@cumulus/test-data');
 const proxyquire = require('proxyquire');
 
+const fakeCollectionsApi = {};
 const fakeProvidersApi = {};
 
 const { parsePdr } = proxyquire(
   '..',
   {
     '@cumulus/api-client': {
+      collections: fakeCollectionsApi,
       providers: fakeProvidersApi,
     },
   }
@@ -44,20 +46,27 @@ test.before(async (t) => {
   const testBucket = `internal-bucket-${randomString().slice(0, 6)}`;
   await createBucket(testBucket);
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
-  t.context.collectionConfigStore = new CollectionConfigStore(
-    testBucket,
-    t.context.stackName
-  );
+
   const mod09CollectionConfig = {
     granuleIdExtraction: '^(.*)\.hdf',
   };
   const mod87CollectionConfig = {
     granuleIdExtraction: '^PENS-(.*)\.hdf',
   };
-  await Promise.all([
-    t.context.collectionConfigStore.put('MOD09GQ', '006', mod09CollectionConfig),
-    t.context.collectionConfigStore.put('MOD87GQ', '006', mod87CollectionConfig),
-  ]);
+
+  t.context.sandbox = sinon.createSandbox();
+  t.context.getCollectionsStub = t.context.sandbox.stub();
+  fakeCollectionsApi.getCollection = t.context.getCollectionsStub;
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.stackName,
+    collectionName: 'MOD09GQ',
+    collectionVersion: '006',
+  }).resolves(mod09CollectionConfig);
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.stackName,
+    collectionName: 'MOD87GQ',
+    collectionVersion: '006',
+  }).resolves(mod87CollectionConfig);
 
   t.context.payload = {
     config: {
@@ -85,6 +94,7 @@ test.beforeEach(() => {
 });
 
 test.after.always(async (t) => {
+  t.context.sandbox.restore();
   await recursivelyDeleteS3Bucket(t.context.payload.config.bucket);
 });
 

@@ -27,10 +27,10 @@
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.hbs *.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
-    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
@@ -47,7 +47,7 @@
     "@cumulus/logger": "3.0.0",
     "aws-sdk": "^2.585.0",
     "jsonpath-plus": "^1.1.0",
-    "lodash": "~4.17.15",
+    "lodash": "~4.17.20",
     "p-map": "^1.2.0",
     "p-retry": "^4.2.0",
     "p-wait-for": "^3.1.0",
