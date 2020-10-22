@@ -211,7 +211,7 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
       },
     });
     const results = JSON.parse(resp.body).results;
-    if (results.length === 1) {
+    if (results && results.length === 1) {
       return isEqual(omit(results[0], fieldsIgnored), omit(granule, fieldsIgnored));
     }
     return false;

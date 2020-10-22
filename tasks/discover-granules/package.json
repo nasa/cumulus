@@ -35,11 +35,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/api-client": "3.0.0",
-    "@cumulus/cumulus-message-adapter-js": "1.3.1",
+    "@cumulus/cumulus-message-adapter-js": "2.0.0",
     "@cumulus/ingest": "3.0.0",
     "@cumulus/logger": "3.0.0",
     "got": "^9.2.1",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "@cumulus/aws-client": "3.0.0",

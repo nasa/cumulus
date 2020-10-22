@@ -6,13 +6,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-2216**
+  - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
+
+### Fixed
+- **CUMULUS-2203**
+  - Update Core tasks to use
+    [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
+    v2.0.0 to resolve memory leak/lambda ENOMEM constant failure issue.   This
+    issue caused lambdas to slowly use all memory in the run environment and
+    prevented AWS from halting/restarting warmed instances when task code was
+    throwing consistent errors under load.
+
 ### Added
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
+- **CUMULUS-2211**
+  - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
 
 ### Changed
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
+- **CUMULUS-2232**
+  - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
+- **CUMULUS-2216**
+  - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.
+  - The `es/collections` Collection class takes a new parameter includeStats. It no longer appends granule aggregate statistics to the returned results by default. One must set the new parameter to any non-false value.
+
 
 ## [v3.0.0] 2020-10-7
 
