@@ -22,11 +22,9 @@ const launchpad = require('@cumulus/launchpad-auth');
 const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const errors = require('@cumulus/errors');
-const CMR = require('@cumulus/cmr-client/CMR');
-const { ummVersion } = require('@cumulus/cmr-client/UmmUtils');
+const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 
 const {
-  getUrl,
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
@@ -128,7 +126,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: 'echo10',
-    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`,
+    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
   };
 }
 
@@ -155,7 +153,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
-    link: `${getUrl('search', undefined, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`,
+    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
   };
 }
 

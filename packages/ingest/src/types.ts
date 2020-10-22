@@ -1,12 +1,15 @@
 export interface ProviderClientListItem {
-
-}
-
-export interface S3ProviderClientListItem extends ProviderClientListItem {
   name: string,
   path: string | undefined,
   size: number,
   time: number
+}
+
+export interface FtpProviderClientListItem extends ProviderClientListItem {
+  type: number
+}
+
+export interface S3ProviderClientListItem extends ProviderClientListItem {
 }
 
 export interface ProviderClient {
