@@ -7,6 +7,7 @@ const {
   getMessageExecutionArn,
   getMessageExecutionName,
   getMessageExecutionParentArn,
+  getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -46,6 +47,7 @@ class Execution extends Manager {
 
     const record = {
       name: getMessageExecutionName(cumulusMessage),
+      cumulusVersion: getMessageCumulusVersion(cumulusMessage),
       arn,
       asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
       parentArn: getMessageExecutionParentArn(cumulusMessage),
