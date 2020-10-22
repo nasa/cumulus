@@ -597,8 +597,16 @@ test('granuleAttributeScan() placeholder', async (t) => {
   };
   const granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
-  const fetchedGranules = await granulesQueue.empty();
-  t.is(fetchedGranules.length, 2);
+  const fetchedGranules = [
+    await granulesQueue.shift(),
+    await granulesQueue.shift(),
+  ];
+  t.is(await granulesQueue.shift(), null);
+  t.deepEqual(
+    fetchedGranules.map((g) => g.granuleId).sort(),
+    granules.slice(0, 2).map((g) => g.granuleId).sort()
+  );
+  t.is(true, true);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
