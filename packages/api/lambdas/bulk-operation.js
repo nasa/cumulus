@@ -178,7 +178,7 @@ async function bulkGranuleReingest(payload) {
         await granuleModel.reingest(granule, process.env.asyncOperationId);
         return granuleId;
       } catch (error) {
-        log.debug(`Granule ${granuleId} encounters error`, error);
+        log.debug(`Granule ${granuleId} encountered an error`, error);
         return { granuleId, err: error };
       }
     },
