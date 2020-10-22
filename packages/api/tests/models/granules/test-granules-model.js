@@ -591,6 +591,7 @@ test('granuleAttributeScan() placeholder', async (t) => {
   // ];
 
   const searchParams = {
+    collectionId,
     status,
     updatedAt__from: Date.now() - 1000 * 30,
     updatedAt__to: Date.now(),
@@ -606,7 +607,6 @@ test('granuleAttributeScan() placeholder', async (t) => {
     fetchedGranules.map((g) => g.granuleId).sort(),
     granules.slice(0, 2).map((g) => g.granuleId).sort()
   );
-  t.is(true, true);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
