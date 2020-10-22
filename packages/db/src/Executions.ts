@@ -7,3 +7,6 @@ export const getDbClient = (knex: Knex) =>
 
 export const getDbTransaction = (trx: Knex.Transaction) =>
   trx(executionsTableName);
+
+export const doesExecutionExist = async (params: object, knex: Knex) =>
+  await getDbClient(knex).where(params).first() !== undefined;
