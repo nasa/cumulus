@@ -58,7 +58,7 @@ locals {
       execution_name          = null
       workflow_start_time     = null
       queueExecutionLimits    = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
-    }, file("${path.module}/cumulus_version.json"))
+    }, jsondecode(file("${path.module}/cumulus_version.json")))
     meta = {
       workflow_name  = null
       workflow_tasks = {}
