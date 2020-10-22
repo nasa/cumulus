@@ -61,8 +61,9 @@ test.afterEach.always((t) => {
 });
 
 test.after.always(async () => {
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await accessTokenModel.deleteTable();
+  await Promise.all([
+    recursivelyDeleteS3Bucket(process.env.system_bucket),
+    accessTokenModel.deleteTable()]);
 });
 
 test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and list of IDs', async (t) => {
