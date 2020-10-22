@@ -592,17 +592,18 @@ test('granuleAttributeScan() placeholder', async (t) => {
   //   'published',
   // ];
 
-  // const searchParams = {
-  //   status,
-  //   updatedAt__from: Date.now() - 1000 * 30,
-  //   updatedAt__to: Date.now(),
-  // };
-  await granuleModel.granuleAttributeScan();
+  const searchParams = {
+    status,
+    updatedAt__from: Date.now() - 1000 * 30,
+    updatedAt__to: Date.now(),
+  };
+  const granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
-  // const fetchedGranules = [
-  //   await granulesQueue.shift(),
-  //   await granulesQueue.shift(),
-  // ];
+  const fetchedGranules = [
+    await granulesQueue.shift(),
+    await granulesQueue.shift(),
+  ];
+  t.is(fetchedGranules.length, 2);
   // t.is(await granulesQueue.shift(), null);
   // const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
   // t.deepEqual(fetchedGranules, expectedGranules);
