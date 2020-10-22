@@ -6,7 +6,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
@@ -17,21 +17,21 @@ const { app } = require('../../../app');
 
 process.env = {
   ...process.env,
-  AccessTokensTable: randomString(),
-  CollectionsTable: randomString(),
-  GranulesTable: randomString(),
-  TOKEN_SECRET: randomString(),
-  stackName: randomString(),
-  system_bucket: randomString(),
-  AsyncOperationsTable: randomString(),
-  AsyncOperationTaskDefinition: randomString(),
-  EcsCluster: randomString(),
-  BulkOperationLambda: randomString(),
-  invoke: randomString(),
-  ES_HOST: randomString(),
-  METRICS_ES_HOST: randomString(),
-  METRICS_ES_USER: randomString(),
-  METRICS_ES_PASS: randomString(),
+  AccessTokensTable: randomId('AccessTokensTable'),
+  CollectionsTable: randomId('CollectionsTable'),
+  GranulesTable: randomId('GranulesTable'),
+  TOKEN_SECRET: randomId('tokenSecret'),
+  stackName: randomId('stackName'),
+  system_bucket: randomId('systemBucket'),
+  AsyncOperationsTable: randomId('AsyncOperationsTable'),
+  AsyncOperationTaskDefinition: randomId('taskDefinition'),
+  EcsCluster: randomId('EcsCluster'),
+  BulkOperationLambda: randomId('BulkOperationLambda'),
+  invoke: randomId('invoke'),
+  ES_HOST: randomId('esHost'),
+  METRICS_ES_HOST: randomId('metricsEsHost'),
+  METRICS_ES_USER: randomId('metricsEsUser'),
+  METRICS_ES_PASS: randomId('metricsEsPass'),
 };
 
 let accessTokenModel;
@@ -40,7 +40,7 @@ let jwtAuthToken;
 test.before(async () => {
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  const username = randomString();
+  const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
@@ -50,7 +50,7 @@ test.before(async () => {
 });
 
 test.beforeEach((t) => {
-  const asyncOperationId = randomString();
+  const asyncOperationId = randomId('asyncOperationId');
   t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
     new Promise((resolve) => resolve({ id: asyncOperationId }))
   );
