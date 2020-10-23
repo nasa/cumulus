@@ -21,12 +21,15 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
 fi
 echo "***Deploying stack with built source"
 
+# Extract cache of compiled TS files
+./bamboo/extract-ts-build-cache.sh
+
 npm install
 ## Double bootstrapping required as workaround to
 ## lerna re-bootstrapping issue in older releases
 ## (similiar to  https://github.com/lerna/lerna/issues/1457)
-(npm run bootstrap-no-build-no-scripts || true) && npm run bootstrap-no-build
+(npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap
 
-./node_modules/.bin/lerna run package
+npm run package
 
 . ./bamboo/deploy-integration-stack.sh
