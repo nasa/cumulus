@@ -17,13 +17,17 @@ export const up = async (knex: Knex): Promise<void> =>
       .inTable('providers')
       .notNullable();
     table
-      .integer('executionCumulusId')
-      .references('cumulusId')
-      .inTable('executions');
-    table
       .enum('status', ['running', 'failed', 'completed'])
       .comment('Status (running, failed, completed) of the PDR')
       .notNullable();
+    table
+      .text('name')
+      .comment('PDR name')
+      .notNullable();
+    table
+      .integer('executionCumulusId')
+      .references('cumulusId')
+      .inTable('executions');
     table
       .float('progress')
       .comment('PDR completion progress percentage');
@@ -41,11 +45,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('originalUrl');
     table
-      .integer('duration');
-    table
-      .text('name')
-      .comment('PDR name')
-      .notNullable();
+      .float('duration');
     table
       .timestamp('timestamp')
       .comment('PDR timestamp');
