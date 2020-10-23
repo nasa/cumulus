@@ -11,6 +11,7 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const url = require('url');
 const Logger = require('@cumulus/logger');
+const { asyncOperationsConfig, getDbTransaction, getKnexConfig, getKnexClient } = require('@cumulus/db');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
@@ -161,26 +162,38 @@ function buildErrorOutput(error) {
  *   into JSON.
  * @returns {Promise} resolves when the item has been updated
  */
-function updateAsyncOperation(status, output) {
+// CUMULUS-2191
+async function updateAsyncOperation(status, output) {
+  const actualOutput = isError(output) ? buildErrorOutput(output) : output;
+  const dbOutput = actualOutput ? JSON.stringify(actualOutput) : 'none';
+  const updatedTime = (Number(Date.now())).toString();
+  const knex = await getKnexClient({ env });
   const dynamodb = new AWS.DynamoDB();
 
-  const actualOutput = isError(output) ? buildErrorOutput(output) : output;
-
-  return dynamodb.updateItem({
-    TableName: process.env.asyncOperationsTable,
-    Key: { id: { S: process.env.asyncOperationId } },
-    ExpressionAttributeNames: {
-      '#S': 'status',
-      '#O': 'output',
-      '#U': 'updatedAt',
-    },
-    ExpressionAttributeValues: {
-      ':s': { S: status },
-      ':o': { S: actualOutput ? JSON.stringify(actualOutput) : 'none' },
-      ':u': { N: (Number(Date.now())).toString() },
-    },
-    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
-  }).promise();
+  return knex.transaction(async (trx) => {
+    getDbTransaction(trx, asyncOperationsConfig)
+      .update({
+        id: process.env.asyncOperationId,
+        status,
+        output: dbOutput,
+        updatedAt: updatedTime,
+      });
+    await dynamodb.updateItem({
+      TableName: process.env.asyncOperationsTable,
+      Key: { id: { S: process.env.asyncOperationId } },
+      ExpressionAttributeNames: {
+        '#S': 'status',
+        '#O': 'output',
+        '#U': 'updatedAt',
+      },
+      ExpressionAttributeValues: {
+        ':s': { S: status },
+        ':o': { S: dbOutput },
+        ':u': { N: updatedTime },
+      },
+      UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
+    });
+  });
 }
 
 /**

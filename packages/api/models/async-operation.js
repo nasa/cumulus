@@ -4,6 +4,13 @@ const { ecs, s3, lambda } = require('@cumulus/aws-client/services');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const uuidv4 = require('uuid/v4');
+
+const {
+  getDbTransaction,
+  getKnexClient,
+  asyncOperationsConfig,
+} = require('@cumulus/db');
+
 const Manager = require('./base');
 const { asyncOperation: asyncOperationSchema } = require('./schemas');
 
@@ -17,11 +24,12 @@ class AsyncOperation extends Manager {
   /**
    * Creates an instance of AsyncOperation.
    *
-   * @param {Object} params - params
-   * @param {string} params.stackName - the Cumulus stack name
+   * @param {Object} params              - params
+   * @param {string} params.stackName    - the Cumulus stack name
    * @param {string} params.systemBucket - the name of the Cumulus system bucket
-   * @param {string} params.tableName - the name of the AsyncOperation DynamoDB
-   *   table
+   * @param {string} params.tableName    - the name of the AsyncOperation DynamoDB
+   * @param {Object} params.knexConfig   - a @cumulus/db `getKnexConfig`
+   *                                       override object for process envs
    * @returns {undefined} creates a new AsyncOperation object
    * @memberof AsyncOperation
    */
@@ -37,6 +45,7 @@ class AsyncOperation extends Manager {
 
     this.systemBucket = params.systemBucket;
     this.stackName = params.stackName;
+    this.knexConfig = { ...process.env, ...params.knexConfig };
   }
 
   async getLambdaEnvironmentVariables(functionName) {
@@ -154,6 +163,19 @@ class AsyncOperation extends Manager {
       taskArn: runTaskResponse.tasks[0].taskArn,
       description,
       operationType,
+    });
+  }
+
+  async create(params) {
+    const {
+      id, status, taskArn, description, operationType,
+    } = params;
+
+    const knex = await getKnexClient({ env: this.knexConfig });
+    return knex.transaction(async (trx) => {
+      await getDbTransaction(trx, asyncOperationsConfig)
+        .insert({ id, status, taskArn, description, operationType });
+      return super.create(params);
     });
   }
 }

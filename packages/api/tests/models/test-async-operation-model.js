@@ -1,5 +1,7 @@
 'use strict';
 
+const cryptoRandomString = require('crypto-random-string');
+
 const isString = require('lodash/isString');
 const test = require('ava');
 const sinon = require('sinon');
@@ -8,8 +10,13 @@ const { ecs, lambda, s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
+const { localStackConnectionEnv, createTestDatabase, deleteTestDatabase, getKnexClient } = require('@cumulus/db');
 
 const { AsyncOperation } = require('../../models');
+
+//const migrationDir = '../../lambdas/db-migration/src/migrations';
+//const migrationDir = 'lambdas/db-migration/src/migrations';
+const { migrationDir } = require('../../../../lambdas/db-migration');
 
 let asyncOperationModel;
 let stubbedEcsRunTaskParams;
@@ -18,7 +25,22 @@ let stubbedEcsRunTaskResult;
 let ecsClient;
 let systemBucket;
 
-test.before(async () => {
+const testDbName = `async_operation_model_test_db_${cryptoRandomString({ length: 10 })}`;
+const knexConfig = {
+  ...localStackConnectionEnv,
+  PG_DATABASE: testDbName,
+};
+
+test.before(async (t) => {
+  console.log(testDbName);
+  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
+  t.context.knex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: testDbName,
+      migrationDir,
+    },
+  });
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket }).promise();
 
@@ -26,8 +48,18 @@ test.before(async () => {
     systemBucket,
     stackName: randomString(),
     tableName: randomString(),
+    knexConfig,
   });
-  await asyncOperationModel.createTable();
+
+  try {
+    await asyncOperationModel.createTable();
+    await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
+    await t.context.knex.migrate.latest();
+    await t.context.knex.destroy();
+  } catch (e) {
+    console.log(`Error ${JSON.stringify(e)}`);
+    throw (e);
+  }
 
   // Set up the mock ECS client
   ecsClient = ecs();
@@ -53,10 +85,13 @@ test.before(async () => {
   });
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   sinon.restore();
   await asyncOperationModel.deleteTable();
   await recursivelyDeleteS3Bucket(systemBucket);
+  //await deleteTestDatabase(t.context.knexAdmin, testDbName);
+  console.log(testDbName);
+  await t.context.knexAdmin.destroy();
 });
 
 test('The AsyncOperation constructor requires that stackName be specified', (t) => {
@@ -64,6 +99,7 @@ test('The AsyncOperation constructor requires that stackName be specified', (t) 
     new AsyncOperation({
       systemBucket: 'asdf',
       tableName: 'asdf',
+      knexConfig,
     });
     t.fail('stackName should be required');
   } catch (error) {
@@ -77,6 +113,7 @@ test('The AsyncOperation constructor requires that systemBucket be specified', (
     new AsyncOperation({
       stackName: 'asdf',
       tableName: 'asdf',
+      knexConfig,
     });
     t.fail('systemBucket should be required');
   } catch (error) {
@@ -91,6 +128,7 @@ test('The AsyncOperation constructor sets the stackName', (t) => {
     stackName: thisTestStackName,
     systemBucket: randomString(),
     tableName: randomString,
+    localStackConnectionEnv: knexConfig,
   });
 
   t.is(asyncOperation.stackName, thisTestStackName);
@@ -101,6 +139,7 @@ test('The AsyncOperation constructor sets the systemBucket', (t) => {
     stackName: randomString(),
     systemBucket,
     tableName: randomString,
+    localStackConnectionEnv: knexConfig,
   });
 
   t.is(localAsyncOperationModel.systemBucket, systemBucket);
