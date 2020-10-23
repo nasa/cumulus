@@ -9,7 +9,7 @@ const {
   getMessageStateMachineArn,
   getStateMachineArnFromExecutionArn,
   getMessageExecutionParentArn,
-  getMessageCumulusVersion
+  getMessageCumulusVersion,
 } = require('../Executions');
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {

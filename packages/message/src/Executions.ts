@@ -134,7 +134,7 @@ export const getMessageExecutionArn = (
  */
 export const getMessageExecutionParentArn = (
   message: Message.CumulusMessage
-) => message.cumulus_meta?.parentExecutionArn;
+): string | undefined => message.cumulus_meta?.parentExecutionArn;
 
 /**
  * Get the Cumulus version from a workflow message, if any.
@@ -146,4 +146,4 @@ export const getMessageExecutionParentArn = (
  */
 export const getMessageCumulusVersion = (
   message: Message.CumulusMessage
-) => message.cumulus_meta?.cumulus_version;
+): string | undefined => message.cumulus_meta?.cumulus_version;
