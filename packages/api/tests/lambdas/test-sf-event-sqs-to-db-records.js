@@ -10,9 +10,9 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   localStackConnectionEnv,
   getKnexClient,
-  Executions,
-  database,
+  getDbClient,
   tableNames,
+  doesExecutionExist,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
@@ -137,7 +137,7 @@ test.beforeEach(async (t) => {
     },
   });
 
-  t.context.executionDbClient = database.getDbClient(t.context.knex, tableNames.executions);
+  t.context.executionDbClient = getDbClient(t.context.knex, tableNames.executions);
 });
 
 test.after.always(async (t) => {
@@ -238,7 +238,7 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
   await saveExecutions(cumulusMessage, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
-    await Executions.doesExecutionExist({
+    await doesExecutionExist({
       arn: executionArn,
     }, knex)
   );
@@ -265,7 +265,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynam
   await saveExecutions(cumulusMessage, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
-    await Executions.doesExecutionExist({
+    await doesExecutionExist({
       arn: executionArn,
     }, knex)
   );
@@ -296,7 +296,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS w
   await saveExecutions(cumulusMessage, knex);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
-    await Executions.doesExecutionExist({
+    await doesExecutionExist({
       arn: executionArn,
     }, knex)
   );

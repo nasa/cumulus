@@ -7,9 +7,9 @@ const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS
 const log = require('@cumulus/common/log');
 const {
   getKnexClient,
-  Executions,
   tableNames,
-  database,
+  getDbTransaction,
+  doesExecutionExist,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
@@ -36,7 +36,7 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
   const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   const parentArn = getMessageExecutionParentArn(cumulusMessage);
   if (!executionIsPostDeployment || !parentArn) return executionIsPostDeployment;
-  return Executions.doesExecutionExist({
+  return doesExecutionExist({
     arn: parentArn,
   }, knex);
 };
@@ -53,7 +53,7 @@ const saveExecutions = async (cumulusMessage, knex) => {
 
   try {
     return await knex.transaction(async (trx) => {
-      await database.getDbTransaction(trx, tableNames.executions)
+      await getDbTransaction(trx, tableNames.executions)
         .insert({
           arn: executionArn,
           cumulus_version: getMessageCumulusVersion(cumulusMessage),
