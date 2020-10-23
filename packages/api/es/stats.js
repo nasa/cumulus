@@ -31,7 +31,6 @@ const textFields = [
   'arn',
 ];
 
-
 class Stats extends BaseSearch {
   /**
    * Remove stats-specific fields, then create search
