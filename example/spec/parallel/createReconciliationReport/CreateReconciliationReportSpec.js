@@ -253,7 +253,8 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
     // Verify the collection is returned when listing collections
     const collsResp = await getCollections({ prefix: stackName,
       query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
-    const ids = JSON.parse(collsResp.body).results.map((c) => constructCollectionId(c.name, c.version));
+    const results = get(JSON.parse(collsResp.body), 'results', []);
+    const ids = results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
   },
   {
@@ -351,7 +352,7 @@ describe('When there are granule differences and granule reconciliation is run',
         granuleId: publishedGranuleId,
       });
       console.log('XXXXX Completed for granulesApiTestUtils.getGranule()');
-
+      await waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleBeforeUpdate.body));
       console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
@@ -414,6 +415,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       report = JSON.parse(response.body);
       expect(report.reportType).toBe('Inventory');
+      expect(report.status).toBe('SUCCESS');
     });
 
     it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
@@ -558,6 +560,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       report = JSON.parse(response.body);
       expect(report.reportType).toBe('Internal');
+      expect(report.status).toBe('SUCCESS');
     });
 
     it('generates a report showing number of collections that are in both ES and DB', () => {
@@ -570,6 +573,9 @@ describe('When there are granule differences and granule reconciliation is run',
     it('generates a report showing number of granules that are in both ES and DB', () => {
       expect(report.granules.okCount).toBe(2);
       expect(report.granules.withConflicts.length).toBe(0);
+      if (report.granules.withConflicts.length !== 0) {
+        console.log(`XXXX ${JSON.stringify(report.granules.withConflicts)}`);
+      }
       expect(report.granules.onlyInEs.length).toBe(0);
       expect(report.granules.onlyInDb.length).toBe(0);
     });
