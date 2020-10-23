@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v3.0.1] 2020-10-21
+
 - **CUMULUS-2203**
   - Update Core tasks to use
     [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
@@ -13,12 +15,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     issue caused lambdas to slowly use all memory in the run environment and
     prevented AWS from halting/restarting warmed instances when task code was
     throwing consistent errors under load.
-
-- **CUMULUS-2200**
-  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
-    `/reconciliationReport` returns.  The user (dashboard) must read the value
-    of `url` from the return to get the s3SignedURL and then download the
-    report.
 
 - **CUMULUS-2232**
   - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and
@@ -51,6 +47,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
+    `/reconciliationReport` returns.  The user (dashboard) must read the value
+    of `url` from the return to get the s3SignedURL and then download the report.
 - **CUMULUS-2099**
   - `meta.queues` has been removed from Cumulus core workflow messages.
   - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
@@ -3601,7 +3601,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.1...HEAD
+[v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
 [v2.0.7]: https://github.com/nasa/cumulus/compare/v2.0.6...v2.0.7
 [v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.5...v2.0.6
