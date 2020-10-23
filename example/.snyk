@@ -1,0 +1,14 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.19.0
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  SNYK-JS-LODASH-567746:
+    - '@cumulus/post-to-cmr > lodash':
+        patched: '2020-10-23T19:07:32.868Z'
+    - '@cumulus/queue-pdrs > lodash':
+        patched: '2020-10-23T19:07:32.868Z'
+    - '@cumulus/sf-sqs-report > lodash':
+        patched: '2020-10-23T19:07:32.868Z'
+    - '@cumulus/sync-granule > lodash':
+        patched: '2020-10-23T19:07:32.868Z'
