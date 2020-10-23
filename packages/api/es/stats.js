@@ -5,6 +5,33 @@ const omit = require('lodash/omit');
 
 const { BaseSearch } = require('./search');
 
+const textFields = [
+  'type',
+  'provider',
+  'granuleId',
+  'collectionId',
+  'pdrName',
+  'file',
+  'executions',
+  'version',
+  'name',
+  'id',
+  'status',
+  'operationType',
+  'taskArn',
+  'execution',
+  'address',
+  'originalUrl',
+  'cmrLink',
+  'protocol',
+  'host',
+  'location',
+  'workflow',
+  'state',
+  'arn',
+];
+
+
 class Stats extends BaseSearch {
   /**
    * Remove stats-specific fields, then create search
@@ -46,12 +73,12 @@ class Stats extends BaseSearch {
       },
       granulesStatus: {
         terms: {
-          field: 'status',
+          field: 'status.raw',
         },
       },
       collections: {
         cardinality: {
-          field: 'collectionId',
+          field: 'collectionId.raw',
         },
       },
     };
@@ -107,7 +134,15 @@ class Stats extends BaseSearch {
       this.client = await this.constructor.es();
     }
 
-    const field = this.params.field || 'status';
+    let field;
+
+    // When doing aggregation, we need the keyword version of the field, which
+    // is stored in [fieldname].raw
+    if (textFields.includes(this.params.field)) {
+      field = `${this.params.field}.raw`;
+    } else {
+      field = this.params.field || 'status.raw';
+    }
 
     const searchParams = this._buildSearch();
     searchParams.type = this.type;
