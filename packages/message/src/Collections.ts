@@ -1,6 +1,5 @@
 'use strict';
 
-import get from 'lodash/get';
 import { Message } from '@cumulus/types';
 
 /**
@@ -12,6 +11,11 @@ import { Message } from '@cumulus/types';
  * @example
  * const Collections = require('@cumulus/message/Collections');
  */
+
+type CollectionInfo = {
+  name: string
+  version: string
+};
 
 /**
  * Returns the collection ID.
@@ -25,6 +29,28 @@ import { Message } from '@cumulus/types';
 export const constructCollectionId = (name: string, version: string) =>
   `${name}___${version}`;
 
+export const getCollectionNameFromMessage = (
+  message: Message.CumulusMessage
+): string | undefined => message.meta?.collection?.name;
+
+export const getCollectionVersionFromMessage = (
+  message: Message.CumulusMessage
+): string | undefined => message.meta?.collection?.version;
+
+export const getCollectionInfoFromMessage = (
+  message: Message.CumulusMessage
+): CollectionInfo | undefined => {
+  const name = getCollectionNameFromMessage(message);
+  const version = getCollectionVersionFromMessage(message);
+  if (!name || !version) {
+    return undefined;
+  }
+  return {
+    name,
+    version,
+  };
+};
+
 /**
  * Get collection ID from execution message.
  *
@@ -37,9 +63,9 @@ export const constructCollectionId = (name: string, version: string) =>
  */
 export const getCollectionIdFromMessage = (
   message: Message.CumulusMessage
-) => {
-  const collectionName = get(message, 'meta.collection.name');
-  const collectionVersion = get(message, 'meta.collection.version');
+): string | undefined => {
+  const collectionName = getCollectionNameFromMessage(message);
+  const collectionVersion = getCollectionVersionFromMessage(message);
   if (!collectionName || !collectionVersion) {
     return undefined;
   }
