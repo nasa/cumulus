@@ -8,6 +8,8 @@ const log = require('@cumulus/common/log');
 const {
   getKnexClient,
   Executions,
+  tableNames,
+  database,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
@@ -51,7 +53,7 @@ const saveExecutions = async (cumulusMessage, knex) => {
 
   try {
     return await knex.transaction(async (trx) => {
-      await Executions.getDbTransaction(trx)
+      await database.getDbTransaction(trx, tableNames.executions)
         .insert({
           arn: executionArn,
           cumulus_version: getMessageCumulusVersion(cumulusMessage),
