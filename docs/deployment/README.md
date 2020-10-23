@@ -240,6 +240,10 @@ workflows, etc. The `cumulus` module depends on the resources created in the
 
 Each of these modules have to be deployed independently and require their own Terraform backend, variable, and output settings. The template deploy repo that was cloned previously already contains the scaffolding of the necessary files for the deployment of each module: `data-persistence-tf` deploys the `data-persistence` module and `cumulus-tf` deploys the `cumulus` module. For reference on the files that are included, see the [documentation on adding components to a Terraform deployment](components.md#adding-components-to-your-terraform-deployment).
 
+### Troubleshooting
+
+Please see our [troubleshooting documentation for any issues with your deployment](../troubleshooting/troubleshooting-deployment) when performing the upcoming steps.
+
 ### Configure and deploy the `data-persistence-tf` root module
 
 These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously. Run the following to copy the example files.
@@ -359,12 +363,6 @@ $ aws lambda publish-layer-version \
 
 Make sure to copy the `LayerVersionArn` of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
 
-### Create a secret for signing Thin Egress App JWTs
-
-The [Thin Egress App](https://github.com/asfadmin/thin-egress-app) is provided as [part of a Cumulus deployment](https://github.com/nasa/cumulus/blob/master/tf-modules/distribution/main.tf) as a distribution API for files in S3. The Thin Egress App uses JWTs internally to authenticate requests and requires a secret stored in AWS Secrets Manager containing SSH keys that are used to sign the JWTs.
-
-See the [Thin Egress App documentation on how to create this secret with the correct values](https://github.com/asfadmin/thin-egress-app#jwt-cookie-secret). It will be used later to set the `thin_egress_jwt_secret_name` variable when deploying the Cumulus module.
-
 ### Configure and deploy the `cumulus-tf` root module
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
@@ -389,6 +387,10 @@ Notes on specific variables:
 - **`thin_egress_jwt_secret_name`**: Use the value created during the previous [`Create a secret for signing Thin Egress App JWTs`](#create-a-secret-for-signing-thin-egress-app-jwts) step
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
+
+#### Configure the Thin Egress App
+
+The Thin Egress App is used for Cumulus distribution. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
 
 #### Initialize Terraform
 
@@ -424,12 +426,6 @@ You will need to add two redirect URLs to your EarthData login application.
 1. You may delete the placeholder url you used to create the application.
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
-
-___
-
-## Troubleshooting
-
-Please see our [troubleshooting documentation for any issues with your deployment](../troubleshooting/troubleshooting-deployment).
 
 ---
 
