@@ -3,16 +3,15 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { localStackConnectionEnv } = require('../dist/config');
 const { getKnexClient } = require('../dist/connection');
-const {
-  getDbClient,
-  doesExecutionExist,
-} = require('../dist/Executions');
+const { getDbClient } = require('../dist/database');
+const { doesExecutionExist } = require('../dist/Executions');
+const { tableNames } = require('../dist/tables');
 
 test.before(async (t) => {
   t.context.knex = await getKnexClient({
     env: localStackConnectionEnv,
   });
-  t.context.executionDbClient = getDbClient(t.context.knex);
+  t.context.executionDbClient = getDbClient(t.context.knex, tableNames.executions);
 });
 
 test('doesExecutionExist correctly returns true', async (t) => {
