@@ -165,6 +165,12 @@ aws iam create-service-linked-role --aws-service-name es.amazonaws.com
 
 This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
+### Set up EC2 key pair (optional)
+
+The key pair will be used to SSH into your EC2 instance(s). It is recommended to [create or import a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and specify it in your Cumulus deployment.
+
+This can also be done post-deployment by redeploying your Cumulus instance.
+
 ---
 
 ## Configure EarthData application
@@ -387,6 +393,7 @@ Notes on specific variables:
 - **`thin_egress_jwt_secret_name`**: Use the value created during the previous [`Create a secret for signing Thin Egress App JWTs`](#create-a-secret-for-signing-thin-egress-app-jwts) step
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
+- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
 
 #### Configure the Thin Egress App
 
