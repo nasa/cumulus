@@ -24,6 +24,10 @@ export interface CumulusMessage {
   cumulus_meta: CumulusMeta
   meta: {
     workflow_name: string
+    collection?: {
+      name?: string
+      version?: string
+    }
     [key: string]: unknown
   }
   payload: unknown
