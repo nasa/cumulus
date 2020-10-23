@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
 
 ### Fixed
+
 - **CUMULUS-2203**
   - Update Core tasks to use
     [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
@@ -21,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     throwing consistent errors under load.
 
 ### Added
+- **CUMULUS-2239**
+  - Add resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
 - **CUMULUS-2211**
