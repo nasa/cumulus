@@ -11,6 +11,8 @@ const {
   localStackConnectionEnv,
   getKnexClient,
   Executions,
+  database,
+  tableNames,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
@@ -135,7 +137,7 @@ test.beforeEach(async (t) => {
     },
   });
 
-  t.context.executionDbClient = Executions.getDbClient(t.context.knex);
+  t.context.executionDbClient = database.getDbClient(t.context.knex, tableNames.executions);
 });
 
 test.after.always(async (t) => {
