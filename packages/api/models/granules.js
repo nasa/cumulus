@@ -420,7 +420,11 @@ class Granule extends Manager {
       } else {
         const operation = '=';
         attributeValues[`:${key}`] = value;
-        expression = `#${field} ${operation} :${key}`;
+        if (!isQuery && field === 'granuleId') {
+          expression = `contains(#${field}, :${key})`;
+        } else {
+          expression = `#${field} ${operation} :${key}`;
+        }
       }
 
       if (isQuery && field === 'granuleId') {

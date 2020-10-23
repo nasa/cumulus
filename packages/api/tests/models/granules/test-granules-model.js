@@ -576,28 +576,35 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
   const granules = [
     fakeGranuleFactoryV2({ collectionId, status }),
     fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ granuleId: 'test123', collectionId, status }),
     fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
     fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
   ];
   await granuleModel.create(granules);
 
-  const searchParams = {
+  let searchParams = {
     collectionId,
     status,
     updatedAt__from: Date.now() - 1000 * 30,
     updatedAt__to: Date.now(),
   };
-  const granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+  let granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
 
-  const fetchedGranules = [
-    await granulesQueue.shift(),
-    await granulesQueue.shift(),
-  ];
-  t.is(await granulesQueue.shift(), null);
+  let fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 3);
   t.deepEqual(
     fetchedGranules.map((g) => g.granuleId).sort(),
-    granules.slice(0, 2).map((g) => g.granuleId).sort()
+    granules.slice(0, 3).map((g) => g.granuleId).sort()
   );
+
+  searchParams = {
+    ...searchParams,
+    granuleId: 'test',
+  };
+
+  granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 1);
 });
 
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
