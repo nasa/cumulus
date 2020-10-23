@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/earthdata-login-client",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "A client for the Earthata Login service API",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/earthdata-login-client#readme",
   "repository": {
@@ -25,10 +25,10 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs dist/src/*.js > README.md",
-    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "tsc": "rm -rf dist && ../../node_modules/.bin/tsc"
+    "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "ava": {
     "files": [
@@ -42,6 +42,6 @@
     }
   },
   "dependencies": {
-    "got": "^11.2.0"
+    "got": "^11.7.0"
   }
 }

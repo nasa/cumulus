@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "An API Gateway Lambda to return AWS credentials for fetching objects from S3",
   "license": "Apache-2.0",
   "engines": {
@@ -16,11 +16,11 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "2.0.1",
-    "@cumulus/aws-client": "2.0.1",
-    "@cumulus/earthdata-login-client": "2.0.1",
-    "@cumulus/errors": "2.0.1",
-    "@cumulus/logger": "2.0.1",
+    "@cumulus/api": "3.0.0",
+    "@cumulus/aws-client": "3.0.0",
+    "@cumulus/earthdata-login-client": "3.0.0",
+    "@cumulus/errors": "3.0.0",
+    "@cumulus/logger": "3.0.0",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",
@@ -28,7 +28,7 @@
     "express": "^4.17.1",
     "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
-    "got": "^11.2.0",
+    "got": "^11.7.0",
     "hsts": "^2.2.0",
     "morgan": "^1.9.1",
     "url-join": "^4.0.0"

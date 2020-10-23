@@ -3,13 +3,15 @@ const moment = require('moment');
 const AWS = require('aws-sdk');
 const path = require('path');
 const os = require('os');
+const got = require('got');
+const { pipeline } = require('stream');
+const { promisify } = require('util');
 
 const emsApi = require('@cumulus/api-client/ems');
 const Granule = require('@cumulus/api/models/granules');
 const { fileExists, getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { lambda } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { download } = require('@cumulus/common/http');
 const {
   addCollections,
   addProviders,
@@ -340,7 +342,10 @@ xdescribe('The EMS report', () => {
         // eslint-disable-next-line no-await-in-loop
         const s3SignedUrl = await getTEADistributionApiRedirect(filePath, headers);
         // eslint-disable-next-line no-await-in-loop
-        await download(s3SignedUrl, downloadedFile);
+        await promisify(pipeline)(
+          got.stream(s3SignedUrl),
+          fs.createWriteStream(downloadedFile)
+        );
         fs.unlinkSync(downloadedFile);
       }
     });

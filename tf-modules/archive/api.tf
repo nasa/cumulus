@@ -19,17 +19,16 @@ locals {
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
       CollectionsTable                 = var.dynamo_tables.collections.name
-      databaseCredentialSecretArn      = var.rds_user_access_secret_arn
-      dbHeartBeat                      = var.rds_connection_heartbeat
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
       EARTHDATA_BASE_URL               = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
       EcsCluster                       = var.ecs_cluster_name
-      EmsDistributionReport            = aws_lambda_function.ems_distribution_report.arn
-      EmsIngestReport                  = aws_lambda_function.ems_ingest_report.arn
-      EmsProductMetadataReport         = aws_lambda_function.ems_product_metadata_report.arn
+      EmsDistributionReport            = var.ems_deploy ? aws_lambda_function.ems_distribution_report[0].arn : null
+      EmsIngestReport                  = var.ems_deploy ? aws_lambda_function.ems_ingest_report[0].arn : null
+      EmsProductMetadataReport         = var.ems_deploy ? aws_lambda_function.ems_product_metadata_report[0].arn : null
+      EmsConfigured                    = var.ems_deploy
       ENTITY_ID                        = var.saml_entity_id
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname
@@ -132,7 +131,7 @@ resource "aws_lambda_function" "private_api" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids =  concat(local.lambda_security_group_ids, [var.rds_security_group])
+      security_group_ids =  local.lambda_security_group_ids
     }
   }
 }
@@ -157,7 +156,7 @@ resource "aws_lambda_function" "api" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
+      security_group_ids = local.lambda_security_group_ids
     }
   }
 }

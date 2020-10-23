@@ -242,7 +242,6 @@ test("filterDBCollections filters collections by recReportParams's collectionIds
 });
 
 test('searchParamsForCollectionIdArray converts array of collectionIds to a proper object to pass to the query command.', (t) => {
-  // TODO [MHS, 09/09/2020] look at collections.js L139-147
   const collectionIds = ['col1___ver1', 'col1___ver2', 'col2___ver1'];
 
   const expectedInputQueryParams = {

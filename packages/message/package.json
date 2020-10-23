@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/message",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Utilities for building and parsing Cumulus messages",
   "keywords": [
     "GIBS",
@@ -21,10 +21,10 @@
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md --heading-depth 3 -t templates/README.md.hbs *.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
-    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
@@ -37,12 +37,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "2.0.1",
-    "@cumulus/common": "2.0.1",
-    "@cumulus/logger": "2.0.1",
-    "@cumulus/types": "2.0.1",
+    "@cumulus/aws-client": "3.0.0",
+    "@cumulus/common": "3.0.0",
+    "@cumulus/logger": "3.0.0",
+    "@cumulus/types": "3.0.0",
     "jsonpath-plus": "^3.0.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "uuid": "^8.2.0"
   },
   "devDependencies": {

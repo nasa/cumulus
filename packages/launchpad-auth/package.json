@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/launchpad-auth",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Utilities for authentication with Launchpad",
   "keywords": [
     "CUMULUS",
@@ -20,10 +20,10 @@
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 3 --template templates/README.md.hbs index.js LaunchpadToken.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
-    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
@@ -36,10 +36,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "2.0.1",
-    "@cumulus/logger": "2.0.1",
-    "got": "^11.5.1",
-    "lodash": "^4.17.15",
+    "@cumulus/aws-client": "3.0.0",
+    "@cumulus/logger": "3.0.0",
+    "got": "^11.7.0",
+    "lodash": "^4.17.20",
     "uuid": "^3.2.1"
   }
 }

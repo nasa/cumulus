@@ -13,6 +13,11 @@ const log = require('@cumulus/common/log');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
+  const emsConfigured = (process.env.EmsConfigured === 'true');
+  if (!emsConfigured) {
+    return res.boom.badRequest('EMS not configured');
+  }
+
   const typeToLambda = {
     metadata: process.env.EmsProductMetadataReport,
     ingest: process.env.EmsIngestReport,

@@ -125,14 +125,14 @@ test.after.always(async () => {
 });
 
 test.serial('getStats returns an empty list if there are no records or ids', async (t) => {
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const stats = await collectionSearch.getStats([], []);
 
   t.deepEqual([], stats);
 });
 
 test.serial('getStats returns an empty list if there are no records', async (t) => {
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const stats = await collectionSearch.getStats([], ['coll1___1']);
 
   t.deepEqual(stats, []);
@@ -143,7 +143,7 @@ test.serial('getStats returns empty stats if there are no ids', async (t) => {
     { name: 'coll1', version: '1' },
     { name: 'coll1', version: '2' },
   ];
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const stats = await collectionSearch.getStats(records, []);
 
   t.deepEqual(stats,
@@ -159,7 +159,7 @@ test.serial('getStats returns empty stats if there are no ids', async (t) => {
 });
 
 test.serial('getStats correctly adds stats', async (t) => {
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const stats = await collectionSearch.getStats([{ name: 'coll1', version: '1' }], ['coll1___1']);
 
   t.is(stats.length, 1);
@@ -172,7 +172,7 @@ test.serial('getStats correctly adds stats', async (t) => {
 });
 
 test.serial('getStats correctly adds stats to different versions of collections', async (t) => {
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const stats = await collectionSearch.getStats([
     {
       name: 'coll1',
@@ -222,7 +222,7 @@ test.serial('addStatsToCollection add stats to ES collection results', async (t)
     },
   ];
 
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const resultsWithStats = await collectionSearch.addStatsToCollectionResults(esResults);
 
   t.deepEqual(resultsWithStats, [
@@ -250,17 +250,18 @@ test.serial('addStatsToCollection add stats to ES collection results', async (t)
 });
 
 test.serial('addStatsToCollection returns empty list for no collections', async (t) => {
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const resultsWithStats = await collectionSearch.addStatsToCollectionResults([]);
 
   t.deepEqual(resultsWithStats, []);
 });
 
-test.serial('query returns all collections with stats by default', async (t) => {
+test.serial('query returns all collections with stats when requested', async (t) => {
   const collectionSearch = new Collection(
     { queryStringParameters: { limit: 13 } },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    true
   );
   const queryResult = await collectionSearch.query();
 
@@ -336,13 +337,63 @@ test.serial('query returns all collections with stats by default', async (t) => 
   }))));
 });
 
+test.serial('Collection query returns all collections without stats by default', async (t) => {
+  const collectionSearch = new Collection(
+    { queryStringParameters: { limit: 13 } },
+    undefined,
+    process.env.ES_INDEX
+  );
+  const queryResult = await collectionSearch.query();
+
+  t.is(queryResult.meta.count, 13);
+
+  const collections = queryResult.results.map((c) => ({
+    name: c.name,
+    version: c.version,
+    stats: c.stats,
+  }));
+
+  const orderedCollections = sortBy(collections, ['name', 'version']);
+  t.deepEqual(orderedCollections, [
+    {
+      name: 'coll1',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll1',
+      version: '2',
+      stats: undefined,
+    },
+    {
+      name: 'coll2',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll3',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll4',
+      version: '0',
+      stats: undefined,
+    },
+  ].concat(range(1, 9).map((i) => ({
+    name: 'coll4',
+    version: i.toString(),
+    stats: undefined,
+  }))));
+});
+
 test.serial('query correctly queries collection by date', async (t) => {
   const collectionSearch = new Collection({
     queryStringParameters: {
       updatedAt__from: (new Date(2020, 0, 25)).getTime(),
       updatedAt__to: (new Date(2020, 0, 30)).getTime(),
     },
-  }, undefined, process.env.ES_INDEX);
+  }, undefined, process.env.ES_INDEX, true);
   const queryResult = await collectionSearch.query();
 
   t.is(queryResult.meta.count, 1);
@@ -350,7 +401,7 @@ test.serial('query correctly queries collection by date', async (t) => {
 });
 
 test.serial('aggregateGranuleCollections returns only collections with granules', async (t) => {
-  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX);
+  const collectionSearch = new Collection({}, undefined, process.env.ES_INDEX, true);
   const queryResult = await collectionSearch.aggregateGranuleCollections();
 
   const orderedResult = queryResult.sort();
@@ -368,7 +419,7 @@ test.serial('aggregateGranuleCollections respects date range for granules', asyn
       updatedAt__from: (new Date(2020, 1, 25)).getTime(),
       updatedAt__to: (new Date(2020, 1, 30)).getTime(),
     },
-  }, undefined, process.env.ES_INDEX);
+  }, undefined, process.env.ES_INDEX, true);
   const queryResult = await collectionSearch.aggregateGranuleCollections();
 
   t.deepEqual(queryResult, ['coll3___1']);
@@ -378,7 +429,8 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
   const collectionSearch = new Collection(
     { queryStringParameters: { limit: 11 } },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    true
   );
   const queryResult = await collectionSearch.queryCollectionsWithActiveGranules();
 
@@ -435,13 +487,54 @@ test.serial('queryCollectionsWithActiveGranules returns collection info and stat
   }))));
 });
 
+test.serial('Collection queryCollectionsWithActiveGranules returns collection info without statistics by default', async (t) => {
+  const collectionSearch = new Collection(
+    { queryStringParameters: { limit: 11 } },
+    undefined,
+    process.env.ES_INDEX
+  );
+  const queryResult = await collectionSearch.queryCollectionsWithActiveGranules();
+
+  t.is(queryResult.meta.count, 11);
+
+  const collections = queryResult.results.map((c) => ({
+    name: c.name,
+    version: c.version,
+    stats: c.stats,
+  }));
+
+  const orderedCollections = sortBy(collections, ['name', 'version']);
+
+  t.deepEqual(orderedCollections, [
+    {
+      name: 'coll1',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll3',
+      version: '1',
+      stats: undefined,
+    },
+    {
+      name: 'coll4',
+      version: '0',
+      stats: undefined,
+    },
+  ].concat(range(1, 9).map((i) => ({
+    name: 'coll4',
+    version: i.toString(),
+    stats: undefined,
+  }))));
+});
+
 test.serial('queryCollectionsWithActiveGranules respects granule update times, but not collection', async (t) => {
   const collectionSearch = new Collection({
     queryStringParameters: {
       updatedAt__from: (new Date(2020, 1, 25)).getTime(),
       updatedAt__to: (new Date(2020, 1, 30)).getTime(),
     },
-  }, undefined, process.env.ES_INDEX);
+  }, undefined, process.env.ES_INDEX, true);
   const queryResult = await collectionSearch.queryCollectionsWithActiveGranules();
 
   t.is(queryResult.meta.count, 1);
