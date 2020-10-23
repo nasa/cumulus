@@ -118,7 +118,7 @@ test.beforeEach(async (t) => {
     meta: {
       status: 'running',
       collection: {
-        name: 'my-collection',
+        name: `my-collection${cryptoRandomString({ length: 5 })}`,
         version: 5,
       },
       provider: {
@@ -137,6 +137,12 @@ test.beforeEach(async (t) => {
       ...localStackConnectionEnv,
     },
   });
+
+  await getDbClient(t.context.knex, tableNames.collection)
+    .insert({
+      name: t.context.meta.collection.name,
+      version: t.context.meta.collection.version,
+    });
 
   t.context.executionDbClient = getDbClient(t.context.knex, tableNames.executions);
 });
@@ -296,7 +302,7 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
   );
 });
 
-test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test.serial.only('saveExecutions() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
