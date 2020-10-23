@@ -150,9 +150,10 @@ class Granule extends Manager {
    * start the re-ingest of a given granule object
    *
    * @param {Object} granule - the granule object
+   * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} - undefined
    */
-  async reingest(granule) {
+  async reingest(granule, asyncOperationId = undefined) {
     const executionArn = path.basename(granule.execution);
 
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
@@ -176,6 +177,7 @@ class Granule extends Manager {
         version,
       },
       queueUrl: granule.queueUrl,
+      asyncOperationId,
     });
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');

@@ -22,7 +22,7 @@
     "@cumulus/logger": "^1.13.0",
     "aws-sdk": "^2.585.0",
     "got": "^11.7.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "p-retry": "^2.0.0"
   },
   "engines": {

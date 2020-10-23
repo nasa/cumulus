@@ -7,10 +7,10 @@
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
-    "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "publishConfig": {
@@ -50,7 +50,7 @@
     "is-ip": "^2.0.0",
     "is-valid-hostname": "^0.0.1",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "mime-types": "^2.1.22",
     "moment": "2.24.0",
     "simplecrawler": "^1.1.9",

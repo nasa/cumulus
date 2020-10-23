@@ -1,5 +1,3 @@
-
-
 variable "lambda_processing_role_arn" {
   type = string
 }
@@ -27,4 +25,9 @@ variable "vpc_id" {
   type        = string
   description = "VPC used by Lambda functions"
   default     = null
+}
+
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
 }
