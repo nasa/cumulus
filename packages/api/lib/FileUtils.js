@@ -72,6 +72,7 @@ const setS3FileSize = async (s3, file) => {
 
     return { ...file, size };
   } catch (error) {
+    console.log(`File is ${file}, Error is ${error}`);
     return file;
   }
 };

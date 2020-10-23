@@ -251,7 +251,7 @@
       },
       "Type": "Task",
       "Resource": "${update_granules_metadata_task_arn}",
-      "Next": "HyraxMetadataUpdateTask",
+      "Next": "HyraxMetadataUpdatesTask",
       "Retry": [
         {
           "ErrorEquals": [
