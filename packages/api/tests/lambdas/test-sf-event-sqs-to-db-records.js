@@ -210,7 +210,7 @@ test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution m
   );
 });
 
-test('shouldWriteExecutionToRDS returns false for post-RDS deployment execution message with missing parent execution', async (t) => {
+test('shouldWriteExecutionToRDS returns false if parent execution does not exist in RDS', async (t) => {
   const { knex } = t.context;
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
 
@@ -224,7 +224,7 @@ test('shouldWriteExecutionToRDS returns false for post-RDS deployment execution 
   );
 });
 
-test.only('shouldWriteExecutionToRDS returns false for post-RDS deployment execution message with parent execution but not async operation in RDS', async (t) => {
+test('shouldWriteExecutionToRDS returns false if parent execution exists in RDS but not async operation', async (t) => {
   const { knex, executionDbClient } = t.context;
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
   await executionDbClient.insert({
@@ -237,6 +237,39 @@ test.only('shouldWriteExecutionToRDS returns false for post-RDS deployment execu
         cumulus_version: '3.0.0',
         parentExecutionArn,
         asyncOperationId: uuidv4(),
+      },
+    }, knex)
+  );
+});
+
+test('shouldWriteExecutionToRDS returns false if parent execution, async operation exist in RDS but not collection', async (t) => {
+  const { knex, executionDbClient } = t.context;
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  await executionDbClient.insert({
+    arn: parentExecutionArn,
+  });
+
+  const asyncOperationId = uuidv4();
+  await getDbClient(knex, tableNames.asyncOperations)
+    .insert({
+      id: asyncOperationId,
+      description: 'test-async-operation',
+      operationType: 'Bulk Granules',
+      status: 'RUNNING',
+    });
+
+  t.false(
+    await shouldWriteExecutionToRDS({
+      cumulus_meta: {
+        cumulus_version: '3.0.0',
+        parentExecutionArn,
+        asyncOperationId,
+      },
+      meta: {
+        collection: {
+          name: 'fake-name',
+          version: '0.0.0',
+        },
       },
     }, knex)
   );

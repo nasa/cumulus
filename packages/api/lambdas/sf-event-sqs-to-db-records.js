@@ -10,11 +10,15 @@ const {
   tableNames,
   getDbTransaction,
   doesAsyncOperationExist,
+  doesCollectionExist,
   doesExecutionExist,
 } = require('@cumulus/db');
 const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
+const {
+  getCollectionInfoFromMessage,
+} = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getMessageExecutionParentArn,
@@ -42,6 +46,7 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
 
   let executionExists = true;
   let asyncOperationExists = true;
+  let collectionExists = true;
 
   const parentArn = getMessageExecutionParentArn(cumulusMessage);
   if (parentArn) {
@@ -55,7 +60,11 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
       id: asyncOperationId,
     }, knex);
   }
-  return executionExists && asyncOperationExists;
+  const collectionInfo = getCollectionInfoFromMessage(cumulusMessage);
+  if (collectionInfo) {
+    collectionExists = await doesCollectionExist(collectionInfo, knex);
+  }
+  return executionExists && asyncOperationExists && collectionExists;
 };
 
 const saveExecutions = async (cumulusMessage, knex) => {
