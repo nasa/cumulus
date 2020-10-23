@@ -4,7 +4,7 @@ title: How to Deploy Cumulus
 hide_title: false
 ---
 
-# Overview
+## Overview
 
 This is a guide for deploying a new instance of Cumulus.
 
