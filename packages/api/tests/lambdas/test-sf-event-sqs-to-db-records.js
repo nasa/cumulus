@@ -5,6 +5,7 @@ const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
+const uuidv4 = require('uuid/v4');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
@@ -218,6 +219,24 @@ test('shouldWriteExecutionToRDS returns false for post-RDS deployment execution 
       cumulus_meta: {
         cumulus_version: '3.0.0',
         parentExecutionArn,
+      },
+    }, knex)
+  );
+});
+
+test.only('shouldWriteExecutionToRDS returns false for post-RDS deployment execution message with parent execution but not async operation in RDS', async (t) => {
+  const { knex, executionDbClient } = t.context;
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  await executionDbClient.insert({
+    arn: parentExecutionArn,
+  });
+
+  t.false(
+    await shouldWriteExecutionToRDS({
+      cumulus_meta: {
+        cumulus_version: '3.0.0',
+        parentExecutionArn,
+        asyncOperationId: uuidv4(),
       },
     }, knex)
   );

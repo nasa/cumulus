@@ -2,6 +2,10 @@
 
 const get = require('lodash/get');
 const pLimit = require('p-limit');
+
+const {
+  getMessageAsyncOperationId,
+} = require('@cumulus/message/AsyncOperations');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
@@ -49,7 +53,7 @@ class Execution extends Manager {
       name: getMessageExecutionName(cumulusMessage),
       cumulusVersion: getMessageCumulusVersion(cumulusMessage),
       arn,
-      asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
+      asyncOperationId: getMessageAsyncOperationId(cumulusMessage),
       parentArn: getMessageExecutionParentArn(cumulusMessage),
       execution: StepFunctionUtils.getExecutionUrl(arn),
       tasks: get(cumulusMessage, 'meta.workflow_tasks'),

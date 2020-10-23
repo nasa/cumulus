@@ -9,8 +9,12 @@ const {
   getKnexClient,
   tableNames,
   getDbTransaction,
+  doesAsyncOperationExist,
   doesExecutionExist,
 } = require('@cumulus/db');
+const {
+  getMessageAsyncOperationId,
+} = require('@cumulus/message/AsyncOperations');
 const {
   getMessageExecutionArn,
   getMessageExecutionParentArn,
@@ -34,11 +38,24 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
 
 const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
   const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+  if (!executionIsPostDeployment) return executionIsPostDeployment;
+
+  let executionExists = true;
+  let asyncOperationExists = true;
+
   const parentArn = getMessageExecutionParentArn(cumulusMessage);
-  if (!executionIsPostDeployment || !parentArn) return executionIsPostDeployment;
-  return doesExecutionExist({
-    arn: parentArn,
-  }, knex);
+  if (parentArn) {
+    executionExists = await doesExecutionExist({
+      arn: parentArn,
+    }, knex);
+  }
+  const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
+  if (asyncOperationId) {
+    asyncOperationExists = await doesAsyncOperationExist({
+      id: asyncOperationId,
+    }, knex);
+  }
+  return executionExists && asyncOperationExists;
 };
 
 const saveExecutions = async (cumulusMessage, knex) => {
