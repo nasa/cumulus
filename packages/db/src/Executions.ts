@@ -1,12 +1,7 @@
 import Knex from 'knex';
 
-const executionsTableName = 'executions';
-
-export const getDbClient = (knex: Knex) =>
-  knex(executionsTableName);
-
-export const getDbTransaction = (trx: Knex.Transaction) =>
-  trx(executionsTableName);
+import { tableNames } from './tables';
+import { getDbClient } from './database';
 
 export const doesExecutionExist = async (params: object, knex: Knex) =>
-  await getDbClient(knex).where(params).first() !== undefined;
+  await getDbClient(knex, tableNames.executions).where(params).first() !== undefined;
