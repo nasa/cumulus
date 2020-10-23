@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     of `url` from the return to get the s3SignedURL and then download the report.
     
 ### Added
+- **CUMULUS-2138**
+  - Adds a new task `update-granules-metadata` to Ingest and Publish Granule workflow. This new task updates CMR Metadata and adds CMR file etags. It decouples said functionality from the `move-granules` task.
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
 
