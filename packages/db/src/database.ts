@@ -5,3 +5,6 @@ export const getDbClient = (knex: Knex, tableName: string) =>
 
 export const getDbTransaction = (trx: Knex.Transaction, tableName: string) =>
   trx(tableName);
+
+export const doesRecordExist = async (params: object, knex: Knex, tableName: string) =>
+  await getDbClient(knex, tableName).where(params).first() !== undefined;
