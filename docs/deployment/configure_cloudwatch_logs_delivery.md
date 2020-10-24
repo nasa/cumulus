@@ -18,7 +18,7 @@ Be default, the following logs will be sent to the destination when one is given
 
 * Ingest logs
 * Async Operation logs
-* API Gateway logs (if `log_api_gateway_to_cloudwatch` is set to true)
+* Thin Egress App API Gateway logs ([if configured](./api_gateway_logging.md))
 
 ## Additional Logs
 
