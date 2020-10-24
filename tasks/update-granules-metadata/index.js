@@ -32,7 +32,7 @@ const {
  * @param {Object} bucketTypes           - map of bucket names to bucket types
  * @param {Object} distributionBucketMap - mapping of bucket->distirubtion path values
  *                                         (e.g. { bucket: distribution path })
- * @returns {Promise<Object[]>} array of updated CMR files with etags
+ * @returns {Promise<Object[]>} Array of updated CMR files with etags of newly updated files.
  *
  */
 async function updateEachCmrFileAccessURLs(
