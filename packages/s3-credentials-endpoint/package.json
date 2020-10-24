@@ -28,7 +28,7 @@
     "express": "^4.17.1",
     "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
-    "got": "^11.2.0",
+    "got": "^11.7.0",
     "hsts": "^2.2.0",
     "morgan": "^1.9.1",
     "url-join": "^4.0.0"

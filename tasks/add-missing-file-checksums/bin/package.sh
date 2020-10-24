@@ -2,8 +2,6 @@
 
 set -e
 
-npm run tsc
-
 rm -rf dist/webpack
 
 npm run webpack
