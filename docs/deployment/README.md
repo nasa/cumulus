@@ -214,12 +214,6 @@ $ aws dynamodb create-table \
     --region us-east-1
 ```
 
-### Create a secret for signing Thin Egress App JWTs
-
-The [Thin Egress App](https://github.com/asfadmin/thin-egress-app) is provided as [part of a Cumulus deployment](https://github.com/nasa/cumulus/blob/master/tf-modules/distribution/main.tf) as a distribution API for files in S3. The Thin Egress App uses JWTs internally to authenticate requests and requires a secret stored in AWS Secrets Manager containing SSH keys that are used to sign the JWTs.
-
-See the [Thin Egress App documentation on how to create this secret with the correct values](https://github.com/asfadmin/thin-egress-app#setting-up-the-jwt-cookie-secrets). It will be used later to set the `thin_egress_jwt_secret_name` variable when deploying the Cumulus module.
-
 ---
 
 ## Deploy the Cumulus instance
@@ -363,7 +357,6 @@ Notes on specific variables:
 
 - **`deploy_to_ngap`**: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. **If you are deploying to NGAP, you must set this variable to `true`.**
 - **`prefix`**: The value should be the same as the `prefix` from the data-persistence deployment.
-- **`thin_egress_jwt_secret_name`**: Use the value created during the previous [`Create a secret for signing Thin Egress App JWTs`](#create-a-secret-for-signing-thin-egress-app-jwts) step
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 
