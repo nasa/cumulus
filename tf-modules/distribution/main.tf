@@ -21,6 +21,7 @@ module "tea_map_cache" {
   tags                       = var.tags
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
+  deploy_to_ngap             = var.deploy_to_ngap
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {

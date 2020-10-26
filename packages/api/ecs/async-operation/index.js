@@ -11,6 +11,8 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const url = require('url');
 const Logger = require('@cumulus/logger');
+const { pipeline } = require('stream');
+const { promisify } = require('util');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
@@ -113,14 +115,10 @@ async function fetchLambdaFunction(codeUrl) {
   // of connection timeouts.  If the download fails, this will retry it up to
   // 10 times with an exponential backoff.
   await pRetry(
-    () => new Promise((resolve, reject) => {
-      const file = fs.createWriteStream('/home/task/fn.zip')
-        .on('finish', resolve)
-        .on('error', reject);
-      got.stream(codeUrl)
-        .on('error', reject)
-        .pipe(file);
-    }),
+    () => promisify(pipeline)(
+      got.stream(codeUrl),
+      fs.createWriteStream('/home/task/fn.zip')
+    ),
     {
       maxTimeout: 10000,
       onFailedAttempt: (err) => {

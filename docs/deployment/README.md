@@ -225,10 +225,6 @@ $ aws dynamodb create-table \
     --region us-east-1
 ```
 
-⚠️ **Note:** The `--billing-mode` option was recently added to the AWS CLI. You
-may need to upgrade your version of the AWS CLI if you get an error about
-provisioned throughput when creating the table.
-
 ---
 
 ## Deploy the Cumulus instance
@@ -391,7 +387,6 @@ Notes on specific variables:
 
 - **`deploy_to_ngap`**: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. **If you are deploying to NGAP, you must set this variable to `true`.**
 - **`prefix`**: The value should be the same as the `prefix` from the data-persistence deployment.
-- **`thin_egress_jwt_secret_name`**: Use the value created during the previous [`Create a secret for signing Thin Egress App JWTs`](#create-a-secret-for-signing-thin-egress-app-jwts) step
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 - **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
