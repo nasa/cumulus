@@ -112,3 +112,8 @@ additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
 */
+
+# Optional, uncomment if needed.
+/*
+es_request_concurrency = 1
+*/
