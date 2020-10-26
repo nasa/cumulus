@@ -96,11 +96,14 @@ const deleteProvidersByNodeName = async (stackName, nodeName) => {
       host: nodeName,
     },
   });
-  const deletes = JSON.parse(resp.body).results.map((p) => providersApi.deleteProvider({
+  const ids = JSON.parse(resp.body).results.map((p) => p.id);
+  console.log('deleteProvidersByNodeName', ids);
+  const deletes = ids.map((id) => providersApi.deleteProvider({
     prefix: stackName,
-    providerId: p.id,
+    providerId: id,
   }));
   await Promise.all(deletes).catch(console.error);
+  await Promise.all(ids.map((id) => exports.waitForProviderRecordInOrNotInList(stackName, id, false)));
 };
 
 const waitForProviderRecordInOrNotInList = async (
