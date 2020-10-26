@@ -67,7 +67,7 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
   return executionExists && asyncOperationExists && collectionExists;
 };
 
-const saveExecutions = async (cumulusMessage, knex) => {
+const saveExecution = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
@@ -126,7 +126,7 @@ const handler = async (event) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
     const results = await Promise.allSettled([
-      saveExecutions(cumulusMessage, knex),
+      saveExecution(cumulusMessage, knex),
       saveGranulesToDb(cumulusMessage),
       savePdrToDb(cumulusMessage),
     ]);
@@ -142,7 +142,7 @@ module.exports = {
   handler,
   isPostRDSDeploymentExecution,
   shouldWriteExecutionToRDS,
-  saveExecutions,
+  saveExecution,
   saveGranulesToDb,
   savePdrToDb,
 };

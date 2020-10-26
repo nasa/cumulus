@@ -24,7 +24,7 @@ const Pdr = require('../../models/pdrs');
 const {
   isPostRDSDeploymentExecution,
   shouldWriteExecutionToRDS,
-  saveExecutions,
+  saveExecution,
   saveGranulesToDb,
   savePdrToDb,
 } = require('../../lambdas/sf-event-sqs-to-db-records');
@@ -297,7 +297,7 @@ test('shouldWriteExecutionToRDS returns false if parent execution and async oper
   );
 });
 
-test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
+test('saveExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -309,7 +309,7 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
 
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  await saveExecutions(cumulusMessage, knex);
+  await saveExecution(cumulusMessage, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
     await doesExecutionExist({
@@ -318,7 +318,7 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
   );
 });
 
-test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -340,7 +340,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynam
     trxSpy.restore();
   });
 
-  await t.throwsAsync(saveExecutions(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution(cumulusMessage, knex));
   t.true(trxSpy.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
@@ -350,7 +350,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynam
   );
 });
 
-test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -373,7 +373,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS w
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(saveExecutions(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution(cumulusMessage, knex));
   t.true(trxStub.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
