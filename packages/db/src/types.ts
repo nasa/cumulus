@@ -49,5 +49,5 @@ export interface ProviderRecord {
   cmKeyId?: string
   certificateUri?: string
   created_at: Date
-  updated_at?: Date
+  updated_at: Date
 }
