@@ -1,6 +1,7 @@
 'use strict';
 
 const isIp = require('is-ip');
+const pWaitFor = require('p-wait-for');
 const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
@@ -87,9 +88,47 @@ const createProvider = async (stackName, provider) => {
   await providersApi.createProvider({ prefix: stackName, provider: provider });
 };
 
+const deleteProvidersByNodeName = async (stackName, nodeName) => {
+  const resp = await providersApi.getProviders({
+    prefix: stackName,
+    query: {
+      fields: 'id',
+      host: nodeName,
+    },
+  });
+  const deletes = JSON.parse(resp.body).results.map((p) => providersApi.deleteProvider({
+    prefix: stackName,
+    providerId: p.id,
+  }));
+  await Promise.all(deletes).catch(console.error);
+};
+
+const waitForProviderRecordInOrNotInList = async (
+  stackName, id, recordIsIncluded = true, additionalQueryParams = {}
+) => pWaitFor(
+  async () => {
+    const resp = await providersApi.getProviders({
+      prefix: stackName,
+      query: {
+        fields: 'id',
+        id,
+        ...additionalQueryParams,
+      },
+    });
+    const ids = JSON.parse(resp.body).results.map((p) => p.id);
+    return recordIsIncluded ? ids.includes(id) : !ids.includes(id);
+  },
+  {
+    interval: 10000,
+    timeout: 600 * 1000,
+  }
+);
+
 module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
   createProvider,
+  deleteProvidersByNodeName,
   fetchFakeS3ProviderBucket,
+  waitForProviderRecordInOrNotInList,
 };
