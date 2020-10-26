@@ -91,13 +91,12 @@ const createProvider = async (stackName, provider) => {
 const deleteProvidersByNodeName = async (stackName, nodeName) => {
   const resp = await providersApi.getProviders({
     prefix: stackName,
-    query: {
+    queryStringParameters: {
       fields: 'id',
       host: nodeName,
     },
   });
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
-  console.log('deleteProvidersByNodeName', ids);
   const deletes = ids.map((id) => providersApi.deleteProvider({
     prefix: stackName,
     providerId: id,
@@ -112,7 +111,7 @@ const waitForProviderRecordInOrNotInList = async (
   async () => {
     const resp = await providersApi.getProviders({
       prefix: stackName,
-      query: {
+      queryStringParameters: {
         fields: 'id',
         id,
         ...additionalQueryParams,
