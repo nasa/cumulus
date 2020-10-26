@@ -29,14 +29,39 @@ type CollectionInfo = {
 export const constructCollectionId = (name: string, version: string) =>
   `${name}___${version}`;
 
+/**
+ * Get collection name from execution message.
+ *
+ * @param {Message.CumulusMessage} message - An execution message
+ * @returns {string | undefined} - Collection name or undefined
+ *
+ * @alias module:Collections
+ */
 export const getCollectionNameFromMessage = (
   message: Message.CumulusMessage
 ): string | undefined => message.meta?.collection?.name;
 
+/**
+ * Get collection version from execution message.
+ *
+ * @param {Message.CumulusMessage} message - An execution message
+ * @returns {string | undefined} - Collection version or undefined
+ *
+ * @alias module:Collections
+ */
 export const getCollectionVersionFromMessage = (
   message: Message.CumulusMessage
 ): string | undefined => message.meta?.collection?.version;
 
+/**
+ * Get collection name and version from execution message.
+ *
+ * @param {Message.CumulusMessage} message - An execution message
+ * @returns {CollectionInfo | undefined}
+ *   Object with collection name and version or undefined
+ *
+ * @alias module:Collections
+ */
 export const getCollectionInfoFromMessage = (
   message: Message.CumulusMessage
 ): CollectionInfo | undefined => {
