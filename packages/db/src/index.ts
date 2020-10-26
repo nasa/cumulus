@@ -5,3 +5,9 @@ export { doesCollectionExist } from './Collections';
 export { doesExecutionExist } from './Executions';
 export { getDbClient, getDbTransaction } from './database';
 export { tableNames } from './tables';
+export {
+  AsyncOperationRecord,
+  CollectionRecord,
+  ExecutionRecord,
+  ProviderRecord,
+} from './types';

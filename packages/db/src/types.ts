@@ -36,3 +36,18 @@ export interface ExecutionRecord {
   created_at: Date
   updated_at: Date
 }
+
+export interface ProviderRecord {
+  name: string
+  protocol: string
+  host: string
+  port?: number
+  username?: string
+  password?: string
+  globalConnectionLimit?: number
+  privateKey?: string
+  cmKeyId?: string
+  certificateUri?: string
+  created_at: Date
+  updated_at?: Date
+}
