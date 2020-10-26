@@ -239,14 +239,16 @@ A new folder should be added in the `/spec` folder for the workflow and the test
 
 Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `spec` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
 
-## Fake data server
+## Fake Data Server
 
 A fake server is required for tests testing FTP/HTTP/HTTPS discover and downloads. The fake server should be set up once per account.
 
-The Cloudformation template for the fake data server is in `fake-server.yml`. To setup the fake server run:
+The Cloudformation template for the fake data server is in `fake-provider-cf.yml`. To setup the fake server, you can use the AWS CLI or AWS Console.
+
+If you want to use the AWS CLI, run:
 
 ```bash
-aws cloudformation deploy --template-file fake-server.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> SubnetId=<subnet-XXXXXX> AZone=<az-zone> Ngap=true --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation deploy --template-file fake-provider-cf.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> SubnetId=<subnet-XXXXXX> AZone=<az-zone> Ngap=true --capabilities CAPABILITY_NAMED_IAM
 ```
 
 with the following parameters:
@@ -257,8 +259,8 @@ with the following parameters:
 - AZone - Availability zone, needs to match the Subnet ID's availability zone
 - Ngap - `true` if in an NASA NGAP environment, will add the NGAP permission boundary to the IAM role created
 
-In the outputs section of your Cloudformation deployment in the AWS console, you can find the IP address of the fake server created. To use this fake server with the tests, update the provider configurations in `example/data/providers` to use this host address.
+Alternatively, you can use the AWS Console. Navigate to `CloudFormation > Create Stack with new resources > Create template in designer` and paste the contents of `fake-provider-cf.yml` into the template box. Be sure to choose `YAML` as the template language.
 
 ### Update data bucket
 
-By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-server.yml` with the alternative bucket and re-deploy the fake data server.
+By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-provider-cf.yml` with the alternative bucket and re-deploy the fake data server.
