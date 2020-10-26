@@ -2,6 +2,7 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
+import { CollectionRecord } from '@cumulus/db';
 import Logger from '@cumulus/logger';
 
 import { RecordAlreadyMigrated } from './errors';
@@ -11,26 +12,6 @@ const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/collections' });
-
-export interface RDSCollectionRecord {
-  name: string
-  version: string
-  process: string
-  granuleIdValidationRegex: string
-  granuleIdExtractionRegex: string
-  files: string
-  // default will be set by schema validation
-  duplicateHandling: string
-  // default will be set by schema validation
-  reportToEms: boolean
-  sampleFileName?: string
-  url_path?: string
-  ignoreFilesConfigForDiscovery?: boolean
-  meta?: object
-  tags?: string
-  created_at: Date
-  updated_at: Date
-}
 
 /**
  * Migrate collection record from Dynamo to RDS.
@@ -49,7 +30,7 @@ export const migrateCollectionRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.collection);
 
-  const existingRecord = await knex<RDSCollectionRecord>('collections')
+  const existingRecord = await knex<CollectionRecord>('collections')
     .where({
       name: dynamoRecord.name,
       version: dynamoRecord.version,
@@ -61,7 +42,7 @@ export const migrateCollectionRecord = async (
   }
 
   // Map old record to new schema.
-  const updatedRecord: RDSCollectionRecord = {
+  const updatedRecord: CollectionRecord = {
     name: dynamoRecord.name,
     version: dynamoRecord.version,
     process: dynamoRecord.process,

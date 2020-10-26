@@ -3,6 +3,7 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import * as KMS from '@cumulus/aws-client/KMS';
 import { envUtils, keyPairProvider } from '@cumulus/common';
+import { ProviderRecord } from '@cumulus/db';
 import Logger from '@cumulus/logger';
 
 import { RecordAlreadyMigrated } from './errors';
@@ -13,18 +14,7 @@ const schemas = require('@cumulus/api/models/schemas');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/providers' });
 
-export interface RDSProviderRecord {
-  name: string
-  protocol: string
-  host: string
-  port?: number
-  username?: string
-  password?: string
-  globalConnectionLimit?: number
-  privateKey?: string
-  cmKeyId?: string
-  certificateUri?: string
-  created_at: Date
+export interface ProviderInsertData extends ProviderRecord {
   updated_at?: Date
 }
 
@@ -61,7 +51,7 @@ export const migrateProviderRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.provider);
 
-  const existingRecord = await knex<RDSProviderRecord>('providers')
+  const existingRecord = await knex<ProviderRecord>('providers')
     .where('name', dynamoRecord.id)
     .first();
   // Throw error if it was already migrated.
@@ -83,7 +73,7 @@ export const migrateProviderRecord = async (
   }
 
   // Map old record to new schema.
-  const updatedRecord: RDSProviderRecord = {
+  const updatedRecord: ProviderInsertData = {
     name: dynamoRecord.id,
     protocol: dynamoRecord.protocol,
     host: dynamoRecord.host,
