@@ -62,5 +62,3 @@ The `cumulus` module deploys certain components that interact with TEA. As a res
 Also, if you are specifying a value for the `stage_name` variable to the TEA module, you **must use the same value for the `tea_api_gateway_stage` variable to the `cumulus` module**.
 
 One way to keep these variable values in sync across the modules is to use [Terraform local values](https://www.terraform.io/docs/configuration/locals.html) to define values to use for the variables for both modules. This approach is shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
-
-

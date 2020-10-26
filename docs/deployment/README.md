@@ -109,7 +109,6 @@ We will return to [configuring this repo and using it for deployment below](#dep
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
 
-
 > **Note**: If you are pushing your deployment code to a git repo, make sure to add `terraform.tf` and `terraform.tfvars` to `.gitignore`, **as these files will contain sensitive data related to your AWS account**.
 
 </details>
@@ -261,9 +260,10 @@ cp terraform.tfvars.example terraform.tfvars
 ```
 
 In `terraform.tf`, configure the remote state settings by substituting the appropriate values for:
-* `bucket`
-* `dynamodb_table`
-* `PREFIX` (whatever prefix you've chosen for your deployment)
+
+- `bucket`
+- `dynamodb_table`
+- `PREFIX` (whatever prefix you've chosen for your deployment)
 
 Fill in the appropriate values in `terraform.tfvars`. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
 
@@ -380,9 +380,10 @@ cp terraform.tfvars.example terraform.tfvars
 ```
 
 In `terraform.tf`, configure the remote state settings by substituting the appropriate values for:
-* `bucket`
-* `dynamodb_table`
-* `PREFIX` (whatever prefix you've chosen for your deployment)
+
+- `bucket`
+- `dynamodb_table`
+- `PREFIX` (whatever prefix you've chosen for your deployment)
 
 Fill in the appropriate values in `terraform.tfvars`. See the [Cumulus module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for more detail on each variable.
 
@@ -425,12 +426,12 @@ distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 You will need to add two redirect URLs to your EarthData login application.
 
 1. Login to URS.
-1. Under My Applications -> Application Administration -> use the edit icon of your application.
-1. Under Manage -> redirect URIs, add the Backend API url returned from the stack deployment
+2. Under My Applications -> Application Administration -> use the edit icon of your application.
+3. Under Manage -> redirect URIs, add the Backend API url returned from the stack deployment
    * e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
-1. Also add the Distribution url
+4. Also add the Distribution url
    * e.g. `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1].
-1. You may delete the placeholder url you used to create the application.
+5. You may delete the placeholder url you used to create the application.
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
 
