@@ -26,3 +26,13 @@ export interface CollectionRecord {
   created_at: Date
   updated_at: Date
 }
+
+export interface ExecutionRecord {
+  arn: string
+  asyncOperationCumulusId?: number
+  collectionCumulusId?: number
+  parentCumulusId?: number
+  cumulus_version: string
+  created_at: Date
+  updated_at: Date
+}
