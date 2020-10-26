@@ -423,9 +423,9 @@ You will need to add two redirect URLs to your EarthData login application.
 1. Login to URS.
 2. Under My Applications -> Application Administration -> use the edit icon of your application.
 3. Under Manage -> redirect URIs, add the Backend API url returned from the stack deployment
-   * e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
+   - e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
 4. Also add the Distribution url
-   * e.g. `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1].
+   - e.g. `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1].
 5. You may delete the placeholder url you used to create the application.
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
