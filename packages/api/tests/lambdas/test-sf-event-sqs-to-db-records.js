@@ -86,6 +86,19 @@ const runHandler = async (cumulusMessage = {}) => {
   return { executionArn, granuleId, pdrName, handlerResponse, sqsEvent };
 };
 
+const generateRDSCollectionRecord = (params) => ({
+  name: `${cryptoRandomString({ length: 10 })}collection`,
+  version: '0.0.0',
+  duplicateHandling: 'replace',
+  granuleIdValidationRegex: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
+  granuleIdExtractionRegex: '(MOD09GQ\\.(.*))\\.hdf',
+  sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
+  files: JSON.stringify([{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }]),
+  created_at: new Date(),
+  updated_at: new Date(),
+  ...params,
+});
+
 test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
   process.env.GranulesTable = randomString();
@@ -110,6 +123,12 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   process.env.RDS_DEPLOYMENT_CUMULUS_VERSION = '3.0.0';
 
+  t.context.collection = generateRDSCollectionRecord();
+  t.context.collectionId = constructCollectionId(
+    t.context.collection.name,
+    t.context.collection.version
+  );
+
   t.context.cumulusMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
@@ -118,8 +137,8 @@ test.beforeEach(async (t) => {
     meta: {
       status: 'running',
       collection: {
-        name: `my-collection${cryptoRandomString({ length: 5 })}`,
-        version: 5,
+        name: t.context.collection.name,
+        version: t.context.collection.version,
       },
       provider: {
         id: 'test-provider',
@@ -138,11 +157,8 @@ test.beforeEach(async (t) => {
     },
   });
 
-  await getDbClient(t.context.knex, tableNames.collection)
-    .insert({
-      name: t.context.meta.collection.name,
-      version: t.context.meta.collection.version,
-    });
+  await t.context.knex(tableNames.collections)
+    .insert(t.context.collection);
 
   t.context.executionDbClient = getDbClient(t.context.knex, tableNames.executions);
 });
@@ -248,7 +264,7 @@ test('shouldWriteExecutionToRDS returns false if parent execution exists in RDS 
   );
 });
 
-test('shouldWriteExecutionToRDS returns false if parent execution, async operation exist in RDS but not collection', async (t) => {
+test('shouldWriteExecutionToRDS returns false if parent execution and async operation exist in RDS but not collection', async (t) => {
   const { knex, executionDbClient } = t.context;
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
   await executionDbClient.insert({
@@ -302,7 +318,7 @@ test('saveExecutions() saves execution to Dynamo and RDS if write to RDS is enab
   );
 });
 
-test.serial.only('saveExecutions() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test.serial('saveExecutions() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const { cumulusMessage, executionModel, knex } = t.context;
 
   const stateMachineName = randomString();
@@ -318,9 +334,14 @@ test.serial.only('saveExecutions() does not persist records to Dynamo or RDS if 
     .callsFake(() => {
       throw new Error('fake error');
     });
-  t.teardown(() => saveExecutionStub.restore());
+  const trxSpy = sinon.spy(knex, 'transaction');
+  t.teardown(() => {
+    saveExecutionStub.restore();
+    trxSpy.restore();
+  });
 
-  await saveExecutions(cumulusMessage, knex);
+  await t.throwsAsync(saveExecutions(cumulusMessage, knex));
+  t.true(trxSpy.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesExecutionExist({
@@ -349,9 +370,11 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS w
     });
     return cb(fakeTrx);
   };
-  sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
+  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
+  t.teardown(() => trxStub.restore());
 
-  await saveExecutions(cumulusMessage, knex);
+  await t.throwsAsync(saveExecutions(cumulusMessage, knex));
+  t.true(trxStub.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesExecutionExist({
@@ -361,7 +384,7 @@ test.serial('saveExecutions() does not persist records to Dynamo or RDS if RDS w
 });
 
 test('saveGranulesToDb() saves a granule record to the database', async (t) => {
-  const { cumulusMessage, granuleModel } = t.context;
+  const { cumulusMessage, granuleModel, collectionId } = t.context;
 
   const stateMachineName = randomString();
   const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
@@ -386,7 +409,7 @@ test('saveGranulesToDb() saves a granule record to the database', async (t) => {
   const fetchedGranule = await granuleModel.get({ granuleId });
   const expectedGranule = {
     ...granule,
-    collectionId: 'my-collection___5',
+    collectionId,
     execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
     productVolume: 250,
     provider: 'test-provider',

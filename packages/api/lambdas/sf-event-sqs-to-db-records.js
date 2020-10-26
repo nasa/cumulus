@@ -88,7 +88,7 @@ const saveExecutions = async (cumulusMessage, knex) => {
     });
   } catch (error) {
     log.error(`Failed to write execution records for ${executionArn}`, error);
-    return Promise.resolve();
+    throw error;
   }
 };
 
