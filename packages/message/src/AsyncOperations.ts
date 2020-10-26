@@ -6,7 +6,7 @@ import { Message } from '@cumulus/types';
  * @param {Message.CumulusMessage} message - A workflow message object
  * @returns {undefined|string} The async operation ID
  *
- * @alias module:Executions
+ * @alias module:AsyncOperations
  */
 export const getMessageAsyncOperationId = (
   message: Message.CumulusMessage
