@@ -5,31 +5,7 @@ const omit = require('lodash/omit');
 
 const { BaseSearch } = require('./search');
 
-const textFields = [
-  'type',
-  'provider',
-  'granuleId',
-  'collectionId',
-  'pdrName',
-  'file',
-  'executions',
-  'version',
-  'name',
-  'id',
-  'status',
-  'operationType',
-  'taskArn',
-  'execution',
-  'address',
-  'originalUrl',
-  'cmrLink',
-  'protocol',
-  'host',
-  'location',
-  'workflow',
-  'state',
-  'arn',
-];
+const { convertTextField } = require('./textFields');
 
 class Stats extends BaseSearch {
   /**
@@ -133,15 +109,7 @@ class Stats extends BaseSearch {
       this.client = await this.constructor.es();
     }
 
-    let field;
-
-    // When doing aggregation, we need the keyword version of the field, which
-    // is stored in [fieldname].raw
-    if (textFields.includes(this.params.field)) {
-      field = `${this.params.field}.raw`;
-    } else {
-      field = this.params.field || 'status.raw';
-    }
+    const field = convertTextField(this.params.field) || 'status.raw';
 
     const searchParams = this._buildSearch();
     searchParams.type = this.type;

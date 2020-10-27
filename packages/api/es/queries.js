@@ -9,6 +9,8 @@
 
 const omit = require('lodash/omit');
 
+const { convertTextField } = require('./textFields');
+
 const regexes = {
   terms: /^(.*)__in$/,
   term: /^((?!__).)*$/,
@@ -39,11 +41,13 @@ const build = {
     const { sort_by: sortBy, order, sort_key: sortKey } = params;
 
     if (sortBy && order) {
-      sort = [{ [sortBy]: { order: order } }];
+      const sortField = convertTextField(sortBy);
+      sort = [{ [sortField]: { order: order } }];
     } else if (sortKey && Array.isArray(sortKey)) {
-      sort = sortKey.map((key) => ({
-        [key.replace(/^[+-]/, '')]: { order: key.startsWith('-') ? 'desc' : 'asc' },
-      }));
+      sort = sortKey.map((key) => {
+        const sortField = convertTextField(key.replace(/^[+-]/, ''));
+        return { [sortField]: { order: key.startsWith('-') ? 'desc' : 'asc' } };
+      });
     } else {
       sort = [{ timestamp: { order: 'desc' } }];
     }
@@ -139,9 +143,10 @@ const build = {
   terms: (queries, params, regex) => {
     const results = params.map((i) => {
       const field = i.name.match(regex)[1];
+      const fieldTerm = convertTextField(field);
       return {
         terms: {
-          [field]: i.value.split(','),
+          [fieldTerm]: i.value.split(','),
         },
       };
     });
@@ -152,9 +157,10 @@ const build = {
   not: (queries, params, regex) => {
     const results = params.map((i) => {
       const field = i.name.match(regex)[1];
+      const fieldTerm = convertTextField(field);
       return {
         terms: {
-          [field]: i.value.split(','),
+          [fieldTerm]: i.value.split(','),
         },
       };
     });
