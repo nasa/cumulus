@@ -39,7 +39,7 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
     : false;
 };
 
-const hasNoParentOrParentExists = async (cumulusMessage, knex) => {
+const hasNoParentExecutionOrExists = async (cumulusMessage, knex) => {
   const parentArn = getMessageExecutionParentArn(cumulusMessage);
   if (!parentArn) {
     return true;
@@ -49,7 +49,7 @@ const hasNoParentOrParentExists = async (cumulusMessage, knex) => {
   }, knex);
 };
 
-const hasNoAsyncOrAsyncExists = async (cumulusMessage, knex) => {
+const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
   const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   if (!asyncOperationId) {
     return true;
@@ -59,7 +59,7 @@ const hasNoAsyncOrAsyncExists = async (cumulusMessage, knex) => {
   }, knex);
 };
 
-const hasNoCollectioOrNoCollectionExists = async (cumulusMessage, knex) => {
+const hasNoCollectionOrExists = async (cumulusMessage, knex) => {
   const collectionInfo = getCollectionInfoFromMessage(cumulusMessage);
   if (!collectionInfo) {
     return true;
@@ -73,9 +73,9 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
 
   try {
     const results = await Promise.all([
-      hasNoParentOrParentExists(cumulusMessage, knex),
-      hasNoAsyncOrAsyncExists(cumulusMessage, knex),
-      hasNoCollectioOrNoCollectionExists(cumulusMessage, knex),
+      hasNoParentExecutionOrExists(cumulusMessage, knex),
+      hasNoAsyncOpOrExists(cumulusMessage, knex),
+      hasNoCollectionOrExists(cumulusMessage, knex),
     ]);
     return !results.some((result) => result === false);
   } catch (error) {
