@@ -10,7 +10,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Execution ARN')
       .notNullable();
     table
-      .text('name')
+      .uuid('name')
       .comment('Execution name')
       .notNullable();
     table
