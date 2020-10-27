@@ -125,3 +125,8 @@ variable "vpc_id" {
   description = "VPC used by Lambda functions"
   default     = null
 }
+
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}

@@ -6,12 +6,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-2239**
+  - Add resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
+- **CUMULUS-2063**
+  - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
+- **CUMULUS-2211**
+  - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
+
+### Changed
+- **CUMULUS-2216**
+  - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.
+  - The `es/collections` Collection class takes a new parameter includeStats. It no longer appends granule aggregate statistics to the returned results by default. One must set the new parameter to any non-false value.
+
+### BREAKING CHANGES
+
+- **CUMULUS-2216**
+  - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
+
+
 ## [v3.0.1] 2020-10-21
 
 - **CUMULUS-2203**
   - Update Core tasks to use
     [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
-    v1.3.2 to resolve memory leak/lambda ENOMEM constant failure issue.   This
+    v2.0.0 to resolve memory leak/lambda ENOMEM constant failure issue.   This
     issue caused lambdas to slowly use all memory in the run environment and
     prevented AWS from halting/restarting warmed instances when task code was
     throwing consistent errors under load.
@@ -91,6 +110,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `const { recursion } = require('@cumulus/ingest/recursion');`
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
+- `@cumulus/common.http` has been removed
+- `@cumulus/common/http.download` has been removed
 
 ### Added
 

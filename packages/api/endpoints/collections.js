@@ -15,6 +15,7 @@ const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 
@@ -26,12 +27,17 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
   const collection = new Collection(
-    { queryStringParameters: req.query },
+    { queryStringParameters },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    includeStats === 'true'
   );
-  const result = await collection.query();
+  let result = await collection.query();
+  if (getMMT === 'true') {
+    result = await insertMMTLinks(result);
+  }
   return res.send(result);
 }
 
@@ -45,12 +51,18 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
+
   const collection = new Collection(
-    { queryStringParameters: req.query },
+    { queryStringParameters },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    includeStats === 'true'
   );
-  const result = await collection.queryCollectionsWithActiveGranules();
+  let result = await collection.queryCollectionsWithActiveGranules();
+  if (getMMT === 'true') {
+    result = await insertMMTLinks(result);
+  }
   return res.send(result);
 }
 

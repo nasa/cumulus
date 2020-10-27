@@ -74,7 +74,7 @@
     "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
     "googleapis": "^49.0.0",
-    "got": "^8.3.0",
+    "got": "^11.7.0",
     "hsts": "^2.1.0",
     "is-valid-hostname": "0.0.1",
     "json2csv": "^4.5.1",

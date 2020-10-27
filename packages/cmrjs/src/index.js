@@ -29,5 +29,4 @@ module.exports = {
   reconcileCMRMetadata,
   granulesToCmrFileObjects,
   updateCMRMetadata,
-  updateToken,
 };

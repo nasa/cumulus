@@ -29,7 +29,7 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api-client": "2.0.4",
+    "@cumulus/api-client": "3.0.1",
     "@cumulus/aws-client": "3.0.1",
     "@cumulus/collection-config-store": "3.0.1",
     "@cumulus/common": "3.0.1",
