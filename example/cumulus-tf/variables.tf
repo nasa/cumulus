@@ -190,6 +190,12 @@ variable "ems_username" {
   default     = "cumulus"
 }
 
+variable "es_request_concurrency" {
+  type = number
+  default = 10
+  description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
+}
+
 variable "key_name" {
   type    = string
   default = null
