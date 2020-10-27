@@ -233,7 +233,7 @@ Please see our [troubleshooting documentation for any issues with your deploymen
 
 ### Configure and deploy the `data-persistence-tf` root module
 
-These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously. Run the following to copy the example files.
+These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that you previously cloned. Run the following to copy the example files.
 
 ```shell
 cd data-persistence-tf/
