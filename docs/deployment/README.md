@@ -74,8 +74,8 @@ Terraform v0.12.12
 
 ### Credentials
 
-- [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password. CMR credentials must be provided if you are exporting metadata to CMR with Earthdata Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
-- [NASA Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
+- [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password. CMR credentials must be provided if you are exporting metadata to CMR with Earthdata Login authentication.
+- [NASA Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API.
 - [Earthdata Login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS. It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
@@ -249,9 +249,9 @@ In `terraform.tf`, configure the remote state settings by substituting the appro
 
 Fill in the appropriate values in `terraform.tfvars`. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
 
-**Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus dashboard will not work without Elasticsearch.
+**Reminder:** _Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus dashboard will not work without Elasticsearch._
 
-**Reminder:** If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already.
+**Reminder:** _If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already._
 
 #### Initialize Terraform
 
