@@ -41,7 +41,7 @@ const {
   savePdrToDb,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
-    sendSQSMessage: async (queue, message) => [queue, message]
+    sendSQSMessage: async (queue, message) => [queue, message],
   },
   '@cumulus/db': {
     doesAsyncOperationExist: stubs.asyncOperationExists,
