@@ -196,15 +196,6 @@ test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS
   }));
 });
 
-test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with no parent execution', async (t) => {
-  const { knex } = t.context;
-  t.true(await shouldWriteExecutionToRDS({
-    cumulus_meta: {
-      cumulus_version: '3.0.0',
-    },
-  }, knex));
-});
-
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
   const { knex } = t.context;
   t.false(await shouldWriteExecutionToRDS({
@@ -214,58 +205,13 @@ test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution m
   }, knex));
 });
 
-test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with parent execution in RDS', async (t) => {
-  const { knex, executionDbClient } = t.context;
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  await executionDbClient.insert({
-    arn: parentExecutionArn,
-  });
-
-  t.true(
-    await shouldWriteExecutionToRDS({
-      cumulus_meta: {
-        cumulus_version: '3.0.0',
-        parentExecutionArn,
-      },
-    }, knex)
-  );
-});
-
-test('shouldWriteExecutionToRDS returns false if parent execution does not exist in RDS', async (t) => {
-  const { knex } = t.context;
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-
-  t.false(
-    await shouldWriteExecutionToRDS({
-      cumulus_meta: {
-        cumulus_version: '3.0.0',
-        parentExecutionArn,
-      },
-    }, knex)
-  );
-});
-
-test('shouldWriteExecutionToRDS returns false if parent execution exists in RDS but not async operation', async (t) => {
-  const { knex, executionDbClient } = t.context;
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  await executionDbClient.insert({
-    arn: parentExecutionArn,
-  });
-
-  t.false(
-    await shouldWriteExecutionToRDS({
-      cumulus_meta: {
-        cumulus_version: '3.0.0',
-        parentExecutionArn,
-        asyncOperationId: uuidv4(),
-      },
-    }, knex)
-  );
-});
-
-test('shouldWriteExecutionToRDS returns false if parent execution and async operation exist in RDS but not collection', async (t) => {
+test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message with existing referenced objects', async (t) => {
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
   const asyncOperationId = uuidv4();
+  const collection = {
+    name: 'fake-name',
+    version: '0.0.0',
+  };
 
   const fakeKnex = () => ({
     where: (params) => ({
@@ -274,6 +220,46 @@ test('shouldWriteExecutionToRDS returns false if parent execution and async oper
         if (params.arn === parentExecutionArn) return {};
         // mock async operation exists
         if (params.id === asyncOperationId) return {};
+        // collection does not exist
+        if (params.name === collection.name
+            && params.version === collection.version) return {};
+        return undefined;
+      },
+    }),
+  });
+
+  t.true(
+    await shouldWriteExecutionToRDS({
+      cumulus_meta: {
+        cumulus_version: '3.0.0',
+        parentExecutionArn,
+        asyncOperationId,
+      },
+      meta: {
+        collection,
+      },
+    }, fakeKnex)
+  );
+});
+
+test('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  const asyncOperationId = uuidv4();
+  const collection = {
+    name: 'fake-name',
+    version: '0.0.0',
+  };
+
+  const fakeKnex = () => ({
+    where: (params) => ({
+      first: () => {
+        // mock parent execution exists
+        if (params.arn === parentExecutionArn) return {};
+        // mock async operation exists
+        if (params.id === asyncOperationId) return {};
+        // collection does not exist
+        if (params.name === collection.name
+            && params.version === collection.version) return undefined;
         return undefined;
       },
     }),
@@ -287,10 +273,7 @@ test('shouldWriteExecutionToRDS returns false if parent execution and async oper
         asyncOperationId,
       },
       meta: {
-        collection: {
-          name: 'fake-name',
-          version: '0.0.0',
-        },
+        collection
       },
     }, fakeKnex)
   );
