@@ -159,6 +159,8 @@ module.exports = {
   handler,
   isPostRDSDeploymentExecution,
   hasNoParentExecutionOrExists,
+  hasNoAsyncOpOrExists,
+  hasNoCollectionOrExists,
   shouldWriteExecutionToRDS,
   saveExecution,
   saveGranulesToDb,

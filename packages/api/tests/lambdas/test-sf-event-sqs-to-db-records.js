@@ -16,6 +16,7 @@ const {
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
+
 const { randomString } = require('@cumulus/common/test-utils');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
@@ -23,6 +24,8 @@ const Pdr = require('../../models/pdrs');
 const {
   isPostRDSDeploymentExecution,
   hasNoParentExecutionOrExists,
+  hasNoAsyncOpOrExists,
+  hasNoCollectionOrExists,
   shouldWriteExecutionToRDS,
   saveExecution,
   saveGranulesToDb,
@@ -30,7 +33,7 @@ const {
 } = require('../../lambdas/sf-event-sqs-to-db-records');
 const { handler } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
-    sendSQSMessage: async (queue, message) => [queue, message],
+    sendSQSMessage: async (queue, message) => [queue, message]
   },
 });
 
@@ -159,8 +162,6 @@ test.beforeEach(async (t) => {
 
   await t.context.knex(tableNames.collections)
     .insert(t.context.collection);
-
-  t.context.executionDbClient = t.context.knex(tableNames.executions);
 });
 
 test.after.always(async (t) => {
@@ -195,6 +196,128 @@ test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS
       cumulus_version: '2.0.0',
     },
   }));
+});
+
+test('hasNoParentExecutionOrExists returns true if there is no parent execution', async (t) => {
+  const { knex } = t.context;
+  t.true(await hasNoParentExecutionOrExists({}, knex));
+});
+
+test('hasNoParentExecutionOrExists returns true if parent execution exists', async (t) => {
+  const { knex } = t.context;
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+
+  await knex(tableNames.executions)
+    .insert({ arn: parentExecutionArn });
+
+  t.true(await hasNoParentExecutionOrExists({
+    cumulus_meta: {
+      parentExecutionArn,
+    },
+  }, knex));
+});
+
+test('hasNoParentExecutionOrExists returns false if parent execution does not exist', async (t) => {
+  const { knex } = t.context;
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+
+  t.false(await hasNoParentExecutionOrExists({
+    cumulus_meta: {
+      parentExecutionArn,
+    },
+  }, knex));
+});
+
+test('hasNoAsyncOpOrExists returns true if there is no async operation', async (t) => {
+  const { knex } = t.context;
+  t.true(await hasNoAsyncOpOrExists({}, knex));
+});
+
+test('hasNoAsyncOpOrExists returns true if async operation exists', async (t) => {
+  const { knex } = t.context;
+  const asyncOperationId = uuidv4();
+
+  await knex(tableNames.asyncOperations)
+    .insert({
+      id: asyncOperationId,
+      description: 'fake-description',
+      operationType: 'Bulk Granules',
+      status: 'RUNNING',
+    });
+
+  t.true(await hasNoAsyncOpOrExists({
+    cumulus_meta: {
+      asyncOperationId,
+    },
+  }, knex));
+});
+
+test('hasNoAsyncOpOrExists returns false if async operation does not exist', async (t) => {
+  const { knex } = t.context;
+  const asyncOperationId = uuidv4();
+
+  t.false(await hasNoAsyncOpOrExists({
+    cumulus_meta: {
+      asyncOperationId,
+    },
+  }, knex));
+});
+
+test('hasNoCollectionOrExists returns true if there is no collection', async (t) => {
+  const { knex } = t.context;
+  t.true(await hasNoCollectionOrExists({}, knex));
+});
+
+test('hasNoCollectionOrExists returns true if collection exists', async (t) => {
+  const collection = {
+    name: cryptoRandomString({ length: 10 }),
+    version: '0.0.0',
+  };
+
+  const whereStub = sinon.stub().callsFake((params) => ({
+    first: () => {
+      // collection does exist
+      if (params.name === collection.name
+          && params.version === collection.version) return {};
+      return undefined;
+    },
+  }));
+  const fakeKnex = () => ({
+    where: whereStub,
+  });
+
+  t.true(await hasNoCollectionOrExists({
+    meta: {
+      collection,
+    },
+  }, fakeKnex));
+  t.true(whereStub.called);
+});
+
+test('hasNoCollectionOrExists returns false if collection does not exist', async (t) => {
+  const collection = {
+    name: cryptoRandomString({ length: 10 }),
+    version: '0.0.0',
+  };
+
+  const whereStub = sinon.stub().callsFake((params) => ({
+    first: () => {
+      // collection does exist
+      if (params.name === collection.name
+          && params.version === collection.version) return undefined;
+      return {};
+    },
+  }));
+  const fakeKnex = () => ({
+    where: whereStub,
+  });
+
+  t.false(await hasNoCollectionOrExists({
+    meta: {
+      collection,
+    },
+  }, fakeKnex));
+  t.true(whereStub.called);
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
@@ -274,7 +397,7 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
         asyncOperationId,
       },
       meta: {
-        collection
+        collection,
       },
     }, fakeKnex)
   );
