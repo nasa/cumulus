@@ -8,11 +8,25 @@ hide_title: false
 
 In the following data cookbooks we'll go through things like setting up workflows, making configuration changes, and interacting with CNM. The point of this section is to set up, or at least better understand, collections, providers, and rules and how they are configured.
 
+## Ingest/Workflow Configuration
+
+The elements needed to configure ingest or any kind of workflow are providers, collections, and rules.
+
+- **Providers** tell Cumulus where to get the data - i.e. S3, HTTPS
+- **Collections** tell Cumulus where to put the data
+- **Rules** tell Cumulus when to trigger a workflow execution and tie providers and collections together
+
 ## Schemas
 
 Looking at our api schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
 
 **Note:** The schemas are _extremely_ useful for understanding what attributes are configurable and which of those are required. Indeed, they are what the Cumulus code validates definitions (whether that be collection, provider, or others) against. Much of this document is simply providing some context to the information in the schemas.
+
+## Providers
+
+Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
+
+For more on Provider configuration see the [Provider section of the Operator Documentation](../operator-docs/provider).
 
 ## Collections
 
@@ -47,12 +61,6 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
 |url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
 |checksumFor|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|No|If this is a checksum file, set `checksumFor` to the `regex` of the target file.|
-
-## Providers
-
-Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
-
-For more on Provider configuration see the [Provider section of the Operator Documentation](../operator-docs/provider).
 
 ## Rules
 
