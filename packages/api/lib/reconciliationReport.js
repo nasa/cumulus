@@ -117,7 +117,6 @@ function convertToDBGranuleSearchParams(params) {
   return removeNilProperties(searchParams);
 }
 
-
 /**
  *
  * @param {Object} params - request params to convert to database params
