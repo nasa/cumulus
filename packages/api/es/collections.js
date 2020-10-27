@@ -135,7 +135,7 @@ class Collection extends BaseSearch {
     searchParams.body.aggs = {
       collections: {
         terms: {
-          field: 'collectionId',
+          field: 'collectionId.raw',
           size: ES_MAX_AGG,
         },
       },
