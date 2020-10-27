@@ -265,20 +265,20 @@ test('shouldWriteExecutionToRDS returns false if parent execution exists in RDS 
 });
 
 test('shouldWriteExecutionToRDS returns false if parent execution and async operation exist in RDS but not collection', async (t) => {
-  const { knex, executionDbClient } = t.context;
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  await executionDbClient.insert({
-    arn: parentExecutionArn,
-  });
-
   const asyncOperationId = uuidv4();
-  await getDbClient(knex, tableNames.asyncOperations)
-    .insert({
-      id: asyncOperationId,
-      description: 'test-async-operation',
-      operationType: 'Bulk Granules',
-      status: 'RUNNING',
-    });
+
+  const fakeKnex = () => ({
+    where: (params) => ({
+      first: () => {
+        // mock parent execution exists
+        if (params.arn === parentExecutionArn) return {};
+        // mock async operation exists
+        if (params.id === asyncOperationId) return {};
+        return undefined;
+      },
+    }),
+  });
 
   t.false(
     await shouldWriteExecutionToRDS({
@@ -293,7 +293,7 @@ test('shouldWriteExecutionToRDS returns false if parent execution and async oper
           version: '0.0.0',
         },
       },
-    }, knex)
+    }, fakeKnex)
   );
 });
 

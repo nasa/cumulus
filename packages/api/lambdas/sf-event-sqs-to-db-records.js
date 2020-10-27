@@ -40,31 +40,49 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
     : false;
 };
 
+const hasNoParentOrParentExists = async (cumulusMessage, knex) => {
+  const parentArn = getMessageExecutionParentArn(cumulusMessage);
+  if (!parentArn) {
+    return true;
+  }
+  return doesExecutionExist({
+    arn: parentArn,
+  }, knex);
+};
+
+const hasNoAsyncOrAsyncExists = async (cumulusMessage, knex) => {
+  const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
+  if (!asyncOperationId) {
+    return true;
+  }
+  return doesAsyncOperationExist({
+    id: asyncOperationId,
+  }, knex);
+};
+
+const hasNoCollectioOrNoCollectionExists = async (cumulusMessage, knex) => {
+  const collectionInfo = getCollectionInfoFromMessage(cumulusMessage);
+  if (!collectionInfo) {
+    return true;
+  }
+  return doesCollectionExist(collectionInfo, knex);
+};
+
 const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
   const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   if (!executionIsPostDeployment) return executionIsPostDeployment;
 
-  let executionExists = true;
-  let asyncOperationExists = true;
-  let collectionExists = true;
-
-  const parentArn = getMessageExecutionParentArn(cumulusMessage);
-  if (parentArn) {
-    executionExists = await doesExecutionExist({
-      arn: parentArn,
-    }, knex);
+  try {
+    const results = await Promise.all([
+      hasNoParentOrParentExists(cumulusMessage, knex),
+      hasNoAsyncOrAsyncExists(cumulusMessage, knex),
+      hasNoCollectioOrNoCollectionExists(cumulusMessage, knex),
+    ]);
+    return !results.some((result) => result === false);
+  } catch (error) {
+    log.error(error);
+    return false;
   }
-  const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
-  if (asyncOperationId) {
-    asyncOperationExists = await doesAsyncOperationExist({
-      id: asyncOperationId,
-    }, knex);
-  }
-  const collectionInfo = getCollectionInfoFromMessage(cumulusMessage);
-  if (collectionInfo) {
-    collectionExists = await doesCollectionExist(collectionInfo, knex);
-  }
-  return executionExists && asyncOperationExists && collectionExists;
 };
 
 const saveExecution = async (cumulusMessage, knex) => {
