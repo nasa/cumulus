@@ -184,9 +184,7 @@ Follow the directions on [how to register an application](https://wiki.earthdata
 
 > _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
 
-The state of the Terraform deployment is stored in S3. In the following
-examples, it will be assumed that state is being stored in a bucket called
-`my-tf-state`. You can also use an existing bucket, if desired.
+The state of the Terraform deployment is stored in S3. In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`. You can also use an existing bucket, if desired.
 
 ### Create the state bucket
 
@@ -194,8 +192,7 @@ examples, it will be assumed that state is being stored in a bucket called
 aws s3api create-bucket --bucket my-tf-state
 ```
 
-In order to help prevent loss of state information, **it is strongly recommended that
-versioning be enabled on the state bucket**.
+In order to help prevent loss of state information, **it is strongly recommended that versioning be enabled on the state bucket**.
 
 ```shell
 aws s3api put-bucket-versioning \
@@ -203,18 +200,11 @@ aws s3api put-bucket-versioning \
     --versioning-configuration Status=Enabled
 ```
 
-⚠️ **Note:** If your state information does become lost or corrupt, then
-deployment (via `terraform apply`) will have unpredictable results, including
-possible loss of data and loss of deployed resources. In order to reduce your
-risk of the corruption or loss of your Terraform state file, or otherwise
-corrupt your Cumulus deployment, please see the
-[Terraform Best Practices](terraform-best-practices.md) guide.
+⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources. In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide.
 
 ### Create the locks table
 
-Terraform uses a lock stored in DynamoDB in order to prevent multiple
-simultaneous updates. In the following examples, that table will be called
-`my-tf-locks`.
+Terraform uses a lock stored in DynamoDB in order to prevent multiple simultaneous updates. In the following examples, that table will be called `my-tf-locks`.
 
 ```shell
 $ aws dynamodb create-table \
@@ -233,11 +223,7 @@ A typical Cumulus deployment is broken into two
 [Terraform root modules](https://www.terraform.io/docs/configuration/modules.html):
 [`data-persistence`](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence) and [`cumulus`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus).
 
-The `data-persistence` module should
-be deployed first, and creates the Elasticsearch domain and DynamoDB tables. The
-`cumulus` module deploys the rest of Cumulus: distribution, API, ingest,
-workflows, etc. The `cumulus` module depends on the resources created in the
-`data-persistence` deployment.
+The `data-persistence` module should be deployed first, and creates the Elasticsearch domain and DynamoDB tables. The `cumulus` module deploys the rest of Cumulus: distribution, API, ingest, workflows, etc. The `cumulus` module depends on the resources created in the `data-persistence` deployment.
 
 Each of these modules have to be deployed independently and require their own Terraform backend, variable, and output settings. The template deploy repo that was cloned previously already contains the scaffolding of the necessary files for the deployment of each module: `data-persistence-tf` deploys the `data-persistence` module and `cumulus-tf` deploys the `cumulus` module. For reference on the files that are included, see the [documentation on adding components to a Terraform deployment](components.md#adding-components-to-your-terraform-deployment).
 
