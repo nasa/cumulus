@@ -5,6 +5,11 @@ const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const {
+  getMessagePdr,
+  getPdrPANSent,
+  getPdrPANMessage
+} = require('@cumulus/message/PDRs');
 const pvl = require('@cumulus/pvl');
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
@@ -56,7 +61,7 @@ class Pdr extends Manager {
    *   not set
    */
   generatePdrRecord(message) {
-    const pdr = get(message, 'payload.pdr');
+    const pdr = getMessagePdr(message);
 
     if (!pdr) { // We got a message with no PDR (OK)
       log.info('No PDRs to process on the message');
@@ -96,8 +101,8 @@ class Pdr extends Manager {
       provider: get(message, 'meta.provider.id'),
       progress,
       execution,
-      PANSent: get(pdr, 'PANSent', false),
-      PANmessage: get(pdr, 'PANmessage', 'N/A'),
+      PANSent: getPdrPANSent(pdr),
+      PANmessage: getPdrPANMessage(pdr),
       stats,
       createdAt: get(message, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now(),
