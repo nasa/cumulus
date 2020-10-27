@@ -32,7 +32,7 @@ export const getMessagePdr = (
  *
  * @alias module:PDRs
  */
-export const getMessagePdrPANSent = (
+export const getPdrPANSent = (
   pdr: PDR
 ): boolean => pdr?.PANSent ?? false;
 
@@ -44,6 +44,6 @@ export const getMessagePdrPANSent = (
  *
  * @alias module:PDRs
  */
-export const getMessagePdrPANMessage = (
+export const getPdrPANMessage = (
   pdr: PDR
 ): string => pdr?.PANmessage ?? 'N/A';
