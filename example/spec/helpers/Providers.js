@@ -88,12 +88,12 @@ const createProvider = async (stackName, provider) => {
   await providersApi.createProvider({ prefix: stackName, provider: provider });
 };
 
-const deleteProvidersByNodeName = async (stackName, nodeName) => {
+const deleteProvidersByHost = async (stackName, host) => {
   const resp = await providersApi.getProviders({
     prefix: stackName,
     queryStringParameters: {
       fields: 'id',
-      host: nodeName,
+      host,
     },
   });
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
@@ -130,7 +130,7 @@ module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
   createProvider,
-  deleteProvidersByNodeName,
+  deleteProvidersByHost,
   fetchFakeS3ProviderBucket,
   waitForProviderRecordInOrNotInList,
 };

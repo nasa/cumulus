@@ -57,7 +57,7 @@ const {
 } = require('../../helpers/granuleUtils');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-const { deleteProvidersByNodeName, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
+const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
@@ -109,7 +109,7 @@ describe('Ingesting from PDR', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       nodeName = config.pdrNodeNameProviderBucket;
-      await deleteProvidersByNodeName(config.stackName, nodeName);
+      await deleteProvidersByHost(config.stackName, nodeName);
 
       nodeNameProviderId = `provider-${randomString(4)}`;
 
