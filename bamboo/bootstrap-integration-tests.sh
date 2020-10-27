@@ -28,9 +28,6 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Prepare repo lambdas
   cd ..
 
-  # Extract cache of compiled TS files
-  ./bamboo/extract-ts-build-cache.sh
-
   npm install && npm run package
   cd ..
 else

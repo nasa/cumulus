@@ -6,7 +6,7 @@ hide_title: false
 
 ## Enabling API Gateway logging
 
-In order to enable API Access and Execution logging, configure the Cumulus deployment by setting `log_api_gateway_to_cloudwatch` on the `cumulus` module:
+In order to enable distribution API Access and execution logging, configure the TEA deployment by setting `log_api_gateway_to_cloudwatch` on the `thin_egress_app` module:
 
 ```hcl
 log_api_gateway_to_cloudwatch = true
@@ -53,7 +53,7 @@ aws iam create-role \
 --assume-role-policy-document file://apigateway-policy.json
 ```
 
-Note the Arn of the returned role for the last step.
+Note the ARN of the returned role for the last step.
 
 ### Attach correct permissions to role
 
