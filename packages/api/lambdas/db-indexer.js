@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const pMap = require('p-map');
+const pEachSeries = require('p-each-series');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
@@ -196,10 +196,9 @@ async function indexRecord(esClient, record) {
 async function indexRecords(records) {
   const esClient = await Search.es();
 
-  return pMap(
+  return pEachSeries(
     records,
-    (record) => indexRecord(esClient, record).catch(log.error),
-    { concurrency: 1 }
+    (record) => indexRecord(esClient, record).catch(log.error)
   );
 }
 
