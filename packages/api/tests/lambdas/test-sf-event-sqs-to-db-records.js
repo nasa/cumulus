@@ -11,7 +11,6 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   localStackConnectionEnv,
   getKnexClient,
-  getDbClient,
   tableNames,
   doesExecutionExist,
 } = require('@cumulus/db');
@@ -160,7 +159,7 @@ test.beforeEach(async (t) => {
   await t.context.knex(tableNames.collections)
     .insert(t.context.collection);
 
-  t.context.executionDbClient = getDbClient(t.context.knex, tableNames.executions);
+  t.context.executionDbClient = t.context.knex(tableNames.executions);
 });
 
 test.after.always(async (t) => {
