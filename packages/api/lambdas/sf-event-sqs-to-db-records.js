@@ -68,10 +68,10 @@ const hasNoCollectionOrExists = async (cumulusMessage, knex) => {
 };
 
 const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
-  const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-  if (!executionIsPostDeployment) return executionIsPostDeployment;
-
   try {
+    const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+    if (!executionIsPostDeployment) return executionIsPostDeployment;
+
     const results = await Promise.all([
       hasNoParentExecutionOrExists(cumulusMessage, knex),
       hasNoAsyncOpOrExists(cumulusMessage, knex),
