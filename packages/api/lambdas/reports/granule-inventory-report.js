@@ -7,6 +7,7 @@ const Logger = require('@cumulus/logger');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { Granule } = require('../../models');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
+const { convertToDBScanGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
  * Builds a CSV file of all granules in the Cumulus DB
@@ -31,16 +32,8 @@ async function createGranuleInventoryReport(recReportParams) {
     'published',
   ];
 
-  const { reportKey, systemBucket, ...params } = recReportParams;
-  const searchParams = {};
-  fields.forEach((field) => {
-    let searchField = field;
-    if (field === 'granuleUr') searchField = 'granuleId';
-    const fieldValue = params[searchField];
-    if (fieldValue) {
-      searchParams[field] = fieldValue;
-    }
-  });
+  const { reportKey, systemBucket } = recReportParams;
+  const searchParams = convertToDBScanGranuleSearchParams(recReportParams);
 
   const granuleScanner = new Granule().granuleAttributeScan(searchParams);
   let nextGranule = await granuleScanner.peek();

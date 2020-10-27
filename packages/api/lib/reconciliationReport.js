@@ -117,6 +117,38 @@ function convertToDBGranuleSearchParams(params) {
   return removeNilProperties(searchParams);
 }
 
+
+/**
+ *
+ * @param {Object} params - request params to convert to database params
+ * @returns {Object} object of desired parameters formated for database granule search
+ */
+function convertToDBScanGranuleSearchParams(params) {
+  const {
+    collectionId,
+    collectionIds,
+    granuleId,
+    granuleIds,
+    provider,
+    providers,
+    status,
+    startTimestamp,
+    endTimestamp,
+  } = params;
+  const searchParams = {
+    updatedAt__from: dateToValue(startTimestamp),
+    updatedAt__to: dateToValue(endTimestamp),
+    collectionId,
+    collectionIds,
+    granuleId,
+    granuleIds,
+    provider,
+    providers,
+    status,
+  };
+  return removeNilProperties(searchParams);
+}
+
 /**
  * create initial report header
  *
@@ -204,6 +236,7 @@ module.exports = {
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
   convertToDBGranuleSearchParams,
+  convertToDBScanGranuleSearchParams,
   filterCMRCollections,
   filterDBCollections,
   initialReportHeader,
