@@ -35,7 +35,7 @@ test.afterEach.always(async (t) => {
   ]);
 });
 
-test('Writes a file containing all granules to S3.', async (t) => {
+test.serial('Writes a file containing all granules to S3.', async (t) => {
   const testGranules = range(20).map(() => fakeGranuleFactoryV2());
   await new models.Granule().create(testGranules);
   const reportRecordName = randomId('recordName');
@@ -65,7 +65,7 @@ test('Writes a file containing all granules to S3.', async (t) => {
   });
 });
 
-test('Writes a file containing a filtered set of granules to S3.', async (t) => {
+test.serial('Writes a file containing a filtered set of granules to S3.', async (t) => {
   const collectionId = randomString();
   const status = 'running';
   const granuleId = randomString();
