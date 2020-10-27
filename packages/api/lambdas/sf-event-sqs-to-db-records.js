@@ -77,7 +77,7 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
       hasNoAsyncOpOrExists(cumulusMessage, knex),
       hasNoCollectionOrExists(cumulusMessage, knex),
     ]);
-    return !results.some((result) => result === false);
+    return results.every((result) => result === true);
   } catch (error) {
     log.error(error);
     return false;
@@ -158,6 +158,7 @@ const handler = async (event) => {
 module.exports = {
   handler,
   isPostRDSDeploymentExecution,
+  hasNoParentExecutionOrExists,
   shouldWriteExecutionToRDS,
   saveExecution,
   saveGranulesToDb,

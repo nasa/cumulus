@@ -22,6 +22,7 @@ const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const {
   isPostRDSDeploymentExecution,
+  hasNoParentExecutionOrExists,
   shouldWriteExecutionToRDS,
   saveExecution,
   saveGranulesToDb,
