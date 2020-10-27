@@ -199,11 +199,7 @@ async function indexRecords(records) {
   return pMap(
     records,
     (record) => indexRecord(esClient, record).catch(log.error),
-    {
-      concurrency: process.env.ES_CONCURRENCY
-        ? Number.parseInt(process.env.ES_CONCURRENCY, 10)
-        : 3,
-    }
+    { concurrency: 1 }
   );
 }
 
