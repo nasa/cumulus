@@ -1,12 +1,14 @@
 import { Message } from '@cumulus/types';
 
-export interface MessageWithPdr extends Message.CumulusMessage {
+interface PDR {
+  name: string
+  PANSent: boolean
+  PANmessage: string
+}
+
+interface MessageWithPdr extends Message.CumulusMessage {
   payload: {
-    pdr?: {
-      name: string
-      PANSent: boolean
-      PANmessage: string
-    }
+    pdr?: PDR
   }
 }
 
@@ -23,25 +25,25 @@ export const getMessagePdr = (
 ): object | undefined => message.payload?.pdr;
 
 /**
- * Get the PDR PAN sent status from a workflow message, if any.
+ * Get the PAN sent status from a PDR, if any.
  *
- * @param {MessageWithPdr} message - A workflow message object
+ * @param {PDR} pdr - A PDR object
  * @returns {boolean} The PAN sent status
  *
  * @alias module:PDRs
  */
 export const getMessagePdrPANSent = (
-  message: MessageWithPdr
-): boolean => message.payload.pdr?.PANSent ?? false;
+  pdr: PDR
+): boolean => pdr?.PANSent ?? false;
 
 /**
- * Get the PDR PAN message status from a workflow message, if any.
+ * Get the PAN message status from a PDR, if any.
  *
- * @param {MessageWithPdr} message - A workflow message object
- * @returns {string} The PDR object
+ * @param {PDR} pdr - A PDR object
+ * @returns {string} The PAN message
  *
  * @alias module:PDRs
  */
 export const getMessagePdrPANMessage = (
-  message: MessageWithPdr
-): string | undefined => message.payload.pdr?.PANmessage ?? 'N/A';
+  pdr: PDR
+): string => pdr?.PANmessage ?? 'N/A';

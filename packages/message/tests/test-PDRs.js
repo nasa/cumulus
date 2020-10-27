@@ -27,44 +27,24 @@ test('getMessagePdr returns undefined if there is no PDR', (t) => {
 
 test('getMessagePdrPANSent returns correct value', (t) => {
   t.true(getMessagePdrPANSent({
-    payload: {
-      pdr: {
-        PANSent: true,
-      },
-    },
+    PANSent: true,
   }));
   t.false(getMessagePdrPANSent({
-    payload: {
-      pdr: {
-        PANSent: false,
-      },
-    },
+    PANSent: false,
   }));
 });
 
 test('getMessagePdrPANSent returns false if there is no PANsent value', (t) => {
-  t.false(getMessagePdrPANSent({
-    payload: {
-      pdr: {},
-    },
-  }));
+  t.false(getMessagePdrPANSent({}));
 });
 
 test('getMessagePdrPANMessage returns correct value', (t) => {
   const PANmessage = 'message';
   t.is(getMessagePdrPANMessage({
-    payload: {
-      pdr: {
-        PANmessage,
-      },
-    },
+    PANmessage,
   }), PANmessage);
 });
 
 test('getMessagePdrPANMessage returns "N/A" if there is no PANMessage value', (t) => {
-  t.is(getMessagePdrPANMessage({
-    payload: {
-      pdr: {},
-    },
-  }), 'N/A');
+  t.is(getMessagePdrPANMessage({}), 'N/A');
 });
