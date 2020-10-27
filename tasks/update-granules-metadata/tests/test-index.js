@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const cloneDeep = require('lodash/cloneDeep');
+const findIndex = require('lodash/findIndex');
 
 const {
   buildS3Uri,
@@ -102,9 +103,21 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await updateGranulesMetadata(newPayload);
-  output.granules[0].files
+
+  output.granules.forEach((g) => g.files
     .filter(isCMRFile)
-    .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/));
+    .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/)));
+});
+
+test.serial('Should update existing etag on CMR metadata file', async (t) => {
+  const newPayload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const output = await updateGranulesMetadata(newPayload);
+  const granule = output.granules[output.granules.findIndex((g) => g.granuleId === 'MOD11A1.A2017200.h19v04.006.2017201090722')];
+  const fileWithPrevEtag = granule.files.filter(isCMRFile);
+  t.true(fileWithPrevEtag !== '13f2bb38e22496fe9d42e761c42a0e67');
 });
 
 test.serial('Updated-granules-metadata throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {

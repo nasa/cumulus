@@ -9,10 +9,6 @@
     "buckets"
   ],
   "properties": {
-    "bucket": {
-      "type": "string",
-      "description": "the bucket the has the private/public key needed for decrypting cmr password"
-    },
     "buckets": {
       "type": "object",
       "description": "aws s3 buckets used by this task",
@@ -42,31 +38,6 @@
       "description": "The type of URL to add to the Online Access URLs in the CMR file. 'distribution' to point to the distribution API, 's3' to put in the S3 link, and 'none' to not add Online Access URLs for the granules.",
       "enum": ["distribution", "s3", "none"],
       "default": "distribution"
-    },
-    "collection": {
-      "type": "object",
-      "required": [
-        "files",
-        "name"
-      ],
-      "properties": {
-        "name": { "type": "string" },
-        "process": { "type": "string" },
-        "url_path": { "type": "string" },
-        "duplicateHandling": { "type": "string" },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["regex", "bucket"],
-            "properties": {
-              "regex": { "type": "string" },
-              "bucket": { "type": "string" },
-              "url_path": { "type": "string" }
-            }
-          }
-        }
-      }
     }
   }
 }
