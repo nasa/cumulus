@@ -32,7 +32,7 @@ The configuration file is a simple json mapping of the form:
 
 ```json
 {
-  "daac-public-data-bucket": /path/to/this/kind/of/data
+  "daac-public-data-bucket": "/path/to/this/kind/of/data"
 }
 ```
 
