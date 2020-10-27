@@ -446,7 +446,7 @@ test.serial('saveExecution() saves execution to Dynamo and RDS if write to RDS i
   const {
     cumulusMessage,
     knex,
-    executionModel
+    executionModel,
   } = t.context;
 
   const stateMachineName = randomString();
