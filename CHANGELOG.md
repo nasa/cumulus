@@ -35,7 +35,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2216**
   - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.
   - The `es/collections` Collection class takes a new parameter includeStats. It no longer appends granule aggregate statistics to the returned results by default. One must set the new parameter to any non-false value.
-
+- **CUMULUS-2201**
+  - Update `dbIndexer` lambda to process requests in serial
+  - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
 
 ## [v3.0.0] 2020-10-7
 
