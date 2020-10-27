@@ -1,0 +1,43 @@
+{
+  "name": "@cumulus/async-operations",
+  "version": "3.0.0",
+  "description": "Cumulus Core internal async operations module",
+  "main": "index.js",
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "scripts": {
+    "clean": "rm -f ./dist/*.js ./dist/*.d.ts ./dist/lambda.zip",
+    "package": "cd dist && zip -r -q ./lambda.zip * && cd .. && zip -r -q ./dist/lambda.zip node_modules",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "tsc:watch": "../../node_modules/.bin/tsc -w",
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
+  },
+  "ava": {
+    "files": [
+      "tests/**/*.js"
+    ],
+    "fail-fast": true,
+    "verbose": true,
+    "timeout": "2m"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/api": "3.0.0",
+    "@cumulus/aws-client": "3.0.0",
+    "@cumulus/db": "3.0.0",
+    "@cumulus/logger": "3.0.0",
+    "@cumulus/errors": "3.0.0",
+    "uuid": "8.3.1"
+  },
+  "devDependencies": {
+    "@cumulus/common": "3.0.0",
+    "@types/uuid": "^8.0.0",
+    "@types/aws-sdk": "2.7.0"
+  },
+  "private": true
+}
