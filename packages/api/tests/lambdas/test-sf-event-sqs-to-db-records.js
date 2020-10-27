@@ -383,9 +383,27 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
   );
 });
 
-// test('shouldWriteExecutionToRDS returns false if error is thrown', async (t) => {
+test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async (t) => {
+  const {
+    knex,
+    doesExecutionExistStub,
+  } = t.context;
 
-// })
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+
+  doesExecutionExistStub.withArgs({
+    arn: parentExecutionArn,
+  }).throws();
+
+  t.false(
+    await shouldWriteExecutionToRDS({
+      cumulus_meta: {
+        cumulus_version: '3.0.0',
+        parentExecutionArn,
+      },
+    }, knex)
+  );
+});
 
 test('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
   const {
