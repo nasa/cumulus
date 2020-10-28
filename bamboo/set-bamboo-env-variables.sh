@@ -178,4 +178,4 @@ else
   export UNIT_TEST_BUILD_DIR=/source/cumulus
 fi
 
-# export TS_BUILD_CACHE_FILE=ts-build-cache.tgz
+export TS_BUILD_CACHE_FILE=ts-build-cache.tgz
