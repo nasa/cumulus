@@ -1,10 +1,10 @@
 import { Message } from '@cumulus/types';
 
-interface MessageWithStatus extends Message.CumulusMessage {
+type MessageWithStatus = Message.CumulusMessage & {
   meta: {
     status?: string
   }
-}
+};
 
 /**
  * Get the status workflow message, if any.
