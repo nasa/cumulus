@@ -113,13 +113,12 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const newPayload = buildPayload(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   const inputGranules = newPayload.input.granules;
-  const indexOfFileWithEtag = inputGranules.findIndex((g) => g.files.some((f) => f.etag));
-  const granuleWithEtag = newPayload.input.granules[indexOfFileWithEtag];
+  const granuleWithEtag = inputGranules.find((g) => g.files.some((f) => f.etag));
   const previousEtag = granuleWithEtag.files[0].etag;
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const output = await updateGranulesMetadata(newPayload);
-  const updatedGranule = output.granules[output.granules.findIndex((g) => g.granuleId === granuleWithEtag.granuleId)];
+  const { granules } = await updateGranulesMetadata(newPayload);
+  const updatedGranule = granules.find((g) => g.granuleId === granuleWithEtag.granuleId);
   const newEtag = updatedGranule.files.filter(isCMRFile)[0].etag;
   t.not(newEtag, previousEtag);
 });
