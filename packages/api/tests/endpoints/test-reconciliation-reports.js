@@ -15,6 +15,7 @@ const {
   parseS3Uri,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const asyncOperations = require('@cumulus/async-operations');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   createFakeJwtAuthToken,
@@ -278,10 +279,12 @@ test.serial('delete a report', (t) =>
 
 test.serial('create a report starts an async operation', async (t) => {
   const id = randomId('id');
-  const stub = sinon.stub(models.AsyncOperation.prototype, 'start').resolves({
+  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({
     id,
   });
-
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
   try {
     const response = await request(app)
       .post('/reconciliationReports')
@@ -293,22 +296,28 @@ test.serial('create a report starts an async operation', async (t) => {
       id,
     });
 
-    t.true(stub.calledWith({
-      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-      cluster: process.env.EcsCluster,
-      lambdaName: process.env.invokeReconcileLambda,
-      description: 'Create Reconciliation Report',
-      operationType: 'Reconciliation Report',
-      payload: normalizeEvent({}),
-      useLambdaEnvironmentVariables: true,
-    }));
+    t.deepEqual(
+      omit(stub.lastCall.args[0], ['knexConfig']),
+      {
+        asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+        cluster: process.env.EcsCluster,
+        lambdaName: process.env.invokeReconcileLambda,
+        description: 'Create Reconciliation Report',
+        operationType: 'Reconciliation Report',
+        payload: normalizeEvent({}),
+        useLambdaEnvironmentVariables: true,
+        stackName,
+        systemBucket,
+        dynamoTableName: tableName,
+      }
+    );
   } finally {
     stub.restore();
   }
 });
 
 test.serial('POST returns a 500 when failing to create an async operation', async (t) => {
-  const stub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
@@ -324,7 +333,7 @@ test.serial('POST returns a 500 when failing to create an async operation', asyn
 });
 
 test.serial('POST returns a 503 when there is an ecs error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 
@@ -341,7 +350,7 @@ test.serial('POST returns a 503 when there is an ecs error', async (t) => {
 });
 
 test.serial('create a report with invalid payload errors immediately', async (t) => {
-  const stub = sinon.stub(models.AsyncOperation.prototype, 'start');
+  const stub = sinon.stub(asyncOperations, 'startAsyncOperation');
   const payload = {
     startTimestamp: '2020-09-17T16:38:23.973Z',
     collectionId: ['a-collectionId'],
