@@ -260,13 +260,9 @@ with the following parameters:
 - Subnet - Subnet ID
 - PermissionsBoundary - A permissions boundary from NGAP. 
 - NGAPProtAppInstanceMinimalPolicyName - Will be included in the list of Amazon Resource Names (ARNs) of the IAM managed policies we want to attach to the user.
-- LatestAmiId - The most recent Amazon Machine Image ID
-- FtpPassword -
-- Bucket - 
+- LatestAmiId - An SSM parameter value that resolve to an Amazon Machine Image ID value. When deploying within NGAP, the SMM parameter is provided by NGAP.
+- FtpPassword - Password for the FTP server created by the stack
+- Bucket -  S3 bucket name
 - Prefix - Any string, generally a DAAC's name
 
 Alternatively, you can use the AWS Console. Navigate to `CloudFormation > Create Stack with new resources > Create template in designer` and paste the contents of `fake-provider-cf.yml` into the template box. Be sure to choose `YAML` as the template language.
-
-### Update data bucket
-
-By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-provider-cf.yml` with the alternative bucket and re-deploy the fake data server.
