@@ -29,7 +29,9 @@ async function startKinesisReplayAsyncOperation(req, res) {
     return res.boom.badRequest('kinesisStream is required for kinesis-type replay');
   }
 
-  const knexConfig = await getKnexConfig({ env: localStackConnectionEnv }); // TODO make sure the api lambda has the right knex env configuration
+  const knexConfig = await getKnexConfig({
+    env: { ...localStackConnectionEnv, ...process.env },
+  }); // TODO make sure the api lambda has the right secrets config
   const asyncOperation = await asyncOperations.startAsyncOperation({
     description: 'Kinesis Replay',
     operationType: 'Kinesis Replay',
