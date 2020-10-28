@@ -7,12 +7,13 @@ const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const asyncOperations = require('@cumulus/async-operations');
+
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { app } = require('../../app');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 const AccessToken = require('../../models/access-tokens');
-const AsyncOperation = require('../../models/async-operation');
 
 let accessTokenModel;
 let jwtAuthToken;
@@ -57,7 +58,7 @@ test.after.always(async () => {
 });
 
 test.serial('request to replays endpoint returns 400 when no type is specified', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').resolves(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
 
@@ -73,7 +74,7 @@ test.serial('request to replays endpoint returns 400 when no type is specified',
 });
 
 test.serial('request to replays endpoint returns 400 if type is kinesis but no kinesisStream is specified', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').resolves(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
 
@@ -93,7 +94,7 @@ test.serial('request to replays endpoint returns 400 if type is kinesis but no k
 });
 
 test.serial('request to replays endpoint with valid kinesis parameters starts an AsyncOperation and returns its id', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').resolves(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
 
@@ -121,7 +122,7 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
 });
 
 test.serial('request to /replays endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
@@ -145,7 +146,7 @@ test.serial('request to /replays endpoint returns 500 if starting ECS task throw
 });
 
 test.serial('request to /replays endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 

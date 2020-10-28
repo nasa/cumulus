@@ -1,10 +1,11 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const asyncOperations = require('@cumulus/async-operations');
+const { getKnexConfig, localStackConnectionEnv } = require('@cumulus/db');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
-
 /**
  * Start an AsyncOperation that will perform kinesis message replay
  *
@@ -13,10 +14,10 @@ const AsyncOperation = require('../models/async-operation');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function startKinesisReplayAsyncOperation(req, res) {
-  const asyncOperationModel = new AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-  });
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+
+  const asyncOperationModel = new AsyncOperation({ stackName, systemBucket });
 
   const payload = req.body;
 
@@ -28,16 +29,20 @@ async function startKinesisReplayAsyncOperation(req, res) {
     return res.boom.badRequest('kinesisStream is required for kinesis-type replay');
   }
 
-  const asyncOperation = await asyncOperationModel.start({
+  const knexConfig = await getKnexConfig({ env: localStackConnectionEnv }); // TODO make sure the api lambda has the right knex env configuration
+  const asyncOperation = await asyncOperations.startAsyncOperation({
+    description: 'Kinesis Replay',
+    operationType: 'Kinesis Replay',
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.ManualConsumerLambda,
-    description: 'Kinesis Replay',
-    operationType: 'Kinesis Replay',
     payload,
     useLambdaEnvironmentVariables: true,
-  });
-
+    systemBucket,
+    stackName,
+    dynamoTableName: asyncOperationModel.tableName,
+    knexConfig,
+  }, asyncOperationModel);
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
