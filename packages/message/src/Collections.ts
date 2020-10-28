@@ -37,7 +37,7 @@ export const constructCollectionId = (name: string, version: string) =>
  *
  * @alias module:Collections
  */
-export const getCollectionNameFromMessage = (
+const getCollectionNameFromMessage = (
   message: Message.CumulusMessage
 ): string | undefined => message.meta?.collection?.name;
 
@@ -49,7 +49,7 @@ export const getCollectionNameFromMessage = (
  *
  * @alias module:Collections
  */
-export const getCollectionVersionFromMessage = (
+const getCollectionVersionFromMessage = (
   message: Message.CumulusMessage
 ): string | undefined => message.meta?.collection?.version;
 
@@ -62,7 +62,7 @@ export const getCollectionVersionFromMessage = (
  *
  * @alias module:Collections
  */
-export const getCollectionInfoFromMessage = (
+export const getCollectionNameAndVersionFromMessage = (
   message: Message.CumulusMessage
 ): CollectionInfo | undefined => {
   const name = getCollectionNameFromMessage(message);
