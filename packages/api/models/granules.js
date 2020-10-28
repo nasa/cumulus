@@ -368,7 +368,7 @@ class Granule extends Manager {
       pdrName: get(message, 'meta.pdr.name'),
       collectionId,
       status: get(message, 'meta.status', get(granule, 'status')),
-      provider: get(message, 'meta.provider.id'),
+      provider: getMessageProviderId(message),
       execution: executionUrl,
       cmrLink: granule.cmrLink,
       files: granuleFiles,
