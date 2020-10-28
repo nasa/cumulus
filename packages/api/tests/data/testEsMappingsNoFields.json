@@ -2,7 +2,12 @@
   "logs": {
     "properties": {
       "type": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "level": {
         "type": "integer"
@@ -23,10 +28,20 @@
     ],
     "properties": {
       "name": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "version": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "timestamp": {
         "type": "date"
@@ -47,19 +62,44 @@
     ],
     "properties": {
       "execution": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "pdrName": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "collectionId": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "status": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "provider": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "progress": {
         "type": "float"
@@ -71,10 +111,20 @@
         "type": "text"
       },
       "address": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "originalUrl": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "duration": {
         "type": "float"
@@ -117,25 +167,60 @@
     },
     "properties": {
       "execution": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "granuleId": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "pdrName": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "collectionId": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "status": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "provider": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "cmrLink": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "published": {
         "type": "boolean"
@@ -165,25 +250,60 @@
     },
     "properties": {
       "execution": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "granuleId": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "pdrName": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "collectionId": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "status": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "provider": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "cmrLink": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "published": {
         "type": "boolean"
@@ -213,16 +333,31 @@
     ],
     "properties": {
       "id": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "globalConnectionLimit": {
         "type": "integer"
       },
       "protocol": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "host": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "port": {
         "type": "integer"
@@ -246,13 +381,28 @@
     ],
     "properties": {
       "name": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "workflow": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "provider": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "collection": {
         "properties": {
@@ -275,7 +425,12 @@
         }
       },
       "state": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "timestamp": {
         "type": "date"
@@ -285,22 +440,52 @@
   "execution": {
     "properties": {
       "arn": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "name": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "execution": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "type": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "collectionId": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "status": {
-        "type": "keyword"
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
       },
       "duration": {
         "type": "float"
