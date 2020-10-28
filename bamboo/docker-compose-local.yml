@@ -7,13 +7,6 @@ services:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
       - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
       - ../packages/test-data:/data
-  pg_admin:
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=test@testing.com
-      - PGADMIN_DEFAULT_PASSWORD=testing
-      - PGADMIN_LISTEN_PORT=2893
-    network_mode: "service:build_env"
   build_env:
     image: cumuluss/cumulus-build-env:latest
     volumes:
