@@ -18,6 +18,9 @@ const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { getMessageGranules } = require('@cumulus/message/Granules');
+const {
+  getMessageProviderId,
+} = require('@cumulus/message/Providers');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
