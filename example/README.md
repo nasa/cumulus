@@ -231,15 +231,15 @@ Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and 
 
 ### Adding a new test workflow
 
-The workflow should be configured as it would be for a normal Cumulus deployment in a workflows yaml file. It must be deployed to the current deployment if testing locally.
+The workflow should be configured as it would be for a normal Cumulus deployment in a workflows terraform file. It must be deployed to the current deployment if testing locally.
 
-The workflows yaml files are located in the `/workflows/` folder and are split up to make the workflows easier to find and understand. When adding a new file, make sure to update the `app/config.yml` `stepFunctions` field.
+The workflows terraform files are located in the `/example/cumulus-tf` folder and are split up to make the workflows easier to find and understand.
 
 A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
 
-Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `spec` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
+Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `spec/serial` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
 
-## Fake Data Server
+## Fake data server
 
 A fake server is required for tests testing FTP/HTTP/HTTPS discover and downloads. The fake server should be set up once per account.
 
