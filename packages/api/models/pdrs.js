@@ -11,6 +11,9 @@ const {
   getPdrPANMessage,
 } = require('@cumulus/message/PDRs');
 const {
+  getMessageProviderId,
+} = require('@cumulus/message/Providers');
+const {
   getWorkflowStatus,
 } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
@@ -101,7 +104,7 @@ class Pdr extends Manager {
       pdrName: pdr.name,
       collectionId,
       status: getWorkflowStatus(message),
-      provider: get(message, 'meta.provider.id'),
+      provider: getMessageProviderId(message),
       progress,
       execution,
       PANSent: getPdrPANSent(pdr),
