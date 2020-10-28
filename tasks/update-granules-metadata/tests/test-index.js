@@ -113,11 +113,13 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const newPayload = buildPayload(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
+  const inputGranule = newPayload.input.granules[newPayload.input.granules.findIndex((g) => g.granuleId === 'MOD11A1.A2017200.h19v04.006.2017201090722')];
+  const previousEtag = inputGranule.files.filter(isCMRFile)[0].etag;
 
   const output = await updateGranulesMetadata(newPayload);
-  const granule = output.granules[output.granules.findIndex((g) => g.granuleId === 'MOD11A1.A2017200.h19v04.006.2017201090722')];
-  const fileWithPrevEtag = granule.files.filter(isCMRFile);
-  t.true(fileWithPrevEtag !== '13f2bb38e22496fe9d42e761c42a0e67');
+  const updatedGranule = output.granules[output.granules.findIndex((g) => g.granuleId === 'MOD11A1.A2017200.h19v04.006.2017201090722')];
+  const newEtag = updatedGranule.files.filter(isCMRFile)[0].etag;
+  t.true(newEtag !== previousEtag);
 });
 
 test.serial('Updated-granules-metadata throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
@@ -127,9 +129,8 @@ test.serial('Updated-granules-metadata throws an error when cmr file type is dis
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const error = await t.throwsAsync(
-    () => updateGranulesMetadata(newPayload)
+  await t.throwsAsync(
+    () => updateGranulesMetadata(newPayload),
+    { message: 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.' } 
   );
-
-  t.is(error.message, 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
 });

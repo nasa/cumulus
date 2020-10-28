@@ -242,10 +242,8 @@
         "cma": {
           "event.$": "$",
           "task_config": {
-            "bucket": "{$.meta.buckets.internal.name}",
             "buckets": "{$.meta.buckets}",
-            "distribution_endpoint": "{$.meta.distribution_endpoint}",
-            "collection": "{$.meta.collection}"
+            "distribution_endpoint": "{$.meta.distribution_endpoint}"
           }
         }
       },
