@@ -239,7 +239,7 @@ The workflows terraform files are located in the `/example/cumulus-tf` folder an
 
 A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
 
-Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `spec/serial` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
+Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `serial` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
 
 ## Fake data server
 
