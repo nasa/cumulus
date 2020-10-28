@@ -50,16 +50,18 @@ const siteConfig = {
   algolia: {
     apiKey: process.env.DOCSEARCH_API_KEY,
     indexName: process.env.DOCSEARCH_INDEX_NAME,
-    contextualSearch: true
+    searchParameters: {
+      facetFilters: ['version:VERSION']
+    }
   },
 
-  themeConfig: {
-    algolia: {
-      apiKey: process.env.DOCSEARCH_API_KEY,
-      indexName: process.env.DOCSEARCH_INDEX_NAME,
-      contextualSearch: true
-    },
-  },
+  // themeConfig: {
+  //   algolia: {
+  //     apiKey: process.env.DOCSEARCH_API_KEY,
+  //     indexName: process.env.DOCSEARCH_INDEX_NAME,
+  //     contextualSearch: true
+  //   },
+  // },
 
   /* Colors for website */
   colors: {
