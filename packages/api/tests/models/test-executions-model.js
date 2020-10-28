@@ -40,7 +40,7 @@ test.after.always(async (t) => {
   await t.context.executionModel.deleteTable();
 });
 
-test('generateRecord() returns the correct record in the basic case', (t) => {
+test('generateRecord() returns the correct record from workflow message', (t) => {
   const { cumulusMessage, executionArn, executionName } = t.context;
 
   const actualRecord = Execution.generateRecord(cumulusMessage);
