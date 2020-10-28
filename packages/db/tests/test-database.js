@@ -20,14 +20,14 @@ test.after.always(async (t) => {
   await t.context.knex.schema.dropTable(t.context.tableName);
 });
 
-test('doesExecutionExist correctly returns true', async (t) => {
+test('doesRecordExist correctly returns true', async (t) => {
   const { dbClient, knex, tableName } = t.context;
   const key = cryptoRandomString({ length: 5 });
   await dbClient.insert({ key });
   t.true(await doesRecordExist({ key }, knex, tableName));
 });
 
-test('doesExecutionExist correctly returns false', async (t) => {
+test('doesRecordExist correctly returns false', async (t) => {
   const { knex, tableName } = t.context;
   const key = cryptoRandomString({ length: 5 });
   t.false(await doesRecordExist({ key }, knex, tableName));
