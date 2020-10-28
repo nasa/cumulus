@@ -248,16 +248,20 @@ The Cloudformation template for the fake data server is in `fake-provider-cf.yml
 If you want to use the AWS CLI, run:
 
 ```bash
-aws cloudformation deploy --template-file fake-provider-cf.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> SubnetId=<subnet-XXXXXX> AZone=<az-zone> Ngap=true --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation deploy --template-file fake-provider-cf.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> Subnet=<subnet-XXXXXX> PermissionsBoundary=<permissions-boundary> NGAPProtAppInstanceMinimalPolicyName=<policy-name> LatestAmiId=<ami-id> FtpPassword=<ftp-password> Bucket=<bucket-name> Prefix=<prefix> --capabilities CAPABILITY_NAMED_IAM
 ```
 
 with the following parameters:
 
 - stack-name - Stack name for the fake server
 - VpcId - VPC ID
-- SubnetId - Subnet ID
-- AZone - Availability zone, needs to match the Subnet ID's availability zone
-- Ngap - `true` if in an NASA NGAP environment, will add the NGAP permission boundary to the IAM role created
+- Subnet - Subnet ID
+- PermissionsBoundary - A permissions boundary from NGAP. 
+- NGAPProtAppInstanceMinimalPolicyName - Will be included in the list of Amazon Resource Names (ARNs) of the IAM managed policies we want to attach to the user.
+- LatestAmiId - The most recent Amazon Machine Image ID
+- FtpPassword -
+- Bucket - 
+- Prefix - Any string, generally a DAAC's name
 
 Alternatively, you can use the AWS Console. Navigate to `CloudFormation > Create Stack with new resources > Create template in designer` and paste the contents of `fake-provider-cf.yml` into the template box. Be sure to choose `YAML` as the template language.
 
