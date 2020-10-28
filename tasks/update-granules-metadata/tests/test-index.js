@@ -112,14 +112,16 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
 test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const newPayload = buildPayload(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
+  const inputGranules = newPayload.input.granules;
+  const indexOfFileWithEtag = inputGranules.findIndex((g) => g.files.some((f) => f.etag));
+  const granuleWithEtag = newPayload.input.granules[indexOfFileWithEtag];
+  const previousEtag = granuleWithEtag.files[0].etag;
   await uploadFiles(filesToUpload, t.context.stagingBucket);
-  const inputGranule = newPayload.input.granules[newPayload.input.granules.findIndex((g) => g.granuleId === 'MOD11A1.A2017200.h19v04.006.2017201090722')];
-  const previousEtag = inputGranule.files.filter(isCMRFile)[0].etag;
 
   const output = await updateGranulesMetadata(newPayload);
   const updatedGranule = output.granules[output.granules.findIndex((g) => g.granuleId === 'MOD11A1.A2017200.h19v04.006.2017201090722')];
   const newEtag = updatedGranule.files.filter(isCMRFile)[0].etag;
-  t.true(newEtag !== previousEtag);
+  t.not(newEtag, previousEtag);
 });
 
 test.serial('Updated-granules-metadata throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
