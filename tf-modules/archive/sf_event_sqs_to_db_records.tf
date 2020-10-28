@@ -69,7 +69,6 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.prefix}-sfEventSqsToDbRecordsInputQueue"]
   }
 
-
   # Required for DLQ
   statement {
     actions = ["sqs:SendMessage"]
@@ -89,6 +88,13 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     resources = [
       aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
     ]
+  }
+
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+    resources = [var.rds_user_access_secret_arn]
   }
 }
 
@@ -159,6 +165,8 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       GranulesTable   = var.dynamo_tables.granules.name
       PdrsTable       = var.dynamo_tables.pdrs.name
       DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
+      databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      RDS_DEPLOYMENT_CUMULUS_VERSION = "4.0.0"
     }
   }
 

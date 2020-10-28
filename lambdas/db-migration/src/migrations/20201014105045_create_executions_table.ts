@@ -10,20 +10,20 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Execution ARN')
       .notNullable();
     table
-      .integer('asyncOperationsCumulusId')
+      .integer('asyncOperationCumulusId')
       .references('cumulusId')
-      .inTable('asyncOperations')
-      .notNullable();
+      .inTable('asyncOperations');
     table
       .integer('collectionCumulusId')
       .references('cumulusId')
-      .inTable('collections')
-      .notNullable();
+      .inTable('collections');
     table
       .integer('parentCumulusId')
       .references('cumulusId')
-      .inTable('executions')
-      .notNullable();
+      .inTable('executions');
+    table
+      .text('cumulus_version')
+      .comment('Cumulus version for the execution');
     table
       .timestamps(false, true);
     table.unique(['arn']);
