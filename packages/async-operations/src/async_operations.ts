@@ -101,7 +101,7 @@ export const startECSTask = async ({
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const start = async (params: {
+export const startAsyncOperation = async (params: {
   description: string,
   operationType: string,
   lambdaName: string,

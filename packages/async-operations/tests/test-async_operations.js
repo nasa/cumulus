@@ -1,6 +1,5 @@
 'use strict';
 
-
 const cryptoRandomString = require('crypto-random-string');
 
 const test = require('ava');
@@ -19,7 +18,7 @@ const { EcsStartTaskError } = require('@cumulus/errors');
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../../lambdas/db-migration');
 
-const { getLambdaEnvironmentVariables, start } = require('../dist/async_operations');
+const { getLambdaEnvironmentVariables, startAsyncOperation } = require('../dist/async_operations');
 
 const dynamoTableName = 'randomDynamoTable';
 
@@ -88,7 +87,7 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test.serial('async_operations start uploads the payload to S3', async (t) => {
+test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
   const createSpy = sinon.spy((obj) => obj);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -101,7 +100,7 @@ test.serial('async_operations start uploads the payload to S3', async (t) => {
   const payload = { number: 42 };
   const stackName = randomString();
 
-  const { id } = await start({
+  const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
@@ -122,7 +121,7 @@ test.serial('async_operations start uploads the payload to S3', async (t) => {
   t.deepEqual(JSON.parse(getObjectResponse.Body.toString()), payload);
 });
 
-test.serial('The AsyncOperation start method starts an ECS task with the correct parameters', async (t) => {
+test.serial('The AsyncOperation start method startAsyncOperations an ECS task with the correct parameters', async (t) => {
   const createSpy = sinon.spy((obj) => obj);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -140,7 +139,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
   const payload = { x: randomString() };
   const stackName = randomString(); // shouldn't we just use the name from the model?
 
-  const { id } = await start({
+  const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition,
     cluster,
     lambdaName,
@@ -169,7 +168,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
   t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${stackName}/async-operation-payloads/${id}.json`);
 });
 
-test.serial('The AsyncOperation start() method throws error if it is unable to create an ECS task', async (t) => {
+test.serial('The startAsyncOperation method throws error if it is unable to create an ECS task', async (t) => {
   const createSpy = sinon.spy((obj) => ({ id: obj.id }));
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -181,7 +180,7 @@ test.serial('The AsyncOperation start() method throws error if it is unable to c
   };
   const stackName = randomString();
 
-  await t.throwsAsync(start({
+  await t.throwsAsync(startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
@@ -223,7 +222,7 @@ test.serial('The AsyncOperation start() method throws error if it is unable to c
   t.is(fetchedAsyncOperation.taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
 });
  */
-test('The AsyncOperation start() calls Dynamo model create method', async (t) => {
+test(' startAsyncOperation calls Dynamo model create method', async (t) => {
   const createSpy = sinon.spy(() => true);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -236,7 +235,7 @@ test('The AsyncOperation start() calls Dynamo model create method', async (t) =>
     tasks: [{ taskArn }],
     failures: [],
   };
-  const result = await start({
+  const result = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
@@ -263,7 +262,7 @@ test('The AsyncOperation start() calls Dynamo model create method', async (t) =>
   t.truthy(spyCall.id); // TODO make this introspection better?
 });
 
-test.serial('The AsyncOperation start method writes records to the databases', async (t) => {
+test.serial('The startAsyncOperation writes records to the databases', async (t) => {
   const createSpy = sinon.spy((obj) => ({ id: obj.id }));
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -278,7 +277,7 @@ test.serial('The AsyncOperation start method writes records to the databases', a
     failures: [],
   };
 
-  const { id } = await start({
+  const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
@@ -308,7 +307,7 @@ test.serial('The AsyncOperation start method writes records to the databases', a
   t.deepEqual(omit(spyCall, omitList), omit(expected[0], omitList));
 });
 
-test.serial('The AsyncOperation start method returns the newly-generated record', async (t) => {
+test.serial('The startAsyncOperation method returns the newly-generated record', async (t) => {
   const createSpy = sinon.spy((obj) => obj);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -322,7 +321,7 @@ test.serial('The AsyncOperation start method returns the newly-generated record'
 
   const stackName = randomString();
 
-  const results = await start({
+  const results = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
@@ -360,7 +359,7 @@ test.serial('ECS task params contain lambda environment variables when flag is s
 
   const stackName = randomString();
 
-  await start({
+  await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),

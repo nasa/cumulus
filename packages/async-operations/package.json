@@ -2,7 +2,8 @@
   "name": "@cumulus/async-operations",
   "version": "3.0.0",
   "description": "Cumulus Core internal async operations module",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "engines": {
     "node": ">=12.18.0"
   },
