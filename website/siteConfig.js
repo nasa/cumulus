@@ -50,7 +50,7 @@ const siteConfig = {
   algolia: {
     apiKey: process.env.DOCSEARCH_API_KEY,
     indexName: process.env.DOCSEARCH_INDEX_NAME,
-    searchParameters: {
+    algoliaOptions: {
       facetFilters: ['version:VERSION']
     }
   },
