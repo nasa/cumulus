@@ -14,7 +14,18 @@ const schemas = require('@cumulus/api/models/schemas');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/providers' });
 
-export interface ProviderInsertData extends ProviderRecord {
+interface ProviderInsertData {
+  name: string
+  protocol: string
+  host: string
+  port?: number
+  username?: string
+  password?: string
+  globalConnectionLimit?: number
+  privateKey?: string
+  cmKeyId?: string
+  certificateUri?: string
+  created_at: Date
   updated_at?: Date
 }
 
