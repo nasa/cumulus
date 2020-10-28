@@ -34,6 +34,7 @@ export const constructCollectionId = (name: string, version: string) =>
  *
  * @param {Message.CumulusMessage} message - An execution message
  * @returns {string | undefined} - Collection name or undefined
+ * @private
  *
  * @alias module:Collections
  */
@@ -46,6 +47,7 @@ const getCollectionNameFromMessage = (
  *
  * @param {Message.CumulusMessage} message - An execution message
  * @returns {string | undefined} - Collection version or undefined
+ * @private
  *
  * @alias module:Collections
  */
