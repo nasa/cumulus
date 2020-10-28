@@ -12,7 +12,7 @@ const {
   localStackConnectionEnv,
   getKnexClient,
   tableNames,
-  doesExecutionExist,
+  doesRecordExist,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
@@ -24,9 +24,7 @@ const Pdr = require('../../models/pdrs');
 
 const sandbox = sinon.createSandbox();
 const stubs = {
-  asyncOperationExists: sandbox.stub().resolves(true),
-  collectionExists: sandbox.stub().resolves(true),
-  executionExists: sandbox.stub().resolves(true),
+  recordExists: sandbox.stub(),
 };
 
 const {
@@ -44,9 +42,7 @@ const {
     sendSQSMessage: async (queue, message) => [queue, message],
   },
   '@cumulus/db': {
-    doesAsyncOperationExist: stubs.asyncOperationExists,
-    doesCollectionExist: stubs.collectionExists,
-    doesExecutionExist: stubs.executionExists,
+    doesRecordExist: stubs.recordExists,
   },
 });
 
@@ -176,14 +172,8 @@ test.beforeEach(async (t) => {
   await t.context.knex(tableNames.collections)
     .insert(t.context.collection);
 
-  t.context.doesExecutionExistStub = stubs.executionExists;
-  t.context.doesExecutionExistStub.resetHistory();
-
-  t.context.doesAsyncOperationExistStub = stubs.asyncOperationExists;
-  t.context.doesAsyncOperationExistStub.resetHistory();
-
-  t.context.doesCollectionExistStub = stubs.collectionExists;
-  t.context.doesCollectionExistStub.resetHistory();
+  t.context.doesRecordExistStub = stubs.recordExists;
+  t.context.doesRecordExistStub.resetHistory();
 });
 
 test.after.always(async (t) => {
@@ -222,16 +212,16 @@ test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS
 });
 
 test('hasNoParentExecutionOrExists returns true if there is no parent execution', async (t) => {
-  const { knex, doesExecutionExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   t.true(await hasNoParentExecutionOrExists({}, knex));
-  t.false(doesExecutionExistStub.called);
+  t.false(doesRecordExistStub.called);
 });
 
 test.serial('hasNoParentExecutionOrExists returns true if parent execution exists', async (t) => {
-  const { knex, doesExecutionExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
 
-  doesExecutionExistStub.withArgs({
+  doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
   }).resolves(true);
 
@@ -240,14 +230,14 @@ test.serial('hasNoParentExecutionOrExists returns true if parent execution exist
       parentExecutionArn,
     },
   }, knex));
-  t.true(doesExecutionExistStub.called);
+  t.true(doesRecordExistStub.called);
 });
 
 test.serial('hasNoParentExecutionOrExists returns false if parent execution does not exist', async (t) => {
-  const { knex, doesExecutionExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
 
-  doesExecutionExistStub.withArgs({
+  doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
   }).resolves(false);
 
@@ -256,20 +246,20 @@ test.serial('hasNoParentExecutionOrExists returns false if parent execution does
       parentExecutionArn,
     },
   }, knex));
-  t.true(doesExecutionExistStub.called);
+  t.true(doesRecordExistStub.called);
 });
 
 test('hasNoAsyncOpOrExists returns true if there is no async operation', async (t) => {
-  const { knex, doesAsyncOperationExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   t.true(await hasNoAsyncOpOrExists({}, knex));
-  t.false(doesAsyncOperationExistStub.called);
+  t.false(doesRecordExistStub.called);
 });
 
 test.serial('hasNoAsyncOpOrExists returns true if async operation exists', async (t) => {
-  const { knex, doesAsyncOperationExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   const asyncOperationId = uuidv4();
 
-  doesAsyncOperationExistStub.withArgs({
+  doesRecordExistStub.withArgs({
     id: asyncOperationId,
   }).resolves(true);
 
@@ -278,14 +268,14 @@ test.serial('hasNoAsyncOpOrExists returns true if async operation exists', async
       asyncOperationId,
     },
   }, knex));
-  t.true(doesAsyncOperationExistStub.called);
+  t.true(doesRecordExistStub.called);
 });
 
 test.serial('hasNoAsyncOpOrExists returns false if async operation does not exist', async (t) => {
-  const { knex, doesAsyncOperationExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   const asyncOperationId = uuidv4();
 
-  doesAsyncOperationExistStub.withArgs({
+  doesRecordExistStub.withArgs({
     id: asyncOperationId,
   }).resolves(false);
 
@@ -294,47 +284,47 @@ test.serial('hasNoAsyncOpOrExists returns false if async operation does not exis
       asyncOperationId,
     },
   }, knex));
-  t.true(doesAsyncOperationExistStub.called);
+  t.true(doesRecordExistStub.called);
 });
 
 test('hasNoCollectionOrExists returns true if there is no collection', async (t) => {
-  const { knex, doesCollectionExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   t.true(await hasNoCollectionOrExists({}, knex));
-  t.false(doesCollectionExistStub.called);
+  t.false(doesRecordExistStub.called);
 });
 
 test.serial('hasNoCollectionOrExists returns true if collection exists', async (t) => {
-  const { knex, doesCollectionExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   const collection = {
     name: cryptoRandomString({ length: 10 }),
     version: '0.0.0',
   };
 
-  doesCollectionExistStub.withArgs(collection).resolves(true);
+  doesRecordExistStub.withArgs(collection).resolves(true);
 
   t.true(await hasNoCollectionOrExists({
     meta: {
       collection,
     },
   }, knex));
-  t.true(doesCollectionExistStub.called);
+  t.true(doesRecordExistStub.called);
 });
 
 test.serial('hasNoCollectionOrExists returns false if collection does not exist', async (t) => {
-  const { knex, doesCollectionExistStub } = t.context;
+  const { knex, doesRecordExistStub } = t.context;
   const collection = {
     name: cryptoRandomString({ length: 10 }),
     version: '0.0.0',
   };
 
-  doesCollectionExistStub.withArgs(collection).resolves(false);
+  doesRecordExistStub.withArgs(collection).resolves(false);
 
   t.false(await hasNoCollectionOrExists({
     meta: {
       collection,
     },
   }, knex));
-  t.true(doesCollectionExistStub.called);
+  t.true(doesRecordExistStub.called);
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
@@ -349,9 +339,7 @@ test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution m
 test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', async (t) => {
   const {
     knex,
-    doesAsyncOperationExistStub,
-    doesCollectionExistStub,
-    doesExecutionExistStub,
+    doesRecordExistStub,
   } = t.context;
 
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
@@ -361,11 +349,11 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
     version: '0.0.0',
   };
 
-  doesAsyncOperationExistStub.withArgs({
+  doesRecordExistStub.withArgs({
     id: asyncOperationId,
   }).resolves(true);
-  doesCollectionExistStub.withArgs(collection).resolves(true);
-  doesExecutionExistStub.withArgs({
+  doesRecordExistStub.withArgs(collection).resolves(true);
+  doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
   }).resolves(true);
 
@@ -386,12 +374,12 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
 test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async (t) => {
   const {
     knex,
-    doesExecutionExistStub,
+    doesRecordExistStub,
   } = t.context;
 
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
 
-  doesExecutionExistStub.withArgs({
+  doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
   }).throws();
 
@@ -408,9 +396,7 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
 test('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
   const {
     knex,
-    doesAsyncOperationExistStub,
-    doesCollectionExistStub,
-    doesExecutionExistStub,
+    doesRecordExistStub,
   } = t.context;
 
   const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
@@ -420,11 +406,11 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
     version: '0.0.0',
   };
 
-  doesAsyncOperationExistStub.withArgs({
+  doesRecordExistStub.withArgs({
     id: asyncOperationId,
   }).resolves(true);
-  doesCollectionExistStub.withArgs(collection).resolves(false);
-  doesExecutionExistStub.withArgs({
+  doesRecordExistStub.withArgs(collection).resolves(false);
+  doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
   }).resolves(true);
 
@@ -447,37 +433,102 @@ test.serial('saveExecution() saves execution to Dynamo and RDS if write to RDS i
     cumulusMessage,
     knex,
     executionModel,
+    doesRecordExistStub,
   } = t.context;
 
-  const stateMachineName = randomString();
+  const stateMachineName = cryptoRandomString({ length: 5 });
   const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
   cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
 
-  const executionName = randomString();
+  const executionName = cryptoRandomString({ length: 5 });
   cumulusMessage.cumulus_meta.execution_name = executionName;
-
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
 
-  await saveExecution(cumulusMessage, knex);
+  const collection = {
+    name: cryptoRandomString({ length: 10 }),
+    version: '0.0.0',
+  };
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  const asyncOperationId = uuidv4();
+
+  const message = {
+    ...cumulusMessage,
+    cumulus_meta: {
+      ...cumulusMessage.cumulus_meta,
+      state_machine: stateMachineArn,
+      execution_name: executionName,
+      parentExecutionArn,
+      asyncOperationId,
+    },
+    meta: {
+      ...cumulusMessage.meta,
+      collection,
+    },
+  };
+
+  doesRecordExistStub.withArgs({
+    id: asyncOperationId,
+  }).resolves(true);
+  doesRecordExistStub.withArgs(collection).resolves(true);
+  doesRecordExistStub.withArgs({
+    arn: parentExecutionArn,
+  }).resolves(true);
+
+  await saveExecution(message, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
-    await doesExecutionExist({
+    await doesRecordExist({
       arn: executionArn,
-    }, knex)
+    }, knex, tableNames.executions)
   );
 });
 
 test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
-  const { cumulusMessage, executionModel, knex } = t.context;
+  const {
+    cumulusMessage,
+    knex,
+    executionModel,
+    doesRecordExistStub,
+  } = t.context;
 
-  const stateMachineName = randomString();
+  const stateMachineName = cryptoRandomString({ length: 5 });
   const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
   cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
 
-  const executionName = randomString();
+  const executionName = cryptoRandomString({ length: 5 });
   cumulusMessage.cumulus_meta.execution_name = executionName;
-
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+
+  const collection = {
+    name: cryptoRandomString({ length: 10 }),
+    version: '0.0.0',
+  };
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  const asyncOperationId = uuidv4();
+
+  const message = {
+    ...cumulusMessage,
+    cumulus_meta: {
+      ...cumulusMessage.cumulus_meta,
+      state_machine: stateMachineArn,
+      execution_name: executionName,
+      parentExecutionArn,
+      asyncOperationId,
+    },
+    meta: {
+      ...cumulusMessage.meta,
+      collection,
+    },
+  };
+
+  // restore stub
+  doesRecordExistStub.withArgs({
+    id: asyncOperationId,
+  }).resolves(true);
+  doesRecordExistStub.withArgs(collection).resolves(true);
+  doesRecordExistStub.withArgs({
+    arn: parentExecutionArn,
+  }).resolves(true);
 
   const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
     .callsFake(() => {
@@ -489,27 +540,61 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     trxSpy.restore();
   });
 
-  await t.throwsAsync(saveExecution(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution(message, knex));
   t.true(trxSpy.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
-    await doesExecutionExist({
+    await doesRecordExist({
       arn: executionArn,
-    }, knex)
+    }, knex, tableNames.executions)
   );
 });
 
 test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
-  const { cumulusMessage, executionModel, knex } = t.context;
+  const {
+    cumulusMessage,
+    knex,
+    executionModel,
+    doesRecordExistStub,
+  } = t.context;
 
-  const stateMachineName = randomString();
+  const stateMachineName = cryptoRandomString({ length: 5 });
   const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
   cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
 
-  const executionName = randomString();
+  const executionName = cryptoRandomString({ length: 5 });
   cumulusMessage.cumulus_meta.execution_name = executionName;
-
   const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+
+  const collection = {
+    name: cryptoRandomString({ length: 10 }),
+    version: '0.0.0',
+  };
+  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  const asyncOperationId = uuidv4();
+
+  const message = {
+    ...cumulusMessage,
+    cumulus_meta: {
+      ...cumulusMessage.cumulus_meta,
+      state_machine: stateMachineArn,
+      execution_name: executionName,
+      parentExecutionArn,
+      asyncOperationId,
+    },
+    meta: {
+      ...cumulusMessage.meta,
+      collection,
+    },
+  };
+
+  doesRecordExistStub.withArgs({
+    id: asyncOperationId,
+  }).resolves(true);
+  doesRecordExistStub.withArgs(collection).resolves(true);
+  doesRecordExistStub.withArgs({
+    arn: parentExecutionArn,
+  }).resolves(true);
 
   const fakeTrxCallback = (cb) => {
     const fakeTrx = sinon.stub().returns({
@@ -522,13 +607,13 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(saveExecution(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution(message, knex));
   t.true(trxStub.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
-    await doesExecutionExist({
+    await doesRecordExist({
       arn: executionArn,
-    }, knex)
+    }, knex, tableNames.executions)
   );
 });
 

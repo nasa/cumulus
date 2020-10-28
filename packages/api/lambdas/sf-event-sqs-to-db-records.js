@@ -8,9 +8,7 @@ const log = require('@cumulus/common/log');
 const {
   getKnexClient,
   tableNames,
-  doesAsyncOperationExist,
-  doesCollectionExist,
-  doesExecutionExist,
+  doesRecordExist,
 } = require('@cumulus/db');
 const {
   getMessageAsyncOperationId,
@@ -44,9 +42,9 @@ const hasNoParentExecutionOrExists = async (cumulusMessage, knex) => {
   if (!parentArn) {
     return true;
   }
-  return doesExecutionExist({
+  return doesRecordExist({
     arn: parentArn,
-  }, knex);
+  }, knex, tableNames.executions);
 };
 
 const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
@@ -54,9 +52,9 @@ const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
   if (!asyncOperationId) {
     return true;
   }
-  return doesAsyncOperationExist({
+  return doesRecordExist({
     id: asyncOperationId,
-  }, knex);
+  }, knex, tableNames.asyncOperations);
 };
 
 const hasNoCollectionOrExists = async (cumulusMessage, knex) => {
@@ -64,7 +62,7 @@ const hasNoCollectionOrExists = async (cumulusMessage, knex) => {
   if (!collectionInfo) {
     return true;
   }
-  return doesCollectionExist(collectionInfo, knex);
+  return doesRecordExist(collectionInfo, knex, tableNames.collections);
 };
 
 const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
