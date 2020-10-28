@@ -21,6 +21,9 @@ const { getMessageGranules } = require('@cumulus/message/Granules');
 const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
+const {
+  getWorkflowStatus,
+} = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -367,7 +370,7 @@ class Granule extends Manager {
       granuleId: granule.granuleId,
       pdrName: get(message, 'meta.pdr.name'),
       collectionId,
-      status: get(message, 'meta.status', get(granule, 'status')),
+      status: getWorkflowStatus(message) || get(granule, 'status'),
       provider: getMessageProviderId(message),
       execution: executionUrl,
       cmrLink: granule.cmrLink,
