@@ -74,8 +74,8 @@ Terraform v0.12.12
 
 ### Credentials
 
-- [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password. CMR credentials must be provided if you are exporting metadata to CMR with Earthdata Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
-- [NASA Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
+- [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password. CMR credentials must be provided if you are exporting metadata to CMR with Earthdata Login authentication.
+- [NASA Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API.
 - [Earthdata Login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS. It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
@@ -184,9 +184,7 @@ Follow the directions on [how to register an application](https://wiki.earthdata
 
 > _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
 
-The state of the Terraform deployment is stored in S3. In the following
-examples, it will be assumed that state is being stored in a bucket called
-`my-tf-state`. You can also use an existing bucket, if desired.
+The state of the Terraform deployment is stored in S3. In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`. You can also use an existing bucket, if desired.
 
 ### Create the state bucket
 
@@ -194,8 +192,7 @@ examples, it will be assumed that state is being stored in a bucket called
 aws s3api create-bucket --bucket my-tf-state
 ```
 
-In order to help prevent loss of state information, **it is strongly recommended that
-versioning be enabled on the state bucket**.
+In order to help prevent loss of state information, **it is strongly recommended that versioning be enabled on the state bucket**.
 
 ```shell
 aws s3api put-bucket-versioning \
@@ -203,18 +200,11 @@ aws s3api put-bucket-versioning \
     --versioning-configuration Status=Enabled
 ```
 
-⚠️ **Note:** If your state information does become lost or corrupt, then
-deployment (via `terraform apply`) will have unpredictable results, including
-possible loss of data and loss of deployed resources. In order to reduce your
-risk of the corruption or loss of your Terraform state file, or otherwise
-corrupt your Cumulus deployment, please see the
-[Terraform Best Practices](terraform-best-practices.md) guide.
+⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources. In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide.
 
 ### Create the locks table
 
-Terraform uses a lock stored in DynamoDB in order to prevent multiple
-simultaneous updates. In the following examples, that table will be called
-`my-tf-locks`.
+Terraform uses a lock stored in DynamoDB in order to prevent multiple simultaneous updates. In the following examples, that table will be called `my-tf-locks`.
 
 ```shell
 $ aws dynamodb create-table \
@@ -233,11 +223,7 @@ A typical Cumulus deployment is broken into two
 [Terraform root modules](https://www.terraform.io/docs/configuration/modules.html):
 [`data-persistence`](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence) and [`cumulus`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus).
 
-The `data-persistence` module should
-be deployed first, and creates the Elasticsearch domain and DynamoDB tables. The
-`cumulus` module deploys the rest of Cumulus: distribution, API, ingest,
-workflows, etc. The `cumulus` module depends on the resources created in the
-`data-persistence` deployment.
+The `data-persistence` module should be deployed first, and creates the Elasticsearch domain and DynamoDB tables. The `cumulus` module deploys the rest of Cumulus: distribution, API, ingest, workflows, etc. The `cumulus` module depends on the resources created in the `data-persistence` deployment.
 
 Each of these modules have to be deployed independently and require their own Terraform backend, variable, and output settings. The template deploy repo that was cloned previously already contains the scaffolding of the necessary files for the deployment of each module: `data-persistence-tf` deploys the `data-persistence` module and `cumulus-tf` deploys the `cumulus` module. For reference on the files that are included, see the [documentation on adding components to a Terraform deployment](components.md#adding-components-to-your-terraform-deployment).
 
@@ -247,7 +233,7 @@ Please see our [troubleshooting documentation for any issues with your deploymen
 
 ### Configure and deploy the `data-persistence-tf` root module
 
-These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that was cloned previously. Run the following to copy the example files.
+These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that you previously cloned. Run the following to copy the example files.
 
 ```shell
 cd data-persistence-tf/
@@ -263,9 +249,9 @@ In `terraform.tf`, configure the remote state settings by substituting the appro
 
 Fill in the appropriate values in `terraform.tfvars`. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
 
-**Reminder:** Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus dashboard will not work without Elasticsearch.
+**Reminder:** _Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus dashboard will not work without Elasticsearch._
 
-**Reminder:** If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already.
+**Reminder:** _If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already._
 
 #### Initialize Terraform
 
@@ -423,9 +409,9 @@ You will need to add two redirect URLs to your EarthData login application.
 1. Login to URS.
 2. Under My Applications -> Application Administration -> use the edit icon of your application.
 3. Under Manage -> redirect URIs, add the Backend API url returned from the stack deployment
-   * e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
+   - e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
 4. Also add the Distribution url
-   * e.g. `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1].
+   - e.g. `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1].
 5. You may delete the placeholder url you used to create the application.
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.

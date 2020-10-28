@@ -18,5 +18,6 @@ fi
 npm install
 npm --version
 ## Bootstrapping is only required if updates to dynamodbDocClient relevant to lock-stack.js are made
+## Use the cached directory otherwise.
 # (npm run bootstrap-no-build || true) && npm run bootstrap-no-build && cd example && node ./scripts/lock-stack.js lock $GIT_SHA $DEPLOYMENT false
-cd example && npm install && node ./scripts/lock-stack.js lock "$GIT_SHA" "$DEPLOYMENT" false
+cd /cumulus/example && node ./scripts/lock-stack.js lock "$GIT_SHA" "$DEPLOYMENT" false
