@@ -53,6 +53,14 @@ const siteConfig = {
     contextualSearch: true
   },
 
+  themeConfig: {
+    algolia: {
+      apiKey: process.env.DOCSEARCH_API_KEY,
+      indexName: process.env.DOCSEARCH_INDEX_NAME,
+      contextualSearch: true
+    },
+  },
+
   /* Colors for website */
   colors: {
     primaryColor: '#2276AC',
