@@ -33,10 +33,11 @@ const {
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
   hasNoCollectionOrExists,
+  hasNoProviderOrExists,
   shouldWriteExecutionToRDS,
   saveExecution,
   saveGranulesToDb,
-  savePdrToDb,
+  savePdr,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: async (queue, message) => [queue, message],
@@ -322,6 +323,48 @@ test.serial('hasNoCollectionOrExists returns false if collection does not exist'
   t.false(await hasNoCollectionOrExists({
     meta: {
       collection,
+    },
+  }, knex));
+  t.true(doesRecordExistStub.called);
+});
+
+test('hasNoProviderOrExists returns true if there is no provider', async (t) => {
+  const { knex, doesRecordExistStub } = t.context;
+  t.true(await hasNoProviderOrExists({}, knex));
+  t.false(doesRecordExistStub.called);
+});
+
+test('hasNoProviderOrExists returns true if there provider exists', async (t) => {
+  const { knex, doesRecordExistStub } = t.context;
+  const provider = {
+    id: cryptoRandomString({ length: 10 }),
+  };
+
+  doesRecordExistStub.withArgs({
+    name: provider.id,
+  }).resolves(true);
+
+  t.true(await hasNoProviderOrExists({
+    meta: {
+      provider,
+    },
+  }, knex));
+  t.true(doesRecordExistStub.called);
+});
+
+test('hasNoProviderOrExists returns false if provider does not exist', async (t) => {
+  const { knex, doesRecordExistStub } = t.context;
+  const provider = {
+    id: cryptoRandomString({ length: 10 }),
+  };
+
+  doesRecordExistStub.withArgs({
+    name: provider.id,
+  }).resolves(false);
+
+  t.false(await hasNoProviderOrExists({
+    meta: {
+      provider,
     },
   }, knex));
   t.true(doesRecordExistStub.called);
@@ -674,8 +717,8 @@ test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusM
   }
 });
 
-test.serial('savePdrToDb() saves a PDR record', async (t) => {
-  const { cumulusMessage, pdrModel } = t.context;
+test.serial('savePdr() saves a PDR record', async (t) => {
+  const { cumulusMessage, pdrModel, knex } = t.context;
 
   const stateMachineName = randomString();
   const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
@@ -697,7 +740,7 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
     failed: new Array(2).map(randomString),
     running: new Array(6).map(randomString),
   };
-  await savePdrToDb(cumulusMessage);
+  await savePdr(cumulusMessage, knex);
 
   const collectionId = (() => {
     const { name, version } = cumulusMessage.meta.collection;
@@ -727,15 +770,15 @@ test.serial('savePdrToDb() saves a PDR record', async (t) => {
   t.deepEqual(fetchedPdr, expectedPdr);
 });
 
-test.serial('savePdrToDb() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
-  const { cumulusMessage } = t.context;
+test.serial('savePdr() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
+  const { cumulusMessage, knex } = t.context;
 
   const storeGranuleStub = sinon.stub(Pdr.prototype, 'storePdrFromCumulusMessage')
     .callsFake(() => {
       throw new Error('error');
     });
   try {
-    await t.throwsAsync(savePdrToDb(cumulusMessage));
+    await t.throwsAsync(savePdr(cumulusMessage, knex));
   } finally {
     storeGranuleStub.restore();
   }

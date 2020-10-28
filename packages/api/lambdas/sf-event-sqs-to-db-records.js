@@ -21,6 +21,9 @@ const {
   getMessageExecutionParentArn,
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
+const {
+  getMessageProviderId
+} = require('@cumulus/message/Providers');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
@@ -65,6 +68,16 @@ const hasNoCollectionOrExists = async (cumulusMessage, knex) => {
   return doesRecordExist(collectionInfo, knex, tableNames.collections);
 };
 
+const hasNoProviderOrExists = async (cumulusMessage, knex) => {
+  const providerId = getMessageProviderId(cumulusMessage);
+  if (!providerId) {
+    return true;
+  }
+  return doesRecordExist({
+    name: providerId,
+  }, knex, tableNames.providers);
+};
+
 const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
   try {
     const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
@@ -107,16 +120,57 @@ const saveExecution = async (cumulusMessage, knex) => {
   }
 };
 
-const savePdrToDb = async (cumulusMessage) => {
-  const pdrModel = new Pdr();
+const shouldWritePdrToRDS = async (cumulusMessage, knex) => {
   try {
-    await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+    const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+    if (!executionIsPostDeployment) return executionIsPostDeployment;
+
+    const results = await Promise.all([
+      hasNoCollectionOrExists(cumulusMessage, knex),
+      hasNoProviderOrExists(cumulusMessage, knex),
+    ]);
+    return results.every((result) => result === true);
   } catch (error) {
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    log.fatal(`Failed to create/update PDR database record for execution ${executionArn}: ${error.message}`);
+    log.error(error);
+    return false;
+  }
+};
+
+const savePdr = async (cumulusMessage, knex) => {
+  const pdrModel = new Pdr();
+  const executionArn = getMessageExecutionArn(cumulusMessage);
+
+  const isRDSWriteEnabled = await shouldWritePdrToRDS(cumulusMessage, knex);
+
+  if (!isRDSWriteEnabled) {
+    return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+  }
+
+  try {
+    return await knex.transaction(async (trx) => {
+      await trx(tableNames.pdrs)
+        .insert({
+          arn: executionArn,
+          cumulus_version: getMessageCumulusVersion(cumulusMessage),
+        });
+      return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+    });
+  } catch (error) {
+    log.error(`Failed to write PDR records for ${executionArn}`, error);
     throw error;
   }
 };
+
+// const savePdrToDb = async (cumulusMessage) => {
+//   const pdrModel = new Pdr();
+//   try {
+//     await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+//   } catch (error) {
+//     const executionArn = getMessageExecutionArn(cumulusMessage);
+//     log.fatal(`Failed to create/update PDR database record for execution ${executionArn}: ${error.message}`);
+//     throw error;
+//   }
+// };
 
 const saveGranulesToDb = async (cumulusMessage) => {
   const granuleModel = new Granule();
@@ -146,7 +200,7 @@ const handler = async (event) => {
     const results = await Promise.allSettled([
       saveExecution(cumulusMessage, knex),
       saveGranulesToDb(cumulusMessage),
-      savePdrToDb(cumulusMessage),
+      savePdr(cumulusMessage, knex),
     ]);
     if (results.some((result) => result.status === 'rejected')) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
@@ -162,8 +216,9 @@ module.exports = {
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
   hasNoCollectionOrExists,
+  hasNoProviderOrExists,
   shouldWriteExecutionToRDS,
   saveExecution,
   saveGranulesToDb,
-  savePdrToDb,
+  savePdr,
 };
