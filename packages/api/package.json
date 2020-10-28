@@ -45,6 +45,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/async-operations": "3.0.0",
     "@cumulus/aws-client": "3.0.0",
     "@cumulus/cmr-client": "3.0.0",
     "@cumulus/cmrjs": "3.0.0",

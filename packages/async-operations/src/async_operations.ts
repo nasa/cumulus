@@ -1,17 +1,12 @@
-import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { ECS } from 'aws-sdk';
-import { AsyncOperation } from '@cumulus/api/models';
-import {
-  getDbTransaction,
-  getKnexClient,
-  asyncOperationsConfig,
-} from '@cumulus/db';
+import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
+import { getDbTransaction, getKnexClient, asyncOperationsConfig } from '@cumulus/db';
 import { v4 as uuidv4 } from 'uuid';
-
-import type { PromiseResult } from 'aws-sdk/lib/request';
 import type { AWSError } from 'aws-sdk/lib/error';
+import type { PromiseResult } from 'aws-sdk/lib/request';
 
+import { AsyncOperationsDynamoModel } from './types';
 
 const { EcsStartTaskError } = require('@cumulus/errors');
 
@@ -102,6 +97,7 @@ export const startECSTask = async ({
  * @param {string} params.lambdaName - the name of the Lambda task to be run
  * @param {Object|Array} params.payload - the event to be passed to the lambda task.
  *   Must be a simple Object or Array which can be converted to JSON.
+ * @param {Object} AsyncOperation - A api dynamoDb modeal AsyncOperation object
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
@@ -111,13 +107,15 @@ export const start = async (params: {
   lambdaName: string,
   cluster: string,
   asyncOperationTaskDefinition: string,
-  payload: any,
+  payload: unknown,
   systemBucket: string,
   stackName: string,
   dynamoTableName: string,
   useLambdaEnvironmentVariables?: string,
-  knexConfig: any, // Fix this typing
-}): Promise<any> => {
+  knexConfig: NodeJS.ProcessEnv,
+}, AsyncOperation: new(params: { stackName: string, systemBucket: string, tableName?: string })
+  => AsyncOperationsDynamoModel
+): Promise<unknown> => { // Update this return typing to match Mark's db typings
   const {
     description,
     operationType,
@@ -171,8 +169,7 @@ export const start = async (params: {
       description,
       operationType,
     };
-    await getDbTransaction(trx, asyncOperationsConfig.name)
-      .insert(createObject);
+    await getDbTransaction(trx, asyncOperationsConfig.name).insert(createObject);
     return asyncOperationModel.create(createObject);
   });
 };

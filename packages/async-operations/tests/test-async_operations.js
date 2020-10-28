@@ -1,29 +1,30 @@
 'use strict';
 
+
 const cryptoRandomString = require('crypto-random-string');
 
-const isString = require('lodash/isString');
 const test = require('ava');
 const sinon = require('sinon');
 
+const omit = require('lodash/omit');
 const { ecs, lambda, s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+// eslint-disable-next-line node/no-unpublished-require
 const { randomString } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 const {
-  localStackConnectionEnv, createTestDatabase, deleteTestDatabase, getKnexClient
+  localStackConnectionEnv, createTestDatabase, deleteTestDatabase, getKnexClient,
 } = require('@cumulus/db');
-
-const { AsyncOperation } = require('@cumulus/api/models');
-const { getLambdaEnvironmentVariables, start } = require('../dist/async_operations');
+const { EcsStartTaskError } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../../lambdas/db-migration');
 
-let asyncOperationModel;
+const { getLambdaEnvironmentVariables, start } = require('../dist/async_operations');
+
+const dynamoTableName = 'randomDynamoTable';
+
 let stubbedEcsRunTaskParams;
 let stubbedEcsRunTaskResult;
-
 let ecsClient;
 let systemBucket;
 
@@ -46,17 +47,9 @@ test.before(async (t) => {
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket }).promise();
 
-  asyncOperationModel = new AsyncOperation({
-    systemBucket,
-    stackName: randomString(),
-    tableName: randomString(),
-  });
-
   try {
-    await asyncOperationModel.createTable();
     await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
     await t.context.knex.migrate.latest();
-    await t.context.knex.destroy();
   } catch (e) {
     console.log(`Error ${JSON.stringify(e)}`);
     throw (e);
@@ -88,14 +81,19 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   sinon.restore();
-  await asyncOperationModel.deleteTable();
+  await t.context.knex.destroy();
   await recursivelyDeleteS3Bucket(systemBucket);
-  //await deleteTestDatabase(t.context.knexAdmin, testDbName);
+  await deleteTestDatabase(t.context.knexAdmin, testDbName);
   console.log(testDbName);
   await t.context.knexAdmin.destroy();
 });
 
 test.serial('async_operations start uploads the payload to S3', async (t) => {
+  const createSpy = sinon.spy((obj) => obj);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
     failures: [],
@@ -111,10 +109,10 @@ test.serial('async_operations start uploads the payload to S3', async (t) => {
     operationType: 'ES Index',
     payload,
     stackName,
-    dynamoTableName: asyncOperationModel.tableName,
+    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  });
+  }, stubbedAsyncOperationsModel);
 
   const getObjectResponse = await s3().getObject({
     Bucket: systemBucket,
@@ -125,6 +123,11 @@ test.serial('async_operations start uploads the payload to S3', async (t) => {
 });
 
 test.serial('The AsyncOperation start method starts an ECS task with the correct parameters', async (t) => {
+  const createSpy = sinon.spy((obj) => obj);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+
   stubbedEcsRunTaskParams = {};
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
@@ -145,11 +148,11 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
     operationType: 'ES Index',
     payload,
     stackName,
-    dynamoTableName: asyncOperationModel.tableName,
+    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
     useLambdaEnvironmentVariables: true, // Why did this work before, wtf.
-  });
+  }, stubbedAsyncOperationsModel);
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
   t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
@@ -161,12 +164,17 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
   });
 
   t.is(environmentOverrides.asyncOperationId, id);
-  t.is(environmentOverrides.asyncOperationsTable, asyncOperationModel.tableName);
+  t.is(environmentOverrides.asyncOperationsTable, dynamoTableName);
   t.is(environmentOverrides.lambdaName, lambdaName);
   t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${stackName}/async-operation-payloads/${id}.json`);
 });
 
-test('The AsyncOperation.start() method throws error and updates operation if it is unable to create an ECS task', async (t) => {
+test.serial('The AsyncOperation start() method throws error if it is unable to create an ECS task', async (t) => {
+  const createSpy = sinon.spy((obj) => ({ id: obj.id }));
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+
   stubbedEcsRunTaskResult = {
     tasks: [],
     failures: [{ arn: randomString(), reason: 'out of cheese' }],
@@ -181,16 +189,16 @@ test('The AsyncOperation.start() method throws error and updates operation if it
     operationType: 'ES Index',
     payload: {},
     stackName,
-    dynamoTableName: asyncOperationModel.tableName,
+    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  }), {
+  }, stubbedAsyncOperationsModel), {
     instanceOf: EcsStartTaskError,
     message: 'Failed to start AsyncOperation: out of cheese',
   });
 });
 
-test.serial('The AsyncOperation start() method writes a new record to DynamoDB', async (t) => {
+/* test.serial('The AsyncOperation start() method writes a new record to DynamoDB', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
     failures: [],
@@ -214,39 +222,107 @@ test.serial('The AsyncOperation start() method writes a new record to DynamoDB',
   const fetchedAsyncOperation = await asyncOperationModel.get({ id });
   t.is(fetchedAsyncOperation.taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
 });
+ */
+test('The AsyncOperation start() calls Dynamo model create method', async (t) => {
+  const createSpy = sinon.spy(() => true);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+  const stackName = randomString();
+  const description = randomString();
+  const taskArn = randomString();
 
-test.serial('The AsyncOperation start() method returns an item id', async (t) => {
   stubbedEcsRunTaskResult = {
-    tasks: [{ taskArn: randomString() }],
+    tasks: [{ taskArn }],
     failures: [],
   };
+  const result = await start({
+    asyncOperationTaskDefinition: randomString(),
+    cluster: randomString(),
+    lambdaName: randomString(),
+    description,
+    operationType: 'ES Index',
+    payload: {},
+    stackName,
+    dynamoTableName: dynamoTableName,
+    knexConfig: knexConfig,
+    systemBucket,
+  }, stubbedAsyncOperationsModel);
 
+  const spyCall = createSpy.getCall(0).args[0];
+
+  const expected = {
+    description,
+    operationType: 'ES Index',
+    status: 'RUNNING',
+    taskArn,
+  };
+
+  t.true(result);
+  t.deepEqual(omit(spyCall, ['id']), expected);
+  t.truthy(spyCall.id); // TODO make this introspection better?
+});
+
+test.serial('The AsyncOperation start method writes records to the databases', async (t) => {
+  const createSpy = sinon.spy((obj) => ({ id: obj.id }));
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+  const description = randomString();
   const stackName = randomString();
+  const operationType = 'ES Index';
+  const taskArn = randomString();
+
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn }],
+    failures: [],
+  };
 
   const { id } = await start({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
-    description: randomString(),
-    operationType: 'ES Index',
+    description,
+    operationType,
     payload: {},
     stackName,
-    dynamoTableName: asyncOperationModel.tableName,
+    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  });
+  }, stubbedAsyncOperationsModel);
 
-  t.true(isString(id));
+  const spyCall = createSpy.getCall(0).args[0];
+  const dbResults = await t.context.knex.select('*').from('asyncOperations').where('id', id);
+  const expected = {
+    0: {
+      cumulusId: 1,
+      description,
+      id,
+      operationType: 'ES Index',
+      status: 'RUNNING',
+      taskArn,
+    },
+  };
+  const omitList = ['created_at', 'updated_at', 'cumulusId', 'output'];
+  t.deepEqual(omit(dbResults[0], omitList), omit(expected[0], omitList));
+  t.deepEqual(omit(spyCall, omitList), omit(expected[0], omitList));
 });
 
-test.serial('The AsyncOperation.start() method sets the record status to "RUNNING"', async (t) => {
+test.serial('The AsyncOperation start method returns the newly-generated record', async (t) => {
+  const createSpy = sinon.spy((obj) => obj);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+
+  const taskArn = randomString();
   stubbedEcsRunTaskResult = {
-    tasks: [{ taskArn: randomString() }],
+    tasks: [{ taskArn }],
     failures: [],
   };
+
   const stackName = randomString();
 
-  const { id } = await start({
+  const results = await start({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     lambdaName: randomString(),
@@ -254,37 +330,12 @@ test.serial('The AsyncOperation.start() method sets the record status to "RUNNIN
     operationType: 'ES Index',
     payload: {},
     stackName,
-    dynamoTableName: asyncOperationModel.tableName,
+    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  });
+  }, stubbedAsyncOperationsModel);
 
-  const fetchedAsyncOperation = await asyncOperationModel.get({ id });
-  t.is(fetchedAsyncOperation.status, 'RUNNING');
-});
-
-test.serial('The AsyncOperation.start() method returns the newly-generated record', async (t) => {
-  stubbedEcsRunTaskResult = {
-    tasks: [{ taskArn: randomString() }],
-    failures: [],
-  };
-
-  const stackName = randomString();
-
-  const { taskArn } = await start({
-    asyncOperationTaskDefinition: randomString(),
-    cluster: randomString(),
-    lambdaName: randomString(),
-    description: randomString(),
-    operationType: 'ES Index',
-    payload: {},
-    stackName,
-    dynamoTableName: asyncOperationModel.tableName,
-    knexConfig: knexConfig,
-    systemBucket,
-  });
-
-  t.is(taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
+  t.is(results.taskArn, taskArn);
 });
 
 test('getLambdaEnvironmentVariables returns expected environment variables', async (t) => {
@@ -297,6 +348,11 @@ test('getLambdaEnvironmentVariables returns expected environment variables', asy
 });
 
 test.serial('ECS task params contain lambda environment variables when flag is set', async (t) => {
+  const createSpy = sinon.spy((obj) => obj);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
     failures: [],
@@ -313,10 +369,10 @@ test.serial('ECS task params contain lambda environment variables when flag is s
     payload: {},
     useLambdaEnvironmentVariables: true,
     stackName,
-    dynamoTableName: asyncOperationModel.tableName,
+    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  });
+  }, stubbedAsyncOperationsModel);
 
   const environmentOverrides = {};
   stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {

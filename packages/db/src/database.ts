@@ -1,9 +1,9 @@
 import Knex from 'knex';
 
-export const getDbClient = (knex: Knex, tableName: string) =>
+export const getDbClient = (knex: Knex, tableName: string) => // TODO dump
   knex(tableName);
 
-export const getDbTransaction = (trx: Knex.Transaction, tableName: string) =>
+export const getDbTransaction = (trx: Knex.Transaction, tableName: string) => // TODO dump
   trx(tableName);
 
 export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {

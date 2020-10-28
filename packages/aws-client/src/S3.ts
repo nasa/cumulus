@@ -606,7 +606,8 @@ export const uploadS3Files = (
       filename = file;
 
       if (typeof keyPath === 'string') {
-        key = s3Join(keyPath, path.basename(file));
+        key =
+        (keyPath, path.basename(file));
       } else {
         key = keyPath(file);
       }

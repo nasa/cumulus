@@ -32,7 +32,6 @@ class AsyncOperation extends Manager {
 
     this.systemBucket = params.systemBucket;
     this.stackName = params.stackName;
-    //this.knexConfig = { ...process.env, ...params.knexConfig };
   }
 }
 module.exports = AsyncOperation;
