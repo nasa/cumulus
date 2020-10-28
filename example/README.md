@@ -260,7 +260,7 @@ with the following parameters:
 - Subnet - Subnet ID
 - PermissionsBoundary - A permissions boundary from NGAP. 
 - NGAPProtAppInstanceMinimalPolicyName - Will be included in the list of Amazon Resource Names (ARNs) of the IAM managed policies we want to attach to the user.
-- LatestAmiId - An SSM parameter value that resolve to an Amazon Machine Image ID value. When deploying within NGAP, the SMM parameter is provided by NGAP.
+- LatestAmiId - An SSM parameter value that resolves to an Amazon Machine Image ID value. When deploying within NGAP, the SSM parameter is provided by NGAP.
 - FtpPassword - Password for the FTP server created by the stack
 - Bucket -  S3 bucket name
 - Prefix - Any string, generally a DAAC's name
