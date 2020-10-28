@@ -10,9 +10,9 @@ type MessageWithStatus = Message.CumulusMessage & {
  * Get the status workflow message, if any.
  *
  * @param {MessageWithStatus} message - A workflow message object
- * @returns {undefined|string} The PDR object
+ * @returns {undefined|string} The workflow status
  *
- * @alias module:PDRs
+ * @alias module:workflows
  */
 export const getWorkflowStatus = (
   message: MessageWithStatus
