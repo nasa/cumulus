@@ -205,11 +205,11 @@ Run `npm test`.
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
-Tests are separated into standalone and parallel folders. The `standalone` folder is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Bamboo on master.
+Tests are separated into standalone and parallel directories. The `standalone` directory is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Bamboo on master.
 
-The `parallel` folder holds tests that can be run in parallel.
+The `parallel` directory holds tests that can be run in parallel.
 
-All other tests in the spec folder will be run in serial.
+All other tests in the spec directory will be run in serial.
 
 To run all tests outside of standalone, run `DEPLOYMENT=<name-of-your-deployment> npm test` in this directory. The parallel tests will be run in parallel locally and on CI.
 
@@ -219,7 +219,7 @@ To run all of the tests, including standalone, run `DEPLOYMENT=<name-of-your-dep
 
 To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/helloWorld/HelloWorldSuccessSpec.js`.
 
-Jasmine supports wildcard expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/standalone/*`
+Jasmine supports wildcard expressions for running tests, so an entire test directory can be run using `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/standalone/*`
 
 ### Running Tests on SIT
 
@@ -229,17 +229,17 @@ In the event that you are running the tests outside of the Cumulus sandbox envir
 
 ### Adding tests for an existing workflow
 
-Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and supporting JSON files can go in there.
+Workflow tests are located in the `/spec/<workflow-name>` directory. Any tests and supporting JSON files can go in there.
 
 ### Adding a new test workflow
 
 The workflow should be configured as it would be for a normal Cumulus deployment in a workflows terraform file. It must be deployed to the current deployment if testing locally.
 
-The workflows terraform files are located in the `/example/cumulus-tf` folder and are split up to make the workflows easier to find and understand.
+The workflows terraform files are located in the `/example/cumulus-tf` directory and are split up to make the workflows easier to find and understand.
 
-A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
+A new directory should be added in the `/spec` directory for the workflow and the tests should go into that directory with the input JSON files.
 
-Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `serial` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
+Ideally the test can run in parallel with other tests and should be put in the `parallel` directory. If it cannot be, it should go in the `serial` directory. Only if the test should be run outside of the test suite should it go in the `standalone` directory.
 
 ## Fake data server
 
