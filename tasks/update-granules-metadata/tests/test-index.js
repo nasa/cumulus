@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const cloneDeep = require('lodash/cloneDeep');
-const findIndex = require('lodash/findIndex');
 
 const {
   buildS3Uri,
