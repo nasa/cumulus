@@ -16,7 +16,7 @@ const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
 const {
-  getCollectionInfoFromMessage,
+  getCollectionNameAndVersionFromMessage,
 } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
@@ -60,7 +60,7 @@ const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
 };
 
 const hasNoCollectionOrExists = async (cumulusMessage, knex) => {
-  const collectionInfo = getCollectionInfoFromMessage(cumulusMessage);
+  const collectionInfo = getCollectionNameAndVersionFromMessage(cumulusMessage);
   if (!collectionInfo) {
     return true;
   }
@@ -133,9 +133,12 @@ const saveGranulesToDb = async (cumulusMessage) => {
 };
 
 const handler = async (event) => {
-  const env = event.env ? event.env : process.env;
-
-  const knex = await getKnexClient({ env });
+  const knex = await getKnexClient({
+    env: {
+      ...process.env,
+      ...event.env,
+    },
+  });
 
   const sqsMessages = get(event, 'Records', []);
 
