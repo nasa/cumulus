@@ -101,7 +101,7 @@ export const startECSTask = async ({
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const startAsyncOperation = async (params: {
+export const startAsyncOperation = async (params: { // fix input params to match overloaded typing
   description: string,
   operationType: string,
   lambdaName: string,

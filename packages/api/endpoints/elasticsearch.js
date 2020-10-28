@@ -12,8 +12,6 @@ const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
 const { createIndex } = require('../es/indexer');
 
-
-
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
 function timestampedIndexName() {

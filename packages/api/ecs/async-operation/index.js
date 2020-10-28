@@ -167,7 +167,7 @@ async function updateAsyncOperation(status, output) {
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : 'none';
   const updatedTime = (Number(Date.now())).toString();
-  const knex = await getKnexClient({ env });
+  const knex = await getKnexClient(); // TODO - make sure this has the right process envs for DB access including dbHeatBeat
   const dynamodb = new AWS.DynamoDB();
 
   return knex.transaction(async (trx) => {

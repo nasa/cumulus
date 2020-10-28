@@ -33,17 +33,17 @@ async function startKinesisReplayAsyncOperation(req, res) {
     env: { ...localStackConnectionEnv, ...process.env },
   }); // TODO make sure the api lambda has the right secrets config
   const asyncOperation = await asyncOperations.startAsyncOperation({
-    description: 'Kinesis Replay',
-    operationType: 'Kinesis Replay',
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    lambdaName: process.env.ManualConsumerLambda,
-    payload,
-    useLambdaEnvironmentVariables: true,
-    systemBucket,
-    stackName,
+    description: 'Kinesis Replay',
     dynamoTableName: asyncOperationModel.tableName,
     knexConfig,
+    lambdaName: process.env.ManualConsumerLambda,
+    operationType: 'Kinesis Replay',
+    payload,
+    stackName,
+    systemBucket,
+    useLambdaEnvironmentVariables: true,
   }, asyncOperationModel);
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }

@@ -3,6 +3,8 @@
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
+const { getKnexConfig, localStackConnectionEnv } = require('@cumulus/db');
+const asyncOperations = require('@cumulus/async-operations');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
@@ -236,15 +238,19 @@ async function bulkOperations(req, res) {
   if (!payload.workflowName) {
     return res.boom.badRequest('workflowName is required.');
   }
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
 
   const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
+    stackName, systemBucket, tableName,
+  });
+
+  const knexConfig = await getKnexConfig({
+    env: { ...localStackConnectionEnv, ...process.env },
   });
 
   let description;
-
   if (payload.query) {
     description = `Bulk run ${payload.workflowName} on ${payload.query.size} granules`;
   } else if (payload.ids) {
@@ -253,7 +259,7 @@ async function bulkOperations(req, res) {
     description = `Bulk run on ${payload.workflowName}`;
   }
 
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
@@ -273,7 +279,11 @@ async function bulkOperations(req, res) {
       },
     },
     esHost: process.env.ES_HOST,
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig,
+  }, asyncOperationModel);
 
   return res.status(202).send(asyncOperation);
 }
@@ -292,13 +302,19 @@ async function bulkDelete(req, res) {
     return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
   }
 
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
+
   const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
+    stackName, systemBucket, tableName,
   });
 
-  const asyncOperation = await asyncOperationModel.start({
+  const knexConfig = await getKnexConfig({
+    env: { ...localStackConnectionEnv, ...process.env },
+  });
+
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
@@ -325,25 +341,34 @@ async function bulkDelete(req, res) {
         system_bucket: process.env.system_bucket,
       },
     },
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig,
+  }, asyncOperationModel);
 
   return res.status(202).send(asyncOperation);
 }
 
 async function bulkReingest(req, res) {
   const payload = req.body;
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
 
   const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
+    stackName, systemBucket, tableName,
+  });
+
+  const knexConfig = await getKnexConfig({
+    env: { ...localStackConnectionEnv, ...process.env },
   });
 
   const numOfGranules = (payload.query && payload.query.size)
     || (payload.ids && payload.ids.length);
   const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;
 
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
@@ -363,7 +388,11 @@ async function bulkReingest(req, res) {
       },
     },
     esHost: process.env.ES_HOST,
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig,
+  }, asyncOperationModel);
 
   return res.status(202).send(asyncOperation);
 }

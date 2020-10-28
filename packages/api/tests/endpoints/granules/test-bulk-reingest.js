@@ -2,6 +2,7 @@ const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
+const asyncOperations = require('@cumulus/async-operations');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -51,7 +52,7 @@ test.before(async () => {
 
 test.beforeEach((t) => {
   const asyncOperationId = randomId('asyncOperationId');
-  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: asyncOperationId }))
   );
 });
@@ -256,7 +257,7 @@ test.serial('POST /granules/bulkReingest returns 400 when the Metrics ELK stack 
 
 test.serial('POST /granules/bulkReingest returns 500 if starting ECS task throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
@@ -273,7 +274,7 @@ test.serial('POST /granules/bulkReingest returns 500 if starting ECS task throws
 
 test.serial('POST /granules/bulkReingest returns 503 if starting ECS task throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 
