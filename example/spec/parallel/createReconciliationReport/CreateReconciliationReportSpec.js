@@ -610,7 +610,7 @@ describe('When there are granule differences and granule reconciliation is run',
         reportName: randomId('granuleInventory'),
         endTimestamp: moment.utc().format(),
         collectionId,
-        granuleId: 'MYD13Q1',
+        granuleIds: [publishedGranuleId, dbGranuleId],
       };
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
@@ -671,18 +671,17 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('includes correct records', () => {
-      // [
-      //   collectionId,
-      //   dbGranuleId,
-      //   publishedGranuleId,
-      // ].forEach((testStr) => {
-      //   // found in report
-      //   expect(reportArray.some((record) => record.includes(testStr))).toBe(true);
-      // });
+      [
+        collectionId,
+        dbGranuleId,
+        publishedGranuleId,
+      ].forEach((testStr) => {
+        // found in report
+        expect(reportArray.some((record) => record.includes(testStr))).toBe(true);
+      });
 
-      // const omittedCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
-
-      expect(reportArray.some((record) => record.includes('MYD13Q1'))).toBe(true);
+      const omittedCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+      expect(reportArray.some((record) => record.includes(omittedCollectionId))).toBe(false);
     });
 
     it('deletes a reconciliation report through the Cumulus API', async () => {
