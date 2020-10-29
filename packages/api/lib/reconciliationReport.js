@@ -124,19 +124,15 @@ function convertToDBGranuleSearchParams(params) {
  */
 function convertToDBScanGranuleSearchParams(params) {
   const {
-    collectionId,
-    granuleId: granuleIdParam,
-    granuleIds,
+    collectionIds: collectionId,
+    granuleIds: granuleIdsParam,
     status,
     startTimestamp,
     endTimestamp,
   } = params;
-  let granuleId;
-  if (granuleIds) {
-    granuleId = (granuleIds.length === 1) ? granuleIds[0] : granuleIds;
-  } else {
-    granuleId = granuleIdParam;
-  }
+  const granuleId = (granuleIdsParam && (granuleIdsParam.length === 1))
+    ? granuleIdsParam[0] : granuleIdsParam;
+
   const searchParams = {
     updatedAt__from: dateToValue(startTimestamp),
     updatedAt__to: dateToValue(endTimestamp),
