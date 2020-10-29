@@ -78,10 +78,9 @@ const hasNoProviderOrExists = async (cumulusMessage, knex) => {
   }, knex, tableNames.providers);
 };
 
-const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
+const shouldWriteExecutionToRDS = async (cumulusMessage, isExecutionPostDeployment, knex) => {
   try {
-    const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-    if (!executionIsPostDeployment) return executionIsPostDeployment;
+    if (!isExecutionPostDeployment) return false;
 
     const results = await Promise.all([
       hasNoParentExecutionOrExists(cumulusMessage, knex),
@@ -95,35 +94,25 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, knex) => {
   }
 };
 
-const saveExecution = async (cumulusMessage, knex) => {
+const saveExecution = async (cumulusMessage, isExecutionRDSWriteEnabled, trx) => {
   const executionModel = new Execution();
-  const executionArn = getMessageExecutionArn(cumulusMessage);
 
-  const isRDSWriteEnabled = await shouldWriteExecutionToRDS(cumulusMessage, knex);
-
-  if (!isRDSWriteEnabled) {
+  if (!isExecutionRDSWriteEnabled) {
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   }
 
-  try {
-    return await knex.transaction(async (trx) => {
-      await trx(tableNames.executions)
-        .insert({
-          arn: executionArn,
-          cumulus_version: getMessageCumulusVersion(cumulusMessage),
-        });
-      return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
+  await trx(tableNames.executions)
+    .insert({
+      arn: getMessageExecutionArn(cumulusMessage),
+      cumulus_version: getMessageCumulusVersion(cumulusMessage),
     });
-  } catch (error) {
-    log.error(`Failed to write execution records for ${executionArn}`, error);
-    throw error;
-  }
+  return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 };
 
 const shouldWritePdrToRDS = async (cumulusMessage, knex) => {
   try {
-    const executionIsPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-    if (!executionIsPostDeployment) return executionIsPostDeployment;
+    const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+    if (!isExecutionPostDeployment) return isExecutionPostDeployment;
 
     const results = await Promise.all([
       hasNoCollectionOrExists(cumulusMessage, knex),
@@ -161,17 +150,6 @@ const savePdr = async (cumulusMessage, knex) => {
   }
 };
 
-// const savePdrToDb = async (cumulusMessage) => {
-//   const pdrModel = new Pdr();
-//   try {
-//     await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
-//   } catch (error) {
-//     const executionArn = getMessageExecutionArn(cumulusMessage);
-//     log.fatal(`Failed to create/update PDR database record for execution ${executionArn}: ${error.message}`);
-//     throw error;
-//   }
-// };
-
 const saveGranulesToDb = async (cumulusMessage) => {
   const granuleModel = new Granule();
 
@@ -180,6 +158,26 @@ const saveGranulesToDb = async (cumulusMessage) => {
   } catch (error) {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     log.fatal(`Failed to create/update granule records for execution ${executionArn}: ${error.message}`);
+    throw error;
+  }
+};
+
+const saveRecords = async (cumulusMessage, knex) => {
+  const executionArn = getMessageExecutionArn(cumulusMessage);
+
+  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+  const isExecutionRDSWriteEnabled = await shouldWriteExecutionToRDS(
+    cumulusMessage,
+    isExecutionPostDeployment,
+    knex
+  );
+
+  try {
+    return await knex.transaction(async (trx) => {
+      await saveExecution(cumulusMessage, isExecutionRDSWriteEnabled, trx);
+    });
+  } catch (error) {
+    log.error(`Failed to write PDR records for ${executionArn}`, error);
     throw error;
   }
 };
@@ -197,10 +195,10 @@ const handler = async (event) => {
   return Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+    await saveRecords(cumulusMessage, knex);
     const results = await Promise.allSettled([
-      saveExecution(cumulusMessage, knex),
-      saveGranulesToDb(cumulusMessage),
       savePdr(cumulusMessage, knex),
+      saveGranulesToDb(cumulusMessage),
     ]);
     if (results.some((result) => result.status === 'rejected')) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);

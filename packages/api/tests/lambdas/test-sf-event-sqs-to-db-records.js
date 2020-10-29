@@ -372,11 +372,7 @@ test('hasNoProviderOrExists returns false if provider does not exist', async (t)
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
   const { knex } = t.context;
-  t.false(await shouldWriteExecutionToRDS({
-    cumulus_meta: {
-      cumulus_version: '2.99.1',
-    },
-  }, knex));
+  t.false(await shouldWriteExecutionToRDS({}, false, knex));
 });
 
 test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', async (t) => {
@@ -410,7 +406,7 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
       meta: {
         collection,
       },
-    }, knex)
+    }, true, knex)
   );
 });
 
@@ -432,7 +428,7 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
         cumulus_version: '3.0.0',
         parentExecutionArn,
       },
-    }, knex)
+    }, true, knex)
   );
 });
 
@@ -476,7 +472,6 @@ test.serial('saveExecution() saves execution to Dynamo and RDS if write to RDS i
     cumulusMessage,
     knex,
     executionModel,
-    doesRecordExistStub,
   } = t.context;
 
   const stateMachineName = cryptoRandomString({ length: 5 });
@@ -509,15 +504,10 @@ test.serial('saveExecution() saves execution to Dynamo and RDS if write to RDS i
     },
   };
 
-  doesRecordExistStub.withArgs({
-    id: asyncOperationId,
-  }).resolves(true);
-  doesRecordExistStub.withArgs(collection).resolves(true);
-  doesRecordExistStub.withArgs({
-    arn: parentExecutionArn,
-  }).resolves(true);
+  await knex.transaction(async (trx) => {
+    await saveExecution(message, true, trx);
+  });
 
-  await saveExecution(message, knex);
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
     await doesRecordExist({
@@ -531,7 +521,6 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     cumulusMessage,
     knex,
     executionModel,
-    doesRecordExistStub,
   } = t.context;
 
   const stateMachineName = cryptoRandomString({ length: 5 });
@@ -564,15 +553,6 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     },
   };
 
-  // restore stub
-  doesRecordExistStub.withArgs({
-    id: asyncOperationId,
-  }).resolves(true);
-  doesRecordExistStub.withArgs(collection).resolves(true);
-  doesRecordExistStub.withArgs({
-    arn: parentExecutionArn,
-  }).resolves(true);
-
   const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
     .callsFake(() => {
       throw new Error('fake error');
@@ -583,7 +563,9 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     trxSpy.restore();
   });
 
-  await t.throwsAsync(saveExecution(message, knex));
+  await t.throwsAsync(knex.transaction(async (trx) => {
+    await saveExecution(message, true, trx);
+  }));
   t.true(trxSpy.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
@@ -598,7 +580,6 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
     cumulusMessage,
     knex,
     executionModel,
-    doesRecordExistStub,
   } = t.context;
 
   const stateMachineName = cryptoRandomString({ length: 5 });
@@ -631,14 +612,6 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
     },
   };
 
-  doesRecordExistStub.withArgs({
-    id: asyncOperationId,
-  }).resolves(true);
-  doesRecordExistStub.withArgs(collection).resolves(true);
-  doesRecordExistStub.withArgs({
-    arn: parentExecutionArn,
-  }).resolves(true);
-
   const fakeTrxCallback = (cb) => {
     const fakeTrx = sinon.stub().returns({
       insert: () => {
@@ -650,7 +623,9 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(saveExecution(message, knex));
+  await t.throwsAsync(knex.transaction(async (trx) => {
+    await saveExecution(message, true, trx);
+  }));
   t.true(trxStub.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
