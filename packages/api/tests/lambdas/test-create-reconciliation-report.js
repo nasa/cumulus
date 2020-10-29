@@ -1661,7 +1661,7 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
   t.is(report.granules.withConflicts.length, 0);
 });
 
-test.serial('Creates a valid Cranule Inventory report', async (t) => {
+test.serial('Creates a valid Granule Inventory report', async (t) => {
   const collection = fakeCollectionFactory();
   const collectionId = constructCollectionId(collection.name, collection.version);
   const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId }));
@@ -1677,6 +1677,7 @@ test.serial('Creates a valid Cranule Inventory report', async (t) => {
     reportType: 'Granule Inventory',
     reportName: randomId('reportName'),
     collectionId,
+    status: 'completed',
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };

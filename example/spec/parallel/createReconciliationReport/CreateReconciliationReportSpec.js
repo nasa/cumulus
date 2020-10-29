@@ -610,7 +610,8 @@ describe('When there are granule differences and granule reconciliation is run',
         reportName: randomId('granuleInventory'),
         endTimestamp: moment.utc().format(),
         collectionId,
-        granuleIds: [publishedGranuleId, dbGranuleId],
+        status: 'completed',
+        granuleId: [publishedGranuleId, dbGranuleId],
       };
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
