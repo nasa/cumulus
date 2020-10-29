@@ -15,8 +15,8 @@
     "webpack": "../../node_modules/.bin/webpack",
     "build-lambda-zip": "(cd dist/webpack && cp -R ../lambda/migrations . && node ../../../../bin/zip.js lambda.zip index.js migrations/*.js)",
     "package": "npm run clean && npm run tsc && npm run webpack && npm run build-lambda-zip",
-    "prepare": "npm run tsc",
-    "tsc": "rm -rf dist && ../../node_modules/.bin/tsc"
+    "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "dependencies": {
     "@cumulus/db": "2.0.1-alpha.1",

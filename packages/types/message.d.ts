@@ -11,6 +11,7 @@ export interface CumulusMeta {
   parentExecutionArn?: string
   asyncOperationId?: string
   queueExecutionLimits: QueueExecutionLimits
+  cumulus_version?: string
 }
 
 export interface ReplaceConfig {
@@ -23,6 +24,10 @@ export interface CumulusMessage {
   cumulus_meta: CumulusMeta
   meta: {
     workflow_name: string
+    collection?: {
+      name?: string
+      version?: string
+    }
     [key: string]: unknown
   }
   payload: unknown
