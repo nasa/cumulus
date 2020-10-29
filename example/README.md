@@ -229,7 +229,7 @@ In the event that you are running the tests outside of the Cumulus sandbox envir
 
 ### Adding tests for an existing workflow
 
-Workflow tests are located in the `/spec/<workflow-name>` directory. Any tests and supporting JSON files can go in there.
+Workflow tests are located in the `/spec/parallel` or `/spec/serial` directory depending on whether or not they can run in parallel or not. Any tests and supporting JSON files can go in there.
 
 ### Adding a new test workflow
 
