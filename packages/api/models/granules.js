@@ -440,7 +440,6 @@ class Granule extends Manager {
       filterArray,
       filterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
       keyConditionArray,
-      keyExpression: keyConditionArray.join(' AND '),
     };
   }
 
