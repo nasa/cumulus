@@ -15,10 +15,10 @@ const logger = new Logger({ sender: '@cumulus/data-migration/async-operations' }
 export interface RDSAsyncOperationRecord {
   id: string
   description: string
-  operationType: string
+  operation_type: string
   status: string
   output?: Object
-  taskArn?: string
+  task_arn?: string
   created_at: Date
   updated_at: Date
 }
@@ -30,18 +30,29 @@ export const migrateAsyncOperationRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.asyncOperation);
 
+  const existingRecord = await knex<RDSAsyncOperationRecord>('async_operations')
+    .where({
+      id: dynamoRecord.id,
+    })
+    .first();
+  // Throw error if it was already migrated.
+  if (existingRecord) {
+    throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.id} was already migrated, skipping`);
+  }
+
   const updatedRecord: RDSAsyncOperationRecord = {
     id: dynamoRecord.id,
     description: dynamoRecord.description,
-    operationType:  dynamoRecord.operationType,
-    output: dynamoRecord.output,
+    operation_type:  dynamoRecord.operationType,
     status: dynamoRecord.status,
-    taskArn:  dynamoRecord.taskArn,
+    task_arn:  dynamoRecord.taskArn,
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: new Date(dynamoRecord.updatedAt),
   }
 
-  await knex('asyncOperations').insert(updatedRecord);
+  if (![undefined, 'None'].includes(dynamoRecord.output)) updatedRecord.output = JSON.parse(dynamoRecord.output);
+
+  await knex('async_operations').insert(updatedRecord);
 }
 
 export const migrateAsyncOperations = async (
