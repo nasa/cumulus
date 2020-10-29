@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-2248**
+  - Updates Integration Tests README to point to new fake provider template.
 - **CUMULUS-2239**
   - Add resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
 - **CUMULUS-2063**
