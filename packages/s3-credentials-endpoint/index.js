@@ -274,7 +274,9 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     authClient,
   } = getConfigurations();
 
-  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
+  const redirectUri = req.earthdataLoginClient.redirectUri;
+  const authUrl = authClient.getAuthorizationUrl(req.path);
+  const redirectURLForAuthorizationCode = urljoin(redirectUri, authUrl);
   const accessToken = req.cookies.accessToken;
   if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
 
