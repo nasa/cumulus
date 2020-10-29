@@ -40,10 +40,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     prevented AWS from halting/restarting warmed instances when task code was
     throwing consistent errors under load.
 
-### Added
-
-
-### Changed
 - **CUMULUS-2232**
   - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and
     `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
