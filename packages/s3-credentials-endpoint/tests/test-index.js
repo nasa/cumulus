@@ -5,6 +5,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 const moment = require('moment');
+const urljoin = require('url-join');
 
 const awsServices = require('@cumulus/aws-client/services');
 
@@ -103,9 +104,10 @@ test('An s3credential request without access Token redirects to Oauth2 provider.
     .get('/s3credentials')
     .set('Accept', 'application/json')
     .expect(307);
+  const redirectUrl = urljoin(process.env.DISTRIBUTION_REDIRECT_ENDPOINT, authorizationUrl);
 
   t.is(response.status, 307);
-  t.is(response.headers.location, authorizationUrl);
+  t.is(response.headers.location, redirectUrl);
 });
 
 test('An s3credential request with expired accessToken redirects to Oauth2 provider', async (t) => {
@@ -113,6 +115,7 @@ test('An s3credential request with expired accessToken redirects to Oauth2 provi
     expirationTime: moment().unix(),
   });
   await accessTokenModel.create(accessTokenRecord);
+  const redirectUrl = urljoin(process.env.DISTRIBUTION_REDIRECT_ENDPOINT, authorizationUrl);
 
   const response = await request(distributionApp)
     .get('/s3credentials')
@@ -121,7 +124,7 @@ test('An s3credential request with expired accessToken redirects to Oauth2 provi
     .expect(307);
 
   t.is(response.status, 307);
-  t.is(response.headers.location, authorizationUrl);
+  t.is(response.headers.location, redirectUrl);
 });
 
 test('buildRoleSessionName() returns the username if a client name is not provided', (t) => {
