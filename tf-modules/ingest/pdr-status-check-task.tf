@@ -8,7 +8,7 @@ resource "aws_lambda_function" "pdr_status_check_task" {
   timeout          = 300
   memory_size      = 1024
 
-  layers = [var.cumulus_message_adapter_lambda_layer_arn]
+  layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
   environment {
     variables = {
