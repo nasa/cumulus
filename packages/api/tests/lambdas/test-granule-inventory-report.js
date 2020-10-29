@@ -72,6 +72,8 @@ test.serial('Writes a file containing a filtered set of granules to S3.', async 
   const testGranules = [
     fakeGranuleFactoryV2({ collectionId, status }),
     fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testGranule' }),
+    fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testAnotherGranule' }),
     fakeGranuleFactoryV2({ collectionId, status, granuleId }),
     fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
   ];
@@ -80,11 +82,14 @@ test.serial('Writes a file containing a filtered set of granules to S3.', async 
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportRecordName}.csv`;
   const systemBucket = t.context.systemBucket;
   const reportParams = {
-    ...normalizeEvent({ reportType: 'Granule Inventory' }),
+    ...normalizeEvent({
+      reportType: 'Granule Inventory',
+      collectionId,
+      status,
+      granuleId: 'test',
+    }),
     reportKey,
     systemBucket,
-    collectionId,
-    status,
   };
 
   await createGranuleInventoryReport(reportParams);
@@ -95,14 +100,11 @@ test.serial('Writes a file containing a filtered set of granules to S3.', async 
   });
 
   const reportData = reportOnS3.Body.toString();
+  const reportArray = reportData.split('\n');
+  const reportHeader = reportArray.slice(0, 1)[0];
+  const reportRows = reportArray.slice(1, reportArray.length);
 
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published"';
-  t.true(reportData.includes(header));
-  testGranules.forEach((g, index) => {
-    const createdAt = new Date(g.createdAt).toISOString();
-    const searchStr = `"${g.granuleId}","${g.collectionId}","${createdAt}"`;
-    if (index === 3) {
-      t.false(reportData.includes(searchStr));
-    } else t.true(reportData.includes(searchStr));
-  });
+  t.is(reportHeader, header);
+  t.is(reportRows.length, 2);
 });
