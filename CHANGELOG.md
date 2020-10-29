@@ -15,7 +15,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds ability to filter granule inventory reports
 - **CUMULUS-2211**
   - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
-  
 
 ### Changed
 - **CUMULUS-2216**
