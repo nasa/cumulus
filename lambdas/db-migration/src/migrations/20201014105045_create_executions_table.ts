@@ -12,7 +12,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .integer('asyncOperationCumulusId')
       .references('cumulusId')
-      .inTable('async_operations')
+      .inTable('async_operations');
     table
       .integer('collectionCumulusId')
       .references('cumulusId')

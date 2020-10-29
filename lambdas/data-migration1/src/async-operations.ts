@@ -43,17 +43,17 @@ export const migrateAsyncOperationRecord = async (
   const updatedRecord: RDSAsyncOperationRecord = {
     id: dynamoRecord.id,
     description: dynamoRecord.description,
-    operation_type:  dynamoRecord.operationType,
+    operation_type: dynamoRecord.operationType,
     status: dynamoRecord.status,
-    task_arn:  dynamoRecord.taskArn,
+    task_arn: dynamoRecord.taskArn,
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: new Date(dynamoRecord.updatedAt),
-  }
+  };
 
   if (![undefined, 'None'].includes(dynamoRecord.output)) updatedRecord.output = JSON.parse(dynamoRecord.output);
 
   await knex('async_operations').insert(updatedRecord);
-}
+};
 
 export const migrateAsyncOperations = async (
   env: NodeJS.ProcessEnv,
@@ -62,7 +62,7 @@ export const migrateAsyncOperations = async (
   const asyncOperationsTable = envUtils.getRequiredEnvVar('AsyncOperationsTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
-    TableName: asyncOperationsTable
+    TableName: asyncOperationsTable,
   });
 
   const migrationSummary = {
@@ -70,11 +70,11 @@ export const migrateAsyncOperations = async (
     success: 0,
     failed: 0,
     skipped: 0,
-  }
+  };
 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
-  while(record) {
+  while (record) {
     migrationSummary.dynamoRecords += 1;
 
     try {

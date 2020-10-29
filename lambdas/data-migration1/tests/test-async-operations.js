@@ -14,7 +14,7 @@ const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const {
   migrateAsyncOperationRecord,
   migrateAsyncOperations,
-} = require('../dist/lambda/async-operations')
+} = require('../dist/lambda/async-operations');
 
 const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 // eslint-disable-next-line node/no-unpublished-require
@@ -32,7 +32,7 @@ const generateFakeAsyncOperation = (params) => ({
   taskArn: 'arn:aws:ecs:task:1234',
   createdAt: (Date.now() - 1000),
   updatedAt: Date.now(),
-  ...params
+  ...params,
 });
 
 let asyncOperationsModel;
@@ -46,7 +46,7 @@ test.before(async (t) => {
 
   asyncOperationsModel = new AsyncOperation({
     stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket
+    systemBucket: process.env.system_bucket,
   });
   await asyncOperationsModel.createTable();
 
@@ -99,7 +99,7 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
       ...fakeAsyncOp,
       output: JSON.parse(fakeAsyncOp.output),
       created_at: new Date(fakeAsyncOp.createdAt),
-      updated_at: new Date(fakeAsyncOp.updatedAt)
+      updated_at: new Date(fakeAsyncOp.updatedAt),
     },
     ['createdAt', 'updatedAt'])
   );
