@@ -113,7 +113,7 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   const inputGranules = newPayload.input.granules;
   const granuleWithEtag = inputGranules.find((g) => g.files.some((f) => f.etag));
-  const previousEtag = granuleWithEtag.files[0].etag;
+  const previousEtag = granuleWithEtag.files.filter(isCMRFile)[0].etag;
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const { granules } = await updateGranulesMetadata(newPayload);
