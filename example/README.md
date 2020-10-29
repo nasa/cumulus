@@ -237,7 +237,7 @@ The workflow should be configured as it would be for a normal Cumulus deployment
 
 The workflows terraform files are located in the `/example/cumulus-tf` directory and are split up to make the workflows easier to find and understand.
 
-A new directory should be added in either the `/spec/parallel` directory if the test workflow can be run in parallel. The tests should go in the newly created directory along with any necessary input JSON files. Otherwise, the new test workflow should be added to the `/spec/serial` directory. Only if the test should be run outside of the test suite should it go in the `standalone` directory.
+A new directory should be added in the `/spec/parallel` directory if the test workflow can be run in parallel. The tests should go in the newly created directory along with any necessary input JSON files. Otherwise, the new test workflow should be added to the `/spec/serial` directory. Only if the test should be run outside of the test suite should it go in the `standalone` directory.
 
 ## Fake data server
 
