@@ -47,3 +47,15 @@ export const getPdrPANSent = (
 export const getPdrPANMessage = (
   pdr: PDR
 ): string => pdr?.PANmessage ?? 'N/A';
+
+/**
+ * Get the PDR name from a workflow message, if any.
+ *
+ * @param {MessageWithPdr} message - A workflow message
+ * @returns {string} The PDR name
+ *
+ * @alias module:PDRs
+ */
+export const getMessagePdrName = (
+  message: MessageWithPdr
+): string | undefined => message.payload?.pdr?.name;
