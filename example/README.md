@@ -19,7 +19,7 @@ configuring Terraform, deploying the two root modules, and running your tests.
 In order to manage your installed Terraform versions, we recommend using [`tfenv`](https://github.com/tfutils/tfenv).
 
 If you are using a Mac and [Homebrew](https://brew.sh), installing `tfenv` is
-as simple as:
+as follows:
 
 ```shell
 brew update
@@ -209,7 +209,7 @@ Tests are separated into standalone and parallel directories. The `standalone` d
 
 The `parallel` directory holds tests that can be run in parallel.
 
-All other tests in the spec directory will be run in serial.
+All other tests in the spec directory will be located in the `serial` directory and will be run in serial.
 
 To run all tests outside of standalone, run `DEPLOYMENT=<name-of-your-deployment> npm test` in this directory. The parallel tests will be run in parallel locally and on CI.
 
@@ -237,9 +237,7 @@ The workflow should be configured as it would be for a normal Cumulus deployment
 
 The workflows terraform files are located in the `/example/cumulus-tf` directory and are split up to make the workflows easier to find and understand.
 
-A new directory should be added in the `/spec` directory for the workflow and the tests should go into that directory with the input JSON files.
-
-Ideally the test can run in parallel with other tests and should be put in the `parallel` directory. If it cannot be, it should go in the `serial` directory. Only if the test should be run outside of the test suite should it go in the `standalone` directory.
+A new directory should be added in either the `/spec/parallel` directory if the test workflow can be run in parallel. The tests should go in the newly created directory along with any necessary input JSON files. Otherwise, the new test workflow should be added to the `/spec/serial` directory. Only if the test should be run outside of the test suite should it go in the `standalone` directory.
 
 ## Fake data server
 
