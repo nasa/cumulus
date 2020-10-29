@@ -11,7 +11,7 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const url = require('url');
 const Logger = require('@cumulus/logger');
-const { asyncOperationsConfig, getDbTransaction, getKnexConfig, getKnexClient } = require('@cumulus/db');
+const { asyncOperationsConfig, getDbTransaction, getKnexClient } = require('@cumulus/db');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
@@ -163,38 +163,42 @@ function buildErrorOutput(error) {
  * @returns {Promise} resolves when the item has been updated
  */
 // CUMULUS-2191
-async function updateAsyncOperation(status, output) {
+const updateAsyncOperation = async (status, output, envOverride = {}) => {
+  logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : 'none';
   const updatedTime = (Number(Date.now())).toString();
-  const knex = await getKnexClient(); // TODO - make sure this has the right process envs for DB access including dbHeatBeat
+  const knex = await getKnexClient({ env: { ...process.env, ...envOverride } });
   const dynamodb = new AWS.DynamoDB();
-
-  return knex.transaction(async (trx) => {
-    getDbTransaction(trx, asyncOperationsConfig)
-      .update({
-        id: process.env.asyncOperationId,
-        status,
-        output: dbOutput,
-        updatedAt: updatedTime,
-      });
-    await dynamodb.updateItem({
-      TableName: process.env.asyncOperationsTable,
-      Key: { id: { S: process.env.asyncOperationId } },
-      ExpressionAttributeNames: {
-        '#S': 'status',
-        '#O': 'output',
-        '#U': 'updatedAt',
-      },
-      ExpressionAttributeValues: {
-        ':s': { S: status },
-        ':o': { S: dbOutput },
-        ':u': { N: updatedTime },
-      },
-      UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
+  try {
+    return await knex.transaction(async (trx) => {
+      await getDbTransaction(trx, asyncOperationsConfig)
+        .update({ // TODO - what about upsert behavior here.   How do we even test this.   Units?   Int test *cannot* check db
+          id: process.env.asyncOperationId,
+          status,
+          output: dbOutput,
+          updated_at: knex.raw(`to_timestamp(${updatedTime})`),
+        });
+      return dynamodb.updateItem({
+        TableName: process.env.asyncOperationsTable,
+        Key: { id: { S: process.env.asyncOperationId } },
+        ExpressionAttributeNames: {
+          '#S': 'status',
+          '#O': 'output',
+          '#U': 'updatedAt',
+        },
+        ExpressionAttributeValues: {
+          ':s': { S: status },
+          ':o': { S: dbOutput },
+          ':u': { N: updatedTime },
+        },
+        UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
+      }).promise();
     });
-  });
-}
+  } catch (e) {
+    logger.error(`Error: ${JSON.stringify(e)}`);
+  }
+};
 
 /**
  * Download and run a Lambda task locally.  On completion, write the results out
@@ -245,8 +249,11 @@ async function runTask() {
     return;
   }
 
-  // Write the result out to DynamoDb
-  await updateAsyncOperation('SUCCEEDED', result);
+  try { // Write the result out to databases
+    await updateAsyncOperation('SUCCEEDED', result);
+  } catch (error) {
+    logger.error('Failed to updated records', error);
+  }
 }
 
 // Here's where the magic happens ...
