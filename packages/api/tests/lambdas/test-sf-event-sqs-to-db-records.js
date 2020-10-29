@@ -142,22 +142,32 @@ test.beforeEach(async (t) => {
     t.context.collection.version
   );
 
+  const stateMachineName = cryptoRandomString({ length: 5 });
+  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
+
+  const executionName = cryptoRandomString({ length: 5 });
+  t.context.executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+
+  t.context.parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
+  t.context.asyncOperationId = uuidv4();
+
+  t.context.provider = {
+    id: `provider${cryptoRandomString({ length: 5 })}`,
+    host: 'test-bucket',
+    protocol: 's3',
+  };
+
   t.context.cumulusMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
       cumulus_version: '4.0.0',
+      state_machine: stateMachineArn,
+      execution_name: executionName,
     },
     meta: {
       status: 'running',
-      collection: {
-        name: t.context.collection.name,
-        version: t.context.collection.version,
-      },
-      provider: {
-        id: 'test-provider',
-        host: 'test-bucket',
-        protocol: 's3',
-      },
+      collection: t.context.collection,
+      provider: t.context.provider,
     },
     payload: {
       key: 'my-payload',
@@ -172,6 +182,13 @@ test.beforeEach(async (t) => {
 
   await t.context.knex(tableNames.collections)
     .insert(t.context.collection);
+
+  // await t.context.knex(tableNames.providers)
+  //   .insert({
+  //     name: t.context.provider.id,
+  //     host: t.context.provider.host,
+  //     protocol: t.context.provider.protocol,
+  //   });
 
   t.context.doesRecordExistStub = stubs.recordExists;
   t.context.doesRecordExistStub.resetHistory();
@@ -379,34 +396,25 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
   const {
     knex,
     doesRecordExistStub,
+    cumulusMessage,
+    asyncOperationId,
+    parentExecutionArn,
+    collection,
   } = t.context;
-
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  const asyncOperationId = uuidv4();
-  const collection = {
-    name: 'fake-name',
-    version: '0.0.0',
-  };
 
   doesRecordExistStub.withArgs({
     id: asyncOperationId,
   }).resolves(true);
-  doesRecordExistStub.withArgs(collection).resolves(true);
+  doesRecordExistStub.withArgs({
+    name: collection.name,
+    version: collection.version,
+  }).resolves(true);
   doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
   }).resolves(true);
 
   t.true(
-    await shouldWriteExecutionToRDS({
-      cumulus_meta: {
-        cumulus_version: '3.0.0',
-        parentExecutionArn,
-        asyncOperationId,
-      },
-      meta: {
-        collection,
-      },
-    }, true, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, true, knex)
   );
 });
 
@@ -414,9 +422,8 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
   const {
     knex,
     doesRecordExistStub,
+    parentExecutionArn,
   } = t.context;
-
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
 
   doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
@@ -436,14 +443,10 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   const {
     knex,
     doesRecordExistStub,
+    parentExecutionArn,
+    asyncOperationId,
+    collection,
   } = t.context;
-
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  const asyncOperationId = uuidv4();
-  const collection = {
-    name: cryptoRandomString({ length: 10 }),
-    version: '0.0.0',
-  };
 
   doesRecordExistStub.withArgs({
     id: asyncOperationId,
@@ -467,46 +470,15 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   );
 });
 
-test.serial('saveExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
+test('saveExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
     executionModel,
+    executionArn,
   } = t.context;
 
-  const stateMachineName = cryptoRandomString({ length: 5 });
-  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
-
-  const executionName = cryptoRandomString({ length: 5 });
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
-
-  const collection = {
-    name: cryptoRandomString({ length: 10 }),
-    version: '0.0.0',
-  };
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  const asyncOperationId = uuidv4();
-
-  const message = {
-    ...cumulusMessage,
-    cumulus_meta: {
-      ...cumulusMessage.cumulus_meta,
-      state_machine: stateMachineArn,
-      execution_name: executionName,
-      parentExecutionArn,
-      asyncOperationId,
-    },
-    meta: {
-      ...cumulusMessage.meta,
-      collection,
-    },
-  };
-
-  await knex.transaction(async (trx) => {
-    await saveExecution(message, true, trx);
-  });
+  await saveExecution(cumulusMessage, true, knex);
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
@@ -521,37 +493,8 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     cumulusMessage,
     knex,
     executionModel,
+    executionArn,
   } = t.context;
-
-  const stateMachineName = cryptoRandomString({ length: 5 });
-  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
-
-  const executionName = cryptoRandomString({ length: 5 });
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
-
-  const collection = {
-    name: cryptoRandomString({ length: 10 }),
-    version: '0.0.0',
-  };
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  const asyncOperationId = uuidv4();
-
-  const message = {
-    ...cumulusMessage,
-    cumulus_meta: {
-      ...cumulusMessage.cumulus_meta,
-      state_machine: stateMachineArn,
-      execution_name: executionName,
-      parentExecutionArn,
-      asyncOperationId,
-    },
-    meta: {
-      ...cumulusMessage.meta,
-      collection,
-    },
-  };
 
   const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
     .callsFake(() => {
@@ -563,9 +506,7 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     trxSpy.restore();
   });
 
-  await t.throwsAsync(knex.transaction(async (trx) => {
-    await saveExecution(message, true, trx);
-  }));
+  await t.throwsAsync(saveExecution(cumulusMessage, true, knex));
   t.true(trxSpy.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
@@ -580,37 +521,8 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
     cumulusMessage,
     knex,
     executionModel,
+    executionArn,
   } = t.context;
-
-  const stateMachineName = cryptoRandomString({ length: 5 });
-  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
-
-  const executionName = cryptoRandomString({ length: 5 });
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
-
-  const collection = {
-    name: cryptoRandomString({ length: 10 }),
-    version: '0.0.0',
-  };
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  const asyncOperationId = uuidv4();
-
-  const message = {
-    ...cumulusMessage,
-    cumulus_meta: {
-      ...cumulusMessage.cumulus_meta,
-      state_machine: stateMachineArn,
-      execution_name: executionName,
-      parentExecutionArn,
-      asyncOperationId,
-    },
-    meta: {
-      ...cumulusMessage.meta,
-      collection,
-    },
-  };
 
   const fakeTrxCallback = (cb) => {
     const fakeTrx = sinon.stub().returns({
@@ -623,9 +535,7 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(knex.transaction(async (trx) => {
-    await saveExecution(message, true, trx);
-  }));
+  await t.throwsAsync(saveExecution(cumulusMessage, true, knex));
   t.true(trxStub.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
@@ -636,15 +546,13 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
 });
 
 test('saveGranulesToDb() saves a granule record to the database', async (t) => {
-  const { cumulusMessage, granuleModel, collectionId } = t.context;
-
-  const stateMachineName = randomString();
-  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
-
-  const executionName = randomString();
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = `arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+  const {
+    cumulusMessage,
+    granuleModel,
+    collectionId,
+    provider,
+    executionArn,
+  } = t.context;
 
   const granuleId = randomString();
   const files = [fakeFileFactory({ size: 250 })];
@@ -664,7 +572,7 @@ test('saveGranulesToDb() saves a granule record to the database', async (t) => {
     collectionId,
     execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
     productVolume: 250,
-    provider: 'test-provider',
+    provider: provider.id,
     status: 'running',
     createdAt: 122,
     error: {},
@@ -692,17 +600,12 @@ test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusM
   }
 });
 
-test.serial('savePdr() saves a PDR record', async (t) => {
-  const { cumulusMessage, pdrModel, knex } = t.context;
-
-  const stateMachineName = randomString();
-  const stateMachineArn = `arn:aws:states:us-east-1:1234:stateMachine:${stateMachineName}`;
-  cumulusMessage.cumulus_meta.state_machine = stateMachineArn;
-
-  const executionName = randomString();
-  cumulusMessage.cumulus_meta.execution_name = executionName;
-  const executionArn = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/'
-    + `details/arn:aws:states:us-east-1:1234:execution:${stateMachineName}:${executionName}`;
+test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+  } = t.context;
 
   const pdr = {
     name: randomString(),
@@ -711,52 +614,22 @@ test.serial('savePdr() saves a PDR record', async (t) => {
   };
   cumulusMessage.payload = {
     pdr,
-    completed: new Array(4).map(randomString),
-    failed: new Array(2).map(randomString),
-    running: new Array(6).map(randomString),
   };
-  await savePdr(cumulusMessage, knex);
 
-  const collectionId = (() => {
-    const { name, version } = cumulusMessage.meta.collection;
-    return constructCollectionId(name, version);
-  })();
+  await savePdr(
+    cumulusMessage,
+    true,
+    { cumulusId: 1 },
+    { cumulusId: 2 },
+    knex
+  );
 
-  const fetchedPdr = await pdrModel.get({ pdrName: pdr.name });
-  const expectedPdr = {
-    pdrName: pdr.name,
-    collectionId,
-    status: cumulusMessage.meta.status,
-    provider: cumulusMessage.meta.provider.id,
-    progress: 50,
-    execution: executionArn,
-    PANSent: false,
-    PANmessage: 'test',
-    stats: {
-      processing: 6,
-      completed: 4,
-      failed: 2,
-      total: 12,
-    },
-    createdAt: cumulusMessage.cumulus_meta.workflow_start_time,
-    duration: fetchedPdr.duration,
-    timestamp: fetchedPdr.timestamp,
-  };
-  t.deepEqual(fetchedPdr, expectedPdr);
-});
-
-test.serial('savePdr() throws an exception if storePdrFromCumulusMessage() throws an exception', async (t) => {
-  const { cumulusMessage, knex } = t.context;
-
-  const storeGranuleStub = sinon.stub(Pdr.prototype, 'storePdrFromCumulusMessage')
-    .callsFake(() => {
-      throw new Error('error');
-    });
-  try {
-    await t.throwsAsync(savePdr(cumulusMessage, knex));
-  } finally {
-    storeGranuleStub.restore();
-  }
+  t.true(await pdrModel.exists({ pdrName: pdr.name }));
+  t.true(
+    await doesRecordExist({
+      name: pdr.name,
+    }, knex, tableNames.pdrs)
+  );
 });
 
 test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and pdr fail to write to database', async (t) => {

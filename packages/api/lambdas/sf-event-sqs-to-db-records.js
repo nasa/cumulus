@@ -22,8 +22,14 @@ const {
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const {
-  getMessageProviderId
+  getMessagePdrName,
+} = require('@cumulus/message/PDRs');
+const {
+  getMessageProviderId,
 } = require('@cumulus/message/Providers');
+const {
+  getWorkflowStatus,
+} = require('@cumulus/message/workflows');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
@@ -78,7 +84,11 @@ const hasNoProviderOrExists = async (cumulusMessage, knex) => {
   }, knex, tableNames.providers);
 };
 
-const shouldWriteExecutionToRDS = async (cumulusMessage, isExecutionPostDeployment, knex) => {
+const shouldWriteExecutionToRDS = async (
+  cumulusMessage,
+  isExecutionPostDeployment,
+  knex
+) => {
   try {
     if (!isExecutionPostDeployment) return false;
 
@@ -94,60 +104,58 @@ const shouldWriteExecutionToRDS = async (cumulusMessage, isExecutionPostDeployme
   }
 };
 
-const saveExecution = async (cumulusMessage, isExecutionRDSWriteEnabled, trx) => {
+const saveExecution = async (cumulusMessage, isExecutionRDSWriteEnabled, knex) => {
   const executionModel = new Execution();
 
   if (!isExecutionRDSWriteEnabled) {
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   }
 
-  await trx(tableNames.executions)
-    .insert({
-      arn: getMessageExecutionArn(cumulusMessage),
-      cumulus_version: getMessageCumulusVersion(cumulusMessage),
-    });
-  return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
+  return knex.transaction(async (trx) => {
+    await trx(tableNames.executions)
+      .insert({
+        arn: getMessageExecutionArn(cumulusMessage),
+        cumulus_version: getMessageCumulusVersion(cumulusMessage),
+      });
+    return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
+  });
 };
 
-const shouldWritePdrToRDS = async (cumulusMessage, knex) => {
-  try {
-    const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-    if (!isExecutionPostDeployment) return isExecutionPostDeployment;
-
-    const results = await Promise.all([
-      hasNoCollectionOrExists(cumulusMessage, knex),
-      hasNoProviderOrExists(cumulusMessage, knex),
-    ]);
-    return results.every((result) => result === true);
-  } catch (error) {
-    log.error(error);
-    return false;
-  }
+const shouldWritePdrToRDS = async (
+  isExecutionPostDeployment,
+  isExecutionRDSWriteEnabled,
+  collection,
+  provider
+) => {
+  if (!isExecutionPostDeployment) return false;
+  if (!isExecutionRDSWriteEnabled) return false;
+  if (!collection || !provider) return false;
+  return true;
 };
 
-const savePdr = async (cumulusMessage, knex) => {
+const savePdr = async (
+  cumulusMessage,
+  isPdrRDSWriteEnabled,
+  collection,
+  provider,
+  knex
+) => {
   const pdrModel = new Pdr();
-  const executionArn = getMessageExecutionArn(cumulusMessage);
 
-  const isRDSWriteEnabled = await shouldWritePdrToRDS(cumulusMessage, knex);
-
-  if (!isRDSWriteEnabled) {
+  if (!isPdrRDSWriteEnabled) {
     return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
   }
 
-  try {
-    return await knex.transaction(async (trx) => {
-      await trx(tableNames.pdrs)
-        .insert({
-          arn: executionArn,
-          cumulus_version: getMessageCumulusVersion(cumulusMessage),
-        });
-      return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
-    });
-  } catch (error) {
-    log.error(`Failed to write PDR records for ${executionArn}`, error);
-    throw error;
-  }
+  return knex.transaction(async (trx) => {
+    await trx(tableNames.pdrs)
+      .insert({
+        name: getMessagePdrName(cumulusMessage),
+        status: getWorkflowStatus(cumulusMessage),
+        collectionCumulusId: collection.cumulusId,
+        providerCumulusId: provider.cumulusId,
+      });
+    return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+  });
 };
 
 const saveGranulesToDb = async (cumulusMessage) => {
@@ -166,18 +174,39 @@ const saveRecords = async (cumulusMessage, knex) => {
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
   const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+  const [collection, provider] = await Promise.allSettled([
+    knex(tableNames.collections).where(
+      getCollectionNameAndVersionFromMessage(cumulusMessage)
+    ).first(),
+    knex(tableNames.providers).where({
+      name: getMessageProviderId(cumulusMessage),
+    }).first(),
+  ]);
+
   const isExecutionRDSWriteEnabled = await shouldWriteExecutionToRDS(
     cumulusMessage,
     isExecutionPostDeployment,
     knex
   );
+  const isPdrRDSWriteEnabled = await shouldWritePdrToRDS(
+    isExecutionPostDeployment,
+    isExecutionRDSWriteEnabled,
+    collection,
+    provider
+  );
 
   try {
-    return await knex.transaction(async (trx) => {
-      await saveExecution(cumulusMessage, isExecutionRDSWriteEnabled, trx);
-    });
+    await saveExecution(cumulusMessage, isExecutionRDSWriteEnabled, knex);
+    // PDR write only attempted if execution saved
+    await savePdr(
+      cumulusMessage,
+      isPdrRDSWriteEnabled,
+      collection,
+      provider,
+      knex
+    );
   } catch (error) {
-    log.error(`Failed to write PDR records for ${executionArn}`, error);
+    log.error(`Failed to write records for ${executionArn}`, error);
     throw error;
   }
 };
@@ -195,16 +224,14 @@ const handler = async (event) => {
   return Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
-    await saveRecords(cumulusMessage, knex);
-    const results = await Promise.allSettled([
-      savePdr(cumulusMessage, knex),
-      saveGranulesToDb(cumulusMessage),
-    ]);
-    if (results.some((result) => result.status === 'rejected')) {
+
+    try {
+      await saveRecords(cumulusMessage, knex);
+      return await saveGranulesToDb(cumulusMessage);
+    } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
-    return results;
   }));
 };
 
