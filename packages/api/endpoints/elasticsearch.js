@@ -3,7 +3,7 @@
 const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
-const { getKnexConfig, localStackConnectionEnv } = require('@cumulus/db');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -205,9 +205,8 @@ async function indexFromDatabase(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
-  const knexConfig = await getKnexConfig({
-    env: { ...localStackConnectionEnv, ...process.env },
-  });
+  const knexConfig = { ...localStackConnectionEnv, ...process.env };
+
   await createIndex(esClient, indexName)
     .catch((error) => {
       if (!(error instanceof IndexExistsError)) throw error;

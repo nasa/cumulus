@@ -1,8 +1,12 @@
 'use strict';
 
+const Logger = require('@cumulus/logger');
 const router = require('express-promise-router')();
 const asyncOperations = require('@cumulus/async-operations');
 const { getKnexConfig, localStackConnectionEnv } = require('@cumulus/db');
+const { logger } = require('handlebars');
+
+const coreLogger = new Logger();
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
@@ -29,9 +33,10 @@ async function startKinesisReplayAsyncOperation(req, res) {
     return res.boom.badRequest('kinesisStream is required for kinesis-type replay');
   }
 
-  const knexConfig = await getKnexConfig({
-    env: { ...localStackConnectionEnv, ...process.env },
-  }); // TODO make sure the api lambda has the right secrets config
+  const knexConfig = { ...localStackConnectionEnv, ...process.env };
+
+  coreLogger.info(JSON.stringify({ ...localStackConnectionEnv, ...process.env }));
+
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
@@ -44,7 +49,7 @@ async function startKinesisReplayAsyncOperation(req, res) {
     stackName,
     systemBucket,
     useLambdaEnvironmentVariables: true,
-  }, asyncOperationModel);
+  }, AsyncOperation);
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 

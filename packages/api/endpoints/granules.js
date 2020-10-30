@@ -3,7 +3,7 @@
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
-const { getKnexConfig, localStackConnectionEnv } = require('@cumulus/db');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -242,13 +242,7 @@ async function bulkOperations(req, res) {
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
 
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName, systemBucket, tableName,
-  });
-
-  const knexConfig = await getKnexConfig({
-    env: { ...localStackConnectionEnv, ...process.env },
-  });
+  const knexConfig = { ...localStackConnectionEnv, ...process.env };
 
   let description;
   if (payload.query) {
@@ -283,7 +277,7 @@ async function bulkOperations(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig,
-  }, asyncOperationModel);
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
@@ -306,13 +300,7 @@ async function bulkDelete(req, res) {
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
 
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName, systemBucket, tableName,
-  });
-
-  const knexConfig = await getKnexConfig({
-    env: { ...localStackConnectionEnv, ...process.env },
-  });
+  const knexConfig = { ...localStackConnectionEnv, ...process.env };
 
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
@@ -345,7 +333,7 @@ async function bulkDelete(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig,
-  }, asyncOperationModel);
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
@@ -356,13 +344,7 @@ async function bulkReingest(req, res) {
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
 
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName, systemBucket, tableName,
-  });
-
-  const knexConfig = await getKnexConfig({
-    env: { ...localStackConnectionEnv, ...process.env },
-  });
+  const knexConfig = { ...localStackConnectionEnv, ...process.env };
 
   const numOfGranules = (payload.query && payload.query.size)
     || (payload.ids && payload.ids.length);
@@ -392,7 +374,7 @@ async function bulkReingest(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig,
-  }, asyncOperationModel);
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }

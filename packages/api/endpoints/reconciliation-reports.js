@@ -122,10 +122,7 @@ async function createReport(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
-  const knexConfig = await getKnexConfig({
-    env: { ...localStackConnectionEnv, ...process.env },
-  });
-
+  const knexConfig = { ...localStackConnectionEnv, ...process.env };
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
@@ -133,10 +130,6 @@ async function createReport(req, res) {
     logger.error(error);
     return res.boom.badRequest(error.message, error);
   }
-
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName, systemBucket, tableName,
-  });
 
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
@@ -150,7 +143,7 @@ async function createReport(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig,
-  }, asyncOperationModel);
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
