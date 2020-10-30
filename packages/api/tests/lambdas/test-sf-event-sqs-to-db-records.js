@@ -810,6 +810,35 @@ test('saveRecords() only writes records to Dynamo if cumulus version is less tha
   // Add assertion for granule
 });
 
+test('saveRecords() does not write PDR if execution write fails', async (t) => {
+  const {
+    cumulusMessage,
+    executionModel,
+    pdrModel,
+    knex,
+    executionArn,
+    pdrName,
+  } = t.context;
+
+  delete cumulusMessage.meta.provider;
+
+  await t.throwsAsync(saveRecords(cumulusMessage, knex));
+
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.false(await pdrModel.exists({ pdrName }));
+
+  t.true(
+    await doesRecordExist({
+      arn: executionArn,
+    }, knex, tableNames.executions)
+  );
+  t.false(
+    await doesRecordExist({
+      name: pdrName,
+    }, knex, tableNames.pdrs)
+  );
+});
+
 test('saveRecords() writes records to Dynamo and RDS if cumulus version is less than RDS deployment version', async (t) => {
   const {
     cumulusMessage,
