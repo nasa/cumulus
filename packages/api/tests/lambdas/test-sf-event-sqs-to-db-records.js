@@ -32,8 +32,8 @@ const {
   isPostRDSDeploymentExecution,
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
-  hasNoCollectionOrExists,
-  hasNoProviderOrExists,
+  getMessageCollection,
+  getMessageProvider,
   shouldWriteExecutionToRDS,
   saveExecutionViaTransaction,
   saveGranulesToDb,
@@ -305,86 +305,63 @@ test.serial('hasNoAsyncOpOrExists returns false if async operation does not exis
   t.true(doesRecordExistStub.called);
 });
 
-test('hasNoCollectionOrExists returns true if there is no collection', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  t.true(await hasNoCollectionOrExists({}, knex));
-  t.false(doesRecordExistStub.called);
+test('getMessageCollection returns correct collection', async (t) => {
+  const { collection, cumulusMessage } = t.context;
+
+  const fakeKnex = () => ({
+    where: (params) => ({
+      first: async () => {
+        if (params.name === collection.name
+            && params.version === collection.version) {
+          return {
+            cumulusId: 5,
+          };
+        }
+        return undefined;
+      },
+    }),
+  });
+
+  t.deepEqual(
+    await getMessageCollection(cumulusMessage, fakeKnex),
+    {
+      cumulusId: 5,
+    }
+  );
 });
 
-test.serial('hasNoCollectionOrExists returns true if collection exists', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const collection = {
-    name: cryptoRandomString({ length: 10 }),
-    version: '0.0.0',
-  };
-
-  doesRecordExistStub.withArgs(collection).resolves(true);
-
-  t.true(await hasNoCollectionOrExists({
-    meta: {
-      collection,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
+test('getMessageCollection returns undefined if collection cannot be found', async (t) => {
+  const { knex } = t.context;
+  t.is(await getMessageCollection({}, knex), undefined);
 });
 
-test.serial('hasNoCollectionOrExists returns false if collection does not exist', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const collection = {
-    name: cryptoRandomString({ length: 10 }),
-    version: '0.0.0',
-  };
+test('getMessageProvider returns correct provider', async (t) => {
+  const { cumulusMessage, provider } = t.context;
 
-  doesRecordExistStub.withArgs(collection).resolves(false);
+  const fakeKnex = () => ({
+    where: (params) => ({
+      first: async () => {
+        if (params.name === provider.id) {
+          return {
+            cumulusId: 234,
+          };
+        }
+        return undefined;
+      },
+    }),
+  });
 
-  t.false(await hasNoCollectionOrExists({
-    meta: {
-      collection,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
+  t.deepEqual(
+    await getMessageProvider(cumulusMessage, fakeKnex),
+    {
+      cumulusId: 234,
+    }
+  );
 });
 
-test('hasNoProviderOrExists returns true if there is no provider', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  t.true(await hasNoProviderOrExists({}, knex));
-  t.false(doesRecordExistStub.called);
-});
-
-test('hasNoProviderOrExists returns true if there provider exists', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const provider = {
-    id: cryptoRandomString({ length: 10 }),
-  };
-
-  doesRecordExistStub.withArgs({
-    name: provider.id,
-  }).resolves(true);
-
-  t.true(await hasNoProviderOrExists({
-    meta: {
-      provider,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
-});
-
-test('hasNoProviderOrExists returns false if provider does not exist', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const provider = {
-    id: cryptoRandomString({ length: 10 }),
-  };
-
-  doesRecordExistStub.withArgs({
-    name: provider.id,
-  }).resolves(false);
-
-  t.false(await hasNoProviderOrExists({
-    meta: {
-      provider,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
+test('getMessageProvider returns undefined if provider cannot be found', async (t) => {
+  const { knex } = t.context;
+  t.is(await getMessageProvider({}, knex), undefined);
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {

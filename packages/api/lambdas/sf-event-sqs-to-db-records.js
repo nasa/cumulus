@@ -66,36 +66,49 @@ const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
   }, knex, tableNames.asyncOperations);
 };
 
-const hasNoCollectionOrExists = async (cumulusMessage, knex) => {
-  const collectionInfo = getCollectionNameAndVersionFromMessage(cumulusMessage);
-  if (!collectionInfo) {
-    return true;
+const getMessageCollection = async (cumulusMessage, knex) => {
+  try {
+    const collectionNameAndVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
+    if (!collectionNameAndVersion) {
+      throw new Error('Could not find collection name/version in message');
+    }
+    return await knex(tableNames.collections).where(
+      collectionNameAndVersion
+    ).first();
+  } catch (error) {
+    log.error(error);
+    return undefined;
   }
-  return doesRecordExist(collectionInfo, knex, tableNames.collections);
 };
 
-const hasNoProviderOrExists = async (cumulusMessage, knex) => {
-  const providerId = getMessageProviderId(cumulusMessage);
-  if (!providerId) {
-    return true;
+const getMessageProvider = async (cumulusMessage, knex) => {
+  try {
+    const providerId = getMessageProviderId(cumulusMessage);
+    if (!providerId) {
+      throw new Error('Could not find provider ID in message');
+    }
+    return await knex(tableNames.providers).where({
+      name: getMessageProviderId(cumulusMessage),
+    }).first();
+  } catch (error) {
+    log.error(error);
+    return undefined;
   }
-  return doesRecordExist({
-    name: providerId,
-  }, knex, tableNames.providers);
 };
 
 const shouldWriteExecutionToRDS = async (
   cumulusMessage,
   isExecutionPostDeployment,
+  collection,
   knex
 ) => {
   try {
     if (!isExecutionPostDeployment) return false;
+    if (!collection) return false;
 
     const results = await Promise.all([
       hasNoParentExecutionOrExists(cumulusMessage, knex),
       hasNoAsyncOpOrExists(cumulusMessage, knex),
-      hasNoCollectionOrExists(cumulusMessage, knex),
     ]);
     return results.every((result) => result === true);
   } catch (error) {
@@ -170,18 +183,11 @@ const saveRecords = async (cumulusMessage, knex) => {
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
   const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-  const [collection, provider] = await Promise.allSettled([
-    knex(tableNames.collections).where(
-      getCollectionNameAndVersionFromMessage(cumulusMessage)
-    ).first(),
-    knex(tableNames.providers).where({
-      name: getMessageProviderId(cumulusMessage),
-    }).first(),
-  ]);
-
+  const collection = await getMessageCollection(cumulusMessage, knex);
   const isExecutionRDSWriteEnabled = await shouldWriteExecutionToRDS(
     cumulusMessage,
     isExecutionPostDeployment,
+    collection,
     knex
   );
 
@@ -190,6 +196,8 @@ const saveRecords = async (cumulusMessage, knex) => {
   if (!isExecutionRDSWriteEnabled) {
     return saveRecordsToDynamoDb(cumulusMessage);
   }
+
+  const provider = await getMessageProvider(cumulusMessage, knex);
 
   try {
     await saveExecutionViaTransaction(cumulusMessage, knex);
@@ -238,8 +246,8 @@ module.exports = {
   isPostRDSDeploymentExecution,
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
-  hasNoCollectionOrExists,
-  hasNoProviderOrExists,
+  getMessageCollection,
+  getMessageProvider,
   shouldWriteExecutionToRDS,
   saveExecutionViaTransaction,
   saveGranulesToDb,
