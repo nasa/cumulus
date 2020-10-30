@@ -185,6 +185,13 @@ test.beforeEach(async (t) => {
   await t.context.knex(tableNames.collections)
     .insert(t.context.collection);
 
+  await t.context.knex(tableNames.providers)
+    .insert({
+      name: t.context.provider.id,
+      host: t.context.provider.host,
+      protocol: t.context.provider.protocol,
+    });
+
   t.context.doesRecordExistStub = stubRecordExists;
   t.context.doesRecordExistStub.resetHistory();
 });
