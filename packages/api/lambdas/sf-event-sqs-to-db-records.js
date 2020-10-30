@@ -152,8 +152,9 @@ const savePdr = async ({
   collection,
   provider,
   knex,
+  pdrModel = new Pdr(),
 }) => {
-  const pdrModel = new Pdr();
+  // const pdrModel = new Pdr();
 
   return knex.transaction(async (trx) => {
     await savePdrViaTransaction({ cumulusMessage, collection, provider, trx });

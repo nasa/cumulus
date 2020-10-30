@@ -603,6 +603,96 @@ test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', a
   );
 });
 
+test('savePdr() does not persist records Dynamo or RDS if Dynamo write fails', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+  } = t.context;
+
+  const pdr = {
+    name: randomString(),
+    PANSent: false,
+    PANmessage: 'test',
+  };
+  cumulusMessage.payload = {
+    pdr,
+  };
+
+  const fakePdrModel = {
+    storePdrFromCumulusMessage: () => {
+      throw new Error('PDR dynamo error');
+    },
+  };
+
+  await t.throwsAsync(
+    savePdr({
+      cumulusMessage,
+      collection: { cumulusId: collectionCumulusId },
+      provider: { cumulusId: providerCumulusId },
+      knex,
+      pdrModel: fakePdrModel,
+    }),
+    { message: 'PDR dynamo error' }
+  );
+
+  t.false(await pdrModel.exists({ pdrName: pdr.name }));
+  t.false(
+    await doesRecordExist({
+      name: pdr.name,
+    }, knex, tableNames.pdrs)
+  );
+});
+
+test('savePdr() does not persist records Dynamo or RDS if RDS write fails', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+  } = t.context;
+
+  const pdr = {
+    name: randomString(),
+    PANSent: false,
+    PANmessage: 'test',
+  };
+  cumulusMessage.payload = {
+    pdr,
+  };
+
+  const fakeTrxCallback = (cb) => {
+    const fakeTrx = sinon.stub().returns({
+      insert: () => {
+        throw new Error('PDR RDS error');
+      },
+    });
+    return cb(fakeTrx);
+  };
+  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
+  t.teardown(() => trxStub.restore());
+
+  await t.throwsAsync(
+    savePdr({
+      cumulusMessage,
+      collection: { cumulusId: collectionCumulusId },
+      provider: { cumulusId: providerCumulusId },
+      knex,
+    }),
+    { message: 'PDR RDS error' }
+  );
+
+  t.false(await pdrModel.exists({ pdrName: pdr.name }));
+  t.false(
+    await doesRecordExist({
+      name: pdr.name,
+    }, knex, tableNames.pdrs)
+  );
+});
+
 test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and pdr fail to write to database', async (t) => {
   const {
     cumulusMessage,
