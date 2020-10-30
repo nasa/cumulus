@@ -104,12 +104,8 @@ const shouldWriteExecutionToRDS = async (
   }
 };
 
-const saveExecution = async (cumulusMessage, isExecutionRDSWriteEnabled, knex) => {
+const saveExecution = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
-
-  if (!isExecutionRDSWriteEnabled) {
-    return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
-  }
 
   return knex.transaction(async (trx) => {
     await trx(tableNames.executions)
@@ -121,30 +117,13 @@ const saveExecution = async (cumulusMessage, isExecutionRDSWriteEnabled, knex) =
   });
 };
 
-const shouldWritePdrToRDS = async (
-  isExecutionPostDeployment,
-  isExecutionRDSWriteEnabled,
-  collection,
-  provider
-) => {
-  if (!isExecutionPostDeployment) return false;
-  if (!isExecutionRDSWriteEnabled) return false;
-  if (!collection || !provider) return false;
-  return true;
-};
-
 const savePdr = async (
   cumulusMessage,
-  isPdrRDSWriteEnabled,
   collection,
   provider,
   knex
 ) => {
   const pdrModel = new Pdr();
-
-  if (!isPdrRDSWriteEnabled) {
-    return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
-  }
 
   return knex.transaction(async (trx) => {
     await trx(tableNames.pdrs)
@@ -170,6 +149,23 @@ const saveGranulesToDb = async (cumulusMessage) => {
   }
 };
 
+const saveRecordsToDynamoDb = async (cumulusMessage) => {
+  const executionModel = new Execution();
+  const pdrModel = new Pdr();
+
+  const results = await Promise.allSettled([
+    executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
+    pdrModel.storePdrFromCumulusMessage(cumulusMessage),
+  ]);
+  const failures = results.filter((result) => result.status === 'rejected');
+  if (failures.length > 0) {
+    const allFailures = failures.map((failure) => failure.reason);
+    log.error(allFailures.join(' '));
+    throw new Error('Failed writing some records to Dynamo');
+  }
+  return results;
+};
+
 const saveRecords = async (cumulusMessage, knex) => {
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
@@ -188,23 +184,25 @@ const saveRecords = async (cumulusMessage, knex) => {
     isExecutionPostDeployment,
     knex
   );
-  const isPdrRDSWriteEnabled = await shouldWritePdrToRDS(
-    isExecutionPostDeployment,
-    isExecutionRDSWriteEnabled,
-    collection,
-    provider
-  );
+
+  // If execution is not written to RDS, then PDRs/granules which reference
+  // execution should not be written to RDS either
+  if (!isExecutionRDSWriteEnabled) {
+    return saveRecordsToDynamoDb(cumulusMessage);
+  }
 
   try {
-    await saveExecution(cumulusMessage, isExecutionRDSWriteEnabled, knex);
+    await saveExecution(cumulusMessage, knex);
     // PDR write only attempted if execution saved
-    await savePdr(
-      cumulusMessage,
-      isPdrRDSWriteEnabled,
-      collection,
-      provider,
-      knex
-    );
+    if (collection && provider) {
+      await savePdr(
+        cumulusMessage,
+        collection,
+        provider,
+        knex
+      );
+    }
+    return true;
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
     throw error;
