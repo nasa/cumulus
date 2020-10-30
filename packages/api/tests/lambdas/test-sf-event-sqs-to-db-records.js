@@ -33,9 +33,9 @@ const {
   getMessageCollection,
   getMessageProvider,
   shouldWriteExecutionToRDS,
-  saveExecutionViaTransaction,
+  saveExecution,
   saveGranulesToDb,
-  savePdrViaTransaction,
+  savePdr,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: async (queue, message) => [queue, message],
@@ -440,7 +440,7 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   );
 });
 
-test('saveExecutionViaTransaction() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
+test('saveExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -448,7 +448,7 @@ test('saveExecutionViaTransaction() saves execution to Dynamo and RDS if write t
     executionArn,
   } = t.context;
 
-  await saveExecutionViaTransaction(cumulusMessage, knex);
+  await saveExecution(cumulusMessage, knex);
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
@@ -458,7 +458,7 @@ test('saveExecutionViaTransaction() saves execution to Dynamo and RDS if write t
   );
 });
 
-test.serial('saveExecutionViaTransaction() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -466,17 +466,17 @@ test.serial('saveExecutionViaTransaction() does not persist records to Dynamo or
     executionArn,
   } = t.context;
 
-  const saveExecutionViaTransactionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
+  const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
     .callsFake(() => {
       throw new Error('fake error');
     });
   const trxSpy = sinon.spy(knex, 'transaction');
   t.teardown(() => {
-    saveExecutionViaTransactionStub.restore();
+    saveExecutionStub.restore();
     trxSpy.restore();
   });
 
-  await t.throwsAsync(saveExecutionViaTransaction(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution(cumulusMessage, knex));
   t.true(trxSpy.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
@@ -486,7 +486,7 @@ test.serial('saveExecutionViaTransaction() does not persist records to Dynamo or
   );
 });
 
-test.serial('saveExecutionViaTransaction() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -505,7 +505,7 @@ test.serial('saveExecutionViaTransaction() does not persist records to Dynamo or
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(saveExecutionViaTransaction(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution(cumulusMessage, knex));
   t.true(trxStub.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
@@ -570,7 +570,7 @@ test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusM
   }
 });
 
-test('savePdrViaTransaction() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
+test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -586,7 +586,7 @@ test('savePdrViaTransaction() saves a PDR record to Dynamo and RDS if RDS write 
     pdr,
   };
 
-  await savePdrViaTransaction(
+  await savePdr(
     cumulusMessage,
     { cumulusId: 1 },
     { cumulusId: 2 },

@@ -117,15 +117,18 @@ const shouldWriteExecutionToRDS = async (
   }
 };
 
-const saveExecutionViaTransaction = async (cumulusMessage, knex) => {
+const saveExecutionViaTransaction = async (cumulusMessage, trx) =>
+  trx(tableNames.executions)
+    .insert({
+      arn: getMessageExecutionArn(cumulusMessage),
+      cumulus_version: getMessageCumulusVersion(cumulusMessage),
+    });
+
+const saveExecution = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
 
   return knex.transaction(async (trx) => {
-    await trx(tableNames.executions)
-      .insert({
-        arn: getMessageExecutionArn(cumulusMessage),
-        cumulus_version: getMessageCumulusVersion(cumulusMessage),
-      });
+    await saveExecutionViaTransaction(cumulusMessage, trx);
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   });
 };
@@ -134,18 +137,26 @@ const savePdrViaTransaction = async (
   cumulusMessage,
   collection,
   provider,
+  trx
+) =>
+  trx(tableNames.pdrs)
+    .insert({
+      name: getMessagePdrName(cumulusMessage),
+      status: getWorkflowStatus(cumulusMessage),
+      collectionCumulusId: collection.cumulusId,
+      providerCumulusId: provider.cumulusId,
+    });
+
+const savePdr = async (
+  cumulusMessage,
+  collection,
+  provider,
   knex
 ) => {
   const pdrModel = new Pdr();
 
   return knex.transaction(async (trx) => {
-    await trx(tableNames.pdrs)
-      .insert({
-        name: getMessagePdrName(cumulusMessage),
-        status: getWorkflowStatus(cumulusMessage),
-        collectionCumulusId: collection.cumulusId,
-        providerCumulusId: provider.cumulusId,
-      });
+    await savePdrViaTransaction(cumulusMessage, collection, provider, trx);
     return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
   });
 };
@@ -247,7 +258,7 @@ module.exports = {
   getMessageCollection,
   getMessageProvider,
   shouldWriteExecutionToRDS,
-  saveExecutionViaTransaction,
+  saveExecution,
   saveGranulesToDb,
-  savePdrViaTransaction,
+  savePdr,
 };
