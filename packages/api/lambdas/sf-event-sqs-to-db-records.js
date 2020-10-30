@@ -9,6 +9,7 @@ const {
   getKnexClient,
   tableNames,
   doesRecordExist,
+  isRecordDefined,
 } = require('@cumulus/db');
 const {
   getMessageAsyncOperationId,
@@ -105,7 +106,7 @@ const shouldWriteExecutionToRDS = async (
   try {
     const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
     if (!isExecutionPostDeployment) return false;
-    if (!collection) return false;
+    if (!isRecordDefined(collection)) return false;
 
     const results = await Promise.all([
       hasNoParentExecutionOrExists(cumulusMessage, knex),
@@ -160,10 +161,10 @@ const savePdr = async ({
   if (!messageHasPdr(cumulusMessage)) {
     return true;
   }
-  if (!collection) {
+  if (!isRecordDefined(collection)) {
     throw new Error(`Collection reference is required for a PDR, got ${collection}`);
   }
-  if (!provider) {
+  if (!isRecordDefined(provider)) {
     throw new Error(`Provider reference is required for a PDR, got ${provider}`);
   }
   return knex.transaction(async (trx) => {
