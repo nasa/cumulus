@@ -36,7 +36,6 @@ const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
-const { granule } = require('../models/schemas');
 
 const isPostRDSDeploymentExecution = (cumulusMessage) => {
   const minimumSupportedRDSVersion = process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
@@ -158,7 +157,7 @@ const savePdr = async ({
   knex,
   pdrModel = new Pdr(),
 }) => {
-  // If there is no PDR message, then there's nothing to do here, which is fine
+  // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
     return true;
   }
