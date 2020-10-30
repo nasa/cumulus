@@ -104,7 +104,7 @@ const shouldWriteExecutionToRDS = async (
   }
 };
 
-const saveExecution = async (cumulusMessage, knex) => {
+const saveExecutionViaTransaction = async (cumulusMessage, knex) => {
   const executionModel = new Execution();
 
   return knex.transaction(async (trx) => {
@@ -117,7 +117,7 @@ const saveExecution = async (cumulusMessage, knex) => {
   });
 };
 
-const savePdr = async (
+const savePdrViaTransaction = async (
   cumulusMessage,
   collection,
   provider,
@@ -192,10 +192,10 @@ const saveRecords = async (cumulusMessage, knex) => {
   }
 
   try {
-    await saveExecution(cumulusMessage, knex);
+    await saveExecutionViaTransaction(cumulusMessage, knex);
     // PDR write only attempted if execution saved
     if (collection && provider) {
-      await savePdr(
+      await savePdrViaTransaction(
         cumulusMessage,
         collection,
         provider,
@@ -241,7 +241,7 @@ module.exports = {
   hasNoCollectionOrExists,
   hasNoProviderOrExists,
   shouldWriteExecutionToRDS,
-  saveExecution,
+  saveExecutionViaTransaction,
   saveGranulesToDb,
-  savePdr,
+  savePdrViaTransaction,
 };
