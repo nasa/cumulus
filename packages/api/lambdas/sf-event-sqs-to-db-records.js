@@ -147,20 +147,17 @@ const savePdrViaTransaction = async ({
       providerCumulusId: provider.cumulusId,
     });
 
-const savePdr = async ({
+const savePdr = ({
   cumulusMessage,
   collection,
   provider,
   knex,
   pdrModel = new Pdr(),
-}) => {
-  // const pdrModel = new Pdr();
-
-  return knex.transaction(async (trx) => {
+}) =>
+  knex.transaction(async (trx) => {
     await savePdrViaTransaction({ cumulusMessage, collection, provider, trx });
     return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
   });
-};
 
 const saveGranulesToDb = async (cumulusMessage) => {
   const granuleModel = new Granule();
