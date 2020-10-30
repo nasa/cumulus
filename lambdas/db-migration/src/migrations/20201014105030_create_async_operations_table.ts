@@ -14,7 +14,15 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('description for async operation')
       .notNullable();
     table
-      .enum('operationType', ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Kinesis Replay', 'Reconciliation Report'])
+      .enum('operationType',
+        [
+          'ES Index',
+          'Bulk Granules',
+          'Bulk Granules Ingest',
+          'Bulk Granule Delete',
+          'Kinesis Replay',
+          'Reconciliation Report',
+        ])
       .comment('type of async operation')
       .notNullable();
     table
