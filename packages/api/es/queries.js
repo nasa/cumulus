@@ -104,9 +104,11 @@ const build = {
       fieldName = match[1];
     }
 
+    const fieldTerm = convertTextField(fieldName);
+
     return {
       match: {
-        [fieldName]: i.value,
+        [fieldTerm]: i.value,
       },
     };
   }),
