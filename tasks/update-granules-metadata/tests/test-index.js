@@ -96,7 +96,7 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('Should add etag to each CMR metadata file by checking that etag is one of more characters not whitespace', async (t) => {
+test.serial('Should add etag to each CMR metadata file by checking that etag is one or more characters, not whitespace', async (t) => {
   const newPayload = buildPayload(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
@@ -122,7 +122,7 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   t.not(newEtag, previousEtag);
 });
 
-test.serial('Updated-granules-metadata throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
+test.serial('Update-granules-metadata throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
   const newPayload = buildPayload(t);
   delete newPayload.config.distribution_endpoint;
 
