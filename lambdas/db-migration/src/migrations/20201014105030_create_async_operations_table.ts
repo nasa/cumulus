@@ -18,7 +18,7 @@ export const up = async (knex: Knex): Promise<void> =>
         [
           'ES Index',
           'Bulk Granules',
-          'Bulk Granules Ingest',
+          'Bulk Granules Reingest',
           'Bulk Granule Delete',
           'Kinesis Replay',
           'Reconciliation Report',
