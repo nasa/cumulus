@@ -64,7 +64,7 @@ export const startECSTask = async ({
     { name: 'lambdaName', value: lambdaName },
     { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` },
   ] as EnvironmentVariables[];
-  let taskVars;
+  let taskVars = envVars;
 
   if (useLambdaEnvironmentVariables) {
     const lambdaVars = await getLambdaEnvironmentVariables(lambdaName);
@@ -112,7 +112,7 @@ export const startAsyncOperation = async (params: { // fix input params to match
   stackName: string,
   dynamoTableName: string,
   useLambdaEnvironmentVariables?: string,
-  knexConfig: NodeJS.ProcessEnv,
+  knexConfig?: NodeJS.ProcessEnv,
 }, AsyncOperation: new(params: { stackName: string, systemBucket: string, tableName?: string })
   => AsyncOperationsDynamoModel
 ): Promise<unknown> => { // Update this return typing to match Mark's db typings
@@ -123,7 +123,7 @@ export const startAsyncOperation = async (params: { // fix input params to match
     systemBucket,
     stackName,
     dynamoTableName,
-    knexConfig,
+    knexConfig = process.env,
   } = params;
 
   // Create the record in the database
