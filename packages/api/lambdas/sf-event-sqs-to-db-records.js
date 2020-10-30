@@ -36,6 +36,7 @@ const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
+const { granule } = require('../models/schemas');
 
 const isPostRDSDeploymentExecution = (cumulusMessage) => {
   const minimumSupportedRDSVersion = process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
@@ -188,10 +189,12 @@ const saveGranulesToDb = async (cumulusMessage) => {
 const saveRecordsToDynamoDb = async (cumulusMessage) => {
   const executionModel = new Execution();
   const pdrModel = new Pdr();
+  const granuleModel = new Granule();
 
   const results = await Promise.allSettled([
     executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
     pdrModel.storePdrFromCumulusMessage(cumulusMessage),
+    granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
   ]);
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {
@@ -226,12 +229,13 @@ const saveRecords = async (cumulusMessage, knex) => {
       knex,
     });
     // PDR write only attempted if execution saved
-    return await savePdr({
+    await savePdr({
       cumulusMessage,
       collection,
       provider,
       knex,
     });
+    return await saveGranulesToDb(cumulusMessage);
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
     throw error;
@@ -254,7 +258,6 @@ const handler = async (event) => {
 
     try {
       await saveRecords(cumulusMessage, knex);
-      return await saveGranulesToDb(cumulusMessage);
     } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
@@ -273,4 +276,5 @@ module.exports = {
   saveExecution,
   saveGranulesToDb,
   savePdr,
+  saveRecords,
 };

@@ -36,6 +36,7 @@ const {
   saveExecution,
   saveGranulesToDb,
   savePdr,
+  saveRecords,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: async (queue, message) => [queue, message],
@@ -73,17 +74,6 @@ const runHandler = async (cumulusMessage = {}) => {
   fixture.detail.stateMachineArn = stateMachineArn;
   fixture.detail.name = executionName;
 
-  const granuleId = randomString();
-  const files = [fakeFileFactory()];
-  const granule = fakeGranuleFactoryV2({ files, granuleId });
-
-  cumulusMessage.payload.granules = [granule];
-
-  const pdrName = randomString();
-  cumulusMessage.payload.pdr = {
-    name: pdrName,
-  };
-
   fixture.detail.input = JSON.stringify(cumulusMessage);
 
   const sqsEvent = {
@@ -94,7 +84,7 @@ const runHandler = async (cumulusMessage = {}) => {
     env: localStackConnectionEnv,
   };
   const handlerResponse = await handler(sqsEvent);
-  return { executionArn, granuleId, pdrName, handlerResponse, sqsEvent };
+  return { executionArn, handlerResponse, sqsEvent };
 };
 
 const generateRDSCollectionRecord = (params) => ({
@@ -157,11 +147,16 @@ test.beforeEach(async (t) => {
     protocol: 's3',
   };
 
+  t.context.pdrName = cryptoRandomString({ length: 10 });
   t.context.pdr = {
-    name: randomString(),
+    name: t.context.pdrName,
     PANSent: false,
     PANmessage: 'test',
   };
+
+  t.context.granuleId = cryptoRandomString({ length: 10 });
+  const files = [fakeFileFactory()];
+  const granule = fakeGranuleFactoryV2({ files, granuleId: t.context.granuleId });
 
   t.context.cumulusMessage = {
     cumulus_meta: {
@@ -180,6 +175,7 @@ test.beforeEach(async (t) => {
     payload: {
       key: 'my-payload',
       pdr: t.context.pdr,
+      granules: [granule],
     },
   };
 
@@ -423,6 +419,7 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
     doesRecordExistStub,
     cumulusMessage,
     parentExecutionArn,
+    collectionCumulusId,
   } = t.context;
 
   doesRecordExistStub.withArgs({
@@ -430,7 +427,18 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
   }).throws();
 
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: 1 }, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: collectionCumulusId }, knex)
+  );
+});
+
+test('shouldWriteExecutionToRDS returns false if collection record is not defined', async (t) => {
+  const {
+    knex,
+    cumulusMessage,
+  } = t.context;
+
+  t.false(
+    await shouldWriteExecutionToRDS(cumulusMessage, undefined, knex)
   );
 });
 
@@ -440,6 +448,7 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
     doesRecordExistStub,
     cumulusMessage,
     asyncOperationId,
+    collectionCumulusId,
   } = t.context;
 
   doesRecordExistStub.withArgs({
@@ -447,7 +456,7 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   }).resolves(false);
 
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: 1 }, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: collectionCumulusId }, knex)
   );
 });
 
@@ -744,19 +753,19 @@ test('savePdr() does not persist records Dynamo or RDS if RDS write fails', asyn
   );
 });
 
-test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and pdr fail to write to database', async (t) => {
+test('Lambda sends message to DLQ when any write to database fails', async (t) => {
   const {
     cumulusMessage,
     executionModel,
     granuleModel,
     pdrModel,
+    granuleId,
+    pdrName,
   } = t.context;
 
   delete cumulusMessage.meta.collection;
   const {
     executionArn,
-    granuleId,
-    pdrName,
     handlerResponse,
     sqsEvent,
   } = await runHandler(cumulusMessage);
@@ -767,7 +776,7 @@ test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and p
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('Lambda writes records to Dynamo and not RDS if cumulus version is less than RDS deployment version', async (t) => {
+test('saveRecords() only writes records to Dynamo if cumulus version is less than RDS deployment version', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -775,11 +784,14 @@ test('Lambda writes records to Dynamo and not RDS if cumulus version is less tha
     pdrModel,
     knex,
     preRDSDeploymentVersion,
+    executionArn,
+    pdrName,
+    granuleId,
   } = t.context;
 
   cumulusMessage.cumulus_meta.cumulus_version = preRDSDeploymentVersion;
 
-  const { executionArn, granuleId, pdrName } = await runHandler(cumulusMessage);
+  await saveRecords(cumulusMessage, knex);
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await granuleModel.exists({ granuleId }));
@@ -795,5 +807,36 @@ test('Lambda writes records to Dynamo and not RDS if cumulus version is less tha
       name: pdrName,
     }, knex, tableNames.pdrs)
   );
-  // Add assertions for granule
+  // Add assertion for granule
+});
+
+test('saveRecords() writes records to Dynamo and RDS if cumulus version is less than RDS deployment version', async (t) => {
+  const {
+    cumulusMessage,
+    executionModel,
+    granuleModel,
+    pdrModel,
+    knex,
+    executionArn,
+    pdrName,
+    granuleId,
+  } = t.context;
+
+  await saveRecords(cumulusMessage, knex);
+
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await pdrModel.exists({ pdrName }));
+
+  t.true(
+    await doesRecordExist({
+      arn: executionArn,
+    }, knex, tableNames.executions)
+  );
+  t.true(
+    await doesRecordExist({
+      name: pdrName,
+    }, knex, tableNames.pdrs)
+  );
+  // Add assertion for granule
 });
