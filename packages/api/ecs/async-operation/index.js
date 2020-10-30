@@ -172,9 +172,11 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
   const dynamodb = new AWS.DynamoDB();
   try {
     return await knex.transaction(async (trx) => {
+      // TODO - what about upsert behavior here.   How do we even test this.
+      // Units ? Int test *cannot* directly check RDS
       await getDbTransaction(trx, asyncOperationsConfig)
-        .update({ // TODO - what about upsert behavior here.   How do we even test this.   Units?   Int test *cannot* check db
-          id: process.env.asyncOperationId,
+        .where({ id: process.env.asyncOperationId })
+        .update({
           status,
           output: dbOutput,
           updated_at: knex.raw(`to_timestamp(${updatedTime})`),
