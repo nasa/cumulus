@@ -22,7 +22,19 @@ interface MessageWithPdr extends Message.CumulusMessage {
  */
 export const getMessagePdr = (
   message: MessageWithPdr
-): object | undefined => message.payload?.pdr;
+): PDR | undefined => message.payload?.pdr;
+
+/**
+ * Determine if message has a PDR.
+ *
+ * @param {MessageWithPdr} message - A workflow message object
+ * @returns {boolean} true if message has a PDR
+ *
+ * @alias module:PDRs
+ */
+export const messageHasPdr = (
+  message: MessageWithPdr
+): boolean => getMessagePdr(message) !== undefined;
 
 /**
  * Get the PAN sent status from a PDR, if any.
@@ -58,4 +70,4 @@ export const getPdrPANMessage = (
  */
 export const getMessagePdrName = (
   message: MessageWithPdr
-): string | undefined => message.payload?.pdr?.name;
+): string | undefined => getMessagePdr(message)?.name;
