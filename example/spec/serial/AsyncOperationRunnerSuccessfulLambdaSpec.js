@@ -53,7 +53,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         Key: payloadKey,
         Body: JSON.stringify([1, 2, 3]),
       }).promise();
-      console.log(asyncOperationId);
 
       await asyncOperationModel.create({
         id: asyncOperationId,
