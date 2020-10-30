@@ -27,7 +27,6 @@ process.env.AccessTokensTable = randomId('tokenTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 
 let accessTokenModel;
-let authorizationUrl;
 
 // import the express app after setting the env variables
 // const { distributionApp } = require('../distribution');
@@ -39,21 +38,19 @@ const {
   s3credentials,
 } = require('..');
 
+const buildEarthdataLoginClient = () =>
+  new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: 'https://uat.urs.earthdata.nasa.gov',
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+  });
+
 test.before(async () => {
   accessTokenModel = new models.AccessToken('token');
   await accessTokenModel.createTable();
 
   const stubbedAccessToken = fakeAccessTokenFactory();
-
-  const buildEarthdataLoginClient = () =>
-    new EarthdataLoginClient({
-      clientId: process.env.EARTHDATA_CLIENT_ID,
-      clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-      earthdataLoginUrl: 'https://uat.urs.earthdata.nasa.gov',
-      redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-    });
-  const authUrl = urljoin(process.env.DISTRIBUTION_REDIRECT_ENDPOINT, '/s3credentials');
-  authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(authUrl);
 
   sinon.stub(
     EarthdataLoginClient.prototype,
@@ -66,7 +63,7 @@ test.after.always(async () => {
   sinon.reset();
 });
 
-test('An authorized s3credential requeste invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
+test('An authorized s3credential request invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
   const username = randomId('username');
   const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
 
@@ -108,6 +105,8 @@ test('An s3credential request without access Token redirects to Oauth2 provider.
     .get('/s3credentials')
     .set('Accept', 'application/json')
     .expect(307);
+  const authUrl = urljoin(process.env.DISTRIBUTION_REDIRECT_ENDPOINT, response.req.path);
+  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(authUrl);
 
   t.is(response.status, 307);
   t.is(response.headers.location, authorizationUrl);
@@ -124,6 +123,8 @@ test('An s3credential request with expired accessToken redirects to Oauth2 provi
     .set('Accept', 'application/json')
     .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
     .expect(307);
+  const authUrl = urljoin(process.env.DISTRIBUTION_REDIRECT_ENDPOINT, response.req.path);
+  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(authUrl);
 
   t.is(response.status, 307);
   t.is(response.headers.location, authorizationUrl);
