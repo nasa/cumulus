@@ -182,15 +182,19 @@ test.beforeEach(async (t) => {
     },
   });
 
-  await t.context.knex(tableNames.collections)
-    .insert(t.context.collection);
+  const collectionResponse = await t.context.knex(tableNames.collections)
+    .insert(t.context.collection)
+    .returning('cumulusId');
+  t.context.collectionCumulusId = collectionResponse[0];
 
-  await t.context.knex(tableNames.providers)
+  const providerResponse = await t.context.knex(tableNames.providers)
     .insert({
       name: t.context.provider.id,
       host: t.context.provider.host,
       protocol: t.context.provider.protocol,
-    });
+    })
+    .returning('cumulusId');
+  t.context.providerCumulusId = providerResponse[0];
 
   t.context.doesRecordExistStub = stubRecordExists;
   t.context.doesRecordExistStub.resetHistory();
@@ -571,6 +575,8 @@ test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', a
     cumulusMessage,
     pdrModel,
     knex,
+    collectionCumulusId,
+    providerCumulusId,
   } = t.context;
 
   const pdr = {
@@ -584,8 +590,8 @@ test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', a
 
   await savePdr(
     cumulusMessage,
-    { cumulusId: 1 },
-    { cumulusId: 2 },
+    { cumulusId: collectionCumulusId },
+    { cumulusId: providerCumulusId },
     knex
   );
 
