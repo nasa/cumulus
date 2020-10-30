@@ -31,6 +31,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
 
 ### Changed
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2228**
+    - Added logic to the `sfEventSqsToDbRecords` Lambda to conditionally write execution and PDR records to RDS in parallel with writes to Dynamo
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
 - **CUMULUS-2232**
