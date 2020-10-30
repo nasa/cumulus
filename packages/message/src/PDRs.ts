@@ -37,28 +37,28 @@ export const messageHasPdr = (
 ): boolean => getMessagePdr(message) !== undefined;
 
 /**
- * Get the PAN sent status from a PDR, if any.
+ * Get the PAN sent status from a workflow message, if any.
  *
- * @param {PDR} pdr - A PDR object
+ * @param {MessageWithPdr} message - A workflow message
  * @returns {boolean} The PAN sent status
  *
  * @alias module:PDRs
  */
-export const getPdrPANSent = (
-  pdr: PDR
-): boolean => pdr?.PANSent ?? false;
+export const getMessagePdrPANSent = (
+  message: MessageWithPdr
+): boolean => getMessagePdr(message)?.PANSent ?? false;
 
 /**
- * Get the PAN message status from a PDR, if any.
+ * Get the PAN message status from a workflow message, if any.
  *
- * @param {PDR} pdr - A PDR object
+ * @param {MessageWithPdr} message - A workflow message
  * @returns {string} The PAN message
  *
  * @alias module:PDRs
  */
-export const getPdrPANMessage = (
-  pdr: PDR
-): string => pdr?.PANmessage ?? 'N/A';
+export const getMessagePdrPANMessage = (
+  message: MessageWithPdr
+): string => getMessagePdr(message)?.PANmessage ?? 'N/A';
 
 /**
  * Get the PDR name from a workflow message, if any.

@@ -5,8 +5,8 @@ const test = require('ava');
 const {
   getMessagePdr,
   messageHasPdr,
-  getPdrPANSent,
-  getPdrPANMessage,
+  getMessagePdrPANSent,
+  getMessagePdrPANMessage,
 } = require('../PDRs');
 
 test('getMessagePdr returns correct PDR object', (t) => {
@@ -43,26 +43,38 @@ test('messageHasPdr correct returns false if there is no PDR', (t) => {
   }));
 });
 
-test('getPdrPANSent returns correct value', (t) => {
-  t.true(getPdrPANSent({
-    PANSent: true,
+test('getMessagePdrPANSent returns correct value', (t) => {
+  t.true(getMessagePdrPANSent({
+    payload: {
+      pdr: {
+        PANSent: true,
+      },
+    },
   }));
-  t.false(getPdrPANSent({
-    PANSent: false,
+  t.false(getMessagePdrPANSent({
+    payload: {
+      pdr: {
+        PANSent: false,
+      },
+    },
   }));
 });
 
-test('getPdrPANSent returns false if there is no PANsent value', (t) => {
-  t.false(getPdrPANSent({}));
+test('getMessagePdrPANSent returns false if there is no PANsent value', (t) => {
+  t.false(getMessagePdrPANSent({}));
 });
 
-test('getPdrPANMessage returns correct value', (t) => {
+test('getMessagePdrPANMessage returns correct value', (t) => {
   const PANmessage = 'message';
-  t.is(getPdrPANMessage({
-    PANmessage,
+  t.is(getMessagePdrPANMessage({
+    payload: {
+      pdr: {
+        PANmessage,
+      },
+    },
   }), PANmessage);
 });
 
-test('getPdrPANMessage returns "N/A" if there is no PANMessage value', (t) => {
-  t.is(getPdrPANMessage({}), 'N/A');
+test('getMessagePdrPANMessage returns "N/A" if there is no PANMessage value', (t) => {
+  t.is(getMessagePdrPANMessage({}), 'N/A');
 });
