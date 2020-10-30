@@ -470,15 +470,20 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     executionArn,
   } = t.context;
 
-  const saveExecutionStub = sinon.stub(Execution.prototype, 'storeExecutionFromCumulusMessage')
-    .callsFake(() => {
-      throw new Error('fake error');
-    });
-  t.teardown(() => {
-    saveExecutionStub.restore();
-  });
+  const fakeExecutionModel = {
+    storeExecutionFromCumulusMessage: () => {
+      throw new Error('execution Dynamo error');
+    },
+  };
 
-  await t.throwsAsync(saveExecution({ cumulusMessage, knex }));
+  await t.throwsAsync(
+    saveExecution({
+      cumulusMessage,
+      knex,
+      executionModel: fakeExecutionModel,
+    }),
+    { message: 'execution Dynamo error' }
+  );
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesRecordExist({
@@ -498,7 +503,7 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
   const fakeTrxCallback = (cb) => {
     const fakeTrx = sinon.stub().returns({
       insert: () => {
-        throw new Error('fake insert error');
+        throw new Error('execution RDS error');
       },
     });
     return cb(fakeTrx);
@@ -506,7 +511,10 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(saveExecution({ cumulusMessage, knex }));
+  await t.throwsAsync(
+    saveExecution({ cumulusMessage, knex }),
+    { message: 'execution RDS error' }
+  );
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesRecordExist({

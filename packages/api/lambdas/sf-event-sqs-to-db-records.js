@@ -124,14 +124,15 @@ const saveExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
       cumulus_version: getMessageCumulusVersion(cumulusMessage),
     });
 
-const saveExecution = async ({ cumulusMessage, knex }) => {
-  const executionModel = new Execution();
-
-  return knex.transaction(async (trx) => {
+const saveExecution = async ({
+  cumulusMessage,
+  knex,
+  executionModel = new Execution(),
+}) =>
+  knex.transaction(async (trx) => {
     await saveExecutionViaTransaction({ cumulusMessage, trx });
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   });
-};
 
 const savePdrViaTransaction = async ({
   cumulusMessage,
