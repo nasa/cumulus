@@ -7,7 +7,7 @@ module "ingest" {
 
   distribution_url = var.tea_external_api_endpoint
 
-  cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
+  cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 
   # Buckets config
   system_bucket = var.system_bucket

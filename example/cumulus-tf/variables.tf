@@ -25,8 +25,9 @@ variable "bucket_map_key" {
   default = null
 }
 
-variable "cumulus_message_adapter_lambda_layer_arn" {
-  type = string
+variable "cumulus_message_adapter_lambda_layer_version_arn" {
+  type        = string
+  description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
 }
 
 variable "cmr_oauth_provider" {
