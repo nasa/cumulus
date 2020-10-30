@@ -54,7 +54,7 @@ data "aws_ssm_parameter" "ecs_image_id" {
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 
-  cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
+  cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 
   prefix = var.prefix
 
