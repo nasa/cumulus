@@ -53,6 +53,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         Key: payloadKey,
         Body: JSON.stringify([1, 2, 3]),
       }).promise();
+      console.log(asyncOperationId);
 
       await asyncOperationModel.create({
         id: asyncOperationId,
@@ -109,14 +110,13 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
   it('updates the status field to "SUCCEEDED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(asyncOperation.status).toEqual('SUCCEEDED');
+    else expect(asyncOperation.status).toEqual('SUCCEEDED'); // TODO - This isn't actually the database.
   });
 
   it('updates the output field in DynamoDB', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);
-
       expect(parsedOutput).toEqual([1, 2, 3]);
     }
   });

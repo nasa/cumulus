@@ -1,5 +1,6 @@
 'use strict';
 
+const asyncOperations = require('@cumulus/async-operations');
 const { ecs } = require('@cumulus/aws-client/services');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
@@ -23,11 +24,9 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
 
       asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
 
-      asyncOperationModel = new AsyncOperation({
-        stackName: config.stackName,
-        systemBucket: config.bucket,
-        tableName: asyncOperationsTableName,
-      });
+      const stackName = config.stackName;
+      const systemBucket = config.bucket;
+      const dynamoTableName = asyncOperationsTableName;
 
       // Find the ARN of the cluster
       cluster = await getClusterArn(config.stackName);
@@ -39,14 +38,17 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       ({
         id: asyncOperationId,
         taskArn,
-      } = await asyncOperationModel.start({
+      } = await await asyncOperations.startAsyncOperation({
         asyncOperationTaskDefinition,
         cluster,
         lambdaName: 'does-not-exist',
         description: 'Some description',
         operationType: 'ES Index',
         payload: {},
-      }));
+        stackName,
+        systemBucket,
+        dynamoTableName,
+      }, AsyncOperation));
 
       await ecs().waitFor(
         'tasksStopped',
