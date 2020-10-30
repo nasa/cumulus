@@ -23,9 +23,7 @@ const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 
 const sandbox = sinon.createSandbox();
-const stubs = {
-  recordExists: sandbox.stub(),
-};
+const stubRecordExists = sandbox.stub().resolves(true);
 
 const {
   handler,
@@ -43,7 +41,7 @@ const {
     sendSQSMessage: async (queue, message) => [queue, message],
   },
   '@cumulus/db': {
-    doesRecordExist: stubs.recordExists,
+    doesRecordExist: stubRecordExists,
   },
 });
 
@@ -166,6 +164,7 @@ test.beforeEach(async (t) => {
       state_machine: stateMachineArn,
       execution_name: executionName,
       parentExecutionArn: t.context.parentExecutionArn,
+      asyncOperationId: t.context.asyncOperationId,
     },
     meta: {
       status: 'running',
@@ -186,7 +185,7 @@ test.beforeEach(async (t) => {
   await t.context.knex(tableNames.collections)
     .insert(t.context.collection);
 
-  t.context.doesRecordExistStub = stubs.recordExists;
+  t.context.doesRecordExistStub = stubRecordExists;
   t.context.doesRecordExistStub.resetHistory();
 });
 
