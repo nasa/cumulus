@@ -470,14 +470,11 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     .callsFake(() => {
       throw new Error('fake error');
     });
-  const trxSpy = sinon.spy(knex, 'transaction');
   t.teardown(() => {
     saveExecutionStub.restore();
-    trxSpy.restore();
   });
 
   await t.throwsAsync(saveExecution(cumulusMessage, knex));
-  t.true(trxSpy.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesRecordExist({
@@ -506,7 +503,6 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
   t.teardown(() => trxStub.restore());
 
   await t.throwsAsync(saveExecution(cumulusMessage, knex));
-  t.true(trxStub.called);
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesRecordExist({
