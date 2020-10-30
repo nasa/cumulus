@@ -17,7 +17,6 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const AccessToken = require('../../../models/access-tokens');
-const AsyncOperation = require('../../../models/async-operation');
 
 let accessTokenModel;
 let jwtAuthToken;

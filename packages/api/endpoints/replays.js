@@ -3,8 +3,7 @@
 const Logger = require('@cumulus/logger');
 const router = require('express-promise-router')();
 const asyncOperations = require('@cumulus/async-operations');
-const { getKnexConfig, localStackConnectionEnv } = require('@cumulus/db');
-const { logger } = require('handlebars');
+const { localStackConnectionEnv } = require('@cumulus/db');
 
 const coreLogger = new Logger();
 

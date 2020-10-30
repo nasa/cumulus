@@ -11,7 +11,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { getKnexConfig, localStackConnectionEnv } = require('@cumulus/db');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 
