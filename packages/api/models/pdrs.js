@@ -7,8 +7,8 @@ const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const {
   getMessagePdr,
-  getPdrPANSent,
-  getPdrPANMessage,
+  getMessagePdrPANSent,
+  getMessagePdrPANMessage,
 } = require('@cumulus/message/PDRs');
 const {
   getMessageProviderId,
@@ -107,8 +107,8 @@ class Pdr extends Manager {
       provider: getMessageProviderId(message),
       progress,
       execution,
-      PANSent: getPdrPANSent(pdr),
-      PANmessage: getPdrPANMessage(pdr),
+      PANSent: getMessagePdrPANSent(message),
+      PANmessage: getMessagePdrPANMessage(message),
       stats,
       createdAt: get(message, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now(),
