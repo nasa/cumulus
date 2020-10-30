@@ -157,6 +157,12 @@ test.beforeEach(async (t) => {
     protocol: 's3',
   };
 
+  t.context.pdr = {
+    name: randomString(),
+    PANSent: false,
+    PANmessage: 'test',
+  };
+
   t.context.cumulusMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
@@ -173,6 +179,7 @@ test.beforeEach(async (t) => {
     },
     payload: {
       key: 'my-payload',
+      pdr: t.context.pdr,
     },
   };
 
@@ -578,6 +585,50 @@ test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusM
   }
 });
 
+test('savePdr() returns true if there is no PDR on the message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+  } = t.context;
+
+  delete cumulusMessage.payload.pdr;
+
+  t.true(
+    await savePdr({
+      cumulusMessage,
+      collection: { id: collectionCumulusId },
+      provider: { id: providerCumulusId },
+      knex,
+    })
+  );
+});
+
+test('savePdr() throws an error if collection is not provided', async (t) => {
+  const { cumulusMessage, knex, providerCumulusId } = t.context;
+  await t.throwsAsync(
+    savePdr({
+      cumulusMessage,
+      collection: undefined,
+      provider: { id: providerCumulusId },
+      knex,
+    })
+  );
+});
+
+test('savePdr() throws an error if provider is not provided', async (t) => {
+  const { cumulusMessage, knex, collectionCumulusId } = t.context;
+  await t.throwsAsync(
+    savePdr({
+      cumulusMessage,
+      collection: { id: collectionCumulusId },
+      provider: undefined,
+      knex,
+    })
+  );
+});
+
 test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
   const {
     cumulusMessage,
@@ -585,16 +636,8 @@ test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', a
     knex,
     collectionCumulusId,
     providerCumulusId,
-  } = t.context;
-
-  const pdr = {
-    name: randomString(),
-    PANSent: false,
-    PANmessage: 'test',
-  };
-  cumulusMessage.payload = {
     pdr,
-  };
+  } = t.context;
 
   await savePdr({
     cumulusMessage,

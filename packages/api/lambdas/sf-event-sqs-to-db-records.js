@@ -23,6 +23,7 @@ const {
 } = require('@cumulus/message/Executions');
 const {
   getMessagePdrName,
+  messageHasPdr,
 } = require('@cumulus/message/PDRs');
 const {
   getMessageProviderId,
@@ -148,17 +149,28 @@ const savePdrViaTransaction = async ({
       providerCumulusId: provider.cumulusId,
     });
 
-const savePdr = ({
+const savePdr = async ({
   cumulusMessage,
   collection,
   provider,
   knex,
   pdrModel = new Pdr(),
-}) =>
-  knex.transaction(async (trx) => {
+}) => {
+  // If there is no PDR message, then there's nothing to do here, which is fine
+  if (!messageHasPdr(cumulusMessage)) {
+    return true;
+  }
+  if (!collection) {
+    throw new Error(`Collection reference is required for a PDR, got ${collection}`);
+  }
+  if (!provider) {
+    throw new Error(`Provider reference is required for a PDR, got ${provider}`);
+  }
+  return knex.transaction(async (trx) => {
     await savePdrViaTransaction({ cumulusMessage, collection, provider, trx });
     return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
   });
+};
 
 const saveGranulesToDb = async (cumulusMessage) => {
   const granuleModel = new Granule();
@@ -213,15 +225,12 @@ const saveRecords = async (cumulusMessage, knex) => {
       knex,
     });
     // PDR write only attempted if execution saved
-    if (collection && provider) {
-      await savePdr({
-        cumulusMessage,
-        collection,
-        provider,
-        knex,
-      });
-    }
-    return true;
+    return await savePdr({
+      cumulusMessage,
+      collection,
+      provider,
+      knex,
+    });
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
     throw error;
