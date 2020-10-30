@@ -275,23 +275,23 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   } = getConfigurations();
 
   const redirectUri = req.earthdataLoginClient.redirectUri;
-  const redirectURLForAuthorizationCode = urljoin(redirectUri, req.path);
-  const authUrl = authClient.getAuthorizationUrl(redirectURLForAuthorizationCode);
+  const state = urljoin(redirectUri, req.path);
+  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(state);
   const accessToken = req.cookies.accessToken;
-  if (!accessToken) return res.redirect(307, authUrl);
+  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
 
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.redirect(307, authUrl);
+      return res.redirect(307, redirectURLForAuthorizationCode);
     }
     throw error;
   }
 
   if (isAccessTokenExpired(accessTokenRecord)) {
-    return res.redirect(307, authUrl);
+    return res.redirect(307, redirectURLForAuthorizationCode);
   }
 
   req.authorizedMetadata = { userName: accessTokenRecord.username };
