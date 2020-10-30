@@ -452,7 +452,7 @@ test('saveExecution() saves execution to Dynamo and RDS if write to RDS is enabl
     executionArn,
   } = t.context;
 
-  await saveExecution(cumulusMessage, knex);
+  await saveExecution({ cumulusMessage, knex });
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
@@ -478,7 +478,7 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if Dynamo
     saveExecutionStub.restore();
   });
 
-  await t.throwsAsync(saveExecution(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution({ cumulusMessage, knex }));
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesRecordExist({
@@ -506,7 +506,7 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(saveExecution(cumulusMessage, knex));
+  await t.throwsAsync(saveExecution({ cumulusMessage, knex }));
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(
     await doesRecordExist({
@@ -588,12 +588,12 @@ test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', a
     pdr,
   };
 
-  await savePdr(
+  await savePdr({
     cumulusMessage,
-    { cumulusId: collectionCumulusId },
-    { cumulusId: providerCumulusId },
-    knex
-  );
+    collection: { cumulusId: collectionCumulusId },
+    provider: { cumulusId: providerCumulusId },
+    knex,
+  });
 
   t.true(await pdrModel.exists({ pdrName: pdr.name }));
   t.true(

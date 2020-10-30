@@ -117,28 +117,28 @@ const shouldWriteExecutionToRDS = async (
   }
 };
 
-const saveExecutionViaTransaction = async (cumulusMessage, trx) =>
+const saveExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
   trx(tableNames.executions)
     .insert({
       arn: getMessageExecutionArn(cumulusMessage),
       cumulus_version: getMessageCumulusVersion(cumulusMessage),
     });
 
-const saveExecution = async (cumulusMessage, knex) => {
+const saveExecution = async ({ cumulusMessage, knex }) => {
   const executionModel = new Execution();
 
   return knex.transaction(async (trx) => {
-    await saveExecutionViaTransaction(cumulusMessage, trx);
+    await saveExecutionViaTransaction({ cumulusMessage, trx });
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   });
 };
 
-const savePdrViaTransaction = async (
+const savePdrViaTransaction = async ({
   cumulusMessage,
   collection,
   provider,
-  trx
-) =>
+  trx,
+}) =>
   trx(tableNames.pdrs)
     .insert({
       name: getMessagePdrName(cumulusMessage),
@@ -147,16 +147,16 @@ const savePdrViaTransaction = async (
       providerCumulusId: provider.cumulusId,
     });
 
-const savePdr = async (
+const savePdr = async ({
   cumulusMessage,
   collection,
   provider,
-  knex
-) => {
+  knex,
+}) => {
   const pdrModel = new Pdr();
 
   return knex.transaction(async (trx) => {
-    await savePdrViaTransaction(cumulusMessage, collection, provider, trx);
+    await savePdrViaTransaction({ cumulusMessage, collection, provider, trx });
     return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
   });
 };
@@ -209,15 +209,18 @@ const saveRecords = async (cumulusMessage, knex) => {
   const provider = await getMessageProvider(cumulusMessage, knex);
 
   try {
-    await saveExecutionViaTransaction(cumulusMessage, knex);
+    await saveExecution({
+      cumulusMessage,
+      knex,
+    });
     // PDR write only attempted if execution saved
     if (collection && provider) {
-      await savePdrViaTransaction(
+      await savePdr({
         cumulusMessage,
         collection,
         provider,
-        knex
-      );
+        knex,
+      });
     }
     return true;
   } catch (error) {
