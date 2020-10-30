@@ -135,6 +135,8 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   process.env.RDS_DEPLOYMENT_CUMULUS_VERSION = '3.0.0';
+  t.context.postRDSDeploymentVersion = '4.0.0';
+  t.context.preRDSDeploymentVersion = '2.9.99';
 
   t.context.collection = generateRDSCollectionRecord();
   t.context.collectionId = constructCollectionId(
@@ -160,9 +162,10 @@ test.beforeEach(async (t) => {
   t.context.cumulusMessage = {
     cumulus_meta: {
       workflow_start_time: 122,
-      cumulus_version: '4.0.0',
+      cumulus_version: t.context.postRDSDeploymentVersion,
       state_machine: stateMachineArn,
       execution_name: executionName,
+      parentExecutionArn: t.context.parentExecutionArn,
     },
     meta: {
       status: 'running',
@@ -182,13 +185,6 @@ test.beforeEach(async (t) => {
 
   await t.context.knex(tableNames.collections)
     .insert(t.context.collection);
-
-  // await t.context.knex(tableNames.providers)
-  //   .insert({
-  //     name: t.context.provider.id,
-  //     host: t.context.provider.host,
-  //     protocol: t.context.provider.protocol,
-  //   });
 
   t.context.doesRecordExistStub = stubs.recordExists;
   t.context.doesRecordExistStub.resetHistory();
@@ -365,8 +361,18 @@ test('getMessageProvider returns undefined if provider cannot be found', async (
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
-  const { knex } = t.context;
-  t.false(await shouldWriteExecutionToRDS({}, false, knex));
+  const { cumulusMessage, knex, preRDSDeploymentVersion } = t.context;
+  t.false(await shouldWriteExecutionToRDS(
+    {
+      ...cumulusMessage,
+      cumulus_meta: {
+        ...cumulusMessage.cumulus_meta,
+        cumulus_version: preRDSDeploymentVersion,
+      },
+    },
+    { cumulusId: 1 },
+    knex
+  ));
 });
 
 test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', async (t) => {
@@ -376,22 +382,21 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
     cumulusMessage,
     asyncOperationId,
     parentExecutionArn,
-    collection,
   } = t.context;
 
   doesRecordExistStub.withArgs({
     id: asyncOperationId,
   }).resolves(true);
   doesRecordExistStub.withArgs({
-    name: collection.name,
-    version: collection.version,
-  }).resolves(true);
-  doesRecordExistStub.withArgs({
     arn: parentExecutionArn,
   }).resolves(true);
 
   t.true(
-    await shouldWriteExecutionToRDS(cumulusMessage, true, knex)
+    await shouldWriteExecutionToRDS(
+      cumulusMessage,
+      { cumulusId: 1 },
+      knex
+    )
   );
 });
 
@@ -399,6 +404,7 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
   const {
     knex,
     doesRecordExistStub,
+    cumulusMessage,
     parentExecutionArn,
   } = t.context;
 
@@ -407,12 +413,7 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
   }).throws();
 
   t.false(
-    await shouldWriteExecutionToRDS({
-      cumulus_meta: {
-        cumulus_version: '3.0.0',
-        parentExecutionArn,
-      },
-    }, true, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: 1 }, knex)
   );
 });
 
@@ -420,30 +421,16 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   const {
     knex,
     doesRecordExistStub,
-    parentExecutionArn,
+    cumulusMessage,
     asyncOperationId,
-    collection,
   } = t.context;
 
   doesRecordExistStub.withArgs({
     id: asyncOperationId,
-  }).resolves(true);
-  doesRecordExistStub.withArgs(collection).resolves(false);
-  doesRecordExistStub.withArgs({
-    arn: parentExecutionArn,
-  }).resolves(true);
+  }).resolves(false);
 
   t.false(
-    await shouldWriteExecutionToRDS({
-      cumulus_meta: {
-        cumulus_version: '3.0.0',
-        parentExecutionArn,
-        asyncOperationId,
-      },
-      meta: {
-        collection,
-      },
-    }, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: 1 }, knex)
   );
 });
 
@@ -631,21 +618,6 @@ test('sf-event-sqs-to-db-records handler sends message to DLQ when granule and p
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('The sf-event-sqs-to-db-records Lambda adds records to the granule, execution and pdr tables', async (t) => {
-  const {
-    cumulusMessage,
-    executionModel,
-    granuleModel,
-    pdrModel,
-  } = t.context;
-
-  const { executionArn, granuleId, pdrName } = await runHandler(cumulusMessage);
-
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await pdrModel.exists({ pdrName }));
-});
-
 test('Lambda writes records to Dynamo and not RDS if cumulus version is less than RDS deployment version', async (t) => {
   const {
     cumulusMessage,
@@ -653,9 +625,10 @@ test('Lambda writes records to Dynamo and not RDS if cumulus version is less tha
     granuleModel,
     pdrModel,
     knex,
+    preRDSDeploymentVersion,
   } = t.context;
 
-  cumulusMessage.cumulus_meta.cumulus_version = '2.0.1';
+  cumulusMessage.cumulus_meta.cumulus_version = preRDSDeploymentVersion;
 
   const { executionArn, granuleId, pdrName } = await runHandler(cumulusMessage);
 
@@ -663,10 +636,15 @@ test('Lambda writes records to Dynamo and not RDS if cumulus version is less tha
   t.true(await granuleModel.exists({ granuleId }));
   t.true(await pdrModel.exists({ pdrName }));
 
-  t.falsy(
-    await knex('executions')
-      .where('arn', executionArn)
-      .first()
+  t.false(
+    await doesRecordExist({
+      arn: executionArn,
+    }, knex, tableNames.executions)
   );
-  // Add assertions for granule, PDR
+  t.false(
+    await doesRecordExist({
+      name: pdrName,
+    }, knex, tableNames.pdrs)
+  );
+  // Add assertions for granule
 });

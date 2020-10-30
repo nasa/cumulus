@@ -98,11 +98,11 @@ const getMessageProvider = async (cumulusMessage, knex) => {
 
 const shouldWriteExecutionToRDS = async (
   cumulusMessage,
-  isExecutionPostDeployment,
   collection,
   knex
 ) => {
   try {
+    const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
     if (!isExecutionPostDeployment) return false;
     if (!collection) return false;
 
@@ -182,11 +182,9 @@ const saveRecordsToDynamoDb = async (cumulusMessage) => {
 const saveRecords = async (cumulusMessage, knex) => {
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
-  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   const collection = await getMessageCollection(cumulusMessage, knex);
   const isExecutionRDSWriteEnabled = await shouldWriteExecutionToRDS(
     cumulusMessage,
-    isExecutionPostDeployment,
     collection,
     knex
   );
