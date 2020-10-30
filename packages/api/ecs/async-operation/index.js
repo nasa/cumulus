@@ -170,36 +170,30 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
   const updatedTime = (Number(Date.now())).toString();
   const knex = await getKnexClient({ env: { ...process.env, ...envOverride } });
   const dynamodb = new AWS.DynamoDB();
-  try {
-    return await knex.transaction(async (trx) => {
-      // TODO - what about upsert behavior here.   How do we even test this.
-      // Units ? Int test *cannot* directly check RDS
-      await getDbTransaction(trx, asyncOperationsConfig)
-        .where({ id: process.env.asyncOperationId })
-        .update({
-          status,
-          output: dbOutput,
-          updated_at: knex.raw(`to_timestamp(${updatedTime})`),
-        });
-      return dynamodb.updateItem({
-        TableName: process.env.asyncOperationsTable,
-        Key: { id: { S: process.env.asyncOperationId } },
-        ExpressionAttributeNames: {
-          '#S': 'status',
-          '#O': 'output',
-          '#U': 'updatedAt',
-        },
-        ExpressionAttributeValues: {
-          ':s': { S: status },
-          ':o': { S: dbOutput },
-          ':u': { N: updatedTime },
-        },
-        UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
-      }).promise();
-    });
-  } catch (e) {
-    logger.error(`Error: ${JSON.stringify(e)}`);
-  }
+  return knex.transaction(async (trx) => {
+    await getDbTransaction(trx, asyncOperationsConfig)
+      .where({ id: process.env.asyncOperationId })
+      .update({
+        status,
+        output: dbOutput,
+        updated_at: knex.raw(`to_timestamp(${updatedTime})`),
+      });
+    return dynamodb.updateItem({
+      TableName: process.env.asyncOperationsTable,
+      Key: { id: { S: process.env.asyncOperationId } },
+      ExpressionAttributeNames: {
+        '#S': 'status',
+        '#O': 'output',
+        '#U': 'updatedAt',
+      },
+      ExpressionAttributeValues: {
+        ':s': { S: status },
+        ':o': { S: dbOutput },
+        ':u': { N: updatedTime },
+      },
+      UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
+    }).promise();
+  });
 };
 
 /**
