@@ -93,6 +93,7 @@
     "p-wait-for": "^2.0.1",
     "querystring": "^0.2.0",
     "saml2-js": "^2.0.3",
+    "semver": "^7.3.2",
     "split2": "^2.2.0",
     "tough-cookie": "^2.4.3",
     "url-join": "^4.0.0",
