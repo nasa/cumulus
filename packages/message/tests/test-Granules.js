@@ -3,7 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { getMessageGranules } = require('../Granules');
+const { getMessageGranules, messageHasGranules } = require('../Granules');
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
@@ -20,8 +20,24 @@ test('getMessageGranules returns granules from payload.granules', (t) => {
   t.deepEqual(result, granules);
 });
 
-test('getMessageGranules returns nothing when granules are absent from message', (t) => {
+test('getMessageGranules returns undefined when granules are absent from message', (t) => {
   const testMessage = {};
   const result = getMessageGranules(testMessage);
   t.is(result, undefined);
+});
+
+test('messageHasGranules returns true if message has granules', (t) => {
+  t.true(messageHasGranules({
+    payload: {
+      granules: [{
+        granuleId: randomId('granule'),
+      }],
+    },
+  }));
+});
+
+test('messageHasGranules returns false if message does not have granules', (t) => {
+  t.false(messageHasGranules({
+    payload: {},
+  }));
 });
