@@ -1,7 +1,7 @@
 import { ECS } from 'aws-sdk';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
-import { getDbTransaction, getKnexClient, asyncOperationsConfig } from '@cumulus/db';
+import { getKnexClient, asyncOperationsConfig } from '@cumulus/db';
 import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
@@ -169,7 +169,7 @@ export const startAsyncOperation = async (params: { // fix input params to match
       description,
       operationType,
     };
-    await getDbTransaction(trx, asyncOperationsConfig.name).insert(createObject);
+    await trx(asyncOperationsConfig.name).insert(createObject);
     return asyncOperationModel.create(createObject);
   });
 };

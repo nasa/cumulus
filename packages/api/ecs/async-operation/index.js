@@ -11,7 +11,8 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const url = require('url');
 const Logger = require('@cumulus/logger');
-const { asyncOperationsConfig, getDbTransaction, getKnexClient } = require('@cumulus/db');
+const { asyncOperationsConfig, getKnexClient } = require('@cumulus/db');
+const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
@@ -151,6 +152,17 @@ function buildErrorOutput(error) {
   };
 }
 
+const writeAsyncOperationToRds = async (params) => {
+  const { trx, knex, dbOutput, status, updatedTime, id } = params;
+  return trx(asyncOperationsConfig.name)
+    .where({ id })
+    .update({
+      status,
+      output: dbOutput,
+      updated_at: knex.raw(`to_timestamp(${Number(updatedTime / 1000.00 )})`),
+    });
+};
+
 /**
  * Update an AsyncOperation item in DynamoDB
  *
@@ -158,29 +170,29 @@ function buildErrorOutput(error) {
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property
  *
  * @param {string} status - the new AsyncOperation status
- * @param {Object} output - the new output to store.  Must be parsable
- *   into JSON.
+ * @param {Object} output - the new output to store.  Must be parsable JSON
+ * @param {Object} envOverride - Object to override/extend environment variables
  * @returns {Promise} resolves when the item has been updated
  */
-// CUMULUS-2191
 const updateAsyncOperation = async (status, output, envOverride = {}) => {
   logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : 'none';
-  const updatedTime = (Number(Date.now())).toString();
-  const knex = await getKnexClient({ env: { ...process.env, ...envOverride } });
-  const dynamodb = new AWS.DynamoDB();
+  const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
+  const env = { ...process.env, ...envOverride };
+  const knex = await getKnexClient({ env });
   return knex.transaction(async (trx) => {
-    await getDbTransaction(trx, asyncOperationsConfig)
-      .where({ id: process.env.asyncOperationId })
-      .update({
-        status,
-        output: dbOutput,
-        updated_at: knex.raw(`to_timestamp(${updatedTime})`),
-      });
-    return dynamodb.updateItem({
-      TableName: process.env.asyncOperationsTable,
-      Key: { id: { S: process.env.asyncOperationId } },
+    await writeAsyncOperationToRds({
+      id: env.asyncOperationId,
+      trx,
+      knex,
+      dbOutput,
+      status,
+      updatedTime,
+    });
+    return dynamodb().updateItem({
+      TableName: env.asyncOperationsTable,
+      Key: { id: { S: env.asyncOperationId } },
       ExpressionAttributeNames: {
         '#S': 'status',
         '#O': 'output',
@@ -252,6 +264,7 @@ async function runTask() {
   }
 }
 
+module.exports = { updateAsyncOperation };
 // Here's where the magic happens ...
 
 // Make sure that all of the required environment variables are set
