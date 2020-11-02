@@ -35,6 +35,7 @@ const {
   shouldWriteExecutionToRDS,
   saveExecution,
   savePdr,
+  saveGranuleViaTransaction,
   saveGranules,
   saveRecords,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
@@ -696,6 +697,28 @@ test('savePdr() does not persist records to Dynamo or RDS if RDS write fails', a
       name: pdr.name,
     }, knex, tableNames.pdrs)
   );
+});
+
+test('saveGranuleViaTransaction() handles undefined provider record', async (t) => {
+  const {
+    cumulusMessage,
+    granuleId,
+    knex,
+    collectionCumulusId,
+  } = t.context;
+  await t.notThrowsAsync(knex.transaction(
+    (trx) =>
+      saveGranuleViaTransaction({
+        cumulusMessage,
+        granule: { granuleId },
+        collection: { cumulusId: collectionCumulusId },
+        provider: undefined,
+        trx,
+      })
+  ));
+  t.true(await doesRecordExist(
+    { granuleId }, knex, tableNames.granules
+  ));
 });
 
 test('saveGranules() returns true if there are no granules in the message', async (t) => {

@@ -314,6 +314,7 @@ module.exports = {
   shouldWriteExecutionToRDS,
   saveExecution,
   savePdr,
+  saveGranuleViaTransaction,
   saveGranules,
   saveRecords,
 };
