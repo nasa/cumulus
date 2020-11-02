@@ -35,6 +35,7 @@ const {
   shouldWriteExecutionToRDS,
   saveExecution,
   savePdr,
+  saveGranules,
   saveRecords,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
@@ -694,6 +695,131 @@ test('savePdr() does not persist records Dynamo or RDS if RDS write fails', asyn
     await doesRecordExist({
       name: pdr.name,
     }, knex, tableNames.pdrs)
+  );
+});
+
+test('saveGranules() returns true if there are no granules in the message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+  } = t.context;
+
+  delete cumulusMessage.payload.granules;
+
+  t.true(
+    await saveGranules({
+      cumulusMessage,
+      collection: { id: collectionCumulusId },
+      provider: { id: providerCumulusId },
+      knex,
+    })
+  );
+});
+
+test('saveGranules() throws an error if collection is not provided', async (t) => {
+  const { cumulusMessage, knex, providerCumulusId } = t.context;
+  await t.throwsAsync(
+    saveGranules({
+      cumulusMessage,
+      collection: undefined,
+      provider: { id: providerCumulusId },
+      knex,
+    })
+  );
+});
+
+test('saveGranules() saves granule records to Dynamo and RDS if RDS write is enabled', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  await saveGranules({
+    cumulusMessage,
+    collection: { cumulusId: collectionCumulusId },
+    provider: { cumulusId: providerCumulusId },
+    knex,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(
+    await doesRecordExist({ granuleId }, knex, tableNames.granules)
+  );
+});
+
+test('saveGranules() does not persist records Dynamo or RDS if Dynamo write fails', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const fakeGranuleModel = {
+    storeGranulesFromCumulusMessage: () => {
+      throw new Error('Granules dynamo error');
+    },
+  };
+
+  await t.throwsAsync(
+    saveGranules({
+      cumulusMessage,
+      collection: { cumulusId: collectionCumulusId },
+      provider: { cumulusId: providerCumulusId },
+      knex,
+      granuleModel: fakeGranuleModel,
+    }),
+    { message: 'Granules dynamo error' }
+  );
+
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await doesRecordExist({ granuleId }, knex, tableNames.granules)
+  );
+});
+
+test('saveGranules() does not persist records Dynamo or RDS if RDS write fails', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const fakeTrxCallback = (cb) => {
+    const fakeTrx = sinon.stub().returns({
+      insert: () => {
+        throw new Error('Granules RDS error');
+      },
+    });
+    return cb(fakeTrx);
+  };
+  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
+  t.teardown(() => trxStub.restore());
+
+  await t.throwsAsync(
+    saveGranules({
+      cumulusMessage,
+      collection: { cumulusId: collectionCumulusId },
+      provider: { cumulusId: providerCumulusId },
+      knex,
+    }),
+    { message: 'Granules RDS error' }
+  );
+
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await doesRecordExist({ granuleId }, knex, tableNames.granules)
   );
 });
 
