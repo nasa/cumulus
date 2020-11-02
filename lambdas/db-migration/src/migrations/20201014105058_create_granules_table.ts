@@ -7,6 +7,14 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Internal Cumulus ID for a granule')
       .primary();
     table
+      .text('granuleId')
+      .comment('Granule ID')
+      .notNullable();
+    table
+      .enum('status', ['running', 'completed', 'failed'])
+      .comment('Ingest status of the granule')
+      .notNullable();
+    table
       .integer('collectionCumulusId')
       .references('cumulusId')
       .inTable('collections')
@@ -16,10 +24,6 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .boolean('published')
       .comment('Flag that shows if the granule has been published in CMR');
-    table
-      .enum('status', ['running', 'completed', 'failed'])
-      .comment('Ingest status of the granule')
-      .notNullable();
     table
       .float('duration')
       .comment('Ingest duration');
@@ -46,12 +50,9 @@ export const up = async (knex: Knex): Promise<void> =>
       .references('cumulusId')
       .inTable('pdrs');
     table
-      .text('granuleId')
-      .comment('Granule ID')
-      .notNullable();
-    table
-      .text('provider')
-      .comment('Provider granule is associated with');
+      .integer('providerCumulusId')
+      .references('cumulusId')
+      .inTable('providers');
     table
       .timestamp('beginningDateTime')
       .comment('Date granule started');
