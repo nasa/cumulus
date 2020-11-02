@@ -34,7 +34,6 @@ const {
   getMessageProvider,
   shouldWriteExecutionToRDS,
   saveExecution,
-  saveGranulesToDb,
   savePdr,
   saveRecords,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
@@ -537,61 +536,6 @@ test.serial('saveExecution() does not persist records to Dynamo or RDS if RDS wr
       arn: executionArn,
     }, knex, tableNames.executions)
   );
-});
-
-test('saveGranulesToDb() saves a granule record to the database', async (t) => {
-  const {
-    cumulusMessage,
-    granuleModel,
-    collectionId,
-    provider,
-    executionArn,
-  } = t.context;
-
-  const granuleId = randomString();
-  const files = [fakeFileFactory({ size: 250 })];
-  const granule = fakeGranuleFactoryV2({
-    files,
-    granuleId,
-  });
-  delete granule.version;
-  delete granule.dataType;
-  cumulusMessage.payload.granules = [granule];
-
-  await saveGranulesToDb(cumulusMessage);
-
-  const fetchedGranule = await granuleModel.get({ granuleId });
-  const expectedGranule = {
-    ...granule,
-    collectionId,
-    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
-    productVolume: 250,
-    provider: provider.id,
-    status: 'running',
-    createdAt: 122,
-    error: {},
-    timeToArchive: 0,
-    timeToPreprocess: 0,
-    duration: fetchedGranule.duration,
-    timestamp: fetchedGranule.timestamp,
-    updatedAt: fetchedGranule.updatedAt,
-  };
-  t.deepEqual(fetchedGranule, expectedGranule);
-});
-
-test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusMessage() throws an exception', async (t) => {
-  const { cumulusMessage } = t.context;
-
-  const storeGranuleStub = sinon.stub(Granule.prototype, 'storeGranulesFromCumulusMessage')
-    .callsFake(() => {
-      throw new Error('error');
-    });
-
-  try {
-    await t.throwsAsync(saveGranulesToDb(cumulusMessage));
-  } finally {
-    storeGranuleStub.restore();
-  }
 });
 
 test('savePdr() returns true if there is no PDR on the message', async (t) => {

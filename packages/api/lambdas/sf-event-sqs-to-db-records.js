@@ -177,18 +177,6 @@ const savePdr = async ({
   });
 };
 
-const saveGranulesToDb = async (cumulusMessage) => {
-  const granuleModel = new Granule();
-
-  try {
-    await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
-  } catch (error) {
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    log.fatal(`Failed to create/update granule records for execution ${executionArn}: ${error.message}`);
-    throw error;
-  }
-};
-
 const saveGranuleViaTransaction = async ({
   cumulusMessage,
   granule,
@@ -325,7 +313,7 @@ module.exports = {
   getMessageProvider,
   shouldWriteExecutionToRDS,
   saveExecution,
-  saveGranulesToDb,
   savePdr,
+  saveGranules,
   saveRecords,
 };
