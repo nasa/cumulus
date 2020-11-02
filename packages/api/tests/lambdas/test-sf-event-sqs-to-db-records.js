@@ -608,7 +608,7 @@ test('savePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', a
   );
 });
 
-test('savePdr() does not persist records Dynamo or RDS if Dynamo write fails', async (t) => {
+test('savePdr() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -651,7 +651,7 @@ test('savePdr() does not persist records Dynamo or RDS if Dynamo write fails', a
   );
 });
 
-test('savePdr() does not persist records Dynamo or RDS if RDS write fails', async (t) => {
+test('savePdr() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -753,7 +753,7 @@ test('saveGranules() saves granule records to Dynamo and RDS if RDS write is ena
   );
 });
 
-test('saveGranules() does not persist records Dynamo or RDS if Dynamo write fails', async (t) => {
+test('saveGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -786,7 +786,7 @@ test('saveGranules() does not persist records Dynamo or RDS if Dynamo write fail
   );
 });
 
-test('saveGranules() does not persist records Dynamo or RDS if RDS write fails', async (t) => {
+test('saveGranules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
