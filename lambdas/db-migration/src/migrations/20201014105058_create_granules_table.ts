@@ -38,16 +38,17 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('cmrLink')
       .comment('Link to granule in the CMR API');
     table
-      .text('execution')
-      .comment('Step Function Execution link')
-      .notNullable();
+      .integer('executionCumulusId')
+      .references('cumulusId')
+      .inTable('executions');
+    table
+      .integer('pdrCumulusId')
+      .references('cumulusId')
+      .inTable('pdrs');
     table
       .text('granuleId')
       .comment('Granule ID')
       .notNullable();
-    table
-      .text('pdrName')
-      .comment('PDR associated with the granule');
     table
       .text('provider')
       .comment('Provider granule is associated with');
