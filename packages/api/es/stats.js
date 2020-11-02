@@ -48,12 +48,12 @@ class Stats extends BaseSearch {
       },
       granulesStatus: {
         terms: {
-          field: 'status.raw',
+          field: 'status.keyword',
         },
       },
       collections: {
         cardinality: {
-          field: 'collectionId.raw',
+          field: 'collectionId.keyword',
         },
       },
     };
@@ -109,7 +109,7 @@ class Stats extends BaseSearch {
       this.client = await this.constructor.es();
     }
 
-    const field = convertTextField(this.params.field) || 'status.raw';
+    const field = convertTextField(this.params.field) || 'status.keyword';
 
     const searchParams = this._buildSearch();
     searchParams.type = this.type;

@@ -4,7 +4,7 @@
       "type": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -15,7 +15,7 @@
       "provider": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -23,7 +23,7 @@
       "granuleId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -31,7 +31,7 @@
       "collectionId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -39,7 +39,7 @@
       "pdrName": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -50,7 +50,7 @@
       "file": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -69,7 +69,7 @@
       "version": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -92,7 +92,7 @@
       "name": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -100,7 +100,7 @@
       "version": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -126,7 +126,7 @@
       "id": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -134,7 +134,7 @@
       "status": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -145,7 +145,7 @@
       "operationType": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -153,7 +153,7 @@
       "taskArn": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -182,7 +182,7 @@
       "execution": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -190,7 +190,7 @@
       "pdrName": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -198,7 +198,7 @@
       "collectionId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -206,7 +206,7 @@
       "status": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -214,7 +214,7 @@
       "provider": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -231,7 +231,7 @@
       "address": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -239,7 +239,7 @@
       "originalUrl": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -287,7 +287,7 @@
       "execution": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -295,7 +295,7 @@
       "granuleId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -303,7 +303,7 @@
       "pdrName": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -311,7 +311,7 @@
       "collectionId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -319,7 +319,7 @@
       "status": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -327,7 +327,7 @@
       "provider": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -335,7 +335,7 @@
       "cmrLink": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -370,7 +370,7 @@
       "execution": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -378,7 +378,7 @@
       "granuleId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -386,7 +386,7 @@
       "pdrName": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -394,7 +394,7 @@
       "collectionId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -402,7 +402,7 @@
       "status": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -410,7 +410,7 @@
       "provider": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -418,7 +418,7 @@
       "cmrLink": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -453,7 +453,7 @@
       "id": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -464,7 +464,7 @@
       "protocol": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -472,7 +472,7 @@
       "host": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -501,7 +501,7 @@
       "name": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -509,7 +509,7 @@
       "type": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -517,7 +517,7 @@
       "status": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -525,7 +525,7 @@
       "location": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -551,7 +551,7 @@
       "name": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -559,7 +559,7 @@
       "workflow": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -567,7 +567,7 @@
       "provider": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -595,7 +595,7 @@
       "state": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -621,7 +621,7 @@
       "arn": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -629,7 +629,7 @@
       "name": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -637,7 +637,7 @@
       "execution": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -645,7 +645,7 @@
       "type": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -653,7 +653,7 @@
       "collectionId": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }
@@ -661,7 +661,7 @@
       "status": {
         "type": "text",
         "fields": {
-          "raw": {
+          "keyword": {
             "type": "keyword"
           }
         }

@@ -38,7 +38,7 @@ function convertTextField(field) {
   let returnField = field;
 
   if (textFields.includes(returnField)) {
-    returnField = `${returnField}.raw`;
+    returnField = `${returnField}.keyword`;
   }
 
   return returnField;
