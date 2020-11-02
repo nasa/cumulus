@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
-
+- **CUMULUS-2138**
+  - Adds a new task `update-granules-cmr-metadata-file-links` to Ingest and Publish Granule workflow. This new task updates CMR Metadata and adds CMR file etags. It removes said functionality from the `move-granules` task. It is recommended that you add the step `UpdateGranulesMetadataStep` to your workflows after `MoveGranulesStep`.
 - **CUMULUS-2216**
   - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
 
@@ -22,8 +23,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     throwing consistent errors under load.
 
 ### Added
-- **CUMULUS-2138**
-  - Adds a new task `update-granules-metadata` to Ingest and Publish Granule workflow. This new task updates CMR Metadata and adds CMR file etags. It decouples said functionality from the `move-granules` task.
 - **CUMULUS-2239**
   - Add resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
 - **CUMULUS-2063**

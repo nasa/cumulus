@@ -100,8 +100,8 @@ output "update_cmr_access_constraints_task" {
   value = module.ingest.update_cmr_access_constraints_task
 }
 
-output "update_granules_metadata_task" {
-  value = module.ingest.update_granules_metadata_task
+output "update_granules_cmr_metadata_file_links_task" {
+  value = module.ingest.update_granules_cmr_metadata_file_links_task
 }
 
 # Workflow config outputs

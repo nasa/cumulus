@@ -17,7 +17,7 @@ const { isCMRFile } = require('@cumulus/cmrjs');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 
-const { updateGranulesMetadata } = require('..');
+const { updateGranulesCmrMetadataFileLinks } = require('..');
 
 function cmrReadStream(file) {
   return file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : fs.createReadStream('tests/data/ummg-meta.json');
@@ -101,7 +101,7 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const output = await updateGranulesMetadata(newPayload);
+  const output = await updateGranulesCmrMetadataFileLinks(newPayload);
 
   output.granules.forEach((g) => g.files
     .filter(isCMRFile)
@@ -116,13 +116,13 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const previousEtag = granuleWithEtag.files.filter(isCMRFile)[0].etag;
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const { granules } = await updateGranulesMetadata(newPayload);
+  const { granules } = await updateGranulesCmrMetadataFileLinks(newPayload);
   const updatedGranule = granules.find((g) => g.granuleId === granuleWithEtag.granuleId);
   const newEtag = updatedGranule.files.filter(isCMRFile)[0].etag;
   t.not(newEtag, previousEtag);
 });
 
-test.serial('Update-granules-metadata throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
   const newPayload = buildPayload(t);
   delete newPayload.config.distribution_endpoint;
 
@@ -130,7 +130,7 @@ test.serial('Update-granules-metadata throws an error when cmr file type is dist
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   await t.throwsAsync(
-    () => updateGranulesMetadata(newPayload),
+    () => updateGranulesCmrMetadataFileLinks(newPayload),
     { message: 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.' } 
   );
 });

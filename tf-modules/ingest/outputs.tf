@@ -149,8 +149,8 @@ output "start_sf_queue_url" {
   value = aws_sqs_queue.start_sf.id
 }
 
-output "update_granules_metadata_task" {
+output "update_granules_cmr_metadata_file_links_task" {
   value = {
-    task_arn = aws_lambda_function.update_granules_metadata_task.arn
+    task_arn = aws_lambda_function.update_granules_cmr_metadata_file_links_task.arn
   }
 }

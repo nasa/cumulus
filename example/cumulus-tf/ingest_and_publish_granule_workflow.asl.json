@@ -214,7 +214,7 @@
       },
       "Type": "Task",
       "Resource": "${move_granules_task_arn}",
-      "Next": "UpdateGranulesMetadataStep",
+      "Next": "UpdateGranulesCmrMetadataFileLinksStep",
       "Catch": [
         {
           "ErrorEquals": [
@@ -237,7 +237,7 @@
         }
       ]
     },
-    "UpdateGranulesMetadataStep": {
+    "UpdateGranulesCmrMetadataFileLinksStep": {
       "Parameters": {
         "cma": {
           "event.$": "$",
@@ -248,7 +248,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${update_granules_metadata_task_arn}",
+      "Resource": "${update_granules_cmr_metadata_file_links_task_arn}",
       "Next": "HyraxMetadataUpdatesTask",
       "Retry": [
         {

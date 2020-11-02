@@ -1,6 +1,6 @@
 {
   "title": "UpdateGranulesMetadataConfig",
-  "description": "Describes the config used by the update-granules-metadata task",
+  "description": "Describes the config used by the update-granules-cmr-metadata-file-links task",
   "type": "object",
   "required": [
     "distribution_endpoint",

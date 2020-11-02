@@ -1,6 +1,6 @@
 {
   "title": "UpdateGranulesMetadataInput",
-  "description": "Describes the input expected by the update-granules-metadata task",
+  "description": "Describes the input expected by the update-granules-cmr-metadata-file-links task",
   "type": "object",
   "required": [
     "granules"

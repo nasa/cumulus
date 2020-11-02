@@ -80,7 +80,7 @@ function addCmrFileEtags(granulesByGranuleId, cmrFiles) {
     (granule) => ({ ...granule, files: addEtags(granule.files) }));
 }
 
-async function updateGranulesMetadata(event) {
+async function updateGranulesCmrMetadataFileLinks(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
   const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
@@ -120,8 +120,8 @@ async function updateGranulesMetadata(event) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(updateGranulesMetadata, event, context);
+  return cumulusMessageAdapter.runCumulusTask(updateGranulesCmrMetadataFileLinks, event, context);
 }
 
 exports.handler = handler;
-exports.updateGranulesMetadata = updateGranulesMetadata;
+exports.updateGranulesCmrMetadataFileLinks = updateGranulesCmrMetadataFileLinks;
