@@ -807,7 +807,11 @@ test('saveRecords() only writes records to Dynamo if cumulus version is less tha
       name: pdrName,
     }, knex, tableNames.pdrs)
   );
-  // Add assertion for granule
+  t.false(
+    await doesRecordExist({
+      granuleId,
+    }, knex, tableNames.granules)
+  );
 });
 
 test('saveRecords() does not write PDR if execution write fails', async (t) => {
@@ -867,5 +871,9 @@ test('saveRecords() writes records to Dynamo and RDS if cumulus version is less 
       name: pdrName,
     }, knex, tableNames.pdrs)
   );
-  // Add assertion for granule
+  t.true(
+    await doesRecordExist({
+      granuleId,
+    }, knex, tableNames.granules)
+  );
 });

@@ -23,6 +23,10 @@ const {
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const {
+  getMessageGranules,
+  messageHasGranules,
+} = require('@cumulus/message/Granules');
+const {
   getMessagePdrName,
   messageHasPdr,
 } = require('@cumulus/message/PDRs');
@@ -185,6 +189,49 @@ const saveGranulesToDb = async (cumulusMessage) => {
   }
 };
 
+const saveGranuleViaTransaction = async ({
+  cumulusMessage,
+  granule,
+  collection,
+  provider,
+  trx,
+}) =>
+  trx(tableNames.granules)
+    .insert({
+      granuleId: granule.granuleId,
+      status: getWorkflowStatus(cumulusMessage) || granule.status,
+      collectionCumulusId: collection.cumulusId,
+      providerCumulusId: provider ? provider.cumulusId : undefined,
+    });
+
+const saveGranules = async ({
+  cumulusMessage,
+  collection,
+  provider,
+  knex,
+  granuleModel = new Granule(),
+}) => {
+  // If there are no granules in the message, then there's nothing to do here, which is fine
+  if (!messageHasGranules(cumulusMessage)) {
+    return true;
+  }
+  if (!isRecordDefined(collection)) {
+    throw new Error(`Collection reference is required for granules, got ${collection}`);
+  }
+  // if (!isRecordDefined(provider)) {
+  //   throw new Error(`Provider reference is required for a PDR, got ${provider}`);
+  // }
+  return knex.transaction(async (trx) => {
+    // TODO: should write of each granule to Dynamo/RDS be done in a transaction per granule,
+    // rather than one transaction for all granules to Dynamo/RDS? A transaction per granule
+    // would allow write of each granule to succeed or fail independently
+    await Promise.all(getMessageGranules(cumulusMessage).map(
+      (granule) => saveGranuleViaTransaction({ cumulusMessage, granule, collection, provider, trx })
+    ));
+    return granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
+  });
+};
+
 const saveRecordsToDynamoDb = async (cumulusMessage) => {
   const executionModel = new Execution();
   const pdrModel = new Pdr();
@@ -234,7 +281,12 @@ const saveRecords = async (cumulusMessage, knex) => {
       provider,
       knex,
     });
-    return await saveGranulesToDb(cumulusMessage);
+    return await saveGranules({
+      cumulusMessage,
+      collection,
+      provider,
+      knex,
+    });
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
     throw error;
