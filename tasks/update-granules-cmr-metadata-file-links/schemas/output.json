@@ -1,5 +1,5 @@
 {
-  "title": "UpdateGranulesMetadataOutput",
+  "title": "UpdateGranulesCmrMetadataFileLinksOutput",
   "description": "Describes the output produced by the update-granules-cmr-metadata-file-links task",
   "type": "object",
   "properties": {

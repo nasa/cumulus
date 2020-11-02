@@ -1,5 +1,5 @@
 {
-  "title": "UpdateGranulesMetadataConfig",
+  "title": "UpdateGranulesCmrMetadataFileLinksConfig",
   "description": "Describes the config used by the update-granules-cmr-metadata-file-links task",
   "type": "object",
   "required": [

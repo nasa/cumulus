@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
-  function_name    = "${var.prefix}-UpdateGranulesMetadata"
+  function_name    = "${var.prefix}-UpdateGranulesCmrMetadataFileLinks"
   filename         = "${path.module}/../../tasks/update-granules-cmr-metadata-file-links/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/update-granules-cmr-metadata-file-links/dist/lambda.zip")
   handler          = "index.handler"
