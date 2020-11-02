@@ -102,6 +102,12 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
   });
 
   t.is(result.$response.httpResponse.statusCode, 200);
+  t.deepEqual(result.$response.data.Attributes, {
+    id: { S: t.context.asyncOperationId },
+    status: { S: status },
+    output: { S: JSON.stringify(output) },
+    updatedAt: { N: updateTime },
+  });
   t.deepEqual(rdsResponse, [{
     id: t.context.asyncOperationId,
     status,
