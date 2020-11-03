@@ -1,11 +1,11 @@
 'use strict';
 
+const { Cookie } = require('tough-cookie');
 const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 const moment = require('moment');
-const urljoin = require('url-join');
 
 const awsServices = require('@cumulus/aws-client/services');
 
@@ -27,6 +27,7 @@ process.env.AccessTokensTable = randomId('tokenTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 
 let accessTokenModel;
+let context;
 
 // import the express app after setting the env variables
 // const { distributionApp } = require('../distribution');
@@ -51,11 +52,16 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   const stubbedAccessToken = fakeAccessTokenFactory();
+  await accessTokenModel.create(stubbedAccessToken);
 
   sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
   ).callsFake(() => stubbedAccessToken);
+
+  context = {
+    stubbedAccessToken,
+  };
 });
 
 test.after.always(async () => {
@@ -105,8 +111,7 @@ test('An s3credential request without access Token redirects to Oauth2 provider.
     .get('/s3credentials')
     .set('Accept', 'application/json')
     .expect(307);
-  const authUrl = urljoin(process.env.DISTRIBUTION_REDIRECT_ENDPOINT, response.req.path);
-  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(authUrl);
+  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(response.req.path);
 
   t.is(response.status, 307);
   t.is(response.headers.location, authorizationUrl);
@@ -123,11 +128,31 @@ test('An s3credential request with expired accessToken redirects to Oauth2 provi
     .set('Accept', 'application/json')
     .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
     .expect(307);
-  const authUrl = urljoin(process.env.DISTRIBUTION_REDIRECT_ENDPOINT, response.req.path);
-  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(authUrl);
+  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(response.req.path);
 
   t.is(response.status, 307);
   t.is(response.headers.location, authorizationUrl);
+});
+
+test('A redirect request returns a response with an unexpired cookie ', async (t) => {
+  const {
+    stubbedAccessToken,
+  } = context;
+
+  const response = await request(distributionApp)
+    .get('/redirect')
+    .query({ code: randomId('code'), state: 'original-path/s3credentials' })
+    .set('Accept', 'application/json')
+    .expect(307);
+
+  const cookie = response.headers['set-cookie'].map(Cookie.parse);
+  const accessToken = cookie.find((c) => c.key === 'accessToken');
+  t.truthy(accessToken);
+  t.is(accessToken.value, stubbedAccessToken.accessToken);
+  t.is(
+    accessToken.expires.valueOf(),
+    stubbedAccessToken.expirationTime * 1000
+  );
 });
 
 test('buildRoleSessionName() returns the username if a client name is not provided', (t) => {
