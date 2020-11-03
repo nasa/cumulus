@@ -39,26 +39,21 @@ test.before(async (t) => {
         WriteCapacityUnits: 5,
       },
     });
-  } catch (error) {
-    console.log(`Error ${JSON.stringify(error)}`);
-    throw (error);
-  }
 
-  console.log(testDbName);
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-    },
-  });
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
+    console.log(testDbName);
+    t.context.knexAdmin = await getKnexClient({
+      env: {
+        ...localStackConnectionEnv,
+      },
+    });
+    t.context.knex = await getKnexClient({
+      env: {
+        ...localStackConnectionEnv,
+        PG_DATABASE: testDbName,
+        migrationDir,
+      },
+    });
 
-  try {
     await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
     await t.context.knex.migrate.latest();
     await t.context.knex(asyncOperationsConfig.name).insert({

@@ -1,7 +1,7 @@
 import { ECS } from 'aws-sdk';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
-import { getKnexClient, asyncOperationsConfig } from '@cumulus/db';
+import { AsyncOperationRecord, getKnexClient, asyncOperationsConfig } from '@cumulus/db';
 import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
@@ -36,6 +36,8 @@ export const getLambdaEnvironmentVariables = async (
  *   S3 bucket name where async operation payload is stored
  * @param {string} params.payloadKey
  *   S3 key name where async operation payload is stored
+ * @param {string} params.useLambdaEnvironmentVariables
+ *   Boolean
  * @returns {Promise<Object>}
  * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ECS.html#runTask-property
  */
@@ -90,32 +92,42 @@ export const startECSTask = async ({
  * Start an AsyncOperation in ECS and store its associate record to DynamoDB
  *
  * @param {Object} params - params
- * @param {string} params.id - the id of the AsyncOperation to start
  * @param {string} params.asyncOperationTaskDefinition - the name or ARN of the
  *   async-operation ECS task definition
  * @param {string} params.cluster - the name of the ECS cluster
+ * @param {string} params.description - the ECS task description
+ * @param {string} params.dynamoTableName - the dynamo async operations table to
+ * write records to
+ * @param {Object} params.knexConfig - Object with Knex configuration keys
  * @param {string} params.lambdaName - the name of the Lambda task to be run
+ * @param {string} params.operationType - the type of async operation to run
  * @param {Object|Array} params.payload - the event to be passed to the lambda task.
  *   Must be a simple Object or Array which can be converted to JSON.
+ * @param {string} params.stackName- the Cumulus stack name
+ * @param {string} params.systembucket- Cumulus system bucket to use for writing
+ * async payload objects
+ * @param {string} params.useLambdaEnvironmentVariables -
+ * useLambdaEnvironmentVariables, set 'true' if async task
+ * should import environment variables from the deployed lambda
  * @param {Object} AsyncOperation - A api dynamoDb modeal AsyncOperation object
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
 export const startAsyncOperation = async (params: { // fix input params to match overloaded typing
-  description: string,
-  operationType: string,
-  lambdaName: string,
-  cluster: string,
   asyncOperationTaskDefinition: string,
-  payload: unknown,
-  systemBucket: string,
-  stackName: string,
+  cluster: string,
+  description: string,
   dynamoTableName: string,
-  useLambdaEnvironmentVariables?: string,
   knexConfig?: NodeJS.ProcessEnv,
+  lambdaName: string,
+  operationType: string,
+  payload: unknown,
+  stackName: string,
+  systemBucket: string,
+  useLambdaEnvironmentVariables?: string,
 }, AsyncOperation: new(params: { stackName: string, systemBucket: string, tableName?: string })
   => AsyncOperationsDynamoModel
-): Promise<unknown> => { // Update this return typing to match Mark's db typings
+): Promise<Partial<AsyncOperationRecord>> => {
   const {
     description,
     operationType,
@@ -126,9 +138,7 @@ export const startAsyncOperation = async (params: { // fix input params to match
     knexConfig = process.env,
   } = params;
 
-  // Create the record in the database
   const id = uuidv4();
-
   // Store the payload to S3
   const payloadBucket = systemBucket;
   const payloadKey = `${stackName}/async-operation-payloads/${id}.json`;
@@ -158,7 +168,6 @@ export const startAsyncOperation = async (params: { // fix input params to match
     systemBucket,
     tableName: dynamoTableName,
   });
-  // Create the database record with the taskArn
 
   const knex = await getKnexClient({ env: knexConfig });
   return knex.transaction(async (trx) => {

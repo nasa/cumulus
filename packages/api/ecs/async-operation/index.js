@@ -13,6 +13,7 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { asyncOperationsConfig, getKnexClient } = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
+const { blockParams } = require('handlebars');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
@@ -153,14 +154,35 @@ function buildErrorOutput(error) {
 }
 
 const writeAsyncOperationToRds = async (params) => {
-  const { trx, knex, dbOutput, status, updatedTime, id } = params;
+  const { trx, env, dbOutput, status, updatedTime } = params;
+  const id = env.asyncOperationId;
+  const knex = await getKnexClient({ env });
   return trx(asyncOperationsConfig.name)
     .where({ id })
     .update({
       status,
       output: dbOutput,
-      updated_at: knex.raw(`to_timestamp(${Number(updatedTime / 1000.00 )})`),
+      updated_at: knex.raw(`to_timestamp(${Number(updatedTime / 1000)})`),
     });
+};
+
+const writeAsyncOperationToDynamo = async (params) => {
+  const { env, status, dbOutput, updatedTime } = params;
+  return dynamodb().updateItem({
+    TableName: env.asyncOperationsTable,
+    Key: { id: { S: env.asyncOperationId } },
+    ExpressionAttributeNames: {
+      '#S': 'status',
+      '#O': 'output',
+      '#U': 'updatedAt',
+    },
+    ExpressionAttributeValues: {
+      ':s': { S: status },
+      ':o': { S: dbOutput },
+      ':u': { N: updatedTime },
+    },
+    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
+  }).promise();
 };
 
 /**
@@ -185,26 +207,11 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
     await writeAsyncOperationToRds({
       id: env.asyncOperationId,
       trx,
-      knex,
       dbOutput,
       status,
       updatedTime,
     });
-    return dynamodb().updateItem({
-      TableName: env.asyncOperationsTable,
-      Key: { id: { S: env.asyncOperationId } },
-      ExpressionAttributeNames: {
-        '#S': 'status',
-        '#O': 'output',
-        '#U': 'updatedAt',
-      },
-      ExpressionAttributeValues: {
-        ':s': { S: status },
-        ':o': { S: dbOutput },
-        ':u': { N: updatedTime },
-      },
-      UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
-    }).promise();
+    return writeAsyncOperationToDynamo({ env, status, dbOutput, updatedTime });
   });
 };
 
@@ -257,17 +264,18 @@ async function runTask() {
     return;
   }
 
-  try { // Write the result out to databases
+  // Write the result out to databases
+  try {
     await updateAsyncOperation('SUCCEEDED', result);
   } catch (error) {
-    logger.error('Failed to update records', error);
+    logger.error('Failed to update record', error);
+    throw error;
   }
 }
 
-module.exports = { updateAsyncOperation };
-// Here's where the magic happens ...
-
-// Make sure that all of the required environment variables are set
 const missingVars = missingEnvironmentVariables();
+
 if (missingVars.length === 0) runTask();
 else logger.error('Missing environment variables:', missingVars.join(', '));
+
+module.exports = { updateAsyncOperation };
