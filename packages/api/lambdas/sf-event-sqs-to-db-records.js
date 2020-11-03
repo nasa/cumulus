@@ -98,6 +98,8 @@ const saveExecution = async (cumulusMessage, knex) => {
         .insert({
           arn: executionArn,
           cumulus_version: getMessageCumulusVersion(cumulusMessage),
+          // stubbing for now
+          status: 'running',
         });
       return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
     });
