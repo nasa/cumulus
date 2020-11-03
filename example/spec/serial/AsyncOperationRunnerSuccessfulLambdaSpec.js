@@ -109,7 +109,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
   it('updates the status field to "SUCCEEDED"', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
-    else expect(asyncOperation.status).toEqual('SUCCEEDED'); // TODO - This isn't actually the database.
+    else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
 
   it('updates the output field in DynamoDB', async () => {
