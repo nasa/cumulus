@@ -5,14 +5,14 @@ const uuidv4 = require('uuid/v4');
 const cryptoRandomString = require('crypto-random-string');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const awsServices = require('@cumulus/aws-client/services');
-// eslint-disable-next-line unicorn/import-index
-const { updateAsyncOperation } = require('../index');
 const {
   asyncOperationsConfig,
   createTestDatabase,
   localStackConnectionEnv,
   getKnexClient,
 } = require('@cumulus/db');
+// eslint-disable-next-line unicorn/import-index
+const { updateAsyncOperation } = require('../index');
 
 const testDbName = `async_operation_model_test_db_${cryptoRandomString({ length: 10 })}`;
 // eslint-disable-next-line node/no-unpublished-require

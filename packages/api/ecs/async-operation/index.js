@@ -13,7 +13,6 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { asyncOperationsConfig, getKnexClient } = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
-const { blockParams } = require('handlebars');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
