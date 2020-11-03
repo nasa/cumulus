@@ -260,7 +260,7 @@ async function runTask() {
   try { // Write the result out to databases
     await updateAsyncOperation('SUCCEEDED', result);
   } catch (error) {
-    logger.error('Failed to updated records', error);
+    logger.error('Failed to update records', error);
   }
 }
 
