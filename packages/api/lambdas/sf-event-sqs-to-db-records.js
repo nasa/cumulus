@@ -120,7 +120,7 @@ const shouldWriteExecutionToRDS = async (
   }
 };
 
-const saveExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
+const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
   trx(tableNames.executions)
     .insert({
       arn: getMessageExecutionArn(cumulusMessage),
@@ -128,17 +128,17 @@ const saveExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
       status: getWorkflowStatus(cumulusMessage),
     });
 
-const saveExecution = async ({
+const writeExecution = async ({
   cumulusMessage,
   knex,
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
-    await saveExecutionViaTransaction({ cumulusMessage, trx });
+    await writeExecutionViaTransaction({ cumulusMessage, trx });
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   });
 
-const savePdrViaTransaction = async ({
+const writePdrViaTransaction = async ({
   cumulusMessage,
   collection,
   provider,
@@ -152,7 +152,7 @@ const savePdrViaTransaction = async ({
       providerCumulusId: provider.cumulusId,
     });
 
-const savePdr = async ({
+const writePdr = async ({
   cumulusMessage,
   collection,
   provider,
@@ -170,7 +170,7 @@ const savePdr = async ({
     throw new Error(`Provider reference is required for a PDR, got ${provider}`);
   }
   return knex.transaction(async (trx) => {
-    await savePdrViaTransaction({ cumulusMessage, collection, provider, trx });
+    await writePdrViaTransaction({ cumulusMessage, collection, provider, trx });
     return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
   });
 };
@@ -187,7 +187,7 @@ const saveGranulesToDb = async (cumulusMessage) => {
   }
 };
 
-const saveRecordsToDynamoDb = async (cumulusMessage) => {
+const writeRecordsToDynamoDb = async (cumulusMessage) => {
   const executionModel = new Execution();
   const pdrModel = new Pdr();
   const granuleModel = new Granule();
@@ -207,7 +207,7 @@ const saveRecordsToDynamoDb = async (cumulusMessage) => {
   return results;
 };
 
-const saveRecords = async (cumulusMessage, knex) => {
+const writeRecords = async (cumulusMessage, knex) => {
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
   const collection = await getMessageCollection(cumulusMessage, knex);
@@ -220,18 +220,18 @@ const saveRecords = async (cumulusMessage, knex) => {
   // If execution is not written to RDS, then PDRs/granules which reference
   // execution should not be written to RDS either
   if (!isExecutionRDSWriteEnabled) {
-    return saveRecordsToDynamoDb(cumulusMessage);
+    return writeRecordsToDynamoDb(cumulusMessage);
   }
 
   const provider = await getMessageProvider(cumulusMessage, knex);
 
   try {
-    await saveExecution({
+    await writeExecution({
       cumulusMessage,
       knex,
     });
     // PDR write only attempted if execution saved
-    await savePdr({
+    await writePdr({
       cumulusMessage,
       collection,
       provider,
@@ -259,7 +259,7 @@ const handler = async (event) => {
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
     try {
-      return await saveRecords(cumulusMessage, knex);
+      return await writeRecords(cumulusMessage, knex);
     } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
@@ -275,8 +275,8 @@ module.exports = {
   getMessageCollection,
   getMessageProvider,
   shouldWriteExecutionToRDS,
-  saveExecution,
+  writeExecution,
   saveGranulesToDb,
-  savePdr,
-  saveRecords,
+  writePdr,
+  writeRecords,
 };
