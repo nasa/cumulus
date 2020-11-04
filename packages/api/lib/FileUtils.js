@@ -9,8 +9,10 @@ const pick = require('lodash/pick');
 const urljoin = require('url-join');
 const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { removeNilProperties } = require('@cumulus/common/util');
+const Logger = require('@cumulus/logger');
 const schemas = require('../models/schemas');
 
+const log = new Logger({ sender: 'api/lib/FieUtils' });
 const getBucket = (file) => {
   if (file.bucket) return file.bucket;
   if (file.filename) return parseS3Uri(file.filename).Bucket;
@@ -72,7 +74,8 @@ const setS3FileSize = async (s3, file) => {
 
     return { ...file, size };
   } catch (error) {
-    console.log(`File is ${file}, Error is ${error}`);
+    log.info(`Unable to get object size. File is ${file}`);
+    log.error(error);
     return file;
   }
 };
