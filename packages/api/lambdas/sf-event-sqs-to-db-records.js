@@ -31,7 +31,7 @@ const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
 const {
-  getWorkflowStatus,
+  getMetaStatus,
 } = require('@cumulus/message/workflows');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
@@ -125,7 +125,7 @@ const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
     .insert({
       arn: getMessageExecutionArn(cumulusMessage),
       cumulus_version: getMessageCumulusVersion(cumulusMessage),
-      status: getWorkflowStatus(cumulusMessage),
+      status: getMetaStatus(cumulusMessage),
     });
 
 const writeExecution = async ({
@@ -147,7 +147,7 @@ const writePdrViaTransaction = async ({
   trx(tableNames.pdrs)
     .insert({
       name: getMessagePdrName(cumulusMessage),
-      status: getWorkflowStatus(cumulusMessage),
+      status: getMetaStatus(cumulusMessage),
       collectionCumulusId: collection.cumulusId,
       providerCumulusId: provider.cumulusId,
     });
