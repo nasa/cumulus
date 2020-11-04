@@ -27,10 +27,7 @@ process.env.AccessTokensTable = randomId('tokenTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 
 let accessTokenModel;
-let context;
 
-// import the express app after setting the env variables
-// const { distributionApp } = require('../distribution');
 const {
   buildRoleSessionName,
   distributionApp,
@@ -47,7 +44,7 @@ const buildEarthdataLoginClient = () =>
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 
-test.before(async () => {
+test.before(async (t) => {
   accessTokenModel = new models.AccessToken('token');
   await accessTokenModel.createTable();
 
@@ -59,9 +56,7 @@ test.before(async () => {
     'getAccessToken'
   ).callsFake(() => stubbedAccessToken);
 
-  context = {
-    stubbedAccessToken,
-  };
+  t.context = { stubbedAccessToken };
 });
 
 test.after.always(async () => {
@@ -135,13 +130,10 @@ test('An s3credential request with expired accessToken redirects to Oauth2 provi
 });
 
 test('A redirect request returns a response with an unexpired cookie ', async (t) => {
-  const {
-    stubbedAccessToken,
-  } = context;
-
+  const { stubbedAccessToken } = t.context;
   const response = await request(distributionApp)
     .get('/redirect')
-    .query({ code: randomId('code'), state: 'original-path/s3credentials' })
+    .query({ code: randomId('code'), state: randomId('authorizationUrl') })
     .set('Accept', 'application/json')
     .expect(307);
 
@@ -153,6 +145,7 @@ test('A redirect request returns a response with an unexpired cookie ', async (t
     accessToken.expires.valueOf(),
     stubbedAccessToken.expirationTime * 1000
   );
+  t.true(accessToken.expires.valueOf() > Date.now());
 });
 
 test('buildRoleSessionName() returns the username if a client name is not provided', (t) => {

@@ -137,6 +137,7 @@
     "ssh2-streams": "^0.4.8",
     "string-replace-loader": "^2.3.0",
     "supertest": "^4.0.2",
+    "tough-cookie": "^4.0.0",
     "ts-loader": "^8.0.3",
     "tsc-watch": "^4.2.8",
     "typescript": "^3.9.0",
