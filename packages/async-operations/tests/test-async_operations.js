@@ -197,31 +197,6 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
   });
 });
 
-/* test.serial('The AsyncOperation start() method writes a new record to DynamoDB', async (t) => {
-  stubbedEcsRunTaskResult = {
-    tasks: [{ taskArn: randomString() }],
-    failures: [],
-  };
-  const stackName = randomString();
-
-  const { id } = await start({
-    asyncOperationTaskDefinition: randomString(),
-    cluster: randomString(),
-    lambdaName: randomString(),
-    description: randomString(),
-    operationType: 'ES Index',
-    payload: {},
-    stackName,
-    dynamoTableName: asyncOperationModel.tableName,
-    knexConfig: knexConfig,
-    systemBucket,
-
-  });
-
-  const fetchedAsyncOperation = await asyncOperationModel.get({ id });
-  t.is(fetchedAsyncOperation.taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
-});
- */
 test(' startAsyncOperation calls Dynamo model create method', async (t) => {
   const createSpy = sinon.spy(() => true);
   const stubbedAsyncOperationsModel = class {
