@@ -204,10 +204,10 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
   const knex = await getKnexClient({ env });
   return knex.transaction(async (trx) => {
     await writeAsyncOperationToRds({
-      id: env.asyncOperationId,
-      trx,
       dbOutput,
+      env,
       status,
+      trx,
       updatedTime,
     });
     return writeAsyncOperationToDynamo({ env, status, dbOutput, updatedTime });
