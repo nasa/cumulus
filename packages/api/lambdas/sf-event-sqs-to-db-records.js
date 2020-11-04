@@ -124,6 +124,7 @@ const saveExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
     .insert({
       arn: getMessageExecutionArn(cumulusMessage),
       cumulus_version: getMessageCumulusVersion(cumulusMessage),
+      status: getWorkflowStatus(cumulusMessage),
     });
 
 const saveExecution = async ({
