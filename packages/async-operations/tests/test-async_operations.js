@@ -121,7 +121,7 @@ test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
   t.deepEqual(JSON.parse(getObjectResponse.Body.toString()), payload);
 });
 
-test.serial('The AsyncOperation start method startAsyncOperations an ECS task with the correct parameters', async (t) => {
+test.serial('The AsyncOperation start method starts an ECS task with the correct parameters', async (t) => {
   const createSpy = sinon.spy((obj) => obj);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -137,7 +137,7 @@ test.serial('The AsyncOperation start method startAsyncOperations an ECS task wi
   const cluster = randomString();
   const lambdaName = randomString();
   const payload = { x: randomString() };
-  const stackName = randomString(); // shouldn't we just use the name from the model?
+  const stackName = randomString();
 
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition,
@@ -150,7 +150,7 @@ test.serial('The AsyncOperation start method startAsyncOperations an ECS task wi
     dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-    useLambdaEnvironmentVariables: true, // Why did this work before, wtf.
+    useLambdaEnvironmentVariables: true,
   }, stubbedAsyncOperationsModel);
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
