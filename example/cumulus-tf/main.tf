@@ -54,7 +54,7 @@ data "aws_ssm_parameter" "ecs_image_id" {
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 
-  cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
+  cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 
   prefix = var.prefix
 
@@ -89,6 +89,8 @@ module "cumulus" {
   ems_submit_report     = var.ems_submit_report
   ems_username          = var.ems_username
 
+  es_request_concurrency = var.es_request_concurrency
+  
   metrics_es_host     = var.metrics_es_host
   metrics_es_password = var.metrics_es_password
   metrics_es_username = var.metrics_es_username

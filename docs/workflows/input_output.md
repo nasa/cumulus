@@ -25,7 +25,7 @@ In order to make use of this configuration, a Lambda layer must be uploaded to y
 
 Once you've deployed the layer, integrate the CMA layer with your Lambdas:
 
-- If using the `cumulus` module, set the `cumulus_message_adapter_lambda_layer_arn` in your `.tfvars` file to integrate the CMA layer with all core Cumulus lambdas.
+- If using the `cumulus` module, set the `cumulus_message_adapter_lambda_layer_version_arn` in your `.tfvars` file to integrate the CMA layer with all core Cumulus lambdas.
 - If including your own Lambda or ECS task Terraform modules, specify the CMA layer ARN in the Terraform resource definitions.  Also, make sure to set the `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable for the task to `/opt` for the CMA integration to work properly.
 
 In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed.

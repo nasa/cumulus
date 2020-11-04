@@ -19,7 +19,7 @@ configuring Terraform, deploying the two root modules, and running your tests.
 In order to manage your installed Terraform versions, we recommend using [`tfenv`](https://github.com/tfutils/tfenv).
 
 If you are using a Mac and [Homebrew](https://brew.sh), installing `tfenv` is
-as simple as:
+as follows:
 
 ```shell
 brew update
@@ -197,17 +197,19 @@ Copy `.env.sample` to `.env`, filling in approriate values for your deployment.
 Set the `DEPLOYMENT` environment variable to match the `prefix` that you
 configured in your `terraform.tfvars` files.
 
+If you are deploying outside of NGAP, you may need to update `example/config.yml` to override custom settings for your deployment such as the default bucket, your Earth Data Login username for login tests, or the value of `pdrNodeNameProviderBucket`.
+
 Run `npm test`.
 
 ## Run all tests
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
-Tests are separated into standalone and parallel folders. The `standalone` folder is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Bamboo on master.
+Tests are separated into standalone and parallel directories. The `standalone` directory is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Bamboo on master.
 
-The `parallel` folder holds tests that can be run in parallel.
+The `parallel` directory holds tests that can be run in parallel.
 
-All other tests in the spec folder will be run in serial.
+All other tests in the spec directory will be located in the `serial` directory and will be run in serial.
 
 To run all tests outside of standalone, run `DEPLOYMENT=<name-of-your-deployment> npm test` in this directory. The parallel tests will be run in parallel locally and on CI.
 
@@ -217,7 +219,7 @@ To run all of the tests, including standalone, run `DEPLOYMENT=<name-of-your-dep
 
 To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/parallel/helloWorld/HelloWorldEcsSpec.js`.
 
-Jasmine supports wildcard expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/standalone/*`
+Jasmine supports wildcard expressions for running tests, so an entire test directory can be run using `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/standalone/*`
 
 ### Running Tests on SIT
 
@@ -227,38 +229,38 @@ In the event that you are running the tests outside of the Cumulus sandbox envir
 
 ### Adding tests for an existing workflow
 
-Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and supporting JSON files can go in there.
+Workflow tests are located in the `/spec/parallel` or `/spec/serial` directory depending on whether or not they can run in parallel or not. Any tests and supporting JSON files can go in there.
 
 ### Adding a new test workflow
 
-The workflow should be configured as it would be for a normal Cumulus deployment in a workflows yaml file. It must be deployed to the current deployment if testing locally.
+The workflow should be configured as it would be for a normal Cumulus deployment in a workflows terraform file. It must be deployed to the current deployment if testing locally.
 
-The workflows yaml files are located in the `/workflows/` folder and are split up to make the workflows easier to find and understand. When adding a new file, make sure to update the `app/config.yml` `stepFunctions` field.
+The workflows terraform files are located in the `/example/cumulus-tf` directory and are split up to make the workflows easier to find and understand.
 
-A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
-
-Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `spec` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
+A new directory should be added in the `/spec/parallel` directory if the test workflow can be run in parallel. The tests should go in the newly created directory along with any necessary input JSON files. Otherwise, the new test workflow should be added to the `/spec/serial` directory. Only if the test should be run outside of the test suite should it go in the `standalone` directory.
 
 ## Fake data server
 
 A fake server is required for tests testing FTP/HTTP/HTTPS discover and downloads. The fake server should be set up once per account.
 
-The Cloudformation template for the fake data server is in `fake-server.yml`. To setup the fake server run:
+The Cloudformation template for the fake data server is in `fake-provider-cf.yml`. To setup the fake server, you can use the AWS CLI or AWS Console.
+
+If you want to use the AWS CLI, run:
 
 ```bash
-aws cloudformation deploy --template-file fake-server.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> SubnetId=<subnet-XXXXXX> AZone=<az-zone> Ngap=true --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation deploy --template-file fake-provider-cf.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> Subnet=<subnet-XXXXXX> PermissionsBoundary=<permissions-boundary> NGAPProtAppInstanceMinimalPolicyName=<policy-name> LatestAmiId=<ami-id> FtpPassword=<ftp-password> Bucket=<bucket-name> Prefix=<prefix> --capabilities CAPABILITY_NAMED_IAM
 ```
 
 with the following parameters:
 
 - stack-name - Stack name for the fake server
 - VpcId - VPC ID
-- SubnetId - Subnet ID
-- AZone - Availability zone, needs to match the Subnet ID's availability zone
-- Ngap - `true` if in an NASA NGAP environment, will add the NGAP permission boundary to the IAM role created
+- Subnet - Subnet ID
+- PermissionsBoundary - A permissions boundary from NGAP. 
+- NGAPProtAppInstanceMinimalPolicyName - Will be included in the list of Amazon Resource Names (ARNs) of the IAM managed policies we want to attach to the user.
+- LatestAmiId - An SSM parameter value that resolves to an Amazon Machine Image ID value. When deploying within NGAP, the SSM parameter is provided by NGAP.
+- FtpPassword - Password for the FTP server created by the stack
+- Bucket -  S3 bucket name
+- Prefix - Any string, generally a DAAC's name
 
-In the outputs section of your Cloudformation deployment in the AWS console, you can find the IP address of the fake server created. To use this fake server with the tests, update the provider configurations in `example/data/providers` to use this host address.
-
-### Update data bucket
-
-By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-server.yml` with the alternative bucket and re-deploy the fake data server.
+Alternatively, you can use the AWS Console. Navigate to `CloudFormation > Create Stack with new resources > Create template in designer` and paste the contents of `fake-provider-cf.yml` into the template box. Be sure to choose `YAML` as the template language.
