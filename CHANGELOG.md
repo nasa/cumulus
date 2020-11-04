@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2201**
   - Update `dbIndexer` lambda to process requests in serial
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
+- **CUMULUS-2020**
+  - Improved Elasticsearch mappings to improve search
 
 ### BREAKING CHANGES
 
@@ -39,6 +41,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **[1956](https://github.com/nasa/cumulus/issues/1956)**
   - Update the name of the `cumulus_message_adapter_lambda_layer_arn` output from the `cumulus-message-adapter` module to `cumulus_message_adapter_lambda_layer_version_arn`. The output value has changed from being the ARN of the Lambda layer **without a version** to the ARN of the Lambda layer **with a version**.
   - Update the variable name in the `cumulus` and `ingest` modules from `cumulus_message_adapter_lambda_layer_arn` to `cumulus_message_adapter_lambda_layer_version_arn`
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then preform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
 
 ## [v3.0.1] 2020-10-21
 
