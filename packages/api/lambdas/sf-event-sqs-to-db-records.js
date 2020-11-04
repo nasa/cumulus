@@ -2,6 +2,7 @@
 
 const get = require('lodash/get');
 const semver = require('semver');
+const AggregateError = require('aggregate-error');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
@@ -199,8 +200,9 @@ const saveRecordsToDynamoDb = async (cumulusMessage) => {
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
-    log.error(allFailures.join(' '));
-    throw new Error('Failed writing some records to Dynamo');
+    const aggregateError = new AggregateError(allFailures);
+    log.error('Failed writing some records to Dynamo', aggregateError);
+    throw aggregateError;
   }
   return results;
 };
