@@ -594,7 +594,7 @@ test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusM
   }
 });
 
-test('writePdr() returns true if there is no PDR on the message', async (t) => {
+test('writePdr() returns undefined if there is no PDR on the message', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -604,13 +604,14 @@ test('writePdr() returns true if there is no PDR on the message', async (t) => {
 
   delete cumulusMessage.payload.pdr;
 
-  t.true(
+  t.is(
     await writePdr({
       cumulusMessage,
       collection: { id: collectionCumulusId },
       provider: { id: providerCumulusId },
       knex,
-    })
+    }),
+    undefined
   );
 });
 
@@ -638,7 +639,7 @@ test('writePdr() throws an error if provider is not provided', async (t) => {
   );
 });
 
-test('writePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
+test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulusId if RDS write is enabled', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -648,7 +649,7 @@ test('writePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', 
     pdr,
   } = t.context;
 
-  await writePdr({
+  const pdrCumulusId = await writePdr({
     cumulusMessage,
     collection: { cumulusId: collectionCumulusId },
     provider: { cumulusId: providerCumulusId },
@@ -658,7 +659,7 @@ test('writePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', 
   t.true(await pdrModel.exists({ pdrName: pdr.name }));
   t.true(
     await doesRecordExist({
-      name: pdr.name,
+      cumulusId: pdrCumulusId,
     }, knex, tableNames.pdrs)
   );
 });

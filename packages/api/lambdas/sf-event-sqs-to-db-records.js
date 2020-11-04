@@ -150,7 +150,8 @@ const writePdrViaTransaction = async ({
       status: getMetaStatus(cumulusMessage),
       collectionCumulusId: collection.cumulusId,
       providerCumulusId: provider.cumulusId,
-    });
+    })
+    .returning('cumulusId');
 
 const writePdr = async ({
   cumulusMessage,
@@ -161,7 +162,7 @@ const writePdr = async ({
 }) => {
   // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
-    return true;
+    return undefined;
   }
   if (!isRecordDefined(collection)) {
     throw new Error(`Collection reference is required for a PDR, got ${collection}`);
@@ -170,8 +171,9 @@ const writePdr = async ({
     throw new Error(`Provider reference is required for a PDR, got ${provider}`);
   }
   return knex.transaction(async (trx) => {
-    await writePdrViaTransaction({ cumulusMessage, collection, provider, trx });
-    return pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+    const [cumulusId] = await writePdrViaTransaction({ cumulusMessage, collection, provider, trx });
+    await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+    return cumulusId;
   });
 };
 
@@ -231,13 +233,13 @@ const writeRecords = async (cumulusMessage, knex) => {
       knex,
     });
     // PDR write only attempted if execution saved
-    await writePdr({
+    const pdrCumulusId = await writePdr({
       cumulusMessage,
       collection,
       provider,
       knex,
     });
-    return await saveGranulesToDb(cumulusMessage);
+    return await saveGranulesToDb(cumulusMessage, pdrCumulusId);
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
     throw error;
