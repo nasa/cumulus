@@ -14,7 +14,7 @@ const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
 const {
-  getWorkflowStatus,
+  getMetaStatus,
 } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
@@ -103,7 +103,7 @@ class Pdr extends Manager {
     const record = {
       pdrName: pdr.name,
       collectionId,
-      status: getWorkflowStatus(message),
+      status: getMetaStatus(message),
       provider: getMessageProviderId(message),
       progress,
       execution,

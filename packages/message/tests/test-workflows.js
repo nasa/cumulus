@@ -3,11 +3,11 @@
 const test = require('ava');
 
 const {
-  getWorkflowStatus,
+  getMetaStatus,
 } = require('../workflows');
 
-test('getWorkflowStatus returns correct status', (t) => {
-  const status = getWorkflowStatus({
+test('getMetaStatus returns correct status', (t) => {
+  const status = getMetaStatus({
     meta: {
       status: 'running',
     },
@@ -15,8 +15,8 @@ test('getWorkflowStatus returns correct status', (t) => {
   t.is(status, 'running');
 });
 
-test('getWorkflowStatus returns undefined if there is no status', (t) => {
-  const status = getWorkflowStatus({
+test('getMetaStatus returns undefined if there is no status', (t) => {
+  const status = getMetaStatus({
     meta: {},
   });
   t.is(status, undefined);
