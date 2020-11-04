@@ -11,6 +11,7 @@ const { AsyncOperation } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
 const { createIndex } = require('../es/indexer');
+const models = require('../models');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -241,8 +242,7 @@ async function indexFromDatabase(req, res) {
       dynamoTableName: tableName,
       knexConfig,
     },
-    asyncOperationModel,
-  });
+  }, models.AsyncOperation);
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }
