@@ -39,7 +39,6 @@ test.before(async (t) => {
     },
   });
 
-  console.log(testDbName);
   t.context.knexAdmin = await getKnexClient({
     env: {
       ...localStackConnectionEnv,

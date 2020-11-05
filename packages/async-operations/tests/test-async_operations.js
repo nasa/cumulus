@@ -34,7 +34,6 @@ const knexConfig = {
 };
 
 test.before(async (t) => {
-  console.log(testDbName);
   t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
   t.context.knex = await getKnexClient({
     env: {
