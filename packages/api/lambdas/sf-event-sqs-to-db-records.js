@@ -158,6 +158,7 @@ const writePdrViaTransaction = async ({
   collection,
   provider,
   trx,
+  executionCumulusId,
 }) =>
   trx(tableNames.pdrs)
     .insert({
@@ -165,6 +166,7 @@ const writePdrViaTransaction = async ({
       status: getMetaStatus(cumulusMessage),
       collectionCumulusId: collection.cumulusId,
       providerCumulusId: provider.cumulusId,
+      executionCumulusId,
     })
     .returning('cumulusId');
 
@@ -173,6 +175,7 @@ const writePdr = async ({
   collection,
   provider,
   knex,
+  executionCumulusId,
   pdrModel = new Pdr(),
 }) => {
   // If there is no PDR in the message, then there's nothing to do here, which is fine
@@ -186,7 +189,13 @@ const writePdr = async ({
     throw new Error(`Provider reference is required for a PDR, got ${provider}`);
   }
   return knex.transaction(async (trx) => {
-    const [cumulusId] = await writePdrViaTransaction({ cumulusMessage, collection, provider, trx });
+    const [cumulusId] = await writePdrViaTransaction({
+      cumulusMessage,
+      collection,
+      provider,
+      trx,
+      executionCumulusId,
+    });
     await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
     return cumulusId;
   });

@@ -791,7 +791,7 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
   );
 });
 
-test('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -824,7 +824,7 @@ test('writeGranules() does not persist records to Dynamo or RDS if Dynamo write 
   );
 });
 
-test('writeGranules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
