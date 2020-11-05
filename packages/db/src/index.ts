@@ -1,6 +1,6 @@
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
-export { doesRecordExist } from './database';
+export { doesRecordExist, isRecordDefined } from './database';
 export { tableNames } from './tables';
 export {
   AsyncOperationRecord,
