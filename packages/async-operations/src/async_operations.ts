@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
 
-import { AsyncOperationModelClass } from './types';
+import type { AsyncOperationModelClass } from './types';
 
 const { EcsStartTaskError } = require('@cumulus/errors');
 
