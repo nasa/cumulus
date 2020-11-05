@@ -475,7 +475,7 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   );
 });
 
-test('writeExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
+test('writeExecution() saves execution to Dynamo and RDS and returns cumulusId if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -483,12 +483,12 @@ test('writeExecution() saves execution to Dynamo and RDS if write to RDS is enab
     executionArn,
   } = t.context;
 
-  await writeExecution({ cumulusMessage, knex });
+  const executionCumulusId = await writeExecution({ cumulusMessage, knex });
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
     await doesRecordExist({
-      arn: executionArn,
+      cumulusId: executionCumulusId,
     }, knex, tableNames.executions)
   );
 });

@@ -139,7 +139,8 @@ const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
       arn: getMessageExecutionArn(cumulusMessage),
       cumulus_version: getMessageCumulusVersion(cumulusMessage),
       status: getMetaStatus(cumulusMessage),
-    });
+    })
+    .returning('cumulusId');
 
 const writeExecution = async ({
   cumulusMessage,
@@ -147,8 +148,9 @@ const writeExecution = async ({
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
-    await writeExecutionViaTransaction({ cumulusMessage, trx });
-    return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
+    const [cumulusId] = await writeExecutionViaTransaction({ cumulusMessage, trx });
+    await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
+    return cumulusId;
   });
 
 const writePdrViaTransaction = async ({
@@ -278,7 +280,7 @@ const writeRecords = async (cumulusMessage, knex) => {
   const provider = await getMessageProvider(cumulusMessage, knex);
 
   try {
-    await writeExecution({
+    const executionCumulusId = await writeExecution({
       cumulusMessage,
       knex,
     });
@@ -288,6 +290,7 @@ const writeRecords = async (cumulusMessage, knex) => {
       collection,
       provider,
       knex,
+      executionCumulusId,
     });
     return await writeGranules({
       cumulusMessage,
