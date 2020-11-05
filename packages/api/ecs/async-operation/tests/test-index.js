@@ -54,7 +54,7 @@ test.before(async (t) => {
 
   await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
   await t.context.knex.migrate.latest();
-  await t.context.knex(tableNames.async).insert({
+  await t.context.knex(tableNames.asyncOperations).insert({
     id: t.context.asyncOperationId,
     description: 'test description',
     operationType: 'ES Index',
@@ -91,12 +91,6 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
   });
 
   t.is(result.$response.httpResponse.statusCode, 200);
-  t.deepEqual(result.$response.data.Attributes, {
-    id: { S: t.context.asyncOperationId },
-    status: { S: status },
-    output: { S: JSON.stringify(output) },
-    updatedAt: { N: updateTime },
-  });
   t.deepEqual(rdsResponse, [{
     id: t.context.asyncOperationId,
     status,
