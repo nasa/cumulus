@@ -197,7 +197,7 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
   });
 });
 
-test(' startAsyncOperation calls Dynamo model create method', async (t) => {
+test('startAsyncOperation calls Dynamo model create method', async (t) => {
   const createSpy = sinon.spy(() => true);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -266,20 +266,21 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
   }, stubbedAsyncOperationsModel);
 
   const spyCall = createSpy.getCall(0).args[0];
-  const dbResults = await t.context.knex.select('*').from('asyncOperations').where('id', id);
+  const dbResults = await t.context.knex.select('*')
+    .from('asyncOperations')
+    .where('id', id)
+    .first();
   const expected = {
-    0: {
-      cumulusId: 1,
-      description,
-      id,
-      operationType: 'ES Index',
-      status: 'RUNNING',
-      taskArn,
-    },
+    cumulusId: 1,
+    description,
+    id,
+    operationType: 'ES Index',
+    status: 'RUNNING',
+    taskArn,
   };
   const omitList = ['created_at', 'updated_at', 'cumulusId', 'output'];
   t.deepEqual(omit(dbResults[0], omitList), omit(expected[0], omitList));
-  t.deepEqual(omit(spyCall, omitList), omit(expected[0], omitList));
+  t.deepEqual(omit(spyCall, omitList), omit(expected, omitList));
 });
 
 test.serial('The startAsyncOperation method returns the newly-generated record', async (t) => {
