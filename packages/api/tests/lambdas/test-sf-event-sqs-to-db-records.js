@@ -35,8 +35,8 @@ const {
   getMessageCollection,
   getMessageProvider,
   shouldWriteExecutionToRDS,
-  saveGranuleViaTransaction,
-  saveGranules,
+  writeGranuleViaTransaction,
+  writeGranules,
   writeExecution,
   writePdr,
   writeRecords,
@@ -714,7 +714,7 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
   );
 });
 
-test('saveGranuleViaTransaction() handles undefined provider record', async (t) => {
+test('writeGranuleViaTransaction() handles undefined provider record', async (t) => {
   const {
     cumulusMessage,
     granuleId,
@@ -723,7 +723,7 @@ test('saveGranuleViaTransaction() handles undefined provider record', async (t) 
   } = t.context;
   await t.notThrowsAsync(knex.transaction(
     (trx) =>
-      saveGranuleViaTransaction({
+      writeGranuleViaTransaction({
         cumulusMessage,
         granule: { granuleId },
         collection: { cumulusId: collectionCumulusId },
@@ -736,7 +736,7 @@ test('saveGranuleViaTransaction() handles undefined provider record', async (t) 
   ));
 });
 
-test('saveGranules() returns true if there are no granules in the message', async (t) => {
+test('writeGranules() returns true if there are no granules in the message', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -747,7 +747,7 @@ test('saveGranules() returns true if there are no granules in the message', asyn
   delete cumulusMessage.payload.granules;
 
   t.true(
-    await saveGranules({
+    await writeGranules({
       cumulusMessage,
       collection: { id: collectionCumulusId },
       provider: { id: providerCumulusId },
@@ -756,10 +756,10 @@ test('saveGranules() returns true if there are no granules in the message', asyn
   );
 });
 
-test('saveGranules() throws an error if collection is not provided', async (t) => {
+test('writeGranules() throws an error if collection is not provided', async (t) => {
   const { cumulusMessage, knex, providerCumulusId } = t.context;
   await t.throwsAsync(
-    saveGranules({
+    writeGranules({
       cumulusMessage,
       collection: undefined,
       provider: { id: providerCumulusId },
@@ -768,7 +768,7 @@ test('saveGranules() throws an error if collection is not provided', async (t) =
   );
 });
 
-test('saveGranules() saves granule records to Dynamo and RDS if RDS write is enabled', async (t) => {
+test('writeGranules() saves granule records to Dynamo and RDS if RDS write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -778,7 +778,7 @@ test('saveGranules() saves granule records to Dynamo and RDS if RDS write is ena
     granuleId,
   } = t.context;
 
-  await saveGranules({
+  await writeGranules({
     cumulusMessage,
     collection: { cumulusId: collectionCumulusId },
     provider: { cumulusId: providerCumulusId },
@@ -791,7 +791,7 @@ test('saveGranules() saves granule records to Dynamo and RDS if RDS write is ena
   );
 });
 
-test('saveGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -808,7 +808,7 @@ test('saveGranules() does not persist records to Dynamo or RDS if Dynamo write f
   };
 
   await t.throwsAsync(
-    saveGranules({
+    writeGranules({
       cumulusMessage,
       collection: { cumulusId: collectionCumulusId },
       provider: { cumulusId: providerCumulusId },
@@ -824,7 +824,7 @@ test('saveGranules() does not persist records to Dynamo or RDS if Dynamo write f
   );
 });
 
-test('saveGranules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+test('writeGranules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -846,7 +846,7 @@ test('saveGranules() does not persist records to Dynamo or RDS if RDS write fail
   t.teardown(() => trxStub.restore());
 
   await t.throwsAsync(
-    saveGranules({
+    writeGranules({
       cumulusMessage,
       collection: { cumulusId: collectionCumulusId },
       provider: { cumulusId: providerCumulusId },

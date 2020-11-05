@@ -190,7 +190,7 @@ const writePdr = async ({
   });
 };
 
-const saveGranuleViaTransaction = async ({
+const writeGranuleViaTransaction = async ({
   cumulusMessage,
   granule,
   collection,
@@ -205,7 +205,7 @@ const saveGranuleViaTransaction = async ({
       providerCumulusId: provider ? provider.cumulusId : undefined,
     });
 
-const saveGranules = async ({
+const writeGranules = async ({
   cumulusMessage,
   collection,
   provider,
@@ -227,7 +227,13 @@ const saveGranules = async ({
     // rather than one transaction for all granules to Dynamo/RDS? A transaction per granule
     // would allow write of each granule to succeed or fail independently
     await Promise.all(getMessageGranules(cumulusMessage).map(
-      (granule) => saveGranuleViaTransaction({ cumulusMessage, granule, collection, provider, trx })
+      (granule) => writeGranuleViaTransaction({
+        cumulusMessage,
+        granule,
+        collection,
+        provider,
+        trx,
+      })
     ));
     return granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
   });
@@ -283,11 +289,12 @@ const writeRecords = async (cumulusMessage, knex) => {
       provider,
       knex,
     });
-    return await saveGranules({
+    return await writeGranules({
       cumulusMessage,
       collection,
       provider,
       knex,
+      pdrCumulusId,
     });
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
@@ -326,8 +333,8 @@ module.exports = {
   getMessageCollection,
   getMessageProvider,
   shouldWriteExecutionToRDS,
-  saveGranuleViaTransaction,
-  saveGranules,
+  writeGranuleViaTransaction,
+  writeGranules,
   writeExecution,
   writePdr,
   writeRecords,
