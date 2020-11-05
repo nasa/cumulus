@@ -554,7 +554,7 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if RDS w
   );
 });
 
-test('savePdr() returns true if there is no PDR on the message', async (t) => {
+test('writePdr() returns true if there is no PDR on the message', async (t) => {
   const {
     cumulusMessage,
     knex,
