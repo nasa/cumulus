@@ -174,10 +174,11 @@ export const startAsyncOperation = async (params: {
     const createObject = {
       id,
       status: 'RUNNING',
-      taskArn: runTaskResponse?.tasks ? runTaskResponse.tasks[0].taskArn : undefined,
+      taskArn: runTaskResponse?.tasks?.[0].taskArn,
       description,
       operationType,
     };
+
     await trx(asyncOperationsConfig.name).insert(createObject);
     return asyncOperationModel.create(createObject);
   });
