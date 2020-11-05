@@ -14,7 +14,7 @@ const {
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const {
-  getWorkflowStatus,
+  getMetaStatus,
 } = require('@cumulus/message/workflows');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -43,7 +43,7 @@ class Execution extends Manager {
     const arn = getMessageExecutionArn(cumulusMessage);
     if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
 
-    const status = getWorkflowStatus(cumulusMessage);
+    const status = getMetaStatus(cumulusMessage);
     if (!status) throw new Error('Unable to determine status from Cumulus message');
 
     const now = Date.now();

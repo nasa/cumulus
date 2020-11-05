@@ -30,11 +30,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add schema migration for `providers` table
     - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to RDS
   - **CUMULUS-2182**
-    - Add schema migration for `pdrs` table
-  - **CUMULUS-2183**
-    - Add schema migration for `asyncOperations` table
+    - Add schema migration for PDRs table
   - **CUMULUS-2230**
     - Add schema migration for `rules` table
+  - **CUMULUS-2183**
+    - Add schema migration for `asyncOperations` table
+  - **CUMULUS-2184**
+    - Add schema migration for `executions` table
 
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
@@ -45,7 +47,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2228**
-    - Added logic to the `sfEventSqsToDbRecords` Lambda to conditionally write execution and PDR records to RDS in parallel with writes to Dynamo
+    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution and PDR records to the Core PostgreSQL database in parallel with writes to DynamoDB
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
 - **CUMULUS-2232**
