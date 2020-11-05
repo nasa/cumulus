@@ -60,7 +60,7 @@ test.before(async () => {
 
 test.beforeEach((t) => {
   const asyncOperationId = randomString();
-  t.context.f = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: asyncOperationId }
   );
 });
