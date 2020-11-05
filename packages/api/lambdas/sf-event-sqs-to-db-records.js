@@ -134,7 +134,6 @@ const writeExecution = async ({
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
-    console.log('writing execution');
     await writeExecutionViaTransaction({ cumulusMessage, trx });
     return executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
   });
@@ -229,12 +228,10 @@ const writeRecords = async (cumulusMessage, knex) => {
   const provider = await getMessageProvider(cumulusMessage, knex);
 
   try {
-    console.log('about to write execution');
     await writeExecution({
       cumulusMessage,
       knex,
     });
-    console.log('about to write PDR');
     // PDR write only attempted if execution saved
     const pdrCumulusId = await writePdr({
       cumulusMessage,
@@ -242,7 +239,6 @@ const writeRecords = async (cumulusMessage, knex) => {
       provider,
       knex,
     });
-    console.log('about to write granules');
     return await saveGranulesToDb(cumulusMessage, pdrCumulusId);
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
@@ -264,9 +260,7 @@ const handler = async (event) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
-    console.log(message, 'message');
     try {
-      console.log('about to writeRecords');
       return await writeRecords(cumulusMessage, knex);
     } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
