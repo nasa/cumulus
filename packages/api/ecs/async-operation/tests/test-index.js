@@ -23,49 +23,44 @@ test.before(async (t) => {
   t.context.asyncOperationId = uuidv4();
 
   const tableHash = { name: 'id', type: 'S' };
-  try {
-    await DynamoDb.createAndWaitForDynamoDbTable({
-      TableName: t.context.dynamoTableName,
-      AttributeDefinitions: [{
-        AttributeName: tableHash.name,
-        AttributeType: tableHash.type,
-      }],
-      KeySchema: [{
-        AttributeName: tableHash.name,
-        KeyType: 'HASH',
-      }],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 5,
-        WriteCapacityUnits: 5,
-      },
-    });
+  await DynamoDb.createAndWaitForDynamoDbTable({
+    TableName: t.context.dynamoTableName,
+    AttributeDefinitions: [{
+      AttributeName: tableHash.name,
+      AttributeType: tableHash.type,
+    }],
+    KeySchema: [{
+      AttributeName: tableHash.name,
+      KeyType: 'HASH',
+    }],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5,
+      WriteCapacityUnits: 5,
+    },
+  });
 
-    console.log(testDbName);
-    t.context.knexAdmin = await getKnexClient({
-      env: {
-        ...localStackConnectionEnv,
-      },
-    });
-    t.context.knex = await getKnexClient({
-      env: {
-        ...localStackConnectionEnv,
-        PG_DATABASE: testDbName,
-        migrationDir,
-      },
-    });
+  console.log(testDbName);
+  t.context.knexAdmin = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+    },
+  });
+  t.context.knex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: testDbName,
+      migrationDir,
+    },
+  });
 
-    await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
-    await t.context.knex.migrate.latest();
-    await t.context.knex(asyncOperationsConfig.name).insert({
-      id: t.context.asyncOperationId,
-      description: 'test description',
-      operationType: 'ES Index',
-      status: 'RUNNING',
-    });
-  } catch (error) {
-    console.log(`Error ${JSON.stringify(error)}`);
-    throw (error);
-  }
+  await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
+  await t.context.knex.migrate.latest();
+  await t.context.knex(asyncOperationsConfig.name).insert({
+    id: t.context.asyncOperationId,
+    description: 'test description',
+    operationType: 'ES Index',
+    status: 'RUNNING',
+  });
 });
 
 test('updateAsyncOperation updates databases as expected', async (t) => {
