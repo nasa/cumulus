@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
 
-import { AsyncOperationsDynamoModel } from './types';
+import { AsyncOperationModelClass } from './types';
 
 const { EcsStartTaskError } = require('@cumulus/errors');
 
@@ -125,8 +125,7 @@ export const startAsyncOperation = async (params: {
   stackName: string,
   systemBucket: string,
   useLambdaEnvironmentVariables?: boolean,
-}, AsyncOperation: new(params: { stackName: string, systemBucket: string, tableName?: string })
-  => AsyncOperationsDynamoModel
+}, AsyncOperation: AsyncOperationModelClass
 ): Promise<Partial<AsyncOperationRecord>> => {
   const {
     description,
