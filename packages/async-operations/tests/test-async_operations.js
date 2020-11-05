@@ -20,7 +20,7 @@ const { migrationDir } = require('../../../lambdas/db-migration');
 
 const { getLambdaEnvironmentVariables, startAsyncOperation } = require('../dist/async_operations');
 
-const dynamoTableName = 'randomDynamoTable';
+const dynamoTableName = 'notUsedDynamoTableName';
 
 let stubbedEcsRunTaskParams;
 let stubbedEcsRunTaskResult;
@@ -45,14 +45,8 @@ test.before(async (t) => {
   });
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket }).promise();
-
-  try {
-    await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
-    await t.context.knex.migrate.latest();
-  } catch (e) {
-    console.log(`Error ${JSON.stringify(e)}`);
-    throw (e);
-  }
+  await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
+  await t.context.knex.migrate.latest();
 
   // Set up the mock ECS client
   ecsClient = ecs();
