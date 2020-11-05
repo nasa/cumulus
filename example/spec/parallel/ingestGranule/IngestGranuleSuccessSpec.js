@@ -1102,6 +1102,7 @@ describe('The S3 Ingest Granules workflow', () => {
           'ProcessingStep',
           'FilesToGranulesStep',
           'MoveGranuleStep',
+          'UpdateGranulesCmrMetadataFileLinksStep',
           'CmrStep',
           'WorkflowSucceeded',
         ];

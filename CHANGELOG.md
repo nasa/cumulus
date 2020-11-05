@@ -32,8 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
 
 ### BREAKING CHANGES
-- **CUMULUS-2138**
-  - Adds a new task `update-granules-cmr-metadata-file-links` to Ingest and Publish Granule workflow. This new task updates CMR Metadata and adds CMR file etags. It removes said functionality from the `move-granules` task. It is recommended that you add the step `UpdateGranulesCmrMetadataFileLinksStep` to your workflows after `MoveGranulesStep`.
+- **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a 
+new `update-granules-cmr-metadata-file-links` task. As a result, you need to update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 - **CUMULUS-2216**
   - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
 - **[1956](https://github.com/nasa/cumulus/issues/1956)**
