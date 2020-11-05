@@ -5,6 +5,7 @@ const test = require('ava');
 const get = require('lodash/get');
 const sinon = require('sinon');
 
+const { localStackConnectionEnv } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -95,6 +96,7 @@ test.before(async (t) => {
 
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
+  process.env = { ...process.env, ...localStackConnectionEnv }
 
   // create the elasticsearch index and add mapping
   await createIndex(esIndex, t.context.esAlias);

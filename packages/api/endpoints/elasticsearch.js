@@ -3,11 +3,9 @@
 const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
-const { localStackConnectionEnv } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const { AsyncOperation } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
 const { createIndex } = require('../es/indexer');
@@ -206,7 +204,7 @@ async function indexFromDatabase(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
-  const knexConfig = { ...localStackConnectionEnv, ...process.env };
+  const knexConfig = process.env;
 
   await createIndex(esClient, indexName)
     .catch((error) => {
