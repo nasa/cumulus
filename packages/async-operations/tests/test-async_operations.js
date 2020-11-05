@@ -83,7 +83,6 @@ test.after.always(async (t) => {
   await t.context.knex.destroy();
   await recursivelyDeleteS3Bucket(systemBucket);
   await deleteTestDatabase(t.context.knexAdmin, testDbName);
-  console.log(testDbName);
   await t.context.knexAdmin.destroy();
 });
 
