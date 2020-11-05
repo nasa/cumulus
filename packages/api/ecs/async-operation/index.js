@@ -165,7 +165,7 @@ const writeAsyncOperationToRds = async (params) => {
     });
 };
 
-const writeAsyncOperationToDynamo = async (params) => {
+const writeAsyncOperationToDynamoDb = async (params) => {
   const { env, status, dbOutput, updatedTime } = params;
   return dynamodb().updateItem({
     TableName: env.asyncOperationsTable,
@@ -210,7 +210,7 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
       trx,
       updatedTime,
     });
-    return writeAsyncOperationToDynamo({ env, status, dbOutput, updatedTime });
+    return writeAsyncOperationToDynamoDb({ env, status, dbOutput, updatedTime });
   });
 };
 
