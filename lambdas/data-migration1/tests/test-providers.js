@@ -125,7 +125,7 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
         username: await KMS.decryptBase64String(createdRecord.username),
         password: await KMS.decryptBase64String(createdRecord.password),
       },
-      ['cumulusId']
+      ['cumulus_id']
     ),
     omit(
       {
@@ -270,7 +270,7 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
   // ensure updated_at was set
   t.false(Number.isNaN(Date.parse(createdRecord.updated_at)));
   t.deepEqual(
-    omit(createdRecord, ['cumulusId', 'updated_at']),
+    omit(createdRecord, ['cumulus_id', 'updated_at']),
     omit(
       {
         ...fakeProvider,

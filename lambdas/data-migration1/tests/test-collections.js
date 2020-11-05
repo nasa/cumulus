@@ -101,7 +101,7 @@ test.serial('migrateCollectionRecord correctly migrates collection record', asyn
     .first();
 
   t.deepEqual(
-    omit(createdRecord, ['cumulusId']),
+    omit(createdRecord, ['cumulus_id']),
     omit(
       {
         ...fakeCollection,
@@ -145,7 +145,7 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
     .first();
 
   t.deepEqual(
-    omit(createdRecord, ['cumulusId']),
+    omit(createdRecord, ['cumulus_id']),
     omit(
       {
         ...fakeCollection,

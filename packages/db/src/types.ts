@@ -1,10 +1,10 @@
 export interface AsyncOperationRecord {
   id: string
   description: string
-  operationType: string
+  operation_type: string
   status: string
   output?: object
-  taskArn?: string
+  task_arn?: string
   created_at: Date
   updated_at: Date
 }
@@ -13,14 +13,14 @@ export interface CollectionRecord {
   name: string
   version: string
   process: string
-  granuleIdValidationRegex: string
-  granuleIdExtractionRegex: string
+  granule_id_validation_regex: string
+  granule_id_extraction_regex: string
   files: string
-  duplicateHandling?: string
-  reportToEms?: boolean
-  sampleFileName?: string
+  duplicate_handling?: string
+  report_to_ems?: boolean
+  sample_file_name?: string
   url_path?: string
-  ignoreFilesConfigForDiscovery?: boolean
+  ignore_files_config_for_discovery?: boolean
   meta?: object
   tags?: string
   created_at: Date
@@ -29,9 +29,9 @@ export interface CollectionRecord {
 
 export interface ExecutionRecord {
   arn: string
-  asyncOperationCumulusId?: number
-  collectionCumulusId?: number
-  parentCumulusId?: number
+  async_operation_cumulus_id?: number
+  collection_cumulus_id?: number
+  parent_cumulus_id?: number
   cumulus_version: string
   created_at: Date
   updated_at: Date
@@ -44,10 +44,10 @@ export interface ProviderRecord {
   port?: number
   username?: string
   password?: string
-  globalConnectionLimit?: number
-  privateKey?: string
-  cmKeyId?: string
-  certificateUri?: string
+  global_connection_limit?: number
+  private_key?: string
+  cm_key_id?: string
+  certificate_uri?: string
   created_at: Date
   updated_at: Date
 }
