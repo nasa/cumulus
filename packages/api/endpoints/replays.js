@@ -1,11 +1,7 @@
 'use strict';
 
-const Logger = require('@cumulus/logger');
 const router = require('express-promise-router')();
 const asyncOperations = require('@cumulus/async-operations');
-const { localStackConnectionEnv } = require('@cumulus/db');
-
-const coreLogger = new Logger();
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
