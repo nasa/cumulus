@@ -22,7 +22,6 @@ const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 
-// eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const sandbox = sinon.createSandbox();
