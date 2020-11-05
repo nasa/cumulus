@@ -298,21 +298,19 @@ test.serial('create a report starts an async operation', async (t) => {
       id,
     });
 
-    t.deepEqual(
-      omit(stub.lastCall.args[0], ['knexConfig']),
-      {
-        asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-        cluster: process.env.EcsCluster,
-        lambdaName: process.env.invokeReconcileLambda,
-        description: 'Create Reconciliation Report',
-        operationType: 'Reconciliation Report',
-        payload: normalizeEvent({}),
-        useLambdaEnvironmentVariables: true,
-        stackName,
-        systemBucket,
-        dynamoTableName: tableName,
-      }
-    );
+    t.true(stub.calledWith({
+      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+      cluster: process.env.EcsCluster,
+      lambdaName: process.env.invokeReconcileLambda,
+      description: 'Create Reconciliation Report',
+      operationType: 'Reconciliation Report',
+      payload: normalizeEvent({}),
+      useLambdaEnvironmentVariables: true,
+      stackName,
+      systemBucket,
+      dynamoTableName: tableName,
+      knexConfig: process.env,
+    }));
   } finally {
     stub.restore();
   }
