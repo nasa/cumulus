@@ -131,6 +131,6 @@ test.serial('update-granules-cmr-metadata-file-links throws an error when cmr fi
 
   await t.throwsAsync(
     () => updateGranulesCmrMetadataFileLinks(newPayload),
-    { message: 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.' } 
+    { message: 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.' }
   );
 });
