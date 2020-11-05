@@ -57,7 +57,7 @@ export const startECSTask = async ({
   id: string,
   payloadBucket: string,
   payloadKey: string,
-  useLambdaEnvironmentVariables?: string,
+  useLambdaEnvironmentVariables?: boolean,
   dynamoTableName: string,
 }): Promise<PromiseResult<ECS.RunTaskResponse, AWSError>> => {
   const envVars = [
@@ -109,11 +109,11 @@ export const startECSTask = async ({
  * @param {string} params.useLambdaEnvironmentVariables -
  * useLambdaEnvironmentVariables, set 'true' if async task
  * should import environment variables from the deployed lambda
- * @param {Object} AsyncOperation - A api dynamoDb modeal AsyncOperation object
+ * @param {Object} AsyncOperation - A reference to the dynamo AsyncOperations object
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const startAsyncOperation = async (params: { // fix input params to match overloaded typing
+export const startAsyncOperation = async (params: {
   asyncOperationTaskDefinition: string,
   cluster: string,
   description: string,
@@ -124,7 +124,7 @@ export const startAsyncOperation = async (params: { // fix input params to match
   payload: unknown,
   stackName: string,
   systemBucket: string,
-  useLambdaEnvironmentVariables?: string,
+  useLambdaEnvironmentVariables?: boolean,
 }, AsyncOperation: new(params: { stackName: string, systemBucket: string, tableName?: string })
   => AsyncOperationsDynamoModel
 ): Promise<Partial<AsyncOperationRecord>> => {
