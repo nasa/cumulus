@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@cumulus/aws-client": "^3.0.0",
+    "@cumulus/db": "^3.0.0-alpha.1",
     "@cumulus/logger": "^3.0.0",
     "aws-sdk": "^2.585.0",
     "got": "^9.2.2",

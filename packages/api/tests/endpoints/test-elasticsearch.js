@@ -96,7 +96,7 @@ test.before(async (t) => {
 
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
-  process.env = { ...process.env, ...localStackConnectionEnv }
+  process.env = { ...process.env, ...localStackConnectionEnv };
 
   // create the elasticsearch index and add mapping
   await createIndex(esIndex, t.context.esAlias);
