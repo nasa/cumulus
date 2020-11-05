@@ -200,7 +200,7 @@ const saveGranuleViaTransaction = async ({
   trx(tableNames.granules)
     .insert({
       granuleId: granule.granuleId,
-      status: getWorkflowStatus(cumulusMessage) || granule.status,
+      status: getMetaStatus(cumulusMessage) || granule.status,
       collectionCumulusId: collection.cumulusId,
       providerCumulusId: provider ? provider.cumulusId : undefined,
     });
