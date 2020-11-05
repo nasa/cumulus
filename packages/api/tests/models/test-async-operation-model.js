@@ -1,7 +1,5 @@
 'use strict';
 
-const cryptoRandomString = require('crypto-random-string');
-
 const test = require('ava');
 const sinon = require('sinon');
 
@@ -17,10 +15,7 @@ let stubbedEcsRunTaskResult;
 let ecsClient;
 let systemBucket;
 
-const testDbName = `async_operation_model_test_db_${cryptoRandomString({ length: 10 })}`;
-
 test.before(async () => {
-  console.log(testDbName);
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket }).promise();
 
