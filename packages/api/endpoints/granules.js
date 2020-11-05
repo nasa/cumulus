@@ -3,7 +3,6 @@
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
-const { localStackConnectionEnv } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
