@@ -234,7 +234,7 @@ test(' startAsyncOperation calls Dynamo model create method', async (t) => {
 
   t.true(result);
   t.deepEqual(omit(spyCall, ['id']), expected);
-  t.truthy(spyCall.id); // TODO make this introspection better?
+  t.truthy(spyCall.id);
 });
 
 test.serial('The startAsyncOperation writes records to the databases', async (t) => {

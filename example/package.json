@@ -52,7 +52,7 @@
     "@cumulus/cmr-client": "3.0.0",
     "@cumulus/cmrjs": "3.0.0",
     "@cumulus/common": "3.0.0",
-    "@cumulus/db": "3.0.0", 
+    "@cumulus/db": "3.0.0-alpha.1",
     "@cumulus/discover-granules": "3.0.0",
     "@cumulus/discover-pdrs": "3.0.0",
     "@cumulus/files-to-granules": "3.0.0",
