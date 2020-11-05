@@ -666,6 +666,22 @@ class Granule extends Manager {
     }
   }
 
+  async storeGranuleFromCumulusMessage({
+    granule,
+    cumulusMessage,
+    executionUrl,
+    executionDescription,
+  }) {
+    const granuleRecord = await Granule.generateGranuleRecord({
+      s3: awsClients.s3(),
+      granule,
+      message: cumulusMessage,
+      executionUrl,
+      executionDescription,
+    });
+    return this._validateAndStoreGranuleRecord(granuleRecord);
+  }
+
   /**
    * Generate and store granule records from a Cumulus message.
    *
@@ -673,9 +689,31 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async storeGranulesFromCumulusMessage(cumulusMessage) {
-    const granuleRecords = await this.constructor
-      ._getGranuleRecordsFromCumulusMessage(cumulusMessage);
-    return Promise.all(granuleRecords.map(this._validateAndStoreGranuleRecord, this));
+    const granules = getMessageGranules(cumulusMessage);
+    if (!granules) {
+      log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
+      return [];
+    }
+
+    const executionArn = getMessageExecutionArn(cumulusMessage);
+    const executionUrl = StepFunctionUtils.getExecutionUrl(executionArn);
+
+    let executionDescription;
+    try {
+      executionDescription = await StepFunctions.describeExecution({ executionArn });
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
+    }
+
+    return Promise.all(granules.map((granule) => this.storeGranuleFromCumulusMessage({
+      granule,
+      cumulusMessage,
+      executionDescription,
+      executionUrl,
+    })));
+    // const granuleRecords = await this.constructor
+    //   ._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+    // return Promise.all(granuleRecords.map(this._validateAndStoreGranuleRecord, this));
   }
 }
 
