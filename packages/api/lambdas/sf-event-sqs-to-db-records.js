@@ -6,12 +6,14 @@ const AggregateError = require('aggregate-error');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
+const { envUtils } = require('@cumulus/common');
 const {
   getKnexClient,
   tableNames,
   doesRecordExist,
   isRecordDefined,
 } = require('@cumulus/db');
+const { MissingRequiredEnvVar } = require('@cumulus/errors');
 const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
@@ -39,14 +41,20 @@ const Pdr = require('../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
 
 const isPostRDSDeploymentExecution = (cumulusMessage) => {
-  const minimumSupportedRDSVersion = process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
-  if (!minimumSupportedRDSVersion) {
-    throw new Error('RDS_DEPLOYMENT_CUMULUS_VERSION environment variable must be set');
+  try {
+    const minimumSupportedRDSVersion = envUtils.getRequiredEnvVar('RDS_DEPLOYMENT_CUMULUS_VERSION');
+    const cumulusVersion = getMessageCumulusVersion(cumulusMessage);
+    return cumulusVersion
+      ? semver.gte(cumulusVersion, minimumSupportedRDSVersion)
+      : false;
+  } catch (error) {
+    // Throw error to fail lambda if required env var is missing
+    if (error instanceof MissingRequiredEnvVar) {
+      throw error;
+    }
+    // Treat other errors as false
+    return false;
   }
-  const cumulusVersion = getMessageCumulusVersion(cumulusMessage);
-  return cumulusVersion
-    ? semver.gte(cumulusVersion, minimumSupportedRDSVersion)
-    : false;
 };
 
 const hasNoParentExecutionOrExists = async (cumulusMessage, knex) => {
@@ -104,9 +112,10 @@ const shouldWriteExecutionToRDS = async (
   collection,
   knex
 ) => {
+  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+  if (!isExecutionPostDeployment) return false;
+
   try {
-    const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-    if (!isExecutionPostDeployment) return false;
     if (!isRecordDefined(collection)) return false;
 
     const results = await Promise.all([

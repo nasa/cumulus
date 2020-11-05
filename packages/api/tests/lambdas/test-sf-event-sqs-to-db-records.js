@@ -754,29 +754,6 @@ test('writePdr() does not persist records Dynamo or RDS if RDS write fails', asy
   );
 });
 
-test('Lambda sends message to DLQ when any write to database fails', async (t) => {
-  const {
-    cumulusMessage,
-    executionModel,
-    granuleModel,
-    pdrModel,
-    granuleId,
-    pdrName,
-  } = t.context;
-
-  delete cumulusMessage.meta.collection;
-  const {
-    executionArn,
-    handlerResponse,
-    sqsEvent,
-  } = await runHandler(cumulusMessage);
-
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.false(await granuleModel.exists({ granuleId }));
-  t.false(await pdrModel.exists({ pdrName }));
-  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
-});
-
 test('writeRecords() only writes records to Dynamo if cumulus version is less than RDS deployment version', async (t) => {
   const {
     cumulusMessage,
@@ -869,4 +846,41 @@ test('writeRecords() writes records to Dynamo and RDS if cumulus version is less
     }, knex, tableNames.pdrs)
   );
   // Add assertion for granule
+});
+
+test.serial('Lambda sends message to DLQ when RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+
+  delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
+  const {
+    handlerResponse,
+    sqsEvent,
+  } = await runHandler(cumulusMessage);
+
+  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
+});
+
+test('Lambda sends message to DLQ when any write to database fails', async (t) => {
+  const {
+    cumulusMessage,
+    executionModel,
+    granuleModel,
+    pdrModel,
+    granuleId,
+    pdrName,
+  } = t.context;
+
+  delete cumulusMessage.meta.collection;
+  const {
+    executionArn,
+    handlerResponse,
+    sqsEvent,
+  } = await runHandler(cumulusMessage);
+
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(await pdrModel.exists({ pdrName }));
+  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
