@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
+const { localStackConnectionEnv } = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -33,6 +34,7 @@ const envs = {
 };
 
 test.before(async () => {
+  process.env = { ...process.env, ...localStackConnectionEnv };
   Object.keys(envs).forEach((key) => {
     process.env[key] = envs[key];
   });

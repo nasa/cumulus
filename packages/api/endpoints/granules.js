@@ -242,8 +242,6 @@ async function bulkOperations(req, res) {
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
 
-  const knexConfig = { ...localStackConnectionEnv, ...process.env };
-
   let description;
   if (payload.query) {
     description = `Bulk run ${payload.workflowName} on ${payload.query.size} granules`;
@@ -276,7 +274,7 @@ async function bulkOperations(req, res) {
     stackName,
     systemBucket,
     dynamoTableName: tableName,
-    knexConfig,
+    knexConfig: process.env,
   }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
@@ -299,8 +297,6 @@ async function bulkDelete(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
-
-  const knexConfig = { ...localStackConnectionEnv, ...process.env };
 
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
@@ -332,7 +328,7 @@ async function bulkDelete(req, res) {
     stackName,
     systemBucket,
     dynamoTableName: tableName,
-    knexConfig,
+    knexConfig: process.env,
   }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
@@ -343,8 +339,6 @@ async function bulkReingest(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
-
-  const knexConfig = { ...localStackConnectionEnv, ...process.env };
 
   const numOfGranules = (payload.query && payload.query.size)
     || (payload.ids && payload.ids.length);
@@ -373,7 +367,7 @@ async function bulkReingest(req, res) {
     stackName,
     systemBucket,
     dynamoTableName: tableName,
-    knexConfig,
+    knexConfig: process.env,
   }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);

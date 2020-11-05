@@ -31,17 +31,12 @@ async function startKinesisReplayAsyncOperation(req, res) {
   if (payload.type === 'kinesis' && !payload.kinesisStream) {
     return res.boom.badRequest('kinesisStream is required for kinesis-type replay');
   }
-
-  const knexConfig = { ...localStackConnectionEnv, ...process.env };
-
-  coreLogger.info(JSON.stringify({ ...localStackConnectionEnv, ...process.env }));
-
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     description: 'Kinesis Replay',
     dynamoTableName: asyncOperationModel.tableName,
-    knexConfig,
+    knexConfig: process.env,
     lambdaName: process.env.ManualConsumerLambda,
     operationType: 'Kinesis Replay',
     payload,

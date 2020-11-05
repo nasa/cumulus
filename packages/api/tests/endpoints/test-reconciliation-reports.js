@@ -8,6 +8,7 @@ const request = require('supertest');
 const {
   EcsStartTaskError,
 } = require('@cumulus/errors');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
@@ -30,6 +31,7 @@ const {
   Search,
 } = require('../../es/search');
 
+process.env = { ...process.env, ...localStackConnectionEnv };
 process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
 process.env.system_bucket = 'testsystembucket';
