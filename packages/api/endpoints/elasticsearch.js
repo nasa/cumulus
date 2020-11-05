@@ -213,10 +213,6 @@ async function indexFromDatabase(req, res) {
       if (!(error instanceof IndexExistsError)) throw error;
     });
 
-  const asyncOperationModel = new AsyncOperation({
-    stackName, systemBucket, tableName,
-  });
-
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
