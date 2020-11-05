@@ -322,7 +322,7 @@ test('getLambdaEnvironmentVariables returns expected environment variables', asy
   ]));
 });
 
-test.serial('ECS task params contain lambda environment variables when flag is set', async (t) => {
+test.serial('ECS task params contain lambda environment variables when useLambdaEnvironmentVariables is set to true', async (t) => {
   const createSpy = sinon.spy((obj) => obj);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
