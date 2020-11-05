@@ -3,5 +3,4 @@ export const tableNames = {
   collections: 'collections',
   executions: 'executions',
   providers: 'providers',
-  asyncOperations: 'asyncOperations',
 };
