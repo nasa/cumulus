@@ -230,9 +230,6 @@ const writeGranules = async ({
   if (!isRecordDefined(collection)) {
     throw new Error(`Collection reference is required for granules, got ${collection}`);
   }
-  // if (!isRecordDefined(provider)) {
-  //   throw new Error(`Provider reference is required for a PDR, got ${provider}`);
-  // }
   return knex.transaction(async (trx) => {
     // TODO: should write of each granule to Dynamo/RDS be done in a transaction per granule,
     // rather than one transaction for all granules to Dynamo/RDS? A transaction per granule
