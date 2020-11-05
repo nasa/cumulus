@@ -109,7 +109,7 @@ export const startECSTask = async ({
  * @param {string} params.useLambdaEnvironmentVariables -
  * useLambdaEnvironmentVariables, set 'true' if async task
  * should import environment variables from the deployed lambda
- * @param {Object} AsyncOperation - A reference to the dynamo AsyncOperations object
+ * @param {Class} AsyncOperation - A reference to the AsyncOperations model class
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
