@@ -1,4 +1,3 @@
-export { asyncOperationsConfig } from './AsyncOperations';
 export {
   createTestDatabase, deleteTestDatabase,
 } from './database';

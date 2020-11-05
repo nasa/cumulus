@@ -11,7 +11,7 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const url = require('url');
 const Logger = require('@cumulus/logger');
-const { asyncOperationsConfig, getKnexClient } = require('@cumulus/db');
+const { tableNames, getKnexClient } = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
@@ -156,7 +156,7 @@ const writeAsyncOperationToRds = async (params) => {
   const { trx, env, dbOutput, status, updatedTime } = params;
   const id = env.asyncOperationId;
   const knex = await getKnexClient({ env });
-  return trx(asyncOperationsConfig.name)
+  return trx(tableNames.asyncOperations)
     .where({ id })
     .update({
       status,

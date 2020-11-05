@@ -6,7 +6,7 @@ const cryptoRandomString = require('crypto-random-string');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  asyncOperationsConfig,
+  tableNames,
   createTestDatabase,
   localStackConnectionEnv,
   getKnexClient,
@@ -55,7 +55,7 @@ test.before(async (t) => {
 
   await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
   await t.context.knex.migrate.latest();
-  await t.context.knex(asyncOperationsConfig.name).insert({
+  await t.context.knex(tableNames.async).insert({
     id: t.context.asyncOperationId,
     description: 'test description',
     operationType: 'ES Index',
@@ -81,7 +81,7 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
   );
 
   // Query RDS for result
-  const rdsResponse = await t.context.knex(asyncOperationsConfig.name)
+  const rdsResponse = await t.context.knex(tableNames.asyncOperations)
     .select('id', 'status', 'output', 'updated_at')
     .where('id', t.context.asyncOperationId);
   const dynamoResponse = await DynamoDb.get({
