@@ -238,6 +238,8 @@ const writeGranules = async ({
   if (!isRecordDefined(collection)) {
     throw new Error(`Collection reference is required for granules, got ${collection}`);
   }
+  // Process each granule in a separate transaction via Promise.allSettled
+  // so that they can succeed/fail indepdently
   return Promise.allSettled(getMessageGranules(cumulusMessage).map(
     async (granule) => {
       const executionArn = getMessageExecutionArn(cumulusMessage);
