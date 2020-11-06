@@ -41,7 +41,7 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
-    image: localstack/localstack:0.10.7
+    image: localstack/localstack:0.10.9
     network_mode: "service:build_env"
     environment:
       SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions"

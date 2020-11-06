@@ -3,12 +3,13 @@
 const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
+const asyncOperations = require('@cumulus/async-operations');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const { AsyncOperation } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
 const { createIndex } = require('../es/indexer');
+const models = require('../models');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -199,21 +200,18 @@ async function indicesStatus(req, res) {
 
 async function indexFromDatabase(req, res) {
   const esClient = await Search.es();
-
   const indexName = req.body.indexName || timestampedIndexName();
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
+  const knexConfig = process.env;
 
   await createIndex(esClient, indexName)
     .catch((error) => {
       if (!(error instanceof IndexExistsError)) throw error;
     });
 
-  const asyncOperationModel = new AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.IndexFromDatabaseLambda,
@@ -233,8 +231,12 @@ async function indexFromDatabase(req, res) {
       },
       esHost: process.env.ES_HOST,
       esRequestConcurrency: process.env.ES_CONCURRENCY,
+      stackName,
+      systemBucket,
+      dynamoTableName: tableName,
+      knexConfig,
     },
-  });
+  }, models.AsyncOperation);
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }

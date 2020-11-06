@@ -130,6 +130,12 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       module.archive.launchpad_passphrase_secret_arn,
     ]
   }
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      var.rds_user_access_secret_arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "ecs_cluster_instance" {
