@@ -391,3 +391,51 @@ test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus me
     await S3.recursivelyDeleteS3Bucket(bucket);
   }
 });
+
+test('storeGranulesFromCumulusMessage() handles failing and succcessful granules independently', async (t) => {
+  const { granuleModel } = t.context;
+
+  const bucket = randomId('bucket-');
+  await S3.createBucket(bucket);
+  t.teardown(() => S3.recursivelyDeleteS3Bucket(bucket));
+
+  const granule1 = fakeGranuleFactoryV2({
+    files: [fakeFileFactory({ bucket })],
+  });
+  // Missing files should cause failure to write
+  const granule2 = fakeGranuleFactoryV2({
+    files: undefined,
+  });
+
+  await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
+
+  const cumulusMessage = {
+    cumulus_meta: {
+      execution_name: randomId('execution'),
+      state_machine: 'state-machine',
+      workflow_start_time: Date.now(),
+    },
+    meta: {
+      collection: {
+        name: 'name',
+        version: '001',
+      },
+      provider: {
+        host: 'example-bucket',
+        protocol: 's3',
+      },
+      status: 'completed',
+    },
+    payload: {
+      granules: [
+        granule1,
+        granule2,
+      ],
+    },
+  };
+
+  await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
+
+  t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
+  t.false(await granuleModel.exists({ granuleId: granule2.granuleId }));
+});
