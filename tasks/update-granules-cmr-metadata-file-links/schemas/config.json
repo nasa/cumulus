@@ -1,0 +1,41 @@
+{
+  "title": "UpdateGranulesCmrMetadataFileLinksConfig",
+  "description": "Describes the config used by the update-granules-cmr-metadata-file-links task",
+  "type": "object",
+  "required": [
+    "distribution_endpoint",
+    "buckets"
+  ],
+  "properties": {
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "patternProperties": {
+        "\\S*": {
+          "description": "bucket configuration for the key'd bucket",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "name of the S3 bucket"
+            },
+            "type": {
+              "type": "string",
+              "description": "the type of bucket - i.e. internal, public, private, protected"
+            }
+          }
+        }
+      }
+    },
+    "distribution_endpoint": {
+      "type": "string",
+      "description": "The api distribution endpoint"
+    },
+    "cmrGranuleUrlType": {
+      "type": "string",
+      "description": "The type of URL to add to the Online Access URLs in the CMR file. 'distribution' to point to the distribution API, 's3' to put in the S3 link, and 'none' to not add Online Access URLs for the granules.",
+      "enum": ["distribution", "s3", "none"],
+      "default": "distribution"
+    }
+  }
+}
