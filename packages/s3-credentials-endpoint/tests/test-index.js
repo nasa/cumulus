@@ -1,5 +1,6 @@
 'use strict';
 
+const { Cookie } = require('tough-cookie');
 const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
 const sinon = require('sinon');
@@ -26,10 +27,7 @@ process.env.AccessTokensTable = randomId('tokenTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 
 let accessTokenModel;
-let authorizationUrl;
 
-// import the express app after setting the env variables
-// const { distributionApp } = require('../distribution');
 const {
   buildRoleSessionName,
   distributionApp,
@@ -38,22 +36,27 @@ const {
   s3credentials,
 } = require('..');
 
-test.before(async () => {
+const buildEarthdataLoginClient = () =>
+  new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: 'https://uat.urs.earthdata.nasa.gov',
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+  });
+
+test.before(async (t) => {
   accessTokenModel = new models.AccessToken('token');
   await accessTokenModel.createTable();
 
-  authorizationUrl = randomId('authURL');
   const stubbedAccessToken = fakeAccessTokenFactory();
+  await accessTokenModel.create(stubbedAccessToken);
 
   sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
   ).callsFake(() => stubbedAccessToken);
 
-  sinon.stub(
-    EarthdataLoginClient.prototype,
-    'getAuthorizationUrl'
-  ).callsFake(() => authorizationUrl);
+  t.context = { stubbedAccessToken };
 });
 
 test.after.always(async () => {
@@ -61,7 +64,7 @@ test.after.always(async () => {
   sinon.reset();
 });
 
-test('An authorized s3credential requeste invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
+test('An authorized s3credential request invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
   const username = randomId('username');
   const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
 
@@ -103,6 +106,7 @@ test('An s3credential request without access Token redirects to Oauth2 provider.
     .get('/s3credentials')
     .set('Accept', 'application/json')
     .expect(307);
+  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(response.req.path);
 
   t.is(response.status, 307);
   t.is(response.headers.location, authorizationUrl);
@@ -119,9 +123,29 @@ test('An s3credential request with expired accessToken redirects to Oauth2 provi
     .set('Accept', 'application/json')
     .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
     .expect(307);
+  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(response.req.path);
 
   t.is(response.status, 307);
   t.is(response.headers.location, authorizationUrl);
+});
+
+test('A redirect request returns a response with an unexpired cookie ', async (t) => {
+  const { stubbedAccessToken } = t.context;
+  const response = await request(distributionApp)
+    .get('/redirect')
+    .query({ code: randomId('code'), state: randomId('authorizationUrl') })
+    .set('Accept', 'application/json')
+    .expect(307);
+
+  const cookie = response.headers['set-cookie'].map(Cookie.parse);
+  const accessToken = cookie.find((c) => c.key === 'accessToken');
+  t.truthy(accessToken);
+  t.is(accessToken.value, stubbedAccessToken.accessToken);
+  t.is(
+    accessToken.expires.valueOf(),
+    stubbedAccessToken.expirationTime * 1000
+  );
+  t.true(accessToken.expires.valueOf() > Date.now());
 });
 
 test('buildRoleSessionName() returns the username if a client name is not provided', (t) => {
