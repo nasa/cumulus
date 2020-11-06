@@ -5,6 +5,7 @@ const semver = require('semver');
 const AggregateError = require('aggregate-error');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
+const { describeExecution } = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const { envUtils } = require('@cumulus/common');
 const {
@@ -22,6 +23,7 @@ const {
 } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
+  getExecutionUrlFromArn,
   getMessageExecutionParentArn,
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
@@ -230,21 +232,50 @@ const writeGranules = async ({
   if (!isRecordDefined(collection)) {
     throw new Error(`Collection reference is required for granules, got ${collection}`);
   }
-  return knex.transaction(async (trx) => {
-    // TODO: should write of each granule to Dynamo/RDS be done in a transaction per granule,
-    // rather than one transaction for all granules to Dynamo/RDS? A transaction per granule
-    // would allow write of each granule to succeed or fail independently
-    await Promise.all(getMessageGranules(cumulusMessage).map(
-      (granule) => writeGranuleViaTransaction({
-        cumulusMessage,
-        granule,
-        collection,
-        provider,
-        trx,
-      })
-    ));
-    return granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
-  });
+  return Promise.allSettled(getMessageGranules(cumulusMessage).map(
+    async (granule) => {
+      const executionArn = getMessageExecutionArn(cumulusMessage);
+      const executionUrl = getExecutionUrlFromArn(executionArn);
+
+      let executionDescription;
+      try {
+        executionDescription = await describeExecution({ executionArn });
+      } catch (error) {
+        log.error(`Could not describe execution ${executionArn}`, error);
+      }
+
+      return knex.transaction(async (trx) => {
+        await writeGranuleViaTransaction({
+          cumulusMessage,
+          granule,
+          collection,
+          provider,
+          trx,
+        });
+        return granuleModel.storeGranuleFromCumulusMessage({
+          granule,
+          cumulusMessage,
+          executionUrl,
+          executionDescription,
+        });
+      });
+    }
+  ));
+  // return knex.transaction(async (trx) => {
+  //   // TODO: should write of each granule to Dynamo/RDS be done in a transaction per granule,
+  //   // rather than one transaction for all granules to Dynamo/RDS? A transaction per granule
+  //   // would allow write of each granule to succeed or fail independently
+  //   await Promise.all(getMessageGranules(cumulusMessage).map(
+  //     (granule) => writeGranuleViaTransaction({
+  //       cumulusMessage,
+  //       granule,
+  //       collection,
+  //       provider,
+  //       trx,
+  //     })
+  //   ));
+  //   return granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
+  // });
 };
 
 const writeRecordsToDynamoDb = async (cumulusMessage) => {

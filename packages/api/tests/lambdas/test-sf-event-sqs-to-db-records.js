@@ -7,7 +7,6 @@ const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
 
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   localStackConnectionEnv,
   getKnexClient,
@@ -43,6 +42,9 @@ const {
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: async (queue, message) => [queue, message],
+  },
+  '@cumulus/aws-client/StepFunctions': {
+    describeExecution: async () => ({}),
   },
   '@cumulus/db': {
     doesRecordExist: stubRecordExists,
@@ -119,9 +121,6 @@ test.before(async (t) => {
   const pdrModel = new Pdr();
   await pdrModel.createTable();
   t.context.pdrModel = pdrModel;
-
-  t.context.describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution')
-    .resolves({});
 
   t.context.testDbName = `sfEventSqsToDbRecords_${cryptoRandomString({ length: 10 })}`;
 
@@ -791,6 +790,38 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
   );
 });
 
+test('writeGranules() handles successful and failing writes independently', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const granule2 = {
+    // no granule ID should cause failure
+  };
+  cumulusMessage.payload.granules = [
+    ...cumulusMessage.payload.granules,
+    granule2,
+  ];
+
+  const results = await writeGranules({
+    cumulusMessage,
+    collection: { cumulusId: collectionCumulusId },
+    provider: { cumulusId: providerCumulusId },
+    knex,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(
+    await doesRecordExist({ granuleId }, knex, tableNames.granules)
+  );
+  t.is(results.filter((result) => result.status === 'rejected').length, 1);
+});
+
 test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
@@ -802,22 +833,21 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo
   } = t.context;
 
   const fakeGranuleModel = {
-    storeGranulesFromCumulusMessage: () => {
+    storeGranuleFromCumulusMessage: () => {
       throw new Error('Granules dynamo error');
     },
   };
 
-  await t.throwsAsync(
-    writeGranules({
-      cumulusMessage,
-      collection: { cumulusId: collectionCumulusId },
-      provider: { cumulusId: providerCumulusId },
-      knex,
-      granuleModel: fakeGranuleModel,
-    }),
-    { message: 'Granules dynamo error' }
-  );
+  const results = await writeGranules({
+    cumulusMessage,
+    collection: { cumulusId: collectionCumulusId },
+    provider: { cumulusId: providerCumulusId },
+    knex,
+    granuleModel: fakeGranuleModel,
+  });
 
+  const [failure] = results.filter((result) => result.status === 'rejected');
+  t.is(failure.reason.message, 'Granules dynamo error');
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await doesRecordExist({ granuleId }, knex, tableNames.granules)
@@ -845,16 +875,15 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  await t.throwsAsync(
-    writeGranules({
-      cumulusMessage,
-      collection: { cumulusId: collectionCumulusId },
-      provider: { cumulusId: providerCumulusId },
-      knex,
-    }),
-    { message: 'Granules RDS error' }
-  );
+  const results = await writeGranules({
+    cumulusMessage,
+    collection: { cumulusId: collectionCumulusId },
+    provider: { cumulusId: providerCumulusId },
+    knex,
+  });
 
+  const [failure] = results.filter((result) => result.status === 'rejected');
+  t.is(failure.reason.message, 'Granules RDS error');
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await doesRecordExist({ granuleId }, knex, tableNames.granules)
@@ -977,7 +1006,7 @@ test.serial('Lambda sends message to DLQ when RDS_DEPLOYMENT_CUMULUS_VERSION env
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('Lambda sends message to DLQ when any write to database fails', async (t) => {
+test('Lambda sends message to DLQ when an execution/PDR write to the database fails', async (t) => {
   const {
     cumulusMessage,
     executionModel,
