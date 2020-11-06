@@ -32,8 +32,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
-    - Updated cumuluss/async-operation task to write async-operations to the RDS
-    database.
     - Added `@cumulus/async-operations` to core packages, exposing
       `startAsyncOperation` which will handle starting an async operation and adding an entry to both RDS and DynamoDb
   - **CUMULUS-2127**
