@@ -22,11 +22,16 @@ const regexes = {
 const queryFields = [
   'error',
   'granuleId',
+  'granuleId.keyword',
   'id',
+  'id.keyword',
   'status',
+  'status.keyword',
   'pdrName',
+  'pdrName.keyword',
   'msg',
   'name',
+  'name.keyword',
 ];
 
 const build = {
