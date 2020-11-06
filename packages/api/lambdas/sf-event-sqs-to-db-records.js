@@ -261,21 +261,6 @@ const writeGranules = async ({
       });
     }
   ));
-  // return knex.transaction(async (trx) => {
-  //   // TODO: should write of each granule to Dynamo/RDS be done in a transaction per granule,
-  //   // rather than one transaction for all granules to Dynamo/RDS? A transaction per granule
-  //   // would allow write of each granule to succeed or fail independently
-  //   await Promise.all(getMessageGranules(cumulusMessage).map(
-  //     (granule) => writeGranuleViaTransaction({
-  //       cumulusMessage,
-  //       granule,
-  //       collection,
-  //       provider,
-  //       trx,
-  //     })
-  //   ));
-  //   return granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
-  // });
 };
 
 const writeRecordsToDynamoDb = async (cumulusMessage) => {
