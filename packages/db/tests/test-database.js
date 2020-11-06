@@ -3,7 +3,7 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { localStackConnectionEnv } = require('../dist/config');
 const { getKnexClient } = require('../dist/connection');
-const { doesRecordExist } = require('../dist/database');
+const { doesRecordExist, isRecordDefined } = require('../dist/database');
 
 test.before(async (t) => {
   t.context.knex = await getKnexClient({
@@ -30,4 +30,12 @@ test('doesRecordExist correctly returns false', async (t) => {
   const { knex, tableName } = t.context;
   const key = cryptoRandomString({ length: 5 });
   t.false(await doesRecordExist({ key }, knex, tableName));
+});
+
+test('isRecordDefined correctly returns true', async (t) => {
+  t.true(isRecordDefined({ key: 'value' }));
+});
+
+test('isRecordDefined correctly returns false', async (t) => {
+  t.false(isRecordDefined(undefined));
 });
