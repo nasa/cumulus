@@ -105,12 +105,16 @@ test.serial('migrateCollectionRecord correctly migrates collection record', asyn
     omit(
       {
         ...fakeCollection,
-        granuleIdValidationRegex: fakeCollection.granuleId,
-        granuleIdExtractionRegex: fakeCollection.granuleIdExtraction,
+        sample_file_name: fakeCollection.sampleFileName,
+        granule_id_validation_regex: fakeCollection.granuleId,
+        granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
+        duplicate_handling: fakeCollection.duplicateHandling,
+        report_to_ems: fakeCollection.reportToEms,
+        ignore_files_config_for_discovery: fakeCollection.ignoreFilesConfigForDiscovery,
         created_at: new Date(fakeCollection.createdAt),
         updated_at: new Date(fakeCollection.updatedAt),
       },
-      ['granuleId', 'granuleIdExtraction', 'createdAt', 'updatedAt']
+      ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt']
     )
   );
 });
@@ -149,20 +153,21 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
     omit(
       {
         ...fakeCollection,
-        granuleIdValidationRegex: fakeCollection.granuleId,
-        granuleIdExtractionRegex: fakeCollection.granuleIdExtraction,
+        sample_file_name: fakeCollection.sampleFileName,
+        granule_id_validation_regex: fakeCollection.granuleId,
+        granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
         url_path: null,
         process: null,
-        ignoreFilesConfigForDiscovery: null,
+        ignore_files_config_for_discovery: null,
         meta: null,
         tags: null,
         created_at: new Date(fakeCollection.createdAt),
         updated_at: new Date(fakeCollection.updatedAt),
         // schema validation will add default values
-        duplicateHandling: 'error',
-        reportToEms: true,
+        duplicate_handling: 'error',
+        report_to_ems: true,
       },
-      ['granuleId', 'granuleIdExtraction', 'createdAt', 'updatedAt']
+      ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt']
     )
   );
 });

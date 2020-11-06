@@ -131,10 +131,14 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
       {
         ...fakeProvider,
         name: fakeProvider.id,
+        global_connection_limit: fakeProvider.globalConnectionLimit,
+        private_key: fakeProvider.privateKey,
+        cm_key_id: fakeProvider.cmKeyId,
+        certificate_uri: fakeProvider.certificateUri,
         created_at: new Date(fakeProvider.createdAt),
         updated_at: new Date(fakeProvider.updatedAt),
       },
-      ['id', 'encrypted', 'createdAt', 'updatedAt']
+      ['id', 'encrypted', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri', 'createdAt', 'updatedAt']
     )
   );
 });
@@ -278,12 +282,13 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
         port: null,
         username: null,
         password: null,
-        privateKey: null,
-        cmKeyId: null,
-        certificateUri: null,
+        global_connection_limit: fakeProvider.globalConnectionLimit,
+        private_key: null,
+        cm_key_id: null,
+        certificate_uri: null,
         created_at: new Date(fakeProvider.createdAt),
       },
-      ['id', 'createdAt', 'updatedAt']
+      ['id', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri', 'createdAt', 'updatedAt']
     )
   );
 });
