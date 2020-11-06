@@ -6,13 +6,52 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-2203**
+  - Update Core tasks to use
+    [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
+    v2.0.0 to resolve memory leak/lambda ENOMEM constant failure issue.   This
+    issue caused lambdas to slowly use all memory in the run environment and
+    prevented AWS from halting/restarting warmed instances when task code was
+    throwing consistent errors under load.
+
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
+    `/reconciliationReport` returns.  The user (dashboard) must read the value
+    of `url` from the return to get the s3SignedURL and then download the report.
+
 ### Added
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2127**
+    - Add schema migration for `collections` table
+  - **CUMULUS-2129**
+    - Added logic to `data-migration1` Lambda for migrating collection records from Dynamo to RDS
+  - **CUMULUS-2157**
+    - Add schema migration for `providers` table
+    - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to RDS
+  - **CUMULUS-2182**
+    - Add schema migration for PDRs table
+  - **CUMULUS-2230**
+    - Add schema migration for `rules` table
+  - **CUMULUS-2183**
+    - Add schema migration for `asyncOperations` table
+  - **CUMULUS-2184**
+    - Add schema migration for `executions` table
+
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
+- **CUMULUS-2211**
+  - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
 
 ### Changed
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2228**
+    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution and PDR records to the Core PostgreSQL database in parallel with writes to DynamoDB
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
+- **CUMULUS-2232**
+  - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
 
 ## [v3.0.0] 2020-10-7
 

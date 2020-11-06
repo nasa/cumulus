@@ -18,6 +18,12 @@ const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { getMessageGranules } = require('@cumulus/message/Granules');
+const {
+  getMessageProviderId,
+} = require('@cumulus/message/Providers');
+const {
+  getMetaStatus,
+} = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -150,9 +156,10 @@ class Granule extends Manager {
    * start the re-ingest of a given granule object
    *
    * @param {Object} granule - the granule object
+   * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} - undefined
    */
-  async reingest(granule) {
+  async reingest(granule, asyncOperationId = undefined) {
     const executionArn = path.basename(granule.execution);
 
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
@@ -176,6 +183,7 @@ class Granule extends Manager {
         version,
       },
       queueUrl: granule.queueUrl,
+      asyncOperationId,
     });
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
@@ -362,8 +370,8 @@ class Granule extends Manager {
       granuleId: granule.granuleId,
       pdrName: get(message, 'meta.pdr.name'),
       collectionId,
-      status: get(message, 'meta.status', get(granule, 'status')),
-      provider: get(message, 'meta.provider.id'),
+      status: getMetaStatus(message) || get(granule, 'status'),
+      provider: getMessageProviderId(message),
       execution: executionUrl,
       cmrLink: granule.cmrLink,
       files: granuleFiles,

@@ -2,11 +2,20 @@
 
 const get = require('lodash/get');
 const pLimit = require('p-limit');
+
+const {
+  getMessageAsyncOperationId,
+} = require('@cumulus/message/AsyncOperations');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getMessageExecutionName,
+  getMessageExecutionParentArn,
+  getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
+const {
+  getMetaStatus,
+} = require('@cumulus/message/workflows');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
 
@@ -34,7 +43,7 @@ class Execution extends Manager {
     const arn = getMessageExecutionArn(cumulusMessage);
     if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
 
-    const status = get(cumulusMessage, 'meta.status');
+    const status = getMetaStatus(cumulusMessage);
     if (!status) throw new Error('Unable to determine status from Cumulus message');
 
     const now = Date.now();
@@ -45,9 +54,10 @@ class Execution extends Manager {
 
     const record = {
       name: getMessageExecutionName(cumulusMessage),
+      cumulusVersion: getMessageCumulusVersion(cumulusMessage),
       arn,
-      asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
-      parentArn: get(cumulusMessage, 'cumulus_meta.parentExecutionArn'),
+      asyncOperationId: getMessageAsyncOperationId(cumulusMessage),
+      parentArn: getMessageExecutionParentArn(cumulusMessage),
       execution: StepFunctionUtils.getExecutionUrl(arn),
       tasks: get(cumulusMessage, 'meta.workflow_tasks'),
       error: parseException(cumulusMessage.exception),

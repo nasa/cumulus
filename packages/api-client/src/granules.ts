@@ -361,3 +361,24 @@ export const bulkDeleteGranules = async (params: {
     },
   });
 };
+
+export const bulkReingestGranules = async (params: {
+  prefix: string,
+  body: unknown,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkReingest',
+      body: JSON.stringify(body),
+    },
+  });
+};

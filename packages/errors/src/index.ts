@@ -148,3 +148,5 @@ export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 export const UnparsableFileLocationError = createErrorType('UnparsableFileLocationError');
 
 export const ValidationError = createErrorType('ValidationError');
+
+export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
