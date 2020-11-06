@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    aws  = ">= 3.5.0"
+    aws  = ">= 3.14.1"
     null = "~> 2.1"
   }
 }
@@ -90,7 +90,7 @@ module "cumulus" {
   ems_username          = var.ems_username
 
   es_request_concurrency = var.es_request_concurrency
-  
+
   metrics_es_host     = var.metrics_es_host
   metrics_es_password = var.metrics_es_password
   metrics_es_username = var.metrics_es_username

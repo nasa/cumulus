@@ -55,6 +55,9 @@ new `update-granules-cmr-metadata-file-links` task.
   - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and
     `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
 
+### Fixed
+- **CUMULUS-2233**
+  - Fixes /s3credentials bug where the expiration time on the cookie was set to a time that is always expired, so authentication was never being recognized as complete by the API. Consequently, the user would end up in a redirect loop and requests to /s3credentials would never complete successfully. The bug was caused by the fact that the code setting the expiration time for the cookie was expecting a time value in milliseconds, but was receiving the expirationTime from the EarthdataLoginClient in seconds. This bug has been fixed by converting seconds into milliseconds. Unit tests were added to test that the expiration time has been converted to milliseconds and checking that the cookie's expiration time is greater than the current time.
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS
