@@ -8,7 +8,7 @@ locals {
   lambda_log_group_name  = "/aws/lambda/${var.tea_stack_name}-EgressLambda"
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 
-  repo_lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
+  lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
 }
 
 module "tea_map_cache" {
