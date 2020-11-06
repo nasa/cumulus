@@ -98,15 +98,20 @@ const getMessageCollection = async (cumulusMessage, knex) => {
   }
 };
 
-const getMessageProvider = async (cumulusMessage, knex) => {
+const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
   try {
     const providerId = getMessageProviderId(cumulusMessage);
     if (!providerId) {
       throw new Error('Could not find provider ID in message');
     }
-    return await knex(tableNames.providers).where({
+    const searchParams = {
       name: getMessageProviderId(cumulusMessage),
-    }).first();
+    };
+    const provider = await knex(tableNames.providers).where(searchParams).first();
+    if (!isRecordDefined(provider)) {
+      throw new Error(`Could not find provider with params ${JSON.stringify(searchParams)}`);
+    }
+    return provider.cumulusId;
   } catch (error) {
     log.error(error);
     return undefined;
@@ -157,9 +162,9 @@ const writeExecution = async ({
 
 const writePdrViaTransaction = async ({
   cumulusMessage,
-  collection,
-  provider,
   trx,
+  collection,
+  providerCumulusId,
   executionCumulusId,
 }) =>
   trx(tableNames.pdrs)
@@ -167,7 +172,7 @@ const writePdrViaTransaction = async ({
       name: getMessagePdrName(cumulusMessage),
       status: getMetaStatus(cumulusMessage),
       collectionCumulusId: collection.cumulusId,
-      providerCumulusId: provider.cumulusId,
+      providerCumulusId,
       executionCumulusId,
     })
     .returning('cumulusId');
@@ -175,9 +180,9 @@ const writePdrViaTransaction = async ({
 const writePdr = async ({
   cumulusMessage,
   collection,
-  provider,
-  knex,
+  providerCumulusId,
   executionCumulusId,
+  knex,
   pdrModel = new Pdr(),
 }) => {
   // If there is no PDR in the message, then there's nothing to do here, which is fine
@@ -187,14 +192,14 @@ const writePdr = async ({
   if (!isRecordDefined(collection)) {
     throw new Error(`Collection reference is required for a PDR, got ${collection}`);
   }
-  if (!isRecordDefined(provider)) {
-    throw new Error(`Provider reference is required for a PDR, got ${provider}`);
+  if (!providerCumulusId) {
+    throw new Error('Provider reference is required for a PDR');
   }
   return knex.transaction(async (trx) => {
     const [cumulusId] = await writePdrViaTransaction({
       cumulusMessage,
       collection,
-      provider,
+      providerCumulusId,
       trx,
       executionCumulusId,
     });
@@ -207,7 +212,7 @@ const writeGranuleViaTransaction = async ({
   cumulusMessage,
   granule,
   collection,
-  provider,
+  providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
   trx,
@@ -217,7 +222,7 @@ const writeGranuleViaTransaction = async ({
       granuleId: granule.granuleId,
       status: getMetaStatus(cumulusMessage) || granule.status,
       collectionCumulusId: collection.cumulusId,
-      providerCumulusId: provider ? provider.cumulusId : undefined,
+      providerCumulusId,
       executionCumulusId,
       pdrCumulusId,
     });
@@ -225,10 +230,10 @@ const writeGranuleViaTransaction = async ({
 const writeGranules = async ({
   cumulusMessage,
   collection,
-  provider,
-  knex,
+  providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
+  knex,
   granuleModel = new Granule(),
 }) => {
   // If there are no granules in the message, then there's nothing to do here, which is fine
@@ -257,7 +262,7 @@ const writeGranules = async ({
           cumulusMessage,
           granule,
           collection,
-          provider,
+          providerCumulusId,
           executionCumulusId,
           pdrCumulusId,
           trx,
@@ -309,7 +314,7 @@ const writeRecords = async (cumulusMessage, knex) => {
     return writeRecordsToDynamoDb(cumulusMessage);
   }
 
-  const provider = await getMessageProvider(cumulusMessage, knex);
+  const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
 
   try {
     const executionCumulusId = await writeExecution({
@@ -320,14 +325,14 @@ const writeRecords = async (cumulusMessage, knex) => {
     const pdrCumulusId = await writePdr({
       cumulusMessage,
       collection,
-      provider,
+      providerCumulusId,
       knex,
       executionCumulusId,
     });
     return await writeGranules({
       cumulusMessage,
       collection,
-      provider,
+      providerCumulusId,
       executionCumulusId,
       pdrCumulusId,
       knex,
@@ -367,7 +372,7 @@ module.exports = {
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
   getMessageCollection,
-  getMessageProvider,
+  getMessageProviderCumulusId,
   shouldWriteExecutionToRDS,
   writeGranuleViaTransaction,
   writeGranules,

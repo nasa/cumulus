@@ -32,7 +32,7 @@ const {
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
   getMessageCollection,
-  getMessageProvider,
+  getMessageProviderCumulusId,
   shouldWriteExecutionToRDS,
   writeGranuleViaTransaction,
   writeGranules,
@@ -358,7 +358,7 @@ test('getMessageCollection returns undefined if collection cannot be found', asy
   t.is(await getMessageCollection({}, knex), undefined);
 });
 
-test('getMessageProvider returns correct provider', async (t) => {
+test('getMessageProviderCumulusId returns cumulusId of provider in message', async (t) => {
   const { cumulusMessage, provider } = t.context;
 
   const fakeKnex = () => ({
@@ -374,17 +374,21 @@ test('getMessageProvider returns correct provider', async (t) => {
     }),
   });
 
-  t.deepEqual(
-    await getMessageProvider(cumulusMessage, fakeKnex),
-    {
-      cumulusId: 234,
-    }
+  t.is(
+    await getMessageProviderCumulusId(cumulusMessage, fakeKnex),
+    234
   );
 });
 
-test('getMessageProvider returns undefined if provider cannot be found', async (t) => {
+test('getMessageProviderCumulusId returns undefined if there is no provider in the message', async (t) => {
   const { knex } = t.context;
-  t.is(await getMessageProvider({}, knex), undefined);
+  t.is(await getMessageProviderCumulusId({}, knex), undefined);
+});
+
+test('getMessageProviderCumulusId returns undefined if provider cannot be found', async (t) => {
+  const { cumulusMessage, knex } = t.context;
+  cumulusMessage.meta.provider.id = 'bogus-provider-id';
+  t.is(await getMessageProviderCumulusId(cumulusMessage, knex), undefined);
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
@@ -611,7 +615,7 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulusId if R
   const pdrCumulusId = await writePdr({
     cumulusMessage,
     collection: { cumulusId: collectionCumulusId },
-    provider: { cumulusId: providerCumulusId },
+    providerCumulusId,
     knex,
   });
 
@@ -651,7 +655,7 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
     writePdr({
       cumulusMessage,
       collection: { cumulusId: collectionCumulusId },
-      provider: { cumulusId: providerCumulusId },
+      providerCumulusId,
       knex,
       pdrModel: fakePdrModel,
     }),
@@ -699,7 +703,7 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
     writePdr({
       cumulusMessage,
       collection: { cumulusId: collectionCumulusId },
-      provider: { cumulusId: providerCumulusId },
+      providerCumulusId,
       knex,
     }),
     { message: 'PDR RDS error' }
