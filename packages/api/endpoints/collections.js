@@ -148,7 +148,7 @@ async function post(req, res) {
     const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
     try {
-      await dbClient('collections').insert(dbRecord, 'cumulusId');
+      await dbClient('collections').insert(dbRecord, 'cumulus_id');
     } catch (error) {
       await collectionsModel.delete({ name, version });
 

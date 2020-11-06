@@ -198,7 +198,7 @@ test.beforeEach(async (t) => {
 
   const collectionResponse = await t.context.knex(tableNames.collections)
     .insert(t.context.collection)
-    .returning('cumulusId');
+    .returning('cumulus_id');
   t.context.collectionCumulusId = collectionResponse[0];
 
   const providerResponse = await t.context.knex(tableNames.providers)
@@ -207,7 +207,7 @@ test.beforeEach(async (t) => {
       host: t.context.provider.host,
       protocol: t.context.provider.protocol,
     })
-    .returning('cumulusId');
+    .returning('cumulus_id');
   t.context.providerCumulusId = providerResponse[0];
 
   t.context.doesRecordExistStub = stubRecordExists;
@@ -337,7 +337,7 @@ test('getMessageCollection returns correct collection', async (t) => {
         if (params.name === collection.name
             && params.version === collection.version) {
           return {
-            cumulusId: 5,
+            cumulus_id: 5,
           };
         }
         return undefined;
@@ -348,7 +348,7 @@ test('getMessageCollection returns correct collection', async (t) => {
   t.deepEqual(
     await getMessageCollection(cumulusMessage, fakeKnex),
     {
-      cumulusId: 5,
+      cumulus_id: 5,
     }
   );
 });
@@ -366,7 +366,7 @@ test('getMessageProvider returns correct provider', async (t) => {
       first: async () => {
         if (params.name === provider.id) {
           return {
-            cumulusId: 234,
+            cumulus_id: 234,
           };
         }
         return undefined;
@@ -377,7 +377,7 @@ test('getMessageProvider returns correct provider', async (t) => {
   t.deepEqual(
     await getMessageProvider(cumulusMessage, fakeKnex),
     {
-      cumulusId: 234,
+      cumulus_id: 234,
     }
   );
 });
@@ -397,7 +397,7 @@ test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution m
         cumulus_version: preRDSDeploymentVersion,
       },
     },
-    { cumulusId: 1 },
+    { cumulus_id: 1 },
     knex
   ));
 });
@@ -421,7 +421,7 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
   t.true(
     await shouldWriteExecutionToRDS(
       cumulusMessage,
-      { cumulusId: 1 },
+      { cumulus_id: 1 },
       knex
     )
   );
@@ -441,7 +441,7 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
   }).throws();
 
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: collectionCumulusId }, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, { cumulus_id: collectionCumulusId }, knex)
   );
 });
 
@@ -470,7 +470,7 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   }).resolves(false);
 
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, { cumulusId: collectionCumulusId }, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, { cumulus_id: collectionCumulusId }, knex)
   );
 });
 
@@ -665,15 +665,15 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulusId if R
 
   const pdrCumulusId = await writePdr({
     cumulusMessage,
-    collection: { cumulusId: collectionCumulusId },
-    provider: { cumulusId: providerCumulusId },
+    collection: { cumulus_id: collectionCumulusId },
+    provider: { cumulus_id: providerCumulusId },
     knex,
   });
 
   t.true(await pdrModel.exists({ pdrName: pdr.name }));
   t.true(
     await doesRecordExist({
-      cumulusId: pdrCumulusId,
+      cumulus_id: pdrCumulusId,
     }, knex, tableNames.pdrs)
   );
 });
@@ -705,8 +705,8 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
   await t.throwsAsync(
     writePdr({
       cumulusMessage,
-      collection: { cumulusId: collectionCumulusId },
-      provider: { cumulusId: providerCumulusId },
+      collection: { cumulus_id: collectionCumulusId },
+      provider: { cumulus_id: providerCumulusId },
       knex,
       pdrModel: fakePdrModel,
     }),
@@ -753,8 +753,8 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
   await t.throwsAsync(
     writePdr({
       cumulusMessage,
-      collection: { cumulusId: collectionCumulusId },
-      provider: { cumulusId: providerCumulusId },
+      collection: { cumulus_id: collectionCumulusId },
+      provider: { cumulus_id: providerCumulusId },
       knex,
     }),
     { message: 'PDR RDS error' }
