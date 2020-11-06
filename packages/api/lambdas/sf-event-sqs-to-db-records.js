@@ -208,6 +208,8 @@ const writeGranuleViaTransaction = async ({
   granule,
   collection,
   provider,
+  executionCumulusId,
+  pdrCumulusId,
   trx,
 }) =>
   trx(tableNames.granules)
@@ -216,6 +218,8 @@ const writeGranuleViaTransaction = async ({
       status: getMetaStatus(cumulusMessage) || granule.status,
       collectionCumulusId: collection.cumulusId,
       providerCumulusId: provider ? provider.cumulusId : undefined,
+      executionCumulusId,
+      pdrCumulusId,
     });
 
 const writeGranules = async ({
@@ -223,6 +227,8 @@ const writeGranules = async ({
   collection,
   provider,
   knex,
+  executionCumulusId,
+  pdrCumulusId,
   granuleModel = new Granule(),
 }) => {
   // If there are no granules in the message, then there's nothing to do here, which is fine
@@ -250,6 +256,8 @@ const writeGranules = async ({
           granule,
           collection,
           provider,
+          executionCumulusId,
+          pdrCumulusId,
           trx,
         });
         return granuleModel.storeGranuleFromCumulusMessage({
@@ -318,8 +326,9 @@ const writeRecords = async (cumulusMessage, knex) => {
       cumulusMessage,
       collection,
       provider,
-      knex,
+      executionCumulusId,
       pdrCumulusId,
+      knex,
     });
   } catch (error) {
     log.error(`Failed to write records for ${executionArn}`, error);
