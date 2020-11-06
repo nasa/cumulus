@@ -13,7 +13,7 @@ const {
   doesRecordExist,
   isRecordDefined,
 } = require('@cumulus/db');
-const { MissingRequiredEnvVar } = require('@cumulus/errors');
+const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
@@ -53,7 +53,7 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
       : false;
   } catch (error) {
     // Throw error to fail lambda if required env var is missing
-    if (error instanceof MissingRequiredEnvVar) {
+    if (error instanceof MissingRequiredEnvVarError) {
       throw error;
     }
     // Treat other errors as false
