@@ -83,15 +83,19 @@ const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
   }, knex, tableNames.asyncOperations);
 };
 
-const getMessageCollection = async (cumulusMessage, knex) => {
+const getMessageCollectionCumulusId = async (cumulusMessage, knex) => {
   try {
     const collectionNameAndVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
     if (!collectionNameAndVersion) {
       throw new Error('Could not find collection name/version in message');
     }
-    return await knex(tableNames.collections).where(
+    const collection = await knex(tableNames.collections).where(
       collectionNameAndVersion
     ).first();
+    if (!isRecordDefined(collection)) {
+      throw new Error(`Could not find collection with params ${JSON.stringify(collectionNameAndVersion)}`);
+    }
+    return collection.cumulusId;
   } catch (error) {
     log.error(error);
     return undefined;
@@ -120,14 +124,14 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
 
 const shouldWriteExecutionToRDS = async (
   cumulusMessage,
-  collection,
+  collectionCumulusId,
   knex
 ) => {
   const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   if (!isExecutionPostDeployment) return false;
 
   try {
-    if (!isRecordDefined(collection)) return false;
+    if (!collectionCumulusId) return false;
 
     const results = await Promise.all([
       hasNoParentExecutionOrExists(cumulusMessage, knex),
@@ -163,7 +167,7 @@ const writeExecution = async ({
 const writePdrViaTransaction = async ({
   cumulusMessage,
   trx,
-  collection,
+  collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
 }) =>
@@ -171,7 +175,7 @@ const writePdrViaTransaction = async ({
     .insert({
       name: getMessagePdrName(cumulusMessage),
       status: getMetaStatus(cumulusMessage),
-      collectionCumulusId: collection.cumulusId,
+      collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
     })
@@ -179,7 +183,7 @@ const writePdrViaTransaction = async ({
 
 const writePdr = async ({
   cumulusMessage,
-  collection,
+  collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
   knex,
@@ -189,8 +193,8 @@ const writePdr = async ({
   if (!messageHasPdr(cumulusMessage)) {
     return undefined;
   }
-  if (!isRecordDefined(collection)) {
-    throw new Error(`Collection reference is required for a PDR, got ${collection}`);
+  if (!collectionCumulusId) {
+    throw new Error('Collection reference is required for a PDR');
   }
   if (!providerCumulusId) {
     throw new Error('Provider reference is required for a PDR');
@@ -198,7 +202,7 @@ const writePdr = async ({
   return knex.transaction(async (trx) => {
     const [cumulusId] = await writePdrViaTransaction({
       cumulusMessage,
-      collection,
+      collectionCumulusId,
       providerCumulusId,
       trx,
       executionCumulusId,
@@ -211,7 +215,7 @@ const writePdr = async ({
 const writeGranuleViaTransaction = async ({
   cumulusMessage,
   granule,
-  collection,
+  collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
@@ -221,7 +225,7 @@ const writeGranuleViaTransaction = async ({
     .insert({
       granuleId: granule.granuleId,
       status: getMetaStatus(cumulusMessage) || granule.status,
-      collectionCumulusId: collection.cumulusId,
+      collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
       pdrCumulusId,
@@ -229,7 +233,7 @@ const writeGranuleViaTransaction = async ({
 
 const writeGranules = async ({
   cumulusMessage,
-  collection,
+  collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
@@ -240,8 +244,8 @@ const writeGranules = async ({
   if (!messageHasGranules(cumulusMessage)) {
     return true;
   }
-  if (!isRecordDefined(collection)) {
-    throw new Error(`Collection reference is required for granules, got ${collection}`);
+  if (!collectionCumulusId) {
+    throw new Error('Collection reference is required for granules');
   }
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail indepdently
@@ -261,7 +265,7 @@ const writeGranules = async ({
         await writeGranuleViaTransaction({
           cumulusMessage,
           granule,
-          collection,
+          collectionCumulusId,
           providerCumulusId,
           executionCumulusId,
           pdrCumulusId,
@@ -301,10 +305,10 @@ const writeRecordsToDynamoDb = async (cumulusMessage) => {
 const writeRecords = async (cumulusMessage, knex) => {
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
-  const collection = await getMessageCollection(cumulusMessage, knex);
+  const collectionCumulusId = await getMessageCollectionCumulusId(cumulusMessage, knex);
   const isExecutionRDSWriteEnabled = await shouldWriteExecutionToRDS(
     cumulusMessage,
-    collection,
+    collectionCumulusId,
     knex
   );
 
@@ -324,14 +328,14 @@ const writeRecords = async (cumulusMessage, knex) => {
     // PDR write only attempted if execution saved
     const pdrCumulusId = await writePdr({
       cumulusMessage,
-      collection,
+      collectionCumulusId,
       providerCumulusId,
       knex,
       executionCumulusId,
     });
     return await writeGranules({
       cumulusMessage,
-      collection,
+      collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
       pdrCumulusId,
@@ -371,7 +375,7 @@ module.exports = {
   isPostRDSDeploymentExecution,
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
-  getMessageCollection,
+  getMessageCollectionCumulusId,
   getMessageProviderCumulusId,
   shouldWriteExecutionToRDS,
   writeGranuleViaTransaction,
