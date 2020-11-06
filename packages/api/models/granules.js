@@ -579,63 +579,6 @@ class Granule extends Manager {
   }
 
   /**
-   * Parse a Cumulus message and build granule records for the embedded granules.
-   *
-   * @param {Object} cumulusMessage - A Cumulus message
-   * @returns {Promise<Array<Object>>} - An array of granule records
-   */
-  static async _getGranuleRecordsFromCumulusMessage(cumulusMessage) {
-    const granules = getMessageGranules(cumulusMessage);
-    if (!granules) {
-      log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
-      return [];
-    }
-
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    const executionUrl = getExecutionUrlFromArn(executionArn);
-
-    let executionDescription;
-    try {
-      executionDescription = await StepFunctions.describeExecution({ executionArn });
-    } catch (error) {
-      log.error(`Could not describe execution ${executionArn}`, error);
-    }
-
-    const promisedGranuleRecords = granules
-      .map(
-        async (granule) => {
-          try {
-            return await Granule.generateGranuleRecord({
-              s3: awsClients.s3(),
-              granule,
-              message: cumulusMessage,
-              executionUrl,
-              executionDescription,
-            });
-          } catch (error) {
-            log.logAdditionalKeys(
-              {
-                error: {
-                  name: error.name,
-                  message: error.message,
-                  stack: error.stack.split('\n'),
-                },
-                cumulusMessage,
-              },
-              'Unable to get granule records from Cumulus Message'
-            );
-
-            return undefined;
-          }
-        }
-      );
-
-    const granuleRecords = await Promise.all(promisedGranuleRecords);
-
-    return granuleRecords.filter((r) => !isNil(r));
-  }
-
-  /**
    * Store a granule record.
    *
    * @param {Object} granuleRecord - A granule record.
