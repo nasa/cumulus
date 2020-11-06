@@ -11,6 +11,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 
 const models = require('../models');
@@ -117,6 +118,9 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
@@ -125,13 +129,7 @@ async function createReport(req, res) {
     return res.boom.badRequest(error.message, error);
   }
 
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.invokeReconcileLambda,
@@ -139,7 +137,11 @@ async function createReport(req, res) {
     operationType: 'Reconciliation Report',
     payload: validatedInput,
     useLambdaEnvironmentVariables: true,
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }

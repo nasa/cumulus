@@ -1,3 +1,6 @@
+export {
+  createTestDatabase, deleteTestDatabase,
+} from './database';
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { doesRecordExist, isRecordDefined } from './database';
