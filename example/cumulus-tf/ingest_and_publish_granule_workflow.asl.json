@@ -214,7 +214,7 @@
       },
       "Type": "Task",
       "Resource": "${move_granules_task_arn}",
-      "Next": "HyraxMetadataUpdatesTask",
+      "Next": "UpdateGranulesCmrMetadataFileLinksStep",
       "Catch": [
         {
           "ErrorEquals": [
@@ -234,6 +234,32 @@
           ],
           "IntervalSeconds": 2,
           "MaxAttempts": 6
+        }
+      ]
+    },
+    "UpdateGranulesCmrMetadataFileLinksStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${update_granules_cmr_metadata_file_links_task_arn}",
+      "Next": "HyraxMetadataUpdatesTask",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
         }
       ]
     },
