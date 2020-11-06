@@ -15,6 +15,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
+const { isConditionalCheckException } = require('@cumulus/errors');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { getMessageGranules } = require('@cumulus/message/Granules');
@@ -633,37 +634,56 @@ class Granule extends Manager {
   }
 
   /**
+   * Store a granule record.
+   *
+   * @param {Object} granuleRecord - A granule record.
+   * @returns {Promise<Object|undefined>}
+   */
+  async _storeGranuleRecord(granuleRecord) {
+    const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
+    const updateParams = this._buildDocClientUpdateParams({
+      item: granuleRecord,
+      itemKey: { granuleId: granuleRecord.granuleId },
+      mutableFieldNames,
+    });
+
+    // Only allow "running" granule to replace completed/failed
+    // granule if the execution has changed
+    if (granuleRecord.status === 'running') {
+      updateParams.ConditionExpression = '#execution <> :execution';
+    }
+
+    try {
+      return await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (isConditionalCheckException(error)) {
+        log.logAdditionalKeys(
+          {
+            error: {
+              name: error.name,
+              message: error.message,
+              stack: error.stack.split('\n'),
+            },
+          },
+          'Record not updated due to conditional check exception'
+        );
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Validate and store a granule record.
    *
    * @param {Object} granuleRecord - A granule record.
    * @returns {Promise}
    */
   async _validateAndStoreGranuleRecord(granuleRecord) {
-    try {
-      // TODO: Refactor this all to use model.update() to avoid having to manually call
-      // schema validation and the actual client.update() method.
-      await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
-
-      const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
-      const updateParams = this._buildDocClientUpdateParams({
-        item: granuleRecord,
-        itemKey: { granuleId: granuleRecord.granuleId },
-        mutableFieldNames,
-      });
-
-      // Only allow "running" granule to replace completed/failed
-      // granule if the execution has changed
-      if (granuleRecord.status === 'running') {
-        updateParams.ConditionExpression = '#execution <> :execution';
-      }
-
-      await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (error) {
-      log.error(
-        'Could not store granule record: ', granuleRecord,
-        error
-      );
-    }
+    // TODO: Refactor this all to use model.update() to avoid having to manually call
+    // schema validation and the actual client.update() method.
+    await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
+    return this._storeGranuleRecord(granuleRecord);
   }
 
   async storeGranuleFromCumulusMessage({
@@ -711,9 +731,6 @@ class Granule extends Manager {
       executionDescription,
       executionUrl,
     })));
-    // const granuleRecords = await this.constructor
-    //   ._getGranuleRecordsFromCumulusMessage(cumulusMessage);
-    // return Promise.all(granuleRecords.map(this._validateAndStoreGranuleRecord, this));
   }
 }
 
