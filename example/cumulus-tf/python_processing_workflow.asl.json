@@ -164,7 +164,33 @@
           "Next": "WorkflowFailed"
         }
       ],
-      "Next": "WorkflowSucceeded"
+      "Next": "UpdateGranulesCmrMetadataFileLinksStep"
+    },
+    "UpdateGranulesCmrMetadataFileLinksStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${update_granules_cmr_metadata_file_links_task_arn}",
+      "Next": "WorkflowSucceeded",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ]
     },
     "WorkflowFailed": {
       "Type": "Fail",

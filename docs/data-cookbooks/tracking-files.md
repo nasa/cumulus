@@ -38,7 +38,7 @@ For more information, see the [ancillary metadata](../features/ancillary_metadat
 
 ### CMR Metadata
 
-When updating granule CMR metadata, the `MoveGranules` task will add the external facing URLs to the CMR metadata file based on the file type.
+When updating granule CMR metadata, the `UpdateGranulesCmrMetadataFileLinks` task will add the external facing URLs to the CMR metadata file based on the file type.
 The table below shows how the CNM data types map to CMR metadata updates. Non-CNM file types are handled as 'data' file types.
 The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, whereas the ECHO10 column shows how the CNM type affects the destination element.
 

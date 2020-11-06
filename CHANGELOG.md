@@ -7,8 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Migration notes
-
 - Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
+- **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 
 ### Added
 
@@ -33,7 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
 
 ### BREAKING CHANGES
-
+- **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a
+new `update-granules-cmr-metadata-file-links` task.
 - **CUMULUS-2216**
   - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
 - **[1956](https://github.com/nasa/cumulus/issues/1956)**
