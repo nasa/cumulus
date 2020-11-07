@@ -250,7 +250,7 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscr
   distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
-  log_group_name  = var.tea_api_egress_log_group
+  log_group_name  = var.tea_api_egress_log_group.egress_log_group
 }
 
 # Egress Lambda Log Group
