@@ -90,7 +90,7 @@ module "cumulus" {
   ems_username          = var.ems_username
 
   es_request_concurrency = var.es_request_concurrency
-  
+
   metrics_es_host     = var.metrics_es_host
   metrics_es_password = var.metrics_es_password
   metrics_es_username = var.metrics_es_username
@@ -157,7 +157,7 @@ module "cumulus" {
   tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
   tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
   tea_external_api_endpoint = module.thin_egress_app.api_endpoint
-  tea_api_egress_log_group = module.thin_egress_app.egress_log_group
+  tea_api_egress_log_group = { egress_log_group = module.thin_egress_app.egress_log_group }
 
   log_destination_arn = var.log_destination_arn
 
