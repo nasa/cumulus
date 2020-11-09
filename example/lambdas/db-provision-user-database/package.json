@@ -9,10 +9,11 @@
   "scripts": {
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
-    "prepublish": "npm run tsc",
     "test": "../../../node_modules/.bin/ava",
     "python-lint": "true",
+    "prepare": "npm run tsc",
     "tsc": "../../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "webpack": "../../../node_modules/.bin/webpack"
   },
   "directories": {
