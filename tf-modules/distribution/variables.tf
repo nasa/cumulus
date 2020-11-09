@@ -74,14 +74,6 @@ variable "tea_api_gateway_stage" {
   description = "The API Gateway stage name for the Thin Egress App"
 }
 
-variable "tea_api_egress_log_group" {
-  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
-  type        = object({
-    egress_log_group = string
-  })
-  default     = null
-}
-
 variable "tea_external_api_endpoint" {
   description = "Thin Egress App external endpoint URL"
   type        = string

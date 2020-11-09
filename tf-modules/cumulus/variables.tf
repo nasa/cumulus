@@ -425,14 +425,6 @@ variable "tea_api_gateway_stage" {
   default     = "DEV"
 }
 
-variable "tea_api_egress_log_group" {
-  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
-  type        = object({
-    egress_log_group = string
-  })
-  default     = null
-}
-
 variable "tea_rest_api_id" {
   description = "Thin Egress App API gateway ID"
   type        = string
