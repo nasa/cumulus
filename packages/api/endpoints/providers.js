@@ -1,10 +1,18 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
+const omit = require('lodash/omit');
+
+const {
+  getKnexClient,
+  tableNames,
+  rdsProviderFromCumulusProvider,
+  validateProviderHost,
+} = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const { Search } = require('../es/search');
@@ -51,6 +59,30 @@ async function get(req, res) {
   return res.send(result);
 }
 
+async function providerDoesNotExistRds(knex, name) {
+  const queryResult = await knex(tableNames.providers).select().where({ name });
+  return (queryResult === 0);
+}
+
+class ApiProviderCollisionError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CumulusMessageError';
+    Error.captureStackTrace(this, ApiProviderCollisionError);
+  }
+}
+
+async function throwIfDynamoRecordExists(providerModel, id) {
+  try {
+    await providerModel.get({ id });
+    throw new ApiProviderCollisionError(`Dynamo record id ${id} exists`);
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+}
+
 /**
  * Creates a new provider
  *
@@ -59,34 +91,49 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
+  const data = req.body;
+  const id = data.id;
+
+  const providerModel = new Provider();
+  const knex = await getKnexClient({ env: process.env });
   try {
-    const data = req.body;
-    const id = data.id;
-
-    const providerModel = new Provider();
-
-    try {
-      // make sure the record doesn't exist
-      await providerModel.get({ id });
-      return res.boom.conflict(`A record already exists for ${id}`);
-    } catch (error) {
-      if (error instanceof RecordDoesNotExist) {
-        const record = await providerModel.create(data);
-
-        if (inTestMode()) {
-          await addToLocalES(record, indexProvider);
-        }
-        return res.send({ record, message: 'Record saved' });
+    let record;
+    await throwIfDynamoRecordExists(providerModel, id);
+    await knex.transaction(async (trx) => {
+      const createObject = await rdsProviderFromCumulusProvider(data);
+      validateProviderHost(createObject.host);
+      await trx(tableNames.providers).insert(createObject);
+      record = await providerModel.create(data);
+      if (inTestMode()) {
+        await addToLocalES(record, indexProvider);
       }
-      throw error;
-    }
+    });
+    return res.send({ record, message: 'Record saved' });
   } catch (error) {
-    if (isBadRequestError(error)) {
+    if (error instanceof ApiProviderCollisionError || error.code === '23505') {
+      // Postgres error codes:
+      // https://www.postgresql.org/docs/9.2/errcodes-appendix.html
+      // TODO - should we abstract this
+      return res.boom.conflict(`A record already exists for ${id}`);
+    }
+    // TODO - What should we do about db schema validation?   Knex casts
+    // everything.
+    if (isBadRequestError(error)) { // TODO - should we have a knex schema failure error?
       return res.boom.badRequest(error.message);
     }
     log.error('Error occurred while trying to create provider:', error);
     return res.boom.badImplementation(error.message);
   }
+}
+
+function nullifyUndefinedValues(data) {
+  const returnData = { ...data };
+  const optionalValues = ['port', 'username', 'password', 'globalConnetionLimit', 'privateKey', 'cmKeyId', 'certificationUri'];
+  optionalValues.forEach((value) => {
+    // eslint-disable-next-line unicorn/no-null
+    returnData[value] = returnData[value] ? returnData[value] : null;
+  });
+  return returnData;
 }
 
 /**
@@ -103,20 +150,33 @@ async function put({ params: { id }, body }, res) {
     );
   }
 
+  const knex = await getKnexClient({ env: process.env });
   const providerModel = new Provider();
 
-  if (!(await providerModel.exists(id))) {
+  const providerExists = Promise.all([
+    providerModel.exists(id),
+    providerDoesNotExistRds(knex, id),
+  ]);
+
+  if (!providerExists.filter(Boolean).size) {
     return res.boom.notFound(
       `Provider with ID '${id}' not found`
     );
   }
-
-  const record = await providerModel.create(body);
-
-  if (inTestMode()) {
-    await addToLocalES(record, indexProvider);
-  }
-
+  // trx create db record with knex
+  let record;
+  // TODO *gah, we need to 'blank' any fields that are non-existant
+  await knex.transaction(async (trx) => {
+    let createObject = { // TODO - make this a seperate method
+      ...(omit(body, ['id', 'encrypted', 'createdAt', 'updatedAt'])),
+      name: body.id,
+      created_at: body.createdAt,
+      updated_at: body.updatedAt,
+    };
+    createObject = nullifyUndefinedValues(createObject);
+    await trx(tableNames.providers).where({ name: id }).update(createObject);
+    record = await providerModel.create(body);
+  });
   return res.send(record);
 }
 
