@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `dbIndexer` lambda to process requests in serial
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
 - **CUMULUS-2251**
-  - Move Egress Api Gateway Log Group Filter from `distribution/main.tf` to `/cumulus-tf/main.tf` and remove and add needed variables
+  - Move Egress Api Gateway Log Group Filter from `distribution/main.tf` to `/cumulus-tf/main.tf` and remove `tea_api_egress_log_group` variable from `distribution/variables.tf` and `cumulus/variables.tf` and add `log_api_gateway_to_cloudwatch` variable to `cumulus-tf/variables.tf`
   - This fixes the count error users ran into when they had `log_api_gateway_to_cloudwatch` set to true in their `thin_egress_app` module.
 
 ### BREAKING CHANGES
