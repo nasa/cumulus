@@ -4,7 +4,6 @@
 const {
   createErrorType,
   ValidationError,
-  RDSValidationError,
 } = require('@cumulus/errors');
 
 const isBadRequestError = (err) =>

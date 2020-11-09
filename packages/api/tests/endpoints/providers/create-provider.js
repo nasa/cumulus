@@ -3,6 +3,8 @@
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
+const omit = require('lodash/omit');
+const isMatch = require('lodash/isMatch');
 
 const {
   localStackConnectionEnv,
@@ -138,7 +140,7 @@ test('POST with invalid authorization scheme returns an invalid authorization re
   await providerDoesNotExist(t, newProvider.id);
 });
 
-test('POST creates a new provider', async (t) => {
+test.only('POST creates a new provider', async (t) => {
   const newProviderId = randomString();
   const newProvider = fakeProviderFactory({
     id: newProviderId,
@@ -152,9 +154,17 @@ test('POST creates a new provider', async (t) => {
     .expect(200);
 
   const { message, record } = response.body;
+  const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
+    name: newProviderId,
+  });
   t.is(message, 'Record saved');
   t.is(record.id, newProviderId);
-  // check RDS
+  t.is(rdsRecord.length, 1);
+
+  t.true(isMatch(rdsRecord[0], {
+    ...(omit(newProvider, ['id'])),
+    name: newProviderId,
+  }));
 });
 
 test('POST returns a 409 error if the provider already exists', async (t) => {
