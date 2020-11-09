@@ -30,7 +30,6 @@ locals {
   protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
 
-  tea_api_egress_log_group = module.thin_egress_app.egress_log_group
   tea_stack_name = "${var.prefix}-thin-egress-app"
   tea_stage_name = "DEV"
 }
@@ -224,7 +223,7 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscr
   distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
-  log_group_name  = local.tea_api_egress_log_group
+  log_group_name  = module.thin_egress_app.egress_log_group
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
