@@ -216,7 +216,6 @@ module "thin_egress_app" {
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
 }
 
-# Egress Api Gateway Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
   count           = var.log_api_gateway_to_cloudwatch != null ? 1 : 0
   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
