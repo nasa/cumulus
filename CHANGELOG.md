@@ -6,15 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration notes
+- Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
+- **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
+
 ### Added
+
+- **CUMULUS-2248**
+  - Updates Integration Tests README to point to new fake provider template.
 - **CUMULUS-2239**
   - Add resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
+- **CUMULUS-2170**
+  - Adds ability to filter granule inventory reports
 - **CUMULUS-2211**
   - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
 
 ### Changed
+
 - **CUMULUS-2216**
   - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.
   - The `es/collections` Collection class takes a new parameter includeStats. It no longer appends granule aggregate statistics to the returned results by default. One must set the new parameter to any non-false value.
@@ -23,10 +33,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
 
 ### BREAKING CHANGES
-
+- **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a
+new `update-granules-cmr-metadata-file-links` task.
 - **CUMULUS-2216**
   - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
-
+- **[1956](https://github.com/nasa/cumulus/issues/1956)**
+  - Update the name of the `cumulus_message_adapter_lambda_layer_arn` output from the `cumulus-message-adapter` module to `cumulus_message_adapter_lambda_layer_version_arn`. The output value has changed from being the ARN of the Lambda layer **without a version** to the ARN of the Lambda layer **with a version**.
+  - Update the variable name in the `cumulus` and `ingest` modules from `cumulus_message_adapter_lambda_layer_arn` to `cumulus_message_adapter_lambda_layer_version_arn`
 
 ## [v3.0.1] 2020-10-21
 
@@ -42,6 +55,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and
     `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
 
+### Fixed
+- **CUMULUS-2233**
+  - Fixes /s3credentials bug where the expiration time on the cookie was set to a time that is always expired, so authentication was never being recognized as complete by the API. Consequently, the user would end up in a redirect loop and requests to /s3credentials would never complete successfully. The bug was caused by the fact that the code setting the expiration time for the cookie was expecting a time value in milliseconds, but was receiving the expirationTime from the EarthdataLoginClient in seconds. This bug has been fixed by converting seconds into milliseconds. Unit tests were added to test that the expiration time has been converted to milliseconds and checking that the cookie's expiration time is greater than the current time.
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS

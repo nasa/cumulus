@@ -40,9 +40,10 @@ variable "cmr_username" {
   type = string
 }
 
-variable "cumulus_message_adapter_lambda_layer_arn" {
-  type    = string
-  default = null
+variable "cumulus_message_adapter_lambda_layer_version_arn" {
+  description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
+  type        = string
+  default     = null
 }
 
 variable "custom_queues" {

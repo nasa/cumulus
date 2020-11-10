@@ -50,7 +50,9 @@ const siteConfig = {
   algolia: {
     apiKey: process.env.DOCSEARCH_API_KEY,
     indexName: process.env.DOCSEARCH_INDEX_NAME,
-    contextualSearch: true
+    algoliaOptions: {
+      facetFilters: ['version:VERSION']
+    }
   },
 
   /* Colors for website */

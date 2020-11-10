@@ -8,7 +8,7 @@ resource "aws_lambda_function" "add_missing_file_checksums_task" {
   timeout          = 300
   memory_size      = 256
 
-  layers = [var.cumulus_message_adapter_lambda_layer_arn]
+  layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
   environment {
     variables = {
