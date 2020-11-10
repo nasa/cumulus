@@ -5,6 +5,7 @@ const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const {
   buildS3Uri,
   createBucket,
@@ -116,7 +117,7 @@ let jwtAuthToken;
 
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
-
+  process.env = { ...process.env, ...localStackConnectionEnv };
   esIndex = randomId('esindex');
   t.context.esAlias = randomId('esAlias');
   process.env.ES_INDEX = t.context.esAlias;

@@ -17,9 +17,13 @@ resource "aws_ecs_task_definition" "async_operation" {
       {
         "name": "AWS_REGION",
         "value": "${data.aws_region.current.name}"
+      },
+      {
+        "name": "databaseCredentialSecretArn",
+        "value": "${var.rds_user_access_secret_arn}"
       }
     ],
-    "image": "cumuluss/async-operation:27",
+    "image": "jlkovarik/ecs-task-runner:41",
     "memoryReservation": 700,
     "logConfiguration": {
       "logDriver": "awslogs",
