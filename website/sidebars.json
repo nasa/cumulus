@@ -75,7 +75,6 @@
     "Integrator Guide": [
       "integrator-guide/about-int-guide",
       "integrator-guide/int-common-use-cases",
-      "integrator-guide/create-cumulus-data-mgmt-types",
       "integrator-guide/workflow-add-new-lambda",
       "integrator-guide/workflow-ts-failed-step"
     ],
@@ -110,7 +109,7 @@
     ],
     "Configuration": [
       "operator-docs/locating-access-logs",
-      "operator-docs/provider"
+      "configuration/data-management-types"
     ],
     "Operations": [
       "operator-docs/discovery-filtering",
@@ -124,7 +123,8 @@
       "operator-docs/ops-common-use-cases",
       "operator-docs/kinesis-stream-for-ingest",
       "operator-docs/create-rule-in-cumulus",
-      "operator-docs/granule-workflows"
+      "operator-docs/granule-workflows",
+      "operator-docs/trigger-workflow"
     ]
   }
 }
