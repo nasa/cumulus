@@ -31,6 +31,7 @@
     "@cumulus/common": "3.0.0",
     "@cumulus/logger": "3.0.0",
     "knex": "0.21.6",
-    "pg": "^8.3.0"
+    "pg": "^8.3.0",
+    "snake-camel": "^1.0.6"
   }
 }

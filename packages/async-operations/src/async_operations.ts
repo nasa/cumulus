@@ -1,7 +1,12 @@
 import { ECS } from 'aws-sdk';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
-import { AsyncOperationRecord, getKnexClient, tableNames } from '@cumulus/db';
+import {
+  AsyncOperationRecord,
+  getKnexClient,
+  tableNames,
+  translateAsyncOperationToSnakeCase,
+} from '@cumulus/db';
 import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
@@ -178,7 +183,9 @@ export const startAsyncOperation = async (params: {
       operationType,
     };
 
-    await trx(tableNames.asyncOperations).insert(createObject);
+    const knexCreateObject = translateAsyncOperationToSnakeCase(createObject);
+
+    await trx(tableNames.asyncOperations).insert(knexCreateObject);
     return asyncOperationModel.create(createObject);
   });
 };
