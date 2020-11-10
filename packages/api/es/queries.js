@@ -20,20 +20,20 @@ const regexes = {
 };
 
 const queryKeywordFields = [
+  'error',
   'granuleId.keyword',
   'id.keyword',
   'status.keyword',
   'pdrName.keyword',
+  'msg',
   'name.keyword',
 ];
 
 const queryFields = [
-  'error',
   'granuleId',
   'id',
   'status',
   'pdrName',
-  'msg',
   'name',
 ].concat(queryKeywordFields);
 
