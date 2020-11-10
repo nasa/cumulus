@@ -216,8 +216,7 @@ module "thin_egress_app" {
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  depends_on = [module.thin_egress_app.egress_log_group]
-  count           = var.log_api_gateway_to_cloudwatch != null ? 1 : 0
+  count           = (var.log_api_gateway_to_cloudwatch != null && var.log_destination_arn != null) ? 1 : 0
   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
   distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
