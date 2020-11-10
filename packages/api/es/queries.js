@@ -19,20 +19,23 @@ const regexes = {
   range: /^(.*)__(from|to)$/,
 };
 
+const queryKeywordFields = [
+  'granuleId.keyword',
+  'id.keyword',
+  'status.keyword',
+  'pdrName.keyword',
+  'name.keyword',
+];
+
 const queryFields = [
   'error',
   'granuleId',
-  'granuleId.keyword',
   'id',
-  'id.keyword',
   'status',
-  'status.keyword',
   'pdrName',
-  'pdrName.keyword',
   'msg',
   'name',
-  'name.keyword',
-];
+].concat(queryKeywordFields);
 
 const build = {
   general: (params) => ({
@@ -62,7 +65,7 @@ const build = {
 
   prefix: (queries, _prefix, terms) => {
     if (_prefix) {
-      let fields = queryFields.slice();
+      let fields = queryKeywordFields.slice();
 
       terms = terms.map((f) => f.name);
 
