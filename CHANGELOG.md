@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
 - **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 - **CUMULUS-2251**
-  - Add new resource defintion `egress_api_gateway_log_subscription_filter` to `cumulus-tf/main.tf`.
+  - Because it has been removed from the `cumulus` module, a new resource definition for `egress_api_gateway_log_subscription_filter` must be added to `cumulus-tf/main.tf`. For reference on how to define this resource, see [`example/cumulus-tf/main.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
 
 ### Added
 
@@ -36,12 +36,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `dbIndexer` lambda to process requests in serial
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
 - **CUMULUS-2251**
-  - Moves Egress Api Gateway Log Group Filter from `distribution/main.tf` to `/cumulus-tf/main.tf` and remove `tea_api_egress_log_group` variable from `distribution/variables.tf` and `cumulus/variables.tf`.
+  - Moves Egress Api Gateway Log Group Filter from `distribution/main.tf` to `/cumulus-tf/main.tf`
 
 ### Fixed
 - **CUMULUS-2251**
   - This fixes a deployment error caused by depending on the `thin_egress_app` module output for a resource count.
 
+### Removed
+- **CUMULUS-2251**
+  -  Removes `tea_api_egress_log_group` variable from `distribution/variables.tf` and `cumulus/variables.tf`.
 ### BREAKING CHANGES
 - **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a
 new `update-granules-cmr-metadata-file-links` task.
