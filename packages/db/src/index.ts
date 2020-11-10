@@ -6,7 +6,11 @@ export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { doesRecordExist, isRecordDefined } from './database';
 export { tableNames } from './tables';
-export { rdsProviderFromCumulusProvider, validateProviderHost } from './provider';
+export {
+  rdsProviderFromCumulusProvider,
+  validateProviderHost,
+  nullifyUndefinedProviderValues,
+} from './provider';
 export {
   AsyncOperationRecord,
   CollectionRecord,

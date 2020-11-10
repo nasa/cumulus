@@ -2,14 +2,14 @@
 
 const router = require('express-promise-router')();
 
-const omit = require('lodash/omit');
-
 const {
   getKnexClient,
   tableNames,
   rdsProviderFromCumulusProvider,
   validateProviderHost,
+  nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
+
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
@@ -116,23 +116,13 @@ async function post(req, res) {
       return res.boom.conflict(`A record already exists for ${id}`);
     }
     // TODO - What should we do about db schema validation?   Knex casts
-    // everything.
-    if (isBadRequestError(error)) { // TODO - should we have a knex schema failure error?
+    // everything
+    if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
     }
     log.error('Error occurred while trying to create provider:', error);
     return res.boom.badImplementation(error.message);
   }
-}
-
-function nullifyUndefinedValues(data) {
-  const returnData = { ...data };
-  const optionalValues = ['port', 'username', 'password', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri'];
-  optionalValues.forEach((value) => {
-    // eslint-disable-next-line unicorn/no-null
-    returnData[value] = returnData[value] ? returnData[value] : null;
-  });
-  return returnData;
 }
 
 /**
@@ -162,17 +152,11 @@ async function put({ params: { id }, body }, res) {
       `Provider with ID '${id}' not found in Dynamo and PostGres databases`
     );
   }
-  // trx create db record with knex
+
   let record;
-  // TODO *gah, we need to 'blank' any fields that are non-existant
   await knex.transaction(async (trx) => {
-    let createObject = { // TODO - make this a seperate method
-      ...(omit(body, ['id', 'encrypted', 'createdAt', 'updatedAt'])),
-      name: body.id,
-      created_at: body.createdAt,
-      updated_at: body.updatedAt,
-    };
-    createObject = nullifyUndefinedValues(createObject);
+    let createObject = await rdsProviderFromCumulusProvider(body);
+    createObject = await nullifyUndefinedProviderValues(createObject);
     await trx(tableNames.providers).where({ name: id }).update(createObject);
     record = await providerModel.create(body);
   });
@@ -207,7 +191,6 @@ async function del(req, res) {
   } catch (error) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_providercumulusid_foreign') {
       const messageDetail = error.rules || [error.detail];
-      console.log(process.env.PG_DATABASE);
       const message = `Cannot delete provider with associated rules: ${messageDetail.join(', ')}`;
       return res.boom.conflict(message);
     }

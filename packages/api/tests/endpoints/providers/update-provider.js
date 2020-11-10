@@ -2,7 +2,6 @@
 
 const omit = require('lodash/omit');
 const test = require('ava');
-const isMatch = require('lodash/isMatch');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
@@ -14,6 +13,8 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
+  rdsProviderFromCumulusProvider,
+  nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -116,6 +117,8 @@ test('PUT replaces existing provider', async (t) => {
   const expectedProvider = omit(testProvider,
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
 
+  const postgresExpectedProvider = await rdsProviderFromCumulusProvider(expectedProvider);
+  const postgresOmitList = ['created_at', 'updated_at', 'cumulusId'];
   // Make sure testProvider contains values for the properties we omitted from
   // expectedProvider to confirm that after we replace (PUT) the provider those
   // properties are dropped from the stored provider.
@@ -136,22 +139,34 @@ test('PUT replaces existing provider', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
-    name: id,
-  });
+  const rdsRecord = await t.context.testKnex(tableNames.providers)
+    .select()
+    .where({
+      name: id,
+    });
 
   t.deepEqual(actualProvider, {
     ...expectedProvider,
-    protocol: 'http', // Default value
+    protocol: 'http', // Default value added by schema rule
     createdAt: actualProvider.createdAt,
     updatedAt: actualProvider.updatedAt,
   });
 
   t.is(rdsRecord.length, 1);
-  t.true(isMatch(rdsRecord[0], {
-    ...(omit(expectedProvider, ['id'])),
-    name: id,
-  }));
+
+  t.deepEqual(
+    omit(
+      await rdsRecord[0],
+      postgresOmitList
+    ),
+    omit(
+      await nullifyUndefinedProviderValues({
+        ...postgresExpectedProvider,
+        protocol: 'http', // Default value, added by RDS rule
+      }),
+      postgresOmitList
+    )
+  );
 });
 
 test('PUT returns 404 for non-existent provider', async (t) => {

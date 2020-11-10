@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
 'use strict';
+
 const {
   createErrorType,
   ValidationError,
@@ -9,7 +10,7 @@ const {
 const isBadRequestError = (err) =>
   err.name === 'SchemaValidationError'
   || err instanceof ValidationError
-  || (Number(err.code) >= 22000 && Number(err.code) < 25000);
+  || ['22', '23'].includes((err.code || '').substring(0, 2));
   // Postgres error codes:
   // https://www.postgresql.org/docs/9.2/errcodes-appendix.html
 
