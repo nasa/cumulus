@@ -12,6 +12,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .enum('protocol', ['http', 'https', 'ftp', 'sftp', 's3'])
       .comment('Protocol for the provider')
+      .defaultTo('http')
       .notNullable();
     table
       .text('host')
