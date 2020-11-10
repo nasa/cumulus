@@ -229,8 +229,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 });
 
 test('POST returns a 400 response if invalid record is provided', async (t) => {
-  const newProvider = fakeProviderFactory();
-  delete newProvider.host; // TODO - this approach presumes knoweldge of the schema
+  const newProvider = { foo: 'bar' };
 
   const response = await request(app)
     .post('/providers')

@@ -11,7 +11,7 @@ const {
 } = require('@cumulus/db');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const { RecordDoesNotExist, ValidationError } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
@@ -93,21 +93,27 @@ async function throwIfDynamoRecordExists(providerModel, id) {
 async function post(req, res) {
   const data = req.body;
   const id = data.id;
-
   const providerModel = new Provider();
   const knex = await getKnexClient({ env: process.env });
   try {
     let record;
+
+    if (!data.id) {
+      throw new ValidationError('Provider records require an id');
+    }
     await throwIfDynamoRecordExists(providerModel, id);
+    const createObject = await rdsProviderFromCumulusProvider(data);
+    validateProviderHost(createObject.host);
+
     await knex.transaction(async (trx) => {
-      const createObject = await rdsProviderFromCumulusProvider(data);
-      validateProviderHost(createObject.host);
       await trx(tableNames.providers).insert(createObject);
       record = await providerModel.create(data);
-      if (inTestMode()) {
-        await addToLocalES(record, indexProvider);
-      }
     });
+
+    if (inTestMode()) {
+      await addToLocalES(record, indexProvider);
+    }
+
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (error instanceof ApiProviderCollisionError || error.code === '23505') {
@@ -115,8 +121,7 @@ async function post(req, res) {
       // https://www.postgresql.org/docs/9.2/errcodes-appendix.html
       return res.boom.conflict(`A record already exists for ${id}`);
     }
-    // TODO - What should we do about db schema validation?   Knex casts
-    // everything
+
     if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
     }
@@ -154,9 +159,9 @@ async function put({ params: { id }, body }, res) {
   }
 
   let record;
+  let createObject = await rdsProviderFromCumulusProvider(body);
+  createObject = await nullifyUndefinedProviderValues(createObject);
   await knex.transaction(async (trx) => {
-    let createObject = await rdsProviderFromCumulusProvider(body);
-    createObject = await nullifyUndefinedProviderValues(createObject);
     await trx(tableNames.providers).where({ name: id }).update(createObject);
     record = await providerModel.create(body);
   });
