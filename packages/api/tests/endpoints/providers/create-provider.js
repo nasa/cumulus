@@ -140,7 +140,7 @@ test('POST with invalid authorization scheme returns an invalid authorization re
   await providerDoesNotExist(t, newProvider.id);
 });
 
-test.only('POST creates a new provider', async (t) => {
+test('POST creates a new provider', async (t) => {
   const newProviderId = randomString();
   const newProvider = fakeProviderFactory({
     id: newProviderId,

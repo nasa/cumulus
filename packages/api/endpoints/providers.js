@@ -59,9 +59,9 @@ async function get(req, res) {
   return res.send(result);
 }
 
-async function providerDoesNotExistRds(knex, name) {
+async function providerExistsInPostgres(knex, name) {
   const queryResult = await knex(tableNames.providers).select().where({ name });
-  return (queryResult === 0);
+  return (queryResult.length !== 0);
 }
 
 class ApiProviderCollisionError extends Error {
@@ -113,7 +113,6 @@ async function post(req, res) {
     if (error instanceof ApiProviderCollisionError || error.code === '23505') {
       // Postgres error codes:
       // https://www.postgresql.org/docs/9.2/errcodes-appendix.html
-      // TODO - should we abstract this
       return res.boom.conflict(`A record already exists for ${id}`);
     }
     // TODO - What should we do about db schema validation?   Knex casts
@@ -128,7 +127,7 @@ async function post(req, res) {
 
 function nullifyUndefinedValues(data) {
   const returnData = { ...data };
-  const optionalValues = ['port', 'username', 'password', 'globalConnetionLimit', 'privateKey', 'cmKeyId', 'certificationUri'];
+  const optionalValues = ['port', 'username', 'password', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri'];
   optionalValues.forEach((value) => {
     // eslint-disable-next-line unicorn/no-null
     returnData[value] = returnData[value] ? returnData[value] : null;
@@ -153,14 +152,14 @@ async function put({ params: { id }, body }, res) {
   const knex = await getKnexClient({ env: process.env });
   const providerModel = new Provider();
 
-  const providerExists = Promise.all([
+  const providerExists = await Promise.all([
     providerModel.exists(id),
-    providerDoesNotExistRds(knex, id),
+    providerExistsInPostgres(knex, id),
   ]);
 
-  if (!providerExists.filter(Boolean).size) {
+  if (providerExists.filter(Boolean).length !== 2) {
     return res.boom.notFound(
-      `Provider with ID '${id}' not found`
+      `Provider with ID '${id}' not found in Dynamo and PostGres databases`
     );
   }
   // trx create db record with knex
@@ -189,22 +188,27 @@ async function put({ params: { id }, body }, res) {
  */
 async function del(req, res) {
   const providerModel = new Provider();
+  const knex = await getKnexClient({ env: process.env });
 
   try {
-    await providerModel.delete({ id: req.params.id });
-
-    if (inTestMode()) {
-      const esClient = await Search.es(process.env.ES_HOST);
-      await esClient.delete({
-        id: req.params.id,
-        type: 'provider',
-        index: process.env.ES_INDEX,
-      }, { ignore: [404] });
-    }
+    await knex.transaction(async (trx) => {
+      await trx(tableNames.providers).where({ name: req.params.id }).del();
+      await providerModel.delete({ id: req.params.id });
+      if (inTestMode()) {
+        const esClient = await Search.es(process.env.ES_HOST);
+        await esClient.delete({
+          id: req.params.id,
+          type: 'provider',
+          index: process.env.ES_INDEX,
+        }, { ignore: [404] });
+      }
+    });
     return res.send({ message: 'Record deleted' });
   } catch (error) {
-    if (error instanceof AssociatedRulesError) {
-      const message = `Cannot delete provider with associated rules: ${error.rules.join(', ')}`;
+    if (error instanceof AssociatedRulesError || error.constraint === 'rules_providercumulusid_foreign') {
+      const messageDetail = error.rules || [error.detail];
+      console.log(process.env.PG_DATABASE);
+      const message = `Cannot delete provider with associated rules: ${messageDetail.join(', ')}`;
       return res.boom.conflict(message);
     }
     throw error;

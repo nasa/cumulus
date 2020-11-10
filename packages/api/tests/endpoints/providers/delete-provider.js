@@ -2,11 +2,18 @@
 
 const test = require('ava');
 const request = require('supertest');
+const omit = require('lodash/omit');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  tableNames,
+} = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
@@ -18,14 +25,21 @@ const {
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+const testDbName = randomString(12);
 
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+process.env = {
+  ...process.env,
+  ...localStackConnectionEnv,
+  PG_DATABASE: testDbName,
+};
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const esIndex = randomString();
 let esClient;
@@ -35,7 +49,11 @@ let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
 
-test.before(async () => {
+test.before(async (t) => {
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
   process.env.stackName = randomString();
 
   process.env.system_bucket = randomString();
@@ -72,15 +90,25 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.testProvider = fakeProviderFactory();
-  await providerModel.create(t.context.testProvider);
+  await request(app)
+    .post('/providers')
+    .send(t.context.testProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await providerModel.deleteTable();
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await destroyLocalTestDb(t.context.testKnex = {
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test('Attempting to delete a provider without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -109,14 +137,19 @@ test.todo('Attempting to delete a provider with an unauthorized user returns an 
 
 test('Deleting a provider removes the provider', async (t) => {
   const { testProvider } = t.context;
-
+  const id = testProvider.id;
   await request(app)
-    .delete(`/providers/${testProvider.id}`)
+    .delete(`/providers/${id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
+    name: id,
+  });
+
   t.false(await providerModel.exists(testProvider.id));
+  t.is(rdsRecord.length, 0);
 });
 
 test('Deleting a provider that does not exist succeeds', async (t) => {
@@ -124,8 +157,60 @@ test('Deleting a provider that does not exist succeeds', async (t) => {
     .delete(`/providers/${randomString}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
-
   t.is(status, 200);
+});
+
+test('Attempting to delete a provider with an associated postgres rule returns a 409 response', async (t) => {
+  const { testProvider } = t.context;
+  const rule = fakeRuleFactoryV2({
+    provider: testProvider.id,
+    rule: {
+      type: 'onetime',
+    },
+  });
+
+  // The workflow message template must exist in S3 before the rule can be created
+  await s3().putObject({
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+    Body: JSON.stringify({}),
+  }).promise();
+
+  await ruleModel.create(rule);
+
+  // This block will need to be refactored as the Collection and Rule endpoints
+  // are updated on the feature branch
+  // ---
+  const providerResult = await t.context.testKnex(tableNames.providers)
+    .select('cumulusId')
+    .where('name', testProvider.id);
+
+  const collectionResult = await t.context.testKnex(tableNames.collections).insert({
+    name: randomString(10),
+    version: '001',
+    sampleFileName: 'fake',
+    granuleIdValidationRegex: 'fake',
+    granuleIdExtractionRegex: 'fake',
+    files: {},
+  }).returning('cumulusId');
+
+  await t.context.testKnex(tableNames.rules).insert({
+    ...(omit(rule, ['collection', 'provider', 'rule', 'state'])),
+    collectionCumulusId: collectionResult[0],
+    providerCumulusId: providerResult[0].cumulusId,
+    type: 'onetime',
+    enabled: 'true',
+  });
+
+  // ----
+  const response = await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(409);
+
+  t.is(response.status, 409);
+  t.true(response.body.message.includes('Cannot delete provider with associated rules'));
 });
 
 test('Attempting to delete a provider with an associated rule returns a 409 response', async (t) => {

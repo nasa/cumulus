@@ -2,12 +2,19 @@
 
 const omit = require('lodash/omit');
 const test = require('ava');
+const isMatch = require('lodash/isMatch');
 const request = require('supertest');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  tableNames,
+} = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
@@ -16,16 +23,24 @@ const {
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
+
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const testDbName = randomString(12);
 
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+process.env = {
+  ...process.env,
+  ...localStackConnectionEnv,
+  PG_DATABASE: testDbName,
+};
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 let providerModel;
 const esIndex = randomString();
@@ -34,7 +49,11 @@ let esClient;
 let accessTokenModel;
 let jwtAuthToken;
 
-test.before(async () => {
+test.before(async (t) => {
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const esAlias = randomString();
@@ -60,14 +79,24 @@ test.beforeEach(async (t) => {
     ...fakeProviderFactory(),
     cmKeyId: 'key',
   };
-  await providerModel.create(t.context.testProvider);
+  await request(app)
+    .post('/providers').send(t.context.testProvider)
+    .send(t.context.testProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
   await providerModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
+  await destroyLocalTestDb(t.context.testKnex = {
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
@@ -107,16 +136,43 @@ test('PUT replaces existing provider', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
+    name: id,
+  });
+
   t.deepEqual(actualProvider, {
     ...expectedProvider,
     protocol: 'http', // Default value
     createdAt: actualProvider.createdAt,
     updatedAt: actualProvider.updatedAt,
   });
+
+  t.is(rdsRecord.length, 1);
+  t.true(isMatch(rdsRecord[0], {
+    ...(omit(expectedProvider, ['id'])),
+    name: id,
+  }));
 });
 
 test('PUT returns 404 for non-existent provider', async (t) => {
   const id = randomString();
+  const response = await request(app)
+    .put(`/provider/${id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ id })
+    .expect(404);
+  const { message, record } = response.body;
+
+  t.truthy(message);
+  t.falsy(record);
+});
+
+test('PUT returns 404 for non-existent postgres provider', async (t) => {
+  const id = randomString();
+  const newProvider = fakeProviderFactory({ id });
+  await providerModel.create(newProvider);
+
   const response = await request(app)
     .put(`/provider/${id}`)
     .set('Accept', 'application/json')

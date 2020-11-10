@@ -4,4 +4,5 @@ export const tableNames = {
   executions: 'executions',
   pdrs: 'pdrs',
   providers: 'providers',
+  rules: 'rules',
 };
