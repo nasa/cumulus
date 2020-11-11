@@ -44,7 +44,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 - **CUMULUS-2251**
-  -  Removes `tea_api_egress_log_group` variable from `distribution/variables.tf` and `cumulus/variables.tf`.
+  -  Removes `tea_api_egress_log_group` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`.
 
 ### BREAKING CHANGES
 - **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a
