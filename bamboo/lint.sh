@@ -9,5 +9,5 @@ set -ex
     cd /cumulus/
  fi
 
-(npm run ci:bootstrap || true) && npm run ci:bootstrap
+(npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap-no-scripts
 npm run lint
