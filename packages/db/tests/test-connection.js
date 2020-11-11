@@ -98,7 +98,7 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test('getKnexClient with heartbeat check enabled and configured database connection returns Knex object',
+test.only('getKnexClient with heartbeat check enabled and configured database connection returns Knex object',
   async (t) => {
     const results = await getKnexClient({
       env: {
@@ -114,7 +114,7 @@ test('getKnexClient with heartbeat check enabled and configured database connect
       host: localStackConnectionEnv.PG_HOST,
       password: localStackConnectionEnv.PG_PASSWORD,
       user: localStackConnectionEnv.PG_USER,
-      port: localStackConnectionEnv.PG_PORT,
+      port: Number(localStackConnectionEnv.PG_PORT),
     };
     t.deepEqual(expected, results.client.config.connection);
   });
