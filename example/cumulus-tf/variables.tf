@@ -222,6 +222,12 @@ variable "lambda_subnet_ids" {
   default = []
 }
 
+variable "log_api_gateway_to_cloudwatch" {
+  type        = bool
+  default     = false
+  description = "Enable logging of API Gateway activity to CloudWatch."
+}
+
 variable "log_destination_arn" {
   type        = string
   default     = null
