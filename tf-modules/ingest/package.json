@@ -6,7 +6,7 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "prepare": "node scripts/write-cumulus-version.js"
+    "prepublish": "node scripts/write-cumulus-version.js"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
