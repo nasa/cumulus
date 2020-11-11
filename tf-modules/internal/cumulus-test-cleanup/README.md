@@ -9,7 +9,7 @@ Currently cleans up:
 
 ## Build
 
-Run `npm install` to install packages then `npm run prepare` to prepare lambda zip file for deployment.
+Run `npm install` to install packages then `npm run package` to prepare lambda zip file for deployment.
 
 ## Deployment
 

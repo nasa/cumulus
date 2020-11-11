@@ -49,7 +49,7 @@ resource "aws_lambda_function" "cumulus_test_cleanup" {
 }
 
 resource "aws_cloudwatch_event_rule" "cumulus_test_cleanup" {
-  name = "${var.prefix}_cumulus_test_cleanup"
+  name = "cumulus_test_cleanup"
   schedule_expression = "cron(0 1 * * ? *)"
   tags                = var.tags
 }
