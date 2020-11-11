@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 - **CUMULUS-2251**
   - Because it has been removed from the `cumulus` module, a new resource definition for `egress_api_gateway_log_subscription_filter` must be added to `cumulus-tf/main.tf`. For reference on how to define this resource, see [`example/cumulus-tf/main.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
 
 ### Added
 
@@ -38,7 +40,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2251**
   - Moves Egress Api Gateway Log Group Filter from `tf-modules/distribution/main.tf` to `example/cumulus-tf/main.tf`
 - **CUMULUS-2020**
-  - Improved Elasticsearch mappings to improve search
+  - Updated Elasticsearch mappings to support case-insensitive search
 
 ### Fixed
 - **CUMULUS-2251**
@@ -57,7 +59,7 @@ new `update-granules-cmr-metadata-file-links` task.
   - Update the name of the `cumulus_message_adapter_lambda_layer_arn` output from the `cumulus-message-adapter` module to `cumulus_message_adapter_lambda_layer_version_arn`. The output value has changed from being the ARN of the Lambda layer **without a version** to the ARN of the Lambda layer **with a version**.
   - Update the variable name in the `cumulus` and `ingest` modules from `cumulus_message_adapter_lambda_layer_arn` to `cumulus_message_adapter_lambda_layer_version_arn`
 - **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then preform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
 
 ## [v3.0.1] 2020-10-21
 
