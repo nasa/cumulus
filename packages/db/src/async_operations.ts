@@ -26,7 +26,7 @@ export const translateAsyncOperationToSnakeCase = (
   record: CamelCaseAsyncOperation
 ): SnakeCaseAsyncOperation => {
   const translatedRecord: SnakeCaseAsyncOperation = <SnakeCaseAsyncOperation>toSnake(record);
-  if(record.output !== undefined) {
+  if (record.output !== undefined) {
     translatedRecord.output = record.output;
   }
   return translatedRecord;

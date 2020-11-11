@@ -38,7 +38,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2184**
     - Add schema migration for `executions` table
   - **CUMULUS-2257**
-    - Update RDS table and column names to snake_case
+    - Updated RDS table and column names to snake_case
+    - Added `translateAsyncOperationToSnakeCase` function to `@cumulus/db`
 
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.

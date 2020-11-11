@@ -31,7 +31,7 @@ test('translateAsyncOperationToSnakeCase does not convert output field to snake_
     output: {
       esIndex: 'test-index',
       operationStatus: 'complete',
-    }
+    },
   };
 
   const expected = {
