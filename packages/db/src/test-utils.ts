@@ -1,7 +1,14 @@
 import Knex from 'knex';
 import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
-import { createTestDatabase, deleteTestDatabase } from './database';
+
+export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {
+  await knex.raw(`create database "${dbName}";`);
+  await knex.raw(`grant all privileges on database "${dbName}" to "${dbUser}"`);
+};
+
+export const deleteTestDatabase = async (knex: Knex, dbName: string) =>
+  knex.raw(`drop database if exists "${dbName}"`);
 
 export const generateLocalTestDb = async (
   testDbName: string,
@@ -31,3 +38,4 @@ export const destroyLocalTestDb = async ({
   await deleteTestDatabase(knexAdmin, testDbName);
   knexAdmin.destroy();
 };
+
