@@ -38,4 +38,3 @@ export const destroyLocalTestDb = async ({
   await deleteTestDatabase(knexAdmin, testDbName);
   knexAdmin.destroy();
 };
-

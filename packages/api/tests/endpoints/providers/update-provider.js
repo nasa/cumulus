@@ -160,7 +160,7 @@ test('PUT replaces existing provider', async (t) => {
       postgresOmitList
     ),
     omit(
-      await nullifyUndefinedProviderValues({
+      nullifyUndefinedProviderValues({
         ...postgresExpectedProvider,
         protocol: 'http', // Default value, added by RDS rule
       }),

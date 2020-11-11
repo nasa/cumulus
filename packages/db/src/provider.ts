@@ -1,22 +1,32 @@
-const omit = require('lodash/omit');
-const isNil = require('lodash/isNil');
-const isValidHostname = require('is-valid-hostname');
-const { RDSValidationError } = require('@cumulus/errors');
-const KMS = require('@cumulus/aws-client/KMS');
+import omit from 'lodash/omit';
+import isNil from 'lodash/isNil';
+import isValidHostname from 'is-valid-hostname';
 
-const encryptValueWithKMS = (value: string) =>
-  KMS.encrypt(process.env.provider_kms_key_id, value);
+import { ProviderRecord, PostgresProviderRecord } from '@cumulus/types';
+import { RDSValidationError } from '@cumulus/errors';
+
+import KMS from '@cumulus/aws-client/KMS';
+
+export const encryptValueWithKMS = (
+  value: string
+): Promise<string> => {
+  if (process.env?.provider_kms_key_id === undefined) {
+    throw new Error('env variable provider_kms_key_id must be set');
+  }
+  return KMS.encrypt(process.env?.provider_kms_key_id, value);
+};
 
 export const rdsProviderFromCumulusProvider = async (
-  data: any
+  data: ProviderRecord,
+  encryptMethod: Function = encryptValueWithKMS
 ) => {
   let username: string | undefined;
   let password: string | undefined;
   if (data.username) {
-    username = await encryptValueWithKMS(data.username);
+    username = await encryptMethod(data.username);
   }
   if (data.password) {
-    password = await encryptValueWithKMS(data.password);
+    password = await encryptMethod(data.password);
   }
   return ({
     ...(omit(data, ['id', 'encrypted', 'createdAt', 'updatedAt'])),
@@ -27,9 +37,9 @@ export const rdsProviderFromCumulusProvider = async (
     password,
   });
 };
-
-// TODO - data shouldn't be any
-export const nullifyUndefinedProviderValues = async (data: any) => {
+export const nullifyUndefinedProviderValues = (
+  data: PostgresProviderRecord
+): PostgresProviderRecord => {
   const returnData = { ...data };
   const optionalValues = ['port', 'username', 'password', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri'];
   optionalValues.forEach((value) => {

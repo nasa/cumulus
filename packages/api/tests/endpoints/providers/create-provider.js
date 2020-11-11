@@ -168,7 +168,7 @@ test('POST creates a new provider', async (t) => {
   t.deepEqual(
     omit(rdsRecord[0], postgresOmitList),
     omit(
-      await nullifyUndefinedProviderValues(postgresExpectedProvider),
+      nullifyUndefinedProviderValues(postgresExpectedProvider),
       postgresOmitList
     )
   );

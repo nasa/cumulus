@@ -13,6 +13,7 @@ const {
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist, ValidationError } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const { Search } = require('../es/search');
@@ -160,7 +161,7 @@ async function put({ params: { id }, body }, res) {
 
   let record;
   let createObject = await rdsProviderFromCumulusProvider(body);
-  createObject = await nullifyUndefinedProviderValues(createObject);
+  createObject = nullifyUndefinedProviderValues(createObject);
   await knex.transaction(async (trx) => {
     await trx(tableNames.providers).where({ name: id }).update(createObject);
     record = await providerModel.create(body);
