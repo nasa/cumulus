@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `dbIndexer` lambda to process requests in serial
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
 - **CUMULUS-2251**
-  - Moves Egress Api Gateway Log Group Filter from `distribution/main.tf` to `/cumulus-tf/main.tf`
+  - Moves Egress Api Gateway Log Group Filter from `tf-modules/distribution/main.tf` to `example/cumulus-tf/main.tf`
 
 ### Fixed
 - **CUMULUS-2251**
