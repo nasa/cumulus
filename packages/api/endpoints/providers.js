@@ -155,7 +155,7 @@ async function put({ params: { id }, body }, res) {
 
   if (providerExists.filter(Boolean).length !== 2) {
     return res.boom.notFound(
-      `Provider with ID '${id}' not found in Dynamo and PostGres databases`
+      `Provider with ID '${id}' not found in Dynamo and Postgres databases`
     );
   }
 
