@@ -144,12 +144,12 @@ test('Deleting a provider removes the provider', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
+  const postgresRecord = await t.context.testKnex(tableNames.providers).select().where({
     name: id,
   });
 
   t.false(await providerModel.exists(testProvider.id));
-  t.is(rdsRecord.length, 0);
+  t.is(postgresRecord.length, 0);
 });
 
 test('Deleting a provider that does not exist succeeds', async (t) => {

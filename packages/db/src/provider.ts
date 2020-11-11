@@ -3,7 +3,7 @@ import isNil from 'lodash/isNil';
 import isValidHostname from 'is-valid-hostname';
 
 import { ProviderRecord, PostgresProviderRecord } from '@cumulus/types';
-import { RDSValidationError } from '@cumulus/errors';
+import { PostgresValidationError } from '@cumulus/errors';
 
 import KMS from '@cumulus/aws-client/KMS';
 
@@ -16,7 +16,7 @@ export const encryptValueWithKMS = (
   return KMS.encrypt(process.env?.provider_kms_key_id, value);
 };
 
-export const rdsProviderFromCumulusProvider = async (
+export const postgresProviderFromCumulusProvider = async (
   data: ProviderRecord,
   encryptMethod: Function = encryptValueWithKMS
 ) => {
@@ -53,7 +53,7 @@ export const validateProviderHost = (host: string) => {
   if (isNil(host)) return;
   if (isValidHostname(host)) return;
 
-  const error = new RDSValidationError('The record has validation errors');
+  const error = new PostgresValidationError('The record has validation errors');
   error.detail = `${host} is not a valid hostname or IP address`;
   throw error;
 };

@@ -151,11 +151,11 @@ export const ValidationError = createErrorType('ValidationError');
 
 export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
 
-export class RDSValidationError extends ValidationError {
+export class PostgresValidationError extends ValidationError {
   detail: string | undefined;
   constructor(message: string) {
     super(message);
-    this.name = 'RDSValidationError';
+    this.name = 'PostgresValidationError';
     Error.captureStackTrace(this, this.constructor);
   }
 }

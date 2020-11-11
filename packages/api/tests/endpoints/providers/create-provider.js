@@ -11,7 +11,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
-  rdsProviderFromCumulusProvider,
+  postgresProviderFromCumulusProvider,
   nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -160,7 +160,7 @@ test('POST creates a new provider', async (t) => {
   const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
     name: newProviderId,
   });
-  const postgresExpectedProvider = await rdsProviderFromCumulusProvider(newProvider);
+  const postgresExpectedProvider = await postgresProviderFromCumulusProvider(newProvider);
   t.is(message, 'Record saved');
   t.is(record.id, newProviderId);
   t.is(rdsRecord.length, 1);
@@ -194,7 +194,7 @@ test('POST returns a 409 error if the provider already exists in RDS', async (t)
   const newProvider = fakeProviderFactory();
 
   await t.context.testKnex(tableNames.providers).insert(
-    await rdsProviderFromCumulusProvider(newProvider)
+    await postgresProviderFromCumulusProvider(newProvider)
   );
   const response = await request(app)
     .post('/providers')

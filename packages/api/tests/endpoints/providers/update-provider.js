@@ -13,7 +13,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
-  rdsProviderFromCumulusProvider,
+  postgresProviderFromCumulusProvider,
   nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 
@@ -117,7 +117,7 @@ test('PUT replaces existing provider', async (t) => {
   const expectedProvider = omit(testProvider,
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
 
-  const postgresExpectedProvider = await rdsProviderFromCumulusProvider(expectedProvider);
+  const postgresExpectedProvider = await postgresProviderFromCumulusProvider(expectedProvider);
   const postgresOmitList = ['created_at', 'updated_at', 'cumulusId'];
   // Make sure testProvider contains values for the properties we omitted from
   // expectedProvider to confirm that after we replace (PUT) the provider those
@@ -139,7 +139,7 @@ test('PUT replaces existing provider', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const rdsRecord = await t.context.testKnex(tableNames.providers)
+  const postgresRecord = await t.context.testKnex(tableNames.providers)
     .select()
     .where({
       name: id,
@@ -152,11 +152,11 @@ test('PUT replaces existing provider', async (t) => {
     updatedAt: actualProvider.updatedAt,
   });
 
-  t.is(rdsRecord.length, 1);
+  t.is(postgresRecord.length, 1);
 
   t.deepEqual(
     omit(
-      await rdsRecord[0],
+      await postgresRecord[0],
       postgresOmitList
     ),
     omit(

@@ -11,7 +11,7 @@ export { doesRecordExist, isRecordDefined } from './database';
 export { tableNames } from './tables';
 
 export {
-  rdsProviderFromCumulusProvider,
+  postgresProviderFromCumulusProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
 } from './provider';
