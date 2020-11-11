@@ -39,7 +39,10 @@ test('postgresProviderFromCumulusProvider translates a Cumulus Provider object t
     updated_at: 5678,
     username: 'fakeEncryptedString',
   };
-  const result = await postgresProviderFromCumulusProvider(cumulusProviderObject, fakeEncryptFunction);
+  const result = await postgresProviderFromCumulusProvider(
+    cumulusProviderObject,
+    fakeEncryptFunction
+  );
   t.deepEqual(result, expected);
 });
 

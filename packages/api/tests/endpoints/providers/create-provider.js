@@ -4,7 +4,6 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 const omit = require('lodash/omit');
-const isMatch = require('lodash/isMatch');
 
 const {
   localStackConnectionEnv,
