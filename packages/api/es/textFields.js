@@ -27,8 +27,8 @@ const textFields = [
 ];
 
 /**
- * For certain Elasticsearch aggregations, text fields are more efficient to use
- * the keyword version, which is stored in [fieldname].raw. This function
+ * For certain Elasticsearch aggregations, it is more efficient for text fields to use
+ * the keyword subfield, which is stored in [fieldname].keyword. This function
  * converts that field to use the keyword version if its a text field.
  *
  * @param {string/number} field - elasticsearch field
