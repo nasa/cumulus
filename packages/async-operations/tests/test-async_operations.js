@@ -15,7 +15,7 @@ const {
   createTestDatabase,
   deleteTestDatabase,
   getKnexClient,
-  translateAsyncOperationToSnakeCase,
+  translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
@@ -276,7 +276,7 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
   const omitList = ['created_at', 'updated_at', 'cumulus_id', 'output'];
   t.deepEqual(
     omit(dbResults, omitList),
-    translateAsyncOperationToSnakeCase(omit(expected, omitList))
+    translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
   );
   t.deepEqual(omit(spyCall, omitList), omit(expected, omitList));
 });

@@ -1,8 +1,8 @@
 const test = require('ava');
-const { translateAsyncOperationToSnakeCase } = require('../dist/async_operations');
+const { translateApiAsyncOperationToPostgresAsyncOperation } = require('../dist/async_operations');
 
-test('translateAsyncOperationToSnakeCase converts a camelCase record to snake_case', (t) => {
-  const camelCaseAsyncOperation = {
+test('translateApiAsyncOperationToPostgresAsyncOperation converts a camelCase record to snake_case', (t) => {
+  const apiAsyncOperation = {
     id: '1234567890',
     status: 'RUNNING',
     taskArn: 'aws:arn:ecs:task:someTask',
@@ -11,18 +11,18 @@ test('translateAsyncOperationToSnakeCase converts a camelCase record to snake_ca
   };
 
   const expected = {
-    id: camelCaseAsyncOperation.id,
-    status: camelCaseAsyncOperation.status,
-    task_arn: camelCaseAsyncOperation.taskArn,
-    description: camelCaseAsyncOperation.description,
-    operation_type: camelCaseAsyncOperation.operationType,
+    id: apiAsyncOperation.id,
+    status: apiAsyncOperation.status,
+    task_arn: apiAsyncOperation.taskArn,
+    description: apiAsyncOperation.description,
+    operation_type: apiAsyncOperation.operationType,
   };
 
-  t.deepEqual(translateAsyncOperationToSnakeCase(camelCaseAsyncOperation), expected);
+  t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);
 });
 
-test('translateAsyncOperationToSnakeCase does not convert output field to snake_case', (t) => {
-  const camelCaseAsyncOperation = {
+test('translateApiAsyncOperationToPostgresAsyncOperation does not convert output field to snake_case', (t) => {
+  const apiAsyncOperation = {
     id: '1234567890',
     status: 'SUCCEEDED',
     taskArn: 'aws:arn:ecs:task:someTask',
@@ -35,13 +35,13 @@ test('translateAsyncOperationToSnakeCase does not convert output field to snake_
   };
 
   const expected = {
-    id: camelCaseAsyncOperation.id,
-    status: camelCaseAsyncOperation.status,
-    task_arn: camelCaseAsyncOperation.taskArn,
-    description: camelCaseAsyncOperation.description,
-    operation_type: camelCaseAsyncOperation.operationType,
-    output: camelCaseAsyncOperation.output,
+    id: apiAsyncOperation.id,
+    status: apiAsyncOperation.status,
+    task_arn: apiAsyncOperation.taskArn,
+    description: apiAsyncOperation.description,
+    operation_type: apiAsyncOperation.operationType,
+    output: apiAsyncOperation.output,
   };
 
-  t.deepEqual(translateAsyncOperationToSnakeCase(camelCaseAsyncOperation), expected);
+  t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);
 });

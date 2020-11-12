@@ -6,9 +6,10 @@ export { getKnexConfig, localStackConnectionEnv } from './config';
 export { doesRecordExist, isRecordDefined } from './database';
 export { tableNames } from './tables';
 export {
-  AsyncOperationRecord,
+  PostgresAsyncOperation,
+  PostgresAsyncOperationRecord,
   CollectionRecord,
   ExecutionRecord,
   ProviderRecord,
 } from './types';
-export { translateAsyncOperationToSnakeCase } from './async_operations';
+export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
