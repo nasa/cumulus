@@ -13,6 +13,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
+  doesRecordExist,
 } = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -144,12 +145,8 @@ test('Deleting a provider removes the provider', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const postgresRecord = await t.context.testKnex(tableNames.providers).select().where({
-    name: id,
-  });
-
   t.false(await providerModel.exists(testProvider.id));
-  t.is(postgresRecord.length, 0);
+  t.false(await doesRecordExist({ name: id }, t.context.testKnex, tableNames.providers));
 });
 
 test('Deleting a provider that does not exist succeeds', async (t) => {
