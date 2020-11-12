@@ -14,6 +14,7 @@
 * Jacob Campbell
 * James Norton
 * Jason Gilman
+* Jennifer Tran
 * Jenny Liu
 * Jonathan Kovarik
 * Juanisa McCoy

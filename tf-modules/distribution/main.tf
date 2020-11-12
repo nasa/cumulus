@@ -241,16 +241,6 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
   stage_name  = var.tea_api_gateway_stage
 }
 
-# Egress Api Gateway Log Group Filter
-resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  count           = var.tea_api_egress_log_group != null ? 1 : 0
-  name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
-  distribution    = "ByLogStream"
-  destination_arn = var.log_destination_arn
-  filter_pattern  = ""
-  log_group_name  = var.tea_api_egress_log_group
-}
-
 # Egress Lambda Log Group
 resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
   count             = var.log_destination_arn == null ? 0 : 1

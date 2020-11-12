@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v4.0.0] 2020-11-20
+
 ### Migration notes
 - Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
 - **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
+- **CUMULUS-2251**
+  - Because it has been removed from the `cumulus` module, a new resource definition for `egress_api_gateway_log_subscription_filter` must be added to `cumulus-tf/main.tf`. For reference on how to define this resource, see [`example/cumulus-tf/main.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
 
 ### Added
 
@@ -22,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds ability to filter granule inventory reports
 - **CUMULUS-2211**
   - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
+- **CUMULUS-2251**
+  - Adds `log_api_gateway_to_cloudwatch` variable to `example/cumulus-tf/variables.tf`
 
 ### Changed
 
@@ -31,6 +37,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2201**
   - Update `dbIndexer` lambda to process requests in serial
   - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
+- **CUMULUS-2251**
+  - Moves Egress Api Gateway Log Group Filter from `tf-modules/distribution/main.tf` to `example/cumulus-tf/main.tf`
+
+### Fixed
+- **CUMULUS-2251**
+  - This fixes a deployment error caused by depending on the `thin_egress_app` module output for a resource count.
+
+### Removed
+- **CUMULUS-2251**
+  -  Removes `tea_api_egress_log_group` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`.
 
 ### BREAKING CHANGES
 - **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a
@@ -3641,7 +3657,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v4.0.0...HEAD
+[v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
 [v2.0.7]: https://github.com/nasa/cumulus/compare/v2.0.6...v2.0.7
