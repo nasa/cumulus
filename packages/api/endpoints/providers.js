@@ -162,6 +162,11 @@ async function put({ params: { id }, body }, res) {
     await trx(tableNames.providers).where({ name: id }).update(createObject);
     record = await providerModel.create(body);
   });
+
+  if (inTestMode()) {
+    await addToLocalES(record, indexProvider);
+  }
+
   return res.send(record);
 }
 
