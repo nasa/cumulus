@@ -83,3 +83,19 @@ export interface PostgresProviderRecord extends PostgresProvider {
   updated_at: number,
   cumulusId: number,
 }
+
+export interface RuleRecord {
+  name: string
+  worfklow: string
+  provider?: string
+  collection?: object
+  meta?: object
+  payload?: object
+  queueUrl?: string
+  rule: object
+  state: string
+  created_at: Date
+  updated_at: Date
+  tags?: Array<string>
+  executionNamePrefix?: string
+}
