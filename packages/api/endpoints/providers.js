@@ -8,6 +8,7 @@ const {
   postgresProviderFromCumulusProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
+  doesRecordExist,
 } = require('@cumulus/db');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -58,11 +59,6 @@ async function get(req, res) {
   }
   delete result.password;
   return res.send(result);
-}
-
-async function providerExistsInPostgres(knex, name) {
-  const queryResult = await knex(tableNames.providers).select().where({ name });
-  return (queryResult.length !== 0);
 }
 
 class ApiProviderCollisionError extends Error {
@@ -150,7 +146,7 @@ async function put({ params: { id }, body }, res) {
 
   const providerExists = await Promise.all([
     providerModel.exists(id),
-    providerExistsInPostgres(knex, id),
+    doesRecordExist({ name: id }, knex, tableNames.providers),
   ]);
 
   if (providerExists.filter(Boolean).length !== 2) {
