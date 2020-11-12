@@ -248,7 +248,7 @@ const writeGranules = async ({
     throw new Error('Collection reference is required for granules');
   }
   // Process each granule in a separate transaction via Promise.allSettled
-  // so that they can succeed/fail indepdently
+  // so that they can succeed/fail independently
   return Promise.allSettled(getMessageGranules(cumulusMessage).map(
     async (granule) => {
       const executionArn = getMessageExecutionArn(cumulusMessage);
