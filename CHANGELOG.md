@@ -19,9 +19,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `/reconciliationReport` returns.  The user (dashboard) must read the value
     of `url` from the return to get the s3SignedURL and then download the report.
 
+### BREAKING CHANGES
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Removed the following from the `@cumulus/api/models.asyncOperation` class in
+      favor of the added `@cumulus/async-operations` module:
+      - `start`
+      - `startAsyncOperations`
+
 ### Added
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Added `@cumulus/async-operations` to core packages, exposing
+      `startAsyncOperation` which will handle starting an async operation and adding an entry to both RDS and DynamoDb
   - **CUMULUS-2127**
     - Add schema migration for `collections` table
   - **CUMULUS-2129**
@@ -51,6 +63,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       PostgreSQL database
     - Update integration tests to utilize API calls instead of direct
       api/model/Provider calls
+  - **CUMULUS-2191**
+    - Updated cumuluss/async-operation task to write async-operations to the RDS
+    database.
   - **CUMULUS-2228**
     - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution and PDR records to the Core PostgreSQL database in parallel with writes to DynamoDB
 - **CUMULUS-2200**
