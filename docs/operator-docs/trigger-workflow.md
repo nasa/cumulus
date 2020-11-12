@@ -4,7 +4,7 @@ title: Trigger a Workflow Execution
 hide_title: false
 ---
 
-To trigger a workflow, you simply need to [create a rule](../configuration/data-management-types#create-a-rule). To trigger an ingest workflow, requiring discovering and ingesting data, you will also need to configure the collection and provider and associate those to a rule.
+To trigger a workflow, you need to [create a rule](../configuration/data-management-types#create-a-rule). To trigger an ingest workflow, one that requires discovering and ingesting data, you will also need to configure the collection and provider and associate those to a rule.
 
 ## Trigger a HelloWorld Workflow
 
@@ -14,7 +14,7 @@ You can leave the provider and collection blank and do not need any additional m
 
 ## Trigger an Ingest Workflow
 
-To ingest data, you will likely want a provider and collection set up to tell your workflow where to discover data and where to archive the data respectively.
+To ingest data, you will need a provider and collection configured to tell your workflow where to discover data and where to archive the data respectively.
 
 Follow the instructions to [create a provider](../configuration/data-management-types#create-a-provider) and [create a collection](../configuration/data-management-types#create-a-collection) and [configure their fields](../data-cookbooks/setup#working-with-data-cookbooks) for your data ingest.
 
@@ -24,7 +24,7 @@ In the rule's additional metadata you can specify a `provider_path` from which t
 
 #### Setup
 
-Assume there are 3 files to be ingested in an S3 bucket called `discovery-bucket`, located in the `test-data` folder:
+Assume there are 2 files to be ingested in an S3 bucket called `discovery-bucket`, located in the `test-data` folder:
 - GRANULE.A2017025.jpg
 - GRANULE.A2017025.hdf
 
@@ -40,7 +40,7 @@ Public and protected buckets should exist and be mapped to bucket names in the C
 
 [Create a new collection](../configuration/data-management-types#create-a-collection). Configure the collection to extract the granule id from the filenames and configure where to store the granule files.
 
-The below configuration will store hdf files in the protected bucket and jpg files in the private bucket. The bucket types are
+The configuration below will store hdf files in the protected bucket and jpg files in the private bucket. The bucket types are
 
 ```
 {

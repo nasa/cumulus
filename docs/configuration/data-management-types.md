@@ -4,7 +4,7 @@ title: Cumulus Data Management Types
 hide_title: false
 ---
 
-## What Is A Cumulus Data Management Type
+## What Are The Cumulus Data Management Types
 
 * `Collections`: Collections are logical sets of data objects of the same data type and version. They provide contextual information used by Cumulus ingest.
 * `Granules`: Granules are the smallest aggregation of data that can be independently managed. They are always associated with a collection, which is a grouping of granules.
@@ -24,10 +24,10 @@ hide_title: false
 
 The following are created via the dashboard or API:
 
-* Providers
-* Collections
-* Rules
-* Reconciliation reports
+* **Providers**
+* **Collections**
+* **Rules**
+* **Reconciliation reports**
 
 **Granules** are created by workflow executions and then can be managed via the dashboard or API.
 
@@ -37,9 +37,9 @@ The following are created via the dashboard or API:
 
 ## Configuration Fields
 
-See [data cookbook setup](../data-cookbooks/setup).
+See [data cookbooks introduction](../data-cookbooks/setup).
 
-## Cumulus Dashboard Configuration
+## Configuration Via Cumulus Dashboard
 
 ### Create A Provider
 
