@@ -12,7 +12,7 @@ const isBadRequestError = (err) =>
   || err instanceof ValidationError
   || ['22', '23'].includes((err.code || '').substring(0, 2));
   // Postgres error codes:
-  // https://www.postgresql.org/docs/9.2/errcodes-appendix.html
+  // https://www.postgresql.org/docs/10/errcodes-appendix.html
 
 const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 const IndexExistsError = createErrorType('IndexExistsError');

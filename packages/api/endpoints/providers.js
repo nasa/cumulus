@@ -115,7 +115,7 @@ async function post(req, res) {
   } catch (error) {
     if (error instanceof ApiProviderCollisionError || error.code === '23505') {
       // Postgres error codes:
-      // https://www.postgresql.org/docs/9.2/errcodes-appendix.html
+      // https://www.postgresql.org/docs/10/errcodes-appendix.html
       return res.boom.conflict(`A record already exists for ${id}`);
     }
 
