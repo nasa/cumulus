@@ -104,7 +104,7 @@ test.after.always(async (t) => {
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await destroyLocalTestDb(t.context.testKnex = {
+  await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
     testDbName,

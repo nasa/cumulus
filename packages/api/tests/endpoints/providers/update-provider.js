@@ -93,7 +93,7 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await providerModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
-  await destroyLocalTestDb(t.context.testKnex = {
+  await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
     testDbName,
