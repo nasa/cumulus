@@ -173,8 +173,6 @@ test('Attempting to delete a provider with an associated postgres rule returns a
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
-
   // This block will need to be refactored as the Collection and Rule endpoints
   // are updated on the feature branch
   // ---
