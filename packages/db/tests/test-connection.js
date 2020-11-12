@@ -98,7 +98,7 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test.only('getKnexClient with heartbeat check enabled and configured database connection returns Knex object',
+test('getKnexClient with heartbeat check enabled and configured database connection returns Knex object',
   async (t) => {
     const results = await getKnexClient({
       env: {

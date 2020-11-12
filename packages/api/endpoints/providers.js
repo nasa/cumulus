@@ -149,7 +149,7 @@ async function put({ params: { id }, body }, res) {
     doesRecordExist({ name: id }, knex, tableNames.providers),
   ]);
 
-  if (providerExists.filter(Boolean).length !== 2) {
+  if (providerExists.filter((providerTest) => providerTest === true).length !== 2) {
     return res.boom.notFound(
       `Provider with ID '${id}' not found in Dynamo and Postgres databases`
     );
