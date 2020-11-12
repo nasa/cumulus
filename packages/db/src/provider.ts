@@ -4,16 +4,16 @@ import isValidHostname from 'is-valid-hostname';
 
 import { ProviderRecord, PostgresProviderRecord } from '@cumulus/types';
 import { PostgresValidationError } from '@cumulus/errors';
+import { envUtils } from '@cumulus/common';
+
 
 import KMS from '@cumulus/aws-client/KMS';
 
 export const encryptValueWithKMS = (
   value: string
 ): Promise<string> => {
-  if (process.env?.provider_kms_key_id === undefined) {
-    throw new Error('env variable provider_kms_key_id must be set');
-  }
-  return KMS.encrypt(process.env?.provider_kms_key_id, value);
+  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id');
+  return KMS.encrypt(providerKmsKeyId, value);
 };
 
 export const postgresProviderFromCumulusProvider = async (
