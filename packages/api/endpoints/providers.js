@@ -185,15 +185,15 @@ async function del(req, res) {
     await knex.transaction(async (trx) => {
       await trx(tableNames.providers).where({ name: req.params.id }).del();
       await providerModel.delete({ id: req.params.id });
-      if (inTestMode()) {
-        const esClient = await Search.es(process.env.ES_HOST);
-        await esClient.delete({
-          id: req.params.id,
-          type: 'provider',
-          index: process.env.ES_INDEX,
-        }, { ignore: [404] });
-      }
     });
+    if (inTestMode()) {
+      const esClient = await Search.es(process.env.ES_HOST);
+      await esClient.delete({
+        id: req.params.id,
+        type: 'provider',
+        index: process.env.ES_INDEX,
+      }, { ignore: [404] });
+    }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_providercumulusid_foreign') {
