@@ -131,7 +131,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
     executionModel = new Execution();
     process.env.system_bucket = config.bucket;
-    process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
 
     const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
