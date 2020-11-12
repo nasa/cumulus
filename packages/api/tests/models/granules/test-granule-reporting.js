@@ -152,7 +152,7 @@ test('_storeGranuleRecord() will not allow a running status to replace a complet
     status: 'running',
   };
 
-  await granuleModel._storeGranuleRecord(updatedGranule);
+  await t.throwsAsync(granuleModel._storeGranuleRecord(updatedGranule));
 
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
@@ -171,7 +171,7 @@ test('_storeGranuleRecord() will not allow a running status to replace a failed 
     status: 'running',
   };
 
-  await granuleModel._storeGranuleRecord(updatedGranule);
+  await t.throwsAsync(granuleModel._storeGranuleRecord(updatedGranule));
 
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
@@ -218,22 +218,6 @@ test('_storeGranuleRecord() will allow a running status to replace a failed stat
   t.is(fetchedItem.status, 'running');
 });
 
-test('_storeGranuleRecord() does not throw conditional check exception', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2({ status: 'failed' });
-
-  await granuleModel._storeGranuleRecord(granule);
-
-  const updatedGranule = {
-    ...granule,
-    status: 'running',
-  };
-
-  // conditional exception should be thrown, but caught
-  await t.notThrowsAsync(granuleModel._storeGranuleRecord(updatedGranule));
-});
-
 test('_validateAndStoreGranuleRecord() does throw validation error', async (t) => {
   const { granuleModel } = t.context;
 
@@ -244,7 +228,7 @@ test('_validateAndStoreGranuleRecord() does throw validation error', async (t) =
   await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(granule));
 });
 
-test('_validateAndStoreGranuleRecord() does not throw an error for a conditional check exception', async (t) => {
+test('_validateAndStoreGranuleRecord() throws error for a conditional check exception', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -256,8 +240,7 @@ test('_validateAndStoreGranuleRecord() does not throw an error for a conditional
     status: 'running',
   };
 
-  // conditional exception should be thrown, but also caught
-  await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
+  await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 });
 
 test('storeGranuleFromCumulusMessage() does throw an error for a failing record', async (t) => {

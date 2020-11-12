@@ -15,11 +15,10 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
-const { isConditionalCheckException } = require('@cumulus/errors');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
-  getExecutionUrlFromArn
+  getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 const { getMessageGranules } = require('@cumulus/message/Granules');
 const {
@@ -598,24 +597,7 @@ class Granule extends Manager {
       updateParams.ConditionExpression = '#execution <> :execution';
     }
 
-    try {
-      return await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (error) {
-      if (isConditionalCheckException(error)) {
-        log.logAdditionalKeys(
-          {
-            error: {
-              name: error.name,
-              message: error.message,
-              stack: error.stack.split('\n'),
-            },
-          },
-          'Record not updated due to conditional check exception'
-        );
-        return undefined;
-      }
-      throw error;
-    }
+    return this.dynamodbDocClient.update(updateParams).promise();
   }
 
   /**
