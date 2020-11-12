@@ -7,10 +7,12 @@ const {
   ValidationError,
 } = require('@cumulus/errors');
 
-const isBadRequestError = (err) =>
-  err.name === 'SchemaValidationError'
-  || err instanceof ValidationError
-  || ['22', '23'].includes((err.code || '').substring(0, 2));
+const isPostgresValidationError = (error) => ['22', '23'].includes((error.code || '').substring(0, 2));
+
+const isBadRequestError = (error) =>
+  error.name === 'SchemaValidationError'
+  || error instanceof ValidationError
+  || isPostgresValidationError(error);
   // Postgres error codes:
   // https://www.postgresql.org/docs/10/errcodes-appendix.html
 
