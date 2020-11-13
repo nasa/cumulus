@@ -81,7 +81,7 @@ test.beforeEach(async (t) => {
     cmKeyId: 'key',
   };
   await request(app)
-    .post('/providers').send(t.context.testProvider)
+    .post('/providers')
     .send(t.context.testProvider)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
