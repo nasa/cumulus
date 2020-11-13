@@ -20,11 +20,10 @@ Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/mas
 - [Provider API](https://nasa.github.io/cumulus-api/?language=Python#list-providers)
 - [Sample provider configurations](https://github.com/nasa/cumulus/tree/master/example/data/providers)
 
-
 Please note:
 
-* While *connection* configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
-* There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
+- While *connection* configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
+- There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
 
 ### Provider Configuration
 
@@ -177,20 +176,20 @@ Rules are used by to start processing workflows and the transformation process. 
 
 The `rule - value` entry depends on the type of run:
 
-* If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
-* If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
-* If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
-* If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
-* If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access, and also you must configure a dead-letter queue for this SQS queue. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
+- If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
+- If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
+- If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
+- If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
+- If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access, and also you must configure a dead-letter queue for this SQS queue. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
 
 ### sqs-type rule features
 
-* When an SQS rule is triggered, the SQS message remains on the queue.
-* The SQS message is not processed multiple times in parallel when visibility timeout is properly set.  You should set the visibility timeout to the maximum expected length of the workflow with padding. Longer is better to avoid parallel processing.
-* The SQS message visibility timeout can be overridden by the rule.
-* Upon successful workflow execution, the SQS message is removed from the queue.
-* Upon failed execution(s), the workflow is run 3 or configured number of times.
-* Upon failed execution(s), the visibility timeout will be set to 5s to allow retries.
-* After configured number of failed retries, the SQS message is moved to the dead-letter queue configured for the SQS queue.
+- When an SQS rule is triggered, the SQS message remains on the queue.
+- The SQS message is not processed multiple times in parallel when visibility timeout is properly set.  You should set the visibility timeout to the maximum expected length of the workflow with padding. Longer is better to avoid parallel processing.
+- The SQS message visibility timeout can be overridden by the rule.
+- Upon successful workflow execution, the SQS message is removed from the queue.
+- Upon failed execution(s), the workflow is run 3 or configured number of times.
+- Upon failed execution(s), the visibility timeout will be set to 5s to allow retries.
+- After configured number of failed retries, the SQS message is moved to the dead-letter queue configured for the SQS queue.
 
 </details>

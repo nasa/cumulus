@@ -69,15 +69,14 @@ See [data cookbooks introduction](../data-cookbooks/setup).
 
 1. Go To Rules Page
 
-    -  Go to the Cumulus dashboard, click on `Rules` in the navigation.
-    -  Click `Add Rule`.
+   - Go to the Cumulus dashboard, click on `Rules` in the navigation.
+   - Click `Add Rule`.
 
 ![Screenshot of Rules page](assets/cd_rules_page.png)
 
 2. Complete Form
 
-    - Fill out the template form.
-<!-- markdownlint-enable MD029 -->
+   - Fill out the template form.
 
 ![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule_form_blank.png)
 

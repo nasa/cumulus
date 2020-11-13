@@ -25,6 +25,7 @@ In the rule's additional metadata you can specify a `provider_path` from which t
 #### Setup
 
 Assume there are 2 files to be ingested in an S3 bucket called `discovery-bucket`, located in the `test-data` folder:
+
 - GRANULE.A2017025.jpg
 - GRANULE.A2017025.hdf
 
@@ -61,7 +62,7 @@ buckets = {
 
 The configuration below will store hdf files in the protected bucket and jpg files in the private bucket. The bucket types are
 
-```
+```json
 {
   "name": "test-collection",
   "version": "001",
