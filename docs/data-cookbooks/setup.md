@@ -10,18 +10,95 @@ In the following data cookbooks we'll go through things like setting up workflow
 
 ## Schemas
 
-Looking at our api schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
+Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
 
-**Note:** The schemas are _extremely_ useful for understanding what attributes are configurable and which of those are required. Indeed, they are what the Cumulus code validates definitions (whether that be collection, provider, or others) against. Much of this document is simply providing some context to the information in the schemas.
+> The schemas are _extremely_ useful for understanding which attributes are configurable and which of those are required. Cumulus uses these schemas for validation.
+
+## Providers
+
+- [Provider schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (`module.exports.provider`)
+- [Provider API](https://nasa.github.io/cumulus-api/?language=Python#list-providers)
+- [Sample provider configurations](https://github.com/nasa/cumulus/tree/master/example/data/providers)
+
+Please note:
+
+- While *connection* configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
+- There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
+
+### Provider Configuration
+
+The Provider configuration is defined by a JSON object that takes different configuration keys depending on the provider type.    The following are definitions of typical configuration values relevant for the various providers:
+
+<details>
+  <summary><b>Configuration by provider type</b></summary>
+
+#### S3
+
+|Key  |Type |Required|Description|
+|:---:|:----|:------:|-----------|
+|id|string|Yes|Unique identifier for the provider|
+|globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider. This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|protocol|string|Yes|The protocol for this provider. Must be `s3` for this provider type. |
+|host|string|Yes|S3 Bucket to pull data from |
+
+#### http
+
+|Key  |Type |Required|Description|
+|:---:|:----|:------:|-----------|
+|id|string|Yes|Unique identifier for the provider|
+|globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|protocol|string|Yes|The protocol for this provider.  Must be `http` for this provider type |
+|host|string|Yes|The host to pull data from (e.g. `nasa.gov`)
+|username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|port|integer|No|Port to connect to the provider on.   Defaults to `80`|
+
+#### https
+
+|Key  |Type |Required|Description|
+|:---:|:----|:------:|-----------|
+|id|string|Yes|Unique identifier for the provider|
+|globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|protocol|string|Yes|The protocol for this provider.  Must be `https` for this provider type |
+|host|string|Yes|The host to pull data from (e.g. `nasa.gov`) |
+|username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|port|integer|No|Port to connect to the provider on.   Defaults to `443` |
+
+#### ftp
+
+|Key  |Type |Required|Description|
+|:---:|:----|:------:|-----------|
+|id|string|Yes|Unique identifier for the provider|
+|globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|protocol|string|Yes|The protocol for this provider.  Must be `ftp` for this provider type |
+|host|string|Yes|The ftp host to pull data from (e.g. `nasa.gov`) |
+|username|string|No|Username to use to connect to the ftp server.  Cumulus encrypts this using KMS. Defaults to `anonymous` if not defined |
+|password|string|No|Password to use to connect to the ftp server.  Cumulus encrypts this using KMS. Defaults to `password` if not defined |
+|port|integer|No|Port to connect to the provider on.  Defaults to `21`
+
+#### sftp
+
+|Key  |Type |Required|Description|
+|:---:|:----|:------:|-----------|
+|id|string|Yes|Unique identifier for the provider|
+|globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|protocol|string|Yes|The protocol for this provider.  Must be `sftp` for this provider type |
+|host|string|Yes|The ftp host to pull data from (e.g. `nasa.gov`) |
+|username|string|No|Username to use to connect to the sftp server.|
+|password|string|No|Password to use to connect to the sftp server. |
+|port|integer|No|Port to connect to the provider on.  Defaults to `22`
+
+</details>
 
 ## Collections
 
-Collections are logical sets of data objects of the same data type and version. A collection provides contextual information used by Cumulus ingest. We have a few [test collections](https://github.com/nasa/cumulus/tree/master/example/data/collections) configured in Cumulus source for integration testing. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the "Collections" navigation tab. Additionally, they can be managed via the [collections api](https://nasa.github.io/cumulus-api/?language=Python#list-collections).
+- [Collection schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (`module.exports.collection`)
+- [Collection API](https://nasa.github.io/cumulus-api/?language=Python#list-collections)
+- [Sample collection configurations](https://github.com/nasa/cumulus/tree/master/example/data/collections)
 
-The schema for collections can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) as the object assigned to `module.exports.collection` and tells us all about what values are expected, accepted, and required in a collection object (where required attribute keys are assigned as a string to the `required` attribute).
-
-**Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/blob/master/example/data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json)**
-
+<details>
+  <summary><b>Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/blob/master/example/data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json)</b></summary>
 |Key  |Value  |Required  |Description|
 |:---:|:-----:|:--------:|-----------|
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
@@ -47,20 +124,20 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
 |url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
 |checksumFor|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|No|If this is a checksum file, set `checksumFor` to the `regex` of the target file.|
-
-## Providers
-
-Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
-
-For more on Provider configuration see the [Provider section of the Operator Documentation](../operator-docs/provider).
+</details>
 
 ## Rules
 
-Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by either events in [Kinesis](data-cookbooks/cnm-workflow.md), SNS messages or SQS messages. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (specifically the object assigned to `module.exports.rule`). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
+- [Rule schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (`module.exports.rule`)
+- [Rule API](https://nasa.github.io/cumulus-api/?language=Python#list-rules)
+- [Sample Kinesis rule](https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json)
+- [Sample SNS rule](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
+- [Sample SQS rule](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
 
-The Cumulus Core repository has an example of a Kinesis rule [here](https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json).
-An example of an SNS rule configuration is [here](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json).
-An example of an SQS rule configuration is [here](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json).
+Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by either events in [Kinesis](data-cookbooks/cnm-workflow.md), SNS messages or SQS messages.
+
+<details>
+<summary><b>Rule configuration</b></summary>
 
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
@@ -99,18 +176,20 @@ An example of an SQS rule configuration is [here](https://github.com/nasa/cumulu
 
 The `rule - value` entry depends on the type of run:
 
-* If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
-* If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
-* If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
-* If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
-* If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access, and also you must configure a dead-letter queue for this SQS queue. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
+- If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
+- If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
+- If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
+- If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
+- If this is an sqs rule, this must be an existing `${SQS_QueueUrl}` that your account has permissions to access, and also you must configure a dead-letter queue for this SQS queue. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/data/rules/sqs/MOD09GQ_006_sqsRule.json)
 
 ### sqs-type rule features
 
-* When an SQS rule is triggered, the SQS message remains on the queue.
-* The SQS message is not processed multiple times in parallel when visibility timeout is properly set.  You should set the visibility timeout to the maximum expected length of the workflow with padding. Longer is better to avoid parallel processing.
-* The SQS message visibility timeout can be overridden by the rule.
-* Upon successful workflow execution, the SQS message is removed from the queue.
-* Upon failed execution(s), the workflow is run 3 or configured number of times.
-* Upon failed execution(s), the visibility timeout will be set to 5s to allow retries.
-* After configured number of failed retries, the SQS message is moved to the dead-letter queue configured for the SQS queue.
+- When an SQS rule is triggered, the SQS message remains on the queue.
+- The SQS message is not processed multiple times in parallel when visibility timeout is properly set.  You should set the visibility timeout to the maximum expected length of the workflow with padding. Longer is better to avoid parallel processing.
+- The SQS message visibility timeout can be overridden by the rule.
+- Upon successful workflow execution, the SQS message is removed from the queue.
+- Upon failed execution(s), the workflow is run 3 or configured number of times.
+- Upon failed execution(s), the visibility timeout will be set to 5s to allow retries.
+- After configured number of failed retries, the SQS message is moved to the dead-letter queue configured for the SQS queue.
+
+</details>
