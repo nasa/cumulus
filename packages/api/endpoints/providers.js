@@ -5,14 +5,14 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   tableNames,
-  translateApiProviderToPostgresProvider,
+  postgresProviderFromCumulusProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
   doesRecordExist,
 } = require('@cumulus/db');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist, ValidationError } = require('@cumulus/errors');
+const { ApiCollisionError, RecordDoesNotExist, ValidationError } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const Provider = require('../models/providers');
@@ -21,6 +21,10 @@ const { Search } = require('../es/search');
 const { addToLocalES, indexProvider } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/providers' });
+
+// Postgres error codes:
+// https://www.postgresql.org/docs/10/errcodes-appendix.html
+const isCollisionError = (error) => error instanceof ApiCollisionError || error.code === '23505';
 
 /**
  * List all providers
@@ -61,18 +65,10 @@ async function get(req, res) {
   return res.send(result);
 }
 
-class ApiProviderCollisionError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'CumulusMessageError';
-    Error.captureStackTrace(this, ApiProviderCollisionError);
-  }
-}
-
 async function throwIfDynamoRecordExists(providerModel, id) {
   try {
     await providerModel.get({ id });
-    throw new ApiProviderCollisionError(`Dynamo record id ${id} exists`);
+    throw new ApiCollisionError(`Dynamo record id ${id} exists`);
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
@@ -99,7 +95,7 @@ async function post(req, res) {
       throw new ValidationError('Provider records require an id');
     }
     await throwIfDynamoRecordExists(providerModel, id);
-    const createObject = await translateApiProviderToPostgresProvider(data);
+    const createObject = await postgresProviderFromCumulusProvider(data);
     validateProviderHost(createObject.host);
 
     await knex.transaction(async (trx) => {
@@ -113,9 +109,7 @@ async function post(req, res) {
 
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
-    if (error instanceof ApiProviderCollisionError || error.code === '23505') {
-      // Postgres error codes:
-      // https://www.postgresql.org/docs/10/errcodes-appendix.html
+    if (isCollisionError(error)) {
       return res.boom.conflict(`A record already exists for ${id}`);
     }
 
@@ -156,7 +150,7 @@ async function put({ params: { id }, body }, res) {
   }
 
   let record;
-  let createObject = await translateApiProviderToPostgresProvider(body);
+  let createObject = await postgresProviderFromCumulusProvider(body);
   createObject = nullifyUndefinedProviderValues(createObject);
   await knex.transaction(async (trx) => {
     await trx(tableNames.providers).where({ name: id }).update(createObject);

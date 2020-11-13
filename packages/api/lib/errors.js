@@ -27,6 +27,15 @@ class AssociatedRulesError extends Error {
   }
 }
 
+
+class ApiCollisionError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CumulusMessageError';
+    Error.captureStackTrace(this, ApiCollisionError);
+  }
+}
+
 class EarthdataLoginError extends Error {
   constructor(code, message) {
     super(message);
@@ -39,6 +48,7 @@ class EarthdataLoginError extends Error {
 }
 
 module.exports = {
+  ApiCollisionError,
   AssociatedRulesError,
   IndexExistsError,
   TokenUnauthorizedUserError,
