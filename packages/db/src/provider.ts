@@ -56,8 +56,6 @@ export const nullifyUndefinedProviderValues = (
       // eslint-disable-next-line unicorn/no-null
       Object.assign(returnData, { [value]: null });
     }
-    //This doesn't work
-    //returnData[value] = returnData[value] ? returnData[value] : null;
   });
   return returnData;
 };
