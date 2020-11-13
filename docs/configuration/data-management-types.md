@@ -24,10 +24,10 @@ hide_title: false
 
 The following are created via the dashboard or API:
 
-* **Providers**
-* **Collections**
-* **Rules**
-* **Reconciliation reports**
+- **Providers**
+- **Collections**
+- **Rules**
+- **Reconciliation reports**
 
 **Granules** are created by workflow executions and then can be managed via the dashboard or API.
 
