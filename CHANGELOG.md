@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
 - **CUMULUS-2251**
   - Adds `log_api_gateway_to_cloudwatch` variable to `example/cumulus-tf/variables.tf`.
-  - Adds `log_api_gateway_to_cloudwatch` variable to `thin_egress_app` module defintion.
+  - Adds `log_api_gateway_to_cloudwatch` variable to `thin_egress_app` module definition.
 
 ### Changed
 
