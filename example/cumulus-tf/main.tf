@@ -143,6 +143,7 @@ module "cumulus" {
     "menno.vandiermen",
     "jasmine"
   ]
+  archive_api_url               = var.archive_api_url
   archive_api_port              = var.archive_api_port
   private_archive_api_gateway   = var.private_archive_api_gateway
   api_gateway_stage             = var.api_gateway_stage
