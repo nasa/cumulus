@@ -94,4 +94,4 @@ In the rule meta, set the `provider_path` to `test-data`, so the `test-data` fol
 
 ![Screenshot of adding a Discover Granules rule](assets/cd_add_discover_rule_form.png)
 
-A `onetime` rule will run your workflow momentarily and you can view it on the dashboard Executions page. The Cumulus Discover Granules workflow will trigger an ingest workflow and your ingested granules will be visible on the dashboard Granules page.
+A `onetime` rule will run your workflow on-demand and you can view it on the dashboard Executions page. The Cumulus Discover Granules workflow will trigger an ingest workflow and your ingested granules will be visible on the dashboard Granules page.
