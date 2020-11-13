@@ -27,7 +27,6 @@ class AssociatedRulesError extends Error {
   }
 }
 
-
 class ApiCollisionError extends Error {
   constructor(message) {
     super(message);
