@@ -68,6 +68,7 @@ See [data cookbooks introduction](../data-cookbooks/setup).
 ### Create A Rule
 
 1. Go To Rules Page
+<!-- markdownlint-disable MD029 -->
 
    - Go to the Cumulus dashboard, click on `Rules` in the navigation.
    - Click `Add Rule`.
@@ -78,6 +79,7 @@ See [data cookbooks introduction](../data-cookbooks/setup).
 
    - Fill out the template form.
 
+<!-- markdownlint-enable MD029 -->
 ![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule_form_blank.png)
 
 For more details regarding the field definitions and required information go to [Data Cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
