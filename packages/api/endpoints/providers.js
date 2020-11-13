@@ -5,7 +5,7 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   tableNames,
-  postgresProviderFromCumulusProvider,
+  translateApiProviderToPostgresProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
   doesRecordExist,
@@ -99,7 +99,7 @@ async function post(req, res) {
       throw new ValidationError('Provider records require an id');
     }
     await throwIfDynamoRecordExists(providerModel, id);
-    const createObject = await postgresProviderFromCumulusProvider(data);
+    const createObject = await translateApiProviderToPostgresProvider(data);
     validateProviderHost(createObject.host);
 
     await knex.transaction(async (trx) => {
@@ -156,7 +156,7 @@ async function put({ params: { id }, body }, res) {
   }
 
   let record;
-  let createObject = await postgresProviderFromCumulusProvider(body);
+  let createObject = await translateApiProviderToPostgresProvider(body);
   createObject = nullifyUndefinedProviderValues(createObject);
   await knex.transaction(async (trx) => {
     await trx(tableNames.providers).where({ name: id }).update(createObject);

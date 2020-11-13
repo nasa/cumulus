@@ -11,7 +11,7 @@ export { doesRecordExist, isRecordDefined } from './database';
 export { tableNames } from './tables';
 
 export {
-  postgresProviderFromCumulusProvider,
+  translateApiProviderToPostgresProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
 } from './provider';
@@ -20,5 +20,6 @@ export {
   AsyncOperationRecord,
   CollectionRecord,
   ExecutionRecord,
-  ProviderRecord,
+  PostgresProviderRecord,
+  PostgresProvider,
 } from './types';

@@ -2,12 +2,11 @@ import omit from 'lodash/omit';
 import isNil from 'lodash/isNil';
 import isValidHostname from 'is-valid-hostname';
 
-import { ProviderRecord, PostgresProviderRecord } from '@cumulus/types';
 import { PostgresValidationError } from '@cumulus/errors';
 import { envUtils } from '@cumulus/common';
-
-
 import KMS from '@cumulus/aws-client/KMS';
+import { ApiProvider } from '@cumulus/types';
+import { PostgresProvider } from './types';
 
 export const encryptValueWithKMS = (
   value: string
@@ -16,10 +15,10 @@ export const encryptValueWithKMS = (
   return KMS.encrypt(providerKmsKeyId, value);
 };
 
-export const postgresProviderFromCumulusProvider = async (
-  data: ProviderRecord,
+export const translateApiProviderToPostgresProvider = async (
+  data: ApiProvider,
   encryptMethod: Function = encryptValueWithKMS
-) => {
+): Promise<PostgresProvider> => {
   let username: string | undefined;
   let password: string | undefined;
   if (data.username) {
@@ -37,14 +36,28 @@ export const postgresProviderFromCumulusProvider = async (
     password,
   });
 };
+
 export const nullifyUndefinedProviderValues = (
-  data: PostgresProviderRecord
-): PostgresProviderRecord => {
-  const returnData = { ...data };
-  const optionalValues = ['port', 'username', 'password', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri'];
-  optionalValues.forEach((value) => {
-    // eslint-disable-next-line unicorn/no-null
-    returnData[value] = returnData[value] ? returnData[value] : null;
+  data: PostgresProvider
+): PostgresProvider => {
+  const returnData : PostgresProvider = { ...data };
+  const optionalValues : Array<keyof PostgresProvider> = [
+    'port',
+    'username',
+    'password',
+    'globalConnectionLimit',
+    'privateKey',
+    'cmKeyId',
+    'certificateUri',
+  ];
+
+  optionalValues.forEach((value: keyof PostgresProvider) => {
+    if (returnData[value] === undefined) {
+      // eslint-disable-next-line unicorn/no-null
+      Object.assign(returnData, { [value]: null });
+    }
+    //This doesn't work
+    //returnData[value] = returnData[value] ? returnData[value] : null;
   });
   return returnData;
 };

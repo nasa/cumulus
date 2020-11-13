@@ -13,7 +13,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
-  postgresProviderFromCumulusProvider,
+  translateApiProviderToPostgresProvider,
   nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 
@@ -117,7 +117,7 @@ test('PUT replaces existing provider', async (t) => {
   const expectedProvider = omit(testProvider,
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
 
-  const postgresExpectedProvider = await postgresProviderFromCumulusProvider(expectedProvider);
+  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(expectedProvider);
   const postgresOmitList = ['created_at', 'updated_at', 'cumulusId'];
   // Make sure testProvider contains values for the properties we omitted from
   // expectedProvider to confirm that after we replace (PUT) the provider those

@@ -2,12 +2,12 @@
 const test = require('ava');
 
 const {
-  postgresProviderFromCumulusProvider,
+  translateApiProviderToPostgresProvider,
   nullifyUndefinedProviderValues,
   encryptValueWithKMS,
 } = require('../dist/provider');
 
-test('postgresProviderFromCumulusProvider translates a Cumulus Provider object to a Postgres Provider object', async (t) => {
+test('translateApiProviderToPostgresProvider translates a Cumulus Provider object to a Postgres Provider object', async (t) => {
   const fakeEncryptFunction = async () => 'fakeEncryptedString';
   const cumulusProviderObject = {
     id: 'testId',
@@ -39,7 +39,7 @@ test('postgresProviderFromCumulusProvider translates a Cumulus Provider object t
     updated_at: 5678,
     username: 'fakeEncryptedString',
   };
-  const result = await postgresProviderFromCumulusProvider(
+  const result = await translateApiProviderToPostgresProvider(
     cumulusProviderObject,
     fakeEncryptFunction
   );
