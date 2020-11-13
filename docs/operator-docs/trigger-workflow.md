@@ -28,7 +28,26 @@ Assume there are 2 files to be ingested in an S3 bucket called `discovery-bucket
 - GRANULE.A2017025.jpg
 - GRANULE.A2017025.hdf
 
-Public and protected buckets should exist and be mapped to bucket names in the Cumulus deployment.
+Archive buckets should already be created and mapped to public / private / protected in the Cumulus deployment.
+
+For example:
+
+```json
+buckets = {
+  private = {
+    name = "discovery-bucket"
+    type = "private"
+  },
+  protected = {
+    name = "archive-protected"
+    type = "protected"
+  }
+  public = {
+    name = "archive-public"
+    type = "public"
+  }
+}
+```
 
 #### Create a provider
 
