@@ -9,12 +9,13 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  localStackConnectionEnv,
-  generateLocalTestDb,
   destroyLocalTestDb,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  nullifyUndefinedProviderValues,
+  postgresProviderFromCumulusProvider,
   tableNames,
   translateApiProviderToPostgresProvider,
-  nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -80,12 +81,10 @@ test.beforeEach(async (t) => {
     ...fakeProviderFactory(),
     cmKeyId: 'key',
   };
-  await request(app)
-    .post('/providers')
-    .send(t.context.testProvider)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
+
+  const createObject = await postgresProviderFromCumulusProvider(t.context.testProvider);
+  await t.context.testKnex.insert(tableNames.providers).insert(createObject);
+  await providerModel.create(t.context.testProvider);
 });
 
 test.after.always(async (t) => {
