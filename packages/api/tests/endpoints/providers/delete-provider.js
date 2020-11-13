@@ -14,7 +14,7 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   tableNames,
-  postgresProviderFromCumulusProvider,
+  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -92,8 +92,8 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   t.context.testProvider = fakeProviderFactory();
-  const createObject = await postgresProviderFromCumulusProvider(t.context.testProvider);
-  await t.context.testKnex.insert(tableNames.providers).insert(createObject);
+  const createObject = await translateApiProviderToPostgresProvider(t.context.testProvider);
+  await t.context.testKnex(tableNames.providers).insert(createObject);
   await providerModel.create(t.context.testProvider);
 });
 
