@@ -213,6 +213,7 @@ module "thin_egress_app" {
   stage_name                 = local.tea_stage_name
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
   vpc_subnet_ids             = var.lambda_subnet_ids
+  log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
