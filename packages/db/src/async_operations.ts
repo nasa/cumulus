@@ -5,7 +5,7 @@ import { PostgresAsyncOperation } from './types';
 export const translateApiAsyncOperationToPostgresAsyncOperation = (
   record: ApiAsyncOperation
 ): PostgresAsyncOperation => {
-  const translatedRecord: PostgresAsyncOperation = <PostgresAsyncOperation>toSnake(record);
+  const translatedRecord = <PostgresAsyncOperation>toSnake(record);
   if (record.output !== undefined) {
     translatedRecord.output = record.output;
   }

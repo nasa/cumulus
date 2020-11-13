@@ -44,6 +44,7 @@ const generateFakeProvider = (params) => ({
 
 let providersModel;
 let rulesModel;
+const providerOmitList = ['id', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri', 'createdAt', 'updatedAt'];
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -138,7 +139,7 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
         created_at: new Date(fakeProvider.createdAt),
         updated_at: new Date(fakeProvider.updatedAt),
       },
-      ['id', 'encrypted', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri', 'createdAt', 'updatedAt']
+      [...providerOmitList, 'encrypted']
     )
   );
 });
@@ -288,7 +289,7 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
         certificate_uri: null,
         created_at: new Date(fakeProvider.createdAt),
       },
-      ['id', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri', 'createdAt', 'updatedAt']
+      providerOmitList
     )
   );
 });

@@ -57,7 +57,7 @@ test.before(async (t) => {
   await t.context.knex(tableNames.asyncOperations).insert({
     id: t.context.asyncOperationId,
     description: 'test description',
-    operationType: 'ES Index',
+    operation_type: 'ES Index',
     status: 'RUNNING',
   });
 });

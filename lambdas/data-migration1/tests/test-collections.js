@@ -43,6 +43,7 @@ const generateFakeCollection = (params) => ({
 
 let collectionsModel;
 let rulesModel;
+const collectionOmitList = ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt'];
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -114,7 +115,7 @@ test.serial('migrateCollectionRecord correctly migrates collection record', asyn
         created_at: new Date(fakeCollection.createdAt),
         updated_at: new Date(fakeCollection.updatedAt),
       },
-      ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt']
+      collectionOmitList
     )
   );
 });
@@ -167,7 +168,7 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
         duplicate_handling: 'error',
         report_to_ems: true,
       },
-      ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt']
+      collectionOmitList
     )
   );
 });
