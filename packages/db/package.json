@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
