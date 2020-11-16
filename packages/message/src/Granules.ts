@@ -20,7 +20,7 @@ interface MessageWithGranules extends Message.CumulusMessage {
 }
 
 /**
- * Get granules from a workflow message.
+ * Get granules from payload?.granules of a workflow message.
  *
  * @param {MessageWithGranules} message - A workflow message
  * @returns {Array<Object>|undefined} An array of granule objects, or
