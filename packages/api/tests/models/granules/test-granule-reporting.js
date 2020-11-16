@@ -228,7 +228,7 @@ test('_validateAndStoreGranuleRecord() does throw validation error', async (t) =
   await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(granule));
 });
 
-test('_validateAndStoreGranuleRecord() throws error for a conditional check exception', async (t) => {
+test('_validateAndStoreGranuleRecord() throws an error if trying to update granule to failed -> running without a new execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
