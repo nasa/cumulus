@@ -7,6 +7,10 @@ const {
   encryptValueWithKMS,
 } = require('../dist/provider');
 
+test.beforeEach(() => {
+  process.env.provider_kms_key_id = 'fakeKeyId';
+});
+
 test('translateApiProviderToPostgresProvider translates a Cumulus Provider object to a Postgres Provider object', async (t) => {
   const fakeEncryptFunction = async () => 'fakeEncryptedString';
   const cumulusProviderObject = {
@@ -71,11 +75,12 @@ test('nullifyUndefinedProviderValues sets undefined provider values to "null"', 
   t.deepEqual(actual, expected);
 });
 
-test('encryptValueWithKMS throws if provder_kms_key_id is undefined', async (t) => {
-  t.throws(() => encryptValueWithKMS('somevalue'));
+test.serial('encryptValueWithKMS throws if provder_kms_key_id is undefined', async (t) => {
+  process.env.provider_kms_key_id = undefined;
+  await t.throwsAsync(() => encryptValueWithKMS('somevalue'));
 });
 
 test.serial('encryptValueWithKMS encrypts the key', async (t) => {
-  const actual = await encryptValueWithKMS('somevalue', () => 'encrypted', 'kmsKey');
+  const actual = await encryptValueWithKMS('somevalue', () => 'encrypted');
   t.is(actual, 'encrypted');
 });

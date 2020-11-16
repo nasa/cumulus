@@ -10,10 +10,9 @@ import { PostgresProvider } from './types';
 
 export const encryptValueWithKMS = (
   value: string,
-  encryptFunction: Function = KMS.encrypt,
-  kmsKey?: string
+  encryptFunction: Function = KMS.encrypt
 ): Promise<string> => {
-  const providerKmsKeyId = kmsKey || envUtils.getRequiredEnvVar('provider_kms_key_id');
+  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id');
   return encryptFunction(providerKmsKeyId, value);
 };
 
