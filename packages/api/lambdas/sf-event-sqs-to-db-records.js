@@ -29,7 +29,6 @@ const {
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
-  messageHasGranules,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -240,8 +239,9 @@ const writeGranules = async ({
   knex,
   granuleModel = new Granule(),
 }) => {
+  const granules = getMessageGranules(cumulusMessage);
   // If there are no granules in the message, then there's nothing to do here, which is fine
-  if (!messageHasGranules(cumulusMessage)) {
+  if (granules.length === 0) {
     return true;
   }
   if (!collectionCumulusId) {
@@ -249,7 +249,7 @@ const writeGranules = async ({
   }
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
-  return Promise.allSettled(getMessageGranules(cumulusMessage).map(
+  return Promise.allSettled(granules.map(
     async (granule) => {
       const executionArn = getMessageExecutionArn(cumulusMessage);
       const executionUrl = getExecutionUrlFromArn(executionArn);
