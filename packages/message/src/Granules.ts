@@ -30,19 +30,7 @@ interface MessageWithGranules extends Message.CumulusMessage {
  */
 export const getMessageGranules = (
   message: MessageWithGranules
-): unknown[] | undefined => message.payload?.granules;
-
-/**
- * Determine whether workflow message has granules.
- *
- * @param {MessageWithGranules} message - A workflow message
- * @returns {boolean} true if message has granules
- *
- * @alias module:Granules
- */
-export const messageHasGranules = (
-  message: MessageWithGranules
-): boolean => getMessageGranules(message) !== undefined;
+): unknown[] => message.payload?.granules ?? [];
 
 /**
  * Determine the status of a granule.
