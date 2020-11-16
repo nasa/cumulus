@@ -243,7 +243,7 @@ test('_validateAndStoreGranuleRecord() throws an error if trying to update granu
   await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 });
 
-test('storeGranuleFromCumulusMessage() does throw an error for a failing record', async (t) => {
+test('storeGranuleFromCumulusMessage() throws an error for a failing record', async (t) => {
   const { granuleModel } = t.context;
 
   const granule1 = fakeGranuleFactoryV2({
