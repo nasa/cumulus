@@ -651,9 +651,9 @@ class Granule extends Manager {
    */
   async storeGranulesFromCumulusMessage(cumulusMessage) {
     const granules = getMessageGranules(cumulusMessage);
-    if (!granules) {
+    if (granules.length === 0) {
       log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
-      return [];
+      return granules;
     }
 
     const executionArn = getMessageExecutionArn(cumulusMessage);
