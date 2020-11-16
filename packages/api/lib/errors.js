@@ -30,7 +30,7 @@ class AssociatedRulesError extends Error {
 class ApiCollisionError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'CumulusMessageError';
+    this.name = 'ApiCollisionError';
     Error.captureStackTrace(this, ApiCollisionError);
   }
 }
