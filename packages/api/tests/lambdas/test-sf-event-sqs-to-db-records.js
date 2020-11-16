@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
+const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
 
@@ -92,10 +93,10 @@ const runHandler = async (cumulusMessage = {}) => {
 const generateRDSCollectionRecord = (params) => ({
   name: `${cryptoRandomString({ length: 10 })}collection`,
   version: '0.0.0',
-  duplicateHandling: 'replace',
-  granuleIdValidationRegex: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
-  granuleIdExtractionRegex: '(MOD09GQ\\.(.*))\\.hdf',
-  sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
+  duplicate_handling: 'replace',
+  granule_id_validation_regex: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
+  granule_id_extraction_regex: '(MOD09GQ\\.(.*))\\.hdf',
+  sample_file_name: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
   files: JSON.stringify([{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }]),
   created_at: new Date(),
   updated_at: new Date(),
@@ -186,7 +187,7 @@ test.beforeEach(async (t) => {
     },
     meta: {
       status: 'running',
-      collection: t.context.collection,
+      collection: toCamel(t.context.collection),
       provider: t.context.provider,
     },
     payload: {
