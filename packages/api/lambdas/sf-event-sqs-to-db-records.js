@@ -230,6 +230,66 @@ const writeGranuleViaTransaction = async ({
       pdrCumulusId,
     });
 
+/**
+ * Write a granule to DynamoDB and Postgres
+ *
+ * @param {Object} params
+ * @param {Object} params.granule - An API granule object
+ * @param {Object} params.cumulusMessage - A workflow message
+ * @param {string} params.collectionCumulusId
+ *   Cumulus ID for collection referenced in workflow message, if any
+ * @param {string} params.executionCumulusId
+ *   Cumulus ID for execution referenced in workflow message, if any
+ * @param {Knex} params.knex - Client to interact with Postgres database
+ * @param {string} [params.providerCumulusId]
+ *   Cumulus ID for provider referenced in workflow message, if any
+ * @param {string} [params.pdrCumulusId]
+ *   Cumulus ID for PDR referenced in workflow message, if any
+ * @param {Object} [params.granuleModel]
+ *   Optional override for the granule model writing to DynamoDB
+ *
+ * @returns {Promise}
+ * @throws
+ */
+const writeGranule = async ({
+  granule,
+  cumulusMessage,
+  collectionCumulusId,
+  executionCumulusId,
+  knex,
+  providerCumulusId,
+  pdrCumulusId,
+  granuleModel,
+}) => {
+  const executionArn = getMessageExecutionArn(cumulusMessage);
+  const executionUrl = getExecutionUrlFromArn(executionArn);
+
+  let executionDescription;
+  try {
+    executionDescription = await describeExecution({ executionArn });
+  } catch (error) {
+    log.error(`Could not describe execution ${executionArn}`, error);
+  }
+
+  return knex.transaction(async (trx) => {
+    await writeGranuleViaTransaction({
+      cumulusMessage,
+      granule,
+      collectionCumulusId,
+      providerCumulusId,
+      executionCumulusId,
+      pdrCumulusId,
+      trx,
+    });
+    return granuleModel.storeGranuleFromCumulusMessage({
+      granule,
+      cumulusMessage,
+      executionUrl,
+      executionDescription,
+    });
+  });
+};
+
 const writeGranules = async ({
   cumulusMessage,
   collectionCumulusId,
@@ -250,35 +310,16 @@ const writeGranules = async ({
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   return Promise.allSettled(granules.map(
-    async (granule) => {
-      const executionArn = getMessageExecutionArn(cumulusMessage);
-      const executionUrl = getExecutionUrlFromArn(executionArn);
-
-      let executionDescription;
-      try {
-        executionDescription = await describeExecution({ executionArn });
-      } catch (error) {
-        log.error(`Could not describe execution ${executionArn}`, error);
-      }
-
-      return knex.transaction(async (trx) => {
-        await writeGranuleViaTransaction({
-          cumulusMessage,
-          granule,
-          collectionCumulusId,
-          providerCumulusId,
-          executionCumulusId,
-          pdrCumulusId,
-          trx,
-        });
-        return granuleModel.storeGranuleFromCumulusMessage({
-          granule,
-          cumulusMessage,
-          executionUrl,
-          executionDescription,
-        });
-      });
-    }
+    (granule) => writeGranule({
+      granule,
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      executionCumulusId,
+      pdrCumulusId,
+      knex,
+      granuleModel,
+    })
   ));
 };
 
