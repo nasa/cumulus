@@ -578,7 +578,7 @@ class Granule extends Manager {
   }
 
   /**
-   * Store a granule record.
+   * Store a granule record in DynamoDB.
    *
    * @param {Object} granuleRecord - A granule record.
    * @returns {Promise<Object|undefined>}
