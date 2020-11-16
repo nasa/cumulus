@@ -613,6 +613,20 @@ class Granule extends Manager {
     return this._storeGranuleRecord(granuleRecord);
   }
 
+  /**
+   * Generate a granule record from a Cumulus message and store it in DynamoDB.
+   *
+   * @param {Object} params
+   * @param {Object} params.granule - Granule object from a Cumulus message
+   * @param {Object} params.cumulusMessage - A workflow message
+   * @param {string} params.executionUrl - Step Function execution URL for the workflow
+   * @param {Object} params.executionDescription
+   *   Response from StepFunctions.DescribeExecution
+   *   See https://docs.aws.amazon.com/step-functions/latest/apireference/API_DescribeExecution.html
+   *
+   * @returns {Promise<Object|undefined>}
+   * @throws
+   */
   async storeGranuleFromCumulusMessage({
     granule,
     cumulusMessage,
