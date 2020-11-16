@@ -290,13 +290,35 @@ const writeGranule = async ({
   });
 };
 
+/**
+ * Write granules to DynamoDB and Postgres
+ *
+ * @param {Object} params
+ * @param {Object} params.cumulusMessage - A workflow message
+ * @param {string} params.collectionCumulusId
+ *   Cumulus ID for collection referenced in workflow message, if any
+ * @param {string} params.executionCumulusId
+ *   Cumulus ID for execution referenced in workflow message, if any
+ * @param {Knex} params.knex - Client to interact with Postgres database
+ * @param {string} [params.providerCumulusId]
+ *   Cumulus ID for provider referenced in workflow message, if any
+ * @param {string} [params.pdrCumulusId]
+ *   Cumulus ID for PDR referenced in workflow message, if any
+ * @param {Object} [params.granuleModel]
+ *   Optional override for the granule model writing to DynamoDB
+ *
+ * @returns {Promise<boolean|Object[]>}
+ *  true if there are no granules on the message, otherwise
+ *  results from Promise.allSettled for all granules
+ * @throws {Error} - if no collection is provided
+ */
 const writeGranules = async ({
   cumulusMessage,
   collectionCumulusId,
-  providerCumulusId,
   executionCumulusId,
-  pdrCumulusId,
   knex,
+  providerCumulusId,
+  pdrCumulusId,
   granuleModel = new Granule(),
 }) => {
   const granules = getMessageGranules(cumulusMessage);
