@@ -189,7 +189,7 @@ test('POST returns a 409 error if the provider already exists', async (t) => {
   t.is(message, (`A record already exists for ${newProvider.id}`));
 });
 
-test('POST returns a 409 error if the provider already exists in RDS', async (t) => {
+test.only('POST returns a 409 error if the provider already exists in RDS', async (t) => {
   const newProvider = fakeProviderFactory();
 
   await t.context.testKnex(tableNames.providers).insert(

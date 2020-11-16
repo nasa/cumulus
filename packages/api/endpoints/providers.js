@@ -10,13 +10,16 @@ const {
   nullifyUndefinedProviderValues,
   doesRecordExist,
 } = require('@cumulus/db');
-
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist, ValidationError } = require('@cumulus/errors');
+const {
+  ApiCollisionError,
+  RecordDoesNotExist,
+  ValidationError,
+} = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const Provider = require('../models/providers');
-const { ApiCollisionError, AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const { Search } = require('../es/search');
 const { addToLocalES, indexProvider } = require('../es/indexer');
 
