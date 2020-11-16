@@ -9,12 +9,21 @@ import { ApiProvider } from '@cumulus/types';
 import { PostgresProvider } from './types';
 
 export const encryptValueWithKMS = (
-  value: string
+  value: string,
+  encryptFunction: Function = KMS.encrypt,
+  kmsKey?: string
 ): Promise<string> => {
-  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id');
-  return KMS.encrypt(providerKmsKeyId, value);
+  const providerKmsKeyId = kmsKey || envUtils.getRequiredEnvVar('provider_kms_key_id');
+  return encryptFunction(providerKmsKeyId, value);
 };
 
+/**
+* Translates API Provider record to Postgres Provider record
+*
+* @param {ApiProvider} data - ApiProvider record to translate
+* @param {Function} [encryptMethod] - The encryption method to use, defaults to encryptValueWithKMS
+* @returns {Promise<PostgresProvider>} Returns a PostgresProvider object
+*/
 export const translateApiProviderToPostgresProvider = async (
   data: ApiProvider,
   encryptMethod: Function = encryptValueWithKMS
@@ -37,6 +46,15 @@ export const translateApiProviderToPostgresProvider = async (
   });
 };
 
+/**
+* Nullifies 'optional' values in the Provider object
+* @summary This is require as updates to knex objects will ignore 'undefined' object keys
+* rather than remove them as required
+*
+* @param {PostgresProvider} data - PostgresProvider object to be updated with
+* null values
+* @returns {PostgresProvider} - PostgresProvider with 'nullified' values
+*/
 export const nullifyUndefinedProviderValues = (
   data: PostgresProvider
 ): PostgresProvider => {
@@ -60,6 +78,13 @@ export const nullifyUndefinedProviderValues = (
   return returnData;
 };
 
+/**
+* Uses isValidHostname to validate if provider host is valid
+* @param {string} host            - Hostname to validate
+* @returns {undefined}            - Returns undefined if hostname valid
+* @throws PostgresValidationError - Throws PostgresValidationError if
+*                                   host is not valid
+*/
 export const validateProviderHost = (host: string) => {
   if (isNil(host)) return;
   if (isValidHostname(host)) return;

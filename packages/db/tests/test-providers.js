@@ -74,3 +74,8 @@ test('nullifyUndefinedProviderValues sets undefined provider values to "null"', 
 test('encryptValueWithKMS throws if provder_kms_key_id is undefined', async (t) => {
   t.throws(() => encryptValueWithKMS('somevalue'));
 });
+
+test.serial('encryptValueWithKMS encrypts the key', async (t) => {
+  const actual = await encryptValueWithKMS('somevalue', () => 'encrypted', 'kmsKey');
+  t.is(actual, 'encrypted');
+});

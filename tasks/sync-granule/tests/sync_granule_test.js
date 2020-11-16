@@ -175,7 +175,7 @@ test.serial('no error when collection info is not provided in the event', async 
   t.is(output.granules[0].files.length, 1);
 });
 
-test.serial('download Granule from FTP endpoint', async (t) => {
+test.serial.only('download Granule from FTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -186,8 +186,13 @@ test.serial('download Granule from FTP endpoint', async (t) => {
 
   t.context.event.config.collection.url_path = 'example/';
 
-  await validateConfig(t, t.context.event.config);
-  await validateInput(t, t.context.event.input);
+  try {
+    await validateConfig(t, t.context.event.config);
+    await validateInput(t, t.context.event.input);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 
   const output = await syncGranule(t.context.event);
 
