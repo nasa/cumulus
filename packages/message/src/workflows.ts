@@ -2,7 +2,7 @@ import { Message } from '@cumulus/types';
 
 type MessageWithOptionalStatus = Message.CumulusMessage & {
   meta: {
-    status?: string
+    status?: Message.WorkflowStatus
   }
 };
 
@@ -10,10 +10,10 @@ type MessageWithOptionalStatus = Message.CumulusMessage & {
  * Get the status workflow message, if any.
  *
  * @param {MessageWithOptionalStatus} message - A workflow message object
- * @returns {undefined|string} The workflow status
+ * @returns {Message.WorkflowStatus|undefined} The workflow status
  *
  * @alias module:workflows
  */
 export const getMetaStatus = (
   message: MessageWithOptionalStatus
-): string | undefined => message.meta?.status;
+): Message.WorkflowStatus | undefined => message.meta?.status;

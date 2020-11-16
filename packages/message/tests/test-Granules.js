@@ -3,7 +3,11 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { getMessageGranules, messageHasGranules } = require('../Granules');
+const {
+  getMessageGranules,
+  messageHasGranules,
+  getGranuleStatus
+} = require('../Granules');
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
 
@@ -40,4 +44,25 @@ test('messageHasGranules returns false if message does not have granules', (t) =
   t.false(messageHasGranules({
     payload: {},
   }));
+});
+
+test('getGranuleStatus returns status from message', (t) => {
+  t.is(
+    getGranuleStatus({
+      meta: {
+        status: 'running',
+      },
+    }),
+    'running'
+  );
+});
+
+test('getGranuleStatus returns status from granule', (t) => {
+  t.is(
+    getGranuleStatus(
+      {},
+      { status: 'failed' }
+    ),
+    'failed'
+  );
 });
