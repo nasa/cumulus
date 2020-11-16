@@ -29,6 +29,7 @@ const {
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
+  getGranuleStatus,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -223,7 +224,7 @@ const writeGranuleViaTransaction = async ({
   trx(tableNames.granules)
     .insert({
       granuleId: granule.granuleId,
-      status: getMetaStatus(cumulusMessage) || granule.status,
+      status: getGranuleStatus(cumulusMessage, granule),
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
