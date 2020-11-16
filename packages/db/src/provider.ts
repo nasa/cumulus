@@ -4,7 +4,7 @@ import isValidHostname from 'is-valid-hostname';
 
 import { PostgresValidationError } from '@cumulus/errors';
 import { envUtils } from '@cumulus/common';
-import KMS from '@cumulus/aws-client/KMS';
+import { KMS } from '@cumulus/aws-client';
 import { ApiProvider } from '@cumulus/types';
 import { PostgresProvider } from './types';
 

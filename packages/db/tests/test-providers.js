@@ -71,6 +71,6 @@ test('nullifyUndefinedProviderValues sets undefined provider values to "null"', 
   t.deepEqual(actual, expected);
 });
 
-test('encryptValueWithKMS throws if provder_kms_key_id is undefined', (t) => {
+test('encryptValueWithKMS throws if provder_kms_key_id is undefined', async (t) => {
   t.throws(() => encryptValueWithKMS('somevalue'));
 });
