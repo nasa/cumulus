@@ -61,13 +61,13 @@ export const up = async (knex: Knex): Promise<void> =>
       .timestamp('last_update_date_time')
       .comment('Timestap for last update');
     table
-      .timestamp('processing_end_datetime')
+      .timestamp('processing_end_date_time')
       .comment('Date granule finished processing');
     table
-      .timestamp('processing_start_datetime')
+      .timestamp('processing_start_date_time')
       .comment('Date granule started processing');
     table
-      .timestamp('production_datetime')
+      .timestamp('production_date_time')
       .comment('Timestamp for granule production date/time');
     table
       .timestamp('timestamp');
