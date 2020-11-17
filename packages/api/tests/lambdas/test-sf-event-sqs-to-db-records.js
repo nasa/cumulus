@@ -720,26 +720,6 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
   );
 });
 
-test('writeGranules() returns true if there are no granules in the message', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    collectionCumulusId,
-    providerCumulusId,
-  } = t.context;
-
-  delete cumulusMessage.payload.granules;
-
-  t.true(
-    await writeGranules({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      knex,
-    })
-  );
-});
-
 test('writeGranules() throws an error if collection is not provided', async (t) => {
   const { cumulusMessage, knex, providerCumulusId } = t.context;
   await t.throwsAsync(
