@@ -793,19 +793,41 @@ test('writeGranules() handles successful and failing writes independently', asyn
     granule2,
   ];
 
-  const results = await writeGranules({
+  await t.throwsAsync(writeGranules({
     cumulusMessage,
     collectionCumulusId,
     providerCumulusId,
     knex,
-  });
+  }));
 
   t.true(await granuleModel.exists({ granuleId }));
   t.true(
     await doesRecordExist({ granuleId }, knex, tableNames.granules)
   );
-  t.is(results.filter((result) => result.status === 'rejected').length, 1);
 });
+
+test('writeGranules() throws error if any granule writes fail', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+  } = t.context;
+
+  cumulusMessage.payload.granules = [
+    ...cumulusMessage.payload.granules,
+    // this object is not a valid granule, so its write should fail
+    {},
+  ];
+
+  await t.throwsAsync(writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+  }));
+});
+
 
 test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
@@ -823,16 +845,17 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo
     },
   };
 
-  const results = await writeGranules({
-    cumulusMessage,
-    collectionCumulusId,
-    providerCumulusId,
-    knex,
-    granuleModel: fakeGranuleModel,
-  });
+  const [error] = await t.throwsAsync(
+    writeGranules({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+      granuleModel: fakeGranuleModel,
+    })
+  );
 
-  const [failure] = results.filter((result) => result.status === 'rejected');
-  t.is(failure.reason.message, 'Granules dynamo error');
+  t.true(error.message.includes('Granules dynamo error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await doesRecordExist({ granuleId }, knex, tableNames.granules)
@@ -860,15 +883,14 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
   const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
   t.teardown(() => trxStub.restore());
 
-  const results = await writeGranules({
+  const [error] = await t.throwsAsync(writeGranules({
     cumulusMessage,
     collectionCumulusId,
     providerCumulusId,
     knex,
-  });
+  }));
 
-  const [failure] = results.filter((result) => result.status === 'rejected');
-  t.is(failure.reason.message, 'Granules RDS error');
+  t.true(error.message.includes('Granules RDS error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await doesRecordExist({ granuleId }, knex, tableNames.granules)
@@ -991,7 +1013,7 @@ test.serial('Lambda sends message to DLQ when RDS_DEPLOYMENT_CUMULUS_VERSION env
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('Lambda sends message to DLQ when an execution/PDR write to the database fails', async (t) => {
+test('Lambda sends message to DLQ when an execution write to the database fails', async (t) => {
   const {
     cumulusMessage,
     executionModel,

@@ -332,7 +332,7 @@ const writeGranules = async ({
   }
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
-  return Promise.allSettled(granules.map(
+  const results = await Promise.allSettled(granules.map(
     (granule) => writeGranule({
       granule,
       cumulusMessage,
@@ -344,6 +344,14 @@ const writeGranules = async ({
       granuleModel,
     })
   ));
+  const failures = results.filter((result) => result.status === 'rejected');
+  if (failures.length > 0) {
+    const allFailures = failures.map((failure) => failure.reason);
+    const aggregateError = new AggregateError(allFailures);
+    log.error('Failed writing some granules to Dynamo', aggregateError);
+    throw aggregateError;
+  }
+  return results;
 };
 
 const writeRecordsToDynamoDb = async (cumulusMessage) => {
