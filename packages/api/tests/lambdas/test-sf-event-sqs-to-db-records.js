@@ -828,7 +828,6 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
   }));
 });
 
-
 test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
