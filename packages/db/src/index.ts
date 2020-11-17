@@ -8,8 +8,10 @@ export { tableNames } from './tables';
 export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
-  CollectionRecord,
+  PostgresCollection,
+  PostgresCollectionRecord,
   ExecutionRecord,
   ProviderRecord,
 } from './types';
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
+export { translateApiCollectionToPostgresCollection } from './collections';

@@ -5,7 +5,7 @@ export interface PostgresAsyncOperation {
   description: string
   operation_type: AsyncOperationType
   status: AsyncOperationStatus
-  output?: object
+  output?: Object
   task_arn?: string
   created_at?: Date
   updated_at?: Date
@@ -16,20 +16,25 @@ export interface PostgresAsyncOperationRecord extends PostgresAsyncOperation {
   updated_at: Date
 }
 
-export interface CollectionRecord {
+export interface PostgresCollection {
   name: string
   version: string
-  process: string
   granule_id_validation_regex: string
   granule_id_extraction_regex: string
   files: string
+  process?: string
   duplicate_handling?: string
   report_to_ems?: boolean
   sample_file_name?: string
   url_path?: string
   ignore_files_config_for_discovery?: boolean
-  meta?: object
+  meta?: string
   tags?: string
+  created_at?: Date
+  updated_at?: Date
+}
+
+export interface PostgresCollectionRecord extends PostgresCollection {
   created_at: Date
   updated_at: Date
 }

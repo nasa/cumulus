@@ -16,10 +16,12 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('sample_file_name')
       .comment('Example filename for this collection')
       .notNullable();
-    table.text('granule_id_validation_regex')
+    table
+      .text('granule_id_validation_regex')
       .notNullable()
       .comment('The regular expression used to validate the granule ID extracted from filenames according to the granuleIdExtraction');
-    table.text('granule_id_extraction_regex')
+    table
+      .text('granule_id_extraction_regex')
       .comment('The regular expression used to extract the granule ID from filenames')
       .notNullable();
     table
