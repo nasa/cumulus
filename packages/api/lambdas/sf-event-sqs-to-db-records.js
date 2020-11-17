@@ -308,7 +308,7 @@ const writeGranule = async ({
  * @param {Object} [params.granuleModel]
  *   Optional override for the granule model writing to DynamoDB
  *
- * @returns {Promise<boolean|Object[]>}
+ * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
  * @throws {Error} - if no collection is provided
@@ -322,14 +322,10 @@ const writeGranules = async ({
   pdrCumulusId,
   granuleModel = new Granule(),
 }) => {
-  const granules = getMessageGranules(cumulusMessage);
-  // If there are no granules in the message, then there's nothing to do here, which is fine
-  if (granules.length === 0) {
-    return true;
-  }
   if (!collectionCumulusId) {
     throw new Error('Collection reference is required for granules');
   }
+  const granules = getMessageGranules(cumulusMessage);
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
