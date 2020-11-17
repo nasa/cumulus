@@ -6,7 +6,7 @@ const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
-  getExecutionUrlFromArn
+  getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 const {
   getMessagePdr,

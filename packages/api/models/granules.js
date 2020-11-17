@@ -22,14 +22,11 @@ const {
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
-  getGranuleStatus
+  getGranuleStatus,
 } = require('@cumulus/message/Granules');
 const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
-const {
-  getMetaStatus,
-} = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
