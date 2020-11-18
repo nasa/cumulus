@@ -95,7 +95,7 @@ const getMessageCollectionCumulusId = async (cumulusMessage, knex) => {
     if (!isRecordDefined(collection)) {
       throw new Error(`Could not find collection with params ${JSON.stringify(collectionNameAndVersion)}`);
     }
-    return collection.cumulusId;
+    return collection.cumulus_id;
   } catch (error) {
     log.error(error);
     return undefined;
@@ -115,7 +115,7 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
     if (!isRecordDefined(provider)) {
       throw new Error(`Could not find provider with params ${JSON.stringify(searchParams)}`);
     }
-    return provider.cumulusId;
+    return provider.cumulus_id;
   } catch (error) {
     log.error(error);
     return undefined;
@@ -223,12 +223,12 @@ const writeGranuleViaTransaction = async ({
 }) =>
   trx(tableNames.granules)
     .insert({
-      granuleId: granule.granuleId,
+      granule_id: granule.granuleId,
       status: getGranuleStatus(cumulusMessage, granule),
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId,
-      pdrCumulusId,
+      collection_cumulus_id: collectionCumulusId,
+      provider_cumulus_id: providerCumulusId,
+      execution_cumulus_id: executionCumulusId,
+      pdr_cumulus_id: pdrCumulusId,
     });
 
 /**
