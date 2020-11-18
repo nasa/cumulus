@@ -23,7 +23,7 @@ resource "aws_ecs_task_definition" "async_operation" {
         "value": "${var.rds_user_access_secret_arn}"
       }
     ],
-    "image": "cumuluss/async-operation:30",
+    "image": "cumuluss/async-operation:31",
     "memoryReservation": 700,
     "logConfiguration": {
       "logDriver": "awslogs",
