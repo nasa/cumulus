@@ -3,7 +3,7 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('providers', (table) => {
     table
-      .increments('cumulusId')
+      .increments('cumulus_id')
       .primary();
     table
       .text('name')
@@ -27,20 +27,20 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('password')
       .comment('password for acessing the provider');
     table
-      .integer('globalConnectionLimit')
+      .integer('global_connection_limit')
       .comment('Maximum number of allowed concurrent connections to this provider');
     table
-      .text('privateKey')
+      .text('private_key')
       .comment(`
         Private key for accessing the provider, if necessary.
         Should specify a filename that is assumed to exist at
         s3://<your-internal-bucket>/<stack-name>/crypto
       `);
     table
-      .text('cmKeyId')
+      .text('cm_key_id')
       .comment('AWS KMS Customer Master Key ARN or alias for decrypting credentials');
     table
-      .text('certificateUri')
+      .text('certificate_uri')
       .comment('S3 URI (e.g. s3://bucket/key) for custom or self-signed SSL (TLS) certificate to access provider');
     table
       .timestamps(false, true);

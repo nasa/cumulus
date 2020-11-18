@@ -138,7 +138,7 @@ test('PUT replaces an existing collection', async (t) => {
 
   t.is(fetchedDbRecord.name, originalCollection.name);
   t.is(fetchedDbRecord.version, originalCollection.version);
-  t.is(fetchedDbRecord.duplicateHandling, 'error');
+  t.is(fetchedDbRecord.duplicate_handling, 'error');
   // eslint-disable-next-line unicorn/no-null
   t.is(fetchedDbRecord.process, null);
   t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
@@ -183,7 +183,7 @@ test('PUT creates a new record in RDS if one does not exist', async (t) => {
 
   t.is(fetchedDbRecord.name, originalCollection.name);
   t.is(fetchedDbRecord.version, originalCollection.version);
-  t.is(fetchedDbRecord.duplicateHandling, 'error');
+  t.is(fetchedDbRecord.duplicate_handling, 'error');
   // eslint-disable-next-line unicorn/no-null
   t.is(fetchedDbRecord.process, null);
   t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);

@@ -1,7 +1,12 @@
 import { ECS } from 'aws-sdk';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
-import { AsyncOperationRecord, getKnexClient, tableNames } from '@cumulus/db';
+import {
+  getKnexClient,
+  tableNames,
+  translateApiAsyncOperationToPostgresAsyncOperation,
+} from '@cumulus/db';
+import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
@@ -120,13 +125,13 @@ export const startAsyncOperation = async (params: {
   dynamoTableName: string,
   knexConfig?: NodeJS.ProcessEnv,
   lambdaName: string,
-  operationType: string,
+  operationType: AsyncOperationType,
   payload: unknown,
   stackName: string,
   systemBucket: string,
   useLambdaEnvironmentVariables?: boolean,
 }, AsyncOperation: AsyncOperationModelClass
-): Promise<Partial<AsyncOperationRecord>> => {
+): Promise<Partial<ApiAsyncOperation>> => {
   const {
     description,
     operationType,
@@ -170,7 +175,7 @@ export const startAsyncOperation = async (params: {
 
   const knex = await getKnexClient({ env: knexConfig });
   return knex.transaction(async (trx) => {
-    const createObject = {
+    const createObject: ApiAsyncOperation = {
       id,
       status: 'RUNNING',
       taskArn: runTaskResponse?.tasks?.[0].taskArn,
@@ -178,7 +183,9 @@ export const startAsyncOperation = async (params: {
       operationType,
     };
 
-    await trx(tableNames.asyncOperations).insert(createObject);
+    const knexCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
+
+    await trx(tableNames.asyncOperations).insert(knexCreateObject);
     return asyncOperationModel.create(createObject);
   });
 };

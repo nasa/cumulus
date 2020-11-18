@@ -11,7 +11,11 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 // eslint-disable-next-line node/no-unpublished-require
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  localStackConnectionEnv, createTestDatabase, deleteTestDatabase, getKnexClient,
+  localStackConnectionEnv,
+  createTestDatabase,
+  deleteTestDatabase,
+  getKnexClient,
+  translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
@@ -259,19 +263,21 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
 
   const spyCall = createSpy.getCall(0).args[0];
   const dbResults = await t.context.knex.select('*')
-    .from('asyncOperations')
+    .from('async_operations')
     .where('id', id)
     .first();
   const expected = {
-    cumulusId: 1,
     description,
     id,
     operationType: 'ES Index',
     status: 'RUNNING',
     taskArn,
   };
-  const omitList = ['created_at', 'updated_at', 'cumulusId', 'output'];
-  t.deepEqual(omit(dbResults[0], omitList), omit(expected[0], omitList));
+  const omitList = ['created_at', 'updated_at', 'cumulus_id', 'output'];
+  t.deepEqual(
+    omit(dbResults, omitList),
+    translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
+  );
   t.deepEqual(omit(spyCall, omitList), omit(expected, omitList));
 });
 
