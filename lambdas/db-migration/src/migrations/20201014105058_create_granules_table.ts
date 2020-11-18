@@ -3,11 +3,11 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('granules', (table) => {
     table
-      .bigIncrements('cumulusId')
+      .bigIncrements('cumulus_id')
       .comment('Internal Cumulus ID for a granule')
       .primary();
     table
-      .text('granuleId')
+      .text('granule_id')
       .comment('Granule ID')
       .notNullable();
     table
@@ -15,8 +15,8 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Ingest status of the granule')
       .notNullable();
     table
-      .integer('collectionCumulusId')
-      .references('cumulusId')
+      .integer('collection_cumulus_id')
+      .references('cumulus_id')
       .inTable('collections')
       .notNullable();
     table
@@ -28,53 +28,53 @@ export const up = async (knex: Knex): Promise<void> =>
       .float('duration')
       .comment('Ingest duration');
     table
-      .float('timeToArchive')
+      .float('time_to_archive')
       .comment('Number of seconds granule took to archive');
     table
-      .float('timeToProcess')
+      .float('time_to_process')
       .comment('Number seconds granule took to complete "processing"');
     table
-      .integer('productVolume');
+      .integer('product_volume');
     table
       .jsonb('error')
       .comment('JSON error object');
     table
-      .text('cmrLink')
+      .text('cmr_link')
       .comment('Link to granule in the CMR API');
     table
-      .integer('executionCumulusId')
+      .integer('execution_cumulus_id')
       .references('cumulusId')
       .inTable('executions');
     table
-      .integer('pdrCumulusId')
+      .integer('pdr_cumulus_id')
       .references('cumulusId')
       .inTable('pdrs');
     table
-      .integer('providerCumulusId')
+      .integer('provider_cumulus_id')
       .references('cumulusId')
       .inTable('providers');
     table
-      .timestamp('beginningDateTime')
+      .timestamp('beginning_date_time')
       .comment('Date granule started');
     table
-      .timestamp('endingDateTime')
+      .timestamp('ending_date_time')
       .comment('Date granule completed');
     table
-      .timestamp('lastUpdateDateTime')
+      .timestamp('last_update_date_time')
       .comment('Timestap for last update');
     table
-      .timestamp('processingEndDateTime')
+      .timestamp('processing_end_date_time')
       .comment('Date granule finished processing');
     table
-      .timestamp('processingStartDateTime')
+      .timestamp('processing_start_date_time')
       .comment('Date granule started processing');
     table
-      .timestamp('productionDateTime')
+      .timestamp('production_date_time')
       .comment('Timestamp for granule production date/time');
     table
       .timestamp('timestamp');
     table
-      .unique(['granuleId', 'collectionCumulusId']);
+      .unique(['granule_id', 'collection_cumulus_id']);
   });
 
 export const down = async (knex: Knex): Promise<void> => knex.schema

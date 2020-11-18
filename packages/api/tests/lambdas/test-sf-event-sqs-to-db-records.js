@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
+const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
 
@@ -94,10 +95,10 @@ const runHandler = async (cumulusMessage = {}) => {
 const generateRDSCollectionRecord = (params) => ({
   name: `${cryptoRandomString({ length: 10 })}collection`,
   version: '0.0.0',
-  duplicateHandling: 'replace',
-  granuleIdValidationRegex: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
-  granuleIdExtractionRegex: '(MOD09GQ\\.(.*))\\.hdf',
-  sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
+  duplicate_handling: 'replace',
+  granule_id_validation_regex: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
+  granule_id_extraction_regex: '(MOD09GQ\\.(.*))\\.hdf',
+  sample_file_name: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
   files: JSON.stringify([{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }]),
   created_at: new Date(),
   updated_at: new Date(),
@@ -185,7 +186,7 @@ test.beforeEach(async (t) => {
     },
     meta: {
       status: 'running',
-      collection: t.context.collection,
+      collection: toCamel(t.context.collection),
       provider: t.context.provider,
     },
     payload: {
@@ -197,7 +198,7 @@ test.beforeEach(async (t) => {
 
   const collectionResponse = await t.context.knex(tableNames.collections)
     .insert(t.context.collection)
-    .returning('cumulusId');
+    .returning('cumulus_id');
   t.context.collectionCumulusId = collectionResponse[0];
 
   const providerResponse = await t.context.knex(tableNames.providers)
@@ -206,7 +207,7 @@ test.beforeEach(async (t) => {
       host: t.context.provider.host,
       protocol: t.context.provider.protocol,
     })
-    .returning('cumulusId');
+    .returning('cumulus_id');
   t.context.providerCumulusId = providerResponse[0];
 
   t.context.doesRecordExistStub = stubRecordExists;
@@ -336,7 +337,7 @@ test('getMessageCollectionCumulusId returns correct collection cumulusId', async
         if (params.name === collection.name
             && params.version === collection.version) {
           return {
-            cumulusId: 5,
+            cumulus_id: 5,
           };
         }
         return undefined;
@@ -369,7 +370,7 @@ test('getMessageProviderCumulusId returns cumulusId of provider in message', asy
       first: async () => {
         if (params.name === provider.id) {
           return {
-            cumulusId: 234,
+            cumulus_id: 234,
           };
         }
         return undefined;
@@ -625,7 +626,7 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulusId if R
   t.true(await pdrModel.exists({ pdrName: pdr.name }));
   t.true(
     await doesRecordExist({
-      cumulusId: pdrCumulusId,
+      cumulus_id: pdrCumulusId,
     }, knex, tableNames.pdrs)
   );
 });

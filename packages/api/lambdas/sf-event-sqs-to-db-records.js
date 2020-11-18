@@ -175,11 +175,11 @@ const writePdrViaTransaction = async ({
     .insert({
       name: getMessagePdrName(cumulusMessage),
       status: getMetaStatus(cumulusMessage),
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId,
+      execution_cumulus_id: executionCumulusId,
+      collection_cumulus_id: collectionCumulusId,
+      provider_cumulus_id: providerCumulusId,
     })
-    .returning('cumulusId');
+    .returning('cumulus_id');
 
 const writePdr = async ({
   cumulusMessage,

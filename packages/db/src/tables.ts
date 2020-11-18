@@ -1,5 +1,5 @@
 export const tableNames = {
-  asyncOperations: 'asyncOperations',
+  asyncOperations: 'async_operations',
   collections: 'collections',
   executions: 'executions',
   granules: 'granules',
