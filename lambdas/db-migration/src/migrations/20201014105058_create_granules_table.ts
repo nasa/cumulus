@@ -43,15 +43,15 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Link to granule in the CMR API');
     table
       .integer('execution_cumulus_id')
-      .references('cumulusId')
+      .references('cumulus_id')
       .inTable('executions');
     table
       .integer('pdr_cumulus_id')
-      .references('cumulusId')
+      .references('cumulus_id')
       .inTable('pdrs');
     table
       .integer('provider_cumulus_id')
-      .references('cumulusId')
+      .references('cumulus_id')
       .inTable('providers');
     table
       .timestamp('beginning_date_time')
