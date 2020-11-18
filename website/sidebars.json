@@ -87,8 +87,7 @@
   },
   "Data Cookbooks": {
     "About Cookbooks": [
-      "data-cookbooks/about-cookbooks",
-      "data-cookbooks/setup"
+      "data-cookbooks/about-cookbooks"
     ],
     "Cookbooks": [
       "data-cookbooks/hello-world",
