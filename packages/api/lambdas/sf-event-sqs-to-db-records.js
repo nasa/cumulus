@@ -151,7 +151,7 @@ const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
       cumulus_version: getMessageCumulusVersion(cumulusMessage),
       status: getMetaStatus(cumulusMessage),
     })
-    .returning('cumulusId');
+    .returning('cumulus_id');
 
 const writeExecution = async ({
   cumulusMessage,
@@ -159,9 +159,11 @@ const writeExecution = async ({
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
-    const [cumulusId] = await writeExecutionViaTransaction({ cumulusMessage, trx });
+    // eslint-disable-next-line camelcase
+    const [cumulus_id] = await writeExecutionViaTransaction({ cumulusMessage, trx });
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
-    return cumulusId;
+    // eslint-disable-next-line camelcase
+    return cumulus_id;
   });
 
 const writePdrViaTransaction = async ({
@@ -200,7 +202,8 @@ const writePdr = async ({
     throw new Error('Provider reference is required for a PDR');
   }
   return knex.transaction(async (trx) => {
-    const [cumulusId] = await writePdrViaTransaction({
+    // eslint-disable-next-line camelcase
+    const [cumulus_id] = await writePdrViaTransaction({
       cumulusMessage,
       collectionCumulusId,
       providerCumulusId,
@@ -208,7 +211,8 @@ const writePdr = async ({
       executionCumulusId,
     });
     await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
-    return cumulusId;
+    // eslint-disable-next-line camelcase
+    return cumulus_id;
   });
 };
 

@@ -328,7 +328,7 @@ test.serial('hasNoAsyncOpOrExists returns false if async operation does not exis
   t.true(doesRecordExistStub.called);
 });
 
-test('getMessageCollectionCumulusId returns correct collection cumulusId', async (t) => {
+test('getMessageCollectionCumulusId returns correct collection cumulus_id', async (t) => {
   const { collection, cumulusMessage } = t.context;
 
   const fakeKnex = () => ({
@@ -362,7 +362,7 @@ test('getMessageCollectionCumulusId returns undefined if collection cannot be fo
   t.is(await getMessageCollectionCumulusId(cumulusMessage, knex), undefined);
 });
 
-test('getMessageProviderCumulusId returns cumulusId of provider in message', async (t) => {
+test('getMessageProviderCumulusId returns cumulus_id of provider in message', async (t) => {
   const { cumulusMessage, provider } = t.context;
 
   const fakeKnex = () => ({
@@ -453,7 +453,7 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
   );
 });
 
-test('shouldWriteExecutionToRDS returns false if collection cumulusId is not defined', async (t) => {
+test('shouldWriteExecutionToRDS returns false if collection cumulus_id is not defined', async (t) => {
   const {
     knex,
     cumulusMessage,
@@ -482,7 +482,7 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   );
 });
 
-test('writeExecution() saves execution to Dynamo and RDS and returns cumulusId if write to RDS is enabled', async (t) => {
+test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -495,7 +495,7 @@ test('writeExecution() saves execution to Dynamo and RDS and returns cumulusId i
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
     await doesRecordExist({
-      cumulusId: executionCumulusId,
+      cumulus_id: executionCumulusId,
     }, knex, tableNames.executions)
   );
 });
@@ -606,7 +606,7 @@ test('writePdr() throws an error if provider is not provided', async (t) => {
   );
 });
 
-test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulusId if RDS write is enabled', async (t) => {
+test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if RDS write is enabled', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -752,7 +752,7 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
 
   t.true(await granuleModel.exists({ granuleId }));
   t.true(
-    await doesRecordExist({ granuleId }, knex, tableNames.granules)
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
   );
 });
 
@@ -783,7 +783,7 @@ test('writeGranules() handles successful and failing writes independently', asyn
 
   t.true(await granuleModel.exists({ granuleId }));
   t.true(
-    await doesRecordExist({ granuleId }, knex, tableNames.granules)
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
   );
 });
 
@@ -838,7 +838,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo
   t.true(error.message.includes('Granules dynamo error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await doesRecordExist({ granuleId }, knex, tableNames.granules)
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
   );
 });
 
@@ -873,7 +873,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
   t.true(error.message.includes('Granules RDS error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await doesRecordExist({ granuleId }, knex, tableNames.granules)
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
   );
 });
 
@@ -910,7 +910,7 @@ test('writeRecords() only writes records to Dynamo if cumulus version is less th
   );
   t.false(
     await doesRecordExist({
-      granuleId,
+      granule_id: granuleId,
     }, knex, tableNames.granules)
   );
 });
@@ -974,7 +974,7 @@ test('writeRecords() writes records to Dynamo and RDS if cumulus version is less
   );
   t.true(
     await doesRecordExist({
-      granuleId,
+      granule_id: granuleId,
     }, knex, tableNames.granules)
   );
 });
