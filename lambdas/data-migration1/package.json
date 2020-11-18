@@ -10,9 +10,10 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
-    "package": "npm run clean && npm run tsc && npm run webpack && npm run build-lambda-zip",
+    "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "webpack": "../../node_modules/.bin/webpack"
@@ -27,9 +28,10 @@
     "@cumulus/api": "3.0.0",
     "@cumulus/aws-client": "3.0.0",
     "@cumulus/common": "3.0.0",
-    "@cumulus/db": "2.0.1-alpha.1",
+    "@cumulus/db": "3.0.1-alpha.1",
     "@cumulus/errors": "3.0.0",
     "@cumulus/logger": "3.0.0",
+    "@cumulus/types": "3.0.0",
     "knex": "0.21.6",
     "lodash": "^4.17.20",
     "pg": "^8.3.0"

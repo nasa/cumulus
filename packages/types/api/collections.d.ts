@@ -21,8 +21,11 @@ export interface PartialCollectionRecord {
   reportToEms?: boolean,
   sampleFileName?: string,
   tags?: string[],
+  meta?: Object,
   url_path?: string,
-  version?: string
+  version?: string,
+  createdAt?: number,
+  updatedAt?: number
 }
 
 export interface NewCollectionRecord extends PartialCollectionRecord {

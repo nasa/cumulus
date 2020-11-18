@@ -19,9 +19,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `/reconciliationReport` returns.  The user (dashboard) must read the value
     of `url` from the return to get the s3SignedURL and then download the report.
 
+### BREAKING CHANGES
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Removed the following from the `@cumulus/api/models.asyncOperation` class in
+      favor of the added `@cumulus/async-operations` module:
+      - `start`
+      - `startAsyncOperations`
+
 ### Added
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Added `@cumulus/async-operations` to core packages, exposing
+      `startAsyncOperation` which will handle starting an async operation and adding an entry to both RDS and DynamoDb
   - **CUMULUS-2127**
     - Add schema migration for `collections` table
   - **CUMULUS-2129**
@@ -37,6 +49,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add schema migration for `asyncOperations` table
   - **CUMULUS-2184**
     - Add schema migration for `executions` table
+  - **CUMULUS-2257**
+    - Updated RDS table and column names to snake_case
+    - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
 
 - **CUMULUS-2063**
   - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
@@ -46,6 +61,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Updated cumuluss/async-operation task to write async-operations to the RDS
+    database.
   - **CUMULUS-2228**
     - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution and PDR records to the Core PostgreSQL database in parallel with writes to DynamoDB
 - **CUMULUS-2200**

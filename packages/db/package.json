@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/db",
-  "version": "2.0.1-alpha.1",
+  "version": "3.0.1-alpha.1",
   "description": "Utilities for working with the Cumulus DB",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -11,10 +11,12 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test"
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "watch": "../../node_modules/.bin/tsc -w"
   },
   "ava": {
     "files": [
@@ -29,7 +31,9 @@
   "dependencies": {
     "@cumulus/common": "3.0.0",
     "@cumulus/logger": "3.0.0",
+    "@cumulus/types": "3.0.0",
     "knex": "0.21.6",
-    "pg": "^8.3.0"
+    "pg": "^8.3.0",
+    "snake-camel": "^1.0.6"
   }
 }
