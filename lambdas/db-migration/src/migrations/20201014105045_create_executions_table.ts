@@ -3,23 +3,23 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('executions', (table) => {
     table
-      .increments('cumulusId')
+      .increments('cumulus_id')
       .primary();
     table
       .text('arn')
       .comment('Execution ARN')
       .notNullable();
     table
-      .integer('asyncOperationCumulusId')
-      .references('cumulusId')
-      .inTable('asyncOperations');
+      .integer('async_operation_cumulus_id')
+      .references('cumulus_id')
+      .inTable('async_operations');
     table
-      .integer('collectionCumulusId')
-      .references('cumulusId')
+      .integer('collection_cumulus_id')
+      .references('cumulus_id')
       .inTable('collections');
     table
-      .integer('parentCumulusId')
-      .references('cumulusId')
+      .integer('parent_cumulus_id')
+      .references('cumulus_id')
       .inTable('executions');
     table
       .text('cumulus_version')
@@ -38,16 +38,16 @@ export const up = async (knex: Knex): Promise<void> =>
       .jsonb('error')
       .comment('Error details in case of a failed execution');
     table
-      .text('workflowName')
+      .text('workflow_name')
       .comment('Name of the Cumulus workflow run in this execution');
     table
       .float('duration')
       .comment('Execution duration');
     table
-      .jsonb('originalPayload')
+      .jsonb('original_payload')
       .comment('Original payload of this workflow');
     table
-      .jsonb('finalPayload')
+      .jsonb('final_payload')
       .comment('Final payload of this workflow');
     table
       .timestamp('timestamp')

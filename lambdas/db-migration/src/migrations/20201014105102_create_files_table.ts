@@ -3,18 +3,18 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('files', (table) => {
     table
-      .bigIncrements('cumulusId')
+      .bigIncrements('cumulus_id')
       .comment('Internal Cumulus ID for a file')
       .primary();
     table
-      .integer('granuleCumulusId')
-      .references('cumulusId')
+      .integer('granule_cumulus_id')
+      .references('cumulus_id')
       .inTable('granules')
       .notNullable();
     table
       .timestamps(false, true);
     table
-      .integer('fileSize')
+      .integer('file_size')
       .comment('Deprecated - size of file');
     table
       .integer('size')
@@ -23,15 +23,15 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('bucket')
       .comment('AWS Bucket file is archived in');
     table
-      .text('checksumType')
+      .text('checksum_type')
       .comment('Type of file checksum (e.g. md5');
     table
-      .text('checksumValue')
+      .text('checksum_value')
       .comment('File checksum');
     table
       .text('filename');
     table
-      .text('fileName')
+      .text('file_name')
       .comment('Source file name');
     table
       .text('key')

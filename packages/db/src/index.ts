@@ -17,9 +17,13 @@ export {
 } from './provider';
 
 export {
-  AsyncOperationRecord,
-  CollectionRecord,
+  PostgresAsyncOperation,
+  PostgresAsyncOperationRecord,
+  PostgresCollection,
+  PostgresCollectionRecord,
   ExecutionRecord,
   PostgresProviderRecord,
   PostgresProvider,
 } from './types';
+export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
+export { translateApiCollectionToPostgresCollection } from './collections';

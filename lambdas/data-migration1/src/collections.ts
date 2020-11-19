@@ -2,7 +2,8 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
-import { CollectionRecord } from '@cumulus/db';
+import { PostgresCollectionRecord, translateApiCollectionToPostgresCollection } from '@cumulus/db';
+import { CollectionRecord } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
 import { RecordAlreadyMigrated } from './errors';
@@ -30,7 +31,7 @@ export const migrateCollectionRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.collection);
 
-  const existingRecord = await knex<CollectionRecord>('collections')
+  const existingRecord = await knex<PostgresCollectionRecord>('collections')
     .where({
       name: dynamoRecord.name,
       version: dynamoRecord.version,
@@ -41,26 +42,7 @@ export const migrateCollectionRecord = async (
     throw new RecordAlreadyMigrated(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
   }
 
-  // Map old record to new schema.
-  const updatedRecord: CollectionRecord = {
-    name: dynamoRecord.name,
-    version: dynamoRecord.version,
-    process: dynamoRecord.process,
-    url_path: dynamoRecord.url_path,
-    duplicateHandling: dynamoRecord.duplicateHandling,
-    granuleIdValidationRegex: dynamoRecord.granuleId,
-    granuleIdExtractionRegex: dynamoRecord.granuleIdExtraction,
-    // have to stringify on an array of values
-    files: JSON.stringify(dynamoRecord.files),
-    reportToEms: dynamoRecord.reportToEms,
-    sampleFileName: dynamoRecord.sampleFileName,
-    ignoreFilesConfigForDiscovery: dynamoRecord.ignoreFilesConfigForDiscovery,
-    meta: dynamoRecord.meta ? dynamoRecord.meta : undefined,
-    // have to stringify on an array of values
-    tags: dynamoRecord.tags ? JSON.stringify(dynamoRecord.tags) : undefined,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
-  };
+  const updatedRecord = translateApiCollectionToPostgresCollection(<CollectionRecord>dynamoRecord);
 
   await knex('collections').insert(updatedRecord);
 };

@@ -1,37 +1,49 @@
-export interface AsyncOperationRecord {
+import { AsyncOperationStatus, AsyncOperationType } from '@cumulus/types/api/async_operations';
+
+export interface PostgresAsyncOperation {
   id: string
   description: string
-  operationType: string
-  status: string
-  output?: object
-  taskArn?: string
+  operation_type: AsyncOperationType
+  status: AsyncOperationStatus
+  output?: Object
+  task_arn?: string
+  created_at?: Date
+  updated_at?: Date
+}
+
+export interface PostgresAsyncOperationRecord extends PostgresAsyncOperation {
   created_at: Date
   updated_at: Date
 }
 
-export interface CollectionRecord {
+export interface PostgresCollection {
   name: string
   version: string
-  process: string
-  granuleIdValidationRegex: string
-  granuleIdExtractionRegex: string
+  granule_id_validation_regex: string
+  granule_id_extraction_regex: string
   files: string
-  duplicateHandling?: string
-  reportToEms?: boolean
-  sampleFileName?: string
+  process?: string
+  duplicate_handling?: string
+  report_to_ems?: boolean
+  sample_file_name?: string
   url_path?: string
-  ignoreFilesConfigForDiscovery?: boolean
-  meta?: object
+  ignore_files_config_for_discovery?: boolean
+  meta?: string
   tags?: string
+  created_at?: Date
+  updated_at?: Date
+}
+
+export interface PostgresCollectionRecord extends PostgresCollection {
   created_at: Date
   updated_at: Date
 }
 
 export interface ExecutionRecord {
   arn: string
-  asyncOperationCumulusId?: number
-  collectionCumulusId?: number
-  parentCumulusId?: number
+  async_operation_cumulus_id?: number
+  collection_cumulus_id?: number
+  parent_cumulus_id?: number
   cumulus_version: string
   created_at: Date
   updated_at: Date
