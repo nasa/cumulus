@@ -149,4 +149,4 @@ export const UnparsableFileLocationError = createErrorType('UnparsableFileLocati
 
 export const ValidationError = createErrorType('ValidationError');
 
-export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
+export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');

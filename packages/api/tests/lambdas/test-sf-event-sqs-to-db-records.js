@@ -8,7 +8,6 @@ const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
 
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   localStackConnectionEnv,
   getKnexClient,
@@ -33,16 +32,19 @@ const {
   isPostRDSDeploymentExecution,
   hasNoParentExecutionOrExists,
   hasNoAsyncOpOrExists,
-  getMessageCollection,
-  getMessageProvider,
+  getMessageCollectionCumulusId,
+  getMessageProviderCumulusId,
   shouldWriteExecutionToRDS,
+  writeGranules,
   writeExecution,
-  saveGranulesToDb,
   writePdr,
   writeRecords,
 } = proxyquire('../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: async (queue, message) => [queue, message],
+  },
+  '@cumulus/aws-client/StepFunctions': {
+    describeExecution: async () => ({}),
   },
   '@cumulus/db': {
     doesRecordExist: stubRecordExists,
@@ -119,9 +121,6 @@ test.before(async (t) => {
   const pdrModel = new Pdr();
   await pdrModel.createTable();
   t.context.pdrModel = pdrModel;
-
-  t.context.describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution')
-    .resolves({});
 
   t.context.testDbName = `sfEventSqsToDbRecords_${cryptoRandomString({ length: 10 })}`;
 
@@ -329,7 +328,7 @@ test.serial('hasNoAsyncOpOrExists returns false if async operation does not exis
   t.true(doesRecordExistStub.called);
 });
 
-test('getMessageCollection returns correct collection', async (t) => {
+test('getMessageCollectionCumulusId returns correct collection cumulus_id', async (t) => {
   const { collection, cumulusMessage } = t.context;
 
   const fakeKnex = () => ({
@@ -346,20 +345,24 @@ test('getMessageCollection returns correct collection', async (t) => {
     }),
   });
 
-  t.deepEqual(
-    await getMessageCollection(cumulusMessage, fakeKnex),
-    {
-      cumulus_id: 5,
-    }
+  t.is(
+    await getMessageCollectionCumulusId(cumulusMessage, fakeKnex),
+    5
   );
 });
 
-test('getMessageCollection returns undefined if collection cannot be found', async (t) => {
+test('getMessageCollectionCumulusId returns undefined if there is no collection on the message', async (t) => {
   const { knex } = t.context;
-  t.is(await getMessageCollection({}, knex), undefined);
+  t.is(await getMessageCollectionCumulusId({}, knex), undefined);
 });
 
-test('getMessageProvider returns correct provider', async (t) => {
+test('getMessageCollectionCumulusId returns undefined if collection cannot be found', async (t) => {
+  const { cumulusMessage, knex } = t.context;
+  cumulusMessage.meta.collection.name = 'fake-collection-name';
+  t.is(await getMessageCollectionCumulusId(cumulusMessage, knex), undefined);
+});
+
+test('getMessageProviderCumulusId returns cumulus_id of provider in message', async (t) => {
   const { cumulusMessage, provider } = t.context;
 
   const fakeKnex = () => ({
@@ -375,17 +378,21 @@ test('getMessageProvider returns correct provider', async (t) => {
     }),
   });
 
-  t.deepEqual(
-    await getMessageProvider(cumulusMessage, fakeKnex),
-    {
-      cumulus_id: 234,
-    }
+  t.is(
+    await getMessageProviderCumulusId(cumulusMessage, fakeKnex),
+    234
   );
 });
 
-test('getMessageProvider returns undefined if provider cannot be found', async (t) => {
+test('getMessageProviderCumulusId returns undefined if there is no provider in the message', async (t) => {
   const { knex } = t.context;
-  t.is(await getMessageProvider({}, knex), undefined);
+  t.is(await getMessageProviderCumulusId({}, knex), undefined);
+});
+
+test('getMessageProviderCumulusId returns undefined if provider cannot be found', async (t) => {
+  const { cumulusMessage, knex } = t.context;
+  cumulusMessage.meta.provider.id = 'bogus-provider-id';
+  t.is(await getMessageProviderCumulusId(cumulusMessage, knex), undefined);
 });
 
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
@@ -398,7 +405,7 @@ test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution m
         cumulus_version: preRDSDeploymentVersion,
       },
     },
-    { cumulus_id: 1 },
+    1,
     knex
   ));
 });
@@ -422,7 +429,7 @@ test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment exec
   t.true(
     await shouldWriteExecutionToRDS(
       cumulusMessage,
-      { cumulus_id: 1 },
+      1,
       knex
     )
   );
@@ -442,11 +449,11 @@ test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async 
   }).throws();
 
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, { cumulus_id: collectionCumulusId }, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
   );
 });
 
-test('shouldWriteExecutionToRDS returns false if collection record is not defined', async (t) => {
+test('shouldWriteExecutionToRDS returns false if collection cumulus_id is not defined', async (t) => {
   const {
     knex,
     cumulusMessage,
@@ -471,11 +478,11 @@ test('shouldWriteExecutionToRDS returns false if any referenced objects are miss
   }).resolves(false);
 
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, { cumulus_id: collectionCumulusId }, knex)
+    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
   );
 });
 
-test('writeExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
+test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -483,12 +490,12 @@ test('writeExecution() saves execution to Dynamo and RDS if write to RDS is enab
     executionArn,
   } = t.context;
 
-  await writeExecution({ cumulusMessage, knex });
+  const executionCumulusId = await writeExecution({ cumulusMessage, knex });
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(
     await doesRecordExist({
-      arn: executionArn,
+      cumulus_id: executionCumulusId,
     }, knex, tableNames.executions)
   );
 });
@@ -554,62 +561,7 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if RDS w
   );
 });
 
-test('saveGranulesToDb() saves a granule record to the database', async (t) => {
-  const {
-    cumulusMessage,
-    granuleModel,
-    collectionId,
-    provider,
-    executionArn,
-  } = t.context;
-
-  const granuleId = randomString();
-  const files = [fakeFileFactory({ size: 250 })];
-  const granule = fakeGranuleFactoryV2({
-    files,
-    granuleId,
-  });
-  delete granule.version;
-  delete granule.dataType;
-  cumulusMessage.payload.granules = [granule];
-
-  await saveGranulesToDb(cumulusMessage);
-
-  const fetchedGranule = await granuleModel.get({ granuleId });
-  const expectedGranule = {
-    ...granule,
-    collectionId,
-    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
-    productVolume: 250,
-    provider: provider.id,
-    status: 'running',
-    createdAt: 122,
-    error: {},
-    timeToArchive: 0,
-    timeToPreprocess: 0,
-    duration: fetchedGranule.duration,
-    timestamp: fetchedGranule.timestamp,
-    updatedAt: fetchedGranule.updatedAt,
-  };
-  t.deepEqual(fetchedGranule, expectedGranule);
-});
-
-test.serial('saveGranulesToDb() throws an exception if storeGranulesFromCumulusMessage() throws an exception', async (t) => {
-  const { cumulusMessage } = t.context;
-
-  const storeGranuleStub = sinon.stub(Granule.prototype, 'storeGranulesFromCumulusMessage')
-    .callsFake(() => {
-      throw new Error('error');
-    });
-
-  try {
-    await t.throwsAsync(saveGranulesToDb(cumulusMessage));
-  } finally {
-    storeGranuleStub.restore();
-  }
-});
-
-test('writePdr() returns undefined if there is no PDR on the message', async (t) => {
+test('writePdr() returns true if there is no PDR on the message', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -622,8 +574,8 @@ test('writePdr() returns undefined if there is no PDR on the message', async (t)
   t.is(
     await writePdr({
       cumulusMessage,
-      collection: { id: collectionCumulusId },
-      provider: { id: providerCumulusId },
+      collectionCumulusId,
+      providerCumulusId,
       knex,
     }),
     undefined
@@ -635,8 +587,8 @@ test('writePdr() throws an error if collection is not provided', async (t) => {
   await t.throwsAsync(
     writePdr({
       cumulusMessage,
-      collection: undefined,
-      provider: { id: providerCumulusId },
+      collectionCumulusId: undefined,
+      providerCumulusId,
       knex,
     })
   );
@@ -647,14 +599,14 @@ test('writePdr() throws an error if provider is not provided', async (t) => {
   await t.throwsAsync(
     writePdr({
       cumulusMessage,
-      collection: { id: collectionCumulusId },
-      provider: undefined,
+      collectionCumulusId,
+      providerCumulusId: undefined,
       knex,
     })
   );
 });
 
-test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulusId if RDS write is enabled', async (t) => {
+test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if RDS write is enabled', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -666,8 +618,8 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulusId if R
 
   const pdrCumulusId = await writePdr({
     cumulusMessage,
-    collection: { cumulus_id: collectionCumulusId },
-    provider: { cumulus_id: providerCumulusId },
+    collectionCumulusId,
+    providerCumulusId,
     knex,
   });
 
@@ -706,8 +658,8 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
   await t.throwsAsync(
     writePdr({
       cumulusMessage,
-      collection: { cumulus_id: collectionCumulusId },
-      provider: { cumulus_id: providerCumulusId },
+      collectionCumulusId,
+      providerCumulusId,
       knex,
       pdrModel: fakePdrModel,
     }),
@@ -754,8 +706,8 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
   await t.throwsAsync(
     writePdr({
       cumulusMessage,
-      collection: { cumulus_id: collectionCumulusId },
-      provider: { cumulus_id: providerCumulusId },
+      collectionCumulusId,
+      providerCumulusId,
       knex,
     }),
     { message: 'PDR RDS error' }
@@ -766,6 +718,162 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
     await doesRecordExist({
       name: pdr.name,
     }, knex, tableNames.pdrs)
+  );
+});
+
+test('writeGranules() throws an error if collection is not provided', async (t) => {
+  const { cumulusMessage, knex, providerCumulusId } = t.context;
+  await t.throwsAsync(
+    writeGranules({
+      cumulusMessage,
+      collectionCumulusId: undefined,
+      providerCumulusId,
+      knex,
+    })
+  );
+});
+
+test('writeGranules() saves granule records to Dynamo and RDS if RDS write is enabled', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+  );
+});
+
+test('writeGranules() handles successful and failing writes independently', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const granule2 = {
+    // no granule ID should cause failure
+  };
+  cumulusMessage.payload.granules = [
+    ...cumulusMessage.payload.granules,
+    granule2,
+  ];
+
+  await t.throwsAsync(writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+  }));
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+  );
+});
+
+test('writeGranules() throws error if any granule writes fail', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+  } = t.context;
+
+  cumulusMessage.payload.granules = [
+    ...cumulusMessage.payload.granules,
+    // this object is not a valid granule, so its write should fail
+    {},
+  ];
+
+  await t.throwsAsync(writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+  }));
+});
+
+test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const fakeGranuleModel = {
+    storeGranuleFromCumulusMessage: () => {
+      throw new Error('Granules dynamo error');
+    },
+  };
+
+  const [error] = await t.throwsAsync(
+    writeGranules({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+      granuleModel: fakeGranuleModel,
+    })
+  );
+
+  t.true(error.message.includes('Granules dynamo error'));
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+  );
+});
+
+test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const fakeTrxCallback = (cb) => {
+    const fakeTrx = sinon.stub().returns({
+      insert: () => {
+        throw new Error('Granules RDS error');
+      },
+    });
+    return cb(fakeTrx);
+  };
+  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
+  t.teardown(() => trxStub.restore());
+
+  const [error] = await t.throwsAsync(writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+  }));
+
+  t.true(error.message.includes('Granules RDS error'));
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
   );
 });
 
@@ -800,7 +908,11 @@ test('writeRecords() only writes records to Dynamo if cumulus version is less th
       name: pdrName,
     }, knex, tableNames.pdrs)
   );
-  // Add assertion for granule
+  t.false(
+    await doesRecordExist({
+      granule_id: granuleId,
+    }, knex, tableNames.granules)
+  );
 });
 
 test('writeRecords() does not write PDR if execution write fails', async (t) => {
@@ -860,7 +972,11 @@ test('writeRecords() writes records to Dynamo and RDS if cumulus version is less
       name: pdrName,
     }, knex, tableNames.pdrs)
   );
-  // Add assertion for granule
+  t.true(
+    await doesRecordExist({
+      granule_id: granuleId,
+    }, knex, tableNames.granules)
+  );
 });
 
 test.serial('Lambda sends message to DLQ when RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
@@ -877,7 +993,7 @@ test.serial('Lambda sends message to DLQ when RDS_DEPLOYMENT_CUMULUS_VERSION env
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('Lambda sends message to DLQ when any write to database fails', async (t) => {
+test('Lambda sends message to DLQ when an execution write to the database fails', async (t) => {
   const {
     cumulusMessage,
     executionModel,
