@@ -153,6 +153,8 @@ export const UnparsableFileLocationError = createErrorType('UnparsableFileLocati
 
 export const ValidationError = createErrorType('ValidationError');
 
+export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');
+
 export class PostgresValidationError extends ValidationError {
   detail: string | undefined;
   constructor(message: string) {
