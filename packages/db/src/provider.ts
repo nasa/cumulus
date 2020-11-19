@@ -3,7 +3,6 @@ import isNil from 'lodash/isNil';
 import isValidHostname from 'is-valid-hostname';
 import omit from 'lodash/omit';
 
-
 import { PostgresValidationError } from '@cumulus/errors';
 import { envUtils } from '@cumulus/common';
 import { KMS } from '@cumulus/aws-client';
