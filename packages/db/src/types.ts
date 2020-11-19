@@ -56,16 +56,16 @@ export interface ExecutionRecord {
  * is ready for write to Cumulus's postgres database instance
  */
 export interface PostgresProvider {
-  certificateUri?: string | null
-  cmKeyId?: string | null,
+  certificate_uri?: string | null
+  cm_key_id?: string | null,
   created_at?: number | null,
-  cumulusId?: number | null,
-  globalConnectionLimit?: number | null,
+  cumulus_id?: number | null,
+  global_connection_limit?: number | null,
   host: string,
   name: string,
   password?: string,
   port?: number| null,
-  privateKey?: string | null,
+  private_key?: string | null,
   protocol: string,
   updated_at?: number | null,
   username?: string | null,

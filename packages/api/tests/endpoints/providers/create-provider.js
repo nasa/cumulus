@@ -146,7 +146,7 @@ test('POST creates a new provider', async (t) => {
     id: newProviderId,
   });
 
-  const postgresOmitList = ['created_at', 'updated_at', 'cumulusId'];
+  const postgresOmitList = ['created_at', 'updated_at', 'cumulus_id'];
 
   const response = await request(app)
     .post('/providers')

@@ -1,6 +1,8 @@
-import omit from 'lodash/omit';
+//import { toSnake } from 'snake-camel';
 import isNil from 'lodash/isNil';
 import isValidHostname from 'is-valid-hostname';
+import omit from 'lodash/omit';
+
 
 import { PostgresValidationError } from '@cumulus/errors';
 import { envUtils } from '@cumulus/common';
@@ -35,11 +37,24 @@ export const translateApiProviderToPostgresProvider = async (
   if (data.password) {
     password = await encryptMethod(data.password);
   }
-  return ({
-    ...(omit(data, ['id', 'encrypted', 'createdAt', 'updatedAt'])),
-    name: data.id,
+  return ({ // TODO - rewrite this using snake
+    ...(omit(data, [
+      'id',
+      'encrypted',
+      'cmKeyId',
+      'certificateUri',
+      'privateKey',
+      'globalConnectionLimit',
+      'createdAt',
+      'updatedAt',
+    ])),
     created_at: data.createdAt,
     updated_at: data.updatedAt,
+    name: data.id,
+    cm_key_id: data.cmKeyId,
+    certificate_uri: data.certificateUri,
+    private_key: data.privateKey,
+    global_connection_limit: data.globalConnectionLimit,
     username,
     password,
   });
@@ -62,10 +77,10 @@ export const nullifyUndefinedProviderValues = (
     'port',
     'username',
     'password',
-    'globalConnectionLimit',
-    'privateKey',
-    'cmKeyId',
-    'certificateUri',
+    'global_connection_limit',
+    'private_key',
+    'cm_key_id',
+    'certificate_uri',
   ];
 
   optionalValues.forEach((value: keyof PostgresProvider) => {

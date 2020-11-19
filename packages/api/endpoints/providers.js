@@ -192,7 +192,7 @@ async function del(req, res) {
     }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
-    if (error instanceof AssociatedRulesError || error.constraint === 'rules_providercumulusid_foreign') {
+    if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
       const messageDetail = error.rules || [error.detail];
       const message = `Cannot delete provider with associated rules: ${messageDetail.join(', ')}`;
       return res.boom.conflict(message);

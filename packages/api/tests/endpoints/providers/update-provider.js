@@ -115,7 +115,7 @@ test('PUT replaces existing provider', async (t) => {
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
 
   const postgresExpectedProvider = await translateApiProviderToPostgresProvider(expectedProvider);
-  const postgresOmitList = ['created_at', 'updated_at', 'cumulusId'];
+  const postgresOmitList = ['created_at', 'updated_at', 'cumulus_id'];
   // Make sure testProvider contains values for the properties we omitted from
   // expectedProvider to confirm that after we replace (PUT) the provider those
   // properties are dropped from the stored provider.

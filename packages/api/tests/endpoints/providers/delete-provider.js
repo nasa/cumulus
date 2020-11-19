@@ -175,22 +175,22 @@ test('Attempting to delete a provider with an associated postgres rule returns a
   // are updated on the feature branch
   // ---
   const providerResult = await t.context.testKnex(tableNames.providers)
-    .select('cumulusId')
+    .select('cumulus_id')
     .where('name', testProvider.id);
 
   const collectionResult = await t.context.testKnex(tableNames.collections).insert({
     name: randomString(10),
     version: '001',
-    sampleFileName: 'fake',
-    granuleIdValidationRegex: 'fake',
-    granuleIdExtractionRegex: 'fake',
+    sample_file_name: 'fake',
+    granule_id_validation_regex: 'fake',
+    granule_id_extraction_regex: 'fake',
     files: {},
-  }).returning('cumulusId');
+  }).returning('cumulus_id');
 
   await t.context.testKnex(tableNames.rules).insert({
     ...(omit(rule, ['collection', 'provider', 'rule', 'state'])),
-    collectionCumulusId: collectionResult[0],
-    providerCumulusId: providerResult[0].cumulusId,
+    collection_cumulus_id: collectionResult[0],
+    provider_cumulus_id: providerResult[0].cumulus_id,
     type: 'onetime',
     enabled: 'true',
   });

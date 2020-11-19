@@ -30,15 +30,15 @@ test('translateApiProviderToPostgresProvider translates a Cumulus Provider objec
   };
 
   const expected = {
-    certificateUri: 'fakeUri',
-    cmKeyId: 'fakecmId',
+    certificate_uri: 'fakeUri',
+    cm_key_id: 'fakecmId',
     created_at: 1234,
-    globalConnectionLimit: 1,
+    global_connection_limit: 1,
     host: 'fakeHost',
     name: 'testId',
     password: 'fakeEncryptedString',
     port: 1234,
-    privateKey: 'fakeKey',
+    private_key: 'fakeKey',
     protocol: 'fakeProtocol',
     updated_at: 5678,
     username: 'fakeEncryptedString',
@@ -65,10 +65,10 @@ test('nullifyUndefinedProviderValues sets undefined provider values to "null"', 
     port: 'fakePort',
     username: null,
     password: null,
-    globalConnectionLimit: null,
-    privateKey: null,
-    cmKeyId: null,
-    certificateUri: null,
+    global_connection_limit: null,
+    private_key: null,
+    cm_key_id: null,
+    certificate_uri: null,
   };
 
   const actual = nullifyUndefinedProviderValues(cumulusProviderObject);
