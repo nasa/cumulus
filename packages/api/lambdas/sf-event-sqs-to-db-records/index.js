@@ -41,10 +41,10 @@ const {
 const {
   getMetaStatus,
 } = require('@cumulus/message/workflows');
-const Execution = require('../models/executions');
-const Granule = require('../models/granules');
-const Pdr = require('../models/pdrs');
-const { getCumulusMessageFromExecutionEvent } = require('../lib/cwSfExecutionEventUtils');
+const Execution = require('../../models/executions');
+const Granule = require('../../models/granules');
+const Pdr = require('../../models/pdrs');
+const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
 const isPostRDSDeploymentExecution = (cumulusMessage) => {
   try {
