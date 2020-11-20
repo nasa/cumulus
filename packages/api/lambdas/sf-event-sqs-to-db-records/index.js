@@ -1,30 +1,19 @@
 'use strict';
 
 const get = require('lodash/get');
-const semver = require('semver');
+
 const AggregateError = require('aggregate-error');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { describeExecution } = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
-const { envUtils } = require('@cumulus/common');
 const {
   getKnexClient,
   tableNames,
-  doesRecordExist,
-  isRecordDefined,
 } = require('@cumulus/db');
-const { MissingRequiredEnvVarError } = require('@cumulus/errors');
-const {
-  getMessageAsyncOperationId,
-} = require('@cumulus/message/AsyncOperations');
-const {
-  getCollectionNameAndVersionFromMessage,
-} = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
-  getMessageExecutionParentArn,
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const {
@@ -36,9 +25,6 @@ const {
   messageHasPdr,
 } = require('@cumulus/message/PDRs');
 const {
-  getMessageProviderId,
-} = require('@cumulus/message/Providers');
-const {
   getMetaStatus,
 } = require('@cumulus/message/workflows');
 const Execution = require('../../models/executions');
@@ -46,81 +32,13 @@ const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
-const isPostRDSDeploymentExecution = (cumulusMessage) => {
-  try {
-    const minimumSupportedRDSVersion = envUtils.getRequiredEnvVar('RDS_DEPLOYMENT_CUMULUS_VERSION');
-    const cumulusVersion = getMessageCumulusVersion(cumulusMessage);
-    return cumulusVersion
-      ? semver.gte(cumulusVersion, minimumSupportedRDSVersion)
-      : false;
-  } catch (error) {
-    // Throw error to fail lambda if required env var is missing
-    if (error instanceof MissingRequiredEnvVarError) {
-      throw error;
-    }
-    // Treat other errors as false
-    return false;
-  }
-};
-
-const hasNoParentExecutionOrExists = async (cumulusMessage, knex) => {
-  const parentArn = getMessageExecutionParentArn(cumulusMessage);
-  if (!parentArn) {
-    return true;
-  }
-  return doesRecordExist({
-    arn: parentArn,
-  }, knex, tableNames.executions);
-};
-
-const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
-  const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
-  if (!asyncOperationId) {
-    return true;
-  }
-  return doesRecordExist({
-    id: asyncOperationId,
-  }, knex, tableNames.asyncOperations);
-};
-
-const getMessageCollectionCumulusId = async (cumulusMessage, knex) => {
-  try {
-    const collectionNameAndVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
-    if (!collectionNameAndVersion) {
-      throw new Error('Could not find collection name/version in message');
-    }
-    const collection = await knex(tableNames.collections).where(
-      collectionNameAndVersion
-    ).first();
-    if (!isRecordDefined(collection)) {
-      throw new Error(`Could not find collection with params ${JSON.stringify(collectionNameAndVersion)}`);
-    }
-    return collection.cumulus_id;
-  } catch (error) {
-    log.error(error);
-    return undefined;
-  }
-};
-
-const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
-  try {
-    const providerId = getMessageProviderId(cumulusMessage);
-    if (!providerId) {
-      throw new Error('Could not find provider ID in message');
-    }
-    const searchParams = {
-      name: getMessageProviderId(cumulusMessage),
-    };
-    const provider = await knex(tableNames.providers).where(searchParams).first();
-    if (!isRecordDefined(provider)) {
-      throw new Error(`Could not find provider with params ${JSON.stringify(searchParams)}`);
-    }
-    return provider.cumulus_id;
-  } catch (error) {
-    log.error(error);
-    return undefined;
-  }
-};
+const {
+  isPostRDSDeploymentExecution,
+  hasNoAsyncOpOrExists,
+  hasNoParentExecutionOrExists,
+  getMessageCollectionCumulusId,
+  getMessageProviderCumulusId,
+} = require('./utils');
 
 const shouldWriteExecutionToRDS = async (
   cumulusMessage,
@@ -259,24 +177,16 @@ const writeGranuleViaTransaction = async ({
 const writeGranule = async ({
   granule,
   cumulusMessage,
+  executionDescription,
+  executionUrl,
   collectionCumulusId,
   executionCumulusId,
   knex,
   providerCumulusId,
   pdrCumulusId,
   granuleModel,
-}) => {
-  const executionArn = getMessageExecutionArn(cumulusMessage);
-  const executionUrl = getExecutionUrlFromArn(executionArn);
-
-  let executionDescription;
-  try {
-    executionDescription = await describeExecution({ executionArn });
-  } catch (error) {
-    log.error(`Could not describe execution ${executionArn}`, error);
-  }
-
-  return knex.transaction(async (trx) => {
+}) =>
+  knex.transaction(async (trx) => {
     await writeGranuleViaTransaction({
       cumulusMessage,
       granule,
@@ -293,7 +203,6 @@ const writeGranule = async ({
       executionDescription,
     });
   });
-};
 
 /**
  * Write granules to DynamoDB and Postgres
@@ -329,13 +238,26 @@ const writeGranules = async ({
   if (!collectionCumulusId) {
     throw new Error('Collection reference is required for granules');
   }
+
   const granules = getMessageGranules(cumulusMessage);
+  const executionArn = getMessageExecutionArn(cumulusMessage);
+  const executionUrl = getExecutionUrlFromArn(executionArn);
+
+  let executionDescription;
+  try {
+    executionDescription = await describeExecution({ executionArn });
+  } catch (error) {
+    log.error(`Could not describe execution ${executionArn}`, error);
+  }
+
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
     (granule) => writeGranule({
       granule,
       cumulusMessage,
+      executionDescription,
+      executionUrl,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
