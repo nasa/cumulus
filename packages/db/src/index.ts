@@ -24,6 +24,8 @@ export {
   ExecutionRecord,
   PostgresProviderRecord,
   PostgresProvider,
+  ProviderRecord,
+  RuleRecord,
 } from './types';
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
 export { translateApiCollectionToPostgresCollection } from './collections';

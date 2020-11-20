@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
@@ -10,10 +9,9 @@ import { RecordDoesNotExist } from '@cumulus/errors';
 import { RecordAlreadyMigrated } from './errors';
 import { MigrationSummary } from './types';
 
+const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
-
-const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
 
 /**
  *
@@ -33,12 +31,6 @@ const getProviderCumulusId = async (
     .table('providers')
     .where({ name: name })
     .first();
-  /*
-  const record = await knex.select(knex.ref('cumulusId').as('providerCumulusId'))
-    .from<ProviderRecord>('providers')
-    .where({ name: name })
-    .first();
-    */
 
   if (record === undefined) {
     throw new RecordDoesNotExist(`Provider with id ${name} does not exist.`);
@@ -71,32 +63,6 @@ const getCollectionCumulusId = async (
   }
   return record.collectionCumulusId;
 };
-
-/**
- *
- * Retrieve cumulusId from table using identifier.
- *
- * @param {any} whereClause - Where Clause of query
- * @param {string} tableName - Name of table
- * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
- * @throws {RecordDoesNotExist} if record cannot be found
-const getCumulusId = async (
-  whereClause : any,
-  tableName: string,
-  knex: Knex
-): Promise<number> => {
-  const record = await knex.select(knex.ref('cumulusId'))
-    .from(tableName)
-    .where(whereClause)
-    .first();
-
-  if (record === undefined) {
-    throw new RecordDoesNotExist(`Record in ${tableName} where ${whereClause} does not exist.`);
-  }
-  return record.cumulusId;
-};
- */
 
 /**
  * Migrate rules record from Dynamo to RDS.

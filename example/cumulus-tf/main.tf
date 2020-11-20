@@ -26,8 +26,6 @@ locals {
   elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
   elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
-  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
-  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 
   protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
@@ -45,13 +43,13 @@ data "terraform_remote_state" "data_persistence" {
   workspace = terraform.workspace
 }
 
-data "aws_lambda_function" "sts_credentials" {
-  function_name = "gsfc-ngap-sh-s3-sts-get-keys"
-}
+# data "aws_lambda_function" "sts_credentials" {
+#   function_name = "gsfc-ngap-sh-s3-sts-get-keys"
+# }
 
-data "aws_ssm_parameter" "ecs_image_id" {
-  name = "image_id_ecs_amz2"
-}
+# data "aws_ssm_parameter" "ecs_image_id" {
+#   name = "image_id_ecs_amz2"
+# }
 
 module "cumulus" {
   source = "../../tf-modules/cumulus"
@@ -60,18 +58,15 @@ module "cumulus" {
 
   prefix = var.prefix
 
-  deploy_to_ngap = true
+  deploy_to_ngap = false
 
   bucket_map_key = var.bucket_map_key
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  rds_security_group            = local.rds_security_group
-  rds_user_access_secret_arn    = local.rds_credentials_secret_arn
-  rds_connection_heartbeat      = var.rds_connection_heartbeat
-
-  ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
+#  ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
+  ecs_cluster_instance_image_id = "ami-a7a242da"
   ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
     ? var.lambda_subnet_ids
     : var.ecs_cluster_instance_subnet_ids
@@ -166,11 +161,13 @@ module "cumulus" {
   log_destination_arn = var.log_destination_arn
 
   # S3 credentials endpoint
-  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+  # sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
   ems_deploy = var.ems_deploy
+
+  deploy_distribution_s3_credentials_endpoint = var.deploy_distribution_s3_credentials_endpoint
 
   tags = local.tags
 }
