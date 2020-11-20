@@ -14,7 +14,6 @@ const {
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
-  getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
@@ -33,56 +32,14 @@ const Pdr = require('../../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
 const {
-  isPostRDSDeploymentExecution,
-  hasNoAsyncOpOrExists,
-  hasNoParentExecutionOrExists,
   getMessageCollectionCumulusId,
   getMessageProviderCumulusId,
 } = require('./utils');
 
-const shouldWriteExecutionToRDS = async (
-  cumulusMessage,
-  collectionCumulusId,
-  knex
-) => {
-  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-  if (!isExecutionPostDeployment) return false;
-
-  try {
-    if (!collectionCumulusId) return false;
-
-    const results = await Promise.all([
-      hasNoParentExecutionOrExists(cumulusMessage, knex),
-      hasNoAsyncOpOrExists(cumulusMessage, knex),
-    ]);
-    return results.every((result) => result === true);
-  } catch (error) {
-    log.error(error);
-    return false;
-  }
-};
-
-const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
-  trx(tableNames.executions)
-    .insert({
-      arn: getMessageExecutionArn(cumulusMessage),
-      cumulus_version: getMessageCumulusVersion(cumulusMessage),
-      status: getMetaStatus(cumulusMessage),
-    })
-    .returning('cumulus_id');
-
-const writeExecution = async ({
-  cumulusMessage,
-  knex,
-  executionModel = new Execution(),
-}) =>
-  knex.transaction(async (trx) => {
-    // eslint-disable-next-line camelcase
-    const [cumulus_id] = await writeExecutionViaTransaction({ cumulusMessage, trx });
-    await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
-    // eslint-disable-next-line camelcase
-    return cumulus_id;
-  });
+const {
+  shouldWriteExecutionToRDS,
+  writeExecution,
+} = require('./write-execution');
 
 const writePdrViaTransaction = async ({
   cumulusMessage,
@@ -366,12 +323,6 @@ const handler = async (event) => {
 
 module.exports = {
   handler,
-  isPostRDSDeploymentExecution,
-  hasNoParentExecutionOrExists,
-  hasNoAsyncOpOrExists,
-  getMessageCollectionCumulusId,
-  getMessageProviderCumulusId,
-  shouldWriteExecutionToRDS,
   writeGranuleViaTransaction,
   writeGranules,
   writeExecution,

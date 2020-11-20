@@ -25,15 +25,11 @@ const Pdr = require('../../../models/pdrs');
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const sandbox = sinon.createSandbox();
-const stubRecordExists = sandbox.stub().resolves(true);
-const hasAsyncOpStub = sandbox.stub().resolves(true);
-const hasParentExecutionStub = sandbox.stub().resolves(true);
+const shouldWriteExecutionStub = sandbox.stub().resolves(true);
 
 const {
   handler,
-  shouldWriteExecutionToRDS,
   writeGranules,
-  writeExecution,
   writePdr,
   writeRecords,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
@@ -43,12 +39,8 @@ const {
   '@cumulus/aws-client/StepFunctions': {
     describeExecution: async () => ({}),
   },
-  '@cumulus/db': {
-    doesRecordExist: stubRecordExists,
-  },
-  './utils': {
-    hasNoAsyncOpOrExists: hasAsyncOpStub,
-    hasNoParentExecutionOrExists: hasParentExecutionStub,
+  './write-execution': {
+    shouldWriteExecutionToRDS: shouldWriteExecutionStub,
   },
 });
 
@@ -211,174 +203,24 @@ test.beforeEach(async (t) => {
     .returning('cumulus_id');
   t.context.providerCumulusId = providerResponse[0];
 
-  t.context.doesRecordExistStub = stubRecordExists;
-  t.context.doesRecordExistStub.resetHistory();
-
-  t.context.hasAsyncOpStub = hasAsyncOpStub;
-  t.context.hasAsyncOpStub.resetHistory();
-
-  t.context.hasParentExecutionStub = hasParentExecutionStub;
-  t.context.hasParentExecutionStub.resetHistory();
+  t.context.shouldWriteExecutionStub = shouldWriteExecutionStub;
+  t.context.shouldWriteExecutionStub.resolves(true);
+  t.context.shouldWriteExecutionStub.resetHistory();
 });
 
 test.after.always(async (t) => {
-  const { executionModel } = t.context;
+  const {
+    executionModel,
+    pdrModel,
+    granuleModel,
+  } = t.context;
   await executionModel.deleteTable();
+  await pdrModel.deleteTable();
+  await granuleModel.deleteTable();
   sandbox.restore();
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
   await t.context.knexAdmin.destroy();
-});
-
-test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
-  const { cumulusMessage, knex, preRDSDeploymentVersion } = t.context;
-  t.false(await shouldWriteExecutionToRDS(
-    {
-      ...cumulusMessage,
-      cumulus_meta: {
-        ...cumulusMessage.cumulus_meta,
-        cumulus_version: preRDSDeploymentVersion,
-      },
-    },
-    1,
-    knex
-  ));
-});
-
-test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-  } = t.context;
-
-  t.context.hasAsyncOpStub.withArgs(cumulusMessage).resolves(true);
-  t.context.hasParentExecutionStub.withArgs(cumulusMessage).resolves(true);
-
-  t.true(
-    await shouldWriteExecutionToRDS(
-      cumulusMessage,
-      1,
-      knex
-    )
-  );
-});
-
-test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-    collectionCumulusId,
-  } = t.context;
-
-  t.context.hasParentExecutionStub.withArgs(cumulusMessage).throws();
-
-  t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
-  );
-});
-
-test('shouldWriteExecutionToRDS returns false if collection cumulus_id is not defined', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-  } = t.context;
-
-  t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, undefined, knex)
-  );
-});
-
-test.serial('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-    collectionCumulusId,
-  } = t.context;
-
-  t.context.hasAsyncOpStub.withArgs(cumulusMessage).resolves(false);
-
-  t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
-  );
-});
-
-test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionModel,
-    executionArn,
-  } = t.context;
-
-  const executionCumulusId = await writeExecution({ cumulusMessage, knex });
-
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(
-    await doesRecordExist({
-      cumulus_id: executionCumulusId,
-    }, knex, tableNames.executions)
-  );
-});
-
-test.serial('writeExecution() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionModel,
-    executionArn,
-  } = t.context;
-
-  const fakeExecutionModel = {
-    storeExecutionFromCumulusMessage: () => {
-      throw new Error('execution Dynamo error');
-    },
-  };
-
-  await t.throwsAsync(
-    writeExecution({
-      cumulusMessage,
-      knex,
-      executionModel: fakeExecutionModel,
-    }),
-    { message: 'execution Dynamo error' }
-  );
-  t.false(await executionModel.exists({ arn: executionArn }));
-  t.false(
-    await doesRecordExist({
-      arn: executionArn,
-    }, knex, tableNames.executions)
-  );
-});
-
-test.serial('writeExecution() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionModel,
-    executionArn,
-  } = t.context;
-
-  const fakeTrxCallback = (cb) => {
-    const fakeTrx = sinon.stub().returns({
-      insert: () => {
-        throw new Error('execution RDS error');
-      },
-    });
-    return cb(fakeTrx);
-  };
-  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
-  t.teardown(() => trxStub.restore());
-
-  await t.throwsAsync(
-    writeExecution({ cumulusMessage, knex }),
-    { message: 'execution RDS error' }
-  );
-  t.false(await executionModel.exists({ arn: executionArn }));
-  t.false(
-    await doesRecordExist({
-      arn: executionArn,
-    }, knex, tableNames.executions)
-  );
 });
 
 test('writePdr() returns true if there is no PDR on the message', async (t) => {
@@ -697,20 +539,19 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
   );
 });
 
-test('writeRecords() only writes records to Dynamo if cumulus version is less than RDS deployment version', async (t) => {
+test.serial('writeRecords() only writes records to Dynamo if shouldWriteExecutionToRDS returns false', async (t) => {
   const {
     cumulusMessage,
     executionModel,
     granuleModel,
     pdrModel,
     knex,
-    preRDSDeploymentVersion,
     executionArn,
     pdrName,
     granuleId,
   } = t.context;
 
-  cumulusMessage.cumulus_meta.cumulus_version = preRDSDeploymentVersion;
+  t.context.shouldWriteExecutionStub.resolves(false);
 
   await writeRecords(cumulusMessage, knex);
 
@@ -764,7 +605,7 @@ test('writeRecords() does not write PDR if execution write fails', async (t) => 
   );
 });
 
-test('writeRecords() writes records to Dynamo and RDS', async (t) => {
+test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -799,8 +640,9 @@ test('writeRecords() writes records to Dynamo and RDS', async (t) => {
   );
 });
 
-test.serial('Lambda sends message to DLQ when RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
-  delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
+test.serial('Lambda sends message to DLQ when shouldWriteExecutionToRDS throws error', async (t) => {
+  t.context.shouldWriteExecutionStub.throws();
+
   const {
     handlerResponse,
     sqsEvent,
