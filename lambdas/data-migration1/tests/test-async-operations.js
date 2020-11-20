@@ -94,14 +94,16 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
     .first();
 
   t.deepEqual(
-    omit(createdRecord, ['cumulusId']),
+    omit(createdRecord, ['cumulus_id']),
     omit({
       ...fakeAsyncOp,
+      operation_type: fakeAsyncOp.operationType,
+      task_arn: fakeAsyncOp.taskArn,
       output: JSON.parse(fakeAsyncOp.output),
       created_at: new Date(fakeAsyncOp.createdAt),
       updated_at: new Date(fakeAsyncOp.updatedAt),
     },
-    ['createdAt', 'updatedAt'])
+    ['createdAt', 'updatedAt', 'operationType', 'taskArn'])
   );
 });
 

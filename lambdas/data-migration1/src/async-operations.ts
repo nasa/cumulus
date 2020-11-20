@@ -2,6 +2,12 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
+import {
+  doesRecordExist,
+  tableNames,
+  translateApiAsyncOperationToPostgresAsyncOperation,
+} from '@cumulus/db';
+import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
 
 import { RecordAlreadyMigrated } from './errors';
@@ -12,17 +18,6 @@ const schemas = require('@cumulus/api/models/schemas');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/async-operations' });
 
-export interface RDSAsyncOperationRecord {
-  id: string
-  description: string
-  operation_type: string
-  status: string
-  output?: Object
-  task_arn?: string
-  created_at: Date
-  updated_at: Date
-}
-
 export const migrateAsyncOperationRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
@@ -30,25 +25,17 @@ export const migrateAsyncOperationRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.asyncOperation);
 
-  const existingRecord = await knex<RDSAsyncOperationRecord>('async_operations')
-    .where({
-      id: dynamoRecord.id,
-    })
-    .first();
-  // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (
+    doesRecordExist(
+      { params: { id: dynamoRecord.id }, knex, tableName: tableNames.asyncOperations }
+    )
+  ) {
     throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.id} was already migrated, skipping`);
   }
 
-  const updatedRecord: RDSAsyncOperationRecord = {
-    id: dynamoRecord.id,
-    description: dynamoRecord.description,
-    operation_type: dynamoRecord.operationType,
-    status: dynamoRecord.status,
-    task_arn: dynamoRecord.taskArn,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
-  };
+  const updatedRecord = translateApiAsyncOperationToPostgresAsyncOperation(
+    <ApiAsyncOperation>dynamoRecord
+  );
 
   if (![undefined, 'None'].includes(dynamoRecord.output)) updatedRecord.output = JSON.parse(dynamoRecord.output);
 
@@ -87,7 +74,7 @@ export const migrateAsyncOperations = async (
       } else {
         migrationSummary.failed += 1;
         logger.error(
-          `Could not create collection record in RDS for Dynamo collection name ${record.name}, version ${record.version}:`,
+          `Could not create async-operation record in RDS for Dynamo async-operation id ${record.id}:`,
           error
         );
       }

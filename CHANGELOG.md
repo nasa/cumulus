@@ -41,6 +41,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2157**
     - Add schema migration for `providers` table
     - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to RDS
+  - **CUMULUS-2187**
+    - Added logic to `data-migration1` Lambda for migrating async operation records from Dynamo to RDS
   - **CUMULUS-2182**
     - Add schema migration for PDRs table
   - **CUMULUS-2230**
