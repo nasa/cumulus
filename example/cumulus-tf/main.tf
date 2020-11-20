@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    aws  = ">= 3.5.0"
+    aws  = ">= 3.14.1"
     null = "~> 2.1"
   }
 }
@@ -43,30 +43,29 @@ data "terraform_remote_state" "data_persistence" {
   workspace = terraform.workspace
 }
 
-# data "aws_lambda_function" "sts_credentials" {
-#   function_name = "gsfc-ngap-sh-s3-sts-get-keys"
-# }
+data "aws_lambda_function" "sts_credentials" {
+  function_name = "gsfc-ngap-sh-s3-sts-get-keys"
+}
 
-# data "aws_ssm_parameter" "ecs_image_id" {
-#   name = "image_id_ecs_amz2"
-# }
+data "aws_ssm_parameter" "ecs_image_id" {
+  name = "image_id_ecs_amz2"
+}
 
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 
-  cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
+  cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 
   prefix = var.prefix
 
-  deploy_to_ngap = false
+  deploy_to_ngap = true
 
   bucket_map_key = var.bucket_map_key
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-#  ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
-  ecs_cluster_instance_image_id = "ami-a7a242da"
+  ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
     ? var.lambda_subnet_ids
     : var.ecs_cluster_instance_subnet_ids
@@ -89,6 +88,8 @@ module "cumulus" {
   ems_retention_in_days = var.ems_retention_in_days
   ems_submit_report     = var.ems_submit_report
   ems_username          = var.ems_username
+
+  es_request_concurrency = var.es_request_concurrency
 
   metrics_es_host     = var.metrics_es_host
   metrics_es_password = var.metrics_es_password
@@ -142,6 +143,7 @@ module "cumulus" {
     "menno.vandiermen",
     "jasmine"
   ]
+  archive_api_url               = var.archive_api_url
   archive_api_port              = var.archive_api_port
   private_archive_api_gateway   = var.private_archive_api_gateway
   api_gateway_stage             = var.api_gateway_stage
@@ -156,18 +158,15 @@ module "cumulus" {
   tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
   tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
   tea_external_api_endpoint = module.thin_egress_app.api_endpoint
-  tea_api_egress_log_group = module.thin_egress_app.egress_log_group
 
   log_destination_arn = var.log_destination_arn
 
   # S3 credentials endpoint
-  # sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 
   additional_log_groups_to_elk  = var.additional_log_groups_to_elk
 
   ems_deploy = var.ems_deploy
-
-  deploy_distribution_s3_credentials_endpoint = var.deploy_distribution_s3_credentials_endpoint
 
   tags = local.tags
 }
@@ -215,6 +214,16 @@ module "thin_egress_app" {
   stage_name                 = local.tea_stage_name
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
   vpc_subnet_ids             = var.lambda_subnet_ids
+  log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
+}
+
+resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
+  count           = (var.log_api_gateway_to_cloudwatch && var.log_destination_arn != null) ? 1 : 0
+  name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
+  distribution    = "ByLogStream"
+  destination_arn = var.log_destination_arn
+  filter_pattern  = ""
+  log_group_name  = module.thin_egress_app.egress_log_group
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
