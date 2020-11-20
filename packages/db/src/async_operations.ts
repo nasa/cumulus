@@ -5,9 +5,12 @@ import { PostgresAsyncOperation } from './types';
 export const translateApiAsyncOperationToPostgresAsyncOperation = (
   record: ApiAsyncOperation
 ): PostgresAsyncOperation => {
+  // fix for old implementation of async-operation output assignment
   const translatedRecord = <PostgresAsyncOperation>toSnake(record);
-  if (record.output !== undefined) {
-    translatedRecord.output = record.output;
+  if (record.output === 'none') {
+    delete translatedRecord.output;
+  } else if (record.output !== undefined) {
+    translatedRecord.output = JSON.parse(record.output);
   }
   if (record.createdAt !== undefined) {
     translatedRecord.created_at = new Date(record.createdAt);
