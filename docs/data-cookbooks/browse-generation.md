@@ -534,7 +534,7 @@ The processing lambda you construct will need to do the following:
 
 If you do not already have a CMR file in the granules list, you will need to generate one for valid export. This example's processing script generates and adds it to the `FilesToGranules` file list via the payload but it can be present in the InputGranules from the DiscoverGranules task as well if you'd prefer to pre-generate it.
 
-Both downstream tasks `MoveGranules` and `PostToCmr` expect a valid CMR file to be available if you want to export to CMR.
+Both downstream tasks `MoveGranules`, `UpdateGranulesCmrMetadataFileLinks`, and `PostToCmr` expect a valid CMR file to be available if you want to export to CMR.
 
 ### Expected Outputs for processing task/tasks
 
@@ -553,7 +553,7 @@ Their expected values from the example above may be useful in constructing a pro
 
 #### payload
 
-The payload includes a full list of files to be 'moved' into the cumulus archive. The `FilesToGranules` task will take this list, merge it with the information from `InputGranules`, then pass that list to the `MoveGranules` task. The `MoveGranules` task will then move the files to their targets and update the CMR metadata file if it exists with the updated granule locations.
+The payload includes a full list of files to be 'moved' into the cumulus archive. The `FilesToGranules` task will take this list, merge it with the information from `InputGranules`, then pass that list to the `MoveGranules` task. The `MoveGranules` task will then move the files to their targets. The `UpdateGranulesCmrMetadataFileLinks` task will update the CMR metadata file if it exists with the updated granule locations and update the CMR file etags.
 
 In the provided example, a payload being passed to the `FilesToGranules` task should be expected to look like:
 

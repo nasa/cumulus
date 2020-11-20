@@ -15,7 +15,7 @@ CMR search, without loading them all into memory at once.  Handles paging.</p>
 ## Functions
 
 <dl>
-<dt><a href="#provideParams">provideParams(params)</a> ⇒ <code>Object</code> | <code>URLSearchParams</code></dt>
+<dt><a href="#providerParams">providerParams(params)</a> ⇒ <code>URLSearchParams</code></dt>
 <dd><p>Shim to correctly add a default provider_short_name to the input searchParams</p>
 </dd>
 </dl>
@@ -240,7 +240,7 @@ The constructor for the CMRSearchConceptQueue class
 | params | <code>Object</code> |  |  |
 | params.cmrSettings | <code>string</code> |  | the CMR settings for the requests - the provider, clientId, and either launchpad token or EDL username and password |
 | params.type | <code>string</code> |  | the type of search 'granule' or 'collection' |
-| [params.searchParams] | <code>string</code> | <code>&quot;{}&quot;</code> | the search parameters |
+| [params.searchParams] | <code>URLSearchParams</code> | <code>{}</code> | the search parameters |
 | params.format | <code>string</code> |  | the result format |
 
 **Example**  
@@ -274,18 +274,18 @@ When there are no more items in the queue, returns `null`.
 
 **Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
-<a name="provideParams"></a>
+<a name="providerParams"></a>
 
-## provideParams(params) ⇒ <code>Object</code> \| <code>URLSearchParams</code>
+## providerParams(params) ⇒ <code>URLSearchParams</code>
 Shim to correctly add a default provider_short_name to the input searchParams
 
 **Kind**: global function  
-**Returns**: <code>Object</code> \| <code>URLSearchParams</code> - - input object appeneded with a default provider_short_name  
+**Returns**: <code>URLSearchParams</code> - - input object appeneded with a default provider_short_name  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | params | <code>Object</code> |  |
-| params.searchParams | <code>Object</code> \| <code>URLSearchParams</code> | input search  parameters for searchConceptQueue. This parameter can be either a  URLSearchParam object or a plain Object. |
+| params.searchParams | <code>URLSearchParams</code> | input search  parameters for searchConceptQueue. This parameter can be either a  URLSearchParam object or a plain Object. |
 
 
 ---

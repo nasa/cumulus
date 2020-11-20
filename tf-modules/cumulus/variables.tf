@@ -25,7 +25,7 @@ variable "cmr_username" {
   type        = string
 }
 
-variable "cumulus_message_adapter_lambda_layer_arn" {
+variable "cumulus_message_adapter_lambda_layer_version_arn" {
   description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
   type        = string
   default     = null
@@ -442,12 +442,6 @@ variable "tea_api_gateway_stage" {
   default     = "DEV"
 }
 
-variable "tea_api_egress_log_group" {
-  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
-  type        = string
-  default     = null
-}
-
 variable "tea_rest_api_id" {
   description = "Thin Egress App API gateway ID"
   type        = string
@@ -543,3 +537,4 @@ variable "ems_deploy" {
   type        = bool
   default     = false
 }
+
