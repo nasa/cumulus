@@ -12,6 +12,7 @@ const {
   getMessageExecutionName,
   getMessageExecutionParentArn,
   getMessageCumulusVersion,
+  getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
@@ -19,7 +20,6 @@ const {
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
 
-const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
@@ -58,7 +58,7 @@ class Execution extends Manager {
       arn,
       asyncOperationId: getMessageAsyncOperationId(cumulusMessage),
       parentArn: getMessageExecutionParentArn(cumulusMessage),
-      execution: StepFunctionUtils.getExecutionUrl(arn),
+      execution: getExecutionUrlFromArn(arn),
       tasks: get(cumulusMessage, 'meta.workflow_tasks'),
       error: parseException(cumulusMessage.exception),
       type: get(cumulusMessage, 'meta.workflow_name'),

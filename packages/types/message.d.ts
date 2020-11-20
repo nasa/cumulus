@@ -1,5 +1,7 @@
 type CumulusException = 'None' | object;
 
+export type WorkflowStatus = 'completed' | 'failed' | 'running';
+
 export interface QueueExecutionLimits {
   [queueUrl: string]: number
 }
