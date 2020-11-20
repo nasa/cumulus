@@ -239,6 +239,12 @@ variable "archive_api_port" {
   default = null
 }
 
+variable "archive_api_url" {
+  type        = string
+  default     = null
+  description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
+}
+
 variable "private_archive_api_gateway" {
   type    = bool
   default = true

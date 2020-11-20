@@ -3,5 +3,5 @@
   "line-length": false,
   "no-duplicate-header": false,
   "ol-prefix": { "style": "ordered" },
-  "no-inline-html": { "allowed_elements": ["code", "br", "ul", "li", "details", "summary"] }
+  "no-inline-html": { "allowed_elements": ["code", "br", "b", "ul", "li", "details", "summary"] }
 }
