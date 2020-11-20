@@ -5,4 +5,5 @@ export const tableNames = {
   granules: 'granules',
   pdrs: 'pdrs',
   providers: 'providers',
+  rules: 'rules',
 };

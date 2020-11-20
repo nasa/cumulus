@@ -50,7 +50,6 @@ const { setProcessEnvironment, readJsonFilesFromDir } = require('./utils');
 const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
-
 const lambdaStep = new LambdaStep();
 
 /**

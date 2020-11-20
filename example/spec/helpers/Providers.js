@@ -82,9 +82,17 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
   return provider;
 };
 
+const throwIfApiReturnFail = async (apiResult) => {
+  if (apiResult.statusCode === 500) {
+    throw new Error(`API returned a 500 status: ${apiResult}, failing.`);
+  }
+};
+
 const createProvider = async (stackName, provider) => {
-  await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
-  await providersApi.createProvider({ prefix: stackName, provider: provider });
+  const deleteProviderResult = await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+  const createProviderResult = await providersApi.createProvider({ prefix: stackName, provider });
+  throwIfApiReturnFail(deleteProviderResult);
+  throwIfApiReturnFail(createProviderResult);
 };
 
 module.exports = {

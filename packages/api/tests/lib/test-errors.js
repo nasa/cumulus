@@ -10,6 +10,18 @@ test('isBadRequestError returns true for SchemaValidationError', (t) => {
   t.true(isBadRequestError(error));
 });
 
+test('isBadRequestError returns true when error.code has a "22" prefix', (t) => {
+  const error = new Error();
+  error.code = '220B5';
+  t.true(isBadRequestError(error));
+});
+
+test('isBadRequestError returns true when error.code has a "23" prefix', (t) => {
+  const error = new Error();
+  error.code = '230B5';
+  t.true(isBadRequestError(error));
+});
+
 test('isBadRequestError returns true for ValidationError', (t) => {
   t.true(isBadRequestError(new ValidationError()));
 });

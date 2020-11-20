@@ -21,17 +21,18 @@ test('translateApiAsyncOperationToPostgresAsyncOperation converts a camelCase re
   t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);
 });
 
-test('translateApiAsyncOperationToPostgresAsyncOperation does not convert output field to snake_case', (t) => {
+test('translateApiAsyncOperationToPostgresAsyncOperation parses output from string to object', (t) => {
+  const operationOutput = {
+    esIndex: 'test-index',
+    operationStatus: 'complete',
+  };
   const apiAsyncOperation = {
     id: '1234567890',
     status: 'SUCCEEDED',
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
     operationType: 'ES Index',
-    output: {
-      esIndex: 'test-index',
-      operationStatus: 'complete',
-    },
+    output: JSON.stringify(operationOutput),
   };
 
   const expected = {
@@ -40,7 +41,28 @@ test('translateApiAsyncOperationToPostgresAsyncOperation does not convert output
     task_arn: apiAsyncOperation.taskArn,
     description: apiAsyncOperation.description,
     operation_type: apiAsyncOperation.operationType,
-    output: apiAsyncOperation.output,
+    output: operationOutput,
+  };
+
+  t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);
+});
+
+test('translateApiAsyncOperationToPostgresAsyncOperation discards \'none\' output', (t) => {
+  const apiAsyncOperation = {
+    id: '1234567890',
+    status: 'SUCCEEDED',
+    taskArn: 'aws:arn:ecs:task:someTask',
+    description: 'dummy operation',
+    operationType: 'ES Index',
+    output: 'none',
+  };
+
+  const expected = {
+    id: apiAsyncOperation.id,
+    status: apiAsyncOperation.status,
+    task_arn: apiAsyncOperation.taskArn,
+    description: apiAsyncOperation.description,
+    operation_type: apiAsyncOperation.operationType,
   };
 
   t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);

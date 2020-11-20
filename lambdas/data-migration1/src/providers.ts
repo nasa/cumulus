@@ -3,7 +3,7 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import * as KMS from '@cumulus/aws-client/KMS';
 import { envUtils, keyPairProvider } from '@cumulus/common';
-import { ProviderRecord } from '@cumulus/db';
+import { PostgresProviderRecord } from '@cumulus/db';
 import Logger from '@cumulus/logger';
 
 import { RecordAlreadyMigrated } from './errors';
@@ -62,7 +62,7 @@ export const migrateProviderRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.provider);
 
-  const existingRecord = await knex<ProviderRecord>('providers')
+  const existingRecord = await knex<PostgresProviderRecord>('providers')
     .where('name', dynamoRecord.id)
     .first();
   // Throw error if it was already migrated.

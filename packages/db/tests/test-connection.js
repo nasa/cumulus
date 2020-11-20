@@ -114,7 +114,7 @@ test('getKnexClient with heartbeat check enabled and configured database connect
       host: localStackConnectionEnv.PG_HOST,
       password: localStackConnectionEnv.PG_PASSWORD,
       user: localStackConnectionEnv.PG_USER,
-      port: localStackConnectionEnv.PG_PORT,
+      port: Number(localStackConnectionEnv.PG_PORT),
     };
     t.deepEqual(expected, results.client.config.connection);
   });

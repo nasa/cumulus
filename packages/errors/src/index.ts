@@ -133,6 +133,8 @@ export const InvalidArgument = createErrorType('InvalidArgument');
  * is raised if the PDR file doesn't match the collection
  */
 
+export const ApiCollisionError = createErrorType('ApiCollisionError');
+
 export const DeletePublishedGranule = createErrorType('DeletePublishedGranule');
 
 export const EcsStartTaskError = createErrorType('EcsStartTaskError');
@@ -140,6 +142,8 @@ export const EcsStartTaskError = createErrorType('EcsStartTaskError');
 export const InvalidRegexError = createErrorType('InvalidRegexError');
 
 export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
+
+export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
 
 export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
 
@@ -150,3 +154,12 @@ export const UnparsableFileLocationError = createErrorType('UnparsableFileLocati
 export const ValidationError = createErrorType('ValidationError');
 
 export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');
+
+export class PostgresValidationError extends ValidationError {
+  detail: string | undefined;
+  constructor(message: string) {
+    super(message);
+    this.name = 'PostgresValidationError';
+    Error.captureStackTrace(this, this.constructor);
+  }
+}

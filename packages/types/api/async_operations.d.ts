@@ -8,7 +8,7 @@ export interface ApiAsyncOperation {
   operationType: AsyncOperationType
   status: AsyncOperationStatus
   taskArn?: string
-  output?: Object
+  output?: string
   createdAt?: number
   updatedAt?: number
 }
