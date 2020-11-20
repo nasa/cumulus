@@ -82,6 +82,17 @@ test.beforeEach((t) => {
   t.context.hasParentExecutionStub.resetHistory();
 });
 
+test.after.always(async (t) => {
+  const {
+    executionModel,
+  } = t.context;
+  await executionModel.deleteTable();
+  sandbox.restore();
+  await t.context.knex.destroy();
+  await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
+  await t.context.knexAdmin.destroy();
+});
+
 test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
   const { cumulusMessage, knex, preRDSDeploymentVersion } = t.context;
   t.false(await shouldWriteExecutionToRDS(
