@@ -198,7 +198,7 @@ const writeAsyncOperationToDynamoDb = async (params) => {
 const updateAsyncOperation = async (status, output, envOverride = {}) => {
   logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
-  const dbOutput = actualOutput ? JSON.stringify(actualOutput) : 'none';
+  const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
   const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
   const env = { ...process.env, ...envOverride };
   const knex = await getKnexClient({ env });

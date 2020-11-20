@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       favor of the added `@cumulus/async-operations` module:
       - `start`
       - `startAsyncOperations`
+  - **CUMULUS-2187**
+    - The `async-operations` endpoint will now omit `output` instead
+      of returning `none` when the operation did not return output.
 
 ### Added
 
@@ -68,6 +71,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     database.
   - **CUMULUS-2228**
     - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the Core PostgreSQL database in parallel with writes to DynamoDB
+  - **CUMULUS-2187**
+    - The `async-operations` endpoint will now omit `output` instead
+      of returning `none` when the operation did not return output.
 - **CUMULUS-2200**
   - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
 - **CUMULUS-2232**

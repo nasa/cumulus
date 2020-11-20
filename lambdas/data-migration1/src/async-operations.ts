@@ -33,8 +33,6 @@ export const migrateAsyncOperationRecord = async (
     <ApiAsyncOperation>dynamoRecord
   );
 
-  if (![undefined, 'None'].includes(dynamoRecord.output)) updatedRecord.output = JSON.parse(dynamoRecord.output);
-
   await knex('async_operations').insert(updatedRecord);
 };
 
