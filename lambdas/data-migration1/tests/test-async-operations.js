@@ -107,6 +107,32 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
   );
 });
 
+test.serial('migrateAsyncOperationRecord migrates asyncOperation record with undefined nullables', async (t) => {
+  const fakeAsyncOp = generateFakeAsyncOperation();
+  delete fakeAsyncOp.output;
+  delete fakeAsyncOp.taskArn;
+  await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('async_operations')
+    .where({ id: fakeAsyncOp.id })
+    .first();
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit({
+      ...fakeAsyncOp,
+      operation_type: fakeAsyncOp.operationType,
+      output: null,
+      task_arn: null,
+      created_at: new Date(fakeAsyncOp.createdAt),
+      updated_at: new Date(fakeAsyncOp.updatedAt),
+    },
+    ['createdAt', 'updatedAt', 'operationType'])
+  );
+});
+
 test.serial('migrateAsyncOperationRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const fakeAsyncOp = generateFakeAsyncOperation();
 
