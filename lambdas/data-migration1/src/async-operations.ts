@@ -25,11 +25,7 @@ export const migrateAsyncOperationRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.asyncOperation);
 
-  if (
-    doesRecordExist(
-      { params: { id: dynamoRecord.id }, knex, tableName: tableNames.asyncOperations }
-    )
-  ) {
+  if (await doesRecordExist({ id: dynamoRecord.id }, knex, tableNames.asyncOperations)) {
     throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.id} was already migrated, skipping`);
   }
 
