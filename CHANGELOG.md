@@ -66,6 +66,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2189**
+    - Updated Provider endpoint logic to write providers in parallel to Core
+      PostgreSQL database
+    - Update integration tests to utilize API calls instead of direct
+      api/model/Provider calls
   - **CUMULUS-2191**
     - Updated cumuluss/async-operation task to write async-operations to the RDS
     database.

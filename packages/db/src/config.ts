@@ -7,7 +7,7 @@ export const localStackConnectionEnv = {
   PG_USER: 'postgres',
   PG_PASSWORD: 'password',
   PG_DATABASE: 'postgres',
-  PG_PORT: 5432,
+  PG_PORT: '5432',
 };
 
 export const getSecretConnectionConfig = async (

@@ -185,7 +185,6 @@ test.serial('download Granule from FTP endpoint', async (t) => {
   };
 
   t.context.event.config.collection.url_path = 'example/';
-
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
