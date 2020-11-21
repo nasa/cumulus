@@ -1,7 +1,7 @@
 import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-import { CollectionRecord, RuleRecord } from '@cumulus/db';
+import { PostgresCollectionRecord, PostgresRuleRecord } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
@@ -15,7 +15,7 @@ const schemas = require('@cumulus/api/models/schemas');
 
 /**
  *
- * Retrieve cumulusId from Provider using id.
+ * Retrieve cumulus_id from Provider using id.
  *
  * @param {string} name - Provider ID
  * @param {Knex} knex - Knex client for writing to RDS database
@@ -40,7 +40,7 @@ const getProviderCumulusId = async (
 
 /**
  *
- * Retrieve cumulusId from Collection using name and version.
+ * Retrieve cumulus_id from Collection using name and version.
  *
  * @param {string} name - Collection Name
  * @param {string} version - Collection version
@@ -53,15 +53,15 @@ const getCollectionCumulusId = async (
   version: string,
   knex: Knex
 ): Promise<number> => {
-  const record = await knex.select(knex.ref('cumulusId').as('collectionCumulusId'))
-    .from<CollectionRecord>('collections')
+  const record = await knex.select(knex.ref('cumulus_id').as('collection_cumulus_id'))
+    .from<PostgresCollectionRecord>('collections')
     .where({ name: name, version: version })
     .first();
 
   if (record === undefined) {
     throw new RecordDoesNotExist(`Collection with name ${name} and version ${version} does not exist.`);
   }
-  return record.collectionCumulusId;
+  return record.collection_cumulus_id;
 };
 
 /**
@@ -80,7 +80,7 @@ export const migrateRuleRecord = async (
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.rule);
 
-  const existingRecord = await knex<RuleRecord>('rules')
+  const existingRecord = await knex<PostgresRuleRecord>('rules')
     .where({ name: dynamoRecord.name })
     .first();
 
@@ -93,21 +93,21 @@ export const migrateRuleRecord = async (
   const providerCumulusId = await getProviderCumulusId(dynamoRecord.provider, knex);
 
   // Map old record to new schema.
-  const updatedRecord: RuleRecord = {
+  const updatedRecord: PostgresRuleRecord = {
     name: dynamoRecord.name,
     workflow: dynamoRecord.workflow,
-    collectionCumulusId: collectionCumulusId,
-    providerCumulusId: providerCumulusId.cumulusId,
+    provider_cumulus_id: providerCumulusId.cumulus_id,
+    collection_cumulus_id: collectionCumulusId,
     enabled: dynamoRecord.state === 'ENABLED',
     type: dynamoRecord.rule.type,
     value: dynamoRecord.rule.value,
     arn: dynamoRecord.rule.arn,
-    logEventArn: dynamoRecord.rule.logEventArn,
-    executionNamePrefix: dynamoRecord.executionNamePrefix ? dynamoRecord.executionNamePrefix : undefined,
+    log_event_arn: dynamoRecord.rule.logEventArn,
+    execution_name_prefix: dynamoRecord.executionNamePrefix ? dynamoRecord.executionNamePrefix : undefined,
     payload: dynamoRecord.payload,
     meta: dynamoRecord.meta ? dynamoRecord.meta : undefined,
     tags: dynamoRecord.tags ? dynamoRecord.tags : undefined,
-    queueUrl: dynamoRecord.queueUrl,
+    queue_url: dynamoRecord.queueUrl,
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: new Date(dynamoRecord.updatedAt),
   };

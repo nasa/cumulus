@@ -1,52 +1,52 @@
 import { AsyncOperationStatus, AsyncOperationType } from '@cumulus/types/api/async_operations';
 
 export interface PostgresAsyncOperation {
-  id: string
-  description: string
-  operation_type: AsyncOperationType
-  status: AsyncOperationStatus
-  output?: Object
-  task_arn?: string
-  created_at?: Date
-  updated_at?: Date
+  id: string,
+  description: string,
+  operation_type: AsyncOperationType,
+  status: AsyncOperationStatus,
+  output?: Object,
+  task_arn?: string,
+  created_at?: Date,
+  updated_at?: Date,
 }
 
 export interface PostgresAsyncOperationRecord extends PostgresAsyncOperation {
-  created_at: Date
-  updated_at: Date
+  created_at: Date,
+  updated_at: Date,
 }
 
 export interface PostgresCollection {
-  name: string
-  version: string
-  granule_id_validation_regex: string
-  granule_id_extraction_regex: string
-  files: string
-  process?: string
-  duplicate_handling?: string
-  report_to_ems?: boolean
-  sample_file_name?: string
-  url_path?: string
-  ignore_files_config_for_discovery?: boolean
-  meta?: string
-  tags?: string
-  created_at?: Date
-  updated_at?: Date
+  name: string,
+  version: string,
+  granule_id_validation_regex: string,
+  granule_id_extraction_regex: string,
+  files: string,
+  process?: string,
+  duplicate_handling?: string,
+  report_to_ems?: boolean,
+  sample_file_name?: string,
+  url_path?: string,
+  ignore_files_config_for_discovery?: boolean,
+  meta?: string,
+  tags?: string,
+  created_at?: Date,
+  updated_at?: Date,
 }
 
 export interface PostgresCollectionRecord extends PostgresCollection {
-  created_at: Date
-  updated_at: Date
+  created_at: Date,
+  updated_at: Date,
 }
 
 export interface ExecutionRecord {
-  arn: string
-  async_operation_cumulus_id?: number
-  collection_cumulus_id?: number
-  parent_cumulus_id?: number
-  cumulus_version: string
-  created_at: Date
-  updated_at: Date
+  arn: string,
+  async_operation_cumulus_id?: number,
+  collection_cumulus_id?: number,
+  parent_cumulus_id?: number,
+  cumulus_version: string,
+  created_at: Date,
+  updated_at: Date,
 }
 
 /**
@@ -56,7 +56,7 @@ export interface ExecutionRecord {
  * is ready for write to Cumulus's postgres database instance
  */
 export interface PostgresProvider {
-  certificate_uri?: string | null
+  certificate_uri?: string | null,
   cm_key_id?: string | null,
   created_at?: number | null,
   cumulus_id?: number | null,
@@ -84,21 +84,24 @@ export interface PostgresProviderRecord extends PostgresProvider {
   cumulusId: number,
 }
 
-export interface RuleRecord {
-  name: string
-  workflow: string
-  created_at: Date
-  updated_at: Date
-  collectionCumulusId: number
-  providerCumulusId: number
-  executionNamePrefix?: string
-  type: string
-  enabled: boolean
-  value: string
-  arn: string
-  logEventArn: string
-  payload?: object
-  meta?: object
-  tags?: Array<string>
-  queueUrl?: string
+export interface PostgresRule {
+  name: string,
+  workflow: string,
+  collection_cumulus_id: number,
+  provider_cumulus_id: number,
+  execution_name_prefix?: string,
+  type: string,
+  enabled: boolean,
+  value: string,
+  arn: string,
+  log_event_arn: string,
+  payload?: object,
+  meta?: object,
+  tags?: Array<string>,
+  queue_url?: string,
+}
+
+export interface PostgresRuleRecord extends PostgresRule {
+  created_at: Date,
+  updated_at: Date,
 }

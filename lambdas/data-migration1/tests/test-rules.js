@@ -36,9 +36,7 @@ const generateFakeRule = (collectionName, collectionVersion, providerId, enabled
   rule: { type: 'onetime' },
   meta: { key: 'value' },
   payload: undefined,
-  queueUrl: undefined,
   tags: undefined,
-  executionNamePrefix: undefined,
   createdAt: Date.now(),
   updatedAt: Date.now(),
 });
@@ -158,7 +156,7 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
     .first();
 
   t.deepEqual(
-    omit(createdRecord, ['cumulusId', 'collectionCumulusId', 'providerCumulusId']),
+    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
     omit(
       {
         ...fakeRule,
@@ -166,10 +164,10 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
         type: fakeRule.rule.type,
         value: fakeRule.rule.value ? fakeRule.rule.value : null,
         enabled: true,
-        logEventArn: null,
-        executionNamePrefix: null,
+        log_event_arn: null,
+        execution_name_prefix: null,
         payload: null,
-        queueUrl: null,
+        queue_url: null,
         tags: null,
         created_at: new Date(fakeRule.createdAt),
         updated_at: new Date(fakeRule.updatedAt),
@@ -228,7 +226,7 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
     .first();
 
   t.deepEqual(
-    omit(createdRecord, ['cumulusId', 'collectionCumulusId', 'providerCumulusId']),
+    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
     omit(
       {
         ...fakeRule,
@@ -236,10 +234,10 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
         value: fakeRule.rule.value ? fakeRule.rule.value : null,
         type: fakeRule.rule.type,
         enabled: true,
-        logEventArn: null,
-        executionNamePrefix: null,
+        log_event_arn: null,
+        execution_name_prefix: null,
         payload: null,
-        queueUrl: null,
+        queue_url: null,
         meta: null,
         tags: null,
         created_at: new Date(fakeRule.createdAt),

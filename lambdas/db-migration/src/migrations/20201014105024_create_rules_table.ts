@@ -46,7 +46,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('log_event_arn')
       .comment('For kinesis rules: ARN of event source mapping between Kinesis stream and inbound event logger Lambda');
     table
-      .text('executionNamePrefix')
+      .text('execution_name_prefix')
       .comment('Optional Execution name prefix');
     table
       .jsonb('payload')
