@@ -1,7 +1,7 @@
 import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-import { PostgresCollectionRecord, PostgresRuleRecord } from '@cumulus/db';
+import { PostgresCollectionRecord, PostgresProviderRecord, PostgresRuleRecord } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
@@ -26,16 +26,15 @@ const getProviderCumulusId = async (
   name: string,
   knex: Knex
 ): Promise<any> => {
-  const record = await knex.queryBuilder()
-    .select()
-    .table('providers')
+  const record = await knex.select(knex.ref('cumulus_id').as('provider_cumulus_id'))
+    .from<PostgresProviderRecord>('providers')
     .where({ name: name })
     .first();
 
   if (record === undefined) {
     throw new RecordDoesNotExist(`Provider with id ${name} does not exist.`);
   }
-  return record;
+  return record.provider_cumulus_id;
 };
 
 /**
@@ -96,7 +95,7 @@ export const migrateRuleRecord = async (
   const updatedRecord: PostgresRuleRecord = {
     name: dynamoRecord.name,
     workflow: dynamoRecord.workflow,
-    provider_cumulus_id: providerCumulusId.cumulus_id,
+    provider_cumulus_id: providerCumulusId,
     collection_cumulus_id: collectionCumulusId,
     enabled: dynamoRecord.state === 'ENABLED',
     type: dynamoRecord.rule.type,
