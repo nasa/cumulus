@@ -179,7 +179,7 @@ export const migrateRules = async (
       } else {
         migrationSummary.failed += 1;
         logger.error(
-          `Could not create rule record in RDS for Dynamo Rule name ${record.id}:`,
+          `Could not create rule record in RDS for Dynamo Rule name: ${record.name}, version: ${record.version}}`,
           error
         );
       }
