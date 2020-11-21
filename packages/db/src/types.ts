@@ -96,8 +96,8 @@ export interface PostgresRule {
   arn: string,
   log_event_arn: string,
   payload?: object,
-  meta?: object,
-  tags?: Array<string>,
+  meta?: string,
+  tags?: string,
   queue_url?: string,
 }
 

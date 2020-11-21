@@ -1,7 +1,7 @@
 import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-import { PostgresCollectionRecord, PostgresProviderRecord, PostgresRuleRecord } from '@cumulus/db';
+import { PostgresRuleRecord } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
@@ -21,7 +21,6 @@ const schemas = require('@cumulus/api/models/schemas');
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordDoesNotExist} if record cannot be found
- */
 const getProviderCumulusId = async (
   name: string,
   knex: Knex
@@ -36,6 +35,7 @@ const getProviderCumulusId = async (
   }
   return record.provider_cumulus_id;
 };
+ */
 
 /**
  *
@@ -46,7 +46,6 @@ const getProviderCumulusId = async (
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordDoesNotExist} if record cannot be found
- */
 const getCollectionCumulusId = async (
   name : string,
   version: string,
@@ -61,6 +60,33 @@ const getCollectionCumulusId = async (
     throw new RecordDoesNotExist(`Collection with name ${name} and version ${version} does not exist.`);
   }
   return record.collection_cumulus_id;
+};
+*/
+
+/**
+ *
+ * Retrieve cumulus_id from table using name and version.
+ *
+ * @param {object} whereClause - where clause for query
+ * @param {'providers' | 'collections'} table - Name of table
+ * @param {Knex} knex - Knex client for writing to RDS database
+ * @returns {Promise<number>} - Cumulus ID for record
+ * @throws {RecordDoesNotExist} if record cannot be found
+ */
+const getCumulusId = async (
+  whereClause : object,
+  table: 'providers' | 'collections',
+  knex: Knex
+): Promise<number> => {
+  const record = await knex.select('cumulus_id')
+    .from(table)
+    .where(whereClause)
+    .first();
+
+  if (record === undefined) {
+    throw new RecordDoesNotExist(`${table.toUpperCase()} with identifiers ${whereClause} does not exist.`);
+  }
+  return record.cumulus_id;
 };
 
 /**
@@ -88,8 +114,15 @@ export const migrateRuleRecord = async (
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
-  const collectionCumulusId = await getCollectionCumulusId(dynamoRecord.collection.name, dynamoRecord.collection.version, knex);
-  const providerCumulusId = await getProviderCumulusId(dynamoRecord.provider, knex);
+  // const collectionCumulusId = await getCollectionCumulusId(dynamoRecord.collection.name, dynamoRecord.collection.version, knex);
+  // const providerCumulusId = await getProviderCumulusId(dynamoRecord.provider, knex);
+  const prefix = dynamoRecord.executionNamePrefix ? dynamoRecord.executionNamePrefix : undefined;
+  const collectionCumulusId = await getCumulusId(
+    { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
+    'collections',
+    knex
+  );
+  const providerCumulusId = await getCumulusId({ name: dynamoRecord.provider }, 'providers', knex);
 
   // Map old record to new schema.
   const updatedRecord: PostgresRuleRecord = {
@@ -102,10 +135,10 @@ export const migrateRuleRecord = async (
     value: dynamoRecord.rule.value,
     arn: dynamoRecord.rule.arn,
     log_event_arn: dynamoRecord.rule.logEventArn,
-    execution_name_prefix: dynamoRecord.executionNamePrefix ? dynamoRecord.executionNamePrefix : undefined,
+    execution_name_prefix: prefix,
     payload: dynamoRecord.payload,
-    meta: dynamoRecord.meta ? dynamoRecord.meta : undefined,
-    tags: dynamoRecord.tags ? dynamoRecord.tags : undefined,
+    meta: dynamoRecord.meta ? JSON.stringify(dynamoRecord.meta) : undefined,
+    tags: dynamoRecord.tags ? JSON.stringify(dynamoRecord.tags) : undefined,
     queue_url: dynamoRecord.queueUrl,
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: new Date(dynamoRecord.updatedAt),
