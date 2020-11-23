@@ -48,6 +48,10 @@ const writeGranuleViaTransaction = async ({
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with Postgres database
+ * @param {Object} [params.executionDescription]
+ *   Description of the Step Function execution for the workflow, if any
+ * @param {string} [params.executionUrl]
+ *   Step Function execution URL for the workflow, if any
  * @param {string} [params.providerCumulusId]
  *   Cumulus ID for provider referenced in workflow message, if any
  * @param {string} [params.pdrCumulusId]
@@ -61,11 +65,11 @@ const writeGranuleViaTransaction = async ({
 const writeGranule = async ({
   granule,
   cumulusMessage,
-  executionDescription,
-  executionUrl,
   collectionCumulusId,
   executionCumulusId,
   knex,
+  executionDescription,
+  executionUrl,
   providerCumulusId,
   pdrCumulusId,
   granuleModel,
