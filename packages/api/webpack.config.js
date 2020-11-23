@@ -27,7 +27,7 @@ module.exports = {
     bulkOperation: './lambdas/bulk-operation.js',
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
-    sfEventSqsToDbRecords: './lambdas/sf-event-sqs-to-db-records.js',
+    sfEventSqsToDbRecords: './lambdas/sf-event-sqs-to-db-records/index.js',
     dbIndexer: './lambdas/db-indexer.js',
     distribution: './app/distribution.js',
     emsDistributionReport: './lambdas/ems-distribution-report.js',
