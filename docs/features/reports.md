@@ -7,6 +7,7 @@ hide_title: false
 ## Report Types
 
 ### Inventory Reports
+
 Inventory reports provide a detailed report of collections, granules and files in Cumulus and CMR.
 This report shows the following data:
 
