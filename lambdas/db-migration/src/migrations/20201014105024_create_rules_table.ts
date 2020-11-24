@@ -16,13 +16,11 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .integer('collection_cumulus_id')
       .references('cumulus_id')
-      .inTable('collections')
-      .notNullable();
+      .inTable('collections');
     table
       .integer('provider_cumulus_id')
       .references('cumulus_id')
-      .inTable('providers')
-      .notNullable();
+      .inTable('providers');
     table
       .enum('type', ['onetime', 'scheduled', 'sns', 'kinesis', 'sqs'])
       .comment(

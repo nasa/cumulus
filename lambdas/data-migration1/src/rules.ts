@@ -64,19 +64,19 @@ export const migrateRuleRecord = async (
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
-  const collectionCumulusId = await getCumulusId(
+  const collectionCumulusId = dynamoRecord.collection ? await getCumulusId(
     { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
     'collections',
     knex
-  );
-  const providerCumulusId = await getCumulusId({ name: dynamoRecord.provider }, 'providers', knex);
+  ) : undefined;
+  const providerCumulusId = dynamoRecord.provdier ? await getCumulusId({ name: dynamoRecord.provider }, 'providers', knex) : undefined;
 
   // Map old record to new schema.
   const updatedRecord: PostgresRuleRecord = {
     name: dynamoRecord.name,
     workflow: dynamoRecord.workflow,
-    provider_cumulus_id: providerCumulusId.cumulus_id,
-    collection_cumulus_id: collectionCumulusId.cumulus_id,
+    provider_cumulus_id: providerCumulusId ? providerCumulusId.cumulus_id : undefined,
+    collection_cumulus_id: collectionCumulusId ? collectionCumulusId.cumulus_id : undefined,
     enabled: dynamoRecord.state === 'ENABLED',
     type: dynamoRecord.rule.type,
     value: dynamoRecord.rule.value,

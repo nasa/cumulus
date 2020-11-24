@@ -183,12 +183,15 @@ test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb
   // make source record invalid
   delete fakeRule.workflow;
 
-  await t.throwsAsync(migrateRuleRecord(fakeRule, t.context.knex));
+  await t.throwsAsync(
+    migrateRuleRecord(fakeRule, t.context.knex),
+    { name: 'SchemaValidationError' }
+  );
 });
 
 test.serial('migrateRuleRecord handles nullable fields on source rule data', async (t) => {
   const { knex } = t.context;
-  const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
+  const fakeRule = generateFakeRule();
 
   delete fakeRule.rule.logEventArn;
   delete fakeRule.rule.value;
@@ -198,6 +201,8 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
   delete fakeRule.meta;
   delete fakeRule.tags;
   delete fakeRule.executionNamePrefix;
+  delete fakeRule.collection;
+  delete fakeRule.provider;
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
   await migrateFakeProviderRecord(fakeProvider, knex);
