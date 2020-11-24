@@ -1,13 +1,12 @@
-/* eslint-disable max-len */
 const Collection = require('@cumulus/api/models/collections');
 const cryptoRandomString = require('crypto-random-string');
-const KMS = require('@cumulus/aws-client/KMS');
 const omit = require('lodash/omit');
 const Provider = require('@cumulus/api/models/providers');
 const Rule = require('@cumulus/api/models/rules');
 const test = require('ava');
 
 const { createBucket, putJsonS3Object, recursivelyDeleteS3Bucket} = require('@cumulus/aws-client/S3');
+const { translateApiCollectionToPostgresCollection, translateApiProviderToPostgresProvider } = require('@cumulus/db');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
@@ -15,8 +14,6 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
-const { migrateCollectionRecord } = require('../dist/lambda/collections');
-const { migrateProviderRecord } = require('../dist/lambda/providers');
 const { migrateRuleRecord, migrateRules } = require('../dist/lambda/rules');
 const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
@@ -35,6 +32,7 @@ const generateFakeRule = (collectionName, collectionVersion, providerId, enabled
     version: collectionVersion,
   },
   rule: { type: 'onetime', value: randomString(), arn: randomString(), logEventArn: randomString() },
+  executionNamePrefix: randomString(),
   meta: { key: 'value' },
   queueUrl: randomString(),
   payload: { result: { key: 'value' } },
@@ -42,6 +40,18 @@ const generateFakeRule = (collectionName, collectionVersion, providerId, enabled
   createdAt: Date.now(),
   updatedAt: Date.now(),
 });
+
+const migrateFakeCollectionRecord = async (record, knex) => {
+  const updatedRecord = translateApiCollectionToPostgresCollection(record);
+  await knex('collections').insert(updatedRecord);
+};
+
+const fakeEncryptFunction = async () => 'fakeEncryptedString';
+
+const migrateFakeProviderRecord = async (record, knex) => {
+  const updatedRecord = await translateApiProviderToPostgresProvider(record, fakeEncryptFunction);
+  await knex('providers').insert(updatedRecord);
+};
 
 let collectionsModel;
 let providersModel;
@@ -55,10 +65,6 @@ test.before(async (t) => {
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
   process.env.ProvidersTable = cryptoRandomString({ length: 10 });
   process.env.RulesTable = cryptoRandomString({ length: 10 });
-
-  const createKeyResponse = await KMS.createKey();
-  process.env.provider_kms_key_id = createKeyResponse.KeyMetadata.KeyId;
-  t.context.providerKmsKeyId = process.env.provider_kms_key_id;
 
   const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
   const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
@@ -75,12 +81,11 @@ test.before(async (t) => {
 
   fakeCollection = fakeCollectionFactory();
   fakeProvider = fakeProviderFactory({
-    encrypted: false,
+    encrypted: true,
     privateKey: 'key',
     cmKeyId: 'key-id',
     certificateUri: 'uri',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: new Date(2020, 11, 17),
   });
 
   t.context.knexAdmin = await getKnexClient({
@@ -135,20 +140,11 @@ test.after.always(async (t) => {
 });
 
 test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
-  fakeCollection = fakeCollectionFactory();
-  fakeProvider = fakeProviderFactory({
-    encrypted: false,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
+  const { knex } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
-  await migrateCollectionRecord(fakeCollection, knex);
-  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateRuleRecord(fakeRule, knex);
 
   const createdRecord = await t.context.knex.queryBuilder()
@@ -169,7 +165,7 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
         value: fakeRule.rule.value,
         enabled: true,
         log_event_arn: fakeRule.rule.logEventArn,
-        execution_name_prefix: null,
+        execution_name_prefix: fakeRule.executionNamePrefix,
         payload: fakeRule.payload,
         queue_url: fakeRule.queueUrl,
         tags: fakeRule.tags,
@@ -182,15 +178,6 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
 });
 
 test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb', async (t) => {
-  fakeCollection = fakeCollectionFactory();
-  fakeProvider = fakeProviderFactory({
-    encrypted: false,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   // make source record invalid
@@ -200,16 +187,7 @@ test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb
 });
 
 test.serial('migrateRuleRecord handles nullable fields on source rule data', async (t) => {
-  fakeCollection = fakeCollectionFactory();
-  fakeProvider = fakeProviderFactory({
-    encrypted: false,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   delete fakeRule.rule.logEventArn;
@@ -221,8 +199,8 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
   delete fakeRule.tags;
   delete fakeRule.executionNamePrefix;
 
-  await migrateCollectionRecord(fakeCollection, knex);
-  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateRuleRecord(fakeRule, t.context.knex);
   const createdRecord = await t.context.knex.queryBuilder()
     .select()
@@ -254,30 +232,21 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
 });
 
 test.serial('migrateRuleRecord ignores extraneous fields from Dynamo', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
-  fakeCollection = fakeCollectionFactory();
-  fakeProvider = fakeProviderFactory({
-    encrypted: false,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
+  const { knex } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   fakeRule.state = 'ENABLED';
-  await migrateCollectionRecord(fakeCollection, knex);
-  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
   await t.notThrowsAsync(migrateRuleRecord(fakeRule, knex));
 });
 
 test.serial('migrateRuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
-  await migrateCollectionRecord(fakeCollection, knex);
-  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateRuleRecord(fakeRule, knex);
   await t.throwsAsync(
     migrateRuleRecord(fakeRule, t.context.knex),
@@ -286,13 +255,13 @@ test.serial('migrateRuleRecord throws RecordAlreadyMigrated error for already mi
 });
 
 test.serial('migrateRules skips already migrated record', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
   const queueUrls = randomString();
   fakeRule.queueUrl = queueUrls.queueUrl;
 
-  await migrateCollectionRecord(fakeCollection, knex);
-  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateRuleRecord(fakeRule, knex);
   await rulesModel.create(fakeRule);
 
@@ -310,25 +279,27 @@ test.serial('migrateRules skips already migrated record', async (t) => {
 });
 
 test.serial('migrateRules processes multiple rules', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex } = t.context;
   const anotherFakeCollection = fakeCollectionFactory();
   const anotherFakeProvider = fakeProviderFactory({
     encrypted: false,
     privateKey: 'key',
     cmKeyId: 'key-id',
     certificateUri: 'uri',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: new Date(2020, 11, 17),
+    updatedAt: new Date(2020, 11, 17),
   });
+  const { id } = anotherFakeProvider;
+  const { name, version } = anotherFakeCollection;
   const fakeRule1 = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
-  const fakeRule2 = generateFakeRule(anotherFakeCollection.name, anotherFakeCollection.version, anotherFakeProvider.id);
+  const fakeRule2 = generateFakeRule(name, version, id);
   const queueUrls1 = randomString();
   const queueUrls2 = randomString();
 
-  await migrateCollectionRecord(fakeCollection, knex);
-  await migrateCollectionRecord(anotherFakeCollection, knex);
-  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
-  await migrateProviderRecord(anotherFakeProvider, providerKmsKeyId, knex);
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeCollectionRecord(anotherFakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+  await migrateFakeProviderRecord(anotherFakeProvider, knex);
 
   fakeRule1.queueUrl = queueUrls1.queueUrl;
   fakeRule2.queueUrl = queueUrls2.queueUrl;
@@ -353,23 +324,25 @@ test.serial('migrateRules processes multiple rules', async (t) => {
 });
 
 test.serial('migrateRules processes all non-failing records', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex } = t.context;
   const anotherFakeCollection = fakeCollectionFactory();
   const anotherFakeProvider = fakeProviderFactory({
     encrypted: false,
     privateKey: 'key',
     cmKeyId: 'key-id',
     certificateUri: 'uri',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: new Date(2020, 11, 17),
+    updatedAt: new Date(2020, 11, 17),
   });
+  const { id } = anotherFakeProvider;
+  const { name, version } = anotherFakeCollection;
 
   const fakeRule1 = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
-  const fakeRule2 = generateFakeRule(anotherFakeCollection.name, anotherFakeCollection.version, anotherFakeProvider.id);
-  await migrateCollectionRecord(fakeCollection, knex);
-  await migrateCollectionRecord(anotherFakeCollection, knex);
-  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
-  await migrateProviderRecord(anotherFakeProvider, providerKmsKeyId, knex);
+  const fakeRule2 = generateFakeRule(name, version, id);
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeCollectionRecord(anotherFakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+  await migrateFakeProviderRecord(anotherFakeProvider, knex);
 
   // remove required source field so that record will fail
   delete fakeRule1.state;
