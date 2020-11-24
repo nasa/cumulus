@@ -9,7 +9,7 @@ const test = require('ava');
 
 const { createBucket, putJsonS3Object, recursivelyDeleteS3Bucket} = require('@cumulus/aws-client/S3');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { createSqsQueues, fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
+const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
@@ -23,6 +23,7 @@ const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
 const workflow = randomId('workflow-');
+const ruleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule'];
 
 const generateFakeRule = (collectionName, collectionVersion, providerId, enabled = true) => ({
   name: cryptoRandomString({ length: 10 }),
@@ -33,10 +34,11 @@ const generateFakeRule = (collectionName, collectionVersion, providerId, enabled
     name: collectionName,
     version: collectionVersion,
   },
-  rule: { type: 'onetime' },
+  rule: { type: 'onetime', value: randomString(), arn: randomString(), logEventArn: randomString() },
   meta: { key: 'value' },
-  payload: undefined,
-  tags: undefined,
+  queueUrl: randomString(),
+  payload: { result: { key: 'value' } },
+  tags: ['tag1', 'tag2'],
   createdAt: Date.now(),
   updatedAt: Date.now(),
 });
@@ -156,23 +158,25 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
     .first();
 
   t.deepEqual(
-    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
+    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id' ]),
     omit(
       {
-        ...fakeRule,
+        name: fakeRule.name,
+        workflow: fakeRule.workflow,
+        meta: fakeRule.meta,
         arn: fakeRule.rule.arn ? fakeRule.rule.arn : null,
         type: fakeRule.rule.type,
         value: fakeRule.rule.value ? fakeRule.rule.value : null,
         enabled: true,
-        log_event_arn: null,
+        log_event_arn: fakeRule.rule.logEventArn ? fakeRule.rule.logEventArn : null,
         execution_name_prefix: null,
-        payload: null,
-        queue_url: null,
-        tags: null,
+        payload: fakeRule.payload,
+        queue_url: fakeRule.queueUrl,
+        tags: fakeRule.tags,
         created_at: new Date(fakeRule.createdAt),
         updated_at: new Date(fakeRule.updatedAt),
       },
-      ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule']
+      ruleOmitList
     )
   );
 });
@@ -190,7 +194,7 @@ test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   // make source record invalid
-  delete fakeRule.files;
+  delete fakeRule.workflow;
 
   await t.throwsAsync(migrateRuleRecord(fakeRule, t.context.knex));
 });
@@ -208,13 +212,14 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
   const { knex, providerKmsKeyId } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
+  delete fakeRule.rule.logEventArn;
   delete fakeRule.rule.value;
   delete fakeRule.rule.arn;
   delete fakeRule.payload;
-  delete fakeRule.logEventArn;
   delete fakeRule.queueUrl;
   delete fakeRule.meta;
   delete fakeRule.tags;
+  delete fakeRule.executionNamePrefix;
 
   await migrateCollectionRecord(fakeCollection, knex);
   await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
@@ -243,7 +248,7 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
         created_at: new Date(fakeRule.createdAt),
         updated_at: new Date(fakeRule.updatedAt),
       },
-      ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule']
+      ruleOmitList
     )
   );
 });
@@ -283,7 +288,7 @@ test.serial('migrateRuleRecord throws RecordAlreadyMigrated error for already mi
 test.serial('migrateRules skips already migrated record', async (t) => {
   const { knex, providerKmsKeyId } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
-  const queueUrls = await createSqsQueues(randomString());
+  const queueUrls = randomString();
   fakeRule.queueUrl = queueUrls.queueUrl;
 
   await migrateCollectionRecord(fakeCollection, knex);
@@ -317,8 +322,8 @@ test.serial('migrateRules processes multiple rules', async (t) => {
   });
   const fakeRule1 = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
   const fakeRule2 = generateFakeRule(anotherFakeCollection.name, anotherFakeCollection.version, anotherFakeProvider.id);
-  const queueUrls1 = await createSqsQueues(randomString());
-  const queueUrls2 = await createSqsQueues(randomString());
+  const queueUrls1 = randomString();
+  const queueUrls2 = randomString();
 
   await migrateCollectionRecord(fakeCollection, knex);
   await migrateCollectionRecord(anotherFakeCollection, knex);

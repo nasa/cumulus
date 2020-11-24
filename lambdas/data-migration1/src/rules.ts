@@ -3,65 +3,15 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { PostgresRuleRecord } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
+import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
-import { RecordDoesNotExist } from '@cumulus/errors';
 import { RecordAlreadyMigrated } from './errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
-
-/**
- *
- * Retrieve cumulus_id from Provider using id.
- *
- * @param {string} name - Provider ID
- * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
- * @throws {RecordDoesNotExist} if record cannot be found
-const getProviderCumulusId = async (
-  name: string,
-  knex: Knex
-): Promise<any> => {
-  const record = await knex.select(knex.ref('cumulus_id').as('provider_cumulus_id'))
-    .from<PostgresProviderRecord>('providers')
-    .where({ name: name })
-    .first();
-
-  if (record === undefined) {
-    throw new RecordDoesNotExist(`Provider with id ${name} does not exist.`);
-  }
-  return record.provider_cumulus_id;
-};
- */
-
-/**
- *
- * Retrieve cumulus_id from Collection using name and version.
- *
- * @param {string} name - Collection Name
- * @param {string} version - Collection version
- * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
- * @throws {RecordDoesNotExist} if record cannot be found
-const getCollectionCumulusId = async (
-  name : string,
-  version: string,
-  knex: Knex
-): Promise<number> => {
-  const record = await knex.select(knex.ref('cumulus_id').as('collection_cumulus_id'))
-    .from<PostgresCollectionRecord>('collections')
-    .where({ name: name, version: version })
-    .first();
-
-  if (record === undefined) {
-    throw new RecordDoesNotExist(`Collection with name ${name} and version ${version} does not exist.`);
-  }
-  return record.collection_cumulus_id;
-};
-*/
 
 /**
  *
@@ -73,20 +23,20 @@ const getCollectionCumulusId = async (
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordDoesNotExist} if record cannot be found
  */
-const getCumulusId = async (
+export const getCumulusId = async<T>(
   whereClause : object,
   table: 'providers' | 'collections',
   knex: Knex
-): Promise<number> => {
+): Promise<any> => {
   const record = await knex.select('cumulus_id')
-    .from(table)
+    .from<T>(table)
     .where(whereClause)
     .first();
 
   if (record === undefined) {
-    throw new RecordDoesNotExist(`${table.toUpperCase()} with identifiers ${whereClause} does not exist.`);
+    throw new RecordDoesNotExist(`Record in ${table} with identifiers ${whereClause} does not exist.`);
   }
-  return record.cumulus_id;
+  return record;
 };
 
 /**
@@ -114,9 +64,6 @@ export const migrateRuleRecord = async (
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
-  // const collectionCumulusId = await getCollectionCumulusId(dynamoRecord.collection.name, dynamoRecord.collection.version, knex);
-  // const providerCumulusId = await getProviderCumulusId(dynamoRecord.provider, knex);
-  const prefix = dynamoRecord.executionNamePrefix ? dynamoRecord.executionNamePrefix : undefined;
   const collectionCumulusId = await getCumulusId(
     { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
     'collections',
@@ -128,16 +75,16 @@ export const migrateRuleRecord = async (
   const updatedRecord: PostgresRuleRecord = {
     name: dynamoRecord.name,
     workflow: dynamoRecord.workflow,
-    provider_cumulus_id: providerCumulusId,
-    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId.cumulus_id,
+    collection_cumulus_id: collectionCumulusId.cumulus_id,
     enabled: dynamoRecord.state === 'ENABLED',
     type: dynamoRecord.rule.type,
     value: dynamoRecord.rule.value,
     arn: dynamoRecord.rule.arn,
     log_event_arn: dynamoRecord.rule.logEventArn,
-    execution_name_prefix: prefix,
+    execution_name_prefix: dynamoRecord.executionNamePrefix,
     payload: dynamoRecord.payload,
-    meta: dynamoRecord.meta ? JSON.stringify(dynamoRecord.meta) : undefined,
+    meta: dynamoRecord.meta,
     tags: dynamoRecord.tags ? JSON.stringify(dynamoRecord.tags) : undefined,
     queue_url: dynamoRecord.queueUrl,
     created_at: new Date(dynamoRecord.createdAt),
