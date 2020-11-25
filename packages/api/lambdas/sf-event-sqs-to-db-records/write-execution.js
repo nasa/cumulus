@@ -70,6 +70,17 @@ const buildExecutionRecord = ({
   };
 };
 
+/**
+ * Special upsert logic for updating a "running" execution. Only
+ * certain fields should be updated if the right is updating a
+ * "running" execution.
+ *
+ * @param {Object} params
+ * @param {unknown} params.trx - A Knex transaction
+ * @param {Object} params.executionRecord - An execution record
+ *
+ * @returns {Promise}
+ */
 const writeRunningExecutionViaTransaction = async ({
   trx,
   executionRecord,
@@ -98,8 +109,18 @@ const writeExecutionViaTransaction = async ({
     asyncOperationCumulusId,
     parentExecutionCumulusId,
   });
+  // Special upsert logic for updating a "running" execution
+  if (executionRecord.status === 'running') {
+    return writeRunningExecutionViaTransaction({
+      trx,
+      executionRecord,
+    });
+  }
+  // Otherwise update all fields on conflict
   return trx(tableNames.executions)
     .insert(executionRecord)
+    .onConflict('arn')
+    .merge()
     .returning('cumulus_id');
 };
 
