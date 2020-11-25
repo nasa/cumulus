@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 
 const {
@@ -15,21 +14,12 @@ const {
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
 
-const sandbox = sinon.createSandbox();
-const hasAsyncOpStub = sandbox.stub().resolves(true);
-const hasParentExecutionStub = sandbox.stub().resolves(true);
-
 const {
   buildExecutionRecord,
   shouldWriteExecutionToRDS,
   // writeExecutionViaTransaction,
   writeExecution,
-} = proxyquire('../../../lambdas/sf-event-sqs-to-db-records/write-execution', {
-  './utils': {
-    hasNoAsyncOpOrExists: hasAsyncOpStub,
-    hasNoParentExecutionOrExists: hasParentExecutionStub,
-  },
-});
+} = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
 
 test.before(async (t) => {
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
@@ -89,12 +79,6 @@ test.beforeEach((t) => {
       foo: 'bar',
     },
   };
-
-  t.context.hasAsyncOpStub = hasAsyncOpStub;
-  t.context.hasAsyncOpStub.resetHistory();
-
-  t.context.hasParentExecutionStub = hasParentExecutionStub;
-  t.context.hasParentExecutionStub.resetHistory();
 });
 
 test.after.always(async (t) => {
@@ -102,7 +86,6 @@ test.after.always(async (t) => {
     executionModel,
   } = t.context;
   await executionModel.deleteTable();
-  sandbox.restore();
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
   await t.context.knexAdmin.destroy();
