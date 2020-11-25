@@ -11,7 +11,7 @@ export const doesRecordExist = async<T>(
 ): Promise<boolean> => isRecordDefined(await knex<T>(tableName).where(params).first());
 
 /**
- * Retrieve cumulus_id from table using name and version.
+ * Retrieve cumulus_id for a record from the specified table.
  *
  * @param {Object} whereClause - where clause for query
  * @param {string} table - Name of table
