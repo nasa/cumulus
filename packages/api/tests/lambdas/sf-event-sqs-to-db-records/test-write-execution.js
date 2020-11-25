@@ -253,9 +253,9 @@ test('buildExecutionRecord returns record with error', (t) => {
   t.deepEqual(record.error, exception);
 });
 
-test.only('writeRunningExecutionViaTransaction only updates allowed fields on conflict', async (t) => {
+test('writeRunningExecutionViaTransaction only updates allowed fields on conflict', async (t) => {
   const { executionArn, knex } = t.context;
-  const now = new Date();
+  const initialDatetime = new Date();
   const executionRecord = {
     arn: executionArn,
     status: 'running',
@@ -263,16 +263,22 @@ test.only('writeRunningExecutionViaTransaction only updates allowed fields on co
     original_payload: {
       key: 'value',
     },
-    created_at: now,
-    updated_at: now,
-    timestamp: now,
+    created_at: initialDatetime,
+    updated_at: initialDatetime,
+    timestamp: initialDatetime,
+    workflow_name: 'TestWorkflow',
   };
   await knex(tableNames.executions).insert(executionRecord);
 
   const newPayload = {
     key2: 'value2',
   };
+  const newDatetime = new Date();
+  executionRecord.created_at = newDatetime;
+  executionRecord.updated_at = newDatetime;
+  executionRecord.timestamp = newDatetime;
   executionRecord.original_payload = newPayload;
+  executionRecord.workflow_name = 'TestWorkflow2';
   executionRecord.url = 'new-url';
 
   await knex.transaction(
@@ -287,9 +293,13 @@ test.only('writeRunningExecutionViaTransaction only updates allowed fields on co
     .first();
   t.is(updatedRecord.status, 'running');
   // should have been updated
-  t.is(updatedRecord.original_payload, newPayload);
+  t.deepEqual(updatedRecord.original_payload, newPayload);
+  t.deepEqual(updatedRecord.timestamp, newDatetime);
+  t.deepEqual(updatedRecord.updated_at, newDatetime);
+  t.deepEqual(updatedRecord.created_at, newDatetime);
   // should not have been updated
   t.is(updatedRecord.url, 'first-url');
+  t.is(updatedRecord.workflow_name, 'TestWorkflow');
 });
 
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
