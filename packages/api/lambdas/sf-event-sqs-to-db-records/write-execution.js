@@ -73,11 +73,15 @@ const buildExecutionRecord = ({
 const writeExecutionViaTransaction = async ({
   cumulusMessage,
   collectionCumulusId,
+  asyncOperationCumulusId,
+  parentExecutionCumulusId,
   trx,
 }) => {
   const executionRecord = buildExecutionRecord({
     cumulusMessage,
     collectionCumulusId,
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
   });
   return trx(tableNames.executions)
     .insert(executionRecord)
@@ -88,6 +92,8 @@ const writeExecution = async ({
   cumulusMessage,
   knex,
   collectionCumulusId,
+  asyncOperationCumulusId,
+  parentExecutionCumulusId,
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
@@ -95,6 +101,8 @@ const writeExecution = async ({
     const [cumulus_id] = await writeExecutionViaTransaction({
       cumulusMessage,
       collectionCumulusId,
+      asyncOperationCumulusId,
+      parentExecutionCumulusId,
       trx,
     });
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
