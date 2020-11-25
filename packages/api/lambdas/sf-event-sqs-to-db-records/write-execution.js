@@ -1,6 +1,5 @@
 const isNil = require('lodash/isNil');
 
-const log = require('@cumulus/common/log');
 const {
   tableNames,
 } = require('@cumulus/db');
@@ -24,30 +23,20 @@ const Execution = require('../../models/executions');
 
 const {
   isPostRDSDeploymentExecution,
-  hasNoAsyncOpOrExists,
-  hasNoParentExecutionOrExists,
 } = require('./utils');
 
-const shouldWriteExecutionToRDS = async (
+const shouldWriteExecutionToRDS = ({
   cumulusMessage,
   collectionCumulusId,
-  knex
-) => {
+  asyncOperationCumulusId,
+  parentExecutionCumulusId,
+}) => {
   const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
   if (!isExecutionPostDeployment) return false;
 
-  try {
-    if (!collectionCumulusId) return false;
-
-    const results = await Promise.all([
-      hasNoParentExecutionOrExists(cumulusMessage, knex),
-      hasNoAsyncOpOrExists(cumulusMessage, knex),
-    ]);
-    return results.every((result) => result === true);
-  } catch (error) {
-    log.error(error);
-    return false;
-  }
+  return !isNil(collectionCumulusId)
+    && !isNil(asyncOperationCumulusId)
+    && !isNil(parentExecutionCumulusId);
 };
 
 const buildExecutionRecord = ({

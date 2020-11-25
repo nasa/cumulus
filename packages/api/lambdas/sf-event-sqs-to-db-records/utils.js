@@ -3,7 +3,6 @@ const { envUtils } = require('@cumulus/common');
 const log = require('@cumulus/common/log');
 const {
   tableNames,
-  doesRecordExist,
   isRecordDefined,
 } = require('@cumulus/db');
 const { MissingRequiredEnvVarError } = require('@cumulus/errors');
@@ -36,26 +35,6 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
     // Treat other errors as false
     return false;
   }
-};
-
-const hasNoParentExecutionOrExists = async (cumulusMessage, knex) => {
-  const parentArn = getMessageExecutionParentArn(cumulusMessage);
-  if (!parentArn) {
-    return true;
-  }
-  return doesRecordExist({
-    arn: parentArn,
-  }, knex, tableNames.executions);
-};
-
-const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
-  const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
-  if (!asyncOperationId) {
-    return true;
-  }
-  return doesRecordExist({
-    id: asyncOperationId,
-  }, knex, tableNames.asyncOperations);
 };
 
 const getMessageAsyncOperationCumulusId = async (cumulusMessage, knex) => {
@@ -137,8 +116,6 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
 
 module.exports = {
   isPostRDSDeploymentExecution,
-  hasNoAsyncOpOrExists,
-  hasNoParentExecutionOrExists,
   getMessageAsyncOperationCumulusId,
   getMessageParentExecutionCumulusId,
   getMessageCollectionCumulusId,

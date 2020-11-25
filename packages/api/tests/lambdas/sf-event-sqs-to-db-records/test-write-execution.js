@@ -4,7 +4,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
-const omit = require('lodash/omit');
 
 const {
   localStackConnectionEnv,
@@ -23,7 +22,7 @@ const hasParentExecutionStub = sandbox.stub().resolves(true);
 const {
   buildExecutionRecord,
   shouldWriteExecutionToRDS,
-  writeExecutionViaTransaction,
+  // writeExecutionViaTransaction,
   writeExecution,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records/write-execution', {
   './utils': {
@@ -109,75 +108,59 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
-  const { cumulusMessage, knex, preRDSDeploymentVersion } = t.context;
-  t.false(await shouldWriteExecutionToRDS(
-    {
+test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', (t) => {
+  const { cumulusMessage, preRDSDeploymentVersion } = t.context;
+  t.false(shouldWriteExecutionToRDS({
+    cumulusMessage: {
       ...cumulusMessage,
       cumulus_meta: {
         ...cumulusMessage.cumulus_meta,
         cumulus_version: preRDSDeploymentVersion,
       },
     },
-    1,
-    knex
-  ));
+  }));
 });
 
-test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', async (t) => {
+test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', (t) => {
   const {
-    knex,
     cumulusMessage,
   } = t.context;
-
-  t.context.hasAsyncOpStub.withArgs(cumulusMessage).resolves(true);
-  t.context.hasParentExecutionStub.withArgs(cumulusMessage).resolves(true);
 
   t.true(
-    await shouldWriteExecutionToRDS(
+    shouldWriteExecutionToRDS({
       cumulusMessage,
-      1,
-      knex
-    )
+      collectionCumulusId: 1,
+      asyncOperationCumulusId: 2,
+      parentExecutionCumulusId: 3,
+    })
   );
 });
 
-test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async (t) => {
+test('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
   const {
-    knex,
-    cumulusMessage,
-    collectionCumulusId,
-  } = t.context;
-
-  t.context.hasParentExecutionStub.withArgs(cumulusMessage).throws();
-
-  t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
-  );
-});
-
-test('shouldWriteExecutionToRDS returns false if collection cumulus_id is not defined', async (t) => {
-  const {
-    knex,
     cumulusMessage,
   } = t.context;
 
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, undefined, knex)
+    await shouldWriteExecutionToRDS({
+      cumulusMessage,
+      collectionCumulusId: 1,
+      asyncOperationCumulusId: 2,
+    })
   );
-});
-
-test.serial('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-    collectionCumulusId,
-  } = t.context;
-
-  t.context.hasAsyncOpStub.withArgs(cumulusMessage).resolves(false);
-
   t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
+    await shouldWriteExecutionToRDS({
+      cumulusMessage,
+      collectionCumulusId: 1,
+      parentExecutionCumulusId: 2,
+    })
+  );
+  t.false(
+    await shouldWriteExecutionToRDS({
+      cumulusMessage,
+      asyncOperationCumulusId: 1,
+      parentExecutionCumulusId: 2,
+    })
   );
 });
 
@@ -189,8 +172,8 @@ test.serial('shouldWriteExecutionToRDS throws error if RDS_DEPLOYMENT_CUMULUS_VE
   } = t.context;
 
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
-  await t.throwsAsync(
-    shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
+  await t.throws(
+    () => shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
   );
 });
 

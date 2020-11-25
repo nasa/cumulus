@@ -25,7 +25,7 @@ const Pdr = require('../../../models/pdrs');
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const sandbox = sinon.createSandbox();
-const shouldWriteExecutionStub = sandbox.stub().resolves(true);
+const shouldWriteExecutionStub = sandbox.stub().returns(true);
 
 const {
   handler,
@@ -233,7 +233,7 @@ test.serial('writeRecords() only writes records to Dynamo if shouldWriteExecutio
     granuleId,
   } = t.context;
 
-  t.context.shouldWriteExecutionStub.resolves(false);
+  t.context.shouldWriteExecutionStub.returns(false);
 
   await writeRecords(cumulusMessage, knex);
 

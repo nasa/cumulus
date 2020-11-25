@@ -19,6 +19,8 @@ const Pdr = require('../../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
 const {
+  getMessageAsyncOperationCumulusId,
+  getMessageParentExecutionCumulusId,
   getMessageCollectionCumulusId,
   getMessageProviderCumulusId,
 } = require('./utils');
@@ -59,12 +61,21 @@ const writeRecordsToDynamoDb = async (cumulusMessage) => {
 const writeRecords = async (cumulusMessage, knex) => {
   const executionArn = getMessageExecutionArn(cumulusMessage);
 
-  const collectionCumulusId = await getMessageCollectionCumulusId(cumulusMessage, knex);
-  const isExecutionRDSWriteEnabled = await shouldWriteExecutionToRDS(
+  const [
+    collectionCumulusId,
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+  ] = await Promise.all([
+    getMessageCollectionCumulusId(cumulusMessage, knex),
+    getMessageAsyncOperationCumulusId(cumulusMessage, knex),
+    getMessageParentExecutionCumulusId(cumulusMessage, knex),
+  ]);
+  const isExecutionRDSWriteEnabled = shouldWriteExecutionToRDS({
     cumulusMessage,
     collectionCumulusId,
-    knex
-  );
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+  });
 
   // If execution is not written to RDS, then PDRs/granules which reference
   // execution should not be written to RDS either
