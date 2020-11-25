@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
+const uuidv4 = require('uuid/v4');
 
 const {
   localStackConnectionEnv,
@@ -300,6 +301,39 @@ test('writeRunningExecutionViaTransaction only updates allowed fields on conflic
   // should not have been updated
   t.is(updatedRecord.url, 'first-url');
   t.is(updatedRecord.workflow_name, 'TestWorkflow');
+});
+
+test('writeExecutionViaTransaction() writes record with foreign key references', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
+
+  const asyncOperation = {
+    id: uuidv4(),
+    description: 'test async operation',
+    operation_type: 'Bulk Granules',
+    status: 'RUNNING',
+  };
+  cumulusMessage.cumulus_meta.asyncOperationId = asyncOperation.id;
+
+  const asyncOperationResult = await knex(tableNames.asyncOperations)
+    .insert(asyncOperation)
+    .returning('cumulus_id');
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        asyncOperationCumulusId: asyncOperationResult[0],
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  // Do I need to test that all the foreign key writes are successful?
+  // parent execution, collection?
+  t.is(record.async_operation_cumulus_id, asyncOperationResult[0]);
 });
 
 test('writeExecutionViaTransaction() can be used to create a new running execution', async (t) => {
