@@ -52,9 +52,9 @@ const shouldWriteExecutionToRDS = async (
 
 const buildExecutionRecord = ({
   cumulusMessage,
-  asyncOperationId,
+  asyncOperationCumulusId,
   collectionCumulusId,
-  parentExecutionId,
+  parentExecutionCumulusId,
   now = new Date(),
 }) => {
   const arn = getMessageExecutionArn(cumulusMessage);
@@ -75,9 +75,9 @@ const buildExecutionRecord = ({
     original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
     final_payload: getMessageExecutionFinalPayload(cumulusMessage),
     duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000,
-    async_operation_cumulus_id: asyncOperationId,
+    async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
-    parent_cumulus_id: parentExecutionId,
+    parent_cumulus_id: parentExecutionCumulusId,
   };
 };
 
