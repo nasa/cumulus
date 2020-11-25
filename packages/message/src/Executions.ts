@@ -10,9 +10,20 @@
  * const Executions = require('@cumulus/message/Executions');
  */
 
-import get from 'lodash/get';
 import isString from 'lodash/isString';
 import { Message } from '@cumulus/types';
+
+import { getMetaStatus } from './workflows';
+
+type MessageWithOptionalWorkflowInfo = Message.CumulusMessage & {
+  cumulus_meta: {
+    workflow_start_time?: number
+    workflow_stop_time?: number
+  }
+  meta: {
+    workflow_tasks?: object
+  }
+};
 
 /**
  * Build execution ARN from a state machine ARN and execution name
@@ -77,7 +88,7 @@ export const getStateMachineArnFromExecutionArn = (
 export const getMessageExecutionName = (
   message: Message.CumulusMessage
 ) => {
-  const executionName = get(message, 'cumulus_meta.execution_name');
+  const executionName = message.cumulus_meta.execution_name;
   if (!isString(executionName)) {
     throw new Error('cumulus_meta.execution_name not set in message');
   }
@@ -96,7 +107,7 @@ export const getMessageExecutionName = (
 export const getMessageStateMachineArn = (
   message: Message.CumulusMessage
 ) => {
-  const stateMachineArn = get(message, 'cumulus_meta.state_machine');
+  const stateMachineArn = message.cumulus_meta.state_machine;
   if (!isString(stateMachineArn)) {
     throw new Error('cumulus_meta.state_machine not set in message');
   }
@@ -147,3 +158,81 @@ export const getMessageExecutionParentArn = (
 export const getMessageCumulusVersion = (
   message: Message.CumulusMessage
 ): string | undefined => message.cumulus_meta?.cumulus_version;
+
+/**
+ * Get the workflow tasks a workflow message, if any.
+ *
+ * @param {MessageWithOptionalWorkflowInfo} message - A workflow message object
+ * @returns {Object|undefined} A map of the workflow tasks
+ *
+ * @alias module:Executions
+ */
+export const getMessageWorkflowTasks = (
+  message: MessageWithOptionalWorkflowInfo
+): object | undefined => message.meta?.workflow_tasks;
+
+/**
+ * Get the workflow start time, if any.
+ *
+ * @param {MessageWithOptionalWorkflowInfo} message - A workflow message object
+ * @returns {number|undefined} The workflow start time, in milliseconds
+ *
+ * @alias module:Executions
+ */
+export const getMessageWorkflowStartTime = (
+  message: MessageWithOptionalWorkflowInfo
+): number | undefined => message.cumulus_meta?.workflow_start_time;
+
+/**
+ * Get the workflow stop time, if any.
+ *
+ * @param {MessageWithOptionalWorkflowInfo} message - A workflow message object
+ * @returns {number|undefined} The workflow stop time, in milliseconds
+ *
+ * @alias module:Executions
+ */
+export const getMessageWorkflowStopTime = (
+  message: MessageWithOptionalWorkflowInfo
+): number | undefined => message.cumulus_meta?.workflow_stop_time;
+
+/**
+ * Get the workflow name, if any.
+ *
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {string|undefined} The workflow name
+ *
+ * @alias module:Executions
+ */
+export const getMessageWorkflowName = (
+  message: Message.CumulusMessage
+): string | undefined => message.meta?.workflow_name;
+
+/**
+ * Get the workflow original payload, if any.
+ *
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {unknown|undefined} The workflow original payload
+ *
+ * @alias module:Executions
+ */
+export const getMessageExecutionOriginalPayload = (
+  message: Message.CumulusMessage
+): unknown | undefined => {
+  const status = getMetaStatus(message);
+  return status === 'running' ? message.payload : undefined;
+};
+
+/**
+ * Get the workflow final payload, if any.
+ *
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {unknown|undefined} The workflow final payload
+ *
+ * @alias module:Executions
+ */
+export const getMessageExecutionFinalPayload = (
+  message: Message.CumulusMessage
+): unknown | undefined => {
+  const status = getMetaStatus(message);
+  return status === 'running' ? undefined : message.payload;
+};
