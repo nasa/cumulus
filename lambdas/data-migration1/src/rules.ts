@@ -5,9 +5,10 @@ import {
   PostgresCollectionRecord,
   PostgresProviderRecord,
   PostgresRuleRecord,
+  getRecordCumulusId,
+  tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
-import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
 import { RecordAlreadyMigrated } from './errors';
@@ -16,31 +17,6 @@ import { MigrationSummary } from './types';
 const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
-
-/**
- *
- * Retrieve cumulus_id from table using name and version.
- *
- * @param {Object} whereClause - where clause for query
- * @param {string} table - Name of table
- * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
- * @throws {RecordDoesNotExist} if record cannot be found
-*/
-export const getCumulusId = async<T extends { __name: string, cumulus_id: number }>(
-  whereClause : Partial<T>,
-  table: T['__name'],
-  knex: Knex
-): Promise<number> => {
-  const record: T = await knex.select('cumulus_id')
-    .from(table)
-    .where(whereClause)
-    .first();
-  if (record === undefined) {
-    throw new RecordDoesNotExist(`Record in ${table} with identifiers ${whereClause} does not exist.`);
-  }
-  return record.cumulus_id;
-};
 
 /**
  * Migrate rules record from Dynamo to RDS.
@@ -68,16 +44,16 @@ export const migrateRuleRecord = async (
   }
 
   const collectionCumulusId = dynamoRecord.collection
-    ? await getCumulusId<PostgresCollectionRecord>(
+    ? await getRecordCumulusId<PostgresCollectionRecord>(
       { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
-      'collections',
+      tableNames.collections,
       knex
     )
     : undefined;
   const providerCumulusId = dynamoRecord.provider
-    ? await getCumulusId<PostgresProviderRecord>(
+    ? await getRecordCumulusId<PostgresProviderRecord>(
       { name: dynamoRecord.provider },
-      'providers',
+      tableNames.providers,
       knex
     )
     : undefined;
