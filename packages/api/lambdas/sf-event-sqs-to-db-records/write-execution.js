@@ -1,10 +1,19 @@
+const isNil = require('lodash/isNil');
+
 const log = require('@cumulus/common/log');
 const {
   tableNames,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
+  getExecutionUrlFromArn,
   getMessageCumulusVersion,
+  getMessageWorkflowTasks,
+  getMessageWorkflowName,
+  getMessageWorkflowStartTime,
+  getMessageWorkflowStopTime,
+  getMessageExecutionOriginalPayload,
+  getMessageExecutionFinalPayload,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
@@ -40,14 +49,29 @@ const shouldWriteExecutionToRDS = async (
   }
 };
 
-const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
-  trx(tableNames.executions)
+const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) => {
+  const arn = getMessageExecutionArn(cumulusMessage);
+  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+  const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
+
+  return trx(tableNames.executions)
     .insert({
-      arn: getMessageExecutionArn(cumulusMessage),
-      cumulus_version: getMessageCumulusVersion(cumulusMessage),
+      arn,
       status: getMetaStatus(cumulusMessage),
+      url: getExecutionUrlFromArn(arn),
+      cumulus_version: getMessageCumulusVersion(cumulusMessage),
+      tasks: getMessageWorkflowTasks(cumulusMessage),
+      workflow_name: getMessageWorkflowName(cumulusMessage),
+      created_at: workflowStartTime ? new Date(workflowStartTime) : undefined,
+      timestamp: new Date(),
+      updated_at: new Date(),
+      original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
+      final_payload: getMessageExecutionFinalPayload(cumulusMessage),
+      duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000,
+      // collection_cumulus_id: collectionCumulusId,
     })
     .returning('cumulus_id');
+};
 
 const writeExecution = async ({
   cumulusMessage,
