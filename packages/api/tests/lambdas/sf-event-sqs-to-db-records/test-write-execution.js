@@ -18,7 +18,7 @@ const {
   buildExecutionRecord,
   shouldWriteExecutionToRDS,
   writeRunningExecutionViaTransaction,
-  // writeExecutionViaTransaction,
+  writeExecutionViaTransaction,
   writeExecution,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
 
@@ -300,6 +300,140 @@ test('writeRunningExecutionViaTransaction only updates allowed fields on conflic
   // should not have been updated
   t.is(updatedRecord.url, 'first-url');
   t.is(updatedRecord.workflow_name, 'TestWorkflow');
+});
+
+test('writeExecutionViaTransaction() can be used to create a new running execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'running');
+});
+
+test('writeExecutionViaTransaction() can be used to update a running execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const newPayload = {
+    key: cryptoRandomString({ length: 5 }),
+  };
+  cumulusMessage.payload = newPayload;
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'running');
+  t.deepEqual(record.original_payload, newPayload);
+});
+
+test('writeExecutionViaTransaction() can be used to create a completed execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'completed');
+});
+
+test('writeExecutionViaTransaction() can be used to updated a completed execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const newPayload = {
+    key: cryptoRandomString({ length: 3 }),
+  };
+  cumulusMessage.payload = newPayload;
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'completed');
+  t.deepEqual(record.final_payload, newPayload);
+});
+
+test('writeExecutionViaTransaction() will not allow a running execution to replace a completed execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  cumulusMessage.meta.status = 'running';
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'completed');
 });
 
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
