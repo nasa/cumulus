@@ -70,6 +70,21 @@ const buildExecutionRecord = ({
   };
 };
 
+const writeRunningExecutionViaTransaction = async ({
+  trx,
+  executionRecord,
+}) =>
+  trx(tableNames.executions)
+    .insert(executionRecord)
+    .onConflict('arn')
+    .merge({
+      created_at: executionRecord.created_at,
+      updated_at: executionRecord.updated_at,
+      timestamp: executionRecord.timestamp,
+      original_payload: executionRecord.original_payload,
+    })
+    .returning('cumulus_id');
+
 const writeExecutionViaTransaction = async ({
   cumulusMessage,
   collectionCumulusId,
@@ -113,6 +128,7 @@ const writeExecution = async ({
 module.exports = {
   buildExecutionRecord,
   shouldWriteExecutionToRDS,
+  writeRunningExecutionViaTransaction,
   writeExecutionViaTransaction,
   writeExecution,
 };

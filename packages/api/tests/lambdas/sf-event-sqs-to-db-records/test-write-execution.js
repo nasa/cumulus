@@ -17,6 +17,7 @@ const Execution = require('../../../models/executions');
 const {
   buildExecutionRecord,
   shouldWriteExecutionToRDS,
+  writeRunningExecutionViaTransaction,
   // writeExecutionViaTransaction,
   writeExecution,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
@@ -250,6 +251,45 @@ test('buildExecutionRecord returns record with error', (t) => {
   });
 
   t.deepEqual(record.error, exception);
+});
+
+test.only('writeRunningExecutionViaTransaction only updates allowed fields on conflict', async (t) => {
+  const { executionArn, knex } = t.context;
+  const now = new Date();
+  const executionRecord = {
+    arn: executionArn,
+    status: 'running',
+    url: 'first-url',
+    original_payload: {
+      key: 'value',
+    },
+    created_at: now,
+    updated_at: now,
+    timestamp: now,
+  };
+  await knex(tableNames.executions).insert(executionRecord);
+
+  const newPayload = {
+    key2: 'value2',
+  };
+  executionRecord.original_payload = newPayload;
+  executionRecord.url = 'new-url';
+
+  await knex.transaction(
+    (trx) =>
+      writeRunningExecutionViaTransaction({
+        trx,
+        executionRecord,
+      })
+  );
+  const updatedRecord = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+  t.is(updatedRecord.status, 'running');
+  // should have been updated
+  t.is(updatedRecord.original_payload, newPayload);
+  // should not have been updated
+  t.is(updatedRecord.url, 'first-url');
 });
 
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
