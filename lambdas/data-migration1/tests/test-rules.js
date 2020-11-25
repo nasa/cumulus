@@ -14,8 +14,8 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
-const { migrateRuleRecord, migrateRules } = require('../dist/lambda/rules');
-const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
+const { migrateRuleRecord, migrateRules, getCumulusId } = require('../dist/lambda/rules');
+const { RecordAlreadyMigrated, ColumnDoesNotExist } = require('../dist/lambda/errors');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
@@ -137,6 +137,19 @@ test.after.always(async (t) => {
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
   await t.context.knexAdmin.destroy();
+});
+
+test.serial('getCumulusId throws ColumnDoesNotExist if table does not have a cumulus_id column', async (t) => {
+  const { knex } = t.context;
+  const result = getCumulusId(
+    {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    'sometable',
+    knex
+  );
+  await t.throwsAsync(result, { name: 'ColumnDoesNotExist' });
 });
 
 test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
