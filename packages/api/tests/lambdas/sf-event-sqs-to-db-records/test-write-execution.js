@@ -406,7 +406,7 @@ test('writeExecutionViaTransaction() can be used to updated a completed executio
   t.deepEqual(record.final_payload, newPayload);
 });
 
-test('writeExecutionViaTransaction() will not allow a running execution to replace a completed execution', async (t) => {
+test('writeExecutionViaTransaction() will not allow a running status to replace a completed status', async (t) => {
   const { executionArn, cumulusMessage, knex } = t.context;
 
   cumulusMessage.meta.status = 'completed';
