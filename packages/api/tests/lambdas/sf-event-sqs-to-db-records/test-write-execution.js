@@ -4,6 +4,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const {
   localStackConnectionEnv,
@@ -20,7 +21,9 @@ const hasAsyncOpStub = sandbox.stub().resolves(true);
 const hasParentExecutionStub = sandbox.stub().resolves(true);
 
 const {
+  buildExecutionRecord,
   shouldWriteExecutionToRDS,
+  writeExecutionViaTransaction,
   writeExecution,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records/write-execution', {
   './utils': {
@@ -63,15 +66,30 @@ test.beforeEach((t) => {
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
 
+  const now = Date.now();
+
+  t.context.workflowTasks = {
+    task1: {
+      key: 'value',
+    },
+  };
+  t.context.workflowName = 'TestWorkflow';
+
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122,
+      workflow_start_time: now,
+      workflow_stop_time: now + 5000,
       cumulus_version: t.context.postRDSDeploymentVersion,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
     },
     meta: {
       status: 'running',
+      workflow_name: t.context.workflowName,
+      workflow_tasks: t.context.workflowTasks,
+    },
+    payload: {
+      foo: 'bar',
     },
   };
 
@@ -175,6 +193,44 @@ test.serial('shouldWriteExecutionToRDS throws error if RDS_DEPLOYMENT_CUMULUS_VE
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
   await t.throwsAsync(
     shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
+  );
+});
+
+test('buildExecutionRecord builds correct record for "running" execution', (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    postRDSDeploymentVersion,
+    workflowName,
+    workflowTasks,
+  } = t.context;
+
+  const now = new Date();
+  const record = buildExecutionRecord({
+    cumulusMessage,
+    now,
+  });
+
+  t.deepEqual(
+    record,
+    {
+      arn: executionArn,
+      cumulus_version: postRDSDeploymentVersion,
+      duration: 5,
+      original_payload: cumulusMessage.payload,
+      status: 'running',
+      tasks: workflowTasks,
+      url: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
+      workflow_name: workflowName,
+      error: {},
+      final_payload: undefined,
+      async_operation_cumulus_id: undefined,
+      collection_cumulus_id: undefined,
+      parent_cumulus_id: undefined,
+      created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
+      timestamp: now,
+      updated_at: now,
+    }
   );
 });
 

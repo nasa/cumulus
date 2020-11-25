@@ -19,6 +19,7 @@ const {
   getMetaStatus,
 } = require('@cumulus/message/workflows');
 
+const { parseException } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 
 const {
@@ -49,44 +50,71 @@ const shouldWriteExecutionToRDS = async (
   }
 };
 
-const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) => {
+const buildExecutionRecord = ({
+  cumulusMessage,
+  asyncOperationId,
+  collectionCumulusId,
+  parentExecutionId,
+  now = new Date(),
+}) => {
   const arn = getMessageExecutionArn(cumulusMessage);
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
+  return {
+    arn,
+    status: getMetaStatus(cumulusMessage),
+    url: getExecutionUrlFromArn(arn),
+    cumulus_version: getMessageCumulusVersion(cumulusMessage),
+    tasks: getMessageWorkflowTasks(cumulusMessage),
+    workflow_name: getMessageWorkflowName(cumulusMessage),
+    created_at: workflowStartTime ? new Date(workflowStartTime) : undefined,
+    timestamp: now,
+    updated_at: now,
+    error: parseException(cumulusMessage.exception),
+    original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
+    final_payload: getMessageExecutionFinalPayload(cumulusMessage),
+    duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000,
+    async_operation_cumulus_id: asyncOperationId,
+    collection_cumulus_id: collectionCumulusId,
+    parent_cumulus_id: parentExecutionId,
+  };
+};
+
+const writeExecutionViaTransaction = async ({
+  cumulusMessage,
+  collectionCumulusId,
+  trx,
+}) => {
+  const executionRecord = buildExecutionRecord({
+    cumulusMessage,
+    collectionCumulusId,
+  });
   return trx(tableNames.executions)
-    .insert({
-      arn,
-      status: getMetaStatus(cumulusMessage),
-      url: getExecutionUrlFromArn(arn),
-      cumulus_version: getMessageCumulusVersion(cumulusMessage),
-      tasks: getMessageWorkflowTasks(cumulusMessage),
-      workflow_name: getMessageWorkflowName(cumulusMessage),
-      created_at: workflowStartTime ? new Date(workflowStartTime) : undefined,
-      timestamp: new Date(),
-      updated_at: new Date(),
-      original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
-      final_payload: getMessageExecutionFinalPayload(cumulusMessage),
-      duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000,
-      // collection_cumulus_id: collectionCumulusId,
-    })
+    .insert(executionRecord)
     .returning('cumulus_id');
 };
 
 const writeExecution = async ({
   cumulusMessage,
   knex,
+  collectionCumulusId,
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
     // eslint-disable-next-line camelcase
-    const [cumulus_id] = await writeExecutionViaTransaction({ cumulusMessage, trx });
+    const [cumulus_id] = await writeExecutionViaTransaction({
+      cumulusMessage,
+      collectionCumulusId,
+      trx,
+    });
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
     // eslint-disable-next-line camelcase
     return cumulus_id;
   });
 
 module.exports = {
+  buildExecutionRecord,
   shouldWriteExecutionToRDS,
   writeExecutionViaTransaction,
   writeExecution,

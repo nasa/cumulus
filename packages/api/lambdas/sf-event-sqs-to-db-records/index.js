@@ -77,6 +77,7 @@ const writeRecords = async (cumulusMessage, knex) => {
   try {
     const executionCumulusId = await writeExecution({
       cumulusMessage,
+      collectionCumulusId,
       knex,
     });
     // PDR write only attempted if execution saved
