@@ -207,6 +207,9 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
   const record = buildExecutionRecord({
     cumulusMessage,
     now,
+    asyncOperationCumulusId: 1,
+    collectionCumulusId: 2,
+    parentExecutionCumulusId: 3,
   });
 
   t.deepEqual(
@@ -222,9 +225,9 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       workflow_name: workflowName,
       error: {},
       final_payload: undefined,
-      async_operation_cumulus_id: undefined,
-      collection_cumulus_id: undefined,
-      parent_cumulus_id: undefined,
+      async_operation_cumulus_id: 1,
+      collection_cumulus_id: 2,
+      parent_cumulus_id: 3,
       created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
       timestamp: now,
       updated_at: now,
@@ -248,7 +251,7 @@ test('buildExecutionRecord returns record with correct payload for non-running e
   t.deepEqual(record.final_payload, cumulusMessage.payload);
 });
 
-test('buildExecutionRecord returns record with correct duration', (t) => {
+test('buildExecutionRecord returns record with duration', (t) => {
   const {
     cumulusMessage,
     workflowStartTime,
@@ -264,7 +267,7 @@ test('buildExecutionRecord returns record with correct duration', (t) => {
   t.is(record.duration, 5);
 });
 
-test('buildExecutionRecord returns record with correct error', (t) => {
+test('buildExecutionRecord returns record with error', (t) => {
   const {
     cumulusMessage,
   } = t.context;

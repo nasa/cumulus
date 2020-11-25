@@ -58,6 +58,44 @@ const hasNoAsyncOpOrExists = async (cumulusMessage, knex) => {
   }, knex, tableNames.asyncOperations);
 };
 
+const getMessageAsyncOperationCumulusId = async (cumulusMessage, knex) => {
+  try {
+    const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
+    if (!asyncOperationId) {
+      throw new Error('Could not find async operation in message');
+    }
+    const asyncOperation = await knex(tableNames.asyncOperations).where({
+      id: asyncOperationId,
+    }).first();
+    if (!isRecordDefined(asyncOperation)) {
+      throw new Error(`Could not find async operation with id ${asyncOperationId}`);
+    }
+    return asyncOperation.cumulus_id;
+  } catch (error) {
+    log.error(error);
+    return undefined;
+  }
+};
+
+const getMessageParentExecutionCumulusId = async (cumulusMessage, knex) => {
+  try {
+    const parentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
+    if (!parentExecutionArn) {
+      throw new Error('Could not find parent execution ARN in message');
+    }
+    const parentExecution = await knex(tableNames.executions).where({
+      arn: parentExecutionArn,
+    }).first();
+    if (!isRecordDefined(parentExecution)) {
+      throw new Error(`Could not find execution with arn ${parentExecutionArn}`);
+    }
+    return parentExecution.cumulus_id;
+  } catch (error) {
+    log.error(error);
+    return undefined;
+  }
+};
+
 const getMessageCollectionCumulusId = async (cumulusMessage, knex) => {
   try {
     const collectionNameAndVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
@@ -101,6 +139,8 @@ module.exports = {
   isPostRDSDeploymentExecution,
   hasNoAsyncOpOrExists,
   hasNoParentExecutionOrExists,
+  getMessageAsyncOperationCumulusId,
+  getMessageParentExecutionCumulusId,
   getMessageCollectionCumulusId,
   getMessageProviderCumulusId,
 };

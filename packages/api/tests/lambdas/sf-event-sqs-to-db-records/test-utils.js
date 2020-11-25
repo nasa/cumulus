@@ -13,6 +13,8 @@ const {
   isPostRDSDeploymentExecution,
   hasNoAsyncOpOrExists,
   hasNoParentExecutionOrExists,
+  getMessageAsyncOperationCumulusId,
+  getMessageParentExecutionCumulusId,
   getMessageCollectionCumulusId,
   getMessageProviderCumulusId,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records/utils', {
@@ -30,6 +32,9 @@ test.beforeEach((t) => {
   t.context.doesRecordExistStub = stubRecordExists;
   t.context.doesRecordExistStub.resetHistory();
 
+  t.context.asyncOperation = {
+    id: cryptoRandomString({ length: 5 }),
+  };
   t.context.collection = {
     name: cryptoRandomString({ length: 5 }),
     version: '0.0.0',
@@ -37,7 +42,12 @@ test.beforeEach((t) => {
   t.context.provider = {
     id: cryptoRandomString({ length: 5 }),
   };
+  t.context.parentExecutionArn = cryptoRandomString({ length: 5 });
   t.context.cumulusMessage = {
+    cumulus_meta: {
+      asyncOperationId: t.context.asyncOperation.id,
+      parentExecutionArn: t.context.parentExecutionArn,
+    },
     meta: {
       collection: t.context.collection,
       provider: t.context.provider,
@@ -159,6 +169,72 @@ test.serial('hasNoAsyncOpOrExists returns false if async operation does not exis
     },
   }, knex));
   t.true(doesRecordExistStub.called);
+});
+
+test('getMessageAsyncOperationCumulusId returns correct async operation cumulus_id', async (t) => {
+  const { asyncOperation, cumulusMessage } = t.context;
+
+  const fakeKnex = () => ({
+    where: (params) => ({
+      first: async () => {
+        if (params.id === asyncOperation.id) {
+          return {
+            cumulus_id: 7,
+          };
+        }
+        return undefined;
+      },
+    }),
+  });
+
+  t.is(
+    await getMessageAsyncOperationCumulusId(cumulusMessage, fakeKnex),
+    7
+  );
+});
+
+test('getMessageAsyncOperationCumulusId returns undefined if there is no async operation on the message', async (t) => {
+  const { knex } = t.context;
+  t.is(await getMessageAsyncOperationCumulusId({}, knex), undefined);
+});
+
+test('getMessageAsyncOperationCumulusId returns undefined if async operation cannot be found', async (t) => {
+  const { cumulusMessage, knex } = t.context;
+  cumulusMessage.cumulus_meta.asyncOperationId = 'fake-id';
+  t.is(await getMessageAsyncOperationCumulusId(cumulusMessage, knex), undefined);
+});
+
+test('getMessageParentExecutionCumulusId returns correct parent execution cumulus_id', async (t) => {
+  const { cumulusMessage, parentExecutionArn } = t.context;
+
+  const fakeKnex = () => ({
+    where: (params) => ({
+      first: async () => {
+        if (params.arn === parentExecutionArn) {
+          return {
+            cumulus_id: 9,
+          };
+        }
+        return undefined;
+      },
+    }),
+  });
+
+  t.is(
+    await getMessageParentExecutionCumulusId(cumulusMessage, fakeKnex),
+    9
+  );
+});
+
+test('getMessageParentExecutionCumulusId returns undefined if there is no parent execution on the message', async (t) => {
+  const { knex } = t.context;
+  t.is(await getMessageParentExecutionCumulusId({}, knex), undefined);
+});
+
+test('getMessageParentExecutionCumulusId returns undefined if parent execution cannot be found', async (t) => {
+  const { cumulusMessage, knex } = t.context;
+  cumulusMessage.cumulus_meta.parentExecutionArn = 'fake-parent-arn';
+  t.is(await getMessageParentExecutionCumulusId(cumulusMessage, knex), undefined);
 });
 
 test('getMessageCollectionCumulusId returns correct collection cumulus_id', async (t) => {
