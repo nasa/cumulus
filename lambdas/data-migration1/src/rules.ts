@@ -1,56 +1,45 @@
 import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-import { PostgresRuleRecord } from '@cumulus/db';
+import {
+  PostgresCollectionRecord,
+  PostgresProviderRecord,
+  PostgresRuleRecord,
+} from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
-import { RecordAlreadyMigrated, ColumnDoesNotExist } from './errors';
+import { RecordAlreadyMigrated } from './errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
 
-interface CumulusRecord {
-  cumulus_id: number
-}
-
 /**
  *
  * Retrieve cumulus_id from table using name and version.
  *
- * @param {object} whereClause - where clause for query
- * @param {'providers' | 'collections'} table - Name of table
+ * @param {Object} whereClause - where clause for query
+ * @param {string} table - Name of table
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordDoesNotExist} if record cannot be found
 */
-export const getCumulusId = async (
-  whereClause : object,
-  table: 'providers' | 'collections',
+export const getCumulusId = async<T extends { __name: string, cumulus_id: number }>(
+  whereClause : Partial<T>,
+  table: T['__name'],
   knex: Knex
-): Promise<number | void> => {
-  const result = await knex.schema.hasColumn(table, 'cumulus_id').then(async (exists) => {
-    if (exists) {
-      const record = await knex.select('cumulus_id')
-        .from<CumulusRecord>(table)
-        .where(whereClause)
-        .first();
-      if (record === undefined) {
-        throw new RecordDoesNotExist(`Record in ${table} with identifiers ${whereClause} does not exist.`);
-      }
-      return record.cumulus_id;
-    }
-    return undefined;
-  }).catch((error) => {
-    logger.error(error);
-  });
-  if (result === undefined) {
-    throw new ColumnDoesNotExist(`cumulus_id does not exist in table ${table}`);
+): Promise<number> => {
+  const record: T = await knex.select('cumulus_id')
+    .from(table)
+    .where(whereClause)
+    .first();
+  if (record === undefined) {
+    throw new RecordDoesNotExist(`Record in ${table} with identifiers ${whereClause} does not exist.`);
   }
-  return result;
+  return record.cumulus_id;
 };
 
 /**
@@ -78,12 +67,20 @@ export const migrateRuleRecord = async (
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
-  const collectionCumulusId = dynamoRecord.collection ? await getCumulusId(
-    { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
-    'collections',
-    knex
-  ) : undefined;
-  const providerCumulusId = dynamoRecord.provider ? await getCumulusId({ name: dynamoRecord.provider }, 'providers', knex) : undefined;
+  const collectionCumulusId = dynamoRecord.collection
+    ? await getCumulusId<PostgresCollectionRecord>(
+      { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
+      'collections',
+      knex
+    )
+    : undefined;
+  const providerCumulusId = dynamoRecord.provider
+    ? await getCumulusId<PostgresProviderRecord>(
+      { name: dynamoRecord.provider },
+      'providers',
+      knex
+    )
+    : undefined;
 
   // Map old record to new schema.
   const updatedRecord: PostgresRuleRecord = {
