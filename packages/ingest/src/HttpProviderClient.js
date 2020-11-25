@@ -1,13 +1,14 @@
 'use strict';
 
-const http = require('@cumulus/common/http');
+const fs = require('fs');
 const https = require('https');
 const isIp = require('is-ip');
 const { basename } = require('path');
-const { PassThrough } = require('stream');
+const { PassThrough, pipeline } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
 const { CookieJar } = require('tough-cookie');
+const { promisify } = require('util');
 
 const {
   buildS3Uri,
@@ -56,13 +57,11 @@ class HttpProviderClient {
       this.username = this.providerConfig.username;
       this.password = this.providerConfig.password;
     }
-    const cookieJar = new CookieJar();
-    const auth = `${this.username}:${this.password}`;
-    this.gotOptions = {
-      ...this.gotOptions,
-      auth,
-      cookieJar,
-    };
+
+    this.gotOptions.cookieJar = new CookieJar();
+
+    if (this.username) this.gotOptions.username = this.username;
+    if (this.password) this.gotOptions.password = this.password;
   }
 
   async downloadTLSCertificate() {
@@ -187,7 +186,10 @@ class HttpProviderClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await http.download(remoteUrl, localPath, this.gotOptions);
+      await promisify(pipeline)(
+        got.stream(remoteUrl, this.gotOptions),
+        fs.createWriteStream(localPath)
+      );
     } catch (error) {
       if (error.message && error.message.includes('Unexpected HTTP status code: 403')) {
         const message = `${basename(remotePath)} was not found on the server with 403 status`;

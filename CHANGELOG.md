@@ -6,19 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- **CUMULUS-2203**
-  - Update Core tasks to use
-    [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
-    v2.0.0 to resolve memory leak/lambda ENOMEM constant failure issue.   This
-    issue caused lambdas to slowly use all memory in the run environment and
-    prevented AWS from halting/restarting warmed instances when task code was
-    throwing consistent errors under load.
-
-- **CUMULUS-2200**
-  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
-    `/reconciliationReport` returns.  The user (dashboard) must read the value
-    of `url` from the return to get the s3SignedURL and then download the report.
-
 ### BREAKING CHANGES
 
 - **CUMULUS-2185** - RDS Migration Epic
@@ -58,11 +45,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
 
-- **CUMULUS-2063**
-  - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
-- **CUMULUS-2211**
-  - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
-
 ### Changed
 
 - **CUMULUS-2185** - RDS Migration Epic
@@ -79,10 +61,76 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2187**
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
-- **CUMULUS-2200**
-  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s `/reconciliationReport` returns.  The user (dashboard) must read the value of `url` from the return to get the s3SignedURL and then download the report.
+
+## [v4.0.0] 2020-11-20
+
+### Migration notes
+- Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
+- **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
+- **CUMULUS-2251**
+  - Because it has been removed from the `cumulus` module, a new resource definition for `egress_api_gateway_log_subscription_filter` must be added to `cumulus-tf/main.tf`. For reference on how to define this resource, see [`example/cumulus-tf/main.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
+
+### Added
+
+- **CUMULUS-2248**
+  - Updates Integration Tests README to point to new fake provider template.
+- **CUMULUS-2239**
+  - Add resource declaration to create a VPC endpoint in tea-map-cache module if `deploy_to_ngap` is false.
+- **CUMULUS-2063**
+  - Adds a new, optional query parameter to the `/collections[&getMMT=true]` and `/collections/active[&getMMT=true]` endpoints. When a user provides a value of `true` for `getMMT` in the query parameters, the endpoint will search CMR and update each collection's results with new key `MMTLink` containing a link to the MMT (Metadata Management Tool) if a CMR collection id is found.
+- **CUMULUS-2170**
+  - Adds ability to filter granule inventory reports
+- **CUMULUS-2211**
+  - Adds `granules/bulkReingest` endpoint to `@cumulus/api`
+- **CUMULUS-2251**
+  - Adds `log_api_gateway_to_cloudwatch` variable to `example/cumulus-tf/variables.tf`.
+  - Adds `log_api_gateway_to_cloudwatch` variable to `thin_egress_app` module definition.
+
+### Changed
+
+- **CUMULUS-2216**
+  - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.
+  - The `es/collections` Collection class takes a new parameter includeStats. It no longer appends granule aggregate statistics to the returned results by default. One must set the new parameter to any non-false value.
+- **CUMULUS-2201**
+  - Update `dbIndexer` lambda to process requests in serial
+  - Fixes ingestPdrWithNodeNameSpec parsePdr provider error
+- **CUMULUS-2251**
+  - Moves Egress Api Gateway Log Group Filter from `tf-modules/distribution/main.tf` to `example/cumulus-tf/main.tf`
+
+### Fixed
+- **CUMULUS-2251**
+  - This fixes a deployment error caused by depending on the `thin_egress_app` module output for a resource count.
+
+### Removed
+- **CUMULUS-2251**
+  -  Removes `tea_api_egress_log_group` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`.
+
+### BREAKING CHANGES
+- **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a
+new `update-granules-cmr-metadata-file-links` task.
+- **CUMULUS-2216**
+  - `/collection` and `/collection/active` endpoints now return collections without granule aggregate statistics by default. The original behavior is preserved and can be found by including a query param of `includeStats=true` on the request to the endpoint.  This is likely to affect the dashboard only but included here for the change of behavior.
+- **[1956](https://github.com/nasa/cumulus/issues/1956)**
+  - Update the name of the `cumulus_message_adapter_lambda_layer_arn` output from the `cumulus-message-adapter` module to `cumulus_message_adapter_lambda_layer_version_arn`. The output value has changed from being the ARN of the Lambda layer **without a version** to the ARN of the Lambda layer **with a version**.
+  - Update the variable name in the `cumulus` and `ingest` modules from `cumulus_message_adapter_lambda_layer_arn` to `cumulus_message_adapter_lambda_layer_version_arn`
+
+## [v3.0.1] 2020-10-21
+
+- **CUMULUS-2203**
+  - Update Core tasks to use
+    [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
+    v2.0.0 to resolve memory leak/lambda ENOMEM constant failure issue.   This
+    issue caused lambdas to slowly use all memory in the run environment and
+    prevented AWS from halting/restarting warmed instances when task code was
+    throwing consistent errors under load.
+
 - **CUMULUS-2232**
-  - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
+  - Updated versions for `ajv`, `lodash`, `googleapis`, `archiver`, and
+    `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
+
+### Fixed
+- **CUMULUS-2233**
+  - Fixes /s3credentials bug where the expiration time on the cookie was set to a time that is always expired, so authentication was never being recognized as complete by the API. Consequently, the user would end up in a redirect loop and requests to /s3credentials would never complete successfully. The bug was caused by the fact that the code setting the expiration time for the cookie was expecting a time value in milliseconds, but was receiving the expirationTime from the EarthdataLoginClient in seconds. This bug has been fixed by converting seconds into milliseconds. Unit tests were added to test that the expiration time has been converted to milliseconds and checking that the cookie's expiration time is greater than the current time.
 
 ## [v3.0.0] 2020-10-7
 
@@ -111,6 +159,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-2200**
+  - Changes return from 303 redirect to 200 success for `Granule Inventory`'s
+    `/reconciliationReport` returns.  The user (dashboard) must read the value
+    of `url` from the return to get the s3SignedURL and then download the report.
 - **CUMULUS-2099**
   - `meta.queues` has been removed from Cumulus core workflow messages.
   - `@cumulus/sf-sqs-report` workflow task no longer reads the reporting queue URL from `input.meta.queues.reporting` on the incoming event. Instead, it requires that the queue URL be set as the `reporting_queue_url` environment variable on the deployed Lambda.
@@ -151,6 +203,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `const { recursion } = require('@cumulus/ingest/recursion');`
 - The `@cumulus/ingest/granule.getRenamedS3File` function has been renamed to
   `listVersionedObjects`
+- `@cumulus/common.http` has been removed
+- `@cumulus/common/http.download` has been removed
 
 ### Added
 
@@ -3688,7 +3742,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v3.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v4.0.0...HEAD
+[v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
+[v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
 [v2.0.7]: https://github.com/nasa/cumulus/compare/v2.0.6...v2.0.7
 [v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.5...v2.0.6

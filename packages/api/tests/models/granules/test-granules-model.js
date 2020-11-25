@@ -568,6 +568,45 @@ test('searchGranulesForCollection() returns matching granules ordered by granule
   t.is(fetchedGranules.length, 0);
 });
 
+test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
+  const { granuleModel } = t.context;
+
+  const collectionId = randomString();
+  const status = 'running';
+  const granules = [
+    fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ granuleId: 'test123', collectionId, status }),
+    fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
+    fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
+  ];
+  await granuleModel.create(granules);
+
+  let searchParams = {
+    collectionId,
+    status,
+    updatedAt__from: Date.now() - 1000 * 30,
+    updatedAt__to: Date.now(),
+  };
+  let granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+
+  let fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 3);
+  t.deepEqual(
+    fetchedGranules.map((g) => g.granuleId).sort(),
+    granules.slice(0, 3).map((g) => g.granuleId).sort()
+  );
+
+  searchParams = {
+    ...searchParams,
+    granuleId: 'test',
+  };
+
+  granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 1);
+});
+
 test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
   const granule = fakeGranuleFactoryV2({ published: false });
 

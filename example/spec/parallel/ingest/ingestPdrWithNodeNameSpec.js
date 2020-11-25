@@ -57,6 +57,7 @@ const {
 } = require('../../helpers/granuleUtils');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
@@ -88,6 +89,7 @@ describe('Ingesting from PDR', () => {
   let addedCollection;
   let nodeName;
   let nodeNameProviderId;
+  const ingestTime = Date.now() - 1000 * 30;
 
   beforeAll(async () => {
     try {
@@ -107,6 +109,8 @@ describe('Ingesting from PDR', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       nodeName = config.pdrNodeNameProviderBucket;
+      await deleteProvidersByHost(config.stackName, nodeName);
+
       nodeNameProviderId = `provider-${randomString(4)}`;
 
       const createProviderResponse = await providersApi.createProvider({
@@ -123,6 +127,8 @@ describe('Ingesting from PDR', () => {
       );
 
       nodeNameProvider = createProviderResponseBody.record;
+
+      await waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime });
 
       // populate collections, providers and test data
       const populatePromises = await Promise.all([
