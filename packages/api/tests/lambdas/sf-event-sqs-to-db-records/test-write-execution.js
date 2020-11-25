@@ -66,8 +66,7 @@ test.beforeEach((t) => {
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
 
-  const now = Date.now();
-
+  t.context.workflowStartTime = Date.now();
   t.context.workflowTasks = {
     task1: {
       key: 'value',
@@ -77,8 +76,7 @@ test.beforeEach((t) => {
 
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: now,
-      workflow_stop_time: now + 5000,
+      workflow_start_time: t.context.workflowStartTime,
       cumulus_version: t.context.postRDSDeploymentVersion,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
@@ -216,7 +214,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
     {
       arn: executionArn,
       cumulus_version: postRDSDeploymentVersion,
-      duration: 5,
+      duration: 0,
       original_payload: cumulusMessage.payload,
       status: 'running',
       tasks: workflowTasks,
@@ -232,6 +230,57 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       updated_at: now,
     }
   );
+});
+
+test('buildExecutionRecord returns record with correct payload for non-running execution', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  const record = buildExecutionRecord({
+    cumulusMessage,
+  });
+
+  t.is(record.status, 'completed');
+  t.is(record.original_payload, undefined);
+  t.deepEqual(record.final_payload, cumulusMessage.payload);
+});
+
+test('buildExecutionRecord returns record with correct duration', (t) => {
+  const {
+    cumulusMessage,
+    workflowStartTime,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.cumulus_meta.workflow_stop_time = workflowStartTime + 5000;
+
+  const record = buildExecutionRecord({
+    cumulusMessage,
+  });
+
+  t.is(record.duration, 5);
+});
+
+test('buildExecutionRecord returns record with correct error', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'failed';
+  const exception = {
+    Error: new Error('fake error'),
+    Cause: 'an error occurred',
+  };
+  cumulusMessage.exception = exception;
+
+  const record = buildExecutionRecord({
+    cumulusMessage,
+  });
+
+  t.deepEqual(record.error, exception);
 });
 
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
