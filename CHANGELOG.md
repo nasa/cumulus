@@ -58,6 +58,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     database.
   - **CUMULUS-2228**
     - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the Core PostgreSQL database in parallel with writes to DynamoDB
+  - **CUMUlUS-2192**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for execution writes to the core PostgreSQL database
   - **CUMULUS-2187**
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
@@ -65,6 +67,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [v4.0.0] 2020-11-20
 
 ### Migration notes
+
 - Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
 - **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 - **CUMULUS-2251**
