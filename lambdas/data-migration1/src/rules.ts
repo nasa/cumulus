@@ -4,6 +4,7 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import {
   PostgresCollectionRecord,
   PostgresProviderRecord,
+  PostgresRuleRecord,
   PostgresRule,
   getRecordCumulusId,
   tableNames,
