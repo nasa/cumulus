@@ -59,7 +59,7 @@ export const migrateRuleRecord = async (
     : undefined;
 
   // Map old record to new schema.
-  const updatedRecord: PostgresRuleRecord = {
+  const updatedRecord: Omit<PostgresRuleRecord, 'cumulus_id'> = {
     name: dynamoRecord.name,
     workflow: dynamoRecord.workflow,
     provider_cumulus_id: (providerCumulusId === undefined) ? undefined : providerCumulusId,
