@@ -2,6 +2,8 @@ import Knex from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 
+import { tableNames } from './tables';
+
 export const isRecordDefined = <T>(record: T) => record !== undefined;
 
 export const doesRecordExist = async<T>(
@@ -19,9 +21,9 @@ export const doesRecordExist = async<T>(
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordDoesNotExist} if record cannot be found
 */
-export const getRecordCumulusId = async<T extends { __name: string, cumulus_id: number }>(
+export const getRecordCumulusId = async<T extends { cumulus_id: number }>(
   whereClause : Partial<T>,
-  table: T['__name'],
+  table: tableNames,
   knex: Knex
 ): Promise<number> => {
   const record: T = await knex.select('cumulus_id')
