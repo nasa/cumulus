@@ -16,7 +16,7 @@ export const doesRecordExist = async<T>(
  * Retrieve cumulus_id for a record from the specified table.
  *
  * @param {Object} whereClause - where clause for query
- * @param {string} table - Name of table
+ * @param {tableNames} table - Name of table
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordDoesNotExist} if record cannot be found
