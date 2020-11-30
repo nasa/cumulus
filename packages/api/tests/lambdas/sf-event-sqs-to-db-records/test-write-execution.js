@@ -17,7 +17,7 @@ const Execution = require('../../../models/executions');
 
 const {
   buildExecutionRecord,
-  shouldWriteExecutionToRDS,
+  shouldWriteExecutionToPostgres,
   writeRunningExecutionViaTransaction,
   writeExecutionViaTransaction,
   writeExecution,
@@ -65,6 +65,13 @@ test.beforeEach((t) => {
   };
   t.context.workflowName = 'TestWorkflow';
 
+  t.context.asyncOperationId = uuidv4();
+  t.context.collectionNameVersion = {
+    name: cryptoRandomString({ length: 5 }),
+    version: '0.0.0',
+  };
+  t.context.parentExecutionArn = `arn${cryptoRandomString({ length: 5 })}`;
+
   t.context.cumulusMessage = {
     cumulus_meta: {
       workflow_start_time: t.context.workflowStartTime,
@@ -93,9 +100,9 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', (t) => {
+test('shouldWriteExecutionToPostgres returns false for pre-RDS deployment execution message', (t) => {
   const { cumulusMessage, preRDSDeploymentVersion } = t.context;
-  t.false(shouldWriteExecutionToRDS({
+  t.false(shouldWriteExecutionToPostgres({
     cumulusMessage: {
       ...cumulusMessage,
       cumulus_meta: {
@@ -106,50 +113,59 @@ test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution m
   }));
 });
 
-test('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', (t) => {
+test.only('shouldWriteExecutionToPostgres returns true for post-RDS deployment execution message if all referenced objects exist', (t) => {
   const {
     cumulusMessage,
+    asyncOperationId,
+    collectionNameVersion,
+    parentExecutionArn,
   } = t.context;
 
   t.true(
-    shouldWriteExecutionToRDS({
+    shouldWriteExecutionToPostgres({
       cumulusMessage,
+      messageCollectionNameVersion: collectionNameVersion,
       collectionCumulusId: 1,
+      messageAsyncOperationId: asyncOperationId,
       asyncOperationCumulusId: 2,
+      messageParentExecutionArn: parentExecutionArn,
       parentExecutionCumulusId: 3,
     })
   );
 });
 
-test('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
+test.only('shouldWriteExecutionToPostgres returns false if any referenced objects are missing', async (t) => {
   const {
     cumulusMessage,
+    asyncOperationId,
+    collectionNameVersion,
+    parentExecutionArn,
   } = t.context;
 
   t.false(
-    await shouldWriteExecutionToRDS({
+    await shouldWriteExecutionToPostgres({
       cumulusMessage,
-      collectionCumulusId: 1,
-      asyncOperationCumulusId: 2,
+      messageCollectionNameVersion: collectionNameVersion,
+      collectionCumulusId: undefined,
     })
   );
   t.false(
-    await shouldWriteExecutionToRDS({
+    await shouldWriteExecutionToPostgres({
       cumulusMessage,
-      collectionCumulusId: 1,
-      parentExecutionCumulusId: 2,
+      messageAsyncOperationId: asyncOperationId,
+      asyncOperationCumulusId: undefined,
     })
   );
   t.false(
-    await shouldWriteExecutionToRDS({
+    await shouldWriteExecutionToPostgres({
       cumulusMessage,
-      asyncOperationCumulusId: 1,
-      parentExecutionCumulusId: 2,
+      messageParentExecutionArn: parentExecutionArn,
+      parentExecutionCumulusId: undefined,
     })
   );
 });
 
-test.serial('shouldWriteExecutionToRDS throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
+test.serial('shouldWriteExecutionToPostgres throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
   const {
     knex,
     cumulusMessage,
@@ -158,7 +174,7 @@ test.serial('shouldWriteExecutionToRDS throws error if RDS_DEPLOYMENT_CUMULUS_VE
 
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
   await t.throws(
-    () => shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
+    () => shouldWriteExecutionToPostgres(cumulusMessage, collectionCumulusId, knex)
   );
 });
 

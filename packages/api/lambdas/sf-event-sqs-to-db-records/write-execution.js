@@ -4,7 +4,11 @@ const {
   tableNames,
 } = require('@cumulus/db');
 const {
+  getMessageAsyncOperationId,
+} = require('@cumulus/message/AsyncOperations');
+const {
   getMessageExecutionArn,
+  getMessageExecutionParentArn,
   getExecutionUrlFromArn,
   getMessageCumulusVersion,
   getMessageWorkflowTasks,
@@ -23,20 +27,39 @@ const Execution = require('../../models/executions');
 
 const {
   isPostRDSDeploymentExecution,
+  getAsyncOperationCumulusId,
+  getParentExecutionCumulusId,
 } = require('./utils');
 
-const shouldWriteExecutionToRDS = ({
+const shouldWriteExecutionToPostgres = ({
   cumulusMessage,
+  messageCollectionNameVersion,
   collectionCumulusId,
+  messageAsyncOperationId,
+  messageParentExecutionArn,
   asyncOperationCumulusId,
   parentExecutionCumulusId,
 }) => {
-  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-  if (!isExecutionPostDeployment) return false;
+  try {
+    const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+    if (!isExecutionPostDeployment) {
+      throw new Error('Workflow message was not started before RDS deployment, skipping');
+    }
 
-  return !isNil(collectionCumulusId)
-    && !isNil(asyncOperationCumulusId)
-    && !isNil(parentExecutionCumulusId);
+    if (!isNil(messageCollectionNameVersion) && isNil(collectionCumulusId)) {
+      throw new Error(`Collection ${messageCollectionNameVersion} found on message, but not in database`);
+    }
+    if (!isNil(messageAsyncOperationId) && isNil(asyncOperationCumulusId)) {
+      throw new Error(`Async operation id ${messageAsyncOperationId} found in message, but not in database`);
+    }
+    if (!isNil(messageParentExecutionArn) && isNil(parentExecutionCumulusId)) {
+      throw new Error(`Parent execution arn ${messageParentExecutionArn} found in message, but not in database`);
+    }
+  } catch (error) {
+    return false;
+  }
+
+  return true;
 };
 
 const buildExecutionRecord = ({
@@ -127,12 +150,36 @@ const writeExecutionViaTransaction = async ({
 const writeExecution = async ({
   cumulusMessage,
   knex,
+  messageCollectionNameVersion,
   collectionCumulusId,
-  asyncOperationCumulusId,
-  parentExecutionCumulusId,
   executionModel = new Execution(),
-}) =>
-  knex.transaction(async (trx) => {
+}) => {
+  const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
+  const asyncOperationCumulusId = await getAsyncOperationCumulusId(
+    messageAsyncOperationId,
+    knex
+  );
+
+  const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
+  const parentExecutionCumulusId = await getParentExecutionCumulusId(
+    messageParentExecutionArn,
+    knex
+  );
+
+  const isExecutionPostgresWriteEnabled = shouldWriteExecutionToPostgres({
+    cumulusMessage,
+    messageCollectionNameVersion,
+    collectionCumulusId,
+    messageAsyncOperationId,
+    messageParentExecutionArn,
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+  });
+  if (!isExecutionPostgresWriteEnabled) {
+    throw new Error('Requirements for writing execution to Postgres could not be satisfied');
+  }
+
+  return knex.transaction(async (trx) => {
     // eslint-disable-next-line camelcase
     const [cumulus_id] = await writeExecutionViaTransaction({
       cumulusMessage,
@@ -145,10 +192,11 @@ const writeExecution = async ({
     // eslint-disable-next-line camelcase
     return cumulus_id;
   });
+};
 
 module.exports = {
   buildExecutionRecord,
-  shouldWriteExecutionToRDS,
+  shouldWriteExecutionToPostgres,
   writeRunningExecutionViaTransaction,
   writeExecutionViaTransaction,
   writeExecution,

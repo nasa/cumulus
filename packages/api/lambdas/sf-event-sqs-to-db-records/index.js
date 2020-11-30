@@ -11,22 +11,22 @@ const {
   getKnexClient,
 } = require('@cumulus/db');
 const {
-  getMessageExecutionArn,
-} = require('@cumulus/message/Executions');
+  getCollectionNameAndVersionFromMessage,
+} = require('@cumulus/message/Collections');
+// const {
+//   getMessageExecutionArn,
+// } = require('@cumulus/message/Executions');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
 const {
-  getMessageAsyncOperationCumulusId,
-  getMessageParentExecutionCumulusId,
   getMessageCollectionCumulusId,
   getMessageProviderCumulusId,
 } = require('./utils');
 
 const {
-  shouldWriteExecutionToRDS,
   writeExecution,
 } = require('./write-execution');
 
@@ -59,60 +59,55 @@ const writeRecordsToDynamoDb = async (cumulusMessage) => {
 };
 
 const writeRecords = async (cumulusMessage, knex) => {
-  const executionArn = getMessageExecutionArn(cumulusMessage);
+  // const executionArn = getMessageExecutionArn(cumulusMessage);
 
-  const [
-    collectionCumulusId,
-    asyncOperationCumulusId,
-    parentExecutionCumulusId,
-  ] = await Promise.all([
-    getMessageCollectionCumulusId(cumulusMessage, knex),
-    getMessageAsyncOperationCumulusId(cumulusMessage, knex),
-    getMessageParentExecutionCumulusId(cumulusMessage, knex),
-  ]);
-  const isExecutionRDSWriteEnabled = shouldWriteExecutionToRDS({
-    cumulusMessage,
-    collectionCumulusId,
-    asyncOperationCumulusId,
-    parentExecutionCumulusId,
-  });
+  const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
+  const collectionCumulusId = await getMessageCollectionCumulusId(
+    messageCollectionNameVersion,
+    knex
+  );
+  // const isExecutionRDSWriteEnabled = shouldWriteExecutionToRDS({
+  //   cumulusMessage,
+  //   messageAsyncOperationId,
+  //   messageParentExecutionArn,
+  //   collectionCumulusId,
+  //   asyncOperationCumulusId,
+  //   parentExecutionCumulusId,
+  // });
 
-  // If execution is not written to RDS, then PDRs/granules which reference
-  // execution should not be written to RDS either
-  if (!isExecutionRDSWriteEnabled) {
+  let executionCumulusId;
+  try {
+    executionCumulusId = await writeExecution({
+      cumulusMessage,
+      messageCollectionNameVersion,
+      collectionCumulusId,
+      knex,
+    });
+  } catch (error) {
+    // If execution is not written to RDS, then PDRs/granules which reference
+    // execution should not be written to RDS either
     return writeRecordsToDynamoDb(cumulusMessage);
   }
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
 
-  try {
-    const executionCumulusId = await writeExecution({
-      cumulusMessage,
-      collectionCumulusId,
-      asyncOperationCumulusId,
-      parentExecutionCumulusId,
-      knex,
-    });
-    // PDR write only attempted if execution saved
-    const pdrCumulusId = await writePdr({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      knex,
-      executionCumulusId,
-    });
-    return await writeGranules({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId,
-      pdrCumulusId,
-      knex,
-    });
-  } catch (error) {
-    log.error(`Failed to write records for ${executionArn}`, error);
-    throw error;
-  }
+  // PDR write only attempted if execution saved
+  const pdrCumulusId = await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+    executionCumulusId,
+  });
+
+  return writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdrCumulusId,
+    knex,
+  });
 };
 
 const handler = async (event) => {

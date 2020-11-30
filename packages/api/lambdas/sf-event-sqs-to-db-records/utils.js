@@ -7,13 +7,6 @@ const {
 } = require('@cumulus/db');
 const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 const {
-  getMessageAsyncOperationId,
-} = require('@cumulus/message/AsyncOperations');
-const {
-  getCollectionNameAndVersionFromMessage,
-} = require('@cumulus/message/Collections');
-const {
-  getMessageExecutionParentArn,
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const {
@@ -37,9 +30,8 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
   }
 };
 
-const getMessageAsyncOperationCumulusId = async (cumulusMessage, knex) => {
+const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
   try {
-    const asyncOperationId = getMessageAsyncOperationId(cumulusMessage);
     if (!asyncOperationId) {
       throw new Error('Could not find async operation in message');
     }
@@ -56,9 +48,8 @@ const getMessageAsyncOperationCumulusId = async (cumulusMessage, knex) => {
   }
 };
 
-const getMessageParentExecutionCumulusId = async (cumulusMessage, knex) => {
+const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
   try {
-    const parentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
     if (!parentExecutionArn) {
       throw new Error('Could not find parent execution ARN in message');
     }
@@ -75,17 +66,16 @@ const getMessageParentExecutionCumulusId = async (cumulusMessage, knex) => {
   }
 };
 
-const getMessageCollectionCumulusId = async (cumulusMessage, knex) => {
+const getMessageCollectionCumulusId = async (messageCollectionNameVersion, knex) => {
   try {
-    const collectionNameAndVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
-    if (!collectionNameAndVersion) {
+    if (!messageCollectionNameVersion) {
       throw new Error('Could not find collection name/version in message');
     }
     const collection = await knex(tableNames.collections).where(
-      collectionNameAndVersion
+      messageCollectionNameVersion
     ).first();
     if (!isRecordDefined(collection)) {
-      throw new Error(`Could not find collection with params ${JSON.stringify(collectionNameAndVersion)}`);
+      throw new Error(`Could not find collection with params ${JSON.stringify(messageCollectionNameVersion)}`);
     }
     return collection.cumulus_id;
   } catch (error) {
@@ -116,8 +106,8 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
 
 module.exports = {
   isPostRDSDeploymentExecution,
-  getMessageAsyncOperationCumulusId,
-  getMessageParentExecutionCumulusId,
+  getAsyncOperationCumulusId,
+  getParentExecutionCumulusId,
   getMessageCollectionCumulusId,
   getMessageProviderCumulusId,
 };
