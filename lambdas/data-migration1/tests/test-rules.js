@@ -56,8 +56,6 @@ const migrateFakeProviderRecord = async (record, knex) => {
 let collectionsModel;
 let providersModel;
 let rulesModel;
-let fakeCollection;
-let fakeProvider;
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -78,15 +76,6 @@ test.before(async (t) => {
   rulesModel = new Rule();
   await rulesModel.createTable();
   await createBucket(process.env.system_bucket);
-
-  fakeCollection = fakeCollectionFactory();
-  fakeProvider = fakeProviderFactory({
-    encrypted: true,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-    createdAt: new Date(2020, 11, 17),
-  });
 
   t.context.knexAdmin = await getKnexClient({
     env: {
@@ -121,6 +110,21 @@ test.before(async (t) => {
   ]);
 });
 
+test.beforeEach(async (t) => {
+
+  const fakeCollection = fakeCollectionFactory();
+  const fakeProvider = fakeProviderFactory({
+    encrypted: true,
+    privateKey: 'key',
+    cmKeyId: 'key-id',
+    certificateUri: 'uri',
+    createdAt: new Date(2020, 11, 17),
+  });
+
+  t.context.fakeCollection = fakeCollection;
+  t.context.fakeProvider = fakeProvider;
+});
+
 test.afterEach.always(async (t) => {
   await t.context.knex('rules').del();
   await t.context.knex('providers').del();
@@ -140,7 +144,7 @@ test.after.always(async (t) => {
 });
 
 test.serial('getCumulusId throws ColumnDoesNotExist if table does not have a cumulus_id column', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection } = t.context;
   const result = getCumulusId(
     {
       name: fakeCollection.name,
@@ -153,7 +157,7 @@ test.serial('getCumulusId throws ColumnDoesNotExist if table does not have a cum
 });
 
 test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
@@ -191,6 +195,7 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
 });
 
 test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb', async (t) => {
+  const { fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   // make source record invalid
@@ -203,7 +208,7 @@ test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb
 });
 
 test.serial('migrateRuleRecord handles nullable fields on source rule data', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule();
 
   delete fakeRule.rule.logEventArn;
@@ -250,7 +255,7 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
 });
 
 test.serial('migrateRuleRecord ignores extraneous fields from Dynamo', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   fakeRule.state = 'ENABLED';
@@ -260,7 +265,7 @@ test.serial('migrateRuleRecord ignores extraneous fields from Dynamo', async (t)
 });
 
 test.serial('migrateRuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
@@ -273,7 +278,7 @@ test.serial('migrateRuleRecord throws RecordAlreadyMigrated error for already mi
 });
 
 test.serial('migrateRules skips already migrated record', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
   const queueUrls = randomString();
   fakeRule.queueUrl = queueUrls.queueUrl;
@@ -297,7 +302,7 @@ test.serial('migrateRules skips already migrated record', async (t) => {
 });
 
 test.serial('migrateRules processes multiple rules', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection, fakeProvider } = t.context;
   const anotherFakeCollection = fakeCollectionFactory();
   const anotherFakeProvider = fakeProviderFactory({
     encrypted: false,
@@ -342,7 +347,7 @@ test.serial('migrateRules processes multiple rules', async (t) => {
 });
 
 test.serial('migrateRules processes all non-failing records', async (t) => {
-  const { knex } = t.context;
+  const { knex, fakeCollection, fakeProvider } = t.context;
   const anotherFakeCollection = fakeCollectionFactory();
   const anotherFakeProvider = fakeProviderFactory({
     encrypted: false,
