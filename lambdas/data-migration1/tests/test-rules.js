@@ -254,16 +254,6 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
   );
 });
 
-test.serial('migrateRuleRecord ignores extraneous fields from Dynamo', async (t) => {
-  const { knex, fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
-
-  fakeRule.state = 'ENABLED';
-  await migrateFakeCollectionRecord(fakeCollection, knex);
-  await migrateFakeProviderRecord(fakeProvider, knex);
-  await t.notThrowsAsync(migrateRuleRecord(fakeRule, knex));
-});
-
 test.serial('migrateRuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const { knex, fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
