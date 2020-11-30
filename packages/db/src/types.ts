@@ -101,6 +101,8 @@ export interface PostgresRule {
   meta?: string,
   tags?: string,
   queue_url?: string,
+  created_at: Date,
+  updated_at: Date,
 }
 
 export interface PostgresRuleRecord extends PostgresRule {

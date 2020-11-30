@@ -4,7 +4,7 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import {
   PostgresCollectionRecord,
   PostgresProviderRecord,
-  PostgresRuleRecord,
+  PostgresRule,
   getRecordCumulusId,
   tableNames,
 } from '@cumulus/db';
@@ -59,7 +59,7 @@ export const migrateRuleRecord = async (
     : undefined;
 
   // Map old record to new schema.
-  const updatedRecord: Omit<PostgresRuleRecord, 'cumulus_id'> = {
+  const updatedRecord: PostgresRule = {
     name: dynamoRecord.name,
     workflow: dynamoRecord.workflow,
     provider_cumulus_id: (providerCumulusId === undefined) ? undefined : providerCumulusId,
