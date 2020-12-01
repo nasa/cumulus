@@ -1,17 +1,22 @@
 const semver = require('semver');
 const { envUtils } = require('@cumulus/common');
-const log = require('@cumulus/common/log');
 const {
   tableNames,
   isRecordDefined,
 } = require('@cumulus/db');
-const { MissingRequiredEnvVarError } = require('@cumulus/errors');
+const {
+  MissingRequiredEnvVarError,
+  RecordDoesNotExist,
+} = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 const {
   getMessageCumulusVersion,
 } = require('@cumulus/message/Executions');
 const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
+
+const logger = new Logger({ sender: '@cumulus/api/sfEventSqsToDbRecords/utils' });
 
 const isPostRDSDeploymentExecution = (cumulusMessage) => {
   try {
@@ -39,11 +44,13 @@ const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
       id: asyncOperationId,
     }).first();
     if (!isRecordDefined(asyncOperation)) {
-      throw new Error(`Could not find async operation with id ${asyncOperationId}`);
+      throw new RecordDoesNotExist(`Could not find async operation with id ${asyncOperationId}`);
     }
     return asyncOperation.cumulus_id;
   } catch (error) {
-    log.error(error);
+    if (error instanceof RecordDoesNotExist) {
+      logger.info(error);
+    }
     return undefined;
   }
 };
@@ -57,11 +64,13 @@ const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
       arn: parentExecutionArn,
     }).first();
     if (!isRecordDefined(parentExecution)) {
-      throw new Error(`Could not find execution with arn ${parentExecutionArn}`);
+      throw new RecordDoesNotExist(`Could not find execution with arn ${parentExecutionArn}`);
     }
     return parentExecution.cumulus_id;
   } catch (error) {
-    log.error(error);
+    if (error instanceof RecordDoesNotExist) {
+      logger.info(error);
+    }
     return undefined;
   }
 };
@@ -75,11 +84,13 @@ const getMessageCollectionCumulusId = async (messageCollectionNameVersion, knex)
       messageCollectionNameVersion
     ).first();
     if (!isRecordDefined(collection)) {
-      throw new Error(`Could not find collection with params ${JSON.stringify(messageCollectionNameVersion)}`);
+      throw new RecordDoesNotExist(`Could not find collection with params ${JSON.stringify(messageCollectionNameVersion)}`);
     }
     return collection.cumulus_id;
   } catch (error) {
-    log.error(error);
+    if (error instanceof RecordDoesNotExist) {
+      logger.info(error);
+    }
     return undefined;
   }
 };
@@ -99,7 +110,7 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
     }
     return provider.cumulus_id;
   } catch (error) {
-    log.error(error);
+    logger.error(error);
     return undefined;
   }
 };

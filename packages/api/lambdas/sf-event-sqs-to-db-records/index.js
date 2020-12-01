@@ -61,11 +61,6 @@ const writeRecordsToDynamoDb = async (cumulusMessage) => {
 const writeRecords = async (cumulusMessage, knex) => {
   // const executionArn = getMessageExecutionArn(cumulusMessage);
 
-  const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
-  const collectionCumulusId = await getMessageCollectionCumulusId(
-    messageCollectionNameVersion,
-    knex
-  );
   // const isExecutionRDSWriteEnabled = shouldWriteExecutionToRDS({
   //   cumulusMessage,
   //   messageAsyncOperationId,
@@ -75,8 +70,16 @@ const writeRecords = async (cumulusMessage, knex) => {
   //   parentExecutionCumulusId,
   // });
 
+  let collectionCumulusId;
   let executionCumulusId;
+
   try {
+    const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
+    collectionCumulusId = await getMessageCollectionCumulusId(
+      messageCollectionNameVersion,
+      knex
+    );
+
     executionCumulusId = await writeExecution({
       cumulusMessage,
       messageCollectionNameVersion,

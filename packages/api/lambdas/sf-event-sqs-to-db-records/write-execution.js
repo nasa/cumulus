@@ -52,7 +52,7 @@ const shouldWriteExecutionToPostgres = ({
   }
 
   if (!isNil(messageCollectionNameVersion) && isNil(collectionCumulusId)) {
-    logger.info(`Collection ${messageCollectionNameVersion} found on message, but not in database`);
+    logger.info(`Collection ${JSON.stringify(messageCollectionNameVersion)} found on message, but not in database`);
     return false;
   }
 
