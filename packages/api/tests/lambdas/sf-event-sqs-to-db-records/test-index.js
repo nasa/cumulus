@@ -3,7 +3,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
-const sinon = require('sinon');
 const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
@@ -14,7 +13,6 @@ const {
   tableNames,
   doesRecordExist,
 } = require('@cumulus/db');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const proxyquire = require('proxyquire');
 
 const { randomString } = require('@cumulus/common/test-utils');
@@ -23,9 +21,6 @@ const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
-
-const sandbox = sinon.createSandbox();
-const shouldWriteExecutionStub = sandbox.stub().returns(true);
 
 const {
   handler,
@@ -36,9 +31,6 @@ const {
   },
   '@cumulus/aws-client/StepFunctions': {
     describeExecution: async () => ({}),
-  },
-  './write-execution': {
-    shouldWriteExecutionToRDS: shouldWriteExecutionStub,
   },
 });
 
@@ -62,6 +54,7 @@ const runHandler = async ({
   stateMachineArn,
   executionArn,
   executionName,
+  testDbName,
 }) => {
   fixture.resources = [executionArn];
   fixture.detail.executionArn = executionArn;
@@ -75,7 +68,10 @@ const runHandler = async ({
       eventSource: 'aws:sqs',
       body: JSON.stringify(fixture),
     }],
-    env: localStackConnectionEnv,
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: testDbName,
+    },
   };
   const handlerResponse = await handler(sqsEvent);
   return { executionArn, handlerResponse, sqsEvent };
@@ -103,7 +99,16 @@ test.before(async (t) => {
   await executionModel.createTable();
   t.context.executionModel = executionModel;
 
-  const granuleModel = new Granule();
+  const fakeFileUtils = {
+    buildDatabaseFiles: async (params) => params.files,
+  };
+  const fakeStepFunctionUtils = {
+    describeExecution: async () => ({}),
+  };
+  const granuleModel = new Granule({
+    fileUtils: fakeFileUtils,
+    stepFunctionUtils: fakeStepFunctionUtils,
+  });
   await granuleModel.createTable();
   t.context.granuleModel = granuleModel;
 
@@ -135,19 +140,12 @@ test.beforeEach(async (t) => {
   t.context.preRDSDeploymentVersion = '2.9.99';
 
   t.context.collection = generateRDSCollectionRecord();
-  t.context.collectionId = constructCollectionId(
-    t.context.collection.name,
-    t.context.collection.version
-  );
 
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:${fixture.region}:${fixture.account}:stateMachine:${stateMachineName}`;
 
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:${fixture.region}:${fixture.account}:execution:${stateMachineName}:${t.context.executionName}`;
-
-  t.context.parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-  t.context.asyncOperationId = uuidv4();
 
   t.context.provider = {
     id: `provider${cryptoRandomString({ length: 5 })}`,
@@ -172,8 +170,6 @@ test.beforeEach(async (t) => {
       cumulus_version: t.context.postRDSDeploymentVersion,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
-      parentExecutionArn: t.context.parentExecutionArn,
-      asyncOperationId: t.context.asyncOperationId,
     },
     meta: {
       status: 'running',
@@ -200,10 +196,6 @@ test.beforeEach(async (t) => {
     })
     .returning('cumulus_id');
   t.context.providerCumulusId = providerResponse[0];
-
-  t.context.shouldWriteExecutionStub = shouldWriteExecutionStub;
-  t.context.shouldWriteExecutionStub.resolves(true);
-  t.context.shouldWriteExecutionStub.resetHistory();
 });
 
 test.after.always(async (t) => {
@@ -215,13 +207,12 @@ test.after.always(async (t) => {
   await executionModel.deleteTable();
   await pdrModel.deleteTable();
   await granuleModel.deleteTable();
-  sandbox.restore();
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
   await t.context.knexAdmin.destroy();
 });
 
-test.serial('writeRecords() only writes records to Dynamo if shouldWriteExecutionToRDS returns false', async (t) => {
+test.serial('writeRecords() only writes records to Dynamo if writeExecution throws an UnmetRequirementsError error', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -233,7 +224,8 @@ test.serial('writeRecords() only writes records to Dynamo if shouldWriteExecutio
     granuleId,
   } = t.context;
 
-  t.context.shouldWriteExecutionStub.returns(false);
+  // add reference in message to object that doesn't exist
+  cumulusMessage.cumulus_meta.asyncOperationId = uuidv4();
 
   await writeRecords(cumulusMessage, knex);
 
@@ -258,14 +250,16 @@ test.serial('writeRecords() only writes records to Dynamo if shouldWriteExecutio
   );
 });
 
-test('writeRecords() does not write PDR if execution write fails', async (t) => {
+test('writeRecords() does not write granules/PDR if writeExecution() throws general error', async (t) => {
   const {
     cumulusMessage,
     executionModel,
+    granuleModel,
     pdrModel,
     knex,
     executionArn,
     pdrName,
+    granuleId,
   } = t.context;
 
   delete cumulusMessage.meta.status;
@@ -274,6 +268,7 @@ test('writeRecords() does not write PDR if execution write fails', async (t) => 
 
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(await pdrModel.exists({ pdrName }));
+  t.false(await granuleModel.exists({ granuleId }));
 
   t.false(
     await doesRecordExist({
@@ -284,6 +279,11 @@ test('writeRecords() does not write PDR if execution write fails', async (t) => 
     await doesRecordExist({
       name: pdrName,
     }, knex, tableNames.pdrs)
+  );
+  t.false(
+    await doesRecordExist({
+      granule_id: granuleId,
+    }, knex, tableNames.granules)
   );
 });
 
@@ -299,7 +299,7 @@ test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
     granuleId,
   } = t.context;
 
-  await writeRecords(cumulusMessage, knex);
+  await writeRecords(cumulusMessage, knex, granuleModel);
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await granuleModel.exists({ granuleId }));
@@ -322,36 +322,14 @@ test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
   );
 });
 
-test.serial('Lambda sends message to DLQ when shouldWriteExecutionToRDS throws error', async (t) => {
-  t.context.shouldWriteExecutionStub.throws();
+test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
+  // will make PDR write throw an error
+  delete t.context.cumulusMessage.meta.collection;
 
   const {
     handlerResponse,
     sqsEvent,
   } = await runHandler(t.context);
 
-  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
-});
-
-test('Lambda sends message to DLQ when an execution write to the database fails', async (t) => {
-  const {
-    cumulusMessage,
-    executionModel,
-    granuleModel,
-    pdrModel,
-    granuleId,
-    pdrName,
-  } = t.context;
-
-  delete cumulusMessage.meta.collection;
-  const {
-    executionArn,
-    handlerResponse,
-    sqsEvent,
-  } = await runHandler(t.context);
-
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.false(await granuleModel.exists({ granuleId }));
-  t.false(await pdrModel.exists({ pdrName }));
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
