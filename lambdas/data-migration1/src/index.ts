@@ -3,6 +3,7 @@ import { getKnexClient } from '@cumulus/db';
 import { migrateCollections } from './collections';
 import { migrateProviders } from './providers';
 import { migrateAsyncOperations } from './async-operations';
+import { migrateRules } from './rules';
 
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
@@ -17,6 +18,7 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
     const collectionsMigrationSummary = await migrateCollections(env, knex);
     const providersMigrationSummary = await migrateProviders(env, knex);
     const asyncOpsMigrationSummary = await migrateAsyncOperations(env, knex);
+    const rulesMigrationSummary = await migrateRules(env, knex);
     return `
       Migration summary:
         Collections:
@@ -34,6 +36,11 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
             ${asyncOpsMigrationSummary.success} records migrated
             ${asyncOpsMigrationSummary.skipped} records skipped
             ${asyncOpsMigrationSummary.failed} records failed
+        Rules:
+          Out of ${rulesMigrationSummary.dynamoRecords} DynamoDB records:
+            ${rulesMigrationSummary.success} records migrated
+            ${rulesMigrationSummary.skipped} records skipped
+            ${rulesMigrationSummary.failed} records failed
     `;
   } finally {
     await knex.destroy();
