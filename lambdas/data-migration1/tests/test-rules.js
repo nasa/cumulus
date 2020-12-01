@@ -5,7 +5,7 @@ const Provider = require('@cumulus/api/models/providers');
 const Rule = require('@cumulus/api/models/rules');
 const test = require('ava');
 
-const { createBucket, putJsonS3Object, recursivelyDeleteS3Bucket} = require('@cumulus/aws-client/S3');
+const { createBucket, putJsonS3Object, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { translateApiCollectionToPostgresCollection, translateApiProviderToPostgresProvider } = require('@cumulus/db');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
@@ -111,7 +111,6 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-
   const fakeCollection = fakeCollectionFactory();
   const fakeProvider = fakeProviderFactory({
     encrypted: true,
@@ -158,7 +157,7 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
     .first();
 
   t.deepEqual(
-    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id' ]),
+    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
     omit(
       {
         name: fakeRule.name,
