@@ -33,7 +33,7 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
 const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
   try {
     if (!asyncOperationId) {
-      throw new Error('Could not find async operation in message');
+      throw new Error(`Async operation ID is required for lookup, received ${asyncOperationId}`);
     }
     const asyncOperation = await knex(tableNames.asyncOperations).where({
       id: asyncOperationId,
@@ -51,7 +51,7 @@ const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
 const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
   try {
     if (!parentExecutionArn) {
-      throw new Error('Could not find parent execution ARN in message');
+      throw new Error(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
     }
     const parentExecution = await knex(tableNames.executions).where({
       arn: parentExecutionArn,
@@ -69,7 +69,7 @@ const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
 const getMessageCollectionCumulusId = async (messageCollectionNameVersion, knex) => {
   try {
     if (!messageCollectionNameVersion) {
-      throw new Error('Could not find collection name/version in message');
+      throw new Error(`Collection name/version is required for lookup, received ${messageCollectionNameVersion}`);
     }
     const collection = await knex(tableNames.collections).where(
       messageCollectionNameVersion

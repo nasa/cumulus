@@ -11,6 +11,7 @@ const {
   tableNames,
   doesRecordExist,
 } = require('@cumulus/db');
+const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
@@ -113,7 +114,7 @@ test('shouldWriteExecutionToPostgres returns false for pre-RDS deployment execut
   }));
 });
 
-test.only('shouldWriteExecutionToPostgres returns true for post-RDS deployment execution message if all referenced objects exist', (t) => {
+test('shouldWriteExecutionToPostgres returns true for post-RDS deployment execution message if all referenced objects exist', (t) => {
   const {
     cumulusMessage,
     asyncOperationId,
@@ -134,7 +135,7 @@ test.only('shouldWriteExecutionToPostgres returns true for post-RDS deployment e
   );
 });
 
-test.only('shouldWriteExecutionToPostgres returns false if any referenced objects are missing', async (t) => {
+test('shouldWriteExecutionToPostgres returns false if any referenced objects are missing', async (t) => {
   const {
     cumulusMessage,
     asyncOperationId,
@@ -174,7 +175,8 @@ test.serial('shouldWriteExecutionToPostgres throws error if RDS_DEPLOYMENT_CUMUL
 
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
   await t.throws(
-    () => shouldWriteExecutionToPostgres(cumulusMessage, collectionCumulusId, knex)
+    () => shouldWriteExecutionToPostgres(cumulusMessage, collectionCumulusId, knex),
+    { instanceOf: MissingRequiredEnvVarError }
   );
 });
 
@@ -484,6 +486,23 @@ test('writeExecutionViaTransaction() will not allow a running status to replace 
     .first();
 
   t.is(record.status, 'completed');
+});
+
+test('writeExecution() throws error if execution write cannot be performed', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionNameVersion,
+  } = t.context;
+
+  await t.throwsAsync(
+    writeExecution({
+      cumulusMessage,
+      knex,
+      // refer to a collection that doesn't exist in Postgres
+      messageCollectionNameVersion: collectionNameVersion,
+    })
+  );
 });
 
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {

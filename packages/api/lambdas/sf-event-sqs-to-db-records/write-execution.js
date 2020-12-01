@@ -3,6 +3,7 @@ const isNil = require('lodash/isNil');
 const {
   tableNames,
 } = require('@cumulus/db');
+const Logger = require('@cumulus/logger');
 const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
@@ -31,6 +32,10 @@ const {
   getParentExecutionCumulusId,
 } = require('./utils');
 
+const logger = new Logger({
+  sender: '@cumulus/api/sfEventSqsToDbRecords/writeExecution',
+});
+
 const shouldWriteExecutionToPostgres = ({
   cumulusMessage,
   messageCollectionNameVersion,
@@ -40,22 +45,24 @@ const shouldWriteExecutionToPostgres = ({
   asyncOperationCumulusId,
   parentExecutionCumulusId,
 }) => {
-  try {
-    const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-    if (!isExecutionPostDeployment) {
-      throw new Error('Workflow message was not started before RDS deployment, skipping');
-    }
+  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
+  if (!isExecutionPostDeployment) {
+    logger.info('Workflow message was not started before RDS deployment');
+    return false;
+  }
 
-    if (!isNil(messageCollectionNameVersion) && isNil(collectionCumulusId)) {
-      throw new Error(`Collection ${messageCollectionNameVersion} found on message, but not in database`);
-    }
-    if (!isNil(messageAsyncOperationId) && isNil(asyncOperationCumulusId)) {
-      throw new Error(`Async operation id ${messageAsyncOperationId} found in message, but not in database`);
-    }
-    if (!isNil(messageParentExecutionArn) && isNil(parentExecutionCumulusId)) {
-      throw new Error(`Parent execution arn ${messageParentExecutionArn} found in message, but not in database`);
-    }
-  } catch (error) {
+  if (!isNil(messageCollectionNameVersion) && isNil(collectionCumulusId)) {
+    logger.info(`Collection ${messageCollectionNameVersion} found on message, but not in database`);
+    return false;
+  }
+
+  if (!isNil(messageAsyncOperationId) && isNil(asyncOperationCumulusId)) {
+    logger.info(`Async operation id ${messageAsyncOperationId} found in message, but not in database`);
+    return false;
+  }
+
+  if (!isNil(messageParentExecutionArn) && isNil(parentExecutionCumulusId)) {
+    logger.info(`Parent execution arn ${messageParentExecutionArn} found in message, but not in database`);
     return false;
   }
 
