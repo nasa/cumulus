@@ -11,13 +11,17 @@ const {
   tableNames,
   doesRecordExist,
 } = require('@cumulus/db');
-const { MissingRequiredEnvVarError } = require('@cumulus/errors');
+const {
+  MissingRequiredEnvVarError,
+  UnmetRequirementsError,
+} = require('@cumulus/errors');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
 
 const {
   buildExecutionRecord,
+  getWriteExecutionRequirements,
   shouldWriteExecutionToPostgres,
   writeRunningExecutionViaTransaction,
   writeExecutionViaTransaction,
@@ -101,81 +105,142 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('shouldWriteExecutionToPostgres returns false for pre-RDS deployment execution message', (t) => {
-  const { cumulusMessage, preRDSDeploymentVersion } = t.context;
-  t.false(shouldWriteExecutionToPostgres({
-    cumulusMessage: {
-      ...cumulusMessage,
-      cumulus_meta: {
-        ...cumulusMessage.cumulus_meta,
-        cumulus_version: preRDSDeploymentVersion,
+test('getWriteExecutionRequirements() throws UnmetRequirementsError for pre-RDS deployment execution message', async (t) => {
+  const { cumulusMessage, preRDSDeploymentVersion, knex } = t.context;
+  await t.throwsAsync(
+    getWriteExecutionRequirements({
+      cumulusMessage: {
+        ...cumulusMessage,
+        cumulus_meta: {
+          ...cumulusMessage.cumulus_meta,
+          cumulus_version: preRDSDeploymentVersion,
+        },
       },
-    },
-  }));
-});
-
-test('shouldWriteExecutionToPostgres returns true for post-RDS deployment execution message if all referenced objects exist', (t) => {
-  const {
-    cumulusMessage,
-    asyncOperationId,
-    collectionNameVersion,
-    parentExecutionArn,
-  } = t.context;
-
-  t.true(
-    shouldWriteExecutionToPostgres({
-      cumulusMessage,
-      messageCollectionNameVersion: collectionNameVersion,
-      collectionCumulusId: 1,
-      messageAsyncOperationId: asyncOperationId,
-      asyncOperationCumulusId: 2,
-      messageParentExecutionArn: parentExecutionArn,
-      parentExecutionCumulusId: 3,
-    })
+      knex,
+    }),
+    { instanceOf: UnmetRequirementsError }
   );
 });
 
-test('shouldWriteExecutionToPostgres returns false if any referenced objects are missing', async (t) => {
+test('getWriteExecutionRequirements() throws UnmetRequirementsError if collection from message is not found in Postgres', async (t) => {
   const {
     cumulusMessage,
-    asyncOperationId,
     collectionNameVersion,
-    parentExecutionArn,
+    knex,
   } = t.context;
 
-  t.false(
-    await shouldWriteExecutionToPostgres({
+  await t.throwsAsync(
+    getWriteExecutionRequirements({
       cumulusMessage,
       messageCollectionNameVersion: collectionNameVersion,
       collectionCumulusId: undefined,
-    })
-  );
-  t.false(
-    await shouldWriteExecutionToPostgres({
-      cumulusMessage,
-      messageAsyncOperationId: asyncOperationId,
-      asyncOperationCumulusId: undefined,
-    })
-  );
-  t.false(
-    await shouldWriteExecutionToPostgres({
-      cumulusMessage,
-      messageParentExecutionArn: parentExecutionArn,
-      parentExecutionCumulusId: undefined,
-    })
+      knex,
+    }),
+    { instanceOf: UnmetRequirementsError }
   );
 });
 
-test.serial('shouldWriteExecutionToPostgres throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
+test('getWriteExecutionRequirements() throws UnmetRequirementsError if async operation from message is not found in Postgres', async (t) => {
+  const {
+    cumulusMessage,
+    asyncOperationId,
+    collectionNameVersion,
+    knex,
+  } = t.context;
+
+  cumulusMessage.cumulus_meta.asyncOperationId = asyncOperationId;
+
+  await t.throwsAsync(
+    getWriteExecutionRequirements({
+      cumulusMessage,
+      messageCollectionNameVersion: collectionNameVersion,
+      collectionCumulusId: 1,
+      knex,
+    }),
+    { instanceOf: UnmetRequirementsError }
+  );
+});
+
+test('getWriteExecutionRequirements() throws UnmetRequirementsError if parent execution from message is not found in Postgres', async (t) => {
+  const {
+    cumulusMessage,
+    collectionNameVersion,
+    parentExecutionArn,
+    knex,
+  } = t.context;
+
+  cumulusMessage.cumulus_meta.parentExecutionArn = parentExecutionArn;
+
+  await t.throwsAsync(
+    getWriteExecutionRequirements({
+      cumulusMessage,
+      messageCollectionNameVersion: collectionNameVersion,
+      collectionCumulusId: 1,
+      knex,
+    }),
+    { instanceOf: UnmetRequirementsError }
+  );
+});
+
+test('getWriteExecutionRequirements() sucessfully returns record IDs', async (t) => {
+  const {
+    cumulusMessage,
+    asyncOperationId,
+    collectionNameVersion,
+    parentExecutionArn,
+  } = t.context;
+
+  cumulusMessage.cumulus_meta.asyncOperationId = asyncOperationId;
+  cumulusMessage.cumulus_meta.parentExecutionArn = parentExecutionArn;
+
+  const fakeKnex = () => ({
+    where: (params) => ({
+      first: async () => {
+        if (params.id === asyncOperationId) {
+          return {
+            cumulus_id: 52,
+          };
+        }
+        if (params.arn === parentExecutionArn) {
+          return {
+            cumulus_id: 73,
+          };
+        }
+        return undefined;
+      },
+    }),
+  });
+
+  t.deepEqual(
+    await getWriteExecutionRequirements({
+      cumulusMessage,
+      messageCollectionNameVersion: collectionNameVersion,
+      collectionCumulusId: 1,
+      knex: fakeKnex,
+    }),
+    {
+      asyncOperationCumulusId: 52,
+      parentExecutionCumulusId: 73,
+    }
+  );
+});
+
+test.serial('getWriteExecutionRequirements() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
   const {
     knex,
     cumulusMessage,
+    collectionNameVersion,
     collectionCumulusId,
   } = t.context;
 
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
-  await t.throws(
-    () => shouldWriteExecutionToPostgres(cumulusMessage, collectionCumulusId, knex),
+  await t.throwsAsync(
+    getWriteExecutionRequirements({
+      cumulusMessage,
+      messageCollectionNameVersion: collectionNameVersion,
+      collectionCumulusId,
+      knex,
+    }),
     { instanceOf: MissingRequiredEnvVarError }
   );
 });
@@ -486,23 +551,6 @@ test('writeExecutionViaTransaction() will not allow a running status to replace 
     .first();
 
   t.is(record.status, 'completed');
-});
-
-test('writeExecution() throws error if execution write cannot be performed', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    collectionNameVersion,
-  } = t.context;
-
-  await t.throwsAsync(
-    writeExecution({
-      cumulusMessage,
-      knex,
-      // refer to a collection that doesn't exist in Postgres
-      messageCollectionNameVersion: collectionNameVersion,
-    })
-  );
 });
 
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
