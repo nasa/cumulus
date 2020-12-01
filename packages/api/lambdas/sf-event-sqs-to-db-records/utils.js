@@ -75,16 +75,16 @@ const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
   }
 };
 
-const getMessageCollectionCumulusId = async (messageCollectionNameVersion, knex) => {
+const getCollectionCumulusId = async (collectionNameVersion, knex) => {
   try {
-    if (!messageCollectionNameVersion) {
-      throw new Error(`Collection name/version is required for lookup, received ${messageCollectionNameVersion}`);
+    if (!collectionNameVersion) {
+      throw new Error(`Collection name/version is required for lookup, received ${collectionNameVersion}`);
     }
     const collection = await knex(tableNames.collections).where(
-      messageCollectionNameVersion
+      collectionNameVersion
     ).first();
     if (!isRecordDefined(collection)) {
-      throw new RecordDoesNotExist(`Could not find collection with params ${JSON.stringify(messageCollectionNameVersion)}`);
+      throw new RecordDoesNotExist(`Could not find collection with params ${JSON.stringify(collectionNameVersion)}`);
     }
     return collection.cumulus_id;
   } catch (error) {
@@ -119,6 +119,6 @@ module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
-  getMessageCollectionCumulusId,
+  getCollectionCumulusId,
   getMessageProviderCumulusId,
 };
