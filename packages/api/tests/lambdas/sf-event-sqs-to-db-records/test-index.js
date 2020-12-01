@@ -227,7 +227,11 @@ test.serial('writeRecords() only writes records to Dynamo if writeExecution thro
   // add reference in message to object that doesn't exist
   cumulusMessage.cumulus_meta.asyncOperationId = uuidv4();
 
-  await writeRecords(cumulusMessage, knex);
+  await writeRecords({
+    cumulusMessage,
+    knex,
+    granuleModel,
+  });
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await granuleModel.exists({ granuleId }));
@@ -264,7 +268,11 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
 
   delete cumulusMessage.meta.status;
 
-  await t.throwsAsync(writeRecords(cumulusMessage, knex));
+  await t.throwsAsync(writeRecords({
+    cumulusMessage,
+    knex,
+    granuleModel,
+  }));
 
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(await pdrModel.exists({ pdrName }));
@@ -287,7 +295,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   );
 });
 
-test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
+test.serial.only('writeRecords() writes records to Dynamo and RDS', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -299,7 +307,7 @@ test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
     granuleId,
   } = t.context;
 
-  await writeRecords(cumulusMessage, knex, granuleModel);
+  await writeRecords({ cumulusMessage, knex, granuleModel });
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await granuleModel.exists({ granuleId }));

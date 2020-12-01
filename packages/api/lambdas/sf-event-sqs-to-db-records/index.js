@@ -57,11 +57,11 @@ const writeRecordsToDynamoDb = async (cumulusMessage) => {
   return results;
 };
 
-const writeRecords = async (
+const writeRecords = async ({
   cumulusMessage,
   knex,
-  granuleModel = new Granule()
-) => {
+  granuleModel,
+}) => {
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const collectionCumulusId = await getCollectionCumulusId(
     messageCollectionNameVersion,
@@ -134,7 +134,7 @@ const handler = async (event) => {
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
     try {
-      return await writeRecords(cumulusMessage, knex);
+      return await writeRecords({ cumulusMessage, knex });
     } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);

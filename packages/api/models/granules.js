@@ -690,6 +690,18 @@ class Granule extends Manager {
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }
 
+  async describeGranuleExecution(executionArn) {
+    let executionDescription;
+    try {
+      executionDescription = await this.stepFunctionUtils.describeExecution({
+        executionArn,
+      });
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
+    }
+    return executionDescription;
+  }
+
   /**
    * Generate and store granule records from a Cumulus message.
    *
