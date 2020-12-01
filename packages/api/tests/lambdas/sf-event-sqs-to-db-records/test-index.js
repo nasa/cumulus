@@ -212,7 +212,7 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test.serial('writeRecords() only writes records to Dynamo if writeExecution throws an UnmetRequirementsError error', async (t) => {
+test('writeRecords() only writes records to Dynamo if writeExecution throws an UnmetRequirementsError error', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -295,7 +295,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   );
 });
 
-test.serial.only('writeRecords() writes records to Dynamo and RDS', async (t) => {
+test('writeRecords() writes records to Dynamo and RDS', async (t) => {
   const {
     cumulusMessage,
     executionModel,

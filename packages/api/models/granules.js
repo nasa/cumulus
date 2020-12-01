@@ -717,13 +717,7 @@ class Granule extends Manager {
 
     const executionArn = getMessageExecutionArn(cumulusMessage);
     const executionUrl = getExecutionUrlFromArn(executionArn);
-
-    let executionDescription;
-    try {
-      executionDescription = await this.stepFunctionUtils.describeExecution({ executionArn });
-    } catch (error) {
-      log.error(`Could not describe execution ${executionArn}`, error);
-    }
+    const executionDescription = await this.describeGranuleExecution(executionArn);
 
     return Promise.all(granules.map(
       (granule) =>

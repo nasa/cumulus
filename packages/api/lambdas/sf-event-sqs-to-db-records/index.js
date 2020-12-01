@@ -37,11 +37,12 @@ const {
   writeGranules,
 } = require('./write-granules');
 
-const writeRecordsToDynamoDb = async (cumulusMessage) => {
-  const executionModel = new Execution();
-  const pdrModel = new Pdr();
-  const granuleModel = new Granule();
-
+const writeRecordsToDynamoDb = async ({
+  cumulusMessage,
+  granuleModel = new Granule(),
+  executionModel = new Execution(),
+  pdrModel = new Pdr(),
+}) => {
   const results = await Promise.allSettled([
     executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
     pdrModel.storePdrFromCumulusMessage(cumulusMessage),
@@ -61,6 +62,8 @@ const writeRecords = async ({
   cumulusMessage,
   knex,
   granuleModel,
+  executionModel,
+  pdrModel,
 }) => {
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const collectionCumulusId = await getCollectionCumulusId(
@@ -85,7 +88,12 @@ const writeRecords = async ({
     // reference executions, so bail out to writing execution/PDR/granule
     // records to Dynamo.
     if (error instanceof UnmetRequirementsError) {
-      return writeRecordsToDynamoDb(cumulusMessage);
+      return writeRecordsToDynamoDb({
+        cumulusMessage,
+        granuleModel,
+        executionModel,
+        pdrModel,
+      });
     }
     throw error;
   }
