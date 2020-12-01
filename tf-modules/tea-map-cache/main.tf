@@ -3,6 +3,20 @@ terraform {
    aws = "~> 3.0,!= 3.14.0"
   }
 }
+
+data "aws_region" "current" {}
+
+resource "aws_vpc_endpoint" "config" {
+  count = !var.deploy_to_ngap && (var.vpc_id != null && length(var.lambda_subnet_ids) != 0) ? 1 : 0
+  vpc_id            = var.vpc_id
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.execute-api"
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids  = [aws_security_group.no_ingress_all_egress[0].id]
+  subnet_ids          = var.lambda_subnet_ids
+  tags                = var.tags
+}
+
 resource "aws_lambda_function" "tea_cache" {
   function_name    = "${var.prefix}-TeaCache"
   description      = "Bootstrap lambda to write tea cache file"

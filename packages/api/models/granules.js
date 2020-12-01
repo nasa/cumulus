@@ -395,6 +395,62 @@ class Granule extends Manager {
   }
 
   /**
+   * Returns the params to pass to GranulesSeachQueue
+   * either as an object/array or a joined expression
+   * @param {Object} searchParams - optional, search parameters
+   * @param {boolean} isQuery - optional, true if the params are for a query
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  getDynamoDbSearchParams(searchParams = {}, isQuery = true) {
+    const attributeNames = {};
+    const attributeValues = {};
+    const filterArray = [];
+    const keyConditionArray = [];
+
+    Object.entries(searchParams).forEach(([key, value]) => {
+      const field = key.includes('__') ? key.split('__').shift() : key;
+      attributeNames[`#${field}`] = field;
+
+      let expression;
+      if (key.endsWith('__from') || key.endsWith('__to')) {
+        const operation = key.endsWith('__from') ? '>=' : '<=';
+        attributeValues[`:${key}`] = value;
+        expression = `#${field} ${operation} :${key}`;
+      } else if (isArray(value)) {
+        const operation = 'IN';
+        const keyValues = [];
+        value.forEach((val, index) => {
+          attributeValues[`:${key}${index}`] = val;
+          keyValues.push(`:${key}${index}`);
+        });
+        expression = `#${field} ${operation} (${keyValues.join(', ')})`;
+      } else {
+        const operation = '=';
+        attributeValues[`:${key}`] = value;
+        if (!isQuery && (field === 'granuleId')) {
+          expression = `contains(#${field}, :${key})`;
+        } else {
+          expression = `#${field} ${operation} :${key}`;
+        }
+      }
+
+      if (isQuery && (field === 'granuleId')) {
+        keyConditionArray.push(expression);
+      } else {
+        filterArray.push(expression);
+      }
+    });
+
+    return {
+      attributeNames,
+      attributeValues,
+      filterArray,
+      filterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
+      keyConditionArray,
+    };
+  }
+
+  /**
    * return the queue of the granules for a given collection,
    * the items are ordered by granuleId
    *
@@ -427,41 +483,14 @@ class Granule extends Manager {
       throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in searchParams');
     }
 
-    const attributeNames = {};
-    const attributeValues = {};
-    const filterArray = [];
+    const {
+      attributeNames,
+      attributeValues,
+      filterExpression,
+      keyConditionArray,
+    } = this.getDynamoDbSearchParams(searchParams);
+
     const projectionArray = [];
-    const keyConditionArray = [];
-
-    Object.entries(searchParams).forEach(([key, value]) => {
-      const field = key.includes('__') ? key.split('__').shift() : key;
-      attributeNames[`#${field}`] = field;
-
-      let expression;
-      if (key.endsWith('__from') || key.endsWith('__to')) {
-        const operation = key.endsWith('__from') ? '>=' : '<=';
-        attributeValues[`:${key}`] = value;
-        expression = `#${field} ${operation} :${key}`;
-      } else if (isArray(value)) {
-        const operation = 'IN';
-        const keyValues = [];
-        value.forEach((val, index) => {
-          attributeValues[`:${key}${index}`] = val;
-          keyValues.push(`:${key}${index}`);
-        });
-        expression = `#${field} ${operation} (${keyValues.join(', ')})`;
-      } else {
-        const operation = '=';
-        attributeValues[`:${key}`] = value;
-        expression = `#${field} ${operation} :${key}`;
-      }
-
-      if (field === 'granuleId') {
-        keyConditionArray.push(expression);
-      } else {
-        filterArray.push(expression);
-      }
-    });
 
     fields.forEach((field) => {
       attributeNames[`#${field}`] = field;
@@ -479,13 +508,21 @@ class Granule extends Manager {
       ExpressionAttributeValues: attributeValues,
       KeyConditionExpression: keyConditionArray.join(' AND '),
       ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
-      FilterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
+      FilterExpression: filterExpression,
     };
 
     return new GranuleSearchQueue(removeNilProperties(params), 'query');
   }
 
-  granuleAttributeScan() {
+  /**
+   * return all granules filtered by given search params
+   *
+   * @param {Object} searchParams - optional, search parameters
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  granuleAttributeScan(searchParams) {
+    const { attributeValues, filterExpression } = this.getDynamoDbSearchParams(searchParams, false);
+
     const params = {
       TableName: this.tableName,
       ExpressionAttributeNames:
@@ -499,10 +536,12 @@ class Granule extends Manager {
         '#updatedAt': 'updatedAt',
         '#published': 'published',
       },
+      ExpressionAttributeValues: filterExpression ? attributeValues : undefined,
       ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
+      FilterExpression: filterExpression,
     };
 
-    return new GranuleSearchQueue(params);
+    return new GranuleSearchQueue(removeNilProperties(params));
   }
 
   /**

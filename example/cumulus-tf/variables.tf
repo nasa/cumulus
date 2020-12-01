@@ -25,8 +25,9 @@ variable "bucket_map_key" {
   default = null
 }
 
-variable "cumulus_message_adapter_lambda_layer_arn" {
-  type = string
+variable "cumulus_message_adapter_lambda_layer_version_arn" {
+  type        = string
+  description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
 }
 
 variable "cmr_oauth_provider" {
@@ -190,6 +191,12 @@ variable "ems_username" {
   default     = "cumulus"
 }
 
+variable "es_request_concurrency" {
+  type = number
+  default = 10
+  description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
+}
+
 variable "key_name" {
   type    = string
   default = null
@@ -224,12 +231,18 @@ variable "log_api_gateway_to_cloudwatch" {
 variable "log_destination_arn" {
   type        = string
   default     = null
-  description = "Remote kinesis/destination arn for delivering logs. Requires log_api_gateway_to_cloudwatch set to true."
+  description = "Remote kinesis/destination arn for delivering logs."
 }
 
 variable "archive_api_port" {
   type    = number
   default = null
+}
+
+variable "archive_api_url" {
+  type        = string
+  default     = null
+  description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
 
 variable "private_archive_api_gateway" {
