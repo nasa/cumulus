@@ -1,4 +1,6 @@
+const isNil = require('lodash/isNil');
 const semver = require('semver');
+
 const { envUtils } = require('@cumulus/common');
 const {
   tableNames,
@@ -42,7 +44,7 @@ const isFailedLookupError = (error) =>
 
 const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
   try {
-    if (!asyncOperationId) {
+    if (isNil(asyncOperationId)) {
       throw new InvalidArgument(`Async operation ID is required for lookup, received ${asyncOperationId}`);
     }
     return await getRecordCumulusId(
@@ -63,7 +65,7 @@ const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
 
 const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
   try {
-    if (!parentExecutionArn) {
+    if (isNil(parentExecutionArn)) {
       throw new InvalidArgument(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
     }
     return await getRecordCumulusId(
@@ -84,7 +86,7 @@ const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
 
 const getCollectionCumulusId = async (collectionNameVersion, knex) => {
   try {
-    if (!collectionNameVersion) {
+    if (isNil(collectionNameVersion)) {
       throw new InvalidArgument(`Collection name/version is required for lookup, received ${collectionNameVersion}`);
     }
     return await getRecordCumulusId(
@@ -104,7 +106,7 @@ const getCollectionCumulusId = async (collectionNameVersion, knex) => {
 const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
   try {
     const providerId = getMessageProviderId(cumulusMessage);
-    if (!providerId) {
+    if (isNil(providerId)) {
       throw new InvalidArgument('Could not find provider ID in message');
     }
     return await getRecordCumulusId(
