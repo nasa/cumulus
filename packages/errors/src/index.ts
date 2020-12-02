@@ -155,8 +155,6 @@ export const ValidationError = createErrorType('ValidationError');
 
 export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');
 
-export const UnmetRequirementsError = createErrorType('UnmetRequirementsError');
-
 export class PostgresValidationError extends ValidationError {
   detail: string | undefined;
   constructor(message: string) {
