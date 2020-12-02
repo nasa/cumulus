@@ -13,6 +13,9 @@ const {
   tableNames,
   doesRecordExist,
 } = require('@cumulus/db');
+const {
+  MissingRequiredEnvVarError,
+} = require('@cumulus/errors');
 const proxyquire = require('proxyquire');
 
 const { randomString } = require('@cumulus/common/test-utils');
@@ -212,7 +215,65 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('writeRecords() only writes records to Dynamo if writeExecution throws an UnmetRequirementsError error', async (t) => {
+test('writeRecords() only writes records to Dynamo if message comes from pre-RDS deployment', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionModel,
+    pdrModel,
+    granuleModel,
+    preRDSDeploymentVersion,
+    executionArn,
+    pdrName,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.cumulus_meta.cumulus_version = preRDSDeploymentVersion;
+
+  await writeRecords({
+    cumulusMessage,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await pdrModel.exists({ pdrName }));
+
+  t.false(
+    await doesRecordExist({
+      arn: executionArn,
+    }, knex, tableNames.executions)
+  );
+  t.false(
+    await doesRecordExist({
+      name: pdrName,
+    }, knex, tableNames.pdrs)
+  );
+  t.false(
+    await doesRecordExist({
+      granule_id: granuleId,
+    }, knex, tableNames.granules)
+  );
+});
+
+test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
+  delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
+  const {
+    cumulusMessage,
+    knex,
+  } = t.context;
+
+  await t.throwsAsync(
+    writeRecords({
+      cumulusMessage,
+      knex,
+    }),
+    { instanceOf: MissingRequiredEnvVarError }
+  );
+});
+
+test('writeRecords() only writes records to Dynamo if requirements to write execution to Postgres are not met', async (t) => {
   const {
     cumulusMessage,
     executionModel,

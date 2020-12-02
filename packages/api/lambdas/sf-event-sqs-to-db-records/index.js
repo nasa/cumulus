@@ -10,10 +10,15 @@ const log = require('@cumulus/common/log');
 const {
   getKnexClient,
 } = require('@cumulus/db');
-const { UnmetRequirementsError } = require('@cumulus/errors');
+const {
+  getMessageAsyncOperationId,
+} = require('@cumulus/message/AsyncOperations');
 const {
   getCollectionNameAndVersionFromMessage,
 } = require('@cumulus/message/Collections');
+const {
+  getMessageExecutionParentArn,
+} = require('@cumulus/message/Executions');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
@@ -22,10 +27,13 @@ const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecution
 const {
   getCollectionCumulusId,
   getMessageProviderCumulusId,
+  isPostRDSDeploymentExecution,
+  getAsyncOperationCumulusId,
+  getParentExecutionCumulusId,
 } = require('./utils');
 
 const {
-  getWriteExecutionRequirements,
+  shouldWriteExecutionToPostgres,
   writeExecution,
 } = require('./write-execution');
 
@@ -65,37 +73,55 @@ const writeRecords = async ({
   executionModel,
   pdrModel,
 }) => {
-  const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
-  const collectionCumulusId = await getCollectionCumulusId(
-    messageCollectionNameVersion,
-    knex
-  );
+  if (!isPostRDSDeploymentExecution(cumulusMessage)) {
+    return writeRecordsToDynamoDb({
+      cumulusMessage,
+      granuleModel,
+      executionModel,
+      pdrModel,
+    });
+  }
 
-  let asyncOperationCumulusId;
-  let parentExecutionCumulusId;
-  try {
-    (
-      { asyncOperationCumulusId, parentExecutionCumulusId } = await getWriteExecutionRequirements({
-        cumulusMessage,
-        messageCollectionNameVersion,
-        collectionCumulusId,
-        knex,
-      })
-    );
-  } catch (error) {
+  const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
+  const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
+  const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
+  const [
+    collectionCumulusId,
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+  ] = await Promise.all([
+    getCollectionCumulusId(
+      messageCollectionNameVersion,
+      knex
+    ),
+    getAsyncOperationCumulusId(
+      messageAsyncOperationId,
+      knex
+    ),
+    getParentExecutionCumulusId(
+      messageParentExecutionArn,
+      knex
+    ),
+  ]);
+
+  if (!shouldWriteExecutionToPostgres({
+    messageCollectionNameVersion,
+    collectionCumulusId,
+    messageAsyncOperationId,
+    asyncOperationCumulusId,
+    messageParentExecutionArn,
+    parentExecutionCumulusId,
+  })) {
     // If any requirements for writing executions to Postgres were not met,
     // then PDR/granules should not be written to Postgres either since they
     // reference executions, so bail out to writing execution/PDR/granule
     // records to Dynamo.
-    if (error instanceof UnmetRequirementsError) {
-      return writeRecordsToDynamoDb({
-        cumulusMessage,
-        granuleModel,
-        executionModel,
-        pdrModel,
-      });
-    }
-    throw error;
+    return writeRecordsToDynamoDb({
+      cumulusMessage,
+      granuleModel,
+      executionModel,
+      pdrModel,
+    });
   }
 
   const executionCumulusId = await writeExecution({

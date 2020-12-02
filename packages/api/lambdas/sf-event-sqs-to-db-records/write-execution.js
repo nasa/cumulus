@@ -3,13 +3,8 @@ const isNil = require('lodash/isNil');
 const {
   tableNames,
 } = require('@cumulus/db');
-const { UnmetRequirementsError } = require('@cumulus/errors');
-const {
-  getMessageAsyncOperationId,
-} = require('@cumulus/message/AsyncOperations');
 const {
   getMessageExecutionArn,
-  getMessageExecutionParentArn,
   getExecutionUrlFromArn,
   getMessageCumulusVersion,
   getMessageWorkflowTasks,
@@ -26,51 +21,24 @@ const {
 const { parseException } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 
-const {
-  isPostRDSDeploymentExecution,
-  getAsyncOperationCumulusId,
-  getParentExecutionCumulusId,
-} = require('./utils');
-
-const getWriteExecutionRequirements = async ({
-  cumulusMessage,
+const shouldWriteExecutionToPostgres = ({
   messageCollectionNameVersion,
   collectionCumulusId,
-  knex,
+  messageAsyncOperationId,
+  asyncOperationCumulusId,
+  messageParentExecutionArn,
+  parentExecutionCumulusId,
 }) => {
-  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-  if (!isExecutionPostDeployment) {
-    throw new UnmetRequirementsError('Workflow message was not started before RDS deployment');
-  }
+  const noMessageCollectionOrExists = isNil(messageCollectionNameVersion)
+    || !isNil(collectionCumulusId);
+  const noMessageAsyncOperationOrExists = isNil(messageAsyncOperationId)
+    || !isNil(asyncOperationCumulusId);
+  const noMessageParentExecutionOrExists = isNil(messageParentExecutionArn)
+    || !isNil(parentExecutionCumulusId);
 
-  if (!isNil(messageCollectionNameVersion) && isNil(collectionCumulusId)) {
-    throw new UnmetRequirementsError(
-      `Collection ${JSON.stringify(messageCollectionNameVersion)} found on message, but not in database`
-    );
-  }
-
-  const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
-  const asyncOperationCumulusId = await getAsyncOperationCumulusId(
-    messageAsyncOperationId,
-    knex
-  );
-  if (!isNil(messageAsyncOperationId) && isNil(asyncOperationCumulusId)) {
-    throw new UnmetRequirementsError(`Async operation id ${messageAsyncOperationId} found in message, but not in database`);
-  }
-
-  const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
-  const parentExecutionCumulusId = await getParentExecutionCumulusId(
-    messageParentExecutionArn,
-    knex
-  );
-  if (!isNil(messageParentExecutionArn) && isNil(parentExecutionCumulusId)) {
-    throw new UnmetRequirementsError(`Parent execution arn ${messageParentExecutionArn} found in message, but not in database`);
-  }
-
-  return {
-    asyncOperationCumulusId,
-    parentExecutionCumulusId,
-  };
+  return noMessageCollectionOrExists
+    && noMessageAsyncOperationOrExists
+    && noMessageParentExecutionOrExists;
 };
 
 const buildExecutionRecord = ({
@@ -182,7 +150,7 @@ const writeExecution = async ({
 
 module.exports = {
   buildExecutionRecord,
-  getWriteExecutionRequirements,
+  shouldWriteExecutionToPostgres,
   writeRunningExecutionViaTransaction,
   writeExecutionViaTransaction,
   writeExecution,
