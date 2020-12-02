@@ -115,7 +115,7 @@ class Granule extends Manager {
     const result = cloneDeep(await super.batchGet(...args));
 
     result.Responses[this.tableName] = await Promise.all(
-      result.Responses[this.tableName].map(translateGranule)
+      result.Responses[this.tableName].map((response) => translateGranule(response))
     );
 
     return result;
@@ -127,7 +127,9 @@ class Granule extends Manager {
     if (scanResponse.Items) {
       return {
         ...scanResponse,
-        Items: await Promise.all(scanResponse.Items.map(translateGranule)),
+        Items: await Promise.all(scanResponse.Items.map(
+          (response) => translateGranule(response)
+        )),
       };
     }
 
