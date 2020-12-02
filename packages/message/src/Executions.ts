@@ -160,7 +160,7 @@ export const getMessageCumulusVersion = (
 ): string | undefined => message.cumulus_meta?.cumulus_version;
 
 /**
- * Get the workflow tasks a workflow message, if any.
+ * Get the workflow tasks in a workflow message, if any.
  *
  * @param {MessageWithOptionalWorkflowInfo} message - A workflow message object
  * @returns {Object|undefined} A map of the workflow tasks
