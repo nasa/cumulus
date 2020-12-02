@@ -7,15 +7,15 @@ const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
   getMessageCumulusVersion,
-  getMessageWorkflowTasks,
-  getMessageWorkflowName,
-  getMessageWorkflowStartTime,
-  getMessageWorkflowStopTime,
   getMessageExecutionOriginalPayload,
   getMessageExecutionFinalPayload,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
+  getMessageWorkflowTasks,
+  getMessageWorkflowName,
+  getMessageWorkflowStartTime,
+  getMessageWorkflowStopTime,
 } = require('@cumulus/message/workflows');
 
 const { parseException } = require('../../lib/utils');

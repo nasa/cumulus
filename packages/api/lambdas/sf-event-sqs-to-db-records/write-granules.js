@@ -2,7 +2,6 @@
 
 const AggregateError = require('aggregate-error');
 
-const { describeExecution } = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const {
   tableNames,

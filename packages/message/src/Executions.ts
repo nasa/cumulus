@@ -15,16 +15,6 @@ import { Message } from '@cumulus/types';
 
 import { getMetaStatus } from './workflows';
 
-type MessageWithOptionalWorkflowInfo = Message.CumulusMessage & {
-  cumulus_meta: {
-    workflow_start_time?: number
-    workflow_stop_time?: number
-  }
-  meta: {
-    workflow_tasks?: object
-  }
-};
-
 /**
  * Build execution ARN from a state machine ARN and execution name
  *
@@ -158,54 +148,6 @@ export const getMessageExecutionParentArn = (
 export const getMessageCumulusVersion = (
   message: Message.CumulusMessage
 ): string | undefined => message.cumulus_meta?.cumulus_version;
-
-/**
- * Get the workflow tasks in a workflow message, if any.
- *
- * @param {MessageWithOptionalWorkflowInfo} message - A workflow message object
- * @returns {Object|undefined} A map of the workflow tasks
- *
- * @alias module:Executions
- */
-export const getMessageWorkflowTasks = (
-  message: MessageWithOptionalWorkflowInfo
-): object | undefined => message.meta?.workflow_tasks;
-
-/**
- * Get the workflow start time, if any.
- *
- * @param {MessageWithOptionalWorkflowInfo} message - A workflow message object
- * @returns {number|undefined} The workflow start time, in milliseconds
- *
- * @alias module:Executions
- */
-export const getMessageWorkflowStartTime = (
-  message: MessageWithOptionalWorkflowInfo
-): number | undefined => message.cumulus_meta?.workflow_start_time;
-
-/**
- * Get the workflow stop time, if any.
- *
- * @param {MessageWithOptionalWorkflowInfo} message - A workflow message object
- * @returns {number|undefined} The workflow stop time, in milliseconds
- *
- * @alias module:Executions
- */
-export const getMessageWorkflowStopTime = (
-  message: MessageWithOptionalWorkflowInfo
-): number | undefined => message.cumulus_meta?.workflow_stop_time;
-
-/**
- * Get the workflow name, if any.
- *
- * @param {Message.CumulusMessage} message - A workflow message object
- * @returns {string|undefined} The workflow name
- *
- * @alias module:Executions
- */
-export const getMessageWorkflowName = (
-  message: Message.CumulusMessage
-): string | undefined => message.meta?.workflow_name;
 
 /**
  * Get the workflow original payload, if any.

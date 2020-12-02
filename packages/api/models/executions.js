@@ -12,15 +12,15 @@ const {
   getMessageExecutionParentArn,
   getMessageCumulusVersion,
   getExecutionUrlFromArn,
-  getMessageWorkflowTasks,
-  getMessageWorkflowStartTime,
-  getMessageWorkflowStopTime,
-  getMessageWorkflowName,
   getMessageExecutionOriginalPayload,
   getMessageExecutionFinalPayload,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
+  getMessageWorkflowTasks,
+  getMessageWorkflowStartTime,
+  getMessageWorkflowStopTime,
+  getMessageWorkflowName,
 } = require('@cumulus/message/workflows');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');

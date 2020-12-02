@@ -10,12 +10,8 @@ const {
   getStateMachineArnFromExecutionArn,
   getMessageExecutionParentArn,
   getMessageCumulusVersion,
-  getMessageWorkflowTasks,
-  getMessageWorkflowStartTime,
-  getMessageWorkflowStopTime,
-  getMessageWorkflowName,
   getMessageExecutionOriginalPayload,
-  getMessageExecutionFinalPayload
+  getMessageExecutionFinalPayload,
 } = require('../Executions');
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
@@ -117,86 +113,6 @@ test('getMessageCumulusVersion returns undefined if there is no cumulus version'
     cumulus_meta: {},
   });
   t.is(cumulusVersion, undefined);
-});
-
-test('getMessageWorkflowTasks returns correct map of workflow tasks', (t) => {
-  const tasks = {
-    task1: {
-      foo: 'bar',
-    },
-  };
-  t.deepEqual(
-    getMessageWorkflowTasks({
-      meta: {
-        workflow_tasks: tasks,
-      },
-    }),
-    tasks
-  );
-});
-
-test('getMessageWorkflowTasks returns undefined if there is no task information on the message', (t) => {
-  t.is(
-    getMessageWorkflowTasks({}),
-    undefined
-  );
-});
-
-test('getMessageWorkflowStartTime returns correct value', (t) => {
-  const time = Date.now();
-  t.is(
-    getMessageWorkflowStartTime({
-      cumulus_meta: {
-        workflow_start_time: time,
-      },
-    }),
-    time
-  );
-});
-
-test('getMessageWorkflowStartTime returns undefined if there is no start time', (t) => {
-  t.is(
-    getMessageWorkflowStartTime({}),
-    undefined
-  );
-});
-
-test('getMessageWorkflowStopTime returns correct value', (t) => {
-  const time = Date.now();
-  t.is(
-    getMessageWorkflowStopTime({
-      cumulus_meta: {
-        workflow_stop_time: time,
-      },
-    }),
-    time
-  );
-});
-
-test('getMessageWorkflowStopTime returns undefined if there is no stop time', (t) => {
-  t.is(
-    getMessageWorkflowStopTime({}),
-    undefined
-  );
-});
-
-test('getMessageWorkflowName returns correct value', (t) => {
-  const workflowName = 'fake-workflow';
-  t.is(
-    getMessageWorkflowName({
-      meta: {
-        workflow_name: workflowName,
-      },
-    }),
-    workflowName
-  );
-});
-
-test('getMessageWorkflowName returns undefined if there is no workflow name', (t) => {
-  t.is(
-    getMessageWorkflowName({}),
-    undefined
-  );
 });
 
 test('getMessageExecutionOriginalPayload returns original payload when status is running', (t) => {
