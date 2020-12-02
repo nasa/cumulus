@@ -44,6 +44,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2257**
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
+- **CUMULUS-2192**
+  - Added helper functions:
+    - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
+    - `@cumulus/message/Executions/getMessageExecutionFinalPayload`
+    - `@cumulus/message/workflows/getMessageWorkflowTasks`
+    - `@cumulus/message/workflows/getMessageWorkflowStartTime`
+    - `@cumulus/message/workflows/getMessageWorkflowStopTime`
+    - `@cumulus/message/workflows/getMessageWorkflowName`
 
 ### Changed
 
