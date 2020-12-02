@@ -2,11 +2,12 @@ const semver = require('semver');
 const { envUtils } = require('@cumulus/common');
 const {
   tableNames,
-  isRecordDefined,
+  getRecordCumulusId,
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
   RecordDoesNotExist,
+  InvalidArgument,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const {
@@ -35,63 +36,68 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
   }
 };
 
+const isFailedLookupError = (error) =>
+  error instanceof InvalidArgument
+  || error instanceof RecordDoesNotExist;
+
 const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
   try {
     if (!asyncOperationId) {
-      throw new Error(`Async operation ID is required for lookup, received ${asyncOperationId}`);
+      throw new InvalidArgument(`Async operation ID is required for lookup, received ${asyncOperationId}`);
     }
-    const asyncOperation = await knex(tableNames.asyncOperations).where({
-      id: asyncOperationId,
-    }).first();
-    if (!isRecordDefined(asyncOperation)) {
-      throw new RecordDoesNotExist(`Could not find async operation with id ${asyncOperationId}`);
-    }
-    return asyncOperation.cumulus_id;
+    return await getRecordCumulusId(
+      {
+        id: asyncOperationId,
+      },
+      tableNames.asyncOperations,
+      knex
+    );
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (isFailedLookupError(error)) {
       logger.info(error);
+      return undefined;
     }
-    return undefined;
+    throw error;
   }
 };
 
 const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
   try {
     if (!parentExecutionArn) {
-      throw new Error(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
+      throw new InvalidArgument(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
     }
-    const parentExecution = await knex(tableNames.executions).where({
-      arn: parentExecutionArn,
-    }).first();
-    if (!isRecordDefined(parentExecution)) {
-      throw new RecordDoesNotExist(`Could not find execution with arn ${parentExecutionArn}`);
-    }
-    return parentExecution.cumulus_id;
+    return await getRecordCumulusId(
+      {
+        arn: parentExecutionArn,
+      },
+      tableNames.executions,
+      knex
+    );
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (isFailedLookupError(error)) {
       logger.info(error);
+      return undefined;
     }
-    return undefined;
+    throw error;
   }
 };
 
 const getCollectionCumulusId = async (collectionNameVersion, knex) => {
   try {
     if (!collectionNameVersion) {
-      throw new Error(`Collection name/version is required for lookup, received ${collectionNameVersion}`);
+      throw new InvalidArgument(`Collection name/version is required for lookup, received ${collectionNameVersion}`);
     }
-    const collection = await knex(tableNames.collections).where(
-      collectionNameVersion
-    ).first();
-    if (!isRecordDefined(collection)) {
-      throw new RecordDoesNotExist(`Could not find collection with params ${JSON.stringify(collectionNameVersion)}`);
-    }
-    return collection.cumulus_id;
+    return await getRecordCumulusId(
+      collectionNameVersion,
+      tableNames.collections,
+      knex
+    );
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (isFailedLookupError(error)) {
       logger.info(error);
+      return undefined;
     }
-    return undefined;
+    throw error;
   }
 };
 
@@ -99,19 +105,21 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
   try {
     const providerId = getMessageProviderId(cumulusMessage);
     if (!providerId) {
-      throw new Error('Could not find provider ID in message');
+      throw new InvalidArgument('Could not find provider ID in message');
     }
-    const searchParams = {
-      name: getMessageProviderId(cumulusMessage),
-    };
-    const provider = await knex(tableNames.providers).where(searchParams).first();
-    if (!isRecordDefined(provider)) {
-      throw new Error(`Could not find provider with params ${JSON.stringify(searchParams)}`);
-    }
-    return provider.cumulus_id;
+    return await getRecordCumulusId(
+      {
+        name: getMessageProviderId(cumulusMessage),
+      },
+      tableNames.providers,
+      knex
+    );
   } catch (error) {
-    logger.error(error);
-    return undefined;
+    if (isFailedLookupError(error)) {
+      logger.info(error);
+      return undefined;
+    }
+    throw error;
   }
 };
 

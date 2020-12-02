@@ -5,12 +5,38 @@ const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
 
 const {
+  localStackConnectionEnv,
+  getKnexClient,
+  tableNames,
+  doesRecordExist,
+} = require('@cumulus/db');
+
+const { migrationDir } = require('../../../../../lambdas/db-migration');
+
+const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/utils');
+
+test.before(async (t) => {
+  t.context.testDbName = `utils_${cryptoRandomString({ length: 10 })}`;
+
+  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
+  await t.context.knexAdmin.raw(`create database "${t.context.testDbName}";`);
+  await t.context.knexAdmin.raw(`grant all privileges on database "${t.context.testDbName}" to "${localStackConnectionEnv.PG_USER}"`);
+
+  t.context.knex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: t.context.testDbName,
+      migrationDir,
+    },
+  });
+  await t.context.knex.migrate.latest();
+});
 
 test.beforeEach((t) => {
   t.context.rdsDeploymentVersion = '3.0.0';
@@ -39,6 +65,12 @@ test.beforeEach((t) => {
       provider: t.context.provider,
     },
   };
+});
+
+test.after.always(async (t) => {
+  await t.context.knex.destroy();
+  await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
+  await t.context.knexAdmin.destroy();
 });
 
 test('isPostRDSDeploymentExecution correctly returns true if Cumulus version is >= RDS deployment version', (t) => {
@@ -81,15 +113,17 @@ test('getAsyncOperationCumulusId returns correct async operation cumulus_id', as
   const { asyncOperation } = t.context;
 
   const fakeKnex = () => ({
-    where: (params) => ({
-      first: async () => {
-        if (params.id === asyncOperation.id) {
-          return {
-            cumulus_id: 7,
-          };
-        }
-        return undefined;
-      },
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.id === asyncOperation.id) {
+            return {
+              cumulus_id: 7,
+            };
+          }
+          return undefined;
+        },
+      }),
     }),
   });
 
@@ -106,7 +140,7 @@ test('getAsyncOperationCumulusId returns undefined if no async operation ID is p
 
 test('getAsyncOperationCumulusId returns undefined if async operation cannot be found', async (t) => {
   const { knex } = t.context;
-  const asyncOperationId = 'fake-id';
+  const asyncOperationId = uuidv4();
   t.is(await getAsyncOperationCumulusId(asyncOperationId, knex), undefined);
 });
 
@@ -114,15 +148,17 @@ test('getParentExecutionCumulusId returns correct parent execution cumulus_id', 
   const { parentExecutionArn } = t.context;
 
   const fakeKnex = () => ({
-    where: (params) => ({
-      first: async () => {
-        if (params.arn === parentExecutionArn) {
-          return {
-            cumulus_id: 9,
-          };
-        }
-        return undefined;
-      },
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.arn === parentExecutionArn) {
+            return {
+              cumulus_id: 9,
+            };
+          }
+          return undefined;
+        },
+      }),
     }),
   });
 
@@ -147,16 +183,18 @@ test('getCollectionCumulusId returns correct collection cumulus_id', async (t) =
   const { collection } = t.context;
 
   const fakeKnex = () => ({
-    where: (params) => ({
-      first: async () => {
-        if (params.name === collection.name
-            && params.version === collection.version) {
-          return {
-            cumulus_id: 5,
-          };
-        }
-        return undefined;
-      },
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.name === collection.name
+              && params.version === collection.version) {
+            return {
+              cumulus_id: 5,
+            };
+          }
+          return undefined;
+        },
+      }),
     }),
   });
 
@@ -181,15 +219,17 @@ test('getMessageProviderCumulusId returns cumulus_id of provider in message', as
   const { cumulusMessage, provider } = t.context;
 
   const fakeKnex = () => ({
-    where: (params) => ({
-      first: async () => {
-        if (params.name === provider.id) {
-          return {
-            cumulus_id: 234,
-          };
-        }
-        return undefined;
-      },
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.name === provider.id) {
+            return {
+              cumulus_id: 234,
+            };
+          }
+          return undefined;
+        },
+      }),
     }),
   });
 
