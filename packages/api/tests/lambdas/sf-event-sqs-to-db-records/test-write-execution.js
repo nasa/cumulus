@@ -277,7 +277,13 @@ test('writeRunningExecutionViaTransaction only updates allowed fields on conflic
 });
 
 test('writeExecutionViaTransaction() writes record with foreign key references', async (t) => {
-  const { executionArn, cumulusMessage, knex } = t.context;
+  const {
+    collectionNameVersion,
+    parentExecutionArn,
+    executionArn,
+    cumulusMessage,
+    knex,
+  } = t.context;
 
   const asyncOperation = {
     id: uuidv4(),
@@ -286,16 +292,38 @@ test('writeExecutionViaTransaction() writes record with foreign key references',
     status: 'RUNNING',
   };
   cumulusMessage.cumulus_meta.asyncOperationId = asyncOperation.id;
-
-  const asyncOperationResult = await knex(tableNames.asyncOperations)
+  const asyncOperationInsertResult = await knex(tableNames.asyncOperations)
     .insert(asyncOperation)
+    .returning('cumulus_id');
+
+  const collection = {
+    ...collectionNameVersion,
+    sample_file_name: 'file.txt',
+    granule_id_validation_regex: '*',
+    granule_id_extraction_regex: '*',
+    files: [],
+  };
+  cumulusMessage.cumulus_meta.collection = collection;
+  const collectionInsertResult = await knex(tableNames.collections)
+    .insert(collection)
+    .returning('cumulus_id');
+
+  const parentExecution = {
+    arn: parentExecutionArn,
+    status: 'completed',
+  };
+  cumulusMessage.cumulus_meta.parentExecutionArn = parentExecution;
+  const parentExecutionInsertResult = await knex(tableNames.executions)
+    .insert(parentExecution)
     .returning('cumulus_id');
 
   await knex.transaction(
     (trx) =>
       writeExecutionViaTransaction({
         cumulusMessage,
-        asyncOperationCumulusId: asyncOperationResult[0],
+        asyncOperationCumulusId: asyncOperationInsertResult[0],
+        collectionCumulusId: collectionInsertResult[0],
+        parentExecutionCumulusId: parentExecutionInsertResult[0],
         trx,
       })
   );
@@ -304,9 +332,9 @@ test('writeExecutionViaTransaction() writes record with foreign key references',
     .where({ arn: executionArn })
     .first();
 
-  // Do I need to test that all the foreign key writes are successful?
-  // parent execution, collection?
-  t.is(record.async_operation_cumulus_id, asyncOperationResult[0]);
+  t.is(record.async_operation_cumulus_id, asyncOperationInsertResult[0]);
+  t.is(record.collection_cumulus_id, collectionInsertResult[0]);
+  t.is(record.parent_cumulus_id, parentExecutionInsertResult[0]);
 });
 
 test('writeExecutionViaTransaction() can be used to create a new running execution', async (t) => {
