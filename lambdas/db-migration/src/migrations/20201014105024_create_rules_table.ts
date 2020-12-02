@@ -16,13 +16,11 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .integer('collection_cumulus_id')
       .references('cumulus_id')
-      .inTable('collections')
-      .notNullable();
+      .inTable('collections');
     table
       .integer('provider_cumulus_id')
       .references('cumulus_id')
-      .inTable('providers')
-      .notNullable();
+      .inTable('providers');
     table
       .enum('type', ['onetime', 'scheduled', 'sns', 'kinesis', 'sqs'])
       .comment(
@@ -45,6 +43,9 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('log_event_arn')
       .comment('For kinesis rules: ARN of event source mapping between Kinesis stream and inbound event logger Lambda');
+    table
+      .text('execution_name_prefix')
+      .comment('Optional Execution name prefix');
     table
       .jsonb('payload')
       .comment('Optional input payload to use for onetime and scheduled workflows');
