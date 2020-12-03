@@ -2,11 +2,12 @@
   "docs": {
     "About Cumulus": [
       "cumulus-docs-readme",
+      "getting-started",
       "architecture",
       "interfaces",
-      "getting-started",
       "helpful-tips",
       "glossary",
+      "faqs",
       "team"
     ],
     "Overviews": [
