@@ -150,15 +150,14 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
 
   # Thin Egress App settings
-  # must match stack_name variable for thin-egress-app module
-  tea_stack_name = local.tea_stack_name
   # must match stage_name variable for thin-egress-app module
   tea_api_gateway_stage = local.tea_stage_name
 
-  tea_rest_api_id = module.thin_egress_app.rest_api.id
+  tea_rest_api_id               = module.thin_egress_app.rest_api.id
   tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
-  tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
-  tea_external_api_endpoint = module.thin_egress_app.api_endpoint
+  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
+  tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
+  tea_egress_lambda_name        = module.thin_egress_app.egress_lambda_name
 
   log_destination_arn = var.log_destination_arn
 
@@ -201,7 +200,7 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
 }
 
 module "thin_egress_app" {
-  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.88.zip"
+  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.100.zip"
 
   auth_base_url              = "https://uat.urs.earthdata.nasa.gov"
   bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.id

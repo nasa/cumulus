@@ -5,7 +5,7 @@ terraform {
 }
 
 locals {
-  lambda_log_group_name  = "/aws/lambda/${var.tea_stack_name}-EgressLambda"
+  lambda_log_group_name  = var.tea_egress_lambda_name != null ? "/aws/lambda/${var.tea_egress_lambda_name}" : null
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 
   lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
@@ -243,7 +243,7 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 
 # Egress Lambda Log Group
 resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
-  count             = var.log_destination_arn == null ? 0 : 1
+  count             = (var.tea_egress_lambda_name != null && var.log_destination_arn != null) ? 1 : 0
   name              = local.lambda_log_group_name
   retention_in_days = 30
   tags              = var.tags
@@ -251,8 +251,8 @@ resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
 
 # Egress Lambda Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
+  count           = (var.tea_egress_lambda_name != null && var.log_destination_arn != null) ? 1 : 0
   depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group]
-  count           = var.log_destination_arn == null ? 0 : 1
   name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
   distribution    = "ByLogStream"

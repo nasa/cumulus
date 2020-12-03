@@ -2,11 +2,11 @@ module "distribution" {
   source = "../distribution"
 
   tea_api_gateway_stage         = var.tea_api_gateway_stage
+  tea_egress_lambda_name        = var.tea_egress_lambda_name
   tea_external_api_endpoint     = var.tea_external_api_endpoint
   tea_internal_api_endpoint     = var.tea_internal_api_endpoint
   tea_rest_api_id               = var.tea_rest_api_id
   tea_rest_api_root_resource_id = var.tea_rest_api_root_resource_id
-  tea_stack_name                = var.tea_stack_name
 
   deploy_s3_credentials_endpoint                 = var.deploy_distribution_s3_credentials_endpoint
   lambda_processing_role_arn                     = aws_iam_role.lambda_processing.arn
