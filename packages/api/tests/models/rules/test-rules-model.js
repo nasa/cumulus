@@ -124,10 +124,7 @@ test.beforeEach(async (t) => {
       status: 'completed',
     },
     payload: {
-      rules: [
-        { ...t.context.onetimeRule, createdAt: Date.now(), updatedAt: Date.now() },
-        { ...t.context.kinesisRule, createdAt: Date.now(), updatedAt: Date.now() },
-      ],
+      rules: [],
     },
   };
 });
@@ -682,17 +679,39 @@ test('creating SQS rule fails if there is no redrive policy on the queue', async
   );
 });
 
-test('storeRulesFromCumulusMessage() stores granule record', async (t) => {
+test('storeRulesFromCumulusMessage() stores rule record', async (t) => {
   const { cumulusMessage, onetimeRule, kinesisRule } = t.context;
-  const rule1 = await rulesModel.create(onetimeRule);
-  const rule2 = await rulesModel.create(kinesisRule);
+
+  cumulusMessage.payload.rules = [
+    { ...onetimeRule, createdAt: Date.now(), updatedAt: Date.now() },
+    { ...kinesisRule, createdAt: Date.now(), updatedAt: Date.now() },
+  ];
 
   await rulesModel.storeRulesFromCumulusMessage(cumulusMessage);
 
   t.true(await rulesModel.exists({ name: kinesisRule.name }));
   t.true(await rulesModel.exists({ name: onetimeRule.name }));
+});
 
-  // delete rule
-  await rulesModel.delete(rule1);
-  await rulesModel.delete(rule2);
+test('storeRulesFromCumulusMessage() does not store a rule record without a rule', async (t) => {
+  const { cumulusMessage, onetimeRule } = t.context;
+
+  onetimeRule.rule = undefined;
+  cumulusMessage.payload.rules = [
+    { ...onetimeRule, createdAt: Date.now(), updatedAt: Date.now() },
+  ];
+
+  await rulesModel.storeRulesFromCumulusMessage(cumulusMessage);
+  t.false(await rulesModel.exists({ name: onetimeRule.name }));
+});
+
+test('storeRuleFromCumulusMessage() throws an error for a rule record without a name', async (t) => {
+  const { onetimeRule } = t.context;
+
+  delete onetimeRule.name;
+  const rule = { ...onetimeRule, createdAt: Date.now(), updatedAt: Date.now() };
+  await t.throwsAsync(
+    rulesModel.storeRuleFromCumulusMessage(rule),
+    { name: 'SchemaValidationError' }
+  );
 });

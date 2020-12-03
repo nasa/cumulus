@@ -580,12 +580,28 @@ class Rule extends Manager {
   }
 
   /**
+   * Store rule record
+   * @param {Object} rule  - A rule record
+   * @returns {Promise}
+   */
+  async storeRuleRecord(rule) {
+    // Check that record is valid before updating
+    await this.constructor.recordIsValid(rule, this.schema, this.removeAdditional);
+
+    const updateParams = this._buildDocClientUpdateParams({
+      item: rule,
+      itemKey: { name: rule.name },
+    });
+    return this.dynamodbDocClient.update(updateParams).promise();
+  }
+
+  /**
    * Generate an rule record from a Cumulus message.
    *
    * @param {Object} rule - A rule
    * @returns {Object} A rule record
    */
-  static generateRuleRecord(rule) {
+  async generateRuleRecord(rule) {
     const now = Date.now();
 
     const record = {
@@ -618,9 +634,8 @@ class Rule extends Manager {
   async storeRuleFromCumulusMessage({
     rule,
   }) {
-    const ruleRecord = await Rule.generateRuleRecord(rule);
-    const result = this.update(ruleRecord, ruleRecord);
-    return result;
+    const ruleRecord = await this.generateRuleRecord(rule);
+    return this.storeRuleRecord(ruleRecord);
   }
 
   /**
