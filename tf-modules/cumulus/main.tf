@@ -6,6 +6,7 @@ terraform {
 
 locals {
   all_bucket_names       = [for k, v in var.buckets : v.name]
+  all_non_system_buckets = [for k, v in var.buckets : v.name if v.type != "internal"]
   private_bucket_names   = [for k, v in var.buckets : v.name if v.type == "private"]
   protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
