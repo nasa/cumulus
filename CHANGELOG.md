@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2092**
+  - Add documentation for Granule Not Found Reports
+
 ## [v4.0.0] 2020-11-20
 
 ### Migration notes
