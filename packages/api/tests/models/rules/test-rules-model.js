@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
+const cryptoRandomString = require('crypto-random-string');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -11,7 +12,6 @@ const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const S3 = require('@cumulus/aws-client/S3');
 const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
@@ -679,6 +679,70 @@ test('creating SQS rule fails if there is no redrive policy on the queue', async
   );
 });
 
+test('storeRuleFromCumulusMessage() throws an error for a rule record without a name', async (t) => {
+  const rule = {
+    name: undefined,
+    workflow,
+    provider: 'my-provider',
+    collection: {
+      name: 'my-collection-name',
+      version: 'my-collection-version',
+    },
+    rule: {
+      type: 'onetime',
+    },
+    state: 'ENABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await t.throwsAsync(
+    rulesModel.storeRuleFromCumulusMessage({ rule }),
+    { name: 'SchemaValidationError' }
+  );
+});
+
+test('storeRuleFromCumulusMessage() throws an error for a rule record without a rule', async (t) => {
+  const rule = {
+    name: cryptoRandomString({ length: 10 }),
+    workflow,
+    provider: 'my-provider',
+    collection: {
+      name: 'my-collection-name',
+      version: 'my-collection-version',
+    },
+    rule: undefined,
+    state: 'ENABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await t.throwsAsync(
+    rulesModel.storeRuleFromCumulusMessage({ rule }),
+    { name: 'SchemaValidationError' }
+  );
+});
+
+test('storeRuleFromCumulusMessage() correctly stores rule record', async (t) => {
+  const rule = {
+    name: cryptoRandomString({ length: 10 }),
+    workflow,
+    provider: randomString(),
+    collection: {
+      name: randomString(),
+      version: 'my-collection-version',
+    },
+    rule: {
+      type: 'onetime',
+    },
+    state: 'ENABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  await rulesModel.storeRuleFromCumulusMessage({ rule });
+  t.true(await rulesModel.exists({ name: rule.name }));
+});
+
 test('storeRulesFromCumulusMessage() stores rule record', async (t) => {
   const { cumulusMessage, onetimeRule, kinesisRule } = t.context;
 
@@ -705,13 +769,17 @@ test('storeRulesFromCumulusMessage() does not store a rule record without a rule
   t.false(await rulesModel.exists({ name: onetimeRule.name }));
 });
 
-test('storeRuleFromCumulusMessage() throws an error for a rule record without a name', async (t) => {
-  const { onetimeRule } = t.context;
+test('storeRulesFromCumulusMessage() handles a valid and invalid rule and does not insert the invalid rule', async (t) => {
+  const { cumulusMessage, onetimeRule, kinesisRule } = t.context;
 
-  delete onetimeRule.name;
-  const rule = { ...onetimeRule, createdAt: Date.now(), updatedAt: Date.now() };
-  await t.throwsAsync(
-    rulesModel.storeRuleFromCumulusMessage(rule),
-    { name: 'SchemaValidationError' }
-  );
+  kinesisRule.rule = undefined;
+  cumulusMessage.payload.rules = [
+    { ...onetimeRule, createdAt: Date.now(), updatedAt: Date.now() },
+    { ...kinesisRule, createdAt: Date.now(), updatedAt: Date.now() },
+  ];
+
+  await rulesModel.storeRulesFromCumulusMessage(cumulusMessage);
+
+  t.false(await rulesModel.exists({ name: kinesisRule.name }));
+  t.true(await rulesModel.exists({ name: onetimeRule.name }));
 });
