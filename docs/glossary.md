@@ -71,7 +71,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   Cumulus Collections are logical sets of data objects of the same data type and version.
 
-  For more information, see [cookbook reference page](data-cookbooks/setup.md#collections).
+  For more information, see [cookbook reference page](configuration/data-management-types#collections).
 
 ### Cumulus Message Adapter (CMA)
 

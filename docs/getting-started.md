@@ -36,7 +36,7 @@ In Cumulus, we have the following types of data that you can create and manage:
 * Executions
 * Reports 
 
-For details on how to create or manage data types go to [Data Management Types](../configuration/data-management-types).
+For details on how to create or manage data types go to [Data Management Types](configuration/data-management-types).
 
 ---
 
