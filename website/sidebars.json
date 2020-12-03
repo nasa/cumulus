@@ -55,7 +55,7 @@
       "features/dead_letter_queues",
       "features/ems_reporting",
       "features/execution_payload_retention",
-      "features/inventory_reports",
+      "features/reports",
       "features/lambda_versioning",
       "features/ancillary_metadata",
       "features/distribution-metrics",
