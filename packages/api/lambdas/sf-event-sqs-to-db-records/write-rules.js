@@ -14,15 +14,11 @@ const Rule = require('../../models/rules');
 
 const writeRuleViaTransaction = async ({
   rule,
-  collectionCumulusId,
-  providerCumulusId,
   trx,
 }) =>
   trx(tableNames.rules)
     .insert({
       name: rule.name,
-      collection_cumulus_id: collectionCumulusId,
-      provider_cumulus_id: providerCumulusId,
     });
 
 /**
@@ -31,11 +27,7 @@ const writeRuleViaTransaction = async ({
  * @param {Object} params
  * @param {Object} params.rule - An API Rule object
  * @param {Object} params.cumulusMessage - A workflow message
- * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with Postgres database
- * @param {string} [params.providerCumulusId]
- *   Cumulus ID for provider referenced in workflow message, if any
  * @param {Object} [params.ruleModel]
  *   Optional override for the rule model writing to DynamoDB
  *
@@ -44,16 +36,12 @@ const writeRuleViaTransaction = async ({
  */
 const writeRule = async ({
   rule,
-  collectionCumulusId,
   knex,
-  providerCumulusId,
   ruleModel,
 }) =>
   knex.transaction(async (trx) => {
     await writeRuleViaTransaction({
       rule,
-      collectionCumulusId,
-      providerCumulusId,
       trx,
     });
     return ruleModel.storeRuleFromCumulusMessage(rule);
@@ -79,15 +67,9 @@ const writeRule = async ({
  */
 const writeRules = async ({
   cumulusMessage,
-  collectionCumulusId,
   knex,
-  providerCumulusId,
   ruleModel = new Rule(),
 }) => {
-  if (!collectionCumulusId) {
-    throw new Error('Collection reference is required for granules');
-  }
-
   const rules = getMessageRules(cumulusMessage);
 
   // Process each rule in a separate transaction via Promise.allSettled
@@ -96,8 +78,6 @@ const writeRules = async ({
     (rule) => writeRule({
       rule,
       cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
       knex,
       ruleModel,
     })
