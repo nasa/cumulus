@@ -49,6 +49,21 @@ variable "launchpad_passphrase" {
   type    = string
   default = ""
 }
+variable "lzards_launchpad_certificate" {
+  type    = string
+  default = "launchpad.pfx"
+}
+
+variable "lzards_launchpad_passphrase" {
+  type    = string
+  default = ""
+}
+
+variable "lzards_api" {
+  description = "LZARDS API endpoint"
+  type = string
+  default = "https://lzards.sit.earthdata.nasa.gov/api/backups"
+}
 
 variable "oauth_provider" {
   type    = string

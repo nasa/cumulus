@@ -107,6 +107,10 @@ module "cumulus" {
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
 
+  lzards_launchpad_certificate = var.launchpad_certificate
+  lzards_launchpad_passphrase  = var.launchpad_passphrase
+  lzards_api            = var.lzards_api
+
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 

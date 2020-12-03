@@ -327,7 +327,7 @@ variable "lambda_subnet_ids" {
 }
 
 variable "launchpad_api" {
-  description = "URL of Launchpad API. Required if using `cmr_oauth_provider = 'launchpad'`."
+  description = "URL of Launchpad API. Required if using lzards-backup task or  `cmr_oauth_provider = 'launchpad'`."
   type        = string
   default     = "launchpadApi"
 }
@@ -342,6 +342,23 @@ variable "launchpad_passphrase" {
   description = "Passphrase of Launchpad certificate. Required if using `cmr_oauth_provider = 'launchpad'`."
   type        = string
   default     = ""
+}
+variable "lzards_launchpad_certificate" {
+  description = "Name of the Launchpad certificate uploaded to the 'crypto' directory of the `system_bucket for use with the lzards-backup task`."
+  type        = string
+  default     = "lzards_launchpad.pfx"
+}
+
+variable "lzards_launchpad_passphrase" {
+  description = "Passphrase for use with lzards_launchpad_certificate."
+  type        = string
+  default     = ""
+}
+
+variable "lzards_api" {
+  description = "LZARDS backup API endpoint"
+  type = string
+  default = ""
 }
 
 variable "log_destination_arn" {

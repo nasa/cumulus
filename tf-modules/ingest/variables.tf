@@ -77,7 +77,21 @@ variable "launchpad_certificate" {
   type = string
 }
 
+variable "lzards_launchpad_certificate" {
+  type = string
+}
+
 variable "launchpad_passphrase" {
+  type = string
+  default = ""
+}
+
+variable "lzards_launchpad_passphrase" {
+  type = string
+  default = ""
+}
+
+variable "lzards_api" {
   type = string
   default = ""
 }

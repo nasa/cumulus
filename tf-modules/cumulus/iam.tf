@@ -18,54 +18,10 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
   }
 }
 
-
-# Lambda backup role
-
-data "aws_iam_policy_document" "lambda_backup_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type = "AWS"
-      identifiers = [aws_iam_role.lambda_processing.arn]
-    }
-
-  }
-}
-
-resource "aws_iam_role_policy" "lambda_backup" {
-  name   = "${var.prefix}_lambda_backup_policy"
-  role   = aws_iam_role.lambda_backup_role.id
-  policy = data.aws_iam_policy_document.lambda_backup_policy.json
-}
-
-
-resource "aws_iam_role" "lambda_backup_role" {
-  name                 = "${var.prefix}-lambda-backups"
-  assume_role_policy   = data.aws_iam_policy_document.lambda_backup_role_policy.json
-  permissions_boundary = var.permissions_boundary_arn
-  tags                 = var.tags
-}
-
-data "aws_iam_policy_document" "lambda_backup_policy" {
-  statement {
-    actions = [
-      "s3:GetBucket*",
-      "s3:ListBucket*",
-    ]
-    resources = [for b in local.all_non_system_buckets : "arn:aws:s3:::${b}"]
-  }
-  statement {
-    actions = [
-      "s3:GetObject*"
-    ]
-    resources = [for b in local.all_non_system_buckets : "arn:aws:s3:::${b}/*"]
-  }
-}
-
 # lambda-processing role
 
 resource "aws_iam_role" "lambda_processing" {
-  name                 = "${var.prefix}-lambda-processing2"
+  name                 = "${var.prefix}-lambda-processing"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
