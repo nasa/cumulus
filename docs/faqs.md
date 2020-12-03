@@ -36,10 +36,11 @@ Below are some commonly asked questions that you may encounter that can assist y
   <summary>Where can I get support help?</summary>
 
   Answer: The following options are available for assistance:
-  * Cumulus: File a bug
-  * AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console when logged in via CloudTamer.
-</details>
 
+* Cumulus: File a bug
+* AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console when logged in via CloudTamer.
+
+</details>
 
 ### Integrators & Developers
 
@@ -48,9 +49,10 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: Those who are working within Cumulus and AWS for deployments and to manage workflows. They may perform the following functions:
 
-  * Configure and deploy Cumulus to the AWS environment
-  * Configure Cumulus workflows
-  * Write custom workflow tasks
+* Configure and deploy Cumulus to the AWS environment
+* Configure Cumulus workflows
+* Write custom workflow tasks
+
 </details>
 
 <details>
@@ -81,27 +83,29 @@ Below are some commonly asked questions that you may encounter that can assist y
   <summary>What are the common use cases that a Cumulus integrator encounters?</summary>
 
   Answer: The following are some examples of possible use cases you may see:
-  * [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
-  * [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
-  * [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+
+* [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
+* [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
+* [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+
 </details>
 
-
-### Operators 
+### Operators
 
 <details>
   <summary>What is a Cumulus operator?</summary>
 
   Answer: Those that ingests, archives, and troubleshoots datasets (called collections in Cumulus). Your daily activities might include but not limited to the following:
 
-  * Ingesting datasets
-  * Maintaining historical data ingest
-  * Starting and stopping data handlers
-  * Managing collections
-  * Managing provider definitions
-  * Creating, enabling, and disabling rules
-  * Investigating errors for granules and deleting or re-ingesting granules
-  * Investigating errors in executions and isolating failed workflow step(s)
+* Ingesting datasets
+* Maintaining historical data ingest
+* Starting and stopping data handlers
+* Managing collections
+* Managing provider definitions
+* Creating, enabling, and disabling rules
+* Investigating errors for granules and deleting or re-ingesting granules
+* Investigating errors in executions and isolating failed workflow step(s)
+
 </details>
 
 <details>
@@ -114,9 +118,11 @@ Below are some commonly asked questions that you may encounter that can assist y
   <summary>What are the common use cases that a Cumulus operator encounters?</summary>
 
   Answer: The following are some examples of possible use cases you may see:
-  * [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest)
-  * [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
-  * [Granule Workflows](../operator-docs/granule-workflows)
+
+* [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest)
+* [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
+* [Granule Workflows](../operator-docs/granule-workflows)
+
 </details>
 
 <details>

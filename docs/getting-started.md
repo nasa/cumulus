@@ -4,7 +4,7 @@ title: Getting Started
 hide_title: false
 ---
 
-[Overview](#overview) | [Quick Tutorials](#quick-tutorials) | [Helpful Tips](#helpful-tips) 
+[Overview](#overview) | [Quick Tutorials](#quick-tutorials) | [Helpful Tips](#helpful-tips)
 
 ## Overview
 
@@ -20,7 +20,8 @@ Data integrators/developers and operators use Cumulus for their daily work funct
 
 ### Cumulus Roles
 
-As a developer, integrator, or operator, you will need to set up your environments to work in Cumulus. The following docs can get you started in your role specific activities. 
+As a developer, integrator, or operator, you will need to set up your environments to work in Cumulus. The following docs can get you started in your role specific activities.
+
 * [Developers](https://github.com/nasa/cumulus)
 * [Integrators](integrator-guide/about-int-guide)
 * [Operators](operator-docs/about-operator-docs)
@@ -28,19 +29,20 @@ As a developer, integrator, or operator, you will need to set up your environmen
 ### What is a Cumulus Data Type
 
 In Cumulus, we have the following types of data that you can create and manage:
+
 * Collections
 * Granules
 * Providers
 * Rules
 * Workflows
 * Executions
-* Reports 
+* Reports
 
 For details on how to create or manage data types go to [Data Management Types](configuration/data-management-types).
 
 ---
 
-## Quick Tutorials 
+## Quick Tutorials
 
 ### Deployment & Configuration
 
@@ -75,6 +77,7 @@ After configuring your workflow and redeploying, you can configure and run your 
 ---
 
 ## Helpful Tips
+
 Here are some useful tips to keep in mind when deploying or working in Cumulus.
 
 ### Integrator/Developer
@@ -93,5 +96,6 @@ Here are some useful tips to keep in mind when deploying or working in Cumulus.
 [Troubleshooting](../troubleshooting/troubleshooting-readme): Some suggestions to help you troubleshoot and solve issues you may encounter.
 
 ### Resources
+
 * Glossary - [here](glossary)
 * FAQs - [here](faqs)
