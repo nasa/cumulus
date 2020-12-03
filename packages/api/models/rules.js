@@ -5,14 +5,15 @@ const get = require('lodash/get');
 const merge = require('lodash/merge');
 const set = require('lodash/set');
 
-const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
-const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const s3Utils = require('@cumulus/aws-client/S3');
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
+const { invoke } = require('@cumulus/aws-client/Lambda');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { ValidationError } = require('@cumulus/errors');
+const { getMessageRules } = require('@cumulus/message/Rules');
 
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
@@ -576,6 +577,71 @@ class Rule extends Manager {
       );
     }
     return rules;
+  }
+
+  /**
+   * Generate an rule record from a Cumulus message.
+   *
+   * @param {Object} rule - A rule
+   * @returns {Object} A rule record
+   */
+  static generateRuleRecord(rule) {
+    const now = Date.now();
+
+    const record = {
+      name: rule.name,
+      workflow: rule.workflow,
+      provider: rule.provider,
+      collection: rule.collection,
+      meta: rule.meta,
+      payload: rule.payload,
+      queueUrl: rule.queueUrl,
+      rule: rule.rule,
+      state: rule.state,
+      createdAt: rule.createdAt,
+      updatedAt: now,
+      tags: rule.tags,
+      executionNamePrefix: rule.executionNamePrefix,
+    };
+
+    return record;
+  }
+
+  /**
+   * Generate a rule record from a Cumulus message and store it in DynamoDB.
+   *
+   * @param {Object} params
+   * @param {Object} params.rule - Granule object from a Cumulus message
+   * @returns {Promise<Object|undefined>}
+   * @throws
+   */
+  async storeRuleFromCumulusMessage({
+    rule,
+  }) {
+    const ruleRecord = await Rule.generateRuleRecord(rule);
+    const result = this.update(ruleRecord, ruleRecord);
+    return result;
+  }
+
+  /**
+   * Generate and store rule records from a Cumulus message.
+   *
+   * @param {Object} cumulusMessage - Cumulus workflow message
+   * @returns {Promise}
+   */
+  async storeRulesFromCumulusMessage(cumulusMessage) {
+    const rules = getMessageRules(cumulusMessage);
+    if (rules.length === 0) {
+      log.info(`No rules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
+      return rules;
+    }
+
+    return Promise.all(rules.map(
+      (rule) =>
+        this.storeRuleFromCumulusMessage({
+          rule,
+        }).catch(log.error)
+    ));
   }
 }
 

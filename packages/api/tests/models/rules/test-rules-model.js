@@ -11,6 +11,7 @@ const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const S3 = require('@cumulus/aws-client/S3');
 const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
@@ -102,6 +103,32 @@ test.beforeEach(async (t) => {
       value: 'my-kinesis-arn',
     },
     state: 'ENABLED',
+  };
+
+  t.context.cumulusMessage = {
+    cumulus_meta: {
+      execution_name: randomId('execution'),
+      state_machine: 'state-machine',
+      workflow_start_time: Date.now(),
+    },
+    meta: {
+      collection: {
+        name: 'name',
+        version: '001',
+      },
+      provider: {
+        host: 'example-bucket',
+        protocol: 's3',
+        id: 'id',
+      },
+      status: 'completed',
+    },
+    payload: {
+      rules: [
+        { ...t.context.onetimeRule, createdAt: Date.now(), updatedAt: Date.now() },
+        { ...t.context.kinesisRule, createdAt: Date.now(), updatedAt: Date.now() },
+      ],
+    },
   };
 });
 
@@ -483,7 +510,7 @@ test('creating an invalid kinesis type rule does not add event mappings', async 
   t.is(logEventMappings.length, 0);
 });
 
-test('Creating a rule with a queueUrl parameter', async (t) => {
+test('buildPayload creates a rule with a queueUrl parameter', async (t) => {
   const { onetimeRule } = t.context;
 
   const ruleItem = cloneDeep(onetimeRule);
@@ -653,4 +680,19 @@ test('creating SQS rule fails if there is no redrive policy on the queue', async
     rulesModel.create(rule),
     { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
+});
+
+test('storeRulesFromCumulusMessage() stores granule record', async (t) => {
+  const { cumulusMessage, onetimeRule, kinesisRule } = t.context;
+  const rule1 = await rulesModel.create(onetimeRule);
+  const rule2 = await rulesModel.create(kinesisRule);
+
+  await rulesModel.storeRulesFromCumulusMessage(cumulusMessage);
+
+  t.true(await rulesModel.exists({ name: kinesisRule.name }));
+  t.true(await rulesModel.exists({ name: onetimeRule.name }));
+
+  // delete rule
+  await rulesModel.delete(rule1);
+  await rulesModel.delete(rule2);
 });
