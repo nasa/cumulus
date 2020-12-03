@@ -29,7 +29,6 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
   keys.
 - **tea_api_egress_log_group** (string) - Name of the Cloudwatch log group for the Thin Egress App (TEA) Lambda
 - **tea_api_gateway_stage** (string) - Name of the API gateway stage for Thin Egress App (TEA)
-- **tea_egress_lambda_name** (string) - Name of Egress Lambda used by Thin Egress App (TEA)
 - **tea_internal_api_endpoint** (string) - URL for the Thin Egress App (TEA) API gateway
 - **tea_rest_api_id** (string) - API Gateway ID for the Thin Egress App (TEA)
 - **tea_rest_api_root_resource_id** (string) - Root resource ID for the Thin Egress App (TEA) API gateway
