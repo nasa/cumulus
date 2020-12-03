@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2258**
   - Removed `tea_stack_name` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`
-  - Removed `egress_lambda_log_subscription_filter` resource from `tf-modules/distribution/main.tf`, which created a subscription filter for the Thin Egress App egress Lambda Cloudwatch log.
+  - Removed `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resources from `tf-modules/distribution/main.tf`
 
 ## [v4.0.0] 2020-11-20
 
