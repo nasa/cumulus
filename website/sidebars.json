@@ -1,13 +1,14 @@
 {
   "docs": {
-    "About Cumulus": [
+    "Getting Started":[
       "cumulus-docs-readme",
       "getting-started",
+      "glossary",
+      "faqs"
+    ],
+    "About Cumulus": [
       "architecture",
       "interfaces",
-      "helpful-tips",
-      "glossary",
-      "faqs",
       "team"
     ],
     "Overviews": [
