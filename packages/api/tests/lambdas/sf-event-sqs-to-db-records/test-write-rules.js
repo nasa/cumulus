@@ -3,7 +3,6 @@
 const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
 const sinon = require('sinon');
-const sandbox = sinon.createSandbox();
 
 const {
   localStackConnectionEnv,
