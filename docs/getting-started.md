@@ -16,7 +16,7 @@ Cumulus is an open source set of components for creating cloud-based data ingest
 
 ### Who uses Cumulus
 
-Data integrators/developers and operators use Cumulus for their daily work functions.
+Data integrators/developers and operators across projects not limited to NASA use Cumulus for their daily work functions.
 
 ### Cumulus Roles
 
