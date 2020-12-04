@@ -81,7 +81,7 @@ const writeRule = async ({
       providerCumulusId,
       trx,
     });
-    return ruleModel.storeRuleFromCumulusMessage({ rule });
+    return ruleModel.storeRuleFromCumulusMessage(rule);
   });
 
 /**
