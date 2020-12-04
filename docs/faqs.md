@@ -37,10 +37,12 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following options are available for assistance:
 
-* Cumulus: File a bug
+* Cumulus: Outside NASA users should file a GitHub issue and inside NASA users should file a JIRA issue.
 * AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
 </details>
+
+---
 
 ### Integrators & Developers
 
@@ -53,12 +55,6 @@ Below are some commonly asked questions that you may encounter that can assist y
 * Configure Cumulus workflows
 * Write custom workflow tasks
 
-</details>
-
-<details>
-  <summary>Can I connect my Cumulus instance to ESDIS Metrics?</summary>
-
-  Answer: Yes, you can integrate Cloud Metrics. View details [here](../features/distribution-metrics#esdis-metrics-in-ngap) on the options available and how to connect your instance to metrics.
 </details>
 
 <details>
@@ -89,6 +85,8 @@ Below are some commonly asked questions that you may encounter that can assist y
 * [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
 
 </details>
+
+---
 
 ### Operators
 

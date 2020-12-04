@@ -20,6 +20,16 @@ Data integrators/developers and operators across projects not limited to NASA us
 
 ### Cumulus Roles
 
+#### Integrator/Developer
+
+Cumulus integrators/developers are those who work within Cumulus and AWS for deployments and to manage workflows.
+
+#### Operator
+
+Cumulus operators are those who work within Cumulus to ingest/archive data and manage collections.
+
+#### Role Guides
+
 As a developer, integrator, or operator, you will need to set up your environments to work in Cumulus. The following docs can get you started in your role specific activities.
 
 * [Developers](https://github.com/nasa/cumulus)
@@ -58,7 +68,7 @@ If you have deployed using the [cumulus-template-deploy repository](https://gith
 
 You can see your deployed workflows on the `Workflows` page of your Cumulus dashboard.
 
-Configure a collection and provider using the [setup guidance](data-cookbooks/setup) on the Cumulus dashboard.
+Configure a collection and provider using the [setup guidance](data-cookbooks/about-cookbooks#setup) on the Cumulus dashboard.
 
 Then [create a rule](operator-docs/create-rule-in-cumulus) to trigger your HelloWorld workflow. You can select a rule type of `one time`.
 
