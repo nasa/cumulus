@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/db');
 
 const {
+  generatePdrRecord,
   writePdr,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
@@ -77,9 +78,10 @@ test.beforeEach(async (t) => {
     protocol: 's3',
   };
 
+  t.context.workflowStartTime = Date.now();
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122,
+      workflow_start_time: t.context.workflowStartTime,
     },
     meta: {
       status: 'running',
@@ -88,6 +90,9 @@ test.beforeEach(async (t) => {
     },
     payload: {
       pdr: t.context.pdr,
+      running: ['one'],
+      completed: ['two'],
+      failed: [],
     },
   };
 
@@ -114,6 +119,44 @@ test.after.always(async (t) => {
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
   await t.context.knexAdmin.destroy();
+});
+
+test('generatePdrRecord() generates correct PDR record', (t) => {
+  const {
+    cumulusMessage,
+    pdr,
+    workflowStartTime,
+  } = t.context;
+  const now = workflowStartTime + 3500;
+
+  t.deepEqual(
+    generatePdrRecord({
+      cumulusMessage,
+      collectionCumulusId: 1,
+      providerCumulusId: 2,
+      executionCumulusId: 3,
+      now,
+    }),
+    {
+      name: pdr.name,
+      status: 'running',
+      pan_sent: pdr.PANSent,
+      pan_message: pdr.PANmessage,
+      stats: {
+        processing: 1,
+        completed: 1,
+        failed: 0,
+        total: 2,
+      },
+      progress: 50,
+      execution_cumulus_id: 3,
+      collection_cumulus_id: 1,
+      provider_cumulus_id: 2,
+      created_at: new Date(workflowStartTime),
+      timestamp: new Date(now),
+      duration: 3.5,
+    }
+  );
 });
 
 test('writePdr() returns true if there is no PDR on the message', async (t) => {

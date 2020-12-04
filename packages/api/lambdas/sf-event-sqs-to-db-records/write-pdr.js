@@ -6,12 +6,45 @@ const {
 const {
   getMessagePdrName,
   messageHasPdr,
+  getMessagePdrStats,
+  getMessagePdrPANSent,
+  getMessagePdrPANMessage,
+  getPdrPercentCompletion,
 } = require('@cumulus/message/PDRs');
 const {
   getMetaStatus,
+  getMessageWorkflowStartTime,
+  getWorklowDuration,
 } = require('@cumulus/message/workflows');
 
 const Pdr = require('../../models/pdrs');
+
+const generatePdrRecord = ({
+  cumulusMessage,
+  collectionCumulusId,
+  providerCumulusId,
+  executionCumulusId,
+  now = Date.now(),
+}) => {
+  const stats = getMessagePdrStats(cumulusMessage);
+  const progress = getPdrPercentCompletion(stats);
+  const timestamp = now;
+  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+  return {
+    name: getMessagePdrName(cumulusMessage),
+    status: getMetaStatus(cumulusMessage),
+    pan_sent: getMessagePdrPANSent(cumulusMessage),
+    pan_message: getMessagePdrPANMessage(cumulusMessage),
+    stats,
+    progress,
+    execution_cumulus_id: executionCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
+    created_at: new Date(workflowStartTime),
+    timestamp: new Date(timestamp),
+    duration: getWorklowDuration(workflowStartTime, timestamp),
+  };
+};
 
 const writePdrViaTransaction = async ({
   cumulusMessage,
@@ -19,16 +52,18 @@ const writePdrViaTransaction = async ({
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
-}) =>
-  trx(tableNames.pdrs)
-    .insert({
-      name: getMessagePdrName(cumulusMessage),
-      status: getMetaStatus(cumulusMessage),
-      execution_cumulus_id: executionCumulusId,
-      collection_cumulus_id: collectionCumulusId,
-      provider_cumulus_id: providerCumulusId,
-    })
+}) => {
+  const pdrRecord = generatePdrRecord({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+  });
+
+  return trx(tableNames.pdrs)
+    .insert(pdrRecord)
     .returning('cumulus_id');
+};
 
 const writePdr = async ({
   cumulusMessage,
@@ -64,6 +99,7 @@ const writePdr = async ({
 };
 
 module.exports = {
+  generatePdrRecord,
   writePdrViaTransaction,
   writePdr,
 };
