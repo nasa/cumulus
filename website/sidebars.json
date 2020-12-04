@@ -94,6 +94,7 @@
       "data-cookbooks/ingest-notifications",
       "data-cookbooks/sips-workflow",
       "data-cookbooks/cnm-workflow",
+      "data-cookbooks/lzards-integration",
       "data-cookbooks/error-handling",
       "data-cookbooks/choice-states",
       "data-cookbooks/browse-generation",
