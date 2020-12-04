@@ -1,7 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
-
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
@@ -20,6 +18,8 @@ const {
 } = require('@cumulus/message/Providers');
 const {
   getMetaStatus,
+  getMessageWorkflowStartTime,
+  getWorklowDuration,
 } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
 const Manager = require('./base');
@@ -92,6 +92,8 @@ class Pdr extends Manager {
 
     const stats = getMessagePdrStats(message);
     const progress = getPdrPercentCompletion(stats);
+    const timestamp = Date.now();
+    const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
       pdrName: pdr.name,
@@ -103,11 +105,11 @@ class Pdr extends Manager {
       PANSent: getMessagePdrPANSent(message),
       PANmessage: getMessagePdrPANMessage(message),
       stats,
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now(),
+      createdAt: workflowStartTime,
+      timestamp,
+      duration: getWorklowDuration(workflowStartTime, timestamp),
     };
 
-    record.duration = (record.timestamp - record.createdAt) / 1000;
     this.constructor.recordIsValid(record, this.schema);
     return record;
   }
