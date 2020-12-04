@@ -355,6 +355,12 @@ variable "lzards_launchpad_passphrase" {
   default     = ""
 }
 
+variable "lzards_provider" {
+  description = "LZARDS provider name"
+  type        = string
+  default     = ""
+}
+
 variable "lzards_api" {
   description = "LZARDS backup API endpoint"
   type = string

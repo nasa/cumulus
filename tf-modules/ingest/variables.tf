@@ -87,14 +87,21 @@ variable "launchpad_passphrase" {
 }
 
 variable "lzards_launchpad_passphrase" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "lzards_api" {
-  type = string
+  type    = string
   default = ""
 }
+
+variable "lzards_provider" {
+  description = "LZARDS provider name"
+  type        = string
+  default     = ""
+}
+
 
 variable "permissions_boundary_arn" {
   type = string

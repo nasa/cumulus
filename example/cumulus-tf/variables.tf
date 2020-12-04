@@ -61,8 +61,14 @@ variable "lzards_launchpad_passphrase" {
 
 variable "lzards_api" {
   description = "LZARDS API endpoint"
-  type = string
-  default = "https://lzards.sit.earthdata.nasa.gov/api/backups"
+  type        = string
+  default     = "https://lzards.sit.earthdata.nasa.gov/api/backups"
+}
+
+variable "lzards_provider" {
+  description = "LZARDS provider name"
+  type        = string
+  default     = "FAKE_DAAC"
 }
 
 variable "oauth_provider" {
