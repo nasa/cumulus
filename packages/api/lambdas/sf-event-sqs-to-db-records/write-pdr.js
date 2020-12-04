@@ -46,6 +46,67 @@ const generatePdrRecord = ({
   };
 };
 
+const writeRunningPdrViaTransaction = async ({
+  pdrRecord,
+  trx,
+}) => {
+  return trx.raw(
+    `
+      INSERT INTO pdrs (
+        "name",
+        "status",
+        "collection_cumulus_id",
+        "provider_cumulus_id",
+        "execution_cumulus_id",
+        "progress",
+        "pan_sent",
+        "pan_message",
+        "stats",
+        "duration",
+        "timestamp",
+        "created_at"
+      ) VALUES (
+        :name,
+        :status,
+        :collection_cumulus_id,
+        :provider_cumulus_id,
+        :execution_cumulus_id,
+        :progress,
+        :pan_sent,
+        :pan_message,
+        :stats,
+        :duration,
+        :timestamp,
+        :created_at
+      )
+      ON CONFLICT ("name") DO UPDATE SET
+        name = EXCLUDED.name,
+        status = EXCLUDED.status,
+        collection_cumulus_id = EXCLUDED.collection_cumulus_id,
+        provider_cumulus_id = EXCLUDED.provider_cumulus_id,
+        execution_cumulus_id = EXCLUDED.execution_cumulus_id,
+        progress = EXCLUDED.progress,
+        pan_sent = EXCLUDED.pan_sent,
+        pan_message = EXCLUDED.pan_message,
+        stats = EXCLUDED.stats,
+        duration = EXCLUDED.duration,
+        timestamp = EXCLUDED.timestamp,
+        created_at = EXCLUDED.created_at
+      WHERE pdrs.execution_cumulus_id != :execution_cumulus_id
+      RETURNING "cumulus_id"
+    `,
+    pdrRecord
+  );
+  // return trx(tableNames.pdrs)
+  //   .where({
+  //     execution_cumulus_id: 'foo',
+  //   })
+  //   .insert(pdrRecord)
+  //   .onConflict('name')
+  //   .merge()
+  //   .returning('cumulus_id');
+};
+
 const writePdrViaTransaction = async ({
   cumulusMessage,
   trx,
@@ -60,8 +121,17 @@ const writePdrViaTransaction = async ({
     executionCumulusId,
   });
 
+  if (pdrRecord.status === 'running') {
+    return writeRunningPdrViaTransaction({
+      pdrRecord,
+      trx,
+    });
+  }
+
   return trx(tableNames.pdrs)
     .insert(pdrRecord)
+    .onConflict('name')
+    .merge()
     .returning('cumulus_id');
 };
 
@@ -100,6 +170,7 @@ const writePdr = async ({
 
 module.exports = {
   generatePdrRecord,
+  writeRunningPdrViaTransaction,
   writePdrViaTransaction,
   writePdr,
 };

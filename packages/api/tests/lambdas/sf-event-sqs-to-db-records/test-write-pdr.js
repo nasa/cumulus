@@ -13,6 +13,7 @@ const {
 
 const {
   generatePdrRecord,
+  writeRunningPdrViaTransaction,
   writePdr,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
@@ -37,6 +38,7 @@ test.before(async (t) => {
       ...localStackConnectionEnv,
       PG_DATABASE: t.context.testDbName,
       migrationDir,
+      KNEX_DEBUG: 'true',
     },
   });
   await t.context.knex.migrate.latest();
@@ -157,6 +159,70 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
       duration: 3.5,
     }
   );
+});
+
+test.only('writeRunningPdrViaTransaction() updates a "completed" record to "running" if the execution is different', async (t) => {
+  const {
+    providerCumulusId,
+    collectionCumulusId,
+    pdr,
+    knex,
+  } = t.context;
+
+  const executionResult = await knex(tableNames.executions)
+    .insert({
+      arn: 'arn1',
+      status: 'completed',
+    })
+    .returning('cumulus_id');
+
+  const pdrRecord = {
+    name: pdr.name,
+    status: 'completed',
+    execution_cumulus_id: executionResult[0],
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
+    progress: 100,
+    pan_sent: true,
+    pan_message: 'message',
+    stats: {},
+    duration: 3,
+    timestamp: new Date(),
+    created_at: new Date(),
+  };
+  await knex(tableNames.pdrs).insert(pdrRecord);
+  const firstRecord = await knex(tableNames.pdrs)
+    .where({ name: pdr.name })
+    .first();
+  t.is(firstRecord.status, 'completed');
+
+  const executionResult2 = await knex(tableNames.executions)
+    .insert({
+      arn: 'arn2',
+      status: 'running',
+    })
+    .returning('cumulus_id');
+
+  // update status to running
+  pdrRecord.status = 'running';
+  pdrRecord.progress = 50;
+  pdrRecord.duration = 1;
+  // update execution so that "completed" record will be updated
+  pdrRecord.execution_cumulus_id = executionResult2[0];
+
+  await knex.transaction(
+    (trx) =>
+      writeRunningPdrViaTransaction({
+        trx,
+        pdrRecord,
+      })
+  );
+  const updatedRecord = await knex(tableNames.pdrs)
+    .where({ name: pdr.name })
+    .first();
+  t.is(updatedRecord.status, 'running');
+  t.is(updatedRecord.progress, 50);
+  t.is(updatedRecord.duration, 1);
 });
 
 test('writePdr() returns true if there is no PDR on the message', async (t) => {
