@@ -1,7 +1,6 @@
 const test = require('ava');
 const sandbox = require('sinon').createSandbox();
 const proxyquire = require('proxyquire');
-//const { getCollections } = require('@cumulus/api-client/collections');
 
 const fakePostReturn = {
   body: 'fake body',
