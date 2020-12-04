@@ -8,6 +8,7 @@ import { PartialCollectionRecord } from '@cumulus/types/api/collections';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
 import { s3 as coreS3 } from '@cumulus/aws-client/services';
 import { getCollections } from '@cumulus/api-client/collections';
+import { getRequiredEnvVar } from '@cumulus/common/env';
 
 import { HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
 
@@ -58,15 +59,8 @@ export const postRequestToLzards = async (params: {
     granuleId,
   } = params;
 
-  const provider = process.env.provider;
-  const lzardsApiUrl = process.env.lzards_api;
-
-  if (!lzardsApiUrl) {
-    throw new Error('process.env.lzards_api is required to be set for this task component');
-  }
-  if (!provider) {
-    throw new Error('process.env.provider is required to be set for this task component');
-  }
+  const provider = getRequiredEnvVar('provider');
+  const lzardsApiUrl = getRequiredEnvVar('lzards_api');
 
   return got.post(lzardsApiUrl,
     {
@@ -131,15 +125,13 @@ export const getGranuleCollection = async (params: {
   collectionVersion: string,
   stackPrefix?: string
 }): Promise<PartialCollectionRecord> => {
-  const prefix = params.stackPrefix || process.env.stackName;
-  if (!prefix) {
-    throw new Error('This task component requires process.env.stackPrefix to be defined');
-  }
+  const prefix = params.stackPrefix || getRequiredEnvVar('stackName');
   const { collectionName, collectionVersion } = params;
   const collectionResults = await getCollections({
     prefix,
     query: { name: collectionName, version: collectionVersion },
   });
+
   return JSON.parse(collectionResults.body).results[0] as PartialCollectionRecord;
 };
 
@@ -169,7 +161,7 @@ export const backupGranule = async (
 export const generateAccessCredentials = async () => {
   const sts = new AWS.STS({ region: process.env.REGION });
   const params = {
-    RoleArn: process.env.backup_role_arn as string,
+    RoleArn: getRequiredEnvVar('backup_role_arn'),
     DurationSeconds: 900,
     RoleSessionName: `${Date.now()}`,
   };
@@ -177,7 +169,6 @@ export const generateAccessCredentials = async () => {
 };
 
 export const getAuthToken = async () => {
-  // TODO add typecheck for all env vars
   const api = process.env.launchpad_api || '';
   const passphrase = await getSecretString(process?.env?.launchpad_passphrase_secret_name || '') || '';
   const certificate = process.env.launchpad_certificate || '';
@@ -188,8 +179,7 @@ export const getAuthToken = async () => {
 };
 
 export const handler = async (event: HandlerEvent) => {
-  // TODO check env vars
-
+  // TODO check env var
   // Given an array of granules, submit each file for backup.
   // Use default collection if none specified?   Probably not.
   // Assume granule files have checksums
