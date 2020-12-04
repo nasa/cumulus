@@ -507,7 +507,7 @@ test('creating an invalid kinesis type rule does not add event mappings', async 
   t.is(logEventMappings.length, 0);
 });
 
-test('buildPayload creates a rule with a queueUrl parameter', async (t) => {
+test('Creates a rule with a queueUrl parameter', async (t) => {
   const { onetimeRule } = t.context;
 
   const ruleItem = cloneDeep(onetimeRule);
