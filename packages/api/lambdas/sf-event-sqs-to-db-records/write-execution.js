@@ -29,16 +29,16 @@ const shouldWriteExecutionToPostgres = ({
   messageParentExecutionArn,
   parentExecutionCumulusId,
 }) => {
-  const noMessageCollectionOrExists = isNil(messageCollectionNameVersion)
+  const noMessageCollectionOrExistsInPostgres = isNil(messageCollectionNameVersion)
     || !isNil(collectionCumulusId);
-  const noMessageAsyncOperationOrExists = isNil(messageAsyncOperationId)
+  const noMessageAsyncOperationOrExistsInPostgres = isNil(messageAsyncOperationId)
     || !isNil(asyncOperationCumulusId);
-  const noMessageParentExecutionOrExists = isNil(messageParentExecutionArn)
+  const noMessageParentExecutionOrExistsInPostgres = isNil(messageParentExecutionArn)
     || !isNil(parentExecutionCumulusId);
 
-  return noMessageCollectionOrExists
-    && noMessageAsyncOperationOrExists
-    && noMessageParentExecutionOrExists;
+  return noMessageCollectionOrExistsInPostgres
+    && noMessageAsyncOperationOrExistsInPostgres
+    && noMessageParentExecutionOrExistsInPostgres;
 };
 
 const buildExecutionRecord = ({
