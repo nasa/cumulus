@@ -17,7 +17,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What prerequisites are needed to setup Cumulus?</summary>
 
-  Answer: You will need access to the AWS console, Cloudtamer.io, and an [Earthdata login](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+  Answer: You will need access to the AWS console and an [Earthdata login](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
 </details>
 
 <details>
