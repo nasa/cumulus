@@ -8,6 +8,7 @@ export interface CollectionFile {
   checksumFor?: string
   type?: string,
   url_path?: string,
+  backup?: boolean,
 }
 
 export interface PartialCollectionRecord {
@@ -22,7 +23,7 @@ export interface PartialCollectionRecord {
   sampleFileName?: string,
   tags?: string[],
   url_path?: string,
-  version?: string
+  version?: string,
 }
 
 export interface NewCollectionRecord extends PartialCollectionRecord {

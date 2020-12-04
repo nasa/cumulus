@@ -13,14 +13,23 @@ export interface HandlerEvent {
 export type MessageGranuleFilesObject = {
   checksumType: string,
   checksum: string,
-  fileName: string,
+  filename: string,
+  name: string,
   backup: boolean,
-  [key: string]: any;
+  filepath: string,
+  bucket: string,
 };
 
 export interface MessageGranule {
   granuleId: string,
-  dataType?: string,
-  version?: string,
+  dataType: string,
+  version: string,
   files: MessageGranuleFilesObject[],
+}
+export interface GetCollectionFunctionParams {
+  prefix: string
+  query: {
+    name: string,
+    version: string,
+  }
 }

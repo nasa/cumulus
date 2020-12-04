@@ -1,55 +1,81 @@
 import AWS from 'aws-sdk';
 import got from 'got';
+import Logger from '@cumulus/logger';
 
 import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { getLaunchpadToken } from '@cumulus/launchpad-auth';
+import { PartialCollectionRecord } from '@cumulus/types/api/collections';
+import { inTestMode } from '@cumulus/aws-client/test-utils';
+import { s3 as coreS3 } from '@cumulus/aws-client/services';
+import { getCollections } from '@cumulus/api-client/collections';
+
 import { HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
 
-export const generateAccessUrl = async (
+const log = new Logger({ sender: '@cumulus/lzards-backup' });
+
+export const generateAccessUrl = async (params: {
   creds: AWS.STS.AssumeRoleResponse,
   Key: string,
   Bucket: string
-) => {
+  usePassedCredentials?: boolean
+}) => {
+  const { creds, Key, Bucket, usePassedCredentials } = params;
   const region = process?.env?.region_name || 'us-east-1';
-  const secretAccessKey = creds.Credentials?.SecretAccessKey || '';
-  const sessionToken = creds.Credentials?.SessionToken;
-  const accessKeyId = creds.Credentials?.AccessKeyId;
-  const s3 = new AWS.S3({
+  const secretAccessKey = creds?.Credentials?.SecretAccessKey;
+  const sessionToken = creds?.Credentials?.SessionToken;
+  const accessKeyId = creds?.Credentials?.AccessKeyId;
+
+  const s3Config = {
     signatureVersion: 'v4',
     secretAccessKey,
     accessKeyId,
     sessionToken,
     region,
-  });
-  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: 8600 });
+  };
+
+  let s3;
+  if (!inTestMode() || usePassedCredentials) {
+    s3 = new AWS.S3(s3Config);
+  } else {
+    coreS3().config.update({ signatureVersion: 'v4' });
+    s3 = coreS3();
+  }
+  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: 3600 });
 };
 
-export const getS3HostName = (bucketName: string): string => {
-  const region = process?.env?.region_name || 'us-east-1';
-  const regionString = region === 'us-east-1' ? '' : `.${region}`;
-  return `${bucketName}.s3${regionString}.amazonaws.com`;
-};
-
-export const makeBackupFileRequest = async (
-  creds: AWS.STS.AssumeRoleResponse,
+export const postRequestToLzards = async (params: {
+  accessUrl: string,
   authToken: string,
-  file: MessageGranuleFilesObject,
   collection: string,
-  granuleId: string
-) => {
-  const accessUrl = await generateAccessUrl(creds, file.filepath, file.bucket);
-  // TODO check env vars
-  const lzardsApiUrl = process.env.lzards_api as string;
-  // TODO - support both checksums, trap errors
+  file: MessageGranuleFilesObject,
+  granuleId: string,
+}) => {
+  const {
+    accessUrl,
+    authToken,
+    collection,
+    file,
+    granuleId,
+  } = params;
 
-  const { statusCode, body } = await got.post(lzardsApiUrl,
+  const provider = process.env.provider;
+  const lzardsApiUrl = process.env.lzards_api;
+
+  if (!lzardsApiUrl) {
+    throw new Error('process.env.lzards_api is required to be set for this task component');
+  }
+  if (!provider) {
+    throw new Error('process.env.provider is required to be set for this task component');
+  }
+
+  return got.post(lzardsApiUrl,
     {
       json: {
-        provider: 'FAKE_DAAC', // TODO - make this configurable
+        provider,
         objectUrl: accessUrl,
         expectedMd5Hash: file.checksum,
         metadata: {
-          filename: file.name,
+          filename: file.filename,
           collection,
           granuleId,
         },
@@ -59,12 +85,62 @@ export const makeBackupFileRequest = async (
         'Content-Type': 'application/json',
       },
     });
+};
 
+export const makeBackupFileRequest = async (params: {
+  authToken: string,
+  collection: string,
+  creds: AWS.STS.AssumeRoleResponse,
+  file: MessageGranuleFilesObject,
+  granuleId: string
+}) => {
+  const { authToken, collection, creds, file, granuleId } = params;
+  const accessUrl = await generateAccessUrl({
+    creds,
+    Key: file.filepath,
+    Bucket: file.bucket,
+  });
+  // TODO - support both checksums, trap errors
+  const { statusCode, body } = await postRequestToLzards({
+    accessUrl,
+    authToken,
+    collection,
+    file,
+    granuleId,
+  });
   if (statusCode !== 201) {
-    throw new Error(`${granuleId}:: LZARDS api returned ${statusCode}: ${JSON.stringify(body)}`);
-    // Write error log
+    log.error(`${granuleId}:: LZARDS api returned ${statusCode}: ${JSON.stringify(body)}`);
   }
   return { statusCode, granuleId, filename: file.name, body };
+};
+
+export const shouldBackupFile = (
+  fileName: string,
+  collectionConfig: PartialCollectionRecord
+): boolean => {
+  const collectionFiles = collectionConfig?.files || [];
+  const config = collectionFiles.find(
+    ({ regex }) => fileName.match(regex)
+  );
+  if (config?.backup) return true;
+  return false;
+};
+
+export const getGranuleCollection = async (params: {
+  collectionName: string,
+  collectionVersion: string,
+  stackPrefix?: string
+}): Promise<PartialCollectionRecord> => {
+  const prefix = params.stackPrefix || process.env.stackName;
+  if (!prefix) {
+    throw new Error('This task component requires process.env.stackPrefix to be defined');
+  }
+  const { collectionName, collectionVersion } = params;
+  const collectionResults = await getCollections({
+    prefix,
+    query: { name: collectionName, version: collectionVersion },
+  });
+  return JSON.parse(collectionResults.body).results[0] as PartialCollectionRecord;
 };
 
 export const backupGranule = async (
@@ -72,26 +148,27 @@ export const backupGranule = async (
   authToken: string,
   granule: MessageGranule
 ) => {
-  // Generate LZARDS request based on granule file
-  // Configure granule files
-  console.log(`BackupGranule called on ${JSON.stringify(granule)}`);
-  const backupFiles = granule.files.filter((file) => file.backup);
-  console.log(`Backup files is ${JSON.stringify(backupFiles)}`);
-
-  // TODO use Core collection identifier code
-  return Promise.all(backupFiles.map((file) => makeBackupFileRequest(
+  log.info(`Backup called on granule: ${JSON.stringify(granule)}`);
+  const granuleCollection = await getGranuleCollection({
+    collectionName: granule.dataType,
+    collectionVersion: granule.version,
+  });
+  const backupFiles = granule.files.filter(
+    (file) => shouldBackupFile(file.name, granuleCollection)
+  );
+  log.info(`${JSON.stringify(granule)}: Backing up ${JSON.stringify(backupFiles)}`);
+  return Promise.all(backupFiles.map((file) => makeBackupFileRequest({
     creds,
     authToken,
     file,
-    `${granule.dataType}__${granule.version}`,
-    granule.granuleId
-  )));
+    collection: `${granule.dataType}___${granule.version}`,
+    granuleId: granule.granuleId,
+  })));
 };
 
 export const generateAccessCredentials = async () => {
   const sts = new AWS.STS({ region: process.env.REGION });
   const params = {
-    //TODO -- make this an env var
     RoleArn: process.env.backup_role_arn as string,
     DurationSeconds: 900,
     RoleSessionName: `${Date.now()}`,
@@ -111,6 +188,8 @@ export const getAuthToken = async () => {
 };
 
 export const handler = async (event: HandlerEvent) => {
+  // TODO check env vars
+
   // Given an array of granules, submit each file for backup.
   // Use default collection if none specified?   Probably not.
   // Assume granule files have checksums
