@@ -12,7 +12,7 @@ In order to configure the LZARDS notifier task, you will need to set up the Laun
 
 ### LZARDS Collection Configuration
 
-In order to tell Cumulus which files to notify LZARDS of for backup, we use the `files` portion of collection configuration.
+In order to tell Cumulus which files to notify LZARDS of for backup, we use the `files` portion of collection configuration. This allows us to identify some, none, or all files on a granule that are to be submitted to the LZARDS archive.
 
 Below is a partial collection definition showing the `lzards` object on a file definition used by the LZARDS notifier task:
 
@@ -48,9 +48,9 @@ lzards_provider=REPLACE-ME-DAAC
 
 ### Include the LZARDS task in your workflow
 
-After deploying the LZARDS task, you will need to update your workflow definition to include the task.
+After deploying the LZARDS task, you will need to update your workflow definition to include the task. This task needs to come after your granule files have reached their final destination on S3, i.e. after `MoveGranules` if you use that, or `SyncGranules` if you don't.
 
-In your workflow's step function definition, include a definition as below:
+In your workflow's step function definition, include a definition for a workflow step as below:
 
 ```json
 {
@@ -93,3 +93,7 @@ In your workflow's step function definition, include a definition as below:
   }
 }
 ```
+
+### Running the LZARDS task
+
+Once included, the LZARDS task will automatically become part of your ingest workflow. For those files matching collection definitions where `backup` is set to `true`, the task will notify the LZARDS API, and provide a signed URL that LZARDS will use to pull the file from S3 and process it into the LZARDS archive.
