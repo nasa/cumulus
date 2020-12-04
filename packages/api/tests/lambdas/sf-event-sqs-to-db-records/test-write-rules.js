@@ -2,6 +2,8 @@
 
 const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
+const sinon = require('sinon');
+const sandbox = sinon.createSandbox();
 
 const {
   localStackConnectionEnv,
@@ -11,12 +13,8 @@ const {
 } = require('@cumulus/db');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const {
-  writeRules,
-} = require('../../../lambdas/sf-event-sqs-to-db-records/write-rules');
-
+const { writeRules } = require('../../../lambdas/sf-event-sqs-to-db-records/write-rules');
 const { migrationDir } = require('../../../../../lambdas/db-migration');
-const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const Rule = require('../../../models/rules');
 
 test.before(async (t) => {
@@ -119,6 +117,7 @@ test.beforeEach(async (t) => {
     host: 'test-bucket',
     protocol: 's3',
   };
+
   const collectionResponse = await t.context.knex(tableNames.collections)
     .insert(t.context.collection)
     .returning('cumulus_id');
@@ -132,6 +131,7 @@ test.beforeEach(async (t) => {
       protocol: t.context.provider.protocol,
     })
     .returning('cumulus_id');
+
   t.context.providerCumulusId = providerResponse[0];
 });
 
@@ -168,18 +168,155 @@ test('writeRules() saves rule records to Dynamo and RDS', async (t) => {
   t.true(
     await doesRecordExist({ name: onetimeRule.name }, knex, tableNames.rules)
   );
+  t.true(
+    await doesRecordExist({ name: kinesisRule.name }, knex, tableNames.rules)
+  );
 });
 
-/*
+test('writeRules() throws an error if any rule writes fail due to an invalid rule', async (t) => {
+  const {
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+  } = t.context;
+
+  const failingRule = {};
+  cumulusMessage.payload.rules = [...cumulusMessage.payload.rules, failingRule];
+
+  await t.throwsAsync(
+    writeRules({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+    }),
+    { name: 'AggregateError' }
+  );
+});
+
 test('writeRules() handles successful and failing writes independently', async (t) => {
+  const {
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+    ruleModel,
+  } = t.context;
+
+  const scheduledRule = {
+    name: cryptoRandomString({ length: 5 }),
+    workflow: randomString(),
+    provider: cryptoRandomString({ length: 10 }),
+    collection: {
+      name: cryptoRandomString({ length: 10 }),
+      version: '0.0.0',
+    },
+    rule: {
+      type: 'scheduled',
+      value: '0 0 12 * * ?',
+    },
+    state: 'ENABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  const failingRule = t.context.onetimeRule;
+  failingRule.state = undefined;
+
+  cumulusMessage.payload.rules = [scheduledRule, failingRule];
+
+  await t.throwsAsync(
+    writeRules({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+    }),
+    { name: 'AggregateError' }
+  );
+
+  t.true(await ruleModel.exists({ name: scheduledRule.name }));
+  t.false(await ruleModel.exists({ name: failingRule.name }));
+  t.true(
+    await doesRecordExist({ name: scheduledRule.name }, knex, tableNames.rules)
+  );
+  t.false(
+    await doesRecordExist({ name: failingRule.name }, knex, tableNames.rules)
+  );
 });
 
-test('writeRules() throws error if any rule writes fail', async (t) => {
-});
+test.serial('writeRules() does not persist records to DynamoDB or RDS if DynamoDB write fails', async (t) => {
+  const {
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    onetimeRule,
+    knex,
+    ruleModel,
+  } = t.context;
 
-test.serial('writeRules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+  const fakeRuleModel = {
+    storeRuleFromCumulusMessage: () => {
+      throw new Error('Rules DynamoDB Error');
+    },
+  };
+
+  const [error] = await t.throwsAsync(
+    writeRules({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+      ruleModel: fakeRuleModel,
+    }),
+    {
+      name: 'AggregateError',
+    }
+  );
+
+  t.true(error.message.includes('Rules DynamoDB Error'));
+  t.false(await ruleModel.exists({ name: onetimeRule.name }));
+  t.false(await doesRecordExist({ name: onetimeRule.name }, knex, tableNames.rules));
 });
 
 test.serial('writeRules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+  const {
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    onetimeRule,
+    kinesisRule,
+    knex,
+    ruleModel,
+  } = t.context;
+
+  const fakeTrxCallback = (cb) => {
+    const fakeTrx = sinon.stub().returns({
+      insert: () => {
+        throw new Error('Rules RDS error');
+      },
+    });
+    return cb(fakeTrx);
+  };
+  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
+  t.teardown(() => trxStub.restore());
+
+  const [error] = await t.throwsAsync(
+    writeRules({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+      ruleModel,
+    }),
+    {
+      name: 'AggregateError',
+    }
+  );
+
+  t.true(error.message.includes('Rules RDS error'));
+  t.false(await ruleModel.exists({ name: onetimeRule.name }));
+  t.false(await ruleModel.exists({ name: kinesisRule.name }));
+  t.false(await doesRecordExist({ name: onetimeRule.name }, knex, tableNames.rules));
+  t.false(await doesRecordExist({ name: kinesisRule.name }, knex, tableNames.rules));
 });
-*/
