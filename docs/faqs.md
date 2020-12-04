@@ -38,7 +38,7 @@ Below are some commonly asked questions that you may encounter that can assist y
   Answer: The following options are available for assistance:
 
 * Cumulus: File a bug
-* AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console when logged in via CloudTamer.
+* AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
 </details>
 
