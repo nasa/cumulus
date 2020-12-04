@@ -14,7 +14,6 @@ const Rule = require('../../models/rules');
 
 const buildRuleRecord = (
   rule,
-  cumulusMessage,
   collectionCumulusId,
   providerCumulusId,
   now = new Date()
@@ -41,12 +40,11 @@ const buildRuleRecord = (
 
 const writeRuleViaTransaction = async ({
   rule,
-  cumulusMessage,
   collectionCumulusId,
   providerCumulusId,
   trx,
 }) => {
-  const record = buildRuleRecord(rule, cumulusMessage, collectionCumulusId, providerCumulusId);
+  const record = buildRuleRecord(rule, collectionCumulusId, providerCumulusId);
   return trx(tableNames.rules)
     .insert(record)
     .returning('cumulus_id');
@@ -71,7 +69,6 @@ const writeRuleViaTransaction = async ({
  */
 const writeRule = async ({
   rule,
-  cumulusMessage,
   collectionCumulusId,
   providerCumulusId,
   knex,
@@ -80,7 +77,6 @@ const writeRule = async ({
   knex.transaction(async (trx) => {
     await writeRuleViaTransaction({
       rule,
-      cumulusMessage,
       collectionCumulusId,
       providerCumulusId,
       trx,
@@ -102,8 +98,8 @@ const writeRule = async ({
  *   Optional override for the rule model writing to DynamoDB
  *
  * @returns {Promise<Object[]>}
- *  true if there are no rules on the message, otherwise
- *  results from Promise.allSettled for all rules
+ *  PromiseSettledResult if there are no rules on the message, otherwise
+ *  returns results from Promise.allSettled for all rules
  */
 const writeRules = async ({
   cumulusMessage,
@@ -119,7 +115,6 @@ const writeRules = async ({
   const results = await Promise.allSettled(rules.map(
     (rule) => writeRule({
       rule,
-      cumulusMessage,
       collectionCumulusId,
       providerCumulusId,
       knex,

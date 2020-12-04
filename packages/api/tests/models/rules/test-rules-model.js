@@ -697,7 +697,7 @@ test('storeRuleFromCumulusMessage() throws an error for a rule record without a 
   };
 
   await t.throwsAsync(
-    rulesModel.storeRuleFromCumulusMessage({ rule }),
+    rulesModel.storeRuleFromCumulusMessage(rule),
     { name: 'SchemaValidationError' }
   );
 });
@@ -718,7 +718,7 @@ test('storeRuleFromCumulusMessage() throws an error for a rule record without a 
   };
 
   await t.throwsAsync(
-    rulesModel.storeRuleFromCumulusMessage({ rule }),
+    rulesModel.storeRuleFromCumulusMessage(rule),
     { name: 'SchemaValidationError' }
   );
 });
@@ -739,7 +739,7 @@ test('storeRuleFromCumulusMessage() correctly stores rule record', async (t) => 
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  await rulesModel.storeRuleFromCumulusMessage({ rule });
+  await rulesModel.storeRuleFromCumulusMessage(rule);
   t.true(await rulesModel.exists({ name: rule.name }));
 });
 

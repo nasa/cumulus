@@ -610,14 +610,11 @@ class Rule extends Manager {
   /**
    * Generate a rule record from a Cumulus message, validate record, and store it in DynamoDB.
    *
-   * @param {Object} params
-   * @param {Object} params.rule - Rule object from a Cumulus message
+   * @param {Object} rule - Rule object from a Cumulus message
    * @returns {Promise<Object|undefined>}
    * @throws
    */
-  async storeRuleFromCumulusMessage({
-    rule,
-  }) {
+  async storeRuleFromCumulusMessage(rule) {
     const ruleRecord = await this.generateRuleRecord(rule);
 
     this.constructor.recordIsValid(ruleRecord, this.schema, this.removeAdditional);
@@ -644,9 +641,7 @@ class Rule extends Manager {
 
     return Promise.all(rules.map(
       (rule) =>
-        this.storeRuleFromCumulusMessage({
-          rule,
-        }).catch(log.error)
+        this.storeRuleFromCumulusMessage(rule).catch(log.error)
     ));
   }
 }
