@@ -12,7 +12,7 @@ This serves as a guide for new Cumulus users to deploy and learn how to use Cumu
 
 ### What is Cumulus
 
-Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth Science data streams.
+Cumulus is an open source set of components for creating cloud-based data ingest, archive, distribution and management designed for NASA's future Earth Science data streams.
 
 ### Who uses Cumulus
 
