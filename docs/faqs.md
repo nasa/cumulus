@@ -107,12 +107,6 @@ Below are some commonly asked questions that you may encounter that can assist y
 </details>
 
 <details>
-  <summary>How do I set up an AWS CloudFront endpoint to serve the Cumulus Dashboard?</summary>
-
-  Answer: Follow the instructions in the Configuration section of Cumulus Operator Docs [here](../operator-docs/serve-dashboard-from-cloudfront).
-</details>
-
-<details>
   <summary>What are the common use cases that a Cumulus operator encounters?</summary>
 
   Answer: The following are some examples of possible use cases you may see:
