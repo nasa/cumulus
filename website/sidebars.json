@@ -1,12 +1,14 @@
 {
   "docs": {
-    "About Cumulus": [
+    "Getting Started":[
       "cumulus-docs-readme",
+      "getting-started",
+      "glossary",
+      "faqs"
+    ],
+    "About Cumulus": [
       "architecture",
       "interfaces",
-      "getting-started",
-      "helpful-tips",
-      "glossary",
       "team"
     ],
     "Overviews": [
@@ -28,6 +30,7 @@
       "deployment/cloudwatch-logs-delivery"
     ],
     "Configuration": [
+      "configuration/data-management-types",
       "configuration/monitoring-readme",
       "configuration/server_access_logging",
       "configuration/cloudwatch-retention",
