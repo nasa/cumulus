@@ -171,10 +171,14 @@ module.exports.collection = {
             type: 'string',
           },
           lzards: {
-            backup: {
-              title: 'Backup File',
-              description: 'Boolean configuration value to determine if file type should be backed up by backup components.  Defaults to false',
-              type: 'boolean',
+            title: 'LZARDS configuration',
+            type: 'object',
+            properties: {
+              backup: {
+                title: 'LZARDS backup flag',
+                description: 'Boolean configuration value to determine if file type should be backed up by backup components.  Defaults to false',
+                type: 'boolean',
+              },
             },
           },
         },
