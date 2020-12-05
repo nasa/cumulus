@@ -4,7 +4,6 @@ const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
-const cryptoRandomString = require('crypto-random-string');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
