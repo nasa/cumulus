@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "es2019",
     "lib": [
-      "es2019"
+      "es2020"
     ],
     "outDir": "dist/src"
   },

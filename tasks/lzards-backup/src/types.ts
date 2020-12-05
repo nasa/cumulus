@@ -10,6 +10,14 @@ export interface HandlerEvent {
   input: HandlerInput
 }
 
+export type makeBackupFileRequestResult = {
+  statusCode?: number
+  granuleId: string,
+  filename: string,
+  body?: string,
+  status: 'COMPLETED' | 'FAILED' | 'INTERNAL FAILURE'
+};
+
 export type MessageGranuleFilesObject = {
   checksumType: string,
   checksum: string,
