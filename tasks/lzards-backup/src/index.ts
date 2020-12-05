@@ -16,6 +16,8 @@ import { ChecksumError, CollectionError } from './errors';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
+const CREDS_EXPIRY_SECONDS = 3600;
+
 export const generateAccessUrl = async (params: {
   creds: AWS.STS.AssumeRoleResponse,
   Key: string,
@@ -43,7 +45,7 @@ export const generateAccessUrl = async (params: {
     coreS3().config.update({ signatureVersion: 'v4' });
     s3 = coreS3();
   }
-  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: 3600 });
+  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: CREDS_EXPIRY_SECONDS });
 };
 
 export const setLzardsChecksumQueryType = (
@@ -204,7 +206,7 @@ export const generateAccessCredentials = async () => {
   // const sts = new AWS.STS({ region: process.env.REGION });
   const params = {
     RoleArn: getRequiredEnvVar('backup_role_arn'),
-    DurationSeconds: 600,
+    DurationSeconds: CREDS_EXPIRY_SECONDS,
     RoleSessionName: `${Date.now()}`,
   };
   const roleCreds = await sts().assumeRole(params).promise();
