@@ -13,7 +13,6 @@ const workflows = require('@cumulus/common/workflows');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { ValidationError } = require('@cumulus/errors');
-const { getMessageRules } = require('@cumulus/message/Rules');
 
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
@@ -577,72 +576,6 @@ class Rule extends Manager {
       );
     }
     return rules;
-  }
-
-  /**
-   * Generate an rule record from a Cumulus message.
-   *
-   * @param {Object} rule - A rule
-   * @returns {Object} A rule record
-   */
-  async generateRuleRecord(rule) {
-    const now = Date.now();
-
-    const record = {
-      name: rule.name,
-      workflow: rule.workflow,
-      provider: rule.provider,
-      collection: rule.collection,
-      meta: rule.meta,
-      payload: rule.payload,
-      queueUrl: rule.queueUrl,
-      rule: rule.rule,
-      state: rule.state,
-      createdAt: rule.createdAt,
-      updatedAt: now,
-      tags: rule.tags,
-      executionNamePrefix: rule.executionNamePrefix,
-    };
-
-    return record;
-  }
-
-  /**
-   * Generate a rule record from a Cumulus message, validate record, and store it in DynamoDB.
-   *
-   * @param {Object} rule - Rule object from a Cumulus message
-   * @returns {Promise<Object|undefined>}
-   * @throws
-   */
-  async storeRuleFromCumulusMessage(rule) {
-    const ruleRecord = await this.generateRuleRecord(rule);
-
-    this.constructor.recordIsValid(ruleRecord, this.schema, this.removeAdditional);
-
-    const updateParams = this._buildDocClientUpdateParams({
-      item: ruleRecord,
-      itemKey: { name: ruleRecord.name },
-    });
-    return this.dynamodbDocClient.update(updateParams).promise();
-  }
-
-  /**
-   * Generate and store rule records from a Cumulus message.
-   *
-   * @param {Object} cumulusMessage - Cumulus workflow message
-   * @returns {Promise}
-   */
-  async storeRulesFromCumulusMessage(cumulusMessage) {
-    const rules = getMessageRules(cumulusMessage);
-    if (rules.length === 0) {
-      log.info(`No rules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
-      return rules;
-    }
-
-    return Promise.all(rules.map(
-      (rule) =>
-        this.storeRuleFromCumulusMessage(rule).catch(log.error)
-    ));
   }
 }
 

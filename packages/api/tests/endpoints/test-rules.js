@@ -7,15 +7,18 @@ const request = require('supertest');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getKnexClient, localStackConnectionEnv, tableNames } = require('@cumulus/db');
 
 const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
+const { buildFakeExpressResponse } = require('./utils');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
   fakeRuleFactoryV2,
 } = require('../../lib/testUtils');
+const { post } = require('../../endpoints/rules');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
@@ -43,7 +46,7 @@ let accessTokenModel;
 let ruleModel;
 let buildPayloadStub;
 
-test.before(async () => {
+test.before(async (t) => {
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
@@ -66,6 +69,7 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.after.always(async () => {
@@ -268,12 +272,25 @@ test('POST creates a rule', async (t) => {
     .expect(200);
 
   const { message, record } = response.body;
+  const fetchedDynamoRecord = await ruleModel.get({
+    name: newRule.name,
+  });
+
+  const fetchedPostgresRecord = await t.context.dbClient.first()
+    .from(tableNames.rules)
+    .where({
+      name: newRule.name,
+    });
+
   t.is(message, 'Record saved');
 
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
 
   t.deepEqual(record, newRule);
+  t.not(fetchedPostgresRecord, undefined);
+  t.is(fetchedPostgresRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST creates a rule that is enabled by default', async (t) => {
@@ -388,6 +405,66 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   } finally {
     stub.restore();
   }
+});
+
+test('POST does not write to RDS if writing to DynamoDB fails', async (t) => {
+  const { dbClient } = t.context;
+  const newRule = fakeRuleFactoryV2({
+    name: 'rule_name',
+  });
+
+  const fakeRulesModel = {
+    exists: () => false,
+    create: () => {
+      throw new Error('Error!!');
+    },
+  };
+
+  const expressRequest = {
+    body: newRule,
+    testContext: {
+      dbClient,
+      rulesModel: fakeRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('Error!!'));
+
+  const dbRecords = await dbClient.select('name')
+    .from(tableNames.rules)
+    .where({
+      name: newRule.name,
+    });
+
+  t.is(dbRecords.length, 0);
+});
+
+test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
+  const newRule = fakeRuleFactoryV2({
+    name: 'rule_name',
+  });
+
+  const fakeDbClient = () => ({
+    insert: () => Promise.reject(new Error('Oh noes!!')),
+  });
+
+  const expressRequest = {
+    body: newRule,
+    testContext: {
+      dbClient: fakeDbClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('Oh noes!!'));
+  t.false(await ruleModel.exists(newRule.name));
 });
 
 test('PUT replaces a rule', async (t) => {

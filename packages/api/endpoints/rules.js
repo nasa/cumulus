@@ -5,6 +5,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
+const { getKnexClient, translateApiRuleToPostgresRule, tableNames } = require('@cumulus/db');
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
@@ -60,26 +61,32 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  try {
-    const data = req.body;
-    const name = data.name;
+  const {
+    model = new models.Rule(),
+    dbClient = await getKnexClient(),
+  } = req.testConext || {};
+  const rule = req.body || {};
+  const name = rule.name;
 
-    const model = new models.Rule();
+  if (await model.exists(name)) {
+    return res.boom.conflict(`A record already exists for ${name}`);
+  }
+
+  try {
+    const record = await model.create(rule);
+    const postgresRecord = translateApiRuleToPostgresRule(record);
 
     try {
-      await model.get({ name });
-      return res.boom.conflict(`A record already exists for ${name}`);
+      await dbClient(tableNames.rules).insert(postgresRecord, 'cumulus_id');
     } catch (error) {
-      if (error instanceof RecordDoesNotExist) {
-        const record = await model.create(data);
-
-        if (inTestMode()) {
-          await addToLocalES(record, indexRule);
-        }
-        return res.send({ message: 'Record saved', record });
-      }
+      await model.delete({ name });
       throw error;
     }
+
+    if (inTestMode()) {
+      await addToLocalES(record, indexRule);
+    }
+    return res.send({ message: 'Record saved', record });
   } catch (error) {
     if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
@@ -111,10 +118,19 @@ async function put({ params: { name }, body }, res) {
 
   try {
     const oldRule = await model.get({ name });
+    const postgresRecord = translateApiRuleToPostgresRule(oldRule);
+    const dbClient = await getKnexClient();
 
     // if rule type is onetime no change is allowed unless it is a rerun
     if (body.action === 'rerun') {
-      return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
+      return models.Rule.invoke(oldRule)
+        .then(async () => {
+          await dbClient.transaction(async (trx) => {
+            await trx(tableNames.rules).where({ name }).del();
+            await trx(tableNames.rules).insert(postgresRecord);
+          });
+          return res.send(oldRule);
+        });
     }
 
     // Remove all fields from the existing rule that are not supplied in body
@@ -123,6 +139,11 @@ async function put({ params: { name }, body }, res) {
     const newRule = await model.update(oldRule, body, fieldsToDelete);
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
+
+    await dbClient.transaction(async (trx) => {
+      await trx(tableNames.rules).where({ name }).del();
+      await trx(tableNames.rules).insert(postgresRecord);
+    });
 
     return res.send(newRule);
   } catch (error) {
