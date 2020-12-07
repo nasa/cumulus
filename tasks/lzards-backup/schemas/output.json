@@ -3,7 +3,7 @@
   "description": "Describes the output expected by the LzardsBackup task component",
   "type": "object",
   "required": ["backupResults", "originalPayload"],
-  "properties" {
+  "properties": {
     "backupResults": {
       "type": "object",
       "required": ["granules"],
