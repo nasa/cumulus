@@ -58,6 +58,7 @@ const runHandler = async ({
   executionArn,
   executionName,
   testDbName,
+  ...additionalParams
 }) => {
   fixture.resources = [executionArn];
   fixture.detail.executionArn = executionArn;
@@ -67,6 +68,7 @@ const runHandler = async ({
   fixture.detail.input = JSON.stringify(cumulusMessage);
 
   const sqsEvent = {
+    ...additionalParams,
     Records: [{
       eventSource: 'aws:sqs',
       body: JSON.stringify(fixture),
@@ -392,13 +394,20 @@ test('writeRecords() writes records to Dynamo and RDS', async (t) => {
 });
 
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
-  // will make PDR write throw an error
-  delete t.context.cumulusMessage.meta.collection;
+  // make execution write throw an error
+  const fakeExecutionModel = {
+    storeExecutionFromCumulusMessage: () => {
+      throw new Error('execution Dynamo error');
+    },
+  };
 
   const {
     handlerResponse,
     sqsEvent,
-  } = await runHandler(t.context);
+  } = await runHandler({
+    ...t.context,
+    executionModel: fakeExecutionModel,
+  });
 
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });

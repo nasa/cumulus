@@ -130,6 +130,7 @@ const writeRecords = async ({
     asyncOperationCumulusId,
     parentExecutionCumulusId,
     knex,
+    executionModel,
   });
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
@@ -140,6 +141,7 @@ const writeRecords = async ({
     providerCumulusId,
     knex,
     executionCumulusId,
+    pdrModel,
   });
 
   return writeGranules({
@@ -168,7 +170,7 @@ const handler = async (event) => {
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
     try {
-      return await writeRecords({ cumulusMessage, knex });
+      return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
