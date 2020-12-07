@@ -471,32 +471,6 @@ test('writeExecutionViaTransaction() will not allow a running status to replace 
   t.is(record.status, 'completed');
 });
 
-test('writeExecutionViaTransaction() throws an error on failed upsert', async (t) => {
-  const { cumulusMessage, knex } = t.context;
-
-  cumulusMessage.meta.status = 'completed';
-
-  await knex.transaction(
-    (trx) =>
-      writeExecutionViaTransaction({
-        cumulusMessage,
-        trx,
-      })
-  );
-
-  delete cumulusMessage.meta.status;
-
-  await t.throwsAsync(
-    knex.transaction(
-      (trx) =>
-        writeExecutionViaTransaction({
-          cumulusMessage,
-          trx,
-        })
-    )
-  );
-});
-
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
