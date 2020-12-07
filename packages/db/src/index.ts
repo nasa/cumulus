@@ -33,3 +33,4 @@ export {
 } from './types';
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
 export { translateApiCollectionToPostgresCollection } from './collections';
+export { translateApiRuleToPostgresRule } from './rules';
