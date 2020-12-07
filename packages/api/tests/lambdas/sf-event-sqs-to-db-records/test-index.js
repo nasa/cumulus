@@ -215,7 +215,7 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('writeRecords() only writes records to Dynamo if message comes from pre-RDS deployment', async (t) => {
+test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
   const {
     cumulusMessage,
     knex,
