@@ -66,6 +66,20 @@ const writeRecordsToDynamoDb = async ({
   return results;
 };
 
+/**
+ * Write records to data stores. Use conditional logic to write either to
+ * DynamoDB only or to DynamoDB and RDS.
+ *
+ * @param {Object} params
+ * @param {Object} params.cumulusMessage - Cumulus workflow message
+ * @param {Knex} params.knex - Knex client
+ * @param {Object} [params.granuleModel]
+ *   Optional instance of granules model used for writing to DynamoDB
+ * @param {Object} [params.executionModel]
+ *   Optional instance of execution model used for writing to DynamoDB
+ * @param {Object} [params.pdrModel]
+ *   Optional instance of PDR model used for writing to DynamoDB
+ */
 const writeRecords = async ({
   cumulusMessage,
   knex,
