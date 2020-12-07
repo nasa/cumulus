@@ -10,9 +10,10 @@
  * const Executions = require('@cumulus/message/Executions');
  */
 
-import get from 'lodash/get';
 import isString from 'lodash/isString';
 import { Message } from '@cumulus/types';
+
+import { getMetaStatus } from './workflows';
 
 /**
  * Build execution ARN from a state machine ARN and execution name
@@ -77,7 +78,7 @@ export const getStateMachineArnFromExecutionArn = (
 export const getMessageExecutionName = (
   message: Message.CumulusMessage
 ) => {
-  const executionName = get(message, 'cumulus_meta.execution_name');
+  const executionName = message.cumulus_meta.execution_name;
   if (!isString(executionName)) {
     throw new Error('cumulus_meta.execution_name not set in message');
   }
@@ -96,7 +97,7 @@ export const getMessageExecutionName = (
 export const getMessageStateMachineArn = (
   message: Message.CumulusMessage
 ) => {
-  const stateMachineArn = get(message, 'cumulus_meta.state_machine');
+  const stateMachineArn = message.cumulus_meta.state_machine;
   if (!isString(stateMachineArn)) {
     throw new Error('cumulus_meta.state_machine not set in message');
   }
@@ -147,3 +148,33 @@ export const getMessageExecutionParentArn = (
 export const getMessageCumulusVersion = (
   message: Message.CumulusMessage
 ): string | undefined => message.cumulus_meta?.cumulus_version;
+
+/**
+ * Get the workflow original payload, if any.
+ *
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {unknown|undefined} The workflow original payload
+ *
+ * @alias module:Executions
+ */
+export const getMessageExecutionOriginalPayload = (
+  message: Message.CumulusMessage
+): unknown | undefined => {
+  const status = getMetaStatus(message);
+  return status === 'running' ? message.payload : undefined;
+};
+
+/**
+ * Get the workflow final payload, if any.
+ *
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {unknown|undefined} The workflow final payload
+ *
+ * @alias module:Executions
+ */
+export const getMessageExecutionFinalPayload = (
+  message: Message.CumulusMessage
+): unknown | undefined => {
+  const status = getMetaStatus(message);
+  return status === 'running' ? undefined : message.payload;
+};

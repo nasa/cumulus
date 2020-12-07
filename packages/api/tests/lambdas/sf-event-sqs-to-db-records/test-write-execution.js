@@ -2,8 +2,8 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const uuidv4 = require('uuid/v4');
 
 const {
   localStackConnectionEnv,
@@ -15,19 +15,13 @@ const {
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
 
-const sandbox = sinon.createSandbox();
-const hasAsyncOpStub = sandbox.stub().resolves(true);
-const hasParentExecutionStub = sandbox.stub().resolves(true);
-
 const {
-  shouldWriteExecutionToRDS,
+  buildExecutionRecord,
+  shouldWriteExecutionToPostgres,
+  writeRunningExecutionViaTransaction,
+  writeExecutionViaTransaction,
   writeExecution,
-} = proxyquire('../../../lambdas/sf-event-sqs-to-db-records/write-execution', {
-  './utils': {
-    hasNoAsyncOpOrExists: hasAsyncOpStub,
-    hasNoParentExecutionOrExists: hasParentExecutionStub,
-  },
-});
+} = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
 
 test.before(async (t) => {
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
@@ -53,33 +47,43 @@ test.before(async (t) => {
 });
 
 test.beforeEach((t) => {
-  process.env.RDS_DEPLOYMENT_CUMULUS_VERSION = '3.0.0';
-  t.context.postRDSDeploymentVersion = '4.0.0';
-  t.context.preRDSDeploymentVersion = '2.9.99';
-
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;
 
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
 
+  t.context.workflowStartTime = Date.now();
+  t.context.workflowTasks = {
+    task1: {
+      key: 'value',
+    },
+  };
+  t.context.workflowName = 'TestWorkflow';
+
+  t.context.asyncOperationId = uuidv4();
+  t.context.collectionNameVersion = {
+    name: cryptoRandomString({ length: 5 }),
+    version: '0.0.0',
+  };
+  t.context.parentExecutionArn = `arn${cryptoRandomString({ length: 5 })}`;
+
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122,
+      workflow_start_time: t.context.workflowStartTime,
       cumulus_version: t.context.postRDSDeploymentVersion,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
     },
     meta: {
       status: 'running',
+      workflow_name: t.context.workflowName,
+      workflow_tasks: t.context.workflowTasks,
+    },
+    payload: {
+      foo: 'bar',
     },
   };
-
-  t.context.hasAsyncOpStub = hasAsyncOpStub;
-  t.context.hasAsyncOpStub.resetHistory();
-
-  t.context.hasParentExecutionStub = hasParentExecutionStub;
-  t.context.hasParentExecutionStub.resetHistory();
 });
 
 test.after.always(async (t) => {
@@ -87,95 +91,384 @@ test.after.always(async (t) => {
     executionModel,
   } = t.context;
   await executionModel.deleteTable();
-  sandbox.restore();
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
   await t.context.knexAdmin.destroy();
 });
 
-test('shouldWriteExecutionToRDS returns false for pre-RDS deployment execution message', async (t) => {
-  const { cumulusMessage, knex, preRDSDeploymentVersion } = t.context;
-  t.false(await shouldWriteExecutionToRDS(
+test('shouldWriteExecutionToPostgres() returns false if collection from message is not found in Postgres', async (t) => {
+  const {
+    collectionNameVersion,
+  } = t.context;
+
+  await t.false(
+    shouldWriteExecutionToPostgres({
+      messageCollectionNameVersion: collectionNameVersion,
+      collectionCumulusId: undefined,
+    })
+  );
+});
+
+test('shouldWriteExecutionToPostgres() returns false if async operation from message is not found in Postgres', async (t) => {
+  const {
+    asyncOperationId,
+  } = t.context;
+
+  t.false(
+    shouldWriteExecutionToPostgres({
+      messageAsyncOperationId: asyncOperationId,
+      asyncOperationCumulusId: undefined,
+    })
+  );
+});
+
+test('shouldWriteExecutionToPostgres() returns false if parent execution from message is not found in Postgres', async (t) => {
+  const {
+    parentExecutionArn,
+  } = t.context;
+
+  t.false(
+    shouldWriteExecutionToPostgres({
+      messageParentExecutionArn: parentExecutionArn,
+      parentExecutionCumulusId: undefined,
+    })
+  );
+});
+
+test('buildExecutionRecord builds correct record for "running" execution', (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    postRDSDeploymentVersion,
+    workflowName,
+    workflowTasks,
+  } = t.context;
+
+  const now = new Date();
+  const record = buildExecutionRecord({
+    cumulusMessage,
+    now,
+    asyncOperationCumulusId: 1,
+    collectionCumulusId: 2,
+    parentExecutionCumulusId: 3,
+  });
+
+  t.deepEqual(
+    record,
     {
-      ...cumulusMessage,
-      cumulus_meta: {
-        ...cumulusMessage.cumulus_meta,
-        cumulus_version: preRDSDeploymentVersion,
-      },
+      arn: executionArn,
+      cumulus_version: postRDSDeploymentVersion,
+      duration: 0,
+      original_payload: cumulusMessage.payload,
+      status: 'running',
+      tasks: workflowTasks,
+      url: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
+      workflow_name: workflowName,
+      error: {},
+      final_payload: undefined,
+      async_operation_cumulus_id: 1,
+      collection_cumulus_id: 2,
+      parent_cumulus_id: 3,
+      created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
+      timestamp: now,
+      updated_at: now,
+    }
+  );
+});
+
+test('buildExecutionRecord returns record with correct payload for non-running execution', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  const record = buildExecutionRecord({
+    cumulusMessage,
+  });
+
+  t.is(record.status, 'completed');
+  t.is(record.original_payload, undefined);
+  t.deepEqual(record.final_payload, cumulusMessage.payload);
+});
+
+test('buildExecutionRecord returns record with duration', (t) => {
+  const {
+    cumulusMessage,
+    workflowStartTime,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.cumulus_meta.workflow_stop_time = workflowStartTime + 5000;
+
+  const record = buildExecutionRecord({
+    cumulusMessage,
+  });
+
+  t.is(record.duration, 5);
+});
+
+test('buildExecutionRecord returns record with error', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'failed';
+  const exception = {
+    Error: new Error('fake error'),
+    Cause: 'an error occurred',
+  };
+  cumulusMessage.exception = exception;
+
+  const record = buildExecutionRecord({
+    cumulusMessage,
+  });
+
+  t.deepEqual(record.error, exception);
+});
+
+test('writeRunningExecutionViaTransaction only updates allowed fields on conflict', async (t) => {
+  const { executionArn, knex } = t.context;
+  const initialDatetime = new Date();
+  const executionRecord = {
+    arn: executionArn,
+    status: 'running',
+    url: 'first-url',
+    original_payload: {
+      key: 'value',
     },
-    1,
-    knex
-  ));
+    created_at: initialDatetime,
+    updated_at: initialDatetime,
+    timestamp: initialDatetime,
+    workflow_name: 'TestWorkflow',
+  };
+  await knex(tableNames.executions).insert(executionRecord);
+
+  const newPayload = {
+    key2: 'value2',
+  };
+  const newDatetime = new Date();
+  executionRecord.created_at = newDatetime;
+  executionRecord.updated_at = newDatetime;
+  executionRecord.timestamp = newDatetime;
+  executionRecord.original_payload = newPayload;
+  executionRecord.workflow_name = 'TestWorkflow2';
+  executionRecord.url = 'new-url';
+
+  await knex.transaction(
+    (trx) =>
+      writeRunningExecutionViaTransaction({
+        trx,
+        executionRecord,
+      })
+  );
+  const updatedRecord = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+  t.is(updatedRecord.status, 'running');
+  // should have been updated
+  t.deepEqual(updatedRecord.original_payload, newPayload);
+  t.deepEqual(updatedRecord.timestamp, newDatetime);
+  t.deepEqual(updatedRecord.updated_at, newDatetime);
+  t.deepEqual(updatedRecord.created_at, newDatetime);
+  // should not have been updated
+  t.is(updatedRecord.url, 'first-url');
+  t.is(updatedRecord.workflow_name, 'TestWorkflow');
 });
 
-test.serial('shouldWriteExecutionToRDS returns true for post-RDS deployment execution message if all referenced objects exist', async (t) => {
+test('writeExecutionViaTransaction() writes record with foreign key references', async (t) => {
   const {
-    knex,
+    collectionNameVersion,
+    parentExecutionArn,
+    executionArn,
     cumulusMessage,
+    knex,
   } = t.context;
 
-  t.context.hasAsyncOpStub.withArgs(cumulusMessage).resolves(true);
-  t.context.hasParentExecutionStub.withArgs(cumulusMessage).resolves(true);
+  const asyncOperation = {
+    id: uuidv4(),
+    description: 'test async operation',
+    operation_type: 'Bulk Granules',
+    status: 'RUNNING',
+  };
+  cumulusMessage.cumulus_meta.asyncOperationId = asyncOperation.id;
+  const asyncOperationInsertResult = await knex(tableNames.asyncOperations)
+    .insert(asyncOperation)
+    .returning('cumulus_id');
 
-  t.true(
-    await shouldWriteExecutionToRDS(
-      cumulusMessage,
-      1,
-      knex
-    )
+  const collection = {
+    ...collectionNameVersion,
+    sample_file_name: 'file.txt',
+    granule_id_validation_regex: '*',
+    granule_id_extraction_regex: '*',
+    files: [],
+  };
+  cumulusMessage.cumulus_meta.collection = collection;
+  const collectionInsertResult = await knex(tableNames.collections)
+    .insert(collection)
+    .returning('cumulus_id');
+
+  const parentExecution = {
+    arn: parentExecutionArn,
+    status: 'completed',
+  };
+  cumulusMessage.cumulus_meta.parentExecutionArn = parentExecution;
+  const parentExecutionInsertResult = await knex(tableNames.executions)
+    .insert(parentExecution)
+    .returning('cumulus_id');
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        asyncOperationCumulusId: asyncOperationInsertResult[0],
+        collectionCumulusId: collectionInsertResult[0],
+        parentExecutionCumulusId: parentExecutionInsertResult[0],
+        trx,
+      })
   );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.async_operation_cumulus_id, asyncOperationInsertResult[0]);
+  t.is(record.collection_cumulus_id, collectionInsertResult[0]);
+  t.is(record.parent_cumulus_id, parentExecutionInsertResult[0]);
 });
 
-test.serial('shouldWriteExecutionToRDS returns false if error is thrown', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-    collectionCumulusId,
-  } = t.context;
+test('writeExecutionViaTransaction() can be used to create a new running execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
 
-  t.context.hasParentExecutionStub.withArgs(cumulusMessage).throws();
-
-  t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
   );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'running');
 });
 
-test('shouldWriteExecutionToRDS returns false if collection cumulus_id is not defined', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-  } = t.context;
+test('writeExecutionViaTransaction() can be used to update a running execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
 
-  t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, undefined, knex)
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
   );
+
+  const newPayload = {
+    key: cryptoRandomString({ length: 5 }),
+  };
+  cumulusMessage.payload = newPayload;
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'running');
+  t.deepEqual(record.original_payload, newPayload);
 });
 
-test.serial('shouldWriteExecutionToRDS returns false if any referenced objects are missing', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-    collectionCumulusId,
-  } = t.context;
+test('writeExecutionViaTransaction() can be used to create a completed execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
 
-  t.context.hasAsyncOpStub.withArgs(cumulusMessage).resolves(false);
+  cumulusMessage.meta.status = 'completed';
 
-  t.false(
-    await shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
   );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'completed');
 });
 
-test.serial('shouldWriteExecutionToRDS throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
-  const {
-    knex,
-    cumulusMessage,
-    collectionCumulusId,
-  } = t.context;
+test('writeExecutionViaTransaction() can be used to updated a completed execution', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
 
-  delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
-  await t.throwsAsync(
-    shouldWriteExecutionToRDS(cumulusMessage, collectionCumulusId, knex)
+  cumulusMessage.meta.status = 'completed';
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
   );
+
+  const newPayload = {
+    key: cryptoRandomString({ length: 3 }),
+  };
+  cumulusMessage.payload = newPayload;
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'completed');
+  t.deepEqual(record.final_payload, newPayload);
+});
+
+test('writeExecutionViaTransaction() will not allow a running status to replace a completed status', async (t) => {
+  const { executionArn, cumulusMessage, knex } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  cumulusMessage.meta.status = 'running';
+
+  await knex.transaction(
+    (trx) =>
+      writeExecutionViaTransaction({
+        cumulusMessage,
+        trx,
+      })
+  );
+
+  const record = await knex(tableNames.executions)
+    .where({ arn: executionArn })
+    .first();
+
+  t.is(record.status, 'completed');
 });
 
 test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {

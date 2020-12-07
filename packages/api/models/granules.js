@@ -63,7 +63,10 @@ const renameProperty = (from, to, obj) => {
 };
 
 class Granule extends Manager {
-  constructor() {
+  constructor({
+    fileUtils = FileUtils,
+    stepFunctionUtils = StepFunctions,
+  } = {}) {
     const globalSecondaryIndexes = [{
       IndexName: 'collectionId-granuleId-index',
       KeySchema: [
@@ -92,10 +95,16 @@ class Granule extends Manager {
       tableIndexes: { GlobalSecondaryIndexes: globalSecondaryIndexes },
       schema: granuleSchema,
     });
+
+    this.fileUtils = fileUtils;
+    this.stepFunctionUtils = stepFunctionUtils;
   }
 
   async get(...args) {
-    return translateGranule(await super.get(...args));
+    return translateGranule(
+      await super.get(...args),
+      this.fileUtils
+    );
   }
 
   getRecord({ granuleId }) {
@@ -106,7 +115,7 @@ class Granule extends Manager {
     const result = cloneDeep(await super.batchGet(...args));
 
     result.Responses[this.tableName] = await Promise.all(
-      result.Responses[this.tableName].map(translateGranule)
+      result.Responses[this.tableName].map((response) => translateGranule(response))
     );
 
     return result;
@@ -118,7 +127,9 @@ class Granule extends Manager {
     if (scanResponse.Items) {
       return {
         ...scanResponse,
-        Items: await Promise.all(scanResponse.Items.map(translateGranule)),
+        Items: await Promise.all(scanResponse.Items.map(
+          (response) => translateGranule(response)
+        )),
       };
     }
 
@@ -332,7 +343,7 @@ class Granule extends Manager {
    * @param {Date} params.executionDescription.stopDate - Stop date of the workflow execution
    * @returns {Promise<Object>} A granule record
    */
-  static async generateGranuleRecord({
+  async generateGranuleRecord({
     s3,
     granule,
     message,
@@ -344,7 +355,7 @@ class Granule extends Manager {
     if (!collectionId) {
       throw new CumulusModelError('meta.collection required to generate a granule record');
     }
-    const granuleFiles = await FileUtils.buildDatabaseFiles({
+    const granuleFiles = await this.fileUtils.buildDatabaseFiles({
       s3,
       providerURL: buildURL({
         protocol: message.meta.provider.protocol,
@@ -556,8 +567,8 @@ class Granule extends Manager {
     await pMap(
       get(granule, 'files', []),
       (file) => {
-        const bucket = FileUtils.getBucket(file);
-        const key = FileUtils.getKey(file);
+        const bucket = this.fileUtils.getBucket(file);
+        const key = this.fileUtils.getKey(file);
         return s3Utils.deleteS3Object(bucket, key);
       }
     );
@@ -671,7 +682,7 @@ class Granule extends Manager {
     executionUrl,
     executionDescription,
   }) {
-    const granuleRecord = await Granule.generateGranuleRecord({
+    const granuleRecord = await this.generateGranuleRecord({
       s3: awsClients.s3(),
       granule,
       message: cumulusMessage,
@@ -679,6 +690,18 @@ class Granule extends Manager {
       executionDescription,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
+  }
+
+  async describeGranuleExecution(executionArn) {
+    let executionDescription;
+    try {
+      executionDescription = await this.stepFunctionUtils.describeExecution({
+        executionArn,
+      });
+    } catch (error) {
+      log.error(`Could not describe execution ${executionArn}`, error);
+    }
+    return executionDescription;
   }
 
   /**
@@ -696,13 +719,7 @@ class Granule extends Manager {
 
     const executionArn = getMessageExecutionArn(cumulusMessage);
     const executionUrl = getExecutionUrlFromArn(executionArn);
-
-    let executionDescription;
-    try {
-      executionDescription = await StepFunctions.describeExecution({ executionArn });
-    } catch (error) {
-      log.error(`Could not describe execution ${executionArn}`, error);
-    }
+    const executionDescription = await this.describeGranuleExecution(executionArn);
 
     return Promise.all(granules.map(
       (granule) =>

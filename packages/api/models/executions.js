@@ -1,6 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
 const pLimit = require('p-limit');
 
 const {
@@ -13,9 +12,15 @@ const {
   getMessageExecutionParentArn,
   getMessageCumulusVersion,
   getExecutionUrlFromArn,
+  getMessageExecutionOriginalPayload,
+  getMessageExecutionFinalPayload,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
+  getMessageWorkflowTasks,
+  getMessageWorkflowStartTime,
+  getMessageWorkflowStopTime,
+  getMessageWorkflowName,
 } = require('@cumulus/message/workflows');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -47,8 +52,8 @@ class Execution extends Manager {
     if (!status) throw new Error('Unable to determine status from Cumulus message');
 
     const now = Date.now();
-    const workflowStartTime = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
-    const workflowStopTime = get(cumulusMessage, 'cumulus_meta.workflow_stop_time');
+    const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+    const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
     const collectionId = getCollectionIdFromMessage(cumulusMessage);
 
@@ -59,16 +64,16 @@ class Execution extends Manager {
       asyncOperationId: getMessageAsyncOperationId(cumulusMessage),
       parentArn: getMessageExecutionParentArn(cumulusMessage),
       execution: getExecutionUrlFromArn(arn),
-      tasks: get(cumulusMessage, 'meta.workflow_tasks'),
+      tasks: getMessageWorkflowTasks(cumulusMessage),
       error: parseException(cumulusMessage.exception),
-      type: get(cumulusMessage, 'meta.workflow_name'),
+      type: getMessageWorkflowName(cumulusMessage),
       collectionId,
       status,
       createdAt: workflowStartTime,
       timestamp: now,
       updatedAt: now,
-      originalPayload: status === 'running' ? cumulusMessage.payload : undefined,
-      finalPayload: status === 'running' ? undefined : cumulusMessage.payload,
+      originalPayload: getMessageExecutionOriginalPayload(cumulusMessage),
+      finalPayload: getMessageExecutionFinalPayload(cumulusMessage),
       duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000,
     };
 

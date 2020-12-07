@@ -23,7 +23,16 @@ const Granule = require('../../../models/granules');
 test.before(async (t) => {
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
 
-  const granuleModel = new Granule();
+  const fakeFileUtils = {
+    buildDatabaseFiles: async (params) => params.files,
+  };
+  const fakeStepFunctionUtils = {
+    describeExecution: async () => ({}),
+  };
+  const granuleModel = new Granule({
+    fileUtils: fakeFileUtils,
+    stepFunctionUtils: fakeStepFunctionUtils,
+  });
   await granuleModel.createTable();
   t.context.granuleModel = granuleModel;
 
@@ -114,13 +123,14 @@ test.after.always(async (t) => {
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {
-  const { cumulusMessage, knex, providerCumulusId } = t.context;
+  const { cumulusMessage, knex, providerCumulusId, granuleModel } = t.context;
   await t.throwsAsync(
     writeGranules({
       cumulusMessage,
       collectionCumulusId: undefined,
       providerCumulusId,
       knex,
+      granuleModel,
     })
   );
 });
@@ -140,6 +150,7 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
     collectionCumulusId,
     providerCumulusId,
     knex,
+    granuleModel,
   });
 
   t.true(await granuleModel.exists({ granuleId }));
@@ -171,6 +182,7 @@ test('writeGranules() handles successful and failing writes independently', asyn
     collectionCumulusId,
     providerCumulusId,
     knex,
+    granuleModel,
   }));
 
   t.true(await granuleModel.exists({ granuleId }));
@@ -185,6 +197,7 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
     knex,
     collectionCumulusId,
     providerCumulusId,
+    granuleModel,
   } = t.context;
 
   cumulusMessage.payload.granules = [
@@ -198,6 +211,7 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
     collectionCumulusId,
     providerCumulusId,
     knex,
+    granuleModel,
   }));
 });
 
@@ -215,6 +229,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo
     storeGranuleFromCumulusMessage: () => {
       throw new Error('Granules dynamo error');
     },
+    describeGranuleExecution: async () => ({}),
   };
 
   const [error] = await t.throwsAsync(
@@ -260,6 +275,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
     collectionCumulusId,
     providerCumulusId,
     knex,
+    granuleModel,
   }));
 
   t.true(error.message.includes('Granules RDS error'));

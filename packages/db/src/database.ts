@@ -26,8 +26,8 @@ export const getRecordCumulusId = async<T extends { cumulus_id: number }>(
   table: tableNames,
   knex: Knex
 ): Promise<number> => {
-  const record: T = await knex.select('cumulus_id')
-    .from(table)
+  const record: T = await knex(table)
+    .select('cumulus_id')
     .where(whereClause)
     .first();
   if (!isRecordDefined(record)) {
