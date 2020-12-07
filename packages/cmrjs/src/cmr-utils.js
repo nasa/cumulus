@@ -126,7 +126,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: 'echo10',
-    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
+    link: `${getSearchUrl()}concepts/${conceptId}.echo10`,
   };
 }
 
@@ -153,7 +153,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
-    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
+    link: `${getSearchUrl()}concepts/${conceptId}.umm_json`,
   };
 }
 
