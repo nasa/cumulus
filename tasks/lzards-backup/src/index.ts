@@ -256,7 +256,7 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
   )}`);
   return {
     backupResults: filteredResults.map((result) => result.value).flat(),
-    originalPayload: event,
+    originalPayload: event.input,
   };
 };
 

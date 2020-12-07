@@ -5,27 +5,21 @@
   "required": ["backupResults", "originalPayload"],
   "properties": {
     "backupResults": {
-      "type": "object",
-      "required": ["granules"],
-      "properties": {
-        "granules": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["filename", "status", "granuleId"],
-            "properties": {
-              "body": { "type": "string" },
-              "filename": { "type": "string" },
-              "status": { "type": "string" },
-              "granuleId": { "type": "string" },
-              "statusCode": { "type": "string" }
-            }
-          }
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["filename", "status", "granuleId"],
+        "properties": {
+          "body": { "type": "string" },
+          "filename": { "type": "string" },
+          "status": { "type": "string" },
+          "granuleId": { "type": "string" },
+          "statusCode": { "type": "number" }
         }
       }
     },
     "originalPayload": {
-      "type": "Object"
+      "type": "object"
     }
   }
 }
