@@ -475,7 +475,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
         statusCode: 201,
       },
     ],
-    originalPayload: fakePayload,
+    originalPayload: fakePayload.input,
   };
   t.deepEqual(actual, expected);
 });
@@ -515,7 +515,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
   const actual = await index.backupGranulesToLzards(fakePayload);
   const expected = {
     backupResults: [],
-    originalPayload: fakePayload,
+    originalPayload: fakePayload.input,
   };
   t.deepEqual(actual, expected);
 });
@@ -588,7 +588,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
         granuleId: 'FakeGranule2',
       },
     ],
-    originalPayload: fakePayload,
+    originalPayload: fakePayload.input,
   };
   t.deepEqual(actual, expected);
 });
