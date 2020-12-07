@@ -1,0 +1,31 @@
+{
+  "title": "LzardsBackupOutput",
+  "description": "Describes the output expected by the LzardsBackup task component",
+  "type": "object",
+  "required": ["backupResults", "originalPayload"],
+  "properties" {
+    "backupResults": {
+      "type": "object",
+      "required": ["granules"],
+      "properties": {
+        "granules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["filename", "status", "granuleId"],
+            "properties": {
+              "body": { "type": "string" },
+              "filename": { "type": "string" },
+              "status": { "type": "string" },
+              "granuleId": { "type": "string" },
+              "statusCode": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "originalPayload": {
+      "type": "Object"
+    }
+  }
+}

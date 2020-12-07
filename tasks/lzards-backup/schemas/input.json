@@ -1,0 +1,40 @@
+{
+  "title": "LzardsBackupInput",
+  "description": "Describes the input expected by the LzardsBackup task component",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["files"],
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "filename",
+                "filepath",
+                "bucket",
+                "name"
+              ],
+              "properties": {
+                "filename": {
+                  "type": "string",
+                  "description": "The s3:// URI of the file"
+                },
+                "checksumType": { "type": "string" },
+                "checksum": { "type": "string" },
+                "filepath": { "type": "string" },
+                "bucket": { "type": "string" },
+                "name": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
