@@ -47,6 +47,7 @@ let ruleModel;
 let buildPayloadStub;
 
 test.before(async (t) => {
+  process.env = { ...process.env, ...localStackConnectionEnv };
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
@@ -449,7 +450,7 @@ test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
   });
 
   const fakeDbClient = () => ({
-    insert: () => Promise.reject(new Error('Oh noes!!')),
+    insert: () => Promise.reject(new Error('Some error')),
   });
 
   const expressRequest = {
@@ -463,7 +464,7 @@ test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
 
   await post(expressRequest, response);
 
-  t.true(response.boom.badImplementation.calledWithMatch('Oh noes!!'));
+  t.true(response.boom.badImplementation.calledWithMatch('Some error'));
   t.false(await ruleModel.exists(newRule.name));
 });
 

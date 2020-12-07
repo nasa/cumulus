@@ -577,6 +577,15 @@ class Rule extends Manager {
     }
     return rules;
   }
+
+  /**
+   * Returns `true` if the rule with the specified name exists, false otherwise
+   * @param {string} name - rule name
+   * @returns {boolean} `true` if the rule with the specified name exists, false otherwise
+   */
+  async exists(name) {
+    return super.exists({ name });
+  }
 }
 
 module.exports = Rule;
