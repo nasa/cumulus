@@ -98,12 +98,10 @@ const writeRunningPdrViaTransaction = async ({
     pdrRecord
   );
   // return trx(tableNames.pdrs)
-  //   .where({
-  //     execution_cumulus_id: 'foo',
-  //   })
   //   .insert(pdrRecord)
   //   .onConflict('name')
   //   .merge()
+  //   .whereRaw('pdrs.execution_cumulus_id <> ?', pdrRecord.execution_cumulus_id)
   //   .returning('cumulus_id');
 };
 

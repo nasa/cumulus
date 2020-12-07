@@ -161,7 +161,7 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
   );
 });
 
-test.only('writeRunningPdrViaTransaction() updates a "completed" record to "running" if the execution is different', async (t) => {
+test('writeRunningPdrViaTransaction() updates a "completed" record to "running" if the execution is different', async (t) => {
   const {
     providerCumulusId,
     collectionCumulusId,
@@ -223,6 +223,57 @@ test.only('writeRunningPdrViaTransaction() updates a "completed" record to "runn
   t.is(updatedRecord.status, 'running');
   t.is(updatedRecord.progress, 50);
   t.is(updatedRecord.duration, 1);
+});
+
+test.only('writeRunningPdrViaTransaction() does not update a "completed" record to "running" if the execution is the same', async (t) => {
+  const {
+    providerCumulusId,
+    collectionCumulusId,
+    pdr,
+    knex,
+  } = t.context;
+
+  const executionResult = await knex(tableNames.executions)
+    .insert({
+      arn: 'arn1',
+      status: 'completed',
+    })
+    .returning('cumulus_id');
+
+  const pdrRecord = {
+    name: pdr.name,
+    status: 'completed',
+    execution_cumulus_id: executionResult[0],
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
+    progress: 100,
+    pan_sent: true,
+    pan_message: 'message',
+    stats: {},
+    duration: 3,
+    timestamp: new Date(),
+    created_at: new Date(),
+  };
+  await knex(tableNames.pdrs).insert(pdrRecord);
+  const firstRecord = await knex(tableNames.pdrs)
+    .where({ name: pdr.name })
+    .first();
+  t.is(firstRecord.status, 'completed');
+
+  // update status to running
+  pdrRecord.status = 'running';
+
+  await knex.transaction(
+    (trx) =>
+      writeRunningPdrViaTransaction({
+        trx,
+        pdrRecord,
+      })
+  );
+  const updatedRecord = await knex(tableNames.pdrs)
+    .where({ name: pdr.name })
+    .first();
+  t.is(updatedRecord.status, 'completed');
 });
 
 test('writePdr() returns true if there is no PDR on the message', async (t) => {
