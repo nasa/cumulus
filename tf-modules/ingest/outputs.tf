@@ -50,6 +50,12 @@ output "kinesis_inbound_event_logger_lambda_function_arn" {
   value = aws_lambda_function.kinesis_inbound_event_logger.arn
 }
 
+output "lzards_backup_lambda_function_arn" {
+  value = {
+    task_arn = aws_lambda_function.lzards_backup_task.arn
+  }
+}
+
 output "manual_consumer_lambda_function_arn" {
   value = aws_lambda_function.manual_consumer.arn
 }

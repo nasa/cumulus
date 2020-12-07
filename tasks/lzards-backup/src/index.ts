@@ -1,18 +1,21 @@
 import AWS from 'aws-sdk';
 import got from 'got';
 import Logger from '@cumulus/logger';
+import { Context } from 'aws-lambda';
 
-import { getSecretString } from '@cumulus/aws-client/SecretsManager';
-import { getLaunchpadToken } from '@cumulus/launchpad-auth';
-import { PartialCollectionRecord } from '@cumulus/types/api/collections';
-import { inTestMode } from '@cumulus/aws-client/test-utils';
-import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
+import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
+import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { getCollections } from '@cumulus/api-client/collections';
+import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { getRequiredEnvVar } from '@cumulus/common/env';
+import { getSecretString } from '@cumulus/aws-client/SecretsManager';
+import { inTestMode } from '@cumulus/aws-client/test-utils';
+import { PartialCollectionRecord } from '@cumulus/types/api/collections';
+import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
 
-import { makeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
-import { isFulfilledPromise } from './typeGuards';
 import { ChecksumError, CollectionError } from './errors';
+import { isFulfilledPromise } from './typeGuards';
+import { makeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
@@ -223,8 +226,9 @@ export const getAuthToken = async () => {
   return token;
 };
 
-export const handler = async (event: HandlerEvent) => {
+export const backupGranulesToLzards = async (event: HandlerEvent) => {
   // Given an array of granules, submit each file for backup.
+  log.warn(`Running backup on ${JSON.stringify(event)}`);
   const roleCreds = await generateAccessCredentials();
   const authToken = await getAuthToken() as string;
 
@@ -243,5 +247,20 @@ export const handler = async (event: HandlerEvent) => {
   const filteredResults = backupResults.filter(
     (result) => isFulfilledPromise(result)
   ) as PromiseFulfilledResult<makeBackupFileRequestResult[]>[];
-  return filteredResults.map((result) => result.value).flat();
+
+  console.log(`Output is ${JSON.stringify(
+    {
+      backupResults: filteredResults.map((result) => result.value).flat(),
+      originalPayload: event,
+    }
+  )}`);
+  return {
+    backupResults: filteredResults.map((result) => result.value).flat(),
+    originalPayload: event,
+  };
 };
+
+export const handler = async (
+  event: CumulusMessage | CumulusRemoteMessage,
+  context: Context
+) => runCumulusTask(backupGranulesToLzards, event, context);

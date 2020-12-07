@@ -457,23 +457,26 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
   process.env.provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
 
-  const actual = await index.handler(fakePayload);
-  const expected = [
-    {
-      body: 'fake body',
-      filename: 'foo.jpg',
-      status: 'COMPLETED',
-      granuleId: 'FakeGranule1',
-      statusCode: 201,
-    },
-    {
-      body: 'fake body',
-      filename: 'foo.jpg',
-      status: 'COMPLETED',
-      granuleId: 'FakeGranule2',
-      statusCode: 201,
-    },
-  ];
+  const actual = await index.backupGranulesToLzards(fakePayload);
+  const expected = {
+    backupResults: [
+      {
+        body: 'fake body',
+        filename: 'foo.jpg',
+        status: 'COMPLETED',
+        granuleId: 'FakeGranule1',
+        statusCode: 201,
+      },
+      {
+        body: 'fake body',
+        filename: 'foo.jpg',
+        status: 'COMPLETED',
+        granuleId: 'FakeGranule2',
+        statusCode: 201,
+      },
+    ],
+    originalPayload: fakePayload,
+  };
   t.deepEqual(actual, expected);
 });
 
@@ -509,8 +512,11 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
   process.env.provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
 
-  const actual = await index.handler(fakePayload);
-  const expected = [];
+  const actual = await index.backupGranulesToLzards(fakePayload);
+  const expected = {
+    backupResults: [],
+    originalPayload: fakePayload,
+  };
   t.deepEqual(actual, expected);
 });
 
@@ -568,19 +574,22 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
   process.env.provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
 
-  const actual = await index.handler(fakePayload);
-  const expected = [
-    {
-      filename: 'foo.jpg',
-      status: 'FAILED',
-      granuleId: 'FakeGranule1',
-    },
-    {
-      filename: 'foo.jpg',
-      status: 'FAILED',
-      granuleId: 'FakeGranule2',
-    },
-  ];
+  const actual = await index.backupGranulesToLzards(fakePayload);
+  const expected = {
+    backupResults: [
+      {
+        filename: 'foo.jpg',
+        status: 'FAILED',
+        granuleId: 'FakeGranule1',
+      },
+      {
+        filename: 'foo.jpg',
+        status: 'FAILED',
+        granuleId: 'FakeGranule2',
+      },
+    ],
+    originalPayload: fakePayload,
+  };
   t.deepEqual(actual, expected);
 });
 
@@ -626,5 +635,5 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   process.env.lzards_api = 'fakeApi';
   process.env.provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
-  await t.throwsAsync(index.handler(fakePayload));
+  await t.throwsAsync(index.backupGranulesToLzards(fakePayload));
 });
