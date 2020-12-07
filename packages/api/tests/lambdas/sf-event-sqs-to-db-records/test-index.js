@@ -273,7 +273,7 @@ test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env v
   );
 });
 
-test('writeRecords() only writes records to Dynamo if requirements to write execution to Postgres are not met', async (t) => {
+test('writeRecords() writes records only to Dynamo if requirements to write execution to Postgres are not met', async (t) => {
   const {
     cumulusMessage,
     executionModel,
