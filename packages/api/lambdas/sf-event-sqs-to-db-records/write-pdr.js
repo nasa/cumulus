@@ -97,12 +97,6 @@ const writeRunningPdrViaTransaction = async ({
     `,
     pdrRecord
   );
-  // return trx(tableNames.pdrs)
-  //   .insert(pdrRecord)
-  //   .onConflict('name')
-  //   .merge()
-  //   .whereRaw('pdrs.execution_cumulus_id <> ?', pdrRecord.execution_cumulus_id)
-  //   .returning('cumulus_id');
 };
 
 const writePdrViaTransaction = async ({
