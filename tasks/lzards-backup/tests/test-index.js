@@ -12,11 +12,11 @@ const fakeCollection = {
   files: [
     {
       regex: 'foo.jpg',
-      backup: true,
+      lzards: { backup: true },
     },
     {
       regex: 'foo.dat',
-      backup: false,
+      lzards: { backup: false },
     },
   ],
 };
@@ -52,11 +52,11 @@ test('shouldBackupFile returns true if the regex matches and the backup option i
     files: [
       {
         regex: '^foo.jpg$',
-        backup: true,
+        lzards: { backup: true },
       },
       {
         regex: '^foo.md5$',
-        backup: false,
+        lzards: { backup: false },
       },
     ],
   };
@@ -68,7 +68,7 @@ test('shouldBackupFile returns false if the regex matches and the backup option 
     files: [
       {
         regex: '^foo.jpg$',
-        backup: false,
+        lzards: { backup: false },
       },
     ],
   };
@@ -80,7 +80,7 @@ test('shouldBackupFile returns false if the regex matches and the backup option 
     files: [
       {
         regex: '^foo.md5$',
-        backup: true,
+        lzards: { backup: true },
       },
     ],
   };

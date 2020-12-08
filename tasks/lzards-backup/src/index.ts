@@ -145,7 +145,7 @@ export const shouldBackupFile = (
   const config = collectionFiles.find(
     ({ regex }) => fileName.match(regex)
   );
-  if (config?.backup) return true;
+  if (config?.lzards?.backup) return true;
   return false;
 };
 

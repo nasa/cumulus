@@ -9,6 +9,9 @@ export interface CollectionFile {
   type?: string,
   url_path?: string,
   backup?: boolean,
+  lzards?: {
+    backup: boolean
+  }
 }
 
 export interface PartialCollectionRecord {
