@@ -31,7 +31,7 @@ export const getRecordCumulusId = async<T extends { cumulus_id: number }>(
     .where(whereClause)
     .first();
   if (!isRecordDefined(record)) {
-    throw new RecordDoesNotExist(`Record in ${table} with identifiers ${whereClause} does not exist.`);
+    throw new RecordDoesNotExist(`Record in ${table} with identifiers ${JSON.stringify(whereClause)} does not exist.`);
   }
   return record.cumulus_id;
 };
