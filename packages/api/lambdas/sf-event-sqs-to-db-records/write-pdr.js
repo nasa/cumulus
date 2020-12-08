@@ -92,7 +92,9 @@ const writeRunningPdrViaTransaction = async ({
         duration = EXCLUDED.duration,
         timestamp = EXCLUDED.timestamp,
         created_at = EXCLUDED.created_at
-      WHERE pdrs.execution_cumulus_id != :execution_cumulus_id
+      WHERE
+        pdrs.execution_cumulus_id != :execution_cumulus_id
+        OR pdrs.progress < :progress
       RETURNING "cumulus_id"
     `,
     pdrRecord
