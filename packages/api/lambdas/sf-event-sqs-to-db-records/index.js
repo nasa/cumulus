@@ -66,6 +66,20 @@ const writeRecordsToDynamoDb = async ({
   return results;
 };
 
+/**
+ * Write records to data stores. Use conditional logic to write either to
+ * DynamoDB only or to DynamoDB and RDS.
+ *
+ * @param {Object} params
+ * @param {Object} params.cumulusMessage - Cumulus workflow message
+ * @param {Knex} params.knex - Knex client
+ * @param {Object} [params.granuleModel]
+ *   Optional instance of granules model used for writing to DynamoDB
+ * @param {Object} [params.executionModel]
+ *   Optional instance of execution model used for writing to DynamoDB
+ * @param {Object} [params.pdrModel]
+ *   Optional instance of PDR model used for writing to DynamoDB
+ */
 const writeRecords = async ({
   cumulusMessage,
   knex,
@@ -130,6 +144,7 @@ const writeRecords = async ({
     asyncOperationCumulusId,
     parentExecutionCumulusId,
     knex,
+    executionModel,
   });
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
@@ -140,6 +155,7 @@ const writeRecords = async ({
     providerCumulusId,
     knex,
     executionCumulusId,
+    pdrModel,
   });
 
   return writeGranules({
@@ -168,7 +184,7 @@ const handler = async (event) => {
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
     try {
-      return await writeRecords({ cumulusMessage, knex });
+      return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);

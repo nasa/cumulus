@@ -58,6 +58,7 @@ const runHandler = async ({
   executionArn,
   executionName,
   testDbName,
+  ...additionalParams
 }) => {
   fixture.resources = [executionArn];
   fixture.detail.executionArn = executionArn;
@@ -67,6 +68,7 @@ const runHandler = async ({
   fixture.detail.input = JSON.stringify(cumulusMessage);
 
   const sqsEvent = {
+    ...additionalParams,
     Records: [{
       eventSource: 'aws:sqs',
       body: JSON.stringify(fixture),
@@ -215,7 +217,7 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('writeRecords() only writes records to Dynamo if message comes from pre-RDS deployment', async (t) => {
+test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -273,7 +275,7 @@ test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env v
   );
 });
 
-test('writeRecords() only writes records to Dynamo if requirements to write execution to Postgres are not met', async (t) => {
+test('writeRecords() writes records only to Dynamo if requirements to write execution to Postgres are not met', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -392,13 +394,20 @@ test('writeRecords() writes records to Dynamo and RDS', async (t) => {
 });
 
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
-  // will make PDR write throw an error
-  delete t.context.cumulusMessage.meta.collection;
+  // make execution write throw an error
+  const fakeExecutionModel = {
+    storeExecutionFromCumulusMessage: () => {
+      throw new Error('execution Dynamo error');
+    },
+  };
 
   const {
     handlerResponse,
     sqsEvent,
-  } = await runHandler(t.context);
+  } = await runHandler({
+    ...t.context,
+    executionModel: fakeExecutionModel,
+  });
 
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
