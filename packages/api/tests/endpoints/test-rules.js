@@ -7,18 +7,21 @@ const request = require('supertest');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const { getKnexClient, localStackConnectionEnv, tableNames } = require('@cumulus/db');
 
+const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
-const { buildFakeExpressResponse } = require('./utils');
+const Collection = require('../../models/collections');
+const Provider = require('../../models/providers');
+
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
   fakeRuleFactoryV2,
 } = require('../../lib/testUtils');
-const { post } = require('../../endpoints/rules');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
@@ -26,6 +29,8 @@ const assertions = require('../../lib/assertions');
 [
   'AccessTokensTable',
   'RulesTable',
+  'CollectionsTable',
+  'ProvidersTable',
   'stackName',
   'system_bucket',
   'TOKEN_SECRET',
@@ -36,18 +41,32 @@ const assertions = require('../../lib/assertions');
 const { app } = require('../../app');
 
 const esIndex = randomString();
-const testRule = fakeRuleFactoryV2();
+const workflow = randomId('workflow-');
+const testRule = {
+  name: randomId('testRule'),
+  workflow: workflow,
+  provider: undefined,
+  collection: undefined,
+  rule: {
+    type: 'onetime',
+  },
+  state: 'ENABLED',
+};
 
+const ruleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule'];
 const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
 
 let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
+let collectionsModel;
+let providersModel;
 let buildPayloadStub;
 
 test.before(async (t) => {
   process.env = { ...process.env, ...localStackConnectionEnv };
+
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
@@ -60,6 +79,12 @@ test.before(async (t) => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
+  collectionsModel = new Collection({ tableName: process.env.CollectionsTable });
+  await collectionsModel.createTable();
+
+  providersModel = new Provider({ tableName: process.env.ProvidersTable });
+  await providersModel.createTable();
+
   const ruleRecord = await ruleModel.create(testRule);
   await indexer.indexRule(esClient, ruleRecord, esAlias);
 
@@ -70,14 +95,51 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+
   t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
-test.after.always(async () => {
+test.beforeEach(async (t) => {
+  const fakeCollection = fakeCollectionFactory();
+  const fakeProvider = fakeProviderFactory({
+    encrypted: true,
+    privateKey: 'key',
+    cmKeyId: 'key-id',
+    certificateUri: 'uri',
+    createdAt: new Date(2020, 11, 17),
+    updatedAt: new Date(2020, 12, 2),
+  });
+  const newRule = {
+    name: randomId('name'),
+    workflow: workflow,
+    provider: undefined,
+    collection: undefined,
+    rule: {
+      type: 'onetime',
+    },
+    state: 'ENABLED',
+  };
+
+  t.context.fakeCollection = fakeCollection;
+  t.context.fakeProvider = fakeProvider;
+  t.context.newRule = newRule;
+});
+
+test.afterEach.always(async (t) => {
+  await t.context.dbClient(tableNames.rules).del();
+  await t.context.dbClient(tableNames.providers).del();
+  await t.context.dbClient(tableNames.collections).del();
+});
+
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
+  await collectionsModel.deleteTable();
   await ruleModel.deleteTable();
+  await providersModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+
+  await t.context.dbClient.destroy();
   buildPayloadStub.restore();
 });
 
@@ -207,7 +269,7 @@ test('GET gets a rule', async (t) => {
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
-  const newRule = fakeRuleFactoryV2();
+  const { newRule } = t.context;
 
   let response = await request(app)
     .post('/rules')
@@ -230,7 +292,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
-  const newRule = fakeRuleFactoryV2();
+  const { newRule } = t.context;
 
   let response = await request(app)
     .post('/rules')
@@ -262,9 +324,8 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule', async (t) => {
-  const newRule = fakeRuleFactoryV2({
-    name: 'make_waffles',
-  });
+  const { newRule } = t.context;
+
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
@@ -277,25 +338,30 @@ test('POST creates a rule', async (t) => {
     name: newRule.name,
   });
 
-  const fetchedPostgresRecord = await t.context.dbClient.first()
-    .from(tableNames.rules)
-    .where({
-      name: newRule.name,
-    });
+  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
+    .select()
+    .table(tableNames.rules)
+    .where({ name: newRule.name })
+    .first();
 
   t.is(message, 'Record saved');
 
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
 
-  t.deepEqual(record, newRule);
   t.not(fetchedPostgresRecord, undefined);
+  t.deepEqual(
+    omit(fetchedPostgresRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
+    omit(fetchedDynamoRecord, ruleOmitList)
+  );
+
   t.is(fetchedPostgresRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
   t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST creates a rule that is enabled by default', async (t) => {
-  const newRule = fakeRuleFactoryV2();
+  const { newRule } = t.context;
+
   delete newRule.state;
 
   const response = await request(app)
@@ -309,7 +375,7 @@ test('POST creates a rule that is enabled by default', async (t) => {
 });
 
 test('POST returns a 409 response if record already exists', async (t) => {
-  const newRule = fakeRuleFactoryV2();
+  const { newRule } = t.context;
 
   await ruleModel.create(newRule);
 
@@ -341,9 +407,8 @@ test('POST returns a 400 response if record is missing a required property', asy
 });
 
 test('POST returns a 400 response if rule name is invalid', async (t) => {
-  const newRule = fakeRuleFactoryV2({
-    name: 'bad rule name',
-  });
+  const { newRule } = t.context;
+  newRule.name = 'bad rule name';
 
   const response = await request(app)
     .post('/rules')
@@ -355,9 +420,8 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
 });
 
 test('POST returns a 400 response if rule type is invalid', async (t) => {
-  const newRule = fakeRuleFactoryV2({
-    type: 'invalid',
-  });
+  const { newRule } = t.context;
+  newRule.type = 'invalid';
 
   const response = await request(app)
     .post('/rules')
@@ -369,7 +433,7 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
 });
 
 test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
-  const newRule = fakeRuleFactoryV2();
+  const { newRule } = t.context;
   buildPayloadStub.restore();
 
   try {
@@ -386,14 +450,11 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+  const { newRule } = t.context;
   const stub = sinon.stub(Rule.prototype, 'create')
     .callsFake(() => {
       throw new Error('unexpected error');
     });
-
-  const newRule = fakeRuleFactoryV2({
-    type: 'invalid',
-  });
 
   try {
     const response = await request(app)
@@ -409,66 +470,13 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 });
 
 test('POST does not write to RDS if writing to DynamoDB fails', async (t) => {
-  const { dbClient } = t.context;
-  const newRule = fakeRuleFactoryV2({
-    name: 'rule_name',
-  });
-
-  const fakeRulesModel = {
-    exists: () => false,
-    create: () => {
-      throw new Error('Error!!');
-    },
-  };
-
-  const expressRequest = {
-    body: newRule,
-    testContext: {
-      dbClient,
-      rulesModel: fakeRulesModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('Error!!'));
-
-  const dbRecords = await dbClient.select('name')
-    .from(tableNames.rules)
-    .where({
-      name: newRule.name,
-    });
-
-  t.is(dbRecords.length, 0);
 });
 
 test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
-  const newRule = fakeRuleFactoryV2({
-    name: 'rule_name',
-  });
-
-  const fakeDbClient = () => ({
-    insert: () => Promise.reject(new Error('Some error')),
-  });
-
-  const expressRequest = {
-    body: newRule,
-    testContext: {
-      dbClient: fakeDbClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('Some error'));
-  t.false(await ruleModel.exists(newRule.name));
 });
 
 test('PUT replaces a rule', async (t) => {
+
   const expectedRule = {
     ...omit(testRule, 'provider'),
     state: 'ENABLED',
@@ -528,7 +536,7 @@ test('PUT returns 400 for name mismatch between params and payload',
   });
 
 test('DELETE deletes a rule', async (t) => {
-  const newRule = fakeRuleFactoryV2();
+  const { newRule } = t.context;
 
   await request(app)
     .post('/rules')
