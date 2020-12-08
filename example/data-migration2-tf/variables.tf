@@ -29,18 +29,3 @@ variable "vpc_id" {
   type    = string
   default = null
 }
-
-variable "aws_profile" {
-  type    = string
-  default = null
-}
-
-variable "log2elasticsearch_lambda_function_arn" {
-  type    = string
-  default = null
-}
-
-variable "ecs_cluster_arn" {
-  type    = string
-  default = null
-}

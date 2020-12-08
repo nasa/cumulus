@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/data-migration2",
   "version": "3.0.0",
-  "description": "A Lambda function used for doing data migrations intended to be executed after data-migration1.",
+  "description": "A Lambda function used for doing data migrations of executions",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=12.18.0"
@@ -32,7 +32,7 @@
     "@cumulus/errors": "3.0.0",
     "@cumulus/logger": "3.0.0",
     "@cumulus/types": "3.0.0",
-    "knex": "0.21.13",
+    "knex": "0.21.6",
     "lodash": "^4.17.20",
     "pg": "^8.3.0"
   },
