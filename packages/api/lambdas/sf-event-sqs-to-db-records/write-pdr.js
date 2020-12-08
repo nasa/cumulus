@@ -50,7 +50,7 @@ const writeRunningPdrViaTransaction = async ({
   pdrRecord,
   trx,
 }) => {
-  return trx.raw(
+  const result = await trx.raw(
     `
       INSERT INTO pdrs (
         "name",
@@ -99,6 +99,10 @@ const writeRunningPdrViaTransaction = async ({
     `,
     pdrRecord
   );
+  // raw query doesn't return prepared output, so have to manually grab the returned field
+  const [row = {}] = result.rows;
+  // return output matching default Knex handling for .returning()
+  return [row.cumulus_id];
 };
 
 const writePdrViaTransaction = async ({
