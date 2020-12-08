@@ -85,6 +85,7 @@ async function post(req, res) {
       await dbClient(tableNames.rules).insert(postgresRecord, 'cumulus_id');
     } catch (error) {
       await model.delete({ name });
+
       throw error;
     }
 

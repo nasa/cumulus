@@ -8,7 +8,7 @@ const request = require('supertest');
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
-const { getKnexClient, localStackConnectionEnv, tableNames } = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv, tableNames, translateApiRuleToPostgresRule } = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -95,6 +95,7 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+  esClient = await Search.es('fakehost');
 
   t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
@@ -380,6 +381,13 @@ test('POST creates a rule that is enabled by default', async (t) => {
 
   delete newRule.state;
 
+  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
+    .select()
+    .table(tableNames.rules)
+    .where({ name: newRule.name })
+    .first();
+
+  t.not(fetchedPostgresRecord, undefined);
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
