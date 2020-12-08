@@ -280,6 +280,14 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 
   t.is(response.body.message, 'Record saved');
 
+  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
+    .select()
+    .table(tableNames.rules)
+    .where({ name: newRule.name })
+    .first();
+
+  t.not(fetchedPostgresRecord, undefined);
+
   response = await request(app)
     .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
@@ -305,6 +313,14 @@ test('403 error when calling the API endpoint to delete an existing rule without
   t.is(message, 'Record saved');
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
+
+  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
+    .select()
+    .table(tableNames.rules)
+    .where({ name: newRule.name })
+    .first();
+
+  t.not(fetchedPostgresRecord, undefined);
 
   response = await request(app)
     .delete(`/rules/${newRule.name}`)
