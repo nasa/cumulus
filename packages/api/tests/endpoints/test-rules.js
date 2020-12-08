@@ -8,8 +8,9 @@ const request = require('supertest');
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
-const { getKnexClient, localStackConnectionEnv, tableNames, translateApiRuleToPostgresRule } = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv, tableNames } = require('@cumulus/db');
 
+// const { translateApiCollectionToPostgresCollection, translateApiProviderToPostgresProvider } = require('@cumulus/db');
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
@@ -42,11 +43,22 @@ const { app } = require('../../app');
 
 const esIndex = randomString();
 const workflow = randomId('workflow-');
+const testCollection = fakeCollectionFactory();
+const testProvider = fakeProviderFactory({
+  encrypted: true,
+  privateKey: 'key',
+  cmKeyId: 'key-id',
+  certificateUri: 'uri',
+  createdAt: new Date(2020, 11, 17),
+});
 const testRule = {
   name: randomId('testRule'),
   workflow: workflow,
-  provider: undefined,
-  collection: undefined,
+  provider: testProvider.id,
+  collection: {
+    name: testCollection.name,
+    version: testCollection.version,
+  },
   rule: {
     type: 'onetime',
   },
@@ -74,6 +86,9 @@ test.before(async (t) => {
   esClient = await Search.es('fakehost');
   await S3.createBucket(process.env.system_bucket);
 
+  const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
+  const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
+
   buildPayloadStub = setBuildPayloadStub();
 
   ruleModel = new Rule();
@@ -98,6 +113,18 @@ test.before(async (t) => {
   esClient = await Search.es('fakehost');
 
   t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
+  await Promise.all([
+    S3.putJsonS3Object(
+      process.env.system_bucket,
+      messageTemplateKey,
+      { meta: 'meta' }
+    ),
+    S3.putJsonS3Object(
+      process.env.system_bucket,
+      workflowfile,
+      { testworkflow: 'workflow-config' }
+    ),
+  ]);
 });
 
 test.beforeEach(async (t) => {
@@ -340,7 +367,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
   t.deepEqual(response.body, record);
 });
 
-test('POST creates a rule', async (t) => {
+test.only('POST creates a rule', async (t) => {
   const { newRule } = t.context;
 
   const response = await request(app)
@@ -473,7 +500,7 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
   }
 });
 
-test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+test.serial.only('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const { newRule } = t.context;
   const stub = sinon.stub(Rule.prototype, 'create')
     .callsFake(() => {
@@ -500,7 +527,6 @@ test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
 });
 
 test('PUT replaces a rule', async (t) => {
-
   const expectedRule = {
     ...omit(testRule, 'provider'),
     state: 'ENABLED',

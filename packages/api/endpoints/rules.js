@@ -66,10 +66,13 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const {
-    model = new models.Rule(),
-    dbClient = await getKnexClient(),
-  } = req.testContext || {};
+  // const {
+  //   model = new models.Rule(),
+  //   dbClient = await getKnexClient(),
+  // } = req.testContext || {};
+  const model = new models.Rule();
+  const dbClient = await getKnexClient();
+
   const rule = req.body || {};
   const name = rule.name;
 
