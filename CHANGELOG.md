@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2092**
   - Add documentation for Getting Started section including FAQs
 
+### Changed
+
+- **CUMULUS-2279**
+  - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
+
 ## [v4.0.0] 2020-11-20
 
 ### Migration notes
