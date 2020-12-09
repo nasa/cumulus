@@ -133,7 +133,7 @@ const writeRunningPdrViaTransaction = async ({
   // result from the query is empty so no cumulus_id will be returned.
   // But this function always needs to return a cumulus_id for the PDR
   // since it is used for writing granules
-  const pdrCumulusId = getCumulusIdFromQueryResultOrLookup(
+  const pdrCumulusId = getPdrCumulusIdFromQueryResultOrLookup(
     trx,
     result,
     pdrRecord
