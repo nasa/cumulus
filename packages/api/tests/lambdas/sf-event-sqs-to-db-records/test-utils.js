@@ -254,7 +254,7 @@ test('getCumulusIdFromRawInsertQueryResult() returns correct cumulus_id', (t) =>
     getCumulusIdFromRawInsertQueryResult({
       rows: [{ cumulus_id: 5 }],
     }),
-    [5]
+    5
   );
 });
 
@@ -263,11 +263,11 @@ test('getCumulusIdFromRawInsertQueryResult() returns undefined', (t) => {
     getCumulusIdFromRawInsertQueryResult({
       rows: [],
     }),
-    [undefined]
+    undefined
   );
 
   t.deepEqual(
     getCumulusIdFromRawInsertQueryResult({}),
-    [undefined]
+    undefined
   );
 });

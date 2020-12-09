@@ -129,8 +129,8 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
  * Get cumulus_id from insert query result run via knex.raw().
  *
  * knex.raw() does not return the same output structure as
- * knex.insert().returning(), so we need to massage the output
- * into the same structure.
+ * knex.insert().returning(), so we need to get the cumulus_id
+ * from the raw query result.
  *
  * @param {Object} result - Raw query result
  * @returns {undefined|number}
@@ -142,8 +142,7 @@ const getCumulusIdFromRawInsertQueryResult = ({
   rows = [],
 }) => {
   const [row = {}] = rows;
-  // return value in an array to match default Knex output from .returning()
-  return [row.cumulus_id];
+  return row.cumulus_id;
 };
 
 module.exports = {
