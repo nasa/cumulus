@@ -91,7 +91,7 @@ describe('The Lzards Backup Task ', () => {
                 {
                   granuleId: 'FakeGranule2',
                   dataType: collection.name,
-                  Version: collection.version,
+                  version: collection.version,
                   files: [
                     {
                       name: 'foo.jpg',
