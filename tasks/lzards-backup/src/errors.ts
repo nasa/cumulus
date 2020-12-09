@@ -14,3 +14,11 @@ export class ChecksumError extends Error {
     Error.captureStackTrace(this, ChecksumError);
   }
 }
+
+export class GetAuthTokenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GetAuthTokenError';
+    Error.captureStackTrace(this, ChecksumError);
+  }
+}

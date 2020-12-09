@@ -12,8 +12,9 @@ import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
 import { PartialCollectionRecord } from '@cumulus/types/api/collections';
 import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
+import { parseS3Uri } from '@cumulus/aws-client/S3';
 
-import { ChecksumError, CollectionError } from './errors';
+import { ChecksumError, CollectionError, GetAuthTokenError } from './errors';
 import { isFulfilledPromise } from './typeGuards';
 import { makeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
 
@@ -109,17 +110,30 @@ export const makeBackupFileRequest = async (params: {
   collection: string,
   creds: AWS.STS.AssumeRoleResponse,
   file: MessageGranuleFilesObject,
-  granuleId: string
+  granuleId: string,
+  lzardsPostMethod?: typeof postRequestToLzards,
+  generateAccessUrlMethod?: typeof generateAccessUrl,
 }): Promise<makeBackupFileRequestResult> => {
-  const { authToken, collection, creds, file, granuleId } = params;
-  const accessUrl = await generateAccessUrl({
+  const {
+    authToken,
+    collection,
     creds,
-    Key: file.filepath,
-    Bucket: file.bucket,
+    file,
+    granuleId,
+    lzardsPostMethod = postRequestToLzards,
+    generateAccessUrlMethod = generateAccessUrl,
+  } = params;
+
+  const { Key, Bucket } = parseS3Uri(file.filename);
+
+  const accessUrl = await generateAccessUrlMethod({
+    Bucket,
+    creds,
+    Key,
   });
   log.info(`${granuleId}: posting backup request to LZARDS: ${file.filepath}`);
   try {
-    const { statusCode, body } = await postRequestToLzards({
+    const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
       authToken,
       collection,
@@ -128,12 +142,12 @@ export const makeBackupFileRequest = async (params: {
     });
     if (statusCode !== 201) {
       log.error(`${granuleId}: Request failed - LZARDS api returned ${statusCode}: ${JSON.stringify(body)}`);
-      return { statusCode, granuleId, filename: file.name, body, status: 'FAILED' };
+      return { statusCode, granuleId, filename: file.filename, body, status: 'FAILED' };
     }
-    return { statusCode, granuleId, filename: file.name, body, status: 'COMPLETED' };
+    return { statusCode, granuleId, filename: file.filename, body, status: 'COMPLETED' };
   } catch (error) {
     log.error(`${granuleId}: LZARDS request failed: ${error}`);
-    return { granuleId, filename: file.name, status: 'FAILED' };
+    return { granuleId, filename: file.filename, status: 'FAILED' };
   }
 };
 
@@ -180,7 +194,7 @@ export const backupGranule = async (
     });
   } catch (error) {
     if (error.name === 'CollectionNotDefinedError') {
-      log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the datastore`);
+      log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the database`);
       log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
       error.message = `${granule.granuleId}: ${error.message}`;
       throw error;
@@ -206,7 +220,6 @@ export const backupGranule = async (
 };
 
 export const generateAccessCredentials = async () => {
-  // const sts = new AWS.STS({ region: process.env.REGION });
   const params = {
     RoleArn: getRequiredEnvVar('backup_role_arn'),
     DurationSeconds: CREDS_EXPIRY_SECONDS,
@@ -218,8 +231,11 @@ export const generateAccessCredentials = async () => {
 
 export const getAuthToken = async () => {
   const api = getRequiredEnvVar('launchpad_api');
-  const passphrase = await getSecretString(getRequiredEnvVar('launchpad_passphrase_secret_name')) || '';
-  const certificate = process.env.launchpad_certificate || '';
+  const passphrase = await getSecretString(getRequiredEnvVar('launchpad_passphrase_secret_name'));
+  if (!passphrase) {
+    throw new GetAuthTokenError('The value stored in "launchpad_passphrase_secret_name" must be defined');
+  }
+  const certificate = getRequiredEnvVar('process.env.launchpad_certificate');
   const token = await getLaunchpadToken({
     api, passphrase, certificate,
   });
@@ -240,20 +256,14 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
 
   // If there are uncaught exceptions, we want to fail the task.
   if (backupResults.some((result) => result.status === 'rejected')) {
-    log.error('Some LZARDS backup results failed due to non-api related failures');
+    log.error('Some LZARDS backup results failed due to internal failure');
+    log.error('Manual reconciliation required - some backup requests may have processed');
     log.error(`Full output: ${JSON.stringify(backupResults)}`);
     throw new Error(`${JSON.stringify(backupResults)}`);
   }
   const filteredResults = backupResults.filter(
     (result) => isFulfilledPromise(result)
   ) as PromiseFulfilledResult<makeBackupFileRequestResult[]>[];
-
-  console.log(`Output is ${JSON.stringify(
-    {
-      backupResults: filteredResults.map((result) => result.value).flat(),
-      originalPayload: event,
-    }
-  )}`);
   return {
     backupResults: filteredResults.map((result) => result.value).flat(),
     originalPayload: event.input,

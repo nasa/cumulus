@@ -93,21 +93,23 @@ test('shouldBackupFile returns false if there is no collection file defined', as
 });
 
 test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZARDS failure', async (t) => {
-  sandbox.stub(index, 'postRequestToLzards').returns({
+  const lzardsPostMethod = (async () => ({
     body: 'failure body',
     statusCode: 404,
-  });
+  }));
   const creds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
   const collection = 'FAKE_COLLECTION';
   const bucket = 'fakeFileBucket';
+  const filename = 's3://fakeFileBucket/fakeFilename';
 
   const file = {
     name,
     filepath,
     bucket,
+    filename,
   };
   const granuleId = 'fakeGranuleId';
 
@@ -117,11 +119,12 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
     creds,
     file,
     granuleId,
+    lzardsPostMethod,
   });
 
   const expected = {
     body: 'failure body',
-    filename: 'fakeFilename',
+    filename,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
     statusCode: 404,
@@ -131,18 +134,22 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
 });
 
 test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult on other failure', async (t) => {
-  sandbox.stub(index, 'postRequestToLzards').throws(new Error('DANGER WILL ROBINSON'));
+  const lzardsPostMethod = (async () => {
+    throw new Error('DANGER WILL ROBINSON');
+  });
   const creds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
   const collection = 'FAKE_COLLECTION';
   const bucket = 'fakeFileBucket';
+  const filename = 's3://fakeFileBucket/fakeFilename';
 
   const file = {
     name,
     filepath,
     bucket,
+    filename,
   };
   const granuleId = 'fakeGranuleId';
 
@@ -152,10 +159,11 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
     creds,
     file,
     granuleId,
+    lzardsPostMethod,
   });
 
   const expected = {
-    filename: 'fakeFilename',
+    filename,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
   };
@@ -165,22 +173,25 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
 
 test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult', async (t) => {
   const accessUrl = 'https://www.nasa.gov';
-  const accessUrlStub = sandbox.stub(index, 'generateAccessUrl').returns(accessUrl);
-  const postStub = sandbox.stub(index, 'postRequestToLzards').returns({
+  const generateAccessUrlMethod = (() => accessUrl);
+  const lzardsPostMethod = (async () => ({
     body: 'fake body',
     statusCode: 201,
-  });
+  }));
+
   const creds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
   const collection = 'FAKE_COLLECTION';
   const bucket = 'fakeFileBucket';
+  const filename = 's3://fakeFileBucket/fakeFileBucket';
 
   const file = {
     name,
     filepath,
     bucket,
+    filename,
   };
   const granuleId = 'fakeGranuleId';
 
@@ -190,20 +201,17 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult'
     creds,
     file,
     granuleId,
+    generateAccessUrlMethod,
+    lzardsPostMethod,
   });
 
   const expected = {
     body: 'fake body',
-    filename: 'fakeFilename',
+    filename,
     granuleId: 'fakeGranuleId',
     status: 'COMPLETED',
     statusCode: 201,
   };
-
-  t.deepEqual(accessUrlStub.getCalls()[0].args, [{ creds, Key: filepath, Bucket: bucket }]);
-  t.deepEqual(postStub.getCalls()[0].args, [{
-    accessUrl, authToken, collection, file, granuleId,
-  }]);
 
   t.deepEqual(actual, expected);
 });
@@ -413,18 +421,16 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
           Version: '000',
           files: [
             {
-              bucket: 'fakeBucket1',
               name: 'foo.jpg',
-              filepath: '/path/to/granule1/foo.jpg',
               checksumType: 'md5',
               checksum: 'fakehash',
+              filename: 's3://fakeBucket1//path/to/granule1/foo.jpg',
             },
             {
-              bucket: 'fakeBucket2',
               name: 'foo.dat',
-              filepath: '/path/to/granule1/foo.dat',
               checksumType: 'md5',
               checksum: 'fakehash',
+              filename: 's3://fakeBucket1//path/to/granule1/foo.dat',
             },
           ],
         },
@@ -434,16 +440,14 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
           Version: '000',
           files: [
             {
-              bucket: 'fakeBucket1',
               name: 'foo.jpg',
-              filepath: '/path/to/granule1/foo.jpg',
+              filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
               checksumType: 'md5',
               checksum: 'fakehash',
             },
             {
-              bucket: 'fakeBucket2',
               name: 'foo.dat',
-              filepath: '/path/to/granule1/foo.dat',
+              filename: 's3://fakeBucket2//path/to/granule1/foo.dat',
               checksumType: 'md5',
               checksum: 'fakehash',
             },
@@ -462,14 +466,14 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
     backupResults: [
       {
         body: 'fake body',
-        filename: 'foo.jpg',
+        filename: 's3://fakeBucket1//path/to/granule1/foo.jpg',
         status: 'COMPLETED',
         granuleId: 'FakeGranule1',
         statusCode: 201,
       },
       {
         body: 'fake body',
-        filename: 'foo.jpg',
+        filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
         status: 'COMPLETED',
         granuleId: 'FakeGranule2',
         statusCode: 201,
@@ -494,7 +498,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
       granules: [
         {
           granuleId: 'FakeGranule1',
-          dataType: 'FakeGranuelType',
+          dataType: 'FakeGranuleType',
           Version: '000',
           files: [
             {
@@ -538,14 +542,12 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
           Version: '000',
           files: [
             {
-              bucket: 'fakeBucket1',
               name: 'foo.jpg',
-              filepath: '/path/to/granule1/foo.jpg',
+              filename: 's3://fakeBucket1//path/to/granule1/foo.jpg',
             },
             {
-              bucket: 'fakeBucket2',
               name: 'foo.dat',
-              filepath: '/path/to/granule1/foo.dat',
+              filename: 's3://fakeBucket1//path/to/granule1/foo.dat',
             },
           ],
         },
@@ -555,14 +557,12 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
           Version: '000',
           files: [
             {
-              bucket: 'fakeBucket1',
               name: 'foo.jpg',
-              filepath: '/path/to/granule1/foo.jpg',
+              filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
             },
             {
-              bucket: 'fakeBucket2',
               name: 'foo.dat',
-              filepath: '/path/to/granule1/foo.dat',
+              filename: 's3://fakeBucket2//path/to/granule1/foo.dat',
             },
           ],
         },
@@ -578,12 +578,12 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
   const expected = {
     backupResults: [
       {
-        filename: 'foo.jpg',
+        filename: 's3://fakeBucket1//path/to/granule1/foo.jpg',
         status: 'FAILED',
         granuleId: 'FakeGranule1',
       },
       {
-        filename: 'foo.jpg',
+        filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
         status: 'FAILED',
         granuleId: 'FakeGranule2',
       },
@@ -617,14 +617,33 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
           granuleId: 'FakeGranule1',
           files: [
             {
-              bucket: 'fakeBucket1',
               name: 'foo.jpg',
-              filepath: '/path/to/granule1/foo.jpg',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              filename: 's3://fakeBucket1//path/to/granule1/foo.jpg',
             },
             {
-              bucket: 'fakeBucket2',
               name: 'foo.dat',
-              filepath: '/path/to/granule1/foo.dat',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              filename: 's3://fakeBucket1//path/to/granule1/foo.dat',
+            },
+          ],
+        },
+        {
+          granuleId: 'FakeGranule2',
+          files: [
+            {
+              name: 'foo.jpg',
+              filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+            },
+            {
+              name: 'foo.dat',
+              filename: 's3://fakeBucket2//path/to/granule1/foo.dat',
+              checksumType: 'md5',
+              checksum: 'fakehash',
             },
           ],
         },
