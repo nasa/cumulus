@@ -131,7 +131,7 @@ export const makeBackupFileRequest = async (params: {
     creds,
     Key,
   });
-  log.info(`${granuleId}: posting backup request to LZARDS: ${file.filepath}`);
+  log.info(`${granuleId}: posting backup request to LZARDS: ${file.filename}`);
   try {
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
@@ -235,7 +235,7 @@ export const getAuthToken = async () => {
   if (!passphrase) {
     throw new GetAuthTokenError('The value stored in "launchpad_passphrase_secret_name" must be defined');
   }
-  const certificate = getRequiredEnvVar('process.env.launchpad_certificate');
+  const certificate = getRequiredEnvVar('launchpad_certificate');
   const token = await getLaunchpadToken({
     api, passphrase, certificate,
   });
