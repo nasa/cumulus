@@ -170,45 +170,6 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
   );
 });
 
-test.skip('writeRunningPdrViaTransaction() returns PDR cumulus_id', async (t) => {
-  const {
-    providerCumulusId,
-    collectionCumulusId,
-    runningExecutionCumulusId,
-    pdr,
-    knex,
-  } = t.context;
-
-  const pdrRecord = {
-    name: pdr.name,
-    status: 'running',
-    execution_cumulus_id: runningExecutionCumulusId,
-    collection_cumulus_id: collectionCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    progress: 50,
-    pan_sent: true,
-    pan_message: 'message',
-    stats: {
-      running: ['arn1'],
-      completed: ['arn2'],
-    },
-    duration: 1,
-    timestamp: new Date(),
-    created_at: new Date(),
-  };
-  // eslint-disable-next-line camelcase
-  const [cumulus_id] = await knex(tableNames.pdrs).insert(pdrRecord).returning('cumulus_id');
-
-  const pdrCumulusId = await knex.transaction(
-    (trx) =>
-      writeRunningPdrViaTransaction({
-        trx,
-        pdrRecord,
-      })
-  );
-  t.is(pdrCumulusId, cumulus_id);
-});
-
 test('writeRunningPdrViaTransaction() does not update record with same execution if progress is less than current', async (t) => {
   const {
     providerCumulusId,
