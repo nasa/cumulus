@@ -270,7 +270,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial('default returns list of rules', async (t) => {
+test('default returns list of rules', async (t) => {
   const response = await request(app)
     .get('/rules')
     .set('Accept', 'application/json')
@@ -292,7 +292,7 @@ test('GET gets a rule', async (t) => {
   t.is(name, testRule.name);
 });
 
-test.serial('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
+test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
   const { newRule } = t.context;
 
   let response = await request(app)
@@ -323,7 +323,7 @@ test.serial('When calling the API endpoint to delete an existing rule it does no
   t.is(record, undefined);
 });
 
-test.serial('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
+test('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
   const { newRule } = t.context;
 
   let response = await request(app)
@@ -363,7 +363,7 @@ test.serial('403 error when calling the API endpoint to delete an existing rule 
   t.deepEqual(response.body, record);
 });
 
-test.serial('POST creates a rule', async (t) => {
+test('POST creates a rule', async (t) => {
   const { newRule } = t.context;
   newRule.name = 'createNewRule';
 
@@ -417,7 +417,7 @@ test.serial('POST creates a rule', async (t) => {
   t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
-test.serial('POST creates a rule that is enabled by default', async (t) => {
+test('POST creates a rule that is enabled by default', async (t) => {
   const { newRule } = t.context;
 
   delete newRule.state;
@@ -497,7 +497,7 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
   t.is(response.status, 400);
 });
 
-test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
+test('POST returns a 500 response if workflow definition file does not exist', async (t) => {
   const { newRule } = t.context;
   buildPayloadStub.restore();
 
@@ -514,7 +514,7 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
   }
 });
 
-test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+test('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const { newRule } = t.context;
   const stub = sinon.stub(Rule.prototype, 'create')
     .callsFake(() => {
