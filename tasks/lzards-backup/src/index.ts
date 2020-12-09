@@ -62,8 +62,8 @@ export const setLzardsChecksumQueryType = (
   if (file.checksumType === 'sha256') {
     return { expectedSha256Hash: file.checksum };
   }
-  log.error(`${granuleId}: File ${file.name} did not have a checksum or supported checksumType defined`);
-  throw new ChecksumError(`${granuleId}: File ${file.name} did not have a checksum or checksumType defined`);
+  log.error(`${granuleId}: File ${file.filename} did not have a checksum or supported checksumType defined`);
+  throw new ChecksumError(`${granuleId}: File ${file.filename} did not have a checksum or checksumType defined`);
 };
 
 export const postRequestToLzards = async (params: {

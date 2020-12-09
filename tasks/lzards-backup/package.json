@@ -48,11 +48,9 @@
     "@cumulus/launchpad-auth": "4.0.0",
     "@cumulus/logger": "4.0.0",
     "@cumulus/message": "4.0.0",
-    "@cumulus/types": "4.0.0",
     "got": "11.7.0"
   },
   "devDependencies": {
-    "@cumulus/types": "4.0.0",
-    "@types/aws-lambda": "^8.10.58"
+    "@cumulus/types": "4.0.0"
   }
 }

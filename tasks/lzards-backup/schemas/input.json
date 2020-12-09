@@ -18,20 +18,19 @@
             "items": {
               "type": "object",
               "required": [
-                "filename",
-                "bucket",
-                "name"
+                "filename", "name"
               ],
               "properties": {
                 "filename": {
                   "type": "string",
-                  "description": "The s3:// URI of the file"
+                  "description": "The s3 bucket/path URI (e.g. s3://{bucket}{object})"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "the filename of the file"
                 },
                 "checksumType": { "type": "string" },
-                "checksum": { "type": "string" },
-                "filepath": { "type": "string" },
-                "bucket": { "type": "string" },
-                "name": { "type": "string" }
+                "checksum": { "type": "string" }
               }
             }
           }
