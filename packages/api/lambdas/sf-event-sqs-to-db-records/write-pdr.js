@@ -19,6 +19,10 @@ const {
 
 const Pdr = require('../../models/pdrs');
 
+const {
+  getCumulusIdFromRawInsertQueryResult,
+} = require('./utils');
+
 const generatePdrRecord = ({
   cumulusMessage,
   collectionCumulusId,
@@ -50,6 +54,8 @@ const writeRunningPdrViaTransaction = async ({
   pdrRecord,
   trx,
 }) => {
+  // Can be replaced with native knex usage once
+  // https://github.com/knex/knex/pull/4148 is released
   const result = await trx.raw(
     `
       INSERT INTO pdrs (
@@ -99,10 +105,7 @@ const writeRunningPdrViaTransaction = async ({
     `,
     pdrRecord
   );
-  // raw query doesn't return prepared output, so have to manually grab the returned field
-  const [row = {}] = result.rows;
-  // return output matching default Knex handling for .returning()
-  return [row.cumulus_id];
+  return getCumulusIdFromRawInsertQueryResult(result);
 };
 
 const writePdrViaTransaction = async ({
