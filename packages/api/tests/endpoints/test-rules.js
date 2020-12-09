@@ -540,7 +540,7 @@ test.skip('POST does not write to RDS if writing to DynamoDB fails', async () =>
 test.skip('POST does not write to DynamoDB if writing to RDS fails', async () => {
 });
 
-test.only('PUT replaces a rule', async (t) => {
+test('PUT replaces a rule', async (t) => {
   // const { dbClient } = t.context;
   const expectedRule = {
     ...omit(testRule, ['queueUrl', 'provider', 'collection']),
