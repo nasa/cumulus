@@ -198,7 +198,7 @@ test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database 
   const [cumulus_id] = await knex(tableNames.pdrs).insert(pdrRecord).returning('cumulus_id');
   const pdrCumulusId = await knex.transaction(
     (trx) =>
-      getCumulusIdFromQueryResultOrLookup(
+      getPdrCumulusIdFromQueryResultOrLookup(
         trx,
         {},
         pdrRecord
