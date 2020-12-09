@@ -13,6 +13,7 @@ const {
 
 const {
   generatePdrRecord,
+  getPdrCumulusIdFromQueryResultOrLookup,
   writeRunningPdrViaTransaction,
   writePdrViaTransaction,
   writePdr,
@@ -168,6 +169,42 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
       duration: 3.5,
     }
   );
+});
+
+test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
+  const {
+    providerCumulusId,
+    collectionCumulusId,
+    runningExecutionCumulusId,
+    pdr,
+    knex,
+  } = t.context;
+
+  const pdrRecord = {
+    name: pdr.name,
+    status: 'running',
+    execution_cumulus_id: runningExecutionCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
+    progress: 25,
+    pan_sent: true,
+    pan_message: 'message',
+    stats: {},
+    duration: 1,
+    timestamp: new Date(),
+    created_at: new Date(),
+  };
+  // eslint-disable-next-line camelcase
+  const [cumulus_id] = await knex(tableNames.pdrs).insert(pdrRecord).returning('cumulus_id');
+  const pdrCumulusId = await knex.transaction(
+    (trx) =>
+      getCumulusIdFromQueryResultOrLookup(
+        trx,
+        {},
+        pdrRecord
+      )
+  );
+  t.is(cumulus_id, pdrCumulusId);
 });
 
 test('writeRunningPdrViaTransaction() does not update record with same execution if progress is less than current', async (t) => {

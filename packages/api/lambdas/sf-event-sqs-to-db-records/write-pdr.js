@@ -50,6 +50,30 @@ const generatePdrRecord = ({
   };
 };
 
+/**
+ * Get the cumulus ID from a raw query result or look it up in the database.
+ *
+ * For certain cases, such as an upsert query that matched no rows, an empty
+ * database result is returned, so no cumulus ID will be returned. In those
+ * cases, this function will lookup the PDR cumulus ID from the record.
+ *
+ * @param {Object} trx - A Knex transaction
+ * @param {Object} queryResult - Raw query result
+ * @param {Object} pdrRecord - A PDR record
+ * @returns {number} - Cumulus ID for the PDR record
+ */
+const getPdrCumulusIdFromQueryResultOrLookup = async (trx, queryResult, pdrRecord) => {
+  let pdrCumulusId = getCumulusIdFromRawInsertQueryResult(queryResult);
+  if (!pdrCumulusId) {
+    const record = await trx(tableNames.pdrs)
+      .select('cumulus_id')
+      .where({ name: pdrRecord.name })
+      .first();
+    pdrCumulusId = record.cumulus_id;
+  }
+  return pdrCumulusId;
+};
+
 const writeRunningPdrViaTransaction = async ({
   pdrRecord,
   trx,
@@ -105,7 +129,16 @@ const writeRunningPdrViaTransaction = async ({
     `,
     pdrRecord
   );
-  return getCumulusIdFromRawInsertQueryResult(result);
+  // If the WHERE clause of the upsert query is not met, then the
+  // result from the query is empty so no cumulus_id will be returned.
+  // But this function always needs to return a cumulus_id for the PDR
+  // since it is used for writing granules
+  const pdrCumulusId = getCumulusIdFromQueryResultOrLookup(
+    trx,
+    result,
+    pdrRecord
+  );
+  return [pdrCumulusId];
 };
 
 const writePdrViaTransaction = async ({
@@ -171,6 +204,7 @@ const writePdr = async ({
 
 module.exports = {
   generatePdrRecord,
+  getPdrCumulusIdFromQueryResultOrLookup,
   writeRunningPdrViaTransaction,
   writePdrViaTransaction,
   writePdr,
