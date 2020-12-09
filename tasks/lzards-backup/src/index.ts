@@ -11,7 +11,7 @@ import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
 import { parseS3Uri } from '@cumulus/aws-client/S3';
 import { PartialCollectionRecord } from '@cumulus/types/api/collections';
-import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
+import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
 
 import { ChecksumError, CollectionError, GetAuthTokenError } from './errors';
@@ -273,4 +273,5 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
 export const handler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
-) => runCumulusTask(backupGranulesToLzards, event, context);
+): Promise<CumulusMessageWithAssignedPayload
+| CumulusRemoteMessage> => runCumulusTask(backupGranulesToLzards, event, context);
