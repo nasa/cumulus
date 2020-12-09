@@ -39,6 +39,7 @@ test.before(async (t) => {
       ...localStackConnectionEnv,
       PG_DATABASE: t.context.testDbName,
       migrationDir,
+      // KNEX_DEBUG: 'true',
     },
   });
   await t.context.knex.migrate.latest();
@@ -223,7 +224,7 @@ test('writeRunningPdrViaTransaction() does not update record with same execution
     execution_cumulus_id: runningExecutionCumulusId,
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
-    progress: 50,
+    progress: 75,
     pan_sent: true,
     pan_message: 'message',
     stats: {
@@ -238,10 +239,10 @@ test('writeRunningPdrViaTransaction() does not update record with same execution
   const firstRecord = await knex(tableNames.pdrs)
     .where({ name: pdr.name })
     .first();
-  t.is(firstRecord.progress, 50);
+  t.is(firstRecord.progress, 75);
 
   // Update PDR progress
-  pdrRecord.progress = 85;
+  pdrRecord.progress = 50;
   pdrRecord.stats = {
     running: ['arn1', 'arn2'],
     completed: ['arn3', 'arn4'],
@@ -257,7 +258,7 @@ test('writeRunningPdrViaTransaction() does not update record with same execution
   const updatedRecord = await knex(tableNames.pdrs)
     .where({ name: pdr.name })
     .first();
-  t.is(updatedRecord.progress, 85);
+  t.is(updatedRecord.progress, 75);
 });
 
 test('writeRunningPdrViaTransaction() overwrites record with same execution if progress is greater than current', async (t) => {
@@ -295,10 +296,10 @@ test('writeRunningPdrViaTransaction() overwrites record with same execution if p
   t.deepEqual(firstRecord.stats, stats);
 
   // Update PDR progress
-  pdrRecord.progress = 75;
+  pdrRecord.progress = 100;
   const updatedStats = {
-    running: ['arn4'],
-    completed: ['arn1', 'arn2', 'arn3'],
+    running: [],
+    completed: ['arn1', 'arn2', 'arn3', 'arn4'],
   };
   pdrRecord.stats = updatedStats;
 
@@ -312,7 +313,7 @@ test('writeRunningPdrViaTransaction() overwrites record with same execution if p
   const updatedRecord = await knex(tableNames.pdrs)
     .where({ name: pdr.name })
     .first();
-  t.is(updatedRecord.progress, 75);
+  t.is(updatedRecord.progress, 100);
   t.deepEqual(updatedRecord.stats, updatedStats);
 });
 
