@@ -138,6 +138,7 @@ module "cumulus" {
   archive_api_users = [
     "brian.tennity",
     "dopeters",
+    "jasmine",
     "jennyhliu",
     "kbaynes",
     "kkelly",
@@ -146,7 +147,7 @@ module "cumulus" {
     "matthewsavoie",
     "mboyd",
     "menno.vandiermen",
-    "jasmine",
+    "mobrien84",
     "npauzenga"
   ]
   archive_api_url               = var.archive_api_url
