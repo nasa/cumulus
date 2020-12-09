@@ -359,7 +359,6 @@ test('403 error when calling the API endpoint to delete an existing rule without
 
 test('POST creates a rule', async (t) => {
   const { newRule } = t.context;
-  newRule.name = 'createNewRule';
 
   const response = await request(app)
     .post('/rules')
