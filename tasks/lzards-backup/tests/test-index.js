@@ -418,7 +418,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
         {
           granuleId: 'FakeGranule1',
           dataType: 'FakeGranuleType',
-          Version: '000',
+          version: '000',
           files: [
             {
               name: 'foo.jpg',
@@ -437,7 +437,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
         {
           granuleId: 'FakeGranule2',
           dataType: 'FakeGranuleType',
-          Version: '000',
+          version: '000',
           files: [
             {
               name: 'foo.jpg',

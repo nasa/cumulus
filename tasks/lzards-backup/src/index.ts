@@ -3,16 +3,16 @@ import got from 'got';
 import Logger from '@cumulus/logger';
 import { Context } from 'aws-lambda';
 
-import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { getCollections } from '@cumulus/api-client/collections';
 import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
-import { PartialCollectionRecord } from '@cumulus/types/api/collections';
-import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
 import { parseS3Uri } from '@cumulus/aws-client/S3';
+import { PartialCollectionRecord } from '@cumulus/types/api/collections';
+import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
+import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
 
 import { ChecksumError, CollectionError, GetAuthTokenError } from './errors';
 import { isFulfilledPromise } from './typeGuards';
