@@ -70,7 +70,7 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-export function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
   Service: new (params: object) => T,
   options: object
 ) {
