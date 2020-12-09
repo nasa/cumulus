@@ -58,10 +58,10 @@ export const setLzardsChecksumQueryType = (
 ) => {
   if (file.checksumType === 'md5') {
     return { expectedMd5Hash: file.checksum };
-  };
+  }
   if (file.checksumType === 'sha256') {
     return { expectedSha256Hash: file.checksum };
-  };
+  }
   log.error(`${granuleId}: File ${file.name} did not have a checksum or supported checksumType defined`);
   throw new ChecksumError(`${granuleId}: File ${file.name} did not have a checksum or checksumType defined`);
 };
