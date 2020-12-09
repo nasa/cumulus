@@ -29,7 +29,7 @@ export const generateAccessUrl = async (params: {
   usePassedCredentials?: boolean
 }) => {
   const { creds, Key, Bucket, usePassedCredentials } = params;
-  const region = process.env.region_name || 'us-east-1';
+  const region = process.env.AWS_REGION || 'us-east-1';
   const secretAccessKey = creds?.Credentials?.SecretAccessKey;
   const sessionToken = creds?.Credentials?.SessionToken;
   const accessKeyId = creds?.Credentials?.AccessKeyId;
