@@ -8,7 +8,13 @@ const request = require('supertest');
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
-const { getKnexClient, localStackConnectionEnv, tableNames } = require('@cumulus/db');
+const {
+  getKnexClient,
+  localStackConnectionEnv,
+  tableNames,
+//  translateApiCollectionToPostgresCollection,
+//  translateApiProviderToPostgresProvider,
+} = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -42,6 +48,7 @@ const { app } = require('../../app');
 
 const esIndex = randomString();
 const workflow = randomId('workflow-');
+/*
 const testCollection = fakeCollectionFactory();
 const testProvider = fakeProviderFactory({
   encrypted: true,
@@ -50,18 +57,17 @@ const testProvider = fakeProviderFactory({
   certificateUri: 'uri',
   createdAt: new Date(2020, 11, 17),
 });
+*/
 const testRule = {
   name: randomId('testRule'),
   workflow: workflow,
-  provider: testProvider.id,
-  collection: {
-    name: testCollection.name,
-    version: testCollection.version,
-  },
+  provider: undefined,
+  collection: undefined,
   rule: {
     type: 'onetime',
   },
   state: 'ENABLED',
+  queueUrl: 'queue_url',
 };
 
 const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl'];
@@ -286,7 +292,7 @@ test('GET gets a rule', async (t) => {
   t.is(name, testRule.name);
 });
 
-test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
+test.serial('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
   const { newRule } = t.context;
 
   let response = await request(app)
@@ -317,7 +323,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
   t.is(record, undefined);
 });
 
-test('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
+test.serial('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
   const { newRule } = t.context;
 
   let response = await request(app)
@@ -357,7 +363,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
   t.deepEqual(response.body, record);
 });
 
-test('POST creates a rule', async (t) => {
+test.serial('POST creates a rule', async (t) => {
   const { newRule } = t.context;
   newRule.name = 'createNewRule';
 
@@ -534,16 +540,25 @@ test.skip('POST does not write to RDS if writing to DynamoDB fails', async () =>
 test.skip('POST does not write to DynamoDB if writing to RDS fails', async () => {
 });
 
-test('PUT replaces a rule', async (t) => {
+test.only('PUT replaces a rule', async (t) => {
+  // const { dbClient } = t.context;
   const expectedRule = {
-    ...omit(testRule, 'provider'),
+    ...omit(testRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
   };
+
+  /*
+  const collectionRecord = translateApiCollectionToPostgresCollection(testCollection);
+  await dbClient(tableNames.collections).insert(collectionRecord);
+  const fakeEncryptFn = async () => 'fakeEncryptedString';
+  const providerRecord = await translateApiProviderToPostgresProvider(testProvider, fakeEncryptFn);
+  await dbClient(tableNames.providers).insert(providerRecord);
+  */
 
   // Make sure testRule contains values for the properties we omitted from
   // expectedRule to confirm that after we replace (PUT) the rule those
   // properties are dropped from the stored rule.
-  t.truthy(testRule.provider);
+  t.truthy(testRule.queueUrl);
 
   await request(app)
     .put(`/rules/${testRule.name}`)

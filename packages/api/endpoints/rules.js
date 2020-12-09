@@ -128,14 +128,14 @@ async function put({ params: { name }, body }, res) {
   try {
     const oldRule = await model.get({ name });
     const dbClient = await getKnexClient();
-    const postgresRecord = dynamoRecordToDbRecord(oldRule, dbClient);
+    const postgresRecord = await dynamoRecordToDbRecord(oldRule, dbClient);
 
     // if rule type is onetime no change is allowed unless it is a rerun
     if (body.action === 'rerun') {
       return models.Rule.invoke(oldRule)
         .then(async () => {
           await dbClient.transaction(async (trx) => {
-            await trx(tableNames.rules).where({ name }).del();
+            await trx(tableNames.rules).where({ name: name }).del();
             await trx(tableNames.rules).insert(postgresRecord);
           });
           return res.send(oldRule);
@@ -146,12 +146,12 @@ async function put({ params: { name }, body }, res) {
     // since body is expected to be a replacement rule, not a partial rule
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
     const newRule = await model.update(oldRule, body, fieldsToDelete);
-    const newPostgresRecord = dynamoRecordToDbRecord(newRule, dbClient);
+    const newPostgresRecord = await dynamoRecordToDbRecord(newRule, dbClient);
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
 
     await dbClient.transaction(async (trx) => {
-      await trx(tableNames.rules).where({ name }).del();
+      await trx(tableNames.rules).where({ name: name }).del();
       await trx(tableNames.rules).insert(newPostgresRecord);
     });
 
