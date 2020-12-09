@@ -417,7 +417,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
       granules: [
         {
           granuleId: 'FakeGranule1',
-          dataType: 'FakeGranuelType',
+          dataType: 'FakeGranuleType',
           Version: '000',
           files: [
             {
@@ -436,7 +436,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
         },
         {
           granuleId: 'FakeGranule2',
-          dataType: 'FakeGranuelType',
+          dataType: 'FakeGranuleType',
           Version: '000',
           files: [
             {
@@ -538,7 +538,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
       granules: [
         {
           granuleId: 'FakeGranule1',
-          dataType: 'FakeGranuelType',
+          dataType: 'FakeGranuleType',
           Version: '000',
           files: [
             {
@@ -553,7 +553,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
         },
         {
           granuleId: 'FakeGranule2',
-          dataType: 'FakeGranuelType',
+          dataType: 'FakeGranuleType',
           Version: '000',
           files: [
             {
