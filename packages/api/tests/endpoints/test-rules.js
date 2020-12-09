@@ -12,8 +12,8 @@ const {
   getKnexClient,
   localStackConnectionEnv,
   tableNames,
-//  translateApiCollectionToPostgresCollection,
-//  translateApiProviderToPostgresProvider,
+  translateApiCollectionToPostgresCollection,
+  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
@@ -48,16 +48,6 @@ const { app } = require('../../app');
 
 const esIndex = randomString();
 const workflow = randomId('workflow-');
-/*
-const testCollection = fakeCollectionFactory();
-const testProvider = fakeProviderFactory({
-  encrypted: true,
-  privateKey: 'key',
-  cmKeyId: 'key-id',
-  certificateUri: 'uri',
-  createdAt: new Date(2020, 11, 17),
-});
-*/
 const testRule = {
   name: randomId('testRule'),
   workflow: workflow,
@@ -358,7 +348,18 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule', async (t) => {
-  const { newRule } = t.context;
+  const { newRule, dbClient, fakeCollection, fakeProvider } = t.context;
+  newRule.provider = fakeProvider.id;
+  newRule.collection = {
+    name: fakeCollection.name,
+    version: fakeCollection.version,
+  };
+
+  const fakeEncryptFn = async () => 'fakeEncryptedString';
+  const collectionRecord = translateApiCollectionToPostgresCollection(fakeCollection);
+  const providerRecord = await translateApiProviderToPostgresProvider(fakeProvider, fakeEncryptFn);
+  await dbClient(tableNames.collections).insert(collectionRecord);
+  await dbClient(tableNames.providers).insert(providerRecord);
 
   const response = await request(app)
     .post('/rules')
@@ -534,19 +535,10 @@ test.skip('POST does not write to DynamoDB if writing to RDS fails', async () =>
 });
 
 test('PUT replaces a rule', async (t) => {
-  // const { dbClient } = t.context;
   const expectedRule = {
     ...omit(testRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
   };
-
-  /*
-  const collectionRecord = translateApiCollectionToPostgresCollection(testCollection);
-  await dbClient(tableNames.collections).insert(collectionRecord);
-  const fakeEncryptFn = async () => 'fakeEncryptedString';
-  const providerRecord = await translateApiProviderToPostgresProvider(testProvider, fakeEncryptFn);
-  await dbClient(tableNames.providers).insert(providerRecord);
-  */
 
   // Make sure testRule contains values for the properties we omitted from
   // expectedRule to confirm that after we replace (PUT) the rule those
