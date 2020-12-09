@@ -94,13 +94,13 @@ describe('The Lzards Backup Task ', () => {
                   version: collection.version,
                   files: [
                     {
-                      name: 'foo.jpg',
+                      name: 'testGranule.jpg',
                       filename: `s3://${ingestPath}/testGranule.jpg`,
                       checksumType: 'md5',
                       checksum: '5799f9560b232baf54337d334179caa0',
                     },
                     {
-                      name: 'foo.dat',
+                      name: 'testGranule.dat',
                       filename: `s3://${ingestPath}/testGranule.dat`,
                       checksumType: 'md5',
                       checksum: '39a870a194a787550b6b5d1f49629236',

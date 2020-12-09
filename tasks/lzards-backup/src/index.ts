@@ -147,7 +147,7 @@ export const makeBackupFileRequest = async (params: {
     return { statusCode, granuleId, filename: file.filename, body, status: 'COMPLETED' };
   } catch (error) {
     log.error(`${granuleId}: LZARDS request failed: ${error}`);
-    return { granuleId, filename: file.filename, status: 'FAILED' };
+    return { granuleId, filename: file.filename, body: JSON.stringify(error), status: 'FAILED' };
   }
 };
 

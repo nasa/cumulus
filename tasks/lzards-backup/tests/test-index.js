@@ -163,6 +163,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   });
 
   const expected = {
+    body: '{}',
     filename,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
@@ -578,11 +579,13 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
   const expected = {
     backupResults: [
       {
+        body: '{"name":"ChecksumError"}',
         filename: 's3://fakeBucket1//path/to/granule1/foo.jpg',
         status: 'FAILED',
         granuleId: 'FakeGranule1',
       },
       {
+        body: '{"name":"ChecksumError"}',
         filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
         status: 'FAILED',
         granuleId: 'FakeGranule2',
