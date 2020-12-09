@@ -149,12 +149,6 @@ test.beforeEach(async (t) => {
   t.context.newRule = newRule;
 });
 
-test.afterEach.always(async (t) => {
-  await t.context.dbClient(tableNames.rules).del();
-  await t.context.dbClient(tableNames.providers).del();
-  await t.context.dbClient(tableNames.collections).del();
-});
-
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionsModel.deleteTable();
@@ -270,7 +264,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('default returns list of rules', async (t) => {
+test.serial('default returns list of rules', async (t) => {
   const response = await request(app)
     .get('/rules')
     .set('Accept', 'application/json')
@@ -497,7 +491,7 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
   t.is(response.status, 400);
 });
 
-test('POST returns a 500 response if workflow definition file does not exist', async (t) => {
+test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
   const { newRule } = t.context;
   buildPayloadStub.restore();
 
@@ -514,7 +508,7 @@ test('POST returns a 500 response if workflow definition file does not exist', a
   }
 });
 
-test('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const { newRule } = t.context;
   const stub = sinon.stub(Rule.prototype, 'create')
     .callsFake(() => {
