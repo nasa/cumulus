@@ -37,6 +37,7 @@ export interface NewRuleRecord extends PartialRuleRecord {
 
 export interface RuleRecord extends NewRuleRecord {
   executionNamePrefix?: string,
+  queueUrl?: string,
   tags?: string[],
   createdAt: number,
   updatedAt: number

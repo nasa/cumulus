@@ -10,7 +10,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getKnexClient, localStackConnectionEnv, tableNames } = require('@cumulus/db');
 
-// const { translateApiCollectionToPostgresCollection, translateApiProviderToPostgresProvider } = require('@cumulus/db');
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
@@ -65,7 +64,8 @@ const testRule = {
   state: 'ENABLED',
 };
 
-const ruleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule'];
+const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl'];
+
 const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
 
 let esClient;
@@ -85,9 +85,6 @@ test.before(async (t) => {
 
   esClient = await Search.es('fakehost');
   await S3.createBucket(process.env.system_bucket);
-
-  const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
-  const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
 
   buildPayloadStub = setBuildPayloadStub();
 
@@ -113,18 +110,6 @@ test.before(async (t) => {
   esClient = await Search.es('fakehost');
 
   t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
-  await Promise.all([
-    S3.putJsonS3Object(
-      process.env.system_bucket,
-      messageTemplateKey,
-      { meta: 'meta' }
-    ),
-    S3.putJsonS3Object(
-      process.env.system_bucket,
-      workflowfile,
-      { testworkflow: 'workflow-config' }
-    ),
-  ]);
 });
 
 test.beforeEach(async (t) => {
@@ -144,7 +129,12 @@ test.beforeEach(async (t) => {
     collection: undefined,
     rule: {
       type: 'onetime',
+      arn: 'arn',
+      value: 'value',
+      logEventArn: 'log_event_arn',
     },
+    meta: { retries: 0 },
+    queueUrl: 'queue_url',
     state: 'ENABLED',
   };
 
@@ -367,8 +357,9 @@ test('403 error when calling the API endpoint to delete an existing rule without
   t.deepEqual(response.body, record);
 });
 
-test.only('POST creates a rule', async (t) => {
+test('POST creates a rule', async (t) => {
   const { newRule } = t.context;
+  newRule.name = 'createNewRule';
 
   const response = await request(app)
     .post('/rules')
@@ -396,17 +387,41 @@ test.only('POST creates a rule', async (t) => {
   t.not(fetchedPostgresRecord, undefined);
   t.deepEqual(
     omit(fetchedPostgresRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
-    omit(fetchedDynamoRecord, ruleOmitList)
+    omit(
+      {
+        ...fetchedDynamoRecord,
+        arn: newRule.rule.arn,
+        value: newRule.rule.value,
+        type: newRule.rule.type,
+        enabled: true,
+        log_event_arn: newRule.rule.logEventArn,
+        execution_name_prefix: null,
+        payload: null,
+        queue_url: newRule.queueUrl,
+        meta: newRule.meta,
+        tags: null,
+        created_at: new Date(newRule.createdAt),
+        updated_at: new Date(newRule.updatedAt),
+      },
+      dynamoRuleOmitList
+    )
   );
 
   t.is(fetchedPostgresRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
   t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
-test('POST creates a rule that is enabled by default', async (t) => {
+test.serial('POST creates a rule that is enabled by default', async (t) => {
   const { newRule } = t.context;
 
   delete newRule.state;
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
 
   const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
     .select()
@@ -415,13 +430,6 @@ test('POST creates a rule that is enabled by default', async (t) => {
     .first();
 
   t.not(fetchedPostgresRecord, undefined);
-  const response = await request(app)
-    .post('/rules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
-    .expect(200);
-
   t.is(response.body.record.state, 'ENABLED');
 });
 
@@ -500,7 +508,7 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
   }
 });
 
-test.serial.only('POST returns a 500 response if record creation throws unexpected error', async (t) => {
+test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const { newRule } = t.context;
   const stub = sinon.stub(Rule.prototype, 'create')
     .callsFake(() => {
@@ -520,10 +528,10 @@ test.serial.only('POST returns a 500 response if record creation throws unexpect
   }
 });
 
-test('POST does not write to RDS if writing to DynamoDB fails', async (t) => {
+test.skip('POST does not write to RDS if writing to DynamoDB fails', async () => {
 });
 
-test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
+test.skip('POST does not write to DynamoDB if writing to RDS fails', async () => {
 });
 
 test('PUT replaces a rule', async (t) => {
