@@ -4,7 +4,6 @@ const omit = require('lodash/omit');
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
-const Knex = require('knex');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -15,7 +14,6 @@ const {
   tableNames,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
-  translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
@@ -24,6 +22,7 @@ const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
 const Collection = require('../../models/collections');
 const Provider = require('../../models/providers');
+const models = require('../../models');
 
 const {
   createFakeJwtAuthToken,
@@ -577,11 +576,17 @@ test.serial.skip('POST does not write to DynamoDB if writing to RDS fails', asyn
     t.false(await ruleModel.exists(newRule.name));
   } finally {
     knexInsertStub.restore();
+
+    const dbRecords = await dbClient.first()
+      .from(tableNames.rules)
+      .where({ name: newRule.name });
+    t.is(dbRecords, undefined);
   }
 });
 
 test('PUT replaces a rule', async (t) => {
   const { dbClient } = t.context;
+  testRule.type = 'scheduled';
   const expectedRule = {
     ...omit(testRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
@@ -647,7 +652,58 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
-test.skip('PUT replaces onetime rule for rerun', async () => {
+test.only('PUT replaces onetime rule for rerun', async (t) => {
+  const expectedRule = {
+    ...omit(testRule, ['queueUrl', 'provider', 'collection']),
+    state: 'ENABLED',
+  };
+  expectedRule.action = 'rerun';
+
+  await request(app)
+    .put(`/rules/${testRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(expectedRule)
+    .expect(200);
+
+  const { body: actualRule } = await request(app)
+    .get(`/rules/${testRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.truthy(actualRule);
+});
+
+test.serial.only('PUT does not insert into RDS if replacing onetime rule for rerun fails', async (t) => {
+  const { dbClient } = t.context;
+  const expectedRule = {
+    ...omit(testRule, ['queueUrl', 'provider', 'collection']),
+    state: 'ENABLED',
+  };
+  expectedRule.action = 'rerun';
+
+  const createRuleStub = sinon.stub(Rule.prototype, 'get')
+    .returns(() => {
+      throw new Error('Error getting rule');
+    });
+
+  try {
+    await request(app)
+      .put(`/rules/${testRule.name}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(expectedRule)
+      .expect(400);
+
+    const dbRecords = await dbClient.select()
+      .from(tableNames.rules)
+      .where({ name: testRule.name });
+
+    t.is(dbRecords.length, 0);
+  } finally {
+    createRuleStub.restore();
+  }
 });
 
 test('DELETE deletes a rule', async (t) => {
