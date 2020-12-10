@@ -1,6 +1,6 @@
 import Knex from 'knex';
 import { RuleRecord } from '@cumulus/types/api/rules';
-import { PostgresRule, PostgresCollectionRecord, PostgresProviderRecord} from './types';
+import { PostgresRule, PostgresCollectionRecord, PostgresProviderRecord } from './types';
 import { getRecordCumulusId } from './database';
 import { tableNames } from './tables';
 
