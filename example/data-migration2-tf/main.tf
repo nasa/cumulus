@@ -5,9 +5,6 @@ terraform {
 }
 
 provider "aws" {
-  region  = var.region
-  profile = var.aws_profile
-
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }
@@ -25,19 +22,20 @@ data "terraform_remote_state" "data_persistence" {
   workspace = terraform.workspace
 }
 
-
-module "data_migration2_ecs_service" {
-  source = "https://github.com/nasa/cumulus/releases/download/v4.0.0/terraform-aws-cumulus-ecs-service.zip"
+module "data_migration2" {
+  source = "../../lambdas/data-migration2"
 
   prefix = var.prefix
-  name   = "ExecutionMigrationService"
 
-  log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
-  cluster_arn                           = module.cumulus.ecs_cluster_arn
-  desired_count                         = 1
-  image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
+  permissions_boundary_arn = var.permissions_boundary_arn
 
-  environment = {
-    lambdaArn: var.data_migration2_function_arn
-  }
+  vpc_id            = var.vpc_id
+  lambda_subnet_ids = var.subnet_ids
+
+  dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
+
+  rds_security_group_id = data.terraform_remote_state.data_persistence.outputs.rds_security_group
+  rds_user_access_secret_arn = data.terraform_remote_state.data_persistence.outputs.database_credentials_secret_arn
+
+  tags = merge(var.tags, { Deployment = var.prefix })
 }

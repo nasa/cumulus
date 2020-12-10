@@ -2,10 +2,6 @@ locals {
   lambda_path = "${path.module}/dist/webpack/lambda.zip"
 }
 
-data "aws_kms_key" "provider_kms_key" {
-  key_id = var.provider_kms_key_id
-}
-
 data "aws_iam_policy_document" "lambda_assume_role_policy" {
   statement {
     principals {
@@ -53,14 +49,6 @@ data "aws_iam_policy_document" "data_migration2" {
     ]
     resources = [var.rds_user_access_secret_arn]
   }
-
-  statement {
-    actions   = [
-      "kms:Encrypt",
-      "kms:Decrypt"
-    ]
-    resources = [data.aws_kms_key.provider_kms_key.arn]
-  }
 }
 
 resource "aws_iam_role_policy" "data_migration2" {
@@ -100,7 +88,6 @@ resource "aws_lambda_function" "data_migration2" {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
       ExecutionsTable = var.dynamo_tables.executions.name
       dbHeartBeat = var.rds_connection_heartbeat
-      provider_kms_key_id = var.provider_kms_key_id
     }
   }
 
