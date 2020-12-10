@@ -3,14 +3,17 @@
 const awsClients = require('@cumulus/aws-client/services');
 const isNil = require('lodash/isNil');
 
-const { buildDatabaseFiles } = require('./FileUtils');
+const FileUtils = require('./FileUtils');
 
-const translateGranule = async (granule) => {
+const translateGranule = async (
+  granule,
+  fileUtils = FileUtils
+) => {
   if (isNil(granule.files)) return granule;
 
   return {
     ...granule,
-    files: await buildDatabaseFiles({
+    files: await fileUtils.buildDatabaseFiles({
       s3: awsClients.s3(),
       files: granule.files,
     }),

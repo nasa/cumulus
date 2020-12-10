@@ -43,3 +43,6 @@ mhs2:
 
 bt-tf:
   bucket: bt-internal
+
+jtran-my-tf:
+  bucket: jtran-my-tf-internal

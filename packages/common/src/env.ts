@@ -1,4 +1,4 @@
-import { MissingRequiredEnvVar } from '@cumulus/errors';
+import { MissingRequiredEnvVarError } from '@cumulus/errors';
 
 export const getRequiredEnvVar = (
   name: string,
@@ -8,5 +8,5 @@ export const getRequiredEnvVar = (
 
   if (typeof value === 'string') return value;
 
-  throw new MissingRequiredEnvVar(`The ${name} environment variable must be set`);
+  throw new MissingRequiredEnvVarError(`The ${name} environment variable must be set`);
 };

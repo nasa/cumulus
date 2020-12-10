@@ -1,7 +1,6 @@
 module "distribution" {
   source = "../distribution"
 
-  tea_api_egress_log_group      = var.tea_api_egress_log_group
   tea_api_gateway_stage         = var.tea_api_gateway_stage
   tea_external_api_endpoint     = var.tea_external_api_endpoint
   tea_internal_api_endpoint     = var.tea_internal_api_endpoint
@@ -23,6 +22,7 @@ module "distribution" {
   urs_client_password                            = var.urs_client_password
   urs_url                                        = var.urs_url
   vpc_id                                         = var.vpc_id
+  deploy_to_ngap                                 = var.deploy_to_ngap
 
   tags = var.tags
 }

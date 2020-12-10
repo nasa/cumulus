@@ -3,7 +3,7 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import * as KMS from '@cumulus/aws-client/KMS';
 import { envUtils, keyPairProvider } from '@cumulus/common';
-import { ProviderRecord } from '@cumulus/db';
+import { PostgresProviderRecord } from '@cumulus/db';
 import Logger from '@cumulus/logger';
 
 import { RecordAlreadyMigrated } from './errors';
@@ -21,10 +21,10 @@ interface ProviderInsertData {
   port?: number
   username?: string
   password?: string
-  globalConnectionLimit?: number
-  privateKey?: string
-  cmKeyId?: string
-  certificateUri?: string
+  global_connection_limit?: number
+  private_key?: string
+  cm_key_id?: string
+  certificate_uri?: string
   created_at: Date
   updated_at?: Date
 }
@@ -62,7 +62,7 @@ export const migrateProviderRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.provider);
 
-  const existingRecord = await knex<ProviderRecord>('providers')
+  const existingRecord = await knex<PostgresProviderRecord>('providers')
     .where('name', dynamoRecord.id)
     .first();
   // Throw error if it was already migrated.
@@ -91,10 +91,10 @@ export const migrateProviderRecord = async (
     port: dynamoRecord.port,
     username,
     password,
-    globalConnectionLimit: dynamoRecord.globalConnectionLimit,
-    privateKey: dynamoRecord.privateKey,
-    cmKeyId: dynamoRecord.cmKeyId,
-    certificateUri: dynamoRecord.certificateUri,
+    global_connection_limit: dynamoRecord.globalConnectionLimit,
+    private_key: dynamoRecord.privateKey,
+    cm_key_id: dynamoRecord.cmKeyId,
+    certificate_uri: dynamoRecord.certificateUri,
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };

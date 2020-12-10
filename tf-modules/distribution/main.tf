@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    aws = ">= 2.31.0"
+   aws = "~> 3.0,!= 3.14.0"
   }
 }
 
@@ -8,9 +8,7 @@ locals {
   lambda_log_group_name  = "/aws/lambda/${var.tea_stack_name}-EgressLambda"
   tea_buckets            = concat(var.protected_buckets, var.public_buckets)
 
-  built_lambda_source_file = "${path.module}/lambda.zip"
-  repo_lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
-  lambda_source_file = fileexists(local.built_lambda_source_file) ? local.built_lambda_source_file : local.repo_lambda_source_file
+  lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
 }
 
 module "tea_map_cache" {
@@ -21,6 +19,7 @@ module "tea_map_cache" {
   tags                       = var.tags
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
+  deploy_to_ngap             = var.deploy_to_ngap
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {
@@ -240,16 +239,6 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 
   rest_api_id = var.tea_rest_api_id
   stage_name  = var.tea_api_gateway_stage
-}
-
-# Egress Api Gateway Log Group Filter
-resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  count           = var.tea_api_egress_log_group != null ? 1 : 0
-  name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
-  distribution    = "ByLogStream"
-  destination_arn = var.log_destination_arn
-  filter_pattern  = ""
-  log_group_name  = var.tea_api_egress_log_group
 }
 
 # Egress Lambda Log Group

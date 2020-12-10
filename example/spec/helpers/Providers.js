@@ -1,6 +1,7 @@
 'use strict';
 
 const isIp = require('is-ip');
+const pWaitFor = require('p-wait-for');
 const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
@@ -82,14 +83,62 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
   return provider;
 };
 
-const createProvider = async (stackName, provider) => {
-  await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
-  await providersApi.createProvider({ prefix: stackName, provider: provider });
+const throwIfApiReturnFail = async (apiResult) => {
+  if (apiResult.statusCode === 500) {
+    throw new Error(`API returned a 500 status: ${apiResult}, failing.`);
+  }
 };
+
+const createProvider = async (stackName, provider) => {
+  const deleteProviderResult = await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+  const createProviderResult = await providersApi.createProvider({ prefix: stackName, provider });
+  throwIfApiReturnFail(deleteProviderResult);
+  throwIfApiReturnFail(createProviderResult);
+};
+
+const deleteProvidersByHost = async (stackName, host) => {
+  const resp = await providersApi.getProviders({
+    prefix: stackName,
+    queryStringParameters: {
+      fields: 'id',
+      host,
+    },
+  });
+  const ids = JSON.parse(resp.body).results.map((p) => p.id);
+  const deletes = ids.map((id) => providersApi.deleteProvider({
+    prefix: stackName,
+    providerId: id,
+  }));
+  await Promise.all(deletes).catch(console.error);
+  await Promise.all(ids.map((id) => exports.waitForProviderRecordInOrNotInList(stackName, id, false)));
+};
+
+const waitForProviderRecordInOrNotInList = async (
+  stackName, id, recordIsIncluded = true, additionalQueryParams = {}
+) => pWaitFor(
+  async () => {
+    const resp = await providersApi.getProviders({
+      prefix: stackName,
+      queryStringParameters: {
+        fields: 'id',
+        id,
+        ...additionalQueryParams,
+      },
+    });
+    const ids = JSON.parse(resp.body).results.map((p) => p.id);
+    return recordIsIncluded ? ids.includes(id) : !ids.includes(id);
+  },
+  {
+    interval: 10000,
+    timeout: 600 * 1000,
+  }
+);
 
 module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
   createProvider,
+  deleteProvidersByHost,
   fetchFakeS3ProviderBucket,
+  waitForProviderRecordInOrNotInList,
 };

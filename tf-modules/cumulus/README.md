@@ -31,7 +31,7 @@ This module's outputs are listed in [ouputs.tf](./outputs.tf). Notable values th
 module "cumulus" {
   source = "https://github.com/nasa/cumulus/releases/download/vx.x.x/terraform-aws-cumulus.zip//tf-modules/cumulus"
 
-  cumulus_message_adapter_lambda_layer_arn = "arn:aws:lambda:us-east-1:1234567890:layer:Cumulus_Message_Adapter:1"
+  cumulus_message_adapter_lambda_layer_version_arn = "arn:aws:lambda:us-east-1:1234567890:layer:Cumulus_Message_Adapter:1"
 
   prefix = "my-prefix"
 

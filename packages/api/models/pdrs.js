@@ -4,7 +4,10 @@ const get = require('lodash/get');
 
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
-const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const {
+  getMessageExecutionArn,
+  getExecutionUrlFromArn,
+} = require('@cumulus/message/Executions');
 const {
   getMessagePdr,
   getMessagePdrPANSent,
@@ -17,7 +20,6 @@ const {
   getMetaStatus,
 } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
-const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
 const { CumulusModelError } = require('./errors');
 const pdrSchema = require('./schemas').pdr;
@@ -79,7 +81,7 @@ class Pdr extends Manager {
     }
 
     const arn = getMessageExecutionArn(message);
-    const execution = StepFunctionUtils.getExecutionUrl(arn);
+    const execution = getExecutionUrlFromArn(arn);
 
     const collectionId = getCollectionIdFromMessage(message);
     if (!collectionId) {

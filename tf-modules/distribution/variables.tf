@@ -74,12 +74,6 @@ variable "tea_api_gateway_stage" {
   description = "The API Gateway stage name for the Thin Egress App"
 }
 
-variable "tea_api_egress_log_group" {
-  description = "Thin Egress App API Gateway Cloudwatch log group ARN"
-  type        = string
-  default     = null
-}
-
 variable "tea_external_api_endpoint" {
   description = "Thin Egress App external endpoint URL"
   type        = string
@@ -124,4 +118,9 @@ variable "vpc_id" {
   type        = string
   description = "VPC used by Lambda functions"
   default     = null
+}
+
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
 }

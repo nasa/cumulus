@@ -14,6 +14,7 @@ module "ingest_granule_catch_duplicate_error_test_workflow" {
       fake_processing_task_arn: module.cumulus.fake_processing_task.task_arn,
       files_to_granules_task_arn: module.cumulus.files_to_granules_task.task_arn,
       move_granules_task_arn: module.cumulus.move_granules_task.task_arn,
+      update_granules_cmr_metadata_file_links_task_arn: module.cumulus.update_granules_cmr_metadata_file_links_task.task_arn
     }
   )
 }

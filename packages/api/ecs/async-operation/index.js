@@ -11,6 +11,10 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const url = require('url');
 const Logger = require('@cumulus/logger');
+const { pipeline } = require('stream');
+const { promisify } = require('util');
+const { tableNames, getKnexClient } = require('@cumulus/db');
+const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
@@ -113,14 +117,10 @@ async function fetchLambdaFunction(codeUrl) {
   // of connection timeouts.  If the download fails, this will retry it up to
   // 10 times with an exponential backoff.
   await pRetry(
-    () => new Promise((resolve, reject) => {
-      const file = fs.createWriteStream('/home/task/fn.zip')
-        .on('finish', resolve)
-        .on('error', reject);
-      got.stream(codeUrl)
-        .on('error', reject)
-        .pipe(file);
-    }),
+    () => promisify(pipeline)(
+      got.stream(codeUrl),
+      fs.createWriteStream('/home/task/fn.zip')
+    ),
     {
       maxTimeout: 10000,
       onFailedAttempt: (err) => {
@@ -150,25 +150,24 @@ function buildErrorOutput(error) {
   };
 }
 
-/**
- * Update an AsyncOperation item in DynamoDB
- *
- * For help with parameters, see:
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property
- *
- * @param {string} status - the new AsyncOperation status
- * @param {Object} output - the new output to store.  Must be parsable
- *   into JSON.
- * @returns {Promise} resolves when the item has been updated
- */
-function updateAsyncOperation(status, output) {
-  const dynamodb = new AWS.DynamoDB();
+const writeAsyncOperationToRds = async (params) => {
+  const { trx, env, dbOutput, status, updatedTime } = params;
+  const id = env.asyncOperationId;
+  const knex = await getKnexClient({ env });
+  return trx(tableNames.asyncOperations)
+    .where({ id })
+    .update({
+      status,
+      output: dbOutput,
+      updated_at: knex.raw(`to_timestamp(${Number(updatedTime / 1000)})`),
+    });
+};
 
-  const actualOutput = isError(output) ? buildErrorOutput(output) : output;
-
-  return dynamodb.updateItem({
-    TableName: process.env.asyncOperationsTable,
-    Key: { id: { S: process.env.asyncOperationId } },
+const writeAsyncOperationToDynamoDb = async (params) => {
+  const { env, status, dbOutput, updatedTime } = params;
+  return dynamodb().updateItem({
+    TableName: env.asyncOperationsTable,
+    Key: { id: { S: env.asyncOperationId } },
     ExpressionAttributeNames: {
       '#S': 'status',
       '#O': 'output',
@@ -176,12 +175,42 @@ function updateAsyncOperation(status, output) {
     },
     ExpressionAttributeValues: {
       ':s': { S: status },
-      ':o': { S: actualOutput ? JSON.stringify(actualOutput) : 'none' },
-      ':u': { N: (Number(Date.now())).toString() },
+      ':o': { S: dbOutput },
+      ':u': { N: updatedTime },
     },
     UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
   }).promise();
-}
+};
+
+/**
+ * Update an AsyncOperation item in DynamoDB
+ *
+ * For help with parameters, see:
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property
+ *
+ * @param {string} status - the new AsyncOperation status
+ * @param {Object} output - the new output to store.  Must be parsable JSON
+ * @param {Object} envOverride - Object to override/extend environment variables
+ * @returns {Promise} resolves when the item has been updated
+ */
+const updateAsyncOperation = async (status, output, envOverride = {}) => {
+  logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
+  const actualOutput = isError(output) ? buildErrorOutput(output) : output;
+  const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
+  const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
+  const env = { ...process.env, ...envOverride };
+  const knex = await getKnexClient({ env });
+  return knex.transaction(async (trx) => {
+    await writeAsyncOperationToRds({
+      dbOutput,
+      env,
+      status,
+      trx,
+      updatedTime,
+    });
+    return writeAsyncOperationToDynamoDb({ env, status, dbOutput, updatedTime });
+  });
+};
 
 /**
  * Download and run a Lambda task locally.  On completion, write the results out
@@ -232,13 +261,18 @@ async function runTask() {
     return;
   }
 
-  // Write the result out to DynamoDb
-  await updateAsyncOperation('SUCCEEDED', result);
+  // Write the result out to databases
+  try {
+    await updateAsyncOperation('SUCCEEDED', result);
+  } catch (error) {
+    logger.error('Failed to update record', error);
+    throw error;
+  }
 }
 
-// Here's where the magic happens ...
-
-// Make sure that all of the required environment variables are set
 const missingVars = missingEnvironmentVariables();
+
 if (missingVars.length === 0) runTask();
 else logger.error('Missing environment variables:', missingVars.join(', '));
+
+module.exports = { updateAsyncOperation };

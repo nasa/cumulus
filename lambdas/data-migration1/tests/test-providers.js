@@ -44,6 +44,7 @@ const generateFakeProvider = (params) => ({
 
 let providersModel;
 let rulesModel;
+const providerOmitList = ['id', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri', 'createdAt', 'updatedAt'];
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -125,16 +126,20 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
         username: await KMS.decryptBase64String(createdRecord.username),
         password: await KMS.decryptBase64String(createdRecord.password),
       },
-      ['cumulusId']
+      ['cumulus_id']
     ),
     omit(
       {
         ...fakeProvider,
         name: fakeProvider.id,
+        global_connection_limit: fakeProvider.globalConnectionLimit,
+        private_key: fakeProvider.privateKey,
+        cm_key_id: fakeProvider.cmKeyId,
+        certificate_uri: fakeProvider.certificateUri,
         created_at: new Date(fakeProvider.createdAt),
         updated_at: new Date(fakeProvider.updatedAt),
       },
-      ['id', 'encrypted', 'createdAt', 'updatedAt']
+      [...providerOmitList, 'encrypted']
     )
   );
 });
@@ -270,7 +275,7 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
   // ensure updated_at was set
   t.false(Number.isNaN(Date.parse(createdRecord.updated_at)));
   t.deepEqual(
-    omit(createdRecord, ['cumulusId', 'updated_at']),
+    omit(createdRecord, ['cumulus_id', 'updated_at']),
     omit(
       {
         ...fakeProvider,
@@ -278,12 +283,13 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
         port: null,
         username: null,
         password: null,
-        privateKey: null,
-        cmKeyId: null,
-        certificateUri: null,
+        global_connection_limit: fakeProvider.globalConnectionLimit,
+        private_key: null,
+        cm_key_id: null,
+        certificate_uri: null,
         created_at: new Date(fakeProvider.createdAt),
       },
-      ['id', 'createdAt', 'updatedAt']
+      providerOmitList
     )
   );
 });

@@ -8,18 +8,40 @@
  * const Granules = require('@cumulus/message/Granules');
  */
 
-import get from 'lodash/get';
 import { Message } from '@cumulus/types';
+import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
+
+import { getMetaStatus } from './workflows';
+
+interface MessageWithGranules extends Message.CumulusMessage {
+  payload: {
+    granules?: object[]
+  }
+}
 
 /**
- * Get granules from execution message.
+ * Get granules from payload?.granules of a workflow message.
  *
- * @param {Message.CumulusMessage} message - An execution message
+ * @param {MessageWithGranules} message - A workflow message
  * @returns {Array<Object>|undefined} An array of granule objects, or
  *   undefined if `message.payload.granules` is not set
  *
  * @alias module:Granules
  */
 export const getMessageGranules = (
-  message: Message.CumulusMessage
-): unknown[] | undefined => get(message, 'payload.granules');
+  message: MessageWithGranules
+): unknown[] => message.payload?.granules ?? [];
+
+/**
+ * Determine the status of a granule.
+ *
+ * @param {Message.CumulusMessage } message - A workflow message
+ * @param {ApiGranule} granule - A granule record
+ * @returns {string} The granule status
+ *
+ * @alias module:Granules
+ */
+export const getGranuleStatus = (
+  message: Message.CumulusMessage,
+  granule: ApiGranule
+): Message.WorkflowStatus | GranuleStatus => getMetaStatus(message) || granule.status;

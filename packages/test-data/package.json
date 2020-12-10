@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-data",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Includes the test data for various packages",
   "keywords": [
     "GIBS",
@@ -15,6 +15,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "test:coverage": "../../node_modules/.bin/nyc true",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },

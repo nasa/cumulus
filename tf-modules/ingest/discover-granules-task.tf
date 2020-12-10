@@ -9,7 +9,7 @@ resource "aws_lambda_function" "discover_granules_task" {
   timeout          = 300
   memory_size      = 512
 
-  layers = [var.cumulus_message_adapter_lambda_layer_arn]
+  layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
   environment {
     variables = {

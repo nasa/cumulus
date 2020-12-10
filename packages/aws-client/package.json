@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
@@ -29,6 +29,7 @@
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
@@ -42,9 +43,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/checksum": "3.0.0",
-    "@cumulus/errors": "3.0.0",
-    "@cumulus/logger": "3.0.0",
+    "@cumulus/checksum": "4.0.0",
+    "@cumulus/errors": "4.0.0",
+    "@cumulus/logger": "4.0.0",
     "aws-sdk": "^2.585.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.20",

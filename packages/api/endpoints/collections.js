@@ -10,7 +10,7 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { getKnexClient } = require('@cumulus/db');
+const { getKnexClient, translateApiCollectionToPostgresCollection } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -20,35 +20,9 @@ const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 
-const dynamoRecordToDbRecord = (dynamoRecord) => {
-  const dbRecord = {
-    ...dynamoRecord,
-    granuleIdExtractionRegex: dynamoRecord.granuleIdExtraction,
-    granuleIdValidationRegex: dynamoRecord.granuleId,
-    files: JSON.stringify(dynamoRecord.files),
-  };
-
-  delete dbRecord.createdAt;
-  delete dbRecord.granuleId;
-  delete dbRecord.granuleIdExtraction;
-  delete dbRecord.updatedAt;
-
-  // eslint-disable-next-line lodash/prefer-lodash-typecheck
-  if (typeof dynamoRecord.createdAt === 'number') {
-    dbRecord.created_at = new Date(dynamoRecord.createdAt);
-  }
-
-  // eslint-disable-next-line lodash/prefer-lodash-typecheck
-  if (typeof dynamoRecord.updatedAt === 'number') {
-    dbRecord.updated_at = new Date(dynamoRecord.updatedAt);
-  }
-
-  if (dynamoRecord.tags) {
-    dbRecord.tags = JSON.stringify(dynamoRecord.tags);
-  }
-
-  return dbRecord;
-};
+const dynamoRecordToDbRecord = (
+  dynamoRecord
+) => translateApiCollectionToPostgresCollection(dynamoRecord);
 
 /**
  * List all collections.
@@ -58,14 +32,15 @@ const dynamoRecordToDbRecord = (dynamoRecord) => {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const { getMMT, ...queryStringParameters } = req.query;
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
   const collection = new Collection(
     { queryStringParameters },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    includeStats === 'true'
   );
   let result = await collection.query();
-  if (getMMT && getMMT === 'true') {
+  if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
   return res.send(result);
@@ -81,15 +56,16 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
-  const { getMMT, ...queryStringParameters } = req.query;
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
 
   const collection = new Collection(
     { queryStringParameters },
     undefined,
-    process.env.ES_INDEX
+    process.env.ES_INDEX,
+    includeStats === 'true'
   );
   let result = await collection.queryCollectionsWithActiveGranules();
-  if (getMMT && getMMT === 'true') {
+  if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
   return res.send(result);
@@ -148,7 +124,7 @@ async function post(req, res) {
     const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
     try {
-      await dbClient('collections').insert(dbRecord, 'cumulusId');
+      await dbClient('collections').insert(dbRecord, 'cumulus_id');
     } catch (error) {
       await collectionsModel.delete({ name, version });
 

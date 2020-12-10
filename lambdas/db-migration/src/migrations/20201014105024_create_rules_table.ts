@@ -3,7 +3,7 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('rules', (table) => {
     table
-      .increments('cumulusId')
+      .increments('cumulus_id')
       .primary();
     table
       .text('name')
@@ -14,15 +14,13 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Workflow name to invoke for this rule')
       .notNullable();
     table
-      .integer('collectionCumulusId')
-      .references('cumulusId')
-      .inTable('collections')
-      .notNullable();
+      .integer('collection_cumulus_id')
+      .references('cumulus_id')
+      .inTable('collections');
     table
-      .integer('providerCumulusId')
-      .references('cumulusId')
-      .inTable('providers')
-      .notNullable();
+      .integer('provider_cumulus_id')
+      .references('cumulus_id')
+      .inTable('providers');
     table
       .enum('type', ['onetime', 'scheduled', 'sns', 'kinesis', 'sqs'])
       .comment(
@@ -43,8 +41,11 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('arn')
       .comment('For kinesis rules: ARN of event source mapping between Kinesis stream and message consumer Lambda');
     table
-      .text('logEventArn')
+      .text('log_event_arn')
       .comment('For kinesis rules: ARN of event source mapping between Kinesis stream and inbound event logger Lambda');
+    table
+      .text('execution_name_prefix')
+      .comment('Optional Execution name prefix');
     table
       .jsonb('payload')
       .comment('Optional input payload to use for onetime and scheduled workflows');
@@ -55,7 +56,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .jsonb('tags')
       .comment('Optional tags for the rule');
     table
-      .text('queueUrl')
+      .text('queue_url')
       .comment('Optional SQS queue URL used to schedule executions for this rule');
     table
       .timestamps(false, true);

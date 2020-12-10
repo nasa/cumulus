@@ -1,9 +1,9 @@
 import * as Knex from 'knex';
 
 export const up = async (knex: Knex): Promise<void> =>
-  knex.schema.createTable('asyncOperations', (table) => {
+  knex.schema.createTable('async_operations', (table) => {
     table
-      .increments('cumulusId')
+      .increments('cumulus_id')
       .primary();
     table
       .uuid('id')
@@ -14,7 +14,15 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('description for async operation')
       .notNullable();
     table
-      .enum('operationType', ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Kinesis Replay', 'Reconciliation Report'])
+      .enum('operation_type',
+        [
+          'ES Index',
+          'Bulk Granules',
+          'Bulk Granule Reingest',
+          'Bulk Granule Delete',
+          'Kinesis Replay',
+          'Reconciliation Report',
+        ])
       .comment('type of async operation')
       .notNullable();
     table
@@ -25,7 +33,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('async operation status')
       .notNullable();
     table
-      .text('taskArn')
+      .text('task_arn')
       .comment('async operation ECS task ARN');
     table
       .timestamps(false, true);
@@ -33,4 +41,4 @@ export const up = async (knex: Knex): Promise<void> =>
   });
 
 export const down = async (knex: Knex): Promise<void> => knex.schema
-  .dropTableIfExists('asyncOperations');
+  .dropTableIfExists('async_operations');

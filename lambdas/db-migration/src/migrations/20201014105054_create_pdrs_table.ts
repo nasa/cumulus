@@ -3,17 +3,17 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('pdrs', (table) => {
     table
-      .increments('cumulusId')
+      .increments('cumulus_id')
       .comment('Internal Cumulus ID for a PDR')
       .primary();
     table
-      .integer('collectionCumulusId')
-      .references('cumulusId')
+      .integer('collection_cumulus_id')
+      .references('cumulus_id')
       .inTable('collections')
       .notNullable();
     table
-      .integer('providerCumulusId')
-      .references('cumulusId')
+      .integer('provider_cumulus_id')
+      .references('cumulus_id')
       .inTable('providers')
       .notNullable();
     table
@@ -25,17 +25,17 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('PDR name')
       .notNullable();
     table
-      .integer('executionCumulusId')
-      .references('cumulusId')
+      .integer('execution_cumulus_id')
+      .references('cumulus_id')
       .inTable('executions');
     table
       .float('progress')
       .comment('PDR completion progress percentage');
     table
-      .boolean('PANSent')
+      .boolean('pan_sent')
       .comment('Boolean defining if a PAN response has been sent for this PDR');
     table
-      .text('PANmessage')
+      .text('pan_message')
       .comment('PAN message text');
     table
       .jsonb('stats')
@@ -43,7 +43,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('address');
     table
-      .text('originalUrl');
+      .text('original_url');
     table
       .float('duration');
     table

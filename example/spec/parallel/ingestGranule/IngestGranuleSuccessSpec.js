@@ -16,7 +16,6 @@ const {
   Execution,
   Granule,
   Pdr,
-  Provider,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -48,6 +47,7 @@ const {
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const executionsApiTestUtils = require('@cumulus/api-client/executions');
+const providersApi = require('@cumulus/api-client/providers');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
@@ -113,7 +113,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let pdrModel;
   let postToCmrOutput;
   let provider;
-  let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
   let failingWorkflowExecution;
@@ -138,7 +137,6 @@ describe('The S3 Ingest Granules workflow', () => {
     executionModel = new Execution();
     process.env.system_bucket = config.bucket;
     process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-    providerModel = new Provider();
     process.env.PdrsTable = `${config.stackName}-PdrsTable`;
     pdrModel = new Pdr();
 
@@ -258,7 +256,10 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      providerModel.delete(provider),
+      providersApi.deleteProvider({
+        prefix: config.stackName,
+        provider: { id: provider.id },
+      }),
       executionModel.delete({ arn: workflowExecutionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
@@ -1086,7 +1087,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(definition.Comment).toEqual('Ingest Granule');
 
         // definition has all the states' information
-        expect(Object.keys(definition.States).length).toBe(10);
+        expect(Object.keys(definition.States).length).toBe(11);
       });
 
       it('returns the inputs, outputs, timing, and status information for each executed step', async () => {
@@ -1102,6 +1103,7 @@ describe('The S3 Ingest Granules workflow', () => {
           'ProcessingStep',
           'FilesToGranulesStep',
           'MoveGranuleStep',
+          'UpdateGranulesCmrMetadataFileLinksStep',
           'CmrStep',
           'WorkflowSucceeded',
         ];

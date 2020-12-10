@@ -145,6 +145,8 @@ async function handleRedirectRequest(req, res) {
   const { code, state } = req.query;
 
   const getAccessTokenResponse = await authClient.getAccessToken(code);
+  // expirationTime is in seconds whereas Date is expecting milliseconds
+  const expirationTime = getAccessTokenResponse.expirationTime * 1000;
 
   await accessTokenModel.create({
     accessToken: getAccessTokenResponse.accessToken,
@@ -158,7 +160,7 @@ async function handleRedirectRequest(req, res) {
       'accessToken',
       getAccessTokenResponse.accessToken,
       {
-        expires: new Date(getAccessTokenResponse.expirationTime),
+        expires: new Date(expirationTime),
         httpOnly: true,
         secure: useSecureCookies(),
       }

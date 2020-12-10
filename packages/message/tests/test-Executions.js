@@ -10,6 +10,8 @@ const {
   getStateMachineArnFromExecutionArn,
   getMessageExecutionParentArn,
   getMessageCumulusVersion,
+  getMessageExecutionOriginalPayload,
+  getMessageExecutionFinalPayload,
 } = require('../Executions');
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
@@ -32,14 +34,14 @@ test.serial('getExecutionUrlFromArn returns correct URL when a region environmen
 
 test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {
   t.throws(
-    () => getMessageExecutionName(),
+    () => getMessageExecutionName({ cumulus_meta: {} }),
     { message: 'cumulus_meta.execution_name not set in message' }
   );
 });
 
 test('getMessageStateMachineArn throws error if cumulus_meta.state_machine is missing', (t) => {
   t.throws(
-    () => getMessageStateMachineArn(),
+    () => getMessageStateMachineArn({ cumulus_meta: {} }),
     { message: 'cumulus_meta.state_machine not set in message' }
   );
 });
@@ -111,4 +113,64 @@ test('getMessageCumulusVersion returns undefined if there is no cumulus version'
     cumulus_meta: {},
   });
   t.is(cumulusVersion, undefined);
+});
+
+test('getMessageExecutionOriginalPayload returns original payload when status is running', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.deepEqual(
+    getMessageExecutionOriginalPayload({
+      meta: {
+        status: 'running',
+      },
+      payload,
+    }),
+    payload
+  );
+});
+
+test('getMessageExecutionOriginalPayload returns undefined for non-running execution', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.is(
+    getMessageExecutionOriginalPayload({
+      meta: {
+        status: 'completed',
+      },
+      payload,
+    }),
+    undefined
+  );
+});
+
+test('getMessageExecutionFinalPayload returns final payload when status is not running', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.deepEqual(
+    getMessageExecutionFinalPayload({
+      meta: {
+        status: 'completed',
+      },
+      payload,
+    }),
+    payload
+  );
+});
+
+test('getMessageExecutionFinalPayload returns undefined for running execution', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.is(
+    getMessageExecutionFinalPayload({
+      meta: {
+        status: 'running',
+      },
+      payload,
+    }),
+    undefined
+  );
 });

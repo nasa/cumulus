@@ -159,6 +159,12 @@ async function fetchCompletedReport(reportRecord) {
     .then(JSON.parse);
 }
 
+async function fetchCompletedReportString(reportRecord) {
+  return awsServices.s3()
+    .getObject(parseS3Uri(reportRecord.location)).promise()
+    .then((response) => response.Body.toString());
+}
+
 /**
  * Looks up and returns the granulesIds given a list of collectionIds.
  * @param {Array<string>} collectionIds - list of collectionIds
@@ -1653,4 +1659,39 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
   t.is(report.granules.onlyInEs.length, 0);
   t.is(report.granules.onlyInDb.length, 0);
   t.is(report.granules.withConflicts.length, 0);
+});
+
+test.serial('Creates a valid Granule Inventory report', async (t) => {
+  const collection = fakeCollectionFactory();
+  const collectionId = constructCollectionId(collection.name, collection.version);
+  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId }));
+  await Promise.all(
+    matchingGrans.map((gran) => indexer.indexGranule(esClient, gran, esAlias))
+  );
+
+  await new models.Granule().create(matchingGrans);
+
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Granule Inventory',
+    reportName: randomId('reportName'),
+    collectionId,
+    status: 'completed',
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+
+  const reportRecord = await handler(event);
+  t.is(reportRecord.status, 'Generated');
+  t.is(reportRecord.name, event.reportName);
+  t.is(reportRecord.type, event.reportType);
+
+  const report = await fetchCompletedReportString(reportRecord);
+  const reportArray = report.split('\n');
+  const reportHeader = reportArray.slice(0, 1)[0];
+  const reportRows = reportArray.slice(1, reportArray.length);
+  const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published"';
+  t.is(reportHeader, header);
+  t.is(reportRows.length, 10);
 });
