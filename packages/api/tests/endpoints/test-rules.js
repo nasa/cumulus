@@ -22,7 +22,6 @@ const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
 const Collection = require('../../models/collections');
 const Provider = require('../../models/providers');
-const models = require('../../models');
 
 const {
   createFakeJwtAuthToken,
