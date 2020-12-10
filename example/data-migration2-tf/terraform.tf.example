@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     region         = "us-east-1"
     bucket         = "PREFIX-state"
-    key            = "PREFIX/data-migration1/terraform.tfstate"
+    key            = "PREFIX/data-migration2/terraform.tfstate"
     dynamodb_table = "PREFIX-tf-locks"
   }
 }

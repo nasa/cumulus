@@ -13,11 +13,6 @@ variable "prefix" {
   type = string
 }
 
-variable "provider_kms_key_id" {
-  description = "KMS key ID for encrypting provider credentials"
-  type        = string
-}
-
 variable "rds_user_access_secret_arn" {
   description = "RDS User Database Login Credential Secret ID"
   type        = string

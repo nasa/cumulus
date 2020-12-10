@@ -6,11 +6,6 @@ terraform {
 
 provider "aws" {
   region  = var.region
-<<<<<<< HEAD
-=======
-  profile = var.aws_profile
-
->>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }
@@ -28,7 +23,6 @@ data "terraform_remote_state" "data_persistence" {
   workspace = terraform.workspace
 }
 
-<<<<<<< HEAD
 module "data_migration2" {
   source = "../../lambdas/data-migration2"
 
@@ -46,21 +40,3 @@ module "data_migration2" {
 
   tags = merge(var.tags, { Deployment = var.prefix })
 }
-=======
-
-module "data_migration2_ecs_service" {
-  source = "https://github.com/nasa/cumulus/releases/download/v4.0.0/terraform-aws-cumulus-ecs-service.zip"
-
-  prefix = var.prefix
-  name   = "ExecutionMigrationService"
-
-  log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
-  cluster_arn                           = module.cumulus.ecs_cluster_arn
-  desired_count                         = 1
-  image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
-
-  environment = {
-    lambdaArn: var.data_migration2_function_arn
-  }
-}
->>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
