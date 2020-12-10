@@ -5,7 +5,10 @@ terraform {
 }
 
 provider "aws" {
+<<<<<<< HEAD
   region  = var.region
+=======
+>>>>>>> c08f83d59... CUMULUS-2188 complete data-migration2 terraform template
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }

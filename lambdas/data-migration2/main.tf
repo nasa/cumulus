@@ -37,10 +37,7 @@ data "aws_iam_policy_document" "data_migration2" {
   statement {
     actions = [
       "dynamodb:Scan",
-<<<<<<< HEAD
       "dynamodb:GetItem",
-=======
->>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
     ]
     resources = [
       var.dynamo_tables.executions.arn
@@ -54,6 +51,7 @@ data "aws_iam_policy_document" "data_migration2" {
     resources = [var.rds_user_access_secret_arn]
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
   statement {
@@ -64,6 +62,8 @@ data "aws_iam_policy_document" "data_migration2" {
     resources = [data.aws_kms_key.provider_kms_key.arn]
   }
 >>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
+=======
+>>>>>>> c08f83d59... CUMULUS-2188 complete data-migration2 terraform template
 }
 
 resource "aws_iam_role_policy" "data_migration2" {
@@ -108,9 +108,12 @@ resource "aws_lambda_function" "data_migration2" {
       ExecutionsTable = var.dynamo_tables.executions.name
       dbHeartBeat = var.rds_connection_heartbeat
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
       provider_kms_key_id = var.provider_kms_key_id
 >>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
+=======
+>>>>>>> c08f83d59... CUMULUS-2188 complete data-migration2 terraform template
     }
   }
 
