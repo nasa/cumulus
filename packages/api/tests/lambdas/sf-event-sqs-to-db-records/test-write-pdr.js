@@ -121,6 +121,21 @@ test.beforeEach(async (t) => {
     })
     .returning('cumulus_id');
   t.context.runningExecutionCumulusId = executionResponse[0];
+
+  t.context.runningPdrRecord = {
+    name: t.context.pdr.name,
+    status: 'running',
+    execution_cumulus_id: t.context.runningExecutionCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+    progress: 25,
+    pan_sent: true,
+    pan_message: 'message',
+    stats: {},
+    duration: 1,
+    timestamp: new Date(),
+    created_at: new Date(),
+  };
 });
 
 test.after.always(async (t) => {
@@ -173,35 +188,18 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
 
 test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
   const {
-    providerCumulusId,
-    collectionCumulusId,
-    runningExecutionCumulusId,
-    pdr,
     knex,
+    runningPdrRecord,
   } = t.context;
 
-  const pdrRecord = {
-    name: pdr.name,
-    status: 'running',
-    execution_cumulus_id: runningExecutionCumulusId,
-    collection_cumulus_id: collectionCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    progress: 25,
-    pan_sent: true,
-    pan_message: 'message',
-    stats: {},
-    duration: 1,
-    timestamp: new Date(),
-    created_at: new Date(),
-  };
   // eslint-disable-next-line camelcase
-  const [cumulus_id] = await knex(tableNames.pdrs).insert(pdrRecord).returning('cumulus_id');
+  const [cumulus_id] = await knex(tableNames.pdrs).insert(runningPdrRecord).returning('cumulus_id');
   const pdrCumulusId = await knex.transaction(
     (trx) =>
       getPdrCumulusIdFromQueryResultOrLookup(
         trx,
         {},
-        pdrRecord
+        runningPdrRecord
       )
   );
   t.is(cumulus_id, pdrCumulusId);
@@ -209,111 +207,84 @@ test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database 
 
 test('writeRunningPdrViaTransaction() does not update record with same execution if progress is less than current', async (t) => {
   const {
-    providerCumulusId,
-    collectionCumulusId,
-    runningExecutionCumulusId,
-    pdr,
     knex,
+    runningPdrRecord,
   } = t.context;
 
-  const pdrRecord = {
-    name: pdr.name,
+  const runningPdrRecord1 = {
+    ...runningPdrRecord,
     status: 'running',
-    execution_cumulus_id: runningExecutionCumulusId,
-    collection_cumulus_id: collectionCumulusId,
-    provider_cumulus_id: providerCumulusId,
     progress: 75,
-    pan_sent: true,
-    pan_message: 'message',
     stats: {
       running: ['arn1'],
       completed: ['arn2', 'arn3', 'arn4'],
     },
-    duration: 3,
-    timestamp: new Date(),
-    created_at: new Date(),
   };
-  await knex(tableNames.pdrs).insert(pdrRecord);
+  await knex(tableNames.pdrs).insert(runningPdrRecord1);
   const firstRecord = await knex(tableNames.pdrs)
-    .where({ name: pdr.name })
+    .where({ name: runningPdrRecord1.name })
     .first();
   t.is(firstRecord.progress, 75);
 
   // Update PDR progress
-  pdrRecord.progress = 50;
-  pdrRecord.stats = {
-    running: ['arn1', 'arn2'],
-    completed: ['arn3', 'arn4'],
+  const runningPdrRecord2 = {
+    ...runningPdrRecord,
+    status: 'running',
+    progress: 50,
+    stats: {
+      running: ['arn1', 'arn2'],
+      completed: ['arn3', 'arn4'],
+    },
   };
 
   await knex.transaction(
-    (trx) => {
-      return writeRunningPdrViaTransaction({
+    (trx) =>
+      writeRunningPdrViaTransaction({
         trx,
-        pdrRecord,
-      });
-    }
+        pdrRecord: runningPdrRecord2,
+      })
   );
   const updatedRecord = await knex(tableNames.pdrs)
-    .where({ name: pdr.name })
+    .where({ name: runningPdrRecord2.name })
     .first();
   t.is(updatedRecord.progress, 75);
 });
 
 test('writeRunningPdrViaTransaction() overwrites record with same execution if progress is greater than current', async (t) => {
   const {
-    providerCumulusId,
-    collectionCumulusId,
-    runningExecutionCumulusId,
-    pdr,
+    runningPdrRecord,
     knex,
   } = t.context;
 
-  const stats = {
-    running: ['arn2', 'arn3', 'arn4'],
-    completed: ['arn1'],
-  };
-  const pdrRecord = {
-    name: pdr.name,
-    status: 'running',
-    execution_cumulus_id: runningExecutionCumulusId,
-    collection_cumulus_id: collectionCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    progress: 25,
-    pan_sent: true,
-    pan_message: 'message',
-    stats,
-    duration: 3,
-    timestamp: new Date(),
-    created_at: new Date(),
-  };
-  await knex(tableNames.pdrs).insert(pdrRecord);
+  await knex(tableNames.pdrs).insert(runningPdrRecord);
   const firstRecord = await knex(tableNames.pdrs)
-    .where({ name: pdr.name })
+    .where({ name: runningPdrRecord.name })
     .first();
   t.is(firstRecord.progress, 25);
-  t.deepEqual(firstRecord.stats, stats);
+  t.deepEqual(firstRecord.stats, runningPdrRecord.stats);
 
   // Update PDR progress
-  pdrRecord.progress = 100;
-  const updatedStats = {
-    running: [],
-    completed: ['arn1', 'arn2', 'arn3', 'arn4'],
+  const updatedRunningPdrRecord = {
+    ...runningPdrRecord,
+    progress: 100,
+    stats: {
+      running: [],
+      completed: ['arn1', 'arn2', 'arn3', 'arn4'],
+    },
   };
-  pdrRecord.stats = updatedStats;
 
   await knex.transaction(
     (trx) =>
       writeRunningPdrViaTransaction({
         trx,
-        pdrRecord,
+        pdrRecord: updatedRunningPdrRecord,
       })
   );
   const updatedRecord = await knex(tableNames.pdrs)
-    .where({ name: pdr.name })
+    .where({ name: updatedRunningPdrRecord.name })
     .first();
   t.is(updatedRecord.progress, 100);
-  t.deepEqual(updatedRecord.stats, updatedStats);
+  t.deepEqual(updatedRecord.stats, updatedRunningPdrRecord.stats);
 });
 
 test('writePdrViaTransaction() updates a "completed" record to "running" if the execution is different', async (t) => {
