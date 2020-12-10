@@ -5,7 +5,6 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
-const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
@@ -555,7 +554,7 @@ test.serial('POST does not write to RDS if writing to DynamoDB fails', async (t)
   }
 });
 
-test.serial.skip('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
+test.serial('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
   const { newRule, dbClient } = t.context;
 
   t.false(await ruleModel.exists(newRule.name));
