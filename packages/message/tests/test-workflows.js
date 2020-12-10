@@ -8,10 +8,7 @@ const {
   getMessageWorkflowStartTime,
   getMessageWorkflowStopTime,
   getMessageWorkflowName,
-<<<<<<< HEAD
   getWorklowDuration,
-=======
->>>>>>> feature-rds
 } = require('../workflows');
 
 test('getMetaStatus returns correct status', (t) => {
