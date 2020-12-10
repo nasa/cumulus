@@ -14,6 +14,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
+const S3 = require('@cumulus/aws-client/S3');
 
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -54,6 +55,8 @@ const testRule = {
   collection: undefined,
   rule: {
     type: 'onetime',
+    arn: 'arn',
+    value: 'value',
   },
   state: 'ENABLED',
   queueUrl: 'queue_url',
@@ -584,7 +587,6 @@ test.serial('POST does not write to DynamoDB if writing to RDS fails', async (t)
 
 test('PUT replaces a rule', async (t) => {
   const { dbClient } = t.context;
-  testRule.type = 'scheduled';
   const expectedRule = {
     ...omit(testRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
