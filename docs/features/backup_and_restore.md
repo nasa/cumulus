@@ -113,9 +113,7 @@ select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg
 This should block new connections to the Core database from the database user
 and cause database writes to fail.
 
-Take care that you aren't using the admin user (e.g. postgres) with a default
-database or you may inadvertently limit connections by your administrative
-tasks.
+Note that it is possible in the above scenario to remove access to your datastore for your *administrative user*.   Use care.
 
 #### **2. Using the AWS CLI (see [AWS PITR documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_PIT.html) for console instructions), making *certain* to use the same subnet groups and vpc-security-group IDs from your Core deployment, run the following command:**
 
@@ -141,8 +139,7 @@ tasks.
   (`DBSubnetGroup` from the AWS RDS CLI output)
 
   Once this command is run, you should see the cluster appear in the RDS cluster
-  list with a `Creating` status.  Verify the creating cluster has a
-  reasonable configuration.   Once the cluster is online, manually validate
+  list with a `Creating` status.  Verify the creating cluster has a configuration similar to the cluster it is replacing.   Once the cluster is online, manually validate
   that it has the tables/data you expect, then proceed.
 
 #### 3. Import cluster into terraform state
