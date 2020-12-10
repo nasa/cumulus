@@ -5,8 +5,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
-const { randomString } = require('@cumulus/common/test-utils');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
   getKnexClient,
   localStackConnectionEnv,
@@ -16,7 +15,9 @@ const {
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 
+const { buildFakeExpressResponse } = require('./utils');
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
+const { post } = require('../../endpoints/rules');
 const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
@@ -557,32 +558,36 @@ test.serial('POST does not write to RDS if writing to DynamoDB fails', async (t)
   }
 });
 
-test.serial('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
+test.only('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
   const { newRule, dbClient } = t.context;
+  const collection = fakeCollectionFactory();
 
-  t.false(await ruleModel.exists(newRule.name));
-  const knexInsertStub = sinon.stub(dbClient, 'insert').returns(() => {
-    throw new Error('Error');
-  });
+  const failingRulesModel = {
+    exists: () => false,
+    create: () => {
+      throw new Error('Rule error');
+    },
+  };
 
-  try {
-    const response = await request(app)
-      .post('/rules')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send(newRule)
-      .expect(200);
+  const expressRequest = {
+    body: newRule,
+    testContext: {
+      dbClient,
+      rulesModel: failingRulesModel,
+    },
+  };
 
-    t.not(response.body.message, 'Record saved');
-    t.false(await ruleModel.exists(newRule.name));
-  } finally {
-    knexInsertStub.restore();
+  const response = buildFakeExpressResponse();
 
-    const dbRecords = await dbClient.first()
-      .from(tableNames.rules)
-      .where({ name: newRule.name });
-    t.is(dbRecords, undefined);
-  }
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('Rule error'));
+
+  const dbRecords = await dbClient.select('name', 'version')
+    .from(tableNames.rules)
+    .where({ name: newRule.name });
+
+  t.is(dbRecords.length, 0);
 });
 
 test('PUT replaces a rule', async (t) => {

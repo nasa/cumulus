@@ -66,8 +66,10 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const model = new models.Rule();
-  const dbClient = await getKnexClient();
+  const {
+    model = new models.Rule(),
+    dbClient = await getKnexClient(),
+  } = req.testContext || {};
 
   const rule = req.body || {};
   const name = rule.name;
@@ -198,4 +200,7 @@ router.put('/:name', put);
 router.post('/', post);
 router.delete('/:name', del);
 
-module.exports = router;
+module.exports = {
+  router,
+  post,
+};
