@@ -102,7 +102,7 @@ completed before proceeding.
 
 ##### Remove Database Cluster Access
 
-Depending on your database cluster/setup, there are several ways to limit access to the
+Depending on your database cluster configuration, there are several ways to limit access to the
 database.   One example:
 
 Log in as the administrative user to your database cluster and run:
