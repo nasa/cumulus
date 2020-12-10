@@ -176,7 +176,7 @@ terraform apply
 
 A RDS cluster can be recreated from a manually created snapshot
 or one of your automated backups.   These backups do not require a live cluster,
-and work in case of accidental deletion or full cluster/backup failure. The
+and can be used for recovery in case of accidental deletion or full cluster/backup failure. The
 terraform  module supports the variable `snapshot identifier` - this
 variable, when set, will on cluster creation utilize an existing snapshot to
 create a new cluster.
