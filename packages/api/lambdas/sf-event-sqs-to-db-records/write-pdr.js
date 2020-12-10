@@ -2,6 +2,7 @@
 
 const {
   tableNames,
+  getRecordCumulusId,
 } = require('@cumulus/db');
 const {
   getMessagePdrName,
@@ -60,16 +61,18 @@ const generatePdrRecord = ({
  * @param {Object} trx - A Knex transaction
  * @param {Object} queryResult - Raw query result
  * @param {Object} pdrRecord - A PDR record
- * @returns {Promise<number>} - Cumulus ID for the PDR record
+ * @returns {Promise<number|undefined>} - Cumulus ID for the PDR record
  */
 const getPdrCumulusIdFromQueryResultOrLookup = async (trx, queryResult, pdrRecord) => {
   let pdrCumulusId = getCumulusIdFromRawInsertQueryResult(queryResult);
   if (!pdrCumulusId) {
-    const record = await trx(tableNames.pdrs)
-      .select('cumulus_id')
-      .where({ name: pdrRecord.name })
-      .first();
-    pdrCumulusId = record.cumulus_id;
+    // If the record were somehow not found, this will throw an error
+    // that causes the whole PDR write transaction to fail. Is that desirable?
+    pdrCumulusId = await getRecordCumulusId(
+      { name: pdrRecord.name },
+      tableNames.pdrs,
+      trx
+    );
   }
   return pdrCumulusId;
 };
