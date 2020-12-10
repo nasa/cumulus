@@ -1,16 +1,14 @@
 const test = require('ava');
+const omit = require('lodash/omit');
 const { translateApiRuleToPostgresRule } = require('../dist/rules');
 
-test('translateApiRuleToPostgresRule converts API rule to Postgres', (t) => {
+test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) => {
   const record = {
     name: 'name',
     workflow: 'workflow_name',
-    provider: 'provider_id',
+    provider: undefined,
     state: 'ENABLED',
-    collection: {
-      name: 'collection_name',
-      version: 'collection_version',
-    },
+    collection: undefined,
     rule: { type: 'onetime', value: 'value', arn: 'arn', logEventArn: 'event_arn' },
     executionNamePrefix: 'prefix',
     meta: { key: 'value' },
@@ -20,15 +18,17 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', (t) => {
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
+
   const expectedPostgresRule = {
     name: record.name,
     workflow: record.workflow,
     meta: (record.meta ? JSON.stringify(record.meta) : undefined),
     payload: record.payload,
-    queue_url: record.queueName,
+    queue_url: record.queueUrl,
     arn: record.rule.arn,
     type: record.rule.type,
     value: record.rule.value,
+    log_event_arn: record.rule.logEventArn,
     enabled: true,
     tags: (record.tags ? JSON.stringify(record.tags) : undefined),
     execution_name_prefix: record.executionNamePrefix,
@@ -36,8 +36,9 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', (t) => {
     updated_at: new Date(record.updatedAt),
   };
 
+  const result = await translateApiRuleToPostgresRule(record);
   t.deepEqual(
-    translateApiRuleToPostgresRule(record),
+    omit(result, ['collection_cumulus_id', 'provider_cumulus_id']),
     expectedPostgresRule
   );
 });
