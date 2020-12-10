@@ -560,7 +560,6 @@ test.serial('POST does not write to RDS if writing to DynamoDB fails', async (t)
 
 test.only('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
   const { newRule, dbClient } = t.context;
-  const collection = fakeCollectionFactory();
 
   const failingRulesModel = {
     exists: () => false,
