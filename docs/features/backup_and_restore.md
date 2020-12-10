@@ -92,7 +92,7 @@ If you are using the `cumulus-rds-tf` module to deploy an RDS Aurora Serverless
 Postgres instance, the following procedure can be used to successfully spin up a duplicate
 cluster from backup in recovery scenarios where the database cluster is still viable:
 
-#### **1. Halt all ingest/remove access to the database to prevent Core processes from writing to the old cluster.**
+#### **1. Halt all ingest and remove access to the database to prevent Core processes from writing to the old cluster.**
 
 ##### Halt Ingest
 
