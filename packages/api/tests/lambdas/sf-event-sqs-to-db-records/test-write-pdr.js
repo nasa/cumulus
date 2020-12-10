@@ -47,16 +47,6 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  process.env.RDS_DEPLOYMENT_CUMULUS_VERSION = '3.0.0';
-  t.context.postRDSDeploymentVersion = '4.0.0';
-  t.context.preRDSDeploymentVersion = '2.9.99';
-
-  const stateMachineName = cryptoRandomString({ length: 5 });
-  t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;
-
-  t.context.executionName = cryptoRandomString({ length: 5 });
-  t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
-
   t.context.pdrName = cryptoRandomString({ length: 10 });
   t.context.pdr = {
     name: t.context.pdrName,
@@ -83,22 +73,6 @@ test.beforeEach(async (t) => {
   };
 
   t.context.workflowStartTime = Date.now();
-  t.context.cumulusMessage = {
-    cumulus_meta: {
-      workflow_start_time: t.context.workflowStartTime,
-    },
-    meta: {
-      status: 'running',
-      collection: t.context.collection,
-      provider: t.context.provider,
-    },
-    payload: {
-      pdr: t.context.pdr,
-      running: ['one'],
-      completed: ['two'],
-      failed: [],
-    },
-  };
 
   const collectionResponse = await t.context.knex(tableNames.collections)
     .insert(t.context.collection)
@@ -131,10 +105,31 @@ test.beforeEach(async (t) => {
     progress: 25,
     pan_sent: true,
     pan_message: 'message',
-    stats: {},
+    stats: {
+      running: ['arn'],
+      completed: ['arn1', 'arn2', 'arn3'],
+      failed: [],
+    },
     duration: 1,
     timestamp: new Date(),
     created_at: new Date(),
+  };
+
+  t.context.cumulusMessage = {
+    cumulus_meta: {
+      workflow_start_time: t.context.workflowStartTime,
+    },
+    meta: {
+      status: 'running',
+      collection: t.context.collection,
+      provider: t.context.provider,
+    },
+    payload: {
+      pdr: t.context.pdr,
+      running: t.context.runningPdrRecord.stats.running,
+      completed: t.context.runningPdrRecord.stats.completed,
+      failed: t.context.runningPdrRecord.stats.failed,
+    },
   };
 });
 
@@ -156,6 +151,13 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
   } = t.context;
   const now = workflowStartTime + 3500;
 
+  cumulusMessage.payload = {
+    ...cumulusMessage.payload,
+    running: ['arn3', 'arn4'],
+    completed: ['arn1', 'arn2'],
+    failed: [],
+  };
+
   t.deepEqual(
     generatePdrRecord({
       cumulusMessage,
@@ -170,10 +172,10 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
       pan_sent: pdr.PANSent,
       pan_message: pdr.PANmessage,
       stats: {
-        processing: 1,
-        completed: 1,
+        processing: 2,
+        completed: 2,
         failed: 0,
-        total: 2,
+        total: 4,
       },
       progress: 50,
       execution_cumulus_id: 3,
