@@ -60,7 +60,7 @@ const generatePdrRecord = ({
  * @param {Object} trx - A Knex transaction
  * @param {Object} queryResult - Raw query result
  * @param {Object} pdrRecord - A PDR record
- * @returns {number} - Cumulus ID for the PDR record
+ * @returns {Promise<number>} - Cumulus ID for the PDR record
  */
 const getPdrCumulusIdFromQueryResultOrLookup = async (trx, queryResult, pdrRecord) => {
   let pdrCumulusId = getCumulusIdFromRawInsertQueryResult(queryResult);
@@ -80,7 +80,7 @@ const writeRunningPdrViaTransaction = async ({
 }) => {
   // Can be replaced with native knex usage once
   // https://github.com/knex/knex/pull/4148 is released
-  const result = await trx.raw(
+  const rawQueryResult = await trx.raw(
     `
       INSERT INTO ${tableNames.pdrs} (
         "name",
@@ -133,9 +133,9 @@ const writeRunningPdrViaTransaction = async ({
   // result from the query is empty so no cumulus_id will be returned.
   // But this function always needs to return a cumulus_id for the PDR
   // since it is used for writing granules
-  const pdrCumulusId = getPdrCumulusIdFromQueryResultOrLookup(
+  const pdrCumulusId = await getPdrCumulusIdFromQueryResultOrLookup(
     trx,
-    result,
+    rawQueryResult,
     pdrRecord
   );
   return [pdrCumulusId];

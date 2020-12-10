@@ -247,11 +247,12 @@ test('writeRunningPdrViaTransaction() does not update record with same execution
   };
 
   await knex.transaction(
-    (trx) =>
-      writeRunningPdrViaTransaction({
+    (trx) => {
+      return writeRunningPdrViaTransaction({
         trx,
         pdrRecord,
-      })
+      });
+    }
   );
   const updatedRecord = await knex(tableNames.pdrs)
     .where({ name: pdr.name })
