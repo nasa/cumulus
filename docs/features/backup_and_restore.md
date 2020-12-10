@@ -119,7 +119,7 @@ Take care that you aren't using the admin user (e.g. postgres) with a default
 database or you may inadvertently limit connections by your administrative
 tasks.
 
-#### **2. Using the AWS CLI (see [AWS PITR documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_PIT.html) for console instructions), run the following command, making *certain* to use the same subnet groups and vpc-security-group IDs from your Core deployment:**
+#### **2. Using the AWS CLI (see [AWS PITR documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_PIT.html) for console instructions), making *certain* to use the same subnet groups and vpc-security-group IDs from your Core deployment, run the following command:**
 
   ```bash
   aws rds restore-db-cluster-to-point-in-time --source-db-cluster-identifier "<cluster-needing-restoration>" --restore-to-time "<time>" --vpc-security-group-ids "<security-group-1>" "<security-group-2>" --copy-tags-to-snapshot --db-cluster-identifier "<new-cluster-identifier>" --db-subnet-group-name "<db-subnet-group>"
