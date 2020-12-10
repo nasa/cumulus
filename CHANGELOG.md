@@ -46,7 +46,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2257**
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
-- **CUMULUS-2192**
+- **CUMULUS-2190**
   - Added helper functions:
     - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
     - `@cumulus/message/Executions/getMessageExecutionFinalPayload`
@@ -54,6 +54,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/message/workflows/getMessageWorkflowStartTime`
     - `@cumulus/message/workflows/getMessageWorkflowStopTime`
     - `@cumulus/message/workflows/getMessageWorkflowName`
+- **CUMULUS-2192**
+  - Added helper functions:
+    - `@cumulus/message/PDRs/getMessagePdrRunningExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrCompletedExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrFailedExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrStats`
+    - `@cumulus/message/PDRs/getPdrPercentCompletion`
+    - `@cumulus/message/workflows/getWorklowDuration`
 
 ### Changed
 
@@ -68,6 +76,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     database.
   - **CUMULUS-2228**
     - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the Core PostgreSQL database in parallel with writes to DynamoDB
+  - **CUMUlUS-2190**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for PDR writes to the core PostgreSQL database
   - **CUMUlUS-2192**
     - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for execution writes to the core PostgreSQL database
   - **CUMULUS-2187**
