@@ -560,7 +560,7 @@ test.serial.skip('POST does not write to DynamoDB if writing to RDS fails', asyn
   const { newRule, dbClient } = t.context;
 
   t.false(await ruleModel.exists(newRule.name));
-  const knexInsertStub = sinon.stub(dbClient, 'insert').callsFake(() => {
+  const knexInsertStub = sinon.stub(dbClient, 'insert').returns(() => {
     throw new Error('Error');
   });
 
@@ -652,7 +652,7 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
-test.only('PUT replaces onetime rule for rerun', async (t) => {
+test('PUT replaces onetime rule for rerun', async (t) => {
   const expectedRule = {
     ...omit(testRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
@@ -675,7 +675,7 @@ test.only('PUT replaces onetime rule for rerun', async (t) => {
   t.truthy(actualRule);
 });
 
-test.serial.only('PUT does not insert into RDS if replacing onetime rule for rerun fails', async (t) => {
+test.serial('PUT does not insert into RDS if replacing onetime rule for rerun fails', async (t) => {
   const { dbClient } = t.context;
   const expectedRule = {
     ...omit(testRule, ['queueUrl', 'provider', 'collection']),
