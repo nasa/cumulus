@@ -558,7 +558,7 @@ test.serial('POST does not write to RDS if writing to DynamoDB fails', async (t)
   }
 });
 
-test.only('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
+test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
   const { newRule, dbClient } = t.context;
 
   const failingRulesModel = {
@@ -572,7 +572,7 @@ test.only('POST does not write to DynamoDB if writing to RDS fails', async (t) =
     body: newRule,
     testContext: {
       dbClient,
-      rulesModel: failingRulesModel,
+      model: failingRulesModel,
     },
   };
 
@@ -582,7 +582,7 @@ test.only('POST does not write to DynamoDB if writing to RDS fails', async (t) =
 
   t.true(response.boom.badImplementation.calledWithMatch('Rule error'));
 
-  const dbRecords = await dbClient.select('name', 'version')
+  const dbRecords = await dbClient.select()
     .from(tableNames.rules)
     .where({ name: newRule.name });
 
