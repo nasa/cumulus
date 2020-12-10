@@ -82,7 +82,7 @@ const writeRunningPdrViaTransaction = async ({
   // https://github.com/knex/knex/pull/4148 is released
   const rawQueryResult = await trx.raw(
     `
-      INSERT INTO ${tableNames.pdrs} (
+      INSERT INTO pdrs (
         "name",
         "status",
         "collection_cumulus_id",
@@ -123,8 +123,8 @@ const writeRunningPdrViaTransaction = async ({
         timestamp = EXCLUDED.timestamp,
         created_at = EXCLUDED.created_at
       WHERE
-        ${tableNames.pdrs}.execution_cumulus_id != :execution_cumulus_id
-        OR ${tableNames.pdrs}.progress < :progress
+        pdrs.execution_cumulus_id != :execution_cumulus_id
+        OR pdrs.progress < :progress
       RETURNING "cumulus_id"
     `,
     pdrRecord
