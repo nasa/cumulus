@@ -66,10 +66,6 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  // const {
-  //   model = new models.Rule(),
-  //   dbClient = await getKnexClient(),
-  // } = req.testContext || {};
   const model = new models.Rule();
   const dbClient = await getKnexClient();
 
@@ -82,10 +78,9 @@ async function post(req, res) {
 
   try {
     const record = await model.create(rule);
-    const postgresRecord = await dynamoRecordToDbRecord(record, dbClient);
-
     try {
-      await dbClient(tableNames.rules).insert(postgresRecord, 'cumulus_id');
+      const postgresRecord = await dynamoRecordToDbRecord(record, dbClient);
+      await dbClient.insert(postgresRecord, 'cumulus_id').into(tableNames.rules);
     } catch (error) {
       await model.delete({ name });
 

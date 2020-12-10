@@ -4,6 +4,7 @@ const omit = require('lodash/omit');
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
+const Knex = require('knex');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -14,6 +15,7 @@ const {
   tableNames,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
@@ -528,13 +530,58 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
-test.skip('POST does not write to RDS if writing to DynamoDB fails', async () => {
+test.serial('POST does not write to RDS if writing to DynamoDB fails', async (t) => {
+  const { newRule, dbClient } = t.context;
+
+  const createRuleStub = sinon.stub(Rule.prototype, 'create')
+    .callsFake(() => {
+      throw new Error('Error creating rule');
+    });
+
+  try {
+    await request(app)
+      .post('/rules')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newRule)
+      .expect(500);
+
+    const dbRecords = await dbClient.select()
+      .from(tableNames.rules)
+      .where({ name: newRule.name });
+
+    t.false(await ruleModel.exists(newRule.name));
+    t.is(dbRecords.length, 0);
+  } finally {
+    createRuleStub.restore();
+  }
 });
 
-test.skip('POST does not write to DynamoDB if writing to RDS fails', async () => {
+test.serial.skip('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
+  const { newRule, dbClient } = t.context;
+
+  t.false(await ruleModel.exists(newRule.name));
+  const knexInsertStub = sinon.stub(dbClient, 'insert').callsFake(() => {
+    throw new Error('Error');
+  });
+
+  try {
+    const response = await request(app)
+      .post('/rules')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(newRule)
+      .expect(200);
+
+    t.not(response.body.message, 'Record saved');
+    t.false(await ruleModel.exists(newRule.name));
+  } finally {
+    knexInsertStub.restore();
+  }
 });
 
 test('PUT replaces a rule', async (t) => {
+  const { dbClient } = t.context;
   const expectedRule = {
     ...omit(testRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
@@ -558,6 +605,13 @@ test('PUT replaces a rule', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  const dbRecords = await dbClient.first()
+    .from(tableNames.rules)
+    .where({ name: expectedRule.name });
+
+  t.is(dbRecords.name, expectedRule.name);
+  t.is(dbRecords.workflow, expectedRule.workflow);
+  t.is(dbRecords.enabled, expectedRule.state === 'ENABLED');
   t.deepEqual(actualRule, {
     ...expectedRule,
     createdAt: actualRule.createdAt,
@@ -592,6 +646,9 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.truthy(message);
     t.falsy(record);
   });
+
+test.skip('PUT replaces onetime rule for rerun', async () => {
+});
 
 test('DELETE deletes a rule', async (t) => {
   const { newRule } = t.context;
