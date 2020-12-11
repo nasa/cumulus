@@ -16,7 +16,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
       stackName                        = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR      = "/opt/"
       system_bucket                    = var.system_bucket
-      launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_launchpad_passphrase.name
+      launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_launchpad_passphrase[0].name
       launchpad_certificate            = var.lzards_launchpad_certificate
       launchpad_api	                   = var.launchpad_api
       backup_role_arn                  = aws_iam_role.lambda_backup_role.arn
@@ -54,7 +54,7 @@ data "aws_iam_policy_document" "lambda_backup_role_policy" {
 resource "aws_iam_role_policy" "lambda_backup" {
   name   = "${var.prefix}_lambda_backup_policy"
   role   = aws_iam_role.lambda_backup_role.id
-  policy = data.aws_iam_policy_document.lambda_backup_policy.json
+  policy = data.aws_iam_policy_document.lambda_backup_policy[0].json
 }
 
 
@@ -66,6 +66,7 @@ resource "aws_iam_role" "lambda_backup_role" {
 }
 
 data "aws_iam_policy_document" "lambda_backup_policy" {
+  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   statement {
     actions = [
       "s3:GetBucket*",
@@ -82,6 +83,7 @@ data "aws_iam_policy_document" "lambda_backup_policy" {
 }
 
 resource "aws_secretsmanager_secret" "lzards_launchpad_passphrase" {
+  count       = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   name_prefix = "${var.prefix}-lzards-launchpad-passphrase"
   description = "Launchpad passphrase for the lzards-backup task from the ${var.prefix} deployment"
   tags        = var.tags
@@ -89,21 +91,23 @@ resource "aws_secretsmanager_secret" "lzards_launchpad_passphrase" {
 
 resource "aws_secretsmanager_secret_version" "lzards_launchpad_passphrase" {
   count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
-  secret_id     = aws_secretsmanager_secret.lzards_launchpad_passphrase.id
+  secret_id     = aws_secretsmanager_secret.lzards_launchpad_passphrase[0].id
   secret_string = var.launchpad_passphrase
 }
 
 data "aws_iam_policy_document" "lzards_processing_role_get_secrets" {
+  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = [
-      aws_secretsmanager_secret.lzards_launchpad_passphrase.arn,
+      aws_secretsmanager_secret.lzards_launchpad_passphrase[0].arn,
     ]
   }
 }
 
 resource "aws_iam_role_policy" "lzards_processing_role_get_secrets" {
+  count  = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   name   = "${var.prefix}_lzards_processing_role_get_secrets_policy"
   role   = split("/", var.lambda_processing_role_arn)[1]
-  policy = data.aws_iam_policy_document.lzards_processing_role_get_secrets.json
+  policy = data.aws_iam_policy_document.lzards_processing_role_get_secrets[0].json
 }
