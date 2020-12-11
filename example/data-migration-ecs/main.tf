@@ -30,4 +30,8 @@ module "data_migration_ecs_service" {
     "--lambdaArn",
     var.data_migration2_function_arn
   ]
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 39b0052db... CUMULUS-2188 complete terraform template for data migration ECS service
