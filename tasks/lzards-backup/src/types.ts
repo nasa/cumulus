@@ -19,13 +19,10 @@ export type makeBackupFileRequestResult = {
 };
 
 export type MessageGranuleFilesObject = {
-  checksumType: string,
-  checksum: string,
+  checksumType?: string,
+  checksum?: string,
   filename: string,
   name: string,
-  backup: boolean,
-  filepath: string,
-  bucket: string,
 };
 
 export interface MessageGranule {
