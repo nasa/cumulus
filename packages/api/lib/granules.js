@@ -20,6 +20,22 @@ const translateGranule = async (
   };
 };
 
+const getExecutionProcessingTimeInfo = ({
+  startDate,
+  stopDate,
+  now = new Date(),
+}) => {
+  const processingTimeInfo = {};
+  if (startDate) {
+    processingTimeInfo.processingStartDateTime = startDate.toISOString();
+    processingTimeInfo.processingEndDateTime = stopDate
+      ? stopDate.toISOString()
+      : now.toISOString();
+  }
+  return processingTimeInfo;
+};
+
 module.exports = {
   translateGranule,
+  getExecutionProcessingTimeInfo,
 };
