@@ -182,27 +182,6 @@ test(
   }
 );
 
-test(
-  'generateGranuleRecord() uses granule.status if meta.status does not exist',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    delete cumulusMessage.meta.status;
-
-    const [granule] = cumulusMessage.payload.granules;
-    granule.status = 'running';
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-    });
-
-    t.is(record.status, 'running');
-  }
-);
-
 test('generateGranuleRecord() builds successful granule record', async (t) => {
   const { granuleModel } = t.context;
   const granule = granuleSuccess.payload.granules[0];
