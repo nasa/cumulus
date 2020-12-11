@@ -44,7 +44,7 @@ export const translateApiRuleToPostgresRule = async (
     workflow: record.workflow,
     provider_cumulus_id: record.provider ? providerCumulusId : undefined,
     collection_cumulus_id: record.collection ? collectionCumulusId : undefined,
-    meta: record.meta ? JSON.stringify(record.meta) : undefined,
+    meta: record.meta,
     payload: record.payload as any,
     queue_url: record.queueUrl,
     arn: record.rule.arn,
