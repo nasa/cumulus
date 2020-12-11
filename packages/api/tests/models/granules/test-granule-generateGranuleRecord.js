@@ -73,14 +73,14 @@ test.before(async (t) => {
 
   sandbox = sinon.createSandbox();
 
-  const fakeCmrMetadata = {
+  t.context.fakeCmrMetadata = {
     beginningDateTime: '2017-10-24T00:00:00.000Z',
     endingDateTime: '2018-10-24T00:00:00.000Z',
     lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
     productionDateTime: '2018-04-25T21:45:45.524Z',
   };
   const fakeCmrUtils = {
-    getGranuleTemporalInfo: () => Promise.resolve(fakeCmrMetadata),
+    getGranuleTemporalInfo: () => Promise.resolve(t.context.fakeCmrMetadata),
   };
   t.context.granuleModel = new Granule({
     cmrUtils: fakeCmrUtils,
@@ -213,10 +213,10 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
   t.is(record.cmrLink, granule.cmrLink);
   t.is(record.published, granule.published);
   t.is(record.productVolume, 17934423);
-  t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
-  t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
-  t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
-  t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
+  t.is(record.beginningDateTime, t.context.fakeCmrMetadata.beginningDateTime);
+  t.is(record.endingDateTime, t.context.fakeCmrMetadata.endingDateTime);
+  t.is(record.productionDateTime, t.context.fakeCmrMetadata.productionDateTime);
+  t.is(record.lastUpdateDateTime, t.context.fakeCmrMetadata.lastUpdateDateTime);
   t.is(record.timeToArchive, 100 / 1000);
   t.is(record.timeToPreprocess, 120 / 1000);
   t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
