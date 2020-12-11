@@ -54,6 +54,8 @@ const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
   getExecutionProcessingTimeInfo,
+  getGranuleTimeToArchive,
+  getGranuleTimeToPreprocess,
   translateGranule,
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
@@ -372,10 +374,6 @@ class Granule extends Manager {
       files,
       granuleId,
       cmrLink,
-      // eslint-disable-next-line camelcase
-      sync_granule_duration = 0,
-      // eslint-disable-next-line camelcase
-      post_to_cmr_duration = 0,
       published = false,
     } = granule;
 
@@ -409,10 +407,8 @@ class Granule extends Manager {
       // Duration is also used as timeToXfer for the EMS report
       duration: getWorklowDuration(workflowStartTime, timestamp),
       productVolume: getGranuleProductVolume(granuleFiles),
-      // eslint-disable-next-line camelcase
-      timeToPreprocess: sync_granule_duration / 1000,
-      // eslint-disable-next-line camelcase
-      timeToArchive: post_to_cmr_duration / 1000,
+      timeToPreprocess: getGranuleTimeToPreprocess(granule),
+      timeToArchive: getGranuleTimeToArchive(granule),
       ...processingTimeInfo,
       ...temporalInfo,
     };

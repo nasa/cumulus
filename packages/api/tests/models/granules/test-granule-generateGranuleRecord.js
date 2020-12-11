@@ -1,4 +1,3 @@
-const cloneDeep = require('lodash/cloneDeep');
 const test = require('ava');
 const sinon = require('sinon');
 
@@ -108,82 +107,6 @@ test.beforeEach((t) => {
 test.after.always(() => {
   sandbox.restore();
 });
-
-test(
-  'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].sync_granule_duration = 123;
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-    });
-
-    t.is(record.timeToPreprocess, 0.123);
-  }
-);
-
-test(
-  'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is not present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].sync_granule_duration = 0;
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-    });
-
-    t.is(record.timeToPreprocess, 0);
-  }
-);
-
-test(
-  'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].post_to_cmr_duration = 123;
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-    });
-
-    t.is(record.timeToArchive, 0.123);
-  }
-);
-
-test(
-  'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is not present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-    cumulusMessage.payload.granules[0].post_to_cmr_duration = 0;
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-    });
-
-    t.is(record.timeToArchive, 0);
-  }
-);
 
 test('generateGranuleRecord() builds successful granule record', async (t) => {
   const { granuleModel } = t.context;
