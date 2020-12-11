@@ -105,7 +105,6 @@ export const postRequestToLzards = async (params: {
       },
       headers: {
         Authorization: `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
       },
     });
 };
