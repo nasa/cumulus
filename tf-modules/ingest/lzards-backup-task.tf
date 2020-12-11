@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "lzards_backup_task" {
+  count            = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   function_name    = "${var.prefix}-LzardsBackup"
   filename         = "${path.module}/../../tasks/lzards-backup/dist/webpack/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/lzards-backup/dist/webpack/lambda.zip")
@@ -19,7 +20,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
       launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_launchpad_passphrase[0].name
       launchpad_certificate            = var.lzards_launchpad_certificate
       launchpad_api	                   = var.launchpad_api
-      backup_role_arn                  = aws_iam_role.lambda_backup_role.arn
+      backup_role_arn                  = aws_iam_role.lambda_backup_role[0].arn
       lzards_api                       = var.lzards_api
       lzards_provider                  = var.lzards_provider
     }
@@ -41,6 +42,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
 # Lambda backup role
 
 data "aws_iam_policy_document" "lambda_backup_role_policy" {
+  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   statement {
     actions = ["sts:AssumeRole"]
     principals {
@@ -52,15 +54,17 @@ data "aws_iam_policy_document" "lambda_backup_role_policy" {
 }
 
 resource "aws_iam_role_policy" "lambda_backup" {
+  count  = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   name   = "${var.prefix}_lambda_backup_policy"
-  role   = aws_iam_role.lambda_backup_role.id
+  role   = aws_iam_role.lambda_backup_role[0].id
   policy = data.aws_iam_policy_document.lambda_backup_policy[0].json
 }
 
 
 resource "aws_iam_role" "lambda_backup_role" {
+  count                = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   name                 = "${var.prefix}-lambda-backups"
-  assume_role_policy   = data.aws_iam_policy_document.lambda_backup_role_policy.json
+  assume_role_policy   = data.aws_iam_policy_document.lambda_backup_role_policy[0].json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
 }

@@ -51,9 +51,9 @@ output "kinesis_inbound_event_logger_lambda_function_arn" {
 }
 
 output "lzards_backup_lambda_function_arn" {
-  value = {
-    task_arn = aws_lambda_function.lzards_backup_task.arn
-  }
+  value = length(aws_lambda_function.lzards_backup_task) > 0
+    ? ({ task_arn = aws_lambda_function.lzards_backup_task[0].arn })
+    : { task_arn = ""}
 }
 
 output "manual_consumer_lambda_function_arn" {
