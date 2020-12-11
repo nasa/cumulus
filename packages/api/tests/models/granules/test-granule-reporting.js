@@ -1,9 +1,6 @@
 const test = require('ava');
-const sinon = require('sinon');
 
 const S3 = require('@cumulus/aws-client/S3');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const cmrjs = require('@cumulus/cmrjs');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -12,15 +9,19 @@ const Granule = require('../../../models/granules');
 test.before(async (t) => {
   process.env.GranulesTable = randomId('granule');
 
-  const granuleModel = new Granule();
+  const fakeStepFunctionUtils = {
+    describeExecution: () => Promise.resolve({}),
+  };
+  const fakeCmrUtils = {
+    getGranuleTemporalInfo: () => Promise.resolve({}),
+  };
+
+  const granuleModel = new Granule({
+    cmrUtils: fakeCmrUtils,
+    stepFunctionUtils: fakeStepFunctionUtils,
+  });
   t.context.granuleModel = granuleModel;
   await granuleModel.createTable();
-
-  sinon.stub(StepFunctions, 'describeExecution')
-    .callsFake(() => Promise.resolve({}));
-
-  sinon.stub(cmrjs, 'getGranuleTemporalInfo')
-    .callsFake(() => Promise.resolve({}));
 });
 
 test('_storeGranuleRecord() can be used to create a new running granule', async (t) => {
