@@ -25,8 +25,15 @@ const {
   getGranuleStatus,
 } = require('@cumulus/message/Granules');
 const {
-  getMessageProviderId,
+  getMessagePdrName,
+} = require('@cumulus/message/PDRs');
+const {
+  getMessageProvider,
 } = require('@cumulus/message/Providers');
+const {
+  getMessageWorkflowStartTime,
+  getWorklowDuration,
+} = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
@@ -355,13 +362,11 @@ class Granule extends Manager {
     if (!collectionId) {
       throw new CumulusModelError('meta.collection required to generate a granule record');
     }
+
+    const provider = getMessageProvider(message);
     const granuleFiles = await this.fileUtils.buildDatabaseFiles({
       s3,
-      providerURL: buildURL({
-        protocol: message.meta.provider.protocol,
-        host: message.meta.provider.host,
-        port: message.meta.provider.port,
-      }),
+      providerURL: buildURL(provider),
       files: granule.files,
     });
 
@@ -377,20 +382,24 @@ class Granule extends Manager {
     }
 
     const now = Date.now();
+    const timestamp = now;
+    const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
       granuleId: granule.granuleId,
-      pdrName: get(message, 'meta.pdr.name'),
+      pdrName: getMessagePdrName(message),
       collectionId,
       status: getGranuleStatus(message, granule),
-      provider: getMessageProviderId(message),
+      provider: provider.id,
       execution: executionUrl,
       cmrLink: granule.cmrLink,
       files: granuleFiles,
       error: parseException(message.exception),
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: now,
+      createdAt: workflowStartTime,
+      timestamp,
       updatedAt: now,
+      // Duration is also used as timeToXfer for the EMS report
+      duration: getWorklowDuration(workflowStartTime, timestamp),
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
       timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
@@ -399,8 +408,6 @@ class Granule extends Manager {
     };
 
     record.published = get(granule, 'published', false);
-    // Duration is also used as timeToXfer for the EMS report
-    record.duration = (record.timestamp - record.createdAt) / 1000;
 
     return removeNilProperties(record);
   }
