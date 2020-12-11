@@ -13,7 +13,6 @@ const Granule = require('../../../models/granules');
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
 
-let fakeExecution;
 let sandbox;
 let testCumulusMessage;
 
@@ -85,12 +84,6 @@ test.before(async (t) => {
     cmrUtils: fakeCmrUtils,
   });
 
-  fakeExecution = {
-    input: JSON.stringify(testCumulusMessage),
-    startDate: new Date(Date.UTC(2019, 6, 28)),
-    stopDate: new Date(Date.UTC(2019, 6, 28, 1)),
-  };
-
   t.context.fakeS3 = {
     headObject: () => ({
       promise: async () => ({
@@ -115,12 +108,17 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
   const collectionId = constructCollectionId(collection.name, collection.version);
   const executionUrl = randomString();
 
+  const processingStartDateTime = new Date(Date.UTC(2019, 6, 28)).toISOString();
+  const processingEndDateTime = new Date(Date.UTC(2019, 6, 28, 1)).toISOString();
   const record = await granuleModel.generateGranuleRecord({
     s3: t.context.fakeS3,
     granule,
     message: granuleSuccess,
     executionUrl,
-    executionDescription: fakeExecution,
+    processingTimeInfo: {
+      processingStartDateTime,
+      processingEndDateTime,
+    },
   });
 
   t.deepEqual(
@@ -142,8 +140,8 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
   t.is(record.lastUpdateDateTime, t.context.fakeCmrMetadata.lastUpdateDateTime);
   t.is(record.timeToArchive, 100 / 1000);
   t.is(record.timeToPreprocess, 120 / 1000);
-  t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-  t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
+  t.is(record.processingStartDateTime, processingStartDateTime);
+  t.is(record.processingEndDateTime, processingEndDateTime);
 
   const { name: deconstructed } = deconstructCollectionId(record.collectionId);
   t.is(deconstructed, collection.name);
@@ -158,7 +156,6 @@ test('generateGranuleRecord() builds a failed granule record', async (t) => {
     granule,
     message: granuleFailure,
     executionUrl,
-    executionDescription: fakeExecution,
   });
 
   t.deepEqual(
