@@ -135,8 +135,10 @@ async function put({ params: { name }, body }, res) {
     if (inTestMode()) await addToLocalES(newRule, indexRule);
 
     await dbClient.transaction(async (trx) => {
-      await trx(tableNames.rules).where({ name: name }).del();
-      await trx(tableNames.rules).insert(newPostgresRecord);
+      await trx(tableNames.rules)
+        .insert(newPostgresRecord)
+        .onConflict('name')
+        .merge();
     });
 
     return res.send(newRule);
