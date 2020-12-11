@@ -22,7 +22,7 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
   const expectedPostgresRule = {
     name: record.name,
     workflow: record.workflow,
-    meta: JSON.stringify(record.meta)
+    meta: record.meta,
     payload: record.payload,
     queue_url: record.queueUrl,
     arn: record.rule.arn,
