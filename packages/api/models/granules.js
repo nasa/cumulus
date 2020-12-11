@@ -13,7 +13,7 @@ const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
-const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
@@ -76,6 +76,7 @@ class Granule extends Manager {
   constructor({
     fileUtils = FileUtils,
     stepFunctionUtils = StepFunctions,
+    cmrUtils = CmrUtils,
   } = {}) {
     const globalSecondaryIndexes = [{
       IndexName: 'collectionId-granuleId-index',
@@ -108,6 +109,7 @@ class Granule extends Manager {
 
     this.fileUtils = fileUtils;
     this.stepFunctionUtils = stepFunctionUtils;
+    this.cmrUtils = cmrUtils;
   }
 
   async get(...args) {
@@ -387,7 +389,7 @@ class Granule extends Manager {
     const now = Date.now();
     const timestamp = now;
     const workflowStartTime = getMessageWorkflowStartTime(message);
-    const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
+    const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
     const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
     const record = {
