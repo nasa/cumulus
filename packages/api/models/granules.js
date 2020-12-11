@@ -163,7 +163,7 @@ class Granule extends Manager {
       throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
-    const cmrSettings = await cmrUtils.getCmrSettings();
+    const cmrSettings = await this.cmrUtils.getCmrSettings();
     const cmr = new CMR(cmrSettings);
     const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
 
@@ -290,7 +290,7 @@ class Granule extends Manager {
     );
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
-    await cmrUtils.reconcileCMRMetadata({
+    await this.cmrUtils.reconcileCMRMetadata({
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
