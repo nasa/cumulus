@@ -21,7 +21,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
       launchpad_api	                   = var.launchpad_api
       backup_role_arn                  = aws_iam_role.lambda_backup_role.arn
       lzards_api                       = var.lzards_api
-      provider                         = var.lzards_provider
+      lzards_provider                  = var.lzards_provider
     }
   }
 

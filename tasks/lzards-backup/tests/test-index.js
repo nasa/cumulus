@@ -1,8 +1,21 @@
 const test = require('ava');
+const omit = require('lodash/omit');
+
 const sandbox = require('sinon').createSandbox();
 const proxyquire = require('proxyquire');
 
 const { ChecksumError } = require('../dist/src/errors');
+
+function removeStackObjectFromErrorBody(object) {
+  let updateObject = { ...object };
+  updateObject.body = JSON.stringify(omit(JSON.parse(updateObject.body), ['stack']));
+  return updateObject;
+}
+
+function removeBackupResultsObjectErrorStack(object) {
+  return object.map((result) => removeStackObjectFromErrorBody(result));
+  //result.body = JSON.stringify(omit(JSON.parse(result.body), ['stack']));
+}
 
 const fakePostReturn = {
   body: 'fake body',
@@ -92,6 +105,47 @@ test('shouldBackupFile returns false if there is no collection file defined', as
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
+test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult when file.filename is not a s3 URI', async (t) => {
+  const lzardsPostMethod = (async () => ({
+    body: 'success body',
+    statusCode: 201,
+  }));
+  const creds = { fake: 'creds_object' };
+  const name = 'fakeFilename';
+  const filepath = 'fakeFilePath';
+  const authToken = 'fakeToken';
+  const collection = 'FAKE_COLLECTION';
+  const bucket = 'fakeFileBucket';
+  const filename = 'totallynotas3uri';
+
+  const file = {
+    name,
+    filepath,
+    bucket,
+    filename,
+  };
+  const granuleId = 'fakeGranuleId';
+
+  const actual = await index.makeBackupFileRequest({
+    authToken,
+    collection,
+    creds,
+    file,
+    granuleId,
+    lzardsPostMethod,
+  });
+
+  const expected = {
+    filename,
+    granuleId: 'fakeGranuleId',
+    status: 'FAILED',
+  };
+
+  t.deepEqual(omit(actual, 'body'), expected);
+  t.is(JSON.parse(actual.body).name, 'TypeError');
+});
+
+
 test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZARDS failure', async (t) => {
   const lzardsPostMethod = (async () => ({
     body: 'failure body',
@@ -153,7 +207,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   };
   const granuleId = 'fakeGranuleId';
 
-  const actual = await index.makeBackupFileRequest({
+  let actual = await index.makeBackupFileRequest({
     authToken,
     collection,
     creds,
@@ -163,12 +217,13 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   });
 
   const expected = {
-    body: '{}',
+    body: '{"name":"Error"}',
     filename,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
   };
 
+  actual = removeStackObjectFromErrorBody(actual);
   t.deepEqual(actual, expected);
 });
 
@@ -254,7 +309,7 @@ test.serial('postRequestToLzards creates the expected query', async (t) => {
   const lzardsApi = 'fakeApi';
   const lzardsProviderName = 'fakeProvider';
 
-  process.env.provider = lzardsProviderName;
+  process.env.lzards_provider = lzardsProviderName;
   process.env.lzards_api = lzardsApi;
 
   const actual = await index.postRequestToLzards({
@@ -295,7 +350,7 @@ test.serial('postRequestToLzards creates the expected query with SHA256 checksum
   const lzardsApi = 'fakeApi';
   const lzardsProviderName = 'fakeProvider';
 
-  process.env.provider = lzardsProviderName;
+  process.env.lzards_provider = lzardsProviderName;
   process.env.lzards_api = lzardsApi;
 
   await index.postRequestToLzards({
@@ -334,7 +389,7 @@ test.serial('postRequestToLzards throws if lzardsApiUrl is not set', async (t) =
   const granuleId = 'fakeGranuleId';
   const lzardsProviderName = 'fakeProvider';
 
-  process.env.provider = lzardsProviderName;
+  process.env.lzards_provider = lzardsProviderName;
   await t.throwsAsync(index.postRequestToLzards({
     accessUrl,
     authToken,
@@ -352,7 +407,7 @@ test.serial('postRequestToLzards throws if file.checksumType is not set ', async
   const granuleId = 'fakeGranuleId';
   const lzardsProviderName = 'fakeProvider';
 
-  process.env.provider = lzardsProviderName;
+  process.env.lzards_provider = lzardsProviderName;
   process.env.lzards_api = 'fakeApi';
   await t.throwsAsync(index.postRequestToLzards({
     accessUrl,
@@ -459,7 +514,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
   };
 
   process.env.lzards_api = 'fakeApi';
-  process.env.provider = 'fakeProvider';
+  process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
 
   const actual = await index.backupGranulesToLzards(fakePayload);
@@ -514,7 +569,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
   };
 
   process.env.lzards_api = 'fakeApi';
-  process.env.provider = 'fakeProvider';
+  process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
 
   const actual = await index.backupGranulesToLzards(fakePayload);
@@ -572,7 +627,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
   };
 
   process.env.lzards_api = 'fakeApi';
-  process.env.provider = 'fakeProvider';
+  process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
 
   const actual = await index.backupGranulesToLzards(fakePayload);
@@ -593,6 +648,8 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
     ],
     originalPayload: fakePayload.input,
   };
+
+  actual.backupResults = removeBackupResultsObjectErrorStack(actual.backupResults);
   t.deepEqual(actual, expected);
 });
 
@@ -655,7 +712,7 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   };
 
   process.env.lzards_api = 'fakeApi';
-  process.env.provider = 'fakeProvider';
+  process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(index.backupGranulesToLzards(fakePayload));
 });

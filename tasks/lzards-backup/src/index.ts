@@ -80,7 +80,7 @@ export const postRequestToLzards = async (params: {
     granuleId,
   } = params;
 
-  const provider = getRequiredEnvVar('provider');
+  const provider = getRequiredEnvVar('lzards_provider');
   const lzardsApiUrl = getRequiredEnvVar('lzards_api');
 
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
@@ -123,15 +123,14 @@ export const makeBackupFileRequest = async (params: {
     generateAccessUrlMethod = generateAccessUrl,
   } = params;
 
-  const { Key, Bucket } = parseS3Uri(file.filename);
-
-  const accessUrl = await generateAccessUrlMethod({
-    Bucket,
-    creds,
-    Key,
-  });
-  log.info(`${granuleId}: posting backup request to LZARDS: ${file.filename}`);
   try {
+    const { Key, Bucket } = parseS3Uri(file.filename);
+    log.info(`${granuleId}: posting backup request to LZARDS: ${file.filename}`);
+    const accessUrl = await generateAccessUrlMethod({
+      Bucket,
+      creds,
+      Key,
+    });
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
       authToken,
@@ -146,7 +145,12 @@ export const makeBackupFileRequest = async (params: {
     return { statusCode, granuleId, filename: file.filename, body, status: 'COMPLETED' };
   } catch (error) {
     log.error(`${granuleId}: LZARDS request failed: ${error}`);
-    return { granuleId, filename: file.filename, body: JSON.stringify(error), status: 'FAILED' };
+    return {
+      granuleId,
+      filename: file.filename,
+      body: JSON.stringify({ name: error.name, stack: error.stack }),
+      status: 'FAILED',
+    };
   }
 };
 
