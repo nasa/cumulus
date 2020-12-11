@@ -114,7 +114,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
-  const collection = 'FAKE_COLLECTION';
+  const collectionId = 'FAKE_COLLECTION';
   const bucket = 'fakeFileBucket';
   const filename = 'totallynotas3uri';
 
@@ -128,7 +128,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
 
   const actual = await index.makeBackupFileRequest({
     authToken,
-    collection,
+    collectionId,
     creds,
     file,
     granuleId,
@@ -155,7 +155,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
-  const collection = 'FAKE_COLLECTION';
+  const collectionId = 'FAKE_COLLECTION';
   const bucket = 'fakeFileBucket';
   const filename = 's3://fakeFileBucket/fakeFilename';
 
@@ -169,7 +169,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
 
   const actual = await index.makeBackupFileRequest({
     authToken,
-    collection,
+    collectionId,
     creds,
     file,
     granuleId,
@@ -195,7 +195,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
-  const collection = 'FAKE_COLLECTION';
+  const collectionId = 'FAKE_COLLECTION';
   const bucket = 'fakeFileBucket';
   const filename = 's3://fakeFileBucket/fakeFilename';
 
@@ -209,7 +209,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
 
   let actual = await index.makeBackupFileRequest({
     authToken,
-    collection,
+    collectionId,
     creds,
     file,
     granuleId,
@@ -239,7 +239,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult'
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
-  const collection = 'FAKE_COLLECTION';
+  const collectionId = 'FAKE_COLLECTION';
   const bucket = 'fakeFileBucket';
   const filename = 's3://fakeFileBucket/fakeFileBucket';
 
@@ -253,7 +253,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult'
 
   const actual = await index.makeBackupFileRequest({
     authToken,
-    collection,
+    collectionId,
     creds,
     file,
     granuleId,

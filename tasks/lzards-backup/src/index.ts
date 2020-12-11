@@ -3,6 +3,7 @@ import got from 'got';
 import Logger from '@cumulus/logger';
 import { Context } from 'aws-lambda';
 
+import { constructCollectionId } from '@cumulus/message/Collections';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { getCollections } from '@cumulus/api-client/collections';
 import { getLaunchpadToken } from '@cumulus/launchpad-auth';
@@ -106,7 +107,7 @@ export const postRequestToLzards = async (params: {
 
 export const makeBackupFileRequest = async (params: {
   authToken: string,
-  collection: string,
+  collectionId: string,
   creds: AWS.STS.AssumeRoleResponse,
   file: MessageGranuleFilesObject,
   granuleId: string,
@@ -115,7 +116,7 @@ export const makeBackupFileRequest = async (params: {
 }): Promise<makeBackupFileRequestResult> => {
   const {
     authToken,
-    collection,
+    collectionId,
     creds,
     file,
     granuleId,
@@ -134,7 +135,7 @@ export const makeBackupFileRequest = async (params: {
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
       authToken,
-      collection,
+      collection: collectionId,
       file,
       granuleId,
     });
@@ -213,7 +214,7 @@ export const backupGranule = async (
       creds,
       authToken,
       file,
-      collection: `${granule.dataType}___${granule.version}`,
+      collectionId: constructCollectionId(granule.dataType, granule.version),
       granuleId: granule.granuleId,
     })));
   } catch (error) {
