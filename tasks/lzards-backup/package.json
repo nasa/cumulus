@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/lzards-backup",
   "version": "4.0.0",
-  "description": "Run lzrds backup",
+  "description": "Run LZARDS backup",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "private": true,
