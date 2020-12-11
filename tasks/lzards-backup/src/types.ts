@@ -15,7 +15,7 @@ export type makeBackupFileRequestResult = {
   granuleId: string,
   filename: string,
   body?: string,
-  status: 'COMPLETED' | 'FAILED' | 'INTERNAL FAILURE'
+  status: 'COMPLETED' | 'FAILED'
 };
 
 export type MessageGranuleFilesObject = {
