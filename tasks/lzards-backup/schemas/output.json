@@ -19,7 +19,43 @@
       }
     },
     "originalPayload": {
-      "type": "object"
+      "type": "object",
+      "required": ["granules"],
+      "properties": {
+        "granules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["files", "granuleId", "dataType", "version"],
+            "properties": {
+              "granuleId": { "type": "string" },
+              "dataType": { "type": "string" },
+              "version": { "type": "string" },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "filename", "name"
+                  ],
+                  "properties": {
+                    "filename": {
+                      "type": "string",
+                      "description": "The s3 bucket/path URI (e.g. s3://{bucket}{object})"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "the filename of the file"
+                    },
+                    "checksumType": { "type": "string" },
+                    "checksum": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
