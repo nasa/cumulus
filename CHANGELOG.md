@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2092**
   - Add documentation for Getting Started section including FAQs
 
+### Changed
+
+ - **CUMULUS-2124**
+   - cumulus-rds-tf terraform module now takes engine_version as an input variable.
+
 ## [v4.0.0] 2020-11-20
 
 ### Migration notes
