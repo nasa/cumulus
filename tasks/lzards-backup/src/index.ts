@@ -34,16 +34,15 @@ export const generateAccessUrl = async (params: {
   const sessionToken = creds?.Credentials?.SessionToken;
   const accessKeyId = creds?.Credentials?.AccessKeyId;
 
-  const s3Config = {
-    signatureVersion: 'v4',
-    secretAccessKey,
-    accessKeyId,
-    sessionToken,
-    region,
-  };
-
   let s3;
   if (!inTestMode() || usePassedCredentials) {
+    const s3Config = {
+      signatureVersion: 'v4',
+      secretAccessKey,
+      accessKeyId,
+      sessionToken,
+      region,
+    };
     s3 = new AWS.S3(s3Config);
   } else {
     coreS3().config.update({ signatureVersion: 'v4' });
