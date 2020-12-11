@@ -150,18 +150,26 @@ terraform state file, where {module_name} is the title you've assigned to the mo
 * Remove the old cluster from your terraform state:
 
 ```bash
-terraform state {module_name}.aws_rds_cluster.cumulus
+terraform state rm module.{module_name}.aws_rds_cluster.cumulus
 ```
 
 * Add the restored cluster to your terraform state:
 
 ```bash
-terraform import {module_name}.aws_rds_cluster.cumulus <new cluster identifier>
+terraform import module.{module_name}.aws_rds_cluster.cumulus <new cluster identifier>
 ```
 
-#### 4. Update module `terraform.tfvars` such that the cluster_identifier variable matches the *new* database cluster
+#### 4. Update module `terraform.tfvars` or your rds cluster module such that the cluster_identifier variable matches the *new* database cluster
 
 #### 5. Run a terraform plan.   ***Be very careful*** to ensure that the `module.rds_cluster.aws_rds_cluster.cumulus` resource is not being recreated as this will wipe the postgres database.    You should expect to see the cluster be modified, not replaced, and the rds_login secret *version* will be replaced, as the host name will change
+
+You should expect to see output that looks like the following (with sensitive identifiers removed):
+
+![Screenshot of shell output showing module.rds_cluster.aws_rds_cluster.cumulus resource changes](../../assets/rds_cluster_update.jpg)
+
+and
+
+![Screenshot of shell output showing module.rds_cluster.aws_secretsmanager_secret_version resource changes](../../assets/secrets_manager_update.jpg)
 
    Once everything looks acceptable, run:
 
