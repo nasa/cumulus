@@ -35,7 +35,21 @@ const getExecutionProcessingTimeInfo = ({
   return processingTimeInfo;
 };
 
+/* eslint-disable camelcase */
+
+const getGranuleTimeToPreprocess = ({
+  sync_granule_duration = 0,
+} = {}) => sync_granule_duration / 1000;
+
+const getGranuleTimeToArchive = ({
+  post_to_cmr_duration = 0,
+} = {}) => post_to_cmr_duration / 1000;
+
+/* eslint-enable camelcase */
+
 module.exports = {
   translateGranule,
   getExecutionProcessingTimeInfo,
+  getGranuleTimeToArchive,
+  getGranuleTimeToPreprocess,
 };
