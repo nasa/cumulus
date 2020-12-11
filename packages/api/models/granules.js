@@ -362,7 +362,7 @@ class Granule extends Manager {
     granule,
     message,
     executionUrl,
-    executionDescription = {},
+    processingTimeInfo = {},
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
@@ -388,7 +388,6 @@ class Granule extends Manager {
     const timestamp = now;
     const workflowStartTime = getMessageWorkflowStartTime(message);
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
-    const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
     const record = {
       granuleId: granuleId,
@@ -731,13 +730,14 @@ class Granule extends Manager {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     const executionUrl = getExecutionUrlFromArn(executionArn);
     const executionDescription = await this.describeGranuleExecution(executionArn);
+    const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
     return Promise.all(granules.map(
       (granule) =>
         this.storeGranuleFromCumulusMessage({
           granule,
           cumulusMessage,
-          executionDescription,
+          processingTimeInfo,
           executionUrl,
         }).catch(log.error)
     ));

@@ -265,10 +265,6 @@ test('storeGranuleFromCumulusMessage() throws an error for a failing record', as
   await t.throwsAsync(granuleModel.storeGranuleFromCumulusMessage({
     granule: granule1,
     cumulusMessage,
-    executionDescription: {
-      startDate: new Date(),
-      stopDate: new Date(),
-    },
     executionUrl: 'http://execution-url.com',
   }));
 });
@@ -313,10 +309,6 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
   await granuleModel.storeGranuleFromCumulusMessage({
     granule: granule1,
     cumulusMessage,
-    executionDescription: {
-      startDate: new Date(),
-      stopDate: new Date(),
-    },
     executionUrl: 'http://execution-url.com',
   });
 
