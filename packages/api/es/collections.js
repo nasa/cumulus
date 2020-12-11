@@ -39,13 +39,13 @@ class Collection extends BaseSearch {
             aggs: {
               name: {
                 terms: {
-                  field: 'name',
+                  field: 'name.keyword',
                   size: ES_MAX_AGG,
                 },
                 aggs: {
                   version: {
                     terms: {
-                      field: 'version',
+                      field: 'version.keyword',
                       size: ES_MAX_AGG,
                     },
                     aggs: {
@@ -56,7 +56,7 @@ class Collection extends BaseSearch {
                         aggs: {
                           count: {
                             terms: {
-                              field: 'status',
+                              field: 'status.keyword',
                               size: ES_MAX_AGG,
                             },
                           },
@@ -135,7 +135,7 @@ class Collection extends BaseSearch {
     searchParams.body.aggs = {
       collections: {
         terms: {
-          field: 'collectionId',
+          field: 'collectionId.keyword',
           size: ES_MAX_AGG,
         },
       },
