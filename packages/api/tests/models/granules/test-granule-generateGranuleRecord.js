@@ -183,68 +183,6 @@ test(
 );
 
 test(
-  'generateGranuleRecord() sets processingEndDateTime when execution stopDate is missing',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-
-    const newFakeExecution = cloneDeep(fakeExecution);
-    delete newFakeExecution.stopDate;
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-      executionDescription: newFakeExecution,
-    });
-
-    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-    t.is(typeof record.processingEndDateTime, 'string');
-  }
-);
-
-test(
-  'generateGranuleRecord() sets processingStartDateTime and processingEndDateTime correctly',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-      executionDescription: fakeExecution,
-    });
-
-    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-    t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
-  }
-);
-
-test(
-  'generateGranuleRecord() does not include processing times if execution startDate is not provided',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const [granule] = cumulusMessage.payload.granules;
-
-    const record = await granuleModel.generateGranuleRecord({
-      s3: t.context.fakeS3,
-      granule,
-      message: cumulusMessage,
-      executionUrl: randomString(),
-    });
-
-    t.falsy(record.processingStartDateTime);
-    t.falsy(record.processingEndDateTime);
-  }
-);
-
-test(
   'generateGranuleRecord() uses granule.status if meta.status does not exist',
   async (t) => {
     const { granuleModel } = t.context;
