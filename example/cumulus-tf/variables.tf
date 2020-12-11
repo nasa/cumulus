@@ -68,7 +68,7 @@ variable "lzards_api" {
 variable "lzards_provider" {
   description = "LZARDS provider name"
   type        = string
-  default     = "FAKE_DAAC"
+  default     = "CUMULUS_INTEGRATION_TESTS"
 }
 
 variable "oauth_provider" {
