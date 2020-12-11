@@ -7,7 +7,7 @@ const proxyquire = require('proxyquire');
 const { ChecksumError } = require('../dist/src/errors');
 
 function removeStackObjectFromErrorBody(object) {
-  let updateObject = { ...object };
+  const updateObject = { ...object };
   updateObject.body = JSON.stringify(omit(JSON.parse(updateObject.body), ['stack']));
   return updateObject;
 }
@@ -34,17 +34,11 @@ const fakeCollection = {
   ],
 };
 
-const getCollectionsStub = sandbox.stub().returns({
-  body: JSON.stringify({
-    results: [
-      fakeCollection,
-    ],
-  }),
-});
+const getCollectionStub = sandbox.stub().returns(fakeCollection);
 const gotPostStub = sandbox.stub().returns(fakePostReturn);
 const index = proxyquire('../dist/src', {
   '@cumulus/api-client/collections': {
-    getCollections: getCollectionsStub,
+    getCollection: getCollectionStub,
   },
   got: {
     default: {
@@ -56,7 +50,7 @@ const env = { ...process.env };
 test.beforeEach(() => {
   sandbox.restore();
   gotPostStub.resetHistory();
-  getCollectionsStub();
+  getCollectionStub.resetHistory();
   process.env = { ...env };
 });
 
@@ -110,7 +104,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
     body: 'success body',
     statusCode: 201,
   }));
-  const creds = { fake: 'creds_object' };
+  const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
@@ -129,7 +123,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   const actual = await index.makeBackupFileRequest({
     authToken,
     collectionId,
-    creds,
+    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -151,7 +145,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
     body: 'failure body',
     statusCode: 404,
   }));
-  const creds = { fake: 'creds_object' };
+  const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
@@ -170,7 +164,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   const actual = await index.makeBackupFileRequest({
     authToken,
     collectionId,
-    creds,
+    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -191,7 +185,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   const lzardsPostMethod = (async () => {
     throw new Error('DANGER WILL ROBINSON');
   });
-  const creds = { fake: 'creds_object' };
+  const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
@@ -210,7 +204,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   let actual = await index.makeBackupFileRequest({
     authToken,
     collectionId,
-    creds,
+    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -235,7 +229,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult'
     statusCode: 201,
   }));
 
-  const creds = { fake: 'creds_object' };
+  const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
   const authToken = 'fakeToken';
@@ -254,7 +248,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult'
   const actual = await index.makeBackupFileRequest({
     authToken,
     collectionId,
-    creds,
+    roleCreds,
     file,
     granuleId,
     generateAccessUrlMethod,
@@ -446,7 +440,7 @@ test('generateAccessUrl generates an v4 accessURL', async (t) => {
 test('generateAccessUrl generates a signed URL using passed credentials', async (t) => {
   const actual = await index.generateAccessUrl({
     usePassedCredentials: true,
-    creds: {
+    roleCreds: {
       Credentials: {
         SecretAccessKey: 'FAKEKey',
         AccessKeyId: 'FAKEId',
@@ -663,13 +657,7 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   });
   sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
 
-  getCollectionsStub.returns({
-    body: JSON.stringify({
-      results: [
-        fakeCollection,
-      ],
-    }),
-  });
+  getCollectionStub.returns(fakeCollection);
   const fakePayload = {
     input: {
       granules: [
