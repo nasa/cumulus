@@ -190,22 +190,11 @@ export const backupGranule = async (
   granule: MessageGranule
 ) => {
   log.info(`${granule.granuleId}: Backup called on granule: ${JSON.stringify(granule)}`);
-  let granuleCollection: PartialCollectionRecord;
   try {
-    granuleCollection = await getGranuleCollection({
+    const granuleCollection = await getGranuleCollection({
       collectionName: granule.dataType,
       collectionVersion: granule.version,
     });
-  } catch (error) {
-    if (error.name === 'CollectionNotDefinedError') {
-      log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the database`);
-      log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
-      error.message = `${granule.granuleId}: ${error.message}`;
-      throw error;
-    }
-  }
-
-  try {
     const backupFiles = granule.files.filter(
       (file) => shouldBackupFile(file.name, granuleCollection)
     );
@@ -218,6 +207,10 @@ export const backupGranule = async (
       granuleId: granule.granuleId,
     })));
   } catch (error) {
+    if (error.name === 'CollectionNotDefinedError') {
+      log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the database`);
+      log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
+    }
     error.message = `${granule.granuleId}: ${error.message}`;
     throw error;
   }
