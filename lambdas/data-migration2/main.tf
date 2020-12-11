@@ -50,20 +50,6 @@ data "aws_iam_policy_document" "data_migration2" {
     ]
     resources = [var.rds_user_access_secret_arn]
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
-  statement {
-    actions   = [
-      "kms:Encrypt",
-      "kms:Decrypt"
-    ]
-    resources = [data.aws_kms_key.provider_kms_key.arn]
-  }
->>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
-=======
->>>>>>> c08f83d59... CUMULUS-2188 complete data-migration2 terraform template
 }
 
 resource "aws_iam_role_policy" "data_migration2" {
@@ -75,11 +61,7 @@ resource "aws_iam_role_policy" "data_migration2" {
 resource "aws_security_group" "data_migration2" {
   count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
 
-<<<<<<< HEAD
   name   = "${var.prefix}-data-migration2"
-=======
-  name   = "${var.prefix}-data-migration"
->>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
   vpc_id = var.vpc_id
 
   egress {
@@ -107,13 +89,6 @@ resource "aws_lambda_function" "data_migration2" {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
       ExecutionsTable = var.dynamo_tables.executions.name
       dbHeartBeat = var.rds_connection_heartbeat
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-      provider_kms_key_id = var.provider_kms_key_id
->>>>>>> a9be28c72... CUMULUS-2188 initial data-migration2 setup for migrating executions to RDS
-=======
->>>>>>> c08f83d59... CUMULUS-2188 complete data-migration2 terraform template
     }
   }
 
