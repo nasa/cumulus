@@ -52,8 +52,6 @@ const workflow = randomId('workflow-');
 const testRule = {
   name: randomId('testRule'),
   workflow: workflow,
-  provider: undefined,
-  collection: undefined,
   rule: {
     type: 'onetime',
     arn: 'arn',
