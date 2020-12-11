@@ -4,7 +4,7 @@ const omit = require('lodash/omit');
 const sandbox = require('sinon').createSandbox();
 const proxyquire = require('proxyquire');
 
-const { ChecksumError } = require('../dist/src/errors');
+const { ChecksumError, CollectionInvalidRegexpError } = require('../dist/src/errors');
 
 function removeStackObjectFromErrorBody(object) {
   const updateObject = { ...object };
@@ -14,7 +14,6 @@ function removeStackObjectFromErrorBody(object) {
 
 function removeBackupResultsObjectErrorStack(object) {
   return object.map((result) => removeStackObjectFromErrorBody(result));
-  //result.body = JSON.stringify(omit(JSON.parse(result.body), ['stack']));
 }
 
 const fakePostReturn = {
@@ -68,6 +67,22 @@ test('shouldBackupFile returns true if the regex matches and the backup option i
     ],
   };
   t.true(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
+});
+
+test('shouldBackupFile throws if multiple files match the collection regexp', (t) => {
+  const fakeCollectionConfig = {
+    files: [
+      {
+        regex: '^foo.jpg$',
+        lzards: { backup: true },
+      },
+      {
+        regex: '^foo.jpg$',
+        lzards: { backup: false },
+      },
+    ],
+  };
+  t.throws(() => index.shouldBackupFile('foo.jpg', fakeCollectionConfig), {instanceOf: CollectionInvalidRegexpError});
 });
 
 test('shouldBackupFile returns false if the regex matches and the backup option is not set on the collectionFile', async (t) => {

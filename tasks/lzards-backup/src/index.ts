@@ -15,7 +15,12 @@ import { CollectionRecord } from '@cumulus/types/api/collections';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
 
-import { ChecksumError, CollectionError, GetAuthTokenError } from './errors';
+import {
+  ChecksumError,
+  CollectionNotDefinedError,
+  CollectionInvalidRegexpError,
+  GetAuthTokenError,
+} from './errors';
 import { isFulfilledPromise } from './typeGuards';
 import { makeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
 
@@ -160,10 +165,15 @@ export const shouldBackupFile = (
   collectionConfig: CollectionRecord
 ): boolean => {
   const collectionFiles = collectionConfig?.files || [];
-  const config = collectionFiles.find(
+  const matchingConfig = collectionFiles.filter(
     ({ regex }) => fileName.match(regex)
   );
-  if (config?.lzards?.backup) return true;
+  if (matchingConfig.length > 1) {
+    const errString = `Multiple files matched configured regexp for ${JSON.stringify(collectionConfig)},${fileName}`;
+    log.error(errString);
+    throw new CollectionInvalidRegexpError(errString);
+  }
+  if (matchingConfig[0]?.lzards?.backup) return true;
   return false;
 };
 
@@ -175,7 +185,7 @@ export const getGranuleCollection = async (params: {
   const prefix = params.stackPrefix || getRequiredEnvVar('stackName');
   const { collectionName, collectionVersion } = params;
   if (!collectionName && !collectionVersion) {
-    throw new CollectionError('Collection Name and Version not defined');
+    throw new CollectionNotDefinedError('Collection Name and Version not defined');
   }
   return getCollection({
     prefix,

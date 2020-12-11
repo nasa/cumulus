@@ -1,12 +1,19 @@
 // eslint-disable-next-line max-classes-per-file
-export class CollectionError extends Error {
+export class CollectionNotDefinedError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'CollectionNotDefinedError';
-    Error.captureStackTrace(this, CollectionError);
+    Error.captureStackTrace(this, CollectionNotDefinedError);
   }
 }
 
+export class CollectionInvalidRegexpError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CollectionInvalidRegexp';
+    Error.captureStackTrace(this, CollectionInvalidRegexpError);
+  }
+}
 export class ChecksumError extends Error {
   constructor(message: string) {
     super(message);
