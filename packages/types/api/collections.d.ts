@@ -8,7 +8,6 @@ export interface CollectionFile {
   checksumFor?: string
   type?: string,
   url_path?: string,
-  backup?: boolean,
   lzards?: {
     backup: boolean
   }
