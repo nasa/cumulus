@@ -13,11 +13,6 @@ const { addToLocalES, indexRule } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
-const dynamoRecordToDbRecord = (
-  dynamoRecord,
-  dbClient
-) => translateApiRuleToPostgresRule(dynamoRecord, dbClient);
-
 /**
  * List all rules.
  *
@@ -81,7 +76,7 @@ async function post(req, res) {
   try {
     const record = await model.create(rule);
     try {
-      const postgresRecord = await dynamoRecordToDbRecord(record, dbClient);
+      const postgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
       await dbClient.insert(postgresRecord, 'cumulus_id').into(tableNames.rules);
     } catch (error) {
       await model.delete({ name });
@@ -125,25 +120,17 @@ async function put({ params: { name }, body }, res) {
   try {
     const oldRule = await model.get({ name });
     const dbClient = await getKnexClient();
-    const postgresRecord = await dynamoRecordToDbRecord(oldRule, dbClient);
 
     // if rule type is onetime no change is allowed unless it is a rerun
     if (body.action === 'rerun') {
-      return models.Rule.invoke(oldRule)
-        .then(async () => {
-          await dbClient.transaction(async (trx) => {
-            await trx(tableNames.rules).where({ name: name }).del();
-            await trx(tableNames.rules).insert(postgresRecord);
-          });
-          return res.send(oldRule);
-        });
+      return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
 
     // Remove all fields from the existing rule that are not supplied in body
     // since body is expected to be a replacement rule, not a partial rule
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
     const newRule = await model.update(oldRule, body, fieldsToDelete);
-    const newPostgresRecord = await dynamoRecordToDbRecord(newRule, dbClient);
+    const newPostgresRecord = await translateApiRuleToPostgresRule(newRule, dbClient);
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
 
