@@ -52,7 +52,10 @@ const Manager = require('./base');
 
 const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
-const { translateGranule } = require('../lib/granules');
+const {
+  getExecutionProcessingTimeInfo,
+  translateGranule,
+} = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
 const {
@@ -363,51 +366,54 @@ class Granule extends Manager {
       throw new CumulusModelError('meta.collection required to generate a granule record');
     }
 
+    const {
+      files,
+      granuleId,
+      cmrLink,
+      // eslint-disable-next-line camelcase
+      sync_granule_duration = 0,
+      // eslint-disable-next-line camelcase
+      post_to_cmr_duration = 0,
+      published = false,
+    } = granule;
+
     const provider = getMessageProvider(message);
     const granuleFiles = await this.fileUtils.buildDatabaseFiles({
       s3,
       providerURL: buildURL(provider),
-      files: granule.files,
+      files,
     });
-
-    const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
-
-    const { startDate, stopDate } = executionDescription;
-    const processingTimeInfo = {};
-    if (startDate) {
-      processingTimeInfo.processingStartDateTime = startDate.toISOString();
-      processingTimeInfo.processingEndDateTime = stopDate
-        ? stopDate.toISOString()
-        : new Date().toISOString();
-    }
 
     const now = Date.now();
     const timestamp = now;
     const workflowStartTime = getMessageWorkflowStartTime(message);
+    const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
+    const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
     const record = {
-      granuleId: granule.granuleId,
+      granuleId: granuleId,
       pdrName: getMessagePdrName(message),
       collectionId,
       status: getGranuleStatus(message, granule),
       provider: provider.id,
       execution: executionUrl,
-      cmrLink: granule.cmrLink,
+      cmrLink: cmrLink,
       files: granuleFiles,
       error: parseException(message.exception),
       createdAt: workflowStartTime,
+      published,
       timestamp,
       updatedAt: now,
       // Duration is also used as timeToXfer for the EMS report
       duration: getWorklowDuration(workflowStartTime, timestamp),
       productVolume: getGranuleProductVolume(granuleFiles),
-      timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
-      timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
+      // eslint-disable-next-line camelcase
+      timeToPreprocess: sync_granule_duration / 1000,
+      // eslint-disable-next-line camelcase
+      timeToArchive: post_to_cmr_duration / 1000,
       ...processingTimeInfo,
       ...temporalInfo,
     };
-
-    record.published = get(granule, 'published', false);
 
     return removeNilProperties(record);
   }
