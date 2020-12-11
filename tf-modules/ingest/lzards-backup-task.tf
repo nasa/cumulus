@@ -71,13 +71,13 @@ data "aws_iam_policy_document" "lambda_backup_policy" {
       "s3:GetBucket*",
       "s3:ListBucket*",
     ]
-    resources = [for b in local.all_non_system_buckets : "arn:aws:s3:::${b}"]
+    resources = [for b in local.all_non_internal_buckets : "arn:aws:s3:::${b}"]
   }
   statement {
     actions = [
       "s3:GetObject*"
     ]
-    resources = [for b in local.all_non_system_buckets : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.all_non_internal_buckets : "arn:aws:s3:::${b}/*"]
   }
 }
 
