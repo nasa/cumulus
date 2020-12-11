@@ -22,7 +22,7 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
   const expectedPostgresRule = {
     name: record.name,
     workflow: record.workflow,
-    meta: (record.meta ? JSON.stringify(record.meta) : undefined),
+    meta: JSON.stringify(record.meta)
     payload: record.payload,
     queue_url: record.queueUrl,
     arn: record.rule.arn,
@@ -30,7 +30,7 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     value: record.rule.value,
     log_event_arn: record.rule.logEventArn,
     enabled: true,
-    tags: (record.tags ? JSON.stringify(record.tags) : undefined),
+    tags: JSON.stringify(record.tags),
     execution_name_prefix: record.executionNamePrefix,
     created_at: new Date(record.createdAt),
     updated_at: new Date(record.updatedAt),
