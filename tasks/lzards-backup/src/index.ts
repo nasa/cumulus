@@ -249,7 +249,7 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
   // Given an array of granules, submit each file for backup.
   log.warn(`Running backup on ${JSON.stringify(event)}`);
   const roleCreds = await generateAccessCredentials();
-  const authToken = await getAuthToken() as string;
+  const authToken = await getAuthToken();
 
   const backupPromises = (event.input.granules.map(
     (granule) => backupGranule(roleCreds, authToken, granule)
