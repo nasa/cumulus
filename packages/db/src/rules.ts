@@ -42,20 +42,16 @@ export const translateApiRuleToPostgresRule = async (
   const ruleRecord: PostgresRule = {
     name: record.name,
     workflow: record.workflow,
-    provider_cumulus_id: record.provider ? await getRecordCumulusId<PostgresProviderRecord>(
-      { name: record.provider },
-      tableNames.providers,
-      dbClient
-    ) : undefined,
+    provider_cumulus_id: record.provider ? providerCumulusId : undefined,
     collection_cumulus_id: record.collection ? collectionCumulusId : undefined,
-    meta: record.meta,
+    meta: record.meta ? JSON.stringify(record.meta) : undefined,
     payload: record.payload as any,
     queue_url: record.queueUrl,
     arn: record.rule.arn,
     type: record.rule.type,
     value: record.rule.value,
     log_event_arn: record.rule.logEventArn,
-    enabled: record.state === 'ENABLED' ,
+    enabled: record.state === 'ENABLED',
     tags: (record.tags ? JSON.stringify(record.tags) : undefined),
     execution_name_prefix: record.executionNamePrefix,
     created_at: new Date(record.createdAt),

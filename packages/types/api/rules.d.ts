@@ -25,7 +25,10 @@ export interface PartialRuleRecord {
   },
   payload?: unknown,
   provider?: string,
-  queueName?: string
+  queueName?: string,
+  executionNamePrefix?: string,
+  queueUrl?: string,
+  tags?: string[],
 }
 
 export interface NewRuleRecord extends PartialRuleRecord {
@@ -36,9 +39,6 @@ export interface NewRuleRecord extends PartialRuleRecord {
 }
 
 export interface RuleRecord extends NewRuleRecord {
-  executionNamePrefix?: string,
-  queueUrl?: string,
-  tags?: string[],
   createdAt: number,
   updatedAt: number
 }
