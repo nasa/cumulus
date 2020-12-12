@@ -125,7 +125,7 @@ test('shouldBackupFile returns false if there is no collection file defined', as
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult when file.filename is not a s3 URI', async (t) => {
+test('makeBackupFileRequest returns expected makeBackupFileRequestResult when file.filename is not a s3 URI', async (t) => {
   const lzardsPostMethod = (async () => ({
     body: 'success body',
     statusCode: 201,
@@ -165,8 +165,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   t.is(JSON.parse(actual.body).name, 'TypeError');
 });
 
-
-test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZARDS failure', async (t) => {
+test('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZARDS failure', async (t) => {
   const lzardsPostMethod = (async () => ({
     body: 'failure body',
     statusCode: 404,
@@ -207,7 +206,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   t.deepEqual(actual, expected);
 });
 
-test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult on other failure', async (t) => {
+test('makeBackupFileRequest returns expected makeBackupFileRequestResult on other failure', async (t) => {
   const lzardsPostMethod = (async () => {
     throw new Error('DANGER WILL ROBINSON');
   });
@@ -247,7 +246,7 @@ test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult 
   t.deepEqual(actual, expected);
 });
 
-test.serial('makeBackupFileRequest returns expected makeBackupFileRequestResult', async (t) => {
+test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async (t) => {
   const accessUrl = 'https://www.nasa.gov';
   const generateAccessUrlMethod = (() => accessUrl);
   const lzardsPostMethod = (async () => ({
