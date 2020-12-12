@@ -626,21 +626,6 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
             },
           ],
         },
-        {
-          granuleId: 'FakeGranule2',
-          dataType: 'FakeGranuleType',
-          Version: '000',
-          files: [
-            {
-              name: 'foo.jpg',
-              filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
-            },
-            {
-              name: 'foo.dat',
-              filename: 's3://fakeBucket2//path/to/granule1/foo.dat',
-            },
-          ],
-        },
       ],
     },
   };
@@ -657,12 +642,6 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
         filename: 's3://fakeBucket1//path/to/granule1/foo.jpg',
         status: 'FAILED',
         granuleId: 'FakeGranule1',
-      },
-      {
-        body: '{"name":"ChecksumError"}',
-        filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
-        status: 'FAILED',
-        granuleId: 'FakeGranule2',
       },
     ],
     originalPayload: fakePayload.input,
