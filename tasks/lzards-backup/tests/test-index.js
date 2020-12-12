@@ -247,7 +247,7 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on othe
 });
 
 test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async (t) => {
-  const accessUrl = 'https://www.nasa.gov';
+  const accessUrl = 'totallynotarealurl';
   const generateAccessUrlMethod = (() => accessUrl);
   const lzardsPostMethod = (async () => ({
     body: 'fake body',
