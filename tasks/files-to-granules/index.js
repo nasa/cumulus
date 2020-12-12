@@ -5,7 +5,8 @@ const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
 const path = require('path');
 
-const { parseS3Uri } = require('@cumulus/aws-client/S3');
+const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
 const { getGranuleId } = require('./utils');
@@ -16,13 +17,19 @@ const { getGranuleId } = require('./utils');
  * @param {string} s3URI - s3://mybucket/myprefix/myobject.
  * @returns {Object} file object
  */
-function fileObjectFromS3URI(s3URI) {
+async function fileObjectFromS3URI(s3URI) {
   const uriParsed = parseS3Uri(s3URI);
+  const size = await getObjectSize({
+    s3: s3(),
+    bucket: uriParsed.Bucket,
+    key: uriParsed.Key,
+  });
   return {
     name: path.basename(s3URI),
     bucket: uriParsed.Bucket,
     filename: s3URI,
     fileStagingDir: path.dirname(uriParsed.Key),
+    size,
   };
 }
 
@@ -35,7 +42,7 @@ function fileObjectFromS3URI(s3URI) {
  * @param {string} regex - regex needed to extract granuleId from filenames
  * @returns {Object} inputGranules with updated file lists
  */
-function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
+async function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
   // create hash list of the granules
   // and a list of files
   const granulesHash = keyBy(inputGranules, 'granuleId');
@@ -45,18 +52,19 @@ function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
   // the process involve getting granuleId of each file
   // match it against the granuleObj and adding the new files to the
   // file list
-  inputFiles
-    .filter((f) => !filesFromInputGranules.includes(f))
-    .forEach((f) => {
-      if (f) {
-        const fileGranuleId = getGranuleId(f, regex);
-        try {
-          granulesHash[fileGranuleId].files.push(fileObjectFromS3URI(f));
-        } catch (error) {
-          throw new Error(`Failed adding ${f} to ${fileGranuleId}'s files`);
-        }
-      }
-    });
+  const filesToAdd = inputFiles.filter((f) => f && !filesFromInputGranules.includes(f));
+
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < filesToAdd.length; i += 1) {
+    const f = filesToAdd[i];
+    const fileGranuleId = getGranuleId(f, regex);
+    try {
+      granulesHash[fileGranuleId].files.push(await fileObjectFromS3URI(f));
+    } catch (error) {
+      throw new Error(`Failed adding ${f} to ${fileGranuleId}'s files`);
+    }
+  }
+  /* eslint-enable no-await-in-loop */
 
   return {
     granules: Object.keys(granulesHash).map((k) => granulesHash[k]),

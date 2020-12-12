@@ -12,7 +12,14 @@ module "kinesis_trigger_test_workflow" {
     {
       cnm_to_cma_task_arn: aws_lambda_function.cnm_to_cma_task.arn,
       cnm_response_task_arn: aws_lambda_function.cnm_response_task.arn,
-      sync_granule_task_arn: module.cumulus.sync_granule_task.task_arn
+      fake_processing_task_arn: module.cumulus.fake_processing_task.task_arn,
+      files_to_granules_task_arn: module.cumulus.files_to_granules_task.task_arn,
+      hyrax_metadata_updates_task_arn: module.cumulus.hyrax_metadata_updates_task.task_arn,
+      move_granules_task_arn: module.cumulus.move_granules_task.task_arn,
+      post_to_cmr_task_arn: module.cumulus.post_to_cmr_task.task_arn,
+      sf_sqs_report_task_arn: module.cumulus.sf_sqs_report_task.task_arn,
+      sync_granule_task_arn: module.cumulus.sync_granule_task.task_arn,
+      update_granules_cmr_metadata_file_links_task_arn: module.cumulus.update_granules_cmr_metadata_file_links_task.task_arn
     }
   )
 }
