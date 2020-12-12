@@ -55,7 +55,7 @@ For a granule file to be backed up, the following should be added to the Collect
 
 ### Output
 
-The task output will contain the results of the requests to LZARDS.   Please note that this task does *not* halt waiting for a response from LZARDS, and *does not* fail if LZARDS rejects an individual backup request.    The task *will* throw if there is an error thrown unrelated to a LZARDS API call, but attempt to complete all requests before it does so.
+The task output will contain the results of the requests to LZARDS.   Please note that this task does *not* halt waiting for a response from LZARDS, and *does not* fail if LZARDS rejects an individual backup request.    The task *will* throw if there is an error thrown unrelated to a LZARDS API call, but attempt to make all requests before it does so.
 
 Upon completion the lambda will return the following structure:
 
