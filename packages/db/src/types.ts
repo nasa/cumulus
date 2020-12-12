@@ -108,3 +108,24 @@ export interface PostgresRule {
 export interface PostgresRuleRecord extends PostgresRule {
   cumulus_id: number,
 }
+
+export interface PostgresPdrRecord {
+  pdr_name: string,
+  collection_cumulus_id: number,
+  provider_cumulus_id: number,
+  status: string,
+  progress?: number,
+  execution_cumulus_id: number,
+  pan_sent?: boolean,
+  stats?: object,
+  address?: string,
+  original_url?: string,
+  timestamp?: number,
+  duration?: number,
+  created_at: Date,
+  updated_at?: Date
+}
+
+export interface PostgresPdrRecord extends PostgresPdr {
+  cumulus_id: number,
+}
