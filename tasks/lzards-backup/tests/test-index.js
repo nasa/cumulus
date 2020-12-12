@@ -53,7 +53,7 @@ test.beforeEach(() => {
   process.env = { ...env };
 });
 
-test('shouldBackupFile returns true if the regex matches and the backup option is set on the collectionFile', async (t) => {
+test('shouldBackupFile returns true if the regex matches and the backup option is set on the matching collection file', async (t) => {
   const fakeCollectionConfig = {
     files: [
       {
@@ -69,7 +69,7 @@ test('shouldBackupFile returns true if the regex matches and the backup option i
   t.true(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test('shouldBackupFile throws if multiple files match the collection regexp', (t) => {
+test('shouldBackupFile throws if multiple files match the collection regexp on the collection files', (t) => {
   const fakeCollectionConfig = {
     files: [
       {
@@ -85,7 +85,7 @@ test('shouldBackupFile throws if multiple files match the collection regexp', (t
   t.throws(() => index.shouldBackupFile('foo.jpg', fakeCollectionConfig), {instanceOf: CollectionInvalidRegexpError});
 });
 
-test('shouldBackupFile returns false if the regex matches and the backup option is set to false on the collectionFile', async (t) => {
+test('shouldBackupFile returns false if the regex matches and the backup option is set to false on the matching collection file', async (t) => {
   const fakeCollectionConfig = {
     files: [
       {
@@ -97,7 +97,18 @@ test('shouldBackupFile returns false if the regex matches and the backup option 
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test('shouldBackupFile returns false if the regex matches and the backup option is set false on Collection File', async (t) => {
+test('shouldBackupFile returns false if the regex matches and the backup option is not set to false on the matching collection file', async (t) => {
+  const fakeCollectionConfig = {
+    files: [
+      {
+        regex: '^foo.jpg$',
+      },
+    ],
+  };
+  t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
+});
+
+test('shouldBackupFile returns false if the regex does not match any file', async (t) => {
   const fakeCollectionConfig = {
     files: [
       {
