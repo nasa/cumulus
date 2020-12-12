@@ -344,7 +344,7 @@ variable "launchpad_passphrase" {
   default     = ""
 }
 variable "lzards_launchpad_certificate" {
-  description = "Name of the Launchpad certificate uploaded to the 'crypto' directory of the `system_bucket for use with the lzards-backup task`."
+  description = "Name of the Launchpad certificate uploaded to the 'crypto' directory of the `system_bucket` for use with the lzards-backup task`."
   type        = string
   default     = "lzards_launchpad.pfx"
 }
@@ -543,4 +543,3 @@ variable "ems_deploy" {
   type        = bool
   default     = false
 }
-
