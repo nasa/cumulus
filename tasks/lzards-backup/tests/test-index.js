@@ -682,23 +682,6 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
             },
           ],
         },
-        {
-          granuleId: 'FakeGranule2',
-          files: [
-            {
-              name: 'foo.jpg',
-              filename: 's3://fakeBucket2//path/to/granule1/foo.jpg',
-              checksumType: 'md5',
-              checksum: 'fakehash',
-            },
-            {
-              name: 'foo.dat',
-              filename: 's3://fakeBucket2//path/to/granule1/foo.dat',
-              checksumType: 'md5',
-              checksum: 'fakehash',
-            },
-          ],
-        },
       ],
     },
   };
