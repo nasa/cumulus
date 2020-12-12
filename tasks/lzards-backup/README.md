@@ -66,7 +66,7 @@ Upon completion the lambda will return the following structure:
 }
 ```
 
-`originalPayload` is provided to seamless ly allow the granules payload to continue downstream of the task (for database writes, etc)
+`originalPayload` is provided to seamlessly allow the granules payload to continue downstream of the task (for database writes, etc)
 
 `backupResults` is an object array that contains:
 
