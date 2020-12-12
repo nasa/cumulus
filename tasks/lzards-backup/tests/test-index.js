@@ -434,7 +434,7 @@ test.serial('postRequestToLzards throws if file.checksumType is not set ', async
     collection,
     file,
     granuleId,
-  }), { name: ChecksumError.name });
+  }), { instanceOf: ChecksumError });
 });
 
 test.serial('postRequestToLzards throws if provider is not set ', async (t) => {
