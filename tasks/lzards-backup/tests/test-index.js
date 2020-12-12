@@ -82,7 +82,7 @@ test('shouldBackupFile throws if multiple files match the collection regexp on t
       },
     ],
   };
-  t.throws(() => index.shouldBackupFile('foo.jpg', fakeCollectionConfig), {instanceOf: CollectionInvalidRegexpError});
+  t.throws(() => index.shouldBackupFile('foo.jpg', fakeCollectionConfig), { instanceOf: CollectionInvalidRegexpError });
 });
 
 test('shouldBackupFile returns false if the regex matches and the backup option is set to false on the matching collection file', async (t) => {
