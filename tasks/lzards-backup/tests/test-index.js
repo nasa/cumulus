@@ -247,7 +247,7 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on othe
 });
 
 test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async (t) => {
-  const accessUrl = 'totallynotarealurl';
+  const accessUrl = 'fakeURL';
   const generateAccessUrlMethod = (() => accessUrl);
   const lzardsPostMethod = (async () => ({
     body: 'fake body',
