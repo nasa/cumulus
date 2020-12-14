@@ -709,7 +709,7 @@ test.serial('PUT does not insert into RDS if replacing onetime rule for rerun fa
 });
 
 test('DELETE deletes a rule', async (t) => {
-  const { newRule } = t.context;
+  const { newRule, dbClient } = t.context;
 
   await request(app)
     .post('/rules')
@@ -725,5 +725,10 @@ test('DELETE deletes a rule', async (t) => {
     .expect(200);
 
   const { message } = response.body;
+  const dbRecords = await dbClient.select()
+    .from(tableNames.rules)
+    .where({ name: newRule.name });
+
+  t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
 });

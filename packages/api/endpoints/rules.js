@@ -153,6 +153,7 @@ async function put({ params: { name }, body }, res) {
 async function del(req, res) {
   const name = (req.params.name || '').replace(/%20/g, ' ');
   const model = new models.Rule();
+  const dbClient = await getKnexClient();
 
   let record;
   try {
@@ -163,7 +164,12 @@ async function del(req, res) {
     }
     throw error;
   }
-  await model.delete(record);
+
+  await dbClient.transaction(async (trx) => {
+    await model.delete(record);
+    await trx(tableNames.rules).where({ name }).del();
+  });
+
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
     await esClient.delete({
