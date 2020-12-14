@@ -111,6 +111,7 @@ module "cumulus" {
   lzards_launchpad_passphrase  = var.launchpad_passphrase
   lzards_api                   = var.lzards_api
   lzards_provider              = var.lzards_provider
+  lzards_s3_link_timeout       = var.lzards_s3_link_timeout
 
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
