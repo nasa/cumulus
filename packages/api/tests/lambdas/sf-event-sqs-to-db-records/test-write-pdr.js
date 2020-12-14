@@ -216,10 +216,6 @@ test('writeRunningPdrViaTransaction() does not update record with same execution
     ...runningPdrRecord,
     status: 'running',
     progress: 75,
-    stats: {
-      running: ['arn1'],
-      completed: ['arn2', 'arn3', 'arn4'],
-    },
   };
   const [insertResult] = await knex(tableNames.pdrs)
     .insert(runningPdrRecord1)
@@ -231,10 +227,6 @@ test('writeRunningPdrViaTransaction() does not update record with same execution
     ...runningPdrRecord,
     status: 'running',
     progress: 50,
-    stats: {
-      running: ['arn1', 'arn2'],
-      completed: ['arn3', 'arn4'],
-    },
   };
 
   const trxResult = await knex.transaction(
