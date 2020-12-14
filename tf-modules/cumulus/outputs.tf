@@ -69,7 +69,7 @@ output "hyrax_metadata_updates_task" {
 }
 
 output "lzards_backup_task" {
-  value = module.ingest.lzards_backup_lambda_function_arn
+  value = module.ingest.lzards_backup_task
 }
 
 output "move_granules_task" {

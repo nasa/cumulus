@@ -355,7 +355,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${lzards_backup_lambda_function_arn}",
+      "Resource": "${lzards_backup_task_arn}",
       "Next": "WorkflowSucceeded",
       "Catch": [
         {
