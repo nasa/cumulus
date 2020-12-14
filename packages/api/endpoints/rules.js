@@ -78,7 +78,9 @@ async function post(req, res) {
       const record = await model.create(rule);
       const postgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
       await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
+
       if (inTestMode()) await addToLocalES(record, indexRule);
+
       return res.send({ message: 'Record saved', record });
     });
   } catch (error) {

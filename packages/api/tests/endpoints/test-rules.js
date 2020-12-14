@@ -110,15 +110,7 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const fakeCollection = fakeCollectionFactory();
-  const fakeProvider = fakeProviderFactory({
-    encrypted: true,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-    createdAt: new Date(2020, 11, 17),
-    updatedAt: new Date(2020, 12, 2),
-  });
+
   const newRule = {
     name: randomId('name'),
     workflow: workflow,
@@ -135,8 +127,6 @@ test.beforeEach(async (t) => {
     state: 'ENABLED',
   };
 
-  t.context.fakeCollection = fakeCollection;
-  t.context.fakeProvider = fakeProvider;
   t.context.newRule = newRule;
 });
 
@@ -289,26 +279,25 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 
   t.is(response.body.message, 'Record saved');
 
-  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
-    .select()
-    .table(tableNames.rules)
-    .where({ name: newRule.name })
-    .first();
-
-  t.not(fetchedPostgresRecord, undefined);
-
   response = await request(app)
     .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
+    .select()
+    .table(tableNames.rules)
+    .where({ name: newRule.name })
+    .first();
+
   const { message, record } = response.body;
   t.is(message, 'Record deleted');
   t.is(record, undefined);
+  t.is(fetchedPostgresRecord, undefined);
 });
 
-test('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
+test('403 error when calling the API endpoint to delete an existing rule without a valid access token', async (t) => {
   const { newRule } = t.context;
 
   let response = await request(app)
@@ -319,17 +308,10 @@ test('403 error when calling the API endpoint to delete an existing rule without
     .expect(200);
 
   const { message, record } = response.body;
+
   t.is(message, 'Record saved');
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
-
-  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
-    .select()
-    .table(tableNames.rules)
-    .where({ name: newRule.name })
-    .first();
-
-  t.not(fetchedPostgresRecord, undefined);
 
   response = await request(app)
     .delete(`/rules/${newRule.name}`)
@@ -349,7 +331,16 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule', async (t) => {
-  const { newRule, dbClient, fakeCollection, fakeProvider } = t.context;
+  const { newRule, dbClient } = t.context;
+  const fakeCollection = fakeCollectionFactory();
+  const fakeProvider = fakeProviderFactory({
+    encrypted: true,
+    privateKey: 'key',
+    cmKeyId: 'key-id',
+    certificateUri: 'uri',
+    createdAt: new Date(2020, 11, 17),
+    updatedAt: new Date(2020, 12, 2),
+  });
   newRule.provider = fakeProvider.id;
   newRule.collection = {
     name: fakeCollection.name,
@@ -414,7 +405,6 @@ test('POST creates a rule', async (t) => {
 
 test('POST creates a rule that is enabled by default', async (t) => {
   const { newRule } = t.context;
-
   delete newRule.state;
 
   const response = await request(app)
@@ -709,17 +699,32 @@ test.serial('PUT does not insert into RDS if replacing onetime rule for rerun fa
 });
 
 test('DELETE deletes a rule', async (t) => {
-  const { newRule, dbClient } = t.context;
+  const { dbClient } = t.context;
+  const rule = {
+    name: randomId('name'),
+    workflow: workflow,
+    provider: undefined,
+    collection: undefined,
+    rule: {
+      type: 'onetime',
+      arn: 'arn',
+      value: 'value',
+      logEventArn: 'log_event_arn',
+    },
+    meta: { retries: 0 },
+    queueUrl: 'queue_url',
+    state: 'ENABLED',
+  };
 
   await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
+    .send(rule)
     .expect(200);
 
   const response = await request(app)
-    .delete(`/rules/${newRule.name}`)
+    .delete(`/rules/${rule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -727,7 +732,7 @@ test('DELETE deletes a rule', async (t) => {
   const { message } = response.body;
   const dbRecords = await dbClient.select()
     .from(tableNames.rules)
-    .where({ name: newRule.name });
+    .where({ name: rule.name });
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
