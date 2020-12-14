@@ -40,7 +40,6 @@ test.before(async (t) => {
       ...localStackConnectionEnv,
       PG_DATABASE: t.context.testDbName,
       migrationDir,
-      // KNEX_DEBUG: 'true',
     },
   });
   await t.context.knex.migrate.latest();
