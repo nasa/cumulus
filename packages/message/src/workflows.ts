@@ -81,7 +81,7 @@ export const getMessageWorkflowName = (
  *
  * @alias module:workflows
  */
-export const getWorklowDuration = (
+export const getWorkflowDuration = (
   startTime: number,
   stopTime?: number
 ): number => (isNil(stopTime) ? 0 : (stopTime - startTime) / 1000);

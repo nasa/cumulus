@@ -15,7 +15,7 @@ const {
 const {
   getMetaStatus,
   getMessageWorkflowStartTime,
-  getWorklowDuration,
+  getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 
 const Pdr = require('../../models/pdrs');
@@ -43,7 +43,7 @@ const generatePdrRecord = ({
     provider_cumulus_id: providerCumulusId,
     created_at: new Date(workflowStartTime),
     timestamp: new Date(timestamp),
-    duration: getWorklowDuration(workflowStartTime, timestamp),
+    duration: getWorkflowDuration(workflowStartTime, timestamp),
   };
 };
 
