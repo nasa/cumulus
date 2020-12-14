@@ -11,7 +11,6 @@ const {
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
-  getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
@@ -38,9 +37,8 @@ const {
 const Granule = require('../../models/granules');
 
 const generateGranuleRecord = async ({
-  message,
+  cumulusMessage,
   granule,
-  executionUrl,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
@@ -48,6 +46,7 @@ const generateGranuleRecord = async ({
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
   fileUtils = FileUtils,
+  s3Client = s3,
   now = Date.now(),
 }) => {
   const {
@@ -57,27 +56,23 @@ const generateGranuleRecord = async ({
     published = false,
   } = granule;
 
-  const provider = getMessageProvider(message);
+  const provider = getMessageProvider(cumulusMessage);
   const granuleFiles = await fileUtils.buildDatabaseFiles({
-    s3,
+    s3: s3Client,
     providerURL: buildURL(provider),
     files,
   });
 
   const timestamp = now;
-  const workflowStartTime = getMessageWorkflowStartTime(message);
+  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
   return {
     granuleId,
-    // pdrName: getMessagePdrName(message),
-    // collectionId,
-    status: getGranuleStatus(message, granule),
-    provider: provider.id,
-    execution: executionUrl,
-    cmrLink: cmrLink,
+    status: getGranuleStatus(cumulusMessage, granule),
+    cmrLink,
     files: granuleFiles,
-    error: parseException(message.exception),
+    error: parseException(cumulusMessage.exception),
     createdAt: workflowStartTime,
     published,
     timestamp,
@@ -207,7 +202,6 @@ const writeGranules = async ({
 
   const granules = getMessageGranules(cumulusMessage);
   const executionArn = getMessageExecutionArn(cumulusMessage);
-  const executionUrl = getExecutionUrlFromArn(executionArn);
   const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
@@ -218,7 +212,6 @@ const writeGranules = async ({
       granule,
       cumulusMessage,
       processingTimeInfo,
-      executionUrl,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
@@ -238,6 +231,7 @@ const writeGranules = async ({
 };
 
 module.exports = {
+  generateGranuleRecord,
   writeGranuleViaTransaction,
   writeGranules,
 };

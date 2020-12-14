@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/db');
 
 const {
+  generateGranuleRecord,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
 
@@ -78,12 +79,16 @@ test.beforeEach(async (t) => {
   };
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
-  const files = [fakeFileFactory()];
-  const granule = fakeGranuleFactoryV2({ files, granuleId: t.context.granuleId });
+  t.context.files = [fakeFileFactory()];
+  t.context.granule = fakeGranuleFactoryV2({
+    files: t.context.files,
+    granuleId: t.context.granuleId
+  });
 
+  t.context.worklowStartTime = Date.now();
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122,
+      workflow_start_time: worklowStartTime,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
     },
@@ -120,6 +125,31 @@ test.after.always(async (t) => {
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
   await t.context.knexAdmin.destroy();
+});
+
+test('generateGranuleRecord() generates the correct granule record', (t) => {
+  const {
+    cumulusMessage,
+    granuleId,
+    granule,
+    worklowStartTime,
+  } = t.context;
+  const now = Date.now();
+  t.deepEqual(
+    generateGranuleRecord({
+      cumulusMessage,
+      now,
+    }),
+    {
+      granuleId,
+      status: 'running',
+      cmrLink: granule.cmrLink,
+      published: granule.published,
+      exception: {},
+      createdAt: new Date(worklowStartTime),
+      timestamp: now
+    }
+  );
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {
