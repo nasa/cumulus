@@ -13,9 +13,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2219**
+  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
 - **CUMULUS-2092**
   - Add documentation for Granule Not Found Reports
-
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
 
