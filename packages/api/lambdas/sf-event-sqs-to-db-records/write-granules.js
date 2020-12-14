@@ -2,7 +2,10 @@
 
 const AggregateError = require('aggregate-error');
 
+const { s3 } = require('@cumulus/aws-client/services');
+const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
+const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   tableNames,
 } = require('@cumulus/db');
@@ -14,8 +17,76 @@ const {
   getMessageGranules,
   getGranuleStatus,
 } = require('@cumulus/message/Granules');
+const {
+  getMessageProvider,
+} = require('@cumulus/message/Providers');
+const {
+  getMessageWorkflowStartTime,
+  getWorkflowDuration,
+} = require('@cumulus/message/workflows');
 
+const FileUtils = require('../../lib/FileUtils');
+const {
+  getExecutionProcessingTimeInfo,
+  getGranuleTimeToArchive,
+  getGranuleTimeToPreprocess,
+} = require('../../lib/granules');
+const {
+  parseException,
+  getGranuleProductVolume,
+} = require('../../lib/utils');
 const Granule = require('../../models/granules');
+
+const generateGranuleRecord = async ({
+  message,
+  granule,
+  executionUrl,
+  processingTimeInfo = {},
+  cmrUtils = CmrUtils,
+  fileUtils = FileUtils,
+  now = Date.now(),
+}) => {
+  const {
+    files,
+    granuleId,
+    cmrLink,
+    published = false,
+  } = granule;
+
+  const provider = getMessageProvider(message);
+  const granuleFiles = await fileUtils.buildDatabaseFiles({
+    s3,
+    providerURL: buildURL(provider),
+    files,
+  });
+
+  const timestamp = now;
+  const workflowStartTime = getMessageWorkflowStartTime(message);
+  const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
+
+  return {
+    granuleId,
+    // pdrName: getMessagePdrName(message),
+    // collectionId,
+    status: getGranuleStatus(message, granule),
+    provider: provider.id,
+    execution: executionUrl,
+    cmrLink: cmrLink,
+    files: granuleFiles,
+    error: parseException(message.exception),
+    createdAt: workflowStartTime,
+    published,
+    timestamp,
+    updatedAt: now,
+    // Duration is also used as timeToXfer for the EMS report
+    duration: getWorkflowDuration(workflowStartTime, timestamp),
+    productVolume: getGranuleProductVolume(granuleFiles),
+    timeToPreprocess: getGranuleTimeToPreprocess(granule),
+    timeToArchive: getGranuleTimeToArchive(granule),
+    ...processingTimeInfo,
+    ...temporalInfo,
+  };
+};
 
 const writeGranuleViaTransaction = async ({
   cumulusMessage,
@@ -130,6 +201,7 @@ const writeGranules = async ({
   const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrlFromArn(executionArn);
   const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
+  const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently

@@ -390,7 +390,7 @@ class Granule extends Manager {
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
 
     const record = {
-      granuleId: granuleId,
+      granuleId,
       pdrName: getMessagePdrName(message),
       collectionId,
       status: getGranuleStatus(message, granule),
