@@ -98,7 +98,7 @@ export const getMessagePdrName = (
  */
 export const getMessagePdrRunningExecutions = (
   message: MessageWithOptionalPdrStats
-): number => (message.payload?.running ?? []).length;
+): number => (message.payload.running ?? []).length;
 
 /**
  * Get the number of completed executions for a PDR, if any.
@@ -110,7 +110,7 @@ export const getMessagePdrRunningExecutions = (
  */
 export const getMessagePdrCompletedExecutions = (
   message: MessageWithOptionalPdrStats
-): number => (message.payload?.completed ?? []).length;
+): number => (message.payload.completed ?? []).length;
 
 /**
  * Get the number of failed executions for a PDR, if any.
@@ -122,7 +122,7 @@ export const getMessagePdrCompletedExecutions = (
  */
 export const getMessagePdrFailedExecutions = (
   message: MessageWithOptionalPdrStats
-): number => (message.payload?.failed ?? []).length;
+): number => (message.payload.failed ?? []).length;
 
 /**
  * Get the PDR stats from a workflow message, if any.
