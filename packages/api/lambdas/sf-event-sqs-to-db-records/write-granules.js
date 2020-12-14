@@ -41,6 +41,10 @@ const generateGranuleRecord = async ({
   message,
   granule,
   executionUrl,
+  collectionCumulusId,
+  providerCumulusId,
+  executionCumulusId,
+  pdrCumulusId,
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
   fileUtils = FileUtils,
@@ -83,6 +87,10 @@ const generateGranuleRecord = async ({
     productVolume: getGranuleProductVolume(granuleFiles),
     timeToPreprocess: getGranuleTimeToPreprocess(granule),
     timeToArchive: getGranuleTimeToArchive(granule),
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
+    execution_cumulus_id: executionCumulusId,
+    pdr_cumulus_id: pdrCumulusId,
     ...processingTimeInfo,
     ...temporalInfo,
   };
@@ -118,10 +126,10 @@ const writeGranuleViaTransaction = async ({
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with Postgres database
- * @param {Object} [params.executionDescription]
- *   Description of the Step Function execution for the workflow, if any
  * @param {string} [params.executionUrl]
  *   Step Function execution URL for the workflow, if any
+ * @param {Object} [params.processingTimeInfo]
+ *   Processing time information for the granule, if any
  * @param {string} [params.providerCumulusId]
  *   Cumulus ID for provider referenced in workflow message, if any
  * @param {string} [params.pdrCumulusId]
@@ -138,8 +146,8 @@ const writeGranule = async ({
   collectionCumulusId,
   executionCumulusId,
   knex,
-  executionDescription,
   executionUrl,
+  processingTimeInfo,
   providerCumulusId,
   pdrCumulusId,
   granuleModel,
@@ -158,7 +166,7 @@ const writeGranule = async ({
       granule,
       cumulusMessage,
       executionUrl,
-      executionDescription,
+      processingTimeInfo,
     });
   });
 
@@ -182,7 +190,7 @@ const writeGranule = async ({
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
- * @throws {Error} - if no collection is provided
+ * @throws {Error}
  */
 const writeGranules = async ({
   cumulusMessage,
@@ -209,7 +217,7 @@ const writeGranules = async ({
     (granule) => writeGranule({
       granule,
       cumulusMessage,
-      executionDescription,
+      processingTimeInfo,
       executionUrl,
       collectionCumulusId,
       providerCumulusId,

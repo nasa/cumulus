@@ -690,14 +690,14 @@ class Granule extends Manager {
     granule,
     cumulusMessage,
     executionUrl,
-    executionDescription,
+    processingTimeInfo,
   }) {
     const granuleRecord = await this.generateGranuleRecord({
       s3: awsClients.s3(),
       granule,
       message: cumulusMessage,
       executionUrl,
-      executionDescription,
+      processingTimeInfo,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }
