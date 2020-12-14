@@ -74,20 +74,13 @@ async function post(req, res) {
   }
 
   try {
-    const record = await model.create(rule);
-    try {
+    return await dbClient.transaction(async (trx) => {
+      const record = await model.create(rule);
       const postgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
-      await dbClient.insert(postgresRecord, 'cumulus_id').into(tableNames.rules);
-    } catch (error) {
-      await model.delete({ name });
-
-      throw error;
-    }
-
-    if (inTestMode()) {
-      await addToLocalES(record, indexRule);
-    }
-    return res.send({ message: 'Record saved', record });
+      await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
+      if (inTestMode()) await addToLocalES(record, indexRule);
+      return res.send({ message: 'Record saved', record });
+    });
   } catch (error) {
     if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
@@ -129,19 +122,18 @@ async function put({ params: { name }, body }, res) {
     // Remove all fields from the existing rule that are not supplied in body
     // since body is expected to be a replacement rule, not a partial rule
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
-    const newRule = await model.update(oldRule, body, fieldsToDelete);
-    const newPostgresRecord = await translateApiRuleToPostgresRule(newRule, dbClient);
 
-    if (inTestMode()) await addToLocalES(newRule, indexRule);
+    return await dbClient.transaction(async (trx) => {
+      const newRule = await model.update(oldRule, body, fieldsToDelete);
+      const newPostgresRecord = await translateApiRuleToPostgresRule(newRule, dbClient);
 
-    await dbClient.transaction(async (trx) => {
+      if (inTestMode()) await addToLocalES(newRule, indexRule);
       await trx(tableNames.rules)
         .insert(newPostgresRecord)
         .onConflict('name')
         .merge();
+      return res.send(newRule);
     });
-
-    return res.send(newRule);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
