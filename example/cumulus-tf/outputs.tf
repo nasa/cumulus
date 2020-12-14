@@ -35,3 +35,11 @@ output "report_granules_sns_topic_arn" {
 output "report_pdrs_sns_topic_arn" {
   value = module.cumulus.report_pdrs_sns_topic_arn
 }
+
+output "lzards_backup_task" {
+  value = module.cumulus.lzards_backup_task
+}
+
+output "move_granules_task" {
+  value = module.cumulus.move_granules_task
+}

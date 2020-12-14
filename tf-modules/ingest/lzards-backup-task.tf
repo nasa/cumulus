@@ -23,6 +23,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
       backup_role_arn                  = aws_iam_role.lambda_backup_role[0].arn
       lzards_api                       = var.lzards_api
       lzards_provider                  = var.lzards_provider
+      lzards_s3_link_timeout           = var.lzards_s3_link_timeout
     }
   }
 

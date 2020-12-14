@@ -96,6 +96,12 @@ variable "lzards_api" {
   default = ""
 }
 
+variable "lzards_s3_link_timeout" {
+  description = "LZARDS S3 access link timeout (seconds)"
+  type        = string
+  default     = ""
+}
+
 variable "lzards_provider" {
   description = "LZARDS provider name"
   type        = string

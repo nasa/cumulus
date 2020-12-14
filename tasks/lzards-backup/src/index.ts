@@ -26,7 +26,8 @@ import { makeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranu
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
-const CREDS_EXPIRY_SECONDS = 3600;
+const CREDS_EXPIRY_SECONDS = 1000;
+const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 
 export const generateAccessUrl = async (params: {
   roleCreds: AWS.STS.AssumeRoleResponse,
@@ -40,6 +41,9 @@ export const generateAccessUrl = async (params: {
   const sessionToken = roleCreds?.Credentials?.SessionToken;
   const accessKeyId = roleCreds?.Credentials?.AccessKeyId;
 
+  const s3AccessTimeoutSeconds = (
+    process.env.lzards_s3_link_timeout || S3_LINK_EXPIRY_SECONDS_DEFAULT
+  );
   let s3;
   if (!inTestMode() || usePassedCredentials) {
     const s3Config = {
@@ -54,7 +58,7 @@ export const generateAccessUrl = async (params: {
     coreS3().config.update({ signatureVersion: 'v4' });
     s3 = coreS3();
   }
-  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: CREDS_EXPIRY_SECONDS });
+  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: s3AccessTimeoutSeconds });
 };
 
 export const setLzardsChecksumQueryType = (

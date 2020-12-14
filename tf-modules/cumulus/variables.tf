@@ -367,6 +367,12 @@ variable "lzards_api" {
   default = ""
 }
 
+variable "lzards_s3_link_timeout" {
+  description = "LZARDS S3 access link timeout (seconds)"
+  type        = string
+  default     = ""
+}
+
 variable "log_destination_arn" {
   type        = string
   default     = null

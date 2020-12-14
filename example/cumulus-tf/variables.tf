@@ -71,6 +71,12 @@ variable "lzards_provider" {
   default     = "CUMULUS_INTEGRATION_TESTS"
 }
 
+variable "lzards_s3_link_timeout" {
+  description = "LZARDS S3 access link timeout (seconds)"
+  type        = string
+  default     = ""
+}
+
 variable "oauth_provider" {
   type    = string
   default = "earthdata"
