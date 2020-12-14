@@ -40,7 +40,6 @@ test.before(async (t) => {
       ...localStackConnectionEnv,
       PG_DATABASE: t.context.testDbName,
       migrationDir,
-      // KNEX_DEBUG: 'true',
     },
   });
   await t.context.knex.migrate.latest();
@@ -198,11 +197,11 @@ test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database 
   const [cumulus_id] = await knex(tableNames.pdrs).insert(runningPdrRecord).returning('cumulus_id');
   const pdrCumulusId = await knex.transaction(
     (trx) =>
-      getPdrCumulusIdFromQueryResultOrLookup(
+      getPdrCumulusIdFromQueryResultOrLookup({
         trx,
-        {},
-        runningPdrRecord
-      )
+        queryResult: [],
+        pdrRecord: runningPdrRecord,
+      })
   );
   t.is(cumulus_id, pdrCumulusId);
 });
@@ -217,35 +216,27 @@ test('writeRunningPdrViaTransaction() does not update record with same execution
     ...runningPdrRecord,
     status: 'running',
     progress: 75,
-    stats: {
-      running: ['arn1'],
-      completed: ['arn2', 'arn3', 'arn4'],
-    },
   };
-  await knex(tableNames.pdrs).insert(runningPdrRecord1);
-  const firstRecord = await knex(tableNames.pdrs)
-    .where({ name: runningPdrRecord1.name })
-    .first();
-  t.is(firstRecord.progress, 75);
+  const [insertResult] = await knex(tableNames.pdrs)
+    .insert(runningPdrRecord1)
+    .returning('*');
+  t.is(insertResult.progress, 75);
 
   // Update PDR progress
   const runningPdrRecord2 = {
     ...runningPdrRecord,
     status: 'running',
     progress: 50,
-    stats: {
-      running: ['arn1', 'arn2'],
-      completed: ['arn3', 'arn4'],
-    },
   };
 
-  await knex.transaction(
+  const trxResult = await knex.transaction(
     (trx) =>
       writeRunningPdrViaTransaction({
         trx,
         pdrRecord: runningPdrRecord2,
       })
   );
+  t.is(insertResult.cumulus_id, trxResult[0]);
   const updatedRecord = await knex(tableNames.pdrs)
     .where({ name: runningPdrRecord2.name })
     .first();
@@ -258,12 +249,11 @@ test('writeRunningPdrViaTransaction() overwrites record with same execution if p
     knex,
   } = t.context;
 
-  await knex(tableNames.pdrs).insert(runningPdrRecord);
-  const firstRecord = await knex(tableNames.pdrs)
-    .where({ name: runningPdrRecord.name })
-    .first();
-  t.is(firstRecord.progress, 25);
-  t.deepEqual(firstRecord.stats, runningPdrRecord.stats);
+  const [insertResult] = await knex(tableNames.pdrs)
+    .insert(runningPdrRecord)
+    .returning('*');
+  t.is(insertResult.progress, 25);
+  t.deepEqual(insertResult.stats, runningPdrRecord.stats);
 
   // Update PDR progress
   const updatedRunningPdrRecord = {
@@ -275,13 +265,14 @@ test('writeRunningPdrViaTransaction() overwrites record with same execution if p
     },
   };
 
-  await knex.transaction(
+  const trxResult = await knex.transaction(
     (trx) =>
       writeRunningPdrViaTransaction({
         trx,
         pdrRecord: updatedRunningPdrRecord,
       })
   );
+  t.is(insertResult.cumulus_id, trxResult[0]);
   const updatedRecord = await knex(tableNames.pdrs)
     .where({ name: updatedRunningPdrRecord.name })
     .first();

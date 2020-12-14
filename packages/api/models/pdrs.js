@@ -19,7 +19,7 @@ const {
 const {
   getMetaStatus,
   getMessageWorkflowStartTime,
-  getWorklowDuration,
+  getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
 const Manager = require('./base');
@@ -107,7 +107,7 @@ class Pdr extends Manager {
       stats,
       createdAt: workflowStartTime,
       timestamp,
-      duration: getWorklowDuration(workflowStartTime, timestamp),
+      duration: getWorkflowDuration(workflowStartTime, timestamp),
     };
 
     this.constructor.recordIsValid(record, this.schema);

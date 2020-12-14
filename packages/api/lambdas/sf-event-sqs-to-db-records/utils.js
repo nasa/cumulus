@@ -125,31 +125,10 @@ const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
   }
 };
 
-/**
- * Get cumulus_id from insert query result run via knex.raw().
- *
- * knex.raw() does not return the same output structure as
- * knex.insert().returning(), so we need to get the cumulus_id
- * from the raw query result.
- *
- * @param {Object} result - Raw query result
- * @returns {undefined|number}
- *  Cumulus ID for the row. The value may also be undefined for
- *  results of upsert queries with a WHERE clause where no rows
- *  were updated by the query.
- */
-const getCumulusIdFromRawInsertQueryResult = ({
-  rows = [],
-}) => {
-  const [row = {}] = rows;
-  return row.cumulus_id;
-};
-
 module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
-  getCumulusIdFromRawInsertQueryResult,
 };

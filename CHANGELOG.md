@@ -61,7 +61,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/message/PDRs/getMessagePdrFailedExecutions`
     - `@cumulus/message/PDRs/getMessagePdrStats`
     - `@cumulus/message/PDRs/getPdrPercentCompletion`
-    - `@cumulus/message/workflows/getWorklowDuration`
+    - `@cumulus/message/workflows/getWorkflowDuration`
 
 ### Changed
 

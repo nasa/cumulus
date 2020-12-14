@@ -21,7 +21,7 @@ const {
   getMessageWorkflowStartTime,
   getMessageWorkflowStopTime,
   getMessageWorkflowName,
-  getWorklowDuration,
+  getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -75,7 +75,7 @@ class Execution extends Manager {
       updatedAt: now,
       originalPayload: getMessageExecutionOriginalPayload(cumulusMessage),
       finalPayload: getMessageExecutionFinalPayload(cumulusMessage),
-      duration: getWorklowDuration(workflowStartTime, workflowStopTime),
+      duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
     };
 
     return removeNilProperties(record);

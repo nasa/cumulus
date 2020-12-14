@@ -16,7 +16,7 @@ const {
   getMessageWorkflowName,
   getMessageWorkflowStartTime,
   getMessageWorkflowStopTime,
-  getWorklowDuration,
+  getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 
 const { parseException } = require('../../lib/utils');
@@ -66,7 +66,7 @@ const buildExecutionRecord = ({
     error: parseException(cumulusMessage.exception),
     original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
     final_payload: getMessageExecutionFinalPayload(cumulusMessage),
-    duration: getWorklowDuration(workflowStartTime, workflowStopTime),
+    duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: parentExecutionCumulusId,

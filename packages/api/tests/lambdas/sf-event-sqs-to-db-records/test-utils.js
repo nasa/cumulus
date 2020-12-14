@@ -17,7 +17,6 @@ const {
   getParentExecutionCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
-  getCumulusIdFromRawInsertQueryResult,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/utils');
 
 test.before(async (t) => {
@@ -247,27 +246,4 @@ test('getMessageProviderCumulusId returns undefined if provider cannot be found'
   const { cumulusMessage, knex } = t.context;
   cumulusMessage.meta.provider.id = 'bogus-provider-id';
   t.is(await getMessageProviderCumulusId(cumulusMessage, knex), undefined);
-});
-
-test('getCumulusIdFromRawInsertQueryResult() returns correct cumulus_id', (t) => {
-  t.deepEqual(
-    getCumulusIdFromRawInsertQueryResult({
-      rows: [{ cumulus_id: 5 }],
-    }),
-    5
-  );
-});
-
-test('getCumulusIdFromRawInsertQueryResult() returns undefined', (t) => {
-  t.deepEqual(
-    getCumulusIdFromRawInsertQueryResult({
-      rows: [],
-    }),
-    undefined
-  );
-
-  t.deepEqual(
-    getCumulusIdFromRawInsertQueryResult({}),
-    undefined
-  );
 });

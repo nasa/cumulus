@@ -19,8 +19,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .integer('execution_cumulus_id')
       .references('cumulus_id')
-      .inTable('executions')
-      .notNullable();
+      .inTable('executions');
     table
       .enum('status', ['running', 'failed', 'completed'])
       .comment('Status (running, failed, completed) of the PDR')

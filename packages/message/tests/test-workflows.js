@@ -8,7 +8,7 @@ const {
   getMessageWorkflowStartTime,
   getMessageWorkflowStopTime,
   getMessageWorkflowName,
-  getWorklowDuration,
+  getWorkflowDuration,
 } = require('../workflows');
 
 test('getMetaStatus returns correct status', (t) => {
@@ -107,10 +107,10 @@ test('getMessageWorkflowName returns undefined if there is no workflow name', (t
   );
 });
 
-test('getWorklowDuration returns correct duration', (t) => {
+test('getWorkflowDuration returns correct duration', (t) => {
   const now = Date.now();
   t.is(
-    getWorklowDuration(
+    getWorkflowDuration(
       now,
       now + 1000
     ),
@@ -118,9 +118,9 @@ test('getWorklowDuration returns correct duration', (t) => {
   );
 });
 
-test('getWorklowDuration 0 if no stop time is provided', (t) => {
+test('getWorkflowDuration 0 if no stop time is provided', (t) => {
   t.is(
-    getWorklowDuration(
+    getWorkflowDuration(
       Date.now()
     ),
     0
