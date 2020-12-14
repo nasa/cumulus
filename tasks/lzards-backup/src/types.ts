@@ -4,9 +4,6 @@ export interface HandlerInput {
 }
 
 export interface HandlerEvent {
-  config: {
-    algorithm: string
-  },
   input: HandlerInput
 }
 
