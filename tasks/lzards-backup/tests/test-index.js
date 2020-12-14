@@ -291,18 +291,6 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async
   t.deepEqual(actual, expected);
 });
 
-test('getGranuleCollection returns queried collections', async (t) => {
-  const collectionName = 'fakeCollection';
-  const collectionVersion = '001';
-  const stackPrefix = 'fakePrefix';
-  const actual = await index.getGranuleCollection({
-    collectionName,
-    collectionVersion,
-    stackPrefix,
-  });
-  t.deepEqual(actual, fakeCollection);
-});
-
 test('getGranuleCollection throws error if no prefix is set', async (t) => {
   const collectionName = 'fakeCollection';
   const collectionVersion = '001';
@@ -320,7 +308,7 @@ test('getGranuleCollection throws error if version and name are not defined', as
 });
 
 test.serial('postRequestToLzards creates the expected query', async (t) => {
-  const accessUrl = 'fakeUrl';
+  const accessUrl = 'fakeUrl';2
   const authToken = 'fakeToken';
   const collection = 'fakeCollectionString';
   const file = { fake: 'fileObject', filename: 'fakeFilename', checksumType: 'md5', checksum: 'fakeChecksum' };
