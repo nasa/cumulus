@@ -20,10 +20,6 @@ const {
 
 const Pdr = require('../../models/pdrs');
 
-const {
-  getCumulusIdFromRawInsertQueryResult,
-} = require('./utils');
-
 const generatePdrRecord = ({
   cumulusMessage,
   collectionCumulusId,
@@ -52,19 +48,24 @@ const generatePdrRecord = ({
 };
 
 /**
- * Get the cumulus ID from a raw query result or look it up in the database.
+ * Get the cumulus ID from a query result or look it up in the database.
  *
  * For certain cases, such as an upsert query that matched no rows, an empty
  * database result is returned, so no cumulus ID will be returned. In those
  * cases, this function will lookup the PDR cumulus ID from the record.
  *
- * @param {Object} trx - A Knex transaction
- * @param {Object} queryResult - Raw query result
- * @param {Object} pdrRecord - A PDR record
+ * @param {Object} params
+ * @param {Object} params.trx - A Knex transaction
+ * @param {Object} params.queryResult - Query result
+ * @param {Object} params.pdrRecord - A PDR record
  * @returns {Promise<number|undefined>} - Cumulus ID for the PDR record
  */
-const getPdrCumulusIdFromQueryResultOrLookup = async (trx, queryResult, pdrRecord) => {
-  let pdrCumulusId = getCumulusIdFromRawInsertQueryResult(queryResult);
+const getPdrCumulusIdFromQueryResultOrLookup = async ({
+  queryResult = [],
+  pdrRecord,
+  trx,
+}) => {
+  let pdrCumulusId = queryResult[0];
   if (!pdrCumulusId) {
     // If the record were somehow not found, this will throw an error
     // that causes the whole PDR write transaction to fail. Is that desirable?
@@ -81,66 +82,22 @@ const writeRunningPdrViaTransaction = async ({
   pdrRecord,
   trx,
 }) => {
-  // Can be replaced with native knex usage once
-  // https://github.com/knex/knex/pull/4148 is released
-  const rawQueryResult = await trx.raw(
-    `
-      INSERT INTO pdrs (
-        "name",
-        "status",
-        "collection_cumulus_id",
-        "provider_cumulus_id",
-        "execution_cumulus_id",
-        "progress",
-        "pan_sent",
-        "pan_message",
-        "stats",
-        "duration",
-        "timestamp",
-        "created_at"
-      ) VALUES (
-        :name,
-        :status,
-        :collection_cumulus_id,
-        :provider_cumulus_id,
-        :execution_cumulus_id,
-        :progress,
-        :pan_sent,
-        :pan_message,
-        :stats,
-        :duration,
-        :timestamp,
-        :created_at
-      )
-      ON CONFLICT ("name") DO UPDATE SET
-        name = EXCLUDED.name,
-        status = EXCLUDED.status,
-        collection_cumulus_id = EXCLUDED.collection_cumulus_id,
-        provider_cumulus_id = EXCLUDED.provider_cumulus_id,
-        execution_cumulus_id = EXCLUDED.execution_cumulus_id,
-        progress = EXCLUDED.progress,
-        pan_sent = EXCLUDED.pan_sent,
-        pan_message = EXCLUDED.pan_message,
-        stats = EXCLUDED.stats,
-        duration = EXCLUDED.duration,
-        timestamp = EXCLUDED.timestamp,
-        created_at = EXCLUDED.created_at
-      WHERE
-        pdrs.execution_cumulus_id != :execution_cumulus_id
-        OR pdrs.progress < :progress
-      RETURNING "cumulus_id"
-    `,
-    pdrRecord
-  );
+  const queryResult = await trx(tableNames.pdrs)
+    .insert(pdrRecord)
+    .onConflict('name')
+    .merge()
+    .where('pdrs.execution_cumulus_id', '!=', pdrRecord.execution_cumulus_id)
+    .orWhere('pdrs.progress', '<', pdrRecord.progress)
+    .returning('cumulus_id');
   // If the WHERE clause of the upsert query is not met, then the
   // result from the query is empty so no cumulus_id will be returned.
   // But this function always needs to return a cumulus_id for the PDR
   // since it is used for writing granules
-  const pdrCumulusId = await getPdrCumulusIdFromQueryResultOrLookup(
+  const pdrCumulusId = await getPdrCumulusIdFromQueryResultOrLookup({
     trx,
-    rawQueryResult,
-    pdrRecord
-  );
+    queryResult,
+    pdrRecord,
+  });
   return [pdrCumulusId];
 };
 
