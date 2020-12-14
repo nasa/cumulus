@@ -308,7 +308,7 @@ test('getGranuleCollection throws error if version and name are not defined', as
 });
 
 test.serial('postRequestToLzards creates the expected query', async (t) => {
-  const accessUrl = 'fakeUrl';2
+  const accessUrl = 'fakeUrl';
   const authToken = 'fakeToken';
   const collection = 'fakeCollectionString';
   const file = { fake: 'fileObject', filename: 'fakeFilename', checksumType: 'md5', checksum: 'fakeChecksum' };
@@ -381,7 +381,7 @@ test.serial('postRequestToLzards creates the expected query with SHA256 checksum
       },
     },
     headers: {
-      Authorization: `Bearer ${authToken}`
+      Authorization: `Bearer ${authToken}`,
     },
   }]);
 });
