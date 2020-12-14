@@ -50,7 +50,6 @@ const { setProcessEnvironment, readJsonFilesFromDir } = require('./utils');
 const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
-
 const lambdaStep = new LambdaStep();
 
 /**
@@ -60,8 +59,6 @@ const lambdaStep = new LambdaStep();
  *   number of retries has been exceeded.
  *
  * @param {Object} params - params
- * @param {string} params.TableName - the name of the AsyncOperations DynamoDB
- *   table
  * @param {string} params.id - the id of the AsyncOperation
  * @param {string} params.status - the status to wait for
  * @param {number} params.retries - the number of times to retry Default: 10

@@ -7,7 +7,8 @@
     "lambdas/*",
     "packages/*",
     "tasks/*",
-    "tf-modules/*"
+    "tf-modules/*",
+    "packages/api/ecs/async-operation"
   ],
   "command": {
     "bootstrap": {

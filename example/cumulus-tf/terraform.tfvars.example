@@ -54,7 +54,7 @@ archive_api_port = 8000
 private_archive_api_gateway = true
 
 # Optional, uncomment if needed. Required if using cmr_oauth_provider = "launchpad".
-/* 
+/*
 launchpad_api = "launchpadApi"
 launchpad_certificate = "certificate"
 launchpad_passphrase = "passphrase"
@@ -112,3 +112,7 @@ additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
 */
+
+# Optional - @cumulus/db will optionally run a 'heartbeat' query and retry if
+# a knexTimeout occurs
+rds_connection_heartbeat = false

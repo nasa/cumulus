@@ -5,6 +5,8 @@ const test = require('ava');
 const get = require('lodash/get');
 const sinon = require('sinon');
 
+const { localStackConnectionEnv } = require('@cumulus/db');
+const asyncOperations = require('@cumulus/async-operations');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -94,6 +96,7 @@ test.before(async (t) => {
 
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
+  process.env = { ...process.env, ...localStackConnectionEnv };
 
   // create the elasticsearch index and add mapping
   await createIndex(esIndex, t.context.esAlias);
@@ -446,7 +449,7 @@ test.serial('Reindex from database - create new index', async (t) => {
   const indexName = randomString();
   const id = randomString();
 
-  const stub = sinon.stub(models.AsyncOperation.prototype, 'start').resolves({ id });
+  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({ id });
 
   try {
     const response = await request(app)
@@ -527,7 +530,7 @@ test.serial('Current index - custom alias', async (t) => {
 });
 
 test.serial('request to /elasticsearch/index-from-database endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
@@ -544,7 +547,7 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 500 
 });
 
 test.serial('request to /elasticsearch/index-from-database endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 

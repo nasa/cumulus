@@ -8,6 +8,10 @@ const {
   getMessageExecutionName,
   getMessageStateMachineArn,
   getStateMachineArnFromExecutionArn,
+  getMessageExecutionParentArn,
+  getMessageCumulusVersion,
+  getMessageExecutionOriginalPayload,
+  getMessageExecutionFinalPayload,
 } = require('../Executions');
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
@@ -30,14 +34,14 @@ test.serial('getExecutionUrlFromArn returns correct URL when a region environmen
 
 test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {
   t.throws(
-    () => getMessageExecutionName(),
+    () => getMessageExecutionName({ cumulus_meta: {} }),
     { message: 'cumulus_meta.execution_name not set in message' }
   );
 });
 
 test('getMessageStateMachineArn throws error if cumulus_meta.state_machine is missing', (t) => {
   t.throws(
-    () => getMessageStateMachineArn(),
+    () => getMessageStateMachineArn({ cumulus_meta: {} }),
     { message: 'cumulus_meta.state_machine not set in message' }
   );
 });
@@ -76,5 +80,97 @@ test('getStateMachineArnFromExecutionArn returns null for no input', (t) => {
   t.is(
     getStateMachineArnFromExecutionArn(),
     null
+  );
+});
+
+test('getMessageExecutionParentArn returns correct parent execution ARN', (t) => {
+  const executionArn = getMessageExecutionParentArn({
+    cumulus_meta: {
+      parentExecutionArn: 'test-arn',
+    },
+  });
+  t.is(executionArn, 'test-arn');
+});
+
+test('getMessageExecutionParentArn returns undefined if there is no parent execution ARN', (t) => {
+  const executionArn = getMessageExecutionParentArn({
+    cumulus_meta: {},
+  });
+  t.is(executionArn, undefined);
+});
+
+test('getMessageCumulusVersion returns correct Cumulus version', (t) => {
+  const cumulusVersion = getMessageCumulusVersion({
+    cumulus_meta: {
+      cumulus_version: '1.2.3',
+    },
+  });
+  t.is(cumulusVersion, '1.2.3');
+});
+
+test('getMessageCumulusVersion returns undefined if there is no cumulus version', (t) => {
+  const cumulusVersion = getMessageCumulusVersion({
+    cumulus_meta: {},
+  });
+  t.is(cumulusVersion, undefined);
+});
+
+test('getMessageExecutionOriginalPayload returns original payload when status is running', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.deepEqual(
+    getMessageExecutionOriginalPayload({
+      meta: {
+        status: 'running',
+      },
+      payload,
+    }),
+    payload
+  );
+});
+
+test('getMessageExecutionOriginalPayload returns undefined for non-running execution', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.is(
+    getMessageExecutionOriginalPayload({
+      meta: {
+        status: 'completed',
+      },
+      payload,
+    }),
+    undefined
+  );
+});
+
+test('getMessageExecutionFinalPayload returns final payload when status is not running', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.deepEqual(
+    getMessageExecutionFinalPayload({
+      meta: {
+        status: 'completed',
+      },
+      payload,
+    }),
+    payload
+  );
+});
+
+test('getMessageExecutionFinalPayload returns undefined for running execution', (t) => {
+  const payload = {
+    foo: 'bar',
+  };
+  t.is(
+    getMessageExecutionFinalPayload({
+      meta: {
+        status: 'running',
+      },
+      payload,
+    }),
+    undefined
   );
 });

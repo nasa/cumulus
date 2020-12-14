@@ -14,11 +14,13 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.executionName = randomId('execution');
 
+  t.context.workflowStartTime = Date.now();
   t.context.cumulusMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: t.context.executionName,
-      workflow_start_time: 123,
+      workflow_start_time: t.context.workflowStartTime,
+      cumulus_version: '1.2.3',
     },
     meta: {
       status: 'running',
@@ -39,19 +41,25 @@ test.after.always(async (t) => {
   await t.context.executionModel.deleteTable();
 });
 
-test('generateRecord() returns the correct record in the basic case', (t) => {
-  const { cumulusMessage, executionArn, executionName } = t.context;
+test('generateRecord() returns the correct record from workflow message', (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    executionName,
+    workflowStartTime,
+  } = t.context;
 
   const actualRecord = Execution.generateRecord(cumulusMessage);
 
   const expectedRecord = {
     name: executionName,
     arn: executionArn,
+    cumulusVersion: '1.2.3',
     execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
     collectionId: 'my-name___my-version',
     error: {},
     status: 'running',
-    createdAt: 123,
+    createdAt: workflowStartTime,
     timestamp: actualRecord.timestamp,
     updatedAt: actualRecord.updatedAt,
     originalPayload: {

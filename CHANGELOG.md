@@ -11,6 +11,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2020**
   - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
 
+### BREAKING CHANGES
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Removed the following from the `@cumulus/api/models.asyncOperation` class in
+      favor of the added `@cumulus/async-operations` module:
+      - `start`
+      - `startAsyncOperations`
+  - **CUMULUS-2187**
+    - The `async-operations` endpoint will now omit `output` instead
+      of returning `none` when the operation did not return output.
+
 ### Added
 
 - **CUMULUS-2219**
@@ -20,19 +35,77 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
 
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Added `@cumulus/async-operations` to core packages, exposing
+      `startAsyncOperation` which will handle starting an async operation and adding an entry to both RDS and DynamoDb
+  - **CUMULUS-2127**
+    - Add schema migration for `collections` table
+  - **CUMULUS-2129**
+    - Added logic to `data-migration1` Lambda for migrating collection records from Dynamo to RDS
+  - **CUMULUS-2157**
+    - Add schema migration for `providers` table
+    - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to RDS
+  - **CUMULUS-2187**
+    - Added logic to `data-migration1` Lambda for migrating async operation records from Dynamo to RDS
+  - **CUMULUS-2198**
+    - Added logic to `data-migration1` Lambda for migrating rule records from DynamoDB to RDS
+  - **CUMULUS-2182**
+    - Add schema migration for PDRs table
+  - **CUMULUS-2230**
+    - Add schema migration for `rules` table
+  - **CUMULUS-2183**
+    - Add schema migration for `asyncOperations` table
+  - **CUMULUS-2184**
+    - Add schema migration for `executions` table
+  - **CUMULUS-2257**
+    - Updated RDS table and column names to snake_case
+    - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
+- **CUMULUS-2190**
+  - Added helper functions:
+    - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
+    - `@cumulus/message/Executions/getMessageExecutionFinalPayload`
+    - `@cumulus/message/workflows/getMessageWorkflowTasks`
+    - `@cumulus/message/workflows/getMessageWorkflowStartTime`
+    - `@cumulus/message/workflows/getMessageWorkflowStopTime`
+    - `@cumulus/message/workflows/getMessageWorkflowName`
+- **CUMULUS-2192**
+  - Added helper functions:
+    - `@cumulus/message/PDRs/getMessagePdrRunningExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrCompletedExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrFailedExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrStats`
+    - `@cumulus/message/PDRs/getPdrPercentCompletion`
+    - `@cumulus/message/workflows/getWorkflowDuration`
+
 ### Changed
 
 - **CUMULUS-2020**
   - Updated Elasticsearch mappings to support case-insensitive search
 
-### BREAKING CHANGES
-
-- **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2189**
+    - Updated Provider endpoint logic to write providers in parallel to Core
+      PostgreSQL database
+    - Update integration tests to utilize API calls instead of direct
+      api/model/Provider calls
+  - **CUMULUS-2191**
+    - Updated cumuluss/async-operation task to write async-operations to the RDS
+    database.
+  - **CUMULUS-2228**
+    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the Core PostgreSQL database in parallel with writes to DynamoDB
+  - **CUMUlUS-2190**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for PDR writes to the core PostgreSQL database
+  - **CUMUlUS-2192**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for execution writes to the core PostgreSQL database
+  - **CUMULUS-2187**
+    - The `async-operations` endpoint will now omit `output` instead
+      of returning `none` when the operation did not return output.
 
 ## [v4.0.0] 2020-11-20
 
 ### Migration notes
+
 - Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
 - **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 - **CUMULUS-2251**
@@ -99,6 +172,7 @@ new `update-granules-cmr-metadata-file-links` task.
 ### Fixed
 - **CUMULUS-2233**
   - Fixes /s3credentials bug where the expiration time on the cookie was set to a time that is always expired, so authentication was never being recognized as complete by the API. Consequently, the user would end up in a redirect loop and requests to /s3credentials would never complete successfully. The bug was caused by the fact that the code setting the expiration time for the cookie was expecting a time value in milliseconds, but was receiving the expirationTime from the EarthdataLoginClient in seconds. This bug has been fixed by converting seconds into milliseconds. Unit tests were added to test that the expiration time has been converted to milliseconds and checking that the cookie's expiration time is greater than the current time.
+
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS
@@ -243,30 +317,55 @@ new `update-granules-cmr-metadata-file-links` task.
     lambda can create `Internal` reconciliation report
 - **CUMULUS-2116**
   - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
-    unpublishes a  granule from CMR and deletes it from Cumulus, but does not
-    update the record to `published: false` before deletion
+  unpublishes a granule from CMR and deletes it from Cumulus, but does not
+  update the record to `published: false` before deletion
 - **CUMULUS-2113**
   - Added Granule not found report to reports endpoint
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL database cluster to meet the PostgreSQL
-    requirements for future releases
+    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    requirements for future releases.
+  - Updated the default Cumulus module to take the following new required variables:
+    - rds_user_access_secret_arn:
+      AWS Secrets Manager secret ARN containing a JSON string of DB credentials
+      (containing at least host, password, port as keys)
+    - rds_security_group:
+      RDS Security Group that provides connection access to the RDS cluster
+  - Updated API lambdas and default ECS cluster to add them to the
+    `rds_security_group` for database access
+- **CUMULUS-2126**
+  - The collections endpoint now writes to the RDS database
+- **CUMULUS-2127**
+  - Added migration to create collections relation for RDS database
+- **CUMULUS-2129**
+  - Added `data-migration1` Terraform module and Lambda to migrate data from Dynamo to RDS
+    - Added support to Lambda for migrating collections data from Dynamo to RDS
+- **CUMULUS-2155**
+  - Added `rds_connection_heartbeat` to `cumulus` and `data-migration` tf
+    modules.  If set to true, this diagnostic variable instructs Core's database
+    code to fire off a connection 'heartbeat' query and log the timing/results
+    for diagnostic purposes, and retry certain connection timeouts once.
+    This option is disabled by default
 - **CUMULUS-2156**
   - Support array inputs parameters for `Internal` reconciliation report
+- **CUMULUS-2157**
+  - Added support to `data-migration1` Lambda for migrating providers data from Dynamo to RDS
+    - The migration process for providers will convert any credentials that are stored unencrypted or encrypted with an S3 keypair provider to be encrypted with a KMS key instead
 - **CUMULUS-2161**
   - Rules now support an `executionNamePrefix` property. If set, any executions
     triggered as a result of that rule will use that prefix in the name of the
     execution.
   - The `QueueGranules` task now supports an `executionNamePrefix` property. Any
     executions queued by that task will use that prefix in the name of the
-    execution.  See the [example workflow](./example/cumulus-tf/discover_granules_with_execution_name_prefix_workflow.asl.json)
+    execution. See the
+    [example workflow](./example/cumulus-tf/discover_granules_with_execution_name_prefix_workflow.asl.json)
     for usage.
-  - The `QueuePdrs` task now supports an `executionNamePrefix` config property. Any
-    executions queued by that task will use that prefix in the name of the
-    execution.  See the [example workflow](./example/cumulus-tf/discover_and_queue_pdrs_with_execution_name_prefix_workflow.asl.json)
+  - The `QueuePdrs` task now supports an `executionNamePrefix` config property.
+    Any executions queued by that task will use that prefix in the name of the
+    execution. See the
+    [example workflow](./example/cumulus-tf/discover_and_queue_pdrs_with_execution_name_prefix_workflow.asl.json)
     for usage.
-
 - **CUMULUS-2162**
   - Adds new report type to `/reconciliationReport` endpoint.  The new report
     is `Granule Inventory`. This report is a CSV file of all the granules in
@@ -462,7 +561,9 @@ the [release page](https://github.com/nasa/cumulus/releases)
 #### Added
 
 - **CUMULUS-2116**
-  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which unpublishes a granule from CMR and deletes it from Cumulus, but does not update the record to `published: false` before deletion
+  - Added `@cumulus/api/models/granule.unpublishAndDeleteGranule` which
+  unpublishes a granule from CMR and deletes it from Cumulus, but does not
+  update the record to `published: false` before deletion
 
 ### Fixed
 

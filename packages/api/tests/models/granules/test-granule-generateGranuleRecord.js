@@ -109,11 +109,12 @@ test.after.always(() => {
 test(
   'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is present for a granule',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 123;
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -127,11 +128,12 @@ test(
 test(
   'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is not present for a granule',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 0;
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -145,11 +147,12 @@ test(
 test(
   'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is present for a granule',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 123;
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -163,11 +166,12 @@ test(
 test(
   'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is not present for a granule',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 0;
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -181,13 +185,14 @@ test(
 test(
   'generateGranuleRecord() sets processingEndDateTime when execution stopDate is missing',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
     const newFakeExecution = cloneDeep(fakeExecution);
     delete newFakeExecution.stopDate;
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -203,10 +208,11 @@ test(
 test(
   'generateGranuleRecord() sets processingStartDateTime and processingEndDateTime correctly',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -222,10 +228,11 @@ test(
 test(
   'generateGranuleRecord() does not include processing times if execution startDate is not provided',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -240,13 +247,14 @@ test(
 test(
   'generateGranuleRecord() uses granule.status if meta.status does not exist',
   async (t) => {
+    const { granuleModel } = t.context;
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     delete cumulusMessage.meta.status;
 
     const [granule] = cumulusMessage.payload.granules;
     granule.status = 'running';
 
-    const record = await Granule.generateGranuleRecord({
+    const record = await granuleModel.generateGranuleRecord({
       s3: t.context.fakeS3,
       granule,
       message: cumulusMessage,
@@ -258,12 +266,13 @@ test(
 );
 
 test('generateGranuleRecord() builds successful granule record', async (t) => {
+  const { granuleModel } = t.context;
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
   const collectionId = constructCollectionId(collection.name, collection.version);
   const executionUrl = randomString();
 
-  const record = await Granule.generateGranuleRecord({
+  const record = await granuleModel.generateGranuleRecord({
     s3: t.context.fakeS3,
     granule,
     message: granuleSuccess,
@@ -298,9 +307,10 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
 });
 
 test('generateGranuleRecord() builds a failed granule record', async (t) => {
+  const { granuleModel } = t.context;
   const granule = granuleFailure.payload.granules[0];
   const executionUrl = randomString();
-  const record = await Granule.generateGranuleRecord({
+  const record = await granuleModel.generateGranuleRecord({
     s3: t.context.fakeS3,
     granule,
     message: granuleFailure,

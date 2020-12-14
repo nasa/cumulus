@@ -116,7 +116,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);
-
       expect(parsedOutput).toEqual([1, 2, 3]);
     }
   });

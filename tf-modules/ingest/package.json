@@ -1,0 +1,14 @@
+{
+  "name": "@cumulus/ingest-module",
+  "version": "3.0.0",
+  "description": "Terraform module for data ingest related functionality",
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "scripts": {
+    "prepublish": "node scripts/write-cumulus-version.js"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "private": true
+}

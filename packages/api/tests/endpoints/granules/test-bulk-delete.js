@@ -4,6 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
 
+const asyncOperations = require('@cumulus/async-operations');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -16,7 +17,6 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const AccessToken = require('../../../models/access-tokens');
-const AsyncOperation = require('../../../models/async-operation');
 
 let accessTokenModel;
 let jwtAuthToken;
@@ -60,8 +60,8 @@ test.before(async () => {
 
 test.beforeEach((t) => {
   const asyncOperationId = randomString();
-  t.context.asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
+    { id: asyncOperationId }
   );
 });
 
@@ -300,7 +300,7 @@ test.serial('POST /granules/bulkDelete returns a 401 status code if valid author
 
 test.serial('request to /granules/bulkDelete endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
@@ -318,7 +318,7 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if starting EC
 
 test.serial('request to /granules/bulkDelete endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 
