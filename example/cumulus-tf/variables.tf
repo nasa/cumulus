@@ -49,6 +49,33 @@ variable "launchpad_passphrase" {
   type    = string
   default = ""
 }
+variable "lzards_launchpad_certificate" {
+  type    = string
+  default = "launchpad.pfx"
+}
+
+variable "lzards_launchpad_passphrase" {
+  type    = string
+  default = ""
+}
+
+variable "lzards_api" {
+  description = "LZARDS API endpoint"
+  type        = string
+  default     = "https://lzards.sit.earthdata.nasa.gov/api/backups"
+}
+
+variable "lzards_provider" {
+  description = "LZARDS provider name"
+  type        = string
+  default     = "CUMULUS_INTEGRATION_TESTS"
+}
+
+variable "lzards_s3_link_timeout" {
+  description = "LZARDS S3 access link timeout (seconds)"
+  type        = string
+  default     = ""
+}
 
 variable "oauth_provider" {
   type    = string
