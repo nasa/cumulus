@@ -32,7 +32,7 @@ const {
 } = require('@cumulus/message/Providers');
 const {
   getMessageWorkflowStartTime,
-  getWorklowDuration,
+  getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -404,7 +404,7 @@ class Granule extends Manager {
       timestamp,
       updatedAt: now,
       // Duration is also used as timeToXfer for the EMS report
-      duration: getWorklowDuration(workflowStartTime, timestamp),
+      duration: getWorkflowDuration(workflowStartTime, timestamp),
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: getGranuleTimeToPreprocess(granule),
       timeToArchive: getGranuleTimeToArchive(granule),
