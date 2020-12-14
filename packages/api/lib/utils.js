@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const isInteger = require('lodash/isInteger');
 const isObject = require('lodash/isObject');
 const isNil = require('lodash/isNil');
 
@@ -56,20 +55,6 @@ function extractDate(payload, dateField) {
   }
 
   return undefined;
-}
-
-/**
- * Calculate granule product volume, which is the sum of the file
- * sizes in bytes
- *
- * @param {Array<Object>} granuleFiles - array of granule files
- * @returns {Integer} - sum of granule file sizes in bytes
- */
-function getGranuleProductVolume(granuleFiles = []) {
-  return granuleFiles
-    .map((f) => f.size)
-    .filter(isInteger)
-    .reduce((x, y) => x + y, 0);
 }
 
 /**

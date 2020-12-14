@@ -4,6 +4,7 @@ const {
   getExecutionProcessingTimeInfo,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
+  getGranuleProductVolume,
 } = require('../../lib/granules');
 
 test('getExecutionProcessingTimeInfo() returns empty object if startDate is not provided', (t) => {
@@ -68,5 +69,25 @@ test('getGranuleTimeToPreprocess() returns correct duration', (t) => {
       sync_granule_duration: syncGranuleDuration,
     }),
     3
+  );
+});
+
+test('getGranuleProductVolume() returns correct product volume', (t) => {
+  t.is(
+    getGranuleProductVolume([{
+      size: 1,
+    }, {
+      size: 2,
+    }]),
+    3
+  );
+
+  t.is(
+    getGranuleProductVolume([{
+      foo: '1',
+    }, {
+      size: 'not-a-number',
+    }]),
+    0
   );
 });

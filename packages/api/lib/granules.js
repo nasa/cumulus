@@ -1,6 +1,7 @@
 'use strict';
 
 const awsClients = require('@cumulus/aws-client/services');
+const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
 
 const FileUtils = require('./FileUtils');
@@ -47,9 +48,24 @@ const getGranuleTimeToArchive = ({
 
 /* eslint-enable camelcase */
 
+/**
+ * Calculate granule product volume, which is the sum of the file
+ * sizes in bytes
+ *
+ * @param {Array<Object>} granuleFiles - array of granule files
+ * @returns {Integer} - sum of granule file sizes in bytes
+ */
+function getGranuleProductVolume(granuleFiles = []) {
+  return granuleFiles
+    .map((f) => f.size)
+    .filter(isInteger)
+    .reduce((x, y) => x + y, 0);
+}
+
 module.exports = {
   translateGranule,
   getExecutionProcessingTimeInfo,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
+  getGranuleProductVolume,
 };
