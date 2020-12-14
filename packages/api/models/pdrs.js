@@ -1,7 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
-
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
@@ -12,12 +10,16 @@ const {
   getMessagePdr,
   getMessagePdrPANSent,
   getMessagePdrPANMessage,
+  getMessagePdrStats,
+  getPdrPercentCompletion,
 } = require('@cumulus/message/PDRs');
 const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
 const {
   getMetaStatus,
+  getMessageWorkflowStartTime,
+  getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
 const Manager = require('./base');
@@ -88,19 +90,10 @@ class Pdr extends Manager {
       throw new CumulusModelError('meta.collection required to generate a PDR record');
     }
 
-    const stats = {
-      processing: get(message, 'payload.running', []).length,
-      completed: get(message, 'payload.completed', []).length,
-      failed: get(message, 'payload.failed', []).length,
-    };
-
-    stats.total = stats.processing + stats.completed + stats.failed;
-    let progress = 0;
-    if (stats.processing > 0 && stats.total > 0) {
-      progress = ((stats.total - stats.processing) / stats.total) * 100;
-    } else if (stats.processing === 0 && stats.total > 0) {
-      progress = 100;
-    }
+    const stats = getMessagePdrStats(message);
+    const progress = getPdrPercentCompletion(stats);
+    const timestamp = Date.now();
+    const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
       pdrName: pdr.name,
@@ -112,11 +105,11 @@ class Pdr extends Manager {
       PANSent: getMessagePdrPANSent(message),
       PANmessage: getMessagePdrPANMessage(message),
       stats,
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now(),
+      createdAt: workflowStartTime,
+      timestamp,
+      duration: getWorkflowDuration(workflowStartTime, timestamp),
     };
 
-    record.duration = (record.timestamp - record.createdAt) / 1000;
     this.constructor.recordIsValid(record, this.schema);
     return record;
   }
