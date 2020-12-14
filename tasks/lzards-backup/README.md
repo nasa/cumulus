@@ -61,12 +61,12 @@ Upon completion the lambda will return the following structure:
 
 ```json
 {
-  "originalPayload": "<Object containing the original payload>",
+  "granules": "<Object containing the input granules>",
   "backupResults": "<Object containing the backup request results>"
 }
 ```
 
-`originalPayload` is provided to seamlessly allow the granules payload to continue downstream of the task (for database writes, etc)
+`granules` is an output object containing the contents of `input.granules` and can be remapped to the payload output or elsewhere if so desired.
 
 `backupResults` is an object array that contains:
 
