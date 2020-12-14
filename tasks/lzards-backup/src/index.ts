@@ -283,7 +283,7 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
   ) as PromiseFulfilledResult<makeBackupFileRequestResult[]>[];
   return {
     backupResults: filteredResults.map((result) => result.value).flat(),
-    originalPayload: event.input,
+    granules: event.input.granules,
   };
 };
 

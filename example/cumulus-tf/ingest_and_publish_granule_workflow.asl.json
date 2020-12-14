@@ -342,8 +342,8 @@
             "cumulus_message": {
               "outputs": [
                 {
-                  "source": "{$.originalPayload}",
-                  "destination": "{$.payload}"
+                  "source": "{$.granules}",
+                  "destination": "{$.payload.granules}"
                 },
                 {
                   "source": "{$.backupResults}",
