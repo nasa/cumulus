@@ -343,7 +343,6 @@ test.serial('postRequestToLzards creates the expected query', async (t) => {
     },
     headers: {
       Authorization: `Bearer ${authToken}`,
-      'Content-Type': 'application/json',
     },
   }]);
 });
@@ -382,8 +381,7 @@ test.serial('postRequestToLzards creates the expected query with SHA256 checksum
       },
     },
     headers: {
-      Authorization: `Bearer ${authToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
     },
   }]);
 });
