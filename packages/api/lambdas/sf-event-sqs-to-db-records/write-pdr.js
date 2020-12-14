@@ -67,8 +67,6 @@ const getPdrCumulusIdFromQueryResultOrLookup = async ({
 }) => {
   let pdrCumulusId = queryResult[0];
   if (!pdrCumulusId) {
-    // If the record were somehow not found, this will throw an error
-    // that causes the whole PDR write transaction to fail. Is that desirable?
     pdrCumulusId = await getRecordCumulusId(
       { name: pdrRecord.name },
       tableNames.pdrs,
