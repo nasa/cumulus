@@ -82,13 +82,13 @@ test.beforeEach(async (t) => {
   t.context.files = [fakeFileFactory()];
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
-    granuleId: t.context.granuleId
+    granuleId: t.context.granuleId,
   });
 
   t.context.worklowStartTime = Date.now();
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: worklowStartTime,
+      workflow_start_time: t.context.worklowStartTime,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
     },
@@ -98,7 +98,7 @@ test.beforeEach(async (t) => {
       provider: t.context.provider,
     },
     payload: {
-      granules: [granule],
+      granules: [t.context.granule],
     },
   };
 
@@ -127,29 +127,130 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('generateGranuleRecord() generates the correct granule record', (t) => {
+test('generateGranuleRecord() generates the correct granule record', async (t) => {
   const {
     cumulusMessage,
     granuleId,
     granule,
     worklowStartTime,
   } = t.context;
-  const now = Date.now();
+
+  const now = worklowStartTime + 5000;
+  // Set granule files
+  const files = [
+    fakeFileFactory({
+      size: 10,
+    }),
+  ];
+  granule.files = files;
+  granule.sync_granule_duration = 3000;
+  granule.post_to_cmr_duration = 7810;
+
   t.deepEqual(
-    generateGranuleRecord({
+    await generateGranuleRecord({
       cumulusMessage,
       now,
+      granule,
+      collectionCumulusId: 1,
+      providerCumulusId: 2,
+      executionCumulusId: 3,
+      pdrCumulusId: 4,
     }),
     {
       granuleId,
       status: 'running',
       cmrLink: granule.cmrLink,
       published: granule.published,
-      exception: {},
+      error: {},
+      files,
       createdAt: new Date(worklowStartTime),
-      timestamp: now
+      timestamp: new Date(now),
+      updatedAt: new Date(now),
+      productVolume: 10,
+      duration: 5,
+      timeToPreprocess: 3,
+      timeToArchive: 7.81,
+      collection_cumulus_id: 1,
+      provider_cumulus_id: 2,
+      execution_cumulus_id: 3,
+      pdr_cumulus_id: 4,
     }
   );
+});
+
+test('generateGranuleRecord() includes processing time info, if provided', async (t) => {
+  const {
+    cumulusMessage,
+    granule,
+  } = t.context;
+
+  const processingTimeInfo = {
+    processingStartDateTime: new Date().toISOString(),
+    processingEndDateTime: new Date().toISOString(),
+  };
+
+  const fakeFileUtils = {
+    buildDatabaseFiles: async () => granule.files,
+  };
+
+  const record = await generateGranuleRecord({
+    cumulusMessage,
+    granule,
+    processingTimeInfo,
+    fileUtils: fakeFileUtils,
+  });
+  t.is(record.processingStartDateTime, processingTimeInfo.processingStartDateTime);
+  t.is(record.processingEndDateTime, processingTimeInfo.processingEndDateTime);
+});
+
+test('generateGranuleRecord() includes temporal info, if any is returned', async (t) => {
+  const {
+    cumulusMessage,
+    granule,
+  } = t.context;
+
+  const temporalInfo = {
+    beginningDateTime: new Date().toISOString(),
+  };
+
+  const fakeCmrUtils = {
+    getGranuleTemporalInfo: async () => temporalInfo,
+  };
+  const fakeFileUtils = {
+    buildDatabaseFiles: async () => granule.files,
+  };
+
+  const record = await generateGranuleRecord({
+    cumulusMessage,
+    granule,
+    cmrUtils: fakeCmrUtils,
+    fileUtils: fakeFileUtils,
+  });
+  t.is(record.beginningDateTime, temporalInfo.beginningDateTime);
+});
+
+test('generateGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {
+  const {
+    cumulusMessage,
+    granule,
+  } = t.context;
+
+  const exception = {
+    Error: new Error('error'),
+    Cause: 'an error occurred',
+  };
+  cumulusMessage.exception = exception;
+
+  const fakeFileUtils = {
+    buildDatabaseFiles: async () => granule.files,
+  };
+
+  const record = await generateGranuleRecord({
+    cumulusMessage,
+    granule,
+    fileUtils: fakeFileUtils,
+  });
+  t.deepEqual(record.error, exception);
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {

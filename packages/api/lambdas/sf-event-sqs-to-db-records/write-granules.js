@@ -11,6 +11,7 @@ const {
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
+  getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
@@ -29,10 +30,10 @@ const {
   getExecutionProcessingTimeInfo,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
+  getGranuleProductVolume,
 } = require('../../lib/granules');
 const {
   parseException,
-  getGranuleProductVolume,
 } = require('../../lib/utils');
 const Granule = require('../../models/granules');
 
@@ -46,7 +47,6 @@ const generateGranuleRecord = async ({
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
   fileUtils = FileUtils,
-  s3Client = s3,
   now = Date.now(),
 }) => {
   const {
@@ -58,7 +58,7 @@ const generateGranuleRecord = async ({
 
   const provider = getMessageProvider(cumulusMessage);
   const granuleFiles = await fileUtils.buildDatabaseFiles({
-    s3: s3Client,
+    s3: s3(),
     providerURL: buildURL(provider),
     files,
   });
@@ -73,10 +73,10 @@ const generateGranuleRecord = async ({
     cmrLink,
     files: granuleFiles,
     error: parseException(cumulusMessage.exception),
-    createdAt: workflowStartTime,
     published,
-    timestamp,
-    updatedAt: now,
+    createdAt: new Date(workflowStartTime),
+    updatedAt: new Date(now),
+    timestamp: new Date(timestamp),
     // Duration is also used as timeToXfer for the EMS report
     duration: getWorkflowDuration(workflowStartTime, timestamp),
     productVolume: getGranuleProductVolume(granuleFiles),
@@ -202,6 +202,7 @@ const writeGranules = async ({
 
   const granules = getMessageGranules(cumulusMessage);
   const executionArn = getMessageExecutionArn(cumulusMessage);
+  const executionUrl = getExecutionUrlFromArn(executionArn);
   const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
@@ -212,6 +213,7 @@ const writeGranules = async ({
       granule,
       cumulusMessage,
       processingTimeInfo,
+      executionUrl,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,

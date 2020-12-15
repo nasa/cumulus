@@ -87,6 +87,5 @@ module.exports = {
   extractDate,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
-  getGranuleProductVolume,
   parseException,
 };

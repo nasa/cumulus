@@ -57,13 +57,13 @@ const {
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
   translateGranule,
+  getGranuleProductVolume,
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
 const {
   parseException,
   deconstructCollectionId,
-  getGranuleProductVolume,
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
