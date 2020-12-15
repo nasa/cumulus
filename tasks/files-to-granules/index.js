@@ -61,7 +61,7 @@ async function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex
     try {
       granulesHash[fileGranuleId].files.push(await fileObjectFromS3URI(f));
     } catch (error) {
-      throw new Error(`Failed adding ${f} to ${fileGranuleId}'s files`);
+      throw new Error(`Failed adding ${f} to ${fileGranuleId}'s files: ${error.code} ${error.message}`);
     }
   }
   /* eslint-enable no-await-in-loop */
