@@ -68,20 +68,20 @@ const generateGranuleRecord = async ({
   const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
   return {
-    granuleId,
+    granule_id: granuleId,
     status: getGranuleStatus(cumulusMessage, granule),
-    cmrLink,
-    files: granuleFiles,
+    cmr_link: cmrLink,
+    // files: granuleFiles,
     error: parseException(cumulusMessage.exception),
     published,
-    createdAt: new Date(workflowStartTime),
-    updatedAt: new Date(updatedAt),
+    created_at: new Date(workflowStartTime),
+    updated_at: new Date(updatedAt),
     timestamp: new Date(timestamp),
     // Duration is also used as timeToXfer for the EMS report
     duration: getWorkflowDuration(workflowStartTime, timestamp),
-    productVolume: getGranuleProductVolume(granuleFiles),
-    timeToPreprocess: getGranuleTimeToPreprocess(granule),
-    timeToArchive: getGranuleTimeToArchive(granule),
+    product_volume: getGranuleProductVolume(granuleFiles),
+    time_to_process: getGranuleTimeToPreprocess(granule),
+    time_to_archive: getGranuleTimeToArchive(granule),
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
     execution_cumulus_id: executionCumulusId,
@@ -94,21 +94,25 @@ const generateGranuleRecord = async ({
 const writeGranuleViaTransaction = async ({
   cumulusMessage,
   granule,
+  processingTimeInfo,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
   trx,
-}) =>
-  trx(tableNames.granules)
-    .insert({
-      granule_id: granule.granuleId,
-      status: getGranuleStatus(cumulusMessage, granule),
-      collection_cumulus_id: collectionCumulusId,
-      provider_cumulus_id: providerCumulusId,
-      execution_cumulus_id: executionCumulusId,
-      pdr_cumulus_id: pdrCumulusId,
-    });
+}) => {
+  const granuleRecord = await generateGranuleRecord({
+    cumulusMessage,
+    granule,
+    processingTimeInfo,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdrCumulusId,
+  });
+  return trx(tableNames.granules)
+    .insert(granuleRecord);
+};
 
 /**
  * Write a granule to DynamoDB and Postgres
@@ -151,6 +155,7 @@ const writeGranule = async ({
     await writeGranuleViaTransaction({
       cumulusMessage,
       granule,
+      processingTimeInfo,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
