@@ -1,6 +1,7 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
+const pick = require('lodash/pick');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
@@ -88,6 +89,36 @@ const generateGranuleRecord = async ({
   };
 };
 
+// const writeGranuleFilesViaTransaction = async (files, trx) => {
+//   return Promise.all(files.map((file) => {
+//     return trx(tableNames.files)
+//       .insert(file)
+//       .onConflict(['bucket', 'key'])
+//       .merge();
+//   }));
+// };
+
+const generateFileRecord = (file) =>
+  pick(
+    {
+      ...file,
+      checksum_type: file.checksumType,
+      checksum_value: file.checksum,
+      filename: file.fileName,
+    },
+    [
+      'bucket',
+      'checksum_type',
+      'checksum_value',
+      'filename',
+      'file_name',
+      'key',
+      'name',
+      'path',
+      'source',
+    ]
+  );
+
 const writeGranuleViaTransaction = async ({
   cumulusMessage,
   granule,
@@ -117,10 +148,12 @@ const writeGranuleViaTransaction = async ({
     executionCumulusId,
     pdrCumulusId,
   });
+
   return trx(tableNames.granules)
     .insert(granuleRecord)
     .onConflict(['granule_id', 'collection_cumulus_id'])
-    .merge();
+    .merge()
+    .returning('cumulus_id');
 };
 
 /**
