@@ -306,16 +306,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule', async (t) => {
-  const { dbClient } = t.context;
-
-  const newRule = fakeRuleFactoryV2(
-    {
-      executionNamePrefix: 'somePrefix',
-      queueUrl: 'queue_url',
-      meta: {},
-      tags: ['tag'],
-    }
-  );
+  const { dbClient, newRule } = t.context;
 
   const fakeCollection = fakeCollectionFactory();
   const fakeProvider = fakeProviderFactory({
@@ -391,11 +382,11 @@ test('POST creates a rule', async (t) => {
         type: newRule.rule.type,
         enabled: false,
         log_event_arn: null,
-        execution_name_prefix: newRule.executionNamePrefix,
+        execution_name_prefix: null,
         payload: null,
-        queue_url: newRule.queueUrl,
-        meta: newRule.meta,
-        tags: newRule.tags,
+        queue_url: null,
+        meta: null,
+        tags: null,
       },
       dynamoRuleOmitList
     )
@@ -647,30 +638,6 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.truthy(message);
     t.falsy(record);
   });
-
-test('PUT replaces onetime rule for rerun', async (t) => {
-  const { newRule } = t.context;
-  const expectedRule = {
-    ...omit(newRule, ['provider', 'collection']),
-    action: 'rerun',
-  };
-
-  const { body: originalRule } = await request(app)
-    .post('/rules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
-    .expect(200);
-
-  const { body: actualRule } = await request(app)
-    .put(`/rules/${expectedRule.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(expectedRule)
-    .expect(200);
-
-  t.deepEqual(omit(actualRule, 'updatedAt'), omit(originalRule.record, 'updatedAt'));
-});
 
 test('DELETE deletes a rule', async (t) => {
   const { dbClient } = t.context;
