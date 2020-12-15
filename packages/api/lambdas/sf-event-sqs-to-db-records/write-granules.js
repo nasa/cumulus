@@ -115,7 +115,9 @@ const writeGranuleViaTransaction = async ({
     pdrCumulusId,
   });
   return trx(tableNames.granules)
-    .insert(granuleRecord);
+    .insert(granuleRecord)
+    .onConflict(['granule_id', 'collection_cumulus_id'])
+    .merge();
 };
 
 /**
