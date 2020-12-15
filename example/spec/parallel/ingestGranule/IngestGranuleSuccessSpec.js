@@ -438,7 +438,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
-        if (file.size) {
+        if (file.size && expectedFile.size) {
           expect(file.size).toEqual(expectedFile.size);
         }
       });
