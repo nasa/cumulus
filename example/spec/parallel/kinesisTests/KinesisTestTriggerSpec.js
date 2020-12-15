@@ -22,10 +22,12 @@ const {
   cleanupCollections,
   readJsonFilesFromDir,
   deleteRules,
-  granulesApi: granulesApiTestUtils,
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
+const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getMessageCnm } = require('@cumulus/message/Granules');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
@@ -106,7 +108,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         Bucket: testConfig.bucket,
         Key: `${filePrefix}/${fileData.name}`,
       }).promise(),
-      granulesApiTestUtils.deleteGranule({
+      deleteGranule({
         prefix: testConfig.stackName,
         granuleId,
       }),
@@ -135,6 +137,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     );
     record.provider += testSuffix;
     record.collection += testSuffix;
+    record.product.name += testSuffix;
 
     granuleId = record.product.name;
     recordIdentifier = randomString();
@@ -338,12 +341,35 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     describe('the CnmResponse Lambda', () => {
       let lambdaOutput;
+      let granule;
 
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
+        granule = await getGranuleWithStatus({
+          prefix: testConfig.stackName,
+          granuleId,
+          status: 'completed',
+        });
       });
 
       it('outputs the expected object', () => {
+        const actualPayload = lambdaOutput.payload;
+        expect(actualPayload.granules.length).toBe(1);
+        expect(actualPayload.granules[0].granuleId).toBe(granuleId);
+      });
+
+      it('writes a message to the response stream', async () => {
+        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'`);
+        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
+        const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
+        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
+        const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
+        expect(responseRecord.identifier).toEqual(recordIdentifier);
+        expect(responseRecord.response.status).toEqual('SUCCESS');
+        expect(responseRecord).toEqual(lambdaOutput.meta.cnmResponse);
+      });
+
+      it('puts cnmResponse to cumulus message for granule record', async () => {
         const expectedCnmResponse = {
           version: record.version,
           submissionTime: record.submissionTime,
@@ -359,24 +385,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           },
         };
 
-        const actualPayload = lambdaOutput.payload;
-        expect(actualPayload.granules.length).toBe(1);
-        expect(actualPayload.granules[0].granuleId).toBe(granuleId);
-
         const cnmResponse = lambdaOutput.meta.cnmResponse;
         expect(isMatch(cnmResponse, expectedCnmResponse)).toBe(true);
         expect(cnmResponse.product.files.length).toBe(2);
-      });
-
-      it('writes a message to the response stream', async () => {
-        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'`);
-        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
-        const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
-        const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
-        expect(responseRecord.identifier).toEqual(recordIdentifier);
-        expect(responseRecord.response.status).toEqual('SUCCESS');
-        expect(responseRecord).toEqual(lambdaOutput.meta.cnmResponse);
+        expect(granule.cnm).toEqual(getMessageCnm(lambdaOutput));
       });
     });
   });

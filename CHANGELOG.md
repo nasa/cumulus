@@ -11,8 +11,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2092**
   - Add documentation for Granule Not Found Reports
 
-  - **CUMULUS-2092**
+- **CUMULUS-2092**
   - Add documentation for Getting Started section including FAQs
+
+- **CUMULUS-2290**
+  - Add cnm fields to granules module
 
 ## [v4.0.0] 2020-11-20
 

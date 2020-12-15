@@ -17,7 +17,7 @@ const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
-const { getMessageGranules } = require('@cumulus/message/Granules');
+const { getMessageCnm, getMessageGranules } = require('@cumulus/message/Granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -337,6 +337,8 @@ class Granule extends Manager {
     if (!collectionId) {
       throw new CumulusModelError('meta.collection required to generate a granule record');
     }
+
+    const cnm = getMessageCnm(message);
     const granuleFiles = await FileUtils.buildDatabaseFiles({
       s3,
       providerURL: buildURL({
@@ -378,6 +380,7 @@ class Granule extends Manager {
       timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
       ...processingTimeInfo,
       ...temporalInfo,
+      cnm,
     };
 
     record.published = get(granule, 'published', false);

@@ -338,6 +338,23 @@ module.exports.granule = {
     dataType: { type: 'string' },
     version: { type: 'string' },
     provider: { type: 'string' },
+    cnm: {
+      type: 'object',
+      properties: {
+        identifier: {
+          type: 'string',
+        },
+        submissionTime: {
+          type: 'string',
+        },
+        receivedTime: {
+          type: 'string',
+        },
+        processCompleteTime: {
+          type: 'string',
+        },
+      },
+    },
   },
   required: [
     'granuleId',

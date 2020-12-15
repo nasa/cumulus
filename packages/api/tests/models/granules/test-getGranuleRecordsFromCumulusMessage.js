@@ -2,6 +2,8 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const cloneDeep = require('lodash/cloneDeep');
+const omit = require('lodash/omit');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -135,4 +137,31 @@ test('Granule._getGranuleRecordsFromCumulusMessage() returns the list of valid g
 
   t.is(granuleRecords.length, 1);
   t.is(granuleRecords[0].granuleId, 'granule-x');
+});
+
+test('Granule._getGranuleRecordsFromCumulusMessage() returns the correct granule record for a Cumulus message with cnm and cnmResponse', async (t) => {
+  const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+  let granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  t.is(granuleRecords.length, 1);
+  t.falsy(granuleRecords[0].cnm);
+
+  cumulusMessage.meta.cnm = {
+    submissionTime: '2017-09-30T03:42:29.791198',
+    identifier: randomString(),
+    receivedTime: '2017-12-12T03:53:05.787Z',
+    other: randomString(),
+  };
+
+  granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  t.is(granuleRecords.length, 1);
+  t.deepEqual(granuleRecords[0].cnm, omit(cumulusMessage.meta.cnm, ['other']));
+
+  cumulusMessage.meta.cnmResponse = {
+    ...cumulusMessage.meta.cnm,
+    processCompleteTime: '2017-12-12T03:54:45.238Z',
+  };
+  granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  t.is(granuleRecords.length, 1);
+  t.truthy(granuleRecords[0].cnm);
+  t.deepEqual(granuleRecords[0].cnm, omit(cumulusMessage.meta.cnmResponse, ['other']));
 });
