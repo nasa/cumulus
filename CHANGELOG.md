@@ -6,18 +6,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration notes
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+
 ### Added
 
+- **CUMULUS-2219**
+  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
 - **CUMULUS-2092**
   - Add documentation for Granule Not Found Reports
-
-  - **CUMULUS-2092**
+- **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
 
 ### Changed
 
 - **CUMULUS-2279**
   - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
+- **CUMULUS-2124**
+  - cumulus-rds-tf terraform module now takes engine_version as an input variable.
+- **CUMULUS-2020**
+  - Updated Elasticsearch mappings to support case-insensitive search
+
+### BREAKING CHANGES
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
 
 ## [v4.0.0] 2020-11-20
 

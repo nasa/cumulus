@@ -68,6 +68,10 @@ output "hyrax_metadata_updates_task" {
   value = module.ingest.hyrax_metadata_updates_task
 }
 
+output "lzards_backup_task" {
+  value = module.ingest.lzards_backup_task
+}
+
 output "move_granules_task" {
   value = module.ingest.move_granules_task
 }
