@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const {
   localStackConnectionEnv,
@@ -148,16 +149,24 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
   granule.post_to_cmr_duration = 7810;
 
   t.deepEqual(
-    await generateGranuleRecord({
-      cumulusMessage,
-      granule,
-      collectionCumulusId: 1,
-      providerCumulusId: 2,
-      executionCumulusId: 3,
-      pdrCumulusId: 4,
-      timestamp,
-      updatedAt,
-    }),
+    omit(
+      await generateGranuleRecord({
+        cumulusMessage,
+        granule,
+        collectionCumulusId: 1,
+        providerCumulusId: 2,
+        executionCumulusId: 3,
+        pdrCumulusId: 4,
+        timestamp,
+        updatedAt,
+      }),
+      'beginning_date_time',
+      'ending_date_time',
+      'production_date_time',
+      'last_update_date_time',
+      'processing_start_date_time',
+      'processing_end_date_time'
+    ),
     {
       granule_id: granuleId,
       status: 'running',
@@ -200,8 +209,8 @@ test('generateGranuleRecord() includes processing time info, if provided', async
     processingTimeInfo,
     fileUtils: fakeFileUtils,
   });
-  t.is(record.processingStartDateTime, processingTimeInfo.processingStartDateTime);
-  t.is(record.processingEndDateTime, processingTimeInfo.processingEndDateTime);
+  t.is(record.processing_start_date_time, processingTimeInfo.processingStartDateTime);
+  t.is(record.processing_end_date_time, processingTimeInfo.processingEndDateTime);
 });
 
 test('generateGranuleRecord() includes temporal info, if any is returned', async (t) => {
@@ -227,7 +236,7 @@ test('generateGranuleRecord() includes temporal info, if any is returned', async
     cmrUtils: fakeCmrUtils,
     fileUtils: fakeFileUtils,
   });
-  t.is(record.beginningDateTime, temporalInfo.beginningDateTime);
+  t.is(record.beginning_date_time, temporalInfo.beginningDateTime);
 });
 
 test('generateGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {

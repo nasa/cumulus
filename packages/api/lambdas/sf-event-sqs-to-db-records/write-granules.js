@@ -86,8 +86,12 @@ const generateGranuleRecord = async ({
     provider_cumulus_id: providerCumulusId,
     execution_cumulus_id: executionCumulusId,
     pdr_cumulus_id: pdrCumulusId,
-    ...processingTimeInfo,
-    ...temporalInfo,
+    beginning_date_time: temporalInfo.beginningDateTime,
+    ending_date_time: temporalInfo.endingDateTime,
+    production_date_time: temporalInfo.productionDateTime,
+    last_update_date_time: temporalInfo.lastUpdateDateTime,
+    processing_start_date_time: processingTimeInfo.processingStartDateTime,
+    processing_end_date_time: processingTimeInfo.processingEndDateTime,
   };
 };
 
