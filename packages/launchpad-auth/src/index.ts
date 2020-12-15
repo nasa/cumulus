@@ -89,7 +89,7 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
  * @async
  * @alias module:launchpad-auth
  */
-async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> {
+export async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> {
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {

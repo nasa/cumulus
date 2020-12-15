@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration notes
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+
 ### BREAKING CHANGES
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
@@ -19,6 +27,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       of returning `none` when the operation did not return output.
 
 ### Added
+
+- **CUMULUS-2219**
+  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
+- **CUMULUS-2092**
+  - Add documentation for Granule Not Found Reports
+- **CUMULUS-1370**
+  - Add documentation for Getting Started section including FAQs
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
@@ -64,6 +79,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/message/workflows/getWorkflowDuration`
 
 ### Changed
+
+- **CUMULUS-2020**
+  - Updated Elasticsearch mappings to support case-insensitive search
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2189**
