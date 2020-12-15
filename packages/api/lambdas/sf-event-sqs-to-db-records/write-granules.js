@@ -63,7 +63,6 @@ const generateGranuleRecord = async ({
     granule_id: granuleId,
     status: getGranuleStatus(cumulusMessage, granule),
     cmr_link: cmrLink,
-    // files: granuleFiles,
     error: parseException(cumulusMessage.exception),
     published,
     created_at: new Date(workflowStartTime),

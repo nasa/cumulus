@@ -199,15 +199,10 @@ test('generateGranuleRecord() includes processing time info, if provided', async
     processingEndDateTime: new Date().toISOString(),
   };
 
-  const fakeFileUtils = {
-    buildDatabaseFiles: async () => granule.files,
-  };
-
   const record = await generateGranuleRecord({
     cumulusMessage,
     granule,
     processingTimeInfo,
-    fileUtils: fakeFileUtils,
   });
   t.is(record.processing_start_date_time, processingTimeInfo.processingStartDateTime);
   t.is(record.processing_end_date_time, processingTimeInfo.processingEndDateTime);
@@ -226,15 +221,11 @@ test('generateGranuleRecord() includes temporal info, if any is returned', async
   const fakeCmrUtils = {
     getGranuleTemporalInfo: async () => temporalInfo,
   };
-  const fakeFileUtils = {
-    buildDatabaseFiles: async () => granule.files,
-  };
 
   const record = await generateGranuleRecord({
     cumulusMessage,
     granule,
     cmrUtils: fakeCmrUtils,
-    fileUtils: fakeFileUtils,
   });
   t.is(record.beginning_date_time, temporalInfo.beginningDateTime);
 });
@@ -251,14 +242,9 @@ test('generateGranuleRecord() includes correct error if cumulus message has an e
   };
   cumulusMessage.exception = exception;
 
-  const fakeFileUtils = {
-    buildDatabaseFiles: async () => granule.files,
-  };
-
   const record = await generateGranuleRecord({
     cumulusMessage,
     granule,
-    fileUtils: fakeFileUtils,
   });
   t.deepEqual(record.error, exception);
 });
