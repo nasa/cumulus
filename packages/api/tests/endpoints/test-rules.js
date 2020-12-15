@@ -55,6 +55,8 @@ const testRule = {
   },
   state: 'ENABLED',
   queueUrl: 'queue_url',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl', 'executionNamePrefix'];
@@ -82,7 +84,7 @@ test.before(async (t) => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  const ruleRecord = await ruleModel.create(testRule);
+  const ruleRecord = await ruleModel.create(testRule, testRule.createdAt, testRule.updatedAt);
   await indexer.indexRule(esClient, ruleRecord, esAlias);
 
   const username = randomString();
@@ -95,6 +97,14 @@ test.before(async (t) => {
   esClient = await Search.es('fakehost');
 
   t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
+});
+
+test.beforeEach(async (t) => {
+  const newRule = fakeRuleFactoryV2();
+  delete newRule.collection;
+  delete newRule.provider;
+
+  t.context.newRule = newRule;
 });
 
 test.after.always(async (t) => {
@@ -233,9 +243,7 @@ test('GET gets a rule', async (t) => {
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
 
   let response = await request(app)
     .post('/rules')
@@ -265,9 +273,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without a valid access token', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
 
   let response = await request(app)
     .post('/rules')
@@ -350,8 +356,8 @@ test('POST creates a rule', async (t) => {
     port: fakeProvider.port,
   };
 
-  const [collectionCumulusId = {}] = await dbClient(tableNames.collections).insert(collectionRecord).returning('cumulus_id');
-  const [providerCumulusId = {}] = await dbClient(tableNames.providers).insert(providerRecord).returning('cumulus_id');
+  const [collectionCumulusId] = await dbClient(tableNames.collections).insert(collectionRecord).returning('cumulus_id');
+  const [providerCumulusId] = await dbClient(tableNames.providers).insert(providerRecord).returning('cumulus_id');
 
   const response = await request(app)
     .post('/rules')
@@ -360,7 +366,7 @@ test('POST creates a rule', async (t) => {
     .send(newRule)
     .expect(200);
 
-  const { message, record } = response.body;
+  const { message } = response.body;
   const fetchedDynamoRecord = await ruleModel.get({
     name: newRule.name,
   });
@@ -373,17 +379,13 @@ test('POST creates a rule', async (t) => {
 
   t.is(message, 'Record saved');
 
-  newRule.createdAt = record.createdAt;
-  newRule.updatedAt = record.updatedAt;
-
-  t.is(fetchedPostgresRecord.collection_cumulus_id, collectionCumulusId);
-  t.is(fetchedPostgresRecord.provider_cumulus_id, providerCumulusId);
-
   t.deepEqual(
-    omit(fetchedPostgresRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
+    omit(fetchedPostgresRecord, ['cumulus_id', 'created_at', 'updated_at']),
     omit(
       {
         ...fetchedDynamoRecord,
+        collection_cumulus_id: collectionCumulusId,
+        provider_cumulus_id: providerCumulusId,
         arn: null,
         value: null,
         type: newRule.rule.type,
@@ -394,21 +396,16 @@ test('POST creates a rule', async (t) => {
         queue_url: newRule.queueUrl,
         meta: newRule.meta,
         tags: newRule.tags,
-        created_at: new Date(newRule.createdAt),
-        updated_at: new Date(newRule.updatedAt),
       },
       dynamoRuleOmitList
     )
   );
 
   t.is(fetchedPostgresRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST creates a rule that is enabled by default', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
   delete newRule.state;
 
   const response = await request(app)
@@ -424,16 +421,16 @@ test('POST creates a rule that is enabled by default', async (t) => {
     .where({ name: newRule.name })
     .first();
 
-  t.is(fetchedPostgresRecord.enabled, true);
+  t.true(fetchedPostgresRecord.enabled);
   t.is(response.body.record.state, 'ENABLED');
 });
 
 test('POST returns a 409 response if record already exists', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
+  newRule.createdAt = Date.now();
+  newRule.updatedAt = Date.now();
 
-  await ruleModel.create(newRule);
+  await ruleModel.create(newRule, newRule.createdAt, newRule.updatedAt);
 
   const response = await request(app)
     .post('/rules')
@@ -448,9 +445,7 @@ test('POST returns a 409 response if record already exists', async (t) => {
 });
 
 test('POST returns a 400 response if record is missing a required property', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
 
   // Remove required property to trigger create error
   delete newRule.workflow;
@@ -465,9 +460,7 @@ test('POST returns a 400 response if record is missing a required property', asy
 });
 
 test('POST returns a 400 response if rule name is invalid', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
   newRule.name = 'bad rule name';
 
   const response = await request(app)
@@ -480,9 +473,7 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
 });
 
 test('POST returns a 400 response if rule type is invalid', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
   newRule.type = 'invalid';
 
   const response = await request(app)
@@ -495,9 +486,7 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
 });
 
 test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
   buildPayloadStub.restore();
 
   try {
@@ -514,9 +503,7 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+  const { newRule } = t.context;
 
   const stub = sinon.stub(Rule.prototype, 'create')
     .callsFake(() => {
@@ -536,14 +523,11 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
-test.serial('POST does not write to RDS or Dynamo if writing to DynamoDB fails', async (t) => {
-  const { dbClient } = t.context;
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+test.serial('POST does not write to RDS or DynamoDB if writing to RDS fails', async (t) => {
+  const { newRule, dbClient } = t.context;
 
   const failingDbClient = {
-    insert: () => {
+    transaction: () => {
       throw new Error('Insert Rule Error');
     },
   };
@@ -562,15 +546,13 @@ test.serial('POST does not write to RDS or Dynamo if writing to DynamoDB fails',
     .from(tableNames.rules)
     .where({ name: newRule.name });
 
+  t.true(response.boom.badImplementation.calledWithMatch('Insert Rule Error'));
   t.false(await ruleModel.exists(newRule.name));
   t.is(dbRecords.length, 0);
 });
 
-test('POST does not write to DynamoDB or RDS if writing to DynamoDB fails', async (t) => {
-  const { dbClient } = t.context;
-  const newRule = fakeRuleFactoryV2();
-  newRule.provider = undefined;
-  newRule.collection = undefined;
+test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails', async (t) => {
+  const { newRule, dbClient } = t.context;
 
   const failingRulesModel = {
     exists: () => false,
@@ -626,11 +608,11 @@ test('PUT replaces a rule', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const dbRecords = await dbClient.first()
+  const dbRecords = await dbClient.select()
     .from(tableNames.rules)
     .where({ name: expectedRule.name });
 
-  t.not(dbRecords.queue_url, undefined);
+  t.is(dbRecords.queue_url, undefined);
   t.deepEqual(actualRule, {
     ...expectedRule,
     createdAt: actualRule.createdAt,
@@ -667,57 +649,27 @@ test('PUT returns 400 for name mismatch between params and payload',
   });
 
 test('PUT replaces onetime rule for rerun', async (t) => {
+  const { newRule } = t.context;
   const expectedRule = {
-    ...omit(testRule, ['queueUrl', 'provider', 'collection']),
-    state: 'ENABLED',
+    ...omit(newRule, ['provider', 'collection']),
+    action: 'rerun',
   };
-  expectedRule.action = 'rerun';
 
-  await request(app)
-    .put(`/rules/${testRule.name}`)
+  const { body: originalRule } = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
+  const { body: actualRule } = await request(app)
+    .put(`/rules/${expectedRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(expectedRule)
     .expect(200);
 
-  const { body: actualRule } = await request(app)
-    .get(`/rules/${testRule.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.truthy(actualRule);
-});
-
-test.serial('PUT does not insert into RDS if replacing onetime rule for rerun fails', async (t) => {
-  const { dbClient } = t.context;
-  const expectedRule = {
-    ...omit(testRule, ['queueUrl', 'provider', 'collection']),
-    state: 'ENABLED',
-  };
-  expectedRule.action = 'rerun';
-
-  const createRuleStub = sinon.stub(Rule.prototype, 'get')
-    .returns(() => {
-      throw new Error('Error getting rule');
-    });
-
-  try {
-    await request(app)
-      .put(`/rules/${testRule.name}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send(expectedRule)
-      .expect(400);
-
-    const dbRecords = await dbClient.select()
-      .from(tableNames.rules)
-      .where({ name: testRule.name });
-
-    t.is(dbRecords.length, 0);
-  } finally {
-    createRuleStub.restore();
-  }
+  t.deepEqual(omit(actualRule, 'updatedAt'), omit(originalRule.record, 'updatedAt'));
 });
 
 test('DELETE deletes a rule', async (t) => {

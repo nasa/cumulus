@@ -1,5 +1,8 @@
 'use strict';
 
+const merge = require('lodash/merge');
+const omit = require('lodash/omit');
+const cloneDeep = require('lodash/cloneDeep');
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -66,23 +69,24 @@ async function post(req, res) {
     dbClient = await getKnexClient(),
   } = req.testContext || {};
 
+  let record;
   const rule = req.body || {};
   const name = rule.name;
+  rule.createdAt = Date.now();
+  rule.updatedAt = Date.now();
 
   if (await model.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
   try {
-    return await dbClient.transaction(async (trx) => {
-      const record = await model.create(rule);
-      const postgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
+    await dbClient.transaction(async (trx) => {
+      const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
       await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
-
-      if (inTestMode()) await addToLocalES(record, indexRule);
-
-      return res.send({ message: 'Record saved', record });
+      record = await model.create(rule, rule.createdAt, rule.updatedAt);
     });
+    if (inTestMode()) await addToLocalES(record, indexRule);
+    return res.send({ message: 'Record saved', record });
   } catch (error) {
     if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
@@ -106,6 +110,7 @@ async function post(req, res) {
  */
 async function put({ params: { name }, body }, res) {
   const model = new models.Rule();
+  let newRule;
 
   if (name !== body.name) {
     return res.boom.badRequest(`Expected rule name to be '${name}', but found`
@@ -116,26 +121,33 @@ async function put({ params: { name }, body }, res) {
     const oldRule = await model.get({ name });
     const dbClient = await getKnexClient();
 
-    // if rule type is onetime no change is allowed unless it is a rerun
+    // If rule type is onetime no change is allowed unless it is a rerun
     if (body.action === 'rerun') {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
 
+    let updatedRuleItem = cloneDeep(oldRule);
     // Remove all fields from the existing rule that are not supplied in body
     // since body is expected to be a replacement rule, not a partial rule
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
+    updatedRuleItem = omit(updatedRuleItem, fieldsToDelete);
+    merge(updatedRuleItem, body);
 
-    return await dbClient.transaction(async (trx) => {
-      const newRule = await model.update(oldRule, body, fieldsToDelete);
-      const newPostgresRecord = await translateApiRuleToPostgresRule(newRule, dbClient);
+    const stateChanged = body.state && body.state !== oldRule.state;
+    const valueUpdated = body.rule && body.rule.value !== oldRule.rule.value;
+    const record = await model.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
-      if (inTestMode()) await addToLocalES(newRule, indexRule);
+    await dbClient.transaction(async (trx) => {
+      const newPostgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
       await trx(tableNames.rules)
         .insert(newPostgresRecord)
         .onConflict('name')
         .merge();
-      return res.send(newRule);
+      newRule = await model.update(oldRule, body, fieldsToDelete);
     });
+    if (inTestMode()) await addToLocalES(newRule, indexRule);
+
+    return res.send(newRule);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
@@ -168,8 +180,8 @@ async function del(req, res) {
   }
 
   await dbClient.transaction(async (trx) => {
-    await model.delete(record);
     await trx(tableNames.rules).where({ name }).del();
+    await model.delete(record);
   });
 
   if (inTestMode()) {
