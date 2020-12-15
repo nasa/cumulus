@@ -55,7 +55,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/message/workflows/getMessageWorkflowStopTime`
     - `@cumulus/message/workflows/getMessageWorkflowName`
   - **CUMULUS-2199**
-    - Updated Rules endpoint to write to RDS if a write to DynamoDB is successful.
+    - Updated Rules endpoint to write to or delete from RDS if a write to or delete from DynamoDB is successful.
     - Added `translateApiRuleToPostgresRule` to translate API Rule to conform to Postgres Rule definition.
 
 ### Changed
