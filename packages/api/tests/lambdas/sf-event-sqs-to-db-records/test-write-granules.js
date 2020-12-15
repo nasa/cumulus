@@ -144,7 +144,6 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       size: 10,
     }),
   ];
-  granule.files = files;
   granule.sync_granule_duration = 3000;
   granule.post_to_cmr_duration = 7810;
 
@@ -153,6 +152,7 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       await generateGranuleRecord({
         cumulusMessage,
         granule,
+        files,
         collectionCumulusId: 1,
         providerCumulusId: 2,
         executionCumulusId: 3,

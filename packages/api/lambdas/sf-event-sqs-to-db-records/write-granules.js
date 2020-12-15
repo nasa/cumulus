@@ -44,25 +44,17 @@ const generateGranuleRecord = async ({
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
+  files,
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
-  fileUtils = FileUtils,
   timestamp = Date.now(),
   updatedAt = Date.now(),
 }) => {
   const {
-    files,
     granuleId,
     cmrLink,
     published = false,
   } = granule;
-
-  const provider = getMessageProvider(cumulusMessage);
-  const granuleFiles = await fileUtils.buildDatabaseFiles({
-    s3: s3(),
-    providerURL: buildURL(provider),
-    files,
-  });
 
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
@@ -79,17 +71,19 @@ const generateGranuleRecord = async ({
     timestamp: new Date(timestamp),
     // Duration is also used as timeToXfer for the EMS report
     duration: getWorkflowDuration(workflowStartTime, timestamp),
-    product_volume: getGranuleProductVolume(granuleFiles),
+    product_volume: getGranuleProductVolume(files),
     time_to_process: getGranuleTimeToPreprocess(granule),
     time_to_archive: getGranuleTimeToArchive(granule),
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
     execution_cumulus_id: executionCumulusId,
     pdr_cumulus_id: pdrCumulusId,
+    // Temporal info from CMR
     beginning_date_time: temporalInfo.beginningDateTime,
     ending_date_time: temporalInfo.endingDateTime,
     production_date_time: temporalInfo.productionDateTime,
     last_update_date_time: temporalInfo.lastUpdateDateTime,
+    // Processing info from execution
     processing_start_date_time: processingTimeInfo.processingStartDateTime,
     processing_end_date_time: processingTimeInfo.processingEndDateTime,
   };
@@ -104,10 +98,20 @@ const writeGranuleViaTransaction = async ({
   executionCumulusId,
   pdrCumulusId,
   trx,
+  fileUtils = FileUtils,
 }) => {
+  // TODO: move to helper
+  const provider = getMessageProvider(cumulusMessage);
+  const files = await fileUtils.buildDatabaseFiles({
+    s3: s3(),
+    providerURL: buildURL(provider),
+    files: granule.files,
+  });
+
   const granuleRecord = await generateGranuleRecord({
     cumulusMessage,
     granule,
+    files,
     processingTimeInfo,
     collectionCumulusId,
     providerCumulusId,
