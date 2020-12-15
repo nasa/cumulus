@@ -10,8 +10,6 @@ const {
   getKnexClient,
   localStackConnectionEnv,
   tableNames,
-  translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 
@@ -21,8 +19,6 @@ const { post } = require('../../endpoints/rules');
 const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
-const Collection = require('../../models/collections');
-const Provider = require('../../models/providers');
 
 const {
   createFakeJwtAuthToken,
@@ -61,7 +57,7 @@ const testRule = {
   queueUrl: 'queue_url',
 };
 
-const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl'];
+const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl', 'executionNamePrefix'];
 
 const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
 
@@ -69,8 +65,6 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
-let collectionsModel;
-let providersModel;
 let buildPayloadStub;
 
 test.before(async (t) => {
@@ -88,12 +82,6 @@ test.before(async (t) => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  collectionsModel = new Collection({ tableName: process.env.CollectionsTable });
-  await collectionsModel.createTable();
-
-  providersModel = new Provider({ tableName: process.env.ProvidersTable });
-  await providersModel.createTable();
-
   const ruleRecord = await ruleModel.create(testRule);
   await indexer.indexRule(esClient, ruleRecord, esAlias);
 
@@ -109,32 +97,9 @@ test.before(async (t) => {
   t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
-test.beforeEach(async (t) => {
-
-  const newRule = {
-    name: randomId('name'),
-    workflow: workflow,
-    provider: undefined,
-    collection: undefined,
-    rule: {
-      type: 'onetime',
-      arn: 'arn',
-      value: 'value',
-      logEventArn: 'log_event_arn',
-    },
-    meta: { retries: 0 },
-    queueUrl: 'queue_url',
-    state: 'ENABLED',
-  };
-
-  t.context.newRule = newRule;
-});
-
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await collectionsModel.deleteTable();
   await ruleModel.deleteTable();
-  await providersModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 
@@ -268,7 +233,9 @@ test('GET gets a rule', async (t) => {
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
 
   let response = await request(app)
     .post('/rules')
@@ -298,7 +265,9 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without a valid access token', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
 
   let response = await request(app)
     .post('/rules')
@@ -331,7 +300,17 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule', async (t) => {
-  const { newRule, dbClient } = t.context;
+  const { dbClient } = t.context;
+
+  const newRule = fakeRuleFactoryV2(
+    {
+      executionNamePrefix: 'somePrefix',
+      queueUrl: 'queue_url',
+      meta: {},
+      tags: ['tag'],
+    }
+  );
+
   const fakeCollection = fakeCollectionFactory();
   const fakeProvider = fakeProviderFactory({
     encrypted: true,
@@ -341,17 +320,38 @@ test('POST creates a rule', async (t) => {
     createdAt: new Date(2020, 11, 17),
     updatedAt: new Date(2020, 12, 2),
   });
+
   newRule.provider = fakeProvider.id;
   newRule.collection = {
     name: fakeCollection.name,
     version: fakeCollection.version,
   };
 
-  const fakeEncryptFn = async () => 'fakeEncryptedString';
-  const collectionRecord = translateApiCollectionToPostgresCollection(fakeCollection);
-  const providerRecord = await translateApiProviderToPostgresProvider(fakeProvider, fakeEncryptFn);
-  await dbClient(tableNames.collections).insert(collectionRecord);
-  await dbClient(tableNames.providers).insert(providerRecord);
+  const collectionRecord = {
+    name: fakeCollection.name,
+    version: fakeCollection.version,
+    duplicate_handling: fakeCollection.duplicateHandling,
+    granule_id_validation_regex: fakeCollection.granuleId,
+    granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
+    files: (JSON.stringify(fakeCollection.files)),
+    report_to_ems: fakeCollection.reportToEms,
+    sample_file_name: fakeCollection.sampleFileName,
+    created_at: new Date(fakeCollection.createdAt),
+    updated_at: new Date(fakeCollection.updatedAt),
+  };
+  const providerRecord = {
+    created_at: fakeProvider.createdAt,
+    updated_at: fakeProvider.updatedAt,
+    name: fakeProvider.id,
+    cm_key_id: fakeProvider.cmKeyId,
+    certificate_uri: fakeProvider.certificateUri,
+    private_key: fakeProvider.privateKey,
+    host: fakeProvider.host,
+    port: fakeProvider.port,
+  };
+
+  const [collectionCumulusId = {}] = await dbClient(tableNames.collections).insert(collectionRecord).returning('cumulus_id');
+  const [providerCumulusId = {}] = await dbClient(tableNames.providers).insert(providerRecord).returning('cumulus_id');
 
   const response = await request(app)
     .post('/rules')
@@ -376,22 +376,24 @@ test('POST creates a rule', async (t) => {
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
 
-  t.not(fetchedPostgresRecord, undefined);
+  t.is(fetchedPostgresRecord.collection_cumulus_id, collectionCumulusId);
+  t.is(fetchedPostgresRecord.provider_cumulus_id, providerCumulusId);
+
   t.deepEqual(
     omit(fetchedPostgresRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
     omit(
       {
         ...fetchedDynamoRecord,
-        arn: newRule.rule.arn,
-        value: newRule.rule.value,
+        arn: null,
+        value: null,
         type: newRule.rule.type,
-        enabled: true,
-        log_event_arn: newRule.rule.logEventArn,
-        execution_name_prefix: null,
+        enabled: false,
+        log_event_arn: null,
+        execution_name_prefix: newRule.executionNamePrefix,
         payload: null,
         queue_url: newRule.queueUrl,
         meta: newRule.meta,
-        tags: null,
+        tags: newRule.tags,
         created_at: new Date(newRule.createdAt),
         updated_at: new Date(newRule.updatedAt),
       },
@@ -404,7 +406,9 @@ test('POST creates a rule', async (t) => {
 });
 
 test('POST creates a rule that is enabled by default', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
   delete newRule.state;
 
   const response = await request(app)
@@ -420,12 +424,14 @@ test('POST creates a rule that is enabled by default', async (t) => {
     .where({ name: newRule.name })
     .first();
 
-  t.not(fetchedPostgresRecord, undefined);
+  t.is(fetchedPostgresRecord.enabled, true);
   t.is(response.body.record.state, 'ENABLED');
 });
 
 test('POST returns a 409 response if record already exists', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
 
   await ruleModel.create(newRule);
 
@@ -443,6 +449,8 @@ test('POST returns a 409 response if record already exists', async (t) => {
 
 test('POST returns a 400 response if record is missing a required property', async (t) => {
   const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
 
   // Remove required property to trigger create error
   delete newRule.workflow;
@@ -457,7 +465,9 @@ test('POST returns a 400 response if record is missing a required property', asy
 });
 
 test('POST returns a 400 response if rule name is invalid', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
   newRule.name = 'bad rule name';
 
   const response = await request(app)
@@ -470,7 +480,9 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
 });
 
 test('POST returns a 400 response if rule type is invalid', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
   newRule.type = 'invalid';
 
   const response = await request(app)
@@ -483,7 +495,9 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
 });
 
 test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
   buildPayloadStub.restore();
 
   try {
@@ -500,7 +514,10 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
-  const { newRule } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
+
   const stub = sinon.stub(Rule.prototype, 'create')
     .callsFake(() => {
       throw new Error('unexpected error');
@@ -519,35 +536,41 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
-test.serial('POST does not write to RDS if writing to DynamoDB fails', async (t) => {
-  const { newRule, dbClient } = t.context;
+test.serial('POST does not write to RDS or Dynamo if writing to DynamoDB fails', async (t) => {
+  const { dbClient } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
 
-  const createRuleStub = sinon.stub(Rule.prototype, 'create')
-    .callsFake(() => {
-      throw new Error('Error creating rule');
-    });
+  const failingDbClient = {
+    insert: () => {
+      throw new Error('Insert Rule Error');
+    },
+  };
 
-  try {
-    await request(app)
-      .post('/rules')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send(newRule)
-      .expect(500);
+  const expressRequest = {
+    body: newRule,
+    testContext: {
+      dbClient: failingDbClient,
+    },
+  };
 
-    const dbRecords = await dbClient.select()
-      .from(tableNames.rules)
-      .where({ name: newRule.name });
+  const response = buildFakeExpressResponse();
 
-    t.false(await ruleModel.exists(newRule.name));
-    t.is(dbRecords.length, 0);
-  } finally {
-    createRuleStub.restore();
-  }
+  await post(expressRequest, response);
+  const dbRecords = await dbClient.select()
+    .from(tableNames.rules)
+    .where({ name: newRule.name });
+
+  t.false(await ruleModel.exists(newRule.name));
+  t.is(dbRecords.length, 0);
 });
 
-test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
-  const { newRule, dbClient } = t.context;
+test('POST does not write to DynamoDB or RDS if writing to DynamoDB fails', async (t) => {
+  const { dbClient } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  newRule.provider = undefined;
+  newRule.collection = undefined;
 
   const failingRulesModel = {
     exists: () => false,
@@ -575,6 +598,7 @@ test('POST does not write to DynamoDB if writing to RDS fails', async (t) => {
     .where({ name: newRule.name });
 
   t.is(dbRecords.length, 0);
+  t.false(await ruleModel.exists(newRule.name));
 });
 
 test('PUT replaces a rule', async (t) => {
@@ -606,9 +630,7 @@ test('PUT replaces a rule', async (t) => {
     .from(tableNames.rules)
     .where({ name: expectedRule.name });
 
-  t.is(dbRecords.name, expectedRule.name);
-  t.is(dbRecords.workflow, expectedRule.workflow);
-  t.is(dbRecords.enabled, expectedRule.state === 'ENABLED');
+  t.not(dbRecords.queue_url, undefined);
   t.deepEqual(actualRule, {
     ...expectedRule,
     createdAt: actualRule.createdAt,
