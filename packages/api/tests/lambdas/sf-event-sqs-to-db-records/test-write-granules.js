@@ -135,7 +135,8 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
     worklowStartTime,
   } = t.context;
 
-  const now = worklowStartTime + 5000;
+  const timestamp = worklowStartTime + 5000;
+  const updatedAt = Date.now();
   // Set granule files
   const files = [
     fakeFileFactory({
@@ -149,12 +150,13 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
   t.deepEqual(
     await generateGranuleRecord({
       cumulusMessage,
-      now,
       granule,
       collectionCumulusId: 1,
       providerCumulusId: 2,
       executionCumulusId: 3,
       pdrCumulusId: 4,
+      timestamp,
+      updatedAt,
     }),
     {
       granuleId,
@@ -164,8 +166,8 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       error: {},
       files,
       createdAt: new Date(worklowStartTime),
-      timestamp: new Date(now),
-      updatedAt: new Date(now),
+      timestamp: new Date(timestamp),
+      updatedAt: new Date(updatedAt),
       productVolume: 10,
       duration: 5,
       timeToPreprocess: 3,

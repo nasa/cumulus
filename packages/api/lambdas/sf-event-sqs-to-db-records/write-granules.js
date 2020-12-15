@@ -47,7 +47,8 @@ const generateGranuleRecord = async ({
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
   fileUtils = FileUtils,
-  now = Date.now(),
+  timestamp = Date.now(),
+  updatedAt = Date.now(),
 }) => {
   const {
     files,
@@ -63,7 +64,6 @@ const generateGranuleRecord = async ({
     files,
   });
 
-  const timestamp = now;
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
@@ -75,7 +75,7 @@ const generateGranuleRecord = async ({
     error: parseException(cumulusMessage.exception),
     published,
     createdAt: new Date(workflowStartTime),
-    updatedAt: new Date(now),
+    updatedAt: new Date(updatedAt),
     timestamp: new Date(timestamp),
     // Duration is also used as timeToXfer for the EMS report
     duration: getWorkflowDuration(workflowStartTime, timestamp),
