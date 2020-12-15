@@ -2,34 +2,12 @@ const omit = require('lodash/omit');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-// Dynamo models
 const Execution = require('@cumulus/api/models/executions');
-const AsyncOperation = require('@cumulus/api/models/async-operation');
-const Collection = require('@cumulus/api/models/collections');
-const Rule = require('@cumulus/api/models/rules');
-
-// PG models
-const { CollectionPgModel, AsyncOperationPgModel } = require('@cumulus/db');
-
-const { RecordAlreadyMigrated } = require('@cumulus/errors');
-const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const {
-  generateLocalTestDb,
-  destroyLocalTestDb,
-} = require('@cumulus/db');
-
-// PG mock data factories
-const {
-  fakeCollectionRecordFactory,
-  fakeAsyncOperationRecordFactory,
-} = require('@cumulus/db/dist/test-utils');
-
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-
+const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 
@@ -38,145 +16,90 @@ const {
   migrateExecutions,
 } = require('../dist/lambda/executions');
 
-let collectionsModel;
-let executionsModel;
-let asyncOperationsModel;
-let rulesModel;
-
-const executionOmitList = [
-  'createdAt', 'updatedAt', 'finalPayload', 'originalPayload', 'parentArn', 'type', 'execution', 'name', 'collectionId', 'asyncOperationId', 'cumulusVersion',
-];
-
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
+const testDbUser = 'postgres';
 
-const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {}) => {
-  t.deepEqual(
-    omit(pgExecution, ['cumulus_id']),
-    omit(
-      {
-        ...dynamoExecution,
-        async_operation_cumulus_id: null,
-        collection_cumulus_id: null,
-        parent_cumulus_id: null,
-        cumulus_version: dynamoExecution.cumulusVersion,
-        url: dynamoExecution.execution,
-        workflow_name: dynamoExecution.type,
-        original_payload: dynamoExecution.originalPayload,
-        final_payload: dynamoExecution.finalPayload,
-        created_at: new Date(dynamoExecution.createdAt),
-        updated_at: new Date(dynamoExecution.updatedAt),
-        timestamp: new Date(dynamoExecution.timestamp),
-        ...overrides,
-      },
-      executionOmitList
-    )
-  );
-};
+// An Execution Dynamo record
+const generateFakeDynamoExecution = (params) => ({
+  arn: 'arn:aws:lambda:us-east-1:1234:1234',
+  name: `${cryptoRandomString({ length: 10 })}execution`,
+  execution: 'https://test',
+  error: {},
+  tasks: {},
+  type: 'IngestGranule',
+  status: 'running',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  timestamp: Date.now(),
+  originalPayload: {},
+  finalPayload: undefined,
+  collectionId: '1',
+  duration: 2,
+  parentArn: 'arn:aws:lambda:us-east-1:1234:1234',
+  asyncOperationId: '1',
+  ...params,
+});
+
+let executionsModel;
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-  process.env.AsyncOperationsTable = cryptoRandomString({ length: 10 });
-  process.env.CollectionsTable = cryptoRandomString({ length: 10 });
-  process.env.RulesTable = cryptoRandomString({ length: 10 });
 
   await createBucket(process.env.system_bucket);
-
   executionsModel = new Execution();
-  asyncOperationsModel = new AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-  });
-  collectionsModel = new Collection();
-  rulesModel = new Rule();
-
   await executionsModel.createTable();
-  await asyncOperationsModel.createTable();
-  await collectionsModel.createTable();
-  await rulesModel.createTable();
 
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
+  t.context.knexAdmin = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      migrationDir,
+    },
+  });
+  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
+  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
+
+  t.context.knex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: testDbName,
+      migrationDir,
+    },
+  });
+
+  await t.context.knex.migrate.latest();
 });
 
 test.afterEach.always(async (t) => {
   await t.context.knex('executions').del();
-  await t.context.knex('collections').del();
-  await t.context.knex('async_operations').del();
 });
 
 test.after.always(async (t) => {
   await executionsModel.deleteTable();
-  await asyncOperationsModel.deleteTable();
-  await collectionsModel.deleteTable();
-  await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await destroyLocalTestDb({
-    knex: t.context.knex,
-    knexAdmin: t.context.knexAdmin,
-    testDbName,
-  });
+  await t.context.knex.destroy();
+  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
+  await t.context.knexAdmin.destroy();
 });
 
-test.serial('migrateExecutionRecord correctly migrates execution record', async (t) => {
-  // This will be the top-level execution (no parent execution)
-  const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
-  const fakeCollection = fakeCollectionRecordFactory();
-  const fakeAsyncOperation = fakeAsyncOperationRecordFactory();
-  const existingExecution = await executionsModel.create(fakeExecution);
+test('migrateExecutionRecord correctly migrates execution record', async (t) => {
+  const dynamoExecution = generateFakeDynamoExecution({});
 
-  const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
-    t.context.knex,
-    fakeCollection
-  );
-
-  const asyncOperationPgModel = new AsyncOperationPgModel();
-  const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
-    t.context.knex,
-    fakeAsyncOperation
-  );
-
-  t.teardown(() => Promise.all([
-    executionsModel.delete({ arn: fakeExecution.arn }),
-  ]));
-
-  // migrate the existing dynamo execution to postgres so
-  // we can use it as the parent for the next execution
-  await migrateExecutionRecord(existingExecution, t.context.knex);
-
-  const existingPostgresExecution = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: existingExecution.arn })
-    .first();
-
-  // Create new Dynamo execution to be migrated to postgres
-  const newExecution = fakeExecutionFactoryV2({
-    parentArn: existingExecution.arn,
-    collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
-    asyncOperationId: fakeAsyncOperation.id,
-  });
-
-  await migrateExecutionRecord(newExecution, t.context.knex);
-
+  await migrateExecutionRecord(dynamoExecution, t.context.knex);
   const createdRecord = await t.context.knex.queryBuilder()
     .select()
     .table('executions')
-    .where({ arn: newExecution.arn })
+    .where({ arn: dynamoExecution.arn })
     .first();
 
-  assertPgExecutionMatches(t, newExecution, createdRecord, {
-    async_operation_cumulus_id: asyncOperationCumulusId,
-    collection_cumulus_id: collectionCumulusId,
-    parent_cumulus_id: existingPostgresExecution.cumulus_id,
-  });
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    { ...dynamoExecution }
+  );
 });
 
-test.serial('migrateExecutionRecord throws error on invalid source data from Dynamo', async (t) => {
-  const newExecution = fakeExecutionFactoryV2();
+test('migrateExecutionRecord throws error on invalid source data from Dynamo', async (t) => {
 
   // make source record invalid
   delete newExecution.arn;
@@ -184,6 +107,7 @@ test.serial('migrateExecutionRecord throws error on invalid source data from Dyn
   await t.throwsAsync(migrateExecutionRecord(newExecution, t.context.knex));
 });
 
+<<<<<<< HEAD
 test.serial('migrateExecutionRecord handles nullable fields on source execution data', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
@@ -207,6 +131,9 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
     .table('executions')
     .where({ arn: newExecution.arn })
     .first();
+=======
+test('migrateExecutionRecord handles nullable fields on source execution data', async (t) => {
+>>>>>>> 5c0fb5768... CUMULUS-2188 postgres model definition for executions with tests
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
     duration: null,
@@ -220,8 +147,12 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
   });
 });
 
+<<<<<<< HEAD
 test.serial('migrateExecutionRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+=======
+test('migrateExecutionRecord ignores extraneous fields from Dynamo', async (t) => {
+>>>>>>> 5c0fb5768... CUMULUS-2188 postgres model definition for executions with tests
 
   await migrateExecutionRecord(newExecution, t.context.knex);
   await t.throwsAsync(
@@ -230,6 +161,7 @@ test.serial('migrateExecutionRecord throws RecordAlreadyMigrated error for alrea
   );
 });
 
+<<<<<<< HEAD
 test.serial('migrateExecutions skips already migrated record', async (t) => {
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
 
@@ -431,6 +363,9 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
     executionsModel.delete({ arn: newExecution.arn }),
     executionsModel.delete({ arn: newExecution2.arn }),
   ]));
+=======
+test('migrateExecutionRecord skips already migrated record', async (t) => {
+>>>>>>> 5c0fb5768... CUMULUS-2188 postgres model definition for executions with tests
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
