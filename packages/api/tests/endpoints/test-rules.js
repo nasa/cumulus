@@ -601,9 +601,10 @@ test('PUT replaces a rule', async (t) => {
 
   const dbRecords = await dbClient.select()
     .from(tableNames.rules)
-    .where({ name: expectedRule.name });
+    .where({ name: expectedRule.name })
+    .first();
 
-  t.is(dbRecords.queue_url, undefined);
+  t.is(dbRecords.queue_url, null);
   t.deepEqual(actualRule, {
     ...expectedRule,
     createdAt: actualRule.createdAt,
