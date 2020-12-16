@@ -11,6 +11,7 @@ const {
   localStackConnectionEnv,
   tableNames,
 } = require('@cumulus/db');
+const { translateApiRuleToPostgresRule } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 
 const { buildFakeExpressResponse } = require('./utils');
@@ -586,10 +587,21 @@ test('PUT replaces a rule', async (t) => {
     state: 'ENABLED',
   };
 
+  const translatedRule = await translateApiRuleToPostgresRule(testRule, dbClient);
+  await dbClient(tableNames.rules).insert(translatedRule);
+
+  const dbRecord = await dbClient.select()
+    .from(tableNames.rules)
+    .where({ name: expectedRule.name })
+    .first();
+
   // Make sure testRule contains values for the properties we omitted from
   // expectedRule to confirm that after we replace (PUT) the rule those
   // properties are dropped from the stored rule.
   t.truthy(testRule.queueUrl);
+
+  // Ensure pg record for test rule contains queue_url
+  t.truthy(dbRecord.queue_url);
 
   await request(app)
     .put(`/rules/${testRule.name}`)

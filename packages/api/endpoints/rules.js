@@ -1,8 +1,5 @@
 'use strict';
 
-const merge = require('lodash/merge');
-const omit = require('lodash/omit');
-const cloneDeep = require('lodash/cloneDeep');
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -78,6 +75,7 @@ async function post(req, res) {
   }
 
   try {
+    // Set createdAt and updatedAt so postgres and dynamodb record are in sync
     rule.createdAt = Date.now();
     rule.updatedAt = Date.now();
     const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
@@ -127,13 +125,8 @@ async function put({ params: { name }, body }, res) {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
 
-    let updatedRuleItem = cloneDeep(oldRule);
-    // Remove all fields from the existing rule that are not supplied in body
-    // since body is expected to be a replacement rule, not a partial rule
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
-    updatedRuleItem = omit(updatedRuleItem, fieldsToDelete);
-    const record = merge(updatedRuleItem, body);
-    const newPostgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
+    const newPostgresRecord = await translateApiRuleToPostgresRule(body, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await trx(tableNames.rules)
