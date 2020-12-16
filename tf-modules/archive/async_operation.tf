@@ -19,7 +19,7 @@ resource "aws_ecs_task_definition" "async_operation" {
         "value": "${data.aws_region.current.name}"
       }
     ],
-    "image": "cumuluss/async-operation:27",
+    "image": "cumuluss/async-operation:33",
     "memoryReservation": 700,
     "logConfiguration": {
       "logDriver": "awslogs",

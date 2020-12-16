@@ -15,4 +15,4 @@ RUN npm install
 
 COPY index.js /home/task/
 
-CMD [ "node", "--harmony", "index.js" ]
+CMD [ "node", "--max-old-space-size=4096","--harmony", "index.js" ]
