@@ -79,9 +79,10 @@ async function post(req, res) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
+  const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
+
   try {
     await dbClient.transaction(async (trx) => {
-      const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
       await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
       record = await model.create(rule, rule.createdAt, rule.updatedAt);
     });
@@ -132,9 +133,9 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
     updatedRuleItem = omit(updatedRuleItem, fieldsToDelete);
     const record = merge(updatedRuleItem, body);
+    const newPostgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
 
     await dbClient.transaction(async (trx) => {
-      const newPostgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
       await trx(tableNames.rules)
         .insert(newPostgresRecord)
         .onConflict('name')
