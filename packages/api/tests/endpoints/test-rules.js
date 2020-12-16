@@ -418,10 +418,8 @@ test('POST creates a rule that is enabled by default', async (t) => {
 
 test('POST returns a 409 response if record already exists', async (t) => {
   const { newRule } = t.context;
-  newRule.createdAt = Date.now();
-  newRule.updatedAt = Date.now();
 
-  await ruleModel.create(newRule, newRule.createdAt, newRule.updatedAt);
+  await ruleModel.create(newRule);
 
   const response = await request(app)
     .post('/rules')
