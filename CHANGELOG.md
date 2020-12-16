@@ -55,7 +55,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/message/workflows/getMessageWorkflowStopTime`
     - `@cumulus/message/workflows/getMessageWorkflowName`
   - **CUMULUS-2199**
-    - Added `translateApiRuleToPostgresRule` to translate API Rule to conform to Postgres Rule definition.
+    - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API Rule to conform to Postgres Rule definition.
 
 ### Changed
 
