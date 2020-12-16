@@ -113,23 +113,30 @@ const generateFileRecord = (file) => ({
   source: file.source,
 });
 
+const buildAndGenerateFileRecord = async ({
+  file,
+  provider,
+  fileUtils = FileUtils,
+}) => {
+  // TODO: I think this is necessary to set properties like
+  // `key`, which is required for the Postgres schema
+  const updatedFile = await fileUtils.buildDatabaseFile(
+    s3(),
+    buildURL(provider),
+    file
+  );
+  return generateFileRecord(updatedFile);
+};
+
 const generateFileRecords = async ({
   cumulusMessage,
   files,
-  fileUtils = FileUtils,
 }) => {
   // TODO: move this
   const provider = getMessageProvider(cumulusMessage);
-  return Promise.all(files.map(async (file) => {
-    // TODO: I think this is necessary to set properties like
-    // `key`, which is required for the Postgres schema
-    const updatedFile = await fileUtils.buildDatabaseFile(
-      s3(),
-      buildURL(provider),
-      file
-    );
-    return generateFileRecord(updatedFile);
-  }));
+  return Promise.all(files.map(
+    (file) => buildAndGenerateFileRecord({ provider, file })
+  ));
 };
 
 const writeGranuleViaTransaction = async ({

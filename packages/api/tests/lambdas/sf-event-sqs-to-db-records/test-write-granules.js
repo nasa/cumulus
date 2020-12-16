@@ -291,15 +291,12 @@ test('generateFileRecord() returns only allowed properties', (t) => {
 });
 
 test('generateFileRecords() generates multiple file records', async (t) => {
-  const fakeFileUtils = {
-    buildDatabaseFile: async (...params) => params.pop(),
-  };
   const files = [{
     bucket: cryptoRandomString({ length: 3 }),
-    key: cryptoRandomString({ length: 3 }),
+    size: 1,
   }, {
     bucket: cryptoRandomString({ length: 3 }),
-    key: cryptoRandomString({ length: 3 }),
+    size: 1,
   }];
   const fileRecords = await generateFileRecords({
     cumulusMessage: {
@@ -311,7 +308,6 @@ test('generateFileRecords() generates multiple file records', async (t) => {
       },
     },
     files,
-    fileUtils: fakeFileUtils,
   });
   t.is(fileRecords.length, 2);
 });
