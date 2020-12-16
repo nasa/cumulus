@@ -330,7 +330,8 @@ The following values (denoted by `${}` in the sample below) should be replaced t
   "identifier ": "testIdentifier123456",
   "collection": "${COLLECTION}",
   "provider": "TestProvider",
-  "version": "001"
+  "version": "001",
+  "submissionTime": "2017-09-30T03:42:29.791198"
 }
 ```
 
@@ -390,7 +391,8 @@ Example Input Payload:
   },
   "version": "123456",
   "collection": "MOD09GQ",
-  "provider": "TestProvider"
+  "provider": "TestProvider",
+  "submissionTime": "2017-09-30T03:42:29.791198"
 }
 ```
 
@@ -416,22 +418,26 @@ Example Output Payload:
       },
       "version": "123456",
       "collection": "MOD09GQ",
-      "provider": "TestProvider"
+      "provider": "TestProvider",
+      "submissionTime": "2017-09-30T03:42:29.791198",
+      "receivedTime": "2017-09-30T03:42:31.634552"
     },
-    "granules": [
-      {
-        "granuleId": "TestGranuleUR",
-        "files": [
-          {
-            "path": "some-bucket/data",
-            "url_path": "s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "bucket": "some-bucket",
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "size": 12345678
-          }
-        ]
-      }
-    ]
+    "output": {
+      "granules": [
+        {
+          "granuleId": "TestGranuleUR",
+          "files": [
+            {
+              "path": "some-bucket/data",
+              "url_path": "s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+              "bucket": "some-bucket",
+              "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+              "size": 12345678
+            }
+          ]
+        }
+      ]
+    }
   }
 ```
 
@@ -561,11 +567,12 @@ For purposes of validating the workflow, it may be simpler to locate the workflo
 ```json
 {
   "cnmResponse": {
-    "productSize": 12345678,
-    "processCompleteTime": "2018-07-27T05:43:41.698",
+    "provider": "TestProvider",
     "collection": "MOD09GQ",
     "version": "123456",
-    "provider": "TestProvider",
+    "processCompleteTime": "2017-09-30T03:45:29.791198",
+    "submissionTime": "2017-09-30T03:42:29.791198",
+    "receivedTime": "2017-09-30T03:42:31.634552",
     "identifier ": "testIdentifier123456",
     "response": {
       "status": "SUCCESS"

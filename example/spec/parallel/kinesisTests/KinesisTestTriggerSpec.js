@@ -3,7 +3,6 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isMatch = require('lodash/isMatch');
 const replace = require('lodash/replace');
-const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Execution } = require('@cumulus/api/models');
@@ -104,10 +103,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       deleteTestStream(streamName),
       deleteTestStream(cnmResponseStreamName),
       executionModel.delete({ arn: workflowExecution.executionArn }),
-      s3().deleteObject({
-        Bucket: testConfig.bucket,
-        Key: `${filePrefix}/${fileData.name}`,
-      }).promise(),
       deleteGranule({
         prefix: testConfig.stackName,
         granuleId,
@@ -173,8 +168,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     const fileDataWithFilename = {
       ...fileData,
-      filename: `s3://${testConfig.bucket}/${filePrefix}/${recordFile.name}`,
-      bucket: testConfig.bucket,
+      filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
+      bucket: testConfig.buckets.private.name,
       fileStagingDir: filePrefix,
       size: fileData.size,
     };

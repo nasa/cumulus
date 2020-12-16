@@ -59,7 +59,7 @@
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "collection": "{$.meta.collection}",
-            "downloadBucket": "{$.cumulus_meta.system_bucket}",
+            "downloadBucket": "{$.meta.buckets.private.name}",
             "provider": "{$.meta.provider}",
             "syncChecksumFiles": true,
             "stack": "{$.meta.stack}",
@@ -108,7 +108,7 @@
             "FullMessage": true
           },
           "task_config": {
-            "bucket": "{$.meta.buckets.internal.name}",
+            "bucket": "{$.meta.buckets.private.name}",
             "collection": "{$.meta.collection}",
             "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
             "additionalUrls": "{$.meta.additionalUrls}",
@@ -191,7 +191,7 @@
         "cma": {
           "event.$": "$",
           "task_config": {
-            "bucket": "{$.meta.buckets.internal.name}",
+            "bucket": "{$.meta.buckets.private.name}",
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "collection": "{$.meta.collection}",
