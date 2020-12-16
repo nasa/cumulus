@@ -272,6 +272,8 @@ test('generateFileRecord() generates correct record', (t) => {
         checksum_value: file.checksum,
         filename: file.fileName,
         file_name: file.fileName,
+        name: undefined,
+        path: undefined,
       },
       fileOmitKeys
     )

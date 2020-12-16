@@ -99,29 +99,19 @@ const generateGranuleRecord = async ({
 //   }));
 // };
 
-const generateFileRecord = (file) =>
-  pick(
-    {
-      ...file,
-      checksum_type: file.checksumType,
-      checksum_value: file.checksum,
-      // TODO: do we really need both of these properties?
-      filename: file.fileName,
-      file_name: file.fileName,
-    },
-    [
-      'bucket',
-      'checksum_type',
-      'checksum_value',
-      'filename',
-      'file_name',
-      'key',
-      'name',
-      'path',
-      'size',
-      'source',
-    ]
-  );
+const generateFileRecord = (file) => ({
+  bucket: file.bucket,
+  checksum_type: file.checksumType,
+  checksum_value: file.checksum,
+  // TODO: do we really need both of these properties?
+  filename: file.fileName,
+  file_name: file.fileName,
+  key: file.key,
+  name: file.name,
+  path: file.path,
+  size: file.size,
+  source: file.source,
+});
 
 const generateFileRecords = async ({
   cumulusMessage,
