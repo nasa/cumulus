@@ -101,6 +101,8 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const newRule = fakeRuleFactoryV2();
+  newRule.createdAt = Date.now();
+  newRule.updatedAt = Date.now();
   delete newRule.collection;
   delete newRule.provider;
 
@@ -515,22 +517,27 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 test.serial('POST does not write to RDS or DynamoDB if writing to RDS fails', async (t) => {
   const { newRule, dbClient } = t.context;
 
-  const failingDbClient = {
-    transaction: () => {
-      throw new Error('Insert Rule Error');
-    },
+  const failingTrx = (cb) => {
+    const fakeTrx = sinon.stub().returns({
+      insert: () => {
+        throw new Error('Insert Rule Error');
+      },
+    });
+    return cb(fakeTrx);
   };
+
+  const trxStub = sinon.stub(dbClient, 'transaction').callsFake(failingTrx);
+  t.teardown(() => trxStub.restore());
 
   const expressRequest = {
     body: newRule,
     testContext: {
-      dbClient: failingDbClient,
+      dbClient,
     },
   };
-
   const response = buildFakeExpressResponse();
-
   await post(expressRequest, response);
+
   const dbRecords = await dbClient.select()
     .from(tableNames.rules)
     .where({ name: newRule.name });

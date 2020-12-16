@@ -72,8 +72,6 @@ async function post(req, res) {
   let record;
   const rule = req.body || {};
   const name = rule.name;
-  rule.createdAt = Date.now();
-  rule.updatedAt = Date.now();
 
   if (await model.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
