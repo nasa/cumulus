@@ -300,6 +300,7 @@ const writeGranules = async ({
 
 module.exports = {
   generateFileRecord,
+  generateFileRecords,
   generateGranuleRecord,
   writeGranuleViaTransaction,
   writeGranules,

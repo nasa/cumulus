@@ -14,6 +14,7 @@ const {
 
 const {
   generateFileRecord,
+  generateFileRecords,
   generateGranuleRecord,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
@@ -252,7 +253,7 @@ test('generateGranuleRecord() includes correct error if cumulus message has an e
   t.deepEqual(record.error, exception);
 });
 
-test('generateFileRecord generates correct record', (t) => {
+test('generateFileRecord() generates correct record', (t) => {
   const file = {
     bucket: cryptoRandomString({ length: 3 }),
     key: cryptoRandomString({ length: 3 }),
@@ -277,40 +278,40 @@ test('generateFileRecord generates correct record', (t) => {
   );
 });
 
-test('generateFileRecord returns only allowed properties', (t) => {
+test('generateFileRecord() returns only allowed properties', (t) => {
   const file = {
-    bucket: cryptoRandomString({ length: 3 }),
-    key: cryptoRandomString({ length: 3 }),
-    fileName: cryptoRandomString({ length: 3 }),
-    checksumType: 'md5',
-    checksum: 'bogus-value',
-    size: 100,
-    source: 'fake-source',
-    path: 'fake-path',
-    name: 'fake-name',
     // add bogus property
     foo: 'bar',
   };
 
   const record = generateFileRecord(file);
-  const recordKeys = Object.keys(record);
-  const expectedKeys = Object.keys(
-    omit(
-      {
-        ...file,
-        checksum_type: file.checksumType,
-        checksum_value: file.checksum,
-        filename: file.fileName,
-        file_name: file.fileName,
-      },
-      fileOmitKeys.concat(['foo'])
-    )
-  );
+  t.false(Object.prototype.hasOwnProperty.call(record, 'foo'));
+});
 
-  t.deepEqual(
-    recordKeys.sort(),
-    expectedKeys.sort()
-  );
+test('generateFileRecords() generates multiple file records', async (t) => {
+  const fakeFileUtils = {
+    buildDatabaseFile: async (...params) => params.pop(),
+  };
+  const files = [{
+    bucket: cryptoRandomString({ length: 3 }),
+    key: cryptoRandomString({ length: 3 }),
+  }, {
+    bucket: cryptoRandomString({ length: 3 }),
+    key: cryptoRandomString({ length: 3 }),
+  }];
+  const fileRecords = await generateFileRecords({
+    cumulusMessage: {
+      meta: {
+        provider: {
+          protocol: 's3',
+          host: 'bucket',
+        },
+      },
+    },
+    files,
+    fileUtils: fakeFileUtils,
+  });
+  t.is(fileRecords.length, 2);
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {
