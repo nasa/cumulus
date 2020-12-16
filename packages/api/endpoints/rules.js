@@ -78,7 +78,10 @@ async function post(req, res) {
   }
 
   try {
+    rule.createdAt = Date.now();
+    rule.updatedAt = Date.now();
     const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
+
     await dbClient.transaction(async (trx) => {
       await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
       record = await model.create(rule, rule.createdAt, rule.updatedAt);
