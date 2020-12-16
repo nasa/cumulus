@@ -131,11 +131,7 @@ async function put({ params: { name }, body }, res) {
     // since body is expected to be a replacement rule, not a partial rule
     const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
     updatedRuleItem = omit(updatedRuleItem, fieldsToDelete);
-    merge(updatedRuleItem, body);
-
-    const stateChanged = body.state && body.state !== oldRule.state;
-    const valueUpdated = body.rule && body.rule.value !== oldRule.rule.value;
-    const record = await model.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
+    const record = merge(updatedRuleItem, body);
 
     await dbClient.transaction(async (trx) => {
       const newPostgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
