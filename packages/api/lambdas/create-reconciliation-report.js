@@ -8,6 +8,7 @@ const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
+const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const Logger = require('@cumulus/logger');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
@@ -663,11 +664,13 @@ async function createReconciliationReport(recReportParams) {
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  return s3().putObject({
+  const reportString = JSON.stringify(report);
+  log.debug(`Uploading report with length: ${reportString.length} to s3.`);
+  return promiseS3Upload({
     Bucket: systemBucket,
     Key: reportKey,
-    Body: JSON.stringify(report),
-  }).promise();
+    Body: reportString,
+  });
 }
 
 /**
