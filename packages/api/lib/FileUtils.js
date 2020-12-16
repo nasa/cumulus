@@ -134,6 +134,7 @@ const buildDatabaseFiles = async ({ s3, providerURL, files }) =>
 
 module.exports = {
   setSource,
+  buildDatabaseFile,
   buildDatabaseFiles,
   buildFileSourceURL,
   filterDatabaseProperties,

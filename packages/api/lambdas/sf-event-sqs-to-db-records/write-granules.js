@@ -1,6 +1,7 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
+const flow = require('lodash/flow');
 const pick = require('lodash/pick');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -104,7 +105,9 @@ const generateFileRecord = (file) =>
       ...file,
       checksum_type: file.checksumType,
       checksum_value: file.checksum,
+      // TODO: do we really need both of these properties?
       filename: file.fileName,
+      file_name: file.fileName,
     },
     [
       'bucket',
@@ -115,9 +118,29 @@ const generateFileRecord = (file) =>
       'key',
       'name',
       'path',
+      'size',
       'source',
     ]
   );
+
+const generateFileRecords = async ({
+  cumulusMessage,
+  files,
+  fileUtils = FileUtils,
+}) => {
+  // TODO: move this
+  const provider = getMessageProvider(cumulusMessage);
+  return Promise.all(files.map(async (file) => {
+    // TODO: I think this is necessary to set properties like
+    // `key`, which is required for the Postgres schema
+    const updatedFile = await fileUtils.buildDatabaseFile(
+      s3(),
+      buildURL(provider),
+      file
+    );
+    return generateFileRecord(updatedFile);
+  }));
+};
 
 const writeGranuleViaTransaction = async ({
   cumulusMessage,
@@ -128,13 +151,9 @@ const writeGranuleViaTransaction = async ({
   executionCumulusId,
   pdrCumulusId,
   trx,
-  fileUtils = FileUtils,
 }) => {
-  // TODO: move to helper
-  const provider = getMessageProvider(cumulusMessage);
-  const files = await fileUtils.buildDatabaseFiles({
-    s3: s3(),
-    providerURL: buildURL(provider),
+  const files = await generateFileRecords({
+    cumulusMessage,
     files: granule.files,
   });
 
@@ -280,6 +299,7 @@ const writeGranules = async ({
 };
 
 module.exports = {
+  generateFileRecord,
   generateGranuleRecord,
   writeGranuleViaTransaction,
   writeGranules,

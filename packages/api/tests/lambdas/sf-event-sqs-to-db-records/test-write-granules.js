@@ -13,6 +13,7 @@ const {
 } = require('@cumulus/db');
 
 const {
+  generateFileRecord,
   generateGranuleRecord,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
@@ -21,6 +22,8 @@ const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
+
+const fileOmitKeys = ['checksum', 'checksumType', 'fileName'];
 
 test.before(async (t) => {
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
@@ -80,7 +83,7 @@ test.beforeEach(async (t) => {
   };
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
-  t.context.files = [fakeFileFactory()];
+  t.context.files = [fakeFileFactory({ size: 5 })];
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
     granuleId: t.context.granuleId,
@@ -247,6 +250,67 @@ test('generateGranuleRecord() includes correct error if cumulus message has an e
     granule,
   });
   t.deepEqual(record.error, exception);
+});
+
+test('generateFileRecord generates correct record', (t) => {
+  const file = {
+    bucket: cryptoRandomString({ length: 3 }),
+    key: cryptoRandomString({ length: 3 }),
+    fileName: cryptoRandomString({ length: 3 }),
+    checksumType: 'md5',
+    checksum: 'bogus-value',
+    size: 100,
+    source: 'fake-source',
+  };
+  t.deepEqual(
+    generateFileRecord(file),
+    omit(
+      {
+        ...file,
+        checksum_type: file.checksumType,
+        checksum_value: file.checksum,
+        filename: file.fileName,
+        file_name: file.fileName,
+      },
+      fileOmitKeys
+    )
+  );
+});
+
+test('generateFileRecord returns only allowed properties', (t) => {
+  const file = {
+    bucket: cryptoRandomString({ length: 3 }),
+    key: cryptoRandomString({ length: 3 }),
+    fileName: cryptoRandomString({ length: 3 }),
+    checksumType: 'md5',
+    checksum: 'bogus-value',
+    size: 100,
+    source: 'fake-source',
+    path: 'fake-path',
+    name: 'fake-name',
+    // add bogus property
+    foo: 'bar',
+  };
+
+  const record = generateFileRecord(file);
+  const recordKeys = Object.keys(record);
+  const expectedKeys = Object.keys(
+    omit(
+      {
+        ...file,
+        checksum_type: file.checksumType,
+        checksum_value: file.checksum,
+        filename: file.fileName,
+        file_name: file.fileName,
+      },
+      fileOmitKeys.concat(['foo'])
+    )
+  );
+
+  t.deepEqual(
+    recordKeys.sort(),
+    expectedKeys.sort()
+  );
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {
