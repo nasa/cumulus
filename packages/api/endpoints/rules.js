@@ -77,9 +77,8 @@ async function post(req, res) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
-  const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
-
   try {
+    const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
     await dbClient.transaction(async (trx) => {
       await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
       record = await model.create(rule, rule.createdAt, rule.updatedAt);
