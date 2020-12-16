@@ -640,32 +640,17 @@ test('PUT returns 400 for name mismatch between params and payload',
   });
 
 test('DELETE deletes a rule', async (t) => {
-  const { dbClient } = t.context;
-  const rule = {
-    name: randomId('name'),
-    workflow: workflow,
-    provider: undefined,
-    collection: undefined,
-    rule: {
-      type: 'onetime',
-      arn: 'arn',
-      value: 'value',
-      logEventArn: 'log_event_arn',
-    },
-    meta: { retries: 0 },
-    queueUrl: 'queue_url',
-    state: 'ENABLED',
-  };
+  const { dbClient, newRule } = t.context;
 
   await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(rule)
+    .send(newRule)
     .expect(200);
 
   const response = await request(app)
-    .delete(`/rules/${rule.name}`)
+    .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -673,7 +658,7 @@ test('DELETE deletes a rule', async (t) => {
   const { message } = response.body;
   const dbRecords = await dbClient.select()
     .from(tableNames.rules)
-    .where({ name: rule.name });
+    .where({ name: newRule.name });
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
