@@ -25,7 +25,7 @@ export {
   PostgresAsyncOperationRecord,
   PostgresCollection,
   PostgresCollectionRecord,
-  ExecutionRecord,
+  PostgresExecution,
   PostgresExecutionRecord,
   PostgresProviderRecord,
   PostgresProvider,

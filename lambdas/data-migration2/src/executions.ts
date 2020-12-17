@@ -35,12 +35,20 @@ export const migrateExecutionRecord = async (
     throw new RecordAlreadyMigrated(`Execution arn ${dynamoRecord.arn} was already migrated, skipping`);
   }
 
-  const updatedRecord = translateApiExecutionToPostgresExecution(<ExecutionRecord>dynamoRecord);
+  const updatedRecord = await translateApiExecutionToPostgresExecution(
+    <ExecutionRecord>dynamoRecord, <Knex>knex
+  );
+
+  if (updatedRecord.parent_cumulus_id !== undefined) {
+    // Get parent record
+    // Migrate parent record
+  }
 
   await knex('executions').insert(updatedRecord);
 };
 
-export const migrateExecutions = async (): Promise<MigrationSummary> => {
+export const migrateExecutions = async (knex: Knex): Promise<MigrationSummary> => {
+  console.log(knex);
   const migrationSummary = {
     dynamoRecords: 0,
     success: 0,

@@ -16,39 +16,33 @@ const {
   migrateExecutions,
 } = require('../dist/lambda/executions');
 
+const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
+
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
 
-// An Execution Dynamo record
-const generateFakeDynamoExecution = (params) => ({
-  arn: 'arn:aws:lambda:us-east-1:1234:1234',
-  name: `${cryptoRandomString({ length: 10 })}execution`,
-  execution: 'https://test',
-  error: {},
-  tasks: {},
-  type: 'IngestGranule',
-  status: 'running',
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
-  timestamp: Date.now(),
-  originalPayload: {},
-  finalPayload: undefined,
-  collectionId: '1',
-  duration: 2,
-  parentArn: 'arn:aws:lambda:us-east-1:1234:1234',
-  asyncOperationId: '1',
-  ...params,
-});
+async function addFakeData(numItems, factory, model, factoryParams = {}) {
+  const items = [];
 
-let executionsModel;
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < numItems; i += 1) {
+    const item = factory(factoryParams);
+    items.push(item);
+    await model.create(item);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return items;
+}
+
+process.env.stackName = cryptoRandomString({ length: 10 });
+process.env.system_bucket = cryptoRandomString({ length: 10 });
+process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
+
+const executionsModel = new Execution();
 
 test.before(async (t) => {
-  process.env.stackName = cryptoRandomString({ length: 10 });
-  process.env.system_bucket = cryptoRandomString({ length: 10 });
-  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-
   await createBucket(process.env.system_bucket);
-  executionsModel = new Execution();
   await executionsModel.createTable();
 
   t.context.knexAdmin = await getKnexClient({
@@ -69,6 +63,9 @@ test.before(async (t) => {
   });
 
   await t.context.knex.migrate.latest();
+
+  // await addFakeData(1, fakeExecutionFactoryV2, executionsModel);
+  t.context.existingExecution = await executionsModel.create(fakeExecutionFactoryV2());
 });
 
 test.afterEach.always(async (t) => {
@@ -83,20 +80,27 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test('migrateExecutionRecord correctly migrates execution record', async (t) => {
-  const dynamoExecution = generateFakeDynamoExecution({});
+test.only('migrateExecutionRecord correctly migrates execution record', async (t) => {
+  const { existingExecution } = t.context;
 
-  await migrateExecutionRecord(dynamoExecution, t.context.knex);
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: dynamoExecution.arn })
-    .first();
+  const existingRecord = await executionsModel.get();
 
-  t.deepEqual(
-    omit(createdRecord, ['cumulus_id']),
-    { ...dynamoExecution }
-  );
+  console.log(existingRecord);
+
+  // Create new Dynamo execution to be migrated
+  const newExecution = fakeExecutionFactoryV2({ parentArn: existingExecution.arn });
+
+  await migrateExecutionRecord(newExecution, t.context.knex);
+  // const createdRecord = await t.context.knex.queryBuilder()
+  //   .select()
+  //   .table('executions')
+  //   .where({ cumulus_id: newExecution.cumulus_id })
+  //   .first();
+
+  // t.deepEqual(
+  //   omit(createdRecord, ['cumulus_id']),
+  //   { ...newExecution }
+  // );
 });
 
 test('migrateExecutionRecord throws error on invalid source data from Dynamo', async (t) => {

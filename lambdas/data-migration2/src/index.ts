@@ -12,7 +12,7 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
   const knex = await getKnexClient({ env });
 
   try {
-    const executionsMigrationSummary = await migrateExecutions();
+    const executionsMigrationSummary = await migrateExecutions(knex);
 
     return `
       Migration summary:
