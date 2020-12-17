@@ -67,6 +67,11 @@ test.before(async (t) => {
     collectionName: 'MOD87GQ',
     collectionVersion: '006',
   }).resolves(mod87CollectionConfig);
+  t.context.getCollectionsStub.withArgs({
+    prefix: t.context.stackName,
+    collectionName: 'MOD09AZ',
+    collectionVersion: '401',
+  }).resolves(mod09CollectionConfig);
 
   t.context.payload = {
     config: {
@@ -326,3 +331,7 @@ test.serial('parse-pdr throws an exception if multiple providers for the specifi
 
   await t.throwsAsync(parsePdr(t.context.payload));
 });
+
+test.todo('parsePdr correctly parses DATA_VERSION when it contains leading zeroes');
+
+test.todo('parsePDR correctly parses DATA_VERSION when it does not contain leading zeroes');
