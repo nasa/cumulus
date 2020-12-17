@@ -6,7 +6,7 @@ variable "async_operation_image" {
   default = "cumuluss/async-operation:27"
 }
 
-variable "cumulus_process_activity" {
+variable "cumulus_process_activity_image" {
   description = "docker image to use for python processing service"
   type = string
   default = "cumuluss/cumulus-process-activity:1"
@@ -18,7 +18,7 @@ variable "ecs_task_image" {
   default = "cumuluss/cumulus-ecs-task:1.7.0"
 }
 
-variable "cumulus_test_ingest_process" {
+variable "cumulus_test_ingest_process_image" {
   description = "docker image to use for python test ingest processing service"
   type = string
   default = "jlkovarik/cumulus-test-ingest-process:12"
