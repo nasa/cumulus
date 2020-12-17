@@ -24,7 +24,7 @@ const {
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const granulesApi = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getMessageCnm } = require('@cumulus/message/Granules');
 
@@ -102,11 +102,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
       deleteTestStream(streamName),
       deleteTestStream(cnmResponseStreamName),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
-      deleteGranule({
-        prefix: testConfig.stackName,
-        granuleId,
-      }),
     ]);
   }
 
@@ -257,6 +252,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
+    });
+
+    afterAll(async () => {
+      await executionModel.delete({ arn: workflowExecution.executionArn });
+      await granulesApi.removeFromCMR({ prefix: testConfig.stackName, granuleId });
+      await granulesApi.deleteGranule({ prefix: testConfig.stackName, granuleId });
     });
 
     it('executes successfully', () => {
@@ -412,6 +413,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     afterAll(async () => {
       await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
+      await granulesApi.deleteGranule({ prefix: testConfig.stackName, granuleId });
     });
 
     it('executes but fails', () => {
