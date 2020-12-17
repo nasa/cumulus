@@ -10,11 +10,11 @@ const {
   getKnexClient,
   tableNames,
   doesRecordExist,
+  FileModel,
 } = require('@cumulus/db');
 
 const {
   generateFileRecord,
-  generateFileRecords,
   generateGranuleRecord,
   writeFilesViaTransaction,
   writeGranules,
@@ -322,6 +322,10 @@ test('writeFilesViaTransaction() does not write all files if any writes fail', a
         })
     )
   );
+  const fileModel = new FileModel();
+  fileRecords.forEach(async ({ bucket, key }) => {
+    t.false(await fileModel.exists(knex, { bucket, key }));
+  });
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {
