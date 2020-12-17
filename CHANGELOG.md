@@ -61,7 +61,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2199**
-    - Updated Rules endpoint to write to and delete from RDS if a write to and delete from DynamoDB is successful.
+    - Updated Rules endpoint to write rules to core PostgreSQL database in addition to DynamoDB and to delete rules from the PostgreSQL database in addition to DynamoDB
     - Updated `create` in Rules Model to take in optional `createdAt` parameter which sets the value of createdAt if not specified during function call.
   - **CUMULUS-2189**
     - Updated Provider endpoint logic to write providers in parallel to Core
