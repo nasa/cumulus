@@ -227,7 +227,7 @@ class Rule extends Manager {
     await invoke(process.env.invoke, payload);
   }
 
-  async create(item, createdAt, updatedAt) {
+  async create(item, createdAt) {
     // make sure the name only has word characters
     const re = /\W/;
     if (re.test(item.name)) {
@@ -243,7 +243,7 @@ class Rule extends Manager {
     }
 
     newRuleItem.createdAt = createdAt || Date.now();
-    newRuleItem.updatedAt = updatedAt || Date.now();
+    newRuleItem.updatedAt = Date.now();
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);

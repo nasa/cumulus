@@ -85,7 +85,7 @@ test.before(async (t) => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  const ruleRecord = await ruleModel.create(testRule, testRule.createdAt, testRule.updatedAt);
+  const ruleRecord = await ruleModel.create(testRule, testRule.createdAt);
   await indexer.indexRule(esClient, ruleRecord, esAlias);
 
   const username = randomString();

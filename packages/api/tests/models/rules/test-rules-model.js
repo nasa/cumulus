@@ -196,17 +196,13 @@ test.serial('Creating an invalid rule does not create workflow triggers', async 
   }
 });
 
-test('Creating a rule with a createdAt and updatedAt date assigns the correct values to createdAt and provides a new updatedAt', async (t) => {
+test('Creating a rule with a createdAt date assigns the correct values to createdAt and provides a new updatedAt', async (t) => {
   const newRule = fakeRuleFactoryV2();
   const currentDate = new Date('1/2/2030').getTime();
   newRule.workflow = workflow;
 
-  delete newRule.collection;
-  delete newRule.provider;
-
-  const rule = await rulesModel.create(newRule, currentDate, currentDate);
+  const rule = await rulesModel.create(newRule, currentDate);
   t.is(rule.createdAt, currentDate);
-  t.not(rule.updatedAt, currentDate);
 });
 
 test('enabling a disabled rule updates the state', async (t) => {
