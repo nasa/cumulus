@@ -77,18 +77,20 @@ function isCMRFile(fileobject) {
  *
  * @param {Object} granule - granule object containing CMR files within its
  *    `files` property
+ * @param {Array<Object>} granule.files - array of files for a granule
+ * @param {string} granule.granuleId - granule ID
  * @returns {Array<Object>} an array of CMR file objects, each with properties
  *    `granuleId`, `filename`, and possibly `etag` (if present on input)
  */
-function granuleToCmrFileObject(granule) {
-  return granule.files
+function granuleToCmrFileObject({ granuleId, files = [] }) {
+  return files
     .filter(isCMRFile)
     .map((file) => ({
       // Include etag only if file has one
       ...pick(file, 'etag'),
       // handle both new-style and old-style files model
       filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId: granule.granuleId,
+      granuleId,
     }));
 }
 
@@ -913,6 +915,7 @@ module.exports = {
   constructOnlineAccessUrls,
   generateEcho10XMLString,
   generateFileUrl,
+  granuleToCmrFileObject,
   getCmrSettings,
   getFileDescription,
   getFilename,

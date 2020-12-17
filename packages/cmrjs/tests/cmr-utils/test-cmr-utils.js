@@ -22,7 +22,7 @@ const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { xmlParseOptions } = require('../../utils');
 
-const { getCmrSettings } = require('../../cmr-utils');
+const { getCmrSettings, granuleToCmrFileObject } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
@@ -34,7 +34,9 @@ const stubDistributionBucketMap = {
   'cumulus-test-sandbox-protected-2': 'cumulus-test-sandbox-protected-2',
   'cumulus-test-sandbox-public': 'cumulus-test-sandbox-public',
 };
-const { generateFileUrl } = proxyquire('../../cmr-utils', {
+const {
+  generateFileUrl,
+} = proxyquire('../../cmr-utils', {
   '@cumulus/aws-client/S3': {
     buildS3Uri,
     getS3Object,
@@ -161,6 +163,39 @@ test('isCMRFile returns falsy if fileobject does not valid json filenamename', (
 test('isCMRFile returns falsy if fileobject is invalid', (t) => {
   const fileObj = { bad: 'object' };
   t.falsy(isCMRFile(fileObj));
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    }],
+  };
+  t.deepEqual(
+    granuleToCmrFileObject(granule),
+    [{
+      granuleId: 'fake-id',
+      filename: 's3://bucket/fake.cmr.xml',
+    }]
+  );
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a filename', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      filename: 's3://bucket/fake.cmr.xml',
+    }],
+  };
+  t.deepEqual(
+    granuleToCmrFileObject(granule),
+    [{
+      granuleId: 'fake-id',
+      filename: 's3://bucket/fake.cmr.xml',
+    }]
+  );
 });
 
 test('mapACNMTypeToCMRType returns a mapping', (t) => {
