@@ -2,23 +2,38 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const proxyquire = require('proxyquire');
-const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
 
-const sandbox = sinon.createSandbox();
-const stubRecordExists = sandbox.stub().resolves(true);
+const {
+  localStackConnectionEnv,
+  getKnexClient,
+} = require('@cumulus/db');
+
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   isPostRDSDeploymentExecution,
-  hasNoAsyncOpOrExists,
-  hasNoParentExecutionOrExists,
-  getMessageCollectionCumulusId,
+  getAsyncOperationCumulusId,
+  getParentExecutionCumulusId,
+  getCollectionCumulusId,
   getMessageProviderCumulusId,
-} = proxyquire('../../../lambdas/sf-event-sqs-to-db-records/utils', {
-  '@cumulus/db': {
-    doesRecordExist: stubRecordExists,
-  },
+} = require('../../../lambdas/sf-event-sqs-to-db-records/utils');
+
+test.before(async (t) => {
+  t.context.testDbName = `utils_${cryptoRandomString({ length: 10 })}`;
+
+  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
+  await t.context.knexAdmin.raw(`create database "${t.context.testDbName}";`);
+  await t.context.knexAdmin.raw(`grant all privileges on database "${t.context.testDbName}" to "${localStackConnectionEnv.PG_USER}"`);
+
+  t.context.knex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: t.context.testDbName,
+      migrationDir,
+    },
+  });
+  await t.context.knex.migrate.latest();
 });
 
 test.beforeEach((t) => {
@@ -27,9 +42,9 @@ test.beforeEach((t) => {
   t.context.postRDSDeploymentVersion = '4.0.0';
   t.context.preRDSDeploymentVersion = '2.9.99';
 
-  t.context.doesRecordExistStub = stubRecordExists;
-  t.context.doesRecordExistStub.resetHistory();
-
+  t.context.asyncOperation = {
+    id: uuidv4(),
+  };
   t.context.collection = {
     name: cryptoRandomString({ length: 5 }),
     version: '0.0.0',
@@ -37,7 +52,12 @@ test.beforeEach((t) => {
   t.context.provider = {
     id: cryptoRandomString({ length: 5 }),
   };
+  t.context.parentExecutionArn = cryptoRandomString({ length: 5 });
   t.context.cumulusMessage = {
+    cumulus_meta: {
+      asyncOperationId: t.context.asyncOperation.id,
+      parentExecutionArn: t.context.parentExecutionArn,
+    },
     meta: {
       collection: t.context.collection,
       provider: t.context.provider,
@@ -45,8 +65,10 @@ test.beforeEach((t) => {
   };
 });
 
-test.after.always(() => {
-  sandbox.restore();
+test.after.always(async (t) => {
+  await t.context.knex.destroy();
+  await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
+  await t.context.knexAdmin.destroy();
 });
 
 test('isPostRDSDeploymentExecution correctly returns true if Cumulus version is >= RDS deployment version', (t) => {
@@ -85,129 +107,127 @@ test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS
   }));
 });
 
-test.serial('hasNoParentExecutionOrExists returns true if there is no parent execution', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  t.true(await hasNoParentExecutionOrExists({}, knex));
-  t.false(doesRecordExistStub.called);
-});
-
-test.serial('hasNoParentExecutionOrExists returns true if parent execution exists', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-
-  doesRecordExistStub.withArgs({
-    arn: parentExecutionArn,
-  }).resolves(true);
-
-  t.true(await hasNoParentExecutionOrExists({
-    cumulus_meta: {
-      parentExecutionArn,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
-});
-
-test.serial('hasNoParentExecutionOrExists returns false if parent execution does not exist', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const parentExecutionArn = `machine:${cryptoRandomString({ length: 5 })}`;
-
-  doesRecordExistStub.withArgs({
-    arn: parentExecutionArn,
-  }).resolves(false);
-
-  t.false(await hasNoParentExecutionOrExists({
-    cumulus_meta: {
-      parentExecutionArn,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
-});
-
-test.serial('hasNoAsyncOpOrExists returns true if there is no async operation', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  t.true(await hasNoAsyncOpOrExists({}, knex));
-  t.false(doesRecordExistStub.called);
-});
-
-test.serial('hasNoAsyncOpOrExists returns true if async operation exists', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const asyncOperationId = uuidv4();
-
-  doesRecordExistStub.withArgs({
-    id: asyncOperationId,
-  }).resolves(true);
-
-  t.true(await hasNoAsyncOpOrExists({
-    cumulus_meta: {
-      asyncOperationId,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
-});
-
-test.serial('hasNoAsyncOpOrExists returns false if async operation does not exist', async (t) => {
-  const { knex, doesRecordExistStub } = t.context;
-  const asyncOperationId = uuidv4();
-
-  doesRecordExistStub.withArgs({
-    id: asyncOperationId,
-  }).resolves(false);
-
-  t.false(await hasNoAsyncOpOrExists({
-    cumulus_meta: {
-      asyncOperationId,
-    },
-  }, knex));
-  t.true(doesRecordExistStub.called);
-});
-
-test('getMessageCollectionCumulusId returns correct collection cumulus_id', async (t) => {
-  const { collection, cumulusMessage } = t.context;
+test('getAsyncOperationCumulusId returns correct async operation cumulus_id', async (t) => {
+  const { asyncOperation } = t.context;
 
   const fakeKnex = () => ({
-    where: (params) => ({
-      first: async () => {
-        if (params.name === collection.name
-            && params.version === collection.version) {
-          return {
-            cumulus_id: 5,
-          };
-        }
-        return undefined;
-      },
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.id === asyncOperation.id) {
+            return {
+              cumulus_id: 7,
+            };
+          }
+          return undefined;
+        },
+      }),
     }),
   });
 
   t.is(
-    await getMessageCollectionCumulusId(cumulusMessage, fakeKnex),
+    await getAsyncOperationCumulusId(asyncOperation.id, fakeKnex),
+    7
+  );
+});
+
+test('getAsyncOperationCumulusId returns undefined if no async operation ID is provided', async (t) => {
+  const { knex } = t.context;
+  t.is(await getAsyncOperationCumulusId(undefined, knex), undefined);
+});
+
+test('getAsyncOperationCumulusId returns undefined if async operation cannot be found', async (t) => {
+  const { knex } = t.context;
+  const asyncOperationId = uuidv4();
+  t.is(await getAsyncOperationCumulusId(asyncOperationId, knex), undefined);
+});
+
+test('getParentExecutionCumulusId returns correct parent execution cumulus_id', async (t) => {
+  const { parentExecutionArn } = t.context;
+
+  const fakeKnex = () => ({
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.arn === parentExecutionArn) {
+            return {
+              cumulus_id: 9,
+            };
+          }
+          return undefined;
+        },
+      }),
+    }),
+  });
+
+  t.is(
+    await getParentExecutionCumulusId(parentExecutionArn, fakeKnex),
+    9
+  );
+});
+
+test('getParentExecutionCumulusId returns undefined if no parent execution ARN is provided', async (t) => {
+  const { knex } = t.context;
+  t.is(await getParentExecutionCumulusId(undefined, knex), undefined);
+});
+
+test('getParentExecutionCumulusId returns undefined if parent execution cannot be found', async (t) => {
+  const { knex } = t.context;
+  const parentExecutionArn = 'fake-parent-arn';
+  t.is(await getParentExecutionCumulusId(parentExecutionArn, knex), undefined);
+});
+
+test('getCollectionCumulusId returns correct collection cumulus_id', async (t) => {
+  const { collection } = t.context;
+
+  const fakeKnex = () => ({
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.name === collection.name
+              && params.version === collection.version) {
+            return {
+              cumulus_id: 5,
+            };
+          }
+          return undefined;
+        },
+      }),
+    }),
+  });
+
+  t.is(
+    await getCollectionCumulusId(collection, fakeKnex),
     5
   );
 });
 
-test('getMessageCollectionCumulusId returns undefined if there is no collection on the message', async (t) => {
+test('getCollectionCumulusId returns undefined if no collection name/version is provided', async (t) => {
   const { knex } = t.context;
-  t.is(await getMessageCollectionCumulusId({}, knex), undefined);
+  t.is(await getCollectionCumulusId(undefined, knex), undefined);
 });
 
-test('getMessageCollectionCumulusId returns undefined if collection cannot be found', async (t) => {
-  const { cumulusMessage, knex } = t.context;
-  cumulusMessage.meta.collection.name = 'fake-collection-name';
-  t.is(await getMessageCollectionCumulusId(cumulusMessage, knex), undefined);
+test('getCollectionCumulusId returns undefined if collection cannot be found', async (t) => {
+  const { collection, knex } = t.context;
+  collection.name = 'fake-collection-name';
+  t.is(await getCollectionCumulusId(collection, knex), undefined);
 });
 
 test('getMessageProviderCumulusId returns cumulus_id of provider in message', async (t) => {
   const { cumulusMessage, provider } = t.context;
 
   const fakeKnex = () => ({
-    where: (params) => ({
-      first: async () => {
-        if (params.name === provider.id) {
-          return {
-            cumulus_id: 234,
-          };
-        }
-        return undefined;
-      },
+    select: () => ({
+      where: (params) => ({
+        first: async () => {
+          if (params.name === provider.id) {
+            return {
+              cumulus_id: 234,
+            };
+          }
+          return undefined;
+        },
+      }),
     }),
   });
 

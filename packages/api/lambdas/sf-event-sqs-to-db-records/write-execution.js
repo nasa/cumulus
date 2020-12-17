@@ -1,69 +1,158 @@
-const log = require('@cumulus/common/log');
+const isNil = require('lodash/isNil');
+
 const {
   tableNames,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
+  getExecutionUrlFromArn,
   getMessageCumulusVersion,
+  getMessageExecutionOriginalPayload,
+  getMessageExecutionFinalPayload,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
+  getMessageWorkflowTasks,
+  getMessageWorkflowName,
+  getMessageWorkflowStartTime,
+  getMessageWorkflowStopTime,
+  getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 
+const { parseException } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 
-const {
-  isPostRDSDeploymentExecution,
-  hasNoAsyncOpOrExists,
-  hasNoParentExecutionOrExists,
-} = require('./utils');
-
-const shouldWriteExecutionToRDS = async (
-  cumulusMessage,
+const shouldWriteExecutionToPostgres = ({
+  messageCollectionNameVersion,
   collectionCumulusId,
-  knex
-) => {
-  const isExecutionPostDeployment = isPostRDSDeploymentExecution(cumulusMessage);
-  if (!isExecutionPostDeployment) return false;
+  messageAsyncOperationId,
+  asyncOperationCumulusId,
+  messageParentExecutionArn,
+  parentExecutionCumulusId,
+}) => {
+  const noMessageCollectionOrExistsInPostgres = isNil(messageCollectionNameVersion)
+    || !isNil(collectionCumulusId);
+  const noMessageAsyncOperationOrExistsInPostgres = isNil(messageAsyncOperationId)
+    || !isNil(asyncOperationCumulusId);
+  const noMessageParentExecutionOrExistsInPostgres = isNil(messageParentExecutionArn)
+    || !isNil(parentExecutionCumulusId);
 
-  try {
-    if (!collectionCumulusId) return false;
-
-    const results = await Promise.all([
-      hasNoParentExecutionOrExists(cumulusMessage, knex),
-      hasNoAsyncOpOrExists(cumulusMessage, knex),
-    ]);
-    return results.every((result) => result === true);
-  } catch (error) {
-    log.error(error);
-    return false;
-  }
+  return noMessageCollectionOrExistsInPostgres
+    && noMessageAsyncOperationOrExistsInPostgres
+    && noMessageParentExecutionOrExistsInPostgres;
 };
 
-const writeExecutionViaTransaction = async ({ cumulusMessage, trx }) =>
+const buildExecutionRecord = ({
+  cumulusMessage,
+  asyncOperationCumulusId,
+  collectionCumulusId,
+  parentExecutionCumulusId,
+  now = new Date(),
+}) => {
+  const arn = getMessageExecutionArn(cumulusMessage);
+  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+  const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
+
+  return {
+    arn,
+    status: getMetaStatus(cumulusMessage),
+    url: getExecutionUrlFromArn(arn),
+    cumulus_version: getMessageCumulusVersion(cumulusMessage),
+    tasks: getMessageWorkflowTasks(cumulusMessage),
+    workflow_name: getMessageWorkflowName(cumulusMessage),
+    created_at: workflowStartTime ? new Date(workflowStartTime) : undefined,
+    timestamp: now,
+    updated_at: now,
+    error: parseException(cumulusMessage.exception),
+    original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
+    final_payload: getMessageExecutionFinalPayload(cumulusMessage),
+    duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
+    async_operation_cumulus_id: asyncOperationCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    parent_cumulus_id: parentExecutionCumulusId,
+  };
+};
+
+/**
+ * Special upsert logic for updating a "running" execution. Only
+ * certain fields should be updated if the right is updating a
+ * "running" execution.
+ *
+ * @param {Object} params
+ * @param {unknown} params.trx - A Knex transaction
+ * @param {Object} params.executionRecord - An execution record
+ *
+ * @returns {Promise}
+ */
+const writeRunningExecutionViaTransaction = async ({
+  trx,
+  executionRecord,
+}) =>
   trx(tableNames.executions)
-    .insert({
-      arn: getMessageExecutionArn(cumulusMessage),
-      cumulus_version: getMessageCumulusVersion(cumulusMessage),
-      status: getMetaStatus(cumulusMessage),
+    .insert(executionRecord)
+    .onConflict('arn')
+    .merge({
+      created_at: executionRecord.created_at,
+      updated_at: executionRecord.updated_at,
+      timestamp: executionRecord.timestamp,
+      original_payload: executionRecord.original_payload,
     })
     .returning('cumulus_id');
+
+const writeExecutionViaTransaction = async ({
+  cumulusMessage,
+  collectionCumulusId,
+  asyncOperationCumulusId,
+  parentExecutionCumulusId,
+  trx,
+}) => {
+  const executionRecord = buildExecutionRecord({
+    cumulusMessage,
+    collectionCumulusId,
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+  });
+  // Special upsert logic for updating a "running" execution
+  if (executionRecord.status === 'running') {
+    return writeRunningExecutionViaTransaction({
+      trx,
+      executionRecord,
+    });
+  }
+  // Otherwise update all fields on conflict
+  return trx(tableNames.executions)
+    .insert(executionRecord)
+    .onConflict('arn')
+    .merge()
+    .returning('cumulus_id');
+};
 
 const writeExecution = async ({
   cumulusMessage,
   knex,
+  collectionCumulusId,
+  asyncOperationCumulusId,
+  parentExecutionCumulusId,
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
     // eslint-disable-next-line camelcase
-    const [cumulus_id] = await writeExecutionViaTransaction({ cumulusMessage, trx });
+    const [cumulus_id] = await writeExecutionViaTransaction({
+      cumulusMessage,
+      collectionCumulusId,
+      asyncOperationCumulusId,
+      parentExecutionCumulusId,
+      trx,
+    });
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
     // eslint-disable-next-line camelcase
     return cumulus_id;
   });
 
 module.exports = {
-  shouldWriteExecutionToRDS,
+  buildExecutionRecord,
+  shouldWriteExecutionToPostgres,
+  writeRunningExecutionViaTransaction,
   writeExecutionViaTransaction,
   writeExecution,
 };

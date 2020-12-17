@@ -71,7 +71,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   Cumulus Collections are logical sets of data objects of the same data type and version.
 
-  For more information, see [cookbook reference page](data-cookbooks/setup.md#collections).
+  For more information, see [cookbook reference page](configuration/data-management-types#collections).
 
 ### Cumulus Message Adapter (CMA)
 
@@ -88,6 +88,10 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
   This refers to Amazon SQS Dead-Letter Queues - these SQS queues are specifically configured to capture failed messages from other services/SQS queues/etc to allow for processing of failed messages.
 
   For more on DLQs, see the [Amazon Documentation](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) and the [Cumulus DLQ feature page](features/lambda_dead_letter_queue.md).
+
+### Developer
+
+  Those who setup deployment and workflow management for Cumulus. Sometimes referred to as an integrator. *See [integrator](#integrator)*.
 
 ### ECS
 
@@ -121,6 +125,10 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   For more information, see [AWS IAMs](https://aws.amazon.com/iam/).
 
+### Integrator/Developer
+
+  Those who work within Cumulus and AWS for deployments and to manage workflows.
+
 ### Kinesis
 
   Amazon's platform for streaming data on AWS.
@@ -149,7 +157,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Operator
 
-  Refers to those tasked with monitoring, configuring or otherwise utilizing Cumulus in an operational deployment.
+  Those who work within Cumulus to ingest/archive data and manage collections.
 
 ### PDR
 

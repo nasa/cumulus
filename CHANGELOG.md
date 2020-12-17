@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration notes
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+
 ### BREAKING CHANGES
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
@@ -19,6 +27,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       of returning `none` when the operation did not return output.
 
 ### Added
+
+- **CUMULUS-2219**
+  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
+- **CUMULUS-2092**
+  - Add documentation for Granule Not Found Reports
+- **CUMULUS-1370**
+  - Add documentation for Getting Started section including FAQs
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
@@ -46,8 +61,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2257**
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
+- **CUMULUS-2190**
+  - Added helper functions:
+    - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
+    - `@cumulus/message/Executions/getMessageExecutionFinalPayload`
+    - `@cumulus/message/workflows/getMessageWorkflowTasks`
+    - `@cumulus/message/workflows/getMessageWorkflowStartTime`
+    - `@cumulus/message/workflows/getMessageWorkflowStopTime`
+    - `@cumulus/message/workflows/getMessageWorkflowName`
+- **CUMULUS-2192**
+  - Added helper functions:
+    - `@cumulus/message/PDRs/getMessagePdrRunningExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrCompletedExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrFailedExecutions`
+    - `@cumulus/message/PDRs/getMessagePdrStats`
+    - `@cumulus/message/PDRs/getPdrPercentCompletion`
+    - `@cumulus/message/workflows/getWorkflowDuration`
 
 ### Changed
+
+- **CUMULUS-2020**
+  - Updated Elasticsearch mappings to support case-insensitive search
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2189**
@@ -60,6 +94,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     database.
   - **CUMULUS-2228**
     - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the Core PostgreSQL database in parallel with writes to DynamoDB
+  - **CUMUlUS-2190**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for PDR writes to the core PostgreSQL database
+  - **CUMUlUS-2192**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for execution writes to the core PostgreSQL database
   - **CUMULUS-2187**
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
@@ -67,6 +105,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [v4.0.0] 2020-11-20
 
 ### Migration notes
+
 - Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
 - **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 - **CUMULUS-2251**

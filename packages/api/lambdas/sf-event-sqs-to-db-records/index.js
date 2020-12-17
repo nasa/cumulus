@@ -11,7 +11,13 @@ const {
   getKnexClient,
 } = require('@cumulus/db');
 const {
-  getMessageExecutionArn,
+  getMessageAsyncOperationId,
+} = require('@cumulus/message/AsyncOperations');
+const {
+  getCollectionNameAndVersionFromMessage,
+} = require('@cumulus/message/Collections');
+const {
+  getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
@@ -19,12 +25,15 @@ const Pdr = require('../../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
 const {
-  getMessageCollectionCumulusId,
+  getCollectionCumulusId,
   getMessageProviderCumulusId,
+  isPostRDSDeploymentExecution,
+  getAsyncOperationCumulusId,
+  getParentExecutionCumulusId,
 } = require('./utils');
 
 const {
-  shouldWriteExecutionToRDS,
+  shouldWriteExecutionToPostgres,
   writeExecution,
 } = require('./write-execution');
 
@@ -36,11 +45,12 @@ const {
   writeGranules,
 } = require('./write-granules');
 
-const writeRecordsToDynamoDb = async (cumulusMessage) => {
-  const executionModel = new Execution();
-  const pdrModel = new Pdr();
-  const granuleModel = new Granule();
-
+const writeRecordsToDynamoDb = async ({
+  cumulusMessage,
+  granuleModel = new Granule(),
+  executionModel = new Execution(),
+  pdrModel = new Pdr(),
+}) => {
   const results = await Promise.allSettled([
     executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
     pdrModel.storePdrFromCumulusMessage(cumulusMessage),
@@ -56,49 +66,107 @@ const writeRecordsToDynamoDb = async (cumulusMessage) => {
   return results;
 };
 
-const writeRecords = async (cumulusMessage, knex) => {
-  const executionArn = getMessageExecutionArn(cumulusMessage);
+/**
+ * Write records to data stores. Use conditional logic to write either to
+ * DynamoDB only or to DynamoDB and RDS.
+ *
+ * @param {Object} params
+ * @param {Object} params.cumulusMessage - Cumulus workflow message
+ * @param {Knex} params.knex - Knex client
+ * @param {Object} [params.granuleModel]
+ *   Optional instance of granules model used for writing to DynamoDB
+ * @param {Object} [params.executionModel]
+ *   Optional instance of execution model used for writing to DynamoDB
+ * @param {Object} [params.pdrModel]
+ *   Optional instance of PDR model used for writing to DynamoDB
+ */
+const writeRecords = async ({
+  cumulusMessage,
+  knex,
+  granuleModel,
+  executionModel,
+  pdrModel,
+}) => {
+  if (!isPostRDSDeploymentExecution(cumulusMessage)) {
+    return writeRecordsToDynamoDb({
+      cumulusMessage,
+      granuleModel,
+      executionModel,
+      pdrModel,
+    });
+  }
 
-  const collectionCumulusId = await getMessageCollectionCumulusId(cumulusMessage, knex);
-  const isExecutionRDSWriteEnabled = await shouldWriteExecutionToRDS(
+  const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
+  const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
+  const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
+  const [
+    collectionCumulusId,
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+  ] = await Promise.all([
+    getCollectionCumulusId(
+      messageCollectionNameVersion,
+      knex
+    ),
+    getAsyncOperationCumulusId(
+      messageAsyncOperationId,
+      knex
+    ),
+    getParentExecutionCumulusId(
+      messageParentExecutionArn,
+      knex
+    ),
+  ]);
+
+  if (!shouldWriteExecutionToPostgres({
+    messageCollectionNameVersion,
+    collectionCumulusId,
+    messageAsyncOperationId,
+    asyncOperationCumulusId,
+    messageParentExecutionArn,
+    parentExecutionCumulusId,
+  })) {
+    // If any requirements for writing executions to Postgres were not met,
+    // then PDR/granules should not be written to Postgres either since they
+    // reference executions, so bail out to writing execution/PDR/granule
+    // records to Dynamo.
+    return writeRecordsToDynamoDb({
+      cumulusMessage,
+      granuleModel,
+      executionModel,
+      pdrModel,
+    });
+  }
+
+  const executionCumulusId = await writeExecution({
     cumulusMessage,
     collectionCumulusId,
-    knex
-  );
-
-  // If execution is not written to RDS, then PDRs/granules which reference
-  // execution should not be written to RDS either
-  if (!isExecutionRDSWriteEnabled) {
-    return writeRecordsToDynamoDb(cumulusMessage);
-  }
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+    knex,
+    executionModel,
+  });
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
 
-  try {
-    const executionCumulusId = await writeExecution({
-      cumulusMessage,
-      knex,
-    });
-    // PDR write only attempted if execution saved
-    const pdrCumulusId = await writePdr({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      knex,
-      executionCumulusId,
-    });
-    return await writeGranules({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId,
-      pdrCumulusId,
-      knex,
-    });
-  } catch (error) {
-    log.error(`Failed to write records for ${executionArn}`, error);
-    throw error;
-  }
+  const pdrCumulusId = await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    knex,
+    executionCumulusId,
+    pdrModel,
+  });
+
+  return writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdrCumulusId,
+    knex,
+    granuleModel,
+  });
 };
 
 const handler = async (event) => {
@@ -116,7 +184,7 @@ const handler = async (event) => {
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
     try {
-      return await writeRecords(cumulusMessage, knex);
+      return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);

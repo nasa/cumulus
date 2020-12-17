@@ -8,6 +8,9 @@ export interface CollectionFile {
   checksumFor?: string
   type?: string,
   url_path?: string,
+  lzards?: {
+    backup: boolean
+  }
 }
 
 export interface PartialCollectionRecord {

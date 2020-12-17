@@ -72,49 +72,6 @@ test('generatePdrRecord() throws error if message.payload.pdr.name is not set', 
   { message: 'Could not find name on PDR object {}' });
 });
 
-test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {
-  const pdrName = randomId('pdr');
-  const message = createPdrMessage({
-    numRunningExecutions: 3,
-  });
-
-  const pdr = {
-    name: pdrName,
-  };
-
-  message.payload.pdr = pdr;
-
-  const record = pdrsModel.generatePdrRecord(message);
-
-  t.is(record.status, 'running');
-  t.is(record.stats.processing, 3);
-  t.is(record.stats.total, 3);
-  t.is(record.progress, 0);
-});
-
-test('generatePdrRecord() sets correct progress value for partially complete PDR', async (t) => {
-  const pdrName = randomId('pdr');
-  const message = createPdrMessage({
-    numCompletedExecutions: 1,
-    numFailedExecutions: 2,
-    numRunningExecutions: 3,
-  });
-  const pdr = {
-    name: pdrName,
-  };
-
-  message.payload.pdr = pdr;
-
-  const record = pdrsModel.generatePdrRecord(message);
-
-  t.is(record.status, 'running');
-  t.is(record.stats.processing, 3);
-  t.is(record.stats.failed, 2);
-  t.is(record.stats.completed, 1);
-  t.is(record.stats.total, 6);
-  t.is(record.progress, 50);
-});
-
 test('generatePdrRecord() generates a completed PDR record', async (t) => {
   const collectionId = `${randomId('MOD')}___${randomNumber()}`;
   const providerId = randomId('provider');

@@ -2,7 +2,6 @@
 
 const AggregateError = require('aggregate-error');
 
-const { describeExecution } = require('@cumulus/aws-client/StepFunctions');
 const log = require('@cumulus/common/log');
 const {
   tableNames,
@@ -130,13 +129,7 @@ const writeGranules = async ({
   const granules = getMessageGranules(cumulusMessage);
   const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrlFromArn(executionArn);
-
-  let executionDescription;
-  try {
-    executionDescription = await describeExecution({ executionArn });
-  } catch (error) {
-    log.error(`Could not describe execution ${executionArn}`, error);
-  }
+  const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently

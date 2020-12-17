@@ -36,7 +36,7 @@
     "@cumulus/types": "4.0.0",
     "is-valid-hostname": "0.0.1",
     "lodash": "^4.17.20",
-    "knex": "0.21.6",
+    "knex": "0.21.13",
     "pg": "^8.3.0",
     "snake-camel": "^1.0.6"
   }
