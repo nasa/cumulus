@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:27"
+  default = "cumuluss/async-operation:32"
 }
 
 variable "cmr_client_id" {
