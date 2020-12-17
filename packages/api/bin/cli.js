@@ -77,8 +77,7 @@ program
   .option('--no-reseed', 'do not reseed dynamoDB and Elasticsearch with new data on start.')
   .description('Serves the local version of the Cumulus API')
   .action((cmd) => {
-    serveApi(process.env.USERNAME, cmd.stackName, cmd.reseed)
-      .catch(console.error);
+    serveApi(process.env.USERNAME, cmd.stackName, cmd.reseed).catch(console.error);
   });
 
 program
