@@ -1,7 +1,7 @@
-import Base from './base';
+import BaseModel from './base';
 import { tableNames } from '../tables';
 
-export default class FileModel extends Base {
+export default class FileModel extends BaseModel {
   constructor() {
     super({
       tableName: tableNames.files,
