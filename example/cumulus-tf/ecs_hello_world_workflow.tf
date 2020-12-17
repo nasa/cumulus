@@ -12,7 +12,7 @@ module "hello_world_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
+  image                                 = var.ecs_task_image
   log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
 
   cpu                = 400
