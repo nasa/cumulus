@@ -1,3 +1,5 @@
+import FileModel from './models/file';
+
 export {
   generateLocalTestDb,
   destroyLocalTestDb,
@@ -33,3 +35,5 @@ export {
 } from './types';
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
 export { translateApiCollectionToPostgresCollection } from './collections';
+
+export { FileModel };
