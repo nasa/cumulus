@@ -1,8 +1,6 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
-const flow = require('lodash/flow');
-const pick = require('lodash/pick');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
@@ -90,16 +88,7 @@ const generateGranuleRecord = async ({
   };
 };
 
-// const writeGranuleFilesViaTransaction = async (files, trx) => {
-//   return Promise.all(files.map((file) => {
-//     return trx(tableNames.files)
-//       .insert(file)
-//       .onConflict(['bucket', 'key'])
-//       .merge();
-//   }));
-// };
-
-const generateFileRecord = (file) => ({
+const generateFileRecord = ({ file, granuleCumulusId }) => ({
   bucket: file.bucket,
   checksum_type: file.checksumType,
   checksum_value: file.checksum,
@@ -111,53 +100,63 @@ const generateFileRecord = (file) => ({
   path: file.path,
   size: file.size,
   source: file.source,
+  granule_cumulus_id: granuleCumulusId,
 });
 
-const buildAndGenerateFileRecord = async ({
-  file,
-  provider,
-  fileUtils = FileUtils,
-}) => {
-  // TODO: I think this is necessary to set properties like
-  // `key`, which is required for the Postgres schema
-  const updatedFile = await fileUtils.buildDatabaseFile(
-    s3(),
-    buildURL(provider),
-    file
-  );
-  return generateFileRecord(updatedFile);
-};
-
 const generateFileRecords = async ({
-  cumulusMessage,
   files,
-}) => {
-  // TODO: move this
-  const provider = getMessageProvider(cumulusMessage);
-  return Promise.all(files.map(
-    (file) => buildAndGenerateFileRecord({ provider, file })
-  ));
-};
+  granuleCumulusId,
+}) => files.map((file) => generateFileRecord({ file, granuleCumulusId }));
 
 const writeGranuleViaTransaction = async ({
+  granuleRecord,
+  trx,
+}) =>
+  trx(tableNames.granules)
+    .insert(granuleRecord)
+    .onConflict(['granule_id', 'collection_cumulus_id'])
+    .merge()
+    .returning('cumulus_id');
+
+const writeFilesViaTransaction = async ({
+  fileRecords,
+  trx,
+}) =>
+  Promise.all(fileRecords.map(
+    (fileRecord) =>
+      trx(tableNames.files)
+        .insert(fileRecord)
+        .onConflict(['bucket', 'key'])
+        .merge()
+  ));
+
+const writeGranuleAndFilesViaTransaction = async ({
   cumulusMessage,
   granule,
   processingTimeInfo,
+  provider,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
+  fileUtils = FileUtils,
   trx,
 }) => {
-  const files = await generateFileRecords({
-    cumulusMessage,
-    files: granule.files,
+  const { files = [] } = granule;
+  // TODO: I think this is necessary to set properties like
+  // `key`, which is required for the Postgres schema. And
+  // `size` which is used to calculate the granule product
+  // volume
+  const updatedFiles = await fileUtils.buildDatabaseFiles({
+    s3: s3(),
+    providerURL: buildURL(provider),
+    files,
   });
 
   const granuleRecord = await generateGranuleRecord({
     cumulusMessage,
     granule,
-    files,
+    files: updatedFiles,
     processingTimeInfo,
     collectionCumulusId,
     providerCumulusId,
@@ -165,11 +164,17 @@ const writeGranuleViaTransaction = async ({
     pdrCumulusId,
   });
 
-  return trx(tableNames.granules)
-    .insert(granuleRecord)
-    .onConflict(['granule_id', 'collection_cumulus_id'])
-    .merge()
-    .returning('cumulus_id');
+  // eslint-disable-next-line camelcase
+  const [cumulus_id] = await writeGranuleViaTransaction({ granuleRecord, trx });
+
+  const fileRecords = await generateFileRecords({
+    files: updatedFiles,
+    granuleCumulusId: cumulus_id,
+  });
+  return writeFilesViaTransaction({
+    fileRecords,
+    trx,
+  });
 };
 
 /**
@@ -178,6 +183,7 @@ const writeGranuleViaTransaction = async ({
  * @param {Object} params
  * @param {Object} params.granule - An API granule object
  * @param {Object} params.cumulusMessage - A workflow message
+ * @param {Object} params.provider - Provider object from the workflow message
  * @param {string} params.collectionCumulusId
  *   Cumulus ID for collection referenced in workflow message, if any
  * @param {string} params.executionCumulusId
@@ -200,6 +206,7 @@ const writeGranuleViaTransaction = async ({
 const writeGranule = async ({
   granule,
   cumulusMessage,
+  provider,
   collectionCumulusId,
   executionCumulusId,
   knex,
@@ -210,9 +217,10 @@ const writeGranule = async ({
   granuleModel,
 }) =>
   knex.transaction(async (trx) => {
-    await writeGranuleViaTransaction({
+    await writeGranuleAndFilesViaTransaction({
       cumulusMessage,
       granule,
+      provider,
       processingTimeInfo,
       collectionCumulusId,
       providerCumulusId,
@@ -268,6 +276,7 @@ const writeGranules = async ({
   const executionUrl = getExecutionUrlFromArn(executionArn);
   const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
+  const provider = getMessageProvider(cumulusMessage);
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
@@ -277,6 +286,7 @@ const writeGranules = async ({
       cumulusMessage,
       processingTimeInfo,
       executionUrl,
+      provider,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
@@ -299,6 +309,7 @@ module.exports = {
   generateFileRecord,
   generateFileRecords,
   generateGranuleRecord,
-  writeGranuleViaTransaction,
+  writeFilesViaTransaction,
+  writeGranuleAndFilesViaTransaction,
   writeGranules,
 };

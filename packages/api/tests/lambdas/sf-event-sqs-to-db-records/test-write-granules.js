@@ -16,6 +16,7 @@ const {
   generateFileRecord,
   generateFileRecords,
   generateGranuleRecord,
+  writeFilesViaTransaction,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
 
@@ -264,7 +265,7 @@ test('generateFileRecord() generates correct record', (t) => {
     source: 'fake-source',
   };
   t.deepEqual(
-    generateFileRecord(file),
+    generateFileRecord({ file, granuleCumulusId: 1 }),
     omit(
       {
         ...file,
@@ -274,6 +275,7 @@ test('generateFileRecord() generates correct record', (t) => {
         file_name: file.fileName,
         name: undefined,
         path: undefined,
+        granule_cumulus_id: 1,
       },
       fileOmitKeys
     )
@@ -286,30 +288,40 @@ test('generateFileRecord() returns only allowed properties', (t) => {
     foo: 'bar',
   };
 
-  const record = generateFileRecord(file);
+  const record = generateFileRecord({ file });
   t.false(Object.prototype.hasOwnProperty.call(record, 'foo'));
 });
 
-test('generateFileRecords() generates multiple file records', async (t) => {
-  const files = [{
+test('writeFilesViaTransaction() does not write all files if any writes fail', async (t) => {
+  const { knex, collectionCumulusId } = t.context;
+
+  const [cumulus_id] = await knex(tableNames.granules)
+    .insert({
+      granule_id: cryptoRandomString({ length: 5 }),
+      status: 'running',
+      collection_cumulus_id: collectionCumulusId,
+    })
+    .returning('cumulus_id');
+
+  const fileRecords = [{
     bucket: cryptoRandomString({ length: 3 }),
-    size: 1,
+    key: cryptoRandomString({ length: 3 }),
+    granule_cumulus_id: cumulus_id,
   }, {
+    // record doesn't have granule_cumulus_id so should fail
     bucket: cryptoRandomString({ length: 3 }),
-    size: 1,
+    key: cryptoRandomString({ length: 3 }),
   }];
-  const fileRecords = await generateFileRecords({
-    cumulusMessage: {
-      meta: {
-        provider: {
-          protocol: 's3',
-          host: 'bucket',
-        },
-      },
-    },
-    files,
-  });
-  t.is(fileRecords.length, 2);
+
+  await t.throwsAsync(
+    knex.transaction(
+      (trx) =>
+        writeFilesViaTransaction({
+          files: fileRecords,
+          trx,
+        })
+    )
+  );
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {
