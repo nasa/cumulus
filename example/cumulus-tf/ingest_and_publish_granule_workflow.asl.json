@@ -320,6 +320,42 @@
       },
       "Type": "Task",
       "Resource": "${post_to_cmr_task_arn}",
+      "Next": "BackupGranulesToLzards",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "BackupGranulesToLzards": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.payload.granules}"
+                },
+                {
+                  "source": "{$.backupResults}",
+                  "destination": "{$.meta.backupStatus}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${lzards_backup_task_arn}",
       "Next": "WorkflowSucceeded",
       "Catch": [
         {

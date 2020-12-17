@@ -1,3 +1,4 @@
+import isNil from 'lodash/isNil';
 import { Message } from '@cumulus/types';
 
 type MessageWithOptionalWorkflowInfo = Message.CumulusMessage & {
@@ -70,3 +71,17 @@ export const getMessageWorkflowStopTime = (
 export const getMessageWorkflowName = (
   message: Message.CumulusMessage
 ): string | undefined => message.meta?.workflow_name;
+
+/**
+ * Get the workflow duration.
+ *
+ * @param {number} startTime - Workflow start time (as timestamp in ms)
+ * @param {number} [stopTime] - Time to use for measuring duration (as timestamp in ms)
+ * @returns {number} The workflow duration (in seconds)
+ *
+ * @alias module:workflows
+ */
+export const getWorkflowDuration = (
+  startTime: number,
+  stopTime?: number
+): number => (isNil(stopTime) ? 0 : (stopTime - startTime) / 1000);
