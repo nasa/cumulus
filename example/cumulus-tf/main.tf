@@ -65,6 +65,7 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
+  async_operation_image = var.async_operation_image
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
     ? var.lambda_subnet_ids

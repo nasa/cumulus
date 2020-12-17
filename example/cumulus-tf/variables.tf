@@ -1,5 +1,29 @@
 # Required
 
+variable "async_operation_image" {
+  description = "docker image to use for Cumulus async operations tasks"
+  type = string
+  default = "cumuluss/async-operation:27"
+}
+
+variable "cumulus_process_activity" {
+  description = "docker image to use for python processing service"
+  type = string
+  default = "cumuluss/cumulus-process-activity:1"
+}
+
+variable "ecs_task_image" {
+  description = "docker image to use for Cumulus hello world task"
+  type = string
+  default = "cumuluss/cumulus-ecs-task:1.7.0"
+}
+
+variable "cumulus_test_ingest_process" {
+  description = "docker image to use for python test ingest processing service"
+  type = string
+  default = "jlkovarik/cumulus-test-ingest-process:12"
+}
+
 variable "cmr_client_id" {
   type = string
 }
