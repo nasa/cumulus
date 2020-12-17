@@ -38,6 +38,7 @@ const {
   migrateExecutions,
 } = require('../dist/lambda/executions');
 
+<<<<<<< HEAD
 let collectionsModel;
 let executionsModel;
 let asyncOperationsModel;
@@ -80,8 +81,39 @@ test.before(async (t) => {
   process.env.AsyncOperationsTable = cryptoRandomString({ length: 10 });
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
   process.env.RulesTable = cryptoRandomString({ length: 10 });
+=======
+const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 
+const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
+const testDbUser = 'postgres';
+
+async function addFakeData(numItems, factory, model, factoryParams = {}) {
+  const items = [];
+
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < numItems; i += 1) {
+    const item = factory(factoryParams);
+    items.push(item);
+    await model.create(item);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return items;
+}
+
+process.env.stackName = cryptoRandomString({ length: 10 });
+process.env.system_bucket = cryptoRandomString({ length: 10 });
+process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
+
+const executionsModel = new Execution();
+>>>>>>> e56e1b3a6... CUMULUS-2188 update postgresExecution model names and refactor
+
+test.before(async (t) => {
   await createBucket(process.env.system_bucket);
+<<<<<<< HEAD
+=======
+  await executionsModel.createTable();
+>>>>>>> e56e1b3a6... CUMULUS-2188 update postgresExecution model names and refactor
 
   executionsModel = new Execution();
   asyncOperationsModel = new AsyncOperation({
@@ -96,9 +128,16 @@ test.before(async (t) => {
   await collectionsModel.createTable();
   await rulesModel.createTable();
 
+<<<<<<< HEAD
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+=======
+  await t.context.knex.migrate.latest();
+
+  // await addFakeData(1, fakeExecutionFactoryV2, executionsModel);
+  t.context.existingExecution = await executionsModel.create(fakeExecutionFactoryV2());
+>>>>>>> e56e1b3a6... CUMULUS-2188 update postgresExecution model names and refactor
 });
 
 test.afterEach.always(async (t) => {
@@ -184,6 +223,7 @@ test.serial('migrateExecutionRecord throws error on invalid source data from Dyn
   await t.throwsAsync(migrateExecutionRecord(newExecution, t.context.knex));
 });
 
+<<<<<<< HEAD
 test.serial('migrateExecutionRecord handles nullable fields on source execution data', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
@@ -292,6 +332,29 @@ test.serial('migrateExecutionRecord migrates parent execution if not already mig
     childPgRecord,
     { parent_cumulus_id: parentPgRecord.cumulus_id }
   );
+=======
+test.only('migrateExecutionRecord correctly migrates execution record', async (t) => {
+  const { existingExecution } = t.context;
+
+  const existingRecord = await executionsModel.get();
+
+  console.log(existingRecord);
+
+  // Create new Dynamo execution to be migrated
+  const newExecution = fakeExecutionFactoryV2({ parentArn: existingExecution.arn });
+
+  await migrateExecutionRecord(newExecution, t.context.knex);
+  // const createdRecord = await t.context.knex.queryBuilder()
+  //   .select()
+  //   .table('executions')
+  //   .where({ cumulus_id: newExecution.cumulus_id })
+  //   .first();
+
+  // t.deepEqual(
+  //   omit(createdRecord, ['cumulus_id']),
+  //   { ...newExecution }
+  // );
+>>>>>>> e56e1b3a6... CUMULUS-2188 update postgresExecution model names and refactor
 });
 
 test.serial('migrateExecutionRecord recursively migrates grandparent executions', async (t) => {

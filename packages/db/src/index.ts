@@ -32,24 +32,17 @@ export {
 export {
   PostgresCollection,
   PostgresCollectionRecord,
-<<<<<<< HEAD
 } from './types/collection';
 export {
   PostgresExecution,
   PostgresExecutionRecord,
 } from './types/execution';
 export {
-=======
-  ExecutionRecord,
-  PostgresExecutionRecord,
-  PostgresProviderRecord,
->>>>>>> 5c0fb5768... CUMULUS-2188 postgres model definition for executions with tests
   PostgresProvider,
   PostgresProviderRecord,
 } from './types/provider';
 export {
   PostgresRule,
-<<<<<<< HEAD
   PostgresRuleRecord,
 } from './types/rule';
 export {
@@ -76,9 +69,3 @@ export { GranulePgModel } from './models/granule';
 export { PdrPgModel } from './models/pdr';
 export { ProviderPgModel } from './models/provider';
 export { RulePgModel } from './models/rule';
-=======
-} from './types';
-export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
-export { translateApiCollectionToPostgresCollection } from './collections';
-export { translateApiExecutionToPostgresExecution } from './executions';
->>>>>>> 5c0fb5768... CUMULUS-2188 postgres model definition for executions with tests

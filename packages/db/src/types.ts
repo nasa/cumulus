@@ -42,17 +42,12 @@ export interface PostgresCollectionRecord extends PostgresCollection {
   updated_at: Date,
 }
 
-export interface ExecutionRecord {
+export interface PostgresExecution {
   arn: string,
   async_operation_cumulus_id?: number,
   collection_cumulus_id?: number,
   parent_cumulus_id?: number,
   cumulus_version?: string,
-  created_at?: Date,
-  updated_at?: Date,
-}
-
-export interface PostgresExecutionRecord extends ExecutionRecord {
   url?: string,
   status?: ExecutionRecordStatus,
   tasks?: Object, // TODO need specific type?
@@ -62,6 +57,14 @@ export interface PostgresExecutionRecord extends ExecutionRecord {
   original_payload?: Object,
   final_payload?: Object
   timestamp?: Date,
+  created_at?: Date,
+  updated_at?: Date,
+}
+
+export interface PostgresExecutionRecord extends PostgresExecution {
+  cumulus_id: number,
+  created_at: Date,
+  updated_at: Date,
 }
 
 /**
