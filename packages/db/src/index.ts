@@ -1,5 +1,3 @@
-import FileModel from './models/file';
-
 export {
   generateLocalTestDb,
   destroyLocalTestDb,
@@ -27,13 +25,16 @@ export {
   PostgresAsyncOperationRecord,
   PostgresCollection,
   PostgresCollectionRecord,
-  ExecutionRecord,
+  PostgresExecution,
+  PostgresExecutionRecord,
   PostgresProviderRecord,
   PostgresProvider,
   PostgresRuleRecord,
-  PostgresRule,
 } from './types';
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
 export { translateApiCollectionToPostgresCollection } from './collections';
 
-export { FileModel };
+export { CollectionPgModel } from './models/collection';
+export { ExecutionPgModel } from './models/execution';
+export { FilePgModel } from './models/file';
+export { GranulePgModel } from './models/granule';

@@ -1,4 +1,5 @@
 import Knex from 'knex';
+
 import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
 
