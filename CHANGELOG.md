@@ -20,12 +20,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2219**
   - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
 - **CUMULUS-2290**
-  - Add cnm fields to granules module
+  - Add `queryFields` to granule schema, and this allows workflow tasks to add queryable data to granule record. For reference on how to add data to `queryFields` field, see [`example/cumulus-tf/kinesis_trigger_test_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/kinesis_trigger_test_workflow.tf).
 
 ### Changed
 
- - **CUMULUS-2124**
-   - cumulus-rds-tf terraform module now takes engine_version as an input variable.
+- **CUMULUS-2124**
+  - cumulus-rds-tf terraform module now takes engine_version as an input variable.
 - **CUMULUS-2020**
   - Updated Elasticsearch mappings to support case-insensitive search
 

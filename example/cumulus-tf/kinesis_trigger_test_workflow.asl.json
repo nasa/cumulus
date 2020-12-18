@@ -12,6 +12,10 @@
               "outputs": [
                 {
                   "source": "{$.cnm}",
+                  "destination": "{$.meta.granule.queryFields.cnm}"
+                },
+                {
+                  "source": "{$.cnm}",
                   "destination": "{$.meta.cnm}"
                 },
                 {
@@ -352,6 +356,10 @@
             "WorkflowException": "{$.exception}",
             "cumulus_message": {
               "outputs": [
+                {
+                  "source": "{$.cnm}",
+                  "destination": "{$.meta.granule.queryFields.cnm}"
+                },
                 {
                   "source": "{$.cnm}",
                   "destination": "{$.meta.cnmResponse}"

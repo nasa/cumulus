@@ -1,6 +1,7 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
 const isMatch = require('lodash/isMatch');
 const replace = require('lodash/replace');
 const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
@@ -26,7 +27,6 @@ const {
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const granulesApi = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getMessageCnm } = require('@cumulus/message/Granules');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
@@ -381,10 +381,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           },
         };
 
-        const cnmResponse = lambdaOutput.meta.cnmResponse;
+        const cnmResponse = get(lambdaOutput, 'meta.granule.queryFields.cnm');
         expect(isMatch(cnmResponse, expectedCnmResponse)).toBe(true);
         expect(cnmResponse.product.files.length).toBe(2);
-        expect(granule.cnm).toEqual(getMessageCnm(lambdaOutput));
+        expect(get(granule, 'queryFields.cnm')).toEqual(cnmResponse);
       });
     });
   });
@@ -426,24 +426,44 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       expect(lambdaOutput.cause).toMatch(/.+Source file not found.+/);
     });
 
-    it('sends the error to the CnmResponse task', async () => {
-      const CnmResponseInput = await lambdaStep.getStepInput(failingWorkflowExecution.executionArn, 'CnmResponse');
-      expect(CnmResponseInput.exception.Error).toEqual('FileNotFound');
-      expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/Source file not found.+/);
-    });
+    describe('the CnmResponse Lambda', () => {
+      let lambdaOutput;
+      let granule;
 
-    it('writes a failure message to the response stream', async () => {
-      console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
-      responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
-      const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-      if (newResponseStreamRecords.length > 0) {
-        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
-        const responseRecord = parsedRecords.pop();
-        expect(responseRecord.response.status).toEqual('FAILURE');
-        expect(responseRecord.identifier).toBe(badRecord.identifier);
-      } else {
-        fail(`unexpected error occurred and no messages found in ${cnmResponseStreamName}. Did the "ouputs the record" above fail?`);
-      }
+      beforeAll(async () => {
+        lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse');
+        granule = await getGranuleWithStatus({
+          prefix: testConfig.stackName,
+          granuleId,
+          status: 'failed',
+        });
+      });
+
+      it('sends the error to the CnmResponse task', async () => {
+        const CnmResponseInput = await lambdaStep.getStepInput(failingWorkflowExecution.executionArn, 'CnmResponse');
+        expect(CnmResponseInput.exception.Error).toEqual('FileNotFound');
+        expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/Source file not found.+/);
+      });
+
+      it('writes a failure message to the response stream', async () => {
+        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
+        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
+        const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
+        if (newResponseStreamRecords.length > 0) {
+          const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
+          const responseRecord = parsedRecords.pop();
+          expect(responseRecord.response.status).toEqual('FAILURE');
+          expect(responseRecord.identifier).toBe(badRecord.identifier);
+        } else {
+          fail(`unexpected error occurred and no messages found in ${cnmResponseStreamName}. Did the "ouputs the record" above fail?`);
+        }
+      });
+
+      it('puts cnm message to cumulus message for granule record', async () => {
+        const cnm = get(lambdaOutput, 'meta.granule.queryFields.cnm');
+        expect(isMatch(cnm, badRecord)).toBe(true);
+        expect(get(granule, 'queryFields.cnm')).toEqual(cnm);
+      });
     });
   });
 });
