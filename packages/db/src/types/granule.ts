@@ -1,8 +1,8 @@
 export interface PostgresGranule {
   granule_id: string,
   status: string,
-  cmr_link: string,
   collection_cumulus_id: number,
+  cmr_link?: string,
   error?: object,
   published?: boolean,
   duration?: number,

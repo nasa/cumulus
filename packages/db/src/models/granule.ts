@@ -16,16 +16,25 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule
   ) {
+    if (granule.status === 'running') {
+      return knexOrTrx(this.tableName)
+        .insert(granule)
+        .onConflict(['granule_id', 'collection_cumulus_id'])
+        .merge({
+          execution_cumulus_id: granule.execution_cumulus_id,
+          status: granule.status,
+          timestamp: granule.timestamp,
+          updated_at: granule.updated_at,
+        })
+        // TODO: this isn't working due to TS typings for some reason
+        // .where(`${this.tableName}.execution_cumulus_id`, '!=', granule.execution_cumulus_id)
+        .whereRaw(`${this.tableName}.execution_cumulus_id != ?`, granule.execution_cumulus_id)
+        .returning('cumulus_id');
+    }
     return knexOrTrx(this.tableName)
       .insert(granule)
       .onConflict(['granule_id', 'collection_cumulus_id'])
-      .merge({
-        execution_cumulus_id: granule.execution_cumulus_id,
-        status: granule.status,
-        timestamp: granule.timestamp,
-        updated_at: granule.updated_at,
-      })
-      .where(`${this.tableName}.execution_cumulus_id`, granule.execution_cumulus_id)
+      .merge()
       .returning('cumulus_id');
   }
 }
