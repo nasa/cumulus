@@ -14,6 +14,8 @@ const Execution = require('@cumulus/api/models/executions');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
 
+const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
+
 /**
  * Migrate execution record from Dynamo to RDS.
  *

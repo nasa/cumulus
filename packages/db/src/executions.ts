@@ -1,17 +1,38 @@
 import Knex from 'knex';
+import isNil from 'lodash/isNil';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
+import { InvalidArgument, RecordDoesNotExist } from '@cumulus/errors';
 import { getRecordCumulusId } from './database';
 import { tableNames } from './tables';
 import { PostgresExecution, PostgresExecutionRecord } from './types';
 
-// TODO needs to be recursive
-// TODO should this be in the Lambda?
-export const getParentCumulusId = async (arn: string, knex: Knex): Promise<number> =>
-  getRecordCumulusId<PostgresExecutionRecord>(
-    { arn: arn },
-    tableNames.executions,
-    knex
-  );
+// TODO This is copy-pasta from utils.js
+export const isFailedLookupError = (error: Error) =>
+  error instanceof InvalidArgument
+  || error instanceof RecordDoesNotExist;
+
+export const getParentExecutionCumulusId = async (
+  parentExecutionArn: string,
+  knex: Knex
+): Promise<any> => {
+  try {
+    if (isNil(parentExecutionArn)) {
+      throw new InvalidArgument(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
+    }
+    return await getRecordCumulusId<PostgresExecutionRecord>(
+      {
+        arn: parentExecutionArn,
+      },
+      tableNames.executions,
+      knex
+    );
+  } catch (error) {
+    if (isFailedLookupError(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+};
 
 /**
  * Translate execution record from Dynamo to RDS.
@@ -35,18 +56,19 @@ export const translateApiExecutionToPostgresExecution = async (
       dynamoRecord.collectionId ? Number(dynamoRecord.collectionId) : undefined
     ),
     status: dynamoRecord.status,
-    tasks: JSON.stringify(dynamoRecord.tasks), //TODO check this
+    tasks: JSON.stringify(dynamoRecord.tasks),
     error: JSON.stringify(dynamoRecord.error),
     arn: dynamoRecord.arn,
     duration: dynamoRecord.duration,
-    original_payload: JSON.stringify(dynamoRecord.originalPayload), //TODO check this
+    original_payload: JSON.stringify(dynamoRecord.originalPayload),
     final_payload: JSON.stringify(dynamoRecord.finalPayload),
-    timestamp: new Date(Number(dynamoRecord.timestamp)), //TODO check this
+    timestamp: new Date(Number(dynamoRecord.timestamp)),
+    workflow_name: dynamoRecord.name,
   };
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
   if (dynamoRecord.parentArn !== undefined) {
-    const parentId = await getParentCumulusId(dynamoRecord.parentArn, knex);
+    const parentId = await getParentExecutionCumulusId(dynamoRecord.parentArn, knex);
 
     if (parentId !== undefined) {
       translatedRecord.parent_cumulus_id = parentId;
