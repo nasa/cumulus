@@ -1,4 +1,4 @@
-#!/bin/bash
+'#!/bin/bash
 set -ex
 
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
@@ -14,7 +14,6 @@ declare -a param_list=(
   "bamboo_PDR_NODE_NAME_PROVIDER_BUCKET"
   "bamboo_PUBLISH_FLAG"
   "bamboo_REPORT_BUILD_STATUS"
-  "bamboo_SECRET_ASYNC_OPERATION_IMAGE"
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
   "bamboo_SECRET_AWS_ACCOUNT_ID"
   "bamboo_SECRET_AWS_DEFAULT_REGION"
