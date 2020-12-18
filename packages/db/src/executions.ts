@@ -1,38 +1,10 @@
 import Knex from 'knex';
-import isNil from 'lodash/isNil';
+
 import { ExecutionRecord } from '@cumulus/types/api/executions';
-import { InvalidArgument, RecordDoesNotExist } from '@cumulus/errors';
-import { getRecordCumulusId } from './database';
-import { tableNames } from './tables';
-import { PostgresExecution, PostgresExecutionRecord } from './types';
-
-// TODO This is copy-pasta from utils.js
-export const isFailedLookupError = (error: Error) =>
-  error instanceof InvalidArgument
-  || error instanceof RecordDoesNotExist;
-
-export const getParentExecutionCumulusId = async (
-  parentExecutionArn: string,
-  knex: Knex
-): Promise<any> => {
-  try {
-    if (isNil(parentExecutionArn)) {
-      throw new InvalidArgument(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
-    }
-    return await getRecordCumulusId<PostgresExecutionRecord>(
-      {
-        arn: parentExecutionArn,
-      },
-      tableNames.executions,
-      knex
-    );
-  } catch (error) {
-    if (isFailedLookupError(error)) {
-      return undefined;
-    }
-    throw error;
-  }
-};
+import { PostgresExecution } from './types';
+const {
+  getParentExecutionCumulusId,
+} = require('../../api/lambdas/sf-event-sqs-to-db-records/utils');
 
 /**
  * Translate execution record from Dynamo to RDS.
