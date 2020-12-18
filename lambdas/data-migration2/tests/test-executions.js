@@ -3,6 +3,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const Execution = require('@cumulus/api/models/executions');
+const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
@@ -16,24 +17,10 @@ const {
   migrateExecutions,
 } = require('../dist/lambda/executions');
 
-const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
+const executionOmitList = ['createdAt', 'updatedAt', 'finalPayload', 'originalPayload', 'parentArn', 'type', 'execution', 'name'];
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
-
-async function addFakeData(numItems, factory, model, factoryParams = {}) {
-  const items = [];
-
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < numItems; i += 1) {
-    const item = factory(factoryParams);
-    items.push(item);
-    await model.create(item);
-  }
-  /* eslint-enable no-await-in-loop */
-
-  return items;
-}
 
 process.env.stackName = cryptoRandomString({ length: 10 });
 process.env.system_bucket = cryptoRandomString({ length: 10 });
@@ -64,7 +51,6 @@ test.before(async (t) => {
 
   await t.context.knex.migrate.latest();
 
-  // await addFakeData(1, fakeExecutionFactoryV2, executionsModel);
   t.context.existingExecution = await executionsModel.create(fakeExecutionFactoryV2());
 });
 
@@ -80,27 +66,48 @@ test.after.always(async (t) => {
   await t.context.knexAdmin.destroy();
 });
 
-test.only('migrateExecutionRecord correctly migrates execution record', async (t) => {
+test('migrateExecutionRecord correctly migrates execution record', async (t) => {
   const { existingExecution } = t.context;
 
-  const existingRecord = await executionsModel.get();
+  // migrate the existing dynamo execution to postgres so
+  // we can use it as the parent for the next execution
+  await migrateExecutionRecord(existingExecution, t.context.knex);
+  const existingPostgresExecution = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: existingExecution.arn })
+    .first();
 
-  console.log(existingRecord);
-
-  // Create new Dynamo execution to be migrated
+  // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({ parentArn: existingExecution.arn });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
-  // const createdRecord = await t.context.knex.queryBuilder()
-  //   .select()
-  //   .table('executions')
-  //   .where({ cumulus_id: newExecution.cumulus_id })
-  //   .first();
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: newExecution.arn })
+    .first();
 
-  // t.deepEqual(
-  //   omit(createdRecord, ['cumulus_id']),
-  //   { ...newExecution }
-  // );
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit(
+      {
+        ...newExecution,
+        async_operation_cumulus_id: null,
+        collection_cumulus_id: null,
+        cumulus_version: null,
+        url: null,
+        parent_cumulus_id: existingPostgresExecution.cumulus_id,
+        workflow_name: newExecution.name,
+        original_payload: newExecution.originalPayload,
+        final_payload: newExecution.finalPayload,
+        created_at: new Date(newExecution.createdAt),
+        updated_at: new Date(newExecution.updatedAt),
+        timestamp: new Date(newExecution.timestamp),
+      },
+      executionOmitList
+    )
+  );
 });
 
 test('migrateExecutionRecord throws error on invalid source data from Dynamo', async (t) => {
