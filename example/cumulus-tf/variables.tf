@@ -3,7 +3,7 @@
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "32"
+  default = "27"
 }
 
 variable "cumulus_process_activity_version" {
