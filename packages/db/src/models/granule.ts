@@ -1,6 +1,6 @@
 import Knex from 'knex';
 
-import BasePgModel from './base';
+import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
@@ -29,3 +29,5 @@ export default class GranulePgModel extends BasePgModel<PostgresGranuleRecord> {
       .returning('cumulus_id');
   }
 }
+
+export { GranulePgModel };

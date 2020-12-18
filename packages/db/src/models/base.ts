@@ -4,7 +4,7 @@ import { tableNames } from '../tables';
 
 import { isRecordDefined } from '../database';
 
-export default class BasePgModel<RecordType> {
+class BasePgModel<RecordType> {
   readonly tableName: tableNames;
 
   constructor({
@@ -29,3 +29,5 @@ export default class BasePgModel<RecordType> {
     return isRecordDefined(await this.get(knexOrTrx, params));
   }
 }
+
+export { BasePgModel };

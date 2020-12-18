@@ -1,5 +1,3 @@
-import FileModel from './models/file';
-
 export {
   generateLocalTestDb,
   destroyLocalTestDb,
@@ -45,4 +43,5 @@ export {
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
 export { translateApiCollectionToPostgresCollection } from './collections';
 
-export { FileModel };
+export { FilePgModel } from './models/file';
+export { GranulePgModel } from './models/granule';

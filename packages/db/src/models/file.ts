@@ -1,12 +1,26 @@
-import BasePgModel from './base';
+import Knex from 'knex';
+
+import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
-import { PostgresFileRecord } from '../types/file';
+import { PostgresFile, PostgresFileRecord } from '../types/file';
 
-export default class FilePgModel extends BasePgModel<PostgresFileRecord> {
+class FilePgModel extends BasePgModel<PostgresFileRecord> {
   constructor() {
     super({
       tableName: tableNames.files,
     });
   }
+
+  upsert(
+    knexOrTrx: Knex | Knex.Transaction,
+    file: PostgresFile
+  ) {
+    return knexOrTrx(this.tableName)
+      .insert(file)
+      .onConflict(['bucket', 'key'])
+      .merge();
+  }
 }
+
+export { FilePgModel };
