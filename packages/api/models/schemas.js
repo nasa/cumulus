@@ -349,6 +349,11 @@ module.exports.granule = {
     dataType: { type: 'string' },
     version: { type: 'string' },
     provider: { type: 'string' },
+    queryFields: {
+      description: 'fields for query and metrics purpose',
+      type: 'object',
+      additionalProperties: true,
+    },
   },
   required: [
     'granuleId',
