@@ -12,7 +12,7 @@ module "python_test_ingest_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "jlkovarik/cumulus-test-ingest-process:12"
+  image                                 = var.cumulus_test_ingest_process_image
   log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
 
   cpu                = 400
