@@ -10,7 +10,7 @@ module.exports = {
   // Currently handles the subset of DateTime formats specified in the PDR ICD
   dateTimePatterns: [
     /^\d{4}-\d{2}-\d{2}(T)?(\d{2}:\d{2}:\d{2}(Z)?)?$/,
-    /^\d{2}\/\d{2}\/\d{4}(-\d{2}:\d{2}(:\d{2})?)?$/,
+    /^(?:\d{2}\/){2}\d{4}(-\d{2}:\d{2}(:\d{2})?)?$/,
   ],
 
   textStringPatterns: [
