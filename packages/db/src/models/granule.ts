@@ -3,7 +3,7 @@ import Knex from 'knex';
 import BasePgModel from './base';
 import { tableNames } from '../tables';
 
-import { PostgresGranule, PostgresGranuleRecord } from '../types';
+import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 
 export default class GranulePgModel extends BasePgModel<PostgresGranuleRecord> {
   constructor() {

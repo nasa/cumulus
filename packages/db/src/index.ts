@@ -25,14 +25,23 @@ export {
 export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
+} from './types/async_operation';
+export {
   PostgresCollection,
   PostgresCollectionRecord,
-  ExecutionRecord,
-  PostgresProviderRecord,
+} from './types/collection';
+export {
+  PostgresExecution,
+  PostgresExecutionRecord,
+} from './types/execution';
+export {
   PostgresProvider,
-  PostgresRuleRecord,
+  PostgresProviderRecord,
+} from './types/provider';
+export {
   PostgresRule,
-} from './types';
+  PostgresRuleRecord,
+} from './types/rule';
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
 export { translateApiCollectionToPostgresCollection } from './collections';
 
