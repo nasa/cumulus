@@ -10,6 +10,7 @@ const {
 } = require('../../dist');
 const {
   fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
 } = require('../../dist/test-utils');
 
@@ -49,13 +50,10 @@ test.before(async (t) => {
   );
   t.context.collectionCumulusId = collectionResponse[0];
 
-  const executionPgModel = new ExecutionPgModel();
-  const executionResponse = await executionPgModel.create(
+  t.context.executionPgModel = new ExecutionPgModel();
+  const executionResponse = await t.context.executionPgModel.create(
     t.context.knex,
-    {
-      arn: cryptoRandomString({ length: 3 }),
-      status: 'running',
-    }
+    fakeExecutionRecordFactory()
   );
   t.context.executionCumulusId = executionResponse[0];
 });
@@ -85,4 +83,146 @@ test('GranulePgModel.upsert() creates a new running granule', async (t) => {
     await granulePgModel.get(knex, granule),
     granule
   );
+});
+
+test('GranulePgModel.upsert() creates a new completed granule', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  await granulePgModel.upsert(knex, granule);
+
+  t.like(
+    await granulePgModel.get(knex, granule),
+    granule
+  );
+});
+
+test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    product_volume: 50,
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  await granulePgModel.create(knex, granule);
+
+  const updatedGranule = {
+    ...granule,
+    product_volume: 100,
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule);
+
+  t.like(
+    await granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    updatedGranule
+  );
+});
+
+test('GranulePgModel.upsert() will allow a completed status to replace a running status for same execution', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  await granulePgModel.create(knex, granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'completed',
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule);
+
+  t.like(
+    await granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    updatedGranule
+  );
+});
+
+test('GranulePgModel.upsert() will not allow a running status to replace a completed status for same execution', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  await granulePgModel.create(knex, granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule);
+
+  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  t.is(record.status, 'completed');
+});
+
+test('GranulePgModel.upsert() will allow a running status to replace a completed status for different execution', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  await granulePgModel.create(knex, granule);
+
+  const response = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+    execution_cumulus_id: response[0],
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule);
+
+  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  t.is(record.status, 'running');
 });

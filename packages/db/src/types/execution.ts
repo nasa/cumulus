@@ -1,5 +1,6 @@
 export interface PostgresExecution {
   arn: string,
+  status: string,
   async_operation_cumulus_id?: number,
   collection_cumulus_id?: number,
   parent_cumulus_id?: number,

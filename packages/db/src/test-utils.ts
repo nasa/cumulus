@@ -5,6 +5,7 @@ import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
 
 import { PostgresCollection } from './types/collection';
+import { PostgresExecution } from './types/execution';
 import { PostgresGranule } from './types/granule';
 import { PostgresProvider } from './types/provider';
 
@@ -47,7 +48,7 @@ export const destroyLocalTestDb = async ({
 
 export const fakeCollectionRecordFactory = (
   params: Partial<PostgresCollection>
-) => ({
+): PostgresCollection => ({
   name: cryptoRandomString({ length: 5 }),
   version: '0.0.0',
   sample_file_name: 'file.txt',
@@ -60,9 +61,17 @@ export const fakeCollectionRecordFactory = (
   ...params,
 });
 
+export const fakeExecutionRecordFactory = (
+  params: Partial<PostgresExecution>
+): PostgresExecution => ({
+  arn: cryptoRandomString({ length: 3 }),
+  status: 'running',
+  ...params,
+});
+
 export const fakeProviderRecordFactory = (
   params: Partial<PostgresProvider>
-) => ({
+): PostgresProvider => ({
   name: `provider${cryptoRandomString({ length: 5 })}`,
   host: 'test-bucket',
   protocol: 's3',
