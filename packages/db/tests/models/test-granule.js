@@ -51,11 +51,11 @@ test.before(async (t) => {
   t.context.collectionCumulusId = collectionResponse[0];
 
   t.context.executionPgModel = new ExecutionPgModel();
-  const executionResponse = await t.context.executionPgModel.create(
+  const [executionCumulusId] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
-  t.context.executionCumulusId = executionResponse[0];
+  t.context.executionCumulusId = executionCumulusId;
 });
 
 test.after.always(async (t) => {
@@ -102,14 +102,14 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
 
   await granulePgModel.create(knex, granule);
 
-  const response = await executionPgModel.create(
+  const [newExecutionCumulusId] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory({ status: 'running' })
   );
 
   const updatedGranule = {
     ...granule,
-    execution_cumulus_id: response[0],
+    execution_cumulus_id: newExecutionCumulusId,
     timestamp: new Date(),
     updated_at: new Date(),
   };
@@ -247,7 +247,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
 
   await granulePgModel.create(knex, granule);
 
-  const response = await executionPgModel.create(
+  const [newExecutionCumulusId] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory({ status: 'running' })
   );
@@ -255,7 +255,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
   const updatedGranule = {
     ...granule,
     status: 'running',
-    execution_cumulus_id: response[0],
+    execution_cumulus_id: newExecutionCumulusId,
   };
 
   await granulePgModel.upsert(knex, updatedGranule);
