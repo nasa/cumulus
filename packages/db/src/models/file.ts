@@ -1,7 +1,9 @@
-import BaseModel from './base';
+import BasePgModel from './base';
 import { tableNames } from '../tables';
 
-export default class FileModel extends BaseModel {
+import { PostgresFileRecord } from '../types';
+
+export default class FilePgModel extends BasePgModel<PostgresFileRecord> {
   constructor() {
     super({
       tableName: tableNames.files,
