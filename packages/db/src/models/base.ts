@@ -4,7 +4,7 @@ import { tableNames } from '../tables';
 
 import { isRecordDefined } from '../database';
 
-class BasePgModel<RecordType> {
+class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   readonly tableName: tableNames;
 
   constructor({
@@ -27,6 +27,18 @@ class BasePgModel<RecordType> {
     params: Partial<RecordType>
   ): Promise<boolean> {
     return isRecordDefined(await this.get(knexOrTrx, params));
+  }
+
+  create(
+    knexOrTrx: Knex | Knex.Transaction,
+    item: ItemType,
+    returnCumulusId: boolean = true
+  ) {
+    const insertQuery = knexOrTrx(this.tableName).insert(item);
+    if (returnCumulusId) {
+      insertQuery.returning('cumulus_id');
+    }
+    return insertQuery;
   }
 }
 

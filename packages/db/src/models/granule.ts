@@ -5,7 +5,7 @@ import { tableNames } from '../tables';
 
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 
-export default class GranulePgModel extends BasePgModel<PostgresGranuleRecord> {
+export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
     super({
       tableName: tableNames.granules,

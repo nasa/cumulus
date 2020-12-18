@@ -20,6 +20,42 @@ test.after.always(async (t) => {
   await t.context.knex.schema.dropTable(t.context.tableName);
 });
 
+test('BasePgModel.create() creates record and returns cumulus_id by default', async (t) => {
+  const { knex, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+
+  const model = new BasePgModel({ tableName });
+  const queryResult = await model.create(knex, { info });
+
+  const record = await knex(tableName).where({ info }).first();
+  t.deepEqual(
+    record,
+    {
+      cumulus_id: queryResult[0],
+      info,
+    }
+  );
+});
+
+test('BasePgModel.create() returns query result if returnCumulusId = false', async (t) => {
+  const { knex, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+
+  const model = new BasePgModel({ tableName });
+  const queryResult = await model.create(knex, { info }, false);
+
+  // cumulus_id is not returned
+  t.is(queryResult[0], undefined);
+
+  const record = await knex(tableName).where({ info }).first();
+  t.like(
+    record,
+    {
+      info,
+    }
+  );
+});
+
 test('BasePgModel.get() returns correct record', async (t) => {
   const { knex, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });

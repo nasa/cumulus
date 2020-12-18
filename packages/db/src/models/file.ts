@@ -5,7 +5,7 @@ import { tableNames } from '../tables';
 
 import { PostgresFile, PostgresFileRecord } from '../types/file';
 
-class FilePgModel extends BasePgModel<PostgresFileRecord> {
+class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
   constructor() {
     super({
       tableName: tableNames.files,
