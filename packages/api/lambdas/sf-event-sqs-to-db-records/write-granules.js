@@ -8,6 +8,7 @@ const log = require('@cumulus/common/log');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   tableNames,
+  GranulePgModel,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
@@ -108,16 +109,6 @@ const generateFileRecords = async ({
   granuleCumulusId,
 }) => files.map((file) => generateFileRecord({ file, granuleCumulusId }));
 
-const writeGranuleViaTransaction = async ({
-  granuleRecord,
-  trx,
-}) =>
-  trx(tableNames.granules)
-    .insert(granuleRecord)
-    .onConflict(['granule_id', 'collection_cumulus_id'])
-    .merge()
-    .returning('cumulus_id');
-
 const writeFilesViaTransaction = async ({
   fileRecords,
   trx,
@@ -139,6 +130,7 @@ const writeGranuleAndFilesViaTransaction = async ({
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
+  granulePgModel = new GranulePgModel(),
   fileUtils = FileUtils,
   trx,
 }) => {
@@ -164,12 +156,12 @@ const writeGranuleAndFilesViaTransaction = async ({
     pdrCumulusId,
   });
 
-  // eslint-disable-next-line camelcase
-  const [cumulus_id] = await writeGranuleViaTransaction({ granuleRecord, trx });
+  // TODO: handle case where upsert may not return anything
+  const [granuleCumulusId] = await granulePgModel.upsert(trx, granuleRecord);
 
   const fileRecords = await generateFileRecords({
     files: updatedFiles,
-    granuleCumulusId: cumulus_id,
+    granuleCumulusId,
   });
   return writeFilesViaTransaction({
     fileRecords,

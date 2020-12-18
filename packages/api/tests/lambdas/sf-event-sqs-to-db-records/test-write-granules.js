@@ -10,7 +10,7 @@ const {
   getKnexClient,
   tableNames,
   doesRecordExist,
-  FileModel,
+  FilePgModel,
 } = require('@cumulus/db');
 
 const {
@@ -295,7 +295,7 @@ test('generateFileRecord() returns only allowed properties', (t) => {
 test('writeFilesViaTransaction() does not write all files if any writes fail', async (t) => {
   const { knex, collectionCumulusId } = t.context;
 
-  const [cumulus_id] = await knex(tableNames.granules)
+  const [granuleCumulusId] = await knex(tableNames.granules)
     .insert({
       granule_id: cryptoRandomString({ length: 5 }),
       status: 'running',
@@ -306,7 +306,7 @@ test('writeFilesViaTransaction() does not write all files if any writes fail', a
   const fileRecords = [{
     bucket: cryptoRandomString({ length: 3 }),
     key: cryptoRandomString({ length: 3 }),
-    granule_cumulus_id: cumulus_id,
+    granule_cumulus_id: granuleCumulusId,
   }, {
     // record doesn't have granule_cumulus_id so should fail
     bucket: cryptoRandomString({ length: 3 }),
@@ -322,9 +322,9 @@ test('writeFilesViaTransaction() does not write all files if any writes fail', a
         })
     )
   );
-  const fileModel = new FileModel();
+  const filePgModel = new FilePgModel();
   fileRecords.forEach(async ({ bucket, key }) => {
-    t.false(await fileModel.exists(knex, { bucket, key }));
+    t.false(await filePgModel.exists(knex, { bucket, key }));
   });
 });
 
