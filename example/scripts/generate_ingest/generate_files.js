@@ -1,3 +1,4 @@
+/* eslint-disable node/no-extraneous-require */
 /* eslint-disable no-console */
 
 const { s3PutObject } = require('@cumulus/aws-client/S3');
