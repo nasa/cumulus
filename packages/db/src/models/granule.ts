@@ -26,9 +26,9 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
         })
-        // TODO: this isn't working due to TS typings for some reason
-        // .where(`${this.tableName}.execution_cumulus_id`, '!=', granule.execution_cumulus_id)
-        .whereRaw(`${this.tableName}.execution_cumulus_id != ?`, granule.execution_cumulus_id)
+        // execution_cumulus_id is not required, so granule.execution_cumulus_id may be
+        // undefined. so need to compare against EXCLUDED.execution_cumulus_id
+        .whereRaw(`${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`)
         .returning('cumulus_id');
     }
     return knexOrTrx(this.tableName)
