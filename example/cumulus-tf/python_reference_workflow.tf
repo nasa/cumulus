@@ -4,6 +4,10 @@ resource "aws_sfn_activity" "ecs_task_python_processing_service" {
   tags = local.tags
 }
 
+data "aws_ecr_repository" "cumulus_process_activity" {
+  name = "cumulus-process-activity"
+}
+
 module "python_processing_service" {
   source = "../../tf-modules/cumulus_ecs_service"
 
@@ -13,7 +17,7 @@ module "python_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = var.cumulus_process_activity_image
+  image                                 = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
   log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
 
   cpu                = 400
