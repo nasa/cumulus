@@ -85,6 +85,43 @@ test('GranulePgModel.upsert() creates a new running granule', async (t) => {
   );
 });
 
+test('GranulePgModel.upsert() will overwrite allowed fields of a running granule for different execution', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  await granulePgModel.create(knex, granule);
+
+  const response = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+
+  const updatedGranule = {
+    ...granule,
+    execution_cumulus_id: response[0],
+    timestamp: new Date(),
+    updated_at: new Date(),
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule);
+
+  t.like(
+    await granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    updatedGranule
+  );
+});
+
 test('GranulePgModel.upsert() creates a new completed granule', async (t) => {
   const {
     knex,
