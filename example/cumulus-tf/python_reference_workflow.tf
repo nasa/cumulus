@@ -13,7 +13,7 @@ module "python_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "cumuluss/cumulus-process-activity:1"
+  image                                 = var.cumulus_process_activity_image
   log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
 
   cpu                = 400
