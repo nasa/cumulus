@@ -1,4 +1,4 @@
-'#!/bin/bash
+#!/bin/bash
 set -ex
 
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
