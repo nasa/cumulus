@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/example/generateIngest",
+  "name": "@cumulus/example/generate_ingest",
   "version": "4.0.0",
   "description": "Script to generate test data for scaled ingest",
   "keywords": [
