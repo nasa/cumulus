@@ -11,6 +11,7 @@ const {
   tableNames,
   doesRecordExist,
   FilePgModel,
+  fakeFileRecordFactory,
 } = require('@cumulus/db');
 
 const {
@@ -292,40 +293,32 @@ test('generateFileRecord() returns only allowed properties', (t) => {
   t.false(Object.prototype.hasOwnProperty.call(record, 'foo'));
 });
 
-test('writeFilesViaTransaction() does not write all files if any writes fail', async (t) => {
-  const { knex, collectionCumulusId } = t.context;
+test('writeFilesViaTransaction() throws error if any writes fail', async (t) => {
+  const { knex } = t.context;
 
-  const [granuleCumulusId] = await knex(tableNames.granules)
-    .insert({
-      granule_id: cryptoRandomString({ length: 5 }),
-      status: 'running',
-      collection_cumulus_id: collectionCumulusId,
-    })
-    .returning('cumulus_id');
+  const fileRecords = [
+    fakeFileRecordFactory(),
+    fakeFileRecordFactory(),
+  ];
 
-  const fileRecords = [{
-    bucket: cryptoRandomString({ length: 3 }),
-    key: cryptoRandomString({ length: 3 }),
-    granule_cumulus_id: granuleCumulusId,
-  }, {
-    // record doesn't have granule_cumulus_id so should fail
-    bucket: cryptoRandomString({ length: 3 }),
-    key: cryptoRandomString({ length: 3 }),
-  }];
+  const fakeFilePgModel = {
+    upsert: sinon.stub()
+      .onCall(0)
+      .resolves()
+      .onCall(1)
+      .throws(),
+  };
 
   await t.throwsAsync(
     knex.transaction(
       (trx) =>
         writeFilesViaTransaction({
-          files: fileRecords,
+          fileRecords,
           trx,
+          filePgModel: fakeFilePgModel,
         })
     )
   );
-  const filePgModel = new FilePgModel();
-  fileRecords.forEach(async ({ bucket, key }) => {
-    t.false(await filePgModel.exists(knex, { bucket, key }));
-  });
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {

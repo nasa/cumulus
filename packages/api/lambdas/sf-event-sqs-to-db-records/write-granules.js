@@ -8,6 +8,7 @@ const log = require('@cumulus/common/log');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   tableNames,
+  FilePgModel,
   GranulePgModel,
 } = require('@cumulus/db');
 const {
@@ -112,13 +113,10 @@ const generateFileRecords = async ({
 const writeFilesViaTransaction = async ({
   fileRecords,
   trx,
+  filePgModel = new FilePgModel(),
 }) =>
   Promise.all(fileRecords.map(
-    (fileRecord) =>
-      trx(tableNames.files)
-        .insert(fileRecord)
-        .onConflict(['bucket', 'key'])
-        .merge()
+    (fileRecord) => filePgModel.upsert(trx, fileRecord)
   ));
 
 const writeGranuleAndFilesViaTransaction = async ({
