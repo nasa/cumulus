@@ -21,7 +21,8 @@ const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
-const { migratePdrRecord } = require('../dist/lambda/pdrs');
+const { migratePdrRecord, migratePdrs } = require('../dist/lambda/pdrs');
+const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const migrateFakeCollectionRecord = async (record, knex) => {
   const updatedRecord = translateApiCollectionToPostgresCollection(record);
@@ -120,8 +121,8 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(async (t) => {
   await t.context.knex(tableNames.pdrs).del();
-  // await t.context.knex(tableNames.provider).del();
-  // await t.context.knex(tableNames.collections).del();
+  await t.context.knex(tableNames.providers).del();
+  await t.context.knex(tableNames.collections).del();
 });
 
 test.after.always(async (t) => {
@@ -213,8 +214,6 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
     .where({ name: testPdr.pdrName })
     .first();
 
-  console.log(record);
-
   t.like(
     omit(record, ['cumulus_id']),
     omit({
@@ -238,4 +237,38 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
 });
 
 test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+  const { knex, testCollection, testProvider } = t.context;
+
+  await migrateFakeCollectionRecord(testCollection, knex);
+  await migrateFakeProviderRecord(testProvider, knex);
+  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  await migratePdrRecord(testPdr, knex);
+
+  await t.throwsAsync(
+    migratePdrRecord(testPdr, knex),
+    { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial.only('migratePdrRecord skips already migrated record', async (t) => {
+  const { knex, testCollection, testProvider } = t.context;
+  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+
+  await migrateFakeCollectionRecord(testCollection, knex);
+  await migrateFakeProviderRecord(testProvider, knex);
+  await migratePdrRecord(testPdr, knex);
+  await pdrsModel.create(testPdr);
+
+  t.teardown(() => pdrsModel.delete(testPdr));
+  const migrationSummary = await migratePdrs(process.env, knex);
+
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 1,
+    skipped: 1,
+    failed: 0,
+    success: 0,
+  });
+  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+  t.is(records.length, 1);
+  console.log(records);
 });
