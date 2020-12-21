@@ -6,6 +6,7 @@ import { localStackConnectionEnv } from './config';
 
 import { PostgresCollection } from './types/collection';
 import { PostgresExecution } from './types/execution';
+import { PostgresFile } from './types/file';
 import { PostgresGranule } from './types/granule';
 import { PostgresProvider } from './types/provider';
 
@@ -83,5 +84,13 @@ export const fakeGranuleRecordFactory = (
 ): Omit<PostgresGranule, 'collection_cumulus_id'> => ({
   granule_id: cryptoRandomString({ length: 3 }),
   status: 'running',
+  ...params,
+});
+
+export const fakeFileRecordFactory = (
+  params: Partial<PostgresFile>
+): Omit<PostgresFile, 'granule_cumulus_id'> => ({
+  bucket: cryptoRandomString({ length: 3 }),
+  key: cryptoRandomString({ length: 3 }),
   ...params,
 });
