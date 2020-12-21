@@ -137,6 +137,39 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   t.is(metFile.type, 'metadata');
 });
 
+test.serial('parse-pdr properly parses simple PDR file with non-leading zero DATA_VERSION', async (t) => {
+  t.context.payload.input.pdr.name = 'MOD14A1_401_granule.PDR';
+  await setUpTestPdrAndValidate(t).catch(t.fail);
+
+  const result = await parsePdr(t.context.payload);
+  await validateOutput(t, result).catch(t.fail);
+
+  t.is(result.filesCount, 2);
+  t.is(result.granulesCount, 1);
+  t.is(result.granules.length, 1);
+  t.is(result.totalSize, 17909733);
+
+  // test MOD14 401 (non-leading zero DATA_VERSION)
+  const mod14Granule = result.granules.find((granule) => granule.dataType === 'MOD14A1');
+  t.truthy(mod14Granule);
+  t.is(mod14Granule.granuleId, 'MOD14A1.A2017224.h09v02.401.2017227165020');
+  t.is(mod14Granule.granuleSize, 17909733);
+
+  const mod14HdfFile = mod14Granule.files.find((file) => file.name === 'MOD14A1.A2017224.h09v02.401.2017227165020.hdf');
+  t.truthy(mod14HdfFile);
+  t.is(mod14HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+  t.is(mod14HdfFile.size, 17865615);
+  t.is(mod14HdfFile.checksumType, 'CKSUM');
+  t.is(mod14HdfFile.checksum, 4208254019);
+  t.is(mod14HdfFile.type, 'data');
+
+  const mod14MetFile = mod14Granule.files.find((file) => file.name === 'MOD14A1.A2017224.h09v02.401.2017227165020.hdf.met');
+  t.truthy(mod14MetFile);
+  t.is(mod14MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+  t.is(mod14MetFile.size, 44118);
+  t.is(mod14MetFile.type, 'metadata');
+});
+
 test.serial('parse-pdr properly parses PDR with granules of different data-types', async (t) => {
   t.context.payload.input.pdr.name = 'multi-data-type.PDR';
   await setUpTestPdrAndValidate(t).catch(t.fail);
@@ -144,10 +177,10 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   const result = await parsePdr(t.context.payload);
   await validateOutput(t, result).catch(t.fail);
 
-  t.is(result.filesCount, 6);
-  t.is(result.granulesCount, 3);
-  t.is(result.granules.length, 3);
-  t.is(result.totalSize, 53729199);
+  t.is(result.filesCount, 4);
+  t.is(result.granulesCount, 2);
+  t.is(result.granules.length, 2);
+  t.is(result.totalSize, 35819466);
   // test MOD09 006
   const mod09Granule = result.granules.find((granule) => granule.dataType === 'MOD09GQ');
   t.truthy(mod09Granule);
@@ -186,26 +219,6 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod87MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod87MetFile.size, 44118);
   t.is(mod87MetFile.type, 'metadata');
-
-  // test MOD14 401
-  const mod14Granule = result.granules.find((granule) => granule.dataType === 'MOD14A1');
-  t.truthy(mod14Granule);
-  t.is(mod14Granule.granuleId, 'MOD14A1.A2017224.h09v02.401.2017227165020');
-  t.is(mod14Granule.granuleSize, 17909733);
-
-  const mod14HdfFile = mod14Granule.files.find((file) => file.name === 'MOD14A1.A2017224.h09v02.401.2017227165020.hdf');
-  t.truthy(mod14HdfFile);
-  t.is(mod14HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(mod14HdfFile.size, 17865615);
-  t.is(mod14HdfFile.checksumType, 'CKSUM');
-  t.is(mod14HdfFile.checksum, 4208254019);
-  t.is(mod14HdfFile.type, 'data');
-
-  const mod14MetFile = mod14Granule.files.find((file) => file.name === 'MOD14A1.A2017224.h09v02.401.2017227165020.hdf.met');
-  t.truthy(mod14MetFile);
-  t.is(mod14MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(mod14MetFile.size, 44118);
-  t.is(mod14MetFile.type, 'metadata');
 });
 
 test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => {
