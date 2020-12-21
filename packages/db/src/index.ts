@@ -3,6 +3,11 @@ export {
   destroyLocalTestDb,
   createTestDatabase,
   deleteTestDatabase,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeProviderRecordFactory,
+  fakeGranuleRecordFactory,
+  fakeFileRecordFactory,
 } from './test-utils';
 
 export { getKnexClient } from './connection';
