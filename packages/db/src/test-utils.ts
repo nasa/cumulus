@@ -68,6 +68,9 @@ export const fakeExecutionRecordFactory = (
 ): PostgresExecution => ({
   arn: cryptoRandomString({ length: 3 }),
   status: 'running',
+  created_at: new Date(),
+  updated_at: new Date(),
+  timestamp: new Date(),
   ...params,
 });
 
