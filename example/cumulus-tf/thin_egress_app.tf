@@ -35,7 +35,7 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
 }
 
 module "thin_egress_app" {
-  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.101.zip"
+  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.102.zip"
 
   auth_base_url              = "https://uat.urs.earthdata.nasa.gov"
   bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.id
