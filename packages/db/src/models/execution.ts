@@ -1,7 +1,7 @@
 import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
-import { PostgresExecution, PostgresExecutionRecord } from '../types';
+import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {

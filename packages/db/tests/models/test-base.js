@@ -1,6 +1,8 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
+const { RecordDoesNotExist } = require('@cumulus/errors');
+
 const { localStackConnectionEnv } = require('../../dist/config');
 const { getKnexClient } = require('../../dist/connection');
 const { BasePgModel } = require('../../dist/models/base');
@@ -14,6 +16,7 @@ test.before(async (t) => {
     table.increments('cumulus_id').primary();
     table.text('info');
   });
+  t.context.basePgModel = new BasePgModel({ tableName: t.context.tableName });
 });
 
 test.after.always(async (t) => {
@@ -21,11 +24,10 @@ test.after.always(async (t) => {
 });
 
 test('BasePgModel.create() creates record and returns cumulus_id by default', async (t) => {
-  const { knex, tableName } = t.context;
+  const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
-  const model = new BasePgModel({ tableName });
-  const queryResult = await model.create(knex, { info });
+  const queryResult = await basePgModel.create(knex, { info });
 
   const record = await knex(tableName).where({ info }).first();
   t.deepEqual(
@@ -38,29 +40,47 @@ test('BasePgModel.create() creates record and returns cumulus_id by default', as
 });
 
 test('BasePgModel.get() returns correct record', async (t) => {
-  const { knex, tableName } = t.context;
+  const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
   await knex(tableName).insert({ info });
-  const model = new BasePgModel({ tableName });
   t.like(
-    await model.get(knex, { info }),
+    await basePgModel.get(knex, { info }),
     {
       info,
     }
   );
 });
 
+test('BasePgModel.getRecordCumulusId() returns correct value', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const [recordCumulusId] = await knex(tableName)
+    .insert({ info })
+    .returning('cumulus_id');
+  t.is(
+    await basePgModel.getRecordCumulusId(knex, { info }),
+    recordCumulusId
+  );
+});
+
+test('BasePgModel.getRecordCumulusId() throws RecordDoesNotExist error for missing record', async (t) => {
+  const { knex, basePgModel } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  await t.throwsAsync(
+    basePgModel.getRecordCumulusId(knex, { info }),
+    { instanceOf: RecordDoesNotExist }
+  );
+});
+
 test('BasePgModel.exists() correctly returns true', async (t) => {
-  const { knex, tableName } = t.context;
+  const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
   await knex(tableName).insert({ info });
-  const model = new BasePgModel({ tableName });
-  t.true(await model.exists(knex, { info }));
+  t.true(await basePgModel.exists(knex, { info }));
 });
 
 test('BasePgModel.exists() correctly returns false', async (t) => {
-  const { knex, tableName } = t.context;
+  const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
-  const model = new BasePgModel({ tableName });
-  t.false(await model.exists(knex, { info }));
+  t.false(await basePgModel.exists(knex, { info }));
 });
