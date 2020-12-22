@@ -57,3 +57,4 @@ export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';
 export { GranulePgModel } from './models/granule';
 export { PdrPgModel } from './models/pdr';
+export { ProviderPgModel } from './models/provider';
