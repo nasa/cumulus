@@ -47,7 +47,7 @@ const isFailedLookupError = (error) =>
 const getAsyncOperationCumulusId = async (
   asyncOperationId,
   knex,
-  asyncOperationPgModel = new AsyncOperationPgModel(),
+  asyncOperationPgModel = new AsyncOperationPgModel()
 ) => {
   try {
     if (isNil(asyncOperationId)) {
