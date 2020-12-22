@@ -10,7 +10,6 @@ const {
 
 const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
-const Execution = require('@cumulus/api/models/executions');
 const Pdr = require('@cumulus/api/models/pdrs');
 const {
   createBucket,
@@ -57,7 +56,6 @@ const generateTestPdr = (collectionId, provider, executionId) => ({
 
 let collectionsModel;
 let providersModel;
-let executionsModel;
 let pdrsModel;
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
@@ -69,7 +67,6 @@ test.before(async (t) => {
 
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
   process.env.ProvidersTable = cryptoRandomString({ length: 10 });
-  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
   process.env.PdrsTable = cryptoRandomString({ length: 10 });
 
   await createBucket(process.env.system_bucket);
@@ -79,9 +76,6 @@ test.before(async (t) => {
 
   providersModel = new Provider();
   await providersModel.createTable();
-
-  executionsModel = new Execution();
-  await executionsModel.createTable();
 
   pdrsModel = new Pdr();
   await pdrsModel.createTable();
@@ -133,7 +127,6 @@ test.after.always(async (t) => {
 
   await providersModel.deleteTable();
   await collectionsModel.deleteTable();
-  await executionsModel.deleteTable();
   await pdrsModel.deleteTable();
 
   await t.context.knex.destroy();
@@ -245,24 +238,26 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already mig
   );
 });
 
-test.serial.skip('migratePdrs skips already migrated record', async (t) => {
+test.serial.only('migratePdrs skips already migrated record', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
   const testPdr = generateTestPdr(testCollection.name, testProvider.id);
 
   await migratePdrRecord(testPdr, knex);
   await pdrsModel.create(testPdr);
-
-  t.teardown(() => pdrsModel.delete(testPdr));
-  const migrationSummary = await migratePdrs(process.env, knex);
-
-  t.deepEqual(migrationSummary, {
-    dynamoRecords: 1,
-    skipped: 1,
-    failed: 0,
-    success: 0,
-  });
-  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
-  t.is(records.length, 1);
+  try {
+    const migrationSummary = await migratePdrs(process.env, knex);
+    t.deepEqual(migrationSummary,
+      {
+        dynamoRecords: 1,
+        skipped: 1,
+        failed: 0,
+        success: 0,
+      });
+    const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+    t.is(records.length, 1);
+  } finally {
+    pdrsModel.delete(testPdr);
+  }
 });
 
 test.serial.skip('migratePdrs processes multiple PDR records', async (t) => {
