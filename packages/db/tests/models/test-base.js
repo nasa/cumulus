@@ -69,6 +69,19 @@ test('BasePgModel.get() returns correct record', async (t) => {
   );
 });
 
+test('BasePgModel.getRecordCumulusId() returns correct value', async (t) => {
+  const { knex, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const [recordCumulusId] = await knex(tableName)
+    .insert({ info })
+    .returning('cumulus_id');
+  const model = new BasePgModel({ tableName });
+  t.is(
+    await model.getRecordCumulusId(knex, { info }),
+    recordCumulusId
+  );
+});
+
 test('BasePgModel.exists() correctly returns true', async (t) => {
   const { knex, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
