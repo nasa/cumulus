@@ -145,23 +145,17 @@ test('getAsyncOperationCumulusId returns undefined if async operation cannot be 
 test('getParentExecutionCumulusId returns correct parent execution cumulus_id', async (t) => {
   const { parentExecutionArn } = t.context;
 
-  const fakeKnex = () => ({
-    select: () => ({
-      where: (params) => ({
-        first: async () => {
-          if (params.arn === parentExecutionArn) {
-            return {
-              cumulus_id: 9,
-            };
-          }
-          return undefined;
-        },
-      }),
-    }),
-  });
+  const fakeExecutionPgModel = {
+    getRecordCumulusId: async (_, record) => {
+      if (record.arn === parentExecutionArn) {
+        return 9;
+      }
+      return undefined;
+    },
+  };
 
   t.is(
-    await getParentExecutionCumulusId(parentExecutionArn, fakeKnex),
+    await getParentExecutionCumulusId(parentExecutionArn, {}, fakeExecutionPgModel),
     9
   );
 });
@@ -180,24 +174,18 @@ test('getParentExecutionCumulusId returns undefined if parent execution cannot b
 test('getCollectionCumulusId returns correct collection cumulus_id', async (t) => {
   const { collection } = t.context;
 
-  const fakeKnex = () => ({
-    select: () => ({
-      where: (params) => ({
-        first: async () => {
-          if (params.name === collection.name
-              && params.version === collection.version) {
-            return {
-              cumulus_id: 5,
-            };
-          }
-          return undefined;
-        },
-      }),
-    }),
-  });
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: (_, record) => {
+      if (record.name === collection.name
+          && record.version === collection.version) {
+        return 5;
+      }
+      return undefined;
+    },
+  };
 
   t.is(
-    await getCollectionCumulusId(collection, fakeKnex),
+    await getCollectionCumulusId(collection, {}, fakeCollectionPgModel),
     5
   );
 });
@@ -216,23 +204,17 @@ test('getCollectionCumulusId returns undefined if collection cannot be found', a
 test('getMessageProviderCumulusId returns cumulus_id of provider in message', async (t) => {
   const { cumulusMessage, provider } = t.context;
 
-  const fakeKnex = () => ({
-    select: () => ({
-      where: (params) => ({
-        first: async () => {
-          if (params.name === provider.id) {
-            return {
-              cumulus_id: 234,
-            };
-          }
-          return undefined;
-        },
-      }),
-    }),
-  });
+  const fakeProviderPgModel = {
+    getRecordCumulusId: async (_, record) => {
+      if (record.name === provider.id) {
+        return 234;
+      }
+      return undefined;
+    },
+  };
 
   t.is(
-    await getMessageProviderCumulusId(cumulusMessage, fakeKnex),
+    await getMessageProviderCumulusId(cumulusMessage, {}, fakeProviderPgModel),
     234
   );
 });
