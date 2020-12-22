@@ -120,7 +120,7 @@ export const migratePdrs = async (
       } else {
         migrationSummary.failed += 1;
         logger.error(
-          `Could not create PDR record in RDS for Dynamo PDR name: ${record.name}}`,
+          `Could not create PDR record in RDS for Dynamo PDR name: ${record.pdrName}}`,
           error
         );
       }
