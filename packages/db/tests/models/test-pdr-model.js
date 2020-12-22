@@ -50,8 +50,8 @@ test.before(async (t) => {
   );
   t.context.collectionCumulusId = collectionCumulusId;
 
-  const executionPgModel = new ExecutionPgModel();
-  const [executionCumulusId] = await executionPgModel.create(
+  t.context.executionPgModel = new ExecutionPgModel();
+  const [executionCumulusId] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
@@ -104,5 +104,66 @@ test('PdrPgModel.upsert() does not update record with same execution if progress
   t.like(
     await pdrPgModel.get(knex, { name: pdrRecord.name }),
     pdrRecord
+  );
+});
+
+test('PdrPgModel.upsert() overwrites record with same execution if progress is greater than current', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    pdrRecord,
+  } = t.context;
+
+  pdrRecord.status = 'running';
+  pdrRecord.progress = 25;
+  const [insertResult] = await knex(tableNames.pdrs)
+    .insert(pdrRecord)
+    .returning('*');
+  t.is(insertResult.progress, 25);
+
+  // Update PDR progress
+  const updatedRecord = {
+    ...pdrRecord,
+    progress: 100,
+  };
+
+  await pdrPgModel.upsert(knex, updatedRecord);
+
+  t.like(
+    await pdrPgModel.get(knex, { name: pdrRecord.name }),
+    updatedRecord
+  );
+});
+
+test('PdrPgModel.upsert() updates a "completed" record to "running" if execution is different', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    pdrPgModel,
+    pdrRecord,
+  } = t.context;
+
+  pdrRecord.status = 'completed';
+  const [insertResult] = await knex(tableNames.pdrs)
+    .insert(pdrRecord)
+    .returning('*');
+  t.is(insertResult.status, 'completed');
+
+  // Update PDR status and execution
+  const [executionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory()
+  );
+  const updatedRecord = {
+    ...pdrRecord,
+    status: 'running',
+    execution_cumulus_id: executionCumulusId,
+  };
+
+  await pdrPgModel.upsert(knex, updatedRecord);
+
+  t.like(
+    await pdrPgModel.get(knex, { name: pdrRecord.name }),
+    updatedRecord
   );
 });
