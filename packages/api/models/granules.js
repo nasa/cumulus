@@ -337,6 +337,7 @@ class Granule extends Manager {
     if (!collectionId) {
       throw new CumulusModelError('meta.collection required to generate a granule record');
     }
+
     const granuleFiles = await FileUtils.buildDatabaseFiles({
       s3,
       providerURL: buildURL({
@@ -378,6 +379,7 @@ class Granule extends Manager {
       timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
       ...processingTimeInfo,
       ...temporalInfo,
+      queryFields: get(message, 'meta.granule.queryFields'),
     };
 
     record.published = get(granule, 'published', false);

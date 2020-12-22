@@ -53,7 +53,7 @@ resource "aws_rds_cluster" "cumulus" {
   cluster_identifier      = var.cluster_identifier
   engine_mode             = "serverless"
   engine                  = "aurora-postgresql"
-  engine_version          = "10.7"
+  engine_version          = var.engine_version
   database_name           = "postgres"
   master_username         = var.db_admin_username
   master_password         = var.db_admin_password

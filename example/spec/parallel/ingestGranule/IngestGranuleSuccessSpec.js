@@ -99,7 +99,7 @@ function isExecutionForGranuleId(taskInput, params) {
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
   const collectionDupeHandling = 'error';
 
   let collection;
@@ -376,6 +376,18 @@ describe('The S3 Ingest Granules workflow', () => {
     );
   });
 
+  describe('the BackupGranulesToLzards task', () => {
+    let lambdaOutput;
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'LzardsBackup');
+    });
+
+    it('adds LZARDS backup output', () => {
+      expect(true, lambdaOutput.meta.backupStatus.every((file) => file.status === 'COMPLETED'));
+    });
+  });
+
   describe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
@@ -438,7 +450,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
-        if (file.size) {
+        if (file.size && expectedFile.size) {
           expect(file.size).toEqual(expectedFile.size);
         }
       });
@@ -1086,7 +1098,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(definition.Comment).toEqual('Ingest Granule');
 
         // definition has all the states' information
-        expect(Object.keys(definition.States).length).toBe(11);
+        expect(Object.keys(definition.States).length).toBe(12);
       });
 
       it('returns the inputs, outputs, timing, and status information for each executed step', async () => {
@@ -1103,8 +1115,10 @@ describe('The S3 Ingest Granules workflow', () => {
           'FilesToGranulesStep',
           'MoveGranuleStep',
           'UpdateGranulesCmrMetadataFileLinksStep',
+          'HyraxMetadataUpdatesTask',
           'CmrStep',
           'WorkflowSucceeded',
+          'BackupGranulesToLzards',
         ];
 
         // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
