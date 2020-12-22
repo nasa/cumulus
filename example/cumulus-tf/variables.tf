@@ -1,5 +1,29 @@
 # Required
 
+variable "async_operation_image_version" {
+  description = "docker image version to use for Cumulus async operations tasks"
+  type = string
+  default = "32"
+}
+
+variable "cumulus_process_activity_version" {
+    description = "docker image version to use for python processing service"
+    type = string
+    default = "1"
+}
+
+variable "ecs_task_image_version" {
+  description = "docker image version to use for Cumulus hello world task"
+    type = string
+    default = "1.7.0"
+}
+
+variable "cumulus_test_ingest_image_version" {
+    description = "docker image version to use for python test ingest processing service"
+    type = string
+    default = "12"
+}
+
 variable "cmr_client_id" {
   type = string
 }
@@ -48,6 +72,33 @@ variable "launchpad_certificate" {
 variable "launchpad_passphrase" {
   type    = string
   default = ""
+}
+variable "lzards_launchpad_certificate" {
+  type    = string
+  default = "launchpad.pfx"
+}
+
+variable "lzards_launchpad_passphrase" {
+  type    = string
+  default = ""
+}
+
+variable "lzards_api" {
+  description = "LZARDS API endpoint"
+  type        = string
+  default     = "https://lzards.sit.earthdata.nasa.gov/api/backups"
+}
+
+variable "lzards_provider" {
+  description = "LZARDS provider name"
+  type        = string
+  default     = "CUMULUS_INTEGRATION_TESTS"
+}
+
+variable "lzards_s3_link_timeout" {
+  description = "LZARDS S3 access link timeout (seconds)"
+  type        = string
+  default     = ""
 }
 
 variable "oauth_provider" {

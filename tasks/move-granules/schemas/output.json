@@ -23,7 +23,12 @@
                   "type": "string"
                 },
                 "filename": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The s3 bucket/path URI (e.g. s3://{bucket}{object})"
+                },
+                "filepath": {
+                  "type": "string",
+                  "description": "The S3 object key"
                 },
                 "type": {
                   "type": "string"

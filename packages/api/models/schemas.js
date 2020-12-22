@@ -170,6 +170,17 @@ module.exports.collection = {
             description: 'Regex to identify the base file for which this files serves as a sidecar checksum file. Should be identical to the \'regex\' property of the base file',
             type: 'string',
           },
+          lzards: {
+            title: 'LZARDS configuration',
+            type: 'object',
+            properties: {
+              backup: {
+                title: 'LZARDS backup flag',
+                description: 'Boolean configuration value to determine if file type should be backed up by backup components.  Defaults to false',
+                type: 'boolean',
+              },
+            },
+          },
         },
         required: [
           'regex',

@@ -17,16 +17,16 @@ export const doesRecordExist = async<T>(
  *
  * @param {Object} whereClause - where clause for query
  * @param {tableNames} table - Name of table
- * @param {Knex} knex - Knex client for writing to RDS database
+ * @param {Knex|Knex.Transaction} knexOrTrx - Knex client to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordDoesNotExist} if record cannot be found
 */
 export const getRecordCumulusId = async<T extends { cumulus_id: number }>(
   whereClause : Partial<T>,
   table: tableNames,
-  knex: Knex
+  knexOrTrx: Knex|Knex.Transaction
 ): Promise<number> => {
-  const record: T = await knex(table)
+  const record: T = await knexOrTrx(table)
     .select('cumulus_id')
     .where(whereClause)
     .first();
