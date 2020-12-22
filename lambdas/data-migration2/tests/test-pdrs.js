@@ -117,6 +117,9 @@ test.beforeEach(async (t) => {
 
   t.context.testCollection = testCollection;
   t.context.testProvider = testProvider;
+
+  t.context.collectionCumulusId = await migrateFakeCollectionRecord(testCollection, t.context.knex);
+  t.context.providerCumulusId = await migrateFakeProviderRecord(testProvider, t.context.knex);
 });
 
 test.afterEach.always(async (t) => {
@@ -139,10 +142,8 @@ test.after.always(async (t) => {
 });
 
 test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
+  const { knex, testCollection, testProvider, collectionCumulusId, providerCumulusId } = t.context;
 
-  const collectionCumulusId = await migrateFakeCollectionRecord(testCollection, knex);
-  const providerCumulusId = await migrateFakeProviderRecord(testProvider, knex);
   const testPdr = generateTestPdr(testCollection.name, testProvider.id);
   await migratePdrRecord(testPdr, knex);
 
@@ -177,8 +178,6 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
 test.serial('migratePdrRecord throws SchemaValidationError on invalid source data from DynamoDB', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
-  await migrateFakeCollectionRecord(testCollection, knex);
-  await migrateFakeProviderRecord(testProvider, knex);
   const testPdr = generateTestPdr(testCollection.name, testProvider.id);
 
   delete testPdr.status;
@@ -190,10 +189,8 @@ test.serial('migratePdrRecord throws SchemaValidationError on invalid source dat
 });
 
 test.serial('migratePdrRecord handles nullable fields on source PDR data', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
+  const { knex, testCollection, testProvider, collectionCumulusId, providerCumulusId } = t.context;
 
-  const collectionCumulusId = await migrateFakeCollectionRecord(testCollection, knex);
-  const providerCumulusId = await migrateFakeProviderRecord(testProvider, knex);
   const testPdr = generateTestPdr(testCollection.name, testProvider.id);
 
   delete testPdr.execution;
@@ -239,8 +236,6 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
 test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
-  await migrateFakeCollectionRecord(testCollection, knex);
-  await migrateFakeProviderRecord(testProvider, knex);
   const testPdr = generateTestPdr(testCollection.name, testProvider.id);
   await migratePdrRecord(testPdr, knex);
 
@@ -250,12 +245,10 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already mig
   );
 });
 
-test.serial.only('migratePdrRecord skips already migrated record', async (t) => {
+test.serial.skip('migratePdrs skips already migrated record', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
   const testPdr = generateTestPdr(testCollection.name, testProvider.id);
 
-  await migrateFakeCollectionRecord(testCollection, knex);
-  await migrateFakeProviderRecord(testProvider, knex);
   await migratePdrRecord(testPdr, knex);
   await pdrsModel.create(testPdr);
 
@@ -270,5 +263,72 @@ test.serial.only('migratePdrRecord skips already migrated record', async (t) => 
   });
   const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
   t.is(records.length, 1);
-  console.log(records);
+});
+
+test.serial.skip('migratePdrs processes multiple PDR records', async (t) => {
+  const { knex, testCollection, testProvider } = t.context;
+  const anotherCollection = fakeCollectionFactory();
+  const anotherProvider = fakeProviderFactory({
+    encrypted: true,
+    privateKey: 'key',
+    cmKeyId: 'key-id',
+    certificateUri: 'uri',
+  });
+
+  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  const anotherPdr = generateTestPdr(anotherCollection.name, anotherProvider.id);
+  await migrateFakeCollectionRecord(anotherCollection, t.context.knex);
+  await migrateFakeProviderRecord(anotherProvider, t.context.knex);
+
+  await Promise.all([
+    pdrsModel.create(testPdr),
+    pdrsModel.create(anotherPdr),
+  ]);
+  t.teardown(() => Promise.all([
+    pdrsModel.delete(testPdr),
+    pdrsModel.delete(anotherPdr),
+  ]));
+  const migrationSummary = await migratePdrs(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 0,
+    success: 2,
+  });
+  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+  t.is(records.length, 2);
+});
+
+test.serial.skip('migratePdrs processes all non-failing records', async (t) => {
+  const { knex, testCollection, testProvider } = t.context;
+  const anotherCollection = fakeCollectionFactory();
+  const anotherProvider = fakeProviderFactory({
+    encrypted: true,
+    privateKey: 'key',
+    cmKeyId: 'key-id',
+    certificateUri: 'uri',
+  });
+
+  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  const anotherPdr = generateTestPdr(anotherCollection.name, anotherProvider.id);
+  await migrateFakeCollectionRecord(anotherCollection, t.context.knex);
+  await migrateFakeProviderRecord(anotherProvider, t.context.knex);
+
+  await Promise.all([
+    pdrsModel.create(testPdr),
+    pdrsModel.create(anotherPdr),
+  ]);
+  t.teardown(() => Promise.all([
+    pdrsModel.delete(testPdr),
+    pdrsModel.delete(anotherPdr),
+  ]));
+  const migrationSummary = await migratePdrs(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 1,
+    success: 1,
+  });
+  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+  t.is(records.length, 1);
 });

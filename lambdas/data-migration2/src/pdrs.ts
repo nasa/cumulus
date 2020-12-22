@@ -126,8 +126,13 @@ export const migratePdrs = async (
       }
     }
 
-    await searchQueue.shift();
-    record = await searchQueue.peek();
+    try {
+      await searchQueue.shift();
+      record = await searchQueue.peek();
+    } catch (error) {
+      console.log(error);
+      logger.error(error);
+    }
   }
   /* eslint-enable no-await-in-loop */
   logger.info(`Successfully migrated ${migrationSummary.success} PDR records.`);
