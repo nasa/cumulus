@@ -7,6 +7,7 @@ const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
+  translateApiFiletoPostgresFile,
   FilePgModel,
   GranulePgModel,
 } = require('@cumulus/db');
@@ -90,17 +91,7 @@ const generateGranuleRecord = async ({
 };
 
 const generateFileRecord = ({ file, granuleCumulusId }) => ({
-  bucket: file.bucket,
-  checksum_type: file.checksumType,
-  checksum_value: file.checksum,
-  // TODO: do we really need both of these properties?
-  filename: file.fileName,
-  file_name: file.fileName,
-  key: file.key,
-  name: file.name,
-  path: file.path,
-  size: file.size,
-  source: file.source,
+  ...translateApiFiletoPostgresFile(file),
   granule_cumulus_id: granuleCumulusId,
 });
 

@@ -27,8 +27,6 @@ const { migrationDir } = require('../../../../../lambdas/db-migration');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
-const fileOmitKeys = ['checksum', 'checksumType', 'fileName'];
-
 test.before(async (t) => {
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
 
@@ -256,42 +254,10 @@ test('generateGranuleRecord() includes correct error if cumulus message has an e
   t.deepEqual(record.error, exception);
 });
 
-test('generateFileRecord() generates correct record', (t) => {
-  const file = {
-    bucket: cryptoRandomString({ length: 3 }),
-    key: cryptoRandomString({ length: 3 }),
-    fileName: cryptoRandomString({ length: 3 }),
-    checksumType: 'md5',
-    checksum: 'bogus-value',
-    size: 100,
-    source: 'fake-source',
-  };
-  t.deepEqual(
-    generateFileRecord({ file, granuleCumulusId: 1 }),
-    omit(
-      {
-        ...file,
-        checksum_type: file.checksumType,
-        checksum_value: file.checksum,
-        filename: file.fileName,
-        file_name: file.fileName,
-        name: undefined,
-        path: undefined,
-        granule_cumulus_id: 1,
-      },
-      fileOmitKeys
-    )
-  );
-});
-
-test('generateFileRecord() returns only allowed properties', (t) => {
-  const file = {
-    // add bogus property
-    foo: 'bar',
-  };
-
-  const record = generateFileRecord({ file });
-  t.false(Object.prototype.hasOwnProperty.call(record, 'foo'));
+test('generateFileRecord() adds granule cumulus ID', (t) => {
+  const file = {};
+  const record = generateFileRecord({ file, granuleCumulusId: 1 });
+  t.is(record.granule_cumulus_id, 1);
 });
 
 test('getGranuleCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
