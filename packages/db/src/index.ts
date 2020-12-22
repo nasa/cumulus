@@ -53,6 +53,7 @@ export {
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
 export { translateApiCollectionToPostgresCollection } from './collections';
 
+export { AsyncOperationPgModel } from './models/async_operation';
 export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';
