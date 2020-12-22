@@ -39,24 +39,6 @@ test('BasePgModel.create() creates record and returns cumulus_id by default', as
   );
 });
 
-test('BasePgModel.create() returns query result if returnCumulusId = false', async (t) => {
-  const { knex, basePgModel, tableName } = t.context;
-  const info = cryptoRandomString({ length: 5 });
-
-  const queryResult = await basePgModel.create(knex, { info }, false);
-
-  // cumulus_id is not returned
-  t.is(queryResult[0], undefined);
-
-  const record = await knex(tableName).where({ info }).first();
-  t.like(
-    record,
-    {
-      info,
-    }
-  );
-});
-
 test('BasePgModel.get() returns correct record', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });

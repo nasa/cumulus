@@ -47,14 +47,11 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
 
   create(
     knexOrTrx: Knex | Knex.Transaction,
-    item: ItemType,
-    returnCumulusId: boolean = true
+    item: ItemType
   ) {
-    const insertQuery = knexOrTrx(this.tableName).insert(item);
-    if (returnCumulusId) {
-      insertQuery.returning('cumulus_id');
-    }
-    return insertQuery;
+    return knexOrTrx(this.tableName)
+      .insert(item)
+      .returning('cumulus_id');
   }
 }
 
