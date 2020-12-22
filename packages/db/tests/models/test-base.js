@@ -80,7 +80,7 @@ test('BasePgModel.exists() correctly returns true', async (t) => {
 });
 
 test('BasePgModel.exists() correctly returns false', async (t) => {
-  const { knex, basePgModel, tableName } = t.context;
+  const { knex, basePgModel } = t.context;
   const info = cryptoRandomString({ length: 5 });
   t.false(await basePgModel.exists(knex, { info }));
 });
