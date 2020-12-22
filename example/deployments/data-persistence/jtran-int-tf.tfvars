@@ -1,1 +1,1 @@
-prefix = "jtran-int-tf
+prefix = "jtran-int-tf"
