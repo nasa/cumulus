@@ -6,7 +6,7 @@ class ESCollectionGranuleQueue extends ESSearchQueue {
   constructor(queryStringParameters, esIndex) {
     const sortParams = {
       sort: [
-        { granuleId: { order: 'asc' } },
+        { 'granuleId.keyword': { order: 'asc' } },
       ],
     };
     const superQueryStringParameters = { sortParams, ...queryStringParameters };

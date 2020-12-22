@@ -3,6 +3,11 @@ resource "aws_sfn_activity" "ecs_task_python_test_ingest_processing_service" {
   tags = local.tags
 }
 
+
+data "aws_ecr_repository" "cumulus_test_ingest_process" {
+  name = "cumulus-test-ingest-process"
+}
+
 module "python_test_ingest_processing_service" {
   source = "../../tf-modules/cumulus_ecs_service"
 
@@ -12,7 +17,7 @@ module "python_test_ingest_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "jlkovarik/cumulus-test-ingest-process:12"
+  image                                 = "${data.aws_ecr_repository.cumulus_test_ingest_process.repository_url}:${var.cumulus_test_ingest_image_version}"
   log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
 
   cpu                = 400

@@ -33,7 +33,6 @@ const logger = () => new Logger({
  */
 const listFiles = async (params) => {
   const { providerConfig, useList, httpRequestTimeout = 300, path } = params;
-
   const provider = buildProviderClient({
     ...providerConfig,
     useList,

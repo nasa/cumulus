@@ -5,6 +5,8 @@ const omit = require('lodash/omit');
 
 const { BaseSearch } = require('./search');
 
+const { convertTextField } = require('./textFields');
+
 class Stats extends BaseSearch {
   /**
    * Remove stats-specific fields, then create search
@@ -46,12 +48,12 @@ class Stats extends BaseSearch {
       },
       granulesStatus: {
         terms: {
-          field: 'status',
+          field: 'status.keyword',
         },
       },
       collections: {
         cardinality: {
-          field: 'collectionId',
+          field: 'collectionId.keyword',
         },
       },
     };
@@ -107,7 +109,8 @@ class Stats extends BaseSearch {
       this.client = await this.constructor.es();
     }
 
-    const field = this.params.field || 'status';
+    const originalField = this.params.field || 'status';
+    const field = convertTextField(originalField);
 
     const searchParams = this._buildSearch();
     searchParams.type = this.type;
@@ -125,7 +128,7 @@ class Stats extends BaseSearch {
       meta: {
         name: 'cumulus-api',
         count: count.hits.total,
-        field: field,
+        field: originalField,
       },
       count: count.aggregations.count.buckets.map((b) => ({
         key: b.key,

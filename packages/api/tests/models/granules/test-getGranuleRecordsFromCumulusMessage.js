@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const cloneDeep = require('lodash/cloneDeep');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -135,4 +136,23 @@ test('Granule._getGranuleRecordsFromCumulusMessage() returns the list of valid g
 
   t.is(granuleRecords.length, 1);
   t.is(granuleRecords[0].granuleId, 'granule-x');
+});
+
+test('Granule._getGranuleRecordsFromCumulusMessage() returns the correct granule record for a Cumulus message with queryFields', async (t) => {
+  const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+  let granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  t.is(granuleRecords.length, 1);
+  t.falsy(granuleRecords[0].queryFields);
+
+  const queryFields = {
+    anyKey: 'anyValue',
+    anyObject: {
+      foo: 'bar',
+    },
+  };
+  cumulusMessage.meta.granule = { queryFields };
+
+  granuleRecords = await Granule._getGranuleRecordsFromCumulusMessage(cumulusMessage);
+  t.is(granuleRecords.length, 1);
+  t.deepEqual(granuleRecords[0].queryFields, cumulusMessage.meta.granule.queryFields);
 });

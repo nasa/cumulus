@@ -1,5 +1,11 @@
 # Required
 
+variable "async_operation_image" {
+  description = "docker image to use for Cumulus async operations tasks"
+  type = string
+  default = "cumuluss/async-operation:27"
+}
+
 variable "cmr_client_id" {
   description = "Client ID that you want to use for requests to CMR (https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html)"
   type        = string
@@ -327,7 +333,7 @@ variable "lambda_subnet_ids" {
 }
 
 variable "launchpad_api" {
-  description = "URL of Launchpad API. Required if using `cmr_oauth_provider = 'launchpad'`."
+  description = "URL of Launchpad API. Required if using lzards-backup task or  `cmr_oauth_provider = 'launchpad'`."
   type        = string
   default     = "launchpadApi"
 }
@@ -340,6 +346,35 @@ variable "launchpad_certificate" {
 
 variable "launchpad_passphrase" {
   description = "Passphrase of Launchpad certificate. Required if using `cmr_oauth_provider = 'launchpad'`."
+  type        = string
+  default     = ""
+}
+variable "lzards_launchpad_certificate" {
+  description = "Name of the Launchpad certificate uploaded to the 'crypto' directory of the `system_bucket` for use with the lzards-backup task`."
+  type        = string
+  default     = "lzards_launchpad.pfx"
+}
+
+variable "lzards_launchpad_passphrase" {
+  description = "Passphrase for use with lzards_launchpad_certificate."
+  type        = string
+  default     = ""
+}
+
+variable "lzards_provider" {
+  description = "LZARDS provider name"
+  type        = string
+  default     = ""
+}
+
+variable "lzards_api" {
+  description = "LZARDS backup API endpoint"
+  type = string
+  default = ""
+}
+
+variable "lzards_s3_link_timeout" {
+  description = "LZARDS S3 access link timeout (seconds)"
   type        = string
   default     = ""
 }
@@ -520,4 +555,3 @@ variable "ems_deploy" {
   type        = bool
   default     = false
 }
-
