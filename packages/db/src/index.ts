@@ -26,6 +26,10 @@ export {
 } from './provider';
 
 export {
+  translateApiFiletoPostgresFile,
+} from './translate/file';
+
+export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
 } from './types/async_operation';
