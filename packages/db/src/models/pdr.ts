@@ -22,7 +22,9 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
         .onConflict('name')
         .merge()
         .where('pdrs.execution_cumulus_id', '!=', pdr.execution_cumulus_id)
-        .orWhere('pdrs.progress', '<', pdr.progress)
+        // progress is not a required field, so trying to use `pdr.progress`
+        // as where clause value throws a TS error
+        .orWhere(knexOrTrx.raw('pdrs.progress < EXCLUDED.progress'))
         .returning('cumulus_id');
     }
     return knexOrTrx(this.tableName)
