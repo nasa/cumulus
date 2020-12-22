@@ -10,13 +10,14 @@ const {
   getKnexClient,
   tableNames,
   doesRecordExist,
-  FilePgModel,
   fakeFileRecordFactory,
+  fakeGranuleRecordFactory,
 } = require('@cumulus/db');
 
 const {
   generateFileRecord,
   generateGranuleRecord,
+  getGranuleCumulusIdFromQueryResultOrLookup,
   writeFilesViaTransaction,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
@@ -291,6 +292,29 @@ test('generateFileRecord() returns only allowed properties', (t) => {
 
   const record = generateFileRecord({ file });
   t.false(Object.prototype.hasOwnProperty.call(record, 'foo'));
+});
+
+test('getGranuleCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
+  const granuleRecord = fakeGranuleRecordFactory();
+  const fakeGranuleCumulusId = Math.floor(Math.random() * 1000);
+  const fakeGranulePgModel = {
+    getRecordCumulusId: async (_, record) => {
+      if (record.granule_id === granuleRecord.granule_id) {
+        return fakeGranuleCumulusId;
+      }
+      return undefined;
+    },
+  };
+
+  t.is(
+    await getGranuleCumulusIdFromQueryResultOrLookup({
+      trx: {},
+      queryResult: [],
+      granuleRecord,
+      granulePgModel: fakeGranulePgModel,
+    }),
+    fakeGranuleCumulusId
+  );
 });
 
 test('writeFilesViaTransaction() throws error if any writes fail', async (t) => {

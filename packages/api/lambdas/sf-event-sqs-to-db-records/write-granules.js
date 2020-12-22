@@ -7,7 +7,6 @@ const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
-  tableNames,
   FilePgModel,
   GranulePgModel,
 } = require('@cumulus/db');
@@ -119,6 +118,36 @@ const writeFilesViaTransaction = async ({
     (fileRecord) => filePgModel.upsert(trx, fileRecord)
   ));
 
+/**
+ * Get the cumulus ID from a query result or look it up in the database.
+ *
+ * For certain cases, such as an upsert query that matched no rows, an empty
+ * database result is returned, so no cumulus ID will be returned. In those
+ * cases, this function will lookup the granule cumulus ID from the record.
+ *
+ * @param {Object} params
+ * @param {Object} params.trx - A Knex transaction
+ * @param {Object} params.queryResult - Query result
+ * @param {Object} params.granuleRecord - A granule record
+ * @param {Object} params.granulePgModel - Database model for granule data
+ * @returns {Promise<number|undefined>} - Cumulus ID for the granule record
+ */
+const getGranuleCumulusIdFromQueryResultOrLookup = async ({
+  queryResult = [],
+  granuleRecord,
+  trx,
+  granulePgModel = new GranulePgModel(),
+}) => {
+  let [granuleCumulusId] = queryResult;
+  if (!granuleCumulusId) {
+    granuleCumulusId = await granulePgModel.getRecordCumulusId(
+      trx,
+      { granule_id: granuleRecord.granule_id }
+    );
+  }
+  return granuleCumulusId;
+};
+
 const writeGranuleAndFilesViaTransaction = async ({
   cumulusMessage,
   granule,
@@ -154,8 +183,14 @@ const writeGranuleAndFilesViaTransaction = async ({
     pdrCumulusId,
   });
 
-  // TODO: handle case where upsert may not return anything
-  const [granuleCumulusId] = await granulePgModel.upsert(trx, granuleRecord);
+  const upsertQueryResult = await granulePgModel.upsert(trx, granuleRecord);
+  // Ensure that we get a granule ID for the files even if the
+  // upsert query returned an empty result
+  const granuleCumulusId = await getGranuleCumulusIdFromQueryResultOrLookup({
+    trx,
+    queryResult: upsertQueryResult,
+    granuleRecord,
+  });
 
   const fileRecords = await generateFileRecords({
     files: updatedFiles,
@@ -299,6 +334,7 @@ module.exports = {
   generateFileRecord,
   generateFileRecords,
   generateGranuleRecord,
+  getGranuleCumulusIdFromQueryResultOrLookup,
   writeFilesViaTransaction,
   writeGranuleAndFilesViaTransaction,
   writeGranules,
