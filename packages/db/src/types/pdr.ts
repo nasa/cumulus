@@ -16,7 +16,7 @@ export interface PostgresPdr {
   updated_at?: Date
 }
 
-export interface PostgresPdrRecord {
+export interface PostgresPdrRecord extends PostgresPdr {
   cumulus_id: number
   created_at: Date
   updated_at: Date

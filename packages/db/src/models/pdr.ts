@@ -8,32 +8,26 @@ import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
 export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrRecord> {
   constructor() {
     super({
-      tableName: tableNames.granules,
+      tableName: tableNames.pdrs,
     });
   }
 
-  upsert(
+  async upsert(
     knexOrTrx: Knex | Knex.Transaction,
-    granule: PostgresGranule
+    pdr: PostgresPdrRecord
   ) {
-    if (granule.status === 'running') {
+    if (pdr.status === 'running') {
       return knexOrTrx(this.tableName)
-        .insert(granule)
-        .onConflict(['granule_id', 'collection_cumulus_id'])
-        .merge({
-          execution_cumulus_id: granule.execution_cumulus_id,
-          status: granule.status,
-          timestamp: granule.timestamp,
-          updated_at: granule.updated_at,
-        })
-        // execution_cumulus_id is not required, so granule.execution_cumulus_id may be
-        // undefined. so need to compare against EXCLUDED.execution_cumulus_id
-        .whereRaw(`${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`)
+        .insert(pdr)
+        .onConflict('name')
+        .merge()
+        .where('pdrs.execution_cumulus_id', '!=', pdr.execution_cumulus_id)
+        .orWhere('pdrs.progress', '<', pdr.progress)
         .returning('cumulus_id');
     }
     return knexOrTrx(this.tableName)
-      .insert(granule)
-      .onConflict(['granule_id', 'collection_cumulus_id'])
+      .insert(pdr)
+      .onConflict('name')
       .merge()
       .returning('cumulus_id');
   }
