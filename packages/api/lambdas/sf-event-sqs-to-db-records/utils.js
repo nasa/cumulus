@@ -5,6 +5,7 @@ const { envUtils } = require('@cumulus/common');
 const {
   tableNames,
   getRecordCumulusId,
+  AsyncOperationPgModel,
   CollectionPgModel,
   ExecutionPgModel,
   ProviderPgModel,
@@ -45,17 +46,20 @@ const isFailedLookupError = (error) =>
   error instanceof InvalidArgument
   || error instanceof RecordDoesNotExist;
 
-const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
+const getAsyncOperationCumulusId = async (
+  asyncOperationId,
+  knex,
+  asyncOperationPgModel = new AsyncOperationPgModel(),
+) => {
   try {
     if (isNil(asyncOperationId)) {
       throw new InvalidArgument(`Async operation ID is required for lookup, received ${asyncOperationId}`);
     }
-    return await getRecordCumulusId(
+    return await asyncOperationPgModel.getRecordCumulusId(
+      knex,
       {
         id: asyncOperationId,
-      },
-      tableNames.asyncOperations,
-      knex
+      }
     );
   } catch (error) {
     if (isFailedLookupError(error)) {

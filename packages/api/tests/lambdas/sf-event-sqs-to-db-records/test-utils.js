@@ -110,23 +110,17 @@ test.serial('isPostRDSDeploymentExecution throws error if RDS_DEPLOYMENT_CUMULUS
 test('getAsyncOperationCumulusId returns correct async operation cumulus_id', async (t) => {
   const { asyncOperation } = t.context;
 
-  const fakeKnex = () => ({
-    select: () => ({
-      where: (params) => ({
-        first: async () => {
-          if (params.id === asyncOperation.id) {
-            return {
-              cumulus_id: 7,
-            };
-          }
-          return undefined;
-        },
-      }),
-    }),
-  });
+  const fakeAsyncOperationPgModel = {
+    getRecordCumulusId: (_, record) => {
+      if (record.id === asyncOperation.id) {
+        return 7;
+      }
+      return undefined;
+    },
+  };
 
   t.is(
-    await getAsyncOperationCumulusId(asyncOperation.id, fakeKnex),
+    await getAsyncOperationCumulusId(asyncOperation.id, {}, fakeAsyncOperationPgModel),
     7
   );
 });
