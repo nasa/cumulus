@@ -238,7 +238,7 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already mig
   );
 });
 
-test.serial.only('migratePdrs skips already migrated record', async (t) => {
+test.serial('migratePdrs skips already migrated record', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
   const testPdr = generateTestPdr(testCollection.name, testProvider.id);
 
@@ -260,7 +260,7 @@ test.serial.only('migratePdrs skips already migrated record', async (t) => {
   }
 });
 
-test.serial.skip('migratePdrs processes multiple PDR records', async (t) => {
+test.serial('migratePdrs processes multiple PDR records', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
   const anotherCollection = fakeCollectionFactory();
   const anotherProvider = fakeProviderFactory({
@@ -294,7 +294,7 @@ test.serial.skip('migratePdrs processes multiple PDR records', async (t) => {
   t.is(records.length, 2);
 });
 
-test.serial.skip('migratePdrs processes all non-failing records', async (t) => {
+test.serial('migratePdrs processes all non-failing records', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
   const anotherCollection = fakeCollectionFactory();
   const anotherProvider = fakeProviderFactory({
