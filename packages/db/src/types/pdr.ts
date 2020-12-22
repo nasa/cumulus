@@ -1,0 +1,23 @@
+export interface PostgresPdr {
+  status: string
+  name: string
+  collection_cumulus_id: number
+  provider_cumulus_id: number
+  execution_cumulus_id: number
+  progress?: number
+  pan_sent?: boolean
+  pan_message?: string
+  stats?: object
+  address?: string
+  original_url?: string
+  duration?: number
+  timestamp?: Date
+  created_at?: Date
+  updated_at?: Date
+}
+
+export interface PostgresPdrRecord {
+  cumulus_id: number
+  created_at: Date
+  updated_at: Date
+}
