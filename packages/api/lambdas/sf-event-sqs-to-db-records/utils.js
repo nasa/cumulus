@@ -3,8 +3,6 @@ const semver = require('semver');
 
 const { envUtils } = require('@cumulus/common');
 const {
-  tableNames,
-  getRecordCumulusId,
   AsyncOperationPgModel,
   CollectionPgModel,
   ExecutionPgModel,
