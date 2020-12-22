@@ -15,6 +15,7 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
 
@@ -244,20 +245,17 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
 
   await migratePdrRecord(testPdr, knex);
   await pdrsModel.create(testPdr);
-  try {
-    const migrationSummary = await migratePdrs(process.env, knex);
-    t.deepEqual(migrationSummary,
-      {
-        dynamoRecords: 1,
-        skipped: 1,
-        failed: 0,
-        success: 0,
-      });
-    const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
-    t.is(records.length, 1);
-  } finally {
-    pdrsModel.delete(testPdr);
-  }
+  const migrationSummary = await migratePdrs(process.env, knex);
+  t.deepEqual(migrationSummary,
+    {
+      dynamoRecords: 1,
+      skipped: 1,
+      failed: 0,
+      success: 0,
+    });
+  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+  t.is(records.length, 1);
+  t.teardown(() => pdrsModel.delete({ pdrName: testPdr.pdrName }));
 });
 
 test.serial('migratePdrs processes multiple PDR records', async (t) => {
@@ -280,8 +278,8 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
     pdrsModel.create(anotherPdr),
   ]);
   t.teardown(() => Promise.all([
-    pdrsModel.delete(testPdr),
-    pdrsModel.delete(anotherPdr),
+    pdrsModel.delete({ pdrName: testPdr.pdrName }),
+    pdrsModel.delete({ pdrName: anotherPdr.pdrName }),
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
@@ -308,14 +306,20 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
   const anotherPdr = generateTestPdr(anotherCollection.name, anotherProvider.id);
   await migrateFakeCollectionRecord(anotherCollection, t.context.knex);
   await migrateFakeProviderRecord(anotherProvider, t.context.knex);
+  delete testPdr.status;
 
   await Promise.all([
-    pdrsModel.create(testPdr),
+    // Have to use Dynamo client directly because creating
+    // via model won't allow creation of an invalid record
+    dynamodbDocClient().put({
+      TableName: process.env.PdrsTable,
+      Item: testPdr,
+    }).promise(),
     pdrsModel.create(anotherPdr),
   ]);
   t.teardown(() => Promise.all([
-    pdrsModel.delete(testPdr),
-    pdrsModel.delete(anotherPdr),
+    pdrsModel.delete({ pdrName: testPdr.pdrName }),
+    pdrsModel.delete({ pdrName: anotherPdr.pdrName }),
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
