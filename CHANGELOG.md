@@ -46,6 +46,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2257**
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
+- **CUMULUS-2128**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
+    - `@cumulus/message/Providers/getMessageProvider`
 - **CUMULUS-2190**
   - Added helper functions:
     - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
@@ -66,6 +70,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMUlUS-2128**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for granule and file writes to the core PostgreSQL database
   - **CUMULUS-2189**
     - Updated Provider endpoint logic to write providers in parallel to Core
       PostgreSQL database
