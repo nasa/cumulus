@@ -9,6 +9,7 @@ import { PostgresExecution } from './types/execution';
 import { PostgresFile } from './types/file';
 import { PostgresGranule } from './types/granule';
 import { PostgresProvider } from './types/provider';
+import { PostgresPdr } from './types/pdr';
 
 export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {
   await knex.raw(`create database "${dbName}";`);
@@ -92,5 +93,13 @@ export const fakeFileRecordFactory = (
 ): Omit<PostgresFile, 'granule_cumulus_id'> => ({
   bucket: cryptoRandomString({ length: 3 }),
   key: cryptoRandomString({ length: 3 }),
+  ...params,
+});
+
+export const fakePdrRecordFactory = (
+  params: Partial<PostgresPdr>
+) => ({
+  name: `pdr${cryptoRandomString({ length: 3 })}`,
+  status: 'running',
   ...params,
 });

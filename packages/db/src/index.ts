@@ -8,6 +8,7 @@ export {
   fakeProviderRecordFactory,
   fakeGranuleRecordFactory,
   fakeFileRecordFactory,
+  fakePdrRecordFactory,
 } from './test-utils';
 
 export { getKnexClient } from './connection';
