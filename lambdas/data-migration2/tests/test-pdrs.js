@@ -46,6 +46,7 @@ const generateTestPdr = (collectionId, provider, executionId) => ({
   progress: 10,
   execution: executionId,
   PANSent: false,
+  PANmessage: "message",
   stats: { total: 1, completed: 0, failed: 0, processing: 1 },
   address: cryptoRandomString({ length: 5 }),
   originalUrl: cryptoRandomString({ length: 5 }),

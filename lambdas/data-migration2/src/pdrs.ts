@@ -44,7 +44,7 @@ export const migratePdrRecord = async (
 
   // Throw error if it was already migrated.
   if (existingRecord) {
-    throw new RecordAlreadyMigrated(`Pdr name ${dynamoRecord.pdrName} was already migrated, skipping`);
+    throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
   }
 
   const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
@@ -76,6 +76,7 @@ export const migratePdrRecord = async (
     status: dynamoRecord.status,
     progress: dynamoRecord.progress,
     pan_sent: dynamoRecord.PANSent,
+    pan_message: dynamoRecord.PANmessage,
     stats: dynamoRecord.stats,
     address: dynamoRecord.address,
     original_url: dynamoRecord.originalUrl,
