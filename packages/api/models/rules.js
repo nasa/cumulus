@@ -5,13 +5,13 @@ const get = require('lodash/get');
 const merge = require('lodash/merge');
 const set = require('lodash/set');
 
-const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
-const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const s3Utils = require('@cumulus/aws-client/S3');
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
+const { invoke } = require('@cumulus/aws-client/Lambda');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
@@ -227,7 +227,7 @@ class Rule extends Manager {
     await invoke(process.env.invoke, payload);
   }
 
-  async create(item) {
+  async create(item, createdAt) {
     // make sure the name only has word characters
     const re = /\W/;
     if (re.test(item.name)) {
@@ -242,7 +242,7 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
-    newRuleItem.createdAt = Date.now();
+    newRuleItem.createdAt = createdAt || Date.now();
     newRuleItem.updatedAt = Date.now();
 
     // Validate rule before kicking off workflows or adding event source mappings
@@ -576,6 +576,15 @@ class Rule extends Manager {
       );
     }
     return rules;
+  }
+
+  /**
+   * Returns `true` if the rule with the specified name exists, false otherwise
+   * @param {string} name - rule name
+   * @returns {boolean} `true` if the rule with the specified name exists, false otherwise
+   */
+  async exists(name) {
+    return super.exists({ name });
   }
 }
 
