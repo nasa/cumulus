@@ -1,7 +1,16 @@
+resource "null_resource" "get_cnmResponse" {
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+  provisioner "local-exec" {
+    command = "curl -s -L -o cnmResponse.zip https://github.com/podaac/cumulus-cnm-response-task/releases/download/v1.2.0/cnmResponse-1.2.0.zip"
+  }
+}
+
 resource "aws_lambda_function" "cnm_response_task" {
   function_name = "${var.prefix}-CnmResponse"
-  s3_bucket     = "cumulus-data-shared"
-  s3_key        = "daacs/podaac/cnmPreReleases/cnmResponse-1.0.6-cma1.3.0-c.zip"
+  depends_on  = ["null_resource.get_cnmResponse"]
+  filename    = "cnmResponse.zip"
   handler       = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role          = module.cumulus.lambda_processing_role_arn
   runtime       = "java8"
