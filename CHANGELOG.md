@@ -26,12 +26,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-2279**
-  - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
-- **CUMULUS-2124**
-  - cumulus-rds-tf terraform module now takes engine_version as an input variable.
 - **CUMULUS-2020**
   - Updated Elasticsearch mappings to support case-insensitive search
+- **CUMULUS-2124**
+  - cumulus-rds-tf terraform module now takes engine_version as an input variable.
+- **CUMULUS-2279**
+  - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
 
 ### BREAKING CHANGES
 
