@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 
+const isUndefined = require('lodash/isUndefined');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 
@@ -12,9 +13,17 @@ const BATCHSIZE = 100;
 
 // In batches of 100, upload granules
 const uploadTestFiles = async (Bucket, path, batches) => {
-  console.log(`Bucket is ${Bucket}`);
   console.log(...process.argv.slice(2, 5));
+  if (!Number.isFinite(Number(batches)) || batches > 10000000) {
+    throw new Error(`Invalid batch value ${batches} detected`);
+  }
+
+  if (isUndefined(Bucket) || isUndefined(path)) {
+    throw new TypeError('Bucket and path must be defined');
+  }
+
   let batchCount = 0;
+
   console.log(`Running ${batches} batches`);
   while (batchCount < batches) {
     batchCount += 1;
