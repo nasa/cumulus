@@ -17,4 +17,4 @@ aws s3 sync --dry-run --delete . s3://{bucket}/{path}
 
 ## Collection
 
-A sample collection is included for ease of testing/setup in `./collection`.   That collection has been used with the  `DiscoverGranules->IngestGranule` workflows
+A sample collection is included for ease of testing/setup in `./sample-collection`.   That collection has been used with the  `DiscoverGranules->IngestGranule` workflows
