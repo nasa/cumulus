@@ -4,7 +4,7 @@ This lambda is used to generate 'random' MOD09GQ-like granules with fake data in
 
 ## Usage
 
-`node generate_files.js {bucket} {bath} {number of 100 granule batches} `
+`node generate_files.js {bucket} {path} {number of 100 granule batches} `
 
 ## File Removal
 
