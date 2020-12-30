@@ -53,6 +53,11 @@ data "aws_ssm_parameter" "ecs_image_id" {
   name = "image_id_ecs_amz2"
 }
 
+data "aws_ecr_repository" "async_operation" {
+  name = "async_operations"
+}
+
+
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 
@@ -71,6 +76,7 @@ module "cumulus" {
   rds_user_access_secret_arn    = local.rds_credentials_secret_arn
   rds_connection_heartbeat      = var.rds_connection_heartbeat
 
+  async_operation_image =  "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
     ? var.lambda_subnet_ids
@@ -113,6 +119,12 @@ module "cumulus" {
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
 
+  lzards_launchpad_certificate = var.launchpad_certificate
+  lzards_launchpad_passphrase  = var.launchpad_passphrase
+  lzards_api                   = var.lzards_api
+  lzards_provider              = var.lzards_provider
+  lzards_s3_link_timeout       = var.lzards_s3_link_timeout
+
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 
@@ -139,6 +151,7 @@ module "cumulus" {
   archive_api_users = [
     "brian.tennity",
     "dopeters",
+    "jasmine",
     "jennyhliu",
     "kbaynes",
     "kkelly",
@@ -147,7 +160,8 @@ module "cumulus" {
     "matthewsavoie",
     "mboyd",
     "menno.vandiermen",
-    "jasmine"
+    "mobrien84",
+    "npauzenga"
   ]
   archive_api_url               = var.archive_api_url
   archive_api_port              = var.archive_api_port

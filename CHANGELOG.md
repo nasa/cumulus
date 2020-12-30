@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration notes
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+
 ### BREAKING CHANGES
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
@@ -19,6 +27,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       of returning `none` when the operation did not return output.
 
 ### Added
+
+- **CUMULUS-2318**
+  - Added`async_operation_image` as `cumulus` module variable to allow for override of the async_operation container image.  Users can optionally specify a non-default docker image for use with Core async operations.
+- **CUMULUS-2219**
+  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
+- **CUMULUS-2092**
+  - Add documentation for Granule Not Found Reports
+- **CUMULUS-1370**
+  - Add documentation for Getting Started section including FAQs
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
@@ -62,10 +79,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/message/PDRs/getMessagePdrStats`
     - `@cumulus/message/PDRs/getPdrPercentCompletion`
     - `@cumulus/message/workflows/getWorkflowDuration`
+- **CUMULUS-2199**
+  - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API Rule to conform to Postgres Rule definition.
 
 ### Changed
 
+- **CUMULUS-2020**
+  - Updated Elasticsearch mappings to support case-insensitive search
+
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2199**
+    - Updated Rules endpoint to write rules to core PostgreSQL database in addition to DynamoDB and to delete rules from the PostgreSQL database in addition to DynamoDB.
+    - Updated `create` in Rules Model to take in optional `createdAt` parameter which sets the value of createdAt if not specified during function call.
   - **CUMULUS-2189**
     - Updated Provider endpoint logic to write providers in parallel to Core
       PostgreSQL database

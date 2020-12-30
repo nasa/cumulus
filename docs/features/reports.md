@@ -1,16 +1,26 @@
 ---
-id: inventory_reports
-title: Inventory Reports
+id: reports
+title: Reconciliation Reports
 hide_title: false
 ---
 
-This feature provides a detailed report of collections, granules and files in Cumulus and CMR.
-These reports show the following data:
+## Report Types
+
+### Inventory Reports
+
+Inventory reports provide a detailed report of collections, granules and files in Cumulus and CMR.
+This report shows the following data:
 
 * Granule files in Cumulus, those that are in S3 but missing in the internal data store and those in the internal data store but not S3
 * All Collections in Cumulus and CMR, highlighting any collections only in Cumulus or only in CMR
 * All Granules in Cumulus and CMR belonging to collections found in both, highlighting any granules only in Cumulus or only in CMR
 * All granule files in Cumulus and CMR belonging to granules found in both, highlighting any files only in Cumulus or only in CMR
+
+### Granule Not Found Reports
+
+* Granule Not Found reports provide a fixed view on missing granules, comparing them across S3, Cumulus, and CMR.
+* For an individual granule, it will display whether it is okay (green), missing some data (yellow),
+  or missing all data (red) for each of S3, Cumulus, and CMR
 
 ## Viewing Reports on the Cumulus Dashboard
 
@@ -19,8 +29,11 @@ The Cumulus Dashboard offers an interface to create, manage and view these inven
 The Reconciliation Reports Overview page shows a full list of existing reports and the option to create a new report.
 ![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
 
-Viewing a report will show a detailed list of collections, granules and files.
-![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/inventory_report.png)
+Viewing an inventory report will show a detailed list of collections, granules and files.
+![Screenshot of an Inventory Report page](assets/inventory_report.png)
+
+Viewing a granule not found report will show a list of granules missing data
+![Screenshot of a Granule Not Found Report page](assets/granule_not_found_report.png)
 
 ## API
 

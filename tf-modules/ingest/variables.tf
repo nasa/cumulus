@@ -77,10 +77,37 @@ variable "launchpad_certificate" {
   type = string
 }
 
+variable "lzards_launchpad_certificate" {
+  type = string
+}
+
 variable "launchpad_passphrase" {
   type = string
   default = ""
 }
+
+variable "lzards_launchpad_passphrase" {
+  type    = string
+  default = ""
+}
+
+variable "lzards_api" {
+  type    = string
+  default = ""
+}
+
+variable "lzards_s3_link_timeout" {
+  description = "LZARDS S3 access link timeout (seconds)"
+  type        = string
+  default     = ""
+}
+
+variable "lzards_provider" {
+  description = "LZARDS provider name"
+  type        = string
+  default     = ""
+}
+
 
 variable "permissions_boundary_arn" {
   type = string
