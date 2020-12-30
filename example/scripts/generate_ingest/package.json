@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/example/generate_ingest",
+  "name": "@cumulus/generateIngest",
   "private": true,
   "version": "4.0.0",
   "description": "Script to generate test data for scaled ingest",
@@ -21,7 +21,7 @@
     "url": "https://github.com/nasa/cumulus",
     "directory": "packages/types"
   },
-  "devDpendencies": {
+  "dependencies": {
     "@cumulus/aws-client": "4.0.0",
     "@cumulus/common": "4.0.0"
   },
