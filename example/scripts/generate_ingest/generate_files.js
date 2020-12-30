@@ -1,10 +1,13 @@
 /* eslint-disable node/no-extraneous-require */
 /* eslint-disable no-console */
 
+const fs = require('fs');
+
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 
-const granuleRegExp = 'MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}';
+const granuleRegExp = JSON.parse(fs.readFileSync('./sample_collection/MOD09GQ.006.json')).granuleId;
+
 const BATCHSIZE = 100;
 
 // In batches of 100, upload granules
