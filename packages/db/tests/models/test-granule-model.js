@@ -2,8 +2,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const {
-  localStackConnectionEnv,
-  getKnexClient,
   CollectionPgModel,
   ExecutionPgModel,
   GranulePgModel,
