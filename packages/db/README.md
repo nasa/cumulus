@@ -26,7 +26,7 @@ to automatically update to new patch versions.
 
 TypeScript interfaces describing the data types stored in the Cumulus database are found in the `/types` directory.
 
-Typically, there are two Typescript interfaces describing each Cumulus data type. For example:
+Typically, there are two TypeScript interfaces describing each Cumulus data type. For example:
 
 - `PostgresProvider`: Describes the data structure ready for insertion into the Cumulus Postgres database
 - `PostgresProviderRecord`: Describes the data structure after retrieval from the Cumulus database. This data type usually includes extra required properties (such as the auto-incremented primary key field), since those properties will exist once a record has been created.
