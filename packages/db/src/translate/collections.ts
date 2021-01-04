@@ -1,5 +1,5 @@
 import { NewCollectionRecord } from '@cumulus/types/api/collections';
-import { PostgresCollection } from './types/collection';
+import { PostgresCollection } from '../types/collection';
 
 export const translateApiCollectionToPostgresCollection = (
   record: NewCollectionRecord
