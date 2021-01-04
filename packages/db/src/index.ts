@@ -26,10 +26,6 @@ export {
 } from './provider';
 
 export {
-  translateApiFiletoPostgresFile,
-} from './translate/file';
-
-export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
 } from './types/async_operation';
@@ -49,9 +45,13 @@ export {
   PostgresRule,
   PostgresRuleRecord,
 } from './types/rule';
+
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
+export {
+  translateApiFiletoPostgresFile,
+} from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
-export { translateApiRuleToPostgresRule } from './rules';
+export { translateApiRuleToPostgresRule } from './translate/rules';
 
 export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
