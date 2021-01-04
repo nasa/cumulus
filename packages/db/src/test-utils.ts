@@ -81,9 +81,8 @@ export const fakeProviderRecordFactory = (
 
 export const fakeGranuleRecordFactory = (
   params: Partial<PostgresGranule>
-): Omit<PostgresGranule, 'collection_cumulus_id'> => ({
+): Partial<PostgresGranule> => ({
   granule_id: cryptoRandomString({ length: 3 }),
-  status: 'running',
   ...params,
 });
 

@@ -60,6 +60,7 @@ test('GranulePgModel.upsert() creates a new running granule', async (t) => {
   const granule = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
     execution_cumulus_id: executionCumulusId,
+    status: 'running',
   });
 
   await granulePgModel.upsert(knex, granule);

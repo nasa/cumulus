@@ -35,6 +35,7 @@ test.before(async (t) => {
     t.context.knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
+      status: 'running',
     })
   );
   // bigint for granule cumulus_id is treated as a string,
