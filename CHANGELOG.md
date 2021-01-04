@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
 
 ### Added
+- **HYRAX-320**
+  - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title id and granule ur to allow for values with special characters in them. For example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such values will be encoded correctly and parsable by HyraxInTheCloud
 
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
