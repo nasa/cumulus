@@ -2,43 +2,27 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const {
-  localStackConnectionEnv,
-  getKnexClient,
   CollectionPgModel,
   GranulePgModel,
   FilePgModel,
-} = require('../../dist');
-const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
-} = require('../../dist/test-utils');
+} = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `file_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 
 test.before(async (t) => {
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  // create tables
-  await t.context.knex.migrate.latest();
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
 
   const collectionPgModel = new CollectionPgModel();
   const [collectionCumulusId] = await collectionPgModel.create(
@@ -62,9 +46,10 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test('FilePgModel.upsert() creates a new file record', async (t) => {
