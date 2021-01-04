@@ -33,7 +33,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
       .where(whereClause)
       .first();
     if (!isRecordDefined(record)) {
-      throw new RecordDoesNotExist(`Record in ${this.tableName} with identifiers ${whereClause} does not exist.`);
+      throw new RecordDoesNotExist(`Record in ${this.tableName} with identifiers ${JSON.stringify(whereClause)} does not exist.`);
     }
     return record.cumulus_id;
   }
