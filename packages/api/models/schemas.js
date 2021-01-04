@@ -601,7 +601,7 @@ module.exports.provider = {
     protocol: {
       title: 'Protocol',
       type: 'string',
-      enum: ['http', 'https', 'ftp', 'sftp', 's3'],
+      enum: ['http', 'https', 'ftp', 'sftp', 's3', 'azure'],
       default: 'http',
     },
     host: {

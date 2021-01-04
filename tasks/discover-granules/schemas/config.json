@@ -19,7 +19,7 @@
         "globalConnectionLimit": { "type": "integer" },
         "protocol": {
           "type": "string",
-          "enum": ["ftp", "sftp", "http", "https", "s3"]
+          "enum": ["ftp", "sftp", "http", "https", "s3", "azure"]
         }
       }
     },

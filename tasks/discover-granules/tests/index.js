@@ -4,9 +4,11 @@ const path = require('path');
 const test = require('ava');
 const proxyquire = require('proxyquire');
 const { readJson } = require('fs-extra');
+const { BlobServiceClient } = require('@azure/storage-blob');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
+  randomId,
   randomString,
   validateConfig,
   validateOutput,
@@ -17,6 +19,9 @@ const Logger = require('@cumulus/logger');
 // printing them out to the console. This allows us to test that an expected log event is written
 // in one of the tests.
 let logEvents = [];
+
+const blobStorageConnectionString = 'UseDevelopmentStorage=true';
+const blobServiceClient = BlobServiceClient.fromConnectionString(blobStorageConnectionString);
 
 const fakeConsole = {
   log(message) {
@@ -405,4 +410,42 @@ test.serial('discover granules sets the GRANULES environment variable and logs t
     logEventWithGranules.granules,
     ['granule-1', 'granule-2', 'granule-3']
   );
+});
+
+test.serial('Discover Azure files', async (t) => {
+  const sourceContainer = randomId('container');
+  const containerClient = blobServiceClient.getContainerClient(sourceContainer);
+
+  const fileContent = JSON.stringify({ type: 'fake-test-object' });
+
+  await containerClient.create();
+
+  const sourceKey = `${randomId('sourceKey')}.nc`;
+  const sourceBlobClient = containerClient.getBlockBlobClient(sourceKey);
+  await sourceBlobClient.upload(
+    fileContent,
+    fileContent.length
+  );
+
+  const { event } = t.context;
+
+  event.config.provider = {
+    id: 'azure',
+    protocol: 'azure',
+    host: sourceContainer,
+  };
+
+  event.config.provider_path = '';
+
+  await validateConfig(t, event.config);
+
+  const output = await discoverGranules(event);
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+  output.granules.forEach(({ files }) => t.is(files.length, 1));
+
+  t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
+
+  await containerClient.delete();
 });

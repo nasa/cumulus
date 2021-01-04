@@ -2,6 +2,7 @@
 
 const path = require('path');
 const test = require('ava');
+const { BlobServiceClient } = require('@azure/storage-blob');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   calculateObjectHash,
@@ -20,12 +21,16 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadJSONTestData, streamTestData } = require('@cumulus/test-data');
 
 const {
+  randomId,
   randomString,
   validateConfig,
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
 const { syncGranule } = require('..');
+
+const blobStorageConnectionString = 'UseDevelopmentStorage=true';
+const blobServiceClient = BlobServiceClient.fromConnectionString(blobStorageConnectionString);
 
 // prepare the s3 event and data
 async function prepareS3DownloadEvent(t) {
@@ -858,5 +863,65 @@ test.serial('download multiple granules from S3 provider to staging directory', 
   } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
+test.serial('download granule from Azure provider', async (t) => {
+  const granuleFilePath = randomString();
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
+
+  const sourceContainer = randomId('container');
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'azure',
+    host: sourceContainer,
+  };
+
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
+
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
+
+  const containerClient = blobServiceClient.getContainerClient(sourceContainer);
+
+  const fileContent = JSON.stringify({ type: 'fake-test-object' });
+
+  await containerClient.create();
+
+  const sourceKey = `${granuleFilePath}/${granuleFileName}`;
+  const sourceBlobClient = containerClient.getBlockBlobClient(sourceKey);
+  await sourceBlobClient.upload(
+    fileContent,
+    fileContent.length
+  );
+
+  try {
+    await sourceBlobClient.uploadStream(streamTestData(`granules/${granuleFileName}`));
+
+    const output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
+    );
+    t.is(
+      true,
+      await s3ObjectExists({
+        Bucket: t.context.internalBucketName,
+        Key: `${keypath}/${granuleFileName}`,
+      })
+    );
+  } catch (error) {
+    console.log(error);
+  } finally {
+    // Clean up
+    await containerClient.delete();
   }
 });

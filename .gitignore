@@ -45,3 +45,5 @@ cumulus-message-adapter.zip
 cnmToGranule.zip
 cnmResponse.zip
 .terraform*
+/__blobstorage__
+/__azurite*

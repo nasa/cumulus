@@ -8,6 +8,7 @@ const FtpProviderClient = require('./FtpProviderClient');
 const HttpProviderClient = require('./HttpProviderClient');
 const S3ProviderClient = require('./S3ProviderClient');
 const SftpProviderClient = require('./SftpProviderClient');
+const AzureProviderClient = require('./AzureProviderClient');
 
 /**
  * Create a provider client appropriate for the provider config
@@ -26,6 +27,11 @@ const buildProviderClient = (providerConfig = {}) => {
     return new S3ProviderClient({ bucket: providerConfig.host });
   case 'sftp':
     return new SftpProviderClient(providerConfig);
+  case 'azure':
+    return new AzureProviderClient({
+      container: providerConfig.host,
+      connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING || 'UseDevelopmentStorage=true',
+    });
   default:
     throw new Error(`Protocol ${providerConfig.protocol} is not supported.`);
   }

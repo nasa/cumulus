@@ -44,6 +44,7 @@
         "protocol": {
           "type": "string",
           "enum": [
+            "azure",
             "ftp",
             "sftp",
             "http",

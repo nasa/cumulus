@@ -37,6 +37,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@azure/storage-blob": "^12.3.0",
     "@cumulus/aws-client": "4.0.0",
     "@cumulus/common": "4.0.0",
     "@cumulus/errors": "4.0.0",
