@@ -72,7 +72,7 @@ test('GranulePgModel.upsert() creates a new running granule', async (t) => {
   );
 });
 
-test('GranulePgModel.upsert() will overwrite allowed fields of a running granule for different execution', async (t) => {
+test('GranulePgModel.upsert() will overwrite allowed fields of a running granule for a different execution', async (t) => {
   const {
     knex,
     executionPgModel,
