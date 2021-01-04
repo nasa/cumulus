@@ -24,7 +24,7 @@ to automatically update to new patch versions.
 
 ### Types
 
-Typescript interfaces describing the data types stored in the Cumulus database are found in the `/types` directory.
+TypeScript interfaces describing the data types stored in the Cumulus database are found in the `/types` directory.
 
 Typically, there are two Typescript interfaces describing each Cumulus data type. For example:
 
