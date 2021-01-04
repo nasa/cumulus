@@ -1,9 +1,8 @@
 {
+  "version": "1.5",
   "provider": "PODAAC_SWOT",
   "collection": "L2_HR_PIXC",
-  "bucket": "ignored-bucket",
-  "ingestTime":"2017-09-30T03:45:29.791198",
-  "deliveryTime":"2017-09-30T03:42:29.791198",
+  "submissionTime":"2017-09-30T03:42:29.791198",
   "identifier": "<<REPLACED with random string>>",
   "product": {
     "name": "L2_HR_PIXC_product_0001-of-4154",
