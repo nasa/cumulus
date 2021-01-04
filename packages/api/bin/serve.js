@@ -1,6 +1,7 @@
 'use strict';
 
 const pLimit = require('p-limit');
+const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
@@ -228,7 +229,14 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     checkEnvVariablesAreSet(requiredEnvVars);
 
     // create tables if not already created
-    await checkOrCreateTables(stackName);
+    await pRetry(
+      async () => checkOrCreateTables(stackName),
+      {
+        onFailedAttempt: (error) => console.log(
+          `Failed to Create Tables. Localstack may not be ready, will retry ${error.attemptsLeft} more times.`
+        ),
+      }
+    );
 
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
