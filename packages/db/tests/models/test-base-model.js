@@ -39,12 +39,42 @@ test('BasePgModel.create() creates record and returns cumulus_id by default', as
   );
 });
 
+test('BasePgModel.create() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+
+  const queryResult = await knex.transaction(
+    (trx) => basePgModel.create(trx, { info })
+  );
+
+  const record = await knex(tableName).where({ info }).first();
+  t.deepEqual(
+    record,
+    {
+      cumulus_id: queryResult[0],
+      info,
+    }
+  );
+});
+
 test('BasePgModel.get() returns correct record', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
   await knex(tableName).insert({ info });
   t.like(
     await basePgModel.get(knex, { info }),
+    {
+      info,
+    }
+  );
+});
+
+test('BasePgModel.get() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  await knex(tableName).insert({ info });
+  t.like(
+    await knex.transaction((trx) => basePgModel.get(trx, { info })),
     {
       info,
     }
@@ -63,6 +93,20 @@ test('BasePgModel.getRecordCumulusId() returns correct value', async (t) => {
   );
 });
 
+test('BasePgModel.getRecordCumulusId() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const [recordCumulusId] = await knex(tableName)
+    .insert({ info })
+    .returning('cumulus_id');
+  t.is(
+    await knex.transaction(
+      (trx) => basePgModel.getRecordCumulusId(trx, { info })
+    ),
+    recordCumulusId
+  );
+});
+
 test('BasePgModel.getRecordCumulusId() throws RecordDoesNotExist error for missing record', async (t) => {
   const { knex, basePgModel } = t.context;
   const info = cryptoRandomString({ length: 5 });
@@ -77,6 +121,15 @@ test('BasePgModel.exists() correctly returns true', async (t) => {
   const info = cryptoRandomString({ length: 5 });
   await knex(tableName).insert({ info });
   t.true(await basePgModel.exists(knex, { info }));
+});
+
+test('BasePgModel.exists() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  await knex(tableName).insert({ info });
+  t.true(await knex.transaction(
+    (trx) => basePgModel.exists(trx, { info })
+  ));
 });
 
 test('BasePgModel.exists() correctly returns false', async (t) => {
