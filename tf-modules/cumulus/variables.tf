@@ -1,5 +1,11 @@
 # Required
 
+variable "async_operation_image" {
+  description = "docker image to use for Cumulus async operations tasks"
+  type = string
+  default = "cumuluss/async-operation:32"
+}
+
 variable "cmr_client_id" {
   description = "Client ID that you want to use for requests to CMR (https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html)"
   type        = string

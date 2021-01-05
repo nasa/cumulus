@@ -114,7 +114,7 @@ export interface PostgresRule {
   arn?: string,
   log_event_arn?: string,
   payload?: object,
-  meta?: string,
+  meta?: object,
   tags?: string,
   queue_url?: string,
   created_at: Date,
