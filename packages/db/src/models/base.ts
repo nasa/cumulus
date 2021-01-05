@@ -25,7 +25,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   }
 
   async getRecordCumulusId(
-    knexOrTransaction: Knex|Knex.Transaction,
+    knexOrTransaction: Knex | Knex.Transaction,
     whereClause : Partial<RecordType>
   ): Promise<number> {
     const record: RecordType = await knexOrTransaction(this.tableName)
