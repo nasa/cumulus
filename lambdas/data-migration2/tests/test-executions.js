@@ -6,6 +6,7 @@ const uuid = require('uuid/v4');
 const Execution = require('@cumulus/api/models/executions');
 const AsyncOperation = require('@cumulus/api/models/async-operation');
 const Collection = require('@cumulus/api/models/collections');
+const Rule = require('@cumulus/api/models/rules');
 
 const {
   fakeExecutionFactoryV2,
@@ -19,13 +20,20 @@ const {
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
+const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const {
   migrateExecutionRecord,
+  migrateExecutions,
 } = require('../dist/lambda/executions');
 // TODO should we not pull these from another Lambda?
 const { migrateAsyncOperationRecord } = require('../../data-migration1/dist/lambda/async-operations');
 const { migrateCollectionRecord } = require('../../data-migration1/dist/lambda/collections');
+
+let collectionsModel;
+let executionsModel;
+let asyncOperationsModel;
+let rulesModel;
 
 const executionOmitList = [
   'createdAt', 'updatedAt', 'finalPayload', 'originalPayload', 'parentArn', 'type', 'execution', 'name', 'collectionId', 'asyncOperationId',
@@ -34,24 +42,28 @@ const executionOmitList = [
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
 
-process.env.stackName = cryptoRandomString({ length: 10 });
-process.env.system_bucket = cryptoRandomString({ length: 10 });
-process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-process.env.AsyncOperationsTable = cryptoRandomString({ length: 10 });
-process.env.CollectionsTable = cryptoRandomString({ length: 10 });
-
-const executionsModel = new Execution();
-const asyncOperationsModel = new AsyncOperation({
-  stackName: process.env.stackName,
-  systemBucket: process.env.system_bucket,
-});
-const collectionsModel = new Collection();
-
 test.before(async (t) => {
+  process.env.stackName = cryptoRandomString({ length: 10 });
+  process.env.system_bucket = cryptoRandomString({ length: 10 });
+  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
+  process.env.AsyncOperationsTable = cryptoRandomString({ length: 10 });
+  process.env.CollectionsTable = cryptoRandomString({ length: 10 });
+  process.env.RulesTable = cryptoRandomString({ length: 10 });
+
   await createBucket(process.env.system_bucket);
+
+  executionsModel = new Execution();
+  asyncOperationsModel = new AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+  });
+  collectionsModel = new Collection();
+  rulesModel = new Rule();
+
   await executionsModel.createTable();
   await asyncOperationsModel.createTable();
   await collectionsModel.createTable();
+  await rulesModel.createTable();
 
   t.context.knexAdmin = await getKnexClient({
     env: {
@@ -71,16 +83,6 @@ test.before(async (t) => {
   });
 
   await t.context.knex.migrate.latest();
-
-  // This will be the top-level execution (no parent execution)
-  t.context.existingExecution = await executionsModel.create(fakeExecutionFactoryV2({ parentArn: undefined }));
-  t.context.existingCollection = await collectionsModel.create(fakeCollectionFactory());
-  t.context.existingAsyncOperation = await asyncOperationsModel.create(
-    fakeAsyncOperationFactory({
-      id: uuid(),
-      output: '{ "output": "test" }',
-    })
-  );
 });
 
 test.afterEach.always(async (t) => {
@@ -93,6 +95,7 @@ test.after.always(async (t) => {
   await executionsModel.deleteTable();
   await asyncOperationsModel.deleteTable();
   await collectionsModel.deleteTable();
+  await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
@@ -100,11 +103,29 @@ test.after.always(async (t) => {
 });
 
 test.serial('migrateExecutionRecord correctly migrates execution record', async (t) => {
-  const {
+  // This will be the top-level execution (no parent execution)
+  const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const fakeCollection = fakeCollectionFactory();
+  const fakeAsyncOperation = fakeAsyncOperationFactory({
+    id: uuid(),
+    output: '{ "output": "test" }',
+  });
+
+  const [
     existingExecution,
     existingCollection,
     existingAsyncOperation,
-  } = t.context;
+  ] = await Promise.all([
+    executionsModel.create(fakeExecution),
+    collectionsModel.create(fakeCollection),
+    asyncOperationsModel.create(fakeAsyncOperation),
+  ]);
+
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: fakeExecution.arn }), // TODO why do I have to specify the arn here and id in asyncOperationsModel?
+    collectionsModel.delete(fakeCollection),
+    asyncOperationsModel.delete({ id: fakeAsyncOperation.id }),
+  ]));
 
   // migrate existing async operation and collection
   await migrateAsyncOperationRecord(existingAsyncOperation, t.context.knex);
@@ -143,7 +164,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
         ...newExecution,
         async_operation_cumulus_id: 1,
         collection_cumulus_id: 1,
-        cumulus_version: null,
+        cumulus_version: null, // TODO ensure that we don't need to map cumulusVersion from dynamo as it's not on the model def
         url: null,
         parent_cumulus_id: existingPostgresExecution.cumulus_id,
         workflow_name: newExecution.name,
@@ -213,10 +234,55 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
   );
 });
 
-test.serial('migrateExecutionRecord ignores extraneous fields from Dynamo', async (t) => {
+test.serial('migrateCollectionRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
 
+  await migrateExecutionRecord(newExecution, t.context.knex);
+  await t.throwsAsync(
+    migrateExecutionRecord(newExecution, t.context.knex),
+    { instanceOf: RecordAlreadyMigrated }
+  );
 });
 
 test.serial('migrateExecutionRecord skips already migrated record', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
 
+  await migrateExecutionRecord(newExecution, t.context.knex);
+  await executionsModel.create(newExecution);
+  t.teardown(() => executionsModel.delete({ arn: newExecution.arn }));
+
+  const migrationSummary = await migrateExecutions(process.env, t.context.knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 1,
+    skipped: 1,
+    failed: 0,
+    success: 0,
+  });
+
+  const records = await t.context.knex.queryBuilder().select().table('executions');
+  t.is(records.length, 1);
+});
+
+test.serial('migrateExecutions processes multiple executions', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
+  const newExecution2 = fakeExecutionFactoryV2();
+
+  await Promise.all([
+    executionsModel.create(newExecution),
+    executionsModel.create(newExecution2),
+  ]);
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: newExecution.arn }),
+    executionsModel.delete({ arn: newExecution2.arn }),
+  ]));
+
+  const migrationSummary = await migrateExecutions(process.env, t.context.knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 0,
+    success: 2,
+  });
+  const records = await t.context.knex.queryBuilder().select().table('executions');
+  t.is(records.length, 2);
 });

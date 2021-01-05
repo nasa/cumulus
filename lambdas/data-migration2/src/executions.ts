@@ -84,7 +84,7 @@ export const migrateExecutions = async (
       } else {
         migrationSummary.failed += 1;
         logger.error(
-          `Could not create collection record in RDS for Dynamo collection name ${record.name}, version ${record.version}:`,
+          `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`,
           error
         );
       }
