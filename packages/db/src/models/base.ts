@@ -18,17 +18,17 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   }
 
   get(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ) {
-    return knexOrTrx<RecordType>(this.tableName).where(params).first();
+    return knexOrTransaction<RecordType>(this.tableName).where(params).first();
   }
 
   async getRecordCumulusId(
-    knexOrTrx: Knex|Knex.Transaction,
+    knexOrTransaction: Knex|Knex.Transaction,
     whereClause : Partial<RecordType>
   ): Promise<number> {
-    const record: RecordType = await knexOrTrx(this.tableName)
+    const record: RecordType = await knexOrTransaction(this.tableName)
       .select('cumulus_id')
       .where(whereClause)
       .first();
@@ -39,17 +39,17 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   }
 
   async exists(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ): Promise<boolean> {
-    return isRecordDefined(await this.get(knexOrTrx, params));
+    return isRecordDefined(await this.get(knexOrTransaction, params));
   }
 
   create(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexOrTransaction: Knex | Knex.Transaction,
     item: ItemType
   ) {
-    return knexOrTrx(this.tableName)
+    return knexOrTransaction(this.tableName)
       .insert(item)
       .returning('cumulus_id');
   }
