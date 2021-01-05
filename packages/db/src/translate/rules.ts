@@ -1,8 +1,10 @@
 import Knex from 'knex';
 import { RuleRecord } from '@cumulus/types/api/rules';
-import { PostgresRule, PostgresCollectionRecord, PostgresProviderRecord } from './types';
-import { getRecordCumulusId } from './database';
-import { tableNames } from './tables';
+import { PostgresCollectionRecord } from '../types/collection';
+import { PostgresProviderRecord } from '../types/provider';
+import { PostgresRule } from '../types/rule';
+import { getRecordCumulusId } from '../database';
+import { tableNames } from '../tables';
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.
