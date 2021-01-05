@@ -1,6 +1,6 @@
 const test = require('ava');
 const omit = require('lodash/omit');
-const { translateApiRuleToPostgresRule } = require('../dist/rules');
+const { translateApiRuleToPostgresRule } = require('../../dist/translate/rules');
 
 test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) => {
   const record = {

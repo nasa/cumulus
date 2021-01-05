@@ -20,7 +20,6 @@ export {
 export { tableNames } from './tables';
 
 export {
-  translateApiProviderToPostgresProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
 } from './provider';
@@ -51,6 +50,9 @@ export {
   translateApiFiletoPostgresFile,
 } from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
+export {
+  translateApiProviderToPostgresProvider,
+} from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
 
 export { CollectionPgModel } from './models/collection';
