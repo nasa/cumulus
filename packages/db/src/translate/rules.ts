@@ -7,17 +7,19 @@ import { PostgresRule } from '../types/rule';
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.
+ *
  * @param {Object} record - A rule
  * @param {Object} dbClient - Knex client for reading from RDS database
+ * @param {Object} collectionPgModel - Instance of the collection database model
+ * @param {Object} providerPgModel - Instance of the provider database model
  * @returns {Object} A rule record
  */
 export const translateApiRuleToPostgresRule = async (
   record: RuleRecord,
-  dbClient: Knex
+  dbClient: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  providerPgModel = new ProviderPgModel()
 ): Promise<PostgresRule> => {
-  const collectionPgModel = new CollectionPgModel();
-  const providerPgModel = new ProviderPgModel();
-
   const ruleRecord: PostgresRule = {
     name: record.name,
     workflow: record.workflow,

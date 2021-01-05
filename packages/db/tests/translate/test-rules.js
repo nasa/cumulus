@@ -1,14 +1,16 @@
 const test = require('ava');
-const omit = require('lodash/omit');
 const { translateApiRuleToPostgresRule } = require('../../dist/translate/rules');
 
 test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) => {
   const record = {
     name: 'name',
     workflow: 'workflow_name',
-    provider: undefined,
+    provider: 'fake-provider',
     state: 'ENABLED',
-    collection: undefined,
+    collection: {
+      name: 'fake-collection',
+      version: '0.0.0',
+    },
     rule: { type: 'onetime', value: 'value', arn: 'arn', logEventArn: 'event_arn' },
     executionNamePrefix: 'prefix',
     meta: { key: 'value' },
@@ -17,6 +19,14 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     tags: ['tag1', 'tag2'],
     createdAt: Date.now(),
     updatedAt: Date.now(),
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: async () => 1,
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: async () => 2,
   };
 
   const expectedPostgresRule = {
@@ -34,11 +44,18 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     execution_name_prefix: record.executionNamePrefix,
     created_at: new Date(record.createdAt),
     updated_at: new Date(record.updatedAt),
+    collection_cumulus_id: 1,
+    provider_cumulus_id: 2,
   };
 
-  const result = await translateApiRuleToPostgresRule(record);
+  const result = await translateApiRuleToPostgresRule(
+    record,
+    fakeDbClient,
+    fakeCollectionPgModel,
+    fakeProviderPgModel
+  );
   t.deepEqual(
-    omit(result, ['collection_cumulus_id', 'provider_cumulus_id']),
+    result,
     expectedPostgresRule
   );
 });
