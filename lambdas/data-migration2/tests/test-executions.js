@@ -32,11 +32,17 @@ const {
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
+const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const {
   migrateExecutionRecord,
   migrateExecutions,
 } = require('../dist/lambda/executions');
+
+let collectionsModel;
+let executionsModel;
+let asyncOperationsModel;
+let rulesModel;
 
 let collectionsModel;
 let executionsModel;
