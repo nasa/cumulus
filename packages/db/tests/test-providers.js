@@ -29,4 +29,3 @@ test('nullifyUndefinedProviderValues sets undefined provider values to "null"', 
   const actual = nullifyUndefinedProviderValues(cumulusProviderObject);
   t.deepEqual(actual, expected);
 });
-

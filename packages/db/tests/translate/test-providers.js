@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/no-null */
 const test = require('ava');
 
 const {
