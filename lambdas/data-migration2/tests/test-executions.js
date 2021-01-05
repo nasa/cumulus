@@ -8,6 +8,7 @@ const AsyncOperation = require('@cumulus/api/models/async-operation');
 const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
 
+const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const {
   fakeExecutionFactoryV2,
   fakeCollectionFactory,
@@ -285,4 +286,36 @@ test.serial('migrateExecutions processes multiple executions', async (t) => {
   });
   const records = await t.context.knex.queryBuilder().select().table('executions');
   t.is(records.length, 2);
+});
+
+test.serial('migrateExecutions processes all non-failing records', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
+  const newExecution2 = fakeExecutionFactoryV2();
+
+  // remove required source field so that record will fail
+  delete newExecution.name;
+
+  await Promise.all([
+    // Have to use Dynamo client directly because creating
+    // via model won't allow creation of an invalid record
+    dynamodbDocClient().put({
+      TableName: process.env.ExecutionsTable,
+      Item: newExecution,
+    }).promise(),
+    executionsModel.create(newExecution2),
+  ]);
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: newExecution.arn }),
+    executionsModel.delete({ arn: newExecution2.arn }),
+  ]));
+
+  const migrationSummary = await migrateExecutions(process.env, t.context.knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 1,
+    success: 1,
+  });
+  const records = await t.context.knex.queryBuilder().select().table('executions');
+  t.is(records.length, 1);
 });
