@@ -57,4 +57,5 @@ export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';
 export { GranulePgModel } from './models/granule';
+export { ProviderPgModel } from './models/provider';
 export { RulePgModel } from './models/rule';
