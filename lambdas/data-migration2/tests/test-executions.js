@@ -79,6 +79,30 @@ const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {
   );
 };
 
+const assertPgExecutionMatches = async (t, dynamoExecution, pgExecution, overrides = {}) => {
+  t.deepEqual(
+    omit(pgExecution, ['cumulus_id']),
+    omit(
+      {
+        ...dynamoExecution,
+        async_operation_cumulus_id: null,
+        collection_cumulus_id: null,
+        cumulus_version: null, // TODO ensure that we don't need to map cumulusVersion from dynamo as it's not on the model def
+        url: null,
+        parent_cumulus_id: null,
+        workflow_name: dynamoExecution.name,
+        original_payload: dynamoExecution.originalPayload,
+        final_payload: dynamoExecution.finalPayload,
+        created_at: new Date(dynamoExecution.createdAt),
+        updated_at: new Date(dynamoExecution.updatedAt),
+        timestamp: new Date(dynamoExecution.timestamp),
+        ...overrides,
+      },
+      executionOmitList
+    )
+  );
+};
+
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
