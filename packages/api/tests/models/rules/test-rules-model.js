@@ -136,7 +136,7 @@ test('create and delete a onetime rule', async (t) => {
 
   // delete rule
   await rulesModel.delete(rule);
-  t.false(await rulesModel.exists({ name: rule.name }));
+  t.false(await rulesModel.exists(rule.name));
 });
 
 test('Creating a rule with an invalid name throws an error', async (t) => {
@@ -194,6 +194,15 @@ test.serial('Creating an invalid rule does not create workflow triggers', async 
   } finally {
     createTriggerStub.restore();
   }
+});
+
+test('Creating a rule with a createdAt date assigns the correct values to createdAt and provides a new updatedAt', async (t) => {
+  const newRule = fakeRuleFactoryV2();
+  const currentDate = new Date('1/2/2030').getTime();
+  newRule.workflow = workflow;
+
+  const rule = await rulesModel.create(newRule, currentDate);
+  t.is(rule.createdAt, currentDate);
 });
 
 test('enabling a disabled rule updates the state', async (t) => {
@@ -266,7 +275,7 @@ test.serial('deleting a kinesis style rule removes event mappings', async (t) =>
 
   // create and delete rule
   const createdRule = await rulesModel.create(kinesisRule);
-  t.true(await rulesModel.exists({ name: createdRule.name }));
+  t.true(await rulesModel.exists(createdRule.name));
 
   await rulesModel.delete(createdRule);
 
@@ -483,7 +492,7 @@ test('creating an invalid kinesis type rule does not add event mappings', async 
   t.is(logEventMappings.length, 0);
 });
 
-test('Creating a rule with a queueUrl parameter', async (t) => {
+test('Creates a rule with a queueUrl parameter', async (t) => {
   const { onetimeRule } = t.context;
 
   const ruleItem = cloneDeep(onetimeRule);
@@ -653,4 +662,16 @@ test('creating SQS rule fails if there is no redrive policy on the queue', async
     rulesModel.create(rule),
     { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
+});
+
+test.serial('Rule.exists() returns true when a record exists', async (t) => {
+  const { onetimeRule } = t.context;
+
+  await rulesModel.create(onetimeRule);
+
+  t.true(await rulesModel.exists(onetimeRule.name));
+});
+
+test.serial('Rule.exists() returns false when a record does not exist', async (t) => {
+  t.false(await rulesModel.exists(randomString()));
 });
