@@ -87,7 +87,7 @@ const assertPgExecutionMatches = async (t, dynamoExecution, pgExecution, overrid
         ...dynamoExecution,
         async_operation_cumulus_id: null,
         collection_cumulus_id: null,
-        cumulus_version: null, // TODO ensure that we don't need to map cumulusVersion from dynamo as it's not on the model def
+        cumulus_version: null,
         url: null,
         parent_cumulus_id: null,
         workflow_name: dynamoExecution.name,
@@ -186,8 +186,13 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
     parentArn: existingExecution.arn,
+<<<<<<< HEAD
     collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
     asyncOperationId: fakeAsyncOperation.id,
+=======
+    collectionId: `${existingCollection.name}___${existingCollection.version}`,
+    asyncOperationId: existingAsyncOperation.id,
+>>>>>>> 64fd0b79d... CUMULUS-2188 lint fixes, tests for execution API translation
   });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
