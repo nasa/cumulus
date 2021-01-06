@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/generateIngest",
+  "name": "@cumulus/generate_ingest",
   "private": true,
   "version": "4.0.0",
   "description": "Script to generate test data for scaled ingest",
