@@ -1,5 +1,5 @@
 const test = require('ava');
-const { translateApiAsyncOperationToPostgresAsyncOperation } = require('../dist/async_operations');
+const { translateApiAsyncOperationToPostgresAsyncOperation } = require('../../dist/translate/async_operations');
 
 test('translateApiAsyncOperationToPostgresAsyncOperation converts a camelCase record to snake_case', (t) => {
   const apiAsyncOperation = {

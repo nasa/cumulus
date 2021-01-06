@@ -20,14 +20,9 @@ export {
 export { tableNames } from './tables';
 
 export {
-  translateApiProviderToPostgresProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
 } from './provider';
-
-export {
-  translateApiFiletoPostgresFile,
-} from './translate/file';
 
 export {
   PostgresAsyncOperation,
@@ -49,10 +44,20 @@ export {
   PostgresRule,
   PostgresRuleRecord,
 } from './types/rule';
-export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
-export { translateApiCollectionToPostgresCollection } from './collections';
+
+export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
+export {
+  translateApiFiletoPostgresFile,
+} from './translate/file';
+export { translateApiCollectionToPostgresCollection } from './translate/collections';
+export {
+  translateApiProviderToPostgresProvider,
+} from './translate/providers';
+export { translateApiRuleToPostgresRule } from './translate/rules';
 
 export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';
 export { GranulePgModel } from './models/granule';
+export { ProviderPgModel } from './models/provider';
+export { RulePgModel } from './models/rule';

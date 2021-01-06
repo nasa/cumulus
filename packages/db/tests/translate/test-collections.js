@@ -1,6 +1,6 @@
 const test = require('ava');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { translateApiCollectionToPostgresCollection } = require('../dist/collections');
+const { translateApiCollectionToPostgresCollection } = require('../../dist/translate/collections');
 
 test('translateApiCollectionToPostgresCollection converts API collection to Postgres', (t) => {
   const apiCollection = {

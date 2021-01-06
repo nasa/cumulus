@@ -35,6 +35,13 @@ module "ingest" {
   launchpad_passphrase  = var.launchpad_passphrase
   launchpad_certificate = var.launchpad_certificate
 
+  # LZARDS config
+  lzards_launchpad_passphrase  = var.lzards_launchpad_passphrase
+  lzards_launchpad_certificate = var.lzards_launchpad_certificate
+  lzards_api                   = var.lzards_api
+  lzards_provider              = var.lzards_provider
+  lzards_s3_link_timeout       = var.lzards_s3_link_timeout
+
   # DB config
   dynamo_tables = var.dynamo_tables
 
