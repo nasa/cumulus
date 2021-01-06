@@ -50,7 +50,7 @@ router.use('/providers', ensureAuthorized, providers);
 router.use('/pdrs', ensureAuthorized, pdrs);
 
 // rules endpoints
-router.use('/rules', ensureAuthorized, rules);
+router.use('/rules', ensureAuthorized, rules.router);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthorized, executionStatus);
