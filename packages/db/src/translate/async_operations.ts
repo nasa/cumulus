@@ -1,6 +1,6 @@
 import { toSnake } from 'snake-camel';
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
-import { PostgresAsyncOperation } from './types';
+import { PostgresAsyncOperation } from '../types/async_operation';
 
 export const translateApiAsyncOperationToPostgresAsyncOperation = (
   record: ApiAsyncOperation
