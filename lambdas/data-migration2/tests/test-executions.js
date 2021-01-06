@@ -43,6 +43,30 @@ const executionOmitList = [
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
 
+const assertPgExecutionMatches = async (t, dynamoExecution, pgExecution, overrides = {}) => {
+  t.deepEqual(
+    omit(pgExecution, ['cumulus_id']),
+    omit(
+      {
+        ...dynamoExecution,
+        async_operation_cumulus_id: null,
+        collection_cumulus_id: null,
+        cumulus_version: null, // TODO ensure that we don't need to map cumulusVersion from dynamo as it's not on the model def
+        url: null,
+        parent_cumulus_id: null,
+        workflow_name: dynamoExecution.name,
+        original_payload: dynamoExecution.originalPayload,
+        final_payload: dynamoExecution.finalPayload,
+        created_at: new Date(dynamoExecution.createdAt),
+        updated_at: new Date(dynamoExecution.updatedAt),
+        timestamp: new Date(dynamoExecution.timestamp),
+        ...overrides,
+      },
+      executionOmitList
+    )
+  );
+};
+
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
@@ -158,26 +182,11 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
     .where({ arn: newExecution.arn })
     .first();
 
-  t.deepEqual(
-    omit(createdRecord, ['cumulus_id']),
-    omit(
-      {
-        ...newExecution,
-        async_operation_cumulus_id: 1,
-        collection_cumulus_id: 1,
-        cumulus_version: null, // TODO ensure that we don't need to map cumulusVersion from dynamo as it's not on the model def
-        url: null,
-        parent_cumulus_id: existingPostgresExecution.cumulus_id,
-        workflow_name: newExecution.name,
-        original_payload: newExecution.originalPayload,
-        final_payload: newExecution.finalPayload,
-        created_at: new Date(newExecution.createdAt),
-        updated_at: new Date(newExecution.updatedAt),
-        timestamp: new Date(newExecution.timestamp),
-      },
-      executionOmitList
-    )
-  );
+  await assertPgExecutionMatches(t, newExecution, createdRecord, {
+    async_operation_cumulus_id: 1,
+    collection_cumulus_id: 1,
+    parent_cumulus_id: existingPostgresExecution.cumulus_id,
+  });
 });
 
 test.serial('migrateExecutionRecord throws error on invalid source data from Dynamo', async (t) => {
@@ -201,6 +210,7 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
   delete newExecution.originalPayload;
   delete newExecution.finalPayload;
   delete newExecution.timestamp;
+  delete newExecution.parentArn;
 
   await migrateExecutionRecord(newExecution, t.context.knex);
 
@@ -210,33 +220,18 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
     .where({ arn: newExecution.arn })
     .first();
 
-  t.deepEqual(
-    omit(createdRecord, ['cumulus_id']),
-    omit(
-      {
-        ...newExecution,
-        async_operation_cumulus_id: null,
-        collection_cumulus_id: null,
-        cumulus_version: null,
-        url: null,
-        duration: null,
-        error: null,
-        parent_cumulus_id: null,
-        workflow_name: newExecution.name,
-        original_payload: null,
-        final_payload: null,
-        created_at: new Date(newExecution.createdAt),
-        updated_at: new Date(newExecution.updatedAt),
-        timestamp: null,
-        tasks: null,
-      },
-      executionOmitList
-    )
-  );
+  await assertPgExecutionMatches(t, newExecution, createdRecord, {
+    duration: null,
+    error: null,
+    final_payload: null,
+    original_payload: null,
+    tasks: null,
+    timestamp: null,
+  });
 });
 
-test.serial('migrateCollectionRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
-  const newExecution = fakeExecutionFactoryV2();
+test.serial('migrateExecutionRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+  const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
   await t.throwsAsync(
@@ -246,7 +241,7 @@ test.serial('migrateCollectionRecord throws RecordAlreadyMigrated error for alre
 });
 
 test.serial('migrateExecutionRecord skips already migrated record', async (t) => {
-  const newExecution = fakeExecutionFactoryV2();
+  const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
   await executionsModel.create(newExecution);
@@ -264,9 +259,59 @@ test.serial('migrateExecutionRecord skips already migrated record', async (t) =>
   t.is(records.length, 1);
 });
 
+test.serial('migrateExecutionRecord migrates parent execution if not already migrated', async (t) => {
+  // This will be the top-level execution (no parent execution)
+  const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const fakeExecution2 = fakeExecutionFactoryV2({ parentArn: fakeExecution.arn });
+
+  const [
+    parentExecution,
+    childExecution,
+  ] = await Promise.all([
+    executionsModel.create(fakeExecution),
+    executionsModel.create(fakeExecution2),
+  ]);
+
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: fakeExecution.arn }),
+    executionsModel.delete({ arn: fakeExecution2.arn }),
+  ]));
+
+  // explicitly migrate only the child. This should also find and migrate the parent
+  await migrateExecutionRecord(childExecution, t.context.knex);
+
+  const parentPgRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: parentExecution.arn })
+    .first();
+
+  const childPgRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: childExecution.arn })
+    .first();
+
+  // Check that the parent execution was correctly migrated to Postgres
+  // Check that the original (child) execution was correctly migrated to Postgres
+  // The child's parent_cumulus_id should also be set
+  await Promise.all([
+    assertPgExecutionMatches(t, parentExecution, parentPgRecord),
+    assertPgExecutionMatches(t, childExecution, childPgRecord, { parent_cumulus_id: parentPgRecord.cumulus_id }),
+  ]);
+});
+
+test.skip('migrateExecutionRecord recursively migrates parent executions', async (t) => {
+
+});
+
+test.skip('migrateExecutionRecord fails if parent execution cannot be migrated', async (t) => {
+
+});
+
 test.serial('migrateExecutions processes multiple executions', async (t) => {
-  const newExecution = fakeExecutionFactoryV2();
-  const newExecution2 = fakeExecutionFactoryV2();
+  const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const newExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
 
   await Promise.all([
     executionsModel.create(newExecution),
@@ -289,8 +334,8 @@ test.serial('migrateExecutions processes multiple executions', async (t) => {
 });
 
 test.serial('migrateExecutions processes all non-failing records', async (t) => {
-  const newExecution = fakeExecutionFactoryV2();
-  const newExecution2 = fakeExecutionFactoryV2();
+  const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const newExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
 
   // remove required source field so that record will fail
   delete newExecution.name;

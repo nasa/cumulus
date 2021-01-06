@@ -10,6 +10,7 @@ import { MigrationSummary } from './types';
 
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
+const Execution = require('@cumulus/api/models/executions');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
 
@@ -26,7 +27,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
 export const migrateExecutionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
-): Promise<void> => {
+): Promise<Array<number>> => {
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.execution);
 
@@ -44,12 +45,21 @@ export const migrateExecutionRecord = async (
     <ExecutionRecord>dynamoRecord, <Knex>knex
   );
 
-  if (updatedRecord.parent_cumulus_id !== undefined) {
-    // Get parent record
-    // Migrate parent record
+  // If we have a parent arn from the dynamo record but we couldn't fine a cumulus ID
+  // we need to migrate the parent dynamo record to postgres
+  if (dynamoRecord.parentArn !== undefined && updatedRecord.parent_cumulus_id === undefined) {
+    // Get parent record from Dynamo
+    const executionModel = new Execution();
+    const parentExecution = await executionModel.get({ arn: dynamoRecord.parentArn });
+
+    // Migrate parent record to Postgres
+    const parentCumulusIdArr = await migrateExecutionRecord(parentExecution, knex);
+
+    // Get cumulus_id of migrated parent and assign to child
+    updatedRecord.parent_cumulus_id = parentCumulusIdArr[0];
   }
 
-  await knex('executions').insert(updatedRecord);
+  return knex('executions').insert(updatedRecord).returning('cumulus_id');
 };
 
 export const migrateExecutions = async (
