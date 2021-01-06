@@ -511,8 +511,8 @@ describe('The S3 Ingest Granules workflow', () => {
       if (beforeAllError) fail(beforeAllError);
     });
 
-    it('publishes the granule metadata to CMR', () => {
-      const result = conceptExists(granule.cmrLink);
+    it('publishes the granule metadata to CMR', async () => {
+      const result = await conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
