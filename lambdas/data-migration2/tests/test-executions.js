@@ -19,6 +19,12 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+
+// eslint-disable-next-line node/no-unpublished-require
+const { migrateAsyncOperationRecord } = require('@cumulus/data-migration1/dist/lambda/async-operations');
+// eslint-disable-next-line node/no-unpublished-require
+const { migrateCollectionRecord } = require('@cumulus/data-migration1/dist/lambda/collections');
+
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
@@ -27,9 +33,6 @@ const {
   migrateExecutionRecord,
   migrateExecutions,
 } = require('../dist/lambda/executions');
-// TODO should we not pull these from another Lambda?
-const { migrateAsyncOperationRecord } = require('../../data-migration1/dist/lambda/async-operations');
-const { migrateCollectionRecord } = require('../../data-migration1/dist/lambda/collections');
 
 let collectionsModel;
 let executionsModel;
@@ -51,7 +54,7 @@ const assertPgExecutionMatches = async (t, dynamoExecution, pgExecution, overrid
         ...dynamoExecution,
         async_operation_cumulus_id: null,
         collection_cumulus_id: null,
-        cumulus_version: null, // TODO ensure that we don't need to map cumulusVersion from dynamo as it's not on the model def
+        cumulus_version: null,
         url: null,
         parent_cumulus_id: null,
         workflow_name: dynamoExecution.name,
@@ -147,7 +150,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   ]);
 
   t.teardown(() => Promise.all([
-    executionsModel.delete({ arn: fakeExecution.arn }), // TODO why do I have to specify the arn here and id in asyncOperationsModel?
+    executionsModel.delete({ arn: fakeExecution.arn }),
     collectionsModel.delete(fakeCollection),
     asyncOperationsModel.delete({ id: fakeAsyncOperation.id }),
   ]));
@@ -169,7 +172,6 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
     parentArn: existingExecution.arn,
-    // TODO double-check that this is right. The IDs here are always in this format?
     collectionId: `${existingCollection.name}___${existingCollection.version}`,
     asyncOperationId: existingAsyncOperation.id,
   });
@@ -297,7 +299,12 @@ test.serial('migrateExecutionRecord migrates parent execution if not already mig
   // The child's parent_cumulus_id should also be set
   await Promise.all([
     assertPgExecutionMatches(t, parentExecution, parentPgRecord),
-    assertPgExecutionMatches(t, childExecution, childPgRecord, { parent_cumulus_id: parentPgRecord.cumulus_id }),
+    assertPgExecutionMatches(
+      t,
+      childExecution,
+      childPgRecord,
+      { parent_cumulus_id: parentPgRecord.cumulus_id }
+    ),
   ]);
 });
 
@@ -349,8 +356,18 @@ test.serial('migrateExecutionRecord recursively migrates grandparent executions'
   // parent's parent_cumulus_id should be the grandparent's cumulus_id
   await Promise.all([
     assertPgExecutionMatches(t, grandparentExecution, grandparentPgRecord),
-    assertPgExecutionMatches(t, parentExecution, parentPgRecord, { parent_cumulus_id: grandparentPgRecord.cumulus_id }),
-    assertPgExecutionMatches(t, childExecution, childPgRecord, { parent_cumulus_id: parentPgRecord.cumulus_id }),
+    assertPgExecutionMatches(
+      t,
+      parentExecution,
+      parentPgRecord,
+      { parent_cumulus_id: grandparentPgRecord.cumulus_id }
+    ),
+    assertPgExecutionMatches(
+      t,
+      childExecution,
+      childPgRecord,
+      { parent_cumulus_id: parentPgRecord.cumulus_id }
+    ),
   ]);
 });
 

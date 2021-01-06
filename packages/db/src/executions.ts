@@ -25,7 +25,9 @@ export const translateApiExecutionToPostgresExecution = async (
   // Map old record to new schema.
   const translatedRecord: PostgresExecution = {
     async_operation_cumulus_id: (
-      dynamoRecord.asyncOperationId ? await getAsyncOperationCumulusId(dynamoRecord.asyncOperationId, knex) : undefined
+      dynamoRecord.asyncOperationId ? await getAsyncOperationCumulusId(
+        dynamoRecord.asyncOperationId, knex
+      ) : undefined
     ),
     status: dynamoRecord.status,
     tasks: JSON.stringify(dynamoRecord.tasks),
@@ -44,7 +46,10 @@ export const translateApiExecutionToPostgresExecution = async (
   if (dynamoRecord.collectionId) {
     // TODO is there a helper for this?
     const collectionNameVersionArray = dynamoRecord.collectionId.split('___');
-    translatedRecord.collection_cumulus_id = await getCollectionCumulusId({ name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] }, knex);
+    translatedRecord.collection_cumulus_id = await getCollectionCumulusId(
+      { name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] },
+      knex
+    );
   }
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
