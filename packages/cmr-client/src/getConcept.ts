@@ -47,7 +47,7 @@ async function getConceptMetadata(
     return getGranuleConceptMetadata(conceptLink, headers, 'granuleSearch');
   }
   if (conceptLink.match(/\/search\/concepts\//)) {
-    return getGranuleConceptMetadata(conceptLink.replace(/(\..+)$/, '.json'), headers, 'granuleConceptSearch');
+    return getGranuleConceptMetadata(conceptLink.replace(/(\.\w+)$/, '.json'), headers, 'granuleConceptSearch');
   }
   throw new Error(`Unhandled CMR conceptLink -- links must either search by granule/concept_id or granule concept: ${conceptLink}`);
 }
