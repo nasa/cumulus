@@ -33,7 +33,8 @@ async function getGranuleConceptMetadata(
 /**
  * Get the CMR JSON metadata from a CMR granule search
  *
- * @param {string} conceptLink - link to concept in CMR
+ * @param {string} conceptLink - link to concept in CMR, either
+ *                               granule search by concept ID or concept ID search
  * @param {Object} headers - the CMR headers
  * @returns {Object} - metadata as a JS object, null if not
  * found
@@ -43,10 +44,10 @@ async function getConceptMetadata(
   headers: Headers
 ): Promise<unknown> {
   if (conceptLink.match(/search\/granules.json\?/)) {
-    return getGranuleConceptMetadata(conceptLink, headers, 'granuleSearch' );
+    return getGranuleConceptMetadata(conceptLink, headers, 'granuleSearch');
   }
   if (conceptLink.match(/\/search\/concepts\//)) {
-    return getGranuleConceptMetadata(conceptLink.replace(/(.echo10)$/, '.json'), headers, 'granuleConceptSearch');
+    return getGranuleConceptMetadata(conceptLink.replace(/(\..+)$/, '.json'), headers, 'granuleConceptSearch');
   }
   throw new Error(`Unhandled CMR conceptLink -- links must either search by granule/concept_id or granule concept: ${conceptLink}`);
 }
