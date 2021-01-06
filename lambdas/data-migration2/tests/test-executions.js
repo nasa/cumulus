@@ -260,7 +260,7 @@ test.serial('migrateExecutionRecord skips already migrated record', async (t) =>
 });
 
 test.serial('migrateExecutionRecord migrates parent execution if not already migrated', async (t) => {
-  // This will be the top-level execution (no parent execution)
+  // This will be the child execution (no parent execution)
   const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
   const fakeExecution2 = fakeExecutionFactoryV2({ parentArn: fakeExecution.arn });
 
@@ -301,12 +301,89 @@ test.serial('migrateExecutionRecord migrates parent execution if not already mig
   ]);
 });
 
-test.skip('migrateExecutionRecord recursively migrates parent executions', async (t) => {
+test.serial('migrateExecutionRecord recursively migrates grandparent executions', async (t) => {
+  const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const fakeExecution2 = fakeExecutionFactoryV2({ parentArn: fakeExecution.arn });
+  const fakeExecution3 = fakeExecutionFactoryV2({ parentArn: fakeExecution2.arn });
 
+  const [
+    grandparentExecution,
+    parentExecution,
+    childExecution,
+  ] = await Promise.all([
+    executionsModel.create(fakeExecution),
+    executionsModel.create(fakeExecution2),
+    executionsModel.create(fakeExecution3),
+  ]);
+
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: fakeExecution.arn }),
+    executionsModel.delete({ arn: fakeExecution2.arn }),
+    executionsModel.delete({ arn: fakeExecution3.arn }),
+  ]));
+
+  // explicitly migrate only the child. This should also find and migrate the parent and grandparent
+  await migrateExecutionRecord(childExecution, t.context.knex);
+
+  const grandparentPgRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: grandparentExecution.arn })
+    .first();
+
+  const parentPgRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: parentExecution.arn })
+    .first();
+
+  const childPgRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: childExecution.arn })
+    .first();
+
+  // Check that the grandparent execution was correctly migrated to Postgres
+  // Check that the original (child) and parent executions were correctly migrated to Postgres
+  // The child's parent_cumulus_id should be the parent's cumulus_id and the
+  // parent's parent_cumulus_id should be the grandparent's cumulus_id
+  await Promise.all([
+    assertPgExecutionMatches(t, grandparentExecution, grandparentPgRecord),
+    assertPgExecutionMatches(t, parentExecution, parentPgRecord, { parent_cumulus_id: grandparentPgRecord.cumulus_id }),
+    assertPgExecutionMatches(t, childExecution, childPgRecord, { parent_cumulus_id: parentPgRecord.cumulus_id }),
+  ]);
 });
 
-test.skip('migrateExecutionRecord fails if parent execution cannot be migrated', async (t) => {
+test.serial('child execution migration fails if parent execution cannot be migrated', async (t) => {
+  const parentExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const childExecution = fakeExecutionFactoryV2({ parentArn: parentExecution.arn });
 
+  // make parent record invalid
+  delete parentExecution.name;
+
+  await Promise.all([
+    // Have to use Dynamo client directly because creating
+    // via model won't allow creation of an invalid record
+    dynamodbDocClient().put({
+      TableName: process.env.ExecutionsTable,
+      Item: parentExecution,
+    }).promise(),
+    executionsModel.create(childExecution),
+  ]);
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: parentExecution.arn }),
+    executionsModel.delete({ arn: childExecution.arn }),
+  ]));
+
+  const migrationSummary = await migrateExecutions(process.env, t.context.knex);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 2,
+    skipped: 0,
+    failed: 2,
+    success: 0,
+  });
+  const records = await t.context.knex.queryBuilder().select().table('executions');
+  t.is(records.length, 0);
 });
 
 test.serial('migrateExecutions processes multiple executions', async (t) => {
