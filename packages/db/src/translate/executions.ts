@@ -1,5 +1,6 @@
 import Knex from 'knex';
 
+<<<<<<< HEAD
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
@@ -7,6 +8,16 @@ import { PostgresExecution } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
+=======
+import { ExecutionRecord } from '@cumulus/types/api/executions';
+import { PostgresExecution } from '../types';
+// TODO move to common location
+const {
+  getParentExecutionCumulusId,
+  getAsyncOperationCumulusId,
+  getCollectionCumulusId,
+} = require('../../api/lambdas/sf-event-sqs-to-db-records/utils');
+>>>>>>> e5fc49703... CUMULUS-2188 update type definition location and translation .ts to new locations per new conventions
 
 /**
  * Translate execution record from Dynamo to RDS.
@@ -15,16 +26,20 @@ import { AsyncOperationPgModel } from '../models/async_operation';
  *   Source record from DynamoDB
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} knex
  *   Knex client
+<<<<<<< HEAD
  * @param {Object} collectionPgModel
  *   Instance of the collection database model
  * @param {Object} asyncOperationPgModel
  *   Instance of the async operation database model
  * @param {Object} executionPgModel
  *   Instance of the execution database model
+=======
+>>>>>>> e5fc49703... CUMULUS-2188 update type definition location and translation .ts to new locations per new conventions
  * @returns {PostgresExecutionRecord} - converted Execution
  */
 export const translateApiExecutionToPostgresExecution = async (
   dynamoRecord: ExecutionRecord,
+<<<<<<< HEAD
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),
@@ -60,11 +75,43 @@ export const translateApiExecutionToPostgresExecution = async (
     translatedRecord.collection_cumulus_id = await collectionPgModel.getRecordCumulusId(
       knex,
       { name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] }
+=======
+  knex: Knex
+): Promise<PostgresExecution> => {
+  // Map old record to new schema.
+  const translatedRecord: PostgresExecution = {
+    async_operation_cumulus_id: (
+      dynamoRecord.asyncOperationId ? await getAsyncOperationCumulusId(
+        dynamoRecord.asyncOperationId, knex
+      ) : undefined
+    ),
+    status: dynamoRecord.status,
+    tasks: JSON.stringify(dynamoRecord.tasks),
+    error: JSON.stringify(dynamoRecord.error),
+    arn: dynamoRecord.arn,
+    duration: dynamoRecord.duration,
+    original_payload: JSON.stringify(dynamoRecord.originalPayload),
+    final_payload: JSON.stringify(dynamoRecord.finalPayload),
+    workflow_name: dynamoRecord.name,
+  };
+
+  if (dynamoRecord.timestamp) {
+    translatedRecord.timestamp = new Date(Number(dynamoRecord.timestamp));
+  }
+
+  if (dynamoRecord.collectionId) {
+    // TODO is there a helper for this?
+    const collectionNameVersionArray = dynamoRecord.collectionId.split('___');
+    translatedRecord.collection_cumulus_id = await getCollectionCumulusId(
+      { name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] },
+      knex
+>>>>>>> e5fc49703... CUMULUS-2188 update type definition location and translation .ts to new locations per new conventions
     );
   }
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
   if (dynamoRecord.parentArn !== undefined) {
+<<<<<<< HEAD
     let parentId;
 
     try {
@@ -84,6 +131,20 @@ export const translateApiExecutionToPostgresExecution = async (
       }
     }
   }
+=======
+    const parentId = await getParentExecutionCumulusId(dynamoRecord.parentArn, knex);
+
+    if (parentId !== undefined) {
+      translatedRecord.parent_cumulus_id = parentId;
+    }
+  }
+  if (dynamoRecord.createdAt !== undefined) {
+    translatedRecord.created_at = new Date(dynamoRecord.createdAt);
+  }
+  if (dynamoRecord.updatedAt !== undefined) {
+    translatedRecord.updated_at = new Date(dynamoRecord.updatedAt);
+  }
+>>>>>>> e5fc49703... CUMULUS-2188 update type definition location and translation .ts to new locations per new conventions
 
   return translatedRecord;
 };
