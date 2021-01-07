@@ -46,7 +46,7 @@ const executionOmitList = [
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
 
-const assertPgExecutionMatches = async (t, dynamoExecution, pgExecution, overrides = {}) => {
+const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {}) => {
   t.deepEqual(
     omit(pgExecution, ['cumulus_id']),
     omit(
@@ -184,7 +184,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
     .where({ arn: newExecution.arn })
     .first();
 
-  await assertPgExecutionMatches(t, newExecution, createdRecord, {
+  assertPgExecutionMatches(t, newExecution, createdRecord, {
     async_operation_cumulus_id: 1,
     collection_cumulus_id: 1,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
@@ -222,7 +222,7 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
     .where({ arn: newExecution.arn })
     .first();
 
-  await assertPgExecutionMatches(t, newExecution, createdRecord, {
+  assertPgExecutionMatches(t, newExecution, createdRecord, {
     duration: null,
     error: null,
     final_payload: null,
@@ -297,15 +297,13 @@ test.serial('migrateExecutionRecord migrates parent execution if not already mig
   // Check that the parent execution was correctly migrated to Postgres
   // Check that the original (child) execution was correctly migrated to Postgres
   // The child's parent_cumulus_id should also be set
-  await Promise.all([
-    assertPgExecutionMatches(t, parentExecution, parentPgRecord),
-    assertPgExecutionMatches(
-      t,
-      childExecution,
-      childPgRecord,
-      { parent_cumulus_id: parentPgRecord.cumulus_id }
-    ),
-  ]);
+  assertPgExecutionMatches(t, parentExecution, parentPgRecord);
+  assertPgExecutionMatches(
+    t,
+    childExecution,
+    childPgRecord,
+    { parent_cumulus_id: parentPgRecord.cumulus_id }
+  );
 });
 
 test.serial('migrateExecutionRecord recursively migrates grandparent executions', async (t) => {
@@ -354,21 +352,19 @@ test.serial('migrateExecutionRecord recursively migrates grandparent executions'
   // Check that the original (child) and parent executions were correctly migrated to Postgres
   // The child's parent_cumulus_id should be the parent's cumulus_id and the
   // parent's parent_cumulus_id should be the grandparent's cumulus_id
-  await Promise.all([
-    assertPgExecutionMatches(t, grandparentExecution, grandparentPgRecord),
-    assertPgExecutionMatches(
-      t,
-      parentExecution,
-      parentPgRecord,
-      { parent_cumulus_id: grandparentPgRecord.cumulus_id }
-    ),
-    assertPgExecutionMatches(
-      t,
-      childExecution,
-      childPgRecord,
-      { parent_cumulus_id: parentPgRecord.cumulus_id }
-    ),
-  ]);
+  assertPgExecutionMatches(t, grandparentExecution, grandparentPgRecord);
+  assertPgExecutionMatches(
+    t,
+    parentExecution,
+    parentPgRecord,
+    { parent_cumulus_id: grandparentPgRecord.cumulus_id }
+  );
+  assertPgExecutionMatches(
+    t,
+    childExecution,
+    childPgRecord,
+    { parent_cumulus_id: parentPgRecord.cumulus_id }
+  );
 });
 
 test.serial('child execution migration fails if parent execution cannot be migrated', async (t) => {
