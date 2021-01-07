@@ -68,15 +68,19 @@ class S3ProviderClient implements ProviderClient {
    *    the S3 URI and ETag of the destination file
    */
   async sync(
-    sourceKey: string,
-    destinationBucket: string,
-    destinationKey: string
+    params: {
+      destinationBucket: string,
+      destinationKey: string,
+      bucket?: string,
+      fileRemotePath: string,
+    }
   ): Promise<{s3uri: string, etag: string}> {
+    const { fileRemotePath, destinationBucket, destinationKey, bucket } = params;
     try {
       const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
       const { etag } = await S3.multipartCopyObject({
-        sourceBucket: this.bucket,
-        sourceKey,
+        sourceBucket: bucket || this.bucket,
+        sourceKey: fileRemotePath,
         destinationBucket,
         destinationKey,
         ACL: 'private',
@@ -86,7 +90,7 @@ class S3ProviderClient implements ProviderClient {
       return { s3uri, etag };
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
-        const sourceUrl = S3.buildS3Uri(this.bucket, sourceKey);
+        const sourceUrl = S3.buildS3Uri(this.bucket, fileRemotePath);
         throw new errors.FileNotFound(`Source file not found ${sourceUrl}`);
       }
 

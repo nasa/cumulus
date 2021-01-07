@@ -77,11 +77,11 @@ test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async 
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
   const targetKey = 'target.json';
 
-  const { s3uri, etag } = await s3ProviderClient.sync(
-    t.context.sourceKey,
-    t.context.targetBucket,
-    targetKey
-  );
+  const { s3uri, etag } = await s3ProviderClient.sync({
+    fileRemotePath: t.context.sourceKey,
+    destinationBucket: t.context.targetBucket,
+    destinationKey: targetKey
+  });
   t.truthy(s3uri, 'Missing s3uri');
   t.truthy(etag, 'Missing etag');
   t.is(
@@ -94,7 +94,11 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
 
   await t.throwsAsync(
-    s3ProviderClient.sync('non-existent', t.context.targetBucket, 'target.json'),
+    s3ProviderClient.sync({
+      fileRemotePath: 'non-existent',
+      destinationBucket: t.context.targetBucket,
+      destinationKey: 'target.json',
+    }),
     {
       instanceOf: errors.FileNotFound,
       message: `Source file not found s3://${t.context.sourceBucket}/non-existent`,

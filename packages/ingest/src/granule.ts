@@ -199,8 +199,15 @@ export async function handleDuplicateFile(params: {
   target: { Bucket: string, Key: string },
   duplicateHandling: DuplicateHandling,
   checksumFunction?: (bucket: string, key: string) => Promise<[string, string]>,
-  syncFileFunction?: (bucket: string, key: string) => Promise<void>,
-  ACL?: string
+  syncFileFunction?: (params: {
+    destinationBucket: string,
+    destinationKey: string,
+    bucket?: string,
+    fileRemotePath: string,
+  }) => Promise<void>,
+  ACL?: string,
+  sourceBucket?: string,
+  fileRemotePath: string,
 }): Promise<VersionedObject[]> {
   const {
     source,
@@ -209,6 +216,8 @@ export async function handleDuplicateFile(params: {
     checksumFunction,
     syncFileFunction,
     ACL,
+    sourceBucket,
+    fileRemotePath
   } = params;
 
   if (duplicateHandling === 'error') {
@@ -217,7 +226,14 @@ export async function handleDuplicateFile(params: {
     throw new errors.DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
   } else if (duplicateHandling === 'version') {
     // sync to staging location if required
-    if (syncFileFunction) await syncFileFunction(source.Bucket, source.Key);
+    if (syncFileFunction) {
+      await syncFileFunction({
+        destinationBucket: source.Bucket,
+        destinationKey: source.Key,
+        bucket: sourceBucket,
+        fileRemotePath,
+      });
+    }
     let sourceChecksumObject = {};
     if (checksumFunction) {
       // verify integrity
@@ -234,7 +250,12 @@ export async function handleDuplicateFile(params: {
   } else if (duplicateHandling === 'replace') {
     if (syncFileFunction) {
       // sync directly to target location
-      await syncFileFunction(target.Bucket, target.Key);
+      await syncFileFunction({
+        destinationBucket: target.Bucket,
+        destinationKey: target.Key,
+        bucket: sourceBucket,
+        fileRemotePath,
+      });
     } else {
       await S3.moveObject({
         sourceBucket: source.Bucket,
