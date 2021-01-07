@@ -3,6 +3,11 @@ export {
   destroyLocalTestDb,
   createTestDatabase,
   deleteTestDatabase,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeProviderRecordFactory,
+  fakeGranuleRecordFactory,
+  fakeFileRecordFactory,
 } from './test-utils';
 
 export { getKnexClient } from './connection';
@@ -15,7 +20,6 @@ export {
 export { tableNames } from './tables';
 
 export {
-  translateApiProviderToPostgresProvider,
   validateProviderHost,
   nullifyUndefinedProviderValues,
 } from './provider';
@@ -23,16 +27,38 @@ export {
 export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
+} from './types/async_operation';
+export {
   PostgresCollection,
   PostgresCollectionRecord,
+} from './types/collection';
+export {
   PostgresExecution,
   PostgresExecutionRecord,
-  PostgresProviderRecord,
+} from './types/execution';
+export {
   PostgresProvider,
-  PostgresRuleRecord,
+  PostgresProviderRecord,
+} from './types/provider';
+export {
   PostgresRule,
-} from './types';
-export { translateApiAsyncOperationToPostgresAsyncOperation } from './async_operations';
-export { translateApiCollectionToPostgresCollection } from './collections';
-export { translateApiExecutionToPostgresExecution } from './executions';
-export { translateApiRuleToPostgresRule } from './rules';
+  PostgresRuleRecord,
+} from './types/rule';
+
+export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
+export {
+  translateApiFiletoPostgresFile,
+} from './translate/file';
+export { translateApiCollectionToPostgresCollection } from './translate/collections';
+export {
+  translateApiProviderToPostgresProvider,
+} from './translate/providers';
+export { translateApiRuleToPostgresRule } from './translate/rules';
+export { translateApiExecutionToPostgresExecution } from './translate/executions';
+
+export { CollectionPgModel } from './models/collection';
+export { ExecutionPgModel } from './models/execution';
+export { FilePgModel } from './models/file';
+export { GranulePgModel } from './models/granule';
+export { ProviderPgModel } from './models/provider';
+export { RulePgModel } from './models/rule';
