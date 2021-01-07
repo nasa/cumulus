@@ -13,7 +13,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   getKnexClient,
   translateApiCollectionToPostgresCollection,
-  CollectionPgModel
+  CollectionPgModel,
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
