@@ -79,7 +79,7 @@ const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {
   );
 };
 
-const assertPgExecutionMatches = async (t, dynamoExecution, pgExecution, overrides = {}) => {
+const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {}) => {
   t.deepEqual(
     omit(pgExecution, ['cumulus_id']),
     omit(
@@ -186,13 +186,8 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
     parentArn: existingExecution.arn,
-<<<<<<< HEAD
-    collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
-    asyncOperationId: fakeAsyncOperation.id,
-=======
     collectionId: `${existingCollection.name}___${existingCollection.version}`,
     asyncOperationId: existingAsyncOperation.id,
->>>>>>> 64fd0b79d... CUMULUS-2188 lint fixes, tests for execution API translation
   });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
@@ -204,8 +199,8 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
     .first();
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
-    async_operation_cumulus_id: asyncOperationCumulusId,
-    collection_cumulus_id: collectionCumulusId,
+    async_operation_cumulus_id: 1,
+    collection_cumulus_id: 1,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
   });
 });
