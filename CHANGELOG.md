@@ -108,6 +108,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2187**
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
+  - **CUMULUS-2167**
+    - Change Postgres Schema definition for Files to remove `filename` and only support `file_name`.
+    - Change Postgres Schema definition for Files to remove `size` to only support `file_size`.
+    - Change Postgres Schema definition for Files to make `bucket` and `key` non-nullable.
 
 ## [v4.0.0] 2020-11-20
 
