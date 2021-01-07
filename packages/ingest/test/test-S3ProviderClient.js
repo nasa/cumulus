@@ -80,7 +80,7 @@ test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async 
   const { s3uri, etag } = await s3ProviderClient.sync({
     fileRemotePath: t.context.sourceKey,
     destinationBucket: t.context.targetBucket,
-    destinationKey: targetKey
+    destinationKey: targetKey,
   });
   t.truthy(s3uri, 'Missing s3uri');
   t.truthy(etag, 'Missing etag');

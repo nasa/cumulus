@@ -217,7 +217,7 @@ export async function handleDuplicateFile(params: {
     syncFileFunction,
     ACL,
     sourceBucket,
-    fileRemotePath
+    fileRemotePath,
   } = params;
 
   if (duplicateHandling === 'error') {
