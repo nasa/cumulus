@@ -36,6 +36,12 @@ variable "cluster_identifier" {
   default     = "cumulus-rds-serverless-default-cluster"
 }
 
+variable "snapshot_identifier" {
+  description = "Optional database snapshot for restoration"
+  type = string
+  default = null
+}
+
 variable "tags" {
   description = "Tags to be applied to RDS cluster resources that support tags"
   type        = map(string)
