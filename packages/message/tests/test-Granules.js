@@ -29,21 +29,9 @@ test('getMessageGranules returns an empty array when granules are absent from me
   t.deepEqual(result, []);
 });
 
-test('getGranuleStatus returns status from message', (t) => {
-  t.is(
-    getGranuleStatus({
-      meta: {
-        status: 'running',
-      },
-    }),
-    'running'
-  );
-});
-
 test('getGranuleStatus returns status from granule', (t) => {
   t.is(
     getGranuleStatus(
-      {},
       { status: 'failed' }
     ),
     'failed'

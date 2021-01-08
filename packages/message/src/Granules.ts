@@ -11,8 +11,6 @@
 import { Message } from '@cumulus/types';
 import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
 
-import { getMetaStatus } from './workflows';
-
 interface MessageWithGranules extends Message.CumulusMessage {
   payload: {
     granules?: object[]
@@ -35,13 +33,11 @@ export const getMessageGranules = (
 /**
  * Determine the status of a granule.
  *
- * @param {Message.CumulusMessage } message - A workflow message
  * @param {ApiGranule} granule - A granule record
  * @returns {string} The granule status
  *
  * @alias module:Granules
  */
 export const getGranuleStatus = (
-  message: Message.CumulusMessage,
   granule: ApiGranule
-): Message.WorkflowStatus | GranuleStatus => getMetaStatus(message) || granule.status;
+): Message.WorkflowStatus | GranuleStatus => granule.status;
