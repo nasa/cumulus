@@ -39,14 +39,38 @@ const {
 } = require('../../lib/utils');
 const Granule = require('../../models/granules');
 
+/**
+ * Generate a Granule record to save to the core database from a Cumulus message
+ * and other contextual information
+ *
+ * @param {Object} params
+ * @param {Object} params.cumulusMessage - Cumulus workflow message
+ * @param {Object} params.granule - Granule object from workflow message
+ * @param {Array<Object>} params.files - Granule file objects
+ * @param {number} params.collectionCumulusId
+ *   Cumulus ID of collection referenced in workflow message
+ * @param {number} params.providerCumulusId
+ *   Cumulus ID of provider referenced in workflow message
+ * @param {number} params.executionCumulusId
+ *   Cumulus ID of execution referenced in workflow message
+ * @param {number} params.pdrCumulusId
+ *   Cumulus ID of PDR referenced in workflow message
+ * @param {Object} [params.processingTimeInfo={}]
+ *   Info describing the processing time for the granule
+ * @param {Object} [params.cmrUtils=CmrUtils]
+ *   Utilities for interacting with CMR
+ * @param {number} [params.timestamp] - Timestamp for granule record. Defaults to now.
+ * @param {number} [params.updatedAt] - Updated timestamp for granule record. Defaults to now.
+ * @returns {Promise<Object>} - a granule record
+ */
 const generateGranuleRecord = async ({
   cumulusMessage,
   granule,
+  files,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
-  files,
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
   timestamp = Date.now(),
@@ -90,11 +114,29 @@ const generateGranuleRecord = async ({
   };
 };
 
+/**
+ * Generate a file record to save to the core database.
+ *
+ * @param {Object} params
+ * @param {Object} params.file - File object
+ * @param {number} params.granuleCumulusId
+ *   Cumulus ID of the granule for this file
+ * @returns {Object} - a file record
+ */
 const generateFileRecord = ({ file, granuleCumulusId }) => ({
   ...translateApiFiletoPostgresFile(file),
   granule_cumulus_id: granuleCumulusId,
 });
 
+/**
+ * Generate file records to save to the core database.
+ *
+ * @param {Object} params
+ * @param {Object} params.files - File objects
+ * @param {number} params.granuleCumulusId
+ *   Cumulus ID of the granule for this file
+ * @returns {Array<Object>} - file records
+ */
 const generateFileRecords = async ({
   files,
   granuleCumulusId,
