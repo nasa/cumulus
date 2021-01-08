@@ -18,8 +18,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Size of file (bytes)');
     table
       .text('bucket')
-      .comment('AWS Bucket file is archived in')
-      .notNullable();
+      .comment('AWS Bucket file is archived in');
     table
       .text('checksum_type')
       .comment('Type of file checksum (e.g. md5');
@@ -31,8 +30,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Source file name');
     table
       .text('key')
-      .comment('AWS S3 key file is archived at')
-      .notNullable();
+      .comment('AWS S3 key file is archived at');
     table
       .text('name');
     table
