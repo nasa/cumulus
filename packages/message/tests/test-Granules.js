@@ -29,9 +29,20 @@ test('getMessageGranules returns an empty array when granules are absent from me
   t.deepEqual(result, []);
 });
 
+test('getGranuleStatus returns workflow status', (t) => {
+  t.is(
+    getGranuleStatus(
+      'completed',
+      { status: 'foo' }
+    ),
+    'completed'
+  );
+});
+
 test('getGranuleStatus returns status from granule', (t) => {
   t.is(
     getGranuleStatus(
+      undefined,
       { status: 'failed' }
     ),
     'failed'

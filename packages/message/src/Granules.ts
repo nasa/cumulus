@@ -33,11 +33,13 @@ export const getMessageGranules = (
 /**
  * Determine the status of a granule.
  *
+ * @param {string} workflowStatus - The workflow status
  * @param {ApiGranule} granule - A granule record
  * @returns {string} The granule status
  *
  * @alias module:Granules
  */
 export const getGranuleStatus = (
+  workflowStatus: Message.WorkflowStatus,
   granule: ApiGranule
-): Message.WorkflowStatus | GranuleStatus => granule.status;
+): Message.WorkflowStatus | GranuleStatus => workflowStatus || granule.status;
