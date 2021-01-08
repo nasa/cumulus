@@ -472,12 +472,6 @@ variable "tea_rest_api_root_resource_id" {
   default     = null
 }
 
-variable "tea_stack_name" {
-  description = "Thin Egress App Cloudformation stack name"
-  type        = string
-  default     = null
-}
-
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type        = list(object({

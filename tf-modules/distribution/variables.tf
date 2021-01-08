@@ -92,12 +92,6 @@ variable "tea_rest_api_root_resource_id" {
   default     = null
 }
 
-variable "tea_stack_name" {
-  description = "Thin Egress App Cloudformation stack name"
-  type        = string
-  default     = null
-}
-
 variable "urs_client_id" {
   type        = string
   description = "The client ID for your Earthdata login (URS) application"
