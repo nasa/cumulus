@@ -10,7 +10,7 @@ import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
 =======
 import { ExecutionRecord } from '@cumulus/types/api/executions';
-import { PostgresExecution } from '../types';
+import { PostgresExecution } from '../types/execution';
 // TODO move to common location
 const {
   getParentExecutionCumulusId,
