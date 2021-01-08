@@ -7,7 +7,7 @@ const {
   getParentExecutionCumulusId,
   getAsyncOperationCumulusId,
   getCollectionCumulusId,
-} = require('../../api/lambdas/sf-event-sqs-to-db-records/utils');
+} = require('../../../api/lambdas/sf-event-sqs-to-db-records/utils');
 
 /**
  * Translate execution record from Dynamo to RDS.
@@ -37,6 +37,7 @@ export const translateApiExecutionToPostgresExecution = async (
     original_payload: JSON.stringify(dynamoRecord.originalPayload),
     final_payload: JSON.stringify(dynamoRecord.finalPayload),
     workflow_name: dynamoRecord.name,
+    url: dynamoRecord.execution,
   };
 
   if (dynamoRecord.timestamp) {
