@@ -8,8 +8,8 @@ export interface PostgresExecution {
   cumulus_version?: string,
   url?: string,
   status?: ExecutionRecordStatus,
-  tasks?: Object, // TODO need specific type?
-  error?: Object, // TODO need specific type?
+  tasks?: Object,
+  error?: Object,
   workflow_name?: string,
   duration?: number,
   original_payload?: Object,
