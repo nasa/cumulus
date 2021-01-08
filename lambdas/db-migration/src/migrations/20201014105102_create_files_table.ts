@@ -32,8 +32,6 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('key')
       .comment('AWS S3 key file is archived at');
     table
-      .text('name');
-    table
       .text('path')
       .comment('Source file path');
     table
