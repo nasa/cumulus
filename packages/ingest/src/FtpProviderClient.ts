@@ -200,20 +200,21 @@ class FtpProviderClient {
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
-  async sync(
-    remotePath: string,
-    bucket: string,
-    key: string
-  ): Promise<{s3uri: string, etag: string}> {
-    const remoteUrl = `ftp://${this.host}/${remotePath}`;
-    const s3uri = S3.buildS3Uri(bucket, key);
+  async sync(params: {
+    fileRemotePath: string,
+    destinationBucket: string,
+    destinationKey: string
+  }): Promise<{s3uri: string, etag: string}> {
+    const { fileRemotePath, destinationBucket, destinationKey } = params;
+    const remoteUrl = `ftp://${this.host}/${fileRemotePath}`;
+    const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
     logger.info(`Sync ${remoteUrl} to ${s3uri}`);
 
     const client = await this.buildFtpClient();
 
     // get readable stream for remote file
     const readable = await new Promise<Socket>((resolve, reject) => {
-      client.get(remotePath, (err, socket) => {
+      client.get(fileRemotePath, (err, socket) => {
         if (err) {
           return this.errorHandler(reject, err);
         }
@@ -224,15 +225,15 @@ class FtpProviderClient {
     const pass = new PassThrough();
     readable.pipe(pass);
 
-    const params = {
-      Bucket: bucket,
-      Key: key,
+    const s3Params = {
+      Bucket: destinationBucket,
+      Key: destinationKey,
       Body: pass,
-      ContentType: lookupMimeType(key),
+      ContentType: lookupMimeType(destinationKey),
     };
 
     try {
-      const { ETag: etag } = await S3.promiseS3Upload(params);
+      const { ETag: etag } = await S3.promiseS3Upload(s3Params);
       logger.info('Uploading to s3 is complete(ftp)', s3uri);
 
       return { s3uri, etag };
