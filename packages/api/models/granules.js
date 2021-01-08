@@ -13,7 +13,7 @@ const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
-const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
@@ -78,7 +78,7 @@ class Granule extends Manager {
   constructor({
     fileUtils = FileUtils,
     stepFunctionUtils = StepFunctions,
-    cmrUtils = CmrUtils,
+    cmrUtils = cmrjsCmrUtils,
   } = {}) {
     const globalSecondaryIndexes = [{
       IndexName: 'collectionId-granuleId-index',
