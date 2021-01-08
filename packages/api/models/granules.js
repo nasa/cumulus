@@ -352,9 +352,8 @@ class Granule extends Manager {
    * @param {Object} params.granule - A granule object
    * @param {Object} params.message - A workflow execution message
    * @param {string} params.executionUrl - A Step Function execution URL
-   * @param {Object} [params.executionDescription={}] - Defaults to empty object
-   * @param {Date} params.executionDescription.startDate - Start date of the workflow execution
-   * @param {Date} params.executionDescription.stopDate - Stop date of the workflow execution
+   * @param {Object} [params.processingTimeInfo={}]
+   *   Info describing the processing time for the granule
    * @returns {Promise<Object>} A granule record
    */
   async generateGranuleRecord({
@@ -679,9 +678,7 @@ class Granule extends Manager {
    * @param {Object} params.granule - Granule object from a Cumulus message
    * @param {Object} params.cumulusMessage - A workflow message
    * @param {string} params.executionUrl - Step Function execution URL for the workflow
-   * @param {Object} params.executionDescription
-   *   Response from StepFunctions.DescribeExecution
-   *   See https://docs.aws.amazon.com/step-functions/latest/apireference/API_DescribeExecution.html
+   * @param {Object} params.processingTimeInfo - Info describing the processing time for the granule
    *
    * @returns {Promise<Object|undefined>}
    * @throws
