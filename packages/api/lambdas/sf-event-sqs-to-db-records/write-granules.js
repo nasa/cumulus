@@ -203,7 +203,7 @@ const writeGranuleAndFilesViaTransaction = async ({
   trx,
 }) => {
   const { files = [] } = granule;
-  // TODO: I think this is necessary to set properties like
+  // This is necessary to set properties like
   // `key`, which is required for the Postgres schema. And
   // `size` which is used to calculate the granule product
   // volume

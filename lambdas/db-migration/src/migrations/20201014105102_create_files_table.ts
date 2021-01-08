@@ -45,7 +45,6 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('source')
       .comment('Full source path s3/ftp/sftp/http URI to granule');
-    // TODO should bucket/key be required if they are the unique index?
     table
       .unique(['bucket', 'key']);
   });
