@@ -90,7 +90,6 @@ class AzureProviderClient implements ProviderClient {
       Body: downloadBlockBlobResponse.blobDownloadStream,
     });
 
-    // @ts-ignore
     return {
       s3uri: S3.buildS3Uri(destinationBucket, destinationKey),
       etag: uploadResponse.ETag,

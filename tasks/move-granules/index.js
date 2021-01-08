@@ -167,6 +167,7 @@ async function moveFileRequest(
       duplicateHandling,
     });
   } else {
+    // AZURE TO DO: for an azure dest bucket have this talk to Azure.
     await moveObject({
       sourceBucket: source.Bucket,
       sourceKey: source.Key,
