@@ -3,10 +3,12 @@ import Logger from '@cumulus/logger';
 
 const log = new Logger({ sender: 'cmr-client' });
 
+type ConceptType = 'granuleSearch' | 'granuleConceptSearch';
+
 async function getGranuleConceptMetadata(
   conceptLink: string,
   headers: Headers,
-  type: string
+  type: ConceptType
 ): Promise<unknown> {
   let response;
   try {
