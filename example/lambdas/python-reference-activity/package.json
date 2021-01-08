@@ -10,8 +10,8 @@
   },
   "scripts": {
     "test": "true",
-    "python-lint": "pylint *.py",
-    "lint": "pipenv run python-lint",
+    "python-lint": "pipenv run pylint *.py",
+    "lint": "npm run python-lint",
     "build": "export PIPENV_VENV_IN_PROJECT=1 && pip install pipenv && pipenv install --deploy --ignore-pipfile",
     "package": "true"
   },
