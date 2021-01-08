@@ -5,7 +5,6 @@ DIR=$1
 echo "Entering $DIR"
 cd "$DIR" || exit 1
 # ensure packages are up to date
-export PIPENV_IGNORE_VIRTUALENVS=1
 export PIPENV_VENV_IN_PROJECT=1
 pip install pipenv
 pipenv install --deploy --ignore-pipfile
