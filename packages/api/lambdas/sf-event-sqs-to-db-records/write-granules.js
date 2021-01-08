@@ -11,6 +11,7 @@ const {
   FilePgModel,
   GranulePgModel,
 } = require('@cumulus/db');
+const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
@@ -20,10 +21,14 @@ const {
   getGranuleStatus,
 } = require('@cumulus/message/Granules');
 const {
+  getMessagePdrName,
+} = require('@cumulus/message/PDRs');
+const {
   getMessageProvider,
 } = require('@cumulus/message/Providers');
 const {
   getMessageWorkflowStartTime,
+  getMetaStatus,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 
@@ -44,7 +49,7 @@ const Granule = require('../../models/granules');
  * and other contextual information
  *
  * @param {Object} params
- * @param {Object} params.cumulusMessage - Cumulus workflow message
+ * @param {string} params.collectionId - Collection ID for the workflow
  * @param {Object} params.granule - Granule object from workflow message
  * @param {Array<Object>} params.files - Granule file objects
  * @param {number} params.collectionCumulusId
@@ -64,9 +69,11 @@ const Granule = require('../../models/granules');
  * @returns {Promise<Object>} - a granule record
  */
 const generateGranuleRecord = async ({
-  cumulusMessage,
+  error,
   granule,
   files,
+  workflowStartTime,
+  workflowStatus,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
@@ -82,14 +89,13 @@ const generateGranuleRecord = async ({
     published = false,
   } = granule;
 
-  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
   return {
     granule_id: granuleId,
-    status: getGranuleStatus(cumulusMessage, granule),
+    status: getGranuleStatus(workflowStatus, granule),
     cmr_link: cmrLink,
-    error: parseException(cumulusMessage.exception),
+    error,
     published,
     created_at: new Date(workflowStartTime),
     updated_at: new Date(updatedAt),
@@ -182,10 +188,12 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
 };
 
 const writeGranuleAndFilesViaTransaction = async ({
-  cumulusMessage,
   granule,
   processingTimeInfo,
+  error,
   provider,
+  workflowStartTime,
+  workflowStatus,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
@@ -206,14 +214,16 @@ const writeGranuleAndFilesViaTransaction = async ({
   });
 
   const granuleRecord = await generateGranuleRecord({
-    cumulusMessage,
+    error,
     granule,
     files: updatedFiles,
-    processingTimeInfo,
+    workflowStartTime,
+    workflowStatus,
     collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
     pdrCumulusId,
+    processingTimeInfo,
   });
 
   const upsertQueryResult = await granulePgModel.upsert(trx, granuleRecord);
@@ -239,14 +249,16 @@ const writeGranuleAndFilesViaTransaction = async ({
  * Write a granule to DynamoDB and Postgres
  *
  * @param {Object} params
+ * @param {string} params.collectionId - Collection ID for the workflow
  * @param {Object} params.granule - An API granule object
- * @param {Object} params.cumulusMessage - A workflow message
- * @param {Object} params.provider - Provider object from the workflow message
+ * @param {Object} params.provider - Provider object
+ * @param {string} params.workflowStatus - Workflow status
  * @param {string} params.collectionCumulusId
  *   Cumulus ID for collection referenced in workflow message, if any
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with Postgres database
+ * @param {Object} [params.error] - Workflow error, if any
  * @param {string} [params.executionUrl]
  *   Step Function execution URL for the workflow, if any
  * @param {Object} [params.processingTimeInfo]
@@ -262,12 +274,16 @@ const writeGranuleAndFilesViaTransaction = async ({
  * @throws
  */
 const writeGranule = async ({
+  collectionId,
   granule,
-  cumulusMessage,
+  pdrName,
   provider,
+  workflowStartTime,
+  workflowStatus,
   collectionCumulusId,
   executionCumulusId,
   knex,
+  error,
   executionUrl,
   processingTimeInfo,
   providerCumulusId,
@@ -276,10 +292,12 @@ const writeGranule = async ({
 }) =>
   knex.transaction(async (trx) => {
     await writeGranuleAndFilesViaTransaction({
-      cumulusMessage,
       granule,
-      provider,
       processingTimeInfo,
+      error,
+      provider,
+      workflowStartTime,
+      workflowStatus,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
@@ -288,8 +306,13 @@ const writeGranule = async ({
     });
     return granuleModel.storeGranuleFromCumulusMessage({
       granule,
-      cumulusMessage,
       executionUrl,
+      collectionId,
+      provider,
+      workflowStartTime,
+      error,
+      pdrName,
+      workflowStatus,
       processingTimeInfo,
     });
   });
@@ -336,17 +359,24 @@ const writeGranules = async ({
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
   const provider = getMessageProvider(cumulusMessage);
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+  const error = parseException(cumulusMessage.exception);
+  const workflowStatus = getMetaStatus(cumulusMessage);
+  const collectionId = getCollectionIdFromMessage(cumulusMessage);
+  const pdrName = getMessagePdrName(cumulusMessage);
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
     (granule) => writeGranule({
+      collectionId,
       granule,
-      // cumulusMessage,
       processingTimeInfo,
+      error,
       executionUrl,
+      pdrName,
       provider,
       workflowStartTime,
+      workflowStatus,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,

@@ -135,7 +135,6 @@ test.after.always(async (t) => {
 
 test('generateGranuleRecord() generates the correct granule record', async (t) => {
   const {
-    cumulusMessage,
     granuleId,
     granule,
     workflowStartTime,
@@ -152,32 +151,24 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
   granule.sync_granule_duration = 3000;
   granule.post_to_cmr_duration = 7810;
 
-  t.deepEqual(
-    omit(
-      await generateGranuleRecord({
-        cumulusMessage,
-        granule,
-        files,
-        collectionCumulusId: 1,
-        providerCumulusId: 2,
-        executionCumulusId: 3,
-        pdrCumulusId: 4,
-        timestamp,
-        updatedAt,
-      }),
-      'beginning_date_time',
-      'ending_date_time',
-      'production_date_time',
-      'last_update_date_time',
-      'processing_start_date_time',
-      'processing_end_date_time'
-    ),
+  t.like(
+    await generateGranuleRecord({
+      granule,
+      files,
+      workflowStartTime,
+      workflowStatus: 'running',
+      collectionCumulusId: 1,
+      providerCumulusId: 2,
+      executionCumulusId: 3,
+      pdrCumulusId: 4,
+      timestamp,
+      updatedAt,
+    }),
     {
       granule_id: granuleId,
       status: 'running',
       cmr_link: granule.cmrLink,
       published: granule.published,
-      error: {},
       created_at: new Date(workflowStartTime),
       timestamp: new Date(timestamp),
       updated_at: new Date(updatedAt),
@@ -237,7 +228,6 @@ test('generateGranuleRecord() includes temporal info, if any is returned', async
 
 test('generateGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {
   const {
-    cumulusMessage,
     granule,
   } = t.context;
 
@@ -245,11 +235,10 @@ test('generateGranuleRecord() includes correct error if cumulus message has an e
     Error: new Error('error'),
     Cause: 'an error occurred',
   };
-  cumulusMessage.exception = exception;
 
   const record = await generateGranuleRecord({
-    cumulusMessage,
     granule,
+    error: exception,
   });
   t.deepEqual(record.error, exception);
 });

@@ -352,6 +352,11 @@ class Granule extends Manager {
    * @param {AWS.S3} params.s3 - an AWS.S3 instance
    * @param {Object} params.granule - A granule object
    * @param {string} params.executionUrl - A Step Function execution URL
+   * @param {Object} params.provider - Provider object
+   * @param {string} params.workflowStatus - Workflow status
+   * @param {string} params.collectionId - Collection ID for the workflow
+   * @param {string} [params.pdrName] - PDR name for the workflow, if any
+   * @param {Object} [params.error] - Workflow error, if any
    * @param {Object} [params.processingTimeInfo={}]
    *   Info describing the processing time for the granule
    * @returns {Promise<Object>} A granule record
@@ -395,7 +400,7 @@ class Granule extends Manager {
       granuleId,
       pdrName,
       collectionId,
-      status: workflowStatus || getGranuleStatus(granule),
+      status: getGranuleStatus(workflowStatus, granule),
       provider: provider.id,
       execution: executionUrl,
       cmrLink: cmrLink,
@@ -681,7 +686,14 @@ class Granule extends Manager {
    * @param {Object} params.granule - Granule object from a Cumulus message
    * @param {Object} params.cumulusMessage - A workflow message
    * @param {string} params.executionUrl - Step Function execution URL for the workflow
-   * @param {Object} params.processingTimeInfo - Info describing the processing time for the granule
+   * @param {Object} params.provider - Provider object
+   * @param {number} params.workflowStartTime - Workflow start timestamp
+   * @param {string} params.workflowStatus - Workflow status
+   * @param {string} params.collectionId - Collection ID for the workflow
+   * @param {string} [params.pdrName] - PDR name for the workflow, if any
+   * @param {Object} [params.error] - Workflow error, if any
+   * @param {Object} [params.processingTimeInfo]
+   *   Info describing the processing time for the granule
    *
    * @returns {Promise<Object|undefined>}
    * @throws
@@ -701,13 +713,13 @@ class Granule extends Manager {
       s3: awsClients.s3(),
       granule,
       executionUrl,
-      processingTimeInfo,
+      collectionId,
       provider,
       workflowStartTime,
-      collectionId,
       error,
       pdrName,
       workflowStatus,
+      processingTimeInfo,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }
@@ -752,7 +764,6 @@ class Granule extends Manager {
       (granule) =>
         this.storeGranuleFromCumulusMessage({
           granule,
-          cumulusMessage,
           processingTimeInfo,
           executionUrl,
           provider,
