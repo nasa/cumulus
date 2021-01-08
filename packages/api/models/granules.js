@@ -33,6 +33,7 @@ const {
 const {
   getMessageWorkflowStartTime,
   getWorkflowDuration,
+  getMetaStatus,
 } = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -350,7 +351,6 @@ class Granule extends Manager {
    * @param {Object} params
    * @param {AWS.S3} params.s3 - an AWS.S3 instance
    * @param {Object} params.granule - A granule object
-   * @param {Object} params.message - A workflow execution message
    * @param {string} params.executionUrl - A Step Function execution URL
    * @param {Object} [params.processingTimeInfo={}]
    *   Info describing the processing time for the granule
@@ -359,14 +359,19 @@ class Granule extends Manager {
   async generateGranuleRecord({
     s3,
     granule,
-    message,
     executionUrl,
+    collectionId,
+    provider,
+    workflowStartTime,
+    error,
+    pdrName,
+    workflowStatus,
     processingTimeInfo = {},
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
-    const collectionId = getCollectionIdFromMessage(message);
+
     if (!collectionId) {
-      throw new CumulusModelError('meta.collection required to generate a granule record');
+      throw new CumulusModelError('collection required to generate a granule record');
     }
 
     const {
@@ -376,7 +381,6 @@ class Granule extends Manager {
       published = false,
     } = granule;
 
-    const provider = getMessageProvider(message);
     const granuleFiles = await this.fileUtils.buildDatabaseFiles({
       s3,
       providerURL: buildURL(provider),
@@ -385,19 +389,18 @@ class Granule extends Manager {
 
     const now = Date.now();
     const timestamp = now;
-    const workflowStartTime = getMessageWorkflowStartTime(message);
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
 
     const record = {
       granuleId,
-      pdrName: getMessagePdrName(message),
+      pdrName,
       collectionId,
-      status: getGranuleStatus(message, granule),
+      status: workflowStatus || getGranuleStatus(granule),
       provider: provider.id,
       execution: executionUrl,
       cmrLink: cmrLink,
       files: granuleFiles,
-      error: parseException(message.exception),
+      error,
       createdAt: workflowStartTime,
       published,
       timestamp,
@@ -685,16 +688,26 @@ class Granule extends Manager {
    */
   async storeGranuleFromCumulusMessage({
     granule,
-    cumulusMessage,
     executionUrl,
     processingTimeInfo,
+    provider,
+    workflowStartTime,
+    collectionId,
+    error,
+    pdrName,
+    workflowStatus,
   }) {
     const granuleRecord = await this.generateGranuleRecord({
       s3: awsClients.s3(),
       granule,
-      message: cumulusMessage,
       executionUrl,
       processingTimeInfo,
+      provider,
+      workflowStartTime,
+      collectionId,
+      error,
+      pdrName,
+      workflowStatus,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }
@@ -728,6 +741,12 @@ class Granule extends Manager {
     const executionUrl = getExecutionUrlFromArn(executionArn);
     const executionDescription = await this.describeGranuleExecution(executionArn);
     const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
+    const provider = getMessageProvider(cumulusMessage);
+    const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+    const collectionId = getCollectionIdFromMessage(cumulusMessage);
+    const pdrName = getMessagePdrName(cumulusMessage);
+    const error = parseException(cumulusMessage.exception);
+    const workflowStatus = getMetaStatus(cumulusMessage);
 
     return Promise.all(granules.map(
       (granule) =>
@@ -736,6 +755,12 @@ class Granule extends Manager {
           cumulusMessage,
           processingTimeInfo,
           executionUrl,
+          provider,
+          workflowStartTime,
+          collectionId,
+          error,
+          pdrName,
+          workflowStatus,
         }).catch(log.error)
     ));
   }

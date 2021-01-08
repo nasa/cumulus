@@ -335,16 +335,18 @@ const writeGranules = async ({
   const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
   const provider = getMessageProvider(cumulusMessage);
+  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
     (granule) => writeGranule({
       granule,
-      cumulusMessage,
+      // cumulusMessage,
       processingTimeInfo,
       executionUrl,
       provider,
+      workflowStartTime,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
