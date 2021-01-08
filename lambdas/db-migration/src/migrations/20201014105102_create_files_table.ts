@@ -28,7 +28,6 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('checksum_value')
       .comment('File checksum');
-    // TODO: do we need both filename fields?
     table
       .text('filename');
     table
