@@ -91,10 +91,10 @@ test.beforeEach(async (t) => {
     granuleId: t.context.granuleId,
   });
 
-  t.context.worklowStartTime = Date.now();
+  t.context.workflowStartTime = Date.now();
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: t.context.worklowStartTime,
+      workflow_start_time: t.context.workflowStartTime,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
     },
@@ -138,10 +138,10 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
     cumulusMessage,
     granuleId,
     granule,
-    worklowStartTime,
+    workflowStartTime,
   } = t.context;
 
-  const timestamp = worklowStartTime + 5000;
+  const timestamp = workflowStartTime + 5000;
   const updatedAt = Date.now();
   // Set granule files
   const files = [
@@ -178,7 +178,7 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       cmr_link: granule.cmrLink,
       published: granule.published,
       error: {},
-      created_at: new Date(worklowStartTime),
+      created_at: new Date(workflowStartTime),
       timestamp: new Date(timestamp),
       updated_at: new Date(updatedAt),
       product_volume: 10,
