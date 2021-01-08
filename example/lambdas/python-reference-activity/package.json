@@ -11,8 +11,8 @@
   "scripts": {
     "test": "true",
     "python-lint": "pylint *.py",
-    "lint": "npm run python-lint",
-    "build": "true",
+    "lint": "pipenv run python-lint",
+    "build": "pip install pipenv && pipenv install --deploy --ignore-pipfile",
     "package": "true"
   },
   "publishConfig": {

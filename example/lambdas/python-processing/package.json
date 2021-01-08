@@ -11,7 +11,7 @@
   "scripts": {
     "test": "python -m unittest",
     "python-lint": "pylint *.py",
-    "lint": "npm run python-lint",
+    "lint": "pipenv run python-lint",
     "build": "pip install pipenv && pipenv install --deploy --ignore-pipfile",
     "package": "npm run build",
     "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"

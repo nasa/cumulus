@@ -12,10 +12,10 @@
   "scripts": {
     "test": "true",
     "python-lint": "pylint *.py",
-    "lint": "npm run python-lint",
+    "lint": "pipenv run python-lint",
     "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
-    "build": "npm run clean && ../../scripts/package-pipenv-deps.sh $(pwd) && cp *.py ./dist/ && cd ./dist && find . -type f -print0 | xargs -0 node ../../../../bin/zip.js lambda.zip && cd ..",
-    "package": "npm run build",
+    "build": "pip install pipenv && pipenv install --deploy --ignore-pipfile",
+    "package": "npm run clean && ../../scripts/package-pipenv-deps.sh $(pwd) && cp *.py ./dist/ && cd ./dist && find . -type f -print0 | xargs -0 node ../../../../bin/zip.js lambda.zip && cd ..",
     "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
   },
   "ava": {
