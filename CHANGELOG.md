@@ -10,8 +10,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2020**
   - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+- **CUMULUS-2258**
+  - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
+  - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
 
 ### Added
+- **HYRAX-320**
+  - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title id and granule ur to allow for values with special characters in them. For example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such values will be encoded correctly and parsable by HyraxInTheCloud
 
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
@@ -19,6 +24,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add documentation for Granule Not Found Reports
 - **CUMULUS-2219**
   - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
+- **CUMULUS-2280**
+  - In local api, retry to create tables if they fail to ensure localstack has had time to start fully.
 - **CUMULUS-2290**
   - Add `queryFields` to granule schema, and this allows workflow tasks to add queryable data to granule record. For reference on how to add data to `queryFields` field, see [`example/cumulus-tf/kinesis_trigger_test_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/kinesis_trigger_test_workflow.tf).
 - **CUMULUS-2318**
@@ -38,9 +45,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2020**
   - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
 
+### Removed
+
+- **CUMULUS-2258**
+  - Removed `tea_stack_name` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`
+  - Removed `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resources from `tf-modules/distribution/main.tf`
+
 ## [v4.0.0] 2020-11-20
 
 ### Migration notes
+
 - Update the name of your `cumulus_message_adapter_lambda_layer_arn` variable for the `cumulus` module to `cumulus_message_adapter_lambda_layer_version_arn`. The value of the variable should remain the same (a layer version ARN of a Lambda layer for the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter/).
 - **CUMULUS-2138** - Update all workflows using the `MoveGranules` step to add `UpdateGranulesCmrMetadataFileLinksStep`that runs after it. See the example [`IngestAndPublishWorkflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json) for reference.
 - **CUMULUS-2251**
@@ -74,14 +88,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Moves Egress Api Gateway Log Group Filter from `tf-modules/distribution/main.tf` to `example/cumulus-tf/main.tf`
 
 ### Fixed
+
 - **CUMULUS-2251**
   - This fixes a deployment error caused by depending on the `thin_egress_app` module output for a resource count.
 
 ### Removed
+
 - **CUMULUS-2251**
   -  Removes `tea_api_egress_log_group` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`.
 
 ### BREAKING CHANGES
+
 - **CUMULUS-2138** - CMR metadata update behavior has been removed from the `move-granules` task into a
 new `update-granules-cmr-metadata-file-links` task.
 - **CUMULUS-2216**
@@ -105,8 +122,10 @@ new `update-granules-cmr-metadata-file-links` task.
     `@cumulus/aws-client` to remediate vulnerabilities found in SNYK scan.
 
 ### Fixed
+
 - **CUMULUS-2233**
   - Fixes /s3credentials bug where the expiration time on the cookie was set to a time that is always expired, so authentication was never being recognized as complete by the API. Consequently, the user would end up in a redirect loop and requests to /s3credentials would never complete successfully. The bug was caused by the fact that the code setting the expiration time for the cookie was expecting a time value in milliseconds, but was receiving the expirationTime from the EarthdataLoginClient in seconds. This bug has been fixed by converting seconds into milliseconds. Unit tests were added to test that the expiration time has been converted to milliseconds and checking that the cookie's expiration time is greater than the current time.
+
 ## [v3.0.0] 2020-10-7
 
 ### MIGRATION STEPS

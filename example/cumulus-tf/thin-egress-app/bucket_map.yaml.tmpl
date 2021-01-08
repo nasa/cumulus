@@ -14,6 +14,6 @@ MAP:
 %{ if length(public_buckets) > 0 ~}
 PUBLIC_BUCKETS:
 %{ for bucket in public_buckets ~}
-  - ${bucket}
+  ${bucket}: "${bucket} is a public bucket"
 %{ endfor ~}
 %{ endif ~}
