@@ -46,6 +46,10 @@ export {
   PostgresRuleRecord,
 } from './types/rule';
 export {
+  PostgresGranule,
+  PostgresGranuleRecord,
+} from './types/granule';
+export {
   PostgresPdr,
   PostgresPdrRecord,
 } from './types/pdr';
