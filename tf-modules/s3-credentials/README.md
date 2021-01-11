@@ -24,11 +24,18 @@ module "s3_credentials" {
 
   public_buckets    = ["public-1", "public-2"]
 
+  sts_credentials_lambda_function_arn = "arn:aws:lambda:us-east-1:1234567890:function:sts-lambda"
+
+  tea_api_gateway_stage = "stage-name"
+  tea_external_api_endpoint = "https//example-tea-api.com"
+  tea_rest_api_id = "XXXXXX"
+  tea_rest_api_root_resource_id = "XXXXX"
+
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = "abc123"
   urs_client_password = "password"
 
   vpc_id     = "vpc-123"
-  subnet_ids = ["subnet-123", "subnet-456"]
+  lambda_subnet_ids = ["subnet-123", "subnet-456"]
 }
 ```
