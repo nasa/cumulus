@@ -5,13 +5,8 @@ import { ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
 import { PostgresExecution } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
-
-// TODO move to common location
-const {
-  // getParentExecutionCumulusId,
-  getAsyncOperationCumulusId,
-  getCollectionCumulusId,
-} = require('../../../api/lambdas/sf-event-sqs-to-db-records/utils');
+import { CollectionPgModel } from '../models/collection';
+import { AsyncOperationPgModel } from '../models/async_operation';
 
 /**
  * Translate execution record from Dynamo to RDS.
@@ -26,14 +21,17 @@ export const translateApiExecutionToPostgresExecution = async (
   dynamoRecord: ExecutionRecord,
   knex: Knex
 ): Promise<PostgresExecution> => {
-  const Execution = new ExecutionPgModel();
+  const execution = new ExecutionPgModel();
+  const collection = new CollectionPgModel();
+  const asyncOperation = new AsyncOperationPgModel();
   const logger = new Logger({ sender: '@cumulus/db/translate/executions' });
 
   // Map old record to new schema.
   const translatedRecord: PostgresExecution = {
     async_operation_cumulus_id: (
-      dynamoRecord.asyncOperationId ? await getAsyncOperationCumulusId(
-        dynamoRecord.asyncOperationId, knex
+      dynamoRecord.asyncOperationId ? await asyncOperation.getRecordCumulusId(
+        knex,
+        { id: dynamoRecord.asyncOperationId }
       ) : undefined
     ),
     status: dynamoRecord.status,
@@ -55,9 +53,9 @@ export const translateApiExecutionToPostgresExecution = async (
   if (dynamoRecord.collectionId) {
     // TODO is there a helper for this?
     const collectionNameVersionArray = dynamoRecord.collectionId.split('___');
-    translatedRecord.collection_cumulus_id = await getCollectionCumulusId(
-      { name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] },
-      knex
+    translatedRecord.collection_cumulus_id = await collection.getRecordCumulusId(
+      knex,
+      { name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] }
     );
   }
 
@@ -66,7 +64,7 @@ export const translateApiExecutionToPostgresExecution = async (
     let parentId;
 
     try {
-      parentId = await Execution.getRecordCumulusId(
+      parentId = await execution.getRecordCumulusId(
         knex,
         { arn: dynamoRecord.parentArn }
       );
