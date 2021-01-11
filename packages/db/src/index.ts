@@ -56,6 +56,7 @@ export {
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
 
+export { AsyncOperationPgModel } from './models/async_operation';
 export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';
