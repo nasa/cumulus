@@ -1,7 +1,4 @@
 locals {
-  protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
-  public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
-
   tea_stack_name = "${var.prefix}-thin-egress-app"
   tea_stage_name = "DEV"
 }
