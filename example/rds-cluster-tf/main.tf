@@ -19,4 +19,5 @@ module "rds_cluster" {
   deletion_protection  = true
   cluster_identifier   = var.cluster_identifier
   tags                 = var.tags
+  snapshot_identifier  = var.snapshot_identifier
 }

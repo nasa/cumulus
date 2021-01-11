@@ -11,12 +11,6 @@ variable "apply_immediately" {
   default     = true
 }
 
-variable "backup_window" {
-  description = "Preferred database backup window (UTC)"
-  type        = string
-  default     = "07:00-09:00"
-}
-
 variable "backup_retention_period" {
   description = "Number of backup periods to retain"
   type        = number
@@ -61,6 +55,11 @@ variable "security_group_name" {
   description = "Name for RDS access security group"
   type        = string
   default     = "cumulus_rds_cluster_access_ingress"
+}
+
+variable "snapshot_identifier" {
+  description = "Snapshot identifer for restore"
+  default     = null
 }
 
 variable "subnets" {
