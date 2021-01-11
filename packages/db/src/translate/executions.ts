@@ -36,8 +36,9 @@ export const translateApiExecutionToPostgresExecution = async (
     duration: dynamoRecord.duration,
     original_payload: JSON.stringify(dynamoRecord.originalPayload),
     final_payload: JSON.stringify(dynamoRecord.finalPayload),
-    workflow_name: dynamoRecord.name,
+    workflow_name: dynamoRecord.type,
     url: dynamoRecord.execution,
+    cumulus_version: dynamoRecord.cumulusVersion,
   };
 
   if (dynamoRecord.timestamp) {

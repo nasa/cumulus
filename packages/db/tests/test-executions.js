@@ -21,6 +21,7 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     originalPayload: { testInput: 'originalPayloadValue' },
     finalPayload: { testOutput: 'finalPayloadValue' },
     duration: 2,
+    cumulusVersion: '1.0.0',
   };
 
   // Note that we are not testing the foreign keys here. Properties like parent_cumulus_id,
@@ -36,11 +37,12 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     duration: apiExecution.duration,
     original_payload: JSON.stringify(apiExecution.originalPayload),
     final_payload: JSON.stringify(apiExecution.finalPayload),
-    workflow_name: apiExecution.name,
+    workflow_name: apiExecution.type,
     timestamp: new Date(apiExecution.timestamp),
     created_at: new Date(apiExecution.createdAt),
     updated_at: new Date(apiExecution.updatedAt),
     url: apiExecution.execution,
+    cumulus_version: apiExecution.cumulusVersion,
   };
 
   const result = removeNilProperties(

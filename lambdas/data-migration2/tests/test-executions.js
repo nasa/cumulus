@@ -40,7 +40,7 @@ let asyncOperationsModel;
 let rulesModel;
 
 const executionOmitList = [
-  'createdAt', 'updatedAt', 'finalPayload', 'originalPayload', 'parentArn', 'type', 'execution', 'name', 'collectionId', 'asyncOperationId',
+  'createdAt', 'updatedAt', 'finalPayload', 'originalPayload', 'parentArn', 'type', 'execution', 'name', 'collectionId', 'asyncOperationId', 'cumulusVersion',
 ];
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
@@ -54,10 +54,10 @@ const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {
         ...dynamoExecution,
         async_operation_cumulus_id: null,
         collection_cumulus_id: null,
-        cumulus_version: null,
         parent_cumulus_id: null,
+        cumulus_version: dynamoExecution.cumulusVersion,
         url: dynamoExecution.execution,
-        workflow_name: dynamoExecution.name,
+        workflow_name: dynamoExecution.type,
         original_payload: dynamoExecution.originalPayload,
         final_payload: dynamoExecution.finalPayload,
         created_at: new Date(dynamoExecution.createdAt),
