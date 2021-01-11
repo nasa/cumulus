@@ -1,10 +1,14 @@
 import Knex from 'knex';
 
+import { RecordDoesNotExist } from '@cumulus/errors';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
+import Logger from '@cumulus/logger';
 import { PostgresExecution } from '../types/execution';
+import { ExecutionPgModel } from '../models/execution';
+
 // TODO move to common location
 const {
-  getParentExecutionCumulusId,
+  // getParentExecutionCumulusId,
   getAsyncOperationCumulusId,
   getCollectionCumulusId,
 } = require('../../../api/lambdas/sf-event-sqs-to-db-records/utils');
@@ -22,6 +26,9 @@ export const translateApiExecutionToPostgresExecution = async (
   dynamoRecord: ExecutionRecord,
   knex: Knex
 ): Promise<PostgresExecution> => {
+  const Execution = new ExecutionPgModel();
+  const logger = new Logger({ sender: '@cumulus/db/translate/executions' });
+
   // Map old record to new schema.
   const translatedRecord: PostgresExecution = {
     async_operation_cumulus_id: (
@@ -56,10 +63,21 @@ export const translateApiExecutionToPostgresExecution = async (
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
   if (dynamoRecord.parentArn !== undefined) {
-    const parentId = await getParentExecutionCumulusId(dynamoRecord.parentArn, knex);
+    let parentId;
 
-    if (parentId !== undefined) {
-      translatedRecord.parent_cumulus_id = parentId;
+    try {
+      parentId = await Execution.getRecordCumulusId(
+        knex,
+        { arn: dynamoRecord.parentArn }
+      );
+
+      if (parentId !== undefined) {
+        translatedRecord.parent_cumulus_id = parentId;
+      }
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        logger.info(error);
+      }
     }
   }
   if (dynamoRecord.createdAt !== undefined) {
