@@ -15,9 +15,6 @@ export const up = async (knex: Knex): Promise<void> =>
       .timestamps(false, true);
     table
       .integer('file_size')
-      .comment('Deprecated - size of file');
-    table
-      .integer('size')
       .comment('Size of file (bytes)');
     table
       .text('bucket')
@@ -29,15 +26,11 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('checksum_value')
       .comment('File checksum');
     table
-      .text('filename');
-    table
       .text('file_name')
       .comment('Source file name');
     table
       .text('key')
       .comment('AWS S3 key file is archived at');
-    table
-      .text('name');
     table
       .text('path')
       .comment('Source file path');
