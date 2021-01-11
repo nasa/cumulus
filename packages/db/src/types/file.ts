@@ -3,12 +3,11 @@ export interface PostgresFile {
   bucket?: string
   checksum_type?: string
   checksum_value?: string
-  filename?: string
   file_name?: string
   key?: string
   name?: string
   path?: string
-  size?: number
+  file_size?: number
   source?: string
 }
 
