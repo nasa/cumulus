@@ -51,7 +51,6 @@ export const translateApiExecutionToPostgresExecution = async (
   }
 
   if (dynamoRecord.collectionId) {
-    // TODO is there a helper for this?
     const collectionNameVersionArray = dynamoRecord.collectionId.split('___');
     translatedRecord.collection_cumulus_id = await collection.getRecordCumulusId(
       knex,
