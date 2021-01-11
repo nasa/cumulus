@@ -74,6 +74,12 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .timestamp('timestamp');
     table
+      .text('data_type')
+      .comment('Refers to a collection name');
+    table
+      .text('version')
+      .comment('Refers to a collection version');
+    table
       .unique(['granule_id', 'collection_cumulus_id']);
   });
 
