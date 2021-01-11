@@ -213,6 +213,8 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
   delete newExecution.finalPayload;
   delete newExecution.timestamp;
   delete newExecution.parentArn;
+  delete newExecution.type;
+  delete newExecution.cumulusVersion;
 
   await migrateExecutionRecord(newExecution, t.context.knex);
 
@@ -229,6 +231,8 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
     original_payload: null,
     tasks: null,
     timestamp: null,
+    workflow_name: null,
+    cumulus_version: null,
   });
 });
 
@@ -242,7 +246,7 @@ test.serial('migrateExecutionRecord throws RecordAlreadyMigrated error for alrea
   );
 });
 
-test.serial('migrateExecutionRecord skips already migrated record', async (t) => {
+test.serial('migrateExecutions skips already migrated record', async (t) => {
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
 
   await migrateExecutionRecord(newExecution, t.context.knex);

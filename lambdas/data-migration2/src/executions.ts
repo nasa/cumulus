@@ -56,9 +56,9 @@ export const migrateExecutionRecord = async (
     updatedRecord.parent_cumulus_id = await migrateExecutionRecord(parentExecution, knex);
   }
 
-  const cumulusId = await knex('executions').insert(updatedRecord).returning('cumulus_id');
+  const [cumulusId] = await knex('executions').insert(updatedRecord).returning('cumulus_id');
 
-  return cumulusId[0];
+  return cumulusId;
 };
 
 export const migrateExecutions = async (

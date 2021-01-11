@@ -21,15 +21,15 @@ export const translateApiExecutionToPostgresExecution = async (
   dynamoRecord: ExecutionRecord,
   knex: Knex
 ): Promise<PostgresExecution> => {
-  const execution = new ExecutionPgModel();
-  const collection = new CollectionPgModel();
-  const asyncOperation = new AsyncOperationPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const asyncOperationPgModel = new AsyncOperationPgModel();
   const logger = new Logger({ sender: '@cumulus/db/translate/executions' });
 
   // Map old record to new schema.
   const translatedRecord: PostgresExecution = {
     async_operation_cumulus_id: (
-      dynamoRecord.asyncOperationId ? await asyncOperation.getRecordCumulusId(
+      dynamoRecord.asyncOperationId ? await asyncOperationPgModel.getRecordCumulusId(
         knex,
         { id: dynamoRecord.asyncOperationId }
       ) : undefined
@@ -44,15 +44,14 @@ export const translateApiExecutionToPostgresExecution = async (
     workflow_name: dynamoRecord.type,
     url: dynamoRecord.execution,
     cumulus_version: dynamoRecord.cumulusVersion,
+    timestamp: dynamoRecord.timestamp ? new Date(dynamoRecord.timestamp) : undefined,
+    created_at: dynamoRecord.createdAt ? new Date(dynamoRecord.createdAt) : undefined,
+    updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  if (dynamoRecord.timestamp) {
-    translatedRecord.timestamp = new Date(Number(dynamoRecord.timestamp));
-  }
-
-  if (dynamoRecord.collectionId) {
+  if (dynamoRecord.collectionId !== undefined) {
     const collectionNameVersionArray = dynamoRecord.collectionId.split('___');
-    translatedRecord.collection_cumulus_id = await collection.getRecordCumulusId(
+    translatedRecord.collection_cumulus_id = await collectionPgModel.getRecordCumulusId(
       knex,
       { name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] }
     );
@@ -63,7 +62,7 @@ export const translateApiExecutionToPostgresExecution = async (
     let parentId;
 
     try {
-      parentId = await execution.getRecordCumulusId(
+      parentId = await executionPgModel.getRecordCumulusId(
         knex,
         { arn: dynamoRecord.parentArn }
       );
@@ -76,12 +75,6 @@ export const translateApiExecutionToPostgresExecution = async (
         logger.info(error);
       }
     }
-  }
-  if (dynamoRecord.createdAt !== undefined) {
-    translatedRecord.created_at = new Date(dynamoRecord.createdAt);
-  }
-  if (dynamoRecord.updatedAt !== undefined) {
-    translatedRecord.updated_at = new Date(dynamoRecord.updatedAt);
   }
 
   return translatedRecord;

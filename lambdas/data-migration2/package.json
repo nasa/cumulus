@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/data-migration2",
   "version": "3.0.0",
-  "description": "A Lambda function used for doing data migrations of executions",
+  "description": "A Lambda function used for doing data migrations intended to be executed after data-migration1.",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=12.18.0"
