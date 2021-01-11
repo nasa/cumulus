@@ -9,8 +9,8 @@ export const translateApiFiletoPostgresFile = (
   checksum_type: file.checksumType,
   checksum_value: file.checksum,
   file_name: file.fileName,
+  file_size: file.size,
   key: file.key,
   path: file.path,
-  file_size: file.size,
   source: file.source,
 });
