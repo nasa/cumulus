@@ -1,5 +1,10 @@
 # Required
 
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}
+
 variable "lambda_processing_role_arn" {
   type        = string
   description = "Cumulus lambda processing role"
@@ -22,6 +27,12 @@ variable "tea_internal_api_endpoint" {
 
 # Optional
 
+variable "lambda_subnet_ids" {
+  type        = list(string)
+  description = "VPC subnets used by Lambda functions"
+  default     = null
+}
+
 variable "permissions_boundary_arn" {
   type        = string
   default     = null
@@ -40,12 +51,6 @@ variable "public_buckets" {
   description = "A list of public buckets"
 }
 
-variable "lambda_subnet_ids" {
-  type        = list(string)
-  description = "VPC subnets used by Lambda functions"
-  default     = null
-}
-
 variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)
@@ -56,9 +61,4 @@ variable "vpc_id" {
   type        = string
   description = "VPC used by Lambda functions"
   default     = null
-}
-
-variable "deploy_to_ngap" {
-  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
-  type        = bool
 }

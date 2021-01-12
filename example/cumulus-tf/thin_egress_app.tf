@@ -1,8 +1,3 @@
-locals {
-  tea_stack_name = "${var.prefix}-thin-egress-app"
-  tea_stage_name = "DEV"
-}
-
 resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
   name_prefix = "${var.prefix}-tea-urs-creds-"
   description = "URS credentials for the ${var.prefix} Thin Egress App"
