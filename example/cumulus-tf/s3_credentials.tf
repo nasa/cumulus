@@ -11,13 +11,14 @@ module "s3_credentials" {
 
   public_buckets = local.public_bucket_names
 
+  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+
   # Thin Egress App settings
   # must match stage_name variable for thin-egress-app module
   tea_api_gateway_stage = local.tea_stage_name
 
   tea_rest_api_id               = module.thin_egress_app.rest_api.id
   tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
-  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
   tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
 
   urs_url             = var.urs_url

@@ -35,7 +35,7 @@ data "aws_iam_policy_document" "assume_lambda_role" {
 
 resource "aws_iam_role" "s3_credentials_lambda" {
   name                 = "${var.prefix}-S3CredentialsLambda"
-  assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role[0].json
+  assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
 }
@@ -51,7 +51,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
       "dynamodb:GetItem",
       "dynamodb:PutItem"
     ]
-    resources = [aws_dynamodb_table.access_tokens[0].arn]
+    resources = [aws_dynamodb_table.access_tokens.arn]
   }
 
   statement {
@@ -74,8 +74,8 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
 
 resource "aws_iam_role_policy" "s3_credentials_lambda" {
   name   = "${var.prefix}_s3_credentials_lambda_policy"
-  policy = data.aws_iam_policy_document.s3_credentials_lambda[0].json
-  role   = aws_iam_role.s3_credentials_lambda[0].id
+  policy = data.aws_iam_policy_document.s3_credentials_lambda.json
+  role   = aws_iam_role.s3_credentials_lambda.id
 }
 
 resource "aws_security_group" "s3_credentials_lambda" {
@@ -115,7 +115,7 @@ resource "aws_lambda_function" "s3_credentials" {
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
-      AccessTokensTable              = aws_dynamodb_table.access_tokens[0].id
+      AccessTokensTable              = aws_dynamodb_table.access_tokens.id
       STSCredentialsLambda           = var.sts_credentials_lambda_function_arn
     }
   }

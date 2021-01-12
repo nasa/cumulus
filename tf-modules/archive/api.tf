@@ -20,7 +20,6 @@ locals {
       cmr_username                     = var.cmr_username
       CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
-      distributionApiId                = var.distribution_api_id
       EARTHDATA_BASE_URL               = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password

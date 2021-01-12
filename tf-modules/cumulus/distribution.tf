@@ -13,10 +13,6 @@ module "distribution" {
   public_buckets    = local.public_bucket_names
   system_bucket     = var.system_bucket
 
-  urs_client_id       = var.urs_client_id
-  urs_client_password = var.urs_client_password
-  urs_url             = var.urs_url
-
   lambda_subnet_ids = var.lambda_subnet_ids
   vpc_id            = var.vpc_id
 

@@ -158,7 +158,8 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
 
   # Thin Egress App settings
-  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
+  tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
+  tea_external_api_endpoint = module.thin_egress_app.api_endpoint
 
   log_destination_arn = var.log_destination_arn
 

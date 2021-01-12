@@ -100,6 +100,11 @@ variable "system_bucket" {
   type        = string
 }
 
+variable "tea_external_api_endpoint" {
+  description = "Thin Egress App external endpoint URL"
+  type        = string
+}
+
 variable "tea_internal_api_endpoint" {
   description = "Thin Egress App internal endpoint URL"
   type        = string
