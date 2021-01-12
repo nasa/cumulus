@@ -16,10 +16,13 @@ const {
   fakeAsyncOperationFactory,
 } = require('@cumulus/api/lib/testUtils');
 const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
+const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrateAsyncOperationRecord } = require('@cumulus/data-migration1/dist/lambda/async-operations');
@@ -44,7 +47,6 @@ const executionOmitList = [
 ];
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 
 const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {}) => {
   t.deepEqual(
@@ -93,24 +95,9 @@ test.before(async (t) => {
   await collectionsModel.createTable();
   await rulesModel.createTable();
 
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
 test.afterEach.always(async (t) => {
@@ -125,9 +112,11 @@ test.after.always(async (t) => {
   await collectionsModel.deleteTable();
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('migrateExecutionRecord correctly migrates execution record', async (t) => {
