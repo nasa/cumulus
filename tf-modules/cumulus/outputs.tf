@@ -12,10 +12,6 @@ output "archive_api_redirect_uri" {
   value = module.archive.api_redirect_uri
 }
 
-output "s3_credentials_redirect_uri" {
-  value = module.distribution.s3_credentials_redirect_uri
-}
-
 # Reporting queue and topics
 
 output "stepfunction_event_reporter_queue_url" {
