@@ -15,15 +15,21 @@ import { AsyncOperationPgModel } from '../models/async_operation';
  *   Source record from DynamoDB
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} knex
  *   Knex client
+ * @param {Object} collectionPgModel
+ *   Instance of the collection database model
+ * @param {Object} asyncOperationPgModel
+ *   Instance of the async operation database model
+ * @param {Object} executionPgModel
+ *   Instance of the execution database model
  * @returns {PostgresExecutionRecord} - converted Execution
  */
 export const translateApiExecutionToPostgresExecution = async (
   dynamoRecord: ExecutionRecord,
-  knex: Knex
+  knex: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  asyncOperationPgModel = new AsyncOperationPgModel(),
+  executionPgModel = new ExecutionPgModel()
 ): Promise<PostgresExecution> => {
-  const executionPgModel = new ExecutionPgModel();
-  const collectionPgModel = new CollectionPgModel();
-  const asyncOperationPgModel = new AsyncOperationPgModel();
   const logger = new Logger({ sender: '@cumulus/db/translate/executions' });
 
   // Map old record to new schema.
