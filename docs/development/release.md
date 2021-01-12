@@ -98,11 +98,14 @@ Note: This is for 1.10.3 or later.
 
 1. Push the release branch (e.g. `release-1.2.3`) to GitHub.
 2. Create a PR against the minor version base branch  e.g. `release-1.2.x`).
-3. Configure CI to run automated tests against this PR by finding the branch plan for the release branch and setting `GIT_PR: true` in the variables for the branch plan
-4. Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.
+3. Configure CI to run automated tests against this PR by finding the branch plan for the release branch and setting these variables:
+
+    * `GIT_PR`: `true`
+    * `SKIP_AUDIT`: `true`
 
     ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](../assets/configure-release-branch-test.png)
 
+4. Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.
 5. You may delete your release branch after merging to the base branch.
 
 ### 9. Create a git tag for the release
