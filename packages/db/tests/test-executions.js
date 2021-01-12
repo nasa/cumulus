@@ -22,13 +22,27 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     finalPayload: { testOutput: 'finalPayloadValue' },
     duration: 2,
     cumulusVersion: '1.0.0',
+    collectionId: 'name___version',
+    asyncOperationId: '1234',
+    parentArn: 'arn:aws:lambda:us-east-1:5678:5678',
   };
 
-  // Note that we are not testing the foreign keys here. Properties like parent_cumulus_id,
-  // collection_cumulus_id, and async_operation_cumulus_id are set in
-  // translateApiExecutionToPostgresExecution using helpers that are tested elsewhere.
-  // The complete execution, including those foreign keys is
-  // tested in the data-migration2 integration tests.
+  const collectionCumulusId = 1;
+  const asyncOperationCumulusId = 2;
+  const executionCumulusId = 3;
+
+  const fakeDbClient = {};
+
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: async () => collectionCumulusId,
+  };
+  const fakeAsyncOperationPgModel = {
+    getRecordCumulusId: async () => asyncOperationCumulusId,
+  };
+  const fakeExecutionPgModel = {
+    getRecordCumulusId: async () => executionCumulusId,
+  };
+
   const expectedPostgresExecution = {
     status: apiExecution.status,
     tasks: JSON.stringify(apiExecution.tasks),
@@ -43,10 +57,19 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     updated_at: new Date(apiExecution.updatedAt),
     url: apiExecution.execution,
     cumulus_version: apiExecution.cumulusVersion,
+    async_operation_cumulus_id: asyncOperationCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    parent_cumulus_id: executionCumulusId,
   };
 
   const result = removeNilProperties(
-    await translateApiExecutionToPostgresExecution(apiExecution)
+    await translateApiExecutionToPostgresExecution(
+      apiExecution,
+      fakeDbClient,
+      fakeCollectionPgModel,
+      fakeAsyncOperationPgModel,
+      fakeExecutionPgModel
+    )
   );
 
   t.deepEqual(
