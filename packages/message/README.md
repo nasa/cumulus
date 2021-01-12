@@ -35,65 +35,6 @@ from a Cumulus message</p>
 </dd>
 </dl>
 
-### Functions
-
-<dl>
-<dt><a href="#exp_module_AsyncOperations--exports.getMessageAsyncOperationId">exports.getMessageAsyncOperationId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
-<dd><p>Get the async operation ID from a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdr">exports.getMessagePdr(message)</a> ⇒ <code>undefined</code> | <code>Object</code> ⏏</dt>
-<dd><p>Get the PDR object from a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.messageHasPdr">exports.messageHasPdr(message)</a> ⇒ <code>boolean</code> ⏏</dt>
-<dd><p>Determine if message has a PDR.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdrPANSent">exports.getMessagePdrPANSent(message)</a> ⇒ <code>boolean</code> ⏏</dt>
-<dd><p>Get the PAN sent status from a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdrPANMessage">exports.getMessagePdrPANMessage(message)</a> ⇒ <code>string</code> ⏏</dt>
-<dd><p>Get the PAN message status from a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdrName">exports.getMessagePdrName(message)</a> ⇒ <code>string</code> ⏏</dt>
-<dd><p>Get the PDR name from a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdrRunningExecutions">exports.getMessagePdrRunningExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
-<dd><p>Get the number of running executions for a PDR, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdrCompletedExecutions">exports.getMessagePdrCompletedExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
-<dd><p>Get the number of completed executions for a PDR, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdrFailedExecutions">exports.getMessagePdrFailedExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
-<dd><p>Get the number of failed executions for a PDR, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getMessagePdrStats">exports.getMessagePdrStats(message)</a> ⇒ <code>PdrStats</code> ⏏</dt>
-<dd><p>Get the PDR stats from a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_PDRs--exports.getPdrPercentCompletion">exports.getPdrPercentCompletion(stats)</a> ⇒ <code>number</code> ⏏</dt>
-<dd><p>Get the percent completion of PDR executions</p>
-</dd>
-<dt><a href="#exp_module_Providers--exports.getMessageProviderId">exports.getMessageProviderId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
-<dd><p>Get the provider ID from a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_workflows--exports.getMetaStatus">exports.getMetaStatus(message)</a> ⇒ <code>Message.WorkflowStatus</code> | <code>undefined</code> ⏏</dt>
-<dd><p>Get the status of a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_workflows--exports.getMessageWorkflowTasks">exports.getMessageWorkflowTasks(message)</a> ⇒ <code>Object</code> | <code>undefined</code> ⏏</dt>
-<dd><p>Get the workflow tasks in a workflow message, if any.</p>
-</dd>
-<dt><a href="#exp_module_workflows--exports.getMessageWorkflowStartTime">exports.getMessageWorkflowStartTime(message)</a> ⇒ <code>number</code> | <code>undefined</code> ⏏</dt>
-<dd><p>Get the workflow start time, if any.</p>
-</dd>
-<dt><a href="#exp_module_workflows--exports.getMessageWorkflowStopTime">exports.getMessageWorkflowStopTime(message)</a> ⇒ <code>number</code> | <code>undefined</code> ⏏</dt>
-<dd><p>Get the workflow stop time, if any.</p>
-</dd>
-<dt><a href="#exp_module_workflows--exports.getMessageWorkflowName">exports.getMessageWorkflowName(message)</a> ⇒ <code>string</code> | <code>undefined</code> ⏏</dt>
-<dd><p>Get the workflow name, if any.</p>
-</dd>
-<dt><a href="#exp_module_workflows--exports.getWorkflowDuration">exports.getWorkflowDuration(startTime, [stopTime])</a> ⇒ <code>number</code> ⏏</dt>
-<dd><p>Get the workflow duration.</p>
-</dd>
-</dl>
-
 <a name="module_Build"></a>
 
 ### Build
