@@ -12,7 +12,7 @@
     "test": "python -m unittest",
     "python-lint": "pipenv run pylint *.py",
     "lint": "npm run python-lint",
-    "build": "export PIPENV_VENV_IN_PROJECT=1 && pip install pipenv && pipenv install --deploy --ignore-pipfile",
+    "build": "export PIPENV_VENV_IN_PROJECT=1 && pip install pipenv && pipenv install --dev --deploy --ignore-pipfile",
     "package": "npm run build",
     "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
   },
