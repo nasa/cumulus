@@ -23,8 +23,6 @@ export interface PostgresGranule {
   // Processing info from execution
   processing_start_date_time?: Date,
   processing_end_date_time?: Date,
-  data_type?: string,
-  version?: string,
 }
 
 export interface PostgresGranuleRecord extends PostgresGranule {
