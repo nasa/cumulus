@@ -8,6 +8,7 @@ const AsyncOperation = require('@cumulus/api/models/async-operation');
 const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
 
+const { RecordAlreadyMigrated } = require('@cumulus/errors');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const {
   fakeExecutionFactoryV2,
@@ -27,7 +28,6 @@ const { migrateCollectionRecord } = require('@cumulus/data-migration1/dist/lambd
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
-const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const {
   migrateExecutionRecord,

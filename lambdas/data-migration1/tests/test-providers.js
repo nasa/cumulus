@@ -13,12 +13,13 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 const {
   migrateProviderRecord,
   migrateProviders,
 } = require('../dist/lambda/providers');
-const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
+
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 

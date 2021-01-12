@@ -5,7 +5,7 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { PostgresExecutionRecord, translateApiExecutionToPostgresExecution } from '@cumulus/db';
-import { RecordAlreadyMigrated } from './errors';
+import { RecordAlreadyMigrated } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const Manager = require('@cumulus/api/models/base');
