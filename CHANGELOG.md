@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `queryFields` to granule schema, and this allows workflow tasks to add queryable data to granule record. For reference on how to add data to `queryFields` field, see [`example/cumulus-tf/kinesis_trigger_test_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/kinesis_trigger_test_workflow.tf).
 - **CUMULUS-2318**
   - Added`async_operation_image` as `cumulus` module variable to allow for override of the async_operation container image.  Users can optionally specify a non-default docker image for use with Core async operations.
+- **CUMULUS-2328**
+  - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
 
 ### Changed
 
@@ -50,12 +52,36 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
 - **CUMULUS-2296**
   - Improved PDR spec compliance of `parse-pdr` by updating `@cumulus/pvl` to parse fields in a manner more consistent with the PDR ICD, with respect to numbers and dates. Anything not matching the ICD expectations, or incompatible with Javascript parsing, will be parsed as a string instead.
+- **CUMULUS-2328**
+  - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
 
 ### Removed
 
 - **CUMULUS-2258**
   - Removed `tea_stack_name` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`
   - Removed `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resources from `tf-modules/distribution/main.tf`
+- **CUMULUS-2328**
+  - Removed `distributionApiId` environment variable from `<prefix>-ApiEndpoints` and `<prefix>-PrivateApiLambda` Lambdas
+  - Removed `distribution_api_id` variable from `tf-modules/archive` module
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/cumulus` module
+  - Removed variables from `tf-modules/cumulus` module:
+    - `sts_credentials_lambda_function_arn`
+    - `deploy_distribution_s3_credentials_endpoint`
+    - `tea_api_gateway_stage`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/distribution` module
+  - Removed variables from `tf-modules/distribution` module:
+    - `deploy_s3_credentials_endpoint`
+    - `log_destination_arn`
+    - `sts_credentials_lambda_function_arn`
+    - `tea_api_gateway_stage`
+    - `tea_external_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `urs_client_id`
+    - `urs_client_password`
+    - `urs_url`
 
 ## [v4.0.0] 2020-11-20
 
