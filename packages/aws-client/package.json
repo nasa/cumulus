@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
@@ -43,9 +43,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/checksum": "4.0.0",
-    "@cumulus/errors": "4.0.0",
-    "@cumulus/logger": "4.0.0",
+    "@cumulus/checksum": "5.0.0",
+    "@cumulus/errors": "5.0.0",
+    "@cumulus/logger": "5.0.0",
     "aws-sdk": "^2.585.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.20",
