@@ -111,6 +111,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2167**
     - Change Postgres Schema definition for Files to remove `filename` and `name` and only support `file_name`.
     - Change Postgres Schema definition for Files to remove `size` to only support `file_size`.
+    - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
 
 ## [v4.0.0] 2020-11-20
 
