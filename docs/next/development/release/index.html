@@ -11,9 +11,11 @@
 <h2><a class="anchor" aria-hidden="true" id="updating-cumulus-version-and-publishing-to-npm"></a><a href="#updating-cumulus-version-and-publishing-to-npm" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Updating Cumulus version and publishing to NPM</h2>
 <h3><a class="anchor" aria-hidden="true" id="1-create-a-branch-for-the-new-release"></a><a href="#1-create-a-branch-for-the-new-release" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>1. Create a branch for the new release</h3>
 <h4><a class="anchor" aria-hidden="true" id="from-master"></a><a href="#from-master" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>From Master</h4>
-<p>If creating a new minor version release from master, create a branch titled <code>release-MAJOR.MINOR.x</code> (e.g. release-1.14.x) as a minor version base branch from master to allow us to easily backport patches to that version. Push the <code>release-MAJOR.MINOR.x</code> branch to GitHub if it was created locally. (Commits should be even with master at this point.)</p>
-<p>If creating a patch release, you can check out the existing base branch.
-Then create the release branch (e.g. release-1.14.0) from the minor version base branch.</p>
+<p>If creating a new minor version release from master, create a branch titled <code>release-MAJOR.MINOR.x</code> (e.g. <code>release-1.14.x</code>) as a minor version base branch from master to allow us to easily backport patches to that version. Push the <code>release-MAJOR.MINOR.x</code> branch to GitHub if it was created locally. (Commits should be even with master at this point.)</p>
+<p>If creating a patch release, you can check out the existing base branch.</p>
+<p>Then create the release branch (e.g. <code>release-1.14.0</code>) from the minor version base branch. For example, from the <code>release-1.14.x</code> branch:</p>
+<pre><code class="hljs css language-bash">git checkout -b release-1.14.0
+</code></pre>
 <h4><a class="anchor" aria-hidden="true" id="backporting"></a><a href="#backporting" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Backporting</h4>
 <p>When creating a backport, a minor version base branch should already exist on GitHub.
 Check out the existing minor version base branch then create a release branch from it.</p>
@@ -56,10 +58,18 @@ git add .
 <p>Where <code>${release_version}</code> corresponds to the version tag <code>v1.2.3</code>, for example.</p>
 <p>Note: This is for 1.10.3 or later.</p>
 <h3><a class="anchor" aria-hidden="true" id="8-create-a-pull-request-against-the-minor-version-branch"></a><a href="#8-create-a-pull-request-against-the-minor-version-branch" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>8. Create a pull request against the minor version branch</h3>
-<p>Push the release branch to GitHub.
-Create a PR against the minor version base branch.
-Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.
-You may delete your release branch after merging to the base branch.</p>
+<ol>
+<li><p>Push the release branch (e.g. <code>release-1.2.3</code>) to GitHub.</p></li>
+<li><p>Create a PR against the minor version base branch  e.g. <code>release-1.2.x</code>).</p></li>
+<li><p>Configure CI to run automated tests against this PR by finding the branch plan for the release branch and setting these variables:</p>
+<ul>
+<li><code>GIT_PR</code>: <code>true</code></li>
+<li><code>SKIP_AUDIT</code>: <code>true</code></li>
+</ul>
+<p><img src="../assets/configure-release-branch-test.png" alt="Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of &quot;true&quot;"></p></li>
+<li><p>Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.</p></li>
+<li><p>You may delete your release branch after merging to the base branch.</p></li>
+</ol>
 <h3><a class="anchor" aria-hidden="true" id="9-create-a-git-tag-for-the-release"></a><a href="#9-create-a-git-tag-for-the-release" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>9. Create a git tag for the release</h3>
 <p>Check out the minor version base branch now that your changes are merged in and do a git pull.
 Ensure you are on the latest commit.</p>
@@ -104,7 +114,7 @@ You should have been redirected to the <code>Branch Details</code> tab after cre
 <h3><a class="anchor" aria-hidden="true" id="12-merge-base-branch-back-to-master"></a><a href="#12-merge-base-branch-back-to-master" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>12. Merge base branch back to master</h3>
 <p>Finally, you need to reproduce the version update changes back to master.</p>
 <p>If this is the latest version, you can simply create a PR to merge the minor version base branch back to master.
-<strong>Note:</strong> Do not squash this merge. Doing so will make the &quot;compare&quot; view from step 4 show an incorrect diff, because the tag is linked to a specific commit on the base branch.</p>
+<strong>Note:</strong> <strong>Do not squash this merge</strong>. Doing so will make the &quot;compare&quot; view from step 4 show an incorrect diff, because the tag is linked to a specific commit on the base branch.</p>
 <p>If this is a backport, you will need to create a PR that ports the changelog updates back to master.
 It is important in this changelog note to call it out as a backport.
 For example, fixes in backport version 1.14.5 may not be available in 1.15.0 because the fix was introduced in 1.15.3.</p>
