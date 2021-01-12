@@ -25,7 +25,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
  *   if record was already migrated
  */
 export const migrateExecutionRecord = async (
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  dynamoRecord: ExecutionRecord,
   knex: Knex
 ): Promise<number> => {
   // Use API model schema to validate record before processing
@@ -42,7 +42,7 @@ export const migrateExecutionRecord = async (
   }
 
   const updatedRecord = await translateApiExecutionToPostgresExecution(
-    <ExecutionRecord>dynamoRecord, <Knex>knex
+    dynamoRecord, knex
   );
 
   // If we have a parent ARN from the dynamo record but we couldn't find a cumulus_id in Postgres,
@@ -84,7 +84,7 @@ export const migrateExecutions = async (
     migrationSummary.dynamoRecords += 1;
 
     try {
-      await migrateExecutionRecord(record, knex);
+      await migrateExecutionRecord(<ExecutionRecord>record, knex);
       migrationSummary.success += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
