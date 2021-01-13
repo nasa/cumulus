@@ -2,12 +2,12 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import {
+  getRecordCumulusId,
   PostgresCollectionRecord,
-  PostgresProviderRecord,
   PostgresExecutionRecord,
+  PostgresProviderRecord,
   PostgresPdrRecord,
   PostgresPdr,
-  getRecordCumulusId,
   tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
@@ -121,7 +121,7 @@ export const migratePdrs = async (
       } else {
         migrationSummary.failed += 1;
         logger.error(
-          `Could not create PDR record in RDS for Dynamo PDR name: ${record.pdrName}}`,
+          `Could not create PDR record in RDS for Dynamo PDR name: ${record.pdrName}`,
           error
         );
       }
