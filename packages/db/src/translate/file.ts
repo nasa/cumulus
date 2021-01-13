@@ -8,12 +8,9 @@ export const translateApiFiletoPostgresFile = (
   bucket: file.bucket,
   checksum_type: file.checksumType,
   checksum_value: file.checksum,
-  // TODO: do we really need both of these properties?
-  filename: file.fileName,
   file_name: file.fileName,
+  file_size: file.size,
   key: file.key,
-  name: file.name,
   path: file.path,
-  size: file.size,
   source: file.source,
 });

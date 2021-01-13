@@ -4,7 +4,7 @@ const omit = require('lodash/omit');
 
 const { translateApiFiletoPostgresFile } = require('../../dist/translate/file');
 
-const fileOmitKeys = ['checksum', 'checksumType', 'fileName'];
+const fileOmitKeys = ['checksum', 'checksumType', 'fileName', 'size'];
 
 test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
   const file = {
@@ -23,9 +23,8 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
         ...file,
         checksum_type: file.checksumType,
         checksum_value: file.checksum,
-        filename: file.fileName,
         file_name: file.fileName,
-        name: undefined,
+        file_size: file.size,
         path: undefined,
       },
       fileOmitKeys
