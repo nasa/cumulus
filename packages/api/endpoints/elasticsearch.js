@@ -88,17 +88,17 @@ async function reindex(req, res) {
     destIndex = timestampedIndexName();
   }
 
-  try {
-    await createIndex(esClient, destIndex);
-  } catch (error) {
-    if (error instanceof IndexExistsError) {
-      return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
+  const destExists = await esClient.indices.exists({ index: destIndex })
+    .then((response) => response.body);
+
+  if (!destExists) {
+    try {
+      await createIndex(esClient, destIndex);
+      log.info(`Created destination index ${destIndex}.`);
+    } catch (error) {
+      return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
     }
-
-    return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
   }
-
-  log.info(`Created destination index ${destIndex}.`);
 
   // reindex
   esClient.reindex({
@@ -160,7 +160,12 @@ async function changeIndex(req, res) {
     .then((response) => response.body);
 
   if (!destExists) {
-    return res.boom.badRequest(`New index ${newIndex} does not exist.`);
+    try {
+      await createIndex(esClient, newIndex);
+      log.info(`Created destination index ${newIndex}.`);
+    } catch (error) {
+      return res.boom.badRequest(`Error creating index ${newIndex}: ${error.message}`);
+    }
   }
 
   try {
