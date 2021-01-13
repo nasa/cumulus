@@ -251,19 +251,23 @@ test.serial('Reindex success', async (t) => {
 
 test.serial('Reindex - destination index exists', async (t) => {
   const { esAlias } = t.context;
+  const destIndex = randomString();
+  const newAlias = randomString();
+
+  await createIndex(destIndex, newAlias);
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
     .send({
       aliasName: esAlias,
-      destIndex: esIndex,
+      destIndex: destIndex,
       sourceIndex: esIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.body.message, `Destination index ${esIndex} exists. Please specify an index name that does not exist.`);
+  t.is(response.body.message, `Reindexing to ${destIndex} from ${esIndex}. Check the reindex-status endpoint for status.`);
 });
 
 test.serial('Reindex status, no task running', async (t) => {
@@ -340,9 +344,9 @@ test.serial('Change index - new index does not exist', async (t) => {
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.body.message, `New index ${newIndex} does not exist.`);
+  t.is(response.body.message, `Change index success - alias ${esAlias} now pointing to ${newIndex}`);
 });
 
 test.serial('Change index - current index same as new index', async (t) => {
