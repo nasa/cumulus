@@ -9,10 +9,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Migration notes
 
 - **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.tion.
 - **CUMULUS-2258**
   - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
   - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
+- **CUMULUS-2344**
+  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
+    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 ### Added
 - **HYRAX-320**
@@ -41,6 +44,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
 - **CUMULUS-2296**
   - Improved PDR spec compliance of `parse-pdr` by updating `@cumulus/pvl` to parse fields in a manner more consistent with the PDR ICD, with respect to numbers and dates. Anything not matching the ICD expectations, or incompatible with Javascript parsing, will be parsed as a string instead.
+- **CUMULUS-2344**
+  - Elasticsearch API now allows you to reindex to an index that already exists
+  - If using the Change Index operation and the new index doesn't exist, it will be created
 
 ### BREAKING CHANGES
 
