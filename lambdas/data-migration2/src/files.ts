@@ -29,7 +29,6 @@ export const migrateFileRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-
   const [name, version] = dynamoRecord.collectionId.split('___');
 
   const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
