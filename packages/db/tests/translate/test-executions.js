@@ -2,7 +2,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { removeNilProperties } = require('@cumulus/common/util');
-const { translateApiExecutionToPostgresExecution } = require('../dist/translate/executions');
+const { translateApiExecutionToPostgresExecution } = require('../../dist/translate/executions');
 
 test('translateApiExecutionToPostgresExecution converts API execution to Postgres', async (t) => {
   const now = Date.now();

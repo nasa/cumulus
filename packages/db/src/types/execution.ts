@@ -7,7 +7,7 @@ export interface PostgresExecution {
   parent_cumulus_id?: number,
   cumulus_version?: string,
   url?: string,
-  status?: ExecutionRecordStatus,
+  status: ExecutionRecordStatus,
   tasks?: Object,
   error?: Object,
   workflow_name?: string,
