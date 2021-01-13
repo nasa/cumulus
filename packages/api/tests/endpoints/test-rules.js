@@ -152,7 +152,6 @@ test('CUMULUS-911 PUT with pathParameters and without an Authorization header re
     .put('/rules/asdf')
     .set('Accept', 'application/json')
     .expect(401);
-
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
@@ -580,50 +579,53 @@ test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails
   t.false(await ruleModel.exists(newRule.name));
 });
 
-test('PUT replaces a rule', async (t) => {
+test.serial('PUT replaces a rule', async (t) => {
   const { dbClient } = t.context;
-  const expectedRule = {
-    ...omit(testRule, ['queueUrl', 'provider', 'collection']),
+  const putTestRule = { ...testRule, name: randomId('testRule') };
+  t.truthy(putTestRule.queueUrl);
+
+  const updateRule = {
+    ...omit(putTestRule, ['queueUrl', 'provider', 'collection', 'createdAt']),
     state: 'ENABLED',
   };
 
-  const translatedRule = await translateApiRuleToPostgresRule(testRule, dbClient);
-  await dbClient(tableNames.rules).insert(translatedRule);
-
-  const dbRecord = await dbClient.select()
-    .from(tableNames.rules)
-    .where({ name: expectedRule.name })
-    .first();
-
-  // Make sure testRule contains values for the properties we omitted from
-  // expectedRule to confirm that after we replace (PUT) the rule those
-  // properties are dropped from the stored rule.
-  t.truthy(testRule.queueUrl);
-
-  // Ensure pg record for test rule contains queue_url
-  t.truthy(dbRecord.queue_url);
-
   await request(app)
-    .put(`/rules/${testRule.name}`)
+    .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(expectedRule)
+    .send(putTestRule)
+    .expect(200);
+
+  await request(app)
+    .put(`/rules/${updateRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updateRule)
     .expect(200);
 
   const { body: actualRule } = await request(app)
-    .get(`/rules/${testRule.name}`)
+    .get(`/rules/${updateRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const dbRecords = await dbClient.select()
+  const dbRecord = await dbClient.select()
     .from(tableNames.rules)
-    .where({ name: expectedRule.name })
+    .where({ name: updateRule.name })
     .first();
 
-  t.is(dbRecords.queue_url, null);
+  const dbExpectedRule = await translateApiRuleToPostgresRule({
+    ...updateRule, createdAt: actualRule.createdAt,
+  });
+  Object.keys(dbExpectedRule).forEach((key) => {
+    if (dbExpectedRule[key] === undefined) {
+      dbExpectedRule[key] = null;
+    }
+  });
+
+  t.like(dbRecord, { ...dbExpectedRule, updated_at: dbRecord.updated_at });
   t.deepEqual(actualRule, {
-    ...expectedRule,
+    ...updateRule,
     createdAt: actualRule.createdAt,
     updatedAt: actualRule.updatedAt,
   });

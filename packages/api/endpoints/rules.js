@@ -4,12 +4,14 @@ const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+const omit = require('lodash/omit');
 
 const { getKnexClient, translateApiRuleToPostgresRule, tableNames } = require('@cumulus/db');
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
 const { addToLocalES, indexRule } = require('../es/indexer');
+
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
@@ -129,7 +131,7 @@ async function put({ params: { name }, body }, res) {
 
     await dbClient.transaction(async (trx) => {
       await trx(tableNames.rules)
-        .insert(newPostgresRecord)
+        .insert(omit(newPostgresRecord, 'created_at'))
         .onConflict('name')
         .merge();
       newRule = await model.update(oldRule, body, fieldsToDelete);
