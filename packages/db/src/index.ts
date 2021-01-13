@@ -53,6 +53,10 @@ export {
   PostgresPdr,
   PostgresPdrRecord,
 } from './types/pdr';
+export {
+  PostgresFile,
+  PostgresFileRecord,
+} from './types/file';
 
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
