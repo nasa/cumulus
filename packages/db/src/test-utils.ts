@@ -107,6 +107,7 @@ export const fakeAsyncOperationRecordFactory = (
   description: cryptoRandomString({ length: 10 }),
   operation_type: 'ES Index',
   status: 'RUNNING',
+<<<<<<< HEAD
   output: { test: 'output' },
   task_arn: cryptoRandomString({ length: 3 }),
   ...params,
@@ -119,3 +120,11 @@ export const fakePdrRecordFactory = (
   status: 'running',
   ...params,
 });
+=======
+  output: JSON.stringify({
+    test: 'output',
+  }),
+  task_arn: cryptoRandomString({ length: 3 }),
+  ...params,
+});
+>>>>>>> 613ac46b9... CUMULUS-2188 update data migration tests to skip the dynamo record creation of secondary records

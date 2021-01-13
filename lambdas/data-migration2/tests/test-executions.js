@@ -186,8 +186,8 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
     parentArn: existingExecution.arn,
-    collectionId: `${existingCollection.name}___${existingCollection.version}`,
-    asyncOperationId: existingAsyncOperation.id,
+    collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
+    asyncOperationId: fakeAsyncOperation.id,
   });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
@@ -199,8 +199,8 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
     .first();
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
-    async_operation_cumulus_id: 1,
-    collection_cumulus_id: 1,
+    async_operation_cumulus_id: asyncOperationCumulusId,
+    collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
   });
 });
