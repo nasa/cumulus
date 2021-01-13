@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import cryptoRandomString from 'crypto-random-string';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
@@ -9,6 +10,7 @@ import { PostgresExecution } from './types/execution';
 import { PostgresFile } from './types/file';
 import { PostgresGranule } from './types/granule';
 import { PostgresProvider } from './types/provider';
+import { PostgresAsyncOperation } from './types/async_operation';
 
 export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {
   await knex.raw(`create database "${dbName}";`);
@@ -91,5 +93,19 @@ export const fakeFileRecordFactory = (
 ): Omit<PostgresFile, 'granule_cumulus_id'> => ({
   bucket: cryptoRandomString({ length: 3 }),
   key: cryptoRandomString({ length: 3 }),
+  ...params,
+});
+
+export const fakeAsyncOperationRecordFactory = (
+  params: Partial<PostgresAsyncOperation>
+): PostgresAsyncOperation => ({
+  id: uuidv4(),
+  description: cryptoRandomString({ length: 10 }),
+  operation_type: 'ES Index',
+  status: 'RUNNING',
+  output: JSON.stringify({
+    test: 'output',
+  }),
+  task_arn: cryptoRandomString({ length: 3 }),
   ...params,
 });

@@ -62,3 +62,4 @@ export { FilePgModel } from './models/file';
 export { GranulePgModel } from './models/granule';
 export { ProviderPgModel } from './models/provider';
 export { RulePgModel } from './models/rule';
+export { AsyncOperationPgModel } from './models/async_operation';

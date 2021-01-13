@@ -1,33 +1,34 @@
 const omit = require('lodash/omit');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const uuid = require('uuid/v4');
 
+// Dynamo models
 const Execution = require('@cumulus/api/models/executions');
 const AsyncOperation = require('@cumulus/api/models/async-operation');
 const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
 
+// PG models
+const { CollectionPgModel, AsyncOperationPgModel } = require('@cumulus/db');
+
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const {
-  fakeExecutionFactoryV2,
-  fakeCollectionFactory,
-  fakeAsyncOperationFactory,
-} = require('@cumulus/api/lib/testUtils');
+const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const {
   generateLocalTestDb,
   destroyLocalTestDb,
 } = require('@cumulus/db');
+
+// PG mock data factories
+const {
+  fakeCollectionRecordFactory,
+  fakeAsyncOperationRecordFactory,
+} = require('@cumulus/db/dist/test-utils');
+
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrateAsyncOperationRecord } = require('@cumulus/data-migration1/dist/lambda/async-operations');
-// eslint-disable-next-line node/no-unpublished-require
-const { migrateCollectionRecord } = require('@cumulus/data-migration1/dist/lambda/collections');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -122,31 +123,25 @@ test.after.always(async (t) => {
 test.serial('migrateExecutionRecord correctly migrates execution record', async (t) => {
   // This will be the top-level execution (no parent execution)
   const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
-  const fakeCollection = fakeCollectionFactory();
-  const fakeAsyncOperation = fakeAsyncOperationFactory({
-    id: uuid(),
-    output: '{ "output": "test" }',
-  });
+  const fakeCollection = fakeCollectionRecordFactory();
+  const fakeAsyncOperation = fakeAsyncOperationRecordFactory();
+  const existingExecution = await executionsModel.create(fakeExecution);
 
-  const [
-    existingExecution,
-    existingCollection,
-    existingAsyncOperation,
-  ] = await Promise.all([
-    executionsModel.create(fakeExecution),
-    collectionsModel.create(fakeCollection),
-    asyncOperationsModel.create(fakeAsyncOperation),
-  ]);
+  const collectionPgModel = new CollectionPgModel();
+  const [collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    fakeCollection
+  );
+
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
+    t.context.knex,
+    fakeAsyncOperation
+  );
 
   t.teardown(() => Promise.all([
     executionsModel.delete({ arn: fakeExecution.arn }),
-    collectionsModel.delete(fakeCollection),
-    asyncOperationsModel.delete({ id: fakeAsyncOperation.id }),
   ]));
-
-  // migrate existing async operation and collection
-  await migrateAsyncOperationRecord(existingAsyncOperation, t.context.knex);
-  await migrateCollectionRecord(existingCollection, t.context.knex);
 
   // migrate the existing dynamo execution to postgres so
   // we can use it as the parent for the next execution
@@ -161,8 +156,8 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
     parentArn: existingExecution.arn,
-    collectionId: `${existingCollection.name}___${existingCollection.version}`,
-    asyncOperationId: existingAsyncOperation.id,
+    collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
+    asyncOperationId: fakeAsyncOperation.id,
   });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
@@ -174,8 +169,8 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
     .first();
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
-    async_operation_cumulus_id: 1,
-    collection_cumulus_id: 1,
+    async_operation_cumulus_id: asyncOperationCumulusId,
+    collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
   });
 });
