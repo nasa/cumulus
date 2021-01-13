@@ -32,7 +32,6 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 - **tea_internal_api_endpoint** (string) - URL for the Thin Egress App (TEA) API gateway
 - **tea_rest_api_id** (string) - API Gateway ID for the Thin Egress App (TEA)
 - **tea_rest_api_root_resource_id** (string) - Root resource ID for the Thin Egress App (TEA) API gateway
-- **tea_stack_name** (string) - Stack name for the Thin Egress App (TEA) Cloudformation stack-
 - **tags** (list(string)) - AWS tags to be assigned to resources managed by this
   module
 - **urs_url** (string) - The URL of the Earthdata Login site, defaults to
