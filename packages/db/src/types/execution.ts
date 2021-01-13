@@ -6,6 +6,14 @@ export interface PostgresExecution {
   collection_cumulus_id?: number,
   created_at?: Date,
   cumulus_version?: string,
+<<<<<<< HEAD
+=======
+  url?: string,
+  status: ExecutionRecordStatus,
+  tasks?: Object,
+  error?: Object,
+  workflow_name?: string,
+>>>>>>> 066082f0e... CUMULUS-2188 address PR comments
   duration?: number,
   error?: object,
   final_payload?: object,
