@@ -14,7 +14,7 @@ import {
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
-import { RecordAlreadyMigrated } from './errors';
+import { RecordAlreadyMigrated } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
@@ -37,8 +37,10 @@ export const migrateGranuleRecord = async (
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.granule);
 
+  const [name, version] = dynamoRecord.collectionId.split('___');
+
   const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
-    { name: dynamoRecord.collectionId },
+    { name, version },
     tableNames.collections,
     knex
   );
@@ -78,27 +80,27 @@ export const migrateGranuleRecord = async (
   // Map old record to new schema.
   const updatedRecord: PostgresGranule = {
     granule_id: dynamoRecord.granuleId,
-    pdr_cumulus_id: pdrCumulusId,
-    collection_cumulus_id: collectionCumulusId,
     status: dynamoRecord.status,
-    execution_cumulus_id: executionCumulusId,
-    cmr_link: dynamoRecord.cmrLink,
+    collection_cumulus_id: collectionCumulusId,
     published: dynamoRecord.published,
     duration: dynamoRecord.duration,
-    error: dynamoRecord.error,
-    product_volume: dynamoRecord.productVolume,
-    time_to_process: dynamoRecord.timeToPreprocess,
     time_to_archive: dynamoRecord.timeToArchive,
+    time_to_process: dynamoRecord.timeToPreprocess,
+    product_volume: dynamoRecord.productVolume,
+    error: dynamoRecord.error,
+    cmr_link: dynamoRecord.cmrLink,
+    execution_cumulus_id: executionCumulusId,
+    pdr_cumulus_id: pdrCumulusId,
     provider_cumulus_id: providerCumulusId,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
-    timestamp: new Date(dynamoRecord.timestamp),
     beginning_date_time: new Date(dynamoRecord.beginningDateTime),
     ending_date_time: new Date(dynamoRecord.endingDateTime),
-    production_date_time: new Date(dynamoRecord.productionDateTime),
     last_update_date_time: new Date(dynamoRecord.lastUpdateDateTime),
-    processing_start_date_time: new Date(dynamoRecord.processingStartDateTime),
     processing_end_date_time: new Date(dynamoRecord.processingEndDateTime),
+    processing_start_date_time: new Date(dynamoRecord.processingStartDateTime),
+    production_date_time: new Date(dynamoRecord.productionDateTime),
+    timestamp: new Date(dynamoRecord.timestamp),
+    created_at: new Date(dynamoRecord.createdAt),
+    updated_at: new Date(dynamoRecord.updatedAt),
   };
 
   await knex('granules').insert(updatedRecord);
