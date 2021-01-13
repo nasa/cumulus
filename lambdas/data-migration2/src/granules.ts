@@ -8,6 +8,8 @@ import {
   PostgresPdrRecord,
   PostgresGranuleRecord,
   PostgresGranule,
+  PostgresFileRecord,
+  PostgresFile,
   getRecordCumulusId,
   tableNames,
 } from '@cumulus/db';
@@ -34,9 +36,6 @@ export const migrateGranuleRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.granule);
-
   const [name, version] = dynamoRecord.collectionId.split('___');
 
   const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
@@ -106,7 +105,58 @@ export const migrateGranuleRecord = async (
   await knex('granules').insert(updatedRecord);
 };
 
-export const migrateGranules = async (
+/**
+ * Migrate Files record from a Granules record from DynamoDB  to RDS.
+ *
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ *   Record from DynamoDB
+ * @param {Knex} knex - Knex client for writing to RDS database
+ * @returns {Promise<number>} - Cumulus ID for record
+ * @throws {RecordAlreadyMigrated} if record was already migrated
+ */
+export const migrateFileRecord = async (
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knex: Knex
+): Promise<void> => {
+  const [name, version] = dynamoRecord.collectionId.split('___');
+
+  const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
+    { name, version },
+    tableNames.collections,
+    knex
+  );
+
+  const granuleCumulusId = await getRecordCumulusId<PostgresGranuleRecord>(
+    { granule_id: dynamoRecord.granuleId, collection_cumulus_id: collectionCumulusId },
+    tableNames.executions,
+    knex
+  );
+
+  const existingRecord = await knex<PostgresFileRecord>('files')
+    .where({ bucket: dynamoRecord.bucket, key: dynamoRecord.key })
+    .first();
+
+  // Throw error if it was already migrated.
+  if (existingRecord) {
+    throw new RecordAlreadyMigrated(`File with bucket ${dynamoRecord.bucket} and key ${dynamoRecord.key} was already migrated, skipping`);
+  }
+
+  // Map old record to new schema.
+  const updatedRecord: PostgresFile = {
+    granule_cumulus_id: granuleCumulusId,
+    file_size: dynamoRecord.size,
+    bucket: dynamoRecord.bucket,
+    checksum_type: dynamoRecord.checksumType,
+    file_name: dynamoRecord.fileName,
+    key: dynamoRecord.key,
+    source: dynamoRecord.source,
+    path: dynamoRecord.path,
+  };
+
+  await knex('files').insert(updatedRecord);
+};
+
+export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
 ): Promise<MigrationSummary> => {
@@ -116,31 +166,61 @@ export const migrateGranules = async (
     TableName: granulesTable,
   });
 
-  const migrationSummary = {
+  const granuleMigrationSummary = {
     dynamoRecords: 0,
     success: 0,
     failed: 0,
     skipped: 0,
   };
 
+  const fileMigrationSummary = {
+    dynamoRecords: 0,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+  };
   let record = await searchQueue.peek();
+
   /* eslint-disable no-await-in-loop */
   while (record) {
-    migrationSummary.dynamoRecords += 1;
+    granuleMigrationSummary.dynamoRecords += 1;
+    // Validate record before processing using API model schema
+    Manager.recordIsValid(record, schemas.granule);
+    const files = record.files;
 
     try {
       await migrateGranuleRecord(record, knex);
-      migrationSummary.success += 1;
+      granuleMigrationSummary.success += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
-        migrationSummary.skipped += 1;
+        granuleMigrationSummary.skipped += 1;
         logger.info(error);
       } else {
-        migrationSummary.failed += 1;
+        granuleMigrationSummary.failed += 1;
         logger.error(
-          `Could not create granule record in RDS for Dynamo Granule name: ${record.name}, version: ${record.version}}`,
+          `Could not create granule record in RDS for Dynamo Granule granuleId: ${record.granuleId}`,
           error
         );
+      }
+
+      while (files) {
+        files.map(async (file : any) => {
+          try {
+            await migrateFileRecord(file, knex);
+            fileMigrationSummary.success += 1;
+          } catch (migrationError) {
+            if (migrationError instanceof RecordAlreadyMigrated) {
+              fileMigrationSummary.skipped += 1;
+              logger.info(migrationError);
+            } else {
+              fileMigrationSummary.failed += 1;
+              logger.error(
+                `Could not create file record in RDS for Dynamo File bucket: ${file.bucket}, key: ${file.key}`,
+                error
+              );
+            }
+          }
+        });
       }
     }
 
@@ -148,6 +228,7 @@ export const migrateGranules = async (
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`Successfully migrated ${migrationSummary.success} granule records.`);
-  return migrationSummary;
+  logger.info(`Successfully migrated ${granuleMigrationSummary.success} granule records.`);
+  logger.info(`Successfully migrated ${fileMigrationSummary.success} file records.`);
+  return granuleMigrationSummary;
 };
