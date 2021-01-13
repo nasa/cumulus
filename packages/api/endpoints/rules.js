@@ -12,7 +12,6 @@ const models = require('../models');
 const { Search } = require('../es/search');
 const { addToLocalES, indexRule } = require('../es/indexer');
 
-
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
 /**
