@@ -37,7 +37,6 @@
     "pg": "^8.3.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "3.0.0",
-    "@cumulus/data-migration1": "3.0.0"
+    "@cumulus/test-data": "3.0.0"
   }
 }
