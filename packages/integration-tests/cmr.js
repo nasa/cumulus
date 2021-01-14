@@ -126,20 +126,30 @@ const sampleUmmGranule = {
 };
 
 /**
- * Returns true if the concept exists - if the cmrLink
- * returns a 200 and there are entries
+ * Returns true if a granule concept search link returns 200,
+ * false if a 404 is returned.
  *
  * @param {string} cmrLink
- *   CMR URL path to concept, i.e. what is returned from post to cmr task
- *   See `@cumulus/cmrjs/cmr-utils/publishECHO10XML2CMR` for expected URL
+ *   CMR URL search path to granule concept search, e.g
+ *   https://{cmr_url}/search/concepts/{concept_id}
+ *
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
 async function conceptExists(cmrLink) {
-  const response = await got.get(cmrLink, { responseType: 'json' });
+  let response;
+
+  try {
+    response = await got.get(cmrLink);
+  } catch (error) {
+    if (error.response.statusCode !== 404) {
+      throw error;
+    }
+    response = error.response;
+  }
 
   if (response.statusCode !== 200) return false;
 
-  return response.body.feed.entry.length > 0;
+  return true;
 }
 
 // See https://bugs.earthdata.nasa.gov/browse/CUMULUS-962
@@ -282,10 +292,7 @@ async function getOnlineResourcesECHO10(cmrLink) {
 
   const body = JSON.parse(response.body);
 
-  const links = body.feed.entry.map((e) => e.links);
-
-  // Links is a list of a list, so flatten to be one list
-  return [].concat(...links);
+  return body.links;
 }
 
 /**
@@ -325,7 +332,7 @@ async function getOnlineResourcesUMMG(cmrLink) {
  */
 async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
   if (cmrMetadataFormat === 'echo10') {
-    return getOnlineResourcesECHO10(cmrLink);
+    return getOnlineResourcesECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
   }
   if (isUMMGMetadataFormat(cmrMetadataFormat)) {
     return getOnlineResourcesUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);

@@ -114,7 +114,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
 
     t.is(
       output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
     );
 
     output.granules.forEach((g) => {
@@ -153,7 +153,7 @@ test.serial('postToCMR immediately succeeds using metadata file ETag', async (t)
 
     t.is(
       output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
     );
 
     output.granules.forEach((g) => {
@@ -217,7 +217,7 @@ test.serial('postToCMR eventually succeeds using metadata file ETag', async (t) 
 
     t.is(
       output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
     );
 
     output.granules.forEach((g) => {
@@ -291,7 +291,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
     const output = await postToCMR(newPayload);
     t.is(
       output.granules[0].cmrLink,
-      `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      `https://cmr.sit.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
     );
   } finally {
     cmrClient.CMR.prototype.ingestGranule.restore();
@@ -371,7 +371,7 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
     const output = await postToCMR(newPayload);
     t.is(
       output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
     );
     t.is(output.granules[1].cmrLink, undefined);
   } finally {
@@ -399,7 +399,7 @@ test.serial('postToCMR identifies files with the new file schema', async (t) => 
     const output = await postToCMR(newPayload);
     t.is(
       output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
     );
   } finally {
     cmrClient.CMR.prototype.ingestGranule.restore();
@@ -428,7 +428,7 @@ test.serial('postToCMR succeeds with launchpad authentication', async (t) => {
 
     t.is(
       output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
     );
 
     output.granules.forEach((g) => {

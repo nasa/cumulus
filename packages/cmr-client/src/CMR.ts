@@ -7,7 +7,7 @@ import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
 import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
 import deleteConcept from './deleteConcept';
-import getConcept from './getConcept';
+import getConceptMetadata from './getConcept';
 import { getIngestUrl, getTokenUrl } from './getUrl';
 import { UmmMetadata, ummVersion, validateUMMG } from './UmmUtils';
 
@@ -376,6 +376,6 @@ export class CMR {
    */
   async getGranuleMetadata(cmrLink: string): Promise<unknown> {
     const headers = this.getReadHeaders({ token: await this.getToken() });
-    return getConcept(cmrLink, headers);
+    return getConceptMetadata(cmrLink, headers);
   }
 }

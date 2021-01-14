@@ -22,7 +22,7 @@ const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { xmlParseOptions } = require('../../utils');
 
-const { getCmrSettings } = require('../../cmr-utils');
+const { getCmrSettings, constructCmrConceptLink } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
@@ -52,6 +52,8 @@ const cmrPasswordSecret = randomId('cmr-password-secret');
 const cmrPassword = randomId('cmr-password');
 
 test.before(async (t) => {
+  process.env.CMR_ENVIRONMENT = 'OPS';
+
   process.env.cmr_provider = 'CUMULUS-TEST';
   process.env.cmr_client_id = 'Cumulus-Client-Id';
   process.env.cmr_oauth_provider = 'earthdata';
@@ -161,6 +163,20 @@ test('isCMRFile returns falsy if fileobject does not valid json filenamename', (
 test('isCMRFile returns falsy if fileobject is invalid', (t) => {
   const fileObj = { bad: 'object' };
   t.falsy(isCMRFile(fileObj));
+});
+
+test('constructCmrConceptLink returns echo10 link', (t) => {
+  t.is(
+    constructCmrConceptLink('G1234-DAAC', 'echo10'),
+    'https://cmr.earthdata.nasa.gov/search/concepts/G1234-DAAC.echo10'
+  );
+});
+
+test('constructCmrConceptLink returns umm_json link', (t) => {
+  t.is(
+    constructCmrConceptLink('G1234-DAAC', 'umm_json'),
+    'https://cmr.earthdata.nasa.gov/search/concepts/G1234-DAAC.umm_json'
+  );
 });
 
 test('mapACNMTypeToCMRType returns a mapping', (t) => {
