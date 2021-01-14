@@ -3,7 +3,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
-const omit = require('lodash/omit');
 
 const {
   localStackConnectionEnv,
