@@ -52,13 +52,13 @@ For other cases,
 are available.
 
 ```shell
- $ tfenv install 0.12.12
-[INFO] Installing Terraform v0.12.12
+ $ tfenv install 0.14.4
+[INFO] Installing Terraform v0.14.4
 ...
 [INFO] Switching completed
 
-$ tfenv use 0.12.12
-[INFO] Switching to v0.12.12
+$ tfenv use 0.14.4
+[INFO] Switching to v0.14.4
 ...
 [INFO] Switching completed
 ```
@@ -69,7 +69,7 @@ To verify your Terraform version run:
 
 ```shell
 $ terraform --version
-Terraform v0.12.12
+Terraform v0.14.4
 ```
 
 ### Credentials
