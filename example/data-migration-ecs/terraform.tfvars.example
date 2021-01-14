@@ -5,8 +5,4 @@ vpc_id = "vpc-12345"
 
 data_migration2_function_arn = "arn:aws:lambda:us-east-1:<12345>:function:PREFIX-data-migration2"
 log2elasticsearch_lambda_function_arn = "arn:aws:lambda:us-east-1:<12345>:function:PREFIX-log2elasticsearch"
-<<<<<<< HEAD
 ecs_cluster_arn = "arn:aws:ecs:us-east-1:<12345>:cluster/PREFIX-tf-CumulusECSCluster"
-=======
-ecs_cluster_arn = "arn:aws:ecs:us-east-1:<12345>:cluster/PREFIX-tf-CumulusECSCluster"
->>>>>>> 39b0052db... CUMULUS-2188 complete terraform template for data migration ECS service

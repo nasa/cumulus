@@ -28,7 +28,11 @@ module "data_migration_ecs_service" {
     var.data_migration2_function_arn
   ]
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
 =======
 }
 >>>>>>> 39b0052db... CUMULUS-2188 complete terraform template for data migration ECS service
+=======
+}
+>>>>>>> 3984de331... CUMULUS-2188 EOL formatting changes
