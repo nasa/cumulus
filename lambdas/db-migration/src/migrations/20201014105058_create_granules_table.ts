@@ -34,7 +34,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .float('time_to_process')
       .comment('Number seconds granule took to complete "processing"');
     table
-      .integer('product_volume');
+      .bigInteger('product_volume');
     table
       .jsonb('error')
       .comment('JSON error object');
