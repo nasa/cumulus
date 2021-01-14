@@ -25,6 +25,7 @@
 * Mark Boyd
 * Matt Savoie
 * Menno Van Diermen
+* Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn
 * Phil Osip
