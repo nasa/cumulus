@@ -7,15 +7,18 @@ const sinon = require('sinon');
 const {
   localStackConnectionEnv,
   getKnexClient,
-  tableNames,
-  doesRecordExist,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeProviderRecordFactory,
+  CollectionPgModel,
+  ExecutionPgModel,
+  PdrPgModel,
+  ProviderPgModel,
 } = require('@cumulus/db');
 
 const {
   generatePdrRecord,
   getPdrCumulusIdFromQueryResultOrLookup,
-  writeRunningPdrViaTransaction,
-  writePdrViaTransaction,
   writePdr,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
@@ -53,52 +56,27 @@ test.beforeEach(async (t) => {
     PANmessage: 'test',
   };
 
-  t.context.collection = {
-    name: cryptoRandomString({ length: 5 }),
-    version: '0.0.0',
-    sample_file_name: 'file.txt',
-    granule_id_extraction_regex: 'fake-regex',
-    granule_id_validation_regex: 'fake-regex',
-    files: JSON.stringify([{
-      regex: 'fake-regex',
-      sampleFileName: 'file.txt',
-    }]),
-  };
-
-  t.context.provider = {
-    id: `provider${cryptoRandomString({ length: 5 })}`,
-    host: 'test-bucket',
-    protocol: 's3',
-  };
-
   t.context.workflowStartTime = Date.now();
 
-  const collectionResponse = await t.context.knex(tableNames.collections)
-    .insert(t.context.collection)
-    .returning('cumulus_id');
-  t.context.collectionCumulusId = collectionResponse[0];
+  const collection = fakeCollectionRecordFactory();
+  const collectionPgModel = new CollectionPgModel();
+  const [collectionCumulusId] = await collectionPgModel.create(t.context.knex, collection);
+  t.context.collectionCumulusId = collectionCumulusId;
 
-  const providerResponse = await t.context.knex(tableNames.providers)
-    .insert({
-      name: t.context.provider.id,
-      host: t.context.provider.host,
-      protocol: t.context.provider.protocol,
-    })
-    .returning('cumulus_id');
-  t.context.providerCumulusId = providerResponse[0];
+  const provider = fakeProviderRecordFactory();
+  const providerPgModel = new ProviderPgModel();
+  const [providerCumulusId] = await providerPgModel.create(t.context.knex, provider);
+  t.context.providerCumulusId = providerCumulusId;
 
-  const executionResponse = await t.context.knex(tableNames.executions)
-    .insert({
-      arn: cryptoRandomString({ length: 3 }),
-      status: 'running',
-    })
-    .returning('cumulus_id');
-  t.context.runningExecutionCumulusId = executionResponse[0];
+  const execution = fakeExecutionRecordFactory();
+  const executionPgModel = new ExecutionPgModel();
+  const [executionCumulusId] = await executionPgModel.create(t.context.knex, execution);
+  t.context.executionCumulusId = executionCumulusId;
 
   t.context.runningPdrRecord = {
     name: t.context.pdr.name,
     status: 'running',
-    execution_cumulus_id: t.context.runningExecutionCumulusId,
+    execution_cumulus_id: t.context.executionCumulusId,
     collection_cumulus_id: t.context.collectionCumulusId,
     provider_cumulus_id: t.context.providerCumulusId,
     progress: 25,
@@ -120,8 +98,12 @@ test.beforeEach(async (t) => {
     },
     meta: {
       status: 'running',
-      collection: t.context.collection,
-      provider: t.context.provider,
+      collection,
+      provider: {
+        id: provider.name,
+        host: provider.host,
+        protocol: provider.protocol,
+      },
     },
     payload: {
       pdr: t.context.pdr,
@@ -130,6 +112,8 @@ test.beforeEach(async (t) => {
       failed: t.context.runningPdrRecord.stats.failed,
     },
   };
+
+  t.context.pdrPgModel = new PdrPgModel();
 });
 
 test.after.always(async (t) => {
@@ -188,147 +172,25 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
 });
 
 test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
-  const {
-    knex,
-    runningPdrRecord,
-  } = t.context;
+  const { runningPdrRecord } = t.context;
 
-  // eslint-disable-next-line camelcase
-  const [cumulus_id] = await knex(tableNames.pdrs).insert(runningPdrRecord).returning('cumulus_id');
-  const pdrCumulusId = await knex.transaction(
-    (trx) =>
-      getPdrCumulusIdFromQueryResultOrLookup({
-        trx,
-        queryResult: [],
-        pdrRecord: runningPdrRecord,
-      })
-  );
-  t.is(cumulus_id, pdrCumulusId);
-});
-
-test('writeRunningPdrViaTransaction() does not update record with same execution if progress is less than current', async (t) => {
-  const {
-    knex,
-    runningPdrRecord,
-  } = t.context;
-
-  const runningPdrRecord1 = {
-    ...runningPdrRecord,
-    status: 'running',
-    progress: 75,
-  };
-  const [insertResult] = await knex(tableNames.pdrs)
-    .insert(runningPdrRecord1)
-    .returning('*');
-  t.is(insertResult.progress, 75);
-
-  // Update PDR progress
-  const runningPdrRecord2 = {
-    ...runningPdrRecord,
-    status: 'running',
-    progress: 50,
-  };
-
-  const trxResult = await knex.transaction(
-    (trx) =>
-      writeRunningPdrViaTransaction({
-        trx,
-        pdrRecord: runningPdrRecord2,
-      })
-  );
-  t.is(insertResult.cumulus_id, trxResult[0]);
-  const updatedRecord = await knex(tableNames.pdrs)
-    .where({ name: runningPdrRecord2.name })
-    .first();
-  t.is(updatedRecord.progress, 75);
-});
-
-test('writeRunningPdrViaTransaction() overwrites record with same execution if progress is greater than current', async (t) => {
-  const {
-    runningPdrRecord,
-    knex,
-  } = t.context;
-
-  const [insertResult] = await knex(tableNames.pdrs)
-    .insert(runningPdrRecord)
-    .returning('*');
-  t.is(insertResult.progress, 25);
-  t.deepEqual(insertResult.stats, runningPdrRecord.stats);
-
-  // Update PDR progress
-  const updatedRunningPdrRecord = {
-    ...runningPdrRecord,
-    progress: 100,
-    stats: {
-      running: [],
-      completed: ['arn1', 'arn2', 'arn3', 'arn4'],
+  const fakePdrCumulusId = Math.floor(Math.random() * 1000);
+  const fakePdrPgModel = {
+    getRecordCumulusId: async (_, record) => {
+      if (record.name === runningPdrRecord.name) {
+        return fakePdrCumulusId;
+      }
+      return undefined;
     },
   };
 
-  const trxResult = await knex.transaction(
-    (trx) =>
-      writeRunningPdrViaTransaction({
-        trx,
-        pdrRecord: updatedRunningPdrRecord,
-      })
-  );
-  t.is(insertResult.cumulus_id, trxResult[0]);
-  const updatedRecord = await knex(tableNames.pdrs)
-    .where({ name: updatedRunningPdrRecord.name })
-    .first();
-  t.is(updatedRecord.progress, 100);
-  t.deepEqual(updatedRecord.stats, updatedRunningPdrRecord.stats);
-});
-
-test('writePdrViaTransaction() updates a "completed" record to "running" if the execution is different', async (t) => {
-  const {
-    providerCumulusId,
-    collectionCumulusId,
-    runningExecutionCumulusId,
-    cumulusMessage,
-    pdr,
-    knex,
-  } = t.context;
-
-  const completedExecution = await knex(tableNames.executions)
-    .insert({
-      arn: cryptoRandomString({ length: 3 }),
-      status: 'completed',
-    })
-    .returning('cumulus_id');
-
-  cumulusMessage.meta.status = 'completed';
-
-  await knex.transaction(
-    (trx) => writePdrViaTransaction({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId: completedExecution[0],
-      trx,
-    })
-  );
-  const firstRecord = await knex(tableNames.pdrs)
-    .where({ name: pdr.name })
-    .first();
-  t.is(firstRecord.status, 'completed');
-
-  // update status to running
-  cumulusMessage.meta.status = 'running';
-  await knex.transaction(
-    (trx) => writePdrViaTransaction({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId: runningExecutionCumulusId,
-      trx,
-    })
-  );
-
-  const updatedRecord = await knex(tableNames.pdrs)
-    .where({ name: pdr.name })
-    .first();
-  t.is(updatedRecord.status, 'running');
+  const pdrCumulusId = await getPdrCumulusIdFromQueryResultOrLookup({
+    trx: {},
+    queryResult: [],
+    pdrRecord: runningPdrRecord,
+    pdrPgModel: fakePdrPgModel,
+  });
+  t.is(fakePdrCumulusId, pdrCumulusId);
 });
 
 test('writePdr() returns true if there is no PDR on the message', async (t) => {
@@ -383,24 +245,21 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if 
     knex,
     collectionCumulusId,
     providerCumulusId,
-    runningExecutionCumulusId,
+    executionCumulusId,
     pdr,
+    pdrPgModel,
   } = t.context;
 
-  const pdrCumulusId = await writePdr({
+  await writePdr({
     cumulusMessage,
     collectionCumulusId,
     providerCumulusId,
-    executionCumulusId: runningExecutionCumulusId,
+    executionCumulusId: executionCumulusId,
     knex,
   });
 
   t.true(await pdrModel.exists({ pdrName: pdr.name }));
-  t.true(
-    await doesRecordExist({
-      cumulus_id: pdrCumulusId,
-    }, knex, tableNames.pdrs)
-  );
+  t.true(await pdrPgModel.exists(knex, { name: pdr.name }));
 });
 
 test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write fails', async (t) => {
@@ -410,7 +269,8 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
     knex,
     collectionCumulusId,
     providerCumulusId,
-    runningExecutionCumulusId,
+    executionCumulusId,
+    pdrPgModel,
   } = t.context;
 
   const pdr = {
@@ -433,7 +293,7 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
       cumulusMessage,
       collectionCumulusId,
       providerCumulusId,
-      executionCumulusId: runningExecutionCumulusId,
+      executionCumulusId: executionCumulusId,
       knex,
       pdrModel: fakePdrModel,
     }),
@@ -441,11 +301,7 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
   );
 
   t.false(await pdrModel.exists({ pdrName: pdr.name }));
-  t.false(
-    await doesRecordExist({
-      name: pdr.name,
-    }, knex, tableNames.pdrs)
-  );
+  t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
 });
 
 test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fails', async (t) => {
@@ -455,6 +311,7 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
     knex,
     collectionCumulusId,
     providerCumulusId,
+    pdrPgModel,
   } = t.context;
 
   const pdr = {
@@ -490,9 +347,5 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
   );
 
   t.false(await pdrModel.exists({ pdrName: pdr.name }));
-  t.false(
-    await doesRecordExist({
-      name: pdr.name,
-    }, knex, tableNames.pdrs)
-  );
+  t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
 });

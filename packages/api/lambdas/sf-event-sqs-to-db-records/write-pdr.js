@@ -1,8 +1,7 @@
 'use strict';
 
 const {
-  tableNames,
-  getRecordCumulusId,
+  PdrPgModel,
 } = require('@cumulus/db');
 const {
   getMessagePdrName,
@@ -64,29 +63,35 @@ const getPdrCumulusIdFromQueryResultOrLookup = async ({
   queryResult = [],
   pdrRecord,
   trx,
+  pdrPgModel = new PdrPgModel(),
 }) => {
   let pdrCumulusId = queryResult[0];
   if (!pdrCumulusId) {
-    pdrCumulusId = await getRecordCumulusId(
-      { name: pdrRecord.name },
-      tableNames.pdrs,
-      trx
+    pdrCumulusId = await pdrPgModel.getRecordCumulusId(
+      trx,
+      { name: pdrRecord.name }
     );
   }
   return pdrCumulusId;
 };
 
-const writeRunningPdrViaTransaction = async ({
-  pdrRecord,
+const writePdrViaTransaction = async ({
+  cumulusMessage,
   trx,
+  collectionCumulusId,
+  providerCumulusId,
+  executionCumulusId,
+  pdrPgModel = new PdrPgModel(),
 }) => {
-  const queryResult = await trx(tableNames.pdrs)
-    .insert(pdrRecord)
-    .onConflict('name')
-    .merge()
-    .where('pdrs.execution_cumulus_id', '!=', pdrRecord.execution_cumulus_id)
-    .orWhere('pdrs.progress', '<', pdrRecord.progress)
-    .returning('cumulus_id');
+  const pdrRecord = generatePdrRecord({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+  });
+
+  const queryResult = await pdrPgModel.upsert(trx, pdrRecord);
+
   // If the WHERE clause of the upsert query is not met, then the
   // result from the query is empty so no cumulus_id will be returned.
   // But this function always needs to return a cumulus_id for the PDR
@@ -97,34 +102,6 @@ const writeRunningPdrViaTransaction = async ({
     pdrRecord,
   });
   return [pdrCumulusId];
-};
-
-const writePdrViaTransaction = async ({
-  cumulusMessage,
-  trx,
-  collectionCumulusId,
-  providerCumulusId,
-  executionCumulusId,
-}) => {
-  const pdrRecord = generatePdrRecord({
-    cumulusMessage,
-    collectionCumulusId,
-    providerCumulusId,
-    executionCumulusId,
-  });
-
-  if (pdrRecord.status === 'running') {
-    return writeRunningPdrViaTransaction({
-      pdrRecord,
-      trx,
-    });
-  }
-
-  return trx(tableNames.pdrs)
-    .insert(pdrRecord)
-    .onConflict('name')
-    .merge()
-    .returning('cumulus_id');
 };
 
 const writePdr = async ({
@@ -163,7 +140,6 @@ const writePdr = async ({
 module.exports = {
   generatePdrRecord,
   getPdrCumulusIdFromQueryResultOrLookup,
-  writeRunningPdrViaTransaction,
   writePdrViaTransaction,
   writePdr,
 };

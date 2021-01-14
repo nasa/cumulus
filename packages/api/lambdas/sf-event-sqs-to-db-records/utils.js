@@ -3,8 +3,10 @@ const semver = require('semver');
 
 const { envUtils } = require('@cumulus/common');
 const {
-  tableNames,
-  getRecordCumulusId,
+  AsyncOperationPgModel,
+  CollectionPgModel,
+  ExecutionPgModel,
+  ProviderPgModel,
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
@@ -42,17 +44,20 @@ const isFailedLookupError = (error) =>
   error instanceof InvalidArgument
   || error instanceof RecordDoesNotExist;
 
-const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
+const getAsyncOperationCumulusId = async (
+  asyncOperationId,
+  knex,
+  asyncOperationPgModel = new AsyncOperationPgModel()
+) => {
   try {
     if (isNil(asyncOperationId)) {
       throw new InvalidArgument(`Async operation ID is required for lookup, received ${asyncOperationId}`);
     }
-    return await getRecordCumulusId(
+    return await asyncOperationPgModel.getRecordCumulusId(
+      knex,
       {
         id: asyncOperationId,
-      },
-      tableNames.asyncOperations,
-      knex
+      }
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
@@ -63,17 +68,20 @@ const getAsyncOperationCumulusId = async (asyncOperationId, knex) => {
   }
 };
 
-const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
+const getParentExecutionCumulusId = async (
+  parentExecutionArn,
+  knex,
+  executionPgModel = new ExecutionPgModel()
+) => {
   try {
     if (isNil(parentExecutionArn)) {
       throw new InvalidArgument(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
     }
-    return await getRecordCumulusId(
+    return await executionPgModel.getRecordCumulusId(
+      knex,
       {
         arn: parentExecutionArn,
-      },
-      tableNames.executions,
-      knex
+      }
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
@@ -84,15 +92,18 @@ const getParentExecutionCumulusId = async (parentExecutionArn, knex) => {
   }
 };
 
-const getCollectionCumulusId = async (collectionNameVersion, knex) => {
+const getCollectionCumulusId = async (
+  collectionNameVersion,
+  knex,
+  collectionPgModel = new CollectionPgModel()
+) => {
   try {
     if (isNil(collectionNameVersion)) {
       throw new InvalidArgument(`Collection name/version is required for lookup, received ${collectionNameVersion}`);
     }
-    return await getRecordCumulusId(
-      collectionNameVersion,
-      tableNames.collections,
-      knex
+    return await collectionPgModel.getRecordCumulusId(
+      knex,
+      collectionNameVersion
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
@@ -103,18 +114,21 @@ const getCollectionCumulusId = async (collectionNameVersion, knex) => {
   }
 };
 
-const getMessageProviderCumulusId = async (cumulusMessage, knex) => {
+const getMessageProviderCumulusId = async (
+  cumulusMessage,
+  knex,
+  providerPgModel = new ProviderPgModel()
+) => {
   try {
     const providerId = getMessageProviderId(cumulusMessage);
     if (isNil(providerId)) {
       throw new InvalidArgument('Could not find provider ID in message');
     }
-    return await getRecordCumulusId(
+    return await providerPgModel.getRecordCumulusId(
+      knex,
       {
         name: getMessageProviderId(cumulusMessage),
-      },
-      tableNames.providers,
-      knex
+      }
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
