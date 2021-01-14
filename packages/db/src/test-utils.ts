@@ -108,6 +108,7 @@ export const fakeAsyncOperationRecordFactory = (
   operation_type: 'ES Index',
   status: 'RUNNING',
 <<<<<<< HEAD
+<<<<<<< HEAD
   output: { test: 'output' },
   task_arn: cryptoRandomString({ length: 3 }),
   ...params,
@@ -124,6 +125,9 @@ export const fakePdrRecordFactory = (
   output: JSON.stringify({
     test: 'output',
   }),
+=======
+  output: { test: 'output' },
+>>>>>>> bb393677d... CUMULUS-2188 update types for model objects
   task_arn: cryptoRandomString({ length: 3 }),
   ...params,
 });
