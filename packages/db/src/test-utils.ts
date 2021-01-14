@@ -103,9 +103,7 @@ export const fakeAsyncOperationRecordFactory = (
   description: cryptoRandomString({ length: 10 }),
   operation_type: 'ES Index',
   status: 'RUNNING',
-  output: JSON.stringify({
-    test: 'output',
-  }),
+  output: { test: 'output' },
   task_arn: cryptoRandomString({ length: 3 }),
   ...params,
 });

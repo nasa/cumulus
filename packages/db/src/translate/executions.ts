@@ -41,12 +41,12 @@ export const translateApiExecutionToPostgresExecution = async (
       ) : undefined
     ),
     status: dynamoRecord.status,
-    tasks: JSON.stringify(dynamoRecord.tasks),
-    error: JSON.stringify(dynamoRecord.error),
     arn: dynamoRecord.arn,
     duration: dynamoRecord.duration,
-    original_payload: JSON.stringify(dynamoRecord.originalPayload),
-    final_payload: JSON.stringify(dynamoRecord.finalPayload),
+    error: dynamoRecord.error as object, // The Dynamo type is "unknown"
+    tasks: dynamoRecord.tasks as object,
+    original_payload: dynamoRecord.originalPayload as object,
+    final_payload: dynamoRecord.finalPayload as object,
     workflow_name: dynamoRecord.type,
     url: dynamoRecord.execution,
     cumulus_version: dynamoRecord.cumulusVersion,

@@ -45,12 +45,12 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
 
   const expectedPostgresExecution = {
     status: apiExecution.status,
-    tasks: JSON.stringify(apiExecution.tasks),
-    error: JSON.stringify(apiExecution.error),
+    tasks: apiExecution.tasks,
+    error: apiExecution.error,
     arn: apiExecution.arn,
     duration: apiExecution.duration,
-    original_payload: JSON.stringify(apiExecution.originalPayload),
-    final_payload: JSON.stringify(apiExecution.finalPayload),
+    original_payload: apiExecution.originalPayload,
+    final_payload: apiExecution.finalPayload,
     workflow_name: apiExecution.type,
     timestamp: new Date(apiExecution.timestamp),
     created_at: new Date(apiExecution.createdAt),
