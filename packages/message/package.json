@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/message",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Utilities for building and parsing Cumulus messages",
   "keywords": [
     "GIBS",
@@ -19,7 +19,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md --heading-depth 3 -t templates/README.md.hbs *.js > README.md",
+    "build-docs": "npm run clean && npm run tsc && ../../node_modules/.bin/jsdoc2md --heading-depth 3 -t templates/README.md.hbs *.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
@@ -38,10 +38,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "4.0.0",
-    "@cumulus/common": "4.0.0",
-    "@cumulus/logger": "4.0.0",
-    "@cumulus/types": "4.0.0",
+    "@cumulus/aws-client": "5.0.0",
+    "@cumulus/common": "5.0.0",
+    "@cumulus/logger": "5.0.0",
+    "@cumulus/types": "5.0.0",
     "jsonpath-plus": "^3.0.0",
     "lodash": "^4.17.20",
     "uuid": "^8.2.0"
