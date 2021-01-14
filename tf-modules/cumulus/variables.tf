@@ -132,6 +132,11 @@ variable "urs_client_password" {
 
 # Optional
 
+variable "azure_storage_connection_string" {
+  type = string
+  default = ""
+}
+
 variable "api_gateway_stage" {
   type        = string
   default     = "dev"
@@ -152,7 +157,7 @@ variable "archive_api_users" {
 
 variable "buckets" {
   description = "Map identifying the buckets for the deployment"
-  type        = map(object({ name = string, type = string }))
+  type    = map(object({ name = string, type = string, cloudProvider = string }))
   default     = {}
 }
 

@@ -1005,7 +1005,7 @@ export const moveObject = async (
     destinationBucket: string,
     destinationKey: string,
     ACL?: AWS.S3.ObjectCannedACL,
-    copyTags?: boolean
+    copyTags?: boolean,
   }
 ) => {
   await multipartCopyObject({

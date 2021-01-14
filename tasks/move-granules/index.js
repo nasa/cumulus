@@ -8,12 +8,20 @@ const keyBy = require('lodash/keyBy');
 const path = require('path');
 
 const {
+  BlobServiceClient,
+} = require('@azure/storage-blob');
+
+const {
   buildS3Uri,
+  deleteS3Object,
+  getObjectReadStream,
   moveObject,
   s3Join,
   s3ObjectExists,
   waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
+
+const { s3 } = require('@cumulus/aws-client/services');
 
 const { InvalidArgument } = require('@cumulus/errors');
 
@@ -33,6 +41,31 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
+
+async function azureMoveObject(
+  sourceBucket,
+  sourceKey,
+  destinationContainer,
+  destinationKey,
+  copyTags,
+) {
+  const blobServiceClient = BlobServiceClient
+    .fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
+  const containerClient = blobServiceClient.getContainerClient(destinationContainer);
+  const blockBlobClient = containerClient.getBlockBlobClient(destinationKey);
+
+  const s3ReadStream = await getObjectReadStream({
+    s3: s3(),
+    bucket: sourceBucket,
+    key: sourceKey,
+  });
+
+  await blockBlobClient.uploadStream(s3ReadStream);
+
+  // AZURE TO DO: Copy tags
+
+  await deleteS3Object(sourceBucket, sourceKey);
+}
 
 /**
  * Validates the file matched only one collection.file and has a valid bucket
@@ -167,14 +200,23 @@ async function moveFileRequest(
       duplicateHandling,
     });
   } else {
-    // AZURE TO DO: for an azure dest bucket have this talk to Azure.
-    await moveObject({
-      sourceBucket: source.Bucket,
-      sourceKey: source.Key,
-      destinationBucket: target.Bucket,
-      destinationKey: target.Key,
-      copyTags: true,
-    });
+    if (bucketsConfig.bucket(target.Bucket).cloudProvider === 'azure') {
+      await azureMoveObject(
+        source.Bucket,
+        source.Key,
+        target.Bucket,
+        target.Key,
+        true
+      );
+    } else {
+      await moveObject({
+        sourceBucket: source.Bucket,
+        sourceKey: source.Key,
+        destinationBucket: target.Bucket,
+        destinationKey: target.Key,
+        copyTags: true,
+      });
+    }
   }
 
   const renamedFiles = versionedFiles.map((f) => ({

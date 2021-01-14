@@ -1,6 +1,11 @@
 
+variable "azure_storage_connection_string" {
+  type = string
+  default = ""
+}
+
 variable "buckets" {
-  type    = map(object({ name = string, type = string }))
+  type    = map(object({ name = string, type = string, cloudProvider = string }))
   default = {}
 }
 

@@ -50,5 +50,7 @@ module "ingest" {
 
   sf_event_sqs_to_db_records_sqs_queue_url = module.archive.sf_event_sqs_to_db_records_sqs_queue_url
 
+  azure_storage_connection_string = var.azure_storage_connection_string
+
   tags = var.tags
 }

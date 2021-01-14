@@ -64,6 +64,8 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
+  azure_storage_connection_string = var.azure_storage_connection_string
+
   async_operation_image =  "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
