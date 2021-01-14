@@ -141,7 +141,7 @@ module "cumulus" {
     "dopeters",
     "jasmine",
     "jennyhliu",
-    "jmccoy",
+    "jmccoy_uat",
     "kbaynes",
     "kkelly",
     "kovarik",
