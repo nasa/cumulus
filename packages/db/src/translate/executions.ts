@@ -79,6 +79,8 @@ export const translateApiExecutionToPostgresExecution = async (
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
         logger.info(error);
+      } else {
+        throw error;
       }
     }
   }
