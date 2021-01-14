@@ -156,7 +156,10 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
 
   t.like(
     await granulePgModel.get(knex, { granule_id: granule.granule_id }),
-    updatedGranule
+    {
+      ...updatedGranule,
+      product_volume: '100',
+    }
   );
 });
 
