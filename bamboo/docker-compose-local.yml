@@ -22,3 +22,5 @@ services:
       - 5432:5432
       - 8080:8080
       - 9200:9200
+  localstack:
+    image: localstack/localstack:0.10.7
