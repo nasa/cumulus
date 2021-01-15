@@ -11,6 +11,7 @@ import { PostgresFile } from './types/file';
 import { PostgresGranule } from './types/granule';
 import { PostgresProvider } from './types/provider';
 import { PostgresAsyncOperation } from './types/async_operation';
+import { PostgresPdr } from './types/pdr';
 
 export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {
   await knex.raw(`create database "${dbName}";`);
@@ -69,6 +70,9 @@ export const fakeExecutionRecordFactory = (
 ): PostgresExecution => ({
   arn: cryptoRandomString({ length: 3 }),
   status: 'running',
+  created_at: new Date(),
+  updated_at: new Date(),
+  timestamp: new Date(),
   ...params,
 });
 
@@ -105,5 +109,13 @@ export const fakeAsyncOperationRecordFactory = (
   status: 'RUNNING',
   output: { test: 'output' },
   task_arn: cryptoRandomString({ length: 3 }),
+  ...params,
+});
+
+export const fakePdrRecordFactory = (
+  params: Partial<PostgresPdr>
+) => ({
+  name: `pdr${cryptoRandomString({ length: 3 })}`,
+  status: 'running',
   ...params,
 });

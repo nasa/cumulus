@@ -8,6 +8,7 @@ export {
   fakeProviderRecordFactory,
   fakeGranuleRecordFactory,
   fakeFileRecordFactory,
+  fakePdrRecordFactory,
 } from './test-utils';
 
 export { getKnexClient } from './connection';
@@ -56,10 +57,12 @@ export {
 export { translateApiRuleToPostgresRule } from './translate/rules';
 export { translateApiExecutionToPostgresExecution } from './translate/executions';
 
+export { AsyncOperationPgModel } from './models/async_operation';
 export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';
 export { GranulePgModel } from './models/granule';
+export { PdrPgModel } from './models/pdr';
 export { ProviderPgModel } from './models/provider';
 export { RulePgModel } from './models/rule';
 export { AsyncOperationPgModel } from './models/async_operation';
