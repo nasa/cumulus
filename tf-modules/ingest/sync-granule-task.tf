@@ -12,6 +12,7 @@ resource "aws_lambda_function" "sync_granule_task" {
 
   environment {
     variables = {
+      AZURE_STORAGE_CONNECTION_STRING = var.azure_storage_connection_string
       CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       system_bucket               = var.system_bucket

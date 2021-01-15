@@ -15,6 +15,7 @@ resource "aws_lambda_function" "discover_granules_task" {
     variables = {
       stackName                     = var.prefix
       GranulesTable                 = var.dynamo_tables.granules.name
+      AZURE_STORAGE_CONNECTION_STRING = var.azure_storage_connection_string
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }
   }
