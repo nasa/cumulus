@@ -354,7 +354,7 @@ test.serial('Change index - new index does not exist', async (t) => {
 
   t.is(response.body.message, `Change index success - alias ${esAlias} now pointing to ${newIndex}`);
 
-  esClient.indices.delete({ index: newIndex });
+  await esClient.indices.delete({ index: newIndex });
 });
 
 test.serial('Change index - current index same as new index', async (t) => {
