@@ -37,6 +37,7 @@ data "aws_iam_policy_document" "data_migration2" {
   statement {
     actions = [
       "dynamodb:Scan",
+      "dynamodb:GetItem",
     ]
     resources = [
       var.dynamo_tables.executions.arn
