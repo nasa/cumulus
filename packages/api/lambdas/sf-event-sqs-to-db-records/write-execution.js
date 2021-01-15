@@ -1,7 +1,7 @@
 const isNil = require('lodash/isNil');
 
 const {
-  tableNames,
+  ExecutionPgModel,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
@@ -73,38 +73,13 @@ const buildExecutionRecord = ({
   };
 };
 
-/**
- * Special upsert logic for updating a "running" execution. Only
- * certain fields should be updated if the right is updating a
- * "running" execution.
- *
- * @param {Object} params
- * @param {unknown} params.trx - A Knex transaction
- * @param {Object} params.executionRecord - An execution record
- *
- * @returns {Promise}
- */
-const writeRunningExecutionViaTransaction = async ({
-  trx,
-  executionRecord,
-}) =>
-  trx(tableNames.executions)
-    .insert(executionRecord)
-    .onConflict('arn')
-    .merge({
-      created_at: executionRecord.created_at,
-      updated_at: executionRecord.updated_at,
-      timestamp: executionRecord.timestamp,
-      original_payload: executionRecord.original_payload,
-    })
-    .returning('cumulus_id');
-
 const writeExecutionViaTransaction = async ({
   cumulusMessage,
   collectionCumulusId,
   asyncOperationCumulusId,
   parentExecutionCumulusId,
   trx,
+  executionPgModel = new ExecutionPgModel(),
 }) => {
   const executionRecord = buildExecutionRecord({
     cumulusMessage,
@@ -112,19 +87,7 @@ const writeExecutionViaTransaction = async ({
     asyncOperationCumulusId,
     parentExecutionCumulusId,
   });
-  // Special upsert logic for updating a "running" execution
-  if (executionRecord.status === 'running') {
-    return writeRunningExecutionViaTransaction({
-      trx,
-      executionRecord,
-    });
-  }
-  // Otherwise update all fields on conflict
-  return trx(tableNames.executions)
-    .insert(executionRecord)
-    .onConflict('arn')
-    .merge()
-    .returning('cumulus_id');
+  return executionPgModel.upsert(trx, executionRecord);
 };
 
 const writeExecution = async ({
@@ -136,8 +99,7 @@ const writeExecution = async ({
   executionModel = new Execution(),
 }) =>
   knex.transaction(async (trx) => {
-    // eslint-disable-next-line camelcase
-    const [cumulus_id] = await writeExecutionViaTransaction({
+    const [executionCumulusId] = await writeExecutionViaTransaction({
       cumulusMessage,
       collectionCumulusId,
       asyncOperationCumulusId,
@@ -145,14 +107,12 @@ const writeExecution = async ({
       trx,
     });
     await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
-    // eslint-disable-next-line camelcase
-    return cumulus_id;
+    return executionCumulusId;
   });
 
 module.exports = {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
-  writeRunningExecutionViaTransaction,
   writeExecutionViaTransaction,
   writeExecution,
 };
