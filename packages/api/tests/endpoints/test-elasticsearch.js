@@ -203,6 +203,21 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   t.is(response.body.message, `Reindexing to ${destIndex} from ${indexName}. Check the reindex-status endpoint for status.`);
 
+  // Check the reindex status endpoint to see if the operation has completed
+  let statusResponse = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  /* eslint-disable no-await-in-loop */
+  while (Object.keys(statusResponse.body.reindexStatus.nodes).length > 0) {
+    statusResponse = await request(app)
+      .get('/elasticsearch/reindex-status')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+  }
+  /* eslint-enable no-await-in-loop */
+
   await esClient.indices.delete({ index: indexName });
   await esClient.indices.delete({ index: destIndex });
 });
