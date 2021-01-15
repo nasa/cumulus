@@ -629,7 +629,11 @@ test.serial('PUT replaces a rule', async (t) => {
     }
   });
 
-  t.like(dbRecord, { ...dbExpectedRule, updated_at: dbRecord.updated_at, created_at: dbRecord.created_at });
+  t.like(dbRecord, {
+    ...dbExpectedRule,
+    updated_at: dbRecord.updated_at,
+    created_at: dbRecord.created_at,
+  });
   t.deepEqual(actualRule, {
     ...updateRule,
     createdAt: originalRule.createdAt,

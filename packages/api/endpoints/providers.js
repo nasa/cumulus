@@ -7,8 +7,6 @@ const {
   tableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
-  nullifyUndefinedProviderValues,
-  doesRecordExist,
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {

@@ -4,7 +4,6 @@ const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const omit = require('lodash/omit');
 
 const { getKnexClient, translateApiRuleToPostgresRule, tableNames } = require('@cumulus/db');
 const { isBadRequestError } = require('../lib/errors');
