@@ -87,23 +87,26 @@ async function throwIfDynamoRecordExists(providerModel, id) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const data = req.body;
-  const id = data.id;
+  const apiProvider = req.body;
+
+  apiProvider.updatedAt = Date.now();
+  apiProvider.createdAt = Date.now();
+
+  const id = apiProvider.id;
   const providerModel = new Provider();
   const knex = await getKnexClient({ env: process.env });
   try {
     let record;
-
-    if (!data.id) {
+    if (!apiProvider.id) {
       throw new ValidationError('Provider records require an id');
     }
     await throwIfDynamoRecordExists(providerModel, id);
-    const createObject = await translateApiProviderToPostgresProvider(data);
-    validateProviderHost(createObject.host);
+    const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
+    validateProviderHost(apiProvider.host);
 
     await knex.transaction(async (trx) => {
-      await trx(tableNames.providers).insert(createObject);
-      record = await providerModel.create(data);
+      await trx(tableNames.providers).insert(postgresProvider);
+      record = await providerModel.create(apiProvider);
     });
 
     if (inTestMode()) {
@@ -131,32 +134,39 @@ async function post(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put({ params: { id }, body }, res) {
-  if (id !== body.id) {
+  const apiProvider = body;
+
+  if (id !== apiProvider.id) {
     return res.boom.badRequest(
       `Expected provider ID to be '${id}', but found '${body.id}' in payload`
     );
   }
 
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClient();
   const providerModel = new Provider();
-
-  const providerExists = await Promise.all([
-    providerModel.exists(id),
-    doesRecordExist({ name: id }, knex, tableNames.providers),
-  ]);
-
-  if (providerExists.filter((providerTest) => providerTest === true).length !== 2) {
+  let oldProvider;
+  try {
+    oldProvider = await providerModel.get({ id });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
     return res.boom.notFound(
-      `Provider with ID '${id}' not found in Dynamo and Postgres databases`
+      `Provider with ID '${id}' not found`
     );
   }
 
+  apiProvider.updatedAt = Date.now();
+  apiProvider.createdAt = oldProvider.createdAt;
+
   let record;
-  let createObject = await translateApiProviderToPostgresProvider(body);
-  createObject = nullifyUndefinedProviderValues(createObject);
+  const createObject = await translateApiProviderToPostgresProvider(apiProvider);
   await knex.transaction(async (trx) => {
-    await trx(tableNames.providers).where({ name: id }).update(createObject);
-    record = await providerModel.create(body);
+    await trx(tableNames.providers)
+      .insert(createObject)
+      .onConflict('name')
+      .merge();
+    record = await providerModel.create(apiProvider);
   });
 
   if (inTestMode()) {

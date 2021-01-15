@@ -30,7 +30,7 @@ test('translateApiProviderToPostgresProvider translates a Cumulus Provider objec
   const expected = {
     certificate_uri: 'fakeUri',
     cm_key_id: 'fakecmId',
-    created_at: 1234,
+    created_at: new Date(1234),
     global_connection_limit: 1,
     host: 'fakeHost',
     name: 'testId',
@@ -38,7 +38,7 @@ test('translateApiProviderToPostgresProvider translates a Cumulus Provider objec
     port: 1234,
     private_key: 'fakeKey',
     protocol: 'fakeProtocol',
-    updated_at: 5678,
+    updated_at: new Date(5678),
     username: 'fakeEncryptedString',
   };
   const result = await translateApiProviderToPostgresProvider(
