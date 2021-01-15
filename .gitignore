@@ -42,4 +42,6 @@ search_index.json
 website/i18n/en.json
 .idea/
 cumulus-message-adapter.zip
+cnmToGranule.zip
+cnmResponse.zip
 .terraform*

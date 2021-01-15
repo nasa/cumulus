@@ -572,17 +572,18 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
   const { granuleModel } = t.context;
 
   const collectionId = randomString();
+  const provider = randomString();
   const status = 'running';
   const granules = [
     fakeGranuleFactoryV2({ collectionId, status }),
-    fakeGranuleFactoryV2({ collectionId, status }),
+    fakeGranuleFactoryV2({ collectionId, status, provider }),
     fakeGranuleFactoryV2({ granuleId: 'test123', collectionId, status }),
     fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
     fakeGranuleFactoryV2({ collectionId: randomString(), status: 'completed' }),
   ];
   await granuleModel.create(granules);
 
-  let searchParams = {
+  const searchParams = {
     collectionId,
     status,
     updatedAt__from: Date.now() - 1000 * 30,
@@ -597,12 +598,20 @@ test('granuleAttributeScan() returns granules filtered by search params', async 
     granules.slice(0, 3).map((g) => g.granuleId).sort()
   );
 
-  searchParams = {
+  const searchWithGranId = {
     ...searchParams,
     granuleId: 'test',
   };
 
-  granulesQueue = await granuleModel.granuleAttributeScan(searchParams);
+  granulesQueue = await granuleModel.granuleAttributeScan(searchWithGranId);
+  fetchedGranules = await granulesQueue.empty();
+  t.is(fetchedGranules.length, 1);
+
+  const searchWithProvider = {
+    ...searchParams,
+    provider,
+  };
+  granulesQueue = await granuleModel.granuleAttributeScan(searchWithProvider);
   fetchedGranules = await granulesQueue.empty();
   t.is(fetchedGranules.length, 1);
 });

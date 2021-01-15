@@ -71,7 +71,7 @@ The following are steps that are required to set up your Cumulus instance to run
 
 In this example, we're going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.
 
-The following [workflow definition](workflows/README.md) should be added to a new `.tf` workflow resource (e.g. `cnm_workflow.tf`) in your deployment directory.
+The following [workflow definition](workflows/README.md) should be added to a new `.tf` workflow resource (e.g. `cnm_workflow.tf`) in your deployment directory.  For the complete CNM workflow example, see [examples/cumulus-tf/kinesis_trigger_test_workflow.tf](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/kinesis_trigger_test_workflow.tf).
 
 Add the following to the new terraform file in your deployment directory, updating the following:
 
@@ -180,6 +180,7 @@ state_machine_definition = <<JSON
             "event.$": "$",
             "task_config": {
               "OriginalCNM": "{$.meta.cnm}",
+              "distribution_endpoint": "{$.meta.distribution_endpoint}",
               "response-endpoint": "ADD YOUR RESPONSE STREAM NAME HERE",
               "region": "us-east-1",
               "type": "kinesis",
@@ -187,8 +188,12 @@ state_machine_definition = <<JSON
               "cumulus_message": {
                 "outputs": [
                   {
-                    "source": "{$}",
+                    "source": "{$.cnm}",
                     "destination": "{$.meta.cnmResponse}"
+                  },
+                  {
+                    "source": "{$.input.input}",
+                    "destination": "{$.payload}"
                   }
                 ]
               }
@@ -325,7 +330,8 @@ The following values (denoted by `${}` in the sample below) should be replaced t
   "identifier ": "testIdentifier123456",
   "collection": "${COLLECTION}",
   "provider": "TestProvider",
-  "version": "001"
+  "version": "001",
+  "submissionTime": "2017-09-30T03:42:29.791198"
 }
 ```
 
@@ -385,7 +391,8 @@ Example Input Payload:
   },
   "version": "123456",
   "collection": "MOD09GQ",
-  "provider": "TestProvider"
+  "provider": "TestProvider",
+  "submissionTime": "2017-09-30T03:42:29.791198"
 }
 ```
 
@@ -411,22 +418,26 @@ Example Output Payload:
       },
       "version": "123456",
       "collection": "MOD09GQ",
-      "provider": "TestProvider"
+      "provider": "TestProvider",
+      "submissionTime": "2017-09-30T03:42:29.791198",
+      "receivedTime": "2017-09-30T03:42:31.634552"
     },
-    "granules": [
-      {
-        "granuleId": "TestGranuleUR",
-        "files": [
-          {
-            "path": "some-bucket/data",
-            "url_path": "s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "bucket": "some-bucket",
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "size": 12345678
-          }
-        ]
-      }
-    ]
+    "output": {
+      "granules": [
+        {
+          "granuleId": "TestGranuleUR",
+          "files": [
+            {
+              "path": "some-bucket/data",
+              "url_path": "s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+              "bucket": "some-bucket",
+              "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+              "size": 12345678
+            }
+          ]
+        }
+      ]
+    }
   }
 ```
 
@@ -448,9 +459,9 @@ The data written to the `response-endpoint` should adhere to the [Response Messa
 {
   "provider": "PODAAC_SWOT",
   "collection": "SWOT_Prod_l2:1",
-  "ingestTime": "2017-09-30T03:45:29.791198",
+  "processCompleteTime": "2017-09-30T03:45:29.791198",
+  "submissionTime": "2017-09-30T03:42:29.791198",
   "receivedTime": "2017-09-30T03:42:31.634552",
-  "deliveryTime": "2017-09-30T03:42:29.791198",
   "identifier": "1234-abcd-efg0-9876",
   "response": {
     "status": "SUCCESS"
@@ -464,8 +475,8 @@ The data written to the `response-endpoint` should adhere to the [Response Messa
 {
   "provider": "PODAAC_SWOT",
   "collection": "SWOT_Prod_l2:1",
-  "ingestTime": "2017-09-30T03:45:29.791198",
-  "deliveryTime": "2017-09-30T03:42:29.791198",
+  "processCompleteTime": "2017-09-30T03:45:29.791198",
+  "submissionTime": "2017-09-30T03:42:29.791198",
   "receivedTime": "2017-09-30T03:42:31.634552",
   "identifier": "1234-abcd-efg0-9876",
   "response": {
@@ -556,11 +567,12 @@ For purposes of validating the workflow, it may be simpler to locate the workflo
 ```json
 {
   "cnmResponse": {
-    "productSize": 12345678,
-    "processCompleteTime": "2018-07-27T05:43:41.698",
+    "provider": "TestProvider",
     "collection": "MOD09GQ",
     "version": "123456",
-    "provider": "TestProvider",
+    "processCompleteTime": "2017-09-30T03:45:29.791198",
+    "submissionTime": "2017-09-30T03:42:29.791198",
+    "receivedTime": "2017-09-30T03:42:31.634552",
     "identifier ": "testIdentifier123456",
     "response": {
       "status": "SUCCESS"

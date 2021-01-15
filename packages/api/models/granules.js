@@ -396,6 +396,7 @@ class Granule extends Manager {
       timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
       ...processingTimeInfo,
       ...temporalInfo,
+      queryFields: get(message, 'meta.granule.queryFields'),
     };
 
     record.published = get(granule, 'published', false);
@@ -532,23 +533,25 @@ class Granule extends Manager {
    * @returns {Array<Object>} the granules' queue for a given collection
    */
   granuleAttributeScan(searchParams) {
-    const { attributeValues, filterExpression } = this.getDynamoDbSearchParams(searchParams, false);
+    const {
+      attributeNames,
+      attributeValues,
+      filterExpression,
+    } = this.getDynamoDbSearchParams(searchParams, false);
+
+    const projectionArray = [];
+    const fields = ['granuleId', 'collectionId', 'createdAt', 'beginningDateTime',
+      'endingDateTime', 'status', 'updatedAt', 'published', 'provider'];
+    fields.forEach((field) => {
+      attributeNames[`#${field}`] = field;
+      projectionArray.push(`#${field}`);
+    });
 
     const params = {
       TableName: this.tableName,
-      ExpressionAttributeNames:
-      {
-        '#granuleId': 'granuleId',
-        '#collectionId': 'collectionId',
-        '#beginningDateTime': 'beginningDateTime',
-        '#endingDateTime': 'endingDateTime',
-        '#createdAt': 'createdAt',
-        '#status': 'status',
-        '#updatedAt': 'updatedAt',
-        '#published': 'published',
-      },
+      ExpressionAttributeNames: attributeNames,
       ExpressionAttributeValues: filterExpression ? attributeValues : undefined,
-      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
+      ProjectionExpression: projectionArray.join(', '),
       FilterExpression: filterExpression,
     };
 

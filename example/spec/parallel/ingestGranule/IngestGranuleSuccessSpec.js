@@ -244,7 +244,7 @@ describe('The S3 Ingest Granules workflow', () => {
       }
     );
 
-    opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS/Terra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
+    opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
   });
 
   afterAll(async () => {
@@ -451,7 +451,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
-        if (file.size) {
+        if (file.size && expectedFile.size) {
           expect(file.size).toEqual(expectedFile.size);
         }
       });
@@ -512,8 +512,8 @@ describe('The S3 Ingest Granules workflow', () => {
       if (beforeAllError) fail(beforeAllError);
     });
 
-    it('publishes the granule metadata to CMR', () => {
-      const result = conceptExists(granule.cmrLink);
+    it('publishes the granule metadata to CMR', async () => {
+      const result = await conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);

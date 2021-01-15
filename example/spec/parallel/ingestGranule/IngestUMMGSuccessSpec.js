@@ -272,7 +272,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
-        if (file.size) {
+        if (file.size && expectedFile.size) {
           expect(file.size).toEqual(expectedFile.size);
         }
       });
@@ -350,7 +350,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('adds the opendap URL to the CMR metadata', () => {
-      const opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS/Terra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${inputPayload.granules[0].granuleId}`;
+      const opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${inputPayload.granules[0].granuleId}`;
       expect(resourceURLs).toContain(opendapFilePath);
     });
 
