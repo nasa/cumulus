@@ -1,6 +1,7 @@
 import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+import { ApiFile } from '@cumulus/types/api/files';
 import {
   PostgresCollectionRecord,
   PostgresProviderRecord,
@@ -8,7 +9,7 @@ import {
   PostgresPdrRecord,
   PostgresGranuleRecord,
   PostgresGranule,
-  PostgresFileRecord,
+  // PostgresFileRecord,
   PostgresFile,
   getRecordCumulusId,
   tableNames,
@@ -22,6 +23,12 @@ import { MigrationSummary } from './types';
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
+const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
+
+export interface GranulesAndFilesMigrationSummary {
+  granulesSummary: MigrationSummary,
+  filesSummary: MigrationSummary,
+}
 
 /**
  * Migrate granules record from Dynamo to RDS.
@@ -91,13 +98,20 @@ export const migrateGranuleRecord = async (
     execution_cumulus_id: executionCumulusId,
     pdr_cumulus_id: pdrCumulusId,
     provider_cumulus_id: providerCumulusId,
-    beginning_date_time: new Date(dynamoRecord.beginningDateTime),
-    ending_date_time: new Date(dynamoRecord.endingDateTime),
-    last_update_date_time: new Date(dynamoRecord.lastUpdateDateTime),
-    processing_end_date_time: new Date(dynamoRecord.processingEndDateTime),
-    processing_start_date_time: new Date(dynamoRecord.processingStartDateTime),
-    production_date_time: new Date(dynamoRecord.productionDateTime),
-    timestamp: new Date(dynamoRecord.timestamp),
+    beginning_date_time: dynamoRecord.beginningDateTime
+      ? new Date(dynamoRecord.beginningDateTime) : undefined,
+    ending_date_time: dynamoRecord.endingDateTime
+      ? new Date(dynamoRecord.endingDateTime) : undefined,
+    last_update_date_time: dynamoRecord.lastUpdateDateTime
+      ? new Date(dynamoRecord.lastUpdateDateTime) : undefined,
+    processing_end_date_time: dynamoRecord.processingEndDateTime
+      ? new Date(dynamoRecord.processingEndDateTime) : undefined,
+    processing_start_date_time: dynamoRecord.processingStartDateTime
+      ? new Date(dynamoRecord.processingStartDateTime) : undefined,
+    production_date_time: dynamoRecord.productionDateTime
+      ? new Date(dynamoRecord.productionDateTime) : undefined,
+    timestamp: dynamoRecord.timestamp
+      ? new Date(dynamoRecord.timestamp) : undefined,
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: new Date(dynamoRecord.updatedAt),
   };
@@ -106,19 +120,22 @@ export const migrateGranuleRecord = async (
 };
 
 /**
- * Migrate Files record from a Granules record from DynamoDB  to RDS.
+ * Migrate File record from a Granules record from DynamoDB  to RDS.
  *
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- *   Record from DynamoDB
+ * @param {ApiFile} file - Granule file
+ * @param {string} granuleId - ID of granule
+ * @param {string} collectionId - ID of collection
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateFileRecord = async (
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  file: ApiFile,
+  granuleId: string,
+  collectionId: string,
   knex: Knex
 ): Promise<void> => {
-  const [name, version] = dynamoRecord.collectionId.split('___');
+  const [name, version] = collectionId.split('___');
 
   const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
     { name, version },
@@ -127,39 +144,44 @@ export const migrateFileRecord = async (
   );
 
   const granuleCumulusId = await getRecordCumulusId<PostgresGranuleRecord>(
-    { granule_id: dynamoRecord.granuleId, collection_cumulus_id: collectionCumulusId },
-    tableNames.executions,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId },
+    tableNames.granules,
     knex
   );
 
-  const existingRecord = await knex<PostgresFileRecord>('files')
-    .where({ bucket: dynamoRecord.bucket, key: dynamoRecord.key })
-    .first();
+  const bucket = getBucket(file);
+  const key = getKey(file);
+  /*
+    const existingRecord = await knex<PostgresFileRecord>('files')
+      .where({ bucket: file.bucket, key: file.key })
+      .first();
 
-  // Throw error if it was already migrated.
-  if (existingRecord) {
-    throw new RecordAlreadyMigrated(`File with bucket ${dynamoRecord.bucket} and key ${dynamoRecord.key} was already migrated, skipping`);
-  }
+    // Throw error if it was already migrated.
+    if (existingRecord) {
+      // eslint-disable-next-line max-len
+      throw new RecordAlreadyMigrated(`File with bucket ${bucket}, key ${key} was already migrated, skipping`);
+    }
+    */
 
   // Map old record to new schema.
   const updatedRecord: PostgresFile = {
+    bucket,
+    key,
     granule_cumulus_id: granuleCumulusId,
-    file_size: dynamoRecord.size,
-    bucket: dynamoRecord.bucket,
-    checksum_type: dynamoRecord.checksumType,
-    file_name: dynamoRecord.fileName,
-    key: dynamoRecord.key,
-    source: dynamoRecord.source,
-    path: dynamoRecord.path,
+    file_size: file.size,
+    checksum_value: file.checksum,
+    checksum_type: file.checksumType,
+    file_name: file.fileName,
+    source: file.source,
+    path: file.path,
   };
-
   await knex('files').insert(updatedRecord);
 };
 
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
-): Promise<MigrationSummary> => {
+): Promise<GranulesAndFilesMigrationSummary> => {
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
@@ -187,6 +209,8 @@ export const migrateGranulesAndFiles = async (
     // Validate record before processing using API model schema
     Manager.recordIsValid(record, schemas.granule);
     const files = record.files;
+    const granuleId = record.granuleId;
+    const collectionId = record.collectionId;
 
     try {
       await migrateGranuleRecord(record, knex);
@@ -204,9 +228,9 @@ export const migrateGranulesAndFiles = async (
       }
 
       while (files) {
-        files.map(async (file : any) => {
+        files.map(async (file : ApiFile) => {
           try {
-            await migrateFileRecord(file, knex);
+            await migrateFileRecord(file, granuleId, collectionId, knex);
             fileMigrationSummary.success += 1;
           } catch (migrationError) {
             if (migrationError instanceof RecordAlreadyMigrated) {
@@ -230,5 +254,5 @@ export const migrateGranulesAndFiles = async (
   /* eslint-enable no-await-in-loop */
   logger.info(`Successfully migrated ${granuleMigrationSummary.success} granule records.`);
   logger.info(`Successfully migrated ${fileMigrationSummary.success} file records.`);
-  return granuleMigrationSummary;
+  return { granulesSummary: granuleMigrationSummary, filesSummary: fileMigrationSummary };
 };
