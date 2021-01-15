@@ -274,6 +274,23 @@ test.serial('Reindex - destination index exists', async (t) => {
     .expect(200);
 
   t.is(response.body.message, `Reindexing to ${destIndex} from ${esIndex}. Check the reindex-status endpoint for status.`);
+
+  // Check the reindex status endpoint to see if the operation has completed
+  let statusResponse = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  /* eslint-disable no-await-in-loop */
+  while (Object.keys(statusResponse.body.reindexStatus.nodes).length > 0) {
+    statusResponse = await request(app)
+      .get('/elasticsearch/reindex-status')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  await esClient.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex status, no task running', async (t) => {
