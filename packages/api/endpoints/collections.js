@@ -10,7 +10,7 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { getKnexClient, translateApiCollectionToPostgresCollection } = require('@cumulus/db');
+const { getKnexClient, translateApiCollectionToPostgresCollection, tableNames } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -116,6 +116,9 @@ async function post(req, res) {
     return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
   }
 
+  collection.updatedAt = Date.now();
+  collection.createdAt = Date.now();
+
   try {
     const dynamoRecord = await collectionsModel.create(
       omit(collection, 'dataType')
@@ -162,29 +165,38 @@ async function post(req, res) {
 async function put(req, res) {
   const { name, version } = req.params;
   const collection = req.body;
+  let dynamoRecord;
+  let oldCollection;
 
   if (name !== collection.name || version !== collection.version) {
     return res.boom.badRequest('Expected collection name and version to be'
       + ` '${name}' and '${version}', respectively, but found '${collection.name}'`
       + ` and '${collection.version}' in payload`);
   }
-
   const collectionsModel = new models.Collection();
-
-  if (!(await collectionsModel.exists(name, version))) {
+  try {
+    oldCollection = await collectionsModel.get({ name, version });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
     return res.boom.notFound(
       `Collection '${name}' version '${version}' not found`
     );
   }
 
-  const dynamoRecord = await collectionsModel.create(collection);
+  collection.updatedAt = Date.now();
+  collection.createdAt = oldCollection.createdAt;
 
-  const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
+  const dbRecord = dynamoRecordToDbRecord(collection);
 
   const dbClient = await getKnexClient();
   await dbClient.transaction(async (trx) => {
-    await trx('collections').where({ name, version }).del();
-    await trx('collections').insert(dbRecord);
+    await trx(tableNames.collections)
+      .insert(dbRecord)
+      .onConflict(['name', 'version'])
+      .merge();
+    dynamoRecord = await collectionsModel.create(collection);
   });
 
   if (inTestMode()) {
