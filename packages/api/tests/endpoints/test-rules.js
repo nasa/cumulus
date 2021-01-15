@@ -585,7 +585,7 @@ test.serial('PUT replaces a rule', async (t) => {
   t.truthy(putTestRule.queueUrl);
 
   const updateRule = {
-    ...omit(putTestRule, ['queueUrl', 'provider', 'collection', 'createdAt']),
+    ...omit(putTestRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
   };
 
@@ -594,6 +594,12 @@ test.serial('PUT replaces a rule', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(putTestRule)
+    .expect(200);
+
+  const { body: originalRule } = await request(app)
+    .get(`/rules/${updateRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   await request(app)
@@ -623,10 +629,10 @@ test.serial('PUT replaces a rule', async (t) => {
     }
   });
 
-  t.like(dbRecord, { ...dbExpectedRule, updated_at: dbRecord.updated_at });
+  t.like(dbRecord, { ...dbExpectedRule, updated_at: dbRecord.updated_at, created_at: dbRecord.created_at });
   t.deepEqual(actualRule, {
     ...updateRule,
-    createdAt: actualRule.createdAt,
+    createdAt: originalRule.createdAt,
     updatedAt: actualRule.updatedAt,
   });
 });
