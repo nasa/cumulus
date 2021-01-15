@@ -183,6 +183,7 @@ test.serial('Reindex - specify a source index that does not exist', async (t) =>
 test.serial('Reindex - specify a source index that is not aliased', async (t) => {
   const { esAlias } = t.context;
   const indexName = 'source-index';
+  const destIndex = randomString();
 
   await esClient.indices.create({
     index: indexName,
@@ -191,14 +192,19 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
-    .send({ aliasName: esAlias, sourceIndex: indexName })
+    .send({
+      aliasName: esAlias,
+      sourceIndex: indexName,
+      destIndex,
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.body.message, `Source index source-index is not aliased with alias ${esAlias}.`);
+  t.is(response.body.message, `Reindexing to ${destIndex} from ${indexName}. Check the reindex-status endpoint for status.`);
 
   await esClient.indices.delete({ index: indexName });
+  await esClient.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex success', async (t) => {
@@ -347,6 +353,8 @@ test.serial('Change index - new index does not exist', async (t) => {
     .expect(200);
 
   t.is(response.body.message, `Change index success - alias ${esAlias} now pointing to ${newIndex}`);
+
+  esClient.indices.delete({ index: newIndex });
 });
 
 test.serial('Change index - current index same as new index', async (t) => {

@@ -57,14 +57,14 @@ async function reindex(req, res) {
 
   const esClient = await Search.es();
 
-  const alias = await esClient.indices.getAlias({
-    name: aliasName,
-  }).then((response) => response.body);
-
-  // alias keys = index name
-  const indices = Object.keys(alias);
-
   if (!sourceIndex) {
+    const alias = await esClient.indices.getAlias({
+      name: aliasName,
+    }).then((response) => response.body);
+
+    // alias keys = index name
+    const indices = Object.keys(alias);
+
     if (indices.length > 1) {
       // We don't know which index to use as the source, throw error
       return res.boom.badRequest(`Multiple indices found for alias ${aliasName}. Specify source index as one of [${indices.sort().join(', ')}].`);
@@ -77,10 +77,6 @@ async function reindex(req, res) {
 
     if (!sourceExists) {
       return res.boom.badRequest(`Source index ${sourceIndex} does not exist.`);
-    }
-
-    if (indices.includes(sourceIndex) === false) {
-      return res.boom.badRequest(`Source index ${sourceIndex} is not aliased with alias ${aliasName}.`);
     }
   }
 
