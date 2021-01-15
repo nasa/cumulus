@@ -15,7 +15,7 @@
                 ],
                 "version_id": "2.0",
                 "updated": "2017-12-01T00:00:00.000Z",
-                "dataset_id": "GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC",
+                "dataset_id": "Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters",
                 "has_spatial_subsetting": true,
                 "has_transforms": false,
                 "associations": {
@@ -64,7 +64,7 @@
                 "organizations": [
                     "NASA/GSFC/SED/ESD/GCDC/GESDISC"
                 ],
-                "title": "GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC",
+                "title": "Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters",
                 "coordinate_system": "CARTESIAN",
                 "summary": "Global Land Data Assimilation System Version 2 (hereafter, GLDAS-2) has two components: one forced entirely with the Princeton meteorological forcing data (hereafter, GLDAS-2.0), and the other forced with a combination of model and observation based forcing data sets (hereafter, GLDAS-2.1).\n\nThis data set, GLDAS-2.0 0.25 degree daily, contains a series of land surface parameters simulated from the Catchment Land Surface Model 3.3, and currently covers from January 1948 to December 2014.\n\nThe GLDAS-2.0 model simulations were initialized on January 1, 1948, using soil moisture and other state fields from the LSM climatology for that day of the year. The simulations were forced by the global meteorological forcing data set from Princeton University (Sheffield et al., 2006). Each simulation uses the common GLDAS data sets for land water mask (MOD44W: Carroll et al., 2009) and elevation (GTOPO30) along with the model default land cover and soils datasets. Catchment model uses the Mosaic land cover classification and soils, topographic, and other model-specific parameters were derived in a consistent manner as in the NASA/GMAO&#8217;s GEOS-5 climate modeling system. The MODIS based land surface parameters are used in the current GLDAS-2.0 and GLDAS-2.1 products. For more information, please see the README Document.",
                 "time_end": "2014-12-30T23:59:59.000Z",

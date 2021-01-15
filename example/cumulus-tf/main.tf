@@ -26,12 +26,6 @@ locals {
   elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
   elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
-
-  protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
-  public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
-
-  tea_stack_name = "${var.prefix}-thin-egress-app"
-  tea_stage_name = "DEV"
 }
 
 data "aws_caller_identity" "current" {}
@@ -147,6 +141,7 @@ module "cumulus" {
     "dopeters",
     "jasmine",
     "jennyhliu",
+    "jmccoy_uat",
     "kbaynes",
     "kkelly",
     "kovarik",
@@ -163,15 +158,13 @@ module "cumulus" {
   api_gateway_stage             = var.api_gateway_stage
 
   # Thin Egress App settings
-  # must match stack_name variable for thin-egress-app module
-  tea_stack_name = local.tea_stack_name
   # must match stage_name variable for thin-egress-app module
   tea_api_gateway_stage = local.tea_stage_name
 
-  tea_rest_api_id = module.thin_egress_app.rest_api.id
+  tea_rest_api_id               = module.thin_egress_app.rest_api.id
   tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
-  tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
-  tea_external_api_endpoint = module.thin_egress_app.api_endpoint
+  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
+  tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
 
   log_destination_arn = var.log_destination_arn
 
@@ -183,61 +176,6 @@ module "cumulus" {
   ems_deploy = var.ems_deploy
 
   tags = local.tags
-}
-
-resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
-  name_prefix = "${var.prefix}-tea-urs-creds-"
-  description = "URS credentials for the ${var.prefix} Thin Egress App"
-  tags        = local.tags
-}
-
-resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
-  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
-  secret_string = jsonencode({
-    UrsId       = var.urs_client_id
-    UrsAuth     = base64encode("${var.urs_client_id}:${var.urs_client_password}")
-  })
-}
-
-resource "aws_s3_bucket_object" "bucket_map_yaml" {
-  bucket  = var.system_bucket
-  key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
-  content = templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
-    protected_buckets = local.protected_bucket_names,
-    public_buckets = local.public_bucket_names
-  })
-  etag    = md5(templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
-    protected_buckets = local.protected_bucket_names,
-    public_buckets = local.public_bucket_names
-  }))
-  tags    = var.tags
-}
-
-module "thin_egress_app" {
-  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.88.zip"
-
-  auth_base_url              = "https://uat.urs.earthdata.nasa.gov"
-  bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.id
-  bucketname_prefix          = ""
-  config_bucket              = var.system_bucket
-  domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
-  jwt_secret_name            = var.thin_egress_jwt_secret_name
-  permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
-  private_vpc                = var.vpc_id
-  stack_name                 = local.tea_stack_name
-  stage_name                 = local.tea_stage_name
-  urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
-  vpc_subnet_ids             = var.lambda_subnet_ids
-  log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
-}
-
-resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  count           = (var.log_api_gateway_to_cloudwatch && var.log_destination_arn != null) ? 1 : 0
-  name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
-  distribution    = "ByLogStream"
-  destination_arn = var.log_destination_arn
-  filter_pattern  = ""
-  log_group_name  = module.thin_egress_app.egress_log_group
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
