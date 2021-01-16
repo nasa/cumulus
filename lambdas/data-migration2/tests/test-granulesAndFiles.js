@@ -4,11 +4,11 @@ const test = require('ava');
 
 const Collection = require('@cumulus/api/models/collections');
 const Execution = require('@cumulus/api/models/executions');
+const Granule = require('@cumulus/api/models/granules');
+const s3Utils = require('@cumulus/aws-client/S3');
 
-const {
-  createBucket,
-  recursivelyDeleteS3Bucket,
-} = require('@cumulus/aws-client/S3');
+const { createBucket } = require('@cumulus/aws-client/S3');
+const { secretsManager } = require('@cumulus/aws-client/services');
 const {
   translateApiCollectionToPostgresCollection,
   translateApiExecutionToPostgresExecution,
@@ -16,11 +16,11 @@ const {
 } = require('@cumulus/db');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { fakeCollectionFactory, fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
-// const { RecordAlreadyMigrated } = require('@cumulus/errors');
+const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
-const { migrateGranuleRecord, migrateFileRecord } = require('../dist/lambda/granulesAndFiles');
+const { migrateGranuleRecord, migrateFileRecord, migrateGranulesAndFiles } = require('../dist/lambda/granulesAndFiles');
 
 const migrateFakeCollectionRecord = async (record, knex) => {
   const updatedRecord = translateApiCollectionToPostgresCollection(record);
@@ -36,7 +36,10 @@ const migrateFakeExecutionRecord = async (record, knex) => {
 
 const buildCollectionId = (name, version) => `${name}___${version}`;
 
-const generateTestGranule = (collection, executionId, pdrName, provider) => ({
+const dateString = new Date().toString();
+const bucket = cryptoRandomString({ length: 10 });
+
+const generateTestGranule = (collection, executionId, alternateBucket, pdrName, provider) => ({
   granuleId: cryptoRandomString({ length: 5 }),
   collectionId: buildCollectionId(collection.name, collection.version),
   pdrName: pdrName,
@@ -44,10 +47,12 @@ const generateTestGranule = (collection, executionId, pdrName, provider) => ({
   status: 'running',
   execution: executionId,
   cmrLink: cryptoRandomString({ length: 10 }),
-  published: true,
+  published: false,
   duration: 10,
   files: [
     {
+      bucket: alternateBucket || bucket,
+      key: cryptoRandomString({ length: 10 }),
       checksum: 'checkSum01',
       checksumType: 'md5',
       fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
@@ -55,23 +60,17 @@ const generateTestGranule = (collection, executionId, pdrName, provider) => ({
       source: 's3://test/tf-SyncGranuleSuccess-1607005817091-test-data/files/MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
       type: 'data',
     },
-    {
-      fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf.met',
-      size: 21708,
-      source: 's3://test/tf-SyncGranuleSuccess-1607005817091-test-data/files/MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
-      type: 'metadata',
-    },
   ],
   error: {},
   productVolume: 1119742,
   timeToPreprocess: 0,
-  beginningDateTime: Date.now(),
-  endingDateTime: Date.now(),
-  processingStartDateTime: Date.now(),
-  processingEndDateTime: Date.now(),
-  lastUpdateDateTime: Date.now(),
+  beginningDateTime: dateString,
+  endingDateTime: dateString,
+  processingStartDateTime: dateString,
+  processingEndDateTime: dateString,
+  lastUpdateDateTime: dateString,
   timeToArchive: 0,
-  productionDateTime: Date.now(),
+  productionDateTime: dateString,
   timestamp: Date.now(),
   createdAt: Date.now() - 200 * 1000,
   updatedAt: Date.now(),
@@ -79,24 +78,35 @@ const generateTestGranule = (collection, executionId, pdrName, provider) => ({
 
 let collectionsModel;
 let executionsModel;
+let granulesModel;
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';
 
 test.before(async (t) => {
+  await s3Utils.createBucket(bucket);
   process.env.stackName = cryptoRandomString({ length: 10 });
-  process.env.system_bucket = cryptoRandomString({ length: 10 });
+  process.env.system_bucket = bucket;
 
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-
-  await createBucket(process.env.system_bucket);
+  process.env.GranulesTable = cryptoRandomString({ length: 10 });
 
   collectionsModel = new Collection();
   await collectionsModel.createTable();
 
   executionsModel = new Execution();
   await executionsModel.createTable();
+
+  granulesModel = new Granule();
+  await granulesModel.createTable();
+
+  // Store the CMR password
+  process.env.cmr_password_secret_name = cryptoRandomString({ length: 5 });
+  await secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: cryptoRandomString({ length: 5 }),
+  }).promise();
 
   t.context.knexAdmin = await getKnexClient({
     env: {
@@ -136,11 +146,16 @@ test.afterEach.always(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
-
+  await granulesModel.deleteTable();
   await collectionsModel.deleteTable();
   await executionsModel.deleteTable();
 
+  await s3Utils.recursivelyDeleteS3Bucket(bucket);
+
+  await secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true,
+  }).promise();
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
   await t.context.knexAdmin.destroy();
@@ -227,40 +242,251 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
     ['type'])
   );
 });
-/*
+
 test.serial('migrateGranuleRecord throws error on invalid source data from DynamoDB', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const testGranule = generateTestGranule(testCollection, testExecution.arn);
+  delete testGranule.collectionId;
+
+  await t.throwsAsync(
+    migrateGranuleRecord(testGranule, knex),
+    { name: 'SchemaValidationError' }
+  );
 });
 
-test.serial('migrateGranuleRecord handles nullable fields on source execution data', async (t) => {
+test.serial('migrateGranuleRecord handles nullable fields on source granule data', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const testGranule = generateTestGranule(testCollection, testExecution.arn);
+
+  delete testGranule.pdrName;
+  delete testGranule.cmrLink;
+  delete testGranule.published;
+  delete testGranule.duration;
+  delete testGranule.files;
+  delete testGranule.error;
+  delete testGranule.productVolume;
+  delete testGranule.timeToPreprocess;
+  delete testGranule.beginningDateTime;
+  delete testGranule.endingDateTime;
+  delete testGranule.processingStartDateTime;
+  delete testGranule.processingEndDateTime;
+  delete testGranule.lastUpdateDateTime;
+  delete testGranule.timeToArchive;
+  delete testGranule.productionDateTime;
+  delete testGranule.timestamp;
+  delete testGranule.provider;
+
+  await migrateGranuleRecord(testGranule, knex);
+
+  const record = await t.context.knex.queryBuilder()
+    .select()
+    .table(tableNames.granules)
+    .where({ granule_id: testGranule.granuleId, collection_cumulus_id: collectionCumulusId })
+    .first();
+
+  t.like(
+    omit(record, ['cumulus_id']),
+    {
+      granule_id: testGranule.granuleId,
+      status: testGranule.status,
+      collection_cumulus_id: collectionCumulusId,
+      published: testGranule.published,
+      duration: null,
+      time_to_archive: null,
+      time_to_process: null,
+      product_volume: null,
+      error: null,
+      cmr_link: null,
+      execution_cumulus_id: executionCumulusId,
+      pdr_cumulus_id: null,
+      provider_cumulus_id: null,
+      beginning_date_time: null,
+      ending_date_time: null,
+      last_update_date_time: null,
+      processing_end_date_time: null,
+      processing_start_date_time: null,
+      production_date_time: null,
+      timestamp: null,
+      created_at: new Date(testGranule.createdAt),
+      updated_at: new Date(testGranule.updatedAt),
+    }
+  );
 });
 
 test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const testGranule = generateTestGranule(testCollection, testExecution.arn);
+  await migrateGranuleRecord(testGranule, knex);
+
+  await t.throwsAsync(
+    migrateGranuleRecord(testGranule, knex),
+    { instanceOf: RecordAlreadyMigrated }
+  );
 });
 
-test.serial('migrateFileRecord throws error on invalid source data from DynamoDB', async (t) => {
+test.serial('migrateFileRecord handles nullable fields on source file data', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const testGranule = generateTestGranule(testCollection, testExecution.arn);
+  const testFile = testGranule.files[0];
+
+  delete testFile.bucket;
+  delete testFile.checksum;
+  delete testFile.checksumType;
+  delete testFile.fileName;
+  delete testFile.key;
+  delete testFile.path;
+  delete testFile.size;
+  delete testFile.source;
+
+  await migrateGranuleRecord(testGranule, knex);
+  await migrateFileRecord(testFile, testGranule.granuleId, testGranule.collectionId, knex);
+
+  const record = await t.context.knex.queryBuilder()
+    .select()
+    .table(tableNames.files)
+    .first();
+  // .where({ bucket: testFile.bucket, key: testFile.key });
+
+  t.like(
+    omit(record, ['cumulus_id']),
+    {
+      bucket: null,
+      checksum_value: null,
+      checksum_type: null,
+      file_size: null,
+      file_name: null,
+      key: null,
+      source: null,
+    }
+  );
 });
 
-test.serial('migrateFileRecord handles nullable fields on source execution data', async (t) => {
+test.serial('migrateGranulesAndFiles skips already migrated granule record', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const testGranule = generateTestGranule(testCollection, testExecution.arn);
+  await Promise.all(testGranule.files.map((file) => s3Utils.s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: 'some-body',
+  })));
+  await migrateGranuleRecord(testGranule, knex);
+  await granulesModel.create(testGranule);
+
+  t.teardown(() => {
+    granulesModel.delete(testGranule);
+  });
+
+  const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    filesSummary: {
+      dynamoRecords: 0,
+      failed: 0,
+      skipped: 0,
+      success: 0,
+    },
+    granulesSummary: {
+      dynamoRecords: 1,
+      failed: 0,
+      skipped: 1,
+      success: 0,
+    },
+  });
+  const records = await t.context.knex.queryBuilder().select().table(tableNames.granules);
+  t.is(records.length, 1);
+});
+
+test.serial.skip('migrateGranulesAndFiles processes multiple granules and files', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const alternateBucket = cryptoRandomString({ length: 10 });
+  await s3Utils.createBucket(alternateBucket);
+
+  const testCollection2 = fakeCollectionFactory();
+  const testExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
+
+  await migrateFakeCollectionRecord(testCollection2, knex);
+  await migrateFakeExecutionRecord(testExecution2, knex);
+
+  const testGranule1 = generateTestGranule(testCollection, testExecution.arn);
+  const testGranule2 = generateTestGranule(testCollection2, testExecution2.arn, alternateBucket);
+
+  await Promise.all(testGranule1.files.map((file) => s3Utils.s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: 'some-body',
+  })));
+
+  await Promise.all(testGranule2.files.map((file) => s3Utils.s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: 'some-body',
+  })));
+
+  await Promise.all([
+    granulesModel.create(testGranule1),
+    granulesModel.create(testGranule2),
+  ]);
+
+  t.teardown(async () => {
+    granulesModel.delete({ granuleId: testGranule1.granuleId });
+    granulesModel.delete({ granuleId: testGranule2.granuleId });
+    await s3Utils.recursivelyDeleteS3Bucket(alternateBucket);
+  });
+
+  const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    filesSummary: {
+      dynamoRecords: 2,
+      failed: 0,
+      skipped: 0,
+      success: 2,
+    },
+    granulesSummary: {
+      dynamoRecords: 2,
+      failed: 0,
+      skipped: 0,
+      success: 2,
+    },
+  });
+  const records = await t.context.knex.queryBuilder().select().table(tableNames.granules);
+  t.is(records.length, 2);
+});
+
+/*
+test.serial('migrateGranulesAndFiles processes all non-failing records', async (t) => {
 });
 
 test.serial('migrateFileRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
-});
-
-test.serial('migrateGranules skips already migrated record', async (t) => {
-});
-
-test.serial('migrateGranules process multiple granules', async (t) => {
-});
-
-test.serial('migrateGranules process all non-failing records', async (t) => {
-});
-
-test.serial('migrateFiles skips already migrated record', async (t) => {
-});
-
-test.serial('migrateFiles process multiple granules', async (t) => {
-});
-
-test.serial('migrateFiles process all non-failing records', async (t) => {
 });
 */
