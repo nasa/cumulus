@@ -483,10 +483,8 @@ test.serial.skip('migrateGranulesAndFiles processes multiple granules and files'
   t.is(records.length, 2);
 });
 
-/*
-test.serial('migrateGranulesAndFiles processes all non-failing records', async (t) => {
+test.serial.skip('migrateGranulesAndFiles processes all non-failing records', async (t) => {
 });
 
-test.serial('migrateFileRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+test.serial.skip('migrateFileRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
 });
-*/
