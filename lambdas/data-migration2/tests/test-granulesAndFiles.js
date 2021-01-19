@@ -8,7 +8,7 @@ const Granule = require('@cumulus/api/models/granules');
 const s3Utils = require('@cumulus/aws-client/S3');
 
 const { createBucket } = require('@cumulus/aws-client/S3');
-const { secretsManager } = require('@cumulus/aws-client/services');
+const { secretsManager, dynamodbDocClient } = require('@cumulus/aws-client/services');
 const {
   translateApiCollectionToPostgresCollection,
   translateApiExecutionToPostgresExecution,
@@ -465,7 +465,57 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
   t.is(fileRecords.length, 2);
 });
 
-test.serial.skip('migrateGranulesAndFiles processes all non-failing records', async (t) => {
+test.serial('migrateGranulesAndFiles processes all non-failing granule records and does not process files of failling granule records', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
+
+  const alternateBucket = cryptoRandomString({ length: 10 });
+  await s3Utils.createBucket(alternateBucket);
+
+  const testCollection2 = fakeCollectionFactory();
+  const testExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
+
+  await migrateFakeCollectionRecord(testCollection2, knex);
+  await migrateFakeExecutionRecord(testExecution2, knex);
+
+  const testGranule2 = generateTestGranule(testCollection2, testExecution2.arn, alternateBucket);
+  // remove required field so record will fail
+  delete testGranule.collectionId;
+
+  await Promise.all([
+    dynamodbDocClient().put({
+      TableName: process.env.GranulesTable,
+      Item: testGranule,
+    }).promise(),
+    granulesModel.create(testGranule2),
+  ]);
+
+  t.teardown(async () => {
+    granulesModel.delete({ granuleId: testGranule.granuleId });
+    granulesModel.delete({ granuleId: testGranule2.granuleId });
+  });
+
+  const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
+  t.deepEqual(migrationSummary, {
+    filesSummary: {
+      dynamoRecords: 1,
+      failed: 0,
+      skipped: 0,
+      success: 1,
+    },
+    granulesSummary: {
+      dynamoRecords: 2,
+      failed: 1,
+      skipped: 0,
+      success: 1,
+    },
+  });
+  const records = await t.context.knex.queryBuilder().select().table(tableNames.granules);
+  const fileRecords = await t.context.knex.queryBuilder().select().table(tableNames.files);
+  t.is(records.length, 1);
+  t.is(fileRecords.length, 1);
 });
 
 test.serial.skip('migrateFileRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
