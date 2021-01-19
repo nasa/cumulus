@@ -9,7 +9,6 @@ import {
   PostgresPdrRecord,
   PostgresGranuleRecord,
   PostgresGranule,
-  // PostgresFileRecord,
   PostgresFile,
   getRecordCumulusId,
   tableNames,
@@ -153,17 +152,6 @@ export const migrateFileRecord = async (
 
   const bucket = getBucket(file);
   const key = getKey(file);
-  /*
-    const existingRecord = await knex<PostgresFileRecord>('files')
-      .where({ bucket: file.bucket, key: file.key })
-      .first();
-
-    // Throw error if it was already migrated.
-    if (existingRecord) {
-      // eslint-disable-next-line max-len
-      throw new RecordAlreadyMigrated(`File with bucket ${bucket}, key ${key} was already migrated, skipping`);
-    }
-    */
 
   // Map old record to new schema.
   const updatedRecord: PostgresFile = {
