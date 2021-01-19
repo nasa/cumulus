@@ -46,3 +46,6 @@ bt-tf:
 
 jtran-my-tf:
   bucket: jtran-my-tf-internal
+
+np:
+  bucket: npauzenga-internal
