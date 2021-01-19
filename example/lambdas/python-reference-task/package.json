@@ -16,7 +16,7 @@
     "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
     "build": "pip install pipenv && PIPENV_VENV_IN_PROJECT=1 pipenv install --dev --deploy --ignore-pipfile",
     "prepare": "npm run build",
-    "package": "npm run clean && ../../scripts/package-pipenv-deps.sh $(pwd) && cp *.py ./dist/ && cd ./dist && find . -type f -print0 | xargs -0 node ../../../../bin/zip.js lambda.zip && cd ..",
+    "package": "npm run clean && ./package.sh $(pwd)",
     "install-python-deps": "npm run build"
   },
   "ava": {

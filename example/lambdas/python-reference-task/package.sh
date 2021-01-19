@@ -15,3 +15,11 @@ cd "$SITE_PACKAGES" || exit 1
 cp -R ./* "$DIR/dist/"
 
 cd "$DIR" || exit 1
+
+cp ./*.py ./dist/
+
+cd ./dist || exit 1
+
+find . -type f -print0 | xargs -0 node ../../../../bin/zip.js lambda.zip 
+
+cd .. || exit 1
