@@ -136,6 +136,7 @@ test.beforeEach(async (t) => {
 
   t.context.collectionCumulusId = await migrateFakeCollectionRecord(testCollection, t.context.knex);
   t.context.executionCumulusId = await migrateFakeExecutionRecord(testExecution, t.context.knex);
+  t.context.testGranule = generateTestGranule(testCollection, testExecution.arn);
 });
 
 test.afterEach.always(async (t) => {
@@ -163,14 +164,12 @@ test.after.always(async (t) => {
 
 test.serial('migrateGranuleRecord correctly migrates granule record', async (t) => {
   const {
-    knex,
-    testCollection,
-    testExecution,
     collectionCumulusId,
     executionCumulusId,
+    knex,
+    testGranule,
   } = t.context;
 
-  const testGranule = generateTestGranule(testCollection, testExecution.arn);
   await migrateGranuleRecord(testGranule, knex);
 
   const record = await t.context.knex.queryBuilder()
@@ -212,11 +211,9 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
 test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   const {
     knex,
-    testCollection,
-    testExecution,
+    testGranule,
   } = t.context;
 
-  const testGranule = generateTestGranule(testCollection, testExecution.arn);
   const testFile = testGranule.files[0];
   await migrateGranuleRecord(testGranule, knex);
   await migrateFileRecord(testFile, testGranule.granuleId, testGranule.collectionId, knex);
@@ -246,11 +243,9 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
 test.serial('migrateGranuleRecord throws error on invalid source data from DynamoDB', async (t) => {
   const {
     knex,
-    testCollection,
-    testExecution,
+    testGranule,
   } = t.context;
 
-  const testGranule = generateTestGranule(testCollection, testExecution.arn);
   delete testGranule.collectionId;
 
   await t.throwsAsync(
@@ -261,14 +256,11 @@ test.serial('migrateGranuleRecord throws error on invalid source data from Dynam
 
 test.serial('migrateGranuleRecord handles nullable fields on source granule data', async (t) => {
   const {
-    knex,
-    testCollection,
-    testExecution,
     collectionCumulusId,
     executionCumulusId,
+    knex,
+    testGranule,
   } = t.context;
-
-  const testGranule = generateTestGranule(testCollection, testExecution.arn);
 
   delete testGranule.pdrName;
   delete testGranule.cmrLink;
@@ -328,11 +320,9 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
 test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const {
     knex,
-    testCollection,
-    testExecution,
+    testGranule,
   } = t.context;
 
-  const testGranule = generateTestGranule(testCollection, testExecution.arn);
   await migrateGranuleRecord(testGranule, knex);
 
   await t.throwsAsync(
@@ -344,11 +334,9 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already
 test.serial('migrateFileRecord handles nullable fields on source file data', async (t) => {
   const {
     knex,
-    testCollection,
-    testExecution,
+    testGranule,
   } = t.context;
 
-  const testGranule = generateTestGranule(testCollection, testExecution.arn);
   const testFile = testGranule.files[0];
 
   delete testFile.bucket;
@@ -386,11 +374,9 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
 test.serial('migrateGranulesAndFiles skips already migrated granule record', async (t) => {
   const {
     knex,
-    testCollection,
-    testExecution,
+    testGranule,
   } = t.context;
 
-  const testGranule = generateTestGranule(testCollection, testExecution.arn);
   await Promise.all(testGranule.files.map((file) => s3Utils.s3PutObject({
     Bucket: file.bucket,
     Key: file.key,
@@ -422,11 +408,10 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
   t.is(records.length, 1);
 });
 
-test.serial.skip('migrateGranulesAndFiles processes multiple granules and files', async (t) => {
+test.serial('migrateGranulesAndFiles processes multiple granules and files', async (t) => {
   const {
     knex,
-    testCollection,
-    testExecution,
+    testGranule,
   } = t.context;
 
   const alternateBucket = cryptoRandomString({ length: 10 });
@@ -438,16 +423,11 @@ test.serial.skip('migrateGranulesAndFiles processes multiple granules and files'
   await migrateFakeCollectionRecord(testCollection2, knex);
   await migrateFakeExecutionRecord(testExecution2, knex);
 
-  const testGranule1 = generateTestGranule(testCollection, testExecution.arn);
+  const testGranule1 = testGranule;
   const testGranule2 = generateTestGranule(testCollection2, testExecution2.arn, alternateBucket);
+  const files = testGranule1.files.concat(testGranule2.files);
 
-  await Promise.all(testGranule1.files.map((file) => s3Utils.s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: 'some-body',
-  })));
-
-  await Promise.all(testGranule2.files.map((file) => s3Utils.s3PutObject({
+  await Promise.all(files.flatMap((file) => s3Utils.s3PutObject({
     Bucket: file.bucket,
     Key: file.key,
     Body: 'some-body',
@@ -480,7 +460,9 @@ test.serial.skip('migrateGranulesAndFiles processes multiple granules and files'
     },
   });
   const records = await t.context.knex.queryBuilder().select().table(tableNames.granules);
+  const fileRecords = await t.context.knex.queryBuilder().select().table(tableNames.files);
   t.is(records.length, 2);
+  t.is(fileRecords.length, 2);
 });
 
 test.serial.skip('migrateGranulesAndFiles processes all non-failing records', async (t) => {

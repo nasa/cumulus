@@ -118,7 +118,7 @@ export const migrateGranuleRecord = async (
     updated_at: new Date(dynamoRecord.updatedAt),
   };
 
-  await knex('granules').insert(updatedRecord);
+  await knex(tableNames.granules).insert(updatedRecord);
 };
 
 /**
@@ -216,7 +216,7 @@ export const migrateGranulesAndFiles = async (
       await migrateGranuleRecord(record, knex);
       granuleMigrationSummary.success += 1;
 
-      files.map(async (file : ApiFile) => {
+      await Promise.all(files.map(async (file : ApiFile) => {
         fileMigrationSummary.dynamoRecords += 1;
         try {
           await migrateFileRecord(file, granuleId, collectionId, knex);
@@ -233,7 +233,7 @@ export const migrateGranulesAndFiles = async (
             );
           }
         }
-      });
+      }));
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
         granuleMigrationSummary.skipped += 1;
