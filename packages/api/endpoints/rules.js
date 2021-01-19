@@ -67,21 +67,21 @@ async function post(req, res) {
   } = req.testContext || {};
 
   let record;
-  const rule = req.body || {};
-  const name = rule.name;
+  const apiRule = req.body || {};
+  const name = apiRule.name;
 
   if (await model.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
   try {
-    rule.createdAt = Date.now();
-    rule.updatedAt = Date.now();
-    const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
+    apiRule.createdAt = Date.now();
+    apiRule.updatedAt = Date.now();
+    const postgresRecord = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
-      record = await model.create(rule, rule.createdAt);
+      record = await model.create(apiRule, apiRule.createdAt);
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
     return res.send({ message: 'Record saved', record });
@@ -108,10 +108,10 @@ async function post(req, res) {
  */
 async function put({ params: { name }, body }, res) {
   const model = new models.Rule();
-  const record = { ...body };
+  const apiRule = { ...body };
   let newRule;
 
-  if (name !== record.name) {
+  if (name !== apiRule.name) {
     return res.boom.badRequest(`Expected rule name to be '${name}', but found`
       + ` '${body.name}' in payload`);
   }
@@ -119,25 +119,25 @@ async function put({ params: { name }, body }, res) {
   try {
     const oldRule = await model.get({ name });
     const dbClient = await getKnexClient();
-    record.updatedAt = Date.now();
-    record.createdAt = oldRule.createdAt;
+    apiRule.updatedAt = Date.now();
+    apiRule.createdAt = oldRule.createdAt;
     // If rule type is onetime no change is allowed unless it is a rerun
 
-    if (record.action === 'rerun') {
+    if (apiRule.action === 'rerun') {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
 
     const fieldsToDelete = Object.keys(oldRule).filter(
-      (key) => !(key in record) && key !== 'createdAt'
+      (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const newPostgresRecord = await translateApiRuleToPostgresRule(record, dbClient);
+    const newPostgresRecord = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await trx(tableNames.rules)
         .insert(newPostgresRecord)
         .onConflict('name')
         .merge();
-      newRule = await model.update(oldRule, record, fieldsToDelete);
+      newRule = await model.update(oldRule, apiRule, fieldsToDelete);
     });
     if (inTestMode()) await addToLocalES(newRule, indexRule);
 
@@ -163,9 +163,9 @@ async function del(req, res) {
   const model = new models.Rule();
   const dbClient = await getKnexClient();
 
-  let record;
+  let apiRule;
   try {
-    record = await model.get({ name });
+    apiRule = await model.get({ name });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
@@ -175,7 +175,7 @@ async function del(req, res) {
 
   await dbClient.transaction(async (trx) => {
     await trx(tableNames.rules).where({ name }).del();
-    await model.delete(record);
+    await model.delete(apiRule);
   });
 
   if (inTestMode()) {
