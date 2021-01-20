@@ -31,7 +31,6 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
         Files:
           Out of ${granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords} DynamoDB records:
             ${granulesAndFilesMigrationSummary.filesSummary.success} records migrated
-            ${granulesAndFilesMigrationSummary.filesSummary.skipped} records skipped
             ${granulesAndFilesMigrationSummary.filesSummary.failed} records failed
     `;
   } finally {
