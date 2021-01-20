@@ -7,7 +7,6 @@ const {
   tableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
-  nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
@@ -159,12 +158,13 @@ async function put({ params: { id }, body }, res) {
   apiProvider.createdAt = oldProvider.createdAt;
 
   let record;
-  const createObject = await translateApiProviderToPostgresProvider(apiProvider);
+  const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
   await knex.transaction(async (trx) => {
     await trx(tableNames.providers)
-      .where({ name: id })
-      .update(nullifyUndefinedProviderValues(createObject));
+      .insert(postgresProvider)
+      .onConflict('name')
+      .merge();
     record = await providerModel.create(apiProvider);
   });
 

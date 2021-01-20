@@ -10,7 +10,11 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { getKnexClient, translateApiCollectionToPostgresCollection, tableNames } = require('@cumulus/db');
+const {
+  getKnexClient,
+  tableNames,
+  translateApiCollectionToPostgresCollection,
+} = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -188,12 +192,12 @@ async function put(req, res) {
   collection.updatedAt = Date.now();
   collection.createdAt = oldCollection.createdAt;
 
-  const dbRecord = dynamoRecordToDbRecord(collection);
+  const postgresCollection = dynamoRecordToDbRecord(collection);
 
   const dbClient = await getKnexClient();
   await dbClient.transaction(async (trx) => {
     await trx(tableNames.collections)
-      .insert(dbRecord)
+      .insert(postgresCollection)
       .onConflict(['name', 'version'])
       .merge();
     dynamoRecord = await collectionsModel.create(collection);
