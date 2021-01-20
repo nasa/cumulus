@@ -171,9 +171,9 @@ export const migrateFileRecord = async (
 /**
  * Migrate granule and files from DynamoDB to RDS
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- * @param {Knex} Knex
+ * @param {Knex} knex
+ * @returns {Promise<MigrationSummary>} - Migration summary for files
  */
-
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
@@ -199,16 +199,11 @@ export const migrateGranuleAndFilesViaTransaction = async (
         await migrateFileRecord(file, granuleId, collectionId, knex);
         fileMigrationSummary.success += 1;
       } catch (error) {
-        if (error instanceof RecordAlreadyMigrated) {
-          fileMigrationSummary.skipped += 1;
-          logger.info(error);
-        } else {
-          fileMigrationSummary.failed += 1;
-          logger.error(
-            `Could not create file record in RDS for file ${file}`,
-            error
-          );
-        }
+        fileMigrationSummary.failed += 1;
+        logger.error(
+          `Could not create file record in RDS for file ${file}`,
+          error
+        );
       }
     }));
   });
