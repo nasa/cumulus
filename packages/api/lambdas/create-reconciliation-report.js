@@ -681,9 +681,9 @@ async function createReconciliationReport(recReportParams) {
 async function processRequest(params) {
   const { reportType, reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
-  const reportRecordName = reportName ? filenamify(reportName)
-    : `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  let reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
+  const reportRecordName = reportName
+    || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
+  let reportKey = `${stackName}/reconciliation-reports/${filenamify(reportRecordName)}.json`;
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database
