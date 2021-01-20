@@ -12,12 +12,12 @@ to get the data synced correctly.
 
 The first way involves reindexing from the existing Elasticsearch index to a brand new index. This is done in two steps.
 
-1. Change Index
+### Change Index
 
 It is recommended to change Cumulus to point to an empty index first. This will allow new data to be passed to the index without
 interruption. The change index operation can be found [here](https://nasa.github.io/cumulus-api/#change-index)
 
-2. Reindex from the old index to the new index
+### Reindex from the old index to the new index
 
 After changing to a fresh index, you can reindex the data in the old index into the new index. The reindex
 operation can be found [here](https://nasa.github.io/cumulus-api/#reindex)
