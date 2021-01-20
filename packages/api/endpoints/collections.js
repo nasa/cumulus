@@ -10,7 +10,11 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { getKnexClient, translateApiCollectionToPostgresCollection } = require('@cumulus/db');
+const {
+  getKnexClient,
+  translateApiCollectionToPostgresCollection,
+  CollectionPgModel,
+} = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -178,14 +182,12 @@ async function put(req, res) {
   }
 
   const dynamoRecord = await collectionsModel.create(collection);
+  const collectionPgModel = new CollectionPgModel();
 
   const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
   const dbClient = await getKnexClient();
-  await dbClient.transaction(async (trx) => {
-    await trx('collections').where({ name, version }).del();
-    await trx('collections').insert(dbRecord);
-  });
+  await dbClient.transaction((trx) => collectionPgModel.upsert(trx, dbRecord));
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);
