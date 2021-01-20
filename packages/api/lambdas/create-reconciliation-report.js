@@ -21,7 +21,7 @@ const { createGranuleInventoryReport } = require('./reports/granule-inventory-re
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
-const { deconstructCollectionId, errorify } = require('../lib/utils');
+const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToESCollectionSearchParams,
@@ -681,7 +681,7 @@ async function createReconciliationReport(recReportParams) {
 async function processRequest(params) {
   const { reportType, reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
-  const reportRecordName = reportName
+  const reportRecordName = filenamify(reportName)
     || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
   let reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
