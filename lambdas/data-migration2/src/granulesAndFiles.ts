@@ -35,7 +35,7 @@ export interface GranulesAndFilesMigrationSummary {
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
+ * @returns {Promise<void>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateGranuleRecord = async (
@@ -168,6 +168,54 @@ export const migrateFileRecord = async (
   await knex(tableNames.files).insert(updatedRecord);
 };
 
+/**
+ * Migrate granule and files from DynamoDB to RDS
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ * @param {Knex} Knex
+ */
+
+export const migrateGranuleAndFilesViaTransaction = async (
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knex: Knex
+): Promise<MigrationSummary> => {
+  const fileMigrationSummary = {
+    dynamoRecords: 0,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+  };
+
+  // Validate record before processing using API model schema
+  Manager.recordIsValid(dynamoRecord, schemas.granule);
+  const files = dynamoRecord.files;
+  const granuleId = dynamoRecord.granuleId;
+  const collectionId = dynamoRecord.collectionId;
+
+  await knex.transaction(async () => {
+    await migrateGranuleRecord(dynamoRecord, knex);
+    await Promise.all(files.map(async (file : ApiFile) => {
+      fileMigrationSummary.dynamoRecords += 1;
+      try {
+        await migrateFileRecord(file, granuleId, collectionId, knex);
+        fileMigrationSummary.success += 1;
+      } catch (error) {
+        if (error instanceof RecordAlreadyMigrated) {
+          fileMigrationSummary.skipped += 1;
+          logger.info(error);
+        } else {
+          fileMigrationSummary.failed += 1;
+          logger.error(
+            `Could not create file record in RDS for file ${file}`,
+            error
+          );
+        }
+      }
+    }));
+  });
+
+  return fileMigrationSummary;
+};
+
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
@@ -191,37 +239,18 @@ export const migrateGranulesAndFiles = async (
     failed: 0,
     skipped: 0,
   };
+
   let record = await searchQueue.peek();
 
   /* eslint-disable no-await-in-loop */
   while (record) {
     granuleMigrationSummary.dynamoRecords += 1;
-    const files = record.files;
-    const granuleId = record.granuleId;
-    const collectionId = record.collectionId;
-
     try {
-      await migrateGranuleRecord(record, knex);
+      const granuleFileMigrationSummary = await migrateGranuleAndFilesViaTransaction(record, knex);
       granuleMigrationSummary.success += 1;
-
-      await Promise.all(files.map(async (file : ApiFile) => {
-        fileMigrationSummary.dynamoRecords += 1;
-        try {
-          await migrateFileRecord(file, granuleId, collectionId, knex);
-          fileMigrationSummary.success += 1;
-        } catch (fileMigrationError) {
-          if (fileMigrationError instanceof RecordAlreadyMigrated) {
-            fileMigrationSummary.skipped += 1;
-            logger.info(fileMigrationError);
-          } else {
-            fileMigrationSummary.failed += 1;
-            logger.error(
-              `Could not create file record in RDS for Dynamo File bucket: ${file.bucket}, key: ${file.key}`,
-              fileMigrationError
-            );
-          }
-        }
-      }));
+      fileMigrationSummary.dynamoRecords += granuleFileMigrationSummary.dynamoRecords;
+      fileMigrationSummary.success += granuleFileMigrationSummary.success;
+      fileMigrationSummary.failed += granuleFileMigrationSummary.failed;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
         granuleMigrationSummary.skipped += 1;
@@ -229,7 +258,7 @@ export const migrateGranulesAndFiles = async (
       } else {
         granuleMigrationSummary.failed += 1;
         logger.error(
-          `Could not create granule record in RDS for Dynamo Granule granuleId: ${record.granuleId}`,
+          `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${record.granuleId} with files ${record.files}`,
           error
         );
       }
