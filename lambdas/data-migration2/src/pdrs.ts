@@ -3,13 +3,11 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import Logger from '@cumulus/logger';
 import {
-  getRecordCumulusId,
-  PostgresCollectionRecord,
-  PostgresExecutionRecord,
-  PostgresProviderRecord,
-  PostgresPdrRecord,
+  CollectionPgModel,
+  ExecutionPgModel,
+  PdrPgModel,
   PostgresPdr,
-  tableNames,
+  ProviderPgModel,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import { RecordAlreadyMigrated } from '@cumulus/errors';
@@ -36,43 +34,38 @@ export const migratePdrRecord = async (
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.pdr);
 
-  const existingRecord = await knex<PostgresPdrRecord>(tableNames.pdrs)
-    .where({
-      name: dynamoRecord.pdrName,
-    })
-    .first();
+  const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const pdrPgModel = new PdrPgModel();
+  const providerPgModel = new ProviderPgModel();
+
+  const existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
 
   // Throw error if it was already migrated.
   if (existingRecord) {
     throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
   }
-
-  const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
-    { name: dynamoRecord.collectionId },
-    tableNames.collections,
-    knex
+  const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+    knex,
+    { name: dynamoRecord.collectionId }
   );
 
-  const providerCumulusId = await getRecordCumulusId<PostgresProviderRecord>(
-    { name: dynamoRecord.provider },
-    tableNames.providers,
-    knex
+  const providerCumulusId = await providerPgModel.getRecordCumulusId(
+    knex,
+    { name: dynamoRecord.provider }
   );
 
-  const executionCumulusId = dynamoRecord.execution
-    ? await getRecordCumulusId<PostgresExecutionRecord>(
-      { arn: dynamoRecord.execution.arn },
-      tableNames.executions,
-      knex
-    )
-    : undefined;
+  const executionCumulusId = dynamoRecord.execution ? await executionPgModel.getRecordCumulusId(
+    knex,
+    { arn: dynamoRecord.execution.arn }
+  ) : undefined;
 
   // Map old record to new schema.
   const updatedRecord: PostgresPdr = {
     name: dynamoRecord.pdrName,
     provider_cumulus_id: providerCumulusId,
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: (executionCumulusId === undefined) ? undefined : executionCumulusId,
+    execution_cumulus_id: executionCumulusId,
     status: dynamoRecord.status,
     progress: dynamoRecord.progress,
     pan_sent: dynamoRecord.PANSent,
@@ -86,7 +79,7 @@ export const migratePdrRecord = async (
     updated_at: dynamoRecord.updated ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  await knex(tableNames.pdrs).insert(updatedRecord);
+  await pdrPgModel.upsert(knex, updatedRecord);
 };
 
 export const migratePdrs = async (

@@ -2,41 +2,30 @@ const test = require('ava');
 const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 
-const {
-  translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
-  tableNames,
-} = require('@cumulus/db');
-
 const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Pdr = require('@cumulus/api/models/pdrs');
+
+const {
+  CollectionPgModel,
+  fakeCollectionRecordFactory,
+  fakeProviderRecordFactory,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  PdrPgModel,
+  ProviderPgModel,
+  tableNames,
+} = require('@cumulus/db');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
-const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
+const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 const { migratePdrRecord, migratePdrs } = require('../dist/lambda/pdrs');
-const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
-
-const migrateFakeCollectionRecord = async (record, knex) => {
-  const updatedRecord = translateApiCollectionToPostgresCollection(record);
-  const [id] = await knex(tableNames.collections).insert(updatedRecord).returning('cumulus_id');
-  return id;
-};
-
-const fakeEncryptFunction = async () => 'fakeEncryptedString';
-
-const migrateFakeProviderRecord = async (record, knex) => {
-  const updatedRecord = await translateApiProviderToPostgresProvider(record, fakeEncryptFunction);
-  const [id] = await knex(tableNames.providers).insert(updatedRecord).returning('cumulus_id');
-  return id;
-};
 
 const generateTestPdr = (collectionId, provider, executionId) => ({
   pdrName: cryptoRandomString({ length: 5 }),
@@ -61,7 +50,6 @@ let providersModel;
 let pdrsModel;
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -82,40 +70,36 @@ test.before(async (t) => {
   pdrsModel = new Pdr();
   await pdrsModel.createTable();
 
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
+  t.context.pdrPgModel = new PdrPgModel();
 
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
 });
 
 test.beforeEach(async (t) => {
-  const testCollection = fakeCollectionFactory();
-  const testProvider = fakeProviderFactory({
-    encrypted: true,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-  });
+  const collectionPgModel = new CollectionPgModel();
+  t.context.testCollection = fakeCollectionRecordFactory();
 
-  t.context.testCollection = testCollection;
-  t.context.testProvider = testProvider;
+  const collectionResponse = await collectionPgModel.create(
+    t.context.knex,
+    t.context.testCollection
+  );
+  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionPgModel = collectionPgModel;
 
-  t.context.collectionCumulusId = await migrateFakeCollectionRecord(testCollection, t.context.knex);
-  t.context.providerCumulusId = await migrateFakeProviderRecord(testProvider, t.context.knex);
+  const providerPgModel = new ProviderPgModel();
+  t.context.testProvider = fakeProviderRecordFactory();
+
+  const providerResponse = await providerPgModel.create(
+    t.context.knex,
+    t.context.testProvider
+  );
+  t.context.providerCumulusId = providerResponse[0];
+  t.context.providerPgModel = providerPgModel;
 });
 
 test.afterEach.always(async (t) => {
@@ -131,22 +115,26 @@ test.after.always(async (t) => {
   await collectionsModel.deleteTable();
   await pdrsModel.deleteTable();
 
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
-  const { knex, testCollection, testProvider, collectionCumulusId, providerCumulusId } = t.context;
+  const {
+    collectionCumulusId,
+    knex,
+    pdrPgModel,
+    providerCumulusId,
+    testCollection,
+    testProvider,
+  } = t.context;
 
-  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
   await migratePdrRecord(testPdr, knex);
 
-  const record = await t.context.knex.queryBuilder()
-    .select()
-    .table(tableNames.pdrs)
-    .where({ name: testPdr.pdrName })
-    .first();
+  const record = await pdrPgModel.get(knex, { name: testPdr.pdrName });
 
   t.like(
     omit(record, ['cumulus_id']),
@@ -174,7 +162,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
 test.serial('migratePdrRecord throws SchemaValidationError on invalid source data from DynamoDB', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
-  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
 
   delete testPdr.status;
 
@@ -185,9 +173,16 @@ test.serial('migratePdrRecord throws SchemaValidationError on invalid source dat
 });
 
 test.serial('migratePdrRecord handles nullable fields on source PDR data', async (t) => {
-  const { knex, testCollection, testProvider, collectionCumulusId, providerCumulusId } = t.context;
+  const {
+    collectionCumulusId,
+    knex,
+    pdrPgModel,
+    providerCumulusId,
+    testCollection,
+    testProvider,
+  } = t.context;
 
-  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
 
   delete testPdr.execution;
   delete testPdr.PANSent;
@@ -201,14 +196,10 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
   delete testPdr.updatedAt;
 
   await migratePdrRecord(testPdr, knex);
-  const record = await t.context.knex.queryBuilder()
-    .select()
-    .table(tableNames.pdrs)
-    .where({ name: testPdr.pdrName })
-    .first();
+  const record = await pdrPgModel.get(knex, { name: testPdr.pdrName });
 
   t.like(
-    omit(record, ['cumulus_id']),
+    record,
     omit({
       ...testPdr,
       name: testPdr.pdrName,
@@ -233,7 +224,7 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
 test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
-  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
   await migratePdrRecord(testPdr, knex);
 
   await t.throwsAsync(
@@ -243,11 +234,17 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already mig
 });
 
 test.serial('migratePdrs skips already migrated record', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
-  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
+  const {
+    knex,
+    pdrPgModel,
+    testCollection,
+    testProvider,
+  } = t.context;
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
 
   await migratePdrRecord(testPdr, knex);
   await pdrsModel.create(testPdr);
+
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary,
     {
@@ -256,25 +253,28 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
       failed: 0,
       success: 0,
     });
-  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+
+  const records = await knex(tableNames.pdrs).where({ name: testPdr.pdrName });
   t.is(records.length, 1);
   t.teardown(() => pdrsModel.delete({ pdrName: testPdr.pdrName }));
 });
 
 test.serial('migratePdrs processes multiple PDR records', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
-  const anotherCollection = fakeCollectionFactory();
-  const anotherProvider = fakeProviderFactory({
-    encrypted: true,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-  });
+  const {
+    collectionPgModel,
+    knex,
+    providerPgModel,
+    testCollection,
+    testProvider,
+  } = t.context;
 
-  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
-  const anotherPdr = generateTestPdr(anotherCollection.name, anotherProvider.id);
-  await migrateFakeCollectionRecord(anotherCollection, t.context.knex);
-  await migrateFakeProviderRecord(anotherProvider, t.context.knex);
+  const fakeCollection = fakeCollectionRecordFactory();
+  const fakeProvider = fakeProviderRecordFactory();
+  await collectionPgModel.create(knex, fakeCollection);
+  await providerPgModel.create(knex, fakeProvider);
+
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
+  const anotherPdr = generateTestPdr(fakeCollection.name, fakeProvider.name);
 
   await Promise.all([
     pdrsModel.create(testPdr),
@@ -291,24 +291,26 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
     failed: 0,
     success: 2,
   });
-  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+  const records = await knex(tableNames.pdrs);
   t.is(records.length, 2);
 });
 
-test.serial('migratePdrs processes all non-failing records', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
-  const anotherCollection = fakeCollectionFactory();
-  const anotherProvider = fakeProviderFactory({
-    encrypted: true,
-    privateKey: 'key',
-    cmKeyId: 'key-id',
-    certificateUri: 'uri',
-  });
+test.serial.only('migratePdrs processes all non-failing records', async (t) => {
+  const {
+    collectionPgModel,
+    knex,
+    providerPgModel,
+    testCollection,
+    testProvider,
+  } = t.context;
 
-  const testPdr = generateTestPdr(testCollection.name, testProvider.id);
-  const anotherPdr = generateTestPdr(anotherCollection.name, anotherProvider.id);
-  await migrateFakeCollectionRecord(anotherCollection, t.context.knex);
-  await migrateFakeProviderRecord(anotherProvider, t.context.knex);
+  const fakeCollection = fakeCollectionRecordFactory();
+  const fakeProvider = fakeProviderRecordFactory();
+  await collectionPgModel.create(knex, fakeCollection);
+  await providerPgModel.create(knex, fakeProvider);
+
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
+  const anotherPdr = generateTestPdr(fakeCollection.name, fakeProvider.name);
   delete testPdr.status;
 
   await Promise.all([
@@ -331,6 +333,6 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
     failed: 1,
     success: 1,
   });
-  const records = await t.context.knex.queryBuilder().select().table(tableNames.pdrs);
+  const records = await knex(tableNames.pdrs);
   t.is(records.length, 1);
 });
