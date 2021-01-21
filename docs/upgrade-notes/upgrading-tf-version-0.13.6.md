@@ -12,7 +12,7 @@ Cumulus is upgrading its supported version of Terraform from **0.12.12** to **0.
 
 ### Prerequisites
 
-- Follow the [Terraform guidance for what to do before upgrading](https://www.terraform.io/upgrade-guides/0-13.html#before-you-upgrade).
+- Follow the [Terraform guidance for what to do before upgrading](https://www.terraform.io/upgrade-guides/0-13.html#before-you-upgrade), notably ensuring that you have no pending changes to your Cumulus deployments before proceeding.
 - Install Terraform version 0.13.6. We recommend using Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv) to manage your installed versons of Terraform, but this is not required.
 
 ### Upgrade your deployment code
