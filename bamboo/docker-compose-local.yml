@@ -22,3 +22,13 @@ services:
       - 5432:5432
       - 8080:8080
       - 9200:9200
+  localstack:
+    image: localstack/localstack:0.10.7
+  elasticsearch:
+    image: elasticsearch:5.6
+  sftp:
+    image: nsidc/panubo_sshd:latest
+  http:
+    image: httpd:alpine
+  ftp:
+    image: cumuluss/vsftpd:3

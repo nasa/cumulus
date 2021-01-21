@@ -12,6 +12,10 @@
               "outputs": [
                 {
                   "source": "{$.cnm}",
+                  "destination": "{$.meta.granule.queryFields.cnm}"
+                },
+                {
+                  "source": "{$.cnm}",
                   "destination": "{$.meta.cnm}"
                 },
                 {
@@ -43,7 +47,7 @@
             "States.ALL"
           ],
           "ResultPath": "$.exception",
-          "Next": "TranslateMessageResponseFail"
+          "Next": "CnmResponseFail"
         }
       ],
       "Next": "SyncGranule"
@@ -57,10 +61,11 @@
             "TargetPath": "$.payload"
           },
           "task_config": {
-            "provider": "{$.meta.provider}",
             "buckets": "{$.meta.buckets}",
             "collection": "{$.meta.collection}",
             "downloadBucket": "{$.meta.buckets.private.name}",
+            "provider": "{$.meta.provider}",
+            "syncChecksumFiles": true,
             "stack": "{$.meta.stack}",
             "cumulus_message": {
               "outputs": [
@@ -84,7 +89,7 @@
           "ErrorEquals": [
             "States.ALL"
           ],
-          "IntervalSeconds": 10,
+          "IntervalSeconds": 5,
           "MaxAttempts": 3
         }
       ],
@@ -97,7 +102,246 @@
           "Next": "CnmResponseFail"
         }
       ],
-      "Next": "CnmResponse"
+      "Next": "ProcessingStep"
+    },
+    "ProcessingStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.private.name}",
+            "collection": "{$.meta.collection}",
+            "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
+            "additionalUrls": "{$.meta.additionalUrls}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.files}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${fake_processing_task_arn}",
+      "Next": "FilesToGranulesStep",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "CnmResponseFail",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "FilesToGranulesStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "inputGranules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Next": "MoveGranuleStep",
+      "Resource": "${files_to_granules_task_arn}",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "CnmResponseFail",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "MoveGranuleStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "bucket": "{$.meta.buckets.private.name}",
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "collection": "{$.meta.collection}",
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${move_granules_task_arn}",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "CnmResponseFail"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "UpdateGranulesCmrMetadataFileLinksStep"
+    },
+    "UpdateGranulesCmrMetadataFileLinksStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${update_granules_cmr_metadata_file_links_task_arn}",
+      "Next": "HyraxMetadataUpdatesTask",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "CnmResponseFail",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "HyraxMetadataUpdatesTask": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hyrax_metadata_updates_task_arn}",
+      "Next": "CmrStep",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "CnmResponseFail",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Next": "CnmResponse",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "CnmResponseFail",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
     },
     "CnmResponse": {
       "Parameters": {
@@ -105,6 +349,7 @@
           "event.$": "$",
           "task_config": {
             "OriginalCNM": "{$.meta.cnm}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "response-endpoint": "{$.meta.cnmResponseStream}",
             "region": "us-east-1",
             "type": "kinesis",
@@ -112,11 +357,15 @@
             "cumulus_message": {
               "outputs": [
                 {
-                  "source": "{$}",
-                  "destination": "{$.meta.cnmResponse}"
+                  "source": "{$.cnm}",
+                  "destination": "{$.meta.granule.queryFields.cnm}"
                 },
                 {
                   "source": "{$.cnm}",
+                  "destination": "{$.meta.cnmResponse}"
+                },
+                {
+                  "source": "{$.input.input}",
                   "destination": "{$.payload}"
                 }
               ]
@@ -149,56 +398,6 @@
       ],
       "Next": "WorkflowSucceeded"
     },
-    "TranslateMessageResponseFail": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "task_config": {
-            "OriginalCNM": "{$.payload}",
-            "response-endpoint": "{$.meta.cnmResponseStream}",
-            "region": "us-east-1",
-            "type": "kinesis",
-            "WorkflowException": "{$.exception}",
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "{$}",
-                  "destination": "{$.meta.cnmResponse}"
-                },
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload}"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${cnm_response_task_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "Next": "WorkflowFailed"
-    },
     "CnmResponseFail": {
       "Parameters": {
         "cma": {
@@ -212,11 +411,11 @@
             "cumulus_message": {
               "outputs": [
                 {
-                  "source": "{$}",
+                  "source": "{$.cnm}",
                   "destination": "{$.meta.cnmResponse}"
                 },
                 {
-                  "source": "{$}",
+                  "source": "{$.input.input}",
                   "destination": "{$.payload}"
                 }
               ]

@@ -371,6 +371,7 @@ class Granule extends Manager {
     error,
     pdrName,
     workflowStatus,
+    queryFields,
     processingTimeInfo = {},
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
@@ -417,6 +418,7 @@ class Granule extends Manager {
       timeToArchive: getGranuleTimeToArchive(granule),
       ...processingTimeInfo,
       ...temporalInfo,
+      queryFields,
     };
 
     return removeNilProperties(record);
@@ -549,23 +551,25 @@ class Granule extends Manager {
    * @returns {Array<Object>} the granules' queue for a given collection
    */
   granuleAttributeScan(searchParams) {
-    const { attributeValues, filterExpression } = this.getDynamoDbSearchParams(searchParams, false);
+    const {
+      attributeNames,
+      attributeValues,
+      filterExpression,
+    } = this.getDynamoDbSearchParams(searchParams, false);
+
+    const projectionArray = [];
+    const fields = ['granuleId', 'collectionId', 'createdAt', 'beginningDateTime',
+      'endingDateTime', 'status', 'updatedAt', 'published', 'provider'];
+    fields.forEach((field) => {
+      attributeNames[`#${field}`] = field;
+      projectionArray.push(`#${field}`);
+    });
 
     const params = {
       TableName: this.tableName,
-      ExpressionAttributeNames:
-      {
-        '#granuleId': 'granuleId',
-        '#collectionId': 'collectionId',
-        '#beginningDateTime': 'beginningDateTime',
-        '#endingDateTime': 'endingDateTime',
-        '#createdAt': 'createdAt',
-        '#status': 'status',
-        '#updatedAt': 'updatedAt',
-        '#published': 'published',
-      },
+      ExpressionAttributeNames: attributeNames,
       ExpressionAttributeValues: filterExpression ? attributeValues : undefined,
-      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime, #status, #updatedAt, #published',
+      ProjectionExpression: projectionArray.join(', '),
       FilterExpression: filterExpression,
     };
 
@@ -708,6 +712,7 @@ class Granule extends Manager {
     error,
     pdrName,
     workflowStatus,
+    queryFields,
   }) {
     const granuleRecord = await this.generateGranuleRecord({
       s3: awsClients.s3(),
@@ -720,6 +725,7 @@ class Granule extends Manager {
       pdrName,
       workflowStatus,
       processingTimeInfo,
+      queryFields,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }
@@ -759,6 +765,7 @@ class Granule extends Manager {
     const pdrName = getMessagePdrName(cumulusMessage);
     const error = parseException(cumulusMessage.exception);
     const workflowStatus = getMetaStatus(cumulusMessage);
+    const queryFields = get(cumulusMessage, 'meta.granule.queryFields');
 
     return Promise.all(granules.map(
       (granule) =>
@@ -772,6 +779,7 @@ class Granule extends Manager {
           error,
           pdrName,
           workflowStatus,
+          queryFields,
         }).catch(log.error)
     ));
   }

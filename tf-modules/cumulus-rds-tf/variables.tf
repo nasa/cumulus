@@ -77,3 +77,9 @@ variable "vpc_id" {
   description = "VPC ID for the Cumulus Deployment"
   type        = string
 }
+
+variable "engine_version" {
+  description = "Postgres engine version for serverless cluster"
+  type        = string
+  default     = "10.12"
+}

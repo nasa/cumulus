@@ -6,15 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Migration notes
-
-- **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
-
 ### BREAKING CHANGES
-
-- **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
@@ -28,15 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-2318**
-  - Added`async_operation_image` as `cumulus` module variable to allow for override of the async_operation container image.  Users can optionally specify a non-default docker image for use with Core async operations.
-- **CUMULUS-2219**
-  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
-- **CUMULUS-2092**
-  - Add documentation for Granule Not Found Reports
-- **CUMULUS-1370**
-  - Add documentation for Getting Started section including FAQs
-
+- **CUMULUS-2291**
+  - Add provider filter to Granule Inventory Report
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2191**
     - Added `@cumulus/async-operations` to core packages, exposing
@@ -88,9 +73,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-2020**
-  - Updated Elasticsearch mappings to support case-insensitive search
-
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMUlUS-2128**
     - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for granule and file writes to the core PostgreSQL database
@@ -118,6 +100,66 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Change Postgres Schema definition for Files to remove `filename` and `name` and only support `file_name`.
     - Change Postgres Schema definition for Files to remove `size` to only support `file_size`.
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
+
+## [v5.0.0] 2021-01-12
+
+### BREAKING CHANGES
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
+
+### Migration notes
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+- **CUMULUS-2258**
+  - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
+  - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
+
+### BREAKING CHANGES
+
+- **CUMULUS-2020**
+  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
+
+### Added
+
+- **CUMULUS-2318**
+  - Added`async_operation_image` as `cumulus` module variable to allow for override of the async_operation container image.  Users can optionally specify a non-default docker image for use with Core async operations.
+- **CUMULUS-2219**
+  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
+- **CUMULUS-2092**
+  - Add documentation for Granule Not Found Reports
+- **HYRAX-320**
+  - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title id and granule ur to allow for values with special characters in them. For example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such values will be encoded correctly and parsable by HyraxInTheCloud
+- **CUMULUS-1370**
+  - Add documentation for Getting Started section including FAQs
+- **CUMULUS-2092**
+  - Add documentation for Granule Not Found Reports
+- **CUMULUS-2219**
+  - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
+- **CUMULUS-2280**
+  - In local api, retry to create tables if they fail to ensure localstack has had time to start fully.
+- **CUMULUS-2290**
+  - Add `queryFields` to granule schema, and this allows workflow tasks to add queryable data to granule record. For reference on how to add data to `queryFields` field, see [`example/cumulus-tf/kinesis_trigger_test_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/kinesis_trigger_test_workflow.tf).
+- **CUMULUS-2318**
+  - Added`async_operation_image` as `cumulus` module variable to allow for override of the async_operation container image.  Users can optionally specify a non-default docker image for use with Core async operations.
+
+### Changed
+
+- **CUMULUS-2020**
+  - Updated Elasticsearch mappings to support case-insensitive search
+- **CUMULUS-2124**
+  - cumulus-rds-tf terraform module now takes engine_version as an input variable.
+- **CUMULUS-2279**
+  - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
+- **CUMULUS-2296**
+  - Improved PDR spec compliance of `parse-pdr` by updating `@cumulus/pvl` to parse fields in a manner more consistent with the PDR ICD, with respect to numbers and dates. Anything not matching the ICD expectations, or incompatible with Javascript parsing, will be parsed as a string instead.
+
+### Removed
+
+- **CUMULUS-2258**
+  - Removed `tea_stack_name` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`
+  - Removed `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resources from `tf-modules/distribution/main.tf`
 
 ## [v4.0.0] 2020-11-20
 
@@ -3804,7 +3846,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v4.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.0...HEAD
+[v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0

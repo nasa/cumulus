@@ -87,7 +87,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
           return executionId === ingestGranuleRule.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
-        { timeout: 15 }
+        { timeout: 60 }
       );
 
       console.log(`Waiting for ${ingestGranuleExecutionArn} to complete`);
