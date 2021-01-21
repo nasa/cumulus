@@ -68,7 +68,7 @@ function generateAddress() {
  * @returns {string} - the native id
  */
 function getGranuleUr(metadata, isUmmG) {
-  return isUmmG ? metadata.GranuleUR : metadata.Granule.GranuleUR;
+  return encodeURIComponent(isUmmG ? metadata.GranuleUR : metadata.Granule.GranuleUR);
 }
 
 /**
@@ -115,7 +115,7 @@ async function getEntryTitle(config, metadata, isUmmG) {
     throw new RecordDoesNotExist(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
   }
 
-  return datasetId;
+  return encodeURIComponent(datasetId);
 }
 
 /**

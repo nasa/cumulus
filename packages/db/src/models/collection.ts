@@ -1,3 +1,5 @@
+import Knex from 'knex';
+
 import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
@@ -8,6 +10,16 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
     super({
       tableName: tableNames.collections,
     });
+  }
+
+  upsert(
+    knexOrTrx: Knex | Knex.Transaction,
+    collection: PostgresCollection
+  ) {
+    return knexOrTrx(this.tableName)
+      .insert(collection)
+      .onConflict(['name', 'version'])
+      .merge();
   }
 }
 
