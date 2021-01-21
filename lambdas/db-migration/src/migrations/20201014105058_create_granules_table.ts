@@ -72,6 +72,9 @@ export const up = async (knex: Knex): Promise<void> =>
       .timestamp('production_date_time')
       .comment('Timestamp for granule production date/time');
     table
+      .jsonb('query_fields')
+      .comment('Arbitrary query fields for the granule');
+    table
       .timestamp('timestamp');
     table
       .unique(['granule_id', 'collection_cumulus_id']);
