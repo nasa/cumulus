@@ -77,10 +77,10 @@ async function post(req, res) {
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
-    const postgresRecord = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
-      await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
+      await trx(tableNames.rules).insert(postgresRule, 'cumulus_id');
       record = await model.create(apiRule, apiRule.createdAt);
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
@@ -130,11 +130,11 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const newPostgresRecord = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await trx(tableNames.rules)
-        .insert(newPostgresRecord)
+        .insert(postgresRule)
         .onConflict('name')
         .merge();
       newRule = await model.update(oldRule, apiRule, fieldsToDelete);

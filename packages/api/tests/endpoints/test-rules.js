@@ -579,7 +579,7 @@ test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails
   t.false(await ruleModel.exists(newRule.name));
 });
 
-test.serial('PUT replaces a rule', async (t) => {
+test('PUT replaces a rule', async (t) => {
   const { dbClient } = t.context;
   const putTestRule = { ...testRule, name: randomId('testRule') };
   t.truthy(putTestRule.queueUrl);
