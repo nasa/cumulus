@@ -104,7 +104,7 @@ test.serial('Writes a file containing a filtered set of granules to S3.', async 
   const reportHeader = reportArray.slice(0, 1)[0];
   const reportRows = reportArray.slice(1, reportArray.length);
 
-  const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published"';
+  const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published","provider"';
   t.is(reportHeader, header);
   t.is(reportRows.length, 2);
 });
