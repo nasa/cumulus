@@ -6,6 +6,7 @@ const cryptoRandomString = require('crypto-random-string');
 const {
   getMessageGranules,
   getGranuleStatus,
+  getGranuleQueryFields,
 } = require('../Granules');
 
 const randomId = (prefix) => `${prefix}${cryptoRandomString({ length: 10 })}`;
@@ -46,5 +47,28 @@ test('getGranuleStatus returns status from granule', (t) => {
       { status: 'failed' }
     ),
     'failed'
+  );
+});
+
+test('getGranuleQueryFields returns query fields, if any', (t) => {
+  const queryFields = { foo: 'bar' };
+  t.deepEqual(
+    getGranuleQueryFields(
+      {
+        meta: {
+          granule: {
+            queryFields,
+          },
+        },
+      }
+    ),
+    queryFields
+  );
+});
+
+test('getGranuleQueryFields returns undefined', (t) => {
+  t.is(
+    getGranuleQueryFields({}),
+    undefined
   );
 });
