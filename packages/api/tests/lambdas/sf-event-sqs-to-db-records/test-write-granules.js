@@ -3,15 +3,22 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const {
   localStackConnectionEnv,
   getKnexClient,
   tableNames,
   doesRecordExist,
+  fakeFileRecordFactory,
+  fakeGranuleRecordFactory,
 } = require('@cumulus/db');
 
 const {
+  generateFileRecord,
+  generateGranuleRecord,
+  getGranuleCumulusIdFromQueryResultOrLookup,
+  writeFilesViaTransaction,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
 
@@ -78,12 +85,16 @@ test.beforeEach(async (t) => {
   };
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
-  const files = [fakeFileFactory()];
-  const granule = fakeGranuleFactoryV2({ files, granuleId: t.context.granuleId });
+  t.context.files = [fakeFileFactory({ size: 5 })];
+  t.context.granule = fakeGranuleFactoryV2({
+    files: t.context.files,
+    granuleId: t.context.granuleId,
+  });
 
+  t.context.worklowStartTime = Date.now();
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122,
+      workflow_start_time: t.context.worklowStartTime,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
     },
@@ -93,7 +104,7 @@ test.beforeEach(async (t) => {
       provider: t.context.provider,
     },
     payload: {
-      granules: [granule],
+      granules: [t.context.granule],
     },
   };
 
@@ -120,6 +131,184 @@ test.after.always(async (t) => {
   await t.context.knex.destroy();
   await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
   await t.context.knexAdmin.destroy();
+});
+
+test('generateGranuleRecord() generates the correct granule record', async (t) => {
+  const {
+    cumulusMessage,
+    granuleId,
+    granule,
+    worklowStartTime,
+  } = t.context;
+
+  const timestamp = worklowStartTime + 5000;
+  const updatedAt = Date.now();
+  // Set granule files
+  const files = [
+    fakeFileFactory({
+      size: 10,
+    }),
+  ];
+  granule.sync_granule_duration = 3000;
+  granule.post_to_cmr_duration = 7810;
+
+  t.deepEqual(
+    omit(
+      await generateGranuleRecord({
+        cumulusMessage,
+        granule,
+        files,
+        collectionCumulusId: 1,
+        providerCumulusId: 2,
+        executionCumulusId: 3,
+        pdrCumulusId: 4,
+        timestamp,
+        updatedAt,
+      }),
+      'beginning_date_time',
+      'ending_date_time',
+      'production_date_time',
+      'last_update_date_time',
+      'processing_start_date_time',
+      'processing_end_date_time'
+    ),
+    {
+      granule_id: granuleId,
+      status: 'running',
+      cmr_link: granule.cmrLink,
+      published: granule.published,
+      error: {},
+      created_at: new Date(worklowStartTime),
+      timestamp: new Date(timestamp),
+      updated_at: new Date(updatedAt),
+      product_volume: 10,
+      duration: 5,
+      time_to_process: 3,
+      time_to_archive: 7.81,
+      collection_cumulus_id: 1,
+      provider_cumulus_id: 2,
+      execution_cumulus_id: 3,
+      pdr_cumulus_id: 4,
+    }
+  );
+});
+
+test('generateGranuleRecord() includes processing time info, if provided', async (t) => {
+  const {
+    cumulusMessage,
+    granule,
+  } = t.context;
+
+  const processingTimeInfo = {
+    processingStartDateTime: new Date().toISOString(),
+    processingEndDateTime: new Date().toISOString(),
+  };
+
+  const record = await generateGranuleRecord({
+    cumulusMessage,
+    granule,
+    processingTimeInfo,
+  });
+  t.is(record.processing_start_date_time, processingTimeInfo.processingStartDateTime);
+  t.is(record.processing_end_date_time, processingTimeInfo.processingEndDateTime);
+});
+
+test('generateGranuleRecord() includes temporal info, if any is returned', async (t) => {
+  const {
+    cumulusMessage,
+    granule,
+  } = t.context;
+
+  const temporalInfo = {
+    beginningDateTime: new Date().toISOString(),
+  };
+
+  const fakeCmrUtils = {
+    getGranuleTemporalInfo: async () => temporalInfo,
+  };
+
+  const record = await generateGranuleRecord({
+    cumulusMessage,
+    granule,
+    cmrUtils: fakeCmrUtils,
+  });
+  t.is(record.beginning_date_time, temporalInfo.beginningDateTime);
+});
+
+test('generateGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {
+  const {
+    cumulusMessage,
+    granule,
+  } = t.context;
+
+  const exception = {
+    Error: new Error('error'),
+    Cause: 'an error occurred',
+  };
+  cumulusMessage.exception = exception;
+
+  const record = await generateGranuleRecord({
+    cumulusMessage,
+    granule,
+  });
+  t.deepEqual(record.error, exception);
+});
+
+test('generateFileRecord() adds granule cumulus ID', (t) => {
+  const file = {};
+  const record = generateFileRecord({ file, granuleCumulusId: 1 });
+  t.is(record.granule_cumulus_id, 1);
+});
+
+test('getGranuleCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
+  const granuleRecord = fakeGranuleRecordFactory();
+  const fakeGranuleCumulusId = Math.floor(Math.random() * 1000);
+  const fakeGranulePgModel = {
+    getRecordCumulusId: async (_, record) => {
+      if (record.granule_id === granuleRecord.granule_id) {
+        return fakeGranuleCumulusId;
+      }
+      return undefined;
+    },
+  };
+
+  t.is(
+    await getGranuleCumulusIdFromQueryResultOrLookup({
+      trx: {},
+      queryResult: [],
+      granuleRecord,
+      granulePgModel: fakeGranulePgModel,
+    }),
+    fakeGranuleCumulusId
+  );
+});
+
+test('writeFilesViaTransaction() throws error if any writes fail', async (t) => {
+  const { knex } = t.context;
+
+  const fileRecords = [
+    fakeFileRecordFactory(),
+    fakeFileRecordFactory(),
+  ];
+
+  const fakeFilePgModel = {
+    upsert: sinon.stub()
+      .onCall(0)
+      .resolves()
+      .onCall(1)
+      .throws(),
+  };
+
+  await t.throwsAsync(
+    knex.transaction(
+      (trx) =>
+        writeFilesViaTransaction({
+          fileRecords,
+          trx,
+          filePgModel: fakeFilePgModel,
+        })
+    )
+  );
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {

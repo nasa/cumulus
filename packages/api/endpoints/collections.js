@@ -14,6 +14,8 @@ const {
   getKnexClient,
   tableNames,
   translateApiCollectionToPostgresCollection,
+  translateApiCollectionToPostgresCollection,
+  CollectionPgModel,
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
@@ -178,6 +180,8 @@ async function put(req, res) {
       + ` and '${collection.version}' in payload`);
   }
   const collectionsModel = new models.Collection();
+  const collectionPgModel = new CollectionPgModel();
+
   try {
     oldCollection = await collectionsModel.get({ name, version });
   } catch (error) {
@@ -195,13 +199,7 @@ async function put(req, res) {
   const postgresCollection = dynamoRecordToDbRecord(collection);
 
   const dbClient = await getKnexClient();
-  await dbClient.transaction(async (trx) => {
-    await trx(tableNames.collections)
-      .insert(postgresCollection)
-      .onConflict(['name', 'version'])
-      .merge();
-    dynamoRecord = await collectionsModel.create(collection);
-  });
+  await collectionPgModel.upsert(dbClient, dbRecord);
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);

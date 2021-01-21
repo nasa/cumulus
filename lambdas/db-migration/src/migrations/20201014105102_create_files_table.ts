@@ -25,6 +25,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('checksum_value')
       .comment('File checksum');
+    // TODO: do we need both filename fields?
     table
       .text('file_name')
       .comment('Source file name');
@@ -37,6 +38,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .text('source')
       .comment('Full source path s3/ftp/sftp/http URI to granule');
+    // TODO should bucket/key be required if they are the unique index?
     table
       .unique(['bucket', 'key']);
   });

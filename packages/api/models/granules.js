@@ -13,7 +13,7 @@ const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
-const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
@@ -25,8 +25,15 @@ const {
   getGranuleStatus,
 } = require('@cumulus/message/Granules');
 const {
-  getMessageProviderId,
+  getMessagePdrName,
+} = require('@cumulus/message/PDRs');
+const {
+  getMessageProvider,
 } = require('@cumulus/message/Providers');
+const {
+  getMessageWorkflowStartTime,
+  getWorkflowDuration,
+} = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
@@ -45,13 +52,18 @@ const Manager = require('./base');
 
 const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
-const { translateGranule } = require('../lib/granules');
+const {
+  getExecutionProcessingTimeInfo,
+  getGranuleTimeToArchive,
+  getGranuleTimeToPreprocess,
+  translateGranule,
+  getGranuleProductVolume,
+} = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
 const {
   parseException,
   deconstructCollectionId,
-  getGranuleProductVolume,
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
@@ -66,6 +78,7 @@ class Granule extends Manager {
   constructor({
     fileUtils = FileUtils,
     stepFunctionUtils = StepFunctions,
+    cmrUtils = CmrUtils,
   } = {}) {
     const globalSecondaryIndexes = [{
       IndexName: 'collectionId-granuleId-index',
@@ -98,6 +111,7 @@ class Granule extends Manager {
 
     this.fileUtils = fileUtils;
     this.stepFunctionUtils = stepFunctionUtils;
+    this.cmrUtils = cmrUtils;
   }
 
   async get(...args) {
@@ -151,7 +165,7 @@ class Granule extends Manager {
       throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
-    const cmrSettings = await cmrUtils.getCmrSettings();
+    const cmrSettings = await this.cmrUtils.getCmrSettings();
     const cmr = new CMR(cmrSettings);
     const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
 
@@ -278,7 +292,7 @@ class Granule extends Manager {
     );
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
-    await cmrUtils.reconcileCMRMetadata({
+    await this.cmrUtils.reconcileCMRMetadata({
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
@@ -348,59 +362,55 @@ class Granule extends Manager {
     granule,
     message,
     executionUrl,
-    executionDescription = {},
+    processingTimeInfo = {},
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
     const collectionId = getCollectionIdFromMessage(message);
     if (!collectionId) {
       throw new CumulusModelError('meta.collection required to generate a granule record');
     }
+
+    const {
+      files,
+      granuleId,
+      cmrLink,
+      published = false,
+    } = granule;
+
+    const provider = getMessageProvider(message);
     const granuleFiles = await this.fileUtils.buildDatabaseFiles({
       s3,
-      providerURL: buildURL({
-        protocol: message.meta.provider.protocol,
-        host: message.meta.provider.host,
-        port: message.meta.provider.port,
-      }),
-      files: granule.files,
+      providerURL: buildURL(provider),
+      files,
     });
 
-    const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
-
-    const { startDate, stopDate } = executionDescription;
-    const processingTimeInfo = {};
-    if (startDate) {
-      processingTimeInfo.processingStartDateTime = startDate.toISOString();
-      processingTimeInfo.processingEndDateTime = stopDate
-        ? stopDate.toISOString()
-        : new Date().toISOString();
-    }
-
     const now = Date.now();
+    const timestamp = now;
+    const workflowStartTime = getMessageWorkflowStartTime(message);
+    const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
 
     const record = {
-      granuleId: granule.granuleId,
-      pdrName: get(message, 'meta.pdr.name'),
+      granuleId,
+      pdrName: getMessagePdrName(message),
       collectionId,
       status: getGranuleStatus(message, granule),
-      provider: getMessageProviderId(message),
+      provider: provider.id,
       execution: executionUrl,
-      cmrLink: granule.cmrLink,
+      cmrLink: cmrLink,
       files: granuleFiles,
       error: parseException(message.exception),
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: now,
+      createdAt: workflowStartTime,
+      published,
+      timestamp,
       updatedAt: now,
+      // Duration is also used as timeToXfer for the EMS report
+      duration: getWorkflowDuration(workflowStartTime, timestamp),
       productVolume: getGranuleProductVolume(granuleFiles),
-      timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
-      timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
+      timeToPreprocess: getGranuleTimeToPreprocess(granule),
+      timeToArchive: getGranuleTimeToArchive(granule),
       ...processingTimeInfo,
       ...temporalInfo,
     };
-
-    record.published = get(granule, 'published', false);
-    // Duration is also used as timeToXfer for the EMS report
-    record.duration = (record.timestamp - record.createdAt) / 1000;
 
     return removeNilProperties(record);
   }
@@ -680,14 +690,14 @@ class Granule extends Manager {
     granule,
     cumulusMessage,
     executionUrl,
-    executionDescription,
+    processingTimeInfo,
   }) {
     const granuleRecord = await this.generateGranuleRecord({
       s3: awsClients.s3(),
       granule,
       message: cumulusMessage,
       executionUrl,
-      executionDescription,
+      processingTimeInfo,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }
@@ -720,13 +730,14 @@ class Granule extends Manager {
     const executionArn = getMessageExecutionArn(cumulusMessage);
     const executionUrl = getExecutionUrlFromArn(executionArn);
     const executionDescription = await this.describeGranuleExecution(executionArn);
+    const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
 
     return Promise.all(granules.map(
       (granule) =>
         this.storeGranuleFromCumulusMessage({
           granule,
           cumulusMessage,
-          executionDescription,
+          processingTimeInfo,
           executionUrl,
         }).catch(log.error)
     ));
