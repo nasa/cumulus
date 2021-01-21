@@ -23,6 +23,7 @@ const {
 const {
   getMessageGranules,
   getGranuleStatus,
+  getGranuleQueryFields,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -765,7 +766,7 @@ class Granule extends Manager {
     const pdrName = getMessagePdrName(cumulusMessage);
     const error = parseException(cumulusMessage.exception);
     const workflowStatus = getMetaStatus(cumulusMessage);
-    const queryFields = get(cumulusMessage, 'meta.granule.queryFields');
+    const queryFields = getGranuleQueryFields(cumulusMessage);
 
     return Promise.all(granules.map(
       (granule) =>

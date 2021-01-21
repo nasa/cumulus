@@ -5,12 +5,12 @@ const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 
 const {
-  localStackConnectionEnv,
-  getKnexClient,
   tableNames,
   doesRecordExist,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
+  generateLocalTestDb,
+  destroyLocalTestDb,
 } = require('@cumulus/db');
 
 const {
@@ -44,18 +44,12 @@ test.before(async (t) => {
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
 
-  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
-  await t.context.knexAdmin.raw(`create database "${t.context.testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${t.context.testDbName}" to "${localStackConnectionEnv.PG_USER}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: t.context.testDbName,
-      migrationDir,
-    },
-  });
-  await t.context.knex.migrate.latest();
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    t.context.testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
 });
 
 test.beforeEach(async (t) => {
@@ -127,9 +121,9 @@ test.after.always(async (t) => {
     granuleModel,
   } = t.context;
   await granuleModel.deleteTable();
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    ...t.context,
+  });
 });
 
 test('generateGranuleRecord() generates the correct granule record', async (t) => {
@@ -149,6 +143,7 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
   ];
   granule.sync_granule_duration = 3000;
   granule.post_to_cmr_duration = 7810;
+  const queryFields = { foo: 'bar' };
 
   t.like(
     await generateGranuleRecord({
@@ -162,6 +157,7 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       pdrCumulusId: 4,
       timestamp,
       updatedAt,
+      queryFields,
     }),
     {
       granule_id: granuleId,
@@ -179,6 +175,7 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       provider_cumulus_id: 2,
       execution_cumulus_id: 3,
       pdr_cumulus_id: 4,
+      query_fields: queryFields,
     }
   );
 });

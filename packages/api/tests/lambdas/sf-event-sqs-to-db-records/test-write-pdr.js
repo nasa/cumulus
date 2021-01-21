@@ -5,8 +5,8 @@ const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 
 const {
-  localStackConnectionEnv,
-  getKnexClient,
+  generateLocalTestDb,
+  destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeProviderRecordFactory,
@@ -34,18 +34,12 @@ test.before(async (t) => {
 
   t.context.testDbName = `writePdr_${cryptoRandomString({ length: 10 })}`;
 
-  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
-  await t.context.knexAdmin.raw(`create database "${t.context.testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${t.context.testDbName}" to "${localStackConnectionEnv.PG_USER}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: t.context.testDbName,
-      migrationDir,
-    },
-  });
-  await t.context.knex.migrate.latest();
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    t.context.testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
 });
 
 test.beforeEach(async (t) => {
@@ -121,9 +115,9 @@ test.after.always(async (t) => {
     pdrModel,
   } = t.context;
   await pdrModel.deleteTable();
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    ...t.context,
+  });
 });
 
 test('generatePdrRecord() generates correct PDR record', (t) => {

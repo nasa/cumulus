@@ -19,6 +19,7 @@ const {
 const {
   getMessageGranules,
   getGranuleStatus,
+  getGranuleQueryFields,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -52,6 +53,7 @@ const Granule = require('../../models/granules');
  * @param {string} params.collectionId - Collection ID for the workflow
  * @param {Object} params.granule - Granule object from workflow message
  * @param {Array<Object>} params.files - Granule file objects
+ * @param {Object} params.queryFields - Arbitrary query fields for the granule
  * @param {number} params.collectionCumulusId
  *   Cumulus ID of collection referenced in workflow message
  * @param {number} params.providerCumulusId
@@ -74,6 +76,7 @@ const generateGranuleRecord = async ({
   files,
   workflowStartTime,
   workflowStatus,
+  queryFields,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
@@ -117,6 +120,7 @@ const generateGranuleRecord = async ({
     // Processing info from execution
     processing_start_date_time: processingTimeInfo.processingStartDateTime,
     processing_end_date_time: processingTimeInfo.processingEndDateTime,
+    query_fields: queryFields,
   };
 };
 
@@ -194,6 +198,7 @@ const writeGranuleAndFilesViaTransaction = async ({
   provider,
   workflowStartTime,
   workflowStatus,
+  queryFields,
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
@@ -219,6 +224,7 @@ const writeGranuleAndFilesViaTransaction = async ({
     files: updatedFiles,
     workflowStartTime,
     workflowStatus,
+    queryFields,
     collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
@@ -280,6 +286,7 @@ const writeGranule = async ({
   provider,
   workflowStartTime,
   workflowStatus,
+  queryFields,
   collectionCumulusId,
   executionCumulusId,
   knex,
@@ -298,6 +305,7 @@ const writeGranule = async ({
       provider,
       workflowStartTime,
       workflowStatus,
+      queryFields,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
@@ -314,6 +322,7 @@ const writeGranule = async ({
       pdrName,
       workflowStatus,
       processingTimeInfo,
+      queryFields,
     });
   });
 
@@ -363,6 +372,7 @@ const writeGranules = async ({
   const workflowStatus = getMetaStatus(cumulusMessage);
   const collectionId = getCollectionIdFromMessage(cumulusMessage);
   const pdrName = getMessagePdrName(cumulusMessage);
+  const queryFields = getGranuleQueryFields(cumulusMessage);
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
@@ -377,6 +387,7 @@ const writeGranules = async ({
       provider,
       workflowStartTime,
       workflowStatus,
+      queryFields,
       collectionCumulusId,
       providerCumulusId,
       executionCumulusId,
