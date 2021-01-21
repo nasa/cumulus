@@ -217,7 +217,7 @@ deployment.
 workspace first.
 
 ```bash
-tfenv use 0.14.4
+tfenv use 0.13.6
 cd cumulus-tf
 terraform init -reconfigure
 terraform destroy
