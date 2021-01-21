@@ -16,6 +16,7 @@ module "rds_cluster" {
   region               = var.region
   vpc_id               = var.vpc_id
   subnets              = var.subnets
+  engine_version       = var.engine_version
   deletion_protection  = true
   cluster_identifier   = var.cluster_identifier
   tags                 = var.tags
