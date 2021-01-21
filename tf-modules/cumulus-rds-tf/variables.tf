@@ -17,6 +17,12 @@ variable "backup_retention_period" {
   default     = 1
 }
 
+variable "backup_window" {
+  description = "Preferred database backup window (UTC)"
+  type        = string
+  default     = "07:00-09:00"
+}
+
 variable "deletion_protection" {
   description = "Flag to prevent terraform from making changes that delete the database in CI"
   type        = bool

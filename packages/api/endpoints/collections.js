@@ -183,7 +183,6 @@ async function put(req, res) {
   }
 
   const dynamoRecord = await collectionsModel.create(collection);
-
   const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
   const dbClient = await getKnexClient();

@@ -3,9 +3,9 @@ const cryptoRandomString = require('crypto-random-string');
 
 const {
   CollectionPgModel,
+  fakeCollectionRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
-  fakeCollectionRecordFactory,
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
@@ -23,6 +23,10 @@ test.before(async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
 });
 
+test.beforeEach((t) => {
+  t.context.collectionRecord = fakeCollectionRecordFactory();
+});
+
 test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
@@ -30,37 +34,35 @@ test.after.always(async (t) => {
   });
 });
 
-test('CollectionPgModel.upsert() creates a new record', async (t) => {
+test('CollectionPgModel.upsert() creates new collection', async (t) => {
   const {
     knex,
     collectionPgModel,
+    collectionRecord,
   } = t.context;
 
-  const collection = fakeCollectionRecordFactory();
-
-  await collectionPgModel.upsert(knex, collection);
+  await collectionPgModel.upsert(knex, collectionRecord);
 
   t.like(
-    await collectionPgModel.get(knex, collection),
+    await collectionPgModel.get(knex, collectionRecord),
     {
-      ...collection,
-      files: JSON.parse(collection.files),
+      ...collectionRecord,
+      files: JSON.parse(collectionRecord.files),
     }
   );
 });
 
-test('CollectionPgModel.upsert() overwrites a file record', async (t) => {
+test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
   const {
     knex,
     collectionPgModel,
+    collectionRecord,
   } = t.context;
 
-  const collection = fakeCollectionRecordFactory();
-
-  await collectionPgModel.create(knex, collection);
+  await collectionPgModel.create(knex, collectionRecord);
 
   const updatedCollection = {
-    ...collection,
+    ...collectionRecord,
     sample_file_name: cryptoRandomString({ length: 3 }),
   };
 
@@ -68,8 +70,8 @@ test('CollectionPgModel.upsert() overwrites a file record', async (t) => {
 
   t.like(
     await collectionPgModel.get(knex, {
-      name: collection.name,
-      version: collection.version,
+      name: collectionRecord.name,
+      version: collectionRecord.version,
     }),
     {
       ...updatedCollection,
