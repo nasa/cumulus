@@ -7,8 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
+
+### Fixed
+
+- **CUMULUS-2310**
+  - Use valid filename for reconciliation report
 
 ## [v5.0.0] 2021-01-12
 
