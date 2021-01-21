@@ -174,6 +174,7 @@ async function put(req, res) {
   }
 
   const collectionsModel = new models.Collection();
+  const collectionPgModel = new CollectionPgModel();
 
   if (!(await collectionsModel.exists(name, version))) {
     return res.boom.notFound(
@@ -182,12 +183,10 @@ async function put(req, res) {
   }
 
   const dynamoRecord = await collectionsModel.create(collection);
-  const collectionPgModel = new CollectionPgModel();
-
   const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
   const dbClient = await getKnexClient();
-  await dbClient.transaction((trx) => collectionPgModel.upsert(trx, dbRecord));
+  await collectionPgModel.upsert(dbClient, dbRecord);
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);

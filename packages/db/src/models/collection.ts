@@ -13,13 +13,14 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
   }
 
   upsert(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexOrTransaction: Knex | Knex.Transaction,
     collection: PostgresCollection
   ) {
-    return knexOrTrx(this.tableName)
+    return knexOrTransaction(this.tableName)
       .insert(collection)
       .onConflict(['name', 'version'])
-      .merge();
+      .merge()
+      .returning('cumulus_id');
   }
 }
 

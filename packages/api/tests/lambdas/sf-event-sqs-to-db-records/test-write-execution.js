@@ -6,9 +6,9 @@ const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
 
 const {
-  localStackConnectionEnv,
-  getKnexClient,
   ExecutionPgModel,
+  generateLocalTestDb,
+  destroyLocalTestDb,
 } = require('@cumulus/db');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
@@ -29,18 +29,12 @@ test.before(async (t) => {
 
   t.context.testDbName = `writeExecutions_${cryptoRandomString({ length: 10 })}`;
 
-  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
-  await t.context.knexAdmin.raw(`create database "${t.context.testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${t.context.testDbName}" to "${localStackConnectionEnv.PG_USER}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: t.context.testDbName,
-      migrationDir,
-    },
-  });
-  await t.context.knex.migrate.latest();
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    t.context.testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
 
   t.context.executionPgModel = new ExecutionPgModel();
 });
@@ -90,9 +84,9 @@ test.after.always(async (t) => {
     executionModel,
   } = t.context;
   await executionModel.deleteTable();
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    ...t.context,
+  });
 });
 
 test('shouldWriteExecutionToPostgres() returns false if collection from message is not found in Postgres', async (t) => {

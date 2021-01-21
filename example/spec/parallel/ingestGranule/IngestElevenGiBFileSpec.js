@@ -90,6 +90,8 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
         { timeout: 60 }
       );
 
+      console.log(`Waiting for ${ingestGranuleExecutionArn} to complete`);
+
       // Wait for the execution to be completed
       ingestGranuleExecution = await getExecutionWithStatus({
         prefix,

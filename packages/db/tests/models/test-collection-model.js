@@ -52,7 +52,7 @@ test('CollectionPgModel.upsert() creates new collection', async (t) => {
   );
 });
 
-test('CollectionPgModel.upsert() updates collection', async (t) => {
+test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
   const {
     knex,
     collectionPgModel,
@@ -61,17 +61,21 @@ test('CollectionPgModel.upsert() updates collection', async (t) => {
 
   await collectionPgModel.create(knex, collectionRecord);
 
-  const sampleFileName = cryptoRandomString({ length: 5 });
-  collectionRecord.sample_file_name = sampleFileName;
+  const updatedCollection = {
+    ...collectionRecord,
+    sample_file_name: cryptoRandomString({ length: 3 }),
+  };
 
-  await collectionPgModel.upsert(knex, collectionRecord);
+  await collectionPgModel.upsert(knex, updatedCollection);
 
   t.like(
-    await collectionPgModel.get(knex, collectionRecord),
+    await collectionPgModel.get(knex, {
+      name: collectionRecord.name,
+      version: collectionRecord.version,
+    }),
     {
-      ...collectionRecord,
-      files: JSON.parse(collectionRecord.files),
-      sample_file_name: sampleFileName,
+      ...updatedCollection,
+      files: JSON.parse(updatedCollection.files),
     }
   );
 });
