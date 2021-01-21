@@ -48,6 +48,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2257**
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
+- **CUMULUS-2128**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
+    - `@cumulus/message/Providers/getMessageProvider`
 - **CUMULUS-2190**
   - Added helper functions:
     - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
@@ -70,6 +74,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMUlUS-2128**
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for granule and file writes to the core PostgreSQL database
   - **CUMULUS-2199**
     - Updated Rules endpoint to write rules to core PostgreSQL database in addition to DynamoDB and to delete rules from the PostgreSQL database in addition to DynamoDB.
     - Updated `create` in Rules Model to take in optional `createdAt` parameter which sets the value of createdAt if not specified during function call.
@@ -123,6 +129,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `lzards-backup` Core task to facilitate making LZARDS backup requests in Cumulus ingest workflows
 - **CUMULUS-2092**
   - Add documentation for Granule Not Found Reports
+- **HYRAX-320**
+  - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title id and granule ur to allow for values with special characters in them. For example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such values will be encoded correctly and parsable by HyraxInTheCloud
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
 - **CUMULUS-2092**
@@ -197,7 +205,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - **CUMULUS-2251**
-  -  Removes `tea_api_egress_log_group` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`.
+  - Removes `tea_api_egress_log_group` variable from `tf-modules/distribution/variables.tf` and `tf-modules/cumulus/variables.tf`.
 
 ### BREAKING CHANGES
 

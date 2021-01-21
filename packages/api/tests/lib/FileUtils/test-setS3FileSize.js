@@ -68,3 +68,20 @@ test('setS3FileSize() returns the file without a size if size and fileSize are n
 
   t.deepEqual(updatedFile, file);
 });
+
+test('setS3FileSize() returns input file if S3 request to get file size throws error', async (t) => {
+  const file = { };
+
+  const fakeS3 = {
+    headObject: (params = {}) => ({
+      promise: async () => {
+        throw new TypeError(`Unexpected key: ${params.Key}`);
+      },
+    }),
+  };
+
+  t.deepEqual(
+    await setS3FileSize(fakeS3, file),
+    {}
+  );
+});

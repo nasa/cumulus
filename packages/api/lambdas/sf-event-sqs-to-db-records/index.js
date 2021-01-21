@@ -88,6 +88,7 @@ const writeRecords = async ({
   pdrModel,
 }) => {
   if (!isPostRDSDeploymentExecution(cumulusMessage)) {
+    log.info('Message is not for a post-RDS deployment execution. Writes will only be performed to DynamoDB and not RDS');
     return writeRecordsToDynamoDb({
       cumulusMessage,
       granuleModel,
@@ -126,6 +127,7 @@ const writeRecords = async ({
     messageParentExecutionArn,
     parentExecutionCumulusId,
   })) {
+    log.info('Could not satisfy requirements for execution RDS write. All writes will only be performed to DynamoDB and not RDS');
     // If any requirements for writing executions to Postgres were not met,
     // then PDR/granules should not be written to Postgres either since they
     // reference executions, so bail out to writing execution/PDR/granule

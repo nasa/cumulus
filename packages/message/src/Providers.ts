@@ -1,12 +1,29 @@
 import { Message } from '@cumulus/types';
 
+type MessageProvider = {
+  id: string
+  protocol: string
+  host: string
+  port?: number
+};
+
 type MessageWithProvider = Message.CumulusMessage & {
   meta: {
-    provider?: {
-      id: string
-    }
+    provider?: MessageProvider
   }
 };
+
+/**
+ * Get the provider from a workflow message, if any.
+ *
+ * @param {MessageWithProvider} message - A workflow message object
+ * @returns {MessageProvider|string} The provider object
+ *
+ * @alias module:Providers
+ */
+export const getMessageProvider = (
+  message: MessageWithProvider
+): MessageProvider | undefined => message.meta?.provider;
 
 /**
  * Get the provider ID from a workflow message, if any.
@@ -18,4 +35,4 @@ type MessageWithProvider = Message.CumulusMessage & {
  */
 export const getMessageProviderId = (
   message: MessageWithProvider
-): string | undefined => message.meta?.provider?.id;
+): string | undefined => getMessageProvider(message)?.id;

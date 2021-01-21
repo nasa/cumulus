@@ -22,16 +22,18 @@ export interface ReplaceConfig {
   TargetPath?: string
 }
 
+export interface Meta {
+  workflow_name: string
+  collection?: {
+    name?: string
+    version?: string
+  }
+  [key: string]: unknown
+}
+
 export interface CumulusMessage {
   cumulus_meta: CumulusMeta
-  meta: {
-    workflow_name: string
-    collection?: {
-      name?: string
-      version?: string
-    }
-    [key: string]: unknown
-  }
+  meta: Meta
   payload: unknown
   exception?: CumulusException
 }
