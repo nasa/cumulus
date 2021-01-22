@@ -147,7 +147,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   const record = await pdrPgModel.get(knex, { name: testPdr.pdrName });
 
   t.like(
-    omit(record, ['cumulus_id']),
+    record,
     omit({
       name: testPdr.pdrName,
       provider_cumulus_id: providerCumulusId,
@@ -163,7 +163,6 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
       timestamp: new Date(testPdr.timestamp),
       duration: testPdr.duration,
       created_at: new Date(testPdr.createdAt),
-      updated_at: new Date(testPdr.updatedAt),
     },
     ['updated_at'])
   );
@@ -211,11 +210,10 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
   t.like(
     record,
     omit({
-      ...testPdr,
       name: testPdr.pdrName,
       provider_cumulus_id: providerCumulusId,
       collection_cumulus_id: collectionCumulusId,
-      execution_cumulus_id: testPdr.executionCumulusId ? testPdr.executionCumulusId : null,
+      execution_cumulus_id: null,
       status: testPdr.status,
       progress: null,
       pan_sent: null,
@@ -226,8 +224,8 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
       timestamp: null,
       duration: null,
       created_at: new Date(testPdr.createdAt),
-      updated_at: new Date(testPdr.updatedAt),
-    }, ['createdAt', 'updatedAt', 'pdrName', 'collection', 'provider', 'collectionId', 'updated_at'])
+    },
+    ['updated_at'])
   );
 });
 
@@ -246,7 +244,6 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already mig
 test.serial('migratePdrs skips already migrated record', async (t) => {
   const {
     knex,
-    pdrPgModel,
     testCollection,
     testProvider,
   } = t.context;
