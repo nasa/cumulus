@@ -13,7 +13,7 @@ Cumulus is upgrading its supported version of Terraform from **0.12.12** to **0.
 ### Prerequisites
 
 - Follow the [Terraform guidance for what to do before upgrading](https://www.terraform.io/upgrade-guides/0-13.html#before-you-upgrade), notably ensuring that you have no pending changes to your Cumulus deployments before proceeding.
-  - You should do a `terraform plan` to see if you have any pending changes for your deployment (for `data-persistence-tf` and `cumulus-tf`), and if so, run a `terraform apply` **before doing the upgrade to Terraform 0.13.6**
+  - You should do a `terraform plan` to see if you have any pending changes for your deployment (for both the `data-persistence-tf` and `cumulus-tf` modules), and if so, run a `terraform apply` **before doing the upgrade to Terraform 0.13.6**
 - Review the [Terraform v0.13 release notes](https://github.com/hashicorp/terraform/blob/v0.13/CHANGELOG.md) to prepare for any breaking changes that may affect your custom deployment code. **Cumulus' deployment code has already been updated for compatibility with version 0.13**.
 - Install Terraform version 0.13.6. We recommend using Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv) to manage your installed versons of Terraform, but this is not required.
 
@@ -23,7 +23,7 @@ Terraform 0.13 does not support some of the syntax from previous Terraform versi
 
 Terraform provides a [`0.13upgrade` command](https://www.terraform.io/docs/commands/0.13upgrade.html) as part of version 0.13 to handle automatically upgrading your code. **Make sure to check out the [documentation on batch usage of `0.13upgrade`](https://www.terraform.io/docs/commands/0.13upgrade.html#batch-usage), which will allow you to upgrade all of your Terraform code with one command**.
 
-Run the `0.13upgrade` commands until you have no more necessary updates to your deployment code.
+Run the `0.13upgrade` command until you have no more necessary updates to your deployment code.
 
 ### Upgrade your deployment
 
