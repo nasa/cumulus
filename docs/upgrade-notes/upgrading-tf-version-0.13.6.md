@@ -6,7 +6,7 @@ hide_title: false
 
 ## Background
 
-Cumulus pins its support to a specific version of Terraform that is identified [in the code](https://github.com/nasa/cumulus/blob/master/example/.tfversion) and [deployment documentation](../deployment/README.md#install-terraform). The reason for only supporting one specific Terraform version at a time is to avoid deployment errors than can be caused by deploying to the same target with different Terraform versions.
+Cumulus pins its support to a specific version of Terraform [see: deployment documentation](../deployment/README.md#install-terraform). The reason for only supporting one specific Terraform version at a time is to avoid deployment errors than can be caused by deploying to the same target with different Terraform versions.
 
 Cumulus is upgrading its supported version of Terraform from **0.12.12** to **0.13.6**. This document contains instructions on how to perform the uprade for your deployments.
 
