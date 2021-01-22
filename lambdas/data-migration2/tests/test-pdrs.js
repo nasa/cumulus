@@ -8,7 +8,9 @@ const Pdr = require('@cumulus/api/models/pdrs');
 
 const {
   CollectionPgModel,
+  ExecutionPgModel,
   fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
   fakeProviderRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
@@ -27,13 +29,13 @@ const { RecordAlreadyMigrated } = require('@cumulus/errors');
 const { migrationDir } = require('../../db-migration');
 const { migratePdrRecord, migratePdrs } = require('../dist/lambda/pdrs');
 
-const generateTestPdr = (collectionId, provider, executionId) => ({
+const generateTestPdr = (collectionId, provider, executionArn) => ({
   pdrName: cryptoRandomString({ length: 5 }),
   collectionId: collectionId,
   provider: provider,
   status: 'running',
   progress: 10,
-  execution: executionId,
+  execution: executionArn,
   PANSent: false,
   PANmessage: 'message',
   stats: { total: 1, completed: 0, failed: 0, processing: 1 },
@@ -130,8 +132,16 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
     testCollection,
     testProvider,
   } = t.context;
+  const executionPgModel = new ExecutionPgModel();
+  const execution = fakeExecutionRecordFactory();
 
-  const testPdr = generateTestPdr(testCollection.name, testProvider.name);
+  const executionResponse = await executionPgModel.create(
+    knex,
+    execution
+  );
+  const executionCumulusId = executionResponse[0];
+
+  const testPdr = generateTestPdr(testCollection.name, testProvider.name, execution.arn);
   await migratePdrRecord(testPdr, knex);
 
   const record = await pdrPgModel.get(knex, { name: testPdr.pdrName });
@@ -142,7 +152,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
       name: testPdr.pdrName,
       provider_cumulus_id: providerCumulusId,
       collection_cumulus_id: collectionCumulusId,
-      execution_cumulus_id: testPdr.executionCumulusId ? testPdr.executionCumulusId : null,
+      execution_cumulus_id: executionCumulusId,
       status: testPdr.status,
       progress: testPdr.progress,
       pan_sent: testPdr.PANSent,
@@ -295,7 +305,7 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
   t.is(records.length, 2);
 });
 
-test.serial.only('migratePdrs processes all non-failing records', async (t) => {
+test.serial('migratePdrs processes all non-failing records', async (t) => {
   const {
     collectionPgModel,
     knex,

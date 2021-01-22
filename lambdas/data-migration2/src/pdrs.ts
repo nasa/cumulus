@@ -3,11 +3,13 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import Logger from '@cumulus/logger';
 import {
+  getRecordCumulusId,
   CollectionPgModel,
-  ExecutionPgModel,
   PdrPgModel,
+  PostgresExecutionRecord,
   PostgresPdr,
   ProviderPgModel,
+  tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import { RecordAlreadyMigrated } from '@cumulus/errors';
@@ -35,7 +37,6 @@ export const migratePdrRecord = async (
   Manager.recordIsValid(dynamoRecord, schemas.pdr);
 
   const collectionPgModel = new CollectionPgModel();
-  const executionPgModel = new ExecutionPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
 
@@ -55,10 +56,13 @@ export const migratePdrRecord = async (
     { name: dynamoRecord.provider }
   );
 
-  const executionCumulusId = dynamoRecord.execution ? await executionPgModel.getRecordCumulusId(
-    knex,
-    { arn: dynamoRecord.execution.arn }
-  ) : undefined;
+  const executionCumulusId = dynamoRecord.execution
+    ? await getRecordCumulusId<PostgresExecutionRecord>(
+      { arn: dynamoRecord.execution },
+      tableNames.executions,
+      knex
+    )
+    : undefined;
 
   // Map old record to new schema.
   const updatedRecord: PostgresPdr = {
