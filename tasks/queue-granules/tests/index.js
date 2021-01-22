@@ -586,7 +586,7 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
   );
 });
 
-test.serial('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async(t) => {
+test.serial('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -601,10 +601,10 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
 
   const cnm = {
     id: 1234,
-    body: "string"
+    body: 'string',
   };
   event.config.childWorkflowMeta = {
-    cnm
+    cnm,
   };
 
   await validateConfig(t, event.config);
