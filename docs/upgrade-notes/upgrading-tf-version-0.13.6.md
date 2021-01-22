@@ -38,5 +38,5 @@ Run the `0.13upgrade` commands until you have no more necessary updates to your 
     re-initialization of the backend.
     ```
 
-3. Run `terraform apply` to perform a deployment.
+3. Run `terraform apply` to perform a deployment. **WARNING** Even if Terraform says that no resource changes are pending, running the `apply` using Terraform version 0.13.6 will modify your backend state from version 0.12.12 to version 0.13.6 **without requiring approval**. Updating the backend state is a necessary part of the version 0.13.6 upgrade, but it is not completely transparent.
 4. Repeat steps 2 and 3 for the `cumulus-tf` directory.
