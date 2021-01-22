@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-    aws  = ">= 3.14.1"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.14.1"
+    }
   }
 }
 
@@ -32,7 +35,7 @@ module "provision_database" {
 }
 
 module "data_persistence" {
-  source = "../../tf-modules/data-persistence"
+  source                      = "../../tf-modules/data-persistence"
   prefix                      = var.prefix
   subnet_ids                  = var.subnet_ids
   enable_point_in_time_tables = var.enable_point_in_time_tables
