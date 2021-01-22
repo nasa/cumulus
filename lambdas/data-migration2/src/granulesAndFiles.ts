@@ -3,14 +3,15 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
-  PostgresCollectionRecord,
-  PostgresProviderRecord,
-  PostgresExecutionRecord,
-  PostgresPdrRecord,
-  PostgresGranuleRecord,
-  PostgresGranule,
-  PostgresFile,
+  CollectionPgModel,
   getRecordCumulusId,
+  GranulePgModel,
+  PdrPgModel,
+  PostgresExecutionRecord,
+  PostgresFile,
+  PostgresGranule,
+  PostgresGranuleRecord,
+  ProviderPgModel,
   tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
@@ -45,25 +46,24 @@ export const migrateGranuleRecord = async (
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.granule);
   const [name, version] = dynamoRecord.collectionId.split('___');
+  const collectionPgModel = new CollectionPgModel();
+  const providerPgModel = new ProviderPgModel();
+  const pdrPgModel = new PdrPgModel();
 
-  const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
-    { name, version },
-    tableNames.collections,
-    knex
+  const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+    knex,
+    { name, version }
   );
 
-  const providerCumulusId = dynamoRecord.provider
-    ? await getRecordCumulusId<PostgresProviderRecord>(
-      { name: dynamoRecord.provider },
-      tableNames.providers,
-      knex
-    )
-    : undefined;
+  const providerCumulusId = dynamoRecord.provider ? await providerPgModel.getRecordCumulusId(
+    knex,
+    { name: dynamoRecord.provider }
+  ) : undefined;
+
   const pdrCumulusId = dynamoRecord.pdrName
-    ? await getRecordCumulusId<PostgresPdrRecord>(
-      { name: dynamoRecord.pdrName },
-      tableNames.pdrs,
-      knex
+    ? await pdrPgModel.getRecordCumulusId(
+      knex,
+      { name: dynamoRecord.pdrName }
     )
     : undefined;
 
@@ -137,17 +137,17 @@ export const migrateFileRecord = async (
   knex: Knex
 ): Promise<void> => {
   const [name, version] = collectionId.split('___');
+  const collectionPgModel = new CollectionPgModel();
+  const granulePgModel = new GranulePgModel();
 
-  const collectionCumulusId = await getRecordCumulusId<PostgresCollectionRecord>(
-    { name, version },
-    tableNames.collections,
-    knex
+  const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+    knex,
+    { name, version }
   );
 
-  const granuleCumulusId = await getRecordCumulusId<PostgresGranuleRecord>(
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId },
-    tableNames.granules,
-    knex
   );
 
   const bucket = getBucket(file);
