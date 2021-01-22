@@ -1,5 +1,4 @@
 const test = require('ava');
-const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 
 const Collection = require('@cumulus/api/models/collections');
