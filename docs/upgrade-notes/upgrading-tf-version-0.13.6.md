@@ -13,6 +13,8 @@ Cumulus is upgrading its supported version of Terraform from **0.12.12** to **0.
 ### Prerequisites
 
 - Follow the [Terraform guidance for what to do before upgrading](https://www.terraform.io/upgrade-guides/0-13.html#before-you-upgrade), notably ensuring that you have no pending changes to your Cumulus deployments before proceeding.
+  - You should do a `terraform plan` to see if you have any pending changes for your deployment (for `data-persistence-tf` and `cumulus-tf`), and if so, run a `terraform apply` **before doing the upgrade to Terraform 0.13.6**
+- Review the [Terraform v0.13 release notes](https://github.com/hashicorp/terraform/blob/v0.13/CHANGELOG.md) to prepare for any breaking changes that may affect your custom deployment code. **Cumulus' deployment code has already been updated for compatibility with version 0.13**.
 - Install Terraform version 0.13.6. We recommend using Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv) to manage your installed versons of Terraform, but this is not required.
 
 ### Upgrade your deployment code
@@ -26,17 +28,19 @@ Run the `0.13upgrade` commands until you have no more necessary updates to your 
 ### Upgrade your deployment
 
 1. Ensure that you are running Terraform 0.13.6 by running `terraform --version`. If you are using `tfenv`, you can switch versions by running `tfenv use 0.13.6`.
-2. In the `data-persistence-tf` directory, run `terraform init --reconfigure`. The `--reconfigure` flag is required, otherwise you might see an error like:
+2. For the `data-persistence-tf` and `cumulus-tf` directories, take the following steps:
+   1. Run `terraform init --reconfigure`. The `--reconfigure` flag is required, otherwise you might see an error like:
 
-    ```text
-    Error: Failed to decode current backend config
+        ```text
+        Error: Failed to decode current backend config
 
-    The backend configuration created by the most recent run of "terraform init"
-    could not be decoded: unsupported attribute "lock_table". The configuration
-    may have been initialized by an earlier version that used an incompatible
-    configuration structure. Run "terraform init -reconfigure" to force
-    re-initialization of the backend.
-    ```
+        The backend configuration created by the most recent run of "terraform init"
+        could not be decoded: unsupported attribute "lock_table". The configuration
+        may have been initialized by an earlier version that used an incompatible
+        configuration structure. Run "terraform init -reconfigure" to force
+        re-initialization of the backend.
+        ```
 
-3. Run `terraform apply` to perform a deployment. **WARNING** Even if Terraform says that no resource changes are pending, running the `apply` using Terraform version 0.13.6 will modify your backend state from version 0.12.12 to version 0.13.6 **without requiring approval**. Updating the backend state is a necessary part of the version 0.13.6 upgrade, but it is not completely transparent.
-4. Repeat steps 2 and 3 for the `cumulus-tf` directory.
+   2. Run `terraform apply` to perform a deployment.
+
+        > **WARNING:** Even if Terraform says that no resource changes are pending, running the `apply` using Terraform version 0.13.6 will modify your backend state from version 0.12.12 to version 0.13.6 **without requiring approval**. Updating the backend state is a necessary part of the version 0.13.6 upgrade, but it is not completely transparent.
