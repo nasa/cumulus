@@ -7,32 +7,23 @@ const Execution = require('@cumulus/api/models/executions');
 const Granule = require('@cumulus/api/models/granules');
 const s3Utils = require('@cumulus/aws-client/S3');
 
-const { createBucket } = require('@cumulus/aws-client/S3');
 const { secretsManager, dynamodbDocClient } = require('@cumulus/aws-client/services');
 const {
-  translateApiCollectionToPostgresCollection,
-  translateApiExecutionToPostgresExecution,
+  CollectionPgModel,
+  destroyLocalTestDb,
+  ExecutionPgModel,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  FilePgModel,
+  generateLocalTestDb,
+  GranulePgModel,
   tableNames,
 } = require('@cumulus/db');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
-const { fakeCollectionFactory, fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 const { migrateGranuleRecord, migrateFileRecord, migrateGranulesAndFiles } = require('../dist/lambda/granulesAndFiles');
-
-const migrateFakeCollectionRecord = async (record, knex) => {
-  const updatedRecord = translateApiCollectionToPostgresCollection(record);
-  const [id] = await knex(tableNames.collections).insert(updatedRecord).returning('cumulus_id');
-  return id;
-};
-
-const migrateFakeExecutionRecord = async (record, knex) => {
-  const updatedRecord = await translateApiExecutionToPostgresExecution(record, knex);
-  const [id] = await knex(tableNames.executions).insert(updatedRecord).returning('cumulus_id');
-  return id;
-};
 
 const buildCollectionId = (name, version) => `${name}___${version}`;
 
@@ -81,7 +72,6 @@ let executionsModel;
 let granulesModel;
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 
 test.before(async (t) => {
   await s3Utils.createBucket(bucket);
@@ -101,6 +91,9 @@ test.before(async (t) => {
   granulesModel = new Granule();
   await granulesModel.createTable();
 
+  t.context.granulePgModel = new GranulePgModel();
+  t.context.filePgModel = new FilePgModel();
+
   // Store the CMR password
   process.env.cmr_password_secret_name = cryptoRandomString({ length: 5 });
   await secretsManager().createSecret({
@@ -108,34 +101,37 @@ test.before(async (t) => {
     SecretString: cryptoRandomString({ length: 5 }),
   }).promise();
 
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
 });
 
 test.beforeEach(async (t) => {
-  const testCollection = fakeCollectionFactory();
-  const testExecution = fakeExecutionFactoryV2({ parentArn: undefined });
-  t.context.testCollection = testCollection;
-  t.context.testExecution = testExecution;
+  const collectionPgModel = new CollectionPgModel();
+  const testCollection = fakeCollectionRecordFactory();
 
-  t.context.collectionCumulusId = await migrateFakeCollectionRecord(testCollection, t.context.knex);
-  t.context.executionCumulusId = await migrateFakeExecutionRecord(testExecution, t.context.knex);
+  const collectionResponse = await collectionPgModel.create(
+    t.context.knex,
+    testCollection
+  );
+  t.context.testCollection = testCollection;
+  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionPgModel = collectionPgModel;
+
+  const executionPgModel = new ExecutionPgModel();
+  const testExecution = fakeExecutionRecordFactory();
+
+  const executionResponse = await executionPgModel.create(
+    t.context.knex,
+    testExecution
+  );
+  t.context.testExecution = testExecution;
+  t.context.executionCumulusId = executionResponse[0];
+  t.context.executionPgModel = executionPgModel;
+
   t.context.testGranule = generateTestGranule(testCollection, testExecution.arn);
 });
 
@@ -157,29 +153,31 @@ test.after.always(async (t) => {
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
   }).promise();
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test.serial('migrateGranuleRecord correctly migrates granule record', async (t) => {
   const {
     collectionCumulusId,
     executionCumulusId,
+    granulePgModel,
     knex,
     testGranule,
   } = t.context;
 
   await migrateGranuleRecord(testGranule, knex);
 
-  const record = await t.context.knex.queryBuilder()
-    .select()
-    .table(tableNames.granules)
-    .where({ granule_id: testGranule.granuleId, collection_cumulus_id: collectionCumulusId })
-    .first();
+  const record = await granulePgModel.get(knex, {
+    granule_id: testGranule.granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
 
   t.like(
-    omit(record, ['cumulus_id']),
+    record,
     omit({
       granule_id: testGranule.granuleId,
       status: testGranule.status,
@@ -210,6 +208,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
 
 test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   const {
+    filePgModel,
     knex,
     testGranule,
   } = t.context;
@@ -218,14 +217,11 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   await migrateGranuleRecord(testGranule, knex);
   await migrateFileRecord(testFile, testGranule.granuleId, testGranule.collectionId, knex);
 
-  const record = await t.context.knex.queryBuilder()
-    .select()
-    .table(tableNames.files)
-    .first();
-    // .where({ bucket: testFile.bucket, key: testFile.key });
+  // I am not sure how I can select a file where bucket and key are null
+  const record = await filePgModel.get(knex, {});
 
   t.like(
-    omit(record, ['cumulus_id']),
+    record,
     omit({
       bucket: testFile.bucket ? testFile.bucket : null,
       checksum_value: testFile.checksum,
@@ -258,6 +254,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   const {
     collectionCumulusId,
     executionCumulusId,
+    granulePgModel,
     knex,
     testGranule,
   } = t.context;
@@ -282,14 +279,13 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
 
   await migrateGranuleRecord(testGranule, knex);
 
-  const record = await t.context.knex.queryBuilder()
-    .select()
-    .table(tableNames.granules)
-    .where({ granule_id: testGranule.granuleId, collection_cumulus_id: collectionCumulusId })
-    .first();
+  const record = await granulePgModel.get(knex, {
+    granule_id: testGranule.granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
 
   t.like(
-    omit(record, ['cumulus_id']),
+    record,
     {
       granule_id: testGranule.granuleId,
       status: testGranule.status,
@@ -333,6 +329,7 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already
 
 test.serial('migrateFileRecord handles nullable fields on source file data', async (t) => {
   const {
+    filePgModel,
     knex,
     testGranule,
   } = t.context;
@@ -351,14 +348,11 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   await migrateGranuleRecord(testGranule, knex);
   await migrateFileRecord(testFile, testGranule.granuleId, testGranule.collectionId, knex);
 
-  const record = await t.context.knex.queryBuilder()
-    .select()
-    .table(tableNames.files)
-    .first();
-  // .where({ bucket: testFile.bucket, key: testFile.key });
+  // Also unsure of condition for null bucket and key
+  const record = await filePgModel.get(knex, {});
 
   t.like(
-    omit(record, ['cumulus_id']),
+    record,
     {
       bucket: null,
       checksum_value: null,
@@ -404,12 +398,15 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
       success: 0,
     },
   });
-  const records = await t.context.knex.queryBuilder().select().table(tableNames.granules);
+
+  const records = await knex(tableNames.granules);
   t.is(records.length, 1);
 });
 
 test.serial('migrateGranulesAndFiles processes multiple granules and files', async (t) => {
   const {
+    collectionPgModel,
+    executionPgModel,
     knex,
     testGranule,
   } = t.context;
@@ -417,11 +414,17 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
   const alternateBucket = cryptoRandomString({ length: 10 });
   await s3Utils.createBucket(alternateBucket);
 
-  const testCollection2 = fakeCollectionFactory();
-  const testExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
+  const testExecution2 = fakeExecutionRecordFactory();
+  await executionPgModel.create(
+    knex,
+    testExecution2
+  );
 
-  await migrateFakeCollectionRecord(testCollection2, knex);
-  await migrateFakeExecutionRecord(testExecution2, knex);
+  const testCollection2 = fakeCollectionRecordFactory();
+  await collectionPgModel.create(
+    t.context.knex,
+    testCollection2
+  );
 
   const testGranule1 = testGranule;
   const testGranule2 = generateTestGranule(testCollection2, testExecution2.arn, alternateBucket);
@@ -459,14 +462,16 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
       success: 2,
     },
   });
-  const records = await t.context.knex.queryBuilder().select().table(tableNames.granules);
-  const fileRecords = await t.context.knex.queryBuilder().select().table(tableNames.files);
+  const records = await knex(tableNames.granules);
+  const fileRecords = await knex(tableNames.files);
   t.is(records.length, 2);
   t.is(fileRecords.length, 2);
 });
 
 test.serial('migrateGranulesAndFiles processes all non-failing granule records and does not process files of failling granule records', async (t) => {
   const {
+    collectionPgModel,
+    executionPgModel,
     knex,
     testGranule,
   } = t.context;
@@ -474,11 +479,17 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   const alternateBucket = cryptoRandomString({ length: 10 });
   await s3Utils.createBucket(alternateBucket);
 
-  const testCollection2 = fakeCollectionFactory();
-  const testExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
+  const testExecution2 = fakeExecutionRecordFactory();
+  await executionPgModel.create(
+    knex,
+    testExecution2
+  );
 
-  await migrateFakeCollectionRecord(testCollection2, knex);
-  await migrateFakeExecutionRecord(testExecution2, knex);
+  const testCollection2 = fakeCollectionRecordFactory();
+  await collectionPgModel.create(
+    t.context.knex,
+    testCollection2
+  );
 
   const testGranule2 = generateTestGranule(testCollection2, testExecution2.arn, alternateBucket);
   // remove required field so record will fail
@@ -512,8 +523,8 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
       success: 1,
     },
   });
-  const records = await t.context.knex.queryBuilder().select().table(tableNames.granules);
-  const fileRecords = await t.context.knex.queryBuilder().select().table(tableNames.files);
+  const records = await knex(tableNames.granules);
+  const fileRecords = await knex(tableNames.files);
   t.is(records.length, 1);
   t.is(fileRecords.length, 1);
 });
