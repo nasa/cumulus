@@ -37,6 +37,7 @@ async function enqueueParsePdrMessage({
   systemBucket,
   queueUrl,
   executionNamePrefix,
+  additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: parsePdrArn } = await getJsonS3Object(
@@ -58,6 +59,7 @@ async function enqueueParsePdrMessage({
     customMeta: {
       collection,
       provider,
+      ...additionalCustomMeta,
     },
     executionNamePrefix,
   });
@@ -88,6 +90,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
  * @param {string} [params.executionNamePrefix] - the prefix to apply to the
  *   name of the enqueued execution
+ * @param {Object} [params.additionalCustomMeta] - additional object to merge into meta object
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueGranuleIngestMessage({
@@ -101,6 +104,7 @@ async function enqueueGranuleIngestMessage({
   systemBucket,
   queueUrl,
   executionNamePrefix,
+  additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
   const { arn: ingestGranuleArn } = await getJsonS3Object(
@@ -128,6 +132,7 @@ async function enqueueGranuleIngestMessage({
     customMeta: {
       collection,
       provider,
+      ...additionalCustomMeta,
     },
     executionNamePrefix,
   });
