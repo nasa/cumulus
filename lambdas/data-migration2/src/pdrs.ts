@@ -35,7 +35,7 @@ export const migratePdrRecord = async (
 ): Promise<void> => {
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.pdr);
-
+  const [name, version] = dynamoRecord.collectionId.split('___');
   const collectionPgModel = new CollectionPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
@@ -48,7 +48,7 @@ export const migratePdrRecord = async (
   }
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
     knex,
-    { name: dynamoRecord.collectionId }
+    { name, version }
   );
 
   const providerCumulusId = await providerPgModel.getRecordCumulusId(
