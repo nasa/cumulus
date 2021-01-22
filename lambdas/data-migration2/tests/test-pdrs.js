@@ -146,7 +146,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
 
   t.like(
     record,
-    omit({
+    {
       name: testPdr.pdrName,
       provider_cumulus_id: providerCumulusId,
       collection_cumulus_id: collectionCumulusId,
@@ -161,8 +161,8 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
       timestamp: new Date(testPdr.timestamp),
       duration: testPdr.duration,
       created_at: new Date(testPdr.createdAt),
-    },
-    ['updated_at'])
+      updated_at: new Date(testPdr.updatedAt),
+    }
   );
 });
 

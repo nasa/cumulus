@@ -80,7 +80,7 @@ export const migratePdrRecord = async (
     timestamp: dynamoRecord.timestamp ? new Date(dynamoRecord.timestamp) : undefined,
     duration: dynamoRecord.duration,
     created_at: new Date(dynamoRecord.createdAt),
-    updated_at: dynamoRecord.updated ? new Date(dynamoRecord.updatedAt) : undefined,
+    updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
   await pdrPgModel.upsert(knex, updatedRecord);
