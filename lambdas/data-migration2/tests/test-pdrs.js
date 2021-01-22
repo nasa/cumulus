@@ -91,7 +91,6 @@ test.beforeEach(async (t) => {
     t.context.testCollection
   );
   t.context.collectionCumulusId = collectionResponse[0];
-  t.context.collectionPgModel = collectionPgModel;
 
   const providerPgModel = new ProviderPgModel();
   t.context.testProvider = fakeProviderRecordFactory();
@@ -101,7 +100,6 @@ test.beforeEach(async (t) => {
     t.context.testProvider
   );
   t.context.providerCumulusId = providerResponse[0];
-  t.context.providerPgModel = providerPgModel;
 });
 
 test.afterEach.always(async (t) => {
@@ -267,20 +265,13 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
 
 test.serial('migratePdrs processes multiple PDR records', async (t) => {
   const {
-    collectionPgModel,
     knex,
-    providerPgModel,
     testCollection,
     testProvider,
   } = t.context;
 
-  const fakeCollection = fakeCollectionRecordFactory();
-  const fakeProvider = fakeProviderRecordFactory();
-  await collectionPgModel.create(knex, fakeCollection);
-  await providerPgModel.create(knex, fakeProvider);
-
   const testPdr = generateTestPdr(testCollection, testProvider.name);
-  const anotherPdr = generateTestPdr(fakeCollection, fakeProvider.name);
+  const anotherPdr = generateTestPdr(testCollection, testProvider.name);
 
   await Promise.all([
     pdrsModel.create(testPdr),
@@ -303,20 +294,13 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
 
 test.serial('migratePdrs processes all non-failing records', async (t) => {
   const {
-    collectionPgModel,
     knex,
-    providerPgModel,
     testCollection,
     testProvider,
   } = t.context;
 
-  const fakeCollection = fakeCollectionRecordFactory();
-  const fakeProvider = fakeProviderRecordFactory();
-  await collectionPgModel.create(knex, fakeCollection);
-  await providerPgModel.create(knex, fakeProvider);
-
   const testPdr = generateTestPdr(testCollection, testProvider.name);
-  const anotherPdr = generateTestPdr(fakeCollection, fakeProvider.name);
+  const anotherPdr = generateTestPdr(testCollection, testProvider.name);
   delete testPdr.status;
 
   await Promise.all([
