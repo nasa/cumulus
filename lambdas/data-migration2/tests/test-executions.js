@@ -32,7 +32,6 @@ const {
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
-const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const {
   migrateExecutionRecord,
@@ -44,40 +43,11 @@ let executionsModel;
 let asyncOperationsModel;
 let rulesModel;
 
-let collectionsModel;
-let executionsModel;
-let asyncOperationsModel;
-let rulesModel;
-
 const executionOmitList = [
   'createdAt', 'updatedAt', 'finalPayload', 'originalPayload', 'parentArn', 'type', 'execution', 'name', 'collectionId', 'asyncOperationId', 'cumulusVersion',
 ];
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
-
-const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {}) => {
-  t.deepEqual(
-    omit(pgExecution, ['cumulus_id']),
-    omit(
-      {
-        ...dynamoExecution,
-        async_operation_cumulus_id: null,
-        collection_cumulus_id: null,
-        parent_cumulus_id: null,
-        cumulus_version: dynamoExecution.cumulusVersion,
-        url: dynamoExecution.execution,
-        workflow_name: dynamoExecution.type,
-        original_payload: dynamoExecution.originalPayload,
-        final_payload: dynamoExecution.finalPayload,
-        created_at: new Date(dynamoExecution.createdAt),
-        updated_at: new Date(dynamoExecution.updatedAt),
-        timestamp: new Date(dynamoExecution.timestamp),
-        ...overrides,
-      },
-      executionOmitList
-    )
-  );
-};
 
 const assertPgExecutionMatches = (t, dynamoExecution, pgExecution, overrides = {}) => {
   t.deepEqual(

@@ -5,7 +5,7 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { PostgresExecutionRecord, translateApiExecutionToPostgresExecution } from '@cumulus/db';
-import { RecordAlreadyMigrated } from './errors';
+import { RecordAlreadyMigrated } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const Manager = require('@cumulus/api/models/base');
@@ -56,9 +56,9 @@ export const migrateExecutionRecord = async (
     updatedRecord.parent_cumulus_id = await migrateExecutionRecord(parentExecution, knex);
   }
 
-  const cumulusId = await knex('executions').insert(updatedRecord).returning('cumulus_id');
+  const [cumulusId] = await knex('executions').insert(updatedRecord).returning('cumulus_id');
 
-  return cumulusId[0];
+  return cumulusId;
 };
 
 export const migrateExecutions = async (
