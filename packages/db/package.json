@@ -38,6 +38,10 @@
     "lodash": "^4.17.20",
     "knex": "0.21.13",
     "pg": "^8.3.0",
-    "snake-camel": "^1.0.6"
+    "snake-camel": "^1.0.6",
+    "uuid": "8.3.1"
+  },
+  "devDependencies": {
+    "@types/uuid": "^8.0.0"
   }
 }

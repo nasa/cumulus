@@ -5,7 +5,7 @@ export interface PostgresAsyncOperation {
   description: string,
   operation_type: AsyncOperationType,
   status: AsyncOperationStatus,
-  output?: Object,
+  output?: object,
   task_arn?: string,
   created_at?: Date,
   updated_at?: Date,

@@ -9,8 +9,8 @@ import {
 } from '@cumulus/db';
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
+import { RecordAlreadyMigrated } from '@cumulus/errors';
 
-import { RecordAlreadyMigrated } from './errors';
 import { MigrationSummary } from './types';
 
 const Manager = require('@cumulus/api/models/base');

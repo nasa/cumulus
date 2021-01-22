@@ -5,8 +5,8 @@ import { envUtils } from '@cumulus/common';
 import { PostgresCollectionRecord, translateApiCollectionToPostgresCollection } from '@cumulus/db';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
+import { RecordAlreadyMigrated } from '@cumulus/errors';
 
-import { RecordAlreadyMigrated } from './errors';
 import { MigrationSummary } from './types';
 
 const Manager = require('@cumulus/api/models/base');

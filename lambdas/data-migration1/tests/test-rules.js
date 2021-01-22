@@ -11,11 +11,11 @@ const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 const { migrateRuleRecord, migrateRules } = require('../dist/lambda/rules');
-const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const testDbUser = 'postgres';

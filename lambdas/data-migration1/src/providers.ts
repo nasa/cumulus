@@ -5,8 +5,8 @@ import * as KMS from '@cumulus/aws-client/KMS';
 import { envUtils, keyPairProvider } from '@cumulus/common';
 import { PostgresProviderRecord } from '@cumulus/db';
 import Logger from '@cumulus/logger';
+import { RecordAlreadyMigrated } from '@cumulus/errors';
 
-import { RecordAlreadyMigrated } from './errors';
 import { MigrationSummary } from './types';
 
 const Manager = require('@cumulus/api/models/base');
