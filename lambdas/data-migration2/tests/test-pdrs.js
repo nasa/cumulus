@@ -209,7 +209,7 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
 
   t.like(
     record,
-    omit({
+    {
       name: testPdr.pdrName,
       provider_cumulus_id: providerCumulusId,
       collection_cumulus_id: collectionCumulusId,
@@ -224,8 +224,7 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
       timestamp: null,
       duration: null,
       created_at: new Date(testPdr.createdAt),
-    },
-    ['updated_at'])
+    }
   );
 });
 
