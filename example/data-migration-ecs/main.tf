@@ -1,11 +1,14 @@
 terraform {
   required_providers {
-    aws  = ">= 3.5.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.5.0"
+    }
   }
 }
 
 provider "aws" {
-  region  = var.region
+  region = var.region
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }

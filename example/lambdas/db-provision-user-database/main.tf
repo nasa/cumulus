@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-   aws = "~> 3.0,!= 3.14.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0,!= 3.14.0"
+    }
   }
 }
 
@@ -16,7 +19,7 @@ resource "aws_lambda_function" "provision_database" {
   timeout          = 500
   environment {
     variables = {
-      dbHeartBeat                 = var.rds_connection_heartbeat
+      dbHeartBeat = var.rds_connection_heartbeat
     }
   }
 
@@ -24,7 +27,7 @@ resource "aws_lambda_function" "provision_database" {
   dynamic "vpc_config" {
     for_each = length(var.subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.subnet_ids
+      subnet_ids         = var.subnet_ids
       security_group_ids = [var.rds_security_group, aws_security_group.db_provision[0].id]
     }
   }
@@ -34,8 +37,8 @@ resource "aws_lambda_function" "provision_database" {
 resource "aws_security_group" "db_provision" {
   count = length(var.subnet_ids) == 0 ? 0 : 1
 
-  name_prefix   = "${var.prefix}-db-provision"
-  vpc_id        = var.vpc_id
+  name_prefix = "${var.prefix}-db-provision"
+  vpc_id      = var.vpc_id
 
   egress {
     from_port   = 0
@@ -48,9 +51,9 @@ resource "aws_security_group" "db_provision" {
 }
 
 resource "aws_iam_role" "db_provision" {
-  name_prefix                 = "${var.prefix}_db_provision"
-  assume_role_policy          = data.aws_iam_policy_document.lambda_assume_role_policy.json
-  permissions_boundary        = var.permissions_boundary_arn
+  name_prefix          = "${var.prefix}_db_provision"
+  assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  permissions_boundary = var.permissions_boundary_arn
 
   tags = var.tags
 }
@@ -99,17 +102,17 @@ data "aws_iam_policy_document" "db_provision" {
     resources = [aws_secretsmanager_secret.db_credentials.arn]
   }
   statement {
-    actions = ["secretsmanager:GetSecretValue"]
+    actions   = ["secretsmanager:GetSecretValue"]
     resources = [var.rds_admin_access_secret_arn]
   }
 }
 
 data "aws_lambda_invocation" "provision_database" {
-  depends_on                      = [aws_lambda_function.provision_database]
-  function_name                   = aws_lambda_function.provision_database.function_name
-  input                           = jsonencode({ prefix = var.prefix,
-                                                 rootLoginSecret = var.rds_admin_access_secret_arn,
-                                                 userLoginSecret = aws_secretsmanager_secret.db_credentials.name
-                                                 dbPassword = var.rds_user_password
-                                               })
+  depends_on    = [aws_lambda_function.provision_database]
+  function_name = aws_lambda_function.provision_database.function_name
+  input = jsonencode({ prefix = var.prefix,
+    rootLoginSecret = var.rds_admin_access_secret_arn,
+    userLoginSecret = aws_secretsmanager_secret.db_credentials.name
+    dbPassword      = var.rds_user_password
+  })
 }

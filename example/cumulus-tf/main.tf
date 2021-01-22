@@ -72,9 +72,9 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  rds_security_group            = local.rds_security_group
-  rds_user_access_secret_arn    = local.rds_credentials_secret_arn
-  rds_connection_heartbeat      = var.rds_connection_heartbeat
+  rds_security_group         = local.rds_security_group
+  rds_user_access_secret_arn = local.rds_credentials_secret_arn
+  rds_connection_heartbeat   = var.rds_connection_heartbeat
 
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
 
