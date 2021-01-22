@@ -11,11 +11,10 @@ const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
+  CollectionPgModel,
   getKnexClient,
   tableNames,
   translateApiCollectionToPostgresCollection,
-  translateApiCollectionToPostgresCollection,
-  CollectionPgModel,
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
@@ -23,6 +22,7 @@ const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
+const Knex = require('knex');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 
@@ -217,26 +217,23 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const { name, version } = req.params;
-
   const collectionsModel = new models.Collection();
-  const dbClient = await getKnexClient();
 
   try {
-    await collectionsModel.delete({ name, version });
-
-    await dbClient('collections').where({ name, version }).del();
-
-    if (inTestMode()) {
-      const collectionId = constructCollectionId(name, version);
-      const esClient = await Search.es(process.env.ES_HOST);
-      await esClient.delete({
-        id: collectionId,
-        index: process.env.ES_INDEX,
-        type: 'collection',
-      }, { ignore: [404] });
-    }
-
-    return res.send({ message: 'Record deleted' });
+    Knex.transaction(async (trx) => {
+      await trx(tableNames.collections).where({ name, version }).del();
+      await collectionsModel.delete({ name, version });
+      if (inTestMode()) {
+        const collectionId = constructCollectionId(name, version);
+        const esClient = await Search.es(process.env.ES_HOST);
+        await esClient.delete({
+          id: collectionId,
+          index: process.env.ES_INDEX,
+          type: 'collection',
+        }, { ignore: [404] });
+      }
+      return res.send({ message: 'Record deleted' });
+    });
   } catch (error) {
     if (error instanceof AssociatedRulesError) {
       const message = `Cannot delete collection with associated rules: ${error.rules.join(', ')}`;
