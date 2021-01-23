@@ -147,7 +147,7 @@ export const migrateFileRecord = async (
 
   const granuleCumulusId = await granulePgModel.getRecordCumulusId(
     knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId },
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
   const bucket = getBucket(file);
