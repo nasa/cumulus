@@ -93,7 +93,7 @@ export const migrateGranuleRecord = async (
     duration: dynamoRecord.duration,
     time_to_archive: dynamoRecord.timeToArchive,
     time_to_process: dynamoRecord.timeToPreprocess,
-    product_volume: dynamoRecord.productVolume.toString(),
+    product_volume: dynamoRecord.productVolume,
     error: dynamoRecord.error,
     cmr_link: dynamoRecord.cmrLink,
     execution_cumulus_id: executionCumulusId,
