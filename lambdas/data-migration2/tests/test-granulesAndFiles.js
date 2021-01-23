@@ -186,7 +186,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       duration: testGranule.duration,
       time_to_archive: testGranule.timeToArchive,
       time_to_process: testGranule.timeToPreprocess,
-      product_volume: testGranule.productVolume,
+      product_volume: testGranule.productVolume.toString(),
       error: testGranule.error,
       cmr_link: testGranule.cmrLink,
       execution_cumulus_id: executionCumulusId,
@@ -227,7 +227,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
       checksum_value: testFile.checksum,
       checksum_type: testFile.checksumType,
       key: testFile.key ? testFile.key : null,
-      file_size: testFile.size,
+      file_size: testFile.size.toString(),
       file_name: testFile.fileName,
       source: testFile.source,
       type: testFile.type,
@@ -529,5 +529,5 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   t.is(fileRecords.length, 1);
 });
 
-test.serial.skip('migrateFileRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+test.serial.skip('migrateFileRecord throws RecordAlreadyMigrated error for already migrated record', async () => {
 });
