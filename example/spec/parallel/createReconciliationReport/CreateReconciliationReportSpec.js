@@ -417,7 +417,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       report = JSON.parse(response.body);
-      expect(report.reportType).toBe('Inventory');
+      expect(report.reportType).toBe('Granule Not Found');
       expect(report.status).toBe('SUCCESS');
     });
 
