@@ -8,6 +8,7 @@ const Granule = require('@cumulus/api/models/granules');
 const s3Utils = require('@cumulus/aws-client/S3');
 
 const { secretsManager, dynamodbDocClient } = require('@cumulus/aws-client/services');
+const { fakeFileFactory } = require('@cumulus/api/lib/testUtils');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -31,6 +32,16 @@ const dateString = new Date().toString();
 const bucket = cryptoRandomString({ length: 10 });
 
 const fileOmitList = ['granule_cumulus_id', 'cumulus_id', 'created_at', 'updated_at'];
+const fakeFile = (alternateBucket) => fakeFileFactory({
+  bucket: alternateBucket || bucket,
+  key: cryptoRandomString({ length: 10 }),
+  size: 1098034,
+  fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
+  checksum: 'checkSum01',
+  checksumType: 'md5',
+  type: 'data',
+  source: 'source',
+});
 
 const generateTestGranule = (collection, executionId, alternateBucket, pdrName, provider) => ({
   granuleId: cryptoRandomString({ length: 5 }),
@@ -43,16 +54,7 @@ const generateTestGranule = (collection, executionId, alternateBucket, pdrName, 
   published: false,
   duration: 10,
   files: [
-    {
-      bucket: alternateBucket || bucket,
-      key: cryptoRandomString({ length: 10 }),
-      checksum: 'checkSum01',
-      checksumType: 'md5',
-      fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
-      size: 1098034,
-      source: 's3://test/tf-SyncGranuleSuccess-1607005817091-test-data/files/MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
-      type: 'data',
-    },
+    fakeFile(alternateBucket),
   ],
   error: {},
   productVolume: 1119742,
