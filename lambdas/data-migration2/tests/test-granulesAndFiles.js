@@ -468,7 +468,7 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
   t.is(fileRecords.length, 2);
 });
 
-test.serial('migrateGranulesAndFiles processes all non-failing granule records and does not process files of failling granule records', async (t) => {
+test.serial('migrateGranulesAndFiles processes all non-failing granule records and does not process files of failing granule records', async (t) => {
   const {
     collectionPgModel,
     executionPgModel,
