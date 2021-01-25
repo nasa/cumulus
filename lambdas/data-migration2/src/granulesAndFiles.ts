@@ -99,6 +99,7 @@ export const migrateGranuleRecord = async (
     execution_cumulus_id: executionCumulusId,
     pdr_cumulus_id: pdrCumulusId,
     provider_cumulus_id: providerCumulusId,
+    query_fields: dynamoRecord.queryFields,
     beginning_date_time: dynamoRecord.beginningDateTime
       ? new Date(dynamoRecord.beginningDateTime) : undefined,
     ending_date_time: dynamoRecord.endingDateTime

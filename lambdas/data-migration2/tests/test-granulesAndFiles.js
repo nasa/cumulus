@@ -30,6 +30,8 @@ const buildCollectionId = (name, version) => `${name}___${version}`;
 const dateString = new Date().toString();
 const bucket = cryptoRandomString({ length: 10 });
 
+const fileOmitList = ['granule_cumulus_id', 'cumulus_id', 'created_at', 'updated_at'];
+
 const generateTestGranule = (collection, executionId, alternateBucket, pdrName, provider) => ({
   granuleId: cryptoRandomString({ length: 5 }),
   collectionId: buildCollectionId(collection.name, collection.version),
@@ -176,9 +178,9 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
     collection_cumulus_id: collectionCumulusId,
   });
 
-  t.like(
-    record,
-    omit({
+  t.deepEqual(
+    omit(record, ['updated_at', 'cumulus_id']),
+    {
       granule_id: testGranule.granuleId,
       status: testGranule.status,
       collection_cumulus_id: collectionCumulusId,
@@ -192,6 +194,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       execution_cumulus_id: executionCumulusId,
       pdr_cumulus_id: null,
       provider_cumulus_id: null,
+      query_fields: null,
       beginning_date_time: new Date(testGranule.beginningDateTime),
       ending_date_time: new Date(testGranule.endingDateTime),
       last_update_date_time: new Date(testGranule.lastUpdateDateTime),
@@ -200,9 +203,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       production_date_time: new Date(testGranule.productionDateTime),
       timestamp: new Date(testGranule.timestamp),
       created_at: new Date(testGranule.createdAt),
-      updated_at: new Date(testGranule.updatedAt),
-    },
-    ['updated_at'])
+    }
   );
 });
 
@@ -220,13 +221,14 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   // I am not sure how I can select a file where bucket and key are null
   const record = await filePgModel.get(knex, {});
 
-  t.like(
-    record,
+  t.deepEqual(
+    omit(record, fileOmitList),
     omit({
       bucket: testFile.bucket ? testFile.bucket : null,
       checksum_value: testFile.checksum,
       checksum_type: testFile.checksumType,
       key: testFile.key ? testFile.key : null,
+      path: null,
       file_size: testFile.size.toString(),
       file_name: testFile.fileName,
       source: testFile.source,
@@ -284,8 +286,8 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
     collection_cumulus_id: collectionCumulusId,
   });
 
-  t.like(
-    record,
+  t.deepEqual(
+    omit(record, ['updated_at', 'cumulus_id']),
     {
       granule_id: testGranule.granuleId,
       status: testGranule.status,
@@ -300,6 +302,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
       execution_cumulus_id: executionCumulusId,
       pdr_cumulus_id: null,
       provider_cumulus_id: null,
+      query_fields: null,
       beginning_date_time: null,
       ending_date_time: null,
       last_update_date_time: null,
@@ -308,7 +311,6 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
       production_date_time: null,
       timestamp: null,
       created_at: new Date(testGranule.createdAt),
-      updated_at: new Date(testGranule.updatedAt),
     }
   );
 });
@@ -351,8 +353,8 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   // Also unsure of condition for null bucket and key
   const record = await filePgModel.get(knex, {});
 
-  t.like(
-    record,
+  t.deepEqual(
+    omit(record, fileOmitList),
     {
       bucket: null,
       checksum_value: null,
@@ -361,6 +363,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
       file_name: null,
       key: null,
       source: null,
+      path: null,
     }
   );
 });
