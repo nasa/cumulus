@@ -19,6 +19,7 @@ import { MigrationSummary } from './types';
 const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
+const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
  * Migrate PDR record from Dynamo to RDS.
@@ -35,7 +36,7 @@ export const migratePdrRecord = async (
 ): Promise<void> => {
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.pdr);
-  const [name, version] = dynamoRecord.collectionId.split('___');
+  const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const collectionPgModel = new CollectionPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
