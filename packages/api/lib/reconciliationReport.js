@@ -126,6 +126,7 @@ function convertToDBScanGranuleSearchParams(params) {
   const {
     collectionIds: collectionId,
     granuleIds: granuleIdsParam,
+    providers: provider,
     status,
     startTimestamp,
     endTimestamp,
@@ -138,6 +139,7 @@ function convertToDBScanGranuleSearchParams(params) {
     updatedAt__to: dateToValue(endTimestamp),
     collectionId,
     granuleId,
+    provider,
     status,
   };
   return removeNilProperties(searchParams);

@@ -1,7 +1,13 @@
 terraform {
   required_providers {
-    aws  = ">= 3.14.1"
-    null = "~> 2.1"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.14.1"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 2.1"
+    }
   }
 }
 
@@ -21,7 +27,7 @@ provider "aws" {
 }
 
 locals {
-  tags = merge(var.tags, { Deployment = var.prefix })
+  tags                            = merge(var.tags, { Deployment = var.prefix })
   elasticsearch_alarms            = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_alarms", [])
   elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
   elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
@@ -65,12 +71,9 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  async_operation_image =  "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
+  async_operation_image           = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
-  ecs_cluster_instance_subnet_ids = (length(var.ecs_cluster_instance_subnet_ids) == 0
-    ? var.lambda_subnet_ids
-    : var.ecs_cluster_instance_subnet_ids
-  )
+  ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? var.lambda_subnet_ids : var.ecs_cluster_instance_subnet_ids
   ecs_cluster_min_size            = 2
   ecs_cluster_desired_size        = 2
   ecs_cluster_max_size            = 3
@@ -142,6 +145,7 @@ module "cumulus" {
     "dopeters",
     "jasmine",
     "jennyhliu",
+    "jmccoy_uat",
     "kbaynes",
     "kkelly",
     "kovarik",
@@ -152,10 +156,10 @@ module "cumulus" {
     "mobrien84",
     "npauzenga"
   ]
-  archive_api_url               = var.archive_api_url
-  archive_api_port              = var.archive_api_port
-  private_archive_api_gateway   = var.private_archive_api_gateway
-  api_gateway_stage             = var.api_gateway_stage
+  archive_api_url             = var.archive_api_url
+  archive_api_port            = var.archive_api_port
+  private_archive_api_gateway = var.private_archive_api_gateway
+  api_gateway_stage           = var.api_gateway_stage
 
   # Thin Egress App settings
   tea_internal_api_endpoint = module.thin_egress_app.internal_api_endpoint
@@ -163,7 +167,7 @@ module "cumulus" {
 
   log_destination_arn = var.log_destination_arn
 
-  additional_log_groups_to_elk  = var.additional_log_groups_to_elk
+  additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
   ems_deploy = var.ems_deploy
 
@@ -243,7 +247,7 @@ module "s3_access_test_lambda" {
   lambda_processing_role_arn = module.cumulus.lambda_processing_role_arn
 
   providers = {
-    aws = "aws.usw2"
+    aws = aws.usw2
   }
 
   tags = local.tags

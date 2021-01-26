@@ -612,6 +612,7 @@ describe('When there are granule differences and granule reconciliation is run',
         collectionId,
         status: 'completed',
         granuleId: [publishedGranuleId, dbGranuleId],
+        provider: `s3_provider${testSuffix}`,
       };
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,

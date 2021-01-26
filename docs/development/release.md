@@ -12,10 +12,15 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 #### From Master
 
-If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. release-1.14.x) as a minor version base branch from master to allow us to easily backport patches to that version. Push the `release-MAJOR.MINOR.x` branch to GitHub if it was created locally. (Commits should be even with master at this point.)
+If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. `release-1.14.x`) as a minor version base branch from master to allow us to easily backport patches to that version. Push the `release-MAJOR.MINOR.x` branch to GitHub if it was created locally. (Commits should be even with master at this point.)
 
 If creating a patch release, you can check out the existing base branch.
-Then create the release branch (e.g. release-1.14.0) from the minor version base branch.
+
+Then create the release branch (e.g. `release-1.14.0`) from the minor version base branch. For example, from the `release-1.14.x` branch:
+
+```bash
+git checkout -b release-1.14.0
+```
 
 #### Backporting
 
@@ -91,10 +96,17 @@ Note: This is for 1.10.3 or later.
 
 ### 8. Create a pull request against the minor version branch
 
-Push the release branch to GitHub.
-Create a PR against the minor version base branch.
-Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.
-You may delete your release branch after merging to the base branch.
+1. Push the release branch (e.g. `release-1.2.3`) to GitHub.
+2. Create a PR against the minor version base branch  e.g. `release-1.2.x`).
+3. Configure CI to run automated tests against this PR by finding the branch plan for the release branch and setting these variables:
+
+    * `GIT_PR`: `true`
+    * `SKIP_AUDIT`: `true`
+
+    ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](../assets/configure-release-branch-test.png)
+
+4. Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch.
+5. You may delete your release branch after merging to the base branch.
 
 ### 9. Create a git tag for the release
 
@@ -160,7 +172,7 @@ Just make sure to verify the appropriate .zip files are present on Github after 
 Finally, you need to reproduce the version update changes back to master.
 
 If this is the latest version, you can simply create a PR to merge the minor version base branch back to master.
-**Note:** Do not squash this merge. Doing so will make the "compare" view from step 4 show an incorrect diff, because the tag is linked to a specific commit on the base branch.
+**Note:** **Do not squash this merge**. Doing so will make the "compare" view from step 4 show an incorrect diff, because the tag is linked to a specific commit on the base branch.
 
 If this is a backport, you will need to create a PR that ports the changelog updates back to master.
 It is important in this changelog note to call it out as a backport.

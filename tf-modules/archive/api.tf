@@ -20,7 +20,7 @@ locals {
       cmr_username                     = var.cmr_username
       CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
-      EARTHDATA_BASE_URL               = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
+      EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
       EcsCluster                       = var.ecs_cluster_name
@@ -232,7 +232,7 @@ resource "aws_api_gateway_integration" "any_proxy" {
 }
 
 resource "aws_api_gateway_deployment" "api" {
-  depends_on = ["aws_api_gateway_integration.any_proxy"]
+  depends_on = [aws_api_gateway_integration.any_proxy]
 
   rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   stage_name  = var.api_gateway_stage

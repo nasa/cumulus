@@ -62,6 +62,15 @@ Update granule metadata with hooks to OPeNDAP URL
 
 ---
 
+### [@cumulus/lzards-backup](https://github.com/nasa/cumulus/tree/master/tasks/lzards-backup#readme)
+
+Run LZARDS backup
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/lzards-backup#readme/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/lzards-backup) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/lzards-backup#readme)
+
+---
+
 ### [@cumulus/move-granules](https://github.com/nasa/cumulus/tree/master/tasks/move-granules)
 
 Move granule files from staging to final location
@@ -154,7 +163,7 @@ Updates CMR metadata to set access constraints
 
 ### [@cumulus/update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links)
 
-Update CMR metadata files with correct online access urls and etags and transfer etag info to granules' CMR files
+Update cmr metadata files with correct online access urls and etags and transfer etag info to granules' CMR files
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/update-granules-cmr-metadata-file-links) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links)
