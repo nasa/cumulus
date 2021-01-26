@@ -59,7 +59,7 @@ export const migrateGranuleRecord = async (
     throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
   }
 
-  const granule = await translateApiGranuleToPostgresGranule(record, knex, collectionCumulusId);
+  const granule = await translateApiGranuleToPostgresGranule(record, knex, collectionPgModel);
   await knex(tableNames.granules).insert(granule);
 };
 
@@ -79,7 +79,7 @@ export const migrateFileRecord = async (
   collectionId: string,
   knex: Knex
 ): Promise<void> => {
-  const [name, version] = collectionId.split('___');
+  const { name, version } = deconstructCollectionId(collectionId);
   const collectionPgModel = new CollectionPgModel();
   const granulePgModel = new GranulePgModel();
 

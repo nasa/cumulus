@@ -1,11 +1,11 @@
 import Knex from 'knex';
 
-import { getRecordCumulusId } from '../database';
+import { CollectionPgModel } from '../models/collection';
+import { ExecutionPgModel } from '../models/execution';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule } from '../types/granule';
-import { PostgresExecutionRecord } from '../types/execution';
 import { ProviderPgModel } from '../models/provider';
-import { tableNames } from '../tables';
+const { deconstructCollectionId } = require('../../../api/lib/utils');
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.
@@ -13,22 +13,28 @@ import { tableNames } from '../tables';
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Record from DynamoDB
  * @param {Object} knex - Knex client for reading from RDS database
- * @param {number} collectionCumulusId - Collection Cumulus Id
- * @param {Object} providerPgModel - Instance of the provider database model
+ * @param {Object} collectionPgModel - Instance of the collection database model
+ * @param {Object} executionPgModel - Instance of exeuction database model
  * @param {Object} pdrPgModel - Instance of the pdr database model
+ * @param {Object} providerPgModel - Instance of the provider database model
  * @returns {Object} A granule PG record
  */
 export const translateApiGranuleToPostgresGranule = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex,
-  collectionCumulusId: number,
-  providerPgModel = new ProviderPgModel(),
-  pdrPgModel = new PdrPgModel()
+  collectionPgModel = new CollectionPgModel(),
+  executionPgModel = new ExecutionPgModel(),
+  pdrPgModel = new PdrPgModel(),
+  providerPgModel = new ProviderPgModel()
 ): Promise<PostgresGranule> => {
+  const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const granuleRecord: PostgresGranule = {
     granule_id: dynamoRecord.granuleId,
     status: dynamoRecord.status,
-    collection_cumulus_id: collectionCumulusId,
+    collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+      knex,
+      { name, version }
+    ),
     published: dynamoRecord.published,
     duration: dynamoRecord.duration,
     time_to_archive: dynamoRecord.timeToArchive,
@@ -37,10 +43,9 @@ export const translateApiGranuleToPostgresGranule = async (
     error: dynamoRecord.error,
     cmr_link: dynamoRecord.cmrLink,
     execution_cumulus_id: dynamoRecord.execution
-      ? await getRecordCumulusId<PostgresExecutionRecord>(
-        { arn: dynamoRecord.execution },
-        tableNames.executions,
-        knex
+      ? await executionPgModel.getRecordCumulusId(
+        knex,
+        { arn: dynamoRecord.execution }
       )
       : undefined,
     pdr_cumulus_id: dynamoRecord.pdrName

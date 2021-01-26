@@ -1,9 +1,7 @@
 const test = require('ava');
-const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
 const { removeNilProperties } = require('@cumulus/common/util');
-const getRecordCumulusId = require('../../dist/database');
 const { translateApiGranuleToPostgresGranule } = require('../../dist/translate/granules');
 
 test('translateApiGranuleToPostgresGranule converts API execution to Postgres', async (t) => {
@@ -11,7 +9,6 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
   const providerCumulusId = 2;
   const executionCumulusId = 3;
   const pdrCumulusId = 4;
-  const getRecordCumulusIdStub = sinon.stub(getRecordCumulusId, 'getRecordCumulusId').returns(executionCumulusId);
   const dateString = new Date().toString();
 
   const apiGranule = {
@@ -46,7 +43,12 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
   };
 
   const fakeDbClient = {};
-
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: async () => collectionCumulusId,
+  };
+  const fakeExecutionPgModel = {
+    getRecordCumulusId: async () => executionCumulusId,
+  };
   const fakeProviderPgModel = {
     getRecordCumulusId: async () => providerCumulusId,
   };
@@ -83,9 +85,10 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
     await translateApiGranuleToPostgresGranule(
       apiGranule,
       fakeDbClient,
-      collectionCumulusId,
-      fakeProviderPgModel,
-      fakePdrPgModel
+      fakeCollectionPgModel,
+      fakeExecutionPgModel,
+      fakePdrPgModel,
+      fakeProviderPgModel
     )
   );
 
@@ -93,5 +96,4 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
     result,
     expectedPostgresGranule
   );
-  getRecordCumulusIdStub.restore();
 });
