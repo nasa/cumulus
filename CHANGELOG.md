@@ -56,10 +56,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2257**
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
-- **CUMULUS-2128**
-  - Added helper functions:
-    - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
-    - `@cumulus/message/Providers/getMessageProvider`
+  - **CUMULUS-2186**
+    - Added logic to `data-migration2` Lambda for migrating PDR records from DynamoDB to RDS
 - **CUMULUS-2190**
   - Added helper functions:
     - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`

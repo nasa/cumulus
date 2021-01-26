@@ -45,6 +45,10 @@ export {
   PostgresRule,
   PostgresRuleRecord,
 } from './types/rule';
+export {
+  PostgresPdr,
+  PostgresPdrRecord,
+} from './types/pdr';
 
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
