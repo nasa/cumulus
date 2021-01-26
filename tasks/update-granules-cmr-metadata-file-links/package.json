@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/update-granules-cmr-metadata-file-links",
   "version": "5.0.0",
-  "description": "Update cmr metadata files with correct online access urls and etags and transfer etag info to granules' CMR files",
+  "description": "Update CMR metadata files with correct online access urls and etags and transfer etag info to granules' CMR files",
   "main": "index.js",
   "directories": {
     "test": "tests"
