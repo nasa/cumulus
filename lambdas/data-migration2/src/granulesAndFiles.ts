@@ -128,29 +128,37 @@ export const migrateGranuleAndFilesViaTransaction = async (
   const collectionId = dynamoRecord.collectionId;
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
 
+  granulesSummary.dynamoRecords += 1;
+  filesSummary.dynamoRecords += files.length;
+
   try {
-    granulesSummary.dynamoRecords += 1;
-    await migrateGranuleRecord(dynamoRecord, knex);
+    await knex.transaction(async (trx) => {
+      // Have to pass in the transaction (`trx`) so that it is used
+      // by the granule/files writes
+      await migrateGranuleRecord(dynamoRecord, trx);
+      await Promise.all(files.map(async (file : ApiFile) => {
+        try {
+          await migrateFileRecord(file, granuleId, collectionId, trx);
+        } catch (error) {
+          logger.error(
+            `Could not create file record in RDS for file ${file}`,
+            error
+          );
+          // Have to re-throw for transaction to fail
+          throw error;
+        }
+      }));
+    });
+
     granulesSummary.success += 1;
-    await Promise.all(files.map(async (file : ApiFile) => {
-      filesSummary.dynamoRecords += 1;
-      try {
-        await migrateFileRecord(file, granuleId, collectionId, knex);
-        filesSummary.success += 1;
-      } catch (error) {
-        filesSummary.failed += 1;
-        logger.error(
-          `Could not create file record in RDS for file ${file}`,
-          error
-        );
-      }
-    }));
+    filesSummary.success += files.length;
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
       granulesSummary.skipped += 1;
       logger.info(error);
     } else {
       granulesSummary.failed += 1;
+      filesSummary.failed += files.length;
       logger.error(
         `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`,
         error
