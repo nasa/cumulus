@@ -4,15 +4,11 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
   CollectionPgModel,
-  getRecordCumulusId,
   GranulePgModel,
-  PdrPgModel,
-  PostgresExecutionRecord,
   PostgresFile,
-  PostgresGranule,
   PostgresGranuleRecord,
-  ProviderPgModel,
   tableNames,
+  translateApiGranuleToPostgresGranule,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
@@ -47,33 +43,11 @@ export const migrateGranuleRecord = async (
   Manager.recordIsValid(dynamoRecord, schemas.granule);
   const [name, version] = dynamoRecord.collectionId.split('___');
   const collectionPgModel = new CollectionPgModel();
-  const providerPgModel = new ProviderPgModel();
-  const pdrPgModel = new PdrPgModel();
 
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
     knex,
     { name, version }
   );
-
-  const providerCumulusId = dynamoRecord.provider ? await providerPgModel.getRecordCumulusId(
-    knex,
-    { name: dynamoRecord.provider }
-  ) : undefined;
-
-  const pdrCumulusId = dynamoRecord.pdrName
-    ? await pdrPgModel.getRecordCumulusId(
-      knex,
-      { name: dynamoRecord.pdrName }
-    )
-    : undefined;
-
-  const executionCumulusId = dynamoRecord.execution
-    ? await getRecordCumulusId<PostgresExecutionRecord>(
-      { arn: dynamoRecord.execution },
-      tableNames.executions,
-      knex
-    )
-    : undefined;
 
   const existingRecord = await knex<PostgresGranuleRecord>('granules')
     .where({ granule_id: dynamoRecord.granuleId, collection_cumulus_id: collectionCumulusId })
@@ -84,41 +58,8 @@ export const migrateGranuleRecord = async (
     throw new RecordAlreadyMigrated(`Granule ${dynamoRecord.granuleId} was already migrated, skipping`);
   }
 
-  // Map old record to new schema.
-  const updatedRecord: PostgresGranule = {
-    granule_id: dynamoRecord.granuleId,
-    status: dynamoRecord.status,
-    collection_cumulus_id: collectionCumulusId,
-    published: dynamoRecord.published,
-    duration: dynamoRecord.duration,
-    time_to_archive: dynamoRecord.timeToArchive,
-    time_to_process: dynamoRecord.timeToPreprocess,
-    product_volume: dynamoRecord.productVolume,
-    error: dynamoRecord.error,
-    cmr_link: dynamoRecord.cmrLink,
-    execution_cumulus_id: executionCumulusId,
-    pdr_cumulus_id: pdrCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    query_fields: dynamoRecord.queryFields,
-    beginning_date_time: dynamoRecord.beginningDateTime
-      ? new Date(dynamoRecord.beginningDateTime) : undefined,
-    ending_date_time: dynamoRecord.endingDateTime
-      ? new Date(dynamoRecord.endingDateTime) : undefined,
-    last_update_date_time: dynamoRecord.lastUpdateDateTime
-      ? new Date(dynamoRecord.lastUpdateDateTime) : undefined,
-    processing_end_date_time: dynamoRecord.processingEndDateTime
-      ? new Date(dynamoRecord.processingEndDateTime) : undefined,
-    processing_start_date_time: dynamoRecord.processingStartDateTime
-      ? new Date(dynamoRecord.processingStartDateTime) : undefined,
-    production_date_time: dynamoRecord.productionDateTime
-      ? new Date(dynamoRecord.productionDateTime) : undefined,
-    timestamp: dynamoRecord.timestamp
-      ? new Date(dynamoRecord.timestamp) : undefined,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
-  };
-
-  await knex(tableNames.granules).insert(updatedRecord);
+  const granule = await translateApiGranuleToPostgresGranule(dynamoRecord, knex, collectionPgModel);
+  await knex(tableNames.granules).insert(granule);
 };
 
 /**

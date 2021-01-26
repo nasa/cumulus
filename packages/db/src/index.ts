@@ -68,6 +68,7 @@ export {
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
 export { translateApiExecutionToPostgresExecution } from './translate/executions';
+export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { CollectionPgModel } from './models/collection';
