@@ -30,19 +30,19 @@ export interface GranulesAndFilesMigrationSummary {
 /**
  * Migrate granules record from Dynamo to RDS.
  *
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
  *   Record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<void>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateGranuleRecord = async (
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  record: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
   // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.granule);
-  const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
+  Manager.recordIsValid(record, schemas.granule);
+  const { name, version } = deconstructCollectionId(record.collectionId);
   const collectionPgModel = new CollectionPgModel();
 
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
@@ -51,15 +51,15 @@ export const migrateGranuleRecord = async (
   );
 
   const existingRecord = await knex<PostgresGranuleRecord>('granules')
-    .where({ granule_id: dynamoRecord.granuleId, collection_cumulus_id: collectionCumulusId })
+    .where({ granule_id: record.granuleId, collection_cumulus_id: collectionCumulusId })
     .first();
 
   // Throw error if it was already migrated.
   if (existingRecord) {
-    throw new RecordAlreadyMigrated(`Granule ${dynamoRecord.granuleId} was already migrated, skipping`);
+    throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
   }
 
-  const granule = await translateApiGranuleToPostgresGranule(dynamoRecord, knex, collectionCumulusId);
+  const granule = await translateApiGranuleToPostgresGranule(record, knex, collectionCumulusId);
   await knex(tableNames.granules).insert(granule);
 };
 
