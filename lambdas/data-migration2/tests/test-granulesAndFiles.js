@@ -181,7 +181,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
   });
 
   t.deepEqual(
-    omit(record, ['updated_at', 'cumulus_id']),
+    omit(record, ['cumulus_id']),
     {
       granule_id: testGranule.granuleId,
       status: testGranule.status,
@@ -205,6 +205,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       production_date_time: new Date(testGranule.productionDateTime),
       timestamp: new Date(testGranule.timestamp),
       created_at: new Date(testGranule.createdAt),
+      updated_at: new Date(testGranule.updatedAt),
     }
   );
 });
@@ -280,6 +281,8 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   delete testGranule.productionDateTime;
   delete testGranule.timestamp;
   delete testGranule.provider;
+  delete testGranule.queryFields;
+  delete testGranule.version;
 
   await migrateGranuleRecord(testGranule, knex);
 
@@ -289,7 +292,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   });
 
   t.deepEqual(
-    omit(record, ['updated_at', 'cumulus_id']),
+    omit(record, ['cumulus_id']),
     {
       granule_id: testGranule.granuleId,
       status: testGranule.status,
@@ -313,6 +316,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
       production_date_time: null,
       timestamp: null,
       created_at: new Date(testGranule.createdAt),
+      updated_at: new Date(testGranule.updatedAt),
     }
   );
 });
