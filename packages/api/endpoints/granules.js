@@ -10,13 +10,13 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
+const { GranulePgModel, getKnexClient } = require('@cumulus/db');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
-const { GranulePgModel } = require('@cumulus/db');
 
 /**
  * List all granules for a given collection.
@@ -162,7 +162,8 @@ async function del(req, res) {
   try {
     // TODO combine to single knex transaction
     await granuleModelClient.delete(granule);
-    await granulePgModel.delete(granule);
+    const dbClient = await getKnexClient();
+    await granulePgModel.delete(dbClient, granuleId);
   } catch (error) {
     if (error instanceof DeletePublishedGranule) {
       return res.boom.badRequest(error.message);

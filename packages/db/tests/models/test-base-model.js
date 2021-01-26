@@ -81,6 +81,15 @@ test('BasePgModel.get() works with knex transaction', async (t) => {
   );
 });
 
+test('BasePgModel.get() throws an error when a record is not found', async (t) => {
+  const { knex, basePgModel } = t.context;
+  const info = cryptoRandomString({ length: 10 });
+  await t.throwsAsync(
+    knex.transaction((trx) => basePgModel.get(trx, { info })),
+    { instanceOf: RecordDoesNotExist }
+  );
+});
+
 test('BasePgModel.getRecordCumulusId() returns correct value', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
@@ -136,4 +145,38 @@ test('BasePgModel.exists() correctly returns false', async (t) => {
   const { knex, basePgModel } = t.context;
   const info = cryptoRandomString({ length: 5 });
   t.false(await basePgModel.exists(knex, { info }));
+});
+
+test('BasePgModel.delete() correctly deletes a record', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const cumulusId = 123;
+
+  // Insert the record and validate that it exists in the table
+  await knex(tableName).insert({ cumulus_id: cumulusId });
+  t.like(
+    await basePgModel.get(knex, { cumulus_id: cumulusId }),
+    { cumulus_id: cumulusId }
+  );
+
+  // Delete the record and validate that it's gone
+  await basePgModel.delete(knex, cumulusId);
+  await t.throwsAsync(
+    basePgModel.get(knex, { cumulus_id: cumulusId }),
+    { instanceOf: RecordDoesNotExist }
+  );
+});
+
+test('BasePgModel.delete() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const cumulusId = 789;
+  await knex(tableName).insert({ cumulus_id: cumulusId });
+  t.truthy(await knex.transaction(
+    (trx) => basePgModel.delete(trx, cumulusId)
+  ));
+
+  // validate that the record is not in the table
+  await t.throwsAsync(
+    basePgModel.get(knex, { cumulus_id: cumulusId }),
+    { instanceOf: RecordDoesNotExist }
+  );
 });

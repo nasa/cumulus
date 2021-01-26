@@ -17,11 +17,19 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     this.tableName = tableName;
   }
 
-  get(
+  async get(
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ) {
-    return knexOrTransaction<RecordType>(this.tableName).where(params).first();
+    const record = await knexOrTransaction<RecordType>(this.tableName)
+      .where(params)
+      .first();
+
+    if (!isRecordDefined(record)) {
+      throw new RecordDoesNotExist(`Record in ${this.tableName} with identifiers ${JSON.stringify(params)} does not exist.`);
+    }
+
+    return record;
   }
 
   async getRecordCumulusId(
@@ -42,7 +50,11 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ): Promise<boolean> {
-    return isRecordDefined(await this.get(knexOrTransaction, params));
+    const record = await knexOrTransaction<RecordType>(this.tableName)
+      .where(params)
+      .first();
+
+    return isRecordDefined(record);
   }
 
   create(
@@ -52,6 +64,15 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     return knexOrTransaction(this.tableName)
       .insert(item)
       .returning('cumulus_id');
+  }
+
+  delete(
+    knexOrTransaction: Knex | Knex.Transaction,
+    cumulusId: number
+  ) {
+    return knexOrTransaction(this.tableName)
+      .where('cumulus_id', cumulusId)
+      .del();
   }
 }
 
