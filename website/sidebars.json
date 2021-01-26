@@ -83,7 +83,8 @@
       "integrator-guide/workflow-ts-failed-step"
     ],
     "Upgrade Notes": [
-      "upgrade-notes/migrate_tea_standalone"
+      "upgrade-notes/migrate_tea_standalone",
+      "upgrade-notes/upgrade_tf_version_0.13.6"
     ],
     "External Contributions": [
       "external-contributions/external-contributions"
