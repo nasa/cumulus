@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
+const path = require('path');
 const Logger = require('@cumulus/logger');
 const morgan = require('morgan');
 const urljoin = require('url-join');
@@ -72,6 +73,18 @@ async function requestTemporaryCredentialsFromNgap({
     FunctionName: lambdaFunctionName,
     Payload,
   }).promise();
+}
+
+
+/**
+ * Sends a sample webpage describing how to use s3Credentials endpoint
+ *
+ * @param {Object} _req - express request object (unused)
+ * @param {Object} res - express response object
+ * @returns {Object} express repose object of s3Credentials directions.
+ */
+async function displayS3CredentialInstructions(_req, res) {
+  res.sendFile(path.join(__dirname, 'instructions', 'index.html'));
 }
 
 /**
@@ -300,6 +313,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
 distributionRouter.get('/redirect', handleRedirectRequest);
 distributionRouter.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
+distributionRouter.get('/s3credentialsREADME', displayS3CredentialInstructions);
 
 const distributionApp = express();
 

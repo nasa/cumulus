@@ -230,13 +230,44 @@ resource "aws_api_gateway_integration" "s3_credentials_redirect" {
   uri                     = aws_lambda_function.s3_credentials[0].invoke_arn
 }
 
+# GET /s3credentialsREADME
+resource "aws_api_gateway_resource" "s3_credentials_readme" {
+  count = var.deploy_s3_credentials_endpoint ? 1 : 0
+
+  rest_api_id = var.tea_rest_api_id
+  parent_id   = var.tea_rest_api_root_resource_id
+  path_part   = "s3credentialsREADME"
+}
+
+resource "aws_api_gateway_method" "s3_credentials_readme" {
+  count = var.deploy_s3_credentials_endpoint ? 1 : 0
+
+  rest_api_id   = var.tea_rest_api_id
+  resource_id   = aws_api_gateway_resource.s3_credentials_readme[0].id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "s3_credentials_readme" {
+  count = var.deploy_s3_credentials_endpoint ? 1 : 0
+
+  rest_api_id             = var.tea_rest_api_id
+  resource_id             = aws_api_gateway_resource.s3_credentials_readme[0].id
+  http_method             = aws_api_gateway_method.s3_credentials_readme[0].http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.s3_credentials[0].invoke_arn
+}
+
+
 # API deployment
 resource "aws_api_gateway_deployment" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   depends_on = [
     aws_api_gateway_integration.s3_credentials_redirect[0],
-    aws_api_gateway_integration.s3_credentials[0]
+    aws_api_gateway_integration.s3_credentials[0],
+    aws_api_gateway_integration.s3_credentials_readme[0]
   ]
 
   rest_api_id = var.tea_rest_api_id
