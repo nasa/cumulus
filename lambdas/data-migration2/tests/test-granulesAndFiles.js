@@ -123,7 +123,6 @@ test.beforeEach(async (t) => {
   );
   t.context.testCollection = testCollection;
   t.context.collectionCumulusId = collectionResponse[0];
-  t.context.collectionPgModel = collectionPgModel;
 
   const executionPgModel = new ExecutionPgModel();
   const testExecution = fakeExecutionRecordFactory();
@@ -134,7 +133,6 @@ test.beforeEach(async (t) => {
   );
   t.context.testExecution = testExecution;
   t.context.executionCumulusId = executionResponse[0];
-  t.context.executionPgModel = executionPgModel;
 
   t.context.testGranule = generateTestGranule(testCollection, testExecution.arn);
 });
@@ -412,29 +410,17 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
 
 test.serial('migrateGranulesAndFiles processes multiple granules and files', async (t) => {
   const {
-    collectionPgModel,
-    executionPgModel,
     knex,
+    testCollection,
+    testExecution,
     testGranule,
   } = t.context;
 
   const alternateBucket = cryptoRandomString({ length: 10 });
   await s3Utils.createBucket(alternateBucket);
 
-  const testExecution2 = fakeExecutionRecordFactory();
-  await executionPgModel.create(
-    knex,
-    testExecution2
-  );
-
-  const testCollection2 = fakeCollectionRecordFactory();
-  await collectionPgModel.create(
-    t.context.knex,
-    testCollection2
-  );
-
   const testGranule1 = testGranule;
-  const testGranule2 = generateTestGranule(testCollection2, testExecution2.arn, alternateBucket);
+  const testGranule2 = generateTestGranule(testCollection, testExecution.arn, alternateBucket);
   const files = testGranule1.files.concat(testGranule2.files);
 
   await Promise.all(files.flatMap((file) => s3Utils.s3PutObject({
@@ -477,28 +463,16 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
 
 test.serial('migrateGranulesAndFiles processes all non-failing granule records and does not process files of failing granule records', async (t) => {
   const {
-    collectionPgModel,
-    executionPgModel,
     knex,
+    testCollection,
+    testExecution,
     testGranule,
   } = t.context;
 
   const alternateBucket = cryptoRandomString({ length: 10 });
   await s3Utils.createBucket(alternateBucket);
 
-  const testExecution2 = fakeExecutionRecordFactory();
-  await executionPgModel.create(
-    knex,
-    testExecution2
-  );
-
-  const testCollection2 = fakeCollectionRecordFactory();
-  await collectionPgModel.create(
-    t.context.knex,
-    testCollection2
-  );
-
-  const testGranule2 = generateTestGranule(testCollection2, testExecution2.arn, alternateBucket);
+  const testGranule2 = generateTestGranule(testCollection, testExecution.arn, alternateBucket);
   // remove required field so record will fail
   delete testGranule.collectionId;
 
