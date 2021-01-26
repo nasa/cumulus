@@ -123,43 +123,40 @@ export const migrateGranuleAndFilesViaTransaction = async (
   knex: Knex,
   granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary
 ): Promise<GranulesAndFilesMigrationSummary> => {
-
   const files = dynamoRecord.files;
   const granuleId = dynamoRecord.granuleId;
   const collectionId = dynamoRecord.collectionId;
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
 
-  await knex.transaction(async () => {
-    try {
-      granulesSummary.dynamoRecords += 1;
-      await migrateGranuleRecord(dynamoRecord, knex);
-      granulesSummary.success += 1;
-      await Promise.all(files.map(async (file : ApiFile) => {
-        filesSummary.dynamoRecords += 1;
-        try {
-          await migrateFileRecord(file, granuleId, collectionId, knex);
-          filesSummary.success += 1;
-        } catch (error) {
-          filesSummary.failed += 1;
-          logger.error(
-            `Could not create file record in RDS for file ${file}`,
-            error
-          );
-        }
-      }));
-    } catch (error) {
-      if (error instanceof RecordAlreadyMigrated) {
-        granulesSummary.skipped += 1;
-        logger.info(error);
-      } else {
-        granulesSummary.failed += 1;
+  try {
+    granulesSummary.dynamoRecords += 1;
+    await migrateGranuleRecord(dynamoRecord, knex);
+    granulesSummary.success += 1;
+    await Promise.all(files.map(async (file : ApiFile) => {
+      filesSummary.dynamoRecords += 1;
+      try {
+        await migrateFileRecord(file, granuleId, collectionId, knex);
+        filesSummary.success += 1;
+      } catch (error) {
+        filesSummary.failed += 1;
         logger.error(
-          `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`,
+          `Could not create file record in RDS for file ${file}`,
           error
         );
       }
+    }));
+  } catch (error) {
+    if (error instanceof RecordAlreadyMigrated) {
+      granulesSummary.skipped += 1;
+      logger.info(error);
+    } else {
+      granulesSummary.failed += 1;
+      logger.error(
+        `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`,
+        error
+      );
     }
-  });
+  }
 
   return { granulesSummary, filesSummary };
 };
