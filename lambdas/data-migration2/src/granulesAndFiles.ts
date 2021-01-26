@@ -5,9 +5,9 @@ import { ApiFile } from '@cumulus/types/api/files';
 import {
   CollectionPgModel,
   GranulePgModel,
+  FilePgModel,
   PostgresFile,
   PostgresGranuleRecord,
-  tableNames,
   translateApiGranuleToPostgresGranule,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
@@ -44,6 +44,7 @@ export const migrateGranuleRecord = async (
   Manager.recordIsValid(record, schemas.granule);
   const { name, version } = deconstructCollectionId(record.collectionId);
   const collectionPgModel = new CollectionPgModel();
+  const granulePgModel = new GranulePgModel();
 
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
     knex,
@@ -60,7 +61,7 @@ export const migrateGranuleRecord = async (
   }
 
   const granule = await translateApiGranuleToPostgresGranule(record, knex, collectionPgModel);
-  await knex(tableNames.granules).insert(granule);
+  await granulePgModel.upsert(knex, granule);
 };
 
 /**
@@ -82,6 +83,7 @@ export const migrateFileRecord = async (
   const { name, version } = deconstructCollectionId(collectionId);
   const collectionPgModel = new CollectionPgModel();
   const granulePgModel = new GranulePgModel();
+  const filePgModel = new FilePgModel();
 
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
     knex,
@@ -108,7 +110,7 @@ export const migrateFileRecord = async (
     source: file.source,
     path: file.path,
   };
-  await knex(tableNames.files).insert(updatedRecord);
+  await filePgModel.upsert(knex, updatedRecord);
 };
 
 /**
