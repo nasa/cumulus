@@ -115,43 +115,53 @@ export const migrateFileRecord = async (
  * Migrate granule and files from DynamoDB to RDS
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  * @param {Knex} knex
+ * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
  * @returns {Promise<MigrationSummary>} - Migration summary for files
  */
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knex: Knex
-): Promise<MigrationSummary> => {
-  const fileMigrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
-    failed: 0,
-    skipped: 0,
-  };
+  knex: Knex,
+  granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary
+): Promise<GranulesAndFilesMigrationSummary> => {
 
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.granule);
   const files = dynamoRecord.files;
   const granuleId = dynamoRecord.granuleId;
   const collectionId = dynamoRecord.collectionId;
+  const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
 
   await knex.transaction(async () => {
-    await migrateGranuleRecord(dynamoRecord, knex);
-    await Promise.all(files.map(async (file : ApiFile) => {
-      fileMigrationSummary.dynamoRecords += 1;
-      try {
-        await migrateFileRecord(file, granuleId, collectionId, knex);
-        fileMigrationSummary.success += 1;
-      } catch (error) {
-        fileMigrationSummary.failed += 1;
+    try {
+      granulesSummary.dynamoRecords += 1;
+      await migrateGranuleRecord(dynamoRecord, knex);
+      granulesSummary.success += 1;
+      await Promise.all(files.map(async (file : ApiFile) => {
+        filesSummary.dynamoRecords += 1;
+        try {
+          await migrateFileRecord(file, granuleId, collectionId, knex);
+          filesSummary.success += 1;
+        } catch (error) {
+          filesSummary.failed += 1;
+          logger.error(
+            `Could not create file record in RDS for file ${file}`,
+            error
+          );
+        }
+      }));
+    } catch (error) {
+      if (error instanceof RecordAlreadyMigrated) {
+        granulesSummary.skipped += 1;
+        logger.info(error);
+      } else {
+        granulesSummary.failed += 1;
         logger.error(
-          `Could not create file record in RDS for file ${file}`,
+          `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`,
           error
         );
       }
-    }));
+    }
   });
 
-  return fileMigrationSummary;
+  return { granulesSummary, filesSummary };
 };
 
 export const migrateGranulesAndFiles = async (
@@ -178,35 +188,24 @@ export const migrateGranulesAndFiles = async (
     skipped: 0,
   };
 
+  const summary = {
+    granulesSummary: granuleMigrationSummary,
+    filesSummary: fileMigrationSummary,
+  };
+
   let record = await searchQueue.peek();
 
   /* eslint-disable no-await-in-loop */
   while (record) {
-    granuleMigrationSummary.dynamoRecords += 1;
-    try {
-      const granuleFileMigrationSummary = await migrateGranuleAndFilesViaTransaction(record, knex);
-      granuleMigrationSummary.success += 1;
-      fileMigrationSummary.dynamoRecords += granuleFileMigrationSummary.dynamoRecords;
-      fileMigrationSummary.success += granuleFileMigrationSummary.success;
-      fileMigrationSummary.failed += granuleFileMigrationSummary.failed;
-    } catch (error) {
-      if (error instanceof RecordAlreadyMigrated) {
-        granuleMigrationSummary.skipped += 1;
-        logger.info(error);
-      } else {
-        granuleMigrationSummary.failed += 1;
-        logger.error(
-          `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${record.granuleId} with files ${record.files}`,
-          error
-        );
-      }
-    }
+    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, knex, summary);
+    summary.granulesSummary = migrationSummary.granulesSummary;
+    summary.filesSummary = migrationSummary.filesSummary;
 
     await searchQueue.shift();
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`Successfully migrated ${granuleMigrationSummary.success} granule records.`);
-  logger.info(`Successfully migrated ${fileMigrationSummary.success} file records.`);
-  return { granulesSummary: granuleMigrationSummary, filesSummary: fileMigrationSummary };
+  logger.info(`Successfully migrated ${summary.granulesSummary.success} granule records.`);
+  logger.info(`Successfully migrated ${summary.filesSummary.success} file records.`);
+  return { granulesSummary: summary.granulesSummary, filesSummary: summary.filesSummary };
 };
