@@ -54,7 +54,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2186**
     - Added logic to `data-migration2` Lambda for migrating PDR records from DynamoDB to RDS
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule and File records from DynamoDB to RDS
+    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to RDS and parse Granule records to
+    store File records in RDS.
 - **CUMULUS-2128**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
