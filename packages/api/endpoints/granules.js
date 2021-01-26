@@ -16,6 +16,7 @@ const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const { GranulePgModel } = require('@cumulus/db');
 
 /**
  * List all granules for a given collection.
@@ -140,9 +141,12 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
+  const granulePgModel = new GranulePgModel();
 
   let granule;
   try {
+    // TODO we need to know if the granule is published.
+    // Maybe we also need to get from PG and use either?
     granule = await granuleModelClient.getRecord({ granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -156,7 +160,9 @@ async function del(req, res) {
   }
 
   try {
+    // TODO combine to single knex transaction
     await granuleModelClient.delete(granule);
+    await granulePgModel.delete(granule);
   } catch (error) {
     if (error instanceof DeletePublishedGranule) {
       return res.boom.badRequest(error.message);

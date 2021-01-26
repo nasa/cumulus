@@ -5,7 +5,14 @@ const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
-const { localStackConnectionEnv } = require('@cumulus/db');
+const cryptoRandomString = require('crypto-random-string');
+const {
+  localStackConnectionEnv,
+  GranulePgModel,
+  CollectionPgModel,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
 const {
   buildS3Uri,
   createBucket,
@@ -25,10 +32,19 @@ const {
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
+
+// PG mock data factories
+const {
+  fakeGranuleRecordFactory,
+  fakeCollectionRecordFactory,
+} = require('@cumulus/db/dist/test-utils');
+
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
+
+// Dynamo mock data factories
 const {
   fakeAccessTokenFactory,
   fakeCollectionFactory,
@@ -36,10 +52,14 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
+
 const {
   createJwtToken,
 } = require('../../lib/token');
 const { Search } = require('../../es/search');
+const { migrationDir } = require('../../../../lambdas/db-migration');
+
+const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
@@ -164,6 +184,10 @@ test.before(async (t) => {
     Name: process.env.launchpad_passphrase_secret_name,
     SecretString: randomString(),
   }).promise();
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
 test.beforeEach(async (t) => {
@@ -187,7 +211,7 @@ test.beforeEach(async (t) => {
       .then((record) => indexer.indexGranule(esClient, record, esAlias))));
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();
@@ -201,6 +225,12 @@ test.after.always(async () => {
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
   }).promise();
+
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('default returns list of granules', async (t) => {
@@ -647,6 +677,62 @@ test('DELETE for a granule with a file not present in S3 succeeds', async (t) =>
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
   t.is(response.status, 200);
+});
+
+test('DELETE removes a granule from RDS and Dynamo', async (t) => {
+  const granuleId = '123';
+  const collectionId = '456';
+
+  // Create a PG Collection because we need the fk for a PG Granule
+  const newPGCollection = fakeCollectionRecordFactory({ cumulus_id: collectionId });
+  const collectionPgModel = new CollectionPgModel();
+  await collectionPgModel.create(t.context.knex, newPGCollection);
+
+  // Create the same Granule in Dynamo and PG
+  const newDynamoGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
+  const newPGGranule = fakeGranuleRecordFactory(
+    {
+      granule_id: granuleId,
+      status: 'failed',
+      collection_cumulus_id: collectionId,
+    }
+  );
+
+  newDynamoGranule.published = false;
+  newPGGranule.published = false;
+
+  // create a new unpublished granule in Dynamo
+  await granuleModel.create(newDynamoGranule);
+
+  // create a new unpublished granule in RDS
+  const granulePgModel = new GranulePgModel();
+  await granulePgModel.create(t.context.knex, newPGGranule);
+
+  const response = await request(app)
+    .delete(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.status, 200);
+
+  // Check Dynamo and RDS. The granule should have been removed from both.
+  // TODO make doesNotContain function
+  const pgGranule = await t.context.knex.queryBuilder()
+    .select()
+    .table('granules')
+    .where({ granule_id: granuleId })
+    .first();
+
+  t.is(pgGranule, undefined);
+
+  const dynamoGranule = await granuleModel.get({ granuleId: granuleId });
+  t.is(dynamoGranule, undefined);
+});
+
+test('DELETE removes a granule from RDS only if no Dynamo match exists', async (t) => {
+});
+
+test('DELETE removes a granule from Dynamo only if no RDS match exists', async (t) => {
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {
