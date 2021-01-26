@@ -20,6 +20,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const Manager = require('@cumulus/api/models/base');
 const schemas = require('@cumulus/api/models/schemas');
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
+const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 export interface GranulesAndFilesMigrationSummary {
   granulesSummary: MigrationSummary,
@@ -41,7 +42,7 @@ export const migrateGranuleRecord = async (
 ): Promise<void> => {
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.granule);
-  const [name, version] = dynamoRecord.collectionId.split('___');
+  const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const collectionPgModel = new CollectionPgModel();
 
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
@@ -58,7 +59,7 @@ export const migrateGranuleRecord = async (
     throw new RecordAlreadyMigrated(`Granule ${dynamoRecord.granuleId} was already migrated, skipping`);
   }
 
-  const granule = await translateApiGranuleToPostgresGranule(dynamoRecord, knex, collectionPgModel);
+  const granule = await translateApiGranuleToPostgresGranule(dynamoRecord, knex, collectionCumulusId);
   await knex(tableNames.granules).insert(granule);
 };
 
