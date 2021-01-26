@@ -47,9 +47,6 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
 
   const fakeDbClient = {};
 
-  const fakeCollectionPgModel = {
-    getRecordCumulusId: async () => collectionCumulusId,
-  };
   const fakeProviderPgModel = {
     getRecordCumulusId: async () => providerCumulusId,
   };
@@ -86,7 +83,7 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
     await translateApiGranuleToPostgresGranule(
       apiGranule,
       fakeDbClient,
-      fakeCollectionPgModel,
+      collectionCumulusId,
       fakeProviderPgModel,
       fakePdrPgModel
     )
