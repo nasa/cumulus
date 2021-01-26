@@ -9,24 +9,24 @@ variable "sts_credentials_lambda_function_arn" {
   type    = string
 }
 
-variable "tea_api_gateway_stage" {
+variable "api_gateway_stage" {
   type        = string
   default     = null
-  description = "The API Gateway stage name for the Thin Egress App"
+  description = "The API Gateway stage name for attaching the /s3credentials endpoint"
 }
 
-variable "tea_external_api_endpoint" {
-  description = "Thin Egress App external endpoint URL"
+variable "external_api_endpoint" {
+  description = "Public-facing API host used for requesting /s3credentials endpoint"
   type        = string
 }
 
-variable "tea_rest_api_id" {
-  description = "Thin Egress App API gateway ID"
+variable "rest_api_id" {
+  description = "API gateway ID to use for attaching /s3credentials endpoint"
   type        = string
 }
 
-variable "tea_rest_api_root_resource_id" {
-  description = "Thin Egress App API gateway root resource ID"
+variable "rest_api_root_resource_id" {
+  description = "API gateway root resource ID to use for attaching /s3credentials endpoint"
   type        = string
 }
 

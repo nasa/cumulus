@@ -109,8 +109,8 @@ resource "aws_lambda_function" "s3_credentials" {
 
   environment {
     variables = {
-      DISTRIBUTION_ENDPOINT          = var.tea_external_api_endpoint
-      DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_external_api_endpoint}redirect"
+      DISTRIBUTION_ENDPOINT          = var.external_api_endpoint
+      DISTRIBUTION_REDIRECT_ENDPOINT = "${var.external_api_endpoint}redirect"
       public_buckets                 = join(",", var.public_buckets)
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
@@ -131,25 +131,25 @@ resource "aws_lambda_permission" "lambda_permission" {
 
   # The /*/*/* part allows invocation from any stage, method and resource path
   # within API Gateway REST API.
-  source_arn = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.tea_rest_api_id}/*/*/*"
+  source_arn = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.rest_api_id}/*/*/*"
 }
 
 # GET /s3credentials
 resource "aws_api_gateway_resource" "s3_credentials" {
-  rest_api_id = var.tea_rest_api_id
-  parent_id = var.tea_rest_api_root_resource_id
+  rest_api_id = var.rest_api_id
+  parent_id = var.rest_api_root_resource_id
   path_part   = "s3credentials"
 }
 
 resource "aws_api_gateway_method" "s3_credentials" {
-  rest_api_id   = var.tea_rest_api_id
+  rest_api_id   = var.rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "s3_credentials" {
-  rest_api_id             = var.tea_rest_api_id
+  rest_api_id             = var.rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials.id
   http_method             = aws_api_gateway_method.s3_credentials.http_method
   integration_http_method = "POST"
@@ -159,20 +159,20 @@ resource "aws_api_gateway_integration" "s3_credentials" {
 
 # GET /redirect
 resource "aws_api_gateway_resource" "s3_credentials_redirect" {
-  rest_api_id = var.tea_rest_api_id
-  parent_id = var.tea_rest_api_root_resource_id
+  rest_api_id = var.rest_api_id
+  parent_id = var.rest_api_root_resource_id
   path_part   = "redirect"
 }
 
 resource "aws_api_gateway_method" "s3_credentials_redirect" {
-  rest_api_id   = var.tea_rest_api_id
+  rest_api_id   = var.rest_api_id
   resource_id   = aws_api_gateway_resource.s3_credentials_redirect.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "s3_credentials_redirect" {
-  rest_api_id             = var.tea_rest_api_id
+  rest_api_id             = var.rest_api_id
   resource_id             = aws_api_gateway_resource.s3_credentials_redirect.id
   http_method             = aws_api_gateway_method.s3_credentials_redirect.http_method
   integration_http_method = "POST"
@@ -187,6 +187,6 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
     aws_api_gateway_integration.s3_credentials
   ]
 
-  rest_api_id = var.tea_rest_api_id
-  stage_name  = var.tea_api_gateway_stage
+  rest_api_id = var.rest_api_id
+  stage_name  = var.api_gateway_stage
 }
