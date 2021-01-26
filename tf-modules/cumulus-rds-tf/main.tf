@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-    aws  = ">= 3.5.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.14.1"
+    }
   }
 }
 
@@ -19,9 +22,9 @@ resource "aws_db_subnet_group" "default" {
 }
 
 resource "aws_security_group" "rds_cluster_access" {
-  name_prefix   = var.security_group_name
-  vpc_id        = var.vpc_id
-  tags          = var.tags
+  name_prefix = var.security_group_name
+  vpc_id      = var.vpc_id
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret" "rds_login" {
@@ -30,8 +33,8 @@ resource "aws_secretsmanager_secret" "rds_login" {
 }
 
 resource "aws_secretsmanager_secret_version" "rds_login" {
-  secret_id             = aws_secretsmanager_secret.rds_login.id
-  secret_string         = jsonencode({
+  secret_id = aws_secretsmanager_secret.rds_login.id
+  secret_string = jsonencode({
     username            = var.db_admin_username
     password            = var.db_admin_password
     database            = "postgres"
@@ -43,12 +46,12 @@ resource "aws_secretsmanager_secret_version" "rds_login" {
 }
 
 resource "aws_security_group_rule" "rds_security_group_allow_postgres" {
-  type            = "ingress"
-  from_port       = 5432
-  to_port         = 5432
-  protocol        = "tcp"
+  type              = "ingress"
+  from_port         = 5432
+  to_port           = 5432
+  protocol          = "tcp"
   security_group_id = aws_security_group.rds_cluster_access.id
-  self            = true
+  self              = true
 }
 
 resource "aws_rds_cluster" "cumulus" {

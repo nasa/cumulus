@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### MIGRATION NOTES
+
+- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2185** - RDS Migration Epic
@@ -17,6 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2187**
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
+- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
 
 ### Added
 
@@ -101,6 +106,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Change Postgres Schema definition for Files to remove `filename` and `name` and only support `file_name`.
     - Change Postgres Schema definition for Files to remove `size` to only support `file_size`.
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
+
+### Changed
+
+- **CUMULUS-2255**
+  - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+
+### Fixed
+
+- **CUMULUS-2310**
+  - Use valid filename for reconciliation report
 
 ## [v5.0.0] 2021-01-12
 
