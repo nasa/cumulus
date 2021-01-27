@@ -138,7 +138,11 @@ let jwtAuthToken;
 
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
-  process.env = { ...process.env, ...localStackConnectionEnv };
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
   esIndex = randomId('esindex');
   t.context.esAlias = randomId('esAlias');
   process.env.ES_INDEX = t.context.esAlias;
@@ -681,8 +685,8 @@ test('DELETE for a granule with a file not present in S3 succeeds', async (t) =>
 });
 
 test('DELETE removes a granule from RDS and Dynamo', async (t) => {
-  const granuleId = '123';
-  const collectionId = '456';
+  const granuleId = '123abc';
+  const collectionId = 456;
 
   // Create a PG Collection because we need the fk for a PG Granule
   const newPGCollection = fakeCollectionRecordFactory({ cumulus_id: collectionId });
@@ -713,17 +717,16 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
     .delete(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
-
   t.is(response.status, 200);
 
   // Check Dynamo and RDS. The granule should have been removed from both.
   await t.throwsAsync(
-    granulePgModel.get(t.context.knex, { granule_id: granuleId }),
+    granuleModel.get({ granuleId: granuleId }),
     { instanceOf: RecordDoesNotExist }
   );
 
   await t.throwsAsync(
-    granuleModel.get({ granuleId: granuleId }),
+    granulePgModel.get(t.context.knex, { granule_id: granuleId }),
     { instanceOf: RecordDoesNotExist }
   );
 });
