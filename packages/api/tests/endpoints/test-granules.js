@@ -129,10 +129,13 @@ async function setupBucketsConfig() {
 }
 
 // create all the variables needed across this test
+const collectionId = 456;
+
 let esClient;
 let esIndex;
 let accessTokenModel;
 let granuleModel;
+let granulePgModel;
 let collectionModel;
 let jwtAuthToken;
 
@@ -168,6 +171,8 @@ test.before(async (t) => {
   granuleModel = new models.Granule();
   await granuleModel.createTable();
 
+  granulePgModel = new GranulePgModel();
+
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -193,11 +198,9 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
-});
 
-test.beforeEach(async (t) => {
-  const { esAlias } = t.context;
-
+  // Create a Dynamo collection
+  // we need this because a granule has a fk referring to collections
   t.context.testCollection = fakeCollectionFactory({
     name: 'fakeCollection',
     version: 'v1',
@@ -205,15 +208,48 @@ test.beforeEach(async (t) => {
   });
   await collectionModel.create(t.context.testCollection);
 
-  // create fake granule records
+  // Create a PG Collection
+  t.context.testPgCollection = fakeCollectionRecordFactory({ cumulus_id: collectionId });
+  const collectionPgModel = new CollectionPgModel();
+  await collectionPgModel.create(t.context.knex, t.context.testPgCollection);
+});
+
+test.beforeEach(async (t) => {
+  const { esAlias } = t.context;
+
+  const granuleId1 = cryptoRandomString({ length: 6 });
+  const granuleId2 = cryptoRandomString({ length: 6 });
+
+  // create fake Dynamo granule records
   t.context.fakeGranules = [
-    fakeGranuleFactoryV2({ status: 'completed' }),
-    fakeGranuleFactoryV2({ status: 'failed' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
     granuleModel.create(granule)
       .then((record) => indexer.indexGranule(esClient, record, esAlias))));
+
+  // create fake Postgres granule records
+  t.context.fakePGGranules = [
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId1,
+        status: 'completed',
+        collection_cumulus_id: collectionId,
+      }
+    ),
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId2,
+        status: 'failed',
+        collection_cumulus_id: collectionId,
+      }
+    ),
+  ];
+
+  await Promise.all(t.context.fakePGGranules.map((granule) =>
+    granulePgModel.create(t.context.knex, granule)));
 });
 
 test.after.always(async (t) => {
@@ -601,7 +637,9 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
       type: 'public',
     },
   };
-  const newGranule = fakeGranuleFactoryV2({ status: 'failed' });
+  const granuleId = randomId('granule');
+
+  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
   newGranule.published = false;
   newGranule.files = [
     {
@@ -635,8 +673,19 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
     });
   }
 
-  // create a new unpublished granule
+  // create a new unpublished Dynamo granule
   await granuleModel.create(newGranule);
+
+  // create a new unpublished PG granule
+  const newPGGranule = fakeGranuleRecordFactory(
+    {
+      granule_id: granuleId,
+      status: 'failed',
+      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
+    }
+  );
+  newPGGranule.published = false;
+  await granulePgModel.create(t.context.knex, newPGGranule);
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)
@@ -663,18 +712,31 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
 });
 
 test('DELETE for a granule with a file not present in S3 succeeds', async (t) => {
-  const newGranule = fakeGranuleFactoryV2({ status: 'failed' });
-  newGranule.published = false;
-  newGranule.files = [
+  const granuleId = randomId('granule');
+  const files = [
     {
       bucket: process.env.system_bucket,
-      fileName: `${newGranule.granuleId}.hdf`,
+      fileName: `${granuleId}.hdf`,
       key: randomString(),
     },
   ];
 
-  // create a new unpublished granule
+  // Create Dynamo granule
+  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
+  newGranule.published = false;
+  newGranule.files = files;
   await granuleModel.create(newGranule);
+
+  // create PG granule
+  const newPGGranule = fakeGranuleRecordFactory(
+    {
+      granule_id: granuleId,
+      status: 'failed',
+      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
+    }
+  );
+  newPGGranule.published = false;
+  await granulePgModel.create(t.context.knex, newPGGranule);
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)
@@ -685,13 +747,7 @@ test('DELETE for a granule with a file not present in S3 succeeds', async (t) =>
 });
 
 test('DELETE removes a granule from RDS and Dynamo', async (t) => {
-  const granuleId = '123abc';
-  const collectionId = 456;
-
-  // Create a PG Collection because we need the fk for a PG Granule
-  const newPGCollection = fakeCollectionRecordFactory({ cumulus_id: collectionId });
-  const collectionPgModel = new CollectionPgModel();
-  await collectionPgModel.create(t.context.knex, newPGCollection);
+  const granuleId = cryptoRandomString({ length: 6 });
 
   // Create the same Granule in Dynamo and PG
   const newDynamoGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
@@ -699,7 +755,7 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
     {
       granule_id: granuleId,
       status: 'failed',
-      collection_cumulus_id: collectionId,
+      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
     }
   );
 
@@ -710,7 +766,6 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
   await granuleModel.create(newDynamoGranule);
 
   // create a new unpublished granule in RDS
-  const granulePgModel = new GranulePgModel();
   await granulePgModel.create(t.context.knex, newPGGranule);
 
   const response = await request(app)
@@ -731,10 +786,10 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
   );
 });
 
-test('DELETE removes a granule from RDS only if no Dynamo match exists', async (t) => {
+test.skip('DELETE removes a granule from RDS only if no Dynamo match exists', async (t) => {
 });
 
-test('DELETE removes a granule from Dynamo only if no RDS match exists', async (t) => {
+test.skip('DELETE removes a granule from Dynamo only if no RDS match exists', async (t) => {
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {
