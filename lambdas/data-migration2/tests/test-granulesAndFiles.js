@@ -7,7 +7,7 @@ const Execution = require('@cumulus/api/models/executions');
 const Granule = require('@cumulus/api/models/granules');
 const s3Utils = require('@cumulus/aws-client/S3');
 
-const { secretsManager, dynamodbDocClient } = require('@cumulus/aws-client/services');
+const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeFileFactory } = require('@cumulus/api/lib/testUtils');
 const {
   CollectionPgModel,
@@ -207,8 +207,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
-  // I am not sure how I can select a file where bucket and key are null
-  const record = await filePgModel.get(knex, {});
+  const record = await filePgModel.get(knex, { bucket: testFile.bucket, key: testFile.key });
 
   t.deepEqual(
     omit(record, fileOmitList),
@@ -221,6 +220,39 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
       file_size: testFile.size.toString(),
       file_name: testFile.fileName,
       source: testFile.source,
+    }
+  );
+});
+
+test.serial('migrateFileRecord correctly migrates file record with null bucket and key', async (t) => {
+  const {
+    filePgModel,
+    knex,
+    testGranule,
+  } = t.context;
+
+  const testFile = fakeFileFactory({
+    bucket: undefined,
+    key: undefined,
+  });
+  testGranule.files = [testFile];
+
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  await migrateFileRecord(testFile, granuleCumulusId, knex);
+
+  const record = await filePgModel.get(knex, { bucket: null, key: null });
+
+  t.deepEqual(
+    omit(record, fileOmitList),
+    {
+      bucket: null,
+      checksum_value: null,
+      checksum_type: null,
+      key: null,
+      path: null,
+      file_size: null,
+      file_name: testFile.fileName,
+      source: null,
     }
   );
 });
