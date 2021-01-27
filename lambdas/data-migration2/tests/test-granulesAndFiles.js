@@ -2,8 +2,6 @@ const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const test = require('ava');
 
-const Collection = require('@cumulus/api/models/collections');
-const Execution = require('@cumulus/api/models/executions');
 const Granule = require('@cumulus/api/models/granules');
 const s3Utils = require('@cumulus/aws-client/S3');
 
@@ -71,8 +69,6 @@ const generateTestGranule = (collection, executionId, alternateBucket, pdrName, 
   updatedAt: Date.now(),
 });
 
-let collectionsModel;
-let executionsModel;
 let granulesModel;
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
@@ -85,12 +81,6 @@ test.before(async (t) => {
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
-
-  collectionsModel = new Collection();
-  await collectionsModel.createTable();
-
-  executionsModel = new Execution();
-  await executionsModel.createTable();
 
   granulesModel = new Granule();
   await granulesModel.createTable();
@@ -139,8 +129,6 @@ test.afterEach.always(async (t) => {
 
 test.after.always(async (t) => {
   await granulesModel.deleteTable();
-  await collectionsModel.deleteTable();
-  await executionsModel.deleteTable();
 
   await s3Utils.recursivelyDeleteS3Bucket(bucket);
 
