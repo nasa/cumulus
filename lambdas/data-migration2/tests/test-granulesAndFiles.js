@@ -200,10 +200,10 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   t.deepEqual(
     omit(record, fileOmitList),
     {
-      bucket: testFile.bucket ? testFile.bucket : null,
+      bucket: testFile.bucket,
       checksum_value: testFile.checksum,
       checksum_type: testFile.checksumType,
-      key: testFile.key ? testFile.key : null,
+      key: testFile.key,
       path: null,
       file_size: testFile.size.toString(),
       file_name: testFile.fileName,
