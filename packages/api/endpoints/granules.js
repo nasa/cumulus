@@ -143,11 +143,15 @@ async function del(req, res) {
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
 
-  let granule;
+  const dbClient = await getKnexClient();
+
+  let dynamoGranule;
+  let pgGranule;
   try {
     // TODO we need to know if the granule is published.
-    // Maybe we also need to get from PG and use either?
-    granule = await granuleModelClient.getRecord({ granuleId });
+    // Do we need both?
+    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
+    pgGranule = await granulePgModel.get(dbClient, { granule_id: granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(error);
@@ -155,15 +159,15 @@ async function del(req, res) {
     throw error;
   }
 
-  if (granule.detail) {
-    return res.boom.badRequest(granule);
+  if (dynamoGranule.detail) {
+    return res.boom.badRequest(dynamoGranule);
   }
 
   try {
     // TODO combine to single knex transaction
-    await granuleModelClient.delete(granule);
-    const dbClient = await getKnexClient();
-    await granulePgModel.delete(dbClient, granuleId);
+    // as for keeping deletes in sync between the systems, i think we should. so i would use a knex transaction where the PG delete happens, then the dynamo delete
+    await granuleModelClient.delete(dynamoGranule);
+    await granulePgModel.delete(dbClient, pgGranule);
   } catch (error) {
     if (error instanceof DeletePublishedGranule) {
       return res.boom.badRequest(error.message);
@@ -177,7 +181,7 @@ async function del(req, res) {
       esClient,
       id: granuleId,
       type: 'granule',
-      parent: granule.collectionId,
+      parent: dynamoGranule.collectionId,
       index: process.env.ES_INDEX,
       ignore: [404],
     });

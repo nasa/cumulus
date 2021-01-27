@@ -68,10 +68,10 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
 
   delete(
     knexOrTransaction: Knex | Knex.Transaction,
-    cumulusId: number
+    params: Partial<RecordType>
   ) {
     return knexOrTransaction(this.tableName)
-      .where('cumulus_id', cumulusId)
+      .where(params)
       .del();
   }
 }

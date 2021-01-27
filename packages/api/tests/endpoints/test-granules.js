@@ -32,6 +32,7 @@ const {
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 // PG mock data factories
 const {
@@ -716,17 +717,15 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
   t.is(response.status, 200);
 
   // Check Dynamo and RDS. The granule should have been removed from both.
-  // TODO make doesNotContain function
-  const pgGranule = await t.context.knex.queryBuilder()
-    .select()
-    .table('granules')
-    .where({ granule_id: granuleId })
-    .first();
+  await t.throwsAsync(
+    granulePgModel.get(t.context.knex, { granule_id: granuleId }),
+    { instanceOf: RecordDoesNotExist }
+  );
 
-  t.is(pgGranule, undefined);
-
-  const dynamoGranule = await granuleModel.get({ granuleId: granuleId });
-  t.is(dynamoGranule, undefined);
+  await t.throwsAsync(
+    granuleModel.get({ granuleId: granuleId }),
+    { instanceOf: RecordDoesNotExist }
+  );
 });
 
 test('DELETE removes a granule from RDS only if no Dynamo match exists', async (t) => {

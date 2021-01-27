@@ -159,7 +159,7 @@ test('BasePgModel.delete() correctly deletes a record', async (t) => {
   );
 
   // Delete the record and validate that it's gone
-  await basePgModel.delete(knex, cumulusId);
+  await basePgModel.delete(knex, { cumulus_id: cumulusId });
   await t.throwsAsync(
     basePgModel.get(knex, { cumulus_id: cumulusId }),
     { instanceOf: RecordDoesNotExist }
@@ -171,7 +171,7 @@ test('BasePgModel.delete() works with knex transaction', async (t) => {
   const cumulusId = 789;
   await knex(tableName).insert({ cumulus_id: cumulusId });
   t.truthy(await knex.transaction(
-    (trx) => basePgModel.delete(trx, cumulusId)
+    (trx) => basePgModel.delete(trx, { cumulus_id: cumulusId })
   ));
 
   // validate that the record is not in the table
