@@ -7,7 +7,6 @@ import {
   GranulePgModel,
   FilePgModel,
   PostgresFile,
-  PostgresGranuleRecord,
   translateApiGranuleToPostgresGranule,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
@@ -51,9 +50,10 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  const existingRecord = await knex<PostgresGranuleRecord>('granules')
-    .where({ granule_id: record.granuleId, collection_cumulus_id: collectionCumulusId })
-    .first();
+  const existingRecord = await granulePgModel.get(knex, {
+    granule_id: record.granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
 
   // Throw error if it was already migrated.
   if (existingRecord) {
@@ -70,14 +70,14 @@ export const migrateGranuleRecord = async (
  *
  * @param {ApiFile} file - Granule file
  * @param {number} granuleCumulusId - ID of granule
- * @param {Knex} knex - Knex client for writing to RDS database
+ * @param {Knex.Transaction} trx - Knex transaction
  * @returns {Promise<void>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateFileRecord = async (
   file: ApiFile,
   granuleCumulusId: number,
-  knex: Knex
+  trx: Knex.Transaction
 ): Promise<void> => {
   const filePgModel = new FilePgModel();
 
@@ -96,7 +96,7 @@ export const migrateFileRecord = async (
     source: file.source,
     path: file.path,
   };
-  await filePgModel.upsert(knex, updatedRecord);
+  await filePgModel.upsert(trx, updatedRecord);
 };
 
 /**
