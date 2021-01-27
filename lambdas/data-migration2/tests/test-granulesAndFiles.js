@@ -216,8 +216,8 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   } = t.context;
 
   const testFile = testGranule.files[0];
-  await migrateGranuleRecord(testGranule, knex);
-  await migrateFileRecord(testFile, testGranule.granuleId, testGranule.collectionId, knex);
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   // I am not sure how I can select a file where bucket and key are null
   const record = await filePgModel.get(knex, {});
@@ -349,8 +349,8 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.size;
   delete testFile.source;
 
-  await migrateGranuleRecord(testGranule, knex);
-  await migrateFileRecord(testFile, testGranule.granuleId, testGranule.collectionId, knex);
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   // Also unsure of condition for null bucket and key
   const record = await filePgModel.get(knex, {});
@@ -391,7 +391,7 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
   const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
   t.deepEqual(migrationSummary, {
     filesSummary: {
-      dynamoRecords: 0,
+      dynamoRecords: 1,
       failed: 0,
       skipped: 0,
       success: 0,
@@ -492,8 +492,8 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
   t.deepEqual(migrationSummary, {
     filesSummary: {
-      dynamoRecords: 1,
-      failed: 0,
+      dynamoRecords: 2,
+      failed: 1,
       skipped: 0,
       success: 1,
     },

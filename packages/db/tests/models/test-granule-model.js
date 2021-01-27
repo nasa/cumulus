@@ -219,7 +219,7 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
   t.is(record.status, 'completed');
 });
 
-test('GranulePgModel.upsert() will allow a running status to replace a completed status for different execution', async (t) => {
+test.only('GranulePgModel.upsert() will allow a running status to replace a completed status for different execution', async (t) => {
   const {
     knex,
     executionPgModel,

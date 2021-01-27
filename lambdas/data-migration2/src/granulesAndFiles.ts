@@ -33,13 +33,13 @@ export interface GranulesAndFilesMigrationSummary {
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
  *   Record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<void>}
+ * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
-): Promise<void> => {
+): Promise<number> => {
   // Validate record before processing using API model schema
   Manager.recordIsValid(record, schemas.granule);
   const { name, version } = deconstructCollectionId(record.collectionId);
@@ -61,39 +61,25 @@ export const migrateGranuleRecord = async (
   }
 
   const granule = await translateApiGranuleToPostgresGranule(record, knex, collectionPgModel);
-  await granulePgModel.upsert(knex, granule);
+  const [cumulusId] = await granulePgModel.upsert(knex, granule);
+  return cumulusId;
 };
 
 /**
  * Migrate File record from a Granules record from DynamoDB  to RDS.
  *
  * @param {ApiFile} file - Granule file
- * @param {string} granuleId - ID of granule
- * @param {string} collectionId - ID of collection
+ * @param {number} granuleCumulusId - ID of granule
  * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
+ * @returns {Promise<void>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateFileRecord = async (
   file: ApiFile,
-  granuleId: string,
-  collectionId: string,
+  granuleCumulusId: number,
   knex: Knex
 ): Promise<void> => {
-  const { name, version } = deconstructCollectionId(collectionId);
-  const collectionPgModel = new CollectionPgModel();
-  const granulePgModel = new GranulePgModel();
   const filePgModel = new FilePgModel();
-
-  const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-    knex,
-    { name, version }
-  );
-
-  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  );
 
   const bucket = getBucket(file);
   const key = getKey(file);
@@ -116,43 +102,46 @@ export const migrateFileRecord = async (
 /**
  * Migrate granule and files from DynamoDB to RDS
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- * @param {Knex} knex
  * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
+ * @param {Knex} knex
  * @returns {Promise<MigrationSummary>} - Migration summary for files
  */
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knex: Knex,
-  granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary
+  granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
+  knex: Knex
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const files = dynamoRecord.files;
-  const granuleId = dynamoRecord.granuleId;
-  const collectionId = dynamoRecord.collectionId;
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
 
+  granulesSummary.dynamoRecords += 1;
+  filesSummary.dynamoRecords += files.length;
+
   try {
-    granulesSummary.dynamoRecords += 1;
-    await migrateGranuleRecord(dynamoRecord, knex);
+    await knex.transaction(async (trx) => {
+      const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx);
+      await Promise.all(files.map(async (file : ApiFile) => {
+        try {
+          await migrateFileRecord(file, granuleCumulusId, trx);
+        } catch (error) {
+          logger.error(
+            `Could not create file record in RDS for file ${file}`,
+            error
+          );
+          // Have to re-throw for transaction to fail
+          throw error;
+        }
+      }));
+    });
     granulesSummary.success += 1;
-    await Promise.all(files.map(async (file : ApiFile) => {
-      filesSummary.dynamoRecords += 1;
-      try {
-        await migrateFileRecord(file, granuleId, collectionId, knex);
-        filesSummary.success += 1;
-      } catch (error) {
-        filesSummary.failed += 1;
-        logger.error(
-          `Could not create file record in RDS for file ${file}`,
-          error
-        );
-      }
-    }));
+    filesSummary.success += files.length;
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
       granulesSummary.skipped += 1;
       logger.info(error);
     } else {
       granulesSummary.failed += 1;
+      filesSummary.failed += files.length;
       logger.error(
         `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`,
         error
@@ -196,7 +185,7 @@ export const migrateGranulesAndFiles = async (
 
   /* eslint-disable no-await-in-loop */
   while (record) {
-    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, knex, summary);
+    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex);
     summary.granulesSummary = migrationSummary.granulesSummary;
     summary.filesSummary = migrationSummary.filesSummary;
 
