@@ -31,13 +31,13 @@ export interface GranulesAndFilesMigrationSummary {
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
  *   Record from DynamoDB
- * @param {Knex} knex - Knex client for writing to RDS database
+ * @param {Knex.Transaction} knex - Knex transaction
  * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knex: Knex
+  knex: Knex.Transaction
 ): Promise<number> => {
   // Validate record before processing using API model schema
   Manager.recordIsValid(record, schemas.granule);
