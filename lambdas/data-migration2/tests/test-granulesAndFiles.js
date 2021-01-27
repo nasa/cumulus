@@ -360,8 +360,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
-  // Also unsure of condition for null bucket and key
-  const record = await filePgModel.get(knex, {});
+  const record = await filePgModel.get(knex, { bucket: null, key: null });
 
   t.deepEqual(
     omit(record, fileOmitList),
