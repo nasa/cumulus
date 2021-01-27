@@ -98,13 +98,6 @@ test.before(async (t) => {
   t.context.granulePgModel = new GranulePgModel();
   t.context.filePgModel = new FilePgModel();
 
-  // Store the CMR password
-  process.env.cmr_password_secret_name = cryptoRandomString({ length: 5 });
-  await secretsManager().createSecret({
-    Name: process.env.cmr_password_secret_name,
-    SecretString: cryptoRandomString({ length: 5 }),
-  }).promise();
-
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
@@ -150,11 +143,6 @@ test.after.always(async (t) => {
   await executionsModel.deleteTable();
 
   await s3Utils.recursivelyDeleteS3Bucket(bucket);
-
-  await secretsManager().deleteSecret({
-    SecretId: process.env.cmr_password_secret_name,
-    ForceDeleteWithoutRecovery: true,
-  }).promise();
 
   await destroyLocalTestDb({
     ...t.context,
