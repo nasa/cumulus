@@ -30,8 +30,8 @@ const dateString = new Date().toString();
 const bucket = cryptoRandomString({ length: 10 });
 
 const fileOmitList = ['granule_cumulus_id', 'cumulus_id', 'created_at', 'updated_at'];
-const fakeFile = (alternateBucket) => fakeFileFactory({
-  bucket: alternateBucket || bucket,
+const fakeFile = () => fakeFileFactory({
+  bucket,
   key: cryptoRandomString({ length: 10 }),
   size: 1098034,
   fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
@@ -41,7 +41,7 @@ const fakeFile = (alternateBucket) => fakeFileFactory({
   source: 'source',
 });
 
-const generateTestGranule = (collection, executionId, alternateBucket, pdrName, provider) => ({
+const generateTestGranule = (collection, executionId, pdrName, provider) => ({
   granuleId: cryptoRandomString({ length: 5 }),
   collectionId: buildCollectionId(collection.name, collection.version),
   pdrName: pdrName,
@@ -52,7 +52,7 @@ const generateTestGranule = (collection, executionId, alternateBucket, pdrName, 
   published: false,
   duration: 10,
   files: [
-    fakeFile(alternateBucket),
+    fakeFile(),
   ],
   error: {},
   productVolume: 1119742,
@@ -424,11 +424,8 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
     testGranule,
   } = t.context;
 
-  const alternateBucket = cryptoRandomString({ length: 10 });
-  await s3Utils.createBucket(alternateBucket);
-
   const testGranule1 = testGranule;
-  const testGranule2 = generateTestGranule(testCollection, testExecution.arn, alternateBucket);
+  const testGranule2 = generateTestGranule(testCollection, testExecution.arn);
   const files = testGranule1.files.concat(testGranule2.files);
 
   await Promise.all(files.flatMap((file) => s3Utils.s3PutObject({
@@ -445,7 +442,6 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
   t.teardown(async () => {
     granulesModel.delete({ granuleId: testGranule1.granuleId });
     granulesModel.delete({ granuleId: testGranule2.granuleId });
-    await s3Utils.recursivelyDeleteS3Bucket(alternateBucket);
   });
 
   const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
@@ -477,10 +473,7 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
     testGranule,
   } = t.context;
 
-  const alternateBucket = cryptoRandomString({ length: 10 });
-  await s3Utils.createBucket(alternateBucket);
-
-  const testGranule2 = generateTestGranule(testCollection, testExecution.arn, alternateBucket);
+  const testGranule2 = generateTestGranule(testCollection, testExecution.arn);
   // remove required field so record will fail
   delete testGranule.collectionId;
 
