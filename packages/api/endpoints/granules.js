@@ -145,7 +145,28 @@ async function del(req, res) {
     granule = await granuleModelClient.getRecord({ granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(error);
+      // Just making my life easier
+      const es = new Search(
+        { queryStringParameters: { granuleId } },
+        'granule',
+        process.env.ES_INDEX
+      );
+
+      const result = await es.query();
+
+      if (result.meta.count > 0) {
+        const esClient = await Search.es(process.env.ES_HOST);
+
+        await indexer.deleteRecord({
+          esClient,
+          id: granuleId,
+          type: 'granule',
+          index: process.env.ES_INDEX,
+          parent: result.results[0].collectionId,
+          ignore: [404],
+        });
+        return res.send({ detail: 'Record deleted' });
+      }
     }
     throw error;
   }

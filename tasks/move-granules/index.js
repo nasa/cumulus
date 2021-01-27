@@ -67,6 +67,17 @@ async function azureMoveObject(
   await deleteS3Object(sourceBucket, sourceKey);
 }
 
+// TO DO: This shouldn't necessarily live here
+function generateFilename(bucketName, filepath, bucketsConfig) {
+  if (bucketsConfig.bucket(bucketName).cloudProvider === 'azure') {
+    const blobServiceClient = BlobServiceClient
+      .fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
+    return `https://${blobServiceClient.accountName}.blob.core.windows.net/${bucketName}/${filepath}`;
+  }
+
+  return `s3://${s3Join(bucketName, filepath)}`;
+}
+
 /**
  * Validates the file matched only one collection.file and has a valid bucket
  * config.
@@ -139,8 +150,9 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
         ...cmrFileTypeObject, // Add type if the file is a CMR file
         ...{
           bucket: bucketName,
+          key: filepath, // is this needed?
           filepath,
-          filename: `s3://${s3Join(bucketName, filepath)}`,
+          filename: generateFilename(bucketName, filepath, bucketsConfig),
           url_path: URLPathTemplate,
         },
       });

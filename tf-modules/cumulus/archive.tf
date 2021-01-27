@@ -97,5 +97,7 @@ module "archive" {
 
   ems_deploy = var.ems_deploy
 
+  azure_storage_connection_string = var.azure_storage_connection_string
+
   tags = var.tags
 }

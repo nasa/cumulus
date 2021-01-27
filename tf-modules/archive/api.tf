@@ -10,6 +10,7 @@ locals {
       AsyncOperationsTable             = var.dynamo_tables.async_operations.name
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
       auth_mode                        = "public"
+      AZURE_STORAGE_CONNECTION_STRING  = var.azure_storage_connection_string
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       cmr_client_id                    = var.cmr_client_id

@@ -8,6 +8,10 @@ const partial = require('lodash/partial');
 const path = require('path');
 const pMap = require('p-map');
 
+const {
+  BlobServiceClient,
+} = require('@azure/storage-blob');
+
 const awsClients = require('@cumulus/aws-client/services');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -550,10 +554,37 @@ class Granule extends Manager {
     // Delete granule files
     await pMap(
       get(granule, 'files', []),
-      (file) => {
-        const bucket = FileUtils.getBucket(file);
-        const key = FileUtils.getKey(file);
-        return s3Utils.deleteS3Object(bucket, key);
+      // TO DO: This should all get refactored
+      async (file) => {
+        let bucket = FileUtils.getBucket(file);
+        let key = FileUtils.getKey(file);
+        try {
+          return await s3Utils.deleteS3Object(bucket, key);
+        } catch (error) {
+          log.error(error);
+          try {
+            if ((!bucket && !key) && file.filename) {
+              const match = file.filename.match('^https://(.*).blob.core.windows.net/([^/]+)/(.*)$');
+
+              if (match !== null) {
+                bucket = match[2];
+                key = match[3];
+              }
+            }
+
+            key = key || file.fileName;
+
+            const blobServiceClient = BlobServiceClient
+              .fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
+            log.info(`Deleting blob ${key} in ${bucket}`);
+            const containerClient = blobServiceClient.getContainerClient(bucket);
+            const blockBlobClient = containerClient.getBlockBlobClient(key);
+            return await blockBlobClient.delete();
+          } catch (azureError) {
+            log.error(azureError);
+            return undefined;
+          }
+        }
       }
     );
 

@@ -27,13 +27,30 @@ const getChecksum = (file) => {
 
 const getFileName = (file) => {
   if (file.fileName) return file.fileName;
+  if (file.filename) return file.filename; // is this needed?
   if (file.name) return file.name;
   return undefined;
 };
 
 const getKey = (file) => {
   if (file.key) return file.key;
-  if (file.filename) return parseS3Uri(file.filename).Key;
+  try {
+    if (file.filename) {
+      if (file.filename.startsWith('s3')) {
+        return parseS3Uri(file.filename).Key;
+      }
+
+      // TO DO: This is somewhat duplicated in the granules model. Need to find the right place
+      // for this to live.
+      const match = file.filename.match('^https://(.*).blob.core.windows.net/([^/]+)/(.*)$');
+
+      if (match !== null) {
+        return match[3];
+      }
+    }
+  } catch (error) {
+    log.error(error);
+  }
   return undefined;
 };
 

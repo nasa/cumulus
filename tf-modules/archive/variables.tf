@@ -141,6 +141,11 @@ variable "api_url" {
   description = "If not specified, the value of the API Gateway endpoint is used"
 }
 
+variable "azure_storage_connection_string" {
+  type = string
+  default = ""
+}
+
 variable "cmr_limit" {
   type    = number
   default = 100
