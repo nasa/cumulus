@@ -14,7 +14,8 @@ For more information, read the [Backup and Restore documentation](features/data_
 
 ## Elasticsearch reindexing
 
-If new Elasticsearch mappings are added to Cumulus, they are automatically added to the index upon deploy. If you run into issues with your Elasticsearch index, a reindex operation is available via the Cumulus API.
+If you run into issues with your Elasticsearch index, a reindex operation is available via the Cumulus API. See
+the [Reindexing Guide](reindex-elasticsearch.md).
 
 Information on how to reindex Elasticsearch is in the [Cumulus API  documentation](https://nasa.github.io/cumulus-api/#elasticsearch-1).
 
