@@ -60,7 +60,7 @@ export const migrateGranuleRecord = async (
     throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
   }
 
-  const granule = await translateApiGranuleToPostgresGranule(record, knex, collectionPgModel);
+  const granule = await translateApiGranuleToPostgresGranule(record, knex);
   const [cumulusId] = await granulePgModel.upsert(knex, granule);
   return cumulusId;
 };
@@ -121,16 +121,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
     await knex.transaction(async (trx) => {
       const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx);
       await Promise.all(files.map(async (file : ApiFile) => {
-        try {
-          await migrateFileRecord(file, granuleCumulusId, trx);
-        } catch (error) {
-          logger.error(
-            `Could not create file record in RDS for file ${file}`,
-            error
-          );
-          // Have to re-throw for transaction to fail
-          throw error;
-        }
+        await migrateFileRecord(file, granuleCumulusId, trx);
       }));
     });
     granulesSummary.success += 1;

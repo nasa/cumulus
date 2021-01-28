@@ -17,6 +17,7 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   tableNames,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -183,12 +184,14 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
 test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   const {
     filePgModel,
+    granulePgModel,
     knex,
     testGranule,
   } = t.context;
 
   const testFile = testGranule.files[0];
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
+  const [granuleCumulusId] = await granulePgModel.upsert(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(knex, { bucket: testFile.bucket, key: testFile.key });
@@ -211,6 +214,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
 test.serial('migrateFileRecord correctly migrates file record with null bucket and key', async (t) => {
   const {
     filePgModel,
+    granulePgModel,
     knex,
     testGranule,
   } = t.context;
@@ -221,7 +225,8 @@ test.serial('migrateFileRecord correctly migrates file record with null bucket a
   });
   testGranule.files = [testFile];
 
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
+  const [granuleCumulusId] = await granulePgModel.upsert(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(knex, { bucket: null, key: null });
@@ -336,6 +341,7 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already
 test.serial('migrateFileRecord handles nullable fields on source file data', async (t) => {
   const {
     filePgModel,
+    granulePgModel,
     knex,
     testGranule,
   } = t.context;
@@ -351,7 +357,8 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.size;
   delete testFile.source;
 
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
+  const [granuleCumulusId] = await granulePgModel.upsert(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(knex, { bucket: null, key: null });

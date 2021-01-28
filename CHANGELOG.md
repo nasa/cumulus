@@ -68,6 +68,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2128**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
+    - `@cumulus/db/translate/file/translateApiGranuletoPostgresGranule`
     - `@cumulus/message/Providers/getMessageProvider`
 - **CUMULUS-2190**
   - Added helper functions:
