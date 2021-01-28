@@ -78,8 +78,6 @@ test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = bucket;
 
-  process.env.CollectionsTable = cryptoRandomString({ length: 10 });
-  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
 
   granulesModel = new Granule();
