@@ -10,7 +10,7 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-const { GranulePgModel, getKnexClient } = require('@cumulus/db');
+const { GranulePgModel, getKnexClient, FilePgModel } = require('@cumulus/db');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
@@ -142,14 +142,13 @@ async function del(req, res) {
 
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
+  const filePgModel = new FilePgModel();
 
   const knex = await getKnexClient({ env: process.env });
 
   let dynamoGranule;
   let pgGranule;
   try {
-    // TODO we need to know if the granule is published.
-    // Do we need both?
     dynamoGranule = await granuleModelClient.getRecord({ granuleId });
     pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
   } catch (error) {
@@ -159,6 +158,7 @@ async function del(req, res) {
     throw error;
   }
 
+  // TODO what is this?
   if (dynamoGranule.detail) {
     return res.boom.badRequest(dynamoGranule);
   }
@@ -166,6 +166,10 @@ async function del(req, res) {
   try {
     // TODO combine to single knex transaction
     // as for keeping deletes in sync between the systems, i think we should. so i would use a knex transaction where the PG delete happens, then the dynamo delete
+    // Delete all of this granule's files from PG and S3
+    await filePgModel.deleteGranuleFiles(knex, pgGranule);
+
+    // Delete granule from Dynamo and PG
     await granuleModelClient.delete(dynamoGranule);
     await granulePgModel.delete(knex, pgGranule);
   } catch (error) {

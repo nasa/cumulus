@@ -12,6 +12,7 @@ const {
   CollectionPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  FilePgModel,
 } = require('@cumulus/db');
 const {
   buildS3Uri,
@@ -137,6 +138,7 @@ let accessTokenModel;
 let granuleModel;
 let granulePgModel;
 let collectionModel;
+let filePgModel;
 let jwtAuthToken;
 
 test.before(async (t) => {
@@ -172,6 +174,7 @@ test.before(async (t) => {
   await granuleModel.createTable();
 
   granulePgModel = new GranulePgModel();
+  filePgModel = new FilePgModel();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -638,32 +641,34 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
     },
   };
   const granuleId = randomId('granule');
-
-  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
-  newGranule.published = false;
-  newGranule.files = [
+  const files = [
     {
       bucket: buckets.protected.name,
-      fileName: `${newGranule.granuleId}.hdf`,
-      key: `${randomString(5)}/${newGranule.granuleId}.hdf`,
+      fileName: `${granuleId}.hdf`,
+      key: `${randomString(5)}/${granuleId}.hdf`,
     },
     {
       bucket: buckets.protected.name,
-      fileName: `${newGranule.granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${newGranule.granuleId}.cmr.xml`,
+      fileName: `${granuleId}.cmr.xml`,
+      key: `${randomString(5)}/${granuleId}.cmr.xml`,
     },
     {
       bucket: buckets.public.name,
-      fileName: `${newGranule.granuleId}.jpg`,
-      key: `${randomString(5)}/${newGranule.granuleId}.jpg`,
+      fileName: `${granuleId}.jpg`,
+      key: `${randomString(5)}/${granuleId}.jpg`,
     },
   ];
+
+  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
+  newGranule.published = false;
+  newGranule.files = files;
 
   await createBuckets([
     buckets.protected.name,
     buckets.public.name,
   ]);
 
+  // Add files to S3
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
     await putObject({ // eslint-disable-line no-await-in-loop
@@ -685,7 +690,21 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
     }
   );
   newPGGranule.published = false;
-  await granulePgModel.create(t.context.knex, newPGGranule);
+  const [granuleCumulusId] = await granulePgModel.create(t.context.knex, newPGGranule);
+
+  // create PG files
+  await Promise.all(
+    files.map((f) => {
+      const pgFile = {
+        granule_cumulus_id: granuleCumulusId,
+        bucket: f.bucket,
+        file_name: f.fileName,
+        key: f.key,
+      };
+
+      return filePgModel.create(t.context.knex, pgFile);
+    })
+  );
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)
@@ -698,6 +717,10 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   t.is(detail, 'Record deleted');
 
   // verify the files are deleted
+  // if the granule was successfully deleted, the postgres
+  // files will have been as well. Files have a fk which would
+  // prevent the granule from being deleted if files referencing it
+  // still exist.
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
