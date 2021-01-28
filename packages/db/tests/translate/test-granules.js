@@ -1,10 +1,9 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { removeNilProperties } = require('@cumulus/common/util');
 const { translateApiGranuleToPostgresGranule } = require('../../dist/translate/granules');
 
-test('translateApiGranuleToPostgresGranule converts API execution to Postgres', async (t) => {
+test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
   const executionCumulusId = 3;
@@ -70,6 +69,7 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
     execution_cumulus_id: executionCumulusId,
     pdr_cumulus_id: pdrCumulusId,
     provider_cumulus_id: providerCumulusId,
+    query_fields: apiGranule.query_fields,
     beginning_date_time: new Date(apiGranule.beginningDateTime),
     ending_date_time: new Date(apiGranule.endingDateTime),
     last_update_date_time: new Date(apiGranule.lastUpdateDateTime),
@@ -81,15 +81,13 @@ test('translateApiGranuleToPostgresGranule converts API execution to Postgres', 
     updated_at: new Date(apiGranule.updatedAt),
   };
 
-  const result = removeNilProperties(
-    await translateApiGranuleToPostgresGranule(
-      apiGranule,
-      fakeDbClient,
-      fakeCollectionPgModel,
-      fakeExecutionPgModel,
-      fakePdrPgModel,
-      fakeProviderPgModel
-    )
+  const result = await translateApiGranuleToPostgresGranule(
+    apiGranule,
+    fakeDbClient,
+    fakeCollectionPgModel,
+    fakeExecutionPgModel,
+    fakePdrPgModel,
+    fakeProviderPgModel
   );
 
   t.deepEqual(
