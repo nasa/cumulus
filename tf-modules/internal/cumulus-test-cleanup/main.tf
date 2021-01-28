@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-    aws  = ">= 3.14.1"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.14.1"
+    }
   }
 }
 
@@ -49,15 +52,15 @@ resource "aws_lambda_function" "cumulus_test_cleanup" {
 }
 
 resource "aws_cloudwatch_event_rule" "cumulus_test_cleanup" {
-  name = "${var.prefix}_cumulus_test_cleanup"
+  name                = "${var.prefix}_cumulus_test_cleanup"
   schedule_expression = "cron(0 1 * * ? *)"
   tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "cumulus_test_cleanup" {
   target_id = "cleanup_lambda_target"
-  rule = aws_cloudwatch_event_rule.cumulus_test_cleanup.name
-  arn  = aws_lambda_function.cumulus_test_cleanup.arn
+  rule      = aws_cloudwatch_event_rule.cumulus_test_cleanup.name
+  arn       = aws_lambda_function.cumulus_test_cleanup.arn
 }
 
 resource "aws_lambda_permission" "cumulus_test_cleanup" {

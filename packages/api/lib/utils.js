@@ -9,6 +9,10 @@ function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));
 }
 
+function filenamify(fileName) {
+  return fileName.replace(/["%*/:<>?\\|]/g, '_');
+}
+
 /**
  * Ensures that the exception is returned as an object
  *
@@ -100,6 +104,7 @@ module.exports = {
   deconstructCollectionId,
   errorify,
   extractDate,
+  filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
   getGranuleProductVolume,
