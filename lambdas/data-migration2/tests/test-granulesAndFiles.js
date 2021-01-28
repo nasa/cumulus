@@ -27,11 +27,10 @@ const { migrateGranuleRecord, migrateFileRecord, migrateGranulesAndFiles } = req
 const buildCollectionId = (name, version) => `${name}___${version}`;
 
 const dateString = new Date().toString();
-const bucket = cryptoRandomString({ length: 10 });
 
 const fileOmitList = ['granule_cumulus_id', 'cumulus_id', 'created_at', 'updated_at'];
 const fakeFile = () => fakeFileFactory({
-  bucket,
+  bucket: cryptoRandomString({ length: 10 }),
   key: cryptoRandomString({ length: 10 }),
   size: 1098034,
   fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
@@ -508,7 +507,4 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   const fileRecords = await knex(tableNames.files);
   t.is(records.length, 1);
   t.is(fileRecords.length, 1);
-});
-
-test.serial.skip('migrateFileRecord throws RecordAlreadyMigrated error for already migrated record', async () => {
 });
