@@ -145,11 +145,9 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
     testGranule,
   } = t.context;
 
-  await migrateGranuleRecord(testGranule, knex);
-
+  const [granuleCumulusId] = await migrateGranuleRecord(testGranule, knex);
   const record = await granulePgModel.get(knex, {
-    granule_id: testGranule.granuleId,
-    collection_cumulus_id: collectionCumulusId,
+    cumulus_id: granuleCumulusId,
   });
 
   t.deepEqual(
