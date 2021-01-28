@@ -284,11 +284,9 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   delete testGranule.queryFields;
   delete testGranule.version;
 
-  await migrateGranuleRecord(testGranule, knex);
-
+  const [granuleCumulusId] = await migrateGranuleRecord(testGranule, knex);
   const record = await granulePgModel.get(knex, {
-    granule_id: testGranule.granuleId,
-    collection_cumulus_id: collectionCumulusId,
+    cumulus_id: granuleCumulusId,
   });
 
   t.deepEqual(
