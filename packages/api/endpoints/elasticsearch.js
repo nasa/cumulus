@@ -57,14 +57,14 @@ async function reindex(req, res) {
 
   const esClient = await Search.es();
 
-  const alias = await esClient.indices.getAlias({
-    name: aliasName,
-  }).then((response) => response.body);
-
-  // alias keys = index name
-  const indices = Object.keys(alias);
-
   if (!sourceIndex) {
+    const alias = await esClient.indices.getAlias({
+      name: aliasName,
+    }).then((response) => response.body);
+
+    // alias keys = index name
+    const indices = Object.keys(alias);
+
     if (indices.length > 1) {
       // We don't know which index to use as the source, throw error
       return res.boom.badRequest(`Multiple indices found for alias ${aliasName}. Specify source index as one of [${indices.sort().join(', ')}].`);
@@ -78,27 +78,23 @@ async function reindex(req, res) {
     if (!sourceExists) {
       return res.boom.badRequest(`Source index ${sourceIndex} does not exist.`);
     }
-
-    if (indices.includes(sourceIndex) === false) {
-      return res.boom.badRequest(`Source index ${sourceIndex} is not aliased with alias ${aliasName}.`);
-    }
   }
 
   if (!destIndex) {
     destIndex = timestampedIndexName();
   }
 
-  try {
-    await createIndex(esClient, destIndex);
-  } catch (error) {
-    if (error instanceof IndexExistsError) {
-      return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
+  const destExists = await esClient.indices.exists({ index: destIndex })
+    .then((response) => response.body);
+
+  if (!destExists) {
+    try {
+      await createIndex(esClient, destIndex);
+      log.info(`Created destination index ${destIndex}.`);
+    } catch (error) {
+      return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
     }
-
-    return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
   }
-
-  log.info(`Created destination index ${destIndex}.`);
 
   // reindex
   esClient.reindex({
@@ -160,7 +156,12 @@ async function changeIndex(req, res) {
     .then((response) => response.body);
 
   if (!destExists) {
-    return res.boom.badRequest(`New index ${newIndex} does not exist.`);
+    try {
+      await createIndex(esClient, newIndex);
+      log.info(`Created destination index ${newIndex}.`);
+    } catch (error) {
+      return res.boom.badRequest(`Error creating index ${newIndex}: ${error.message}`);
+    }
   }
 
   try {
