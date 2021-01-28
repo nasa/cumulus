@@ -377,11 +377,6 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
     testGranule,
   } = t.context;
 
-  await Promise.all(testGranule.files.map((file) => s3Utils.s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: 'some-body',
-  })));
   await migrateGranuleRecord(testGranule, knex);
   await granulesModel.create(testGranule);
 
@@ -419,13 +414,6 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
 
   const testGranule1 = testGranule;
   const testGranule2 = generateTestGranule(testCollection, testExecution.arn);
-  const files = testGranule1.files.concat(testGranule2.files);
-
-  await Promise.all(files.flatMap((file) => s3Utils.s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: 'some-body',
-  })));
 
   await Promise.all([
     granulesModel.create(testGranule1),
