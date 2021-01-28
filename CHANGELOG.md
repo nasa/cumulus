@@ -9,20 +9,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
+- **CUMULUS-2328**
+  - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
 
 ### BREAKING CHANGES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
+- **CUMULUS-2328**
+  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
 
 ### Added
 
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
+- **CUMULUS-2328**
+  - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
 
 ### Changed
 
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+- **CUMULUS-2328**
+  - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
 
 ### Fixed
 
@@ -31,6 +39,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+
+### Removed
+
+- **CUMULUS-2328**
+  - Removed `distributionApiId` environment variable from `<prefix>-ApiEndpoints` and `<prefix>-PrivateApiLambda` Lambdas
+  - Removed `distribution_api_id` variable from `tf-modules/archive` module
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/cumulus` module
+  - Removed variables from `tf-modules/cumulus` module:
+    - `sts_credentials_lambda_function_arn`
+    - `deploy_distribution_s3_credentials_endpoint`
+    - `tea_api_gateway_stage`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/distribution` module
+  - Removed variables from `tf-modules/distribution` module:
+    - `deploy_s3_credentials_endpoint`
+    - `log_destination_arn`
+    - `sts_credentials_lambda_function_arn`
+    - `tea_api_gateway_stage`
+    - `tea_external_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `urs_client_id`
+    - `urs_client_password`
+    - `urs_url`
 
 ## [v5.0.0] 2021-01-12
 
@@ -46,12 +79,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2258**
   - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
   - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
+- **CUMULUS-2344**
+  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
+    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 ### Added
 
 - **HYRAX-320**
   - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title id and granule ur to allow for values with special characters in them. For example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such values will be encoded correctly and parsable by HyraxInTheCloud
-
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
 - **CUMULUS-2092**
@@ -75,6 +110,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
 - **CUMULUS-2296**
   - Improved PDR spec compliance of `parse-pdr` by updating `@cumulus/pvl` to parse fields in a manner more consistent with the PDR ICD, with respect to numbers and dates. Anything not matching the ICD expectations, or incompatible with Javascript parsing, will be parsed as a string instead.
+- **CUMULUS-2344**
+  - Elasticsearch API now allows you to reindex to an index that already exists
+  - If using the Change Index operation and the new index doesn't exist, it will be created
 
 ### Removed
 
