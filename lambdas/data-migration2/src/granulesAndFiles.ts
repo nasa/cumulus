@@ -104,7 +104,7 @@ export const migrateFileRecord = async (
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
  * @param {Knex} knex
- * @returns {Promise<MigrationSummary>} - Migration summary for files
+ * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
