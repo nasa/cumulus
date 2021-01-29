@@ -4,6 +4,10 @@ const { readJsonFile } = require('@cumulus/common/FileUtils');
 const path = require('path');
 const fs = require('fs-extra');
 
+const generateIterableTestDirectories = (basePath, count) => {
+  return [...new Array(count + 1).keys()].slice(-count).map((i) => `${basePath}_${i}`);
+};
+
 /**
  * Load and parse all of the JSON files from a directory
  *
@@ -34,6 +38,7 @@ const setProcessEnvironment = (stackName, bucketName) => {
 };
 
 module.exports = {
+  generateIterableTestDirectories,
   readJsonFilesFromDir,
   setProcessEnvironment,
 };
