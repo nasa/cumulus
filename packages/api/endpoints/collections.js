@@ -12,7 +12,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   getKnexClient,
-  tableNames,
   translateApiCollectionToPostgresCollection,
   CollectionPgModel,
 } = require('@cumulus/db');
