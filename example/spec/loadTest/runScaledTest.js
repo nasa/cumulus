@@ -27,12 +27,12 @@ const {
 
 // ** Configurable Variables
 const expectedGranuleCount = 500; // Per batch
-const batches = 2;
+const batches = 4;
 const providerPathTemplate = `ingest_${expectedGranuleCount}_test`;
 const providerPaths = generateIterableTestDirectories(providerPathTemplate, batches);
 // const providerPaths = ['ingest_100_test_1'];
 
-const waitForIngestTimeoutMs = 5 * 60 * 1000;
+const waitForIngestTimeoutMs = 6 * 60 * 1000;
 const statsTimeout = 240 * 1000;
 const granuleCountThreshold = 0.95;
 
@@ -41,7 +41,6 @@ const publishGranulesMinInvocations = (expectedGranuleCount * providerPaths.leng
 const publishExecutionsMinInvocations = (expectedGranuleCount * providerPaths.length) / 10; // Number of execution publish invocations to require to pass metrics
 
 const rdsClusterName = process.env.rdsClusterName || 'cumulus-dev-rds-cluster';
-
 const testCollections = [];
 let allIngestedGranules = [];
 let beforeAllCompleted;
@@ -83,6 +82,7 @@ const checkGranuleCount = async (granuleCollection, config, count) => {
 
 describe('The Ingest Load Test', () => {
   beforeAll(async () => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = process.env.LOAD_TEST_TIMEOUT || 4200000;
     try {
       const config = await loadConfig();
       stackName = config.stackName;
@@ -149,7 +149,6 @@ describe('The Ingest Load Test', () => {
   afterAll(async () => {
     try {
       const granIds = allIngestedGranules.map((g) => g.Key.split('\/').pop().replace(/\.hdf$/, ''));
-
       const bulkDeleteResponse = await granules.bulkDeleteGranules({ prefix: stackName, body: { ids: granIds } });
       const responseBody = JSON.parse(bulkDeleteResponse.body);
       if (responseBody.status !== 'RUNNING') {
@@ -246,7 +245,7 @@ describe('The Ingest Load Test', () => {
   });
 
   it('triggers the granules publish lambda and completes with no errors/throttling', async () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed')
+    if (!beforeAllCompleted) fail('beforeAll() failed');
     else {
       const lambda = `${testConfig.stackName}-publishGranules`;
       const EndTime = new Date();
@@ -266,24 +265,24 @@ describe('The Ingest Load Test', () => {
         Dimensions: [{ Name: 'FunctionName', Value: lambda }],
       };
 
-      const dbThrottleCount = await getAggregateMetricQuery({
+      const throttleCount = await getAggregateMetricQuery({
         ...queryObject,
         MetricName: 'Throttles',
       });
 
-      const dbErrorCount = await getAggregateMetricQuery({
+      const errorCount = await getAggregateMetricQuery({
         ...queryObject,
         MetricName: 'Errors',
       });
-
+      console.log(`Counts:  Invocations: ${invocationCount}, throttleCount ${throttleCount}, rrrorCount: ${errorCount}`);
       expect(invocationCount).toBeGreaterThan(publishGranulesMinInvocations); // Checking for interference
-      expect(dbThrottleCount).toBe(0);
-      expect(dbErrorCount).toBe(0);
+      expect(throttleCount).toBe(0);
+      expect(errorCount).toBe(0);
     }
   });
 
   it('triggers the execution publish lambda and completes with no errors/throttling', async () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed')
+    if (!beforeAllCompleted) fail('beforeAll() failed');
     else {
       const lambda = `${testConfig.stackName}-publishExecutions`;
       const invocationCount = await getInvocationCount({
@@ -302,15 +301,16 @@ describe('The Ingest Load Test', () => {
         Period: 120,
         Dimensions: [{ Name: 'FunctionName', Value: lambda }],
       };
-      const dbThrottleCount = await getAggregateMetricQuery({
+      const throttleCount = await getAggregateMetricQuery({
         ...queryObject,
         MetricName: 'Throttles',
       });
-      const dbErrorCount = await getAggregateMetricQuery({
+      const errorCount = await getAggregateMetricQuery({
         ...queryObject,
         MetricName: 'Errors',
       });
 
+      console.log(`Counts:  Invocations: ${invocationCount}, throttleCount ${throttleCount}, errorCount: ${errorCount}`);
       expect(invocationCount).toBeGreaterThan(publishExecutionsMinInvocations); // Checking for interference
       expect(dbThrottleCount).toBe(0);
       expect(dbErrorCount).toBe(0);
