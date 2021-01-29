@@ -6,11 +6,13 @@ const path = require('path');
 const fs = require('fs');
 const pWaitFor = require('p-wait-for');
 
-const { randomString } = require('@cumulus/common/test-utils');
-const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { cloudwatch } = require('@cumulus/aws-client/services');
-const { listS3ObjectsV2, deleteS3Object } = require('@cumulus/aws-client/S3');
+const { getAggregateMetricQuery, getInvocationCount } = require('@cumulus/integration-tests/metrics');
+const  { generateIterableTestDirectories } = require('@cumulus/integration-tests/utils');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const { providers, collections, granules } = require('@cumulus/api-client');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const {
   buildAndExecuteWorkflow,
@@ -22,20 +24,24 @@ const {
   createTimestampedTestId,
   loadConfig,
 } = require('../helpers/testUtils');
-//const provider_path = 'ingest_1_test_2';
-//const provider_path = 'ingest_100_test_2';
-// eslint-disable-next-line camelcase
 
-const expectedGranuleCount = 100; // Per batch
-const providerPaths = ['ingest_100_test_1'];
-const expectedMaxInvocationCount = expectedGranuleCount * providerPaths.length; // Number of Ingest workflow invocations.
+// ** Configurable Variables
+const expectedGranuleCount = 500; // Per batch
+const batches = 2;
+const providerPathTemplate = `ingest_${expectedGranuleCount}_test`;
+const providerPaths = generateIterableTestDirectories(providerPathTemplate, batches);
+// const providerPaths = ['ingest_100_test_1'];
+
+const waitForIngestTimeoutMs = 5 * 60 * 1000;
+const statsTimeout = 240 * 1000;
+const granuleCountThreshold = 0.95;
+
+const expectedMaxWorkflowInvocation = expectedGranuleCount * providerPaths.length; // Number of Ingest workflow invocations.
 const publishGranulesMinInvocations = (expectedGranuleCount * providerPaths.length) / 10; // Number of publish invocations to require to pass metrics.
 const publishExecutionsMinInvocations = (expectedGranuleCount * providerPaths.length) / 10; // Number of execution publish invocations to require to pass metrics
-const waitForIngestTimeoutMs = 5 * 60 * 1000;
 
 const rdsClusterName = process.env.rdsClusterName || 'cumulus-dev-rds-cluster';
 
-//const ingestedCollectionGranules = {};
 const testCollections = [];
 let allIngestedGranules = [];
 let beforeAllCompleted;
@@ -47,109 +53,30 @@ let workflowExecution;
 
 const testBeginTime = new Date(Date.now() - 60000);
 
-const generateMetricsQueryObject = (params) => {
-  const {
-    Dimensions,
-    EndTime,
-    lambda,
-    MetricName,
-    Namespace,
-    Period,
-    StartTime,
-    Statistics,
-  } = params;
-
-  return {
-    Dimensions: Dimensions || [{ Name: 'FunctionName', Value: lambda }],
-    EndTime,
-    MetricName,
-    Namespace,
-    Period,
-    StartTime,
-    Statistics,
-  };
-};
-
-const getAggregateMetricQuery = async (queryObject) => {
-  const response = await cloudwatch().getMetricStatistics(queryObject).promise();
-  console.log(JSON.stringify(response));
-  if (response.NextToken) {
-    throw new Error('Test returned an unexpectedly large stats value');
-  }
-  if (queryObject.Statistics[0] === 'Average') {
-    return response.Datapoints.reduce((a, c) => (a + c.Average), 0) / response.Datapoints.length;
-  }
-  if (queryObject.Statistics[0] === 'Sum') {
-    return response.Datapoints.reduce((a, c) => (a + c.Sum), 0);
-  }
-  if (queryObject.Statistics[0] === 'Minimum') {
-    return response.Datapoints.reduce((a, c) => (a <= c.Minimum ? a : c.Minimum), 0);
-  }
-  if (queryObject.Statistics[0] === 'Maximum') {
-    return response.Datapoints.reduce((a, c) => (a > c.Maximum ? a : c.Maximum), 0);
-  }
-  return response;
-};
-
-/**
-* Takes a lambda and waits for metrics invocation counts to stabilize, returns invocations
-* @summary Takes a lambda and queries metrics for an invocation count, waiting until the count
-* stabilizaes, expecting it will at least have minCount, and stabilize once
-* that minimum reaches, or return no matter what once maxCount has been reached
-* @param {string} lambda - lambda name
-* @param {string} minCount - Minimum invocation count to wait for
-* @param {string} maxCount - Maximum invocation count to wait for
-* @param {string} timeout - Timeout (ms) to allow function to wait for invocations to complete
-* @param {date} beginTime - Date to start metrics query
-* @returns {number} Lambda invocation count
-*/
-const getInvocationCount = async (lambda, minCount, maxCount) => {
-  let dbInvocationCount = 0;
-  let invocationCounts = [0];
-  while (
-    (dbInvocationCount < maxCount &&
-    (invocationCounts.reduce((a, b) => a + b) / invocationCounts.length) < (dbInvocationCount * 0.9)) ||
-    dbInvocationCount < minCount
-  ) { // improve this with retry
-    dbInvocationCount = await getAggregateMetricQuery(generateMetricsQueryObject({
-      EndTime: new Date(),
-      lambda,
-      MetricName: 'Invocations',
-      Namespace: 'AWS/Lambda',
-      Period: 120,
-      StartTime: testBeginTime,
-      Statistics: ['Sum'],
-    }));
-    console.log(`${lambda} Invocation Count: ${dbInvocationCount}`);
-    console.log(`invocationCounts Metric: ${invocationCounts.reduce((a, b) => a + b) / invocationCounts.length}`);
-    console.log(`invocationCounts: ${invocationCounts}`);
-    if (dbInvocationCount) {
-      invocationCounts.push(dbInvocationCount);
-      invocationCounts = invocationCounts.slice(-6);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 10000));
-  }
-  return dbInvocationCount;
-};
-
 const checkGranuleCount = async (granuleCollection, config, count) => {
   console.log(`Using collection ${granuleCollection.name}___${granuleCollection.version}`);
-  let granuleFiles;
+  let prevGranuleFilesCount;
+  let granuleFiles = [];
   try {
     await pWaitFor(async () => {
+      prevGranuleFilesCount = granuleFiles.length;
       granuleFiles = await listS3ObjectsV2({
         Prefix: `${granuleCollection.name}___${granuleCollection.version}`,
         Bucket: config.buckets.protected.name,
       });
       console.log(`Ingested granules found: ${granuleFiles.length}`);
-      return granuleFiles.length === count;
+      if (granuleFiles.length > count) {
+        console.log(`Test misconfiguration detected - ${granuleFiles.length} granules are present when there should be max ${count}`);
+        return true;
+      }
+      return granuleFiles.length === count && prevGranuleFilesCount === count;
     },
-    { interval: 10000, timeout: waitForIngestTimeoutMs });
+    { interval: 20000, timeout: waitForIngestTimeoutMs });
   } catch (error) {
     if (error.name !== 'TimeoutError') {
       throw error;
     }
-    console.log('** Incorrect granule count received');
+    console.log(`Full Granules not ingested: ${prevGranuleFilesCount}`);
   }
   return granuleFiles;
 };
@@ -183,13 +110,13 @@ describe('The Ingest Load Test', () => {
 
       await providers.createProvider({ prefix: stackName, provider });
       while (workflowCount < providerPaths.length) {
+        // Create collection for this batch
         const collection = { ...collectionTemplate };
         collection.name += `_${randomString()}`;
         await collections.createCollection({ prefix: stackName, collection });
         testCollections.push(collection);
 
-        console.log('Starting ingest executions');
-        // Create Rule or manually invoke Discover Granules
+        console.log(`Starting ingest execution for batch ${workflowCount}${providerPaths.length}`);
         workflowExecution = await buildAndExecuteWorkflow(
           stackName,
           bucket,
@@ -204,13 +131,11 @@ describe('The Ingest Load Test', () => {
           'QueueGranules'
         );
         const ingestedGranules = await checkGranuleCount(collection, config, expectedGranuleCount);
-        if (ingestedGranules.length !== expectedGranuleCount) {
-          throw new Error(`Aborting, counts incorrect on test run ${workflowCount}`);
+        if (ingestedGranules.length < expectedGranuleCount * granuleCountThreshold) {
+          throw new Error(`Aborting, counts too low on test run ${workflowCount}`);
         }
-
         allIngestedGranules = allIngestedGranules.concat(ingestedGranules);
         console.log(`Ingested ${ingestedGranules.length} granules in batch ${workflowCount}`);
-
         workflowCount += 1;
       }
       testConfig = config;
@@ -224,20 +149,20 @@ describe('The Ingest Load Test', () => {
   afterAll(async () => {
     try {
       const granIds = allIngestedGranules.map((g) => g.Key.split('\/').pop().replace(/\.hdf$/, ''));
+
       const bulkDeleteResponse = await granules.bulkDeleteGranules({ prefix: stackName, body: { ids: granIds } });
       const responseBody = JSON.parse(bulkDeleteResponse.body);
       if (responseBody.status !== 'RUNNING') {
         throw new Error(`Cleanup Failed - async operations returned ${JSON.stringify(responseBody)}`);
       }
-      const asyncId = JSON.parse(bulkDeleteResponse.body).id;
 
       await pWaitFor(async () => {
-        console.log(`Async operation: ${JSON.stringify(bulkDeleteResponse)}`);
+        console.log(`\nAsync operation: ${JSON.stringify(bulkDeleteResponse)}`);
         let asyncOperation = {};
         try {
           asyncOperation = await apiTestUtils.getAsyncOperation({
             prefix: testConfig.stackName,
-            id: asyncId,
+            id: responseBody.id,
           });
         } catch (error) {
           return false;
@@ -250,7 +175,9 @@ describe('The Ingest Load Test', () => {
         }
         return JSON.parse(asyncOperation.body).status === 'SUCCEEDED';
       }, { interval: 10 * 1000, timeout: 15 * 60 * 1000 });
+
       console.log('Bulk deletion succeeded!');
+
       await providers.deleteProvider({ prefix: stackName, provider: provider.id });
       const deleteCollectionsPromises = testCollections.map((collection) => {
         return collections.deleteCollection({
@@ -261,7 +188,7 @@ describe('The Ingest Load Test', () => {
       });
       await Promise.all(deleteCollectionsPromises);
     } catch (error) {
-      console.log(`Warning -- cleanup didn't complete: ${JSON.stringify(error)}`);
+      console.log(`\nWarning -- cleanup didn't complete: ${error}`);
       throw error;
     }
   });
@@ -272,46 +199,48 @@ describe('The Ingest Load Test', () => {
   });
 
   it('writes to database occur within a reasonable time frame and error count', async () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed')
+    if (!beforeAllCompleted) fail('beforeAll() failed');
     else {
       const lambda = `${stackName}-sfEventSqsToDbRecords`;
       // Check granules have been updated
-      const dbInvocationCount = await getInvocationCount(lambda, 4, (expectedMaxInvocationCount * 2) + 1);
+      const dbInvocationCount = await getInvocationCount({
+        beginTime: testBeginTime,
+        lambda,
+        maxCount: (expectedMaxWorkflowInvocation * 2) + 1,
+        minCount: 4,
+        timeout: statsTimeout,
+      });
+      console.log(`Invocation count is ${dbInvocationCount}`);
       const EndTime = new Date();
       const Period = 120;
       const queryObject = {
         EndTime,
-        lambda,
         Namespace: 'AWS/Lambda',
         Period,
         StartTime: testBeginTime,
+        Dimensions: [{ Name: 'FunctionName', Value: lambda }],
       };
 
-      const dbThrottleCount = await getAggregateMetricQuery(
-        generateMetricsQueryObject(({
-          ...queryObject,
-          MetricName: 'Throttles',
-          Statistics: ['Sum'],
-        }))
-      );
-      const dbErrorCount = await getAggregateMetricQuery(
-        generateMetricsQueryObject(({
-          ...queryObject,
-          MetricName: 'Errors',
-          Statistics: ['Sum'],
-        }))
-      );
-      const durationAverage = await getAggregateMetricQuery(
-        generateMetricsQueryObject(({
-          ...queryObject,
-          MetricName: 'Duration',
-          Statistics: ['Average'],
-        }))
-      );
+      const dbThrottleCount = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'Throttles',
+        Statistics: ['Sum'],
+      });
+      const dbErrorCount = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'Errors',
+        Statistics: ['Sum'],
+      });
+      const durationAverage = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'Duration',
+        Period: (Math.round(((EndTime.getTime() - testBeginTime.getTime()) / 60000)) + 1) * 60,
+        Statistics: ['Average'],
+      });
 
       expect(dbInvocationCount).toBeGreaterThan(3);
       expect(dbThrottleCount).toBe(0);
-      expect(dbErrorCount).toBeLessThan(expectedGranuleCount * 0.01);
+      expect(dbErrorCount).toBeLessThan(expectedGranuleCount * 0.03);
       expect(durationAverage).toBeLessThan(7000);
     }
   });
@@ -321,29 +250,31 @@ describe('The Ingest Load Test', () => {
     else {
       const lambda = `${testConfig.stackName}-publishGranules`;
       const EndTime = new Date();
-      const invocationCount = await getInvocationCount(lambda, 2, expectedMaxInvocationCount * 2);
+      const invocationCount = await getInvocationCount({
+        beginTime: testBeginTime,
+        lambda,
+        maxCount: expectedMaxWorkflowInvocation * 2,
+        minCount: 2,
+        timeout: statsTimeout,
+      });
       const queryObject = {
         Namespace: 'AWS/Lambda',
-        lambda,
         StartTime: testBeginTime,
         EndTime,
         Statistics: ['Sum'],
         Period: 120,
+        Dimensions: [{ Name: 'FunctionName', Value: lambda }],
       };
 
-      const dbThrottleCount = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'Throttles',
-        })
-      );
+      const dbThrottleCount = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'Throttles',
+      });
 
-      const dbErrorCount = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'Errors',
-        })
-      );
+      const dbErrorCount = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'Errors',
+      });
 
       expect(invocationCount).toBeGreaterThan(publishGranulesMinInvocations); // Checking for interference
       expect(dbThrottleCount).toBe(0);
@@ -355,28 +286,30 @@ describe('The Ingest Load Test', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed')
     else {
       const lambda = `${testConfig.stackName}-publishExecutions`;
-      const invocationCount = await getInvocationCount(lambda, 2, expectedMaxInvocationCount * 2);
+      const invocationCount = await getInvocationCount({
+        beginTime: testBeginTime,
+        lambda,
+        maxCount: expectedMaxWorkflowInvocation * 2,
+        minCount: 2,
+        timeout: statsTimeout,
+      });
       const EndTime = new Date();
       const queryObject = {
         Namespace: 'AWS/Lambda',
-        lambda,
         StartTime: testBeginTime,
         EndTime,
         Statistics: ['Sum'],
         Period: 120,
+        Dimensions: [{ Name: 'FunctionName', Value: lambda }],
       };
-      const dbThrottleCount = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'Throttles',
-        })
-      );
-      const dbErrorCount = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'Errors',
-        })
-      );
+      const dbThrottleCount = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'Throttles',
+      });
+      const dbErrorCount = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'Errors',
+      });
 
       expect(invocationCount).toBeGreaterThan(publishExecutionsMinInvocations); // Checking for interference
       expect(dbThrottleCount).toBe(0);
@@ -385,12 +318,13 @@ describe('The Ingest Load Test', () => {
   });
 
   it('does not cause the stack configured database to exceed predefined tolerances', async () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed')
+    if (!beforeAllCompleted) fail('beforeAll() failed');
     else {
+      const EndTime = new Date();
       const queryObject = {
         Namespace: 'AWS/RDS',
         StartTime: testBeginTime,
-        EndTime: new Date(),
+        EndTime,
         Period: 60 * 3,
         Dimensions: [{
           Name: 'DBClusterIdentifier',
@@ -398,47 +332,38 @@ describe('The Ingest Load Test', () => {
         }],
       };
 
-      const dbCpuMaximum = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'CPUUtilization',
-          Statistics: ['Maximum'],
-        })
-      );
+      const dbCpuMaximum = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'CPUUtilization',
+        Statistics: ['Maximum'],
+      });
 
-      const dbCapacity = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'ServerlessDatabaseCapacity',
-          Statistics: ['Maximum'],
-        })
-      );
+      const dbCapacity = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'ServerlessDatabaseCapacity',
+        Statistics: ['Maximum'],
+      });
 
-      const diskQueueDepth = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'DiskQueueDepth',
-          Statistics: ['Maximum'],
-        })
-      );
+      const diskQueueDepth = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'DiskQueueDepth',
+        Statistics: ['Maximum'],
+      });
 
-      const rdsCommitLatency = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'CommitLatency',
-          Statistics: ['Average'],
-        })
-      );
+      const rdsCommitLatency = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'CommitLatency',
+        Statistics: ['Average'],
+        Period: (Math.round(((EndTime.getTime() - testBeginTime.getTime()) / 60000)) + 1) * 60,
+      });
 
-      const dbConnections = await getAggregateMetricQuery(
-        generateMetricsQueryObject({
-          ...queryObject,
-          MetricName: 'DatabaseConnections',
-          Statistics: ['Maximum'],
-        })
-      );
+      const dbConnections = await getAggregateMetricQuery({
+        ...queryObject,
+        MetricName: 'DatabaseConnections',
+        Statistics: ['Maximum'],
+      });
       expect(rdsCommitLatency).toBeLessThan(10);
-      expect(diskQueueDepth).toBe(0);
+      expect(diskQueueDepth).toBeLessThan(10);
       expect(dbCpuMaximum).toBeLessThan(80);
       expect(dbCapacity).toBeLessThan(3);
       expect(dbConnections).toBeLessThan(120);
