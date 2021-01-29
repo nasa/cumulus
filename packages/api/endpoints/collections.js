@@ -186,7 +186,7 @@ async function put(req, res) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
     }
-    return res.boom.notFound( `Collection '${name}' version '${version}' not found`):
+    return res.boom.notFound(`Collection '${name}' version '${version}' not found`);
   }
 
   collection.updatedAt = Date.now();
