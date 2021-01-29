@@ -1,4 +1,6 @@
 import Knex from 'knex';
+import * as s3Utils from '@cumulus/aws-client/S3';
+import pMap from 'p-map';
 
 import { BasePgModel } from './base';
 import { tableNames } from '../tables';
@@ -31,16 +33,43 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
     return super.delete(knexOrTransaction, { cumulus_id: file.cumulus_id });
   }
 
-  // TODO get all files for a granule and delete from pg + s3
-  deleteGranuleFiles(
+  async _deleteFilesFromS3(
+    knexOrTransaction: Knex | Knex.Transaction,
+    granule: PostgresGranuleRecord
+  ): Promise<any> {
+    // get granule's files
+    const files = await knexOrTransaction<PostgresFileRecord>(this.tableName)
+      .where({ granule_cumulus_id: granule.cumulus_id });
+
+    // delete each from S3
+    return pMap(
+      files,
+      (file) => {
+        if (file.bucket && file.key) {
+          return s3Utils.deleteS3Object(file.bucket, file.key);
+        }
+        // TODO throw error?
+        return undefined;
+      }
+    );
+  }
+
+  // get all files for a granule and delete from pg + s3
+  async deleteGranuleFiles(
     knexOrTransaction: Knex | Knex.Transaction,
     granule: PostgresGranuleRecord
   ) {
+    let trx;
+    if (knexOrTransaction instanceof Knex) {
+      trx = await knexOrTransaction.transaction();
+    } else {
+      trx = knexOrTransaction;
+    }
 
-    // TODO in a transaction delete all files. If successful, delete from s3
-    return knexOrTransaction<PostgresFileRecord>(this.tableName)
+    return trx(this.tableName)
       .where({ granule_cumulus_id: granule.cumulus_id })
-      .del(['cumulus_id']);
+      .del(['cumulus_id'])
+      .then(await this._deleteFilesFromS3(trx, granule));
   }
 }
 

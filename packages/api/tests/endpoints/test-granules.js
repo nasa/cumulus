@@ -716,8 +716,8 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  // verify the files are deleted
-  // if the granule was successfully deleted, the postgres
+  // verify the files are deleted from S3. No need to check the Postgres files.
+  // If the granule was successfully deleted, the postgres
   // files will have been as well. Files have a fk which would
   // prevent the granule from being deleted if files referencing it
   // still exist.
@@ -809,10 +809,13 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
   );
 });
 
-test.skip('DELETE removes a granule from RDS only if no Dynamo match exists', async (t) => {
+test.skip('DELETE does not delete Dynamo or RDS record if the RDS transaction fails', async (t) => {
 });
 
-test.skip('DELETE removes a granule from Dynamo only if no RDS match exists', async (t) => {
+test.skip('DELETE deletes the granule\'s files', async (t) => {
+});
+
+test.skip('DELETE does not delete Dynamo or RDS record if file delete fails', async (t) => {
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {

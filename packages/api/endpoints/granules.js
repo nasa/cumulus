@@ -163,21 +163,30 @@ async function del(req, res) {
     return res.boom.badRequest(dynamoGranule);
   }
 
-  try {
-    // TODO combine to single knex transaction
-    // as for keeping deletes in sync between the systems, i think we should. so i would use a knex transaction where the PG delete happens, then the dynamo delete
-    // Delete all of this granule's files from PG and S3
-    await filePgModel.deleteGranuleFiles(knex, pgGranule);
-
-    // Delete granule from Dynamo and PG
-    await granuleModelClient.delete(dynamoGranule);
-    await granulePgModel.delete(knex, pgGranule);
-  } catch (error) {
-    if (error instanceof DeletePublishedGranule) {
-      return res.boom.badRequest(error.message);
-    }
-    throw error;
-  }
+  // transaction
+  //   PG delete granules
+  //   PG delete files
+  //     Delete files from S3
+  //   Dynamo model delete
+  //     Delete files from S3 **perhaps
+  //     Delete granule from dynamo
+  await knex.transaction(async (trx) => {
+    granulePgModel.delete(trx, pgGranule)
+      .then(
+        filePgModel.deleteGranuleFiles(trx, pgGranule)
+      )
+      .then(
+        granuleModelClient.delete(dynamoGranule)
+      )
+      .catch((error) => {
+        if (error instanceof DeletePublishedGranule) {
+          return res.boom.badRequest(error.message);
+        }
+        throw error;
+      })
+      .then(trx.commit)
+      .catch(trx.rollback);
+  });
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
