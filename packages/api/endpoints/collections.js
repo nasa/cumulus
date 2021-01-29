@@ -180,10 +180,13 @@ async function put(req, res) {
   const collectionsModel = new models.Collection();
   const collectionPgModel = new CollectionPgModel();
 
-  if (!(await collectionsModel.exists(name, version))) {
-    return res.boom.notFound(
-      `Collection '${name}' version '${version}' not found`
-    );
+  try {
+    oldCollection = await collectionsModel.get({ name, version });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
+    return res.boom.notFound( `Collection '${name}' version '${version}' not found`):
   }
 
   collection.updatedAt = Date.now();
