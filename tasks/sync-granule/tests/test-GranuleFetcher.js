@@ -365,6 +365,46 @@ test('ingestFile throws an error when no checksum is provided and the size is no
   );
 });
 
+test('ingestFile throws an error on re-run when size is not as expected and duplicateHandling is "skip"', async (t) => {
+  const { collectionConfig, destBucket, internalBucket } = t.context;
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    size: 123456789,
+  };
+
+  const Key = S3.s3Join(file.path, file.name);
+  const params = { Bucket: internalBucket, Key, Body: randomString(30) };
+  await S3.s3PutObject(params);
+
+  const duplicateHandling = 'skip';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
+    fileStagingDir,
+    duplicateHandling,
+  });
+
+  // This test needs to use a unique bucket for each test (or remove the object
+  // added to the destination bucket). Otherwise, it will throw an error on the
+  // first attempt to ingest the file.
+  await t.throwsAsync(
+    () => testGranule.ingestFile(file, destBucket, duplicateHandling),
+    {
+      instanceOf: errors.UnexpectedFileSize,
+    }
+  );
+
+  await t.throwsAsync(
+    testGranule.ingestFile(file, destBucket, duplicateHandling),
+    {
+      instanceOf: errors.UnexpectedFileSize,
+    }
+  );
+});
+
 test('verifyFile returns type and value when file is verified', async (t) => {
   const { collectionConfig, internalBucket } = t.context;
 
@@ -394,6 +434,37 @@ test('verifyFile returns type and value when file is verified', async (t) => {
   const [type, value] = await testGranule.verifyFile(file, internalBucket, Key);
   t.is(type, file.checksumType);
   t.is(value, file.checksum);
+});
+
+test('verifyFile errors when file size is different', async (t) => {
+  const { collectionConfig, internalBucket } = t.context;
+
+  const content = 'test-string';
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    // make size not equal the actual file size
+    size: content.length - 1,
+  };
+
+  const Key = S3.s3Join(file.path, file.name);
+  const params = { Bucket: internalBucket, Key, Body: content };
+  await S3.s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new GranuleFetcher({
+    collection: collectionConfig,
+    provider: { protocol: 's3', host: internalBucket },
+    fileStagingDir,
+    duplicateHandling,
+  });
+
+  await t.throwsAsync(
+    testGranule.verifyFile(file, internalBucket, Key),
+    { instanceOf: errors.UnexpectedFileSize }
+  );
 });
 
 test("getUrlPath() returns the collection's url_path if there are no matching collection file configs", (t) => {
