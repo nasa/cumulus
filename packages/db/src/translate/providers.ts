@@ -30,7 +30,7 @@ export const translateApiProviderToPostgresProvider = async (
   if (record.password) {
     password = await encryptMethod(record.password);
   }
-  return ({ // TODO - rewrite this using snake
+  return ({
     created_at: (record.createdAt ? new Date(record.createdAt) : undefined),
     updated_at: (record.updatedAt ? new Date(record.updatedAt) : undefined),
     name: record.id,
