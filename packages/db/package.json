@@ -29,15 +29,19 @@
     "node": ">=12.18.0"
   },
   "dependencies": {
-    "@cumulus/aws-client": "4.0.0",
-    "@cumulus/common": "4.0.0",
-    "@cumulus/errors": "4.0.0",
-    "@cumulus/logger": "4.0.0",
-    "@cumulus/types": "4.0.0",
+    "@cumulus/aws-client": "5.0.0",
+    "@cumulus/common": "5.0.0",
+    "@cumulus/errors": "5.0.0",
+    "@cumulus/logger": "5.0.0",
+    "@cumulus/types": "5.0.0",
     "is-valid-hostname": "0.0.1",
     "lodash": "^4.17.20",
     "knex": "0.21.13",
     "pg": "^8.3.0",
-    "snake-camel": "^1.0.6"
+    "snake-camel": "^1.0.6",
+    "uuid": "8.3.1"
+  },
+  "devDependencies": {
+    "@types/uuid": "^8.0.0"
   }
 }

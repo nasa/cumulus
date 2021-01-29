@@ -51,7 +51,7 @@ const getAsyncOperationCumulusId = async (
 ) => {
   try {
     if (isNil(asyncOperationId)) {
-      throw new InvalidArgument(`Async operation ID is required for lookup, received ${asyncOperationId}`);
+      throw new InvalidArgument('There is no async operation ID to lookup on the message, skipping');
     }
     return await asyncOperationPgModel.getRecordCumulusId(
       knex,
@@ -75,7 +75,7 @@ const getParentExecutionCumulusId = async (
 ) => {
   try {
     if (isNil(parentExecutionArn)) {
-      throw new InvalidArgument(`Parent execution ARN is required for lookup, received ${parentExecutionArn}`);
+      throw new InvalidArgument('There is no parent execution ARN to lookup on the message, skipping');
     }
     return await executionPgModel.getRecordCumulusId(
       knex,
@@ -99,7 +99,7 @@ const getCollectionCumulusId = async (
 ) => {
   try {
     if (isNil(collectionNameVersion)) {
-      throw new InvalidArgument(`Collection name/version is required for lookup, received ${collectionNameVersion}`);
+      throw new InvalidArgument('There is no collection name/version on the message to lookup, skipping');
     }
     return await collectionPgModel.getRecordCumulusId(
       knex,

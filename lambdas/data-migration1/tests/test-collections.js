@@ -10,12 +10,13 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 const {
   migrateCollectionRecord,
   migrateCollections,
 } = require('../dist/lambda/collections');
-const { RecordAlreadyMigrated } = require('../dist/lambda/errors');
+
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 

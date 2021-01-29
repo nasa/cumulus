@@ -34,7 +34,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .float('time_to_process')
       .comment('Number seconds granule took to complete "processing"');
     table
-      .integer('product_volume');
+      .bigInteger('product_volume');
     table
       .jsonb('error')
       .comment('JSON error object');
@@ -71,6 +71,9 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .timestamp('production_date_time')
       .comment('Timestamp for granule production date/time');
+    table
+      .jsonb('query_fields')
+      .comment('Arbitrary query fields for the granule');
     table
       .timestamp('timestamp');
     table

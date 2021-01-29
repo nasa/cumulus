@@ -33,6 +33,7 @@ function determineIntegrationTestStackName(cb) {
     'Chuck Daniels': 'chuckulus-ci',
     'Brian Tennity': 'bt-ci',
     'Jennifer Tran': 'jtran-int',
+    'Nate Pauzenga': 'np-ci',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {

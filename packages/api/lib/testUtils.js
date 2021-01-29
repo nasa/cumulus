@@ -175,6 +175,7 @@ function fakeExecutionFactoryV2(params = {}) {
     originalPayload: { testInput: 'originalPayloadValue' },
     finalPayload: { testOutput: 'finalPayloadValue' },
     tasks: {},
+    cumulusVersion: '1.0.0',
   };
 
   return { ...execution, ...params };

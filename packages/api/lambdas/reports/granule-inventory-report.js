@@ -30,6 +30,7 @@ async function createGranuleInventoryReport(recReportParams) {
     'status',
     'updatedAt',
     'published',
+    'provider',
   ];
 
   const { reportKey, systemBucket } = recReportParams;
@@ -62,6 +63,7 @@ async function createGranuleInventoryReport(recReportParams) {
       status: nextGranule.status,
       updatedAt: new Date(nextGranule.updatedAt).toISOString(),
       published: nextGranule.published,
+      provider: nextGranule.provider,
     });
     await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
     nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop

@@ -21,7 +21,7 @@ const { createGranuleInventoryReport } = require('./reports/granule-inventory-re
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
-const { deconstructCollectionId, errorify } = require('../lib/utils');
+const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToESCollectionSearchParams,
@@ -683,7 +683,7 @@ async function processRequest(params) {
   const createStartTime = moment.utc();
   const reportRecordName = reportName
     || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  let reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
+  let reportKey = `${stackName}/reconciliation-reports/${filenamify(reportRecordName)}.json`;
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database

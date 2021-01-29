@@ -11,8 +11,8 @@ import {
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
+import { RecordAlreadyMigrated } from '@cumulus/errors';
 
-import { RecordAlreadyMigrated } from './errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/rules' });

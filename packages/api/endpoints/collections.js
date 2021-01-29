@@ -14,6 +14,7 @@ const {
   getKnexClient,
   tableNames,
   translateApiCollectionToPostgresCollection,
+  CollectionPgModel,
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
@@ -178,12 +179,9 @@ async function put(req, res) {
       + ` and '${collection.version}' in payload`);
   }
   const collectionsModel = new models.Collection();
-  try {
-    oldCollection = await collectionsModel.get({ name, version });
-  } catch (error) {
-    if (error.name !== 'RecordDoesNotExist') {
-      throw error;
-    }
+  const collectionPgModel = new CollectionPgModel();
+
+  if (!(await collectionsModel.exists(name, version))) {
     return res.boom.notFound(
       `Collection '${name}' version '${version}' not found`
     );
@@ -196,10 +194,7 @@ async function put(req, res) {
 
   const dbClient = await getKnexClient();
   await dbClient.transaction(async (trx) => {
-    await trx(tableNames.collections)
-      .insert(postgresCollection)
-      .onConflict(['name', 'version'])
-      .merge();
+    await collectionPgModel.upsert(trx, postgresCollection);
     dynamoRecord = await collectionsModel.create(collection);
   });
 

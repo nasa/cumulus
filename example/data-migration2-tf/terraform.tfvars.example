@@ -1,0 +1,11 @@
+permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
+prefix = "PREFIX"
+subnet_ids = ["subnet-12345"]
+vpc_id = "vpc-12345"
+
+data_persistence_remote_state_config = {
+  bucket = "PREFIX-tf-state"
+  key    = "PREFIX/data-persistence/terraform.tfstate"
+  region = "us-east-1"
+}
+provider_kms_key_id = "abc-1234-abcd-1234-abcd"

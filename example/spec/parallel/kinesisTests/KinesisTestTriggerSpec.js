@@ -1,8 +1,10 @@
 'use strict';
 
+const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
+const isMatch = require('lodash/isMatch');
 const replace = require('lodash/replace');
-const { s3 } = require('@cumulus/aws-client/services');
-const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Execution } = require('@cumulus/api/models');
 const fs = require('fs');
@@ -20,9 +22,10 @@ const {
   cleanupCollections,
   readJsonFilesFromDir,
   deleteRules,
-  granulesApi: granulesApiTestUtils,
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
+const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
+const granulesApi = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -78,7 +81,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let ruleDirectory;
   let ruleOverride;
   let ruleSuffix;
-  let s3FileHead;
   let streamName;
   let testConfig;
   let testDataFolder;
@@ -100,15 +102,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
       deleteTestStream(streamName),
       deleteTestStream(cnmResponseStreamName),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
-      s3().deleteObject({
-        Bucket: testConfig.buckets.private.name,
-        Key: `${filePrefix}/${fileData.name}`,
-      }).promise(),
-      granulesApiTestUtils.deleteGranule({
-        prefix: testConfig.stackName,
-        granuleId,
-      }),
     ]);
   }
 
@@ -134,6 +127,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     );
     record.provider += testSuffix;
     record.collection += testSuffix;
+    record.product.name += testSuffix;
 
     granuleId = record.product.name;
     recordIdentifier = randomString();
@@ -146,11 +140,13 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       granules: [
         {
           granuleId: record.product.name,
+          version: record.product.dataVersion,
+          dataType: record.collection,
           files: [
             {
               name: recordFile.name,
               type: recordFile.type,
-              bucket: record.bucket,
+              bucket: parseS3Uri(recordFile.uri).Bucket,
               path: testDataFolder,
               url_path: recordFile.uri,
               size: recordFile.size,
@@ -169,7 +165,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       ...fileData,
       filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
       bucket: testConfig.buckets.private.name,
-      url_path: '',
       fileStagingDir: filePrefix,
       size: fileData.size,
     };
@@ -259,6 +254,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
     });
 
+    afterAll(async () => {
+      await executionModel.delete({ arn: workflowExecution.executionArn });
+      await granulesApi.removeFromCMR({ prefix: testConfig.stackName, granuleId });
+      await granulesApi.deleteGranule({ prefix: testConfig.stackName, granuleId });
+    });
+
     it('executes successfully', () => {
       expect(executionStatus).toEqual('SUCCEEDED');
     });
@@ -279,16 +280,16 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('maps the CNM object correctly', () => {
+        expect(lambdaOutput.meta.cnm.receivedTime).not.toBeNull();
         delete lambdaOutput.meta.cnm.receivedTime;
 
         expect(lambdaOutput.meta.cnm).toEqual({
-          deliveryTime: record.deliveryTime,
-          ingestTime: record.ingestTime,
           product: record.product,
           identifier: recordIdentifier,
-          bucket: record.bucket,
           provider: record.provider,
           collection: record.collection,
+          submissionTime: record.submissionTime,
+          version: record.version,
         });
       });
     });
@@ -329,45 +330,28 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             },
           ],
         };
-
+        updatedExpectedPayload.granules[0].files[0].url_path = lambdaOutput.payload.granules[0].files[0].url_path;
         expect(lambdaOutput.payload).toEqual(updatedExpectedPayload);
-      });
-
-      it('syncs data to s3 target location.', async () => {
-        s3FileHead = await s3().headObject({
-          Bucket: testConfig.buckets.private.name,
-          Key: `${filePrefix}/${fileData.name}`,
-        }).promise();
-        expect(new Date() - s3FileHead.LastModified < maxWaitForSFExistSecs * 1000).toBeTruthy();
       });
     });
 
     describe('the CnmResponse Lambda', () => {
       let lambdaOutput;
+      let granule;
 
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
+        granule = await getGranuleWithStatus({
+          prefix: testConfig.stackName,
+          granuleId,
+          status: 'completed',
+        });
       });
 
       it('outputs the expected object', () => {
         const actualPayload = lambdaOutput.payload;
-
-        // Remove fields that are dynamically generated by the tasks
-        delete actualPayload.processCompleteTime;
-        delete actualPayload.receivedTime;
-
-        expect(actualPayload).toEqual({
-          deliveryTime: record.deliveryTime,
-          ingestTime: record.ingestTime,
-          productSize: recordFile.size,
-          bucket: record.bucket,
-          collection: record.collection,
-          provider: record.provider,
-          identifier: recordIdentifier,
-          response: {
-            status: 'SUCCESS',
-          },
-        });
+        expect(actualPayload.granules.length).toBe(1);
+        expect(actualPayload.granules[0].granuleId).toBe(granuleId);
       });
 
       it('writes a message to the response stream', async () => {
@@ -378,28 +362,49 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
         expect(responseRecord.identifier).toEqual(recordIdentifier);
         expect(responseRecord.response.status).toEqual('SUCCESS');
+        expect(responseRecord).toEqual(lambdaOutput.meta.cnmResponse);
+      });
+
+      it('puts cnmResponse to cumulus message for granule record', async () => {
+        const expectedCnmResponse = {
+          version: record.version,
+          submissionTime: record.submissionTime,
+          collection: record.collection,
+          provider: record.provider,
+          identifier: record.identifier,
+          product: {
+            dataVersion: record.product.dataVersion,
+            name: record.product.name,
+          },
+          response: {
+            status: 'SUCCESS',
+          },
+        };
+
+        const cnmResponse = get(lambdaOutput, 'meta.granule.queryFields.cnm');
+        expect(isMatch(cnmResponse, expectedCnmResponse)).toBe(true);
+        expect(cnmResponse.product.files.length).toBe(2);
+        expect(get(granule, 'queryFields.cnm')).toEqual(cnmResponse);
       });
     });
   });
 
-  describe('Workflow fails because TranslateMessage fails', () => {
+  describe('Workflow fails because SyncGranule fails', () => {
     let failingWorkflowExecution;
+    let badRecord;
 
     beforeAll(async () => {
-      const badRecord = { ...record };
-      const badRecordIdentifier = randomString();
-      badRecord.identifier = badRecordIdentifier;
-      // Need to delete a property that will cause TranslateMessage to fail,
-      // but not CnmResponseFail so that a failure message is still written
-      // to the response stream
-      delete badRecord.product.name;
+      badRecord = cloneDeep(record);
+      badRecord.identifier = randomString();
+      // bad record has a file which doesn't exist
+      badRecord.product.files[0].uri = 's3://not-exist-bucket/somepath/somekey';
 
       await tryCatchExit(cleanUp, async () => {
-        console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
+        console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecord.identifier}.`);
         await putRecordOnStream(streamName, badRecord);
 
         console.log('Waiting for step function to start...');
-        failingWorkflowExecution = await waitForTestSfForRecord(badRecordIdentifier, workflowArn, maxWaitForSFExistSecs);
+        failingWorkflowExecution = await waitForTestSfForRecord(badRecord.identifier, workflowArn, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${failingWorkflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);
@@ -408,37 +413,57 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     afterAll(async () => {
       await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
+      await granulesApi.deleteGranule({ prefix: testConfig.stackName, granuleId });
     });
 
     it('executes but fails', () => {
       expect(executionStatus).toEqual('FAILED');
     });
 
-    it('outputs the record', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CNMToCMA', 'failure');
-      expect(lambdaOutput.error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
-      expect(lambdaOutput.cause).toMatch(/.+An error occurred in the Cumulus Message Adapter: .+/);
-      expect(lambdaOutput.cause).not.toMatch(/.+process hasn't exited.+/);
+    it('outputs the error', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'SyncGranule', 'failure');
+      expect(lambdaOutput.error).toEqual('FileNotFound');
+      expect(lambdaOutput.cause).toMatch(/.+Source file not found.+/);
     });
 
-    it('sends the error to the CnmResponse task', async () => {
-      const CnmResponseInput = await lambdaStep.getStepInput(failingWorkflowExecution.executionArn, 'CnmResponse');
-      expect(CnmResponseInput.exception.Error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
-      expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/An error occurred in the Cumulus Message Adapter: .+/);
-    });
+    describe('the CnmResponse Lambda', () => {
+      let lambdaOutput;
+      let granule;
 
-    it('writes a failure message to the response stream', async () => {
-      console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
-      responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
-      const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-      if (newResponseStreamRecords.length > 0) {
-        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
-        // TODO(aimee): This should check the record identifier is equal to bad
-        // record identifier, but this requires a change to cnmresponse task
-        expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
-      } else {
-        fail(`unexpected error occurred and no messages found in ${cnmResponseStreamName}. Did the "ouputs the record" above fail?`);
-      }
+      beforeAll(async () => {
+        lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse');
+        granule = await getGranuleWithStatus({
+          prefix: testConfig.stackName,
+          granuleId,
+          status: 'failed',
+        });
+      });
+
+      it('sends the error to the CnmResponse task', async () => {
+        const CnmResponseInput = await lambdaStep.getStepInput(failingWorkflowExecution.executionArn, 'CnmResponse');
+        expect(CnmResponseInput.exception.Error).toEqual('FileNotFound');
+        expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/Source file not found.+/);
+      });
+
+      it('writes a failure message to the response stream', async () => {
+        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
+        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
+        const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
+        if (newResponseStreamRecords.length > 0) {
+          const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
+          const responseRecord = parsedRecords.pop();
+          expect(responseRecord.response.status).toEqual('FAILURE');
+          expect(responseRecord.identifier).toBe(badRecord.identifier);
+        } else {
+          fail(`unexpected error occurred and no messages found in ${cnmResponseStreamName}. Did the "ouputs the record" above fail?`);
+        }
+      });
+
+      it('puts cnm message to cumulus message for granule record', async () => {
+        const cnm = get(lambdaOutput, 'meta.granule.queryFields.cnm');
+        expect(isMatch(cnm, badRecord)).toBe(true);
+        expect(get(granule, 'queryFields.cnm')).toEqual(cnm);
+      });
     });
   });
 });

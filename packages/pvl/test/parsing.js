@@ -155,6 +155,8 @@ test('parsing Numeric value', (t) => {
 test('parsing DateTime value', (t) => {
   t.deepEqual(parseValue('1990-07-04T12:00'), new PVLDateTime('1990-07-04T12:00'));
   t.deepEqual(parseValue('1990-07-04T12:00').value, new Date('1990-07-04T12:00'));
+  t.deepEqual(parseValue('07/04/1990-12:00'), new PVLDateTime('07/04/1990-12:00'));
+  t.deepEqual(parseValue('07/04/1990-12:00').value, new Date('07/04/1990-12:00'));
 });
 
 test('parsing quoted TextString value', (t) => {

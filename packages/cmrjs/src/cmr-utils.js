@@ -61,6 +61,8 @@ const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
 
+const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
+
 /**
  * Returns True if this object can be determined to be a cmrMetadata object.
  *
@@ -77,18 +79,20 @@ function isCMRFile(fileobject) {
  *
  * @param {Object} granule - granule object containing CMR files within its
  *    `files` property
+ * @param {Array<Object>} granule.files - array of files for a granule
+ * @param {string} granule.granuleId - granule ID
  * @returns {Array<Object>} an array of CMR file objects, each with properties
  *    `granuleId`, `filename`, and possibly `etag` (if present on input)
  */
-function granuleToCmrFileObject(granule) {
-  return granule.files
+function granuleToCmrFileObject({ granuleId, files = [] }) {
+  return files
     .filter(isCMRFile)
     .map((file) => ({
       // Include etag only if file has one
       ...pick(file, 'etag'),
       // handle both new-style and old-style files model
       filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId: granule.granuleId,
+      granuleId,
     }));
 }
 
@@ -126,7 +130,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: 'echo10',
-    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
+    link: constructCmrConceptLink(conceptId, 'echo10'),
   };
 }
 
@@ -153,7 +157,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
-    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
+    link: constructCmrConceptLink(conceptId, 'umm_json'),
   };
 }
 
@@ -909,10 +913,12 @@ async function getGranuleTemporalInfo(granule) {
 }
 
 module.exports = {
+  constructCmrConceptLink,
   constructOnlineAccessUrl,
   constructOnlineAccessUrls,
   generateEcho10XMLString,
   generateFileUrl,
+  granuleToCmrFileObject,
   getCmrSettings,
   getFileDescription,
   getFilename,
