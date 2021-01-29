@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2391**
+  - Add reportToEms to collections.files file schema
+
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
