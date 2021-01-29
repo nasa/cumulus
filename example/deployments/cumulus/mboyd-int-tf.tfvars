@@ -4,6 +4,7 @@ archive_api_port = 4343
 
 cmr_oauth_provider = "launchpad"
 
+system_bucket     = "mboyd-int-tf-internal"
 buckets = {
   internal = {
     name = "mboyd-int-tf-internal"
