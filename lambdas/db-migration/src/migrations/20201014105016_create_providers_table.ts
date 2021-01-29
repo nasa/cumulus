@@ -26,7 +26,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Username for accessing the provider');
     table
       .text('password')
-      .comment('password for accessing the provider');
+      .comment('Password for accessing the provider');
     table
       .integer('global_connection_limit')
       .comment('Maximum number of allowed concurrent connections to this provider');
