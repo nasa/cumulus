@@ -1,6 +1,6 @@
 {
-  "title": "QueueWorkflowsInput",
-  "description": "Describes the input expected by the queue-workflows task",
+  "title": "QueueWorkflowInput",
+  "description": "Describes the input expected by the queue-workflow task",
   "type": "object",
   "required": ["workflow"],
   "properties": {

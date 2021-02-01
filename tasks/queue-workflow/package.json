@@ -1,12 +1,12 @@
 {
-  "name": "@cumulus/queue-workflows",
+  "name": "@cumulus/queue-workflow",
   "version": "5.0.0",
-  "description": "Add workflows to the queue",
+  "description": "Add workflow to the queue",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/queue-workflows",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/queue-workflow",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus"

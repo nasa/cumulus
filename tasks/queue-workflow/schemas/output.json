@@ -1,6 +1,6 @@
 {
-  "title": "QueueWorkflowsOutput",
-  "description": "Describes the output produced by the queue-workflows task",
+  "title": "QueueWorkflowOutput",
+  "description": "Describes the output produced by the queue-workflow task",
   "type": "object",
   "required": [ "running", "pdrs_queued" ],
   "additionalProperties": false,
