@@ -544,7 +544,7 @@ describe('The S3 Ingest Granules workflow', () => {
         'GET DATA',
         'VIEW RELATED INFORMATION',
         'VIEW RELATED INFORMATION',
-        'GET DATA',
+        'USE SERVICE API',
         'GET RELATED VISUALIZATION',
       ];
       const cmrUrls = resource.map((r) => r.URL);
