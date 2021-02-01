@@ -36,7 +36,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('ProviderPgModel.upsert() creates new collection', async (t) => {
+test('ProviderPgModel.upsert() creates new provider', async (t) => {
   const {
     knex,
     providerPgModel,
