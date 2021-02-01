@@ -6,31 +6,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
+
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
-- **CUMULUS-2328**
-  - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
 
 ### BREAKING CHANGES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
-- **CUMULUS-2328**
-  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
 
 ### Added
 
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
-- **CUMULUS-2328**
-  - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
 
 ### Changed
 
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
-- **CUMULUS-2328**
-  - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
 
 ### Fixed
 
@@ -91,6 +87,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **HYRAX-320**
   - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title id and granule ur to allow for values with special characters in them. For example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such values will be encoded correctly and parsable by HyraxInTheCloud
+
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
 - **CUMULUS-2092**
