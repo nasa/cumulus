@@ -145,7 +145,6 @@ async function enqueueGranuleIngestMessage({
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
 
-
 /**
  * Enqueue a workflow
  *
@@ -178,7 +177,6 @@ async function enqueueWorkflowMessage({
     workflow,
     executionNamePrefix,
   });
-
 
   const arn = buildExecutionArn(
     message.cumulus_meta.state_machine,
