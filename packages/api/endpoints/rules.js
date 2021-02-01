@@ -167,7 +167,6 @@ async function del(req, res) {
   const name = (req.params.name || '').replace(/%20/g, ' ');
   const model = new models.Rule();
   const dbClient = await getKnexClient();
-  const rulePgModel = new RulePgModel();
 
   let apiRule;
   try {
