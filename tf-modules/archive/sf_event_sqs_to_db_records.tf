@@ -166,7 +166,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       PdrsTable       = var.dynamo_tables.pdrs.name
       DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
-      RDS_DEPLOYMENT_CUMULUS_VERSION = "4.0.0"
+      RDS_DEPLOYMENT_CUMULUS_VERSION = "5.0.0"
     }
   }
 
