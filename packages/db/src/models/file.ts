@@ -25,14 +25,6 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
       .merge();
   }
 
-  // TODO also delete from S3
-  delete(
-    knexOrTransaction: Knex | Knex.Transaction,
-    file: PostgresFileRecord
-  ) {
-    return super.delete(knexOrTransaction, { cumulus_id: file.cumulus_id });
-  }
-
   async _deleteFilesFromS3(
     knexOrTransaction: Knex | Knex.Transaction,
     granule: PostgresGranuleRecord

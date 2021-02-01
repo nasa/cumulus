@@ -1,17 +1,16 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
-  buildS3Uri,
-  createBucket,
-  fileExists,
-  putJsonS3Object,
-  recursivelyDeleteS3Bucket,
-} = require('@cumulus/aws-client/S3');
+  randomString,
+  randomId,
+} = require('@cumulus/common/test-utils');
 
 const {
-  s3,
-} = require('@cumulus/aws-client/services');
+  fileExists,
+  createS3Buckets,
+  deleteS3Buckets,
+  s3PutObject,
+} = require('@cumulus/aws-client/S3');
 
 const {
   CollectionPgModel,
@@ -28,17 +27,29 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `file_${cryptoRandomString({ length: 10 })}`;
 
-function createBuckets(buckets) {
-  return Promise.all(buckets.map(createBucket));
-}
-
-function deleteBuckets(buckets) {
-  return Promise.all(buckets.map(recursivelyDeleteS3Bucket));
-}
-
-const putObject = (params) => s3().putObject(params).promise();
-
 let granulePgModel;
+
+const createFakeGranule = async (dbClient) => {
+  // Collection is a required fk for granules
+  const collectionPgModel = new CollectionPgModel();
+  const [collectionCumulusId] = await collectionPgModel.create(
+    dbClient,
+    fakeCollectionRecordFactory()
+  );
+
+  granulePgModel = new GranulePgModel();
+  const [granuleCumulusId] = await granulePgModel.create(
+    dbClient,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      status: 'running',
+    })
+  );
+  // bigint for granule cumulus_id is treated as a string,
+  // not number, by knex
+  // see https://github.com/knex/knex/issues/387
+  return Number.parseInt(granuleCumulusId, 10);
+};
 
 test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
@@ -48,25 +59,7 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
 
-  const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
-    t.context.knex,
-    fakeCollectionRecordFactory()
-  );
-
-  granulePgModel = new GranulePgModel();
-  const [granuleCumulusId] = await granulePgModel.create(
-    t.context.knex,
-    fakeGranuleRecordFactory({
-      collection_cumulus_id: collectionCumulusId,
-      status: 'running',
-    })
-  );
-  // bigint for granule cumulus_id is treated as a string,
-  // not number, by knex
-  // see https://github.com/knex/knex/issues/387
-  t.context.granuleCumulusId = Number.parseInt(granuleCumulusId, 10);
-
+  t.context.granuleCumulusId = await createFakeGranule(t.context.knex);
   t.context.filePgModel = new FilePgModel();
 });
 
@@ -124,44 +117,13 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
   );
 });
 
-test('FilePgModel.delete() deletes a file record', async (t) => {});
-
-test('FilePgModel.delete() deletes a file from S3', async (t) => {});
-
-test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule in PG', async (t) => {
+test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule in Postgres and S3', async (t) => {
   const {
     knex,
     filePgModel,
-    granuleCumulusId,
   } = t.context;
 
-  const files = [
-    fakeFileRecordFactory({
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      granule_cumulus_id: granuleCumulusId,
-    }),
-  ];
-
-  await Promise.all(files.map((f) => filePgModel.create(knex, f)));
-
-  const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
-
-  await filePgModel.deleteGranuleFiles(knex, granule);
-
-  t.false(await filePgModel.exists(knex, { granule_cumulus_id: granuleCumulusId }));
-});
-
-test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule in S3', async (t) => {
-  const {
-    knex,
-    filePgModel,
-    granuleCumulusId,
-  } = t.context;
+  const granuleCumulusId = await createFakeGranule(t.context.knex);
 
   const buckets = {
     protected: {
@@ -195,7 +157,7 @@ test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule 
   // Add files to PG
   await Promise.all(files.map((f) => filePgModel.create(knex, f)));
 
-  await createBuckets([
+  await createS3Buckets([
     buckets.protected.name,
     buckets.public.name,
   ]);
@@ -203,7 +165,7 @@ test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule 
   // Add files to S3
   for (let i = 0; i < files.length; i += 1) {
     const file = files[i];
-    await putObject({ // eslint-disable-line no-await-in-loop
+    await s3PutObject({ // eslint-disable-line no-await-in-loop
       Bucket: file.bucket,
       Key: file.key,
       Body: `test data ${randomString()}`,
@@ -225,7 +187,7 @@ test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule 
   }
   /* eslint-enable no-await-in-loop */
 
-  await deleteBuckets([
+  await deleteS3Buckets([
     buckets.protected.name,
     buckets.public.name,
   ]);
