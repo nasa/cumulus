@@ -3,10 +3,6 @@ const test = require('ava');
 
 const cryptoRandomString = require('crypto-random-string');
 
-const {
-  nullifyUndefinedProviderValues,
-} = require('../../dist/provider');
-
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
@@ -80,29 +76,3 @@ test('ProviderPgModel.upsert() overwrites a provider record', async (t) => {
     }
   );
 });
-
-test('nullifyUndefinedProviderValues sets undefined provider values to "null"', async (t) => {
-  const cumulusProviderObject = {
-    name: 'fakeName',
-    protocol: 'fakeProtocol',
-    host: 'fakeHost',
-    port: 'fakePort',
-  };
-
-  const expected = {
-    name: 'fakeName',
-    protocol: 'fakeProtocol',
-    host: 'fakeHost',
-    port: 'fakePort',
-    username: null,
-    password: null,
-    global_connection_limit: null,
-    private_key: null,
-    cm_key_id: null,
-    certificate_uri: null,
-  };
-
-  const actual = nullifyUndefinedProviderValues(cumulusProviderObject);
-  t.deepEqual(actual, expected);
-});
-
