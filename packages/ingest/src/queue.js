@@ -144,3 +144,49 @@ async function enqueueGranuleIngestMessage({
   return arn;
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
+
+
+/**
+ * Enqueue a workflow
+ *
+ * @param {Object} params
+ * @param {Object} params.workflow - the workflow to be enqueued
+ * @param {string} params.queueUrl - an optional SQS queue to add the message to
+ * @param {Object} params.provider - the provider config to be attached to the message
+ * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
+ * @param {string} [params.executionNamePrefix] - the prefix to apply to the
+ *   name of the enqueued execution
+ * @returns {Promise} - resolves when the message has been enqueued
+ */
+async function enqueueWorkflowMessage({
+  parentExecutionArn,
+  stack,
+  systemBucket,
+  queueUrl,
+  workflow,
+  executionNamePrefix,
+}) {
+  const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
+
+  const payload = { workflow };
+
+  const message = buildQueueMessageFromTemplate({
+    messageTemplate,
+    parentExecutionArn,
+    payload,
+    queueUrl,
+    workflow,
+    executionNamePrefix,
+  });
+
+
+  const arn = buildExecutionArn(
+    message.cumulus_meta.state_machine,
+    message.cumulus_meta.execution_name
+  );
+
+  await sendSQSMessage(queueUrl, message);
+
+  return arn;
+}
+exports.enqueueWorkflowMessage = enqueueWorkflowMessage;
