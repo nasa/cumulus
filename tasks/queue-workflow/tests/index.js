@@ -61,7 +61,6 @@ test.beforeEach(async (t) => {
 
   t.context.event = {
     config: {
-      provider: { name: 'provider-name' },
       queueUrl: t.context.queueUrl,
       stackName: t.context.stackName,
       internalBucket: t.context.templateBucket,
@@ -174,8 +173,6 @@ test.serial('The correct message is enqueued', async (t) => {
       queueExecutionLimits,
     },
     meta: {
-      collection: { name: 'collection-name' },
-      provider: { name: 'provider-name' },
       workflow_name: event.input.workflow,
     },
     payload: {
