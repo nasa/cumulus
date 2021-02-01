@@ -553,7 +553,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(cmrUrls).toContain(s3BrowseImageUrl);
       expect(cmrUrls).toContain(s3CredsUrl);
       expect(cmrUrls).toContain(opendapFilePath);
-      expect(expectedTypes).toEqual(resource.map((r) => r.Type));
+      expect(expectedTypes.sort()).toEqual(resource.map((r) => r.Type).sort());
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
