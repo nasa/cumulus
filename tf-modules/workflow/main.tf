@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-   aws = "~> 3.0,!= 3.14.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0,!= 3.14.0"
+    }
   }
 }
 
@@ -25,8 +28,8 @@ resource "aws_cloudwatch_event_rule" "state_machine_execution_rule" {
 
 resource "aws_cloudwatch_event_target" "semaphore_down" {
   target_id = "semaphore_down_lambda_target"
-  rule = aws_cloudwatch_event_rule.state_machine_execution_rule.name
-  arn  = var.workflow_config.sf_semaphore_down_lambda_function_arn
+  rule      = aws_cloudwatch_event_rule.state_machine_execution_rule.name
+  arn       = var.workflow_config.sf_semaphore_down_lambda_function_arn
 }
 
 resource "aws_lambda_permission" "semaphore_down" {
@@ -38,14 +41,14 @@ resource "aws_lambda_permission" "semaphore_down" {
 
 resource "aws_cloudwatch_event_target" "sf_event_sqs_to_db_records" {
   target_id = "sqs_to_db_lambda_target"
-  rule = aws_cloudwatch_event_rule.state_machine_execution_rule.name
-  arn  = var.workflow_config.sf_event_sqs_to_db_records_sqs_queue_arn
+  rule      = aws_cloudwatch_event_rule.state_machine_execution_rule.name
+  arn       = var.workflow_config.sf_event_sqs_to_db_records_sqs_queue_arn
 }
 
 resource "aws_cloudwatch_event_target" "sqs_message_remover" {
   target_id = "sqs_message_remover_lambda_target"
-  rule = aws_cloudwatch_event_rule.state_machine_execution_rule.name
-  arn  = var.workflow_config.sqs_message_remover_lambda_function_arn
+  rule      = aws_cloudwatch_event_rule.state_machine_execution_rule.name
+  arn       = var.workflow_config.sqs_message_remover_lambda_function_arn
 }
 
 resource "aws_lambda_permission" "sqs_message_remover" {

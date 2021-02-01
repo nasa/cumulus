@@ -47,3 +47,10 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "engine_version" {
+  description = "Postgres engine version for Serverless cluster"
+  type        = string
+  default     = "10.12"
+}
+

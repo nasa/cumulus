@@ -14,7 +14,7 @@ export const up = async (knex: Knex): Promise<void> =>
     table
       .timestamps(false, true);
     table
-      .integer('file_size')
+      .bigInteger('file_size')
       .comment('Size of file (bytes)');
     table
       .text('bucket')

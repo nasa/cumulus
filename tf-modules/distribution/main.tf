@@ -1,13 +1,14 @@
 terraform {
   required_providers {
-   aws = "~> 3.0,!= 3.14.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0,!= 3.14.0"
+    }
   }
 }
 
 locals {
-  lambda_log_group_name  = "/aws/lambda/${var.tea_stack_name}-EgressLambda"
-  tea_buckets            = concat(var.protected_buckets, var.public_buckets)
-
+  tea_buckets        = concat(var.protected_buckets, var.public_buckets)
   lambda_source_file = "${path.module}/../../packages/s3-credentials-endpoint/dist/lambda.zip"
 }
 
@@ -23,11 +24,11 @@ module "tea_map_cache" {
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {
-  depends_on                      = [module.tea_map_cache.lambda_function_name]
-  function_name                   = module.tea_map_cache.lambda_function_name
-  input                           = jsonencode({ bucketList = local.tea_buckets,
-                                                 s3Bucket = var.system_bucket
-                                                 s3Key = "${var.prefix}/distribution_bucket_map.json"
+  depends_on    = [module.tea_map_cache.lambda_function_name]
+  function_name = module.tea_map_cache.lambda_function_name
+  input = jsonencode({ bucketList = local.tea_buckets,
+    s3Bucket = var.system_bucket
+    s3Key    = "${var.prefix}/distribution_bucket_map.json"
   })
 }
 
@@ -159,7 +160,7 @@ resource "aws_lambda_function" "s3_credentials" {
 data "aws_region" "current" {}
 
 resource "aws_lambda_permission" "lambda_permission" {
-  count         = var.deploy_s3_credentials_endpoint ? 1 : 0
+  count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.s3_credentials[0].function_name
@@ -175,7 +176,7 @@ resource "aws_api_gateway_resource" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   rest_api_id = var.tea_rest_api_id
-  parent_id = var.tea_rest_api_root_resource_id
+  parent_id   = var.tea_rest_api_root_resource_id
   path_part   = "s3credentials"
 }
 
@@ -204,7 +205,7 @@ resource "aws_api_gateway_resource" "s3_credentials_redirect" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
   rest_api_id = var.tea_rest_api_id
-  parent_id = var.tea_rest_api_root_resource_id
+  parent_id   = var.tea_rest_api_root_resource_id
   path_part   = "redirect"
 }
 
@@ -239,23 +240,4 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 
   rest_api_id = var.tea_rest_api_id
   stage_name  = var.tea_api_gateway_stage
-}
-
-# Egress Lambda Log Group
-resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
-  count             = var.log_destination_arn == null ? 0 : 1
-  name              = local.lambda_log_group_name
-  retention_in_days = 30
-  tags              = var.tags
-}
-
-# Egress Lambda Log Group Filter
-resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
-  depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group]
-  count           = var.log_destination_arn == null ? 0 : 1
-  name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
-  destination_arn = var.log_destination_arn
-  distribution    = "ByLogStream"
-  filter_pattern  = ""
-  log_group_name  = local.lambda_log_group_name
 }

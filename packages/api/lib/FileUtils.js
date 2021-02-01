@@ -12,7 +12,7 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 const schemas = require('../models/schemas');
 
-const log = new Logger({ sender: 'api/lib/FieUtils' });
+const log = new Logger({ sender: 'api/lib/FileUtils' });
 const getBucket = (file) => {
   if (file.bucket) return file.bucket;
   if (file.filename) return parseS3Uri(file.filename).Bucket;
@@ -74,8 +74,7 @@ const setS3FileSize = async (s3, file) => {
 
     return { ...file, size };
   } catch (error) {
-    log.info(`Unable to get object size. File is ${file}`);
-    log.error(error);
+    log.debug(`Unable to get object size for file: ${JSON.stringify(file, null, 2)}, Cause: ${error}`);
     return file;
   }
 };

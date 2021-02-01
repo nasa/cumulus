@@ -5,7 +5,12 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
-const { getKnexClient, translateApiRuleToPostgresRule, tableNames } = require('@cumulus/db');
+const {
+  getKnexClient,
+  RulePgModel,
+  tableNames,
+  translateApiRuleToPostgresRule,
+} = require('@cumulus/db');
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
@@ -69,6 +74,7 @@ async function post(req, res) {
   let record;
   const apiRule = req.body || {};
   const name = apiRule.name;
+  const rulePgModel = new RulePgModel();
 
   if (await model.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
@@ -80,7 +86,7 @@ async function post(req, res) {
     const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
-      await trx(tableNames.rules).insert(postgresRule, 'cumulus_id');
+      await rulePgModel.create(trx, postgresRule);
       record = await model.create(apiRule, apiRule.createdAt);
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
@@ -119,6 +125,8 @@ async function put({ params: { name }, body }, res) {
   try {
     const oldRule = await model.get({ name });
     const dbClient = await getKnexClient();
+    const rulePgModel = new RulePgModel();
+
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
     // If rule type is onetime no change is allowed unless it is a rerun
@@ -133,14 +141,11 @@ async function put({ params: { name }, body }, res) {
     const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
-      await trx(tableNames.rules)
-        .insert(postgresRule)
-        .onConflict('name')
-        .merge();
+      await rulePgModel.upsert(trx, postgresRule);
       newRule = await model.update(oldRule, apiRule, fieldsToDelete);
     });
-    if (inTestMode()) await addToLocalES(newRule, indexRule);
 
+    if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {

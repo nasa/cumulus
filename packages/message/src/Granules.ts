@@ -11,9 +11,14 @@
 import { Message } from '@cumulus/types';
 import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
 
-import { getMetaStatus } from './workflows';
+interface MetaWithGranuleQueryFields extends Message.Meta {
+  granule?: {
+    queryFields?: unknown
+  }
+}
 
 interface MessageWithGranules extends Message.CumulusMessage {
+  meta: MetaWithGranuleQueryFields,
   payload: {
     granules?: object[]
   }
@@ -35,13 +40,25 @@ export const getMessageGranules = (
 /**
  * Determine the status of a granule.
  *
- * @param {Message.CumulusMessage } message - A workflow message
+ * @param {string} workflowStatus - The workflow status
  * @param {ApiGranule} granule - A granule record
  * @returns {string} The granule status
  *
  * @alias module:Granules
  */
 export const getGranuleStatus = (
-  message: Message.CumulusMessage,
+  workflowStatus: Message.WorkflowStatus,
   granule: ApiGranule
-): Message.WorkflowStatus | GranuleStatus => getMetaStatus(message) || granule.status;
+): Message.WorkflowStatus | GranuleStatus => workflowStatus || granule.status;
+
+/**
+ * Get the query fields of a granule, if any
+ *
+ * @param {MessageWithGranules} message - A workflow message
+ * @returns {unknown|undefined} The granule query fields, if any
+ *
+ * @alias module:Granules
+ */
+export const getGranuleQueryFields = (
+  message: MessageWithGranules
+) => message.meta?.granule?.queryFields;

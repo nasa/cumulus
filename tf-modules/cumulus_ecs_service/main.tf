@@ -1,12 +1,15 @@
 terraform {
   required_providers {
-   aws = "~> 3.0,!= 3.14.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0,!= 3.14.0"
+    }
   }
 }
 
 locals {
-  cluster_name = reverse(split("/", var.cluster_arn))[0]
-  full_name    = "${var.prefix}-${var.name}"
+  cluster_name        = reverse(split("/", var.cluster_arn))[0]
+  full_name           = "${var.prefix}-${var.name}"
   log_destination_arn = var.log_destination_arn != null ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
 }
 

@@ -8,6 +8,7 @@ const request = require('supertest');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
   getKnexClient,
+  RulePgModel,
   localStackConnectionEnv,
   tableNames,
 } = require('@cumulus/db');
@@ -69,6 +70,7 @@ let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
 let buildPayloadStub;
+let pgRuleModel;
 
 test.before(async (t) => {
   process.env = { ...process.env, ...localStackConnectionEnv };
@@ -81,6 +83,9 @@ test.before(async (t) => {
   await S3.createBucket(process.env.system_bucket);
 
   buildPayloadStub = setBuildPayloadStub();
+
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
+  pgRuleModel = new RulePgModel();
 
   ruleModel = new Rule();
   await ruleModel.createTable();
@@ -96,8 +101,6 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
-
-  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.beforeEach(async (t) => {
@@ -583,25 +586,19 @@ test('PUT replaces a rule', async (t) => {
   const { dbClient } = t.context;
   const putTestRule = { ...testRule, name: randomId('testRule') };
   t.truthy(putTestRule.queueUrl);
+  const postgresRule = await translateApiRuleToPostgresRule(putTestRule, t.context.dbClient);
+
+  await dbClient.transaction(async (trx) => {
+    await pgRuleModel.create(trx, postgresRule);
+    await ruleModel.create(putTestRule, putTestRule.createdAt);
+  });
 
   const updateRule = {
     ...omit(putTestRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
-
-  await request(app)
-    .post('/rules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(putTestRule)
-    .expect(200);
-
-  const { body: originalRule } = await request(app)
-    .get(`/rules/${updateRule.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
   await request(app)
     .put(`/rules/${updateRule.name}`)
     .set('Accept', 'application/json')
@@ -609,34 +606,29 @@ test('PUT replaces a rule', async (t) => {
     .send(updateRule)
     .expect(200);
 
-  const { body: actualRule } = await request(app)
-    .get(`/rules/${updateRule.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
+  const actualRule = await ruleModel.get({ name: updateRule.name });
 
-  const dbRecord = await dbClient.select()
+  const actualPostgresRule = await dbClient.select()
     .from(tableNames.rules)
     .where({ name: updateRule.name })
     .first();
-
-  const dbExpectedRule = await translateApiRuleToPostgresRule({
+  const postgresExpectedRule = await translateApiRuleToPostgresRule({
     ...updateRule, createdAt: actualRule.createdAt,
   });
-  Object.keys(dbExpectedRule).forEach((key) => {
-    if (dbExpectedRule[key] === undefined) {
-      dbExpectedRule[key] = null;
+  Object.keys(postgresExpectedRule).forEach((key) => {
+    if (postgresExpectedRule[key] === undefined) {
+      postgresExpectedRule[key] = null;
     }
   });
 
-  t.like(dbRecord, {
-    ...dbExpectedRule,
-    updated_at: dbRecord.updated_at,
-    created_at: dbRecord.created_at,
+  t.like(actualPostgresRule, {
+    ...postgresExpectedRule,
+    updated_at: actualPostgresRule.updated_at,
+    created_at: postgresRule.created_at,
   });
   t.deepEqual(actualRule, {
     ...updateRule,
-    createdAt: originalRule.createdAt,
+    createdAt: putTestRule.createdAt,
     updatedAt: actualRule.updatedAt,
   });
 });

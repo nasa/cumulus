@@ -4,21 +4,18 @@ const sinon = require('sinon');
 const s3Utils = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { filterDatabaseProperties } = require('../../../lib/FileUtils');
-const { deconstructCollectionId } = require('../../../lib/utils');
 const Granule = require('../../../models/granules');
 
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
 
 let sandbox;
-let testCumulusMessage;
 
 const mockedFileSize = 12345;
 
-const granuleFileToRecord = (granuleFile) => {
+const granuleFileToRecord = (granuleFile, provider) => {
   const granuleRecord = {
     size: mockedFileSize,
     ...granuleFile,
@@ -28,9 +25,7 @@ const granuleFileToRecord = (granuleFile) => {
   };
 
   if (granuleFile.path) {
-    // This hard-coded URL comes from the provider configure in the
-    // test fixtures (e.g. data/granule_success.json)
-    granuleRecord.source = `https://07f1bfba.ngrok.io/granules/${granuleFile.name}`;
+    granuleRecord.source = `${provider.protocol}://${provider.host}/granules/${granuleFile.name}`;
   }
 
   return removeNilProperties(filterDatabaseProperties(granuleRecord));
@@ -39,35 +34,6 @@ const granuleFileToRecord = (granuleFile) => {
 test.before(async (t) => {
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
-
-  testCumulusMessage = {
-    cumulus_meta: {
-      execution_name: randomString(),
-      state_machine: 'arn:aws:states:us-east-1:123456789012:stateMachine:HelloStateMachine',
-      workflow_start_time: Date.now(),
-    },
-    meta: {
-      collection: {
-        name: randomString(),
-        version: randomString(),
-      },
-      provider: {
-        host: randomString(),
-        protocol: 's3',
-      },
-      status: 'completed',
-    },
-    payload: {
-      granules: [
-        {
-          granuleId: randomString(),
-          sync_granule_duration: 123,
-          post_to_cmr_duration: 456,
-          files: [],
-        },
-      ],
-    },
-  };
 
   sandbox = sinon.createSandbox();
 
@@ -94,7 +60,15 @@ test.before(async (t) => {
 });
 
 test.beforeEach((t) => {
-  t.context.cumulusMessage = testCumulusMessage;
+  t.context.provider = {
+    name: randomString(),
+    protocol: 's3',
+    host: randomString(),
+  };
+  t.context.collectionId = randomString();
+  t.context.pdrName = randomString();
+  t.context.workflowStartTime = Date.now();
+  t.context.workflowStatus = 'completed';
 });
 
 test.after.always(() => {
@@ -102,10 +76,15 @@ test.after.always(() => {
 });
 
 test('generateGranuleRecord() builds successful granule record', async (t) => {
-  const { granuleModel } = t.context;
+  const {
+    collectionId,
+    provider,
+    granuleModel,
+    workflowStartTime,
+    pdrName,
+    workflowStatus,
+  } = t.context;
   const granule = granuleSuccess.payload.granules[0];
-  const collection = granuleSuccess.meta.collection;
-  const collectionId = constructCollectionId(collection.name, collection.version);
   const executionUrl = randomString();
 
   const processingStartDateTime = new Date(Date.UTC(2019, 6, 28)).toISOString();
@@ -113,21 +92,26 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
   const record = await granuleModel.generateGranuleRecord({
     s3: t.context.fakeS3,
     granule,
-    message: granuleSuccess,
     executionUrl,
     processingTimeInfo: {
       processingStartDateTime,
       processingEndDateTime,
     },
+    collectionId,
+    provider,
+    workflowStartTime,
+    pdrName,
+    workflowStatus,
   });
 
   t.deepEqual(
     record.files,
-    granule.files.map(granuleFileToRecord)
+    granule.files.map((file) => granuleFileToRecord(file, provider))
   );
-  t.is(record.createdAt, 1519167138335);
+  t.is(record.createdAt, workflowStartTime);
   t.is(typeof record.duration, 'number');
-  t.is(record.status, 'completed');
+  t.is(record.status, workflowStatus);
+  t.is(record.pdrName, pdrName);
   t.is(record.collectionId, collectionId);
   t.is(record.execution, executionUrl);
   t.is(record.granuleId, granule.granuleId);
@@ -142,30 +126,41 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
   t.is(record.timeToPreprocess, 120 / 1000);
   t.is(record.processingStartDateTime, processingStartDateTime);
   t.is(record.processingEndDateTime, processingEndDateTime);
-
-  const { name: deconstructed } = deconstructCollectionId(record.collectionId);
-  t.is(deconstructed, collection.name);
 });
 
 test('generateGranuleRecord() builds a failed granule record', async (t) => {
-  const { granuleModel } = t.context;
+  const {
+    collectionId,
+    provider,
+    granuleModel,
+    workflowStartTime,
+  } = t.context;
   const granule = granuleFailure.payload.granules[0];
   const executionUrl = randomString();
+  const error = {
+    Error: 'error',
+    Cause: new Error('error'),
+  };
   const record = await granuleModel.generateGranuleRecord({
     s3: t.context.fakeS3,
     granule,
     message: granuleFailure,
     executionUrl,
+    provider,
+    collectionId,
+    workflowStartTime,
+    workflowStatus: 'failed',
+    error,
   });
 
   t.deepEqual(
     record.files,
-    granule.files.map(granuleFileToRecord)
+    granule.files.map((file) => granuleFileToRecord(file, provider))
   );
   t.is(record.status, 'failed');
   t.is(record.execution, executionUrl);
   t.is(record.granuleId, granule.granuleId);
   t.is(record.published, false);
-  t.is(record.error.Error, granuleFailure.exception.Error);
-  t.is(record.error.Cause, granuleFailure.exception.Cause);
+  t.is(record.error.Error, error.Error);
+  t.is(record.error.Cause, error.Cause);
 });

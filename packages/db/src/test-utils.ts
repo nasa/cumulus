@@ -1,15 +1,18 @@
 import Knex from 'knex';
 import cryptoRandomString from 'crypto-random-string';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
 
+import { PostgresAsyncOperation } from './types/async_operation';
 import { PostgresCollection } from './types/collection';
 import { PostgresExecution } from './types/execution';
 import { PostgresFile } from './types/file';
 import { PostgresGranule } from './types/granule';
-import { PostgresProvider } from './types/provider';
 import { PostgresPdr } from './types/pdr';
+import { PostgresProvider } from './types/provider';
+import { PostgresRule } from './types/rule';
 
 export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {
   await knex.raw(`create database "${dbName}";`);
@@ -47,6 +50,18 @@ export const destroyLocalTestDb = async ({
   await deleteTestDatabase(knexAdmin, testDbName);
   knexAdmin.destroy();
 };
+
+export const fakeRuleRecordFactory = (
+  params: Partial<PostgresRule>
+): PostgresRule => ({
+  name: cryptoRandomString({ length: 8 }),
+  workflow: 'Random Workflow',
+  type: 'onetime',
+  enabled: false,
+  created_at: new Date(),
+  updated_at: new Date(),
+  ...params,
+});
 
 export const fakeCollectionRecordFactory = (
   params: Partial<PostgresCollection>
@@ -95,6 +110,18 @@ export const fakeFileRecordFactory = (
 ): Omit<PostgresFile, 'granule_cumulus_id'> => ({
   bucket: cryptoRandomString({ length: 3 }),
   key: cryptoRandomString({ length: 3 }),
+  ...params,
+});
+
+export const fakeAsyncOperationRecordFactory = (
+  params: Partial<PostgresAsyncOperation>
+): PostgresAsyncOperation => ({
+  id: uuidv4(),
+  description: cryptoRandomString({ length: 10 }),
+  operation_type: 'ES Index',
+  status: 'RUNNING',
+  output: { test: 'output' },
+  task_arn: cryptoRandomString({ length: 3 }),
   ...params,
 });
 

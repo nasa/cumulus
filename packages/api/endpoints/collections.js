@@ -13,16 +13,15 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   getKnexClient,
-  tableNames,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
+const Knex = require('knex');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
-const Knex = require('knex');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 
@@ -188,9 +187,7 @@ async function put(req, res) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
     }
-    return res.boom.notFound(
-      `Collection '${name}' version '${version}' not found`
-    );
+    return res.boom.notFound(`Collection '${name}' version '${version}' not found`);
   }
 
   collection.updatedAt = Date.now();
@@ -199,7 +196,10 @@ async function put(req, res) {
   const postgresCollection = dynamoRecordToDbRecord(collection);
 
   const dbClient = await getKnexClient();
-  await collectionPgModel.upsert(dbClient, dbRecord);
+  await dbClient.transaction(async (trx) => {
+    await collectionPgModel.upsert(trx, postgresCollection);
+    dynamoRecord = await collectionsModel.create(collection);
+  });
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);

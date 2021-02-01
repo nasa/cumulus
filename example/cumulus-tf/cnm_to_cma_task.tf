@@ -1,7 +1,16 @@
+resource "null_resource" "get_cnmToGranule" {
+  triggers = {
+    always_run = timestamp()
+  }
+  provisioner "local-exec" {
+    command = "curl -s -L -o cnmToGranule.zip https://github.com/podaac/cumulus-cnm-to-granule/releases/download/v1.4.2/cnmToGranule-1.4.2.zip"
+  }
+}
+
 resource "aws_lambda_function" "cnm_to_cma_task" {
   function_name = "${var.prefix}-CNMToCMA"
-  s3_bucket     = "cumulus-data-shared"
-  s3_key        = "daacs/podaac/cnmPreReleases/cnmToGranule-1.3.1-cma1.3.0-b.zip"
+  depends_on    = [null_resource.get_cnmToGranule]
+  filename      = "cnmToGranule.zip"
   handler       = "gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams"
   role          = module.cumulus.lambda_processing_role_arn
   runtime       = "java8"

@@ -87,17 +87,6 @@ const deprecatedFields = Object.freeze([
   'provider_path',
 ]);
 
-class CollectionManager extends Manager {
-  addTimeStampsToItem(item) {
-    const now = Date.now();
-    return {
-      createdAt: now,
-      updatedAt: now,
-      ...item,
-    };
-  }
-}
-
 class Collection {
   /**
    * Creates a new Collection model for managing storage and retrieval of
@@ -117,7 +106,7 @@ class Collection {
    * @see Manager#constructor
    */
   constructor() {
-    this.dynamoDbClient = new CollectionManager({
+    this.dynamoDbClient = new Manager({
       tableName: process.env.CollectionsTable,
       tableHash: { name: 'name', type: 'S' },
       tableRange: { name: 'version', type: 'S' },

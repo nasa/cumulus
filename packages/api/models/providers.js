@@ -46,15 +46,6 @@ class Provider extends Manager {
     this.removeAdditional = 'all';
   }
 
-  addTimeStampsToItem(item) {
-    const now = Date.now();
-    return {
-      createdAt: now,
-      updatedAt: now,
-      ...item,
-    };
-  }
-
   /**
    * Check if a given provider exists
    *

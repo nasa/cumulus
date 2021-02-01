@@ -1,14 +1,15 @@
 export {
-  generateLocalTestDb,
-  destroyLocalTestDb,
   createTestDatabase,
   deleteTestDatabase,
+  destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
-  fakeProviderRecordFactory,
-  fakeGranuleRecordFactory,
   fakeFileRecordFactory,
+  fakeGranuleRecordFactory,
   fakePdrRecordFactory,
+  fakeProviderRecordFactory,
+  fakeRuleRecordFactory,
+  generateLocalTestDb,
 } from './test-utils';
 
 export { getKnexClient } from './connection';
@@ -45,6 +46,10 @@ export {
   PostgresRule,
   PostgresRuleRecord,
 } from './types/rule';
+export {
+  PostgresPdr,
+  PostgresPdrRecord,
+} from './types/pdr';
 
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
@@ -55,6 +60,7 @@ export {
   translateApiProviderToPostgresProvider,
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
+export { translateApiExecutionToPostgresExecution } from './translate/executions';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { CollectionPgModel } from './models/collection';

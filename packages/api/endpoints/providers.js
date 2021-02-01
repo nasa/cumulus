@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 
 const {
   getKnexClient,
+  ProviderPgModel,
   tableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
@@ -93,6 +94,7 @@ async function post(req, res) {
   const id = apiProvider.id;
   const providerModel = new Provider();
   const knex = await getKnexClient({ env: process.env });
+  const providerPgModel = new ProviderPgModel();
   try {
     let record;
     if (!apiProvider.id) {
@@ -103,7 +105,7 @@ async function post(req, res) {
     validateProviderHost(apiProvider.host);
 
     await knex.transaction(async (trx) => {
-      await trx(tableNames.providers).insert(postgresProvider);
+      await providerPgModel.create(trx, postgresProvider);
       record = await providerModel.create(apiProvider);
     });
 
@@ -142,6 +144,8 @@ async function put({ params: { id }, body }, res) {
 
   const knex = await getKnexClient();
   const providerModel = new Provider();
+  const providerPgModel = new ProviderPgModel();
+
   let oldProvider;
   try {
     oldProvider = await providerModel.get({ id });
@@ -153,7 +157,6 @@ async function put({ params: { id }, body }, res) {
       `Provider with ID '${id}' not found`
     );
   }
-
   apiProvider.updatedAt = Date.now();
   apiProvider.createdAt = oldProvider.createdAt;
 
@@ -161,10 +164,7 @@ async function put({ params: { id }, body }, res) {
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
   await knex.transaction(async (trx) => {
-    await trx(tableNames.providers)
-      .insert(postgresProvider)
-      .onConflict('name')
-      .merge();
+    await providerPgModel.upsert(trx, postgresProvider);
     record = await providerModel.create(apiProvider);
   });
 
