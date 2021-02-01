@@ -350,8 +350,3 @@ variable "ems_deploy" {
   type        = bool
   default     = true
 }
-
-variable "urs_url" {
-  type = string
-  default = "https://uat.urs.earthdata.nasa.gov"
-}
