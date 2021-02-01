@@ -1,14 +1,15 @@
 export {
-  generateLocalTestDb,
-  destroyLocalTestDb,
   createTestDatabase,
   deleteTestDatabase,
+  destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
-  fakeProviderRecordFactory,
-  fakeGranuleRecordFactory,
   fakeFileRecordFactory,
+  fakeGranuleRecordFactory,
   fakePdrRecordFactory,
+  fakeProviderRecordFactory,
+  fakeRuleRecordFactory,
+  generateLocalTestDb,
 } from './test-utils';
 
 export { getKnexClient } from './connection';
