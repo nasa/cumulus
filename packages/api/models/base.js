@@ -285,8 +285,8 @@ class Manager {
     const now = Date.now();
     return {
       createdAt: now,
-      ...item,
       updatedAt: now,
+      ...item,
     };
   }
 
