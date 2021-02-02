@@ -8,6 +8,9 @@ cumulus-sit:
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
+mboyd-int-tf:
+  bucket: mboyd-int-tf-internal
+
 mvd-tf:
   bucket: mvd-internal
 
@@ -44,8 +47,8 @@ mhs2:
 bt-tf:
   bucket: bt-internal
 
-jtran-my-tf:
-  bucket: jtran-my-tf-internal
+jtran-int-tf:
+  bucket: jtran-int-tf-internal
 
 np:
   bucket: npauzenga-internal

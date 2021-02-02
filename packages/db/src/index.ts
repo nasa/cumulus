@@ -47,9 +47,17 @@ export {
   PostgresRuleRecord,
 } from './types/rule';
 export {
+  PostgresGranule,
+  PostgresGranuleRecord,
+} from './types/granule';
+export {
   PostgresPdr,
   PostgresPdrRecord,
 } from './types/pdr';
+export {
+  PostgresFile,
+  PostgresFileRecord,
+} from './types/file';
 
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
@@ -61,6 +69,7 @@ export {
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
 export { translateApiExecutionToPostgresExecution } from './translate/executions';
+export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { CollectionPgModel } from './models/collection';

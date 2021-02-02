@@ -17,7 +17,7 @@ This url will be added to the Urls portion of the granule metadata as follows,
     ...
     {
         "URL": "https://opendap.earthdata.nasa.gov/providers/GHRC_CLOUD/datasets/ACES CONTINUOUS DATA V1/granules/aces1cont_2002.191_v2.50.nc",
-        "Type": "GET DATA",
+        "Type": "USE SERVICE API",
         "Subtype": "OPENDAP DATA",
         "Description": "OPeNDAP request URL"
     }
