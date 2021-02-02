@@ -128,7 +128,6 @@ test.serial('Workflow is added to the queue', async (t) => {
   t.is(messages.length, 1);
 });
 
-
 test.serial('Workflow is added to the input queue', async (t) => {
   const event = t.context.event;
   event.input.workflow = { name: randomString(), arn: randomString() };
@@ -164,7 +163,7 @@ test.serial('Workflow is added to the input queue', async (t) => {
 
 test.serial('The correct message is enqueued', async (t) => {
   const {
-    workflow,
+    configWorkflow,
     event,
     queueExecutionLimits,
     queueUrl,
@@ -201,7 +200,7 @@ test.serial('The correct message is enqueued', async (t) => {
 
   // Figure out what messages we should have received for each workflow
   const expectedMessages = {};
-  expectedMessages[workflow.name] = {
+  expectedMessages[event.input.workflow.name] = {
     cumulus_meta: {
       state_machine: stateMachineArn,
       parentExecutionArn: arn,
@@ -209,7 +208,7 @@ test.serial('The correct message is enqueued', async (t) => {
       queueExecutionLimits,
     },
     meta: {
-      workflow_name: workflow,
+      workflow_name: configWorkflow,
     },
     payload: {
       workflow: {
