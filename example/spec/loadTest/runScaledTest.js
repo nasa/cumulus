@@ -134,7 +134,7 @@ describe('The Ingest Load Test', () => {
         throw new Error(`Aborting, counts too low on test run ${workflowCount}`);
       }
       allIngestedGranules = allIngestedGranules.concat(ingestedGranules);
-      console.log(`Ingested ${ingestedGranules.length} granules in batch ${workflowCount}`);
+      console.log(`Ingested ${ingestedGranules.length + 1} granules in batch ${workflowCount + 1}`);
       workflowCount += 1;
     }
     testConfig = config;
