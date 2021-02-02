@@ -47,8 +47,8 @@ mhs2:
 bt-tf:
   bucket: bt-internal
 
-jtran-my-tf:
-  bucket: jtran-my-tf-internal
+jtran-int-tf:
+  bucket: jtran-int-tf-internal
 
 np:
   bucket: npauzenga-internal
