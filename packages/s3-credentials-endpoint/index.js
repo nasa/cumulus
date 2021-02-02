@@ -16,7 +16,7 @@ const {
 } = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
-const path = require('path');
+const { join: pathjoin } = require('path');
 const Logger = require('@cumulus/logger');
 const morgan = require('morgan');
 const urljoin = require('url-join');
@@ -87,7 +87,7 @@ async function requestTemporaryCredentialsFromNgap({
  * @returns {Object} express repose object of the s3Credentials directions.
  */
 async function displayS3CredentialInstructions(_req, res) {
-  const instructionTemplate = await readFile(path.join(__dirname, 'instructions', 'index.html'), 'utf-8');
+  const instructionTemplate = await readFile(pathjoin(__dirname, 'instructions', 'index.html'), 'utf-8');
   const compiled = template(instructionTemplate);
   res.send(compiled(process.env));
 }
