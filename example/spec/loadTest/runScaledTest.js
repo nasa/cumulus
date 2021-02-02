@@ -50,6 +50,8 @@ let stackName;
 let workflowExecution;
 
 const testBeginTime = new Date(Date.now() - 60000);
+jasmine.DEFAULT_TIMEOUT_INTERVAL = process.env.LOAD_TEST_TIMEOUT || 4200000;
+
 
 const checkGranuleCount = async (granuleCollection, config, count) => {
   console.log(`Using collection ${granuleCollection.name}___${granuleCollection.version}`);
@@ -81,7 +83,6 @@ const checkGranuleCount = async (granuleCollection, config, count) => {
 
 describe('The Ingest Load Test', () => {
   beforeAll(async () => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = process.env.LOAD_TEST_TIMEOUT || 4200000;
     const config = await loadConfig();
     stackName = config.stackName;
     bucket = config.bucket;
