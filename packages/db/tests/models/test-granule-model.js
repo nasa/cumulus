@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { RecordDoesNotExist, DeletePublishedGranule } = require('@cumulus/errors');
 
 const {
   CollectionPgModel,
@@ -253,8 +254,88 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
   t.is(record.status, 'running');
 });
 
-test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {});
+test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
 
-test('GranulePgModel.delete() throws an error if the granule is published', async (t) => {});
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+    published: false,
+  });
 
-test('GranulePgModel.delete() works with a transaction', async (t) => {});
+  await granulePgModel.create(knex, granule);
+
+  t.like(
+    await granulePgModel.get(knex, granule),
+    granule
+  );
+
+  await granulePgModel.delete(knex, granule);
+
+  await t.throwsAsync(
+    granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    { instanceOf: RecordDoesNotExist }
+  );
+});
+
+test('GranulePgModel.delete() throws an error if the granule is published', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+    published: true,
+  });
+
+  await granulePgModel.create(knex, granule);
+
+  try {
+    granulePgModel.delete(knex, granule);
+  } catch (error) {
+    t.is(error.message, 'You cannot delete a granule that is published to CMR. Remove it from CMR first');
+  }
+});
+
+test('GranulePgModel.delete() works with a transaction', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+    execution_cumulus_id: executionCumulusId,
+    published: false,
+  });
+
+  await granulePgModel.create(knex, granule);
+
+  t.like(
+    await granulePgModel.get(knex, granule),
+    granule
+  );
+
+  await knex.transaction(
+    (trx) => granulePgModel.delete(trx, granule)
+  );
+
+  await t.throwsAsync(
+    granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    { instanceOf: RecordDoesNotExist }
+  );
+});
