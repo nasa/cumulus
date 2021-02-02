@@ -23,6 +23,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
 
+- **CUMULUS-2350**
+  - Adds an unprotected endpoinpoint, `/s3credentialsREADME`, to the s3-credentials-endpoint that displays information on how to use the `/s3credentials` endpoint
+
 ### Changed
 
 - **CUMULUS-2255**
