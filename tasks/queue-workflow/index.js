@@ -18,17 +18,16 @@ async function queueWorkflow(event) {
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
   const executionArn = await enqueueWorkflowMessage({
-    workflow,
+    inputWorkflow: workflow,
+    configWorkflow: event.config.configWorkflow,
     queueUrl: event.input.queueUrl || event.config.queueUrl,
-    provider: event.config.provider,
-    collection: event.config.collection,
     parentExecutionArn: arn,
     stack: event.config.stackName,
     systemBucket: event.config.internalBucket,
     executionNamePrefix: event.config.executionNamePrefix,
   });
 
-  return { running: executionArn };
+  return { running: executionArn, workflow };
 }
 exports.queueWorkflow = queueWorkflow;
 

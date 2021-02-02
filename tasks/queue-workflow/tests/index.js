@@ -61,6 +61,7 @@ test.beforeEach(async (t) => {
 
   t.context.event = {
     config: {
+      configWorkflow: t.context.workflow,
       queueUrl: t.context.queueUrl,
       stackName: t.context.stackName,
       internalBucket: t.context.templateBucket,
@@ -89,7 +90,7 @@ test.serial('The correct output is returned when workflow is queued', async (t) 
 
   await validateOutput(t, output);
 
-  t.is(output.running.length, 1);
+  t.deepEqual(output.workflow, event.input.workflow);
 });
 
 test.serial('The correct output is returned when no workflow is queued', async (t) => {
@@ -102,7 +103,7 @@ test.serial('The correct output is returned when no workflow is queued', async (
   const output = await queueWorkflow(event);
 
   await validateOutput(t, output);
-  t.is(output.running.length, 0);
+  t.deepEqual(output.workflow, event.input.workflow);
 });
 
 test.serial('Workflow is added to the queue', async (t) => {
@@ -127,8 +128,43 @@ test.serial('Workflow is added to the queue', async (t) => {
   t.is(messages.length, 1);
 });
 
+
+test.serial('Workflow is added to the input queue', async (t) => {
+  const event = t.context.event;
+  event.input.workflow = { name: randomString(), arn: randomString() };
+  event.input.queueUrl = await createQueue(randomString());
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queueWorkflow(event);
+
+  await validateOutput(t, output);
+
+  // Get messages from the config queue
+  const receiveConfigQueueMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+  const configQueueMessages = receiveConfigQueueMessageResponse.Messages;
+
+  t.is(configQueueMessages, undefined);
+
+  // Get messages from the input queue
+  const receiveInputQueueMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.input.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+  const inputQueueMessages = receiveInputQueueMessageResponse.Messages;
+
+  t.is(inputQueueMessages.length, 1);
+});
+
 test.serial('The correct message is enqueued', async (t) => {
   const {
+    workflow,
     event,
     queueExecutionLimits,
     queueUrl,
@@ -158,14 +194,14 @@ test.serial('The correct message is enqueued', async (t) => {
   }).promise();
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
-  t.is(messages.length, 2);
+  t.is(messages.length, 1);
 
   const receivedWorkflow = messages.map((message) => message.payload.workflow.name);
   t.true(receivedWorkflow.includes(event.input.workflow.name));
 
   // Figure out what messages we should have received for each workflow
   const expectedMessages = {};
-  expectedMessages[event.input.workflow.name] = {
+  expectedMessages[workflow.name] = {
     cumulus_meta: {
       state_machine: stateMachineArn,
       parentExecutionArn: arn,
@@ -173,7 +209,7 @@ test.serial('The correct message is enqueued', async (t) => {
       queueExecutionLimits,
     },
     meta: {
-      workflow_name: event.input.workflow,
+      workflow_name: workflow,
     },
     payload: {
       workflow: {

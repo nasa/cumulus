@@ -2,15 +2,15 @@
   "title": "QueueWorkflowOutput",
   "description": "Describes the output produced by the queue-workflow task",
   "type": "object",
-  "required": [ "running", "pdrs_queued" ],
+  "required": [ "workflow", "running" ],
   "additionalProperties": false,
   "properties": {
+    "workflow": {
+      "type": "object"
+    },
     "running": {
-      "type": "array",
-      "description": "a list of step function execution arns of pdrs queued",
-      "items": {
-        "type": "string"
-      }
+      "type": "string",
+      "description": "a step function execution arn of workflow queued"
     },
     "pdrs_queued": {
       "type": "integer"
