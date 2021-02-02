@@ -95,6 +95,11 @@ variable "prefix" {
   type        = string
 }
 
+variable "sts_credentials_lambda_function_arn" {
+  type    = string
+  default = null
+}
+
 variable "system_bucket" {
   description = "The name of the S3 bucket to be used for staging deployment files"
   type        = string
@@ -179,6 +184,12 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type        = list(object({ id = string, url = string }))
   default     = []
+}
+
+variable "deploy_distribution_s3_credentials_endpoint" {
+  description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
+  type        = bool
+  default     = true
 }
 
 variable "ecs_container_stop_timeout" {
@@ -443,6 +454,24 @@ variable "tags" {
   default     = {}
 }
 
+variable "tea_api_gateway_stage" {
+  description = "The name of the API Gateway stage to create for the Thin Egress App"
+  type        = string
+  default     = "DEV"
+}
+
+variable "tea_rest_api_id" {
+  description = "Thin Egress App API gateway ID"
+  type        = string
+  default     = null
+}
+
+variable "tea_rest_api_root_resource_id" {
+  description = "Thin Egress App API gateway root resource ID"
+  type        = string
+  default     = null
+}
+
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type        = list(object({
@@ -488,6 +517,7 @@ variable "non_complete_execution_payload_timeout_disable" {
   type        = bool
   default     = false
   description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
+
 }
 
 variable "non_complete_execution_payload_timeout" {

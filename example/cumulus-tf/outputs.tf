@@ -11,7 +11,7 @@ output "distribution_url" {
 }
 
 output "s3_credentials_redirect_uri" {
-  value = module.s3_credentials.s3_credentials_redirect_uri
+  value = module.cumulus.s3_credentials_redirect_uri
 }
 
 output "distribution_redirect_uri" {
