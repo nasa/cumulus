@@ -6,6 +6,10 @@ const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
+const template = require('lodash/template');
+const { promisify } = require('util');
+const fs = require('fs');
+const readFile = promisify(fs.readFile);
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
@@ -75,16 +79,17 @@ async function requestTemporaryCredentialsFromNgap({
   }).promise();
 }
 
-
 /**
  * Sends a sample webpage describing how to use s3Credentials endpoint
  *
  * @param {Object} _req - express request object (unused)
  * @param {Object} res - express response object
- * @returns {Object} express repose object of s3Credentials directions.
+ * @returns {Object} express repose object of the s3Credentials directions.
  */
 async function displayS3CredentialInstructions(_req, res) {
-  res.sendFile(path.join(__dirname, 'instructions', 'index.html'));
+  const instructionTemplate = await readFile(path.join(__dirname, 'instructions', 'index.html'), 'utf-8');
+  const compiled = template(instructionTemplate);
+  res.send(compiled(process.env));
 }
 
 /**
