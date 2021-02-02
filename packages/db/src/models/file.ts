@@ -1,6 +1,6 @@
 import Knex from 'knex';
 import * as s3Utils from '@cumulus/aws-client/S3';
-import { UnparsableFileLocationError } from '@cumulus/errors';
+import { UnparsableFileLocationError, DeletePublishedGranule } from '@cumulus/errors';
 import pMap from 'p-map';
 
 import { BasePgModel } from './base';
@@ -26,6 +26,13 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
       .merge();
   }
 
+  /**
+   * Delete files from S3
+   *
+   * @param {Array<PostgresFileRecord>} files - A list of files with a bucket and key
+   * @returns {Promise}
+   * @private
+   */
   async _deleteFilesFromS3(
     files: Array<PostgresFileRecord>
   ): Promise<any> {
@@ -42,11 +49,21 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
     );
   }
 
-  // get all files for a granule and delete from pg + s3
+  /**
+   * Delete a granule's files from Postgres and S3
+   *
+   * @param {Knex | Knex.Transaction} knexOrTrx - A DB client or transaction
+   * @param {PostgresGranuleRecord} granule - A granule object returned from Postgres
+   * @returns {Knex | Knex.Transaction} - The DB client or transaction
+   */
   async deleteGranuleFiles(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranuleRecord
   ) {
+    if (granule.published) {
+      throw new DeletePublishedGranule('You cannot delete a granule or files from a granule that is published to CMR. Remove it from CMR first');
+    }
+
     // get granule's files first so we can remove them from S3
     const files = await knexOrTrx<PostgresFileRecord>(this.tableName)
       .where({ granule_cumulus_id: granule.cumulus_id });
@@ -56,6 +73,8 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
       .del();
 
     await this._deleteFilesFromS3(files);
+
+    return knexOrTrx;
   }
 }
 

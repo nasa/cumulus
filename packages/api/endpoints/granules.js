@@ -163,13 +163,6 @@ async function del(req, res) {
     return res.boom.badRequest(dynamoGranule);
   }
 
-  // transaction
-  //   PG delete granules
-  //   PG delete files
-  //     Delete files from S3
-  //   Dynamo model delete
-  //     Delete files from S3 **perhaps
-  //     Delete granule from dynamo
   await knex.transaction(async (trx) => {
     // Delete the granule's files from Postgres and S3
     await filePgModel.deleteGranuleFiles(trx, pgGranule);

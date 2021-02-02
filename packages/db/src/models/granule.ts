@@ -47,7 +47,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
     }
 
-    // TODO double-check that this is ok. granule_id is not the pk
     return super.delete(knexOrTransaction, { granule_id: granule.granule_id });
   }
 }

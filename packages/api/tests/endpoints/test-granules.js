@@ -17,7 +17,7 @@ const {
 const {
   buildS3Uri,
   createBucket,
-  fileExists,
+  s3ObjectExists,
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
@@ -614,9 +614,85 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
-test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {
+test('DELETE deleting an existing granule that is published will fail', async (t) => {
+  const buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+  const granuleId = randomId('granule');
+  const files = [
+    {
+      bucket: buckets.protected.name,
+      fileName: `${granuleId}.hdf`,
+      key: `${randomString(5)}/${granuleId}.hdf`,
+    },
+    {
+      bucket: buckets.protected.name,
+      fileName: `${granuleId}.cmr.xml`,
+      key: `${randomString(5)}/${granuleId}.cmr.xml`,
+    },
+    {
+      bucket: buckets.public.name,
+      fileName: `${granuleId}.jpg`,
+      key: `${randomString(5)}/${granuleId}.jpg`,
+    },
+  ];
+
+  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'completed' });
+  newGranule.published = true;
+  newGranule.files = files;
+
+  await createBuckets([
+    buckets.protected.name,
+    buckets.public.name,
+  ]);
+
+  // Add files to S3
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
+    await putObject({ // eslint-disable-line no-await-in-loop
+      Bucket: file.bucket,
+      Key: file.key,
+      Body: `test data ${randomString()}`,
+    });
+  }
+
+  // create a new unpublished Dynamo granule
+  await granuleModel.create(newGranule);
+
+  // create a new unpublished PG granule
+  const newPGGranule = fakeGranuleRecordFactory(
+    {
+      granule_id: granuleId,
+      status: 'completed',
+      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
+    }
+  );
+  newPGGranule.published = true;
+  const [granuleCumulusId] = await granulePgModel.create(t.context.knex, newPGGranule);
+
+  // create PG files
+  await Promise.all(
+    files.map((f) => {
+      const pgFile = {
+        granule_cumulus_id: granuleCumulusId,
+        bucket: f.bucket,
+        file_name: f.fileName,
+        key: f.key,
+      };
+
+      return filePgModel.create(t.context.knex, pgFile);
+    })
+  );
+
   const response = await request(app)
-    .delete(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .delete(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
@@ -625,12 +701,22 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
   const { message } = response.body;
   t.is(
     message,
-    'You cannot delete a granule that is published to CMR. Remove it from CMR first'
+    'You cannot delete a granule or files from a granule that is published to CMR. Remove it from CMR first'
   );
-});
 
-test.skip('DELETE a failed delete will not delete granule or files', async (t) => {
+  // granule should still exist in Dynamo and PG
+  t.true(await granulePgModel.exists(t.context.knex, newPGGranule));
+  t.true(await granuleModel.exists({ granuleId }));
 
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
+    // file should still exist in S3
+    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+    // file should still exist in PG
+    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+  }
+  /* eslint-enable no-await-in-loop */
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
@@ -728,7 +814,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
-    t.false(await fileExists(file.bucket, file.key));
+    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
   }
   /* eslint-enable no-await-in-loop */
 
@@ -811,13 +897,6 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
     granulePgModel.get(t.context.knex, { granule_id: granuleId }),
     { instanceOf: RecordDoesNotExist }
   );
-});
-
-test.skip('DELETE does not delete Dynamo or RDS record if the RDS transaction fails', async (t) => {
-});
-
-// TODO can't be because the file isn't present in S3
-test.skip('DELETE does not delete Dynamo or RDS record if file S3 delete fails', async (t) => {
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {
