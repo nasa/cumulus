@@ -163,7 +163,7 @@ test.serial('Workflow is added to the input queue', async (t) => {
 
 test.serial('The correct message is enqueued', async (t) => {
   const {
-    configWorkflow,
+    workflow,
     event,
     queueExecutionLimits,
     queueUrl,
@@ -208,7 +208,7 @@ test.serial('The correct message is enqueued', async (t) => {
       queueExecutionLimits,
     },
     meta: {
-      workflow_name: configWorkflow,
+      workflow_name: workflow,
     },
     payload: {
       workflow: {
