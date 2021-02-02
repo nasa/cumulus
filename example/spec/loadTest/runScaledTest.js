@@ -26,7 +26,7 @@ const {
 
 // ** Configurable Variables
 const expectedGranuleCount = 500; // Per batch
-const batches = 4; // Number of batches to run
+const batches = 5; // Number of batches to run
 const providerPathTemplate = `ingest_${expectedGranuleCount}_test`; // Directory pattern to use
 const providerPaths = generateIterableTestDirectories(providerPathTemplate, batches); // Given N batches, run over "pattern_0-9,a-z" directories
 // const providerPaths = ['ingest_100_test_0'];
