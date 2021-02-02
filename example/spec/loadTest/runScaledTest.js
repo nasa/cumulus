@@ -114,7 +114,7 @@ describe('The Ingest Load Test', () => {
       await collections.createCollection({ prefix: stackName, collection });
       testCollections.push(collection);
 
-      console.log(`Starting ingest execution for batch ${workflowCount}/${providerPaths.length}`);
+      console.log(`Starting ingest execution for batch ${workflowCount + 1}/${providerPaths.length}`);
       workflowExecution = await buildAndExecuteWorkflow(
         stackName,
         bucket,
