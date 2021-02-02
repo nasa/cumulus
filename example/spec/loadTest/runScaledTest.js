@@ -6,9 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const pWaitFor = require('p-wait-for');
 
-const { cloudwatch } = require('@cumulus/aws-client/services');
 const { getAggregateMetricQuery, getInvocationCount } = require('@cumulus/integration-tests/metrics');
-const  { generateIterableTestDirectories } = require('@cumulus/integration-tests/utils');
+const { generateIterableTestDirectories } = require('@cumulus/integration-tests/utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const { providers, collections, granules } = require('@cumulus/api-client');
@@ -27,10 +26,10 @@ const {
 
 // ** Configurable Variables
 const expectedGranuleCount = 500; // Per batch
-const batches = 4;
-const providerPathTemplate = `ingest_${expectedGranuleCount}_test`;
-const providerPaths = generateIterableTestDirectories(providerPathTemplate, batches);
-// const providerPaths = ['ingest_100_test_1'];
+const batches = 4; // Number of batches to run
+const providerPathTemplate = `ingest_${expectedGranuleCount}_test`; // Directory pattern to use
+const providerPaths = generateIterableTestDirectories(providerPathTemplate, batches); // Given N batches, run over "pattern_0-9,a-z" directories
+// const providerPaths = ['ingest_100_test_0'];
 
 const waitForIngestTimeoutMs = 6 * 60 * 1000;
 const statsTimeout = 240 * 1000;
@@ -83,113 +82,103 @@ const checkGranuleCount = async (granuleCollection, config, count) => {
 describe('The Ingest Load Test', () => {
   beforeAll(async () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = process.env.LOAD_TEST_TIMEOUT || 4200000;
-    try {
-      const config = await loadConfig();
-      stackName = config.stackName;
-      bucket = config.bucket;
-      process.env.system_bucket = config.bucket;
-      process.env.ProvidersTable = `${stackName}-ProvidersTable`;
-      process.env.PdrsTable = `${stackName}-PdrsTable`;
-      process.env.ExecutionsTable = `${stackName}-ExecutionsTable`;
-      process.env.GranulesTable = `${stackName}-GranulesTable`;
-      let workflowCount = 0;
+    const config = await loadConfig();
+    stackName = config.stackName;
+    bucket = config.bucket;
+    process.env.system_bucket = config.bucket;
+    process.env.ProvidersTable = `${stackName}-ProvidersTable`;
+    process.env.PdrsTable = `${stackName}-PdrsTable`;
+    process.env.ExecutionsTable = `${stackName}-ExecutionsTable`;
+    process.env.GranulesTable = `${stackName}-GranulesTable`;
+    let workflowCount = 0;
 
-      const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
-      const collectionTemplate = JSON.parse(fs.readFileSync(
-        path.join(__dirname, '/collection/s3_loadtest_MOD09GQ_006L.json'),
-        'utf8'
-      ));
+    const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
+    const collectionTemplate = JSON.parse(fs.readFileSync(
+      path.join(__dirname, '/collection/s3_loadtest_MOD09GQ_006L.json'),
+      'utf8'
+    ));
 
-      const testSuffix = createTestSuffix(testId);
-      provider = {
-        id: `s3_provider${testSuffix}`,
-        host: 'cumulus-sandbox-fake-s3-provider',
-        protocol: 's3',
-        globalConnectionLimit: 1000,
-      };
+    const testSuffix = createTestSuffix(testId);
+    provider = {
+      id: `s3_provider${testSuffix}`,
+      host: 'cumulus-sandbox-fake-s3-provider',
+      protocol: 's3',
+      globalConnectionLimit: 1000,
+    };
 
-      await providers.createProvider({ prefix: stackName, provider });
-      while (workflowCount < providerPaths.length) {
-        // Create collection for this batch
-        const collection = { ...collectionTemplate };
-        collection.name += `_${randomString()}`;
-        await collections.createCollection({ prefix: stackName, collection });
-        testCollections.push(collection);
+    await providers.createProvider({ prefix: stackName, provider });
+    while (workflowCount < providerPaths.length) {
+      // Create collection for this batch
+      const collection = { ...collectionTemplate };
+      collection.name += `_${randomString()}`;
+      await collections.createCollection({ prefix: stackName, collection });
+      testCollections.push(collection);
 
-        console.log(`Starting ingest execution for batch ${workflowCount}${providerPaths.length}`);
-        workflowExecution = await buildAndExecuteWorkflow(
-          stackName,
-          bucket,
-          'DiscoverGranules',
-          collection,
-          provider,
-          undefined,
-          { provider_path: providerPaths[workflowCount] }
-        );
-        await (new LambdaStep()).getStepOutput(
-          workflowExecution.executionArn,
-          'QueueGranules'
-        );
-        const ingestedGranules = await checkGranuleCount(collection, config, expectedGranuleCount);
-        if (ingestedGranules.length < expectedGranuleCount * granuleCountThreshold) {
-          throw new Error(`Aborting, counts too low on test run ${workflowCount}`);
-        }
-        allIngestedGranules = allIngestedGranules.concat(ingestedGranules);
-        console.log(`Ingested ${ingestedGranules.length} granules in batch ${workflowCount}`);
-        workflowCount += 1;
+      console.log(`Starting ingest execution for batch ${workflowCount}/${providerPaths.length}`);
+      workflowExecution = await buildAndExecuteWorkflow(
+        stackName,
+        bucket,
+        'DiscoverGranules',
+        collection,
+        provider,
+        undefined,
+        { provider_path: providerPaths[workflowCount] }
+      );
+      await (new LambdaStep()).getStepOutput(
+        workflowExecution.executionArn,
+        'QueueGranules'
+      );
+      const ingestedGranules = await checkGranuleCount(collection, config, expectedGranuleCount);
+      if (ingestedGranules.length < expectedGranuleCount * granuleCountThreshold) {
+        throw new Error(`Aborting, counts too low on test run ${workflowCount}`);
       }
-      testConfig = config;
-      beforeAllCompleted = true;
-    } catch (error) {
-      console.log(error);
-      throw error;
+      allIngestedGranules = allIngestedGranules.concat(ingestedGranules);
+      console.log(`Ingested ${ingestedGranules.length} granules in batch ${workflowCount}`);
+      workflowCount += 1;
     }
+    testConfig = config;
+    beforeAllCompleted = true;
   });
 
   afterAll(async () => {
-    try {
-      const granIds = allIngestedGranules.map((g) => g.Key.split('\/').pop().replace(/\.hdf$/, ''));
-      const bulkDeleteResponse = await granules.bulkDeleteGranules({ prefix: stackName, body: { ids: granIds } });
-      const responseBody = JSON.parse(bulkDeleteResponse.body);
-      if (responseBody.status !== 'RUNNING') {
-        throw new Error(`Cleanup Failed - async operations returned ${JSON.stringify(responseBody)}`);
-      }
-
-      await pWaitFor(async () => {
-        console.log(`\nAsync operation: ${JSON.stringify(bulkDeleteResponse)}`);
-        let asyncOperation = {};
-        try {
-          asyncOperation = await apiTestUtils.getAsyncOperation({
-            prefix: testConfig.stackName,
-            id: responseBody.id,
-          });
-        } catch (error) {
-          return false;
-        }
-        if (!asyncOperation.body) {
-          return false;
-        }
-        if (['RUNNER_FAILED', 'TASK_FAILED'].includes(JSON.parse(asyncOperation.body).status)) {
-          throw new Error(`Cleanup failed on delete granules async operation ${JSON.stringify(asyncOperation.body)}`);
-        }
-        return JSON.parse(asyncOperation.body).status === 'SUCCEEDED';
-      }, { interval: 10 * 1000, timeout: 15 * 60 * 1000 });
-
-      console.log('Bulk deletion succeeded!');
-
-      await providers.deleteProvider({ prefix: stackName, provider: provider.id });
-      const deleteCollectionsPromises = testCollections.map((collection) => {
-        return collections.deleteCollection({
-          prefix: stackName,
-          collectionName: collection.name,
-          collectionVersion: collection.version,
-        });
-      });
-      await Promise.all(deleteCollectionsPromises);
-    } catch (error) {
-      console.log(`\nWarning -- cleanup didn't complete: ${error}`);
-      throw error;
+    const granIds = allIngestedGranules.map((g) => g.Key.split('\/').pop().replace(/\.hdf$/, ''));
+    const bulkDeleteResponse = await granules.bulkDeleteGranules({ prefix: stackName, body: { ids: granIds } });
+    const responseBody = JSON.parse(bulkDeleteResponse.body);
+    if (responseBody.status !== 'RUNNING') {
+      throw new Error(`Cleanup Failed - async operations returned ${JSON.stringify(responseBody)}`);
     }
+
+    await pWaitFor(async () => {
+      console.log(`\nAsync operation: ${JSON.stringify(bulkDeleteResponse)}`);
+      let asyncOperation = {};
+      try {
+        asyncOperation = await apiTestUtils.getAsyncOperation({
+          prefix: testConfig.stackName,
+          id: responseBody.id,
+        });
+      } catch (error) {
+        return false;
+      }
+      if (!asyncOperation.body) {
+        return false;
+      }
+      if (['RUNNER_FAILED', 'TASK_FAILED'].includes(JSON.parse(asyncOperation.body).status)) {
+        throw new Error(`Cleanup failed on delete granules async operation ${JSON.stringify(asyncOperation.body)}`);
+      }
+      return JSON.parse(asyncOperation.body).status === 'SUCCEEDED';
+    }, { interval: 10 * 1000, timeout: 15 * 60 * 1000 });
+
+    console.log('Bulk deletion succeeded!');
+
+    await providers.deleteProvider({ prefix: stackName, provider: provider.id });
+    const deleteCollectionsPromises = testCollections.map((collection) => {
+      return collections.deleteCollection({
+        prefix: stackName,
+        collectionName: collection.name,
+        collectionVersion: collection.version,
+      });
+    });
+    await Promise.all(deleteCollectionsPromises);
   });
 
   it('executes successfully', () => {
@@ -312,8 +301,8 @@ describe('The Ingest Load Test', () => {
 
       console.log(`Counts:  Invocations: ${invocationCount}, throttleCount ${throttleCount}, errorCount: ${errorCount}`);
       expect(invocationCount).toBeGreaterThan(publishExecutionsMinInvocations); // Checking for interference
-      expect(dbThrottleCount).toBe(0);
-      expect(dbErrorCount).toBe(0);
+      expect(throttleCount).toBe(0);
+      expect(errorCount).toBe(0);
     }
   });
 

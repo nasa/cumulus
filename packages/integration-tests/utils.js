@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs-extra');
 
 const generateIterableTestDirectories = (basePath, count) => {
-  if(count > 35) {
+  if (count > 35) {
     throw new Error('Predefined directory pattern only defined up to 35 batches');
   }
   // Array containing 0-9, a-z
