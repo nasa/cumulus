@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2395**
+  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
+    custom security group mappings
+
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
 
