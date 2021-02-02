@@ -56,27 +56,3 @@ resource "aws_lambda_permission" "sqs_message_consumer_watcher" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.sqs_message_consumer_watcher.arn
 }
-
-
-# QueueWorkflows Watcher
-
-resource "aws_cloudwatch_event_rule" "post_to_cmr_queue_watcher" {
-  schedule_expression = "rate(1 minute)"
-}
-
-resource "aws_cloudwatch_event_target" "post_to_cmr_queue_watcher" {
-  rule = aws_cloudwatch_event_rule.post_to_cmr_queue_watcher.name
-  arn  = module.cumulus.sqs2sfThrottle_lambda_function_arn
-  input = jsonencode({
-    messageLimit = 500
-    queueUrl     = aws_sqs_queue.post_to_cmr_queue.id
-    timeLimit    = 60
-  })
-}
-
-resource "aws_lambda_permission" "post_to_cmr_queue_watcher" {
-  action        = "lambda:InvokeFunction"
-  function_name = module.cumulus.sqs2sfThrottle_lambda_function_arn
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.post_to_cmr_queue_watcher.arn
-}
