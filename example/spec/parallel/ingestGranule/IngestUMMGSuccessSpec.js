@@ -358,7 +358,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
-      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
+      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION', 'USE SERVICE API',
         'EXTENDED METADATA', 'VIEW RELATED INFORMATION'].sort();
       expect(viewRelatedInfoResource.map(get('URL'))).toContain(s3CredsUrl);
       expect(onlineResources.map(get('Type')).sort()).toEqual(ExpectedResources);
