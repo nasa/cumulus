@@ -69,7 +69,8 @@
       "troubleshooting/troubleshooting-readme",
       "troubleshooting/troubleshooting-deployment",
       "troubleshooting/rerunning-workflow-executions",
-      "troubleshooting/troubleshooting-deployment"
+      "troubleshooting/troubleshooting-deployment",
+      "troubleshooting/reindex-elasticsearch"
     ],
     "Cumulus Development": [
       "adding-a-task",
