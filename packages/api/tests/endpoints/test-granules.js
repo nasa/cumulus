@@ -629,6 +629,10 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
   );
 });
 
+test.skip('DELETE a failed delete will not delete granule or files', async (t) => {
+
+});
+
 test('DELETE deleting an existing unpublished granule', async (t) => {
   const buckets = {
     protected: {
@@ -812,10 +816,8 @@ test('DELETE removes a granule from RDS and Dynamo', async (t) => {
 test.skip('DELETE does not delete Dynamo or RDS record if the RDS transaction fails', async (t) => {
 });
 
-test.skip('DELETE deletes the granule\'s files', async (t) => {
-});
-
-test.skip('DELETE does not delete Dynamo or RDS record if file delete fails', async (t) => {
+// TODO can't be because the file isn't present in S3
+test.skip('DELETE does not delete Dynamo or RDS record if file S3 delete fails', async (t) => {
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {

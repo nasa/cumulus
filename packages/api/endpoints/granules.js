@@ -171,22 +171,19 @@ async function del(req, res) {
   //     Delete files from S3 **perhaps
   //     Delete granule from dynamo
   await knex.transaction(async (trx) => {
-    granulePgModel.delete(trx, pgGranule)
-      .then(
-        filePgModel.deleteGranuleFiles(trx, pgGranule)
-      )
-      .then(
-        granuleModelClient.delete(dynamoGranule)
-      )
-      .catch((error) => {
-        if (error instanceof DeletePublishedGranule) {
-          return res.boom.badRequest(error.message);
-        }
-        throw error;
-      })
-      .then(trx.commit)
-      .catch(trx.rollback);
-  });
+    // Delete the granule's files from Postgres and S3
+    await filePgModel.deleteGranuleFiles(trx, pgGranule);
+    // Delete the Granule from Postgres
+    await granulePgModel.delete(trx, pgGranule);
+    // Delete the granule from Dynamo
+    await granuleModelClient.delete(dynamoGranule);
+  })
+    .catch((error) => {
+      if (error instanceof DeletePublishedGranule) {
+        return res.boom.badRequest(error.message);
+      }
+      throw error;
+    });
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);

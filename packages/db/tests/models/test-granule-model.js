@@ -252,3 +252,9 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
   const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
   t.is(record.status, 'running');
 });
+
+test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {});
+
+test('GranulePgModel.delete() throws an error if the granule is published', async (t) => {});
+
+test('GranulePgModel.delete() works with a transaction', async (t) => {});
