@@ -325,6 +325,57 @@ test('DELETE removes a PDR from RDS and DynamoDB', async (t) => {
   );
 });
 
-test.todo('DELETE removes a PDR from RDS only if no DynamoDB match exists');
+test('DELETE removes a PDR from RDS only if no DynamoDB match exists', async (t) => {
+  const pdrName = `pdr_${cryptoRandomString({ length: 6 })}`;
+  const newPGPdr = fakePdrRecordFactory({
+    name: pdrName,
+    status: 'completed',
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+  });
 
-test.todo('DELETE removes a PDR from DynamoDB only if no RDS match exists');
+  // create a new PDR in RDS
+  await pdrPgModel.create(t.context.knex, newPGPdr);
+
+  const response = await request(app)
+    .delete(`/pdrs/${pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+  t.is(response.status, 200);
+
+  // Check Dynamo and RDS. The PDR should not exist in either.
+  await t.throwsAsync(
+    pdrModel.get({ pdrName }),
+    { instanceOf: RecordDoesNotExist }
+  );
+
+  t.is(
+    await pdrPgModel.exists(t.context.knex, { name: pdrName }),
+    false
+  );
+});
+
+test('DELETE removes a PDR from DynamoDB only if no RDS match exists', async (t) => {
+  const newDynamoPdr = fakePdrFactory('completed');
+  const pdrName = newDynamoPdr.pdrName;
+
+  // create a new PDR in Dynamo
+  await pdrModel.create(newDynamoPdr);
+
+  const response = await request(app)
+    .delete(`/pdrs/${pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+  t.is(response.status, 200);
+
+  // Check Dynamo and RDS. The PDR should not exist in either.
+  await t.throwsAsync(
+    pdrModel.get({ pdrName }),
+    { instanceOf: RecordDoesNotExist }
+  );
+
+  t.is(
+    await pdrPgModel.exists(t.context.knex, { name: pdrName }),
+    false
+  );
+});
