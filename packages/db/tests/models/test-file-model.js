@@ -1,5 +1,4 @@
 const test = require('ava');
-const { Knex } = require('knex');
 const cryptoRandomString = require('crypto-random-string');
 const {
   randomString,
@@ -9,7 +8,6 @@ const {
 const {
   fileExists,
   createS3Buckets,
-  deleteS3Buckets,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 
@@ -50,6 +48,57 @@ const createFakeGranule = async (dbClient) => {
   // not number, by knex
   // see https://github.com/knex/knex/issues/387
   return Number.parseInt(granuleCumulusId, 10);
+};
+
+const saveFilesToS3AndPG = async (dbClient, filePgModel, granuleCumulusId) => {
+  const buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+
+  const files = [
+    fakeFileRecordFactory({
+      bucket: buckets.protected.name,
+      file_name: `${granuleCumulusId}.hdf`,
+      granule_cumulus_id: granuleCumulusId,
+    }),
+    fakeFileRecordFactory({
+      bucket: buckets.protected.name,
+      file_name: `${granuleCumulusId}.cmr.xml`,
+      granule_cumulus_id: granuleCumulusId,
+    }),
+    fakeFileRecordFactory({
+      bucket: buckets.public.name,
+      file_name: `${granuleCumulusId}.jpg`,
+      granule_cumulus_id: granuleCumulusId,
+    }),
+  ];
+
+  // Add files to PG
+  await Promise.all(files.map((f) => filePgModel.create(dbClient, f)));
+
+  await createS3Buckets([
+    buckets.protected.name,
+    buckets.public.name,
+  ]);
+
+  // Add files to S3
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    await s3PutObject({ // eslint-disable-line no-await-in-loop
+      Bucket: file.bucket,
+      Key: file.key,
+      Body: `test data ${randomString()}`,
+    });
+  }
+
+  return files;
 };
 
 test.before(async (t) => {
@@ -125,53 +174,7 @@ test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule 
   } = t.context;
 
   const granuleCumulusId = await createFakeGranule(t.context.knex);
-
-  const buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-
-  const files = [
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.hdf`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.cmr.xml`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.public.name,
-      file_name: `${granuleCumulusId}.jpg`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-  ];
-
-  // Add files to PG
-  await Promise.all(files.map((f) => filePgModel.create(knex, f)));
-
-  await createS3Buckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
-
-  // Add files to S3
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    await s3PutObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
+  const files = await saveFilesToS3AndPG(knex, filePgModel, granuleCumulusId);
 
   // Delete files from PG and S3
   const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
@@ -187,11 +190,6 @@ test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule 
     t.false(await fileExists(file.bucket, file.key));
   }
   /* eslint-enable no-await-in-loop */
-
-  await deleteS3Buckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
 });
 
 test('FilePgModel.deleteGranuleFiles() works with a transaction', async (t) => {
@@ -201,53 +199,7 @@ test('FilePgModel.deleteGranuleFiles() works with a transaction', async (t) => {
   } = t.context;
 
   const granuleCumulusId = await createFakeGranule(t.context.knex);
-
-  const buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-
-  const files = [
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.hdf`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.cmr.xml`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.public.name,
-      file_name: `${granuleCumulusId}.jpg`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-  ];
-
-  // Add files to PG
-  await Promise.all(files.map((f) => filePgModel.create(knex, f)));
-
-  await createS3Buckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
-
-  // Add files to S3
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    await s3PutObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
+  const files = await saveFilesToS3AndPG(knex, filePgModel, granuleCumulusId);
 
   // Delete files from PG and S3 using a transaction
   const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
@@ -266,63 +218,16 @@ test('FilePgModel.deleteGranuleFiles() works with a transaction', async (t) => {
     t.false(await fileExists(file.bucket, file.key));
   }
   /* eslint-enable no-await-in-loop */
-
-  await deleteS3Buckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
 });
 
 test('Private function FilePgModel._deleteFilesFromS3() deletes all files from S3', async (t) => {
   const {
     filePgModel,
+    knex,
   } = t.context;
 
   const granuleCumulusId = await createFakeGranule(t.context.knex);
-
-  const buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-
-  const files = [
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.hdf`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.cmr.xml`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.public.name,
-      file_name: `${granuleCumulusId}.jpg`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-  ];
-
-  await createS3Buckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
-
-  // Add files to S3
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    await s3PutObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
+  const files = await saveFilesToS3AndPG(knex, filePgModel, granuleCumulusId);
 
   // Delete files from S3
   await filePgModel._deleteFilesFromS3(files);
@@ -334,9 +239,4 @@ test('Private function FilePgModel._deleteFilesFromS3() deletes all files from S
     t.false(await fileExists(file.bucket, file.key));
   }
   /* eslint-enable no-await-in-loop */
-
-  await deleteS3Buckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
 });
