@@ -4,7 +4,9 @@ const cloneDeep = require('lodash/cloneDeep');
 const moment = require('moment');
 const fs = require('fs-extra');
 const get = require('lodash/get');
+const got = require('got');
 const isEqual = require('lodash/isEqual');
+const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
 
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
@@ -263,6 +265,28 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
   }
 );
 
+// returns report text
+const fetchReconciliationReport = async (stackName, reportName) => {
+  const response = await reconciliationReportsApi.getReconciliationReport({
+    prefix: stackName,
+    name: reportName,
+  });
+
+  if (response.statusCode !== 200) {
+    throw new Error(`ReconciliationReport getReconciliationReport API did not return 200: ${JSON.stringify(response)}`);
+  }
+
+  const url = JSON.parse(response.body).url;
+  if (isNil(url) || !url.includes(`reconciliation-reports/${reportName}`) ||
+    !url.includes('AWSAccessKeyId') ||
+    !url.includes('Signature')) {
+    throw new Error(`ReconciliationReport getReconciliationReport did not return valid url ${url}`);
+  }
+
+  const reportResponse = await got(url);
+  return reportResponse.body;
+};
+
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
   let beforeAllFailed = false;
@@ -411,12 +435,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('fetches a reconciliation report through the Cumulus API', async () => {
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      report = JSON.parse(response.body);
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      report = JSON.parse(reportContent);
       expect(report.reportType).toBe('Granule Not Found');
       expect(report.status).toBe('SUCCESS');
     });
@@ -554,12 +574,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('fetches a reconciliation report through the Cumulus API', async () => {
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      report = JSON.parse(response.body);
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      report = JSON.parse(reportContent);
       expect(report.reportType).toBe('Internal');
       expect(report.status).toBe('SUCCESS');
     });

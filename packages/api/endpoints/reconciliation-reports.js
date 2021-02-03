@@ -3,7 +3,6 @@
 const router = require('express-promise-router')();
 const {
   deleteS3Object,
-  getS3Object,
   fileExists,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
@@ -52,12 +51,7 @@ async function getReport(req, res) {
   try {
     const result = await reconciliationReportModel.get({ name });
     const { Bucket, Key } = parseS3Uri(result.location);
-    if (Key.endsWith('.json')) {
-      const file = await getS3Object(Bucket, Key);
-      logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
-      return res.json(JSON.parse(file.Body.toString()));
-    }
-    if (Key.endsWith('.csv')) {
+    if (Key.endsWith('.json') || Key.endsWith('.csv')) {
       const downloadFile = Key.split('/').pop();
       const downloadURL = s3().getSignedUrl('getObject', {
         Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
