@@ -81,8 +81,8 @@ test.beforeEach(async (t) => {
     ...fakeProviderFactory(),
     cmKeyId: 'key',
   };
-  const pgCreateObject = await translateApiProviderToPostgresProvider(t.context.testProvider);
-  await t.context.providerPgModel.create(t.context.testKnex, pgCreateObject);
+  t.context.testPostgresProvider = await translateApiProviderToPostgresProvider(t.context.testProvider);
+  await t.context.providerPgModel.create(t.context.testKnex, t.context.testPostgresProvider);
   await providerModel.create(t.context.testProvider);
 });
 
@@ -111,7 +111,7 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT updates existing provider', async (t) => {
-  const { testProvider, testProvider: { id } } = t.context;
+  const { testPostgresProvider, testProvider, testProvider: { id } } = t.context;
   const expectedProvider = omit(testProvider,
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
   const postgresExpectedProvider = await translateApiProviderToPostgresProvider(expectedProvider);
@@ -129,6 +129,8 @@ test('PUT updates existing provider', async (t) => {
     updatedAt: Date.now(),
   };
 
+  const updatedPostgresProvider = translateApiProviderToPostgresProvider(updatedProvider);
+
   await request(app)
     .put(`/providers/${id}`)
     .send(updatedProvider)
@@ -141,6 +143,9 @@ test('PUT updates existing provider', async (t) => {
     t.context.testKnex,
     { name: id }
   );
+
+  t.true(actualPostgresProvider.updated_at > updatedPostgresProvider.updated_at);
+  t.true(actualProvider.updatedAt > updatedProvider.updatedAt);
 
   t.deepEqual(actualProvider, {
     ...expectedProvider,

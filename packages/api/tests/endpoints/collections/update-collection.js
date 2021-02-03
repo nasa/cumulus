@@ -129,6 +129,7 @@ test('PUT replaces an existing collection', async (t) => {
     createdAt: Date.now(),
     duplicateHandling: 'error',
   };
+  const updatedPgCollection = translateApiCollectionToPostgresCollection(updatedCollection);
   delete updatedCollection.process;
 
   await request(app)
@@ -147,6 +148,9 @@ test('PUT replaces an existing collection', async (t) => {
     name: originalCollection.name,
     version: originalCollection.version,
   });
+
+  t.true(actualPgCollection.updated_at > updatedPgCollection.updated_at);
+  t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
 
   t.like(actualCollection, {
     ...originalCollection,

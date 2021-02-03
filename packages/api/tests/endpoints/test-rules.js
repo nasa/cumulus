@@ -599,6 +599,8 @@ test('PUT replaces a rule', async (t) => {
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
+  const updatePostgresRule = await translateApiRuleToPostgresRule(updateRule, t.context.dbClient);
+
   await request(app)
     .put(`/rules/${updateRule.name}`)
     .set('Accept', 'application/json')
@@ -607,7 +609,6 @@ test('PUT replaces a rule', async (t) => {
     .expect(200);
 
   const actualRule = await ruleModel.get({ name: updateRule.name });
-
   const actualPostgresRule = await dbClient.select()
     .from(tableNames.rules)
     .where({ name: updateRule.name })
@@ -621,10 +622,13 @@ test('PUT replaces a rule', async (t) => {
     }
   });
 
+  t.true(actualPostgresRule.updated_at > updatePostgresRule.updated_at);
+  t.true(actualRule.updatedAt > updateRule.updatedAt);
+
   t.like(actualPostgresRule, {
     ...postgresExpectedRule,
-    updated_at: actualPostgresRule.updated_at,
     created_at: postgresRule.created_at,
+    updated_at: actualPostgresRule.updated_at,
   });
   t.deepEqual(actualRule, {
     ...updateRule,
