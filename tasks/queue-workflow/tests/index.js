@@ -68,7 +68,10 @@ test.beforeEach(async (t) => {
     },
     input: {
       workflow: {},
-      workflowInput: {},
+      workflowInput: {
+        prop1: randomString(),
+        prop2: randomString(),
+      },
     },
   };
 });
@@ -96,7 +99,8 @@ test.serial('The correct output is returned when workflow is queued', async (t) 
 
 test.serial('The correct output is returned when no workflow is queued', async (t) => {
   const event = t.context.event;
-  event.input.workflow = {};
+  event.workflow = {};
+  event.workflowInput = {};
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -178,6 +182,7 @@ test.serial('The correct message is enqueued', async (t) => {
     event.cumulus_config.state_machine, event.cumulus_config.execution_name
   );
   event.input.workflow = { name: randomString(), arn: randomString() };
+  event.input.workflowInput = { prop1: randomString(), prop2: randomString() };
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -216,7 +221,10 @@ test.serial('The correct message is enqueued', async (t) => {
         name: event.input.workflow.name,
         arn: event.input.workflow.arn,
       },
-      workflowInput: {},
+      workflowInput: {
+        prop1: event.input.workflowInput.prop1,
+        prop2: event.input.workflowInput.prop2,
+      },
     },
   };
 
