@@ -902,6 +902,7 @@ module.exports = {
   getEventSourceMapping: lambda.getEventSourceMapping,
   getExecutionOutput,
   getExecutions,
+  getExecutionInputObject,
   getLambdaAliases: lambda.getLambdaAliases,
   getLambdaVersions: lambda.getLambdaVersions,
   getOnlineResources: cmr.getOnlineResources,
