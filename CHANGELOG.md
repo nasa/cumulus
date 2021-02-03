@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2368**
+  - Add QueueWorkflow task
+
 ### Fixed
 
 - Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
