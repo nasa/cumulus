@@ -5,7 +5,7 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
-const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `provider_${cryptoRandomString({ length: 10 })}`;
 
 const {
   ProviderPgModel,
