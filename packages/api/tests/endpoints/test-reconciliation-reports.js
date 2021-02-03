@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const got = require('got');
 const isEqual = require('lodash/isEqual');
 const omit = require('lodash/omit');
 const request = require('supertest');
@@ -235,7 +236,8 @@ test.serial('get a report', (t) =>
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .expect(200);
-    t.deepEqual(response.body, {
+    const report = await got(response.body).json();
+    t.deepEqual(report, {
       test_key: `${record.name} test data`,
     });
   })));

@@ -51,6 +51,10 @@ async function getReport(req, res) {
   try {
     const result = await reconciliationReportModel.get({ name });
     const { Bucket, Key } = parseS3Uri(result.location);
+    const reportExists = await fileExists(Bucket, Key);
+    if (!reportExists) {
+      return res.boom.notFound('The report does not exist!');
+    }
     if (Key.endsWith('.json') || Key.endsWith('.csv')) {
       const downloadFile = Key.split('/').pop();
       const downloadURL = s3().getSignedUrl('getObject', {
@@ -62,9 +66,6 @@ async function getReport(req, res) {
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
-    }
-    if (error.name === 'NoSuchKey') {
-      return res.boom.notFound('The report does not exist!');
     }
     throw error;
   }

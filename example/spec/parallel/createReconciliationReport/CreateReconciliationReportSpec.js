@@ -265,7 +265,7 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
   }
 );
 
-// returns report text
+// returns report content text
 const fetchReconciliationReport = async (stackName, reportName) => {
   const response = await reconciliationReportsApi.getReconciliationReport({
     prefix: stackName,
