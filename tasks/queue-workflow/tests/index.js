@@ -61,13 +61,14 @@ test.beforeEach(async (t) => {
 
   t.context.event = {
     config: {
-      configWorkflow: t.context.workflow,
+      parentWorkflow: t.context.workflow,
       queueUrl: t.context.queueUrl,
       stackName: t.context.stackName,
       internalBucket: t.context.templateBucket,
     },
     input: {
-      workflow: [],
+      workflow: {},
+      workflowInput: {},
     },
   };
 });
@@ -215,6 +216,7 @@ test.serial('The correct message is enqueued', async (t) => {
         name: event.input.workflow.name,
         arn: event.input.workflow.arn,
       },
+      workflowInput: {},
     },
   };
 

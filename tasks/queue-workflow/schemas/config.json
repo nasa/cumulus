@@ -5,13 +5,13 @@
   "required": [
     "stackName",
     "internalBucket",
-    "configWorkflow"
+    "parentWorkflow"
   ],
   "additionalProperties": false,
   "properties": {
     "queueUrl": { "type": "string" },
     "internalBucket": { "type": "string" },
-    "configWorkflow": { "type": "string" },
+    "parentWorkflow": { "type": "string" },
     "stackName": { "type": "string" },
     "executionNamePrefix": { "type": "string" }
   }

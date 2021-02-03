@@ -162,21 +162,25 @@ async function enqueueWorkflowMessage({
   stack,
   systemBucket,
   queueUrl,
-  configWorkflow,
-  inputWorkflow,
+  parentWorkflow,
+  workflow,
+  workflowInput,
   executionNamePrefix,
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
-  const { arn: configWorkflowArn } = await getJsonS3Object(
+  const { arn: parentWorkflowArn } = await getJsonS3Object(
     systemBucket,
-    getWorkflowFileKey(stack, configWorkflow)
+    getWorkflowFileKey(stack, parentWorkflow)
   );
 
-  const payload = { workflow: inputWorkflow };
+  const payload = {
+    workflowInput,
+    workflow,
+  };
 
-  const workflow = {
-    name: configWorkflow,
-    arn: configWorkflowArn,
+  const parentWorkflowDefinition = {
+    name: parentWorkflow,
+    arn: parentWorkflowArn,
   };
 
   const message = buildQueueMessageFromTemplate({
@@ -184,7 +188,7 @@ async function enqueueWorkflowMessage({
     parentExecutionArn,
     payload,
     queueUrl,
-    workflow,
+    workflow: parentWorkflowDefinition,
     executionNamePrefix,
   });
 
