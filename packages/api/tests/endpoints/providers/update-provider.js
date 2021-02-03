@@ -14,7 +14,7 @@ const {
   localStackConnectionEnv,
   nullifyUndefinedProviderValues,
   translateApiProviderToPostgresProvider,
-  tableNames,
+  ProviderPgModel,
 } = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -54,6 +54,7 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
+  t.context.providerPgModel = new ProviderPgModel();
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -80,8 +81,8 @@ test.beforeEach(async (t) => {
     ...fakeProviderFactory(),
     cmKeyId: 'key',
   };
-  const createObject = await translateApiProviderToPostgresProvider(t.context.testProvider);
-  await t.context.testKnex(tableNames.providers).insert(createObject);
+  const pgCreateObject = await translateApiProviderToPostgresProvider(t.context.testProvider);
+  await t.context.providerPgModel.create(t.context.testKnex, pgCreateObject);
   await providerModel.create(t.context.testProvider);
 });
 
@@ -109,13 +110,12 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT replaces existing provider', async (t) => {
+test('PUT updates existing provider', async (t) => {
   const { testProvider, testProvider: { id } } = t.context;
   const expectedProvider = omit(testProvider,
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
-
   const postgresExpectedProvider = await translateApiProviderToPostgresProvider(expectedProvider);
-  const postgresOmitList = ['created_at', 'updated_at', 'cumulus_id'];
+  const postgresOmitList = ['cumulus_id'];
   // Make sure testProvider contains values for the properties we omitted from
   // expectedProvider to confirm that after we replace (PUT) the provider those
   // properties are dropped from the stored provider.
@@ -123,43 +123,43 @@ test('PUT replaces existing provider', async (t) => {
   t.truthy(testProvider.protocol);
   t.truthy(testProvider.cmKeyId);
 
+  const updatedProvider = {
+    ...expectedProvider,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
   await request(app)
     .put(`/providers/${id}`)
-    .send(expectedProvider)
+    .send(updatedProvider)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { body: actualProvider } = await request(app)
-    .get(`/providers/${id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const postgresRecord = await t.context.testKnex(tableNames.providers)
-    .select()
-    .where({
-      name: id,
-    });
+  const actualProvider = await providerModel.get({ id });
+  const actualPostgresProvider = await t.context.providerPgModel.get(
+    t.context.testKnex,
+    { name: id }
+  );
 
   t.deepEqual(actualProvider, {
     ...expectedProvider,
     protocol: 'http', // Default value added by schema rule
-    createdAt: actualProvider.createdAt,
+    createdAt: expectedProvider.createdAt,
     updatedAt: actualProvider.updatedAt,
   });
 
-  t.is(postgresRecord.length, 1);
-
   t.deepEqual(
     omit(
-      await postgresRecord[0],
+      actualPostgresProvider,
       postgresOmitList
     ),
     omit(
       nullifyUndefinedProviderValues({
         ...postgresExpectedProvider,
-        protocol: 'http', // Default value, added by RDS rule
+        protocol: 'http', // Default value, added by RDS rule,
+        created_at: postgresExpectedProvider.created_at,
+        updated_at: actualPostgresProvider.updated_at,
       }),
       postgresOmitList
     )
