@@ -1,6 +1,6 @@
 resource "null_resource" "get_cnmToGranule" {
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
   provisioner "local-exec" {
     command = "curl -s -L -o cnmToGranule.zip https://github.com/podaac/cumulus-cnm-to-granule/releases/download/v1.4.2/cnmToGranule-1.4.2.zip"
@@ -9,8 +9,8 @@ resource "null_resource" "get_cnmToGranule" {
 
 resource "aws_lambda_function" "cnm_to_cma_task" {
   function_name = "${var.prefix}-CNMToCMA"
-  depends_on  = ["null_resource.get_cnmToGranule"]
-  filename    = "cnmToGranule.zip"
+  depends_on    = [null_resource.get_cnmToGranule]
+  filename      = "cnmToGranule.zip"
   handler       = "gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams"
   role          = module.cumulus.lambda_processing_role_arn
   runtime       = "java8"

@@ -21,7 +21,7 @@ const { createGranuleInventoryReport } = require('./reports/granule-inventory-re
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
-const { deconstructCollectionId, errorify } = require('../lib/utils');
+const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToESCollectionSearchParams,
@@ -35,6 +35,14 @@ const { ESSearchQueue } = require('../es/esSearchQueue');
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
+
+/**
+ *
+ * @param {string} reportType - reconciation report type
+ * @returns {boolean} - Whether or not to include the link between files and
+ * granules in the report.
+ */
+const linkingFilesToGranules = (reportType) => reportType === 'Granule Not Found';
 
 /**
  * return the queue of the files for a given bucket,
@@ -134,11 +142,13 @@ async function fetchESCollections(recReportParams) {
  * DynamoDB, and that there are no extras in either S3 or DynamoDB
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
+ * @param {Object} recReportParams - input report params.
  * @returns {Promise<Object>} a report
  */
-async function createReconciliationReportForBucket(Bucket) {
+async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
   const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
+  const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
 
   let okCount = 0;
   const onlyInS3 = [];
@@ -150,7 +160,7 @@ async function createReconciliationReportForBucket(Bucket) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
     const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
 
-    if (!okCountByGranule[nextDynamoDbItem.granuleId]) {
+    if (linkFilesAndGranules && !okCountByGranule[nextDynamoDbItem.granuleId]) {
       okCountByGranule[nextDynamoDbItem.granuleId] = 0;
     }
 
@@ -168,7 +178,9 @@ async function createReconciliationReportForBucket(Bucket) {
     } else {
       // Found an item that is in both S3 and DynamoDB
       okCount += 1;
-      okCountByGranule[nextDynamoDbItem.granuleId] += 1;
+      if (linkFilesAndGranules) {
+        okCountByGranule[nextDynamoDbItem.granuleId] += 1;
+      }
       s3ObjectsQueue.shift();
       dynamoDbFilesLister.shift();
     }
@@ -627,7 +639,7 @@ async function createReconciliationReport(recReportParams) {
   if (location !== 'CMR') {
     // Create a report for each bucket
     const promisedBucketReports = dataBuckets.map(
-      (bucket) => createReconciliationReportForBucket(bucket)
+      (bucket) => createReconciliationReportForBucket(bucket, recReportParams)
     );
 
     const bucketReports = await Promise.all(promisedBucketReports);
@@ -639,13 +651,17 @@ async function createReconciliationReport(recReportParams) {
         bucketReport.onlyInDynamoDb
       );
 
-      Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
-        const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
-        const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+      if (linkingFilesToGranules(recReportParams.reportType)) {
+        Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
+          const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
+          const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
 
-        report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
-          + bucketGranuleCount;
-      });
+          report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
+            + bucketGranuleCount;
+        });
+      } else {
+        delete report.filesInCumulus.okCountByGranule;
+      }
     });
   }
 
@@ -683,7 +699,7 @@ async function processRequest(params) {
   const createStartTime = moment.utc();
   const reportRecordName = reportName
     || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
-  let reportKey = `${stackName}/reconciliation-reports/${reportRecordName}.json`;
+  let reportKey = `${stackName}/reconciliation-reports/${filenamify(reportRecordName)}.json`;
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database
