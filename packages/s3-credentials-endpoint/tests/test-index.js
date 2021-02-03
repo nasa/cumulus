@@ -337,7 +337,7 @@ test('s3credentials() with a username and a client name sends the correct reques
 test('displayS3Credentials fills template with correct distribution endpoint.', async (t) => {
   const send = sinon.spy();
   const res = { send };
-  const expectedLink = `<a href="${process.env.DISTRIBUTION_ENDPOINT}/s3credentials">${process.env.DISTRIBUTION_ENDPOINT}/s3credentials</a>`;
+  const expectedLink = `<a href="${process.env.DISTRIBUTION_ENDPOINT}s3credentials" target="_blank">${process.env.DISTRIBUTION_ENDPOINT}s3credentials</a>`;
 
   await displayS3CredentialInstructions(undefined, res);
   t.true(send.calledWithMatch(expectedLink));
