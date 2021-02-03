@@ -166,7 +166,7 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
   }
   const url = {
     URL: hyraxUrl,
-    Type: 'GET DATA',
+    Type: 'USE SERVICE API',
     Subtype: 'OPENDAP DATA',
     Description: 'OPeNDAP request URL',
   };

@@ -36,7 +36,7 @@ Verify that the correct version of Terraform is installed (version number should
 
 ```shell
 $ terraform --version
-Terraform v0.12.12
+Terraform v0.13.6
 ```
 
 If you want to install Terraform manually,
@@ -256,7 +256,7 @@ with the following parameters:
 - stack-name - Stack name for the fake server
 - VpcId - VPC ID
 - Subnet - Subnet ID
-- PermissionsBoundary - A permissions boundary from NGAP. 
+- PermissionsBoundary - A permissions boundary from NGAP.
 - NGAPProtAppInstanceMinimalPolicyName - Will be included in the list of Amazon Resource Names (ARNs) of the IAM managed policies we want to attach to the user.
 - LatestAmiId - An SSM parameter value that resolves to an Amazon Machine Image ID value. When deploying within NGAP, the SSM parameter is provided by NGAP.
 - FtpPassword - Password for the FTP server created by the stack

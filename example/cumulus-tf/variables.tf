@@ -355,3 +355,9 @@ variable "ems_deploy" {
   type        = bool
   default     = true
 }
+
+variable "ecs_custom_sg_ids" {
+  description = "User defined security groups to add to the Core ECS cluster"
+  type = list(string)
+  default = []
+}
