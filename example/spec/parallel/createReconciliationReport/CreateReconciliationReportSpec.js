@@ -384,11 +384,14 @@ describe('When there are granule differences and granule reconciliation is run',
     it('generates an async operation through the Cumulus API', async () => {
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
-        request: { collectionId: [
-          constructCollectionId(collection.name, collection.version),
-          constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
-          constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
-        ] },
+        request: {
+          collectionId: [
+            constructCollectionId(collection.name, collection.version),
+            constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+            constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
+          ],
+          reportType: 'Granule Not Found',
+        },
       });
 
       const responseBody = JSON.parse(response.body);
@@ -414,7 +417,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       report = JSON.parse(response.body);
-      expect(report.reportType).toBe('Inventory');
+      expect(report.reportType).toBe('Granule Not Found');
       expect(report.status).toBe('SUCCESS');
     });
 
