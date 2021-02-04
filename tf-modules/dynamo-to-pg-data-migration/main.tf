@@ -49,7 +49,9 @@ data "aws_iam_policy_document" "data_migration" {
       var.dynamo_tables.collections.arn,
       var.dynamo_tables.providers.arn,
       var.dynamo_tables.executions.arn,
-      var.dynamo_tables.rules.arn
+      var.dynamo_tables.rules.arn,
+      var.dynamo_tables.granules.arn,
+      var.dynamo_tables.pdrs.arn,
     ]
   }
 
@@ -141,6 +143,8 @@ resource "aws_lambda_function" "data_migration2" {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
       ExecutionsTable = var.dynamo_tables.executions.name
+      GranulesTable = var.dynamo_tables.granules.name
+      PdrsTable = var.dynamo_tables.pdrs.name
       dbHeartBeat = var.rds_connection_heartbeat
     }
   }
@@ -157,4 +161,22 @@ resource "aws_lambda_function" "data_migration2" {
   }
 
   tags = var.tags
+}
+
+module "data_migration_ecs_service" {
+  source = "../../tf-modules/cumulus_ecs_service"
+
+  prefix = var.prefix
+  name   = "DataMigrationService"
+
+  log2elasticsearch_lambda_function_arn = var.log2elasticsearch_lambda_function_arn
+  cluster_arn                           = var.ecs_cluster_arn
+  desired_count                         = 1
+  image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
+
+  command = [
+    "cumulus-ecs-task",
+    "--lambdaArn",
+    aws_lambda_function.data_migration2.arn
+  ]
 }
