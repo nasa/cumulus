@@ -270,6 +270,16 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
     aws_api_gateway_integration.s3_credentials_readme[0]
   ]
 
+  triggers = {
+    redeployment = sha1(join(",", list(
+      jsonencode( aws_api_gateway_integration.s3_credentials_redirect[0] ),
+      jsonencode( aws_api_gateway_integration.s3_credentials[0] ),
+      jsonencode( aws_api_gateway_integration.s3_credentials_readme[0] ),
+      )))
+  }
+
+
   rest_api_id = var.tea_rest_api_id
   stage_name  = var.tea_api_gateway_stage
+
 }
