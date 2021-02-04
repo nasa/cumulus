@@ -53,6 +53,8 @@ async function get(req, res) {
   }
 }
 
+const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist');
+
 /**
  * delete a given PDR
  *
@@ -69,22 +71,23 @@ async function del(req, res) {
   const pdrPgModel = new PdrPgModel();
   const knex = await getKnexClient();
 
-  await knex.transaction(async (trx) => {
-    await pdrPgModel.delete(trx, { name: pdrName });
-    await pdrModel.delete({ pdrName });
-    await deleteS3Object(process.env.system_bucket, pdrS3Key);
-  }).catch((error) => {
-    res.boom.badRequest(`Error deleting PDR ${pdrName}`, error);
-    throw error;
-  });
+  try {
+    await knex.transaction(async (trx) => {
+      await pdrPgModel.delete(trx, { name: pdrName });
+      await pdrModel.delete({ pdrName });
+      await deleteS3Object(process.env.system_bucket, pdrS3Key);
+    });
 
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    await esClient.delete({
-      id: pdrName,
-      index: process.env.ES_INDEX,
-      type: 'pdr',
-    }, { ignore: [404] });
+    if (inTestMode()) {
+      const esClient = await Search.es(process.env.ES_HOST);
+      await esClient.delete({
+        id: pdrName,
+        index: process.env.ES_INDEX,
+        type: 'pdr',
+      }, { ignore: [404] });
+    }
+  } catch (error) {
+    if (!isRecordDoesNotExistError(error)) throw error;
   }
   return res.send({ detail: 'Record deleted' });
 }
