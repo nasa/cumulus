@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
-
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
@@ -29,12 +25,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2300**
   - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_granules_workflow.asl.json`.
 
+- **CUMULUS-2391**
+  - Add reportToEms to collections.files file schema
+
 ### Changed
 
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
 
 ### Fixed
+
+- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
 
 - **CUMULUS-2310**
   - Use valid filename for reconciliation report
