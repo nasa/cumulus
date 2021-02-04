@@ -319,10 +319,7 @@ test('DELETE removes a PDR from RDS and DynamoDB', async (t) => {
     { instanceOf: RecordDoesNotExist }
   );
 
-  t.is(
-    await pdrPgModel.exists(t.context.knex, { name: pdrName }),
-    false
-  );
+  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
 
 test('DELETE removes a PDR from RDS only if no DynamoDB match exists', async (t) => {
@@ -349,10 +346,7 @@ test('DELETE removes a PDR from RDS only if no DynamoDB match exists', async (t)
     { instanceOf: RecordDoesNotExist }
   );
 
-  t.is(
-    await pdrPgModel.exists(t.context.knex, { name: pdrName }),
-    false
-  );
+  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
 
 test('DELETE removes a PDR from DynamoDB only if no RDS match exists', async (t) => {
@@ -374,8 +368,5 @@ test('DELETE removes a PDR from DynamoDB only if no RDS match exists', async (t)
     { instanceOf: RecordDoesNotExist }
   );
 
-  t.is(
-    await pdrPgModel.exists(t.context.knex, { name: pdrName }),
-    false
-  );
+  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
