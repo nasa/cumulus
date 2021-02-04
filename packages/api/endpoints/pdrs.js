@@ -53,8 +53,6 @@ async function get(req, res) {
   }
 }
 
-const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist');
-
 /**
  * delete a given PDR
  *
@@ -67,28 +65,27 @@ async function del(req, res) {
 
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
-  await deleteS3Object(process.env.system_bucket, pdrS3Key);
-
   const pdrModel = new models.Pdr();
   const pdrPgModel = new PdrPgModel();
   const knex = await getKnexClient();
 
-  try {
+  await knex.transaction(async (trx) => {
+    await pdrPgModel.delete(trx, { name: pdrName });
     await pdrModel.delete({ pdrName });
-    await pdrPgModel.delete(knex, { name: pdrName });
+    await deleteS3Object(process.env.system_bucket, pdrS3Key);
+  }).catch((error) => {
+    res.boom.badRequest(`Error deleting PDR ${pdrName}`, error);
+    throw error;
+  });
 
-    if (inTestMode()) {
-      const esClient = await Search.es(process.env.ES_HOST);
-      await esClient.delete({
-        id: pdrName,
-        index: process.env.ES_INDEX,
-        type: 'pdr',
-      }, { ignore: [404] });
-    }
-  } catch (error) {
-    if (!isRecordDoesNotExistError(error)) throw error;
+  if (inTestMode()) {
+    const esClient = await Search.es(process.env.ES_HOST);
+    await esClient.delete({
+      id: pdrName,
+      index: process.env.ES_INDEX,
+      type: 'pdr',
+    }, { ignore: [404] });
   }
-
   return res.send({ detail: 'Record deleted' });
 }
 
