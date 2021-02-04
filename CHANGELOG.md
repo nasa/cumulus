@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
+- **CUMULUS-2300**
+  - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_granules_workflow.asl.json`.
 
 - **CUMULUS-2391**
   - Add reportToEms to collections.files file schema
