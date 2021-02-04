@@ -181,11 +181,6 @@ describe('The Ingest Load Test', () => {
     await Promise.all(deleteCollectionsPromises);
   });
 
-  it('executes successfully', () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('SUCCEEDED');
-  });
-
   it('writes to database occur within a reasonable time frame and error count', async () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
     else {
