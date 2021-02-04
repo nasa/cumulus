@@ -154,6 +154,15 @@ data "aws_iam_policy_document" "lambda_processing_access_data_backups" {
       data.aws_s3_bucket.data_backups.arn
     ]
   }
+
+  statement {
+    actions = [
+      "s3:GetObject*",
+    ]
+    resources = [
+      "${data.aws_s3_bucket.data_backups.arn}/*"
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_processing_access_data_backups" {
