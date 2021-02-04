@@ -10,12 +10,12 @@ const { getAggregateMetricQuery, getInvocationCount } = require('@cumulus/integr
 const { generateIterableTestDirectories } = require('@cumulus/integration-tests/utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
-const { providers, collections, granules } = require('@cumulus/api-client');
+const { collections, granules, providers } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const {
-  buildAndExecuteWorkflow,
   api: apiTestUtils,
+  buildAndExecuteWorkflow,
 } = require('@cumulus/integration-tests');
 
 const {
@@ -29,7 +29,6 @@ const expectedGranuleCount = 500; // Per batch
 const batches = 5; // Number of batches to run
 const providerPathTemplate = `ingest_${expectedGranuleCount}_test`; // Directory pattern to use
 const providerPaths = generateIterableTestDirectories(providerPathTemplate, batches); // Given N batches, run over "pattern_0-9,a-z" directories
-// const providerPaths = ['ingest_100_test_0'];
 
 const waitForIngestTimeoutMs = 6 * 60 * 1000;
 const statsTimeout = 240 * 1000;
