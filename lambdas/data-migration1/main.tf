@@ -75,7 +75,7 @@ resource "aws_iam_role_policy" "data_migration1" {
 resource "aws_security_group" "data_migration1" {
   count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
 
-  name   = "${var.prefix}-data-migration"
+  name   = "${var.prefix}-data-migration1"
   vpc_id = var.vpc_id
 
   egress {
