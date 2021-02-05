@@ -131,7 +131,7 @@ test('PUT updates existing provider', async (t) => {
     updatedAt: Date.now(),
   };
 
-  const updatedPostgresProvider = translateApiProviderToPostgresProvider(updatedProvider);
+  const updatedPostgresProvider = await translateApiProviderToPostgresProvider(updatedProvider);
 
   await request(app)
     .put(`/providers/${id}`)
