@@ -41,7 +41,7 @@ const dbLambdaDurationMaxThreshold = 7000; // Max *average* duration test alarm 
 
 // RDS cluster test configuration
 
-const rdsCommitLatencyThrehsold = 10; // Commit latency threshold
+const rdsCommitLatencyThreshold = 10; // Commit latency threshold
 const rdsDiskQueueDepthThreshold = 10;// Queue depth threshold
 const rdsCpuMaximumThreshold = 80; // DB Cluster cpu max threshold
 const rdsDbCapacityThreshold = 3; // RDS ACU capacity threshold
@@ -357,7 +357,7 @@ describe('The Ingest Load Test', () => {
         Statistics: ['Maximum'],
       });
 
-      expect(rdsCommitLatency).toBeLessThan(rdsCommitLatencyThrehsold);
+      expect(rdsCommitLatency).toBeLessThan(rdsCommitLatencyThreshold);
       expect(diskQueueDepth).toBeLessThan(rdsDiskQueueDepthThreshold);
       expect(dbCpuMaximum).toBeLessThan(rdsCpuMaximumThreshold);
       expect(dbCapacity).toBeLessThan(rdsDbCapacityThreshold);
