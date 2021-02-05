@@ -13,6 +13,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   getKnexClient,
+  tableNames,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const Knex = require('knex');
@@ -220,7 +221,7 @@ async function del(req, res) {
   const collectionsModel = new models.Collection();
 
   try {
-    Knex.transaction(async (trx) => {
+    return Knex.transaction(async (trx) => {
       await trx(tableNames.collections).where({ name, version }).del();
       await collectionsModel.delete({ name, version });
       if (inTestMode()) {

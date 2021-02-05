@@ -187,7 +187,7 @@ async function del(req, res) {
   const knex = await getKnexClient({ env: process.env });
 
   try {
-    await knex.transaction(async (trx) => {
+    return knex.transaction(async (trx) => {
       await trx(tableNames.providers).where({ name: req.params.id }).del();
       await providerModel.delete({ id: req.params.id });
       if (inTestMode()) {
