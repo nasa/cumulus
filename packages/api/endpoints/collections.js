@@ -221,7 +221,7 @@ async function del(req, res) {
   const collectionsModel = new models.Collection();
 
   try {
-    return Knex.transaction(async (trx) => {
+    await Knex.transaction(async (trx) => {
       await trx(tableNames.collections).where({ name, version }).del();
       await collectionsModel.delete({ name, version });
       if (inTestMode()) {
@@ -233,8 +233,8 @@ async function del(req, res) {
           type: 'collection',
         }, { ignore: [404] });
       }
-      return res.send({ message: 'Record deleted' });
     });
+    return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError) {
       const message = `Cannot delete collection with associated rules: ${error.rules.join(', ')}`;
