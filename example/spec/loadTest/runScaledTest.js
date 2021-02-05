@@ -25,14 +25,15 @@ const {
 } = require('../helpers/testUtils');
 
 // ** Configurable Variables
-const expectedGranuleCount = 500; // Per batch
-const batches = 5; // Number of batches to run
+const expectedGranuleCount = 500; // Per batch -- requires pre-generation of batch directories in target dir
+const batches = 3; // Number of batches to run
 const providerPathTemplate = `ingest_${expectedGranuleCount}_test`; // Directory pattern to use
 const providerPaths = generateIterableTestDirectories(providerPathTemplate, batches); // Given N batches, run over "pattern_0-9,a-z" directories
 
-const waitForIngestTimeoutMs = 6 * 60 * 1000;
-const statsTimeout = 240 * 1000;
-const granuleCountThreshold = 0.95;
+// Tuneable stats timeout values
+const waitForIngestTimeoutMs = 6 * 60 * 1000; // Timeout(ms) for each batch's files o show up in S3
+const statsTimeout = 240 * 1000; // Timeout(ms) for lambda invocations to stabilize
+const granuleCountThreshold = 0.95; // Percent granules to count as a successful batch on ingest timeout
 
 // sf_event_sqs_to_db_records lambda test configuration
 const dbLambdaErrorThreshold = 0.03; // Max % errors allowed during test
