@@ -187,7 +187,7 @@ async function del(req, res) {
   const knex = await getKnexClient({ env: process.env });
 
   try {
-    return knex.transaction(async (trx) => {
+    await knex.transaction(async (trx) => {
       await trx(tableNames.providers).where({ name: req.params.id }).del();
       await providerModel.delete({ id: req.params.id });
       if (inTestMode()) {
@@ -198,8 +198,8 @@ async function del(req, res) {
           index: process.env.ES_INDEX,
         }, { ignore: [404] });
       }
-      return res.send({ message: 'Record deleted' });
     });
+    return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
       const messageDetail = error.rules || [error.detail];
