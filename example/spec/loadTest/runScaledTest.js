@@ -25,6 +25,7 @@ const {
 } = require('../helpers/testUtils');
 
 // ** Configurable Variables
+
 const expectedGranuleCount = 500; // Per batch -- requires pre-generation of batch directories in target dir
 const batches = 3; // Number of batches to run
 const providerPathTemplate = `ingest_${expectedGranuleCount}_test`; // Directory pattern to use
@@ -36,6 +37,7 @@ const statsTimeout = 240 * 1000; // Timeout(ms) for lambda invocations to stabil
 const granuleCountThreshold = 0.95; // Percent granules to count as a successful batch on ingest timeout
 
 // sf_event_sqs_to_db_records lambda test configuration
+
 const dbLambdaErrorThreshold = 0.03; // Max % errors allowed during test
 const dbLambdaMaxThrottleCountThreshold = 1; // Max throttles allowed alarm threshold
 const dbLambdaDurationMaxThreshold = 7000; // Max *average* duration test alarm threshold
