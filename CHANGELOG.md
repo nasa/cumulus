@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   Error: Lambda function (<prefix>-tf-TeaCache) returned error: ({"errorType":"HTTPError","errorMessage":"Response code 404 (Not Found)","trace":["HTTPError: Response code 404 (Not Found)","    at Request.<anonymous> (/var/task/node_modules/got/dist/source/as-promise/index.js:117:42)","    at processTicksAndRejections (internal/process/task_queues.js:97:5)"]})
   ```
 
-  For now, the workaround if you see this issue is to manually delete the `<prefix>-tf-TeaCache`, which will fix the race condition issue and allow you to deploy.
+  For now, the workaround if you see this issue is to manually delete the `<prefix>-tf-TeaCache`, which will fix the race condition issue and allow you to successfully deploy.
 
 ### Added
 
