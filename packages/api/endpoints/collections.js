@@ -120,6 +120,9 @@ async function post(req, res) {
     return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
   }
 
+  collection.updatedAt = Date.now();
+  collection.createdAt = Date.now();
+
   try {
     const dynamoRecord = await collectionsModel.create(
       omit(collection, 'dataType')
@@ -166,27 +169,36 @@ async function post(req, res) {
 async function put(req, res) {
   const { name, version } = req.params;
   const collection = req.body;
+  let dynamoRecord;
+  let oldCollection;
 
   if (name !== collection.name || version !== collection.version) {
     return res.boom.badRequest('Expected collection name and version to be'
       + ` '${name}' and '${version}', respectively, but found '${collection.name}'`
       + ` and '${collection.version}' in payload`);
   }
-
   const collectionsModel = new models.Collection();
   const collectionPgModel = new CollectionPgModel();
 
-  if (!(await collectionsModel.exists(name, version))) {
-    return res.boom.notFound(
-      `Collection '${name}' version '${version}' not found`
-    );
+  try {
+    oldCollection = await collectionsModel.get({ name, version });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
+    return res.boom.notFound(`Collection '${name}' version '${version}' not found`);
   }
 
-  const dynamoRecord = await collectionsModel.create(collection);
-  const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
+  collection.updatedAt = Date.now();
+  collection.createdAt = oldCollection.createdAt;
+
+  const postgresCollection = dynamoRecordToDbRecord(collection);
 
   const dbClient = await getKnexClient();
-  await collectionPgModel.upsert(dbClient, dbRecord);
+  await dbClient.transaction(async (trx) => {
+    await collectionPgModel.upsert(trx, postgresCollection);
+    dynamoRecord = await collectionsModel.create(collection);
+  });
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);

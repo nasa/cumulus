@@ -1,3 +1,4 @@
+import Knex from 'knex';
 import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
@@ -8,6 +9,17 @@ class RulePgModel extends BasePgModel<PostgresRule, PostgresRuleRecord> {
     super({
       tableName: tableNames.rules,
     });
+  }
+
+  upsert(
+    knexOrTransaction: Knex | Knex.Transaction,
+    rule: PostgresRule
+  ) {
+    return knexOrTransaction(this.tableName)
+      .insert(rule)
+      .onConflict('name')
+      .merge()
+      .returning('cumulus_id');
   }
 }
 
