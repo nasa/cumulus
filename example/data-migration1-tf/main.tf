@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-    aws  = ">= 3.5.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.5.0"
+    }
   }
 }
 
@@ -28,7 +31,7 @@ module "data_migration1" {
 
   dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
 
-  rds_security_group_id = data.terraform_remote_state.data_persistence.outputs.rds_security_group
+  rds_security_group_id      = data.terraform_remote_state.data_persistence.outputs.rds_security_group
   rds_user_access_secret_arn = data.terraform_remote_state.data_persistence.outputs.database_credentials_secret_arn
 
   provider_kms_key_id = var.provider_kms_key_id

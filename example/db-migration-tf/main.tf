@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-    aws  = ">= 3.5.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.5.0"
+    }
   }
 }
 
@@ -14,8 +17,8 @@ provider "aws" {
 }
 
 locals {
-  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", var.rds_security_group)
-  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", var.rds_user_access_secret_arn)
+  rds_security_group         = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", var.rds_security_group)
+  rds_credentials_secret_arn = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", var.rds_user_access_secret_arn)
 }
 
 data "terraform_remote_state" "data_persistence" {
@@ -27,11 +30,11 @@ data "terraform_remote_state" "data_persistence" {
 module "db_migration" {
   source = "../../lambdas/db-migration"
 
-  rds_user_access_secret_arn  = local.rds_credentials_secret_arn
-  permissions_boundary_arn    = var.permissions_boundary_arn
-  prefix                      = var.prefix
-  subnet_ids                  = var.subnet_ids
-  tags                        = merge(var.tags, { Deployment = var.prefix })
-  vpc_id                      = var.vpc_id
-  rds_security_group_id       = local.rds_security_group
+  rds_user_access_secret_arn = local.rds_credentials_secret_arn
+  permissions_boundary_arn   = var.permissions_boundary_arn
+  prefix                     = var.prefix
+  subnet_ids                 = var.subnet_ids
+  tags                       = merge(var.tags, { Deployment = var.prefix })
+  vpc_id                     = var.vpc_id
+  rds_security_group_id      = local.rds_security_group
 }
