@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
-
 ### Fixed
 
 - Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
@@ -68,7 +67,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2235**
      - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to 
+    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to
       RDS and parse Granule records to
     store File records in RDS.
 - **CUMULUS-2128**
