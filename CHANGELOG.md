@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
+  - Terraform v0.13 contains numerous enhancements, such as supporting optional modules via the `count` attribute. See the [Terraform v0.13 CHANGELOG](https://github.com/hashicorp/terraform/blob/v0.13/CHANGELOG.md#0130-august-10-2020) for the full list of changes.
 
 - **CUMULUS-2350**
   - If the  `/s3credentialsREADME`, does not appear to be working after deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html) of the API-gateway stage may be necessary to finish the deployment.
@@ -16,6 +17,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
+  - Because of a change in Terraform v0.13 where `aws_lambda_invocation` data resources are evaluated during the plan/refresh phase of deployment, you may see deployment errors if you add/update the `public`/`protected` buckets in the `buckets` variable for your deployment. The error would look like this:
+
+  ```shell
+  Error: Lambda function (<prefix>-tf-TeaCache) returned error: ({"errorType":"HTTPError","errorMessage":"Response code 404 (Not Found)","trace":["HTTPError: Response code 404 (Not Found)","    at Request.<anonymous> (/var/task/node_modules/got/dist/source/as-promise/index.js:117:42)","    at processTicksAndRejections (internal/process/task_queues.js:97:5)"]})
+  ```
+
+  For now, the workaround if you see this issue is to manually delete the `<prefix>-tf-TeaCache`, which will fix the race condition issue and allow you to deploy.
 
 ### Added
 
