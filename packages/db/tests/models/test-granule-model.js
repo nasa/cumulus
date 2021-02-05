@@ -1,6 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { RecordDoesNotExist, DeletePublishedGranule } = require('@cumulus/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const {
   CollectionPgModel,

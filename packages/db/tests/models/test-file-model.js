@@ -142,39 +142,3 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
     updatedFile
   );
 });
-
-test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule in Postgres', async (t) => {
-  const {
-    knex,
-    filePgModel,
-  } = t.context;
-
-  const granuleCumulusId = await createFakeGranule(t.context.knex);
-
-  // Delete files from PG
-  const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
-  await filePgModel.deleteGranuleFiles(knex, granule);
-
-  // PG records should have been deleted
-  t.false(await filePgModel.exists(knex, { granule_cumulus_id: granuleCumulusId }));
-});
-
-test('FilePgModel.deleteGranuleFiles() works with a transaction', async (t) => {
-  const {
-    knex,
-    filePgModel,
-  } = t.context;
-
-  const granuleCumulusId = await createFakeGranule(t.context.knex);
-  await saveFilesToPG(knex, filePgModel, granuleCumulusId);
-
-  // Delete files from PG using a transaction
-  const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
-
-  await knex.transaction(
-    (trx) => filePgModel.deleteGranuleFiles(trx, granule)
-  );
-
-  // PG records should have been deleted
-  t.false(await filePgModel.exists(knex, { granule_cumulus_id: granuleCumulusId }));
-});

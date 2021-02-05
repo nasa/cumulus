@@ -63,6 +63,19 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
+// create all the variables needed across this test
+const collectionId = 456;
+
+let esClient;
+let esIndex;
+let accessTokenModel;
+let granuleModel;
+let granulePgModel;
+let collectionModel;
+let filePgModel;
+let jwtAuthToken;
+let s3Buckets = [];
+
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
 process.env.CollectionsTable = randomId('collection');
@@ -129,17 +142,92 @@ async function setupBucketsConfig() {
   return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
 
-// create all the variables needed across this test
-const collectionId = 456;
+/**
+ * Helper for creating a granule, and files belonging to that granule
+ * @param {Knex} dbClient - Knex client
+ * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
+ * @param {boolean} published - if the granule should be marked published to CMR
+ * @returns {Object} fake granule object
+ */
+async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+  const granuleId = randomId('granule');
+  const files = [
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.hdf`,
+      key: `${randomString(5)}/${granuleId}.hdf`,
+    },
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.cmr.xml`,
+      key: `${randomString(5)}/${granuleId}.cmr.xml`,
+    },
+    {
+      bucket: s3Buckets.public.name,
+      fileName: `${granuleId}.jpg`,
+      key: `${randomString(5)}/${granuleId}.jpg`,
+    },
+  ];
 
-let esClient;
-let esIndex;
-let accessTokenModel;
-let granuleModel;
-let granulePgModel;
-let collectionModel;
-let filePgModel;
-let jwtAuthToken;
+  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
+  newGranule.published = published;
+  newGranule.files = files;
+
+  await createBuckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
+
+  // Add files to S3
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
+    await putObject({ // eslint-disable-line no-await-in-loop
+      Bucket: file.bucket,
+      Key: file.key,
+      Body: `test data ${randomString()}`,
+    });
+  }
+
+  // create a new Dynamo granule
+  await granuleModel.create(newGranule);
+
+  // create a new PG granule
+  const newPGGranule = fakeGranuleRecordFactory(
+    {
+      granule_id: granuleId,
+      status: 'failed',
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+  newPGGranule.published = published;
+  const [granuleCumulusId] = await granulePgModel.create(dbClient, newPGGranule);
+
+  // create PG files
+  await Promise.all(
+    files.map((f) => {
+      const pgFile = {
+        granule_cumulus_id: granuleCumulusId,
+        bucket: f.bucket,
+        file_name: f.fileName,
+        key: f.key,
+      };
+
+      return filePgModel.create(dbClient, pgFile);
+    })
+  );
+
+  return newGranule;
+}
 
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
@@ -614,82 +702,14 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
-test('DELETE deleting an existing granule that is published will fail', async (t) => {
-  const buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-  const granuleId = randomId('granule');
-  const files = [
-    {
-      bucket: buckets.protected.name,
-      fileName: `${granuleId}.hdf`,
-      key: `${randomString(5)}/${granuleId}.hdf`,
-    },
-    {
-      bucket: buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
-      bucket: buckets.public.name,
-      fileName: `${granuleId}.jpg`,
-      key: `${randomString(5)}/${granuleId}.jpg`,
-    },
-  ];
-
-  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'completed' });
-  newGranule.published = true;
-  newGranule.files = files;
-
-  await createBuckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
-
-  // Add files to S3
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    await putObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
-
-  // create a new unpublished Dynamo granule
-  await granuleModel.create(newGranule);
-
-  // create a new unpublished PG granule
-  const newPGGranule = fakeGranuleRecordFactory(
-    {
-      granule_id: granuleId,
-      status: 'completed',
-      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
-    }
+test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
+  const newGranule = await createGranuleAndFiles(
+    t.context.knex,
+    t.context.testPgCollection.cumulus_id,
+    true
   );
-  newPGGranule.published = true;
-  const [granuleCumulusId] = await granulePgModel.create(t.context.knex, newPGGranule);
 
-  // create PG files
-  await Promise.all(
-    files.map((f) => {
-      const pgFile = {
-        granule_cumulus_id: granuleCumulusId,
-        bucket: f.bucket,
-        file_name: f.fileName,
-        key: f.key,
-      };
-
-      return filePgModel.create(t.context.knex, pgFile);
-    })
-  );
+  const granuleId = newGranule.granuleId;
 
   const response = await request(app)
     .delete(`/granules/${granuleId}`)
@@ -701,11 +721,11 @@ test('DELETE deleting an existing granule that is published will fail', async (t
   const { message } = response.body;
   t.is(
     message,
-    'You cannot delete a granule or files from a granule that is published to CMR. Remove it from CMR first'
+    'You cannot delete a granule that is published to CMR. Remove it from CMR first'
   );
 
   // granule should still exist in Dynamo and PG
-  t.true(await granulePgModel.exists(t.context.knex, newPGGranule));
+  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
   t.true(await granuleModel.exists({ granuleId }));
 
   /* eslint-disable no-await-in-loop */
@@ -720,80 +740,10 @@ test('DELETE deleting an existing granule that is published will fail', async (t
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
-  const buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-  const granuleId = randomId('granule');
-  const files = [
-    {
-      bucket: buckets.protected.name,
-      fileName: `${granuleId}.hdf`,
-      key: `${randomString(5)}/${granuleId}.hdf`,
-    },
-    {
-      bucket: buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
-      bucket: buckets.public.name,
-      fileName: `${granuleId}.jpg`,
-      key: `${randomString(5)}/${granuleId}.jpg`,
-    },
-  ];
-
-  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
-  newGranule.published = false;
-  newGranule.files = files;
-
-  await createBuckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
-
-  // Add files to S3
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    await putObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
-
-  // create a new unpublished Dynamo granule
-  await granuleModel.create(newGranule);
-
-  // create a new unpublished PG granule
-  const newPGGranule = fakeGranuleRecordFactory(
-    {
-      granule_id: granuleId,
-      status: 'failed',
-      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
-    }
-  );
-  newPGGranule.published = false;
-  const [granuleCumulusId] = await granulePgModel.create(t.context.knex, newPGGranule);
-
-  // create PG files
-  await Promise.all(
-    files.map((f) => {
-      const pgFile = {
-        granule_cumulus_id: granuleCumulusId,
-        bucket: f.bucket,
-        file_name: f.fileName,
-        key: f.key,
-      };
-
-      return filePgModel.create(t.context.knex, pgFile);
-    })
+  const newGranule = await createGranuleAndFiles(
+    t.context.knex,
+    t.context.testPgCollection.cumulus_id,
+    false
   );
 
   const response = await request(app)
@@ -819,8 +769,8 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   /* eslint-enable no-await-in-loop */
 
   await deleteBuckets([
-    buckets.protected.name,
-    buckets.public.name,
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
   ]);
 });
 

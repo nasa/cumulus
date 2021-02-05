@@ -12,12 +12,13 @@ const {
 } = require('@cumulus/errors');
 const { GranulePgModel, getKnexClient, FilePgModel } = require('@cumulus/db');
 
-const { deleteFilesFromS3 } = require('../lib/FileUtils');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const pMap = require('p-map');
 
 /**
  * List all granules for a given collection.
@@ -169,13 +170,20 @@ async function del(req, res) {
     .where({ granule_cumulus_id: pgGranule.cumulus_id });
 
   await knex.transaction(async (trx) => {
-    // Delete the granule's files from Postgres
-    await filePgModel.deleteGranuleFiles(trx, pgGranule);
-    // Delete the granule's files from S3
-    await deleteFilesFromS3(files);
-    // Delete the Granule from Postgres
+    if (pgGranule.published) {
+      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+    }
+
+    // TODO This needs to fail outter transaction
+    await pMap(
+      files,
+      (file) =>
+        knex.transaction(async (fileTrx) => {
+          await filePgModel.delete(fileTrx, { cumulus_id: file.cumulus_id });
+          await deleteS3Object(file.bucket, file.key);
+        })
+    );
     await granulePgModel.delete(trx, pgGranule);
-    // Delete the granule from Dynamo
     await granuleModelClient.delete(dynamoGranule);
   })
     .catch((error) => {
