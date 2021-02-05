@@ -5,7 +5,8 @@
   "required": [
     "stackName",
     "internalBucket",
-    "parentWorkflow"
+    "parentWorkflow",
+    "queueUrl"
   ],
   "additionalProperties": false,
   "properties": {
