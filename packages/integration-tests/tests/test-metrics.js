@@ -75,7 +75,7 @@ test('getInvocationCount returns immediately if result is greater than the max c
   t.is(actual, 5);
 });
 
-test('getInvocationCount throws immediately on if result does not stabilize within the timeout period', async (t) => {
+test('getInvocationCount throws immediately if result does not stabilize within the timeout period', async (t) => {
   const aggregateMetricQueryFunction = sinon.stub();
   [2, 4, 5, 6].map(
     (element, index) => aggregateMetricQueryFunction.onCall(index).returns(element)
