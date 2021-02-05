@@ -108,7 +108,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
           bucket: bucketName,
           filepath,
           filename: `s3://${s3Join(bucketName, filepath)}`,
-          url_path: URLPathTemplate,
+          url_path: urlPath,
         },
       });
     });

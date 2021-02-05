@@ -54,6 +54,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
 
+- Updated the output of the `move-granules` task so that `payload.granules.files.url_path`
+  values show the evaluated path, rather than the Collection's top-level `url_path`,
+  which may be an un-evaluted template string.
+
 ## [v5.0.1] 2021-01-27
 
 ### Changed
