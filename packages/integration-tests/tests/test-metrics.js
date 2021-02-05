@@ -104,7 +104,7 @@ test('getInvocationCount returns the expected value if result stabilizes', async
     lambda: 'fakeLambda',
     maxCount: 20,
     minCount: 5,
-    timeout: 20,
+    timeout: 60,
   });
   t.is(actual, 8);
 });
