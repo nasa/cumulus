@@ -201,12 +201,11 @@ test.serial('The correct message is enqueued', async (t) => {
 
   t.is(messages.length, 1);
 
-  const receivedWorkflow = messages.map((message) => message.payload.workflow.name);
+  const message = messages[0];
+  const receivedWorkflow = message.payload.workflow.name;
   t.true(receivedWorkflow.includes(event.input.workflow.name));
 
-  // Figure out what messages we should have received for each workflow
-  const expectedMessages = {};
-  expectedMessages[event.input.workflow.name] = {
+  const expectedMessage = {
     cumulus_meta: {
       state_machine: stateMachineArn,
       parentExecutionArn: arn,
@@ -228,14 +227,9 @@ test.serial('The correct message is enqueued', async (t) => {
     },
   };
 
-  // Make sure we did receive those messages
-  messages.forEach((message) => {
-    const workflowName = message.payload.workflow.name;
-    // The execution name is randomly generated, so we don't care what the value is here
-    expectedMessages[workflowName].cumulus_meta.execution_name
-      = message.cumulus_meta.execution_name;
-    t.deepEqual(message, expectedMessages[workflowName]);
-  });
+  // The execution name is randomly generated, so we don't care what the value is here
+  expectedMessage.cumulus_meta.execution_name = message.cumulus_meta.execution_name;
+  t.deepEqual(message, expectedMessage);
 });
 
 test.serial('A config with executionNamePrefix is handled as expected', async (t) => {

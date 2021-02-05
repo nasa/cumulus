@@ -15,7 +15,7 @@ const { buildExecutionArn } = require('@cumulus/message/Executions');
 async function queueWorkflow(event) {
   const workflow = event.input.workflow || {};
   const workflowInput = event.input.workflowInput || {};
-  const arn = buildExecutionArn(
+  const parentExecutionArn = buildExecutionArn(
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
   const executionArn = await enqueueWorkflowMessage({
@@ -23,7 +23,7 @@ async function queueWorkflow(event) {
     workflowInput,
     parentWorkflow: event.config.parentWorkflow,
     queueUrl: event.input.queueUrl || event.config.queueUrl,
-    parentExecutionArn: arn,
+    parentExecutionArn,
     stack: event.config.stackName,
     systemBucket: event.config.internalBucket,
     executionNamePrefix: event.config.executionNamePrefix,
