@@ -3,11 +3,12 @@
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const path = require('path');
 const fs = require('fs-extra');
+
 /**
-* Returns string appended with _[0-9,a-z] up to 35 batches)
-* @summary If the description is long, write your summary here. Otherwise, feel free to remove this.
-* @param {ParamDataTypeHere} parameterNameHere - Brief description of the parameter here. Note: For other notations of data types, please refer to JSDocs: DataTypes command.
-* @return {ReturnValueDataTypeHere} Brief description of the returning value here.
+* Returns string appended with _[0-9,a-z] up to 36 batches)
+* @param {string} basePath - Directory base path
+* @param {number} count - Number of paths to return
+* @returns {[string]} - Array of directory names
 */
 const generateIterableTestDirectories = (basePath, count) => {
   if (count > 36) {
