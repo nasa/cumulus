@@ -220,8 +220,9 @@ async function del(req, res) {
   const { name, version } = req.params;
   const collectionsModel = new models.Collection();
 
+  const knex = await getKnexClient({ env: process.env });
   try {
-    await Knex.transaction(async (trx) => {
+    await knex.transaction(async (trx) => {
       await trx(tableNames.collections).where({ name, version }).del();
       await collectionsModel.delete({ name, version });
       if (inTestMode()) {
