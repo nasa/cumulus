@@ -16,7 +16,6 @@ const {
   tableNames,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
-const Knex = require('knex');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
