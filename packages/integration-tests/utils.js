@@ -3,10 +3,15 @@
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const path = require('path');
 const fs = require('fs-extra');
-
+/**
+* Returns string appended with _[0-9,a-z] up to 35 batches)
+* @summary If the description is long, write your summary here. Otherwise, feel free to remove this.
+* @param {ParamDataTypeHere} parameterNameHere - Brief description of the parameter here. Note: For other notations of data types, please refer to JSDocs: DataTypes command.
+* @return {ReturnValueDataTypeHere} Brief description of the returning value here.
+*/
 const generateIterableTestDirectories = (basePath, count) => {
-  if (count > 35) {
-    throw new Error('Predefined directory pattern only defined up to 35 batches');
+  if (count > 36) {
+    throw new Error('Predefined directory pattern only defined up to 36 batches');
   }
   // Array containing 0-9, a-z
   const sourceKeys = [...new Array(9).keys()].concat(

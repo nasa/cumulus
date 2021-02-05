@@ -17,5 +17,5 @@ test('generateIterableTestDirectories transitions to alpha directories', (t) => 
 });
 
 test('generateIterableTestDirectories throws if 36 count is specified', (t) => {
-  t.throws(() => generateIterableTestDirectories('base', 36));
+  t.throws(() => generateIterableTestDirectories('base', 37));
 });
