@@ -64,7 +64,6 @@ let workflowExecution;
 const testBeginTime = new Date(Date.now() - 60000);
 jasmine.DEFAULT_TIMEOUT_INTERVAL = process.env.LOAD_TEST_TIMEOUT || 4200000;
 
-
 const checkGranuleCount = async (granuleCollection, config, count) => {
   console.log(`Using collection ${granuleCollection.name}___${granuleCollection.version}`);
   let prevGranuleFilesCount;
@@ -359,7 +358,7 @@ describe('The Ingest Load Test', () => {
       });
 
       expect(rdsCommitLatency).toBeLessThan(rdsCommitLatencyThrehsold);
-      expect(rdsDiskQueueDepthThreshold).toBeLessThan(rdsDiskQueueDepthThreshold);
+      expect(diskQueueDepth).toBeLessThan(rdsDiskQueueDepthThreshold);
       expect(dbCpuMaximum).toBeLessThan(rdsCpuMaximumThreshold);
       expect(dbCapacity).toBeLessThan(rdsDbCapacityThreshold);
       expect(dbConnections).toBeLessThan(rdsConnectionsThreshold);
