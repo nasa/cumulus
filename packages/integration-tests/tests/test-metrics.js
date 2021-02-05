@@ -60,7 +60,7 @@ test('getInvocationCount returns the expected invocation count', async (t) => {
   t.is(actual, 5);
 });
 
-test('getInvocationCount returns immediately on if result is greater than the max count', async (t) => {
+test('getInvocationCount returns immediately if result is greater than the max count', async (t) => {
   const aggregateMetricQueryFunction = sinon.stub();
   aggregateMetricQueryFunction.returns(5);
   const actual = await getInvocationCount({
