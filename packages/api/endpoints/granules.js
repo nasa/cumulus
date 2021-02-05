@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/errors');
 const { GranulePgModel, getKnexClient, FilePgModel } = require('@cumulus/db');
 
+const { deleteFilesFromS3 } = require('../lib/FileUtils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
@@ -163,9 +164,15 @@ async function del(req, res) {
     return res.boom.badRequest(dynamoGranule);
   }
 
+  // get granule's files first so we can remove them from S3
+  const files = await knex(filePgModel.tableName)
+    .where({ granule_cumulus_id: pgGranule.cumulus_id });
+
   await knex.transaction(async (trx) => {
-    // Delete the granule's files from Postgres and S3
+    // Delete the granule's files from Postgres
     await filePgModel.deleteGranuleFiles(trx, pgGranule);
+    // Delete the granule's files from S3
+    await deleteFilesFromS3(files);
     // Delete the Granule from Postgres
     await granulePgModel.delete(trx, pgGranule);
     // Delete the granule from Dynamo

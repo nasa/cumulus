@@ -7,9 +7,11 @@ const isInteger = require('lodash/isInteger');
 const partial = require('lodash/partial');
 const pick = require('lodash/pick');
 const urljoin = require('url-join');
-const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
+const pMap = require('p-map');
+const { getObjectSize, parseS3Uri, deleteS3Object } = require('@cumulus/aws-client/S3');
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
+const { UnparsableFileLocationError } = require('@cumulus/errors');
 const schemas = require('../models/schemas');
 
 const log = new Logger({ sender: 'api/lib/FileUtils' });
@@ -131,6 +133,17 @@ const buildDatabaseFiles = async ({ s3, providerURL, files }) =>
     files.map(partial(buildDatabaseFile, s3, providerURL))
   ).then((newFiles) => newFiles.map(cleanDatabaseFile));
 
+const deleteFilesFromS3 = async (files) =>
+  pMap(
+    files,
+    (file) => {
+      if (file.bucket && file.key) {
+        return deleteS3Object(file.bucket, file.key);
+      }
+      throw new UnparsableFileLocationError(`File bucket "${file.bucket}" or file key "${file.key}" could not be parsed`);
+    }
+  );
+
 module.exports = {
   setSource,
   buildDatabaseFile,
@@ -142,4 +155,5 @@ module.exports = {
   setS3FileSize,
   getBucket,
   getKey,
+  deleteFilesFromS3,
 };

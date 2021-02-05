@@ -1,15 +1,8 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const {
-  randomString,
   randomId,
 } = require('@cumulus/common/test-utils');
-
-const {
-  fileExists,
-  createS3Buckets,
-  s3PutObject,
-} = require('@cumulus/aws-client/S3');
 
 const {
   CollectionPgModel,
@@ -50,7 +43,7 @@ const createFakeGranule = async (dbClient) => {
   return Number.parseInt(granuleCumulusId, 10);
 };
 
-const saveFilesToS3AndPG = async (dbClient, filePgModel, granuleCumulusId) => {
+const saveFilesToPG = async (dbClient, filePgModel, granuleCumulusId) => {
   const buckets = {
     protected: {
       name: randomId('protected'),
@@ -82,23 +75,6 @@ const saveFilesToS3AndPG = async (dbClient, filePgModel, granuleCumulusId) => {
 
   // Add files to PG
   await Promise.all(files.map((f) => filePgModel.create(dbClient, f)));
-
-  await createS3Buckets([
-    buckets.protected.name,
-    buckets.public.name,
-  ]);
-
-  // Add files to S3
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    await s3PutObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
-
-  return files;
 };
 
 test.before(async (t) => {
@@ -167,29 +143,20 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
   );
 });
 
-test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule in Postgres and S3', async (t) => {
+test('FilePgModel.deleteGranuleFiles() deletes all files belonging to a granule in Postgres', async (t) => {
   const {
     knex,
     filePgModel,
   } = t.context;
 
   const granuleCumulusId = await createFakeGranule(t.context.knex);
-  const files = await saveFilesToS3AndPG(knex, filePgModel, granuleCumulusId);
 
-  // Delete files from PG and S3
+  // Delete files from PG
   const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
   await filePgModel.deleteGranuleFiles(knex, granule);
 
   // PG records should have been deleted
   t.false(await filePgModel.exists(knex, { granule_cumulus_id: granuleCumulusId }));
-
-  // S3 files should have been deleted
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    t.false(await fileExists(file.bucket, file.key));
-  }
-  /* eslint-enable no-await-in-loop */
 });
 
 test('FilePgModel.deleteGranuleFiles() works with a transaction', async (t) => {
@@ -199,9 +166,9 @@ test('FilePgModel.deleteGranuleFiles() works with a transaction', async (t) => {
   } = t.context;
 
   const granuleCumulusId = await createFakeGranule(t.context.knex);
-  const files = await saveFilesToS3AndPG(knex, filePgModel, granuleCumulusId);
+  await saveFilesToPG(knex, filePgModel, granuleCumulusId);
 
-  // Delete files from PG and S3 using a transaction
+  // Delete files from PG using a transaction
   const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   await knex.transaction(
@@ -210,33 +177,4 @@ test('FilePgModel.deleteGranuleFiles() works with a transaction', async (t) => {
 
   // PG records should have been deleted
   t.false(await filePgModel.exists(knex, { granule_cumulus_id: granuleCumulusId }));
-
-  // S3 files should have been deleted
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    t.false(await fileExists(file.bucket, file.key));
-  }
-  /* eslint-enable no-await-in-loop */
-});
-
-test('Private function FilePgModel._deleteFilesFromS3() deletes all files from S3', async (t) => {
-  const {
-    filePgModel,
-    knex,
-  } = t.context;
-
-  const granuleCumulusId = await createFakeGranule(t.context.knex);
-  const files = await saveFilesToS3AndPG(knex, filePgModel, granuleCumulusId);
-
-  // Delete files from S3
-  await filePgModel._deleteFilesFromS3(files);
-
-  // S3 files should have been deleted
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    t.false(await fileExists(file.bucket, file.key));
-  }
-  /* eslint-enable no-await-in-loop */
 });
