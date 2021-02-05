@@ -1,4 +1,4 @@
-# @cumulus/queue-pdrs
+# @cumulus/queue-workflow
 
 Adds a workflow to a queue
 
