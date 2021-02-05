@@ -34,6 +34,19 @@ const waitForIngestTimeoutMs = 6 * 60 * 1000;
 const statsTimeout = 240 * 1000;
 const granuleCountThreshold = 0.95;
 
+// sf_event_sqs_to_db_records lambda test configuration
+const dbLambdaErrorThreshold = 0.03; // Max % errors allowed during test
+const dbLambdaMaxThrottleCountThreshold = 1; // Max throttles allowed alarm threshold
+const dbLambdaDurationMaxThreshold = 7000; // Max *average* duration test alarm threshold
+
+// RDS cluster test configuration
+
+const rdsCommitLatencyThrehsold = 10; // Commit latency threshold
+const rdsDiskQueueDepthThreshold = 10;// Queue depth threshold
+const rdsCpuMaximumThreshold = 80; // DB Cluster cpu max threshold
+const rdsDbCapacityThreshold = 3; // RDS ACU capacity threshold
+const rdsConnectionsThreshold = 140; // Max connections threshold
+
 const expectedMaxWorkflowInvocation = expectedGranuleCount * providerPaths.length; // Number of Ingest workflow invocations.
 const publishGranulesMinInvocations = (expectedGranuleCount * providerPaths.length) / 10; // Number of publish invocations to require to pass metrics.
 const publishExecutionsMinInvocations = (expectedGranuleCount * providerPaths.length) / 10; // Number of execution publish invocations to require to pass metrics
@@ -171,13 +184,11 @@ describe('The Ingest Load Test', () => {
     console.log('Bulk deletion succeeded!');
 
     await providers.deleteProvider({ prefix: stackName, provider: provider.id });
-    const deleteCollectionsPromises = testCollections.map((collection) => {
-      return collections.deleteCollection({
-        prefix: stackName,
-        collectionName: collection.name,
-        collectionVersion: collection.version,
-      });
-    });
+    const deleteCollectionsPromises = testCollections.map((collection) => collections.deleteCollection({
+      prefix: stackName,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }));
     await Promise.all(deleteCollectionsPromises);
   });
 
@@ -222,9 +233,9 @@ describe('The Ingest Load Test', () => {
       });
 
       expect(dbInvocationCount).toBeGreaterThan(3);
-      expect(dbThrottleCount).toBe(0);
-      expect(dbErrorCount).toBeLessThan(expectedGranuleCount * 0.03);
-      expect(durationAverage).toBeLessThan(7000);
+      expect(dbThrottleCount).toBeLessThan(dbLambdaMaxThrottleCountThreshold);
+      expect(dbErrorCount).toBeLessThan(expectedGranuleCount * dbLambdaErrorThreshold);
+      expect(durationAverage).toBeLessThan(dbLambdaDurationMaxThreshold);
     }
   });
 
@@ -346,11 +357,12 @@ describe('The Ingest Load Test', () => {
         MetricName: 'DatabaseConnections',
         Statistics: ['Maximum'],
       });
-      expect(rdsCommitLatency).toBeLessThan(10);
-      expect(diskQueueDepth).toBeLessThan(10);
-      expect(dbCpuMaximum).toBeLessThan(80);
-      expect(dbCapacity).toBeLessThan(3);
-      expect(dbConnections).toBeLessThan(120);
+
+      expect(rdsCommitLatency).toBeLessThan(rdsCommitLatencyThrehsold);
+      expect(rdsDiskQueueDepthThreshold).toBeLessThan(rdsDiskQueueDepthThreshold);
+      expect(dbCpuMaximum).toBeLessThan(rdsCpuMaximumThreshold);
+      expect(dbCapacity).toBeLessThan(rdsDbCapacityThreshold);
+      expect(dbConnections).toBeLessThan(rdsConnectionsThreshold);
     }
   });
 });
