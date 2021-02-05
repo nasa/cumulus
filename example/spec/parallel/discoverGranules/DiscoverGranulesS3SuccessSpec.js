@@ -40,7 +40,7 @@ describe('The DiscoverGranules workflow', () => {
 
     const testId = randomString();
 
-    // Create the provide
+    // Create the provider
     provider = await loadProvider({
       filename: './data/providers/s3/s3_provider.json',
       postfix: testId,
