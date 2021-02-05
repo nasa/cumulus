@@ -156,8 +156,8 @@ exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
  *
  * @param {Object} params
  * @param {Object} params.workflow - the workflow to be enqueued
- * @param {string} params.queueUrl - an optional SQS queue to add the message to
- * @param {Object} params.provider - the provider config to be attached to the message
+ * @param {Object} params.workflowInput - the input that should be passed to the queued workflow
+ * @param {string} [params.queueUrl] - an optional SQS queue to add the message to
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
  * @param {string} [params.executionNamePrefix] - the prefix to apply to the
  *   name of the enqueued execution
