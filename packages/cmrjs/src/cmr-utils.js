@@ -140,13 +140,19 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
  * @param {Object} cmrFile.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrFile.granuleId - the metadata's granuleId
  * @param {Object} cmrClient - a CMR instance
+ * @param {string} revisionId - CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
+async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
   const granuleId = cmrFile.metadataObject.GranuleUR;
 
   const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject);
   const conceptId = res['concept-id'];
+  const resultingRevisionId = res['revision-id'];
+
+  if (revisionId && (resultingRevisionId !== revisionId)) {
+    throw new Error(`Expected revision-id ${revisionId} but received ${resultingRevisionId} for ${granuleId}.`);
+  }
 
   log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
 
@@ -173,9 +179,10 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
  * @param {string} creds.username - the CMR username, not used if creds.token is provided
  * @param {string} creds.password - the CMR password, not used if creds.token is provided
  * @param {string} creds.token - the CMR or Launchpad token,
+ * @param {string} cmrRevisionId - CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
-async function publish2CMR(cmrPublishObject, creds) {
+async function publish2CMR(cmrPublishObject, creds, cmrRevisionId = undefined) {
   const cmrClient = new CMR(creds);
 
   // choose xml or json and do the things.
@@ -183,7 +190,7 @@ async function publish2CMR(cmrPublishObject, creds) {
     return publishECHO10XML2CMR(cmrPublishObject, cmrClient);
   }
   if (isUMMGFile(cmrPublishObject.filename)) {
-    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient);
+    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
