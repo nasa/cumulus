@@ -11,9 +11,10 @@ const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
-  getKnexClient,
-  translateApiCollectionToPostgresCollection,
   CollectionPgModel,
+  getKnexClient,
+  tableNames,
+  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
@@ -216,25 +217,23 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const { name, version } = req.params;
-
   const collectionsModel = new models.Collection();
-  const dbClient = await getKnexClient();
 
+  const knex = await getKnexClient({ env: process.env });
   try {
-    await collectionsModel.delete({ name, version });
-
-    await dbClient('collections').where({ name, version }).del();
-
-    if (inTestMode()) {
-      const collectionId = constructCollectionId(name, version);
-      const esClient = await Search.es(process.env.ES_HOST);
-      await esClient.delete({
-        id: collectionId,
-        index: process.env.ES_INDEX,
-        type: 'collection',
-      }, { ignore: [404] });
-    }
-
+    await knex.transaction(async (trx) => {
+      await trx(tableNames.collections).where({ name, version }).del();
+      await collectionsModel.delete({ name, version });
+      if (inTestMode()) {
+        const collectionId = constructCollectionId(name, version);
+        const esClient = await Search.es(process.env.ES_HOST);
+        await esClient.delete({
+          id: collectionId,
+          index: process.env.ES_INDEX,
+          type: 'collection',
+        }, { ignore: [404] });
+      }
+    });
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError) {
