@@ -10,7 +10,7 @@ const pickAll = require('lodash/fp/pickAll');
 
 const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
-const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { promiseS3Upload, recursivelyDeleteS3Bucket, s3PutObject, createBucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { CMRMetaFileNotFound } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
@@ -31,7 +31,7 @@ test.before(async (t) => {
     SecretString: randomString(),
   }).promise();
 
-  // Store the Launchpadd passphrase
+  // Store the Launchpad passphrase
   t.context.launchpadPassphraseSecretName = randomString();
   await awsServices.secretsManager().createSecret({
     Name: t.context.launchpadPassphraseSecretName,
@@ -53,11 +53,11 @@ test.beforeEach(async (t) => {
 
   //update cmr file path
   const match = /^s3:\/\/(.*)\/(.*)$/;
-  const cmrFile = payload.input.granules[0].files[3].filename;
-  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
+  const xmlCmrFile = payload.input.granules[0].files[3].filename;
+  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(xmlCmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
 
-  return awsServices.s3().createBucket({ Bucket: t.context.bucket }).promise();
+  await createBucket(t.context.bucket);
 });
 
 test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucket));
@@ -438,5 +438,63 @@ test.serial('postToCMR succeeds with launchpad authentication', async (t) => {
   } finally {
     cmrClient.CMR.prototype.ingestGranule.restore();
     launchpad.getLaunchpadToken.restore();
+  }
+});
+
+test.serial('postToCMR succeeds with correct payload and expected revisionId', async (t) => {
+  const newPayload = t.context.payload;
+  newPayload.input.granules[1] = {
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090722',
+    files: [
+      {
+        name: 'MOD11A1.A2017200.h19v04.006.2017201090722.cmr.json',
+        bucket: `${t.context.bucket}`,
+        filename: `s3://${t.context.bucket}/MOD11A1.A2017200.h19v04.006.2017201090722.cmr.json`,
+        type: 'metadata',
+        fileStagingDir: 'file-staging/subdir',
+        etag: '"13f2bb38e22496fe9d42e761c42a0e67"',
+      },
+    ],
+  };
+
+  const xmlGranuleId = newPayload.input.granules[0].granuleId;
+  const jsonGranuleId = newPayload.input.granules[1].granuleId;
+  const jsonKey = `${jsonGranuleId}.cmr.json`;
+  const xmlKey = `${xmlGranuleId}.cmr.xml`;
+  const ummgMetadataString = fs.readFileSync(path.join(__dirname, 'data/ummg-meta.json'));
+  const echoMetadataString = fs.readFileSync(path.join(__dirname, 'data/meta.xml'));
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
+  sinon.stub(cmrClient.CMR.prototype, 'ingestUMMGranule').callsFake(resultThunk);
+
+  try {
+    await s3PutObject({
+      Bucket: t.context.bucket,
+      Key: jsonKey,
+      Body: ummgMetadataString,
+    });
+
+    await s3PutObject({
+      Bucket: t.context.bucket,
+      Key: xmlKey,
+      Body: echoMetadataString,
+    });
+
+    const output = await postToCMR(newPayload);
+
+    t.is(output.granules.length, 2);
+
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
+    );
+
+    output.granules.forEach((g) => {
+      t.true(Number.isInteger(g.post_to_cmr_duration));
+      t.true(g.post_to_cmr_duration >= 0);
+    });
+  } finally {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+    cmrClient.CMR.prototype.ingestUMMGranule.restore();
   }
 });

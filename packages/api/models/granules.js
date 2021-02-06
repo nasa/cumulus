@@ -193,6 +193,7 @@ class Granule extends Manager {
    * @param {Object} meta - optional meta object to insert in workflow message
    * @param {string} [queueName] - specify queue to append message to
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
+   * @param {string} [cmrRevisionId] - optional CMR revision ID to insert in workflow
    * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(
@@ -200,7 +201,8 @@ class Granule extends Manager {
     workflow,
     meta = undefined,
     queueName = undefined,
-    asyncOperationId = undefined
+    asyncOperationId = undefined,
+    cmrRevisionId = undefined
   ) {
     if (!workflow) {
       throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
@@ -221,6 +223,7 @@ class Granule extends Manager {
       meta,
       queueName,
       asyncOperationId,
+      cmrRevisionId,
     });
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
