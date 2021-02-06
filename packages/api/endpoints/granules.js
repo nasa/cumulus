@@ -44,6 +44,7 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
+  const cmrRevisionId = req.headers['cmr-revision-id'];
   const granuleId = req.params.granuleName;
   const body = req.body;
   const action = body.action;
@@ -82,7 +83,10 @@ async function put(req, res) {
     await granuleModelClient.applyWorkflow(
       granule,
       body.workflow,
-      body.meta
+      body.meta,
+      undefined,
+      undefined,
+      cmrRevisionId
     );
 
     return res.send({
