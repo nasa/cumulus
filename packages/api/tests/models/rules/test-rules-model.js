@@ -126,7 +126,7 @@ test('create defaults rule state to ENABLED', async (t) => {
   await rulesModel.delete(rule);
 });
 
-test('Creates and delete a onetime rule', async (t) => {
+test('Creates and deletes a onetime rule', async (t) => {
   const { onetimeRule } = t.context;
 
   // create rule

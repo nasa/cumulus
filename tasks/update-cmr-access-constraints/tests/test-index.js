@@ -141,7 +141,7 @@ test('updateCmrAccessConstraints updates UMMG-JSON CMR metadata with access cons
   t.is(updatedMetadata.AccessConstraints.Description, accessConstraints.description);
 });
 
-test.only('updateCmrAccessConstraints sets UMM-G JSON AccessConstraint Description to "None" if undefined', async (t) => {
+test('updateCmrAccessConstraints sets UMM-G JSON AccessConstraint Description to "None" if undefined', async (t) => {
   const key = `${randomString()}.cmr.json`;
   const { ETag } = await S3.s3PutObject({
     Bucket: t.context.bucket,
