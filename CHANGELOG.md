@@ -55,6 +55,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
 
+## [v5.0.1] 2021-01-27
+
+### Changed
+
+- **CUMULUS-2344**
+  - Elasticsearch API now allows you to reindex to an index that already exists
+  - If using the Change Index operation and the new index doesn't exist, it will be created
+  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
+    ensure that new data will end up in the new index while Elasticsearch is reindexing.
+
 ## [v5.0.0] 2021-01-12
 
 ### BREAKING CHANGES
@@ -69,9 +79,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2258**
   - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
   - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
-- **CUMULUS-2344**
-  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
-    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 ### Added
 
@@ -101,9 +108,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
 - **CUMULUS-2296**
   - Improved PDR spec compliance of `parse-pdr` by updating `@cumulus/pvl` to parse fields in a manner more consistent with the PDR ICD, with respect to numbers and dates. Anything not matching the ICD expectations, or incompatible with Javascript parsing, will be parsed as a string instead.
-- **CUMULUS-2344**
-  - Elasticsearch API now allows you to reindex to an index that already exists
-  - If using the Change Index operation and the new index doesn't exist, it will be created
 
 ### Removed
 
@@ -3769,7 +3773,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.1...HEAD
+[v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
