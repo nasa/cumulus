@@ -366,7 +366,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
   sinon.restore();
 });
 
-test.only('publishUMMGJSON2CMR calls ingestUMMGranule and receives a revision ID version conflict', async (t) => {
+test('publishUMMGJSON2CMR calls ingestUMMGranule and throws an error due to a revision ID version conflict', async (t) => {
   const cmrPublishObject = {
     filename: 'cmrfilename',
     metadataObject: { fake: 'metadata', GranuleUR: 'fakeGranuleID' },

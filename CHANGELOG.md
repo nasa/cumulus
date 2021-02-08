@@ -33,6 +33,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `applyWorkflow` of `packages/api/models/granules.js` to take in an optional `cmrRevisionId`.
+  - Updated Rules model to allow for an optional `cmrRevisionId`.
+  - Updated Granules endpoint to take an optional header of `CMR-Revision-Id` and pass it to `applyWorkflow`.
 
 ### Fixed
 
