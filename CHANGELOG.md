@@ -9,10 +9,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
+### Added
+
+- **CUMULUS-2368**
+  - Add QueueWorkflow task
+
+- **CUMULUS-2402**
+  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
 
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
+
+- **CUMULUS-2350**
+  - If the  `/s3credentialsREADME`, does not appear to be working after deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html) of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
 
@@ -28,6 +38,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
 
 ### Added
+
+- **CUMULUS-2395**
+  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
+    custom security group mappings
 
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
@@ -118,19 +132,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Change Postgres Schema definition for Files to remove `filename` and `name` and only support `file_name`.
     - Change Postgres Schema definition for Files to remove `size` to only support `file_size`.
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
-
-### Changed
-
+- **CUMULUS-2300**
+  - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_granules_workflow.asl.json`.
+- **CUMULUS-2350**
+  - Adds an unprotected endpoinpoint, `/s3credentialsREADME`, to the s3-credentials-endpoint that displays information on how to use the `/s3credentials` endpoint
+- **CUMULUS-2391**
+  - Add reportToEms to collections.files file schema
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
 
 ### Fixed
+
+- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
 
 - **CUMULUS-2310**
   - Use valid filename for reconciliation report
 
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+
+## [v5.0.1] 2021-01-27
+
+### Changed
+
+- **CUMULUS-2344**
+  - Elasticsearch API now allows you to reindex to an index that already exists
+  - If using the Change Index operation and the new index doesn't exist, it will be created
+  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
+    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 ## [v5.0.0] 2021-01-12
 
@@ -3883,7 +3912,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.1...HEAD
+[v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
