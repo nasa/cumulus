@@ -312,3 +312,107 @@ test.serial('enqueueParsePdrMessage uses the executionNamePrefix if specified', 
   t.true(executionName.startsWith(executionNamePrefix));
   t.true(executionName.length > executionNamePrefix.length);
 });
+
+test.serial('enqueueParsePdrMessage does not overwrite the collection or provider with additionalCustomMeta if specified', async (t) => {
+  const {
+    queueUrl,
+    templateBucket,
+    stackName,
+    workflow,
+  } = t.context;
+
+  const collection = {
+    name: 'ABC123',
+    version: '001',
+  };
+
+  const provider = {
+    id: 'prov1',
+  };
+
+  await queue.enqueueParsePdrMessage({
+    collection,
+    parentExecutionArn: randomId(),
+    parsePdrWorkflow: workflow,
+    pdr: {},
+    provider,
+    stack: stackName,
+    systemBucket: templateBucket,
+    queueUrl,
+    additionalCustomMeta: {
+      collection: {
+        name: 'XYZ789',
+        version: '999',
+      },
+      provider: {
+        id: 'PROV99',
+      },
+    },
+  });
+
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
+
+  const messageCollection = actualMessage.meta.collection;
+  const messageProvider = actualMessage.meta.provider;
+
+  t.deepEqual(collection, messageCollection);
+  t.deepEqual(provider, messageProvider);
+});
+
+test.serial('enqueueGranuleIngestMessage does not overwrite the collection or provider with additionalCustomMeta if specified', async (t) => {
+  const {
+    queueUrl,
+    templateBucket,
+    stackName,
+    workflow,
+  } = t.context;
+
+  const collection = {
+    name: 'ABC123',
+    version: '001',
+  };
+
+  const provider = {
+    id: 'prov1',
+  };
+
+  await queue.enqueueGranuleIngestMessage({
+    collection,
+    parentExecutionArn: randomId(),
+    granuleIngestWorkflow: workflow,
+    pdr: {},
+    provider,
+    stack: stackName,
+    systemBucket: templateBucket,
+    queueUrl,
+    additionalCustomMeta: {
+      collection: {
+        name: 'XYZ789',
+        version: '999',
+      },
+      provider: {
+        id: 'PROV99',
+      },
+    },
+  });
+
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
+
+  const messageCollection = actualMessage.meta.collection;
+  const messageProvider = actualMessage.meta.provider;
+
+  t.deepEqual(collection, messageCollection);
+  t.deepEqual(provider, messageProvider);
+});

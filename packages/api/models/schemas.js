@@ -181,6 +181,12 @@ module.exports.collection = {
               },
             },
           },
+          reportToEms: {
+            title: 'Report to EMS',
+            description: 'Indicates whether the granule with this file type will be reported to EMS when the collection level configuration is true.',
+            type: 'boolean',
+            default: true,
+          },
         },
         required: [
           'regex',
