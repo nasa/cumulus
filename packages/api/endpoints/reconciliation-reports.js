@@ -72,7 +72,7 @@ async function getReport(req, res) {
       if (estimatedPayloadSize > (process.env.maxResponsePayloadSize || maxResponsePayloadSize)) {
         res.json({
           presignedS3Url,
-          data: `Error: Report file ${downloadFile} exceeded maximum allowed payload size`,
+          data: `Error: Report ${name} exceeded maximum allowed payload size`,
         });
       } else {
         const file = await getS3Object(Bucket, Key);
