@@ -66,8 +66,7 @@ export class SftpClient {
     }
   }
 
-  /* @private */
-  private get sftp(): Client {
+  get sftp(): Client {
     if (!this.connected) {
       throw new Error('Client not connected');
     }
