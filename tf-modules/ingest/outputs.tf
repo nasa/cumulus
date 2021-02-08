@@ -103,6 +103,12 @@ output "queue_pdrs_task" {
   }
 }
 
+output "run_azure_function_task" {
+  value = {
+    task_arn = aws_lambda_function.run_azure_function_task.arn
+  }
+}
+
 output "schedule_sf_lambda_function_arn" {
   value = aws_lambda_function.schedule_sf.arn
 }

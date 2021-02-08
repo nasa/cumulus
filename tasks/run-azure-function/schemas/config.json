@@ -1,0 +1,15 @@
+
+{
+  "title": "MoveGranulesConfig",
+  "description": "Describes the config used by the move-granules task",
+  "type": "object",
+  "required": [
+    "orchestratorURL"
+  ],
+  "properties": {
+    "orchestratorURL": {
+      "type": "string",
+      "description": "The URL to call to start the Azure orchestrator function"
+    }
+  }
+}

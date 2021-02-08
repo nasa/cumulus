@@ -178,6 +178,16 @@ variable "azure_storage_connection_string" {
   default = ""
 }
 
+variable "azure_processing_orchestrator_url" {
+  type = string
+  default = ""
+}
+
+variable "azure_processing_queue_url" {
+  type = string
+  default = ""
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string, cloudProvider = string }))
   default = {}
