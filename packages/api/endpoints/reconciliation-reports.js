@@ -4,6 +4,8 @@ const router = require('express-promise-router')();
 const {
   deleteS3Object,
   fileExists,
+  getObjectSize,
+  getS3Object,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -19,6 +21,8 @@ const indexer = require('../es/indexer');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const logger = new Logger({ sender: '@cumulus/api' });
+const maxResponsePayloadSize = 6 * 1024 * 1024;
+
 /**
  * List all reconciliation reports
  *
@@ -55,12 +59,29 @@ async function getReport(req, res) {
     if (!reportExists) {
       return res.boom.notFound('The report does not exist!');
     }
+
+    const downloadFile = Key.split('/').pop();
+    const presignedS3Url = s3().getSignedUrl('getObject', {
+      Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
+    });
+
     if (Key.endsWith('.json') || Key.endsWith('.csv')) {
-      const downloadFile = Key.split('/').pop();
-      const downloadURL = s3().getSignedUrl('getObject', {
-        Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
-      });
-      return res.json({ url: downloadURL });
+      const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key });
+      // estimated payload size, add extra
+      const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
+      if (estimatedPayloadSize > (process.env.maxResponsePayloadSize || maxResponsePayloadSize)) {
+        res.json({
+          presignedS3Url,
+          data: `Error: Report file ${downloadFile} exceeded maximum allowed payload size`,
+        });
+      } else {
+        const file = await getS3Object(Bucket, Key);
+        logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
+        return res.json({
+          presignedS3Url,
+          data: Key.endsWith('.json') ? JSON.parse(file.Body.toString()) : file.Body.toString(),
+        });
+      }
     }
     logger.debug('reconciliation report getReport received an unhandled report type.');
   } catch (error) {

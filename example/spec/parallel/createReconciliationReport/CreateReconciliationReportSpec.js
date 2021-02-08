@@ -276,7 +276,7 @@ const fetchReconciliationReport = async (stackName, reportName) => {
     throw new Error(`ReconciliationReport getReconciliationReport API did not return 200: ${JSON.stringify(response)}`);
   }
 
-  const url = JSON.parse(response.body).url;
+  const url = JSON.parse(response.body).presignedS3Url;
   if (isNil(url) || !url.includes(`reconciliation-reports/${reportName}`) ||
     !url.includes('AWSAccessKeyId') ||
     !url.includes('Signature')) {
@@ -620,7 +620,6 @@ describe('When there are granule differences and granule reconciliation is run',
   describe('Creates \'Granule Inventory\' reports.', () => {
     let reportRecord;
     let reportArray;
-    let redirectResponse;
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Granule Inventory',
@@ -653,29 +652,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('Fetches an object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
-      redirectResponse = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      expect(redirectResponse.statusCode).toBe(200);
-      const redirectUrl = JSON.parse(redirectResponse.body).url;
-      expect(redirectUrl).toMatch(`reconciliation-reports/${reportRecord.name}.csv?`);
-      expect(redirectUrl).toMatch('AWSAccessKeyId');
-      expect(redirectUrl).toMatch('Signature');
-    });
-
-    it('Wrote correct data to the S3 location.', async () => {
-      const pieces = new RegExp('https://(.*)\.s3.amazonaws.com/(.*)\\?.*', 'm');
-      const [, Bucket, Key] = JSON.parse(redirectResponse.body).url.match(pieces);
-      let response;
-      try {
-        response = await s3().getObject({ Bucket, Key }).promise();
-      } catch (error) {
-        console.error(error);
-      }
-
-      reportArray = response.Body.toString().split('\n');
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      reportArray = reportContent.split('\n');
 
       [
         'granuleUr',
