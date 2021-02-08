@@ -10,15 +10,14 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-const { GranulePgModel, getKnexClient, FilePgModel } = require('@cumulus/db');
+const { GranulePgModel, getKnexClient } = require('@cumulus/db');
 
-const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { deleteGranuleAndFiles } = require('../lib/granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
-const pMap = require('p-map');
 
 /**
  * List all granules for a given collection.
@@ -144,7 +143,6 @@ async function del(req, res) {
 
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
-  const filePgModel = new FilePgModel();
 
   const knex = await getKnexClient({ env: process.env });
 
@@ -165,33 +163,15 @@ async function del(req, res) {
     return res.boom.badRequest(dynamoGranule);
   }
 
-  // get granule's files first so we can remove them from S3
-  const files = await knex(filePgModel.tableName)
-    .where({ granule_cumulus_id: pgGranule.cumulus_id });
+  if (pgGranule.published) {
+    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+  }
 
-  await knex.transaction(async (trx) => {
-    if (pgGranule.published) {
-      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-    }
-
-    // TODO This needs to fail outter transaction
-    await pMap(
-      files,
-      (file) =>
-        knex.transaction(async (fileTrx) => {
-          await filePgModel.delete(fileTrx, { cumulus_id: file.cumulus_id });
-          await deleteS3Object(file.bucket, file.key);
-        })
-    );
-    await granulePgModel.delete(trx, pgGranule);
-    await granuleModelClient.delete(dynamoGranule);
-  })
-    .catch((error) => {
-      if (error instanceof DeletePublishedGranule) {
-        return res.boom.badRequest(error.message);
-      }
-      throw error;
-    });
+  await deleteGranuleAndFiles(
+    knex,
+    dynamoGranule,
+    pgGranule
+  );
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);

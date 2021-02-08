@@ -1,8 +1,5 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const {
-  randomId,
-} = require('@cumulus/common/test-utils');
 
 const {
   CollectionPgModel,
@@ -41,40 +38,6 @@ const createFakeGranule = async (dbClient) => {
   // not number, by knex
   // see https://github.com/knex/knex/issues/387
   return Number.parseInt(granuleCumulusId, 10);
-};
-
-const saveFilesToPG = async (dbClient, filePgModel, granuleCumulusId) => {
-  const buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-
-  const files = [
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.hdf`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.protected.name,
-      file_name: `${granuleCumulusId}.cmr.xml`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-    fakeFileRecordFactory({
-      bucket: buckets.public.name,
-      file_name: `${granuleCumulusId}.jpg`,
-      granule_cumulus_id: granuleCumulusId,
-    }),
-  ];
-
-  // Add files to PG
-  await Promise.all(files.map((f) => filePgModel.create(dbClient, f)));
 };
 
 test.before(async (t) => {

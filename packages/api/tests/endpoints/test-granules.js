@@ -33,7 +33,6 @@ const {
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 
 // PG mock data factories
 const {
@@ -772,81 +771,6 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
     s3Buckets.protected.name,
     s3Buckets.public.name,
   ]);
-});
-
-test('DELETE for a granule with a file not present in S3 succeeds', async (t) => {
-  const granuleId = randomId('granule');
-  const files = [
-    {
-      bucket: process.env.system_bucket,
-      fileName: `${granuleId}.hdf`,
-      key: randomString(),
-    },
-  ];
-
-  // Create Dynamo granule
-  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
-  newGranule.published = false;
-  newGranule.files = files;
-  await granuleModel.create(newGranule);
-
-  // create PG granule
-  const newPGGranule = fakeGranuleRecordFactory(
-    {
-      granule_id: granuleId,
-      status: 'failed',
-      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
-    }
-  );
-  newPGGranule.published = false;
-  await granulePgModel.create(t.context.knex, newPGGranule);
-
-  const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`);
-
-  t.is(response.status, 200);
-});
-
-test('DELETE removes a granule from RDS and Dynamo', async (t) => {
-  const granuleId = cryptoRandomString({ length: 6 });
-
-  // Create the same Granule in Dynamo and PG
-  const newDynamoGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
-  const newPGGranule = fakeGranuleRecordFactory(
-    {
-      granule_id: granuleId,
-      status: 'failed',
-      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
-    }
-  );
-
-  newDynamoGranule.published = false;
-  newPGGranule.published = false;
-
-  // create a new unpublished granule in Dynamo
-  await granuleModel.create(newDynamoGranule);
-
-  // create a new unpublished granule in RDS
-  await granulePgModel.create(t.context.knex, newPGGranule);
-
-  const response = await request(app)
-    .delete(`/granules/${granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`);
-  t.is(response.status, 200);
-
-  // Check Dynamo and RDS. The granule should have been removed from both.
-  await t.throwsAsync(
-    granuleModel.get({ granuleId: granuleId }),
-    { instanceOf: RecordDoesNotExist }
-  );
-
-  await t.throwsAsync(
-    granulePgModel.get(t.context.knex, { granule_id: granuleId }),
-    { instanceOf: RecordDoesNotExist }
-  );
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {

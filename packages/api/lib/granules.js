@@ -3,8 +3,12 @@
 const awsClients = require('@cumulus/aws-client/services');
 const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { GranulePgModel, FilePgModel } = require('@cumulus/db');
+const pMap = require('p-map');
 
 const FileUtils = require('./FileUtils');
+const models = require('../models');
 
 const translateGranule = async (
   granule,
@@ -62,10 +66,37 @@ function getGranuleProductVolume(granuleFiles = []) {
     .reduce((x, y) => x + y, 0);
 }
 
+const deleteGranuleAndFiles = async (
+  knex,
+  dynamoGranule,
+  pgGranule,
+  filePgModel = new FilePgModel(),
+  granulePgModel = new GranulePgModel(),
+  granuleModelClient = new models.Granule()
+) => {
+  const files = await knex(filePgModel.tableName)
+    .where({ granule_cumulus_id: pgGranule.cumulus_id });
+
+  await knex.transaction(async (trx) => {
+    // TODO This needs to fail outer transaction
+    await pMap(
+      files,
+      (file) =>
+        knex.transaction(async (fileTrx) => {
+          await filePgModel.delete(fileTrx, { cumulus_id: file.cumulus_id });
+          await deleteS3Object(file.bucket, file.key);
+        })
+    );
+    await granulePgModel.delete(trx, pgGranule);
+    await granuleModelClient.delete(dynamoGranule);
+  });
+};
+
 module.exports = {
   translateGranule,
   getExecutionProcessingTimeInfo,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
   getGranuleProductVolume,
+  deleteGranuleAndFiles,
 };
