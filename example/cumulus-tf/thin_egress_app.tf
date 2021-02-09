@@ -53,7 +53,6 @@ module "thin_egress_app" {
 
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
   count           = (var.log_api_gateway_to_cloudwatch && var.log_destination_arn != null) ? 1 : 0
-  depends_on      = [module.cumulus]
   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
   distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
@@ -64,7 +63,6 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscr
 # Egress Lambda Log Group
 resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
   count             = (var.log_destination_arn != null) ? 1 : 0
-  depends_on        = [module.cumulus]
   name              = "/aws/lambda/${module.thin_egress_app.egress_lambda_name}"
   retention_in_days = 30
   tags              = var.tags
@@ -73,7 +71,7 @@ resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
 # Egress Lambda Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
   count           = (var.log_destination_arn != null) ? 1 : 0
-  depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group, module.cumulus]
+  depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group]
   name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
   distribution    = "ByLogStream"
