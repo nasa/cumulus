@@ -12,7 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### MIGRATION NOTES
 
-- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
+- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform
+  from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your
+  deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
 
 ### BREAKING CHANGES
 
@@ -61,9 +63,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated RDS table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
   - **CUMULUS-2186**
-    - Added logic to `data-migration2` Lambda for migrating PDR records from DynamoDB to RDS
+    - Added logic to `data-migration2` Lambda for migrating PDR records from
+      DynamoDB to RDS
+  - **CUMULUS-2235**
+     - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to RDS and parse Granule records to
+    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to 
+      RDS and parse Granule records to
     store File records in RDS.
 - **CUMULUS-2128**
   - Added helper functions:

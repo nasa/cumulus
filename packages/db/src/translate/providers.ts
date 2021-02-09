@@ -1,5 +1,3 @@
-import omit from 'lodash/omit';
-
 import { envUtils } from '@cumulus/common';
 import { KMS } from '@cumulus/aws-client';
 import { ApiProvider } from '@cumulus/types';
@@ -16,40 +14,33 @@ export const encryptValueWithKMS = (
 /**
 * Translates API Provider record to Postgres Provider record
 *
-* @param {ApiProvider} data - ApiProvider record to translate
+* @param {ApiProvider} record - ApiProvider record to translate
 * @param {Function} [encryptMethod] - The encryption method to use, defaults to encryptValueWithKMS
 * @returns {Promise<PostgresProvider>} Returns a PostgresProvider object
 */
 export const translateApiProviderToPostgresProvider = async (
-  data: ApiProvider,
+  record: ApiProvider,
   encryptMethod: Function = encryptValueWithKMS
 ): Promise<PostgresProvider> => {
   let username: string | undefined;
   let password: string | undefined;
-  if (data.username) {
-    username = await encryptMethod(data.username);
+  if (record.username) {
+    username = await encryptMethod(record.username);
   }
-  if (data.password) {
-    password = await encryptMethod(data.password);
+  if (record.password) {
+    password = await encryptMethod(record.password);
   }
-  return ({ // TODO - rewrite this using snake
-    ...(omit(data, [
-      'id',
-      'encrypted',
-      'cmKeyId',
-      'certificateUri',
-      'privateKey',
-      'globalConnectionLimit',
-      'createdAt',
-      'updatedAt',
-    ])),
-    created_at: data.createdAt,
-    updated_at: data.updatedAt,
-    name: data.id,
-    cm_key_id: data.cmKeyId,
-    certificate_uri: data.certificateUri,
-    private_key: data.privateKey,
-    global_connection_limit: data.globalConnectionLimit,
+  return ({
+    created_at: (record.createdAt ? new Date(record.createdAt) : undefined),
+    updated_at: (record.updatedAt ? new Date(record.updatedAt) : undefined),
+    name: record.id,
+    cm_key_id: record.cmKeyId,
+    certificate_uri: record.certificateUri,
+    private_key: record.privateKey,
+    global_connection_limit: record.globalConnectionLimit,
+    port: record.port,
+    host: record.host,
+    protocol: record.protocol,
     username,
     password,
   });
