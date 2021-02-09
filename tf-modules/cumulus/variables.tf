@@ -36,12 +36,6 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
   type        = string
   default     = null
 }
-
-variable "tea_map_etag" {
-  type = string
-  default = ""
-}
-
 variable "rds_security_group" {
   description = "RDS Security Group used for access to RDS cluster"
   type        = string

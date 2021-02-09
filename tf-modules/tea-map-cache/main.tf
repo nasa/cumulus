@@ -20,12 +20,8 @@ resource "aws_vpc_endpoint" "config" {
   tags               = var.tags
 }
 
-resource "null_resource" "tea_map_cache" {
-  triggers = { some_value = md5(timestamp()) }
-}
-
 resource "aws_lambda_function" "tea_cache" {
-  function_name    = "${var.prefix}-TeaCache-${var.tea_map_etag}"
+  function_name    = "${var.prefix}-TeaCache"
   description      = "Bootstrap lambda to write tea cache file"
   filename         = "${path.module}/../../packages/tea-map-cache/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/tea-map-cache/dist/lambda.zip")
@@ -37,7 +33,6 @@ resource "aws_lambda_function" "tea_cache" {
   environment {
     variables = {
       TEA_API = var.tea_api_url
-      // foo_bar = null_resource.tea_map_cache
     }
   }
 
