@@ -26,8 +26,7 @@ module "tea_map_cache" {
 locals { timeVal = md5(timestamp())}
 
 data "aws_lambda_invocation" "tea_map_cache" {
-  depends_on            = [module.tea_map_cache]
-  function_name         = "${var.prefix}-TeaCache"
+  function_name         = module.tea_map_cache.lambda_function_name
   input                 = jsonencode({
     bucketList          = local.tea_buckets,
     s3Bucket            = var.system_bucket
