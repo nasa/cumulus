@@ -118,14 +118,11 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
   ]);
 
   // Add files to S3
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    await putObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
+  await Promise.all(newGranule.files.map((file) => putObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: `test data ${randomString()}`,
+  })));
 
   // create a new Dynamo granule
   await granuleModel.create(newGranule);

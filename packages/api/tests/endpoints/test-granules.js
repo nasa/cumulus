@@ -62,9 +62,6 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
-// create all the variables needed across this test
-const collectionId = 456;
-
 let esClient;
 let esIndex;
 let accessTokenModel;
@@ -188,14 +185,11 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
   ]);
 
   // Add files to S3
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    await putObject({ // eslint-disable-line no-await-in-loop
-      Bucket: file.bucket,
-      Key: file.key,
-      Body: `test data ${randomString()}`,
-    });
-  }
+  await Promise.all(newGranule.files.map((file) => putObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: `test data ${randomString()}`,
+  })));
 
   // create a new Dynamo granule
   await granuleModel.create(newGranule);
@@ -299,9 +293,12 @@ test.before(async (t) => {
   await collectionModel.create(t.context.testCollection);
 
   // Create a PG Collection
-  t.context.testPgCollection = fakeCollectionRecordFactory({ cumulus_id: collectionId });
+  t.context.testPgCollection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
-  await collectionPgModel.create(t.context.knex, t.context.testPgCollection);
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    t.context.testPgCollection
+  );
 });
 
 test.beforeEach(async (t) => {
@@ -326,14 +323,14 @@ test.beforeEach(async (t) => {
       {
         granule_id: granuleId1,
         status: 'completed',
-        collection_cumulus_id: collectionId,
+        collection_cumulus_id: t.context.collectionCumulusId,
       }
     ),
     fakeGranuleRecordFactory(
       {
         granule_id: granuleId2,
         status: 'failed',
-        collection_cumulus_id: collectionId,
+        collection_cumulus_id: t.context.collectionCumulusId,
       }
     ),
   ];
@@ -704,7 +701,7 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
 test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const newGranule = await createGranuleAndFiles(
     t.context.knex,
-    t.context.testPgCollection.cumulus_id,
+    t.context.collectionCumulusId,
     true
   );
 
@@ -741,7 +738,7 @@ test('DELETE deleting an existing granule that is published will fail and not de
 test('DELETE deleting an existing unpublished granule', async (t) => {
   const newGranule = await createGranuleAndFiles(
     t.context.knex,
-    t.context.testPgCollection.cumulus_id,
+    t.context.collectionCumulusId,
     false
   );
 
