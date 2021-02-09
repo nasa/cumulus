@@ -140,7 +140,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
  * @param {Object} cmrFile.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrFile.granuleId - the metadata's granuleId
  * @param {Object} cmrClient - a CMR instance
- * @param {string} revisionId - CMR Revision ID
+ * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
@@ -179,7 +179,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
  * @param {string} creds.username - the CMR username, not used if creds.token is provided
  * @param {string} creds.password - the CMR password, not used if creds.token is provided
  * @param {string} creds.token - the CMR or Launchpad token,
- * @param {string} cmrRevisionId - CMR Revision ID
+ * @param {string} cmrRevisionId - Optional CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
 async function publish2CMR(cmrPublishObject, creds, cmrRevisionId = undefined) {
