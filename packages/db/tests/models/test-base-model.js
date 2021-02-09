@@ -147,7 +147,7 @@ test('BasePgModel.exists() correctly returns false', async (t) => {
   t.false(await basePgModel.exists(knex, { info }));
 });
 
-test('BasePgModel.delete() correctly deletes a record', async (t) => {
+test('BasePgModel.delete() correctly deletes records', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
