@@ -22,22 +22,16 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
   bucket  = var.system_bucket
-  key     = "${var.prefix}/thin-egress-app/bucket_map${md5(templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
-    protected_buckets = local.protected_bucket_names,
-    public_buckets = local.public_bucket_names
-  }))}.yaml"
+  key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
   content = templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
     protected_buckets = local.protected_bucket_names,
     public_buckets = local.public_bucket_names
   })
+  etag    = md5(templatefile("${path.module}/thin-egress-app/bucket_map.yaml.tmpl", {
+    protected_buckets = local.protected_bucket_names,
+    public_buckets = local.public_bucket_names
+  }))
   tags    = var.tags
-}
-
-data "aws_s3_bucket_object" "bucket_map_yaml_data" {
-  depends_on = [aws_s3_bucket_object.bucket_map_yaml]
-  bucket  = var.system_bucket
-  key     = aws_s3_bucket_object.bucket_map_yaml.id
-  version_id = aws_s3_bucket_object.bucket_map_yaml.version_id
 }
 
 module "thin_egress_app" {

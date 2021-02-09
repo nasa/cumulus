@@ -23,8 +23,6 @@ module "tea_map_cache" {
   deploy_to_ngap             = var.deploy_to_ngap
 }
 
-locals { timeVal = md5(timestamp())}
-
 data "aws_lambda_invocation" "tea_map_cache" {
   function_name         = module.tea_map_cache.lambda_function_name
   input                 = jsonencode({
