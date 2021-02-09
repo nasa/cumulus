@@ -20,8 +20,8 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   async get(
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
-  ) {
-    const record = await knexOrTransaction<RecordType>(this.tableName)
+  ): Promise<RecordType> {
+    const record: RecordType = await knexOrTransaction(this.tableName)
       .where(params)
       .first();
 
