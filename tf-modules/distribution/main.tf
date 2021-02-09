@@ -21,28 +21,19 @@ module "tea_map_cache" {
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
   deploy_to_ngap             = var.deploy_to_ngap
-  tea_map_etag               = local.timeVal
-}
-
-
-resource "null_resource" "tea_map_cache" {
-  triggers = { some_value = md5(timestamp()) }
 }
 
 locals { timeVal = md5(timestamp())}
 
 data "aws_lambda_invocation" "tea_map_cache" {
-  // Required that it depends on the null res, as otherwise it tries to invoke
-  // while lambda is being created.
-  depends_on = [null_resource.tea_map_cache, module.tea_map_cache]
-  //function_name = module.tea_map_cache.lambda_function_name
-  function_name = "${var.prefix}-TeaCache-${local.timeVal}"
+  depends_on = [module.tea_map_cache]
+  function_name = "${var.prefix}-TeaCache"
   input = jsonencode({
     bucketList = local.tea_buckets,
     s3Bucket = var.system_bucket
     s3Key    = "${var.prefix}/distribution_bucket_map.json"
     teaEndpoint =  var.tea_internal_api_endpoint
-    dependency_array = var.tea_map_etag
+    replacementTrigger = timestamp()
   })
 }
 
