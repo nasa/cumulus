@@ -168,8 +168,14 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
     },
   ];
 
-  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
-  newGranule.published = published;
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: granuleId,
+      status: 'failed',
+      published: published,
+    }
+  );
+
   newGranule.files = files;
 
   await createS3Buckets([
@@ -193,9 +199,10 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
       granule_id: granuleId,
       status: 'failed',
       collection_cumulus_id: collectionCumulusId,
+      published: published,
     }
   );
-  newPGGranule.published = published;
+
   const [granuleCumulusId] = await granulePgModel.create(dbClient, newPGGranule);
 
   // create PG files
@@ -717,15 +724,12 @@ test('DELETE deleting an existing granule that is published will fail and not de
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
   t.true(await granuleModel.exists({ granuleId }));
 
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
+  newGranule.files.forEach(async (file) => {
     // file should still exist in S3
     t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
     // file should still exist in PG
     t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  });
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {

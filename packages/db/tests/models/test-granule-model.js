@@ -1,6 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { RecordDoesNotExist, DeletePublishedGranule } = require('@cumulus/errors');
+const { DeletePublishedGranule } = require('@cumulus/errors');
 
 const {
   CollectionPgModel,
@@ -275,10 +275,7 @@ test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {
 
   await granulePgModel.delete(knex, granule);
 
-  await t.throwsAsync(
-    granulePgModel.get(knex, { granule_id: granule.granule_id }),
-    { instanceOf: RecordDoesNotExist }
-  );
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granule.granule_id }));
 });
 
 test('GranulePgModel.delete() throws an error if the granule is published', async (t) => {
@@ -327,8 +324,5 @@ test('GranulePgModel.delete() works with a transaction', async (t) => {
     (trx) => granulePgModel.delete(trx, granule)
   );
 
-  await t.throwsAsync(
-    granulePgModel.get(knex, { granule_id: granule.granule_id }),
-    { instanceOf: RecordDoesNotExist }
-  );
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granule.granule_id }));
 });
