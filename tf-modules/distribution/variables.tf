@@ -118,3 +118,8 @@ variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
 }
+
+variable "tea_map_etag" {
+  type = string
+  default = ""
+}
