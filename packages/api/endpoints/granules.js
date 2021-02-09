@@ -10,7 +10,7 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-const { GranulePgModel, getKnexClient } = require('@cumulus/db');
+const { GranulePgModel, FilePgModel, getKnexClient } = require('@cumulus/db');
 
 const { deleteGranuleAndFiles } = require('../lib/granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -143,6 +143,7 @@ async function del(req, res) {
 
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
+  const filePgModel = new FilePgModel();
 
   const knex = await getKnexClient({ env: process.env });
 
@@ -170,7 +171,10 @@ async function del(req, res) {
   await deleteGranuleAndFiles(
     knex,
     dynamoGranule,
-    pgGranule
+    pgGranule,
+    filePgModel,
+    granulePgModel,
+    granuleModelClient
   );
 
   if (inTestMode()) {
