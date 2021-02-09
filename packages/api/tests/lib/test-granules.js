@@ -20,10 +20,10 @@ const {
 const {
   createBucket,
   s3ObjectExists,
-  recursivelyDeleteS3Bucket,
+  createS3Buckets,
+  deleteS3Buckets,
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
-
-const { s3 } = require('@cumulus/aws-client/services');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
@@ -60,16 +60,6 @@ process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
 process.env.TOKEN_SECRET = randomId('secret');
-
-function createBuckets(buckets) {
-  return Promise.all(buckets.map(createBucket));
-}
-
-function deleteBuckets(buckets) {
-  return Promise.all(buckets.map(recursivelyDeleteS3Bucket));
-}
-
-const putObject = (params) => s3().putObject(params).promise();
 
 /**
  * Helper for creating a granule, and files belonging to that granule
@@ -112,13 +102,13 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
   newGranule.published = published;
   newGranule.files = files;
 
-  await createBuckets([
+  await createS3Buckets([
     s3Buckets.protected.name,
     s3Buckets.public.name,
   ]);
 
   // Add files to S3
-  await Promise.all(newGranule.files.map((file) => putObject({
+  await Promise.all(newGranule.files.map((file) => s3PutObject({
     Bucket: file.bucket,
     Key: file.key,
     Body: `test data ${randomString()}`,
@@ -201,7 +191,7 @@ test.before(async (t) => {
 
 test.after.always(async () => {
   if (s3Buckets && s3Buckets.protected && s3Buckets.public) {
-    await deleteBuckets([
+    await deleteS3Buckets([
       s3Buckets.protected.name,
       s3Buckets.public.name,
     ]);

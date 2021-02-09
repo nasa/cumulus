@@ -20,6 +20,9 @@ const {
   s3ObjectExists,
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
+  createS3Buckets,
+  deleteS3Buckets,
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const {
   s3,
@@ -83,19 +86,9 @@ process.env.TOKEN_SECRET = randomId('secret');
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-function createBuckets(buckets) {
-  return Promise.all(buckets.map(createBucket));
-}
-
-function deleteBuckets(buckets) {
-  return Promise.all(buckets.map(recursivelyDeleteS3Bucket));
-}
-
-const putObject = (params) => s3().putObject(params).promise();
-
 async function runTestUsingBuckets(buckets, testFunction) {
   try {
-    await createBuckets(buckets);
+    await createS3Buckets(buckets);
     await testFunction();
   } finally {
     await Promise.all(buckets.map(recursivelyDeleteS3Bucket));
@@ -120,14 +113,14 @@ async function setupBucketsConfig() {
   };
 
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
-  await putObject({
+  await s3PutObject({
     Bucket: systemBucket,
     Key: `${process.env.stackName}/workflows/buckets.json`,
     Body: JSON.stringify(buckets),
   });
   await createBucket(buckets.public.name);
   // Create the required bucket map configuration file
-  await putObject({
+  await s3PutObject({
     Bucket: systemBucket,
     Key: getDistributionBucketMapKey(process.env.stackName),
     Body: JSON.stringify({
@@ -179,13 +172,13 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
   newGranule.published = published;
   newGranule.files = files;
 
-  await createBuckets([
+  await createS3Buckets([
     s3Buckets.protected.name,
     s3Buckets.public.name,
   ]);
 
   // Add files to S3
-  await Promise.all(newGranule.files.map((file) => putObject({
+  await Promise.all(newGranule.files.map((file) => s3PutObject({
     Bucket: file.bucket,
     Key: file.key,
     Body: `test data ${randomString()}`,
@@ -244,7 +237,7 @@ test.before(async (t) => {
 
   // create a workflow template file
   const tKey = `${process.env.stackName}/workflow_template.json`;
-  await putObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
 
   // create fake Collections table
   collectionModel = new models.Collection();
@@ -539,7 +532,7 @@ test.serial('reingest a granule', async (t) => {
   // fake workflow
   const message = JSON.parse(fakeDescribeExecutionResult.input);
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
@@ -578,7 +571,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   //fake in-place workflow
   const message = JSON.parse(fakeSFResponse.execution.input);
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
   const fakeDescribeExecutionResult = {
     output: JSON.stringify({
@@ -764,7 +757,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   }
   /* eslint-enable no-await-in-loop */
 
-  await deleteBuckets([
+  await deleteS3Buckets([
     s3Buckets.protected.name,
     s3Buckets.public.name,
   ]);
@@ -803,7 +796,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       await Promise.all(
         newGranule.files.map(
           (file) =>
-            putObject({
+            s3PutObject({
               Bucket: file.bucket,
               Key: file.key,
               Body: 'test data',
@@ -907,13 +900,13 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
 
   await granuleModel.create(newGranule);
 
-  await putObject({
+  await s3PutObject({
     Bucket: newGranule.files[0].bucket,
     Key: newGranule.files[0].key,
     Body: 'test data',
   });
 
-  await putObject({
+  await s3PutObject({
     Bucket: newGranule.files[1].bucket,
     Key: newGranule.files[1].key,
     Body: fs.createReadStream(path.resolve(__dirname, '../data/meta.xml')),
@@ -1009,9 +1002,9 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 
   await Promise.all(newGranule.files.map((file) => {
     if (file.name === `${newGranule.granuleId}.txt`) {
-      return putObject({ Bucket: file.bucket, Key: file.key, Body: 'test data' });
+      return s3PutObject({ Bucket: file.bucket, Key: file.key, Body: 'test data' });
     }
-    return putObject({ Bucket: file.bucket, Key: file.key, Body: ummgMetadataString });
+    return s3PutObject({ Bucket: file.bucket, Key: file.key, Body: ummgMetadataString });
   }));
 
   const destinationFilepath = `${process.env.stackName}/moved_granules/${randomString()}`;
