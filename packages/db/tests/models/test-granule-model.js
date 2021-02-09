@@ -271,10 +271,7 @@ test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {
 
   await granulePgModel.create(knex, granule);
 
-  t.like(
-    await granulePgModel.get(knex, granule),
-    granule
-  );
+  t.true(await granulePgModel.exists(knex, granule));
 
   await granulePgModel.delete(knex, granule);
 
@@ -324,10 +321,7 @@ test('GranulePgModel.delete() works with a transaction', async (t) => {
 
   await granulePgModel.create(knex, granule);
 
-  t.like(
-    await granulePgModel.get(knex, granule),
-    granule
-  );
+  t.true(await granulePgModel.exists(knex, granule));
 
   await knex.transaction(
     (trx) => granulePgModel.delete(trx, granule)
