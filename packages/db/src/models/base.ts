@@ -50,11 +50,15 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ): Promise<boolean> {
-    const record = await knexOrTransaction<RecordType>(this.tableName)
-      .where(params)
-      .first();
-
-    return isRecordDefined(record);
+    try {
+      await this.get(knexOrTransaction, params);
+      return true;
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   create(
