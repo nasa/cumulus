@@ -145,10 +145,14 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
   const granuleId = cmrFile.metadataObject.GranuleUR;
-
   const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject);
+
   const conceptId = res['concept-id'];
   const resultingRevisionId = res['revision-id'];
+
+  const filename = getS3UrlOfFile(cmrFile);
+  const metadataFormat = ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject));
+  const link = constructCmrConceptLink(conceptId, 'umm_json');
 
   if (revisionId && (resultingRevisionId !== revisionId)) {
     throw new Error(`Expected revision-id ${revisionId} but received ${resultingRevisionId} for ${granuleId}.`);
@@ -158,10 +162,10 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
 
   return {
     granuleId,
-    filename: getS3UrlOfFile(cmrFile),
+    filename,
     conceptId,
-    metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
-    link: constructCmrConceptLink(conceptId, 'umm_json'),
+    metadataFormat,
+    link,
   };
 }
 
