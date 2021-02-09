@@ -28,6 +28,7 @@ function determineIntegrationTestStackName(cb) {
     'Menno Van Diermen': 'mvd',
     'Brian Tennity': 'bt-ci',
     'Jennifer Tran': 'jtran-int',
+    'Danielle Peters': 'dop-ci',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
