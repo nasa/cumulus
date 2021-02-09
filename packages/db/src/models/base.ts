@@ -66,7 +66,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
       .returning('cumulus_id');
   }
 
-  delete(
+  async delete(
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ) {

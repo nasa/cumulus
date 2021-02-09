@@ -1,6 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const { RecordDoesNotExist, DeletePublishedGranule } = require('@cumulus/errors');
 
 const {
   CollectionPgModel,
@@ -301,11 +301,10 @@ test('GranulePgModel.delete() throws an error if the granule is published', asyn
 
   await granulePgModel.create(knex, granule);
 
-  try {
-    granulePgModel.delete(knex, granule);
-  } catch (error) {
-    t.is(error.message, 'You cannot delete a granule that is published to CMR. Remove it from CMR first');
-  }
+  await t.throwsAsync(
+    granulePgModel.delete(knex, granule),
+    { instanceOf: DeletePublishedGranule }
+  );
 });
 
 test('GranulePgModel.delete() works with a transaction', async (t) => {

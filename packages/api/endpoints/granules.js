@@ -159,7 +159,7 @@ async function del(req, res) {
     throw error;
   }
 
-  // TODO what is this?
+  // DEPRECATED this can be removed
   if (dynamoGranule.detail) {
     return res.boom.badRequest(dynamoGranule);
   }

@@ -39,7 +39,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .returning('cumulus_id');
   }
 
-  delete(
+  async delete(
     knexOrTransaction: Knex | Knex.Transaction,
     granule: PostgresGranule
   ) {
