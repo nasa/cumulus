@@ -37,11 +37,6 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
   default     = null
 }
 
-variable "tea_map_etag" {
-  type = string
-  default = ""
-}
-
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
