@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "5.0.1",
+  "version": "5.0.2-alpha.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
