@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cumulus-integration-tests",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Cumulus Integration Test Deployment",
   "private": true,
   "main": "index.js",
@@ -44,30 +44,30 @@
     ]
   },
   "dependencies": {
-    "@cumulus/api": "5.0.0",
-    "@cumulus/api-client": "5.0.0",
-    "@cumulus/aws-client": "5.0.0",
-    "@cumulus/checksum": "5.0.0",
-    "@cumulus/cmr-client": "5.0.0",
-    "@cumulus/cmrjs": "5.0.0",
-    "@cumulus/common": "5.0.0",
-    "@cumulus/discover-granules": "5.0.0",
-    "@cumulus/discover-pdrs": "5.0.0",
-    "@cumulus/files-to-granules": "5.0.0",
-    "@cumulus/hello-world": "5.0.0",
-    "@cumulus/integration-tests": "5.0.0",
-    "@cumulus/message": "5.0.0",
-    "@cumulus/move-granules": "5.0.0",
-    "@cumulus/parse-pdr": "5.0.0",
-    "@cumulus/pdr-status-check": "5.0.0",
-    "@cumulus/post-to-cmr": "5.0.0",
-    "@cumulus/queue-granules": "5.0.0",
-    "@cumulus/queue-pdrs": "5.0.0",
-    "@cumulus/sf-sqs-report": "5.0.0",
-    "@cumulus/sync-granule": "5.0.0",
-    "@cumulus/test-processing": "5.0.0"
+    "@cumulus/api": "5.0.1",
+    "@cumulus/api-client": "5.0.1",
+    "@cumulus/aws-client": "5.0.1",
+    "@cumulus/checksum": "5.0.1",
+    "@cumulus/cmr-client": "5.0.1",
+    "@cumulus/cmrjs": "5.0.1",
+    "@cumulus/common": "5.0.1",
+    "@cumulus/discover-granules": "5.0.1",
+    "@cumulus/discover-pdrs": "5.0.1",
+    "@cumulus/files-to-granules": "5.0.1",
+    "@cumulus/hello-world": "5.0.1",
+    "@cumulus/integration-tests": "5.0.1",
+    "@cumulus/message": "5.0.1",
+    "@cumulus/move-granules": "5.0.1",
+    "@cumulus/parse-pdr": "5.0.1",
+    "@cumulus/pdr-status-check": "5.0.1",
+    "@cumulus/post-to-cmr": "5.0.1",
+    "@cumulus/queue-granules": "5.0.1",
+    "@cumulus/queue-pdrs": "5.0.1",
+    "@cumulus/sf-sqs-report": "5.0.1",
+    "@cumulus/sync-granule": "5.0.1",
+    "@cumulus/test-processing": "5.0.1"
   },
   "devDependencies": {
-    "@cumulus/test-data": "5.0.0"
+    "@cumulus/test-data": "5.0.1"
   }
 }
