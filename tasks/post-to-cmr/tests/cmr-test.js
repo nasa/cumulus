@@ -95,35 +95,66 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
 });
 
 test.serial('postToCMR succeeds with correct payload', async (t) => {
-  const newPayload = t.context.payload;
+  const { bucket, payload } = t.context;
+  const newPayload = payload;
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
+  newPayload.input.cmrRevisionId = 123;
+  newPayload.input.granules[1] = {
+    granuleId: 'L0A_RAD_RAW_product_0017-of-0020',
+    files: [
+      {
+        name: 'L0A_RAD_RAW_product_0017-of-0020.cmr.json',
+        bucket: `${t.context.bucket}`,
+        filename: `s3://${t.context.bucket}/L0A_RAD_RAW_product_0017-of-0020.cmr.json`,
+        type: 'metadata',
+        fileStagingDir: 'file-staging/subdir',
+        etag: '"13f2bb38e22496fe9d42e761c42a0e67"',
+      },
+    ],
+  };
 
+  const jsonGranuleId = newPayload.input.granules[1].granuleId;
+  const jsonKey = `${jsonGranuleId}.cmr.json`;
+  const ummgMetadataString = fs.readFileSync(path.join(__dirname, 'data/ummg-meta.json'));
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestUMMGranule').callsFake(
+    () => ({
+      'concept-id': 'G1222482316-CUMULUS',
+      'revision-id': 123,
+    })
+  );
   sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
-
-  try {
-    await promiseS3Upload({
-      Bucket: t.context.bucket,
-      Key: key,
-      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
-    });
-
-    const output = await postToCMR(newPayload);
-
-    t.is(output.granules.length, 1);
-
-    t.is(
-      output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
-    );
-
-    output.granules.forEach((g) => {
-      t.true(Number.isInteger(g.post_to_cmr_duration));
-      t.true(g.post_to_cmr_duration >= 0);
-    });
-  } finally {
+  t.teardown(() => {
     cmrClient.CMR.prototype.ingestGranule.restore();
-  }
+    cmrClient.CMR.prototype.ingestUMMGranule.restore();
+  });
+
+  await s3PutObject({
+    Bucket: bucket,
+    Key: jsonKey,
+    Body: ummgMetadataString,
+  });
+  await s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+  });
+
+  const output = await postToCMR(newPayload);
+  t.is(output.granules.length, 2);
+  t.is(
+    output.granules[0].cmrLink,
+    `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
+  );
+  t.is(
+    output.granules[1].cmrLink,
+    `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.umm_json`
+  );
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.post_to_cmr_duration));
+    t.true(g.post_to_cmr_duration >= 0);
+  });
 });
 
 test.serial('postToCMR immediately succeeds using metadata file ETag', async (t) => {
@@ -439,58 +470,6 @@ test.serial('postToCMR succeeds with launchpad authentication', async (t) => {
     cmrClient.CMR.prototype.ingestGranule.restore();
     launchpad.getLaunchpadToken.restore();
   }
-});
-
-test.serial('postToCMR succeeds with correct payload for UMMG file', async (t) => {
-  const newPayload = t.context.payload;
-  newPayload.input.granules = [{
-    granuleId: 'L0A_RAD_RAW_product_0017-of-0020',
-    files: [
-      {
-        name: 'L0A_RAD_RAW_product_0017-of-0020.cmr.json',
-        bucket: `${t.context.bucket}`,
-        filename: `s3://${t.context.bucket}/L0A_RAD_RAW_product_0017-of-0020.cmr.json`,
-        type: 'metadata',
-        fileStagingDir: 'file-staging/subdir',
-        etag: '"13f2bb38e22496fe9d42e761c42a0e67"',
-      },
-    ],
-  }];
-  newPayload.input.cmrRevisionId = 123;
-
-  const jsonGranuleId = newPayload.input.granules[0].granuleId;
-  const jsonKey = `${jsonGranuleId}.cmr.json`;
-  const ummgMetadataString = fs.readFileSync(path.join(__dirname, 'data/ummg-meta.json'));
-
-  sinon.stub(cmrClient.CMR.prototype, 'ingestUMMGranule').callsFake(
-    () => ({
-      'concept-id': 'G1222482316-CUMULUS',
-      'revision-id': 123,
-    })
-  );
-  t.teardown(() => {
-    cmrClient.CMR.prototype.ingestUMMGranule.restore();
-  });
-
-  await s3PutObject({
-    Bucket: t.context.bucket,
-    Key: jsonKey,
-    Body: ummgMetadataString,
-  });
-
-  const output = await postToCMR(newPayload);
-
-  t.is(output.granules.length, 1);
-
-  t.is(
-    output.granules[0].cmrLink,
-    `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.umm_json`
-  );
-
-  output.granules.forEach((g) => {
-    t.true(Number.isInteger(g.post_to_cmr_duration));
-    t.true(g.post_to_cmr_duration >= 0);
-  });
 });
 
 test.serial('postToCMR fails with conflicting CMR Revision ID', async (t) => {

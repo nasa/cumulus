@@ -113,13 +113,19 @@ function granulesToCmrFileObjects(granules) {
  * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
  * @param {string} cmrFile.metadata - granule xml document
  * @param {Object} cmrClient - a CMR instance
+ * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishECHO10XML2CMR(cmrFile, cmrClient) {
+async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId = undefined) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
   const res = await cmrClient.ingestGranule(xml);
   const conceptId = res.result['concept-id'];
+  const resultingRevisionId = res.result['revision-id'];
+
+  if (revisionId && (resultingRevisionId !== revisionId)) {
+    throw new Error(`Expected revision-id ${revisionId} but received ${resultingRevisionId} for ${cmrFile.granuleId}.`);
+  }
 
   log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
 
@@ -191,7 +197,7 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId = undefined) {
 
   // choose xml or json and do the things.
   if (isECHO10File(cmrPublishObject.filename)) {
-    return publishECHO10XML2CMR(cmrPublishObject, cmrClient);
+    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
   if (isUMMGFile(cmrPublishObject.filename)) {
     return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
