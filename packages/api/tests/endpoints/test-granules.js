@@ -22,6 +22,13 @@ const {
 const {
   buildS3Uri,
   createBucket,
+  createS3Buckets,
+  deleteS3Buckets,
+  putJsonS3Object,
+  recursivelyDeleteS3Bucket,
+  s3ObjectExists,
+  s3PutObject,
+  createBucket,
   s3ObjectExists,
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
