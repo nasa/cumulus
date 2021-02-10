@@ -53,6 +53,15 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
       .insert(item)
       .returning('cumulus_id');
   }
+
+  delete(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: Partial<RecordType>
+  ) {
+    return knexOrTransaction(this.tableName)
+      .where(params)
+      .del();
+  }
 }
 
 export { BasePgModel };
