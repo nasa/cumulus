@@ -13,11 +13,6 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
-  GranulePgModel,
-  CollectionPgModel,
-  generateLocalTestDb,
-  destroyLocalTestDb,
-  FilePgModel,
 } = require('@cumulus/db');
 const {
   buildS3Uri,
@@ -28,18 +23,11 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3PutObject,
-  createBucket,
-  s3ObjectExists,
-  putJsonS3Object,
-  recursivelyDeleteS3Bucket,
-  createS3Buckets,
-  deleteS3Buckets,
-  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const {
-  s3,
   secretsManager,
   sfn,
+  s3,
 } = require('@cumulus/aws-client/services');
 const { CMR } = require('@cumulus/cmr-client');
 const {
@@ -51,8 +39,8 @@ const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/c
 
 // PG mock data factories
 const {
-  fakeGranuleRecordFactory,
   fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
 const assertions = require('../../lib/assertions');
@@ -62,10 +50,10 @@ const indexer = require('../../es/indexer');
 
 // Dynamo mock data factories
 const {
+  createFakeJwtAuthToken,
   fakeAccessTokenFactory,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
-  createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
@@ -77,13 +65,13 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
+let accessTokenModel;
+let collectionModel;
 let esClient;
 let esIndex;
-let accessTokenModel;
+let filePgModel;
 let granuleModel;
 let granulePgModel;
-let collectionModel;
-let filePgModel;
 let jwtAuthToken;
 let s3Buckets = [];
 

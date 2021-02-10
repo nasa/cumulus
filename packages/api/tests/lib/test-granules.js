@@ -4,43 +4,43 @@ const cryptoRandomString = require('crypto-random-string');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const {
-  localStackConnectionEnv,
-  GranulePgModel,
   CollectionPgModel,
   FilePgModel,
   generateLocalTestDb,
+  GranulePgModel,
+  localStackConnectionEnv,
 } = require('@cumulus/db');
 
 // PG mock data factories
 const {
-  fakeGranuleRecordFactory,
   fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
 const {
   createBucket,
-  s3ObjectExists,
   createS3Buckets,
   deleteS3Buckets,
+  s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 
-const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');
 
 // Dynamo mock data factories
 const {
-  fakeGranuleFactoryV2,
   fakeCollectionFactory,
+  fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
 const {
+  deleteGranuleAndFiles,
   getExecutionProcessingTimeInfo,
+  getGranuleProductVolume,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
-  getGranuleProductVolume,
-  deleteGranuleAndFiles,
 } = require('../../lib/granules');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
@@ -49,10 +49,10 @@ const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 const collectionId = 456;
 
-let granuleModel;
 let collectionModel;
-let granulePgModel;
 let filePgModel;
+let granuleModel;
+let granulePgModel;
 let s3Buckets = {};
 
 process.env.CollectionsTable = randomId('collection');
