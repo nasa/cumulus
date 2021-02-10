@@ -63,7 +63,7 @@ resource "aws_sqs_queue" "publish_executions_dead_letter_queue" {
 }
 
 resource "aws_lambda_function" "publish_executions" {
-  depends_on = ["aws_cloudwatch_log_group.publish_executions_logs"]
+  depends_on = [aws_cloudwatch_log_group.publish_executions_logs]
 
   filename         = "${path.module}/../../packages/api/dist/publishExecutions/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/publishExecutions/lambda.zip")

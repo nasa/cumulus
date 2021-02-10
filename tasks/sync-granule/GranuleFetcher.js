@@ -139,7 +139,7 @@ class GranuleFetcher {
    * than a url_path set on the min collection object.
    *
    * @param {Object} file - object representing a file of a granule
-   * @returns {Object} file object updated with url+path tenplate
+   * @returns {Object} file object updated with url+path template
    */
   getUrlPath(file) {
     const collectionFileConfig = this.findCollectionFileConfigForFile(file);

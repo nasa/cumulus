@@ -4,7 +4,9 @@ const cloneDeep = require('lodash/cloneDeep');
 const moment = require('moment');
 const fs = require('fs-extra');
 const get = require('lodash/get');
+const got = require('got');
 const isEqual = require('lodash/isEqual');
+const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
 
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
@@ -263,6 +265,28 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
   }
 );
 
+// returns report content text
+const fetchReconciliationReport = async (stackName, reportName) => {
+  const response = await reconciliationReportsApi.getReconciliationReport({
+    prefix: stackName,
+    name: reportName,
+  });
+
+  if (response.statusCode !== 200) {
+    throw new Error(`ReconciliationReport getReconciliationReport API did not return 200: ${JSON.stringify(response)}`);
+  }
+
+  const url = JSON.parse(response.body).presignedS3Url;
+  if (isNil(url) || !url.includes(`reconciliation-reports/${reportName}`) ||
+    !url.includes('AWSAccessKeyId') ||
+    !url.includes('Signature')) {
+    throw new Error(`ReconciliationReport getReconciliationReport did not return valid url ${url}`);
+  }
+
+  const reportResponse = await got(url);
+  return reportResponse.body;
+};
+
 describe('When there are granule differences and granule reconciliation is run', () => {
   let asyncOperationId;
   let beforeAllFailed = false;
@@ -384,11 +408,14 @@ describe('When there are granule differences and granule reconciliation is run',
     it('generates an async operation through the Cumulus API', async () => {
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
-        request: { collectionId: [
-          constructCollectionId(collection.name, collection.version),
-          constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
-          constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
-        ] },
+        request: {
+          collectionId: [
+            constructCollectionId(collection.name, collection.version),
+            constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+            constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
+          ],
+          reportType: 'Granule Not Found',
+        },
       });
 
       const responseBody = JSON.parse(response.body);
@@ -408,13 +435,9 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('fetches a reconciliation report through the Cumulus API', async () => {
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      report = JSON.parse(response.body);
-      expect(report.reportType).toBe('Inventory');
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      report = JSON.parse(reportContent);
+      expect(report.reportType).toBe('Granule Not Found');
       expect(report.status).toBe('SUCCESS');
     });
 
@@ -492,10 +515,8 @@ describe('When there are granule differences and granule reconciliation is run',
       const urls = report.filesInCumulusCmr.onlyInCmr;
       expect(urls.find((url) => url.URL.endsWith(originalGranuleFile.fileName))).toBeTruthy();
       expect(urls.find((url) => url.URL.endsWith(updatedGranuleFile.fileName))).toBeFalsy();
-      // TBD update to 1 after the s3credentials url has type 'VIEW RELATED INFORMATION' (CUMULUS-1182)
-      // Cumulus 670 has a fix for the issue noted above from 1182.  Setting to 1.
       expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranuleId).length)
-        .toBe(2);
+        .toBe(1);
     });
 
     it('deletes a reconciliation report through the Cumulus API', async () => {
@@ -553,12 +574,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('fetches a reconciliation report through the Cumulus API', async () => {
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      report = JSON.parse(response.body);
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      report = JSON.parse(reportContent);
       expect(report.reportType).toBe('Internal');
       expect(report.status).toBe('SUCCESS');
     });
@@ -603,7 +620,6 @@ describe('When there are granule differences and granule reconciliation is run',
   describe('Creates \'Granule Inventory\' reports.', () => {
     let reportRecord;
     let reportArray;
-    let redirectResponse;
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Granule Inventory',
@@ -612,6 +628,7 @@ describe('When there are granule differences and granule reconciliation is run',
         collectionId,
         status: 'completed',
         granuleId: [publishedGranuleId, dbGranuleId],
+        provider: `s3_provider${testSuffix}`,
       };
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
@@ -635,29 +652,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('Fetches an object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
-      redirectResponse = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      expect(redirectResponse.statusCode).toBe(200);
-      const redirectUrl = JSON.parse(redirectResponse.body).url;
-      expect(redirectUrl).toMatch(`reconciliation-reports/${reportRecord.name}.csv?`);
-      expect(redirectUrl).toMatch('AWSAccessKeyId');
-      expect(redirectUrl).toMatch('Signature');
-    });
-
-    it('Wrote correct data to the S3 location.', async () => {
-      const pieces = new RegExp('https://(.*)\.s3.amazonaws.com/(.*)\\?.*', 'm');
-      const [, Bucket, Key] = JSON.parse(redirectResponse.body).url.match(pieces);
-      let response;
-      try {
-        response = await s3().getObject({ Bucket, Key }).promise();
-      } catch (error) {
-        console.error(error);
-      }
-
-      reportArray = response.Body.toString().split('\n');
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      reportArray = reportContent.split('\n');
 
       [
         'granuleUr',

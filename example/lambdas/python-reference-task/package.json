@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/python-reference-task",
   "private": true,
-  "version": "4.0.0",
+  "version": "5.0.1",
   "description": "Python reference task",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-task",
@@ -11,12 +11,13 @@
   },
   "scripts": {
     "test": "true",
-    "python-lint": "pylint *.py",
+    "python-lint": "pipenv run pylint *.py",
     "lint": "npm run python-lint",
-    "clean": "rm -rf dist && rm -rf lib && mkdir dist && mkdir lib",
-    "build": "npm run clean && pip install -r requirements-dev.txt && pip install -r requirements.txt -t ./dist && cp *.py ./dist/ && cd ./dist && find . -type f | egrep -v '\\.json$' | xargs node ../../../../bin/zip.js lambda.zip && cd ..",
-    "package": "npm run build",
-    "install-python-deps": "pip install -r requirements-dev.txt && pip install -r requirements.txt"
+    "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
+    "build": "pip install pipenv && PIPENV_VENV_IN_PROJECT=1 pipenv install --dev --deploy --ignore-pipfile",
+    "prepare": "npm run build",
+    "package": "npm run clean && ./package.sh $(pwd)",
+    "install-python-deps": "npm run build"
   },
   "ava": {
     "serial": true,

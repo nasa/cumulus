@@ -41,6 +41,7 @@ async function queueGranules(event) {
         stack: event.config.stackName,
         systemBucket: event.config.internalBucket,
         executionNamePrefix: event.config.executionNamePrefix,
+        additionalCustomMeta: event.config.childWorkflowMeta,
       });
     },
     { concurrency: get(event, 'config.concurrency', 3) }

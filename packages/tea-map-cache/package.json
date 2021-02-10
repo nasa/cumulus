@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/tea-map-cache",
-  "version": "4.0.0",
+  "version": "5.0.1",
   "description": "Tea Bucket Map Cache Writer",
   "main": "index.js",
   "engines": {
@@ -27,8 +27,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "4.0.0",
-    "@cumulus/logger": "4.0.0",
+    "@cumulus/aws-client": "5.0.1",
+    "@cumulus/logger": "5.0.1",
     "got": "^11.7.0",
     "p-retry": "^4.2.0"
   },
