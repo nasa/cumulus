@@ -1,6 +1,20 @@
 const path = require('path');
+const { IgnorePlugin } = require('webpack');
 // path to module root
 const root = path.resolve(__dirname);
+
+const ignoredPackages = [
+  'mssql',
+  'mssql/lib/base',
+  'mssql/package.json',
+  'mysql',
+  'mysql2',
+  'oracledb',
+  'pg-native',
+  'pg-query-stream',
+  'sqlite3',
+  'tedious',
+];
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
@@ -17,7 +31,7 @@ module.exports = {
   externals: [
     'aws-sdk',
     'electron',
-    {'formidable': 'url'}
+    { formidable: 'url' },
   ],
   module: {
     rules: [
@@ -28,7 +42,7 @@ module.exports = {
           {
             loader: 'babel-loader',
             options: {
-              cacheDirectory: true
+              cacheDirectory: true,
             },
           },
         ],
@@ -40,12 +54,15 @@ module.exports = {
             loader: 'file-loader',
           },
         ],
-      }
+      },
     ],
   },
   devtool: 'inline-source-map',
   target: 'node',
   optimization: {
-    nodeEnv: false
-  }
+    nodeEnv: false,
+  },
+  plugins: [
+    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+  ],
 };

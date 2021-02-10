@@ -290,14 +290,12 @@ test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', asyn
     false
   );
 
-  await deleteGranuleAndFiles(
-    t.context.knex,
-    newDynamoGranule,
-    newPgGranule,
-    filePgModel,
-    granulePgModel,
-    granuleModel
-  );
+  await deleteGranuleAndFiles({
+    knex: t.context.knex,
+    dynamoGranule: newDynamoGranule,
+    pgGranule: newPgGranule,
+    granuleModelClient: granuleModel,
+  });
 
   // Check Dynamo and RDS. The granule should have been removed from both.
   await t.throwsAsync(
@@ -318,14 +316,12 @@ test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) =>
     false
   );
 
-  await deleteGranuleAndFiles(
-    t.context.knex,
-    newDynamoGranule,
-    newPgGranule,
-    filePgModel,
-    granulePgModel,
-    granuleModel
-  );
+  await deleteGranuleAndFiles({
+    knex: t.context.knex,
+    dynamoGranule: newDynamoGranule,
+    pgGranule: newPgGranule,
+    granuleModelClient: granuleModel,
+  });
 
   // verify the files are deleted from S3. No need to check the Postgres files.
   // If the granule was successfully deleted, the postgres
@@ -370,14 +366,12 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
   const newPgGranule = await granulePgModel.get(t.context.knex, { cumulus_id: granuleCumulusId });
   const newDynamoGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
 
-  await deleteGranuleAndFiles(
-    t.context.knex,
-    newDynamoGranule,
-    newPgGranule,
-    filePgModel,
-    granulePgModel,
-    granuleModel
-  );
+  await deleteGranuleAndFiles({
+    knex: t.context.knex,
+    dynamoGranule: newDynamoGranule,
+    pgGranule: newPgGranule,
+    granuleModelClient: granuleModel,
+  });
 
   // Check Dynamo and RDS. The granule should have been removed from both.
   await t.throwsAsync(
@@ -398,7 +392,6 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
     false
   );
 
-  // make PG file delete fail
   const mockFileModel = {
     tableName: 'files',
     delete: () => {
@@ -407,14 +400,13 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
   };
 
   await t.throwsAsync(
-    deleteGranuleAndFiles(
-      t.context.knex,
-      newDynamoGranule,
-      newPgGranule,
-      mockFileModel,
-      granulePgModel,
-      granuleModel
-    ),
+    deleteGranuleAndFiles({
+      knex: t.context.knex,
+      dynamoGranule: newDynamoGranule,
+      pgGranule: newPgGranule,
+      filePgModel: mockFileModel,
+      granuleModelClient: granuleModel,
+    }),
     { instanceOf: Error }
   );
 
@@ -440,7 +432,6 @@ test.serial('deleteGranuleAndFiles() will delete PG and S3 Files if the PG Granu
     false
   );
 
-  // make PG file delete fail
   const mockGranuleModel = {
     tableName: 'granules',
     delete: () => {
@@ -449,14 +440,13 @@ test.serial('deleteGranuleAndFiles() will delete PG and S3 Files if the PG Granu
   };
 
   await t.throwsAsync(
-    deleteGranuleAndFiles(
-      t.context.knex,
-      newDynamoGranule,
-      newPgGranule,
-      filePgModel,
-      mockGranuleModel,
-      granuleModel
-    ),
+    deleteGranuleAndFiles({
+      knex: t.context.knex,
+      dynamoGranule: newDynamoGranule,
+      pgGranule: newPgGranule,
+      granulePgModel: mockGranuleModel,
+      granuleModelClient: granuleModel,
+    }),
     { instanceOf: Error }
   );
 
@@ -481,7 +471,6 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
     false
   );
 
-  // make PG file delete fail
   const mockGranuleDynamoModel = {
     delete: () => {
       throw new Error('Delete failed');
@@ -489,14 +478,12 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
   };
 
   await t.throwsAsync(
-    deleteGranuleAndFiles(
-      t.context.knex,
-      newDynamoGranule,
-      newPgGranule,
-      filePgModel,
-      mockGranuleDynamoModel,
-      granuleModel
-    ),
+    deleteGranuleAndFiles({
+      knex: t.context.knex,
+      dynamoGranule: newDynamoGranule,
+      pgGranule: newPgGranule,
+      granuleModelClient: mockGranuleDynamoModel,
+    }),
     { instanceOf: Error }
   );
 

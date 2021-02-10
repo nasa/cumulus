@@ -143,7 +143,6 @@ async function del(req, res) {
 
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
-  const filePgModel = new FilePgModel();
 
   const knex = await getKnexClient({ env: process.env });
 
@@ -168,14 +167,12 @@ async function del(req, res) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
 
-  await deleteGranuleAndFiles(
+  await deleteGranuleAndFiles({
     knex,
     dynamoGranule,
     pgGranule,
-    filePgModel,
-    granulePgModel,
-    granuleModelClient
-  );
+    granuleModelClient: granuleModelClient,
+  });
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);

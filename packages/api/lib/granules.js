@@ -4,8 +4,10 @@ const awsClients = require('@cumulus/aws-client/services');
 const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { GranulePgModel, FilePgModel } = require('@cumulus/db');
 const pMap = require('p-map');
 
+const Granule = require('../models/granules');
 const FileUtils = require('./FileUtils');
 
 const translateGranule = async (
@@ -64,15 +66,26 @@ function getGranuleProductVolume(granuleFiles = []) {
     .reduce((x, y) => x + y, 0);
 }
 
-// TODO default arguments
-const deleteGranuleAndFiles = async (
+/**
+ * Delete a Granule from Postgres and Dynamo, delete the Granule's
+ * Files from Postgres and S3
+ *
+ * @param {Object} params
+ * @param {Knex} params.knex - DB client
+ * @param {Object} params.dynamoGranule - Granule from DynamoDB
+ * @param {PostgresGranule} params.pgGranule - Granule from Postgres
+ * @param {FilePgModel} params.filePgModel - File Postgres model
+ * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
+ * @param {Object} params.granuleModelClient - Granule Dynamo model
+ */
+const deleteGranuleAndFiles = async ({
   knex,
   dynamoGranule,
   pgGranule,
-  filePgModel,
-  granulePgModel,
-  granuleModelClient
-) => {
+  filePgModel = new FilePgModel(),
+  granulePgModel = new GranulePgModel(),
+  granuleModelClient = new Granule(),
+}) => {
   const files = await knex(filePgModel.tableName)
     .where({ granule_cumulus_id: pgGranule.cumulus_id });
 
