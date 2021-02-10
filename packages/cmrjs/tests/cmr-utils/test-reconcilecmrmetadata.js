@@ -350,7 +350,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
     granuleId: 'fakeGranuleID',
   };
   const publishUMMGJSON2CMR = cmrUtils.__get__('publishUMMGJSON2CMR');
-  const ingestFake = sinon.fake.resolves({ 'concept-id': 'fakeID', 'revision-id': '123' });
+  const ingestFake = sinon.fake.resolves({ 'concept-id': 'fakeID', 'revision-id': 123 });
   const CmrFake = sinon.fake.returns({ ingestUMMGranule: ingestFake });
 
   const restoreCMR = cmrUtils.__set__('CMR', CmrFake);
@@ -372,9 +372,9 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule and throws an error due to a re
     metadataObject: { fake: 'metadata', GranuleUR: 'fakeGranuleID' },
     granuleId: 'fakeGranuleID',
   };
-  const expectedRevisionId = '321';
+  const expectedRevisionId = 321;
   const publishUMMGJSON2CMR = cmrUtils.__get__('publishUMMGJSON2CMR');
-  const ingestFake = sinon.fake.resolves({ 'concept-id': 'fakeID', 'revision-id': '123' });
+  const ingestFake = sinon.fake.resolves({ 'concept-id': 'fakeID', 'revision-id': 123 });
   const CmrFake = sinon.fake.returns({ ingestUMMGranule: ingestFake });
 
   const restoreCMR = cmrUtils.__set__('CMR', CmrFake);

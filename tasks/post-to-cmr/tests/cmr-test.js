@@ -468,30 +468,29 @@ test.serial('postToCMR succeeds with correct payload for UMMG file', async (t) =
       'revision-id': 123,
     })
   );
-
-  try {
-    await s3PutObject({
-      Bucket: t.context.bucket,
-      Key: jsonKey,
-      Body: ummgMetadataString,
-    });
-
-    const output = await postToCMR(newPayload);
-
-    t.is(output.granules.length, 1);
-
-    t.is(
-      output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.umm_json`
-    );
-
-    output.granules.forEach((g) => {
-      t.true(Number.isInteger(g.post_to_cmr_duration));
-      t.true(g.post_to_cmr_duration >= 0);
-    });
-  } finally {
+  t.teardown(() => {
     cmrClient.CMR.prototype.ingestUMMGranule.restore();
-  }
+  });
+
+  await s3PutObject({
+    Bucket: t.context.bucket,
+    Key: jsonKey,
+    Body: ummgMetadataString,
+  });
+
+  const output = await postToCMR(newPayload);
+
+  t.is(output.granules.length, 1);
+
+  t.is(
+    output.granules[0].cmrLink,
+    `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.umm_json`
+  );
+
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.post_to_cmr_duration));
+    t.true(g.post_to_cmr_duration >= 0);
+  });
 });
 
 test.serial('postToCMR fails with conflicting CMR Revision ID', async (t) => {
@@ -521,16 +520,15 @@ test.serial('postToCMR fails with conflicting CMR Revision ID', async (t) => {
       'revision-id': 123,
     })
   );
-
-  try {
-    await s3PutObject({
-      Bucket: t.context.bucket,
-      Key: jsonKey,
-      Body: ummgMetadataString,
-    });
-
-    await t.throwsAsync(postToCMR(newPayload));
-  } finally {
+  t.teardown(() => {
     cmrClient.CMR.prototype.ingestUMMGranule.restore();
-  }
+  });
+
+  await s3PutObject({
+    Bucket: t.context.bucket,
+    Key: jsonKey,
+    Body: ummgMetadataString,
+  });
+
+  await t.throwsAsync(postToCMR(newPayload));
 });

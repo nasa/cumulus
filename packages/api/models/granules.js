@@ -193,7 +193,7 @@ class Granule extends Manager {
    * @param {Object} meta - optional meta object to insert in workflow message
    * @param {string} [queueName] - specify queue to append message to
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
-   * @param {string} [cmrRevisionId] - optional CMR revision ID to insert in workflow
+   * @param {number} [cmrRevisionId] - optional CMR revision ID to insert in workflow
    * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(

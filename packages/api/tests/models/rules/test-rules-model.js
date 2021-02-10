@@ -501,7 +501,7 @@ test('Creating a rule with a queueUrl parameter succeeds', async (t) => {
 test('Creating a rule with a cmrRevisionId parameter succeeds', async (t) => {
   const { onetimeRule } = t.context;
   const ruleItem = cloneDeep(onetimeRule);
-  ruleItem.cmrRevisionId = '[204]';
+  ruleItem.cmrRevisionId = 204;
 
   const response = await rulesModel.create(ruleItem);
 

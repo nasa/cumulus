@@ -453,7 +453,7 @@ module.exports.rule = {
     },
     cmrRevisionId: {
       title: 'Optional revision ID used for validation',
-      type: 'string',
+      type: 'number',
     },
     rule: {
       title: 'Ingest Rule',
