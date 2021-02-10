@@ -7,6 +7,11 @@ const sinon = require('sinon');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const {
+  CollectionPgModel,
+  destroyLocalTestDb,
+  FilePgModel,
+  generateLocalTestDb,
+  GranulePgModel,
   localStackConnectionEnv,
   GranulePgModel,
   CollectionPgModel,
