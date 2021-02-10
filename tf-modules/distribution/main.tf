@@ -29,7 +29,6 @@ data "aws_lambda_invocation" "tea_map_cache" {
     bucketList          = local.tea_buckets,
     s3Bucket            = var.system_bucket
     s3Key               = "${var.prefix}/distribution_bucket_map.json"
-    teaEndpoint         =  var.tea_internal_api_endpoint
     replacementTrigger  = timestamp()
   })
 }
