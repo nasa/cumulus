@@ -20,6 +20,7 @@ const { postToCMR } = require('..');
 
 const result = {
   'concept-id': 'G1222482316-CUMULUS',
+  'revision-id': 123,
 };
 const resultThunk = () => ({ result });
 
