@@ -1,11 +1,13 @@
 'use strict';
 
-const fs = require('fs');
 const { basename, dirname } = require('path');
+const fs = require('fs');
 const test = require('ava');
-const S3 = require('@cumulus/aws-client/S3');
-const errors = require('@cumulus/errors');
+
 const { randomString } = require('@cumulus/common/test-utils');
+const errors = require('@cumulus/errors');
+const S3 = require('@cumulus/aws-client/S3');
+
 const S3ProviderClient = require('../S3ProviderClient');
 
 const localPath = './tmp.json';
@@ -73,14 +75,32 @@ test.serial('S3ProviderClient.download downloads a file to local disk', async (t
   t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
 });
 
+test.serial('S3ProviderClient.sync syncs a file with a bucket parameter defined from the defined bucket', async(t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: 'fooBarFakeBucket' });
+  const targetKey = 'target.json';
+
+  const { s3uri, etag } = await s3ProviderClient.sync({
+    bucket: t.context.sourceBucket,
+    destinationBucket: t.context.targetBucket,
+    destinationKey: targetKey,
+    fileRemotePath: t.context.sourceKey,
+  });
+  t.truthy(s3uri, 'Missing s3uri');
+  t.truthy(etag, 'Missing etag');
+  t.is(
+    await S3.getTextObject(t.context.targetBucket, targetKey),
+    t.context.fileContent
+  );
+});
+
 test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
   const targetKey = 'target.json';
 
   const { s3uri, etag } = await s3ProviderClient.sync({
-    fileRemotePath: t.context.sourceKey,
     destinationBucket: t.context.targetBucket,
     destinationKey: targetKey,
+    fileRemotePath: t.context.sourceKey,
   });
   t.truthy(s3uri, 'Missing s3uri');
   t.truthy(etag, 'Missing etag');
@@ -95,9 +115,9 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
 
   await t.throwsAsync(
     s3ProviderClient.sync({
-      fileRemotePath: 'non-existent',
       destinationBucket: t.context.targetBucket,
       destinationKey: 'target.json',
+      fileRemotePath: 'non-existent',
     }),
     {
       instanceOf: errors.FileNotFound,
