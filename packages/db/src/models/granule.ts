@@ -12,6 +12,24 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     });
   }
 
+  async create(
+    // Is this safe? Should I do something better to ensure
+    // that this is called with a transaction?
+    knexTransaction: Knex.Transaction,
+    item: PostgresGranule,
+    executionCumulusId: number
+  ) {
+    const [granuleCumulusId] = await knexTransaction(this.tableName)
+      .insert(item)
+      .returning('cumulus_id');
+    return knexTransaction(tableNames.granuleExecutionsHistory)
+      .insert({
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      })
+      .returning('cumulus_id');
+  }
+
   upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule

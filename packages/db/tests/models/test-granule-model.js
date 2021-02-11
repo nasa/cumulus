@@ -49,6 +49,29 @@ test.after.always(async (t) => {
   });
 });
 
+test('GranulePgModel.create() creates a new granule and execution history', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+  await knex.transaction(async (trx) => {
+    await granulePgModel.create(trx, granule, executionCumulusId);
+  });
+
+  t.like(
+    await granulePgModel.get(knex, granule),
+    granule
+  );
+});
+
 test('GranulePgModel.upsert() creates a new running granule', async (t) => {
   const {
     knex,
