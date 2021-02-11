@@ -6,6 +6,45 @@ We use a global versioning approach, meaning version numbers in cumulus are cons
 
 Read more about the semantic versioning [here](https://docs.npmjs.com/getting-started/semantic-versioning).
 
+## Pre-release testing
+
+Before releasing a new major version of Cumulus that contains breaking changes, we should test the deployment upgrade from the latest stable release of Cumulus to the upcoming release with breaking changes.
+
+It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since this is the officially recommended deployment configuration for the users.
+
+1. Checkout the `cumulus-template-deploy` repo
+2. Update the deployment code to use the latest stable release artifacts if it hasn't already been updated:
+
+    ```text
+    # for data-persistence
+    source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/data-persistence"
+
+    # for cumulus
+    source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
+    ```
+
+3. For both the `data-persistence-tf` and `cumulus-tf` modules:
+   1. Add the necessary backend configuration (`terraform.tf`) and variables (`terraform.tfvars`)
+   2. Run `terraform init`
+   3. Run `terraform apply`
+4. Checkout the `master` branch of the `cumulus` repo
+5. Run a full bootstrap of the code: `npm run bootstrap`
+6. Build the release artifacts: `./bamboo/create-release-artifacts.sh`
+7. For both the `data-persistence-tf` and `cumulus-tf` modules:
+   1. Update the deployment to use the built release artifacts:
+
+      ```text
+      # for data-persistence
+      source = "/Users/mboyd/development/cumulus/terraform-aws-cumulus.zip//tf-modules/data-persistence"
+
+      # for cumulus
+      source = "/Users/mboyd/development/cumulus/terraform-aws-cumulus.zip//tf-modules/cumulus"
+      ```
+
+   2. Run `terraform init`
+   3. Run `terraform apply`
+8. Follow any migration steps noted in `CHANGELOG.md` and confirm that they are successful
+
 ## Updating Cumulus version and publishing to NPM
 
 ### 1. Create a branch for the new release
