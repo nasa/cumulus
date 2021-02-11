@@ -15,25 +15,21 @@ function determineIntegrationTestStackName(cb) {
   if (branch === 'master') return cb('cumulus-source');
 
   const stacks = {
-    'Aimee Barciauskas': 'aimee',
+    'Brian Tennity': 'bt-ci',
+    'Danielle Peters': 'dop-ci',
+    'Jennifer Tran': 'jtran-int',
     'Jenny Liu': 'jl',
-    jennyhliu: 'jl',
-    kkelly51: 'kk-int',
+    'Jonathan Kovarik': 'jk',
     'Katherine Kelly': 'kk-int',
     'Lauren Frederick': 'lf-test',
-    laurenfrederick: 'lf-test',
     'Mark Boyd': 'mboyd-int',
-    Marc: 'mth-ci',
-    yjpa7145: 'mth-ci',
-    mhuffnagle: 'mth-ci',
-    'Marc Huffnagle': 'mth-ci',
     'Matt Savoie': 'mhs',
-    'Jonathan Kovarik': 'jk',
     'Menno Van Diermen': 'mvd',
-    'Chuck Daniels': 'chuckulus-ci',
-    'Brian Tennity': 'bt-ci',
-    'Jennifer Tran': 'jtran-int',
     'Nate Pauzenga': 'np-ci',
+    jennyhliu: 'jl',
+    kkelly51: 'kk-int',
+    laurenfrederick: 'lf-test',
+    Menno: 'mvd',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
