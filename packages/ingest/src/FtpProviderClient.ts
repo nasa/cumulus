@@ -6,7 +6,11 @@ import Logger from '@cumulus/logger';
 import { Socket } from 'net';
 import { recursion } from './recursion';
 import { lookupMimeType, decrypt } from './util';
-import { FtpProviderClientListItem, ProviderClientListItem } from './types';
+import {
+  FtpProviderClientListItem,
+  ProviderClient,
+  ProviderClientListItem,
+} from './types';
 
 interface FtpProviderClientConstructorParams {
   host: string;
@@ -23,7 +27,7 @@ function isJSFtpError(error: Error | ListError): error is ListError {
 
 const logger = new Logger({ sender: '@cumulus/ingest/FtpProviderClient' });
 
-class FtpProviderClient {
+class FtpProviderClient implements ProviderClient {
   private readonly providerConfig: FtpProviderClientConstructorParams;
   private readonly host: string;
   private ftpClient?: JSFtp;
