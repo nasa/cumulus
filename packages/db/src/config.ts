@@ -1,6 +1,6 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
-import { envUtils } from '@cumulus/common';
+import { getRequiredEnvVar } from './utils';
 
 export const localStackConnectionEnv = {
   PG_HOST: 'localhost',
@@ -39,10 +39,10 @@ export const getSecretConnectionConfig = async (
 export const getConnectionConfigEnv = (
   env: NodeJS.ProcessEnv
 ): Knex.PgConnectionConfig => ({
-  host: envUtils.getRequiredEnvVar('PG_HOST', env),
-  user: envUtils.getRequiredEnvVar('PG_USER', env),
-  password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
-  database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
+  host: getRequiredEnvVar('PG_HOST', env),
+  user: getRequiredEnvVar('PG_USER', env),
+  password: getRequiredEnvVar('PG_PASSWORD', env),
+  database: getRequiredEnvVar('PG_DATABASE', env),
   port: Number.parseInt(env.PG_PORT ?? '5432', 10),
 });
 

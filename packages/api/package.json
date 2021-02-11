@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "5.0.2-alpha.0",
+  "version": "5.0.2",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -45,7 +45,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/async-operations": "3.0.1-alpha.1",
+    "@cumulus/async-operations": "5.0.1",
     "@cumulus/aws-client": "5.0.1",
     "@cumulus/cmr-client": "5.0.1",
     "@cumulus/cmrjs": "5.0.1",

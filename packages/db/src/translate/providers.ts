@@ -1,13 +1,14 @@
-import { envUtils } from '@cumulus/common';
 import { KMS } from '@cumulus/aws-client';
 import { ApiProvider } from '@cumulus/types';
 import { PostgresProvider } from '../types/provider';
+
+import { getRequiredEnvVar } from '../utils';
 
 export const encryptValueWithKMS = (
   value: string,
   encryptFunction: Function = KMS.encrypt
 ): Promise<string> => {
-  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id');
+  const providerKmsKeyId = getRequiredEnvVar('provider_kms_key_id');
   return encryptFunction(providerKmsKeyId, value);
 };
 
