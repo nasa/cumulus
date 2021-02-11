@@ -48,6 +48,8 @@ const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
 
+const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
+
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -131,97 +133,6 @@ async function setupBucketsConfig() {
   return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
 
-/**
- * Helper for creating a granule, and files belonging to that granule
- * @param {Knex} dbClient - Knex client
- * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
- * @param {boolean} published - if the granule should be marked published to CMR
- * @returns {Object} fake granule object
- */
-async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
-  s3Buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-  const granuleId = randomId('granule');
-  const files = [
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.hdf`,
-      key: `${randomString(5)}/${granuleId}.hdf`,
-    },
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
-      bucket: s3Buckets.public.name,
-      fileName: `${granuleId}.jpg`,
-      key: `${randomString(5)}/${granuleId}.jpg`,
-    },
-  ];
-
-  const newGranule = fakeGranuleFactoryV2(
-    {
-      granuleId: granuleId,
-      status: 'failed',
-      published: published,
-    }
-  );
-
-  newGranule.files = files;
-
-  await createS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]);
-
-  // Add files to S3
-  await Promise.all(newGranule.files.map((file) => s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: `test data ${randomString()}`,
-  })));
-
-  // create a new Dynamo granule
-  await granuleModel.create(newGranule);
-
-  // create a new PG granule
-  const newPGGranule = fakeGranuleRecordFactory(
-    {
-      granule_id: granuleId,
-      status: 'failed',
-      collection_cumulus_id: collectionCumulusId,
-      published: published,
-    }
-  );
-
-  const [granuleCumulusId] = await granulePgModel.create(dbClient, newPGGranule);
-
-  // create PG files
-  await Promise.all(
-    files.map((f) => {
-      const pgFile = {
-        granule_cumulus_id: granuleCumulusId,
-        bucket: f.bucket,
-        file_name: f.fileName,
-        key: f.key,
-      };
-
-      return filePgModel.create(dbClient, pgFile);
-    })
-  );
-
-  return newGranule;
-}
-
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
   process.env = {
@@ -256,6 +167,22 @@ test.before(async (t) => {
 
   granulePgModel = new GranulePgModel();
   filePgModel = new FilePgModel();
+
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+
+  await createS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -699,11 +626,12 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const newGranule = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    true
-  );
+  const newGranule = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: true,
+    s3Buckets,
+  });
 
   const granuleId = newGranule.granuleId;
 
@@ -733,11 +661,12 @@ test('DELETE deleting an existing granule that is published will fail and not de
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
-  const newGranule = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  const newGranule = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+    s3Buckets,
+  });
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)

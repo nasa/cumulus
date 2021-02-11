@@ -10,7 +10,7 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-const { GranulePgModel, FilePgModel, getKnexClient } = require('@cumulus/db');
+const { GranulePgModel, getKnexClient } = require('@cumulus/db');
 
 const { deleteGranuleAndFiles } = require('../lib/granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');

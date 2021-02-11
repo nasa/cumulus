@@ -4,8 +4,11 @@ const pMap = require('p-map');
 
 const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { GranulePgModel, getKnexClient } = require('@cumulus/db');
 
 const GranuleModel = require('../models/granules');
+const { deleteGranuleAndFiles } = require('../lib/granules');
+
 const SCROLL_SIZE = 500; // default size in Kibana
 
 /**
@@ -118,18 +121,29 @@ function applyWorkflowToGranules({
 async function bulkGranuleDelete(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
+  const granulePgModel = new GranulePgModel();
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
+  const knex = await getKnexClient({ env: process.env });
   const deletedGranules = [];
   await pMap(
     granuleIds,
     async (granuleId) => {
       try {
-        const granule = await granuleModel.getRecord({ granuleId });
-        if (granule.published && forceRemoveFromCmr) {
-          await granuleModel.unpublishAndDeleteGranule(granule);
+        const dynamoGranule = await granuleModel.getRecord({ granuleId });
+        const pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+
+        if (dynamoGranule.published && forceRemoveFromCmr) {
+          // TODO needs to support PG
+          await granuleModel.unpublishAndDeleteGranule(dynamoGranule);
         } else {
-          await granuleModel.delete(granule);
+          await deleteGranuleAndFiles({
+            knex,
+            dynamoGranule,
+            pgGranule,
+            granuleModelClient: granuleModel,
+          });
         }
+
         deletedGranules.push(granuleId);
       } catch (error) {
         if (error instanceof RecordDoesNotExist) {

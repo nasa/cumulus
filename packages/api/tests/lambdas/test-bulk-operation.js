@@ -1,11 +1,18 @@
 const test = require('ava');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const cryptoRandomString = require('crypto-random-string');
 
+const { generateLocalTestDb, localStackConnectionEnv } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
+const { createS3Buckets } = require('@cumulus/aws-client/S3');
 
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
 const Granule = require('../../models/granules');
+const { migrationDir } = require('../../../../lambdas/db-migration');
+
+const testDbName = `${cryptoRandomString({ length: 10 })}`;
 
 const sandbox = sinon.createSandbox();
 const FakeEsClient = sandbox.stub();
@@ -19,6 +26,8 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
 
 let applyWorkflowStub;
 let reingestStub;
+let s3Buckets = {};
+
 const envVars = {
   asyncOperationId: randomId('asyncOperationId'),
   cmr_client_id: randomId('cmr_client'),
@@ -38,16 +47,42 @@ const envVars = {
   system_bucket: randomId('bucket'),
 };
 
-test.before(async () => {
+test.before(async (t) => {
   process.env.METRICS_ES_HOST = randomId('host');
   process.env.METRICS_ES_USER = randomId('user');
   process.env.METRICS_ES_PASS = randomId('pass');
   process.env.GranulesTable = randomId('granule');
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
   await new Granule().createTable();
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');
   reingestStub = sandbox.stub(Granule.prototype, 'reingest');
   sandbox.stub(Granule.prototype, '_removeGranuleFromCmr').resolves();
+
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+
+  await createS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
 test.afterEach.always(() => {
@@ -255,11 +290,18 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', async (t) => {
-  const granuleModel = new Granule();
+test.only('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dynamo and PG', async (t) => {
   const granules = await Promise.all([
-    granuleModel.create(fakeGranuleFactoryV2({ published: false })),
-    granuleModel.create(fakeGranuleFactoryV2({ published: false })),
+    createGranuleAndFiles({
+      dbClient: t.context.knex,
+      published: false,
+      s3Buckets,
+    }),
+    createGranuleAndFiles({
+      dbClient: t.context.knex,
+      published: false,
+      s3Buckets,
+    }),
   ]);
 
   const { deletedGranules } = await bulkOperation.handler({
@@ -280,6 +322,9 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs', asy
       granules[1].granuleId,
     ].sort()
   );
+
+  // Granules should have been deleted from Dynamo
+  // Granules should have been deleted from PG
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do not error', async (t) => {
