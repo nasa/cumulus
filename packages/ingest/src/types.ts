@@ -22,7 +22,7 @@ export interface ProviderClient {
   list(path: string): Promise<ProviderClientListItem[]>
 
   sync(
-    parms: {
+    params: {
       fileRemotePath: string,
       sourcePath: string,
       destinationBucket: string,
