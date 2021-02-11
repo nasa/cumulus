@@ -44,7 +44,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   same-collection granules with multiple buckets sources with the appropriate
   payload configurations.
     - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter in
-  support of the changed behavior.
+    support of the changed behavior.
   - Removed `addBucketToFile` and related code from sync-granules task
 
 - **CUMULUS-2255**
