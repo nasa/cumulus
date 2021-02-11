@@ -38,6 +38,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2323**
+  - Updated S3 provider logic to allow for `granule.files.bucket` payload object key
+  override the provider bucket configuration, allowing sync-granules to ingest
+  same-collection granules with multiple buckets sources with the appropriate
+  payload configurations.
+    - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter in
+  support of the changed behavior.
+  - Removed `addBucketToFile` and related code from sync-granules task
+
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
 - **CUMULUS-2321**
