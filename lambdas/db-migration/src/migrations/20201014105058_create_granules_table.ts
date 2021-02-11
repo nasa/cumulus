@@ -42,10 +42,6 @@ export const up = async (knex: Knex): Promise<void> =>
       .text('cmr_link')
       .comment('Link to granule in the CMR API');
     table
-      .integer('execution_cumulus_id')
-      .references('cumulus_id')
-      .inTable('executions');
-    table
       .integer('pdr_cumulus_id')
       .references('cumulus_id')
       .inTable('pdrs');
