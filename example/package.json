@@ -44,7 +44,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/api": "5.0.1",
+    "@cumulus/api": "6.0.0",
     "@cumulus/api-client": "6.0.0",
     "@cumulus/aws-client": "6.0.0",
     "@cumulus/checksum": "6.0.0",
