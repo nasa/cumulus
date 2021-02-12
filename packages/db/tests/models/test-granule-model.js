@@ -12,6 +12,10 @@ const {
   fakeGranuleRecordFactory,
 } = require('../../dist');
 
+const {
+  GranuleExecutionHistoryPgModel,
+} = require('../../dist/models/granule-execution-history');
+
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -25,6 +29,7 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.granulePgModel = new GranulePgModel();
+  t.context.granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel();
 
   const collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
@@ -35,6 +40,9 @@ test.before(async (t) => {
   t.context.collectionCumulusId = collectionResponse[0];
 
   t.context.executionPgModel = new ExecutionPgModel();
+});
+
+test.beforeEach(async (t) => {
   const [executionCumulusId] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
@@ -48,6 +56,9 @@ test.after.always(async (t) => {
     testDbName,
   });
 });
+
+test.todo('getWithExecutionHistory returns execution history for granule with one execution');
+test.todo('getWithExecutionHistory returns execution history for granule with multiple executions');
 
 test('GranulePgModel.createWithExecutionHistory() creates a new granule with execution history', async (t) => {
   const {
@@ -126,6 +137,7 @@ test('GranulePgModel.createWithExecutionHistory() does not commit granule or exe
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    granuleExecutionHistoryPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -133,27 +145,40 @@ test('GranulePgModel.createWithExecutionHistory() does not commit granule or exe
     status: 'running',
   });
 
-  const [granuleCumulusId] = await knex.transaction(
-    (trx) =>
-      granulePgModel.createWithExecutionHistory(
-        trx,
-        granule,
-        executionCumulusId
-      )
+  const fakeGranuleExecutionHistoryPgModel = {
+    create: async () => {
+      throw new Error('error');
+    },
+  };
+
+  await t.throwsAsync(
+    knex.transaction(
+      (trx) =>
+        granulePgModel.createWithExecutionHistory(
+          trx,
+          granule,
+          executionCumulusId,
+          fakeGranuleExecutionHistoryPgModel
+        )
+    )
   );
 
-  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
-    knex,
-    granule
+  t.false(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
   );
-
-  t.like(
-    granuleWithHistory,
-    {
-      ...granule,
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
-      execution_cumulus_id: executionCumulusId,
-    }
+  t.false(
+    await granuleExecutionHistoryPgModel.exists(
+      knex,
+      {
+        execution_cumulus_id: executionCumulusId,
+      }
+    )
   );
 });
 
@@ -350,4 +375,126 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
 
   const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
   t.is(record.status, 'running');
+});
+
+test('GranulePgModel.upsertWithExecutionHistory() adds execution history', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+  const [granuleCumulusId] = await granulePgModel.upsertWithExecutionHistory(
+    knex,
+    granule,
+    executionCumulusId
+  );
+
+  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+    knex,
+    granule
+  );
+
+  t.like(
+    granuleWithHistory,
+    {
+      ...granule,
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionCumulusId,
+    }
+  );
+});
+
+test('GranulePgModel.upsertWithExecutionHistory() works with transaction', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+  const [granuleCumulusId] = await knex.transaction(
+    (trx) =>
+      granulePgModel.upsertWithExecutionHistory(
+        trx,
+        granule,
+        executionCumulusId
+      )
+  );
+
+  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+    knex,
+    granule
+  );
+
+  t.like(
+    granuleWithHistory,
+    {
+      ...granule,
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionCumulusId,
+    }
+  );
+});
+
+test('GranulePgModel.upsertWithExecutionHistory() does not write anything if execution history upsert fails', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+    granuleExecutionHistoryPgModel,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+  const fakeGranuleExecutionHistoryPgModel = {
+    upsert: async () => {
+      throw new Error('error');
+    },
+  };
+
+  await t.throwsAsync(
+    knex.transaction(
+      (trx) =>
+        granulePgModel.upsertWithExecutionHistory(
+          trx,
+          granule,
+          executionCumulusId,
+          fakeGranuleExecutionHistoryPgModel
+        )
+    )
+  );
+
+  t.false(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
+  );
+  t.false(
+    await granuleExecutionHistoryPgModel.exists(
+      knex,
+      {
+        execution_cumulus_id: executionCumulusId,
+      }
+    )
+  );
 });

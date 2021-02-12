@@ -28,7 +28,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         execution_cumulus_id: executionCumulusId,
       }
     );
-    return granuleCumulusId;
+    return [granuleCumulusId];
   }
 
   getWithExecutionHistory(
@@ -91,10 +91,13 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     await granuleExecutionHistoryPgModel.upsert(
       knexOrTrx,
       {
-        granule_cumulus_id: granuleCumulusId,
+        // granule cumulus_id returned from upsert as a string, but
+        // needs to be a number for FK reference
+        granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
         execution_cumulus_id: executionCumulusId,
       }
     );
+    return [granuleCumulusId];
   }
 }
 

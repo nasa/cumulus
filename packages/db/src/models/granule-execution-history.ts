@@ -1,5 +1,6 @@
 import Knex from 'knex';
 
+import { isRecordDefined } from '../database';
 import { tableNames } from '../tables';
 
 import { PostgresGranuleExecution } from '../types/granule-execution-history';
@@ -18,6 +19,13 @@ export default class GranuleExecutionHistoryPgModel {
     item: PostgresGranuleExecution
   ) {
     return knexOrTrx(this.tableName).insert(item);
+  }
+
+  async exists(
+    knexOrTrx: Knex | Knex.Transaction,
+    item: PostgresGranuleExecution
+  ) {
+    return isRecordDefined(await knexOrTrx(this.tableName).where(item).first());
   }
 
   async upsert(
