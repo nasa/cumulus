@@ -151,22 +151,27 @@ test('BasePgModel.delete() correctly deletes records', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
-  // Insert the record and validate that it exists in the table
-  const [recordCumulusId] = await knex(tableName)
-    .insert({ info })
-    .returning('cumulus_id');
+  // Insert the records and validate that they exists in the table
+  const [[recordCumulusId1], [recordCumulusId2]] = await Promise.all([
+    knex(tableName)
+      .insert({ info })
+      .returning('cumulus_id'),
+    knex(tableName)
+      .insert({ info })
+      .returning('cumulus_id'),
+  ]);
 
-  t.true(
-    await basePgModel.exists(knex, { cumulus_id: recordCumulusId })
-  );
+  t.true(await basePgModel.exists(knex, { cumulus_id: recordCumulusId1 }));
+  t.true(await basePgModel.exists(knex, { cumulus_id: recordCumulusId2 }));
 
-  // Delete the record and validate that it's gone
+  // Delete the records and validate that they're gone
   t.is(
-    await basePgModel.delete(knex, { cumulus_id: recordCumulusId }),
-    1
+    await basePgModel.delete(knex, { info }),
+    2
   );
 
-  t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId }));
+  t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId1 }));
+  t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId2 }));
 });
 
 test('BasePgModel.delete() works with knex transaction', async (t) => {
