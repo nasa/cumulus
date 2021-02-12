@@ -189,3 +189,54 @@ test('BasePgModel.delete() works with knex transaction', async (t) => {
   // validate that the record is not in the table
   t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId }));
 });
+
+test('BasePgModel.search() returns an array of records', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const recordBody = { info };
+
+  await Promise.all([
+    knex(tableName).insert(recordBody),
+    knex(tableName).insert(recordBody),
+    knex(tableName).insert(recordBody),
+  ]);
+
+  const searchResponse = await basePgModel.search(knex, recordBody);
+
+  t.is(searchResponse.length, 3);
+
+  searchResponse.forEach((r) => {
+    t.like(r, recordBody);
+  });
+});
+
+test('BasePgModel.search() returns an empty array if nothing found', async (t) => {
+  const { knex, basePgModel } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const recordBody = { info };
+
+  const searchResponse = await basePgModel.search(knex, recordBody);
+
+  t.deepEqual(searchResponse, []);
+});
+
+test('BasePgModel.search() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const recordBody = { info };
+
+  await Promise.all([
+    knex(tableName).insert(recordBody),
+    knex(tableName).insert(recordBody),
+    knex(tableName).insert(recordBody),
+  ]);
+
+  const searchResponse = await knex.transaction(async (trx) =>
+    basePgModel.search(trx, recordBody));
+
+  t.is(searchResponse.length, 3);
+
+  searchResponse.forEach((r) => {
+    t.like(r, recordBody);
+  });
+});

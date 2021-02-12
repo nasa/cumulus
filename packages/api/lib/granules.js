@@ -91,8 +91,10 @@ const deleteGranuleAndFiles = async ({
     await granuleModelClient.delete(dynamoGranule);
   } else {
     // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
-    const files = await knex(filePgModel.tableName)
-      .where({ granule_cumulus_id: pgGranule.cumulus_id });
+    const files = await filePgModel.search(
+      knex,
+      { granule_cumulus_id: pgGranule.cumulus_id }
+    );
 
     await knex.transaction(async (trx) => {
       await pMap(

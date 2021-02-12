@@ -40,6 +40,23 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   }
 
   /**
+   * Fetches multiple items from Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
+   * @returns {Promise<RecordType[]>} List of returned records
+   */
+  async search(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: Partial<RecordType>
+  ): Promise<RecordType[]> {
+    const records: Array<RecordType> = await knexOrTransaction(this.tableName)
+      .where(params);
+
+    return records;
+  }
+
+  /**
    * Checks if an item is present in Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction -
@@ -89,12 +106,12 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {ItemType} item - A record to insert into the DB
-   * @returns {Promise<number>} The ID of the inserted record
+   * @returns {Promise<number[]>} List of IDs of the inserted records
    */
   create(
     knexOrTransaction: Knex | Knex.Transaction,
     item: ItemType
-  ): Promise<number> {
+  ): Promise<number[]> {
     return knexOrTransaction(this.tableName)
       .insert(item)
       .returning('cumulus_id');
