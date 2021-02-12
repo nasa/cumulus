@@ -57,8 +57,94 @@ test.after.always(async (t) => {
   });
 });
 
-test.todo('getWithExecutionHistory returns execution history for granule with one execution');
-test.todo('getWithExecutionHistory returns execution history for granule with multiple executions');
+test('getWithExecutionHistory returns execution history for granule with one execution', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+    granuleExecutionHistoryPgModel,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+  const [granuleCumulusId] = await granulePgModel.create(
+    knex,
+    granule
+  );
+
+  await granuleExecutionHistoryPgModel.create(knex, {
+    granule_cumulus_id: granuleCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+    knex,
+    granule
+  );
+
+  t.like(
+    granuleWithHistory,
+    {
+      ...granule,
+      cumulus_id: granuleCumulusId,
+      execution_cumulus_ids: [executionCumulusId],
+    }
+  );
+});
+
+test('getWithExecutionHistory returns execution history for granule with multiple executions', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+    executionPgModel,
+    granuleExecutionHistoryPgModel,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+  const [granuleCumulusId] = await granulePgModel.create(
+    knex,
+    granule
+  );
+
+  await granuleExecutionHistoryPgModel.create(knex, {
+    granule_cumulus_id: granuleCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  });
+
+  const [newExecutionCumulusId] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory()
+  );
+
+  await granuleExecutionHistoryPgModel.create(knex, {
+    granule_cumulus_id: granuleCumulusId,
+    execution_cumulus_id: newExecutionCumulusId,
+  });
+
+  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+    knex,
+    granule
+  );
+
+  t.like(
+    granuleWithHistory,
+    {
+      ...granule,
+      cumulus_id: granuleCumulusId,
+      execution_cumulus_ids: [executionCumulusId, newExecutionCumulusId],
+    }
+  );
+});
 
 test('GranulePgModel.createWithExecutionHistory() creates a new granule with execution history', async (t) => {
   const {
@@ -88,8 +174,8 @@ test('GranulePgModel.createWithExecutionHistory() creates a new granule with exe
     granuleWithHistory,
     {
       ...granule,
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
-      execution_cumulus_id: executionCumulusId,
+      cumulus_id: granuleCumulusId,
+      execution_cumulus_ids: [executionCumulusId],
     }
   );
 });
@@ -125,8 +211,8 @@ test('GranulePgModel.createWithExecutionHistory() works with a transaction', asy
     granuleWithHistory,
     {
       ...granule,
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
-      execution_cumulus_id: executionCumulusId,
+      cumulus_id: granuleCumulusId,
+      execution_cumulus_ids: [executionCumulusId],
     }
   );
 });
@@ -405,8 +491,8 @@ test('GranulePgModel.upsertWithExecutionHistory() adds execution history', async
     granuleWithHistory,
     {
       ...granule,
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
-      execution_cumulus_id: executionCumulusId,
+      cumulus_id: granuleCumulusId,
+      execution_cumulus_ids: [executionCumulusId],
     }
   );
 });
@@ -442,8 +528,8 @@ test('GranulePgModel.upsertWithExecutionHistory() works with transaction', async
     granuleWithHistory,
     {
       ...granule,
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
-      execution_cumulus_id: executionCumulusId,
+      cumulus_id: granuleCumulusId,
+      execution_cumulus_ids: [executionCumulusId],
     }
   );
 });
@@ -498,3 +584,5 @@ test('GranulePgModel.upsertWithExecutionHistory() does not write anything if exe
     )
   );
 });
+
+test.todo('GranulePgModel.upsertWithExecutionHistory() will allow a running status to replace a completed status for second execution');

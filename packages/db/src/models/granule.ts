@@ -35,16 +35,20 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTransaction: Knex | Knex.Transaction,
     granule: Partial<PostgresGranuleRecord>
   ) {
+    // TODO: is this open to SQL injection?
     return knexOrTransaction(this.tableName)
       .where(granule)
       .join(
         tableNames.granuleExecutionsHistory,
-        // is this open to SQL injection?
         `${this.tableName}.cumulus_id`,
         '=',
         `${tableNames.granuleExecutionsHistory}.granule_cumulus_id`
       )
-      .select(`${this.tableName}.*`, `${tableNames.granuleExecutionsHistory}.*`);
+      .column(`${this.tableName}.*`)
+      .column(
+        knexOrTransaction.raw(`array_agg(${tableNames.granuleExecutionsHistory}.execution_cumulus_id) as execution_cumulus_ids`)
+      )
+      .groupBy('cumulus_id');
   }
 
   async upsert(
