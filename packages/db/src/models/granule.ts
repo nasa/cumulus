@@ -12,22 +12,34 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     });
   }
 
-  async create(
-    // Is this safe? Should I do something better to ensure
-    // that this is called with a transaction?
-    knexTransaction: Knex.Transaction,
+  async createWithExecutionHistory(
+    knexOrTrx: Knex | Knex.Transaction,
     item: PostgresGranule,
     executionCumulusId: number
   ) {
-    const [granuleCumulusId] = await knexTransaction(this.tableName)
-      .insert(item)
-      .returning('cumulus_id');
-    return knexTransaction(tableNames.granuleExecutionsHistory)
+    const [granuleCumulusId] = await this.create(knexOrTrx, item);
+    await knexOrTrx(tableNames.granuleExecutionsHistory)
       .insert({
         granule_cumulus_id: granuleCumulusId,
         execution_cumulus_id: executionCumulusId,
-      })
-      .returning('cumulus_id');
+      });
+    return granuleCumulusId;
+  }
+
+  getWithExecutionHistory(
+    knexOrTransaction: Knex | Knex.Transaction,
+    granule: Partial<PostgresGranuleRecord>
+  ) {
+    return knexOrTransaction(this.tableName)
+      .where(granule)
+      .join(
+        tableNames.granuleExecutionsHistory,
+        // is this open to SQL injection?
+        `${this.tableName}.cumulus_id`,
+        '=',
+        `${tableNames.granuleExecutionsHistory}.granule_cumulus_id`
+      )
+      .select(`${this.tableName}.*`, `${tableNames.granuleExecutionsHistory}.*`);
   }
 
   upsert(
@@ -39,7 +51,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
         .merge({
-          execution_cumulus_id: granule.execution_cumulus_id,
+          // execution_cumulus_id: granule.execution_cumulus_id,
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,

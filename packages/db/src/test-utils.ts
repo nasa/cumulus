@@ -32,6 +32,7 @@ export const generateLocalTestDb = async (
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
       migrationDir,
+      KNEX_DEBUG: 'true',
     },
   });
   await createTestDatabase(knexAdmin, testDbName, localStackConnectionEnv.PG_USER);

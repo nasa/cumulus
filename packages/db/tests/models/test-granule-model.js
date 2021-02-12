@@ -49,7 +49,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('GranulePgModel.create() creates a new granule and execution history', async (t) => {
+test.only('GranulePgModel.createWithExecutionHistory() creates a new granule with execution history', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -62,13 +62,24 @@ test('GranulePgModel.create() creates a new granule and execution history', asyn
     status: 'running',
   });
 
-  await knex.transaction(async (trx) => {
-    await granulePgModel.create(trx, granule, executionCumulusId);
-  });
+  const [granuleCumulusId] = await granulePgModel.createWithExecutionHistory(
+    knex,
+    granule,
+    executionCumulusId
+  );
+
+  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+    knex,
+    granule
+  );
 
   t.like(
-    await granulePgModel.get(knex, granule),
-    granule
+    granuleWithHistory,
+    {
+      ...granule,
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionCumulusId,
+    }
   );
 });
 
