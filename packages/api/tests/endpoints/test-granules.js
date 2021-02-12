@@ -438,7 +438,6 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .set('Cmr-Revision-Id', '203')
     .send({
       action: 'applyWorkflow',
       workflow: 'inPlaceWorkflow',

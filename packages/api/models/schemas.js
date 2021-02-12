@@ -451,10 +451,6 @@ module.exports.rule = {
       title: 'Optional queue URL used to schedule executions for this rule',
       type: 'string',
     },
-    cmrRevisionId: {
-      title: 'Optional revision ID used for validation',
-      type: 'number',
-    },
     rule: {
       title: 'Ingest Rule',
       type: 'object',

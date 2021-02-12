@@ -498,20 +498,6 @@ test('Creating a rule with a queueUrl parameter succeeds', async (t) => {
   t.is(payload.queueUrl, ruleItem.queueUrl);
 });
 
-test('Creating a rule with a cmrRevisionId parameter succeeds', async (t) => {
-  const { onetimeRule } = t.context;
-  const ruleItem = cloneDeep(onetimeRule);
-  ruleItem.cmrRevisionId = 204;
-
-  const response = await rulesModel.create(ruleItem);
-
-  const payload = await models.Rule.buildPayload(ruleItem);
-
-  t.truthy(response.cmrRevisionId);
-  t.is(response.cmrRevisionId, ruleItem.cmrRevisionId);
-  t.is(payload.cmrRevisionId, ruleItem.cmrRevisionId);
-});
-
 test('Updates rule meta object', async (t) => {
   const { onetimeRule } = t.context;
 

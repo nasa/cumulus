@@ -219,7 +219,6 @@ class Rule extends Manager {
       queueUrl: item.queueUrl,
       asyncOperationId: item.asyncOperationId,
       executionNamePrefix: item.executionNamePrefix,
-      cmrRevisionId: item.cmrRevisionId,
     };
   }
 
