@@ -173,6 +173,7 @@ export async function moveGranuleFileWithVersioning(
   return listVersionedObjects(target.Bucket, target.Key);
 }
 
+//TODO -- Update params
 /**
  * handle duplicate file in S3 syncs and moves
  *
@@ -208,16 +209,20 @@ export async function handleDuplicateFile(params: {
   ACL?: string,
   sourceBucket?: string,
   fileRemotePath: string,
+  s3Object?: { moveObject: Function },
+  moveGranuleFileWithVersioningFunction?: Function,
 }): Promise<VersionedObject[]> {
   const {
-    source,
-    target,
-    duplicateHandling,
-    checksumFunction,
-    syncFileFunction,
     ACL,
-    sourceBucket,
+    checksumFunction,
+    duplicateHandling,
     fileRemotePath,
+    moveGranuleFileWithVersioningFunction = moveGranuleFileWithVersioning,
+    s3Object = S3,
+    source,
+    sourceBucket,
+    syncFileFunction,
+    target,
   } = params;
 
   if (duplicateHandling === 'error') {
@@ -228,9 +233,9 @@ export async function handleDuplicateFile(params: {
     // sync to staging location if required
     if (syncFileFunction) {
       await syncFileFunction({
+        bucket: sourceBucket,
         destinationBucket: source.Bucket,
         destinationKey: source.Key,
-        bucket: sourceBucket,
         fileRemotePath,
       });
     }
@@ -241,7 +246,7 @@ export async function handleDuplicateFile(params: {
       sourceChecksumObject = { checksumType, checksum };
     }
     // return list of renamed files
-    return moveGranuleFileWithVersioning(
+    return moveGranuleFileWithVersioningFunction(
       source,
       target,
       sourceChecksumObject,
@@ -257,19 +262,19 @@ export async function handleDuplicateFile(params: {
         fileRemotePath,
       });
     } else {
-      await S3.moveObject({
-        sourceBucket: source.Bucket,
-        sourceKey: source.Key,
+      await s3Object.moveObject({
+        ACL,
+        copyTags: true,
         destinationBucket: target.Bucket,
         destinationKey: target.Key,
-        copyTags: true,
-        ACL,
+        sourceBucket: source.Bucket,
+        sourceKey: source.Key,
       });
     }
     // verify integrity after sync/move
     if (checksumFunction) await checksumFunction(target.Bucket, target.Key);
   }
-  // 'skip' and 'replace' returns
+  // other values (including skip) return
   return [];
 }
 
