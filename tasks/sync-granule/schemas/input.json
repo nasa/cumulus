@@ -20,18 +20,22 @@
               "required": ["name", "path"],
               "properties": {
                 "name": {
+                  "description": "name of file to be synced",
                   "type": "string"
                 },
                 "filename": {
+                  "description": "optional field - usage depends on provider type",
                   "type": "string"
                 },
                 "type": {
                   "type": "string"
                 },
                 "bucket": {
+                  "description": "optional - alternate source bucket to use for this file instead of the provider bucket.  Works with s3 provider only, ignored for other providers",
                   "type": "string"
                 },
                 "path": {
+                  "description": "provider path of file to be synced",
                   "type": "string"
                 }
               }
