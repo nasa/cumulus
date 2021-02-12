@@ -49,7 +49,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.only('GranulePgModel.createWithExecutionHistory() creates a new granule with execution history', async (t) => {
+test('GranulePgModel.createWithExecutionHistory() creates a new granule with execution history', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -93,11 +93,10 @@ test('GranulePgModel.upsert() creates a new running granule', async (t) => {
 
   const granule = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
     status: 'running',
   });
 
-  await granulePgModel.upsert(knex, granule);
+  await granulePgModel.upsert(knex, granule, executionCumulusId);
 
   t.like(
     await granulePgModel.get(knex, granule),
@@ -117,10 +116,9 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
   const granule = fakeGranuleRecordFactory({
     status: 'running',
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
   });
 
-  await granulePgModel.create(knex, granule);
+  await granulePgModel.createWithExecutionHistory(knex, granule, executionCumulusId);
 
   const [newExecutionCumulusId] = await executionPgModel.create(
     t.context.knex,
@@ -129,12 +127,11 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
 
   const updatedGranule = {
     ...granule,
-    execution_cumulus_id: newExecutionCumulusId,
     timestamp: new Date(),
     updated_at: new Date(),
   };
 
-  await granulePgModel.upsert(knex, updatedGranule);
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
 
   t.like(
     await granulePgModel.get(knex, { granule_id: granule.granule_id }),
@@ -153,10 +150,9 @@ test('GranulePgModel.upsert() creates a new completed granule', async (t) => {
   const granule = fakeGranuleRecordFactory({
     status: 'completed',
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
   });
 
-  await granulePgModel.upsert(knex, granule);
+  await granulePgModel.upsert(knex, granule, executionCumulusId);
 
   t.like(
     await granulePgModel.get(knex, granule),
@@ -176,17 +172,16 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
     status: 'completed',
     product_volume: 50,
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
   });
 
-  await granulePgModel.create(knex, granule);
+  await granulePgModel.createWithExecutionHistory(knex, granule, executionCumulusId);
 
   const updatedGranule = {
     ...granule,
     product_volume: 100,
   };
 
-  await granulePgModel.upsert(knex, updatedGranule);
+  await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
 
   t.like(
     await granulePgModel.get(knex, { granule_id: granule.granule_id }),
@@ -208,17 +203,16 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
   const granule = fakeGranuleRecordFactory({
     status: 'running',
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
   });
 
-  await granulePgModel.create(knex, granule);
+  await granulePgModel.createWithExecutionHistory(knex, granule, executionCumulusId);
 
   const updatedGranule = {
     ...granule,
     status: 'completed',
   };
 
-  await granulePgModel.upsert(knex, updatedGranule);
+  await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
 
   t.like(
     await granulePgModel.get(knex, { granule_id: granule.granule_id }),
@@ -237,17 +231,16 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
   const granule = fakeGranuleRecordFactory({
     status: 'completed',
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
   });
 
-  await granulePgModel.create(knex, granule);
+  await granulePgModel.createWithExecutionHistory(knex, granule, executionCumulusId);
 
   const updatedGranule = {
     ...granule,
     status: 'running',
   };
 
-  await granulePgModel.upsert(knex, updatedGranule);
+  await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
 
   const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
   t.is(record.status, 'completed');
@@ -265,10 +258,9 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
   const granule = fakeGranuleRecordFactory({
     status: 'completed',
     collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
   });
 
-  await granulePgModel.create(knex, granule);
+  await granulePgModel.createWithExecutionHistory(knex, granule, executionCumulusId);
 
   const [newExecutionCumulusId] = await executionPgModel.create(
     t.context.knex,
@@ -278,10 +270,9 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
   const updatedGranule = {
     ...granule,
     status: 'running',
-    execution_cumulus_id: newExecutionCumulusId,
   };
 
-  await granulePgModel.upsert(knex, updatedGranule);
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
 
   const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
   t.is(record.status, 'running');

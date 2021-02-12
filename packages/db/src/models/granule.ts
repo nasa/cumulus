@@ -42,23 +42,28 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .select(`${this.tableName}.*`, `${tableNames.granuleExecutionsHistory}.*`);
   }
 
-  upsert(
+  async upsert(
     knexOrTrx: Knex | Knex.Transaction,
-    granule: PostgresGranule
+    granule: PostgresGranule,
+    executionCumulusId: number
   ) {
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
         .merge({
-          // execution_cumulus_id: granule.execution_cumulus_id,
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
         })
-        // execution_cumulus_id is not required, so granule.execution_cumulus_id may be
-        // undefined. so need to compare against EXCLUDED.execution_cumulus_id
-        .whereRaw(`${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`)
+        // Only do the upsert IF there is not already a record associating
+        // the granule to this execution
+        // TODO: test if there are multiple granules
+        .whereNotExists(
+          // `${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`
+          knexOrTrx(tableNames.granuleExecutionsHistory)
+            .where('execution_cumulus_id', '=', executionCumulusId)
+        )
         .returning('cumulus_id');
     }
     return knexOrTrx(this.tableName)
@@ -66,6 +71,22 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .onConflict(['granule_id', 'collection_cumulus_id'])
       .merge()
       .returning('cumulus_id');
+  }
+
+  async upsertWithExecutionHistory(
+    knexOrTrx: Knex | Knex.Transaction,
+    granule: PostgresGranule,
+    executionCumulusId: number
+  ) {
+    // TODO: test what happens if upsert does not affect any rows
+    const [granuleCumulusId] = await this.upsert(knexOrTrx, granule, executionCumulusId);
+    return knexOrTrx(tableNames.granuleExecutionsHistory)
+      .insert({
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      })
+      .onConflict(['granule_cumulus_id', 'execution_cumulus_id'])
+      .merge();
   }
 }
 
