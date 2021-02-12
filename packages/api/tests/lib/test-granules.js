@@ -340,9 +340,7 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
   ];
 
   // Create Dynamo granule
-  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
-  newGranule.published = false;
-  newGranule.files = files;
+  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed', published: false, files });
   await granuleModel.create(newGranule);
 
   // create PG granule
