@@ -7,6 +7,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
   generateMoveFileParams,
+  handleDuplicateFile,
   listVersionedObjects,
   moveGranuleFiles,
   renameS3FileWithTimestamp,
@@ -338,4 +339,14 @@ test('unversionFilename returns filename without version stamp if present', (t) 
   const actual = unversionFilename(timeStampedFilename);
 
   t.is(expected, actual);
+});
+
+test('handleDuplicateFile throws DuplicateFile if method is called and duplicateHandling is set to "error"', async (t) => {
+  await t.throwsAsync(handleDuplicateFile({
+    duplicateHandling: 'error',
+    target: {
+      Bucket: 'bar',
+      Key: 'foo',
+    },
+  }), { name: 'DuplicateFile' });
 });
