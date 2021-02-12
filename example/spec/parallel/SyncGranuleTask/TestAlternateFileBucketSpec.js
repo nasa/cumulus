@@ -101,7 +101,7 @@ describe('The SyncGranule task with a granule file using an alternate bucket', (
                     {
                       name: 'test_granule.dat',
                       path: 'alternate_granule',
-                      bucket: altFakeS3ProviderBucket
+                      bucket: altFakeS3ProviderBucket,
                     },
                   ],
                 },
