@@ -24,7 +24,6 @@ export interface ProviderClient {
   sync(
     params: {
       fileRemotePath: string,
-      sourcePath: string,
       destinationBucket: string,
       destinationKey: string,
       bucket?: string,
