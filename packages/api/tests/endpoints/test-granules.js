@@ -293,11 +293,11 @@ test.before(async (t) => {
   await collectionModel.create(t.context.testCollection);
 
   // Create a PG Collection
-  t.context.testPgCollection = fakeCollectionRecordFactory();
+  const testPgCollection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
   [t.context.collectionCumulusId] = await collectionPgModel.create(
     t.context.knex,
-    t.context.testPgCollection
+    testPgCollection
   );
 });
 

@@ -184,9 +184,12 @@ test.before(async (t) => {
   await collectionModel.create(t.context.testCollection);
 
   // Create a PG Collection
-  t.context.testPgCollection = fakeCollectionRecordFactory({ cumulus_id: collectionId });
+  const testPgCollection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
-  await collectionPgModel.create(t.context.knex, t.context.testPgCollection);
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    testPgCollection
+  );
 });
 
 test.after.always(async () => {
@@ -286,7 +289,7 @@ test('getGranuleProductVolume() returns correct product volume', (t) => {
 test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', async (t) => {
   const { newPgGranule, newDynamoGranule } = await createGranuleAndFiles(
     t.context.knex,
-    t.context.testPgCollection.cumulus_id,
+    t.context.collectionCumulusId,
     false
   );
 
@@ -305,7 +308,7 @@ test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', asyn
 test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) => {
   const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
     t.context.knex,
-    t.context.testPgCollection.cumulus_id,
+    t.context.collectionCumulusId,
     false
   );
 
@@ -348,7 +351,7 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
     {
       granule_id: granuleId,
       status: 'failed',
-      collection_cumulus_id: t.context.testPgCollection.cumulus_id,
+      collection_cumulus_id: t.context.collectionCumulusId,
     }
   );
   fakePGGranule.published = false;
@@ -377,7 +380,7 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
 test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files if the PG file delete fails', async (t) => {
   const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
     t.context.knex,
-    t.context.testPgCollection.cumulus_id,
+    t.context.collectionCumulusId,
     false
   );
 
@@ -417,7 +420,7 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
 test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Granule delete fails', async (t) => {
   const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
     t.context.knex,
-    t.context.testPgCollection.cumulus_id,
+    t.context.collectionCumulusId,
     false
   );
 
@@ -456,7 +459,7 @@ test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Gr
 test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo granule delete fails', async (t) => {
   const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
     t.context.knex,
-    t.context.testPgCollection.cumulus_id,
+    t.context.collectionCumulusId,
     false
   );
 
