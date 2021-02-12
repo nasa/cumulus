@@ -5,7 +5,7 @@ const pWaitFor = require('p-wait-for');
 const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
-const fetchFakeS3ProviderBucket = async () => {
+const fetchFakeS3ProviderBuckets = async () => {
   if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
     throw new Error('The FAKE_PROVIDER_CONFIG_BUCKET environment variable must be set');
   }
@@ -137,6 +137,6 @@ module.exports = {
   buildHttpOrHttpsProvider,
   createProvider,
   deleteProvidersByHost,
-  fetchFakeS3ProviderBucket,
+  fetchFakeS3ProviderBuckets,
   waitForProviderRecordInOrNotInList,
 };

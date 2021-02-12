@@ -19,7 +19,7 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 
 const { loadConfig } = require('../../helpers/testUtils');
-const { fetchFakeS3ProviderBucket } = require('../../helpers/Providers');
+const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
 describe('The IngestGranule workflow ingesting an 11G file', () => {
   let beforeAllFailed = false;
@@ -34,7 +34,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
     try {
       const config = await loadConfig();
       prefix = config.stackName;
-      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBucket();
+      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
 
       // Create the collection
       collection = await createCollection(

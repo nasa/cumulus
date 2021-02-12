@@ -15,7 +15,7 @@ const { lambda } = require('@cumulus/aws-client/services');
 const S3 = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
-const { fetchFakeS3ProviderBucket } = require('../../helpers/Providers');
+const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
 describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
   let beforeAllFailed = false;
@@ -30,7 +30,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
       const config = await loadConfig();
 
       prefix = config.stackName;
-      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBucket();
+      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
 
       // Create the collection
       collection = await createCollection(
