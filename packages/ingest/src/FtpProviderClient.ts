@@ -198,9 +198,10 @@ class FtpProviderClient implements ProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @param {string} bucket - destination s3 bucket of the file
-   * @param {string} key - destination s3 key of the file
+   * @param {Object} params - function parameters
+   * @param {string} params.remotePath - the full path to the remote file to be fetched
+   * @param {string} params.bucket - destination s3 bucket of the file
+   * @param {string} params.key - destination s3 key of the file
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
