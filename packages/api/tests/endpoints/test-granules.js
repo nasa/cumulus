@@ -732,7 +732,7 @@ test('DELETE deleting an existing granule that is published will fail and not de
   });
 });
 
-test('DELETE deleting an existing unpublished granule', async (t) => {
+test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const newGranule = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
@@ -761,13 +761,13 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   }
   /* eslint-enable no-await-in-loop */
 
-  await deleteS3Buckets([
+  t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,
     s3Buckets.public.name,
-  ]);
+  ]));
 });
 
-test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
+test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
   // Create a granule in Dynamo only
   s3Buckets = {
     protected: {
@@ -839,6 +839,11 @@ test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (
     t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
   }
   /* eslint-enable no-await-in-loop */
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {
