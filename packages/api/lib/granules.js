@@ -92,15 +92,21 @@ const deleteGranuleAndFiles = async ({
   await knex.transaction(async (trx) => {
     await pMap(
       files,
-      (file) =>
-        knex.transaction(async (fileTrx) => {
-          await filePgModel.delete(fileTrx, { cumulus_id: file.cumulus_id });
-          await deleteS3Object(file.bucket, file.key);
-        })
+      (file) => {
+        filePgModel.delete(trx, { cumulus_id: file.cumulus_id });
+      }
     );
+
     await granulePgModel.delete(trx, pgGranule);
     await granuleModelClient.delete(dynamoGranule);
   });
+
+  await pMap(
+    files,
+    (file) => {
+      deleteS3Object(file.bucket, file.key);
+    }
+  );
 };
 
 module.exports = {

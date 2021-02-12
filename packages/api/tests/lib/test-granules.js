@@ -374,14 +374,12 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
   });
 
   // Check Dynamo and RDS. The granule should have been removed from both.
-  await t.throwsAsync(
-    granuleModel.get({ granuleId: newDynamoGranule.granuleId }),
-    { instanceOf: RecordDoesNotExist }
+  t.false(
+    await granuleModel.exists({ granuleId: newDynamoGranule.granuleId })
   );
 
-  await t.throwsAsync(
-    granulePgModel.get(t.context.knex, { granule_id: newPgGranule.granule_id }),
-    { instanceOf: RecordDoesNotExist }
+  t.false(
+    await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id })
   );
 });
 
@@ -425,7 +423,7 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
   /* eslint-enable no-await-in-loop */
 });
 
-test.serial('deleteGranuleAndFiles() will delete PG and S3 Files if the PG Granule delete fails', async (t) => {
+test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Granule delete fails', async (t) => {
   const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
     t.context.knex,
     t.context.testPgCollection.cumulus_id,
@@ -454,12 +452,12 @@ test.serial('deleteGranuleAndFiles() will delete PG and S3 Files if the PG Granu
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
-  // Files will have been deleted from S3 and PG.
+  // Files will still exist in S3 and PG.
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < files.length; i += 1) {
     const file = files[i];
-    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
   }
   /* eslint-enable no-await-in-loop */
 });
@@ -491,12 +489,12 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
-  // Files will have been deleted from S3 and PG.
+  // Files will still exist from S3 and PG.
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < files.length; i += 1) {
     const file = files[i];
-    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
   }
   /* eslint-enable no-await-in-loop */
 });
