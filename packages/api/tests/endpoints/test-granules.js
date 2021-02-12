@@ -832,11 +832,7 @@ test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  // verify the files are deleted from S3. No need to check the Postgres files.
-  // If the granule was successfully deleted, the postgres
-  // files will have been as well. Files have a fk which would
-  // prevent the granule from being deleted if files referencing it
-  // still exist.
+  // verify the files are deleted from S3.
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
