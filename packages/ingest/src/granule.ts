@@ -173,7 +173,6 @@ export async function moveGranuleFileWithVersioning(
   return listVersionedObjects(target.Bucket, target.Key);
 }
 
-//TODO -- Update params
 /**
  * handle duplicate file in S3 syncs and moves
  *
@@ -192,6 +191,10 @@ export async function moveGranuleFileWithVersioning(
  * Syncs to temporary source location for `version` case and to target location for `replace` case.
  * Called as `await syncFileFunction(bucket, key);`, expected to create file on S3.
  * For example of function prepared with partial application see `ingestFile` in this module.
+ * @param {Function} [params.moveGranuleFileWithVersioningFunction] - optional -
+ * override for moveGranuleFileWithVersioning.  Defaults to local module method
+ * @param {Object} [params.s3Object] - optional - replacement for S3 import object,
+ * intended for use in testing
  * @throws {DuplicateFile} DuplicateFile error in `error` case.
  * @returns {Array<Object>} List of file version S3 Objects in `version` case, otherwise empty.
  */
