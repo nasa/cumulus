@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **CUMULUS-2323** - The sync granules task when used with the s3 provider no longer ignores payload values for
+  the `bucket` key in `granule.files` objects.  If incoming payloads using this
+  task have a `bucket` value for a file using the s3 provider, the task will
+  attempt to sync from the bucket defined in the file's `bucket` key instead of
+  the `provider`.
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
 - **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
