@@ -767,6 +767,84 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   ]);
 });
 
+test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
+  // Create a granule in Dynamo only
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+  const granuleId = randomId('granule');
+  const files = [
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.hdf`,
+      key: `${randomString(5)}/${granuleId}.hdf`,
+    },
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.cmr.xml`,
+      key: `${randomString(5)}/${granuleId}.cmr.xml`,
+    },
+    {
+      bucket: s3Buckets.public.name,
+      fileName: `${granuleId}.jpg`,
+      key: `${randomString(5)}/${granuleId}.jpg`,
+    },
+  ];
+
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: granuleId,
+      status: 'failed',
+      published: false,
+      files: files,
+    }
+  );
+
+  await createS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
+
+  // Add files to S3
+  await Promise.all(newGranule.files.map((file) => s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: `test data ${randomString()}`,
+  })));
+
+  // create a new Dynamo granule
+  await granuleModel.create(newGranule);
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  // verify the files are deleted from S3. No need to check the Postgres files.
+  // If the granule was successfully deleted, the postgres
+  // files will have been as well. Files have a fk which would
+  // prevent the granule from being deleted if files referencing it
+  // still exist.
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
+    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+  }
+  /* eslint-enable no-await-in-loop */
+});
+
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');

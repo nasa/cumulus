@@ -86,30 +86,36 @@ const deleteGranuleAndFiles = async ({
   granulePgModel = new GranulePgModel(),
   granuleModelClient = new Granule(),
 }) => {
-  const files = await knex(filePgModel.tableName)
-    .where({ granule_cumulus_id: pgGranule.cumulus_id });
+  if (pgGranule === undefined) {
+    // Delete only the Dynamo Granule and S3 Files
+    await granuleModelClient.delete(dynamoGranule);
+  } else {
+    // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
+    const files = await knex(filePgModel.tableName)
+      .where({ granule_cumulus_id: pgGranule.cumulus_id });
 
-  await knex.transaction(async (trx) => {
+    await knex.transaction(async (trx) => {
+      await pMap(
+        files,
+        (file) => {
+          filePgModel.delete(trx, { cumulus_id: file.cumulus_id });
+        }
+      );
+
+      await granulePgModel.delete(trx, pgGranule);
+      await granuleModelClient.delete(dynamoGranule);
+    });
+
     await pMap(
       files,
       (file) => {
-        filePgModel.delete(trx, { cumulus_id: file.cumulus_id });
+        deleteS3Object(
+          FileUtils.getBucket(file),
+          FileUtils.getKey(file)
+        );
       }
     );
-
-    await granulePgModel.delete(trx, pgGranule);
-    await granuleModelClient.delete(dynamoGranule);
-  });
-
-  await pMap(
-    files,
-    (file) => {
-      deleteS3Object(
-        FileUtils.getBucket(file),
-        FileUtils.getKey(file)
-      );
-    }
-  );
+  }
 };
 
 module.exports = {

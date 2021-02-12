@@ -489,3 +489,79 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
   }
   /* eslint-enable no-await-in-loop */
 });
+
+test('deleteGranuleAndFiles() does not require a Postgres Granule', async (t) => {
+  // Create a granule in Dynamo only
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+  const granuleId = randomId('granule');
+  const files = [
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.hdf`,
+      key: `${randomString(5)}/${granuleId}.hdf`,
+    },
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.cmr.xml`,
+      key: `${randomString(5)}/${granuleId}.cmr.xml`,
+    },
+    {
+      bucket: s3Buckets.public.name,
+      fileName: `${granuleId}.jpg`,
+      key: `${randomString(5)}/${granuleId}.jpg`,
+    },
+  ];
+
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: granuleId,
+      status: 'failed',
+      published: false,
+      files: files,
+    }
+  );
+
+  await createS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
+
+  // Add files to S3
+  await Promise.all(newGranule.files.map((file) => s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: `test data ${randomString()}`,
+  })));
+
+  // create a new Dynamo granule
+  await granuleModel.create(newGranule);
+
+  await deleteGranuleAndFiles({
+    knex: t.context.knex,
+    dynamoGranule: newGranule,
+    pgGranule: undefined,
+    granuleModelClient: granuleModel,
+  });
+
+  // Granule should have been removed from Dynamo
+  t.false(
+    await granuleModel.exists({ granuleId: granuleId })
+  );
+
+  // verify the files are deleted from S3.
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
+    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+  }
+  /* eslint-enable no-await-in-loop */
+});
