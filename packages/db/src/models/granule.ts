@@ -5,6 +5,8 @@ import { tableNames } from '../tables';
 
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 
+import { GranuleExecutionHistoryPgModel } from './granule-execution-history';
+
 export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
     super({
@@ -15,14 +17,17 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   async createWithExecutionHistory(
     knexOrTrx: Knex | Knex.Transaction,
     item: PostgresGranule,
-    executionCumulusId: number
+    executionCumulusId: number,
+    granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel()
   ) {
     const [granuleCumulusId] = await this.create(knexOrTrx, item);
-    await knexOrTrx(tableNames.granuleExecutionsHistory)
-      .insert({
+    await granuleExecutionHistoryPgModel.create(
+      knexOrTrx,
+      {
         granule_cumulus_id: granuleCumulusId,
         execution_cumulus_id: executionCumulusId,
-      });
+      }
+    );
     return granuleCumulusId;
   }
 
@@ -45,7 +50,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
-    executionCumulusId: number
+    executionCumulusId: number,
+    granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel()
   ) {
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)
@@ -60,9 +66,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // the granule to this execution
         // TODO: test if there are multiple granules
         .whereNotExists(
-          // `${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`
-          knexOrTrx(tableNames.granuleExecutionsHistory)
-            .where('execution_cumulus_id', '=', executionCumulusId)
+          granuleExecutionHistoryPgModel.search(
+            knexOrTrx,
+            { execution_cumulus_id: executionCumulusId }
+          )
         )
         .returning('cumulus_id');
     }
@@ -76,17 +83,18 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   async upsertWithExecutionHistory(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
-    executionCumulusId: number
+    executionCumulusId: number,
+    granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel()
   ) {
     // TODO: test what happens if upsert does not affect any rows
     const [granuleCumulusId] = await this.upsert(knexOrTrx, granule, executionCumulusId);
-    return knexOrTrx(tableNames.granuleExecutionsHistory)
-      .insert({
+    await granuleExecutionHistoryPgModel.upsert(
+      knexOrTrx,
+      {
         granule_cumulus_id: granuleCumulusId,
         execution_cumulus_id: executionCumulusId,
-      })
-      .onConflict(['granule_cumulus_id', 'execution_cumulus_id'])
-      .merge();
+      }
+    );
   }
 }
 
