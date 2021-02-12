@@ -2,6 +2,8 @@
 
 const moment = require('moment');
 const test = require('ava');
+const sinon = require('sinon');
+
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -350,3 +352,151 @@ test('handleDuplicateFile throws DuplicateFile if method is called and duplicate
     },
   }), { name: 'DuplicateFile' });
 });
+
+test('handleDuplicateFile returns an empty array if duplicateHandling is set to "skip"', async (t) => {
+  const actual = await handleDuplicateFile({
+    duplicateHandling: 'skip',
+  });
+  const expected = [];
+  t.deepEqual(actual, expected);
+});
+
+test('handleDuplicateFile calls syncFileFunction with expected arguments if duplicateHandling is set to "version" and syncFileFunction is provided', async (t) => {
+  const versionReturn =  {
+    Bucket: 'VersionedBucket',
+    Key: 'VersionedKey',
+    size: 0
+  }
+
+  const syncFileFake = sinon.fake.returns(true);
+  const checksumFunctionFake = sinon.fake.returns(['checksumType', 'checksum']);
+  const moveGranuleFileWithVersioningFunctionFake = sinon.fake.returns(versionReturn);
+
+  const actual = await handleDuplicateFile({
+    checksumFunction: checksumFunctionFake,
+    duplicateHandling: 'version',
+    fileRemotePath: 'fileRemotePath',
+    moveGranuleFileWithVersioningFunction: moveGranuleFileWithVersioningFunctionFake,
+    sourceBucket: 'sourceBucket',
+    syncFileFunction: syncFileFake,
+    target: { Bucket: 'targetBucket', Key: 'targetKey' },
+    source: { Bucket: 'sourceBucket', Key: 'sourceKey' },
+  });
+
+  t.deepEqual(actual, versionReturn);
+  t.deepEqual(
+    syncFileFake.getCalls()[0].args[0],
+    {
+      bucket: 'sourceBucket',
+      destinationBucket: 'sourceBucket',
+      destinationKey: 'sourceKey',
+      fileRemotePath: 'fileRemotePath',
+    }
+  );
+  t.deepEqual(
+    checksumFunctionFake.getCalls()[0].args,
+    ['sourceBucket', 'sourceKey']
+  );
+});
+
+test('handleDuplicateFile calls throws if duplicateHandling is set to "version" and checksumFunction throws', async (t) => {
+  const syncFileFake = sinon.fake.returns(true);
+  const checksumFunctionFake = () => {
+    throw new Error('fake test error');
+  };
+  await t.throwsAsync(() => handleDuplicateFile({
+    checksumFunction: checksumFunctionFake,
+    duplicateHandling: 'version',
+    fileRemotePath: 'fileRemotePath',
+    sourceBucket: 'sourceBucket',
+    syncFileFunction: syncFileFake,
+    target: { Bucket: 'targetBucket', Key: 'targetKey' },
+    source: { Bucket: 'sourceBucket', Key: 'sourceKey' },
+  }));
+});
+
+test('handleDuplicateFile calls throws if duplicateHandling is set to "version" and moveGranuleWithVersioningFunction throws', async (t) => {
+  const syncFileFake = sinon.fake.returns(true);
+  const checksumFunctionFake = sinon.fake.returns(['checksumType', 'checksum']);
+  const moveGranuleFileWithVersioningFunctionFake = () => { throw new Error('Fake Test Error')}
+  await t.throwsAsync(() => handleDuplicateFile({
+    checksumFunction: checksumFunctionFake,
+    duplicateHandling: 'version',
+    fileRemotePath: 'fileRemotePath',
+    moveGranuleFileWithVersioningFunction: moveGranuleFileWithVersioningFunctionFake,
+    sourceBucket: 'sourceBucket',
+    syncFileFunction: syncFileFake,
+    target: { Bucket: 'targetBucket', Key: 'targetKey' },
+    source: { Bucket: 'sourceBucket', Key: 'sourceKey' },
+  }));
+});
+
+test('handleDuplicateFile calls syncFileFunction with expected arguments if duplicateHandling is set to "replace" and syncFileFunction is provided', async (t) => {
+  const syncFileFake = sinon.fake.returns(true);
+  const checksumFunctionFake = sinon.fake.returns(true);
+  const actual = await handleDuplicateFile({
+    duplicateHandling: 'replace',
+    fileRemotePath: 'fileRemotePath',
+    sourceBucket: 'sourceBucket',
+    syncFileFunction: syncFileFake,
+    checksumFunction: checksumFunctionFake,
+    target: { Bucket: 'targetBucket', Key: 'targetKey' },
+  });
+
+  const expected = [];
+  t.deepEqual(actual, expected);
+  t.deepEqual(
+    syncFileFake.getCalls()[0].args[0],
+    {
+      bucket: 'sourceBucket',
+      destinationBucket: 'targetBucket',
+      destinationKey: 'targetKey',
+      fileRemotePath: 'fileRemotePath',
+    }
+  );
+  t.deepEqual(
+    checksumFunctionFake.getCalls()[0].args,
+    ['targetBucket', 'targetKey']
+  );
+});
+
+test('handleDuplicateFile throws duplicateHandling is set to "replace" and checksumFunction throws', async (t) => {
+  const syncFileFake = sinon.fake.returns(true);
+  const checksumFunctionFake = () => { throw new Error('checksumFailure')};
+  await t.throwsAsync(handleDuplicateFile({
+    duplicateHandling: 'replace',
+    fileRemotePath: 'fileRemotePath',
+    sourceBucket: 'sourceBucket',
+    syncFileFunction: syncFileFake,
+    checksumFunction: checksumFunctionFake,
+    target: { Bucket: 'targetBucket', Key: 'targetKey' },
+  }));
+});
+
+test('handleDuplicateFile calls S3.moveObject with expected arguments if duplicateHandling is set to "replace" and syncFileFunction is not present', async (t) => {
+  const moveObjectSpy = sinon.spy();
+  const s3Object = { moveObject: moveObjectSpy };
+  const actual = await handleDuplicateFile({
+    ACL: 'acl',
+    duplicateHandling: 'replace',
+    fileRemotePath: 'fileRemotePath',
+    sourceBucket: 'sourceBucket',
+    s3Object,
+    target: { Bucket: 'targetBucket', Key: 'targetKey' },
+    source: { Bucket: 'sourceBucket', Key: 'sourceKey' },
+  });
+
+  const expected = [];
+  t.deepEqual(actual, expected);
+  t.deepEqual(
+    moveObjectSpy.getCalls()[0].args[0],
+    {
+      ACL: 'acl',
+      copyTags: true,
+      destinationBucket: 'targetBucket',
+      destinationKey: 'targetKey',
+      sourceBucket: 'sourceBucket',
+      sourceKey: 'sourceKey',
+    });
+});
+
