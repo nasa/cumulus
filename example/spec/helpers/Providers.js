@@ -10,14 +10,13 @@ const fetchFakeS3ProviderBuckets = async () => {
     throw new Error('The FAKE_PROVIDER_CONFIG_BUCKET environment variable must be set');
   }
 
-  const fakeS3ProviderBucket = await getTextObject(
+  const fakeS3ProviderBucket = (await getTextObject(
     process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-s3-provider-bucket'
-  ).trim();
-
-  const altFakeS3ProviderBucket = await (await getTextObject(
-    process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-s3-provider-bucket-alternate'
   )).trim();
 
+  const altFakeS3ProviderBucket = (await getTextObject(
+    process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-s3-provider-bucket-alternate'
+  )).trim();
   return { fakeS3ProviderBucket, altFakeS3ProviderBucket };
 };
 
