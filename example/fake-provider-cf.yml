@@ -23,6 +23,10 @@ Outputs:
     Value: !Ref S3ProviderBucket
     Export:
       Name: cumulus-fake-s3-provider-bucket
+  S3AltProviderBucket:
+    Value: !Ref S3AltProviderBucket
+    Export:
+      Name: cumulus-fake-s3-provider-bucket-alternate
 
 Resources:
 
@@ -30,6 +34,11 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${Prefix}-fake-s3-provider"
+
+  S3AltProviderBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Prefix}-fake-s3-provider-alternate"
 
   Role:
     Type: AWS::IAM::Role

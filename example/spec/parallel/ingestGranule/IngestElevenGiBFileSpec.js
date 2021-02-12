@@ -29,13 +29,12 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
   let ingestGranuleExecution;
   let prefix;
   let provider;
-  let sourceBucket;
 
   beforeAll(async () => {
     try {
       const config = await loadConfig();
       prefix = config.stackName;
-      sourceBucket = await fetchFakeS3ProviderBucket();
+      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBucket();
 
       // Create the collection
       collection = await createCollection(
@@ -47,7 +46,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       );
 
       // Create the S3 provider
-      provider = await createProvider(prefix, { host: sourceBucket });
+      provider = await createProvider(prefix, { host: fakeS3ProviderBucket });
 
       granuleId = randomId('granule-id-');
 

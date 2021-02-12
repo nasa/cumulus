@@ -23,7 +23,6 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
   let granuleId;
   let prefix;
   let provider;
-  let sourceBucket;
   let syncGranuleOutput;
 
   beforeAll(async () => {
@@ -31,7 +30,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
       const config = await loadConfig();
 
       prefix = config.stackName;
-      sourceBucket = await fetchFakeS3ProviderBucket();
+      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBucket();
 
       // Create the collection
       collection = await createCollection(
@@ -43,7 +42,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
       );
 
       // Create the S3 provider
-      provider = await createProvider(prefix, { host: sourceBucket });
+      provider = await createProvider(prefix, { host: fakeS3ProviderBucket });
 
       granuleId = randomId('granule-id-');
 
