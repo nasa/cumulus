@@ -319,17 +319,13 @@ test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) =>
     granuleModelClient: granuleModel,
   });
 
-  // verify the files are deleted from S3. No need to check the Postgres files.
-  // If the granule was successfully deleted, the postgres
-  // files will have been as well. Files have a fk which would
-  // prevent the granule from being deleted if files referencing it
-  // still exist.
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  // Verify files were delete from S3 and PG
+  await Promise.all(
+    files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 });
 
 test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', async (t) => {
@@ -406,15 +402,13 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    // file should still exist in S3
-    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    // file should still exist in PG
-    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  // Verify files still exist in S3 and PG
+  await Promise.all(
+    files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 });
 
 test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Granule delete fails', async (t) => {
@@ -447,13 +441,12 @@ test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Gr
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
   // Files will still exist in S3 and PG.
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  await Promise.all(
+    files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 });
 
 test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo granule delete fails', async (t) => {
@@ -484,13 +477,12 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
   // Files will still exist from S3 and PG.
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  await Promise.all(
+    files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 });
 
 test('deleteGranuleAndFiles() does not require a Postgres Granule', async (t) => {
@@ -561,10 +553,9 @@ test('deleteGranuleAndFiles() does not require a Postgres Granule', async (t) =>
   );
 
   // verify the files are deleted from S3.
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  await Promise.all(
+    files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+    })
+  );
 });

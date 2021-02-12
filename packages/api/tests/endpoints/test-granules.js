@@ -724,12 +724,13 @@ test('DELETE deleting an existing granule that is published will fail and not de
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
   t.true(await granuleModel.exists({ granuleId }));
 
-  newGranule.files.forEach(async (file) => {
-    // file should still exist in S3
-    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    // file should still exist in PG
-    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-  });
+  // Verify files still exist in S3 and PG
+  await Promise.all(
+    newGranule.files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 });
 
 test.serial('DELETE deleting an existing unpublished granule', async (t) => {
@@ -749,17 +750,13 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  // verify the files are deleted from S3. No need to check the Postgres files.
-  // If the granule was successfully deleted, the postgres
-  // files will have been as well. Files have a fk which would
-  // prevent the granule from being deleted if files referencing it
-  // still exist.
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  // verify the files are deleted from S3 and Postgres
+  await Promise.all(
+    newGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 
   t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,
@@ -832,13 +829,12 @@ test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', 
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  // verify the files are deleted from S3.
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  // Verify files were removed from S3 and PG
+  await Promise.all(
+    newGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+    })
+  );
 
   t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,
