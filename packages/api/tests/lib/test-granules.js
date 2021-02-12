@@ -299,7 +299,7 @@ test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', asyn
 
   // Check Dynamo and RDS. The granule should have been removed from both.
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
-  t.false(await granulePgModel.get(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
 });
 
 test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) => {

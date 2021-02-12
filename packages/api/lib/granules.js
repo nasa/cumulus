@@ -104,7 +104,10 @@ const deleteGranuleAndFiles = async ({
   await pMap(
     files,
     (file) => {
-      deleteS3Object(file.bucket, file.key);
+      deleteS3Object(
+        FileUtils.getBucket(file),
+        FileUtils.getKey(file)
+      );
     }
   );
 };
