@@ -119,7 +119,7 @@ function granulesToCmrFileObjects(granules) {
 async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId = undefined) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
-  const res = await cmrClient.ingestGranule(xml);
+  const res = await cmrClient.ingestGranule(xml, revisionId);
   const conceptId = res.result['concept-id'];
   const resultingRevisionId = res.result['revision-id'];
 
@@ -151,7 +151,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId = undefined) 
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
   const granuleId = cmrFile.metadataObject.GranuleUR;
-  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject);
+  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
 
   const conceptId = res['concept-id'];
   const resultingRevisionId = res['revision-id'];
