@@ -50,9 +50,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
   - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
   - Updated `publish2CMR` to take in optional `cmrRevisionId`.
-  - Updated `applyWorkflow` of `packages/api/models/granules.js` to take in an optional `cmrRevisionId`.
-  - Updated Rules model to allow for an optional `cmrRevisionId`.
-  - Updated Granules endpoint to take an optional header of `CMR-Revision-Id` and pass it to `applyWorkflow`.
 
 ### Fixed
 
