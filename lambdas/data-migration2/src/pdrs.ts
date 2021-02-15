@@ -41,7 +41,13 @@ export const migratePdrRecord = async (
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
 
-  const existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
+  let existingRecord;
+
+  try {
+    existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
+  } catch (error) {
+    logger.info(error);
+  }
 
   // Throw error if it was already migrated.
   if (existingRecord) {
