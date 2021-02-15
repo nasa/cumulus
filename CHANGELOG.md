@@ -66,11 +66,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added logic to `data-migration2` Lambda for migrating PDR records from
       DynamoDB to RDS
   - **CUMULUS-2235**
-     - Added initial ingest load spec test/utility
+    - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to 
+    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to
       RDS and parse Granule records to
     store File records in RDS.
+  - **CUMULUS-2367**
+    - Added `granulesExecutionHistory` table to RDS schema to allow for a many-to-many relationship between granules and executions
+    - Added `createWithExecutionHistory` method to granules Postgres model to allow for inserting a granule record and its execution history to the database
+    - Added `upsertWithExecutionHistory` method to granules Postgres model to allow for upserting a granule record and its execution history to the database
 - **CUMULUS-2128**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
@@ -139,6 +143,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+
+### Removed
+
+- **CUMULUS-2367**
+  - Removed `execution_cumulus_id` column from granules RDS schema and data type
 
 ## [v5.0.0] 2021-01-12
 
