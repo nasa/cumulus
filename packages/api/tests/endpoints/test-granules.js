@@ -754,6 +754,12 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
+  const granuleId = newGranule.granuleId;
+
+  // granule have been deleted from PG and Dynamo
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.false(await granuleModel.exists({ granuleId }));
+
   // verify the files are deleted from S3 and Postgres
   await Promise.all(
     newGranule.files.map(async (file) => {
@@ -833,7 +839,10 @@ test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', 
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  // Verify files were removed from S3 and PG
+  // granule have been deleted from Dynamo
+  t.false(await granuleModel.exists({ granuleId }));
+
+  // Verify files were removed from S3
   await Promise.all(
     newGranule.files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
