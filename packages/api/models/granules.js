@@ -585,16 +585,6 @@ class Granule extends Manager {
    * @private
    */
   async _deleteRecord(granule) {
-    // Delete granule files
-    await pMap(
-      get(granule, 'files', []),
-      (file) => {
-        const bucket = this.fileUtils.getBucket(file);
-        const key = this.fileUtils.getKey(file);
-        return s3Utils.deleteS3Object(bucket, key);
-      }
-    );
-
     return super.delete({ granuleId: granule.granuleId });
   }
 

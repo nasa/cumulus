@@ -855,6 +855,47 @@ test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', 
   ]));
 });
 
+test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
+  const { s3Buckets, newGranule } = await createGranuleAndFiles(
+    t.context.knex,
+    t.context.collectionCumulusId,
+    false
+  );
+
+  const granuleGetStub = sinon
+    .stub(GranulePgModel.prototype, 'get')
+    .throws(new Error('Error message'));
+
+  try {
+    const response = await request(app)
+      .delete(`/granules/${newGranule.granuleId}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`);
+    t.is(response.status, 400);
+  } finally {
+    granuleGetStub.restore();
+  }
+
+  const granuleId = newGranule.granuleId;
+
+  // granule not have been deleted from PG or Dynamo
+  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.true(await granuleModel.exists({ granuleId }));
+
+  // verify the files still exist in S3 and Postgres
+  await Promise.all(
+    newGranule.files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
+
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');

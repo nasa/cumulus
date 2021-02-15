@@ -6,6 +6,23 @@ const FileUtils = require('./FileUtils');
 const Granule = require('../models/granules');
 
 /**
+ * Delete a list of files from S3
+ *
+ * @param {Array} files - A list of S3 files
+ * @returns {Promise}
+ */
+const _deleteS3Files = async (files) =>
+  pMap(
+    files,
+    (file) => {
+      deleteS3Object(
+        FileUtils.getBucket(file),
+        FileUtils.getKey(file)
+      );
+    }
+  );
+
+/**
  * Delete a Granule from Postgres and Dynamo, delete the Granule's
  * Files from Postgres and S3
  *
@@ -27,6 +44,7 @@ const deleteGranuleAndFiles = async ({
 }) => {
   if (pgGranule === undefined) {
     // Delete only the Dynamo Granule and S3 Files
+    await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
   } else {
     // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
@@ -47,15 +65,7 @@ const deleteGranuleAndFiles = async ({
       await granuleModelClient.delete(dynamoGranule);
     });
 
-    await pMap(
-      files,
-      (file) => {
-        deleteS3Object(
-          FileUtils.getBucket(file),
-          FileUtils.getKey(file)
-        );
-      }
-    );
+    await _deleteS3Files(files);
   }
 };
 

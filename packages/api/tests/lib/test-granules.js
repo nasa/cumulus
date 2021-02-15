@@ -1,50 +1,11 @@
 const test = require('ava');
 
-const { createBucket } = require('@cumulus/aws-client/S3');
-const { randomId } = require('@cumulus/common/test-utils');
-
-const models = require('../../models');
-
-// Dynamo mock data factories
-const { fakeCollectionFactory } = require('../../lib/testUtils');
-
 const {
   getExecutionProcessingTimeInfo,
   getGranuleProductVolume,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
 } = require('../../lib/granules');
-
-let collectionModel;
-let granuleModel;
-
-process.env.CollectionsTable = randomId('collection');
-process.env.GranulesTable = randomId('granules');
-process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systembucket');
-process.env.TOKEN_SECRET = randomId('secret');
-
-test.before(async (t) => {
-  // create a fake bucket
-  await createBucket(process.env.system_bucket);
-
-  // create fake Collections table
-  collectionModel = new models.Collection();
-  await collectionModel.createTable();
-
-  // create fake Granules table
-  granuleModel = new models.Granule();
-  await granuleModel.createTable();
-
-  // Create a Dynamo collection
-  // we need this because a granule has a fk referring to collections
-  t.context.testCollection = fakeCollectionFactory({
-    name: 'fakeCollection',
-    version: 'v1',
-    duplicateHandling: 'error',
-  });
-  await collectionModel.create(t.context.testCollection);
-});
 
 test('getExecutionProcessingTimeInfo() returns empty object if startDate is not provided', (t) => {
   t.deepEqual(
