@@ -306,7 +306,6 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
       dynamoGranule: newDynamoGranule,
       pgGranule: newPgGranule,
       filePgModel: mockFileModel,
-      granuleModelClient: granuleModel,
     }),
     { instanceOf: Error }
   );
@@ -354,7 +353,6 @@ test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Gr
       dynamoGranule: newDynamoGranule,
       pgGranule: newPgGranule,
       granulePgModel: mockGranuleModel,
-      granuleModelClient: granuleModel,
     }),
     { instanceOf: Error }
   );
