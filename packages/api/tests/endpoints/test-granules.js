@@ -220,11 +220,11 @@ test.before(async (t) => {
   await collectionModel.create(t.context.testCollection);
 
   // Create a PG Collection
-  t.context.testPgCollection = fakeCollectionRecordFactory();
+  const testPgCollection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
   [t.context.collectionCumulusId] = await collectionPgModel.create(
     t.context.knex,
-    t.context.testPgCollection
+    testPgCollection
   );
 });
 
@@ -652,12 +652,13 @@ test('DELETE deleting an existing granule that is published will fail and not de
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
   t.true(await granuleModel.exists({ granuleId }));
 
-  newGranule.files.forEach(async (file) => {
-    // file should still exist in S3
-    t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    // file should still exist in PG
-    t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-  });
+  // Verify files still exist in S3 and PG
+  await Promise.all(
+    newGranule.files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
@@ -678,22 +679,96 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  // verify the files are deleted from S3. No need to check the Postgres files.
-  // If the granule was successfully deleted, the postgres
-  // files will have been as well. Files have a fk which would
-  // prevent the granule from being deleted if files referencing it
-  // still exist.
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-  }
-  /* eslint-enable no-await-in-loop */
+  // verify the files are deleted from S3 and Postgres
+  await Promise.all(
+    newGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 
-  await deleteS3Buckets([
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
+
+test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
+  // Create a granule in Dynamo only
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+  const granuleId = randomId('granule');
+  const files = [
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.hdf`,
+      key: `${randomString(5)}/${granuleId}.hdf`,
+    },
+    {
+      bucket: s3Buckets.protected.name,
+      fileName: `${granuleId}.cmr.xml`,
+      key: `${randomString(5)}/${granuleId}.cmr.xml`,
+    },
+    {
+      bucket: s3Buckets.public.name,
+      fileName: `${granuleId}.jpg`,
+      key: `${randomString(5)}/${granuleId}.jpg`,
+    },
+  ];
+
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: granuleId,
+      status: 'failed',
+      published: false,
+      files: files,
+    }
+  );
+
+  await createS3Buckets([
     s3Buckets.protected.name,
     s3Buckets.public.name,
   ]);
+
+  // Add files to S3
+  await Promise.all(newGranule.files.map((file) => s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: `test data ${randomString()}`,
+  })));
+
+  // create a new Dynamo granule
+  await granuleModel.create(newGranule);
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  // Verify files were removed from S3 and PG
+  await Promise.all(
+    newGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+    })
+  );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {

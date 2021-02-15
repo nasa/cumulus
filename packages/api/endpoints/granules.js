@@ -148,9 +148,10 @@ async function del(req, res) {
 
   let dynamoGranule;
   let pgGranule;
+
+  // If the granule does not exist in Dynamo, throw an error
   try {
     dynamoGranule = await granuleModelClient.getRecord({ granuleId });
-    pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(error);
@@ -158,12 +159,16 @@ async function del(req, res) {
     throw error;
   }
 
-  // DEPRECATED this can be removed
-  if (dynamoGranule.detail) {
-    return res.boom.badRequest(dynamoGranule);
+  // If the granule does not exist in PG, just log it
+  try {
+    pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+    }
   }
 
-  if (pgGranule.published) {
+  if (dynamoGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
 
