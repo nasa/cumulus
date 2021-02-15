@@ -4,6 +4,10 @@ const router = require('express-promise-router')();
 const {
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
+const {
+  getKnexClient,
+  PdrPgModel,
+} = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Search = require('../es/search').Search;
@@ -63,12 +67,16 @@ async function del(req, res) {
 
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
-  await deleteS3Object(process.env.system_bucket, pdrS3Key);
-
   const pdrModel = new models.Pdr();
+  const pdrPgModel = new PdrPgModel();
+  const knex = await getKnexClient();
 
   try {
-    await pdrModel.delete({ pdrName });
+    await knex.transaction(async (trx) => {
+      await pdrPgModel.delete(trx, { name: pdrName });
+      await deleteS3Object(process.env.system_bucket, pdrS3Key);
+      await pdrModel.delete({ pdrName });
+    });
 
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);
@@ -81,7 +89,6 @@ async function del(req, res) {
   } catch (error) {
     if (!isRecordDoesNotExistError(error)) throw error;
   }
-
   return res.send({ detail: 'Record deleted' });
 }
 

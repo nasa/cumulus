@@ -5,7 +5,12 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
-const { getKnexClient, translateApiRuleToPostgresRule, tableNames } = require('@cumulus/db');
+const {
+  getKnexClient,
+  RulePgModel,
+  tableNames,
+  translateApiRuleToPostgresRule,
+} = require('@cumulus/db');
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
@@ -67,21 +72,22 @@ async function post(req, res) {
   } = req.testContext || {};
 
   let record;
-  const rule = req.body || {};
-  const name = rule.name;
+  const apiRule = req.body || {};
+  const name = apiRule.name;
+  const rulePgModel = new RulePgModel();
 
   if (await model.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
   try {
-    rule.createdAt = Date.now();
-    rule.updatedAt = Date.now();
-    const postgresRecord = await translateApiRuleToPostgresRule(rule, dbClient);
+    apiRule.createdAt = Date.now();
+    apiRule.updatedAt = Date.now();
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
-      await trx(tableNames.rules).insert(postgresRecord, 'cumulus_id');
-      record = await model.create(rule, rule.createdAt);
+      await rulePgModel.create(trx, postgresRule);
+      record = await model.create(apiRule, apiRule.createdAt);
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
     return res.send({ message: 'Record saved', record });
@@ -108,9 +114,10 @@ async function post(req, res) {
  */
 async function put({ params: { name }, body }, res) {
   const model = new models.Rule();
+  const apiRule = { ...body };
   let newRule;
 
-  if (name !== body.name) {
+  if (name !== apiRule.name) {
     return res.boom.badRequest(`Expected rule name to be '${name}', but found`
       + ` '${body.name}' in payload`);
   }
@@ -118,24 +125,27 @@ async function put({ params: { name }, body }, res) {
   try {
     const oldRule = await model.get({ name });
     const dbClient = await getKnexClient();
+    const rulePgModel = new RulePgModel();
 
+    apiRule.updatedAt = Date.now();
+    apiRule.createdAt = oldRule.createdAt;
     // If rule type is onetime no change is allowed unless it is a rerun
-    if (body.action === 'rerun') {
+
+    if (apiRule.action === 'rerun') {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
 
-    const fieldsToDelete = Object.keys(oldRule).filter((key) => !(key in body));
-    const newPostgresRecord = await translateApiRuleToPostgresRule(body, dbClient);
+    const fieldsToDelete = Object.keys(oldRule).filter(
+      (key) => !(key in apiRule) && key !== 'createdAt'
+    );
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
-      await trx(tableNames.rules)
-        .insert(newPostgresRecord)
-        .onConflict('name')
-        .merge();
-      newRule = await model.update(oldRule, body, fieldsToDelete);
+      await rulePgModel.upsert(trx, postgresRule);
+      newRule = await model.update(oldRule, apiRule, fieldsToDelete);
     });
-    if (inTestMode()) await addToLocalES(newRule, indexRule);
 
+    if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -158,9 +168,9 @@ async function del(req, res) {
   const model = new models.Rule();
   const dbClient = await getKnexClient();
 
-  let record;
+  let apiRule;
   try {
-    record = await model.get({ name });
+    apiRule = await model.get({ name });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
@@ -170,7 +180,7 @@ async function del(req, res) {
 
   await dbClient.transaction(async (trx) => {
     await trx(tableNames.rules).where({ name }).del();
-    await model.delete(record);
+    await model.delete(apiRule);
   });
 
   if (inTestMode()) {

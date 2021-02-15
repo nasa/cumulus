@@ -14,7 +14,7 @@ const BATCHSIZE = 100;
 // In batches of 100, upload granules
 const uploadTestFiles = async (Bucket, path, batches) => {
   console.log(...process.argv.slice(2, 5));
-  if (!Number.isFinite(Number(batches)) || batches > 10000000) {
+  if (!Number.isFinite(Number(batches)) || batches > 10000) {
     throw new Error(`Invalid batch value ${batches} detected`);
   }
 
