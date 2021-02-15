@@ -249,6 +249,8 @@ In `terraform.tf`, configure the remote state settings by substituting the appro
 
 Fill in the appropriate values in `terraform.tfvars`. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
 
+Consider [the size of your Elasticsearch cluster](#elasticsearch) when configuring data-persistence.
+
 **Reminder:** _Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus dashboard will not work without Elasticsearch._
 
 **Reminder:** _If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already._
@@ -377,6 +379,8 @@ Notes on specific variables:
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 - **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
 
+Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
+
 #### Configure the Thin Egress App
 
 The Thin Egress App is used for Cumulus distribution. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
@@ -502,6 +506,37 @@ From the S3 Console:
 
 You should be able to visit the dashboard website at `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or find the url
 `<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](deployment-readme#configure-and-deploy-the-cumulus-stack) step.
+
+---
+
+## Cumulus Instance Sizing
+
+The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and design for testing and cost savings. These are likely not suitable for production workloads. Sizing his highly individual and dependent on expected load and archive size.
+
+> Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
+
+### Elasticsearch
+
+The [mappings file](https://github.com/nasa/cumulus/blob/master/packages/api/models/mappings.json) contains all of the data types that will be indexed into Elasticsearch. Elasticsearch sizing is tied to your archive size, your collections, granules, workflow executions that will be stored.
+
+AWS provides [documentation](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/sizing-domains.html) on calculating and configuring for sizing.
+
+In addition to size you'll want to consider the [number of nodes](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains-dedicatedmasternodes.html) which determine how the system reacts in the event of a failure.
+
+
+Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/0e4336d818ad79e259918f1f4b06fa902dd4b69c/tf-modules/data-persistence/variables.tf#L16) and the [cumulus module](https://github.com/nasa/cumulus/blob/0e4336d818ad79e259918f1f4b06fa902dd4b69c/tf-modules/cumulus/variables.tf#L541).
+
+> If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
+
+### EC2 instances and autoscaling groups
+
+EC2 instances are used for long-running operations (i.e. generating a reconciliation report) and long-running workflow tasks. Configuration for your ECS cluster is achieved via [Cumulus deployment variables](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
+
+When configuring your ECS cluster consider:
+* The [EC2 instance type](https://aws.amazon.com/ec2/instance-types/) and [EBS volume size]() needed to accommodate your workloads. Configured as `ecs_cluster_instance_type` and `ecs_cluster_instance_docker_volume_size`.
+* The minimum and desired number of instances on hand to accommodate your workloads. Configured as `ecs_cluster_min_size` and `ecs_cluster_desired_size`.
+* The maximum number of instances you will need and are willing to pay for to accommodate your heaviest workloads. Configured as `ecs_cluster_max_size`.
+* Your autoscaling parameters: `ecs_cluster_scale_in_adjustment_percent`, `ecs_cluster_scale_out_adjustment_percent`, `ecs_cluster_scale_in_threshold_percent`, and `ecs_cluster_scale_out_threshold_percent`.
 
 ---
 
