@@ -71,6 +71,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // linking this granule to this execution, then this upsert query
         // will not affect any rows.
         .whereNotExists(
+          // TODO: this effectively makes executions required for granules
+          // at write time. Is that okay?
           granuleExecutionHistoryPgModel.search(
             knexOrTrx,
             { execution_cumulus_id: executionCumulusId }

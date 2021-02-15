@@ -58,8 +58,6 @@ const Granule = require('../../models/granules');
  *   Cumulus ID of collection referenced in workflow message
  * @param {number} params.providerCumulusId
  *   Cumulus ID of provider referenced in workflow message
- * @param {number} params.executionCumulusId
- *   Cumulus ID of execution referenced in workflow message
  * @param {number} params.pdrCumulusId
  *   Cumulus ID of PDR referenced in workflow message
  * @param {Object} [params.processingTimeInfo={}]
@@ -79,7 +77,6 @@ const generateGranuleRecord = async ({
   queryFields,
   collectionCumulusId,
   providerCumulusId,
-  executionCumulusId,
   pdrCumulusId,
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
@@ -110,7 +107,6 @@ const generateGranuleRecord = async ({
     time_to_archive: getGranuleTimeToArchive(granule),
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
-    execution_cumulus_id: executionCumulusId,
     pdr_cumulus_id: pdrCumulusId,
     // Temporal info from CMR
     beginning_date_time: temporalInfo.beginningDateTime,
@@ -227,12 +223,15 @@ const writeGranuleAndFilesViaTransaction = async ({
     queryFields,
     collectionCumulusId,
     providerCumulusId,
-    executionCumulusId,
     pdrCumulusId,
     processingTimeInfo,
   });
 
-  const upsertQueryResult = await granulePgModel.upsert(trx, granuleRecord);
+  const upsertQueryResult = await granulePgModel.upsertWithExecutionHistory(
+    trx,
+    granuleRecord,
+    executionCumulusId
+  );
   // Ensure that we get a granule ID for the files even if the
   // upsert query returned an empty result
   const granuleCumulusId = await getGranuleCumulusIdFromQueryResultOrLookup({
