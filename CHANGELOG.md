@@ -54,6 +54,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
 
+### Removed
+
+- **CUMULUS-2364**
+  - Remove the internal Cumulus logging lambda (log2elasticsearch)
+
 ## [v5.0.1] 2021-01-27
 
 ### Changed
