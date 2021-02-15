@@ -67,8 +67,9 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           updated_at: granule.updated_at,
         })
         // Only do the upsert IF there is not already a record associating
-        // the granule to this execution
-        // TODO: test if there are multiple granules
+        // the granule to this execution. If there is already a record
+        // linking this granule to this execution, then this upsert query
+        // will not affect any rows.
         .whereNotExists(
           granuleExecutionHistoryPgModel.search(
             knexOrTrx,
@@ -95,8 +96,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     await granuleExecutionHistoryPgModel.upsert(
       knexOrTrx,
       {
-        // granule cumulus_id returned from upsert as a string, but
-        // needs to be a number for FK reference
         granule_cumulus_id: granuleCumulusId,
         execution_cumulus_id: executionCumulusId,
       }

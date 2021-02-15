@@ -671,4 +671,63 @@ test('GranulePgModel.upsertWithExecutionHistory() does not write anything if exe
   );
 });
 
-test.todo('GranulePgModel.upsertWithExecutionHistory() will allow a running status to replace a completed status for second execution');
+test('GranulePgModel.upsertWithExecutionHistory() will allow a running status to replace a completed status for different execution', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    executionPgModel,
+    granuleExecutionHistoryPgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'completed',
+  });
+
+  const [granuleCumulusId] = await granulePgModel.upsertWithExecutionHistory(
+    knex,
+    granule,
+    executionCumulusId
+  );
+
+  const [secondExecutionCumulusId] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory()
+  );
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+  };
+
+  await granulePgModel.upsertWithExecutionHistory(
+    knex,
+    updatedGranule,
+    secondExecutionCumulusId
+  );
+
+  const granuleRecord = await granulePgModel.get(
+    knex,
+    updatedGranule
+  );
+
+  t.like(
+    granuleRecord,
+    {
+      ...updatedGranule,
+      cumulus_id: granuleCumulusId,
+    }
+  );
+  t.deepEqual(
+    await granuleExecutionHistoryPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    [executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionId,
+    }))
+  );
+});
