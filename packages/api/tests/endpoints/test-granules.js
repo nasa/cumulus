@@ -73,7 +73,6 @@ let filePgModel;
 let granuleModel;
 let granulePgModel;
 let jwtAuthToken;
-let s3Buckets = [];
 
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
@@ -139,7 +138,7 @@ async function setupBucketsConfig() {
  * @returns {Object} fake granule object
  */
 async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
-  s3Buckets = {
+  const s3Buckets = {
     protected: {
       name: randomId('protected'),
       type: 'protected',
@@ -219,7 +218,7 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
     })
   );
 
-  return newGranule;
+  return { s3Buckets, newGranule };
 }
 
 test.before(async (t) => {
@@ -699,7 +698,7 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const newGranule = await createGranuleAndFiles(
+  const { s3Buckets, newGranule } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
     true
@@ -731,10 +730,15 @@ test('DELETE deleting an existing granule that is published will fail and not de
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
   );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('DELETE deleting an existing unpublished granule', async (t) => {
-  const newGranule = await createGranuleAndFiles(
+  const { s3Buckets, newGranule } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
     false
@@ -766,7 +770,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
 
 test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
   // Create a granule in Dynamo only
-  s3Buckets = {
+  const s3Buckets = {
     protected: {
       name: randomId('protected'),
       type: 'protected',
