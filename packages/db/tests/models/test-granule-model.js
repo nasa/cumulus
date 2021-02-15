@@ -152,6 +152,7 @@ test('GranulePgModel.createWithExecutionHistory() creates a new granule with exe
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    granuleExecutionHistoryPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -165,18 +166,27 @@ test('GranulePgModel.createWithExecutionHistory() creates a new granule with exe
     executionCumulusId
   );
 
-  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+  const granuleRecord = await granulePgModel.get(
     knex,
     granule
   );
 
   t.like(
-    granuleWithHistory,
+    granuleRecord,
     {
       ...granule,
       cumulus_id: granuleCumulusId,
-      execution_cumulus_ids: [executionCumulusId],
     }
+  );
+  t.deepEqual(
+    await granuleExecutionHistoryPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    [{
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionCumulusId,
+    }]
   );
 });
 
@@ -186,6 +196,7 @@ test('GranulePgModel.createWithExecutionHistory() works with a transaction', asy
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    granuleExecutionHistoryPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -202,18 +213,27 @@ test('GranulePgModel.createWithExecutionHistory() works with a transaction', asy
       )
   );
 
-  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+  const granuleRecord = await granulePgModel.get(
     knex,
     granule
   );
 
   t.like(
-    granuleWithHistory,
+    granuleRecord,
     {
       ...granule,
       cumulus_id: granuleCumulusId,
-      execution_cumulus_ids: [executionCumulusId],
     }
+  );
+  t.deepEqual(
+    await granuleExecutionHistoryPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    [{
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionCumulusId,
+    }]
   );
 });
 
@@ -469,6 +489,7 @@ test('GranulePgModel.upsertWithExecutionHistory() adds execution history', async
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    granuleExecutionHistoryPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -482,18 +503,83 @@ test('GranulePgModel.upsertWithExecutionHistory() adds execution history', async
     executionCumulusId
   );
 
-  const [granuleWithHistory] = await granulePgModel.getWithExecutionHistory(
+  const granuleRecord = await granulePgModel.get(
     knex,
     granule
   );
 
   t.like(
-    granuleWithHistory,
+    granuleRecord,
     {
       ...granule,
       cumulus_id: granuleCumulusId,
-      execution_cumulus_ids: [executionCumulusId],
     }
+  );
+  t.deepEqual(
+    await granuleExecutionHistoryPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    [{
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionCumulusId,
+    }]
+  );
+});
+
+test('GranulePgModel.upsertWithExecutionHistory() handles multiple executions for a granule', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    executionPgModel,
+    granuleExecutionHistoryPgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'completed',
+  });
+
+  const [granuleCumulusId] = await granulePgModel.upsertWithExecutionHistory(
+    knex,
+    granule,
+    executionCumulusId
+  );
+
+  const [secondExecutionCumulusId] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory()
+  );
+
+  await granulePgModel.upsertWithExecutionHistory(
+    knex,
+    granule,
+    secondExecutionCumulusId
+  );
+
+  const granuleRecord = await granulePgModel.get(
+    knex,
+    granule
+  );
+
+  t.like(
+    granuleRecord,
+    {
+      ...granule,
+      cumulus_id: granuleCumulusId,
+    }
+  );
+  t.deepEqual(
+    await granuleExecutionHistoryPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    [executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
+      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      execution_cumulus_id: executionId,
+    }))
   );
 });
 

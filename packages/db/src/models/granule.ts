@@ -97,7 +97,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       {
         // granule cumulus_id returned from upsert as a string, but
         // needs to be a number for FK reference
-        granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+        granule_cumulus_id: granuleCumulusId,
         execution_cumulus_id: executionCumulusId,
       }
     );

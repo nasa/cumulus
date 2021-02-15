@@ -42,7 +42,7 @@ export default class GranuleExecutionHistoryPgModel {
     knexOrTrx: Knex | Knex.Transaction,
     query: Partial<PostgresGranuleExecution>
   ) {
-    return knexOrTrx(tableNames.granuleExecutionsHistory)
+    return knexOrTrx<PostgresGranuleExecution>(tableNames.granuleExecutionsHistory)
       .where(query);
   }
 }
