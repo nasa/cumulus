@@ -66,8 +66,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
         })
-        // Only do the upsert IF there is not already a record associating
-        // the granule to this execution. If there is already a record
+        // Only do the upsert if there IS NOT already a record associating
+        // the granule to this execution. If there IS already a record
         // linking this granule to this execution, then this upsert query
         // will not affect any rows.
         .whereNotExists(
@@ -90,9 +90,15 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     granule: PostgresGranule,
     executionCumulusId: number,
     granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel()
-  ) {
-    // TODO: test what happens if upsert does not affect any rows
+  ): Promise<number[]> {
     const [granuleCumulusId] = await this.upsert(knexOrTrx, granule, executionCumulusId);
+    // granuleCumulusId could be undefined if the upsert affected no rows due to its
+    // conditional logic. In that case, we assume that the executino history for the
+    // granule was already written and return early. Execution history cannot be written
+    // without granuleCumulusId regardless.
+    if (!granuleCumulusId) {
+      return [];
+    }
     await granuleExecutionHistoryPgModel.upsert(
       knexOrTrx,
       {
