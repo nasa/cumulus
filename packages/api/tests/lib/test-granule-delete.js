@@ -43,7 +43,6 @@ let collectionModel;
 let filePgModel;
 let granuleModel;
 let granulePgModel;
-let s3Buckets = {};
 
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
@@ -59,7 +58,7 @@ process.env.TOKEN_SECRET = randomId('secret');
  * @returns {Object} PG and Dynamo granules, files
  */
 async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
-  s3Buckets = {
+  const s3Buckets = {
     protected: {
       name: randomId('protected'),
       type: 'protected',
@@ -136,6 +135,7 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: granuleCumulusId }),
     newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
     files: files,
+    s3Buckets: s3Buckets,
   };
 }
 
@@ -182,17 +182,8 @@ test.before(async (t) => {
   );
 });
 
-test.after.always(async () => {
-  if (s3Buckets && s3Buckets.protected && s3Buckets.public) {
-    await deleteS3Buckets([
-      s3Buckets.protected.name,
-      s3Buckets.public.name,
-    ]);
-  }
-});
-
 test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', async (t) => {
-  const { newPgGranule, newDynamoGranule } = await createGranuleAndFiles(
+  const { newPgGranule, newDynamoGranule, s3Buckets } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
     false
@@ -207,10 +198,20 @@ test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', asyn
   // Check Dynamo and RDS. The granule should have been removed from both.
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) => {
-  const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    files,
+    s3Buckets,
+  } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
     false
@@ -229,6 +230,11 @@ test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) =>
       t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
   );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', async (t) => {
@@ -276,7 +282,12 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
 });
 
 test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files if the PG file delete fails', async (t) => {
-  const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    files,
+    s3Buckets,
+  } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
     false
@@ -311,10 +322,20 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
   );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Granule delete fails', async (t) => {
-  const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    files,
+    s3Buckets,
+  } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
     false
@@ -349,10 +370,20 @@ test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Gr
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
   );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo granule delete fails', async (t) => {
-  const { newPgGranule, newDynamoGranule, files } = await createGranuleAndFiles(
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    files,
+    s3Buckets,
+  } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
     false
@@ -385,11 +416,16 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
   );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test('deleteGranuleAndFiles() does not require a Postgres Granule', async (t) => {
   // Create a granule in Dynamo only
-  s3Buckets = {
+  const s3Buckets = {
     protected: {
       name: randomId('protected'),
       type: 'protected',
@@ -459,4 +495,9 @@ test('deleteGranuleAndFiles() does not require a Postgres Granule', async (t) =>
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
     })
   );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
