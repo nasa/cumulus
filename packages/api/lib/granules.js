@@ -120,6 +120,29 @@ const deleteGranuleAndFiles = async ({
   }
 };
 
+/**
+   * Remove granule record from CMR
+   *
+   * @param {Object} granule - A granule record
+   * @throws {CumulusModelError|Error}
+   * @returns {Promise}
+   * @private
+   */
+  async removeGranuleFromCmr(granule) {
+    log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
+
+    if (!granule.published || !granule.cmrLink) {
+      throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+    }
+
+    const cmrSettings = await this.cmrUtils.getCmrSettings();
+    const cmr = new CMR(cmrSettings);
+    const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
+
+    // Use granule UR to delete from CMR
+    await cmr.deleteGranule(metadata.title, granule.collectionId);
+  }
+
 module.exports = {
   translateGranule,
   getExecutionProcessingTimeInfo,
@@ -127,4 +150,5 @@ module.exports = {
   getGranuleTimeToPreprocess,
   getGranuleProductVolume,
   deleteGranuleAndFiles,
+  removeGranuleFromCmr,
 };

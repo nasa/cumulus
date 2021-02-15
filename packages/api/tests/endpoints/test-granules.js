@@ -168,22 +168,6 @@ test.before(async (t) => {
   granulePgModel = new GranulePgModel();
   filePgModel = new FilePgModel();
 
-  s3Buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-
-  await createS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]);
-
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -625,7 +609,23 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
-test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
+test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+
+  await createS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
+
   const newGranule = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionCumulusId: t.context.collectionCumulusId,
@@ -659,9 +659,30 @@ test('DELETE deleting an existing granule that is published will fail and not de
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
   );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
-test('DELETE deleting an existing unpublished granule', async (t) => {
+test.serial('DELETE deleting an existing unpublished granule', async (t) => {
+  s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+
+  await createS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
+
   const newGranule = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionCumulusId: t.context.collectionCumulusId,

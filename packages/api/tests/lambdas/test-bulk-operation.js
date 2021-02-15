@@ -3,9 +3,9 @@ const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
-const { generateLocalTestDb, localStackConnectionEnv } = require('@cumulus/db');
+const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
-const { createS3Buckets } = require('@cumulus/aws-client/S3');
+const { createS3Buckets, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
@@ -290,7 +290,10 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
   });
 });
 
-test.only('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dynamo and PG', async (t) => {
+test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dynamo and PG', async (t) => {
+  const granuleModel = new Granule();
+  const granulePgModel = new GranulePgModel();
+
   const granules = await Promise.all([
     createGranuleAndFiles({
       dbClient: t.context.knex,
@@ -324,7 +327,17 @@ test.only('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dy
   );
 
   // Granules should have been deleted from Dynamo
+  t.false(await granuleModel.exists({ granuleId: granules[0].granuleId }));
+  t.false(await granuleModel.exists({ granuleId: granules[1].granuleId }));
+
   // Granules should have been deleted from PG
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granules[0].granuleId }));
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granules[1].granuleId }));
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do not error', async (t) => {
