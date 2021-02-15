@@ -5,9 +5,13 @@ const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { GranulePgModel, FilePgModel } = require('@cumulus/db');
+const { CMR } = require('@cumulus/cmr-client');
+const log = require('@cumulus/common/log');
+const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const pMap = require('p-map');
 
 const Granule = require('../models/granules');
+const { CumulusModelError } = require('./errors');
 const FileUtils = require('./FileUtils');
 
 const translateGranule = async (
@@ -121,27 +125,27 @@ const deleteGranuleAndFiles = async ({
 };
 
 /**
-   * Remove granule record from CMR
-   *
-   * @param {Object} granule - A granule record
-   * @throws {CumulusModelError|Error}
-   * @returns {Promise}
-   * @private
-   */
-  async removeGranuleFromCmr(granule) {
-    log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
+ * Remove granule record from CMR
+ *
+ * @param {Object} granule - A granule record
+ * @throws {CumulusModelError|Error}
+ * @returns {Promise}
+ * @private
+ */
+const removeGranuleFromCmr = async (granule) => {
+  log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
 
-    if (!granule.published || !granule.cmrLink) {
-      throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
-    }
-
-    const cmrSettings = await this.cmrUtils.getCmrSettings();
-    const cmr = new CMR(cmrSettings);
-    const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
-
-    // Use granule UR to delete from CMR
-    await cmr.deleteGranule(metadata.title, granule.collectionId);
+  if (!granule.published || !granule.cmrLink) {
+    throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
   }
+
+  const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
+  const cmr = new CMR(cmrSettings);
+  const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
+
+  // Use granule UR to delete from CMR
+  await cmr.deleteGranule(metadata.title, granule.collectionId);
+};
 
 module.exports = {
   translateGranule,
