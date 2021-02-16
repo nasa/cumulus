@@ -511,7 +511,7 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 ## Cumulus Instance Sizing
 
-The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and design for testing and cost savings. These are likely not suitable for production workloads. Sizing his highly individual and dependent on expected load and archive size.
+The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and designed for testing and cost savings. The default settings are likely not suitable for production workloads. Sizing his highly individual and dependent on expected load and archive size.
 
 > Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
 
