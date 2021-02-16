@@ -280,7 +280,7 @@
       },
       "Type": "Task",
       "Resource": "${hyrax_metadata_updates_task_arn}",
-      "Next": "CmrStep",
+      "Next": "CopyToGlacier",
       "Catch": [
         {
           "ErrorEquals": [
@@ -300,6 +300,42 @@
           ],
           "IntervalSeconds": 2,
           "MaxAttempts": 6
+        }
+      ]
+    },
+    "CopyToGlacier": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "granules": "{$.meta.processed_granules}",
+            "files_config": "{$.meta.collection.files}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${copy_to_glacier_lambda_arn}",
+      "Next": "CmrStep",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
         }
       ]
     },
