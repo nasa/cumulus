@@ -35,7 +35,7 @@ It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa
 
       ```text
       # for data-persistence
-      source = "/Users/mboyd/development/cumulus/terraform-aws-cumulus.zip//tf-modules/data-persistence"
+      source = "[path]/cumulus/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
       # for cumulus
       source = "/Users/mboyd/development/cumulus/terraform-aws-cumulus.zip//tf-modules/cumulus"
@@ -183,7 +183,7 @@ git push origin v1.x.x
 
 Publishing of new releases is handled by a Bamboo release plan and is manually triggered.
 
-If you created a new release plan in step one, you will need to create a new bamboo deployment plan following the instructions below.
+If you created a new release plan in step one, you will need to create a new bamboo deployment plan following the instructions below:
 
 #### Creating a Bamboo Deployment plan
 
@@ -216,7 +216,7 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 ### 11. Create a new Cumulus release on github
 
-The CI release scripts will automatically create a Github release based on the release version tag, as well as uploading release artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
+The CI release scripts will automatically create a Github release based on the release version tag, as well as uploading artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
 * A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
 * A S3 replicator module
