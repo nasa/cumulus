@@ -8,6 +8,7 @@ const request = require('supertest');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
   getKnexClient,
+  RulePgModel,
   localStackConnectionEnv,
   tableNames,
 } = require('@cumulus/db');
@@ -69,6 +70,7 @@ let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
 let buildPayloadStub;
+let pgRuleModel;
 
 test.before(async (t) => {
   process.env = { ...process.env, ...localStackConnectionEnv };
@@ -81,6 +83,9 @@ test.before(async (t) => {
   await S3.createBucket(process.env.system_bucket);
 
   buildPayloadStub = setBuildPayloadStub();
+
+  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
+  pgRuleModel = new RulePgModel();
 
   ruleModel = new Rule();
   await ruleModel.createTable();
@@ -96,8 +101,6 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   esClient = await Search.es('fakehost');
-
-  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
 });
 
 test.beforeEach(async (t) => {
@@ -152,7 +155,6 @@ test('CUMULUS-911 PUT with pathParameters and without an Authorization header re
     .put('/rules/asdf')
     .set('Accept', 'application/json')
     .expect(401);
-
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
@@ -582,49 +584,55 @@ test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails
 
 test('PUT replaces a rule', async (t) => {
   const { dbClient } = t.context;
-  const expectedRule = {
-    ...omit(testRule, ['queueUrl', 'provider', 'collection']),
+  const putTestRule = { ...testRule, name: randomId('testRule') };
+  t.truthy(putTestRule.queueUrl);
+  const postgresRule = await translateApiRuleToPostgresRule(putTestRule, t.context.dbClient);
+
+  await dbClient.transaction(async (trx) => {
+    await pgRuleModel.create(trx, postgresRule);
+    await ruleModel.create(putTestRule, putTestRule.createdAt);
+  });
+
+  const updateRule = {
+    ...omit(putTestRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
-
-  const translatedRule = await translateApiRuleToPostgresRule(testRule, dbClient);
-  await dbClient(tableNames.rules).insert(translatedRule);
-
-  const dbRecord = await dbClient.select()
-    .from(tableNames.rules)
-    .where({ name: expectedRule.name })
-    .first();
-
-  // Make sure testRule contains values for the properties we omitted from
-  // expectedRule to confirm that after we replace (PUT) the rule those
-  // properties are dropped from the stored rule.
-  t.truthy(testRule.queueUrl);
-
-  // Ensure pg record for test rule contains queue_url
-  t.truthy(dbRecord.queue_url);
+  const updatePostgresRule = await translateApiRuleToPostgresRule(updateRule, t.context.dbClient);
 
   await request(app)
-    .put(`/rules/${testRule.name}`)
+    .put(`/rules/${updateRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(expectedRule)
+    .send(updateRule)
     .expect(200);
 
-  const { body: actualRule } = await request(app)
-    .get(`/rules/${testRule.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const dbRecords = await dbClient.select()
+  const actualRule = await ruleModel.get({ name: updateRule.name });
+  const actualPostgresRule = await dbClient.select()
     .from(tableNames.rules)
-    .where({ name: expectedRule.name })
+    .where({ name: updateRule.name })
     .first();
+  const postgresExpectedRule = await translateApiRuleToPostgresRule({
+    ...updateRule, createdAt: actualRule.createdAt,
+  });
+  Object.keys(postgresExpectedRule).forEach((key) => {
+    if (postgresExpectedRule[key] === undefined) {
+      postgresExpectedRule[key] = null;
+    }
+  });
 
-  t.is(dbRecords.queue_url, null);
+  t.true(actualPostgresRule.updated_at > updatePostgresRule.updated_at);
+  t.true(actualRule.updatedAt > updateRule.updatedAt);
+
+  t.like(actualPostgresRule, {
+    ...postgresExpectedRule,
+    created_at: postgresRule.created_at,
+    updated_at: actualPostgresRule.updated_at,
+  });
   t.deepEqual(actualRule, {
-    ...expectedRule,
-    createdAt: actualRule.createdAt,
+    ...updateRule,
+    createdAt: putTestRule.createdAt,
     updatedAt: actualRule.updatedAt,
   });
 });

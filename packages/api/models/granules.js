@@ -1,12 +1,10 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const get = require('lodash/get');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
 const partial = require('lodash/partial');
 const path = require('path');
-const pMap = require('p-map');
 
 const awsClients = require('@cumulus/aws-client/services');
 const Lambda = require('@cumulus/aws-client/Lambda');
@@ -585,16 +583,6 @@ class Granule extends Manager {
    * @private
    */
   async _deleteRecord(granule) {
-    // Delete granule files
-    await pMap(
-      get(granule, 'files', []),
-      (file) => {
-        const bucket = this.fileUtils.getBucket(file);
-        const key = this.fileUtils.getKey(file);
-        return s3Utils.deleteS3Object(bucket, key);
-      }
-    );
-
     return super.delete({ granuleId: granule.granuleId });
   }
 

@@ -1,6 +1,5 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { DeletePublishedGranule } = require('@cumulus/errors');
 
 const {
   CollectionPgModel,
@@ -252,77 +251,4 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
 
   const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
   t.is(record.status, 'running');
-});
-
-test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    executionCumulusId,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    status: 'completed',
-    collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
-    published: false,
-  });
-
-  await granulePgModel.create(knex, granule);
-
-  t.true(await granulePgModel.exists(knex, granule));
-
-  await granulePgModel.delete(knex, granule);
-
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granule.granule_id }));
-});
-
-test('GranulePgModel.delete() throws an error if the granule is published', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    executionCumulusId,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    status: 'completed',
-    collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
-    published: true,
-  });
-
-  await granulePgModel.create(knex, granule);
-
-  await t.throwsAsync(
-    granulePgModel.delete(knex, granule),
-    { instanceOf: DeletePublishedGranule }
-  );
-});
-
-test('GranulePgModel.delete() works with a transaction', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    executionCumulusId,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    status: 'completed',
-    collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
-    published: false,
-  });
-
-  await granulePgModel.create(knex, granule);
-
-  t.true(await granulePgModel.exists(knex, granule));
-
-  await knex.transaction(
-    (trx) => granulePgModel.delete(trx, granule)
-  );
-
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granule.granule_id }));
 });

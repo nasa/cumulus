@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/errors');
 const { GranulePgModel, getKnexClient } = require('@cumulus/db');
 
-const { deleteGranuleAndFiles } = require('../lib/granules');
+const { deleteGranuleAndFiles } = require('../lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
@@ -165,6 +165,8 @@ async function del(req, res) {
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+    } else {
+      throw error;
     }
   }
 
@@ -176,7 +178,6 @@ async function del(req, res) {
     knex,
     dynamoGranule,
     pgGranule,
-    granuleModelClient: granuleModelClient,
   });
 
   if (inTestMode()) {

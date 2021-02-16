@@ -20,13 +20,13 @@ export const up = async (knex: Knex): Promise<void> =>
       .notNullable();
     table
       .integer('port')
-      .comment('Port name for acessing the provider');
+      .comment('Port name for accessing the provider');
     table
       .text('username')
-      .comment('Username for acessing the provider');
+      .comment('Username for accessing the provider');
     table
       .text('password')
-      .comment('password for acessing the provider');
+      .comment('Password for accessing the provider');
     table
       .integer('global_connection_limit')
       .comment('Maximum number of allowed concurrent connections to this provider');

@@ -248,6 +248,8 @@ function fakeProviderFactory(options = {}) {
     protocol: 'http',
     host: randomId('host'),
     port: 80,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     ...options,
   };
 }
