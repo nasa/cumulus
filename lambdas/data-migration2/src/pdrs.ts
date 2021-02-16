@@ -46,7 +46,7 @@ export const migratePdrRecord = async (
   try {
     existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
   } catch (error) {
-    // Swallow any non-RecordDoesNotExist errors and proceed with migration,
+    // Swallow any RecordDoesNotExist errors and proceed with migration,
     // otherwise re-throw the error
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
