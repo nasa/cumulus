@@ -359,7 +359,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
   await publishUMMGJSON2CMR(cmrPublishObject, new CmrFake());
 
   // Assert
-  t.true(ingestFake.calledOnceWithExactly(cmrPublishObject.metadataObject));
+  t.true(ingestFake.calledOnceWithExactly(cmrPublishObject.metadataObject, undefined));
 
   // Cleanup
   restoreCMR();
