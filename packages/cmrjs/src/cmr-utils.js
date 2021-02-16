@@ -116,7 +116,7 @@ function granulesToCmrFileObjects(granules) {
  * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId = undefined) {
+async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
   const res = await cmrClient.ingestGranule(xml, revisionId);
@@ -151,7 +151,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId = undefined) 
  * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
+async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
   const granuleId = cmrFile.metadataObject.GranuleUR;
   const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
 
@@ -197,7 +197,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
  * @param {string} cmrRevisionId - Optional CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
-async function publish2CMR(cmrPublishObject, creds, cmrRevisionId = undefined) {
+async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
 
   // choose xml or json and do the things.
