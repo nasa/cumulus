@@ -12,7 +12,7 @@ import {
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
@@ -58,7 +58,11 @@ export const migrateGranuleRecord = async (
       collection_cumulus_id: collectionCumulusId,
     });
   } catch (error) {
-    logger.info(error);
+    // Swallow any non-RecordDoesNotExist errors and proceed with migration,
+    // otherwise re-throw the error
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
   }
 
   // Throw error if it was already migrated.
