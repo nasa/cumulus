@@ -734,7 +734,7 @@ test(
   testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.json')
 );
 
-test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR and receives a revision ID in the log', async (t) => {
+test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t) => {
   // const cmrFileObject = { filename: 'test.cmr.xml', granuleId: 'testGranuleId' };
   const bucket = randomString();
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
@@ -766,7 +766,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR and receiv
   t.is(publishECHO10XML2CMRSpy.getCall(0).args[2], cmrRevisionId);
 });
 
-test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR and ingestUMMGranule and receives a revision ID in the log', async (t) => {
+test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t) => {
   const bucket = randomString();
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
@@ -810,4 +810,83 @@ test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR and ingestU
 
   await cmrUtil.publish2CMR(updatedJsonFile, credentials, cmrRevisionId);
   t.is(publishUMMGJSON2CMRSpy.getCall(0).args[2], cmrRevisionId);
+});
+
+test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async (t) => {
+  // const cmrFileObject = { filename: 'test.cmr.xml', granuleId: 'testGranuleId' };
+  const bucket = randomString();
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  const payload = JSON.parse(rawPayload);
+  const xmlFile = payload.input.granules[0].files[3];
+  const xmlGranuleId = payload.input.granules[0].granuleId;
+  const xmlKey = `${xmlGranuleId}.cmr.xml`;
+  const echoMetadataString = fs.readFileSync(path.join(__dirname, 'data/meta.xml'));
+  const conceptId = 'id204842';
+  const cmrRevisionId = 12;
+  const credentials = await getCmrSettings();
+
+  await createBucket(bucket);
+  await s3PutObject({
+    Bucket: bucket,
+    Key: xmlKey,
+    Body: echoMetadataString,
+  });
+
+  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, xmlKey));
+  const updatedXmlFile = { ...xmlFile, granuleId: xmlGranuleId, metadataObject };
+  const ingestGranuleSpy = sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId, 'revision-id': cmrRevisionId } });
+
+  t.teardown(() => {
+    ingestGranuleSpy.restore();
+  });
+
+  await cmrUtil.publish2CMR(updatedXmlFile, credentials, cmrRevisionId);
+  t.is(ingestGranuleSpy.getCall(0).args[1], cmrRevisionId);
+});
+
+test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', async (t) => {
+  const bucket = randomString();
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  const payload = JSON.parse(rawPayload);
+  payload.input.granules[1] = {
+    granuleId: 'L0A_RAD_RAW_product_0017-of-0020',
+    files: [
+      {
+        name: 'L0A_RAD_RAW_product_0017-of-0020.cmr.json',
+        bucket: `${t.context.bucket}`,
+        filename: `s3://${t.context.bucket}/L0A_RAD_RAW_product_0017-of-0020.cmr.json`,
+        type: 'metadata',
+        fileStagingDir: 'file-staging/subdir',
+        etag: '"13f2bb38e22496fe9d42e761c42a0e67"',
+      },
+    ],
+  };
+
+  const jsonGranuleId = payload.input.granules[1].granuleId;
+  const jsonFile = payload.input.granules[1].files[0];
+  const jsonKey = `${jsonGranuleId}.cmr.json`;
+  const ummgMetadataString = fs.readFileSync(path.join(__dirname, 'data/ummg-meta.json'));
+  const conceptId = 'id204842';
+  const cmrRevisionId = 12;
+  const credentials = await getCmrSettings();
+
+  await createBucket(bucket);
+  await s3PutObject({
+    Bucket: bucket,
+    Key: jsonKey,
+    Body: ummgMetadataString,
+  });
+
+  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, jsonKey));
+  const updatedJsonFile = { ...jsonFile, granuleId: jsonGranuleId, metadataObject };
+  const ingestUMMGranuleSpy = sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId, 'revision-id': cmrRevisionId });
+
+  t.teardown(() => {
+    ingestUMMGranuleSpy.restore();
+  });
+
+  await cmrUtil.publish2CMR(updatedJsonFile, credentials, cmrRevisionId);
+  t.is(ingestUMMGranuleSpy.getCall(0).args[1], cmrRevisionId);
 });
