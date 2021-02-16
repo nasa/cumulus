@@ -41,18 +41,17 @@ export const migratePdrRecord = async (
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
 
-  let existingRecord;
-
   try {
-    existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
+    const existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
+
+    // Throw error if it was already migrated.
+    if (existingRecord) {
+      throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
+    }
   } catch (error) {
     logger.info(error);
   }
 
-  // Throw error if it was already migrated.
-  if (existingRecord) {
-    throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
-  }
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
     knex,
     { name, version }

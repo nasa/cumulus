@@ -50,14 +50,18 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  const existingRecord = await granulePgModel.get(knex, {
-    granule_id: record.granuleId,
-    collection_cumulus_id: collectionCumulusId,
-  });
+  try {
+    const existingRecord = await granulePgModel.get(knex, {
+      granule_id: record.granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    });
 
-  // Throw error if it was already migrated.
-  if (existingRecord) {
-    throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
+    // Throw error if it was already migrated.
+    if (existingRecord) {
+      throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
+    }
+  } catch (error) {
+    logger.info(error);
   }
 
   const granule = await translateApiGranuleToPostgresGranule(record, knex);
