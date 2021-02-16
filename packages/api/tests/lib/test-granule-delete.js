@@ -449,7 +449,7 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
   ]));
 });
 
-test('deleteGranuleAndFiles() does not require a Postgres Granule', async (t) => {
+test.serial('deleteGranuleAndFiles() does not require a Postgres Granule', async (t) => {
   // Create a granule in Dynamo only
   const s3Buckets = {
     protected: {

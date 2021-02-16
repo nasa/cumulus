@@ -737,7 +737,7 @@ test('DELETE deleting an existing granule that is published will fail and not de
   ]));
 });
 
-test.serial('DELETE deleting an existing unpublished granule', async (t) => {
+test('DELETE deleting an existing unpublished granule', async (t) => {
   const { s3Buckets, newGranule } = await createGranuleAndFiles(
     t.context.knex,
     t.context.collectionCumulusId,
@@ -774,7 +774,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   ]));
 });
 
-test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
+test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
   // Create a granule in Dynamo only
   const s3Buckets = {
     protected: {
@@ -862,7 +862,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
     false
   );
 
-  const granuleGetStub = sinon
+  sinon
     .stub(GranulePgModel.prototype, 'get')
     .throws(new Error('Error message'));
 
@@ -873,7 +873,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
       .set('Authorization', `Bearer ${jwtAuthToken}`);
     t.is(response.status, 400);
   } finally {
-    granuleGetStub.restore();
+    GranulePgModel.prototype.get.restore();
   }
 
   const granuleId = newGranule.granuleId;
