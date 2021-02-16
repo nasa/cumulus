@@ -95,7 +95,7 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
   }
 });
 
-test.serial('postToCMR succeeds with correct payload', async (t) => {
+test.serial.only('postToCMR succeeds with correct payload', async (t) => {
   const { bucket, payload } = t.context;
   const newPayload = payload;
   const granuleId = newPayload.input.granules[0].granuleId;

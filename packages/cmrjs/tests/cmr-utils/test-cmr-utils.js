@@ -9,22 +9,26 @@ const { promisify } = require('util');
 const pickAll = require('lodash/fp/pickAll');
 const {
   buildS3Uri,
+  createBucket,
   getS3Object,
-  recursivelyDeleteS3Bucket,
-  promiseS3Upload,
-  s3GetObjectTagging,
   parseS3Uri,
+  promiseS3Upload,
+  recursivelyDeleteS3Bucket,
+  s3GetObjectTagging,
+  s3PutObject,
   s3TagSetToQueryString,
 } = require('@cumulus/aws-client/S3');
+const { CMR } = require('@cumulus/cmr-client');
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
-const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
+const { randomId, readJsonFixture, randomString } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
-const { xmlParseOptions } = require('../../utils');
+const log = require('@cumulus/common/log');
 
 const { getCmrSettings, constructCmrConceptLink } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
-const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
+const { isCMRFile, getGranuleTemporalInfo, metadataObjectFromCMRFile } = cmrUtil;
+const { xmlParseOptions } = require('../../utils');
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
 const stubDistributionBucketMap = {
@@ -729,3 +733,85 @@ test(
   'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR UMMG JSON metadata file',
   testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.json')
 );
+
+test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR and receives a revision ID in the log', async (t) => {
+  // const cmrFileObject = { filename: 'test.cmr.xml', granuleId: 'testGranuleId' };
+  const bucket = randomString();
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  const payload = JSON.parse(rawPayload);
+  const xmlFile = payload.input.granules[0].files[3];
+  const xmlGranuleId = payload.input.granules[0].granuleId;
+  const xmlKey = `${xmlGranuleId}.cmr.xml`;
+  const echoMetadataString = fs.readFileSync(path.join(__dirname, 'data/meta.xml'));
+  const cmrRevisionId = 12;
+  const credentials = await getCmrSettings();
+
+  await createBucket(bucket);
+  await s3PutObject({
+    Bucket: bucket,
+    Key: xmlKey,
+    Body: echoMetadataString,
+  });
+
+  const conceptId = 'id204842';
+  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, xmlKey));
+  const updatedXmlFile = { ...xmlFile, granuleId: xmlGranuleId, metadataObject };
+  const logInfo = sinon.spy(log, 'info');
+  sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId, 'revision-id': cmrRevisionId } });
+
+  t.teardown(() => {
+    CMR.prototype.ingestGranule.restore();
+    logInfo.restore();
+  });
+  await cmrUtil.publish2CMR(updatedXmlFile, credentials, cmrRevisionId);
+  t.true(logInfo.calledOnceWith(`Published ${updatedXmlFile.granuleId} to the CMR. conceptId: ${conceptId}, revisionId: ${cmrRevisionId}`));
+});
+
+test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR and receives a revision ID in the log', async (t) => {
+  const bucket = randomString();
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  const payload = JSON.parse(rawPayload);
+  payload.input.granules[1] = {
+    granuleId: 'L0A_RAD_RAW_product_0017-of-0020',
+    files: [
+      {
+        name: 'L0A_RAD_RAW_product_0017-of-0020.cmr.json',
+        bucket: `${t.context.bucket}`,
+        filename: `s3://${t.context.bucket}/L0A_RAD_RAW_product_0017-of-0020.cmr.json`,
+        type: 'metadata',
+        fileStagingDir: 'file-staging/subdir',
+        etag: '"13f2bb38e22496fe9d42e761c42a0e67"',
+      },
+    ],
+  };
+
+  const jsonGranuleId = payload.input.granules[1].granuleId;
+  const jsonFile = payload.input.granules[1].files[0];
+  const jsonKey = `${jsonGranuleId}.cmr.json`;
+  const ummgMetadataString = fs.readFileSync(path.join(__dirname, 'data/ummg-meta.json'));
+  const cmrRevisionId = 12;
+  const credentials = await getCmrSettings();
+
+  await createBucket(bucket);
+  await s3PutObject({
+    Bucket: bucket,
+    Key: jsonKey,
+    Body: ummgMetadataString,
+  });
+
+  const conceptId = 'id204842';
+  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, jsonKey));
+  const updatedJsonFile = { ...jsonFile, granuleId: jsonGranuleId, metadataObject };
+  const logInfo = sinon.spy(log, 'info');
+  sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId, 'revision-id': cmrRevisionId });
+
+  t.teardown(() => {
+    CMR.prototype.ingestUMMGranule.restore();
+    logInfo.restore();
+  });
+  await cmrUtil.publish2CMR(updatedJsonFile, credentials, cmrRevisionId);
+  const expectedLog = `Published UMMG ${updatedJsonFile.granuleId} to the CMR. conceptId: ${conceptId}, revisionId: ${cmrRevisionId}`;
+  t.true(logInfo.calledOnceWith(expectedLog));
+});

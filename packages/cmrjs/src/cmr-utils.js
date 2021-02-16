@@ -121,13 +121,15 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId = undefined) 
   const xml = builder.buildObject(cmrFile.metadataObject);
   const res = await cmrClient.ingestGranule(xml, revisionId);
   const conceptId = res.result['concept-id'];
-  const resultingRevisionId = res.result['revision-id'];
+  const cmrRevisionId = res.result['revision-id'];
+  const resultLog = `Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`;
+  const revisionIdLog = `, revisionId: ${cmrRevisionId}`;
 
-  if (revisionId && (resultingRevisionId !== revisionId)) {
-    throw new Error(`Expected revision-id ${revisionId} but received ${resultingRevisionId} for ${cmrFile.granuleId}.`);
+  if (revisionId) {
+    log.info(resultLog + revisionIdLog);
+  } else {
+    log.info(resultLog);
   }
-
-  log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
 
   return {
     granuleId: cmrFile.granuleId,
@@ -154,17 +156,20 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId = undefined) {
   const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
 
   const conceptId = res['concept-id'];
-  const resultingRevisionId = res['revision-id'];
+  const cmrRevisionId = res['revision-id'];
 
   const filename = getS3UrlOfFile(cmrFile);
   const metadataFormat = ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject));
   const link = constructCmrConceptLink(conceptId, 'umm_json');
+  const resultLog = `Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`;
+  const revisionIdLog = `, revisionId: ${cmrRevisionId}`;
 
-  if (revisionId && (resultingRevisionId !== revisionId)) {
-    throw new Error(`Expected revision-id ${revisionId} but received ${resultingRevisionId} for ${granuleId}.`);
+  if (revisionId) {
+    log.info(resultLog + revisionIdLog);
+  } else {
+    log.info(resultLog);
   }
 
-  log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
 
   return {
     granuleId,
