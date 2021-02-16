@@ -14,6 +14,10 @@ const {
   fakeCollectionRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
+const {
+  createS3Buckets,
+} = require('@cumulus/aws-client/S3');
+
 // Dynamo mock data factories
 const {
   fakeGranuleFactoryV2,
@@ -32,8 +36,23 @@ async function createGranuleAndFiles({
   dbClient,
   collectionCumulusId,
   published,
-  s3Buckets,
 }) {
+  const s3Buckets = {
+    protected: {
+      name: randomId('protected'),
+      type: 'protected',
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public',
+    },
+  };
+
+  await createS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]);
+
   const granuleModel = new models.Granule();
   const granulePgModel = new GranulePgModel();
   const filePgModel = new FilePgModel();
@@ -115,7 +134,12 @@ async function createGranuleAndFiles({
     })
   );
 
-  return newGranule;
+  return {
+    newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: granuleCumulusId }),
+    newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
+    files: files,
+    s3Buckets: s3Buckets,
+  };
 }
 
 module.exports = {
