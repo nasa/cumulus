@@ -523,7 +523,6 @@ AWS provides [documentation](https://docs.aws.amazon.com/elasticsearch-service/l
 
 In addition to size you'll want to consider the [number of nodes](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains-dedicatedmasternodes.html) which determine how the system reacts in the event of a failure.
 
-
 Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/0e4336d818ad79e259918f1f4b06fa902dd4b69c/tf-modules/data-persistence/variables.tf#L16) and the [cumulus module](https://github.com/nasa/cumulus/blob/0e4336d818ad79e259918f1f4b06fa902dd4b69c/tf-modules/cumulus/variables.tf#L541).
 
 > If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
@@ -533,10 +532,11 @@ Configuration can be done in the [data persistence module](https://github.com/na
 EC2 instances are used for long-running operations (i.e. generating a reconciliation report) and long-running workflow tasks. Configuration for your ECS cluster is achieved via [Cumulus deployment variables](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
 
 When configuring your ECS cluster consider:
-* The [EC2 instance type](https://aws.amazon.com/ec2/instance-types/) and [EBS volume size]() needed to accommodate your workloads. Configured as `ecs_cluster_instance_type` and `ecs_cluster_instance_docker_volume_size`.
-* The minimum and desired number of instances on hand to accommodate your workloads. Configured as `ecs_cluster_min_size` and `ecs_cluster_desired_size`.
-* The maximum number of instances you will need and are willing to pay for to accommodate your heaviest workloads. Configured as `ecs_cluster_max_size`.
-* Your autoscaling parameters: `ecs_cluster_scale_in_adjustment_percent`, `ecs_cluster_scale_out_adjustment_percent`, `ecs_cluster_scale_in_threshold_percent`, and `ecs_cluster_scale_out_threshold_percent`.
+
+- The [EC2 instance type](https://aws.amazon.com/ec2/instance-types/) and [EBS volume size](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_constraints.html) needed to accommodate your workloads. Configured as `ecs_cluster_instance_type` and `ecs_cluster_instance_docker_volume_size`.
+- The minimum and desired number of instances on hand to accommodate your workloads. Configured as `ecs_cluster_min_size` and `ecs_cluster_desired_size`.
+- The maximum number of instances you will need and are willing to pay for to accommodate your heaviest workloads. Configured as `ecs_cluster_max_size`.
+- Your autoscaling parameters: `ecs_cluster_scale_in_adjustment_percent`, `ecs_cluster_scale_out_adjustment_percent`, `ecs_cluster_scale_in_threshold_percent`, and `ecs_cluster_scale_out_threshold_percent`.
 
 ---
 
