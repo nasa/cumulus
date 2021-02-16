@@ -100,42 +100,12 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
   const newPayload = payload;
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
-  newPayload.input.cmrRevisionId = 123;
-  newPayload.input.granules[1] = {
-    granuleId: 'L0A_RAD_RAW_product_0017-of-0020',
-    files: [
-      {
-        name: 'L0A_RAD_RAW_product_0017-of-0020.cmr.json',
-        bucket: `${t.context.bucket}`,
-        filename: `s3://${t.context.bucket}/L0A_RAD_RAW_product_0017-of-0020.cmr.json`,
-        type: 'metadata',
-        fileStagingDir: 'file-staging/subdir',
-        etag: '"13f2bb38e22496fe9d42e761c42a0e67"',
-      },
-    ],
-  };
 
-  const jsonGranuleId = newPayload.input.granules[1].granuleId;
-  const jsonKey = `${jsonGranuleId}.cmr.json`;
-  const ummgMetadataString = fs.readFileSync(path.join(__dirname, 'data/ummg-meta.json'));
-
-  sinon.stub(cmrClient.CMR.prototype, 'ingestUMMGranule').callsFake(
-    () => ({
-      'concept-id': 'G1222482316-CUMULUS',
-      'revision-id': 123,
-    })
-  );
   sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
   t.teardown(() => {
     cmrClient.CMR.prototype.ingestGranule.restore();
-    cmrClient.CMR.prototype.ingestUMMGranule.restore();
   });
 
-  await s3PutObject({
-    Bucket: bucket,
-    Key: jsonKey,
-    Body: ummgMetadataString,
-  });
   await s3PutObject({
     Bucket: bucket,
     Key: key,
@@ -143,14 +113,10 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
   });
 
   const output = await postToCMR(newPayload);
-  t.is(output.granules.length, 2);
+  t.is(output.granules.length, 1);
   t.is(
     output.granules[0].cmrLink,
     `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
-  );
-  t.is(
-    output.granules[1].cmrLink,
-    `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.umm_json`
   );
   output.granules.forEach((g) => {
     t.true(Number.isInteger(g.post_to_cmr_duration));
