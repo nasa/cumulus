@@ -517,7 +517,7 @@ The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances
 
 ### Elasticsearch
 
-The [mappings file](https://github.com/nasa/cumulus/blob/master/packages/api/models/mappings.json) contains all of the data types that will be indexed into Elasticsearch. Elasticsearch sizing is tied to your archive size, your collections, granules, workflow executions that will be stored.
+The [mappings file](https://github.com/nasa/cumulus/blob/master/packages/api/models/mappings.json) contains all of the data types that will be indexed into Elasticsearch. Elasticsearch sizing is tied to your archive size, including your collections, granules, and workflow executions that will be stored.
 
 AWS provides [documentation](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/sizing-domains.html) on calculating and configuring for sizing.
 
