@@ -37,13 +37,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .merge()
       .returning('cumulus_id');
   }
-
-  async delete(
-    knexOrTransaction: Knex | Knex.Transaction,
-    granule: PostgresGranule
-  ) {
-    return super.delete(knexOrTransaction, { granule_id: granule.granule_id });
-  }
 }
 
 export { GranulePgModel };
