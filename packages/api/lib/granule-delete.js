@@ -1,5 +1,6 @@
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { GranulePgModel, FilePgModel } = require('@cumulus/db');
+const { DeletePublishedGranule } = require('@cumulus/errors');
 const pMap = require('p-map');
 
 const FileUtils = require('./FileUtils');
@@ -46,6 +47,8 @@ const deleteGranuleAndFiles = async ({
     // Delete only the Dynamo Granule and S3 Files
     await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
+  } else if (pgGranule.published) {
+    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
     // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
     const files = await filePgModel.search(

@@ -17,6 +17,8 @@ const {
   localStackConnectionEnv,
 } = require('@cumulus/db');
 
+const { DeletePublishedGranule } = require('@cumulus/errors');
+
 // PG mock data factories
 const {
   fakeCollectionRecordFactory,
@@ -180,6 +182,32 @@ test.before(async (t) => {
     t.context.knex,
     testPgCollection
   );
+});
+
+test.serial('deleteGranuleAndFiles() throws an error if the granule is published', async (t) => {
+  const { newPgGranule, newDynamoGranule, s3Buckets } = await createGranuleAndFiles(
+    t.context.knex,
+    t.context.collectionCumulusId,
+    true
+  );
+
+  await t.throwsAsync(
+    deleteGranuleAndFiles({
+      knex: t.context.knex,
+      dynamoGranule: newDynamoGranule,
+      pgGranule: newPgGranule,
+    }),
+    { instanceOf: DeletePublishedGranule }
+  );
+
+  // Check Dynamo and RDS. The granule should still exist in both.
+  t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
+  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', async (t) => {

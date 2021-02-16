@@ -254,7 +254,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
   t.is(record.status, 'running');
 });
 
-test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {
+test('GranulePgModel.delete() deletes a granule', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -276,29 +276,6 @@ test('GranulePgModel.delete() deletes an unpublished granule', async (t) => {
   await granulePgModel.delete(knex, granule);
 
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: granule.granule_id }));
-});
-
-test('GranulePgModel.delete() throws an error if the granule is published', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    executionCumulusId,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    status: 'completed',
-    collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
-    published: true,
-  });
-
-  await granulePgModel.create(knex, granule);
-
-  await t.throwsAsync(
-    granulePgModel.delete(knex, granule),
-    { instanceOf: DeletePublishedGranule }
-  );
 });
 
 test('GranulePgModel.delete() works with a transaction', async (t) => {

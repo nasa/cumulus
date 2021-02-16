@@ -1,5 +1,4 @@
 import Knex from 'knex';
-import { DeletePublishedGranule } from '@cumulus/errors';
 
 import { BasePgModel } from './base';
 import { tableNames } from '../tables';
@@ -43,10 +42,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTransaction: Knex | Knex.Transaction,
     granule: PostgresGranule
   ) {
-    if (granule.published) {
-      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-    }
-
     return super.delete(knexOrTransaction, { granule_id: granule.granule_id });
   }
 }
