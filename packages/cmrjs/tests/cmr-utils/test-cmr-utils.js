@@ -757,18 +757,19 @@ test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR and receiv
   const conceptId = 'id204842';
   const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, xmlKey));
   const updatedXmlFile = { ...xmlFile, granuleId: xmlGranuleId, metadataObject };
-  const logInfo = sinon.spy(log, 'info');
-  sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId, 'revision-id': cmrRevisionId } });
+  const logInfoSpy = sinon.spy(log, 'info');
+  const ingestGranuleSpy = sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId, 'revision-id': cmrRevisionId } });
 
   t.teardown(() => {
-    CMR.prototype.ingestGranule.restore();
-    logInfo.restore();
+    ingestGranuleSpy.restore();
+    logInfoSpy.restore();
   });
   await cmrUtil.publish2CMR(updatedXmlFile, credentials, cmrRevisionId);
-  t.true(logInfo.calledOnceWith(`Published ${updatedXmlFile.granuleId} to the CMR. conceptId: ${conceptId}, revisionId: ${cmrRevisionId}`));
+  t.true(logInfoSpy.calledOnceWith(`Published ${updatedXmlFile.granuleId} to the CMR. conceptId: ${conceptId}, revisionId: ${cmrRevisionId}`));
+  t.is(ingestGranuleSpy.getCall(0).args[1], cmrRevisionId);
 });
 
-test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR and receives a revision ID in the log', async (t) => {
+test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR and ingestUMMGranule and receives a revision ID in the log', async (t) => {
   const bucket = randomString();
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
@@ -804,14 +805,15 @@ test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR and receive
   const conceptId = 'id204842';
   const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, jsonKey));
   const updatedJsonFile = { ...jsonFile, granuleId: jsonGranuleId, metadataObject };
-  const logInfo = sinon.spy(log, 'info');
-  sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId, 'revision-id': cmrRevisionId });
+  const logInfoSpy = sinon.spy(log, 'info');
+  const ingestUMMGranuleSpy = sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId, 'revision-id': cmrRevisionId });
 
   t.teardown(() => {
-    CMR.prototype.ingestUMMGranule.restore();
-    logInfo.restore();
+    ingestUMMGranuleSpy.restore();
+    logInfoSpy.restore();
   });
   await cmrUtil.publish2CMR(updatedJsonFile, credentials, cmrRevisionId);
   const expectedLog = `Published UMMG ${updatedJsonFile.granuleId} to the CMR. conceptId: ${conceptId}, revisionId: ${cmrRevisionId}`;
-  t.true(logInfo.calledOnceWith(expectedLog));
+  t.true(logInfoSpy.calledOnceWith(expectedLog));
+  t.is(ingestUMMGranuleSpy.getCall(0).args[1], cmrRevisionId);
 });
