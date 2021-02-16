@@ -23,11 +23,10 @@ const { s3, secretsManager } = require('@cumulus/aws-client/services');
 const { randomId, readJsonFixture, randomString } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
-const log = require('@cumulus/common/log');
 
 const { getCmrSettings, constructCmrConceptLink } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
-const { isCMRFile, getGranuleTemporalInfo, metadataObjectFromCMRFile } = cmrUtil;
+const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const { xmlParseOptions } = require('../../utils');
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
@@ -754,7 +753,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t
     Body: echoMetadataString,
   });
 
-  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, xmlKey));
+  const metadataObject = await cmrUtil.metadataObjectFromCMRFile(buildS3Uri(bucket, xmlKey));
   const updatedXmlFile = { ...xmlFile, granuleId: xmlGranuleId, metadataObject };
   const publishECHO10XML2CMRSpy = sinon.spy(() => Promise.resolve());
   const revertPublishECHO10XML2CMRSpy = cmrUtil.__set__('publishECHO10XML2CMR', publishECHO10XML2CMRSpy);
@@ -799,7 +798,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t)
     Body: ummgMetadataString,
   });
 
-  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, jsonKey));
+  const metadataObject = await cmrUtil.metadataObjectFromCMRFile(buildS3Uri(bucket, jsonKey));
   const updatedJsonFile = { ...jsonFile, granuleId: jsonGranuleId, metadataObject };
   const publishUMMGJSON2CMRSpy = sinon.spy(() => Promise.resolve());
   const revertPublishUMMGJSON2CMRSpy = cmrUtil.__set__('publishUMMGJSON2CMR', publishUMMGJSON2CMRSpy);
@@ -833,7 +832,7 @@ test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async 
     Body: echoMetadataString,
   });
 
-  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, xmlKey));
+  const metadataObject = await cmrUtil.metadataObjectFromCMRFile(buildS3Uri(bucket, xmlKey));
   const updatedXmlFile = { ...xmlFile, granuleId: xmlGranuleId, metadataObject };
   const ingestGranuleSpy = sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId, 'revision-id': cmrRevisionId } });
 
@@ -879,7 +878,7 @@ test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', asyn
     Body: ummgMetadataString,
   });
 
-  const metadataObject = await metadataObjectFromCMRFile(buildS3Uri(bucket, jsonKey));
+  const metadataObject = await cmrUtil.metadataObjectFromCMRFile(buildS3Uri(bucket, jsonKey));
   const updatedJsonFile = { ...jsonFile, granuleId: jsonGranuleId, metadataObject };
   const ingestUMMGranuleSpy = sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId, 'revision-id': cmrRevisionId });
 
