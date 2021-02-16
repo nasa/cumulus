@@ -12,7 +12,7 @@ Before releasing a new major version of Cumulus that contains breaking changes, 
 
 It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since this is the officially recommended deployment configuration for the users.
 
-1. Checkout the `cumulus-template-deploy` repo
+1. Checkout the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo
 2. Update the deployment code to use the latest stable release artifacts if it hasn't already been updated:
 
     ```text
