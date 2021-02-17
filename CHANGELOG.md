@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
+
 ## [v6.0.0] 2021-02-16
 
 ### MIGRATION NOTES
@@ -18,7 +22,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
-- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
 ### Added
 
