@@ -237,7 +237,7 @@ test('GranulePgModel.createWithExecutionHistory() works with a transaction', asy
   );
 });
 
-test('GranulePgModel.createWithExecutionHistory() does not commit granule or execution history if execution history write fails', async (t) => {
+test('GranulePgModel.createWithExecutionHistory() when using a transaction does not commit granule or execution history if execution history write fails', async (t) => {
   const {
     knex,
     granulePgModel,
