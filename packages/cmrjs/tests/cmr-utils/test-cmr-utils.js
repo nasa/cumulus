@@ -812,7 +812,6 @@ test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t)
 });
 
 test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async (t) => {
-  // const cmrFileObject = { filename: 'test.cmr.xml', granuleId: 'testGranuleId' };
   const bucket = randomString();
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
