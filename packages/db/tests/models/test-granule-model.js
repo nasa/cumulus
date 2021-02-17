@@ -184,7 +184,7 @@ test('GranulePgModel.createWithExecutionHistory() creates a new granule with exe
       { granule_cumulus_id: granuleCumulusId }
     ),
     [{
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      granule_cumulus_id: Number(granuleCumulusId),
       execution_cumulus_id: executionCumulusId,
     }]
   );
@@ -231,7 +231,7 @@ test('GranulePgModel.createWithExecutionHistory() works with a transaction', asy
       { granule_cumulus_id: granuleCumulusId }
     ),
     [{
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      granule_cumulus_id: Number(granuleCumulusId),
       execution_cumulus_id: executionCumulusId,
     }]
   );
@@ -521,7 +521,7 @@ test('GranulePgModel.upsertWithExecutionHistory() adds execution history', async
       { granule_cumulus_id: granuleCumulusId }
     ),
     [{
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      granule_cumulus_id: Number(granuleCumulusId),
       execution_cumulus_id: executionCumulusId,
     }]
   );
@@ -577,7 +577,7 @@ test('GranulePgModel.upsertWithExecutionHistory() handles multiple executions fo
       { granule_cumulus_id: granuleCumulusId }
     ),
     [executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      granule_cumulus_id: Number(granuleCumulusId),
       execution_cumulus_id: executionId,
     }))
   );
@@ -726,7 +726,7 @@ test('GranulePgModel.upsertWithExecutionHistory() will allow a running status to
       { granule_cumulus_id: granuleCumulusId }
     ),
     [executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      granule_cumulus_id: Number(granuleCumulusId),
       execution_cumulus_id: executionId,
     }))
   );
@@ -781,7 +781,7 @@ test('GranulePgModel.upsertWithExecutionHistory() succeeds if upsert() affects n
       { granule_cumulus_id: granuleCumulusId }
     ),
     [executionCumulusId].map((executionId) => ({
-      granule_cumulus_id: Number.parseInt(granuleCumulusId, 10),
+      granule_cumulus_id: Number(granuleCumulusId),
       execution_cumulus_id: executionId,
     }))
   );
