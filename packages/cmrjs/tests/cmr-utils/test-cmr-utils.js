@@ -737,8 +737,8 @@ test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t
 
   const publishECHO10XML2CMRSpy = sinon.spy(() => Promise.resolve());
   const revertPublishECHO10XML2CMRSpy = cmrUtil.__set__('publishECHO10XML2CMR', publishECHO10XML2CMRSpy);
-  const credentials = await getCmrSettings();
-  const cmrRevisionId = Math.random;
+  const credentials = {};
+  const cmrRevisionId = Math.floor(Math.random() * 100);
 
   t.teardown(() => {
     revertPublishECHO10XML2CMRSpy();
@@ -749,7 +749,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t
 
 test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t) => {
   const cmrFileObject = { filename: 'test.cmr.json', granuleId: 'testGranuleId', metadataObject: {} };
-  const cmrRevisionId = Math.random;
+  const cmrRevisionId = Math.floor(Math.random() * 100);
   const credentials = {};
 
   const publishUMMGJSON2CMRSpy = sinon.spy(() => Promise.resolve());
@@ -767,7 +767,7 @@ test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async 
   const cmrFileObject = { filename: 'test.cmr.xml', granuleId: 'testGranuleId', metadataObject: {} };
   const conceptId = randomString();
   const credentials = {};
-  const cmrRevisionId = Math.random;
+  const cmrRevisionId = Math.floor(Math.random() * 100);
 
   const ingestGranuleSpy = sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId, 'revision-id': cmrRevisionId } });
 
@@ -781,7 +781,7 @@ test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async 
 
 test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', async (t) => {
   const cmrFileObject = { filename: 'test.cmr.json', granuleId: 'testGranuleId', metadataObject: {} };
-  const cmrRevisionId = Math.random;
+  const cmrRevisionId = Math.floor(Math.random() * 100);
   const credentials = {};
   const conceptId = randomString();
 
