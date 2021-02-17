@@ -9,13 +9,11 @@ const { promisify } = require('util');
 const pickAll = require('lodash/fp/pickAll');
 const {
   buildS3Uri,
-  createBucket,
   getS3Object,
   parseS3Uri,
   promiseS3Upload,
   recursivelyDeleteS3Bucket,
   s3GetObjectTagging,
-  s3PutObject,
   s3TagSetToQueryString,
 } = require('@cumulus/aws-client/S3');
 const { CMR } = require('@cumulus/cmr-client');
