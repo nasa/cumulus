@@ -620,7 +620,7 @@ test('GranulePgModel.upsertWithExecutionHistory() works with transaction', async
   );
 });
 
-test('GranulePgModel.upsertWithExecutionHistory() does not write anything if execution history upsert fails', async (t) => {
+test('GranulePgModel.upsertWithExecutionHistory() when using a transaction does not write anything if execution history upsert fails', async (t) => {
   const {
     knex,
     granulePgModel,
