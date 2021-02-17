@@ -451,7 +451,7 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
   t.is(record.status, 'completed');
 });
 
-test('GranulePgModel.upsert() will allow a running status to replace a completed status for different execution', async (t) => {
+test('GranulePgModel.upsert() will allow a running status to replace a non-running status for different execution', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -671,7 +671,7 @@ test('GranulePgModel.upsertWithExecutionHistory() when using a transaction does 
   );
 });
 
-test('GranulePgModel.upsertWithExecutionHistory() will allow a running status to replace a completed status for different execution', async (t) => {
+test('GranulePgModel.upsertWithExecutionHistory() will allow a running status to replace a non-running status for different execution', async (t) => {
   const {
     knex,
     granulePgModel,
