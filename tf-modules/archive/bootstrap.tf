@@ -32,5 +32,9 @@ data "aws_lambda_invocation" "custom_bootstrap" {
   depends_on = [aws_lambda_function.custom_bootstrap]
   function_name = aws_lambda_function.custom_bootstrap.function_name
 
-  input = jsonencode({ elasticsearchHostname = var.elasticsearch_hostname })
+  input = jsonencode(
+    {
+      elasticsearchHostname = var.elasticsearch_hostname
+      replacementTrigger = timestamp()
+    })
 }

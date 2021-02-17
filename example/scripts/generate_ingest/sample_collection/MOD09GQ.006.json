@@ -4,7 +4,7 @@
 	"process": "modis",
 	"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
 	"duplicateHandling": "replace",
-	"granuleId": "^MOD09GQ\\.A[\\d]{7}\\..{6}\\.006\\.[\\d]{13}$",
+	"granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$",
 	"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|\\.jpg)",
 	"reportToEms": false,
 	"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
