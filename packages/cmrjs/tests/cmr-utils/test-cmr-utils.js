@@ -769,7 +769,7 @@ test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async 
   const credentials = {};
   const cmrRevisionId = Math.floor(Math.random() * 100);
 
-  const ingestGranuleSpy = sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId, 'revision-id': cmrRevisionId } });
+  const ingestGranuleSpy = sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId } });
 
   t.teardown(() => {
     ingestGranuleSpy.restore();
@@ -785,7 +785,7 @@ test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', asyn
   const credentials = {};
   const conceptId = randomString();
 
-  const ingestUMMGranuleSpy = sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId, 'revision-id': cmrRevisionId });
+  const ingestUMMGranuleSpy = sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId });
 
   t.teardown(() => {
     ingestUMMGranuleSpy.restore();
