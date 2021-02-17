@@ -523,7 +523,7 @@ AWS provides [documentation](https://docs.aws.amazon.com/elasticsearch-service/l
 
 In addition to size you'll want to consider the [number of nodes](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains-dedicatedmasternodes.html) which determine how the system reacts in the event of a failure.
 
-Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/0e4336d818ad79e259918f1f4b06fa902dd4b69c/tf-modules/data-persistence/variables.tf#L16) and the [cumulus module](https://github.com/nasa/cumulus/blob/0e4336d818ad79e259918f1f4b06fa902dd4b69c/tf-modules/cumulus/variables.tf#L541).
+Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf#L16) in `elasticsearch_config` and the [cumulus module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf#L541) in `es_index_shards`.
 
 > If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
 
