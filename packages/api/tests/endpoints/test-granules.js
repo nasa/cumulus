@@ -613,6 +613,14 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
+  const { s3Buckets, newGranule } = await createGranuleAndFiles(
+    t.context.knex,
+    t.context.collectionCumulusId,
+    true
+  );
+
+  const granuleId = newGranule.granuleId;
+
   sinon.stub(
     CMR.prototype,
     'deleteGranule'
@@ -621,11 +629,11 @@ test.serial('remove a granule from CMR', async (t) => {
   sinon.stub(
     CMR.prototype,
     'getGranuleMetadata'
-  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+  ).callsFake(() => Promise.resolve({ title: granuleId }));
 
   try {
     const response = await request(app)
-      .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+      .put(`/granules/${granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -635,15 +643,27 @@ test.serial('remove a granule from CMR', async (t) => {
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'removeFromCmr');
 
-    const updatedGranule = await granuleModel.get({
-      granuleId: t.context.fakeGranules[0].granuleId,
-    });
-    t.is(updatedGranule.published, false);
-    t.is(updatedGranule.cmrLink, undefined);
+    // Should have updated the Dynamo granule
+    const updatedDynamoGranule = await granuleModel.get({ granuleId });
+    t.is(updatedDynamoGranule.published, false);
+    t.is(updatedDynamoGranule.cmrLink, undefined);
+
+    // Should have updated the PG granule
+    const updatedPgGranule = await granulePgModel.get(
+      t.context.knex,
+      { granule_id: granuleId }
+    );
+    t.is(updatedPgGranule.published, false);
+    t.is(updatedPgGranule.cmrLink, undefined);
   } finally {
     CMR.prototype.deleteGranule.restore();
     CMR.prototype.getGranuleMetadata.restore();
   }
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('remove a granule from CMR with launchpad authentication', async (t) => {

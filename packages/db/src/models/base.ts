@@ -132,6 +132,26 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
       .where(params)
       .del();
   }
+
+  /**
+   * Updates the item or items in Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Partial<RecordType>} whereClause - The identifiers used to match records
+   * @param {Partial<RecordType>} updateParams - The fields to update
+   * @param {Array<string>} returning - A list of fields to return after update
+   * @returns {Promise<RecordType[]>} List of returned records
+   */
+  async update(
+    knexOrTransaction: Knex | Knex.Transaction,
+    whereClause: Partial<RecordType>,
+    updateParams: Partial<RecordType>,
+    returning: Array<string> = []
+  ) {
+    return knexOrTransaction(this.tableName)
+      .where(whereClause)
+      .update(updateParams, returning);
+  }
 }
 
 export { BasePgModel };

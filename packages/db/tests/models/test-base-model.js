@@ -240,3 +240,79 @@ test('BasePgModel.search() works with knex transaction', async (t) => {
     t.like(r, recordBody);
   });
 });
+
+test('BasePgModel.update() updates provided fields on a record', async (t) => {
+  const {
+    knex,
+    basePgModel,
+    tableName,
+  } = t.context;
+
+  // Create initial record
+  const info = cryptoRandomString({ length: 5 });
+  const [cumulusId] = await basePgModel.create(knex, { info });
+
+  // Update record
+  const newInfo = cryptoRandomString({ length: 5 });
+  await basePgModel.update(knex, { cumulus_id: cumulusId }, { info: newInfo });
+
+  const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
+  t.deepEqual(
+    record,
+    {
+      cumulus_id: cumulusId,
+      info: newInfo,
+    }
+  );
+});
+
+test('BasePgModel.update() returns only specified fields if provided', async (t) => {
+  const {
+    knex,
+    basePgModel,
+  } = t.context;
+
+  // Create initial record
+  const info = cryptoRandomString({ length: 5 });
+  const [cumulusId] = await basePgModel.create(knex, { info });
+
+  // Update record
+  const newInfo = cryptoRandomString({ length: 5 });
+  const updatedFields = await basePgModel.update(
+    knex,
+    { cumulus_id: cumulusId }, { info: newInfo }, ['info']
+  );
+
+  t.deepEqual(
+    updatedFields,
+    [{ info: newInfo }]
+  );
+});
+
+test('BasePgModel.update() works with a knex transaction', async (t) => {
+  const {
+    knex,
+    basePgModel,
+    tableName,
+  } = t.context;
+
+  // Create initial record
+  const info = cryptoRandomString({ length: 5 });
+  const [cumulusId] = await basePgModel.create(knex, { info });
+
+  // Update record
+  const newInfo = cryptoRandomString({ length: 5 });
+
+  // Use existing transation rather than knex client
+  await knex.transaction(async (trx) =>
+    basePgModel.update(trx, { cumulus_id: cumulusId }, { info: newInfo }));
+
+  const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
+  t.deepEqual(
+    record,
+    {
+      cumulus_id: cumulusId,
+      info: newInfo,
+    }
+  );
+});
