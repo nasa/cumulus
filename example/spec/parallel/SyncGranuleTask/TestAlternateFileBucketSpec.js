@@ -17,7 +17,11 @@ const S3 = require('@cumulus/aws-client/S3');
 const { loadConfig } = require('../../helpers/testUtils');
 const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
-describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
+// This test is intended to evaluate that:
+//  1) The task component is able to ingest a granule file from a bucket other than the configured provider bucket
+//  2) The task component integrates with our example project/terraform deployment code
+
+describe('The SyncGranule task with a granule file using an alternate bucket', () => {
   let beforeAllFailed = false;
   let collection;
   let granuleId;
@@ -28,9 +32,8 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
   beforeAll(async () => {
     try {
       const config = await loadConfig();
-
       prefix = config.stackName;
-      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
+      const { fakeS3ProviderBucket, altFakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
 
       // Create the collection
       collection = await createCollection(
@@ -43,11 +46,8 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
 
       // Create the S3 provider
       provider = await createProvider(prefix, { host: fakeS3ProviderBucket });
-
       granuleId = randomId('granule-id-');
-
       const FunctionName = `${prefix}-SyncGranule`;
-
       const functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
       }).promise();
@@ -101,8 +101,11 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
                   dataType: collection.name,
                   version: collection.version,
                   files: [
-                    { name: '1G.dat.sha256', path: '' },
-                    { name: '1G.dat', path: '' },
+                    {
+                      name: 'test_granule.dat',
+                      path: 'alternate_granule',
+                      source_bucket: altFakeS3ProviderBucket,
+                    },
                   ],
                 },
               ],
@@ -116,6 +119,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
+      console.log(error.message);
       beforeAllFailed = true;
       throw error;
     }
