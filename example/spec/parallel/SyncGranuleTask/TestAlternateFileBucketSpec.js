@@ -17,6 +17,10 @@ const S3 = require('@cumulus/aws-client/S3');
 const { loadConfig } = require('../../helpers/testUtils');
 const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
+// This test is intended to evaluate that:
+//  1) The task component is able to ingest a granule file from a bucket other than the configured provider bucket
+//  2) The task component integrates with our example project/terraform deployment code
+
 describe('The SyncGranule task with a granule file using an alternate bucket', () => {
   let beforeAllFailed = false;
   let collection;
