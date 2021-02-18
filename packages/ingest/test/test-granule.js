@@ -361,6 +361,27 @@ test('handleDuplicateFile returns an empty array if duplicateHandling is set to 
   t.deepEqual(actual, expected);
 });
 
+test('handleDuplicateFile calls moveGranuleFileWithVersioningFunction with expected arguments and returns expected result if duplicateHandling is set to "version" and syncFileFunction/checksum functions are not provided', async (t) => {
+  const versionReturn = {
+    Bucket: 'VersionedBucket',
+    Key: 'VersionedKey',
+    size: 0,
+  };
+
+  const moveGranuleFileWithVersioningFunctionFake = sinon.fake.returns(versionReturn);
+
+  const actual = await handleDuplicateFile({
+    duplicateHandling: 'version',
+    fileRemotePath: 'fileRemotePath',
+    moveGranuleFileWithVersioningFunction: moveGranuleFileWithVersioningFunctionFake,
+    sourceBucket: 'sourceBucket',
+    target: { Bucket: 'targetBucket', Key: 'targetKey' },
+    source: { Bucket: 'sourceBucket', Key: 'sourceKey' },
+  });
+
+  t.deepEqual(actual, versionReturn);
+});
+
 test('handleDuplicateFile calls syncFileFunction with expected arguments if duplicateHandling is set to "version" and syncFileFunction is provided', async (t) => {
   const versionReturn = {
     Bucket: 'VersionedBucket',
@@ -433,7 +454,35 @@ test('handleDuplicateFile calls throws if duplicateHandling is set to "version" 
   }));
 });
 
-test('handleDuplicateFile calls syncFileFunction with expected arguments if duplicateHandling is set to "replace" and syncFileFunction is provided', async (t) => {
+test('handleDuplicateFile calls s3.moveObject with expected arguments and returns expected result if duplicateHandling is set to "replace" and syncFileFunction/checksum functions are not provided', async (t) => {
+  const moveObjectFake = sinon.fake.returns(true);
+  const target = { Bucket: 'targetBucket', Key: 'targetKey' };
+  const source = { Bucket: 'sourceBucket', Key: 'sourceKey' };
+
+  const actual = await handleDuplicateFile({
+    duplicateHandling: 'replace',
+    fileRemotePath: 'fileRemotePath',
+    sourceBucket: 'sourceBucket',
+    s3Object: { moveObject: moveObjectFake },
+    source,
+    target,
+  });
+  const expected = [];
+  t.deepEqual(
+    moveObjectFake.getCalls()[0].args[0],
+    {
+      ACL: undefined,
+      copyTags: true,
+      destinationBucket: target.Bucket,
+      destinationKey: target.Key,
+      sourceBucket: source.Bucket,
+      sourceKey: source.Key,
+    }
+  );
+  t.deepEqual(actual, expected);
+});
+
+test('handleDuplicateFile calls syncFileFunction/checksumFunction with expected arguments if duplicateHandling is set to "replace" and syncFileFunction is provided', async (t) => {
   const syncFileFake = sinon.fake.returns(true);
   const checksumFunctionFake = sinon.fake.returns(true);
   const actual = await handleDuplicateFile({
