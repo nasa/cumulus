@@ -8,7 +8,7 @@
   "reportToEms": false,
   "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
   "meta": {
-    "excludeFileTypes": [".cmr.json", ".cmr.xml", ".h5", ".hdf", ".jpg", ".md5", ".met", ".nc"]
+    "excludeFileTypes": [".cmr.json", ".cmr.xml", ".h5", ".hdf", ".jpg", ".md5", ".met", ".nc", ".txt"]
   },
   "files": [
     {
