@@ -6,13 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Added
+### BREAKING CHANGES
 
-- **CUMULUS-2368**
-  - Add QueueWorkflow task
+- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
-- **CUMULUS-2402**
-  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
+## [v6.0.0] 2021-02-16
 
 ### MIGRATION NOTES
 
@@ -27,20 +25,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-2395**
-  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
-    custom security group mappings
-
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
 - **CUMULUS-2300**
   - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_granules_workflow.asl.json`.
 - **CUMULUS-2350**
   - Adds an unprotected endpoinpoint, `/s3credentialsREADME`, to the s3-credentials-endpoint that displays information on how to use the `/s3credentials` endpoint
+- **CUMULUS-2368**
+  - Add QueueWorkflow task
 - **CUMULUS-2391**
   - Add reportToEms to collections.files file schema
 - **CUMULUS-2376**
   - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
+- **CUMULUS-2395**
+  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
+    custom security group mappings
+- **CUMULUS-2402**
+  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
 
 ### Changed
 
@@ -55,6 +56,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
   - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
   - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+- **CUMULUS-2321**
+  - Updated API endpoint GET `/reconciliationReports/{name}` to return the pre-signed s3 URL in addition to report data
+- **CUMULUS-2362**
+  - Logs endpoints only work with Metrics set up
 
 ### Fixed
 
@@ -62,7 +67,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2310**
   - Use valid filename for reconciliation report
-
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
 
@@ -3784,7 +3788,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v6.0.0...HEAD
+[v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
 [v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0

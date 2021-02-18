@@ -1144,20 +1144,5 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(difference(expectedNotExecutedSteps, stepNames).length).toBe(expectedNotExecutedSteps.length);
       });
     });
-
-    describe('logs endpoint', () => {
-      it('returns logs with a specific execution name', async () => {
-        const executionARNTokens = workflowExecutionArn.split(':');
-        const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
-        console.log(`Log execution name: ${logsExecutionName}`);
-        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
-        const logs = JSON.parse(logsResponse.body);
-        expect(logs.meta.count).not.toEqual(0);
-        logs.results.forEach((log) => {
-          expect(log.sender).not.toBe(undefined);
-          expect(log.executions).toEqual(logsExecutionName);
-        });
-      });
-    });
   });
 });

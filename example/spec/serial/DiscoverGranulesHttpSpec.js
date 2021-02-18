@@ -22,13 +22,6 @@ const { waitForModelStatus } = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
-const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START') ||
-  logEntry.message.includes('END') ||
-  logEntry.message.includes('REPORT');
-
-const isCumulusLogEntry = (e) => !isLambdaStatusLogEntry(e);
-
 describe('The Discover Granules workflow with http Protocol', () => {
   const collectionsDir = './data/collections/http_testcollection_001/';
 
@@ -162,29 +155,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
           'SyncGranule'
         );
         expect(lambdaOutput.payload.granules.length).toEqual(1);
-      });
-    });
-
-    describe('logs endpoint', () => {
-      it('returns the execution logs', async () => {
-        const logsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
-        const logs = JSON.parse(logsResponse.body);
-        expect(logs).not.toBe(undefined);
-        expect(logs.results.length).toEqual(10);
-      });
-
-      it('returns logs with sender set', async () => {
-        const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
-        const logs = JSON.parse(getLogsResponse.body);
-        const logEntries = logs.results;
-        const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
-
-        cumulusLogEntries.forEach((logEntry) => {
-          if (!logEntry.sender) {
-            console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
-          }
-          expect(logEntry.sender).not.toBe(undefined);
-        });
       });
     });
   });
