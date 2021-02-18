@@ -36,6 +36,8 @@
         }
       }
     },
-    "cmrRevisionId": "number"
+    "cmrRevisionId": {
+      "type": "number"
+    }
   }
 }
