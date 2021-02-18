@@ -86,7 +86,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
   -var "region=$AWS_REGION" \
   -var "vpc_id=$VPC_ID" \
-  -var "lambda_subnet_ids=[\"$AWS_LAMBDA_SUBNET\"]" \
+  -var "lambda_subnet_ids=[$AWS_LAMBDA_SUBNET]" \
   -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
