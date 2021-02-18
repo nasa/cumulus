@@ -1,9 +1,16 @@
 data "aws_cloudformation_export" "fake_s3_provider" {
   name = "cumulus-fake-s3-provider-bucket"
 }
+data "aws_cloudformation_export" "fake_s3_provider_alternate" {
+  name = "cumulus-fake-s3-provider-bucket-alternate"
+}
 
 data "aws_s3_bucket" "fake_s3_provider" {
   bucket = data.aws_cloudformation_export.fake_s3_provider.value
+}
+
+data "aws_s3_bucket" "fake_s3_provider_alternate" {
+  bucket = data.aws_cloudformation_export.fake_s3_provider_alternate.value
 }
 
 data "aws_iam_policy_document" "lambda_processing_access_fake_s3_provider" {
@@ -20,7 +27,9 @@ data "aws_iam_policy_document" "lambda_processing_access_fake_s3_provider" {
       "s3:PutReplicationConfiguration"
     ]
     resources = [
-      data.aws_s3_bucket.fake_s3_provider.arn
+      data.aws_s3_bucket.fake_s3_provider.arn,
+      data.aws_s3_bucket.fake_s3_provider_alternate.arn
+
     ]
   }
 
@@ -34,7 +43,8 @@ data "aws_iam_policy_document" "lambda_processing_access_fake_s3_provider" {
       "s3:PutObject*"
     ]
     resources = [
-      "${data.aws_s3_bucket.fake_s3_provider.arn}/*"
+      "${data.aws_s3_bucket.fake_s3_provider.arn}/*",
+      "${data.aws_s3_bucket.fake_s3_provider_alternate.arn}/*",
     ]
   }
 }
