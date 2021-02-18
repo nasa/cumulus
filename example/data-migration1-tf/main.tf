@@ -8,6 +8,7 @@ terraform {
 }
 
 provider "aws" {
+  region = var.region
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }
@@ -27,12 +28,13 @@ module "data_migration1" {
   permissions_boundary_arn = var.permissions_boundary_arn
 
   vpc_id            = var.vpc_id
-  lambda_subnet_ids = var.subnet_ids
+  lambda_subnet_ids = var.lambda_subnet_ids
 
   dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
 
-  rds_security_group_id      = data.terraform_remote_state.data_persistence.outputs.rds_security_group
+  rds_security_group_id = data.terraform_remote_state.data_persistence.outputs.rds_security_group
   rds_user_access_secret_arn = data.terraform_remote_state.data_persistence.outputs.database_credentials_secret_arn
+  rds_connection_heartbeat = var.rds_connection_heartbeat
 
   provider_kms_key_id = var.provider_kms_key_id
 
