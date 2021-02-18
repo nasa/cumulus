@@ -315,7 +315,7 @@ class GranuleFetcher {
    */
   async ingestFile(file, destinationBucket, duplicateHandling) {
     const fileRemotePath = path.join(file.path, file.name);
-    const sourceBucket = file.bucket;
+    const sourceBucket = file.source_bucket;
     // place files in the <collectionId> subdirectory
     const stagingPath = S3.s3Join(this.fileStagingDir, this.collectionId);
     const destinationKey = S3.s3Join(stagingPath, file.name);

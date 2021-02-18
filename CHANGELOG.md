@@ -46,11 +46,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2323**
-  - The sync granules task when used with the s3 provider no longer ignores payload values for
-  the `bucket` key in `granule.files` objects.  If incoming payloads using this
-  task have a `bucket` value for a file using the s3 provider, the task will
-  attempt to sync from the bucket defined in the file's `bucket` key instead of
-  the `provider`.
+  - The sync granules task when used with the s3 provider now uses the
+    `source_bucket` key in `granule.files` objects.  If incoming payloads using
+    this task have a `source_bucket` value for a file using the s3 provider, the
+    task will attempt to sync from the bucket defined in the file's
+    `source_bucket` key instead of the `provider`.
     - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter
       in support of the changed behavior.
   - Removed `addBucketToFile` and related code from sync-granules task

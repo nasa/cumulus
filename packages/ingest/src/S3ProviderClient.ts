@@ -78,10 +78,11 @@ class S3ProviderClient implements ProviderClient {
     }
   ): Promise<{s3uri: string, etag: string}> {
     const { fileRemotePath, destinationBucket, destinationKey, bucket } = params;
+    const sourceBucket = bucket || this.bucket;
     try {
       const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
       const { etag } = await S3.multipartCopyObject({
-        sourceBucket: bucket || this.bucket,
+        sourceBucket,
         sourceKey: fileRemotePath,
         destinationBucket,
         destinationKey,
@@ -92,7 +93,7 @@ class S3ProviderClient implements ProviderClient {
       return { s3uri, etag };
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
-        const sourceUrl = S3.buildS3Uri(this.bucket, fileRemotePath);
+        const sourceUrl = S3.buildS3Uri(sourceBucket, fileRemotePath);
         throw new errors.FileNotFound(`Source file not found ${sourceUrl}`);
       }
 
