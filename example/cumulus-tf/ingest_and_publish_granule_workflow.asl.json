@@ -317,7 +317,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${copy_to_glacier_lambda_arn}",
+      "Resource": "${orca_lambda_copy_to_glacier_arn}",
       "Next": "CmrStep",
       "Catch": [
         {

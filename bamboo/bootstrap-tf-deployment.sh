@@ -92,3 +92,5 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "token_secret=$TOKEN_SECRET" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
   -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
+  -var "postgres_user_pw=$ORCA_POSTGRES_USER_PASSWORD" \
+  -var "database_app_user_pw=$ORCA_DATABASE_APP_USER_PASSWORD" \
