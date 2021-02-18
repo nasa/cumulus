@@ -60,7 +60,6 @@ data "aws_ecr_repository" "async_operation" {
 
 module "cumulus" {
   source = "../../tf-modules/cumulus"
-
   cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 
   prefix = var.prefix
