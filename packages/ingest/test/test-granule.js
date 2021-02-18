@@ -362,11 +362,11 @@ test('handleDuplicateFile returns an empty array if duplicateHandling is set to 
 });
 
 test('handleDuplicateFile calls syncFileFunction with expected arguments if duplicateHandling is set to "version" and syncFileFunction is provided', async (t) => {
-  const versionReturn =  {
+  const versionReturn = {
     Bucket: 'VersionedBucket',
     Key: 'VersionedKey',
-    size: 0
-  }
+    size: 0,
+  };
 
   const syncFileFake = sinon.fake.returns(true);
   const checksumFunctionFake = sinon.fake.returns(['checksumType', 'checksum']);
@@ -418,7 +418,9 @@ test('handleDuplicateFile calls throws if duplicateHandling is set to "version" 
 test('handleDuplicateFile calls throws if duplicateHandling is set to "version" and moveGranuleWithVersioningFunction throws', async (t) => {
   const syncFileFake = sinon.fake.returns(true);
   const checksumFunctionFake = sinon.fake.returns(['checksumType', 'checksum']);
-  const moveGranuleFileWithVersioningFunctionFake = () => { throw new Error('Fake Test Error')}
+  const moveGranuleFileWithVersioningFunctionFake = () => {
+    throw new Error('Fake Test Error');
+  };
   await t.throwsAsync(() => handleDuplicateFile({
     checksumFunction: checksumFunctionFake,
     duplicateHandling: 'version',
@@ -462,7 +464,9 @@ test('handleDuplicateFile calls syncFileFunction with expected arguments if dupl
 
 test('handleDuplicateFile throws duplicateHandling is set to "replace" and checksumFunction throws', async (t) => {
   const syncFileFake = sinon.fake.returns(true);
-  const checksumFunctionFake = () => { throw new Error('checksumFailure')};
+  const checksumFunctionFake = () => {
+    throw new Error('checksumFailure');
+  };
   await t.throwsAsync(handleDuplicateFile({
     duplicateHandling: 'replace',
     fileRemotePath: 'fileRemotePath',
@@ -497,6 +501,6 @@ test('handleDuplicateFile calls S3.moveObject with expected arguments if duplica
       destinationKey: 'targetKey',
       sourceBucket: 'sourceBucket',
       sourceKey: 'sourceKey',
-    });
+    }
+  );
 });
-

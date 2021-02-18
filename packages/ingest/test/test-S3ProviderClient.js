@@ -75,7 +75,7 @@ test.serial('S3ProviderClient.download downloads a file to local disk', async (t
   t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
 });
 
-test.serial('S3ProviderClient.sync syncs a file with a bucket parameter defined from the expected bucket', async(t) => {
+test.serial('S3ProviderClient.sync syncs a file with a bucket parameter defined from the expected bucket', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: 'fooBarFakeBucket' });
   const targetKey = 'target.json';
 
