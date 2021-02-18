@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add QueueWorkflow task
 - **CUMULUS-2391**
   - Add reportToEms to collections.files file schema
+- **CUMULUS-2376**
+  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
 - **CUMULUS-2395**
   - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
     custom security group mappings
@@ -55,6 +57,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
+  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
 - **CUMULUS-2321**
   - Updated API endpoint GET `/reconciliationReports/{name}` to return the pre-signed s3 URL in addition to report data
 - **CUMULUS-2362**

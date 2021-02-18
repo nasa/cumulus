@@ -113,15 +113,18 @@ function granulesToCmrFileObjects(granules) {
  * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
  * @param {string} cmrFile.metadata - granule xml document
  * @param {Object} cmrClient - a CMR instance
+ * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishECHO10XML2CMR(cmrFile, cmrClient) {
+async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
-  const res = await cmrClient.ingestGranule(xml);
+  const res = await cmrClient.ingestGranule(xml, revisionId);
   const conceptId = res.result['concept-id'];
+  let resultLog = `Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`;
 
-  log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
+  if (revisionId) resultLog += `, revisionId: ${revisionId}`;
+  log.info(resultLog);
 
   return {
     granuleId: cmrFile.granuleId,
@@ -140,22 +143,28 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
  * @param {Object} cmrFile.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrFile.granuleId - the metadata's granuleId
  * @param {Object} cmrClient - a CMR instance
+ * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
+async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
   const granuleId = cmrFile.metadataObject.GranuleUR;
-
-  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject);
+  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
   const conceptId = res['concept-id'];
 
-  log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
+  const filename = getS3UrlOfFile(cmrFile);
+  const metadataFormat = ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject));
+  const link = constructCmrConceptLink(conceptId, 'umm_json');
+  let resultLog = `Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`;
+
+  if (revisionId) resultLog += `, revisionId: ${revisionId}`;
+  log.info(resultLog);
 
   return {
     granuleId,
-    filename: getS3UrlOfFile(cmrFile),
+    filename,
     conceptId,
-    metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
-    link: constructCmrConceptLink(conceptId, 'umm_json'),
+    metadataFormat,
+    link,
   };
 }
 
@@ -173,17 +182,18 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
  * @param {string} creds.username - the CMR username, not used if creds.token is provided
  * @param {string} creds.password - the CMR password, not used if creds.token is provided
  * @param {string} creds.token - the CMR or Launchpad token,
+ * @param {string} cmrRevisionId - Optional CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
-async function publish2CMR(cmrPublishObject, creds) {
+async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
 
   // choose xml or json and do the things.
   if (isECHO10File(cmrPublishObject.filename)) {
-    return publishECHO10XML2CMR(cmrPublishObject, cmrClient);
+    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
   if (isUMMGFile(cmrPublishObject.filename)) {
-    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient);
+    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
