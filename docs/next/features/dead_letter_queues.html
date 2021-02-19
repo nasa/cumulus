@@ -76,7 +76,6 @@
 <li>dbIndexer (Updates Elasticsearch based on DynamoDB events)</li>
 <li>EmsIngestReport (Daily EMS ingest report generation Lambda)</li>
 <li>JobsLambda (writes logs outputs to Elasticsearch)</li>
-<li>log2elasticsearch (Lambda that exports logs into Elasticsearch)</li>
 <li>ScheduleSF (the SF Scheduler Lambda that places messages on the queue that is used to start workflows, see <a href="/cumulus/docs/next/workflows/workflow-triggers">Workflow Triggers</a>)</li>
 <li>publishReports  (Lambda that publishes messages to the SNS topics for execution, granule and PDR reporting)</li>
 <li>reportGranules, reportExecutions, reportPdrs (Lambdas responsible for updating records based on messages in the queues published by publishReports)</li>
