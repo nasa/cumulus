@@ -1,5 +1,9 @@
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
-const { GranulePgModel, FilePgModel } = require('@cumulus/db');
+const {
+  GranulePgModel,
+  GranulesExecutionsPgModel,
+  FilePgModel,
+} = require('@cumulus/db');
 const { DeletePublishedGranule } = require('@cumulus/errors');
 const pMap = require('p-map');
 
@@ -42,6 +46,7 @@ const deleteGranuleAndFiles = async ({
   filePgModel = new FilePgModel(),
   granulePgModel = new GranulePgModel(),
   granuleModelClient = new Granule(),
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
 }) => {
   if (pgGranule === undefined) {
     // Delete only the Dynamo Granule and S3 Files
@@ -64,7 +69,9 @@ const deleteGranuleAndFiles = async ({
         }
       );
 
-      await granulePgModel.delete(trx, { granule_id: pgGranule.granule_id });
+      // TODO: relying on the cumulus_id from the lookup is icky, but we need to
+      // truly identify the unique record.
+      await granulePgModel.delete(trx, { cumulus_id: pgGranule.cumulus_id });
       await granuleModelClient.delete(dynamoGranule);
     });
 

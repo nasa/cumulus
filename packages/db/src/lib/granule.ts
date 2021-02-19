@@ -1,6 +1,7 @@
 import Knex from 'knex';
 
 import { PostgresGranule } from '../types/granule';
+import { PostgresGranuleExecution } from '../types/granule-execution';
 
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
@@ -24,6 +25,25 @@ export const createGranuleWithExecutionHistory = async (
     }
   );
   return [granuleCumulusId];
+};
+
+export const deleteGranuleWithExecutionHistory = async (
+  knexTransaction: Knex.Transaction,
+  granule: PostgresGranule,
+  granuleExecutionParams: Partial<PostgresGranuleExecution>,
+  granulePgModel = new GranulePgModel(),
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
+) => {
+  await granulePgModel.delete(
+    knexTransaction,
+    granule
+  );
+  // TODO: really we should delete based on join from granules table,
+  // otherwise we have to lookup cumulus_id to delete from join table
+  return granulesExecutionsPgModel.delete(
+    knexTransaction,
+    granuleExecutionParams
+  );
 };
 
 export const upsertGranuleWithExecutionHistory = async (

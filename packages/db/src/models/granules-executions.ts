@@ -5,6 +5,7 @@ import { tableNames } from '../tables';
 
 import { PostgresGranuleExecution } from '../types/granule-execution';
 
+// TODO: need model tests
 export default class GranulesExecutionsPgModel {
   readonly tableName: tableNames;
 
@@ -15,21 +16,30 @@ export default class GranulesExecutionsPgModel {
   }
 
   async create(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexOrTrx: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return knexOrTrx(this.tableName).insert(item);
   }
 
+  async delete(
+    knexOrTransaction: Knex.Transaction,
+    params: Partial<PostgresGranuleExecution>
+  ): Promise<number> {
+    return knexOrTransaction(this.tableName)
+      .where(params)
+      .del();
+  }
+
   async exists(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexOrTrx: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return isRecordDefined(await knexOrTrx(this.tableName).where(item).first());
   }
 
   async upsert(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexOrTrx: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return knexOrTrx(this.tableName)
