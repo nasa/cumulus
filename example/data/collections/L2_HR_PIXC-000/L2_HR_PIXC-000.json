@@ -8,6 +8,9 @@
   "reportToEms": false,
   "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
   "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.h5",
+  "meta": {
+    "excludeFileTypes": [".cmr.json", ".cmr.xml", ".h5", ".hdf", ".jpg", ".md5", ".met", ".nc", ".txt"]
+  },
   "files": [
     {
       "bucket": "protected",

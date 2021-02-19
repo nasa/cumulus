@@ -376,6 +376,34 @@ describe('The S3 Ingest Granules workflow', () => {
     );
   });
 
+  describe('the CopyToGlacier task', () => {
+    let lambdaOutput;
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'copy_to_glacier');
+    });
+
+    it('copies files configured to glacier', async () => {
+      // TODO after ORCA fixes their iam to support multiple 'protected' buckets,
+      // remove '.cmr.xml' from meta.excludeFileTypes of collection configuration,
+      // and verify .cmr.xml file is copied to glacier
+      // ORCA ticket https://bugs.earthdata.nasa.gov/browse/ORCA-140
+      const excludeFileTypes = get(lambdaOutput, 'meta.collection.meta.excludeFileTypes', []);
+      expect(excludeFileTypes.length).toBe(2);
+      const copiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
+      expect(copiedToGlacier.length).toBe(2);
+
+      // copiedToGlacier contains a list of the file s3uri in primary buckets
+      const copiedOver = await Promise.all(
+        copiedToGlacier.map((s3uri) => {
+          expect(excludeFileTypes.filter((type) => s3uri.endsWith(type)).length).toBe(0);
+          return s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key });
+        })
+      );
+      copiedOver.forEach((check) => expect(check).toEqual(true));
+    });
+  });
+
   describe('the BackupGranulesToLzards task', () => {
     let lambdaOutput;
 
@@ -848,6 +876,17 @@ describe('The S3 Ingest Granules workflow', () => {
           );
           expect(reingestExecution.asyncOperationId).toEqual(asyncOperationId);
         });
+
+        // TODO remove the glacier files via ORCA API when the API is available (PI 21.3 21.4)
+        it('remove files from glacier', async () => {
+          const lambdaOutput = await lambdaStep.getStepOutput(reingestExecutionArn, 'copy_to_glacier');
+          const copiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
+          expect(copiedToGlacier.length).toBe(2);
+
+          await Promise.all(copiedToGlacier.map((s3uri) => deleteS3Object(config.buckets.glacier.name, parseS3Uri(s3uri).Key)));
+          const deletedFromGlacier = await Promise.all(copiedToGlacier.map((s3uri) => s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key })));
+          deletedFromGlacier.forEach((check) => expect(check).toEqual(false));
+        });
       });
 
       it('removeFromCMR removes the ingested granule from CMR', async () => {
@@ -1098,7 +1137,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(definition.Comment).toEqual('Ingest Granule');
 
         // definition has all the states' information
-        expect(Object.keys(definition.States).length).toBe(12);
+        expect(Object.keys(definition.States).length).toBe(13);
       });
 
       it('returns the inputs, outputs, timing, and status information for each executed step', async () => {
@@ -1116,6 +1155,7 @@ describe('The S3 Ingest Granules workflow', () => {
           'MoveGranuleStep',
           'UpdateGranulesCmrMetadataFileLinksStep',
           'HyraxMetadataUpdatesTask',
+          'CopyToGlacier',
           'CmrStep',
           'WorkflowSucceeded',
           'BackupGranulesToLzards',
