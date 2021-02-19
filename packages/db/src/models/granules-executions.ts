@@ -5,7 +5,7 @@ import { tableNames } from '../tables';
 
 import { PostgresGranuleExecution } from '../types/granule-execution';
 
-export default class GranuleExecutionHistoryPgModel {
+export default class GranulesExecutionsPgModel {
   readonly tableName: tableNames;
 
   // can't extend base class because type for this data doesn't contain
@@ -47,4 +47,4 @@ export default class GranuleExecutionHistoryPgModel {
   }
 }
 
-export { GranuleExecutionHistoryPgModel };
+export { GranulesExecutionsPgModel };

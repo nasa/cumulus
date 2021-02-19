@@ -13,7 +13,7 @@ const {
 } = require('../../dist');
 
 const {
-  GranuleExecutionHistoryPgModel,
+  GranulesExecutionsPgModel,
 } = require('../../dist/models/granule-execution-history');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
@@ -29,7 +29,7 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.granulePgModel = new GranulePgModel();
-  t.context.granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel();
+  t.context.granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel();
 
   const collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
@@ -251,7 +251,7 @@ test('GranulePgModel.createWithExecutionHistory() when using a transaction does 
     status: 'running',
   });
 
-  const fakeGranuleExecutionHistoryPgModel = {
+  const fakeGranulesExecutionsPgModel = {
     create: async () => {
       throw new Error('error');
     },
@@ -264,7 +264,7 @@ test('GranulePgModel.createWithExecutionHistory() when using a transaction does 
           trx,
           granule,
           executionCumulusId,
-          fakeGranuleExecutionHistoryPgModel
+          fakeGranulesExecutionsPgModel
         )
     )
   );
@@ -634,7 +634,7 @@ test('GranulePgModel.upsertWithExecutionHistory() when using a transaction does 
     status: 'running',
   });
 
-  const fakeGranuleExecutionHistoryPgModel = {
+  const fakeGranulesExecutionsPgModel = {
     upsert: async () => {
       throw new Error('error');
     },
@@ -647,7 +647,7 @@ test('GranulePgModel.upsertWithExecutionHistory() when using a transaction does 
           trx,
           granule,
           executionCumulusId,
-          fakeGranuleExecutionHistoryPgModel
+          fakeGranulesExecutionsPgModel
         )
     )
   );

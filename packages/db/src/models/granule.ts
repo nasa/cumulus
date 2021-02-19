@@ -5,7 +5,7 @@ import { tableNames } from '../tables';
 
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 
-import { GranuleExecutionHistoryPgModel } from './granule-execution-history';
+import { GranulesExecutionsPgModel } from './granule-execution-history';
 
 export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
@@ -18,7 +18,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     item: PostgresGranule,
     executionCumulusId: number,
-    granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel()
+    granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel()
   ) {
     const [granuleCumulusId] = await this.create(knexOrTrx, item);
     await granuleExecutionHistoryPgModel.create(
@@ -55,7 +55,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
     executionCumulusId: number,
-    granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel()
+    granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel()
   ) {
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)
@@ -91,7 +91,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
     executionCumulusId: number,
-    granuleExecutionHistoryPgModel = new GranuleExecutionHistoryPgModel()
+    granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel()
   ): Promise<number[]> {
     const [granuleCumulusId] = await this.upsert(knexOrTrx, granule, executionCumulusId);
     // granuleCumulusId could be undefined if the upsert affected no rows due to its
