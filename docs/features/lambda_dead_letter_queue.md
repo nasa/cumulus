@@ -29,6 +29,7 @@ The following built-in Cumulus Lambdas are setup with DLQs to allow handling of 
 * dbIndexer (Updates Elasticsearch based on DynamoDB events)
 * EmsIngestReport (Daily EMS ingest report generation Lambda)
 * JobsLambda (writes logs outputs to Elasticsearch)
+* log2elasticsearch (Lambda that exports logs into Elasticsearch)
 * ScheduleSF (the SF Scheduler Lambda that places messages on the queue that is used to start workflows, see [Workflow Triggers](../workflows/workflow-triggers.md))
 * publishReports  (Lambda that publishes messages to the SNS topics for execution, granule and PDR reporting)
 * reportGranules, reportExecutions, reportPdrs (Lambdas responsible for updating records based on messages in the queues published by publishReports)

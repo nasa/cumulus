@@ -5,6 +5,7 @@ variable "prefix" {
 
 variable "log_destination_arn" {
   type        = string
+  default     = null
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }
 
