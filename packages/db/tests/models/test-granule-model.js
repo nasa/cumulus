@@ -14,7 +14,7 @@ const {
 
 const {
   GranulesExecutionsPgModel,
-} = require('../../dist/models/granule-execution-history');
+} = require('../../dist/models/granules-executions');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
