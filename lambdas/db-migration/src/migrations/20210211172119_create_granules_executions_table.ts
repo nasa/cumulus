@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 
 export const up = async (knex: Knex): Promise<void> =>
-  knex.schema.createTable('granule_executions_history', (table) => {
+  knex.schema.createTable('granules_executions', (table) => {
     table
       .integer('granule_cumulus_id')
       .references('cumulus_id')
@@ -17,4 +17,4 @@ export const up = async (knex: Knex): Promise<void> =>
   });
 
 export const down = async (knex: Knex): Promise<void> => knex.schema
-  .dropTableIfExists('granule_executions_history');
+  .dropTableIfExists('granules_executions');
