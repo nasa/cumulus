@@ -1,8 +1,9 @@
-const { GranuleNotPublished } = require('@cumulus/errors');
+const { GranuleNotPublished, RecordDoesNotExist } = require('@cumulus/errors');
 const { CMR } = require('@cumulus/cmr-client');
 const log = require('@cumulus/common/log');
-const { GranulePgModel } = require('@cumulus/db');
+const { CollectionPgModel, GranulePgModel } = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const { deconstructCollectionId } = require('./utils');
 
 const models = require('../models');
 
@@ -38,17 +39,34 @@ const _removeGranuleFromCmr = async (granule) => {
 const unpublishGranule = async (knexOrTransaction, granule) => {
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
+  const collectionPgModel = new CollectionPgModel();
 
   await _removeGranuleFromCmr(granule);
 
-  await granulePgModel.update(
-    knexOrTransaction,
-    { granule_id: granule.granuleId },
-    {
-      published: false,
-      cmr_link: undefined,
+  // If we cannot find a PG Collection for this granule,
+  // don't update the PG Granule, continue to update the Dynamo granule
+  try {
+    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      knexOrTransaction,
+      deconstructCollectionId(granule.collectionId)
+    );
+
+    await granulePgModel.update(
+      knexOrTransaction,
+      {
+        granule_id: granule.granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      },
+      {
+        published: false,
+        cmr_link: undefined,
+      }
+    );
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
     }
-  );
+  }
 
   return granuleModelClient.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
 };

@@ -43,6 +43,8 @@ const {
   fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
+const { constructCollectionId } = require('../../lib/utils');
+
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -133,11 +135,17 @@ async function setupBucketsConfig() {
 /**
  * Helper for creating a granule, and files belonging to that granule
  * @param {Knex} dbClient - Knex client
+ * @param {number} collectionId - granule.collectionId for the granule's parent collection
  * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
  * @param {boolean} published - if the granule should be marked published to CMR
  * @returns {Object} fake granule object
  */
-async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
+async function createGranuleAndFiles({
+  dbClient,
+  collectionId,
+  collectionCumulusId,
+  published,
+}) {
   const s3Buckets = {
     protected: {
       name: randomId('protected'),
@@ -172,6 +180,7 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
       granuleId: granuleId,
       status: 'failed',
       published: published,
+      collectionId,
     }
   );
 
@@ -282,17 +291,25 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+
   // Create a Dynamo collection
   // we need this because a granule has a fk referring to collections
   t.context.testCollection = fakeCollectionFactory({
-    name: 'fakeCollection',
-    version: 'v1',
+    name: collectionName,
+    version: collectionVersion,
     duplicateHandling: 'error',
   });
-  await collectionModel.create(t.context.testCollection);
+  const dynamoCollection = await collectionModel.create(t.context.testCollection);
+  t.context.collectionId = constructCollectionId(dynamoCollection);
 
   // Create a PG Collection
-  const testPgCollection = fakeCollectionRecordFactory();
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
   const collectionPgModel = new CollectionPgModel();
   [t.context.collectionCumulusId] = await collectionPgModel.create(
     t.context.knex,
@@ -613,11 +630,12 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    true
-  );
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: true,
+  });
 
   const granuleId = newGranule.granuleId;
 
@@ -718,11 +736,12 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    true
-  );
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: true,
+  });
 
   const granuleId = newGranule.granuleId;
 
@@ -758,11 +777,12 @@ test('DELETE deleting an existing granule that is published will fail and not de
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)
@@ -876,11 +896,12 @@ test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (
 });
 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   sinon
     .stub(GranulePgModel.prototype, 'get')

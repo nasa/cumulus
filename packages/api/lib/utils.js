@@ -43,6 +43,17 @@ function deconstructCollectionId(collectionId) {
 }
 
 /**
+ * Returns the collectionId that a granule expects in the format
+ * "name___version"
+ *
+ * @param {Collection} collection - A Dynamo Collection object
+ * @returns {string} The formatted collectionId
+ */
+function constructCollectionId(collection) {
+  return [collection.name, collection.version].join('___');
+}
+
+/**
  * Extract a date from the payload and return it in string format
  *
  * @param {Object} payload - payload object
@@ -87,6 +98,7 @@ function findCaseInsensitiveValue(obj, keyArg) {
 
 module.exports = {
   deconstructCollectionId,
+  constructCollectionId,
   errorify,
   extractDate,
   filenamify,
