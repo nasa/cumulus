@@ -125,10 +125,6 @@ output "post_to_cmr_task" {
   value = module.ingest.post_to_cmr_task
 }
 
-output "log2elasticsearch_lambda_function_arn" {
-  value = module.archive.log2elasticsearch_lambda_function_arn
-}
-
 output "sqs2sfThrottle_lambda_function_arn" {
   value = module.ingest.sqs2sfThrottle_lambda_function_arn
 }
