@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### MIGRATION NOTES
+
+- **CUMULUS-2328**
+  - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
+
 ### BREAKING CHANGES
 
+- **CUMULUS-2328**
+  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
 - **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
 ### Added
@@ -20,22 +27,42 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2328**
   - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
 
+### Removed
+
+- **CUMULUS-2328**
+  - Removed `distributionApiId` environment variable from `<prefix>-ApiEndpoints` and `<prefix>-PrivateApiLambda` Lambdas
+  - Removed `distribution_api_id` variable from `tf-modules/archive` module
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/cumulus` module
+  - Removed variables from `tf-modules/cumulus` module:
+    - `sts_credentials_lambda_function_arn`
+    - `deploy_distribution_s3_credentials_endpoint`
+    - `tea_api_gateway_stage`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/distribution` module
+  - Removed variables from `tf-modules/distribution` module:
+    - `deploy_s3_credentials_endpoint`
+    - `log_destination_arn`
+    - `sts_credentials_lambda_function_arn`
+    - `tea_api_gateway_stage`
+    - `tea_external_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `urs_client_id`
+    - `urs_client_password`
+    - `urs_url`
+
 ## [v6.0.0] 2021-02-16
 
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
-- **CUMULUS-2328**
-  - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
-
 - **CUMULUS-2350**
   - If the  `/s3credentialsREADME`, does not appear to be working after deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html) of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
-- **CUMULUS-2328**
-  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
 
 ### Added
 
