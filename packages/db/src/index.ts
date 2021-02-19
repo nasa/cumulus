@@ -81,6 +81,7 @@ export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';
 export { GranulePgModel } from './models/granule';
+export { GranulesExecutionsPgModel } from './models/granules-executions';
 export { PdrPgModel } from './models/pdr';
 export { ProviderPgModel } from './models/provider';
 export { RulePgModel } from './models/rule';

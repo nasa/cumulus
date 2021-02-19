@@ -17,7 +17,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
-    executionCumulusId: number,
+    executionCumulusId?: number,
     granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
     if (granule.status === 'running') {
