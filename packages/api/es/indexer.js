@@ -11,13 +11,10 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const isString = require('lodash/isString');
-const zlib = require('zlib');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 
-const { convertLogLevel } = require('./logUtils');
 const { Search, defaultIndexAlias } = require('./search');
 const { Granule } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
@@ -44,95 +41,6 @@ async function createIndex(esClient, indexName) {
   });
 
   log.info(`Created esIndex ${indexName}`);
-}
-
-/**
- * Determine if log message parts come from a Cumulus log.
- *
- * @param {Array<string>} messageParts - Array of message parts
- * @param {number} messageStartIndex - Start index of log message in message string
- * @returns {boolean}
- */
-const isCumulusLogMessage = (messageParts, messageStartIndex) =>
-  messageParts.length >= 3
-  && messageStartIndex
-  && messageParts[messageParts.length - 1].endsWith('}');
-
-/**
- * Parse Cumulus log from message parts
- *
- * @param {Array<string>} messageParts - Array of message parts
- * @param {number} messageStartIndex - Start index of log message in message string
- * @returns {Object} - Cumulus log record
- */
-const parseCumulusLogMessage = (messageParts, messageStartIndex) => {
-  const record = JSON.parse(messageParts.slice(messageStartIndex).join('\t'));
-  record.RequestId = messageParts[1];
-  return record;
-};
-
-/**
- * Parses a StepFunction log payload  and returns a es logsrecord object
- *
- * @param {Object} payload - Stepfunction log payload
- * @returns {Object} - ElasticSearch log record
- */
-function parsePayload(payload) {
-  let record;
-  try {
-    // cumulus log message has extra aws messages before the json message,
-    // only the json message should be logged to elasticsearch.
-    // example message:
-    // 2018-06-0 1T17:45:27.108Z a714a0ef-f141-4e52-9661-58ca2233959a
-    // {"level": "info", "timestamp": "2018-06-01T17:45:27.108Z",
-    // "message": "uploaded s3://bucket/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"}
-    const entryParts = payload.message.trim().split('\t');
-    // cumulus log message
-    const messageStartIndex = entryParts.findIndex((e) => e.startsWith('{'));
-    if (isCumulusLogMessage(entryParts, messageStartIndex)) {
-      record = parseCumulusLogMessage(entryParts, messageStartIndex);
-    } else { // other logs e.g. cumulus-ecs-task
-      record = JSON.parse(payload.message);
-    }
-    // level is number in elasticsearch
-    if (isString(record.level)) record.level = convertLogLevel(record.level);
-  } catch (error) {
-    record = {
-      message: payload.message.trim(),
-      sender: payload.sender,
-      executions: payload.executions,
-      timestamp: payload.timestamp,
-      version: payload.version,
-      level: 30,
-      pid: 1,
-      name: 'cumulus',
-    };
-  }
-  return record;
-}
-
-/**
- * Extracts info from a stepFunction message and indexes it to
- * an ElasticSearch
- *
- * @param  {Object} esClient - ElasticSearch Connection object
- * @param  {Array} payloads  - an array of log payloads
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: granule)
- * @returns {Promise} Elasticsearch response
- */
-async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'logs') {
-  const body = [];
-
-  payloads.forEach((payload) => {
-    body.push({ index: { _index: index, _type: type, _id: payload.id } });
-    const parsedPayload = parsePayload(payload);
-    body.push(parsedPayload);
-  });
-
-  const actualEsClient = esClient || (await Search.es());
-  const bulkResponse = await actualEsClient.bulk({ body: body });
-  return bulkResponse.body;
 }
 
 /**
@@ -367,31 +275,6 @@ async function reingest(g) {
 }
 
 /**
- * processes the incoming log events coming from AWS
- * CloudWatch
- *
- * @param  {Object} event - incoming message from CloudWatch
- * @param  {Object} context - aws lambda context object
- * @param  {function} cb - aws lambda callback function
- */
-function logHandler(event, context, cb) {
-  log.debug(event);
-  const payload = Buffer.from(event.awslogs.data, 'base64');
-  zlib.gunzip(payload, (e, r) => {
-    try {
-      const logs = JSON.parse(r.toString());
-      log.debug(logs);
-      return indexLog(undefined, logs.logEvents)
-        .then((s) => cb(undefined, s))
-        .catch(cb);
-    } catch (error) {
-      log.error(e);
-      return cb();
-    }
-  });
-}
-
-/**
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -406,9 +289,7 @@ async function addToLocalES(record, doIndex) {
 module.exports = {
   addToLocalES,
   createIndex,
-  logHandler,
   indexCollection,
-  indexLog,
   indexProvider,
   indexReconciliationReport,
   indexRule,

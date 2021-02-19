@@ -19,7 +19,6 @@ module "hello_world_service" {
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
   image                                 = "${data.aws_ecr_repository.ecs_task_image.repository_url}:${var.ecs_task_image_version}"
-  log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
 
   cpu                = 400
   memory_reservation = 700
