@@ -1,8 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const fs = require('fs');
-const path = require('path');
 const request = require('supertest');
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -13,9 +11,7 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
 const { AccessToken } = require('../../models');
 
@@ -32,13 +28,6 @@ let accessTokenModel;
 const { app } = require('../../app');
 
 test.before(async (t) => {
-  t.context.esIndex = randomString();
-
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-
-  await bootstrapElasticSearch('fakehost', t.context.esIndex, esAlias);
-
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const username = randomString();
@@ -50,20 +39,11 @@ test.before(async (t) => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   t.context.esClient = await Search.es('fakehost');
-
-  // Index some fake logs
-  const inputtxt = fs.readFileSync(path.join(__dirname, '../data/log_events_input.txt'), 'utf8');
-  const event = JSON.parse(JSON.parse(inputtxt.toString()));
-  await indexer.indexLog(t.context.esClient, event.logEvents, esAlias);
-
-  await t.context.esClient.indices.refresh();
 });
 
-test.after.always(async (t) => {
-  const { esClient, esIndex } = t.context;
+test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
 });
 
 test.afterEach(async () => {
