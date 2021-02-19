@@ -39,14 +39,14 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     return knexOrTransaction(this.tableName)
       .where(granule)
       .join(
-        tableNames.granuleExecutionsHistory,
+        tableNames.granulesExecutions,
         `${this.tableName}.cumulus_id`,
         '=',
-        `${tableNames.granuleExecutionsHistory}.granule_cumulus_id`
+        `${tableNames.granulesExecutions}.granule_cumulus_id`
       )
       .column(`${this.tableName}.*`)
       .column(
-        knexOrTransaction.raw(`array_agg(${tableNames.granuleExecutionsHistory}.execution_cumulus_id) as execution_cumulus_ids`)
+        knexOrTransaction.raw(`array_agg(${tableNames.granulesExecutions}.execution_cumulus_id) as execution_cumulus_ids`)
       )
       .groupBy('cumulus_id');
   }

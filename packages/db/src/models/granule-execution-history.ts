@@ -11,7 +11,7 @@ export default class GranuleExecutionHistoryPgModel {
   // can't extend base class because type for this data doesn't contain
   // a cumulus_id property
   constructor() {
-    this.tableName = tableNames.granuleExecutionsHistory;
+    this.tableName = tableNames.granulesExecutions;
   }
 
   async create(
@@ -32,7 +32,7 @@ export default class GranuleExecutionHistoryPgModel {
     knexOrTrx: Knex | Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
-    return knexOrTrx(tableNames.granuleExecutionsHistory)
+    return knexOrTrx(this.tableName)
       .insert(item)
       .onConflict(['granule_cumulus_id', 'execution_cumulus_id'])
       .merge();
@@ -42,7 +42,7 @@ export default class GranuleExecutionHistoryPgModel {
     knexOrTrx: Knex | Knex.Transaction,
     query: Partial<PostgresGranuleExecution>
   ) {
-    return knexOrTrx<PostgresGranuleExecution>(tableNames.granuleExecutionsHistory)
+    return knexOrTrx<PostgresGranuleExecution>(this.tableName)
       .where(query);
   }
 }
