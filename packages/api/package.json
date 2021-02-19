@@ -50,6 +50,7 @@
     "@cumulus/cmrjs": "6.0.0",
     "@cumulus/collection-config-store": "6.0.0",
     "@cumulus/common": "6.0.0",
+    "@cumulus/db": "3.0.1-alpha.1",
     "@cumulus/earthdata-login-client": "6.0.0",
     "@cumulus/errors": "6.0.0",
     "@cumulus/ingest": "6.0.0",
