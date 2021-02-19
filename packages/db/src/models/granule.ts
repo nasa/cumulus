@@ -31,26 +31,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     return [granuleCumulusId];
   }
 
-  getWithExecutionHistory(
-    knexOrTransaction: Knex | Knex.Transaction,
-    granule: Partial<PostgresGranuleRecord>
-  ) {
-    // TODO: is this open to SQL injection?
-    return knexOrTransaction(this.tableName)
-      .where(granule)
-      .join(
-        tableNames.granulesExecutions,
-        `${this.tableName}.cumulus_id`,
-        '=',
-        `${tableNames.granulesExecutions}.granule_cumulus_id`
-      )
-      .column(`${this.tableName}.*`)
-      .column(
-        knexOrTransaction.raw(`array_agg(${tableNames.granulesExecutions}.execution_cumulus_id) as execution_cumulus_ids`)
-      )
-      .groupBy('cumulus_id');
-  }
-
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
