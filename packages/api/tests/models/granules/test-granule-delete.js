@@ -34,7 +34,7 @@ test.after.always(async () => {
   removeGranuleFromCmrStub.restore();
 });
 
-test('granule.delete() removes granule files from S3 and record from Dynamo', async (t) => {
+test('granule.delete() removes granule record from Dynamo', async (t) => {
   const granule = fakeGranuleFactoryV2({
     files: [
       fakeFileFactory({ bucket }),
@@ -42,31 +42,12 @@ test('granule.delete() removes granule files from S3 and record from Dynamo', as
     ],
     published: false,
   });
-  await Promise.all(granule.files.map((file) => s3Utils.s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: 'body',
-  })));
 
   await granuleModel.create(granule);
   t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
-  t.deepEqual(
-    await Promise.all(granule.files.map((file) => s3Utils.s3ObjectExists({
-      Bucket: file.bucket,
-      Key: file.key,
-    }))),
-    [true, true]
-  );
 
   await granuleModel.delete(granule);
   t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
-  t.deepEqual(
-    await Promise.all(granule.files.map((file) => s3Utils.s3ObjectExists({
-      Bucket: file.bucket,
-      Key: file.key,
-    }))),
-    [false, false]
-  );
 });
 
 test('granule.delete() for deleted record should not throw error', async (t) => {
@@ -109,15 +90,6 @@ test('granule.delete() with the old file format succeeds', async (t) => {
     ],
   });
 
-  await s3Utils.createBucket(granuleBucket);
-  t.teardown(() => s3Utils.recursivelyDeleteS3Bucket(granuleBucket));
-
-  await s3Utils.s3PutObject({
-    Bucket: granuleBucket,
-    Key: key,
-    Body: 'asdf',
-  });
-
   // create a new unpublished granule
   const baseModel = new models.Manager({
     tableName: process.env.GranulesTable,
@@ -131,11 +103,6 @@ test('granule.delete() with the old file format succeeds', async (t) => {
   await granuleModel.delete(newGranule);
 
   t.false(await granuleModel.exists({ granuleId: newGranule.granuleId }));
-  // verify the file is deleted
-  t.false(await s3Utils.s3ObjectExists({
-    Bucket: granuleBucket,
-    Key: key,
-  }));
 });
 
 test('granule.unpublishAndDeleteGranule() deletes published granule', async (t) => {

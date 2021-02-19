@@ -157,6 +157,8 @@ export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVar
 
 export const RecordAlreadyMigrated = createErrorType('RecordAlreadyMigrated');
 
+export const GranuleNotPublished = createErrorType('GranuleNotPublished');
+
 export class PostgresValidationError extends ValidationError {
   detail: string | undefined;
   constructor(message: string) {
