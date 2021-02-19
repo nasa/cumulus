@@ -342,3 +342,21 @@ test('displayS3Credentials fills template with correct distribution endpoint.', 
   await displayS3CredentialInstructions(undefined, res);
   t.true(send.calledWithMatch(expectedLink));
 });
+
+test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true results in a 503 error', async (t) => {
+  process.env.DISABLE_S3_CREDENTIALS = true;
+  const username = randomId('username');
+  const accessTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(accessTokenRecord);
+
+  const response = await request(distributionApp)
+    .get('/s3credentials')
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
+    .expect(503);
+
+  t.is(response.status, 503);
+  t.teardown(() => {
+    process.env.DISABLE_S3_CREDENTIALS = undefined;
+  });
+});
