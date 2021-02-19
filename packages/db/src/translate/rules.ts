@@ -41,8 +41,8 @@ export const translateApiRuleToPostgresRule = async (
     enabled: (record.state === undefined) || (record.state === 'ENABLED'),
     tags: (record.tags ? JSON.stringify(record.tags) : undefined),
     execution_name_prefix: record.executionNamePrefix,
-    created_at: new Date(record.createdAt),
-    updated_at: new Date(record.updatedAt),
+    created_at: (record.createdAt ? new Date(record.createdAt) : undefined),
+    updated_at: (record.updatedAt ? new Date(record.updatedAt) : undefined),
   };
 
   return ruleRecord;

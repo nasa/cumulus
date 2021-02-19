@@ -10,12 +10,15 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
+const { GranulePgModel, getKnexClient } = require('@cumulus/db');
 
+const { deleteGranuleAndFiles } = require('../lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 
 /**
  * List all granules for a given collection.
@@ -94,7 +97,9 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    await granuleModelClient.removeGranuleFromCmrByGranule(granule);
+    const knex = await getKnexClient({ env: process.env });
+
+    await unpublishGranule(knex, granule);
 
     return res.send({
       granuleId: granule.granuleId,
@@ -140,10 +145,16 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
+  const granulePgModel = new GranulePgModel();
 
-  let granule;
+  const knex = await getKnexClient({ env: process.env });
+
+  let dynamoGranule;
+  let pgGranule;
+
+  // If the granule does not exist in Dynamo, throw an error
   try {
-    granule = await granuleModelClient.getRecord({ granuleId });
+    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(error);
@@ -151,18 +162,26 @@ async function del(req, res) {
     throw error;
   }
 
-  if (granule.detail) {
-    return res.boom.badRequest(granule);
+  // If the granule does not exist in PG, just log it
+  try {
+    pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+    } else {
+      throw error;
+    }
   }
 
-  try {
-    await granuleModelClient.delete(granule);
-  } catch (error) {
-    if (error instanceof DeletePublishedGranule) {
-      return res.boom.badRequest(error.message);
-    }
-    throw error;
+  if (dynamoGranule.published) {
+    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
+
+  await deleteGranuleAndFiles({
+    knex,
+    dynamoGranule,
+    pgGranule,
+  });
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
@@ -170,7 +189,7 @@ async function del(req, res) {
       esClient,
       id: granuleId,
       type: 'granule',
-      parent: granule.collectionId,
+      parent: dynamoGranule.collectionId,
       index: process.env.ES_INDEX,
       ignore: [404],
     });

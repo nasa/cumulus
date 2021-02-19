@@ -7,7 +7,7 @@
 export interface PostgresProvider {
   certificate_uri?: string | null,
   cm_key_id?: string | null,
-  created_at?: number | null,
+  created_at?: Date | null,
   cumulus_id?: number | null,
   global_connection_limit?: number | null,
   host: string,
@@ -16,7 +16,7 @@ export interface PostgresProvider {
   port?: number| null,
   private_key?: string | null,
   protocol: string,
-  updated_at?: number | null,
+  updated_at?: Date | null,
   username?: string | null,
 }
 
@@ -29,6 +29,6 @@ export interface PostgresProvider {
  */
 export interface PostgresProviderRecord extends PostgresProvider {
   cumulus_id: number,
-  created_at: number,
-  updated_at: number,
+  created_at: Date,
+  updated_at: Date,
 }

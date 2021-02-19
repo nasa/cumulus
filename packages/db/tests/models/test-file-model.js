@@ -16,23 +16,19 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `file_${cryptoRandomString({ length: 10 })}`;
 
-test.before(async (t) => {
-  const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
-  t.context.knexAdmin = knexAdmin;
-  t.context.knex = knex;
+let granulePgModel;
 
+const createFakeGranule = async (dbClient) => {
+  // Collection is a required fk for granules
   const collectionPgModel = new CollectionPgModel();
   const [collectionCumulusId] = await collectionPgModel.create(
-    t.context.knex,
+    dbClient,
     fakeCollectionRecordFactory()
   );
 
-  const granulePgModel = new GranulePgModel();
+  granulePgModel = new GranulePgModel();
   const [granuleCumulusId] = await granulePgModel.create(
-    t.context.knex,
+    dbClient,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
       status: 'running',
@@ -41,8 +37,18 @@ test.before(async (t) => {
   // bigint for granule cumulus_id is treated as a string,
   // not number, by knex
   // see https://github.com/knex/knex/issues/387
-  t.context.granuleCumulusId = Number.parseInt(granuleCumulusId, 10);
+  return Number.parseInt(granuleCumulusId, 10);
+};
 
+test.before(async (t) => {
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
+
+  t.context.granuleCumulusId = await createFakeGranule(t.context.knex);
   t.context.filePgModel = new FilePgModel();
 });
 

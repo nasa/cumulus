@@ -6,7 +6,7 @@ import { PostgresProvider } from './types/provider';
 
 /**
 * Nullifies 'optional' values in the Provider object
-* @summary This is require as updates to knex objects will ignore 'undefined' object keys
+* @summary This is required as updates to knex objects will ignore 'undefined' object keys
 * rather than remove them as required
 *
 * @param {PostgresProvider} data - PostgresProvider object to be updated with

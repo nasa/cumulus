@@ -281,6 +281,15 @@ class Manager {
     return this.dynamodbDocClient.batchWrite(params).promise();
   }
 
+  addTimeStampsToItem(item) {
+    const now = Date.now();
+    return {
+      createdAt: now,
+      updatedAt: now,
+      ...item,
+    };
+  }
+
   /**
    * creates record(s)
    *
@@ -298,15 +307,7 @@ class Manager {
     // For each item, set the updatedAt property.  If it does not have a
     // createdAt property, set that as well.  Instead of modifying the original
     // item, this returns an updated copy of the item.
-    const itemsWithTimestamps = itemsArray.map((item) => {
-      const now = Date.now();
-
-      return {
-        createdAt: now,
-        ...item,
-        updatedAt: now,
-      };
-    });
+    const itemsWithTimestamps = itemsArray.map((item) => this.addTimeStampsToItem(item));
 
     if (this.validate) {
       // Make sure that all of the items are valid

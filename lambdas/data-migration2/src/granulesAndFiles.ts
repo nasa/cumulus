@@ -12,7 +12,7 @@ import {
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
@@ -50,10 +50,20 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  const existingRecord = await granulePgModel.get(knex, {
-    granule_id: record.granuleId,
-    collection_cumulus_id: collectionCumulusId,
-  });
+  let existingRecord;
+
+  try {
+    existingRecord = await granulePgModel.get(knex, {
+      granule_id: record.granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    });
+  } catch (error) {
+    // Swallow any RecordDoesNotExist errors and proceed with migration,
+    // otherwise re-throw the error
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   // Throw error if it was already migrated.
   if (existingRecord) {

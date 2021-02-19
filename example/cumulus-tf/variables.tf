@@ -1,29 +1,5 @@
 # Required
 
-variable "async_operation_image_version" {
-  description = "docker image version to use for Cumulus async operations tasks"
-  type = string
-  default = "32"
-}
-
-variable "cumulus_process_activity_version" {
-    description = "docker image version to use for python processing service"
-    type = string
-    default = "1"
-}
-
-variable "ecs_task_image_version" {
-  description = "docker image version to use for Cumulus hello world task"
-    type = string
-    default = "1.7.0"
-}
-
-variable "cumulus_test_ingest_image_version" {
-    description = "docker image version to use for python test ingest processing service"
-    type = string
-    default = "12"
-}
-
 variable "cmr_client_id" {
   type = string
 }

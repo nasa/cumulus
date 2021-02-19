@@ -2,19 +2,35 @@
 
 const test = require('ava');
 const request = require('supertest');
+const cryptoRandomString = require('crypto-random-string');
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const indexer = require('../../es/indexer');
+const { RecordDoesNotExist } = require('@cumulus/errors');
+const {
+  localStackConnectionEnv,
+  CollectionPgModel,
+  PdrPgModel,
+  ProviderPgModel,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
+const {
+  fakePdrRecordFactory,
+  fakeCollectionRecordFactory,
+  fakeProviderRecordFactory,
+} = require('@cumulus/db/dist/test-utils');
 const {
   createFakeJwtAuthToken,
   fakePdrFactory,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
+const models = require('../../models');
+const bootstrap = require('../../lambdas/bootstrap');
+const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
+const { migrationDir } = require('../../../../lambdas/db-migration');
 
 process.env.AccessTokensTable = randomString();
 process.env.PdrsTable = randomString();
@@ -37,18 +53,29 @@ const uploadPdrToS3 = (bucket, pdrName, pdrBody) =>
 // create all the variables needed across this test
 let esClient;
 let fakePdrs;
+const testDbName = `pdrs_${cryptoRandomString({ length: 10 })}`;
 const esIndex = randomString();
 
 let jwtAuthToken;
 let accessTokenModel;
 let pdrModel;
+let pdrPgModel;
 
-test.before(async () => {
+test.before(async (t) => {
   // create esClient
   esClient = await Search.es('fakehost');
 
   const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    ES_INDEX: esAlias,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 
   // add fake elasticsearch index
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
@@ -58,6 +85,8 @@ test.before(async () => {
 
   pdrModel = new models.Pdr();
   await pdrModel.createTable();
+
+  pdrPgModel = new PdrPgModel();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -75,13 +104,34 @@ test.before(async () => {
         .then((record) => indexer.indexPdr(esClient, record, esAlias))
     )
   );
+
+  // Create a PG Collection
+  t.context.testPgCollection = fakeCollectionRecordFactory();
+  const collectionPgModel = new CollectionPgModel();
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    t.context.testPgCollection
+  );
+
+  // Create a PG Provider
+  t.context.testPgProvider = fakeProviderRecordFactory();
+  const providerPgModel = new ProviderPgModel();
+  [t.context.providerCumulusId] = await providerPgModel.create(
+    t.context.knex,
+    t.context.testPgProvider
+  );
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await pdrModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -240,4 +290,85 @@ test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', a
 
   const parsedBody = response.body;
   t.is(parsedBody.detail, 'Record deleted');
+});
+
+test('DELETE removes a PDR from RDS and DynamoDB', async (t) => {
+  // Create the same PDR in Dynamo and PG
+  const newDynamoPdr = fakePdrFactory('completed');
+  const pdrName = newDynamoPdr.pdrName;
+  const newPGPdr = fakePdrRecordFactory({
+    name: pdrName,
+    status: 'completed',
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+  });
+
+  // create a new PDR in Dynamo
+  await pdrModel.create(newDynamoPdr);
+
+  // create a new PDR in RDS
+  await pdrPgModel.create(t.context.knex, newPGPdr);
+
+  const response = await request(app)
+    .delete(`/pdrs/${pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+  t.is(response.status, 200);
+
+  // Check Dynamo and RDS. The PDR should have been removed from both.
+  await t.throwsAsync(
+    pdrModel.get({ pdrName }),
+    { instanceOf: RecordDoesNotExist }
+  );
+
+  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
+});
+
+test('DELETE removes a PDR from RDS only if no DynamoDB match exists', async (t) => {
+  const pdrName = `pdr_${cryptoRandomString({ length: 6 })}`;
+  const newPGPdr = fakePdrRecordFactory({
+    name: pdrName,
+    status: 'completed',
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+  });
+
+  // create a new PDR in RDS
+  await pdrPgModel.create(t.context.knex, newPGPdr);
+
+  const response = await request(app)
+    .delete(`/pdrs/${pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+  t.is(response.status, 200);
+
+  // Check Dynamo and RDS. The PDR should not exist in either.
+  await t.throwsAsync(
+    pdrModel.get({ pdrName }),
+    { instanceOf: RecordDoesNotExist }
+  );
+
+  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
+});
+
+test('DELETE removes a PDR from DynamoDB only if no RDS match exists', async (t) => {
+  const newDynamoPdr = fakePdrFactory('completed');
+  const pdrName = newDynamoPdr.pdrName;
+
+  // create a new PDR in Dynamo
+  await pdrModel.create(newDynamoPdr);
+
+  const response = await request(app)
+    .delete(`/pdrs/${pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+  t.is(response.status, 200);
+
+  // Check Dynamo and RDS. The PDR should not exist in either.
+  await t.throwsAsync(
+    pdrModel.get({ pdrName }),
+    { instanceOf: RecordDoesNotExist }
+  );
+
+  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
