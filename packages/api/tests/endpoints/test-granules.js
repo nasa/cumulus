@@ -36,14 +36,13 @@ const {
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // PG mock data factories
 const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
-
-const { constructCollectionId } = require('../../lib/utils');
 
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
@@ -302,7 +301,10 @@ test.before(async (t) => {
     duplicateHandling: 'error',
   });
   const dynamoCollection = await collectionModel.create(t.context.testCollection);
-  t.context.collectionId = constructCollectionId(dynamoCollection);
+  t.context.collectionId = constructCollectionId(
+    dynamoCollection.name,
+    dynamoCollection.version
+  );
 
   // Create a PG Collection
   const testPgCollection = fakeCollectionRecordFactory({
