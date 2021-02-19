@@ -7,6 +7,7 @@ The Cumulus Distribution Terraform module deploys resources needed for interacti
 ### Required
 
 - **deploy_to_ngap** (boolean) - `true` if deployment is going to an NGAP account
+- **lambda_processing_role_arn** (string) - ARN of IAM role to use for Lambda processing
 - **prefix** (string) - Resource prefix unique to this deployment
 - **system_bucket** (string) - A bucket to be used for staging deployment files
 - **tea_internal_api_endpoint** (string) - URL for the Thin Egress App (TEA) API gateway
@@ -20,8 +21,6 @@ The Cumulus Distribution Terraform module deploys resources needed for interacti
 - **public_buckets** (list(string)) - A list of public buckets
 - **tags** (list(string)) - AWS tags to be assigned to resources managed by this
   module
-- **urs_url** (string) - The URL of the Earthdata Login site, defaults to
-  <https://urs.earthdata.nasa.gov>
 - **vpc_id** (string) - VPC used by Lambda functions
 
 ## Output variables
@@ -47,10 +46,6 @@ module "distribution" {
   public_buckets    = ["public-1", "public-2"]
 
   tea_internal_api_endpoint = "https://abc123.execute-api.us-east-1.amazonaws.com/dev"
-
-  urs_url             = "https://uat.urs.earthdata.nasa.gov"
-  urs_client_id       = "abc123"
-  urs_client_password = "password"
 
   vpc_id     = "vpc-123"
   lambda_subnet_ids = ["subnet-123", "subnet-456"]

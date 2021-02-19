@@ -17,6 +17,7 @@
     "queueUrl": { "type": "string" },
     "stackName": { "type": "string" },
     "concurrency": { "type": "number" },
-    "executionNamePrefix": { "type": "string" }
+    "executionNamePrefix": { "type": "string" },
+    "childWorkflowMeta": { "type": "object" }
   }
 }

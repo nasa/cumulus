@@ -59,7 +59,6 @@ data "aws_ecr_repository" "async_operation" {
 
 module "cumulus" {
   source = "../../tf-modules/cumulus"
-
   cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 
   prefix = var.prefix
@@ -78,6 +77,7 @@ module "cumulus" {
   ecs_cluster_desired_size        = 2
   ecs_cluster_max_size            = 3
   key_name                        = var.key_name
+  ecs_custom_sg_ids               = var.ecs_custom_sg_ids
 
   urs_url             = var.urs_url
   urs_client_id       = var.urs_client_id

@@ -62,6 +62,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
     ]
     resources = ["arn:aws:logs:*:*:*"]
   }
+
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -180,13 +181,47 @@ resource "aws_api_gateway_integration" "s3_credentials_redirect" {
   uri                     = aws_lambda_function.s3_credentials.invoke_arn
 }
 
+# GET /s3credentialsREADME
+resource "aws_api_gateway_resource" "s3_credentials_readme" {
+  rest_api_id = var.tea_rest_api_id
+  parent_id   = var.tea_rest_api_root_resource_id
+  path_part   = "s3credentialsREADME"
+}
+
+resource "aws_api_gateway_method" "s3_credentials_readme" {
+  rest_api_id   = var.tea_rest_api_id
+  resource_id   = aws_api_gateway_resource.s3_credentials_readme.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "s3_credentials_readme" {
+  rest_api_id             = var.tea_rest_api_id
+  resource_id             = aws_api_gateway_resource.s3_credentials_readme.id
+  http_method             = aws_api_gateway_method.s3_credentials_readme.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.s3_credentials.invoke_arn
+}
+
 # API deployment
 resource "aws_api_gateway_deployment" "s3_credentials" {
   depends_on = [
     aws_api_gateway_integration.s3_credentials_redirect,
-    aws_api_gateway_integration.s3_credentials
+    aws_api_gateway_integration.s3_credentials,
+    aws_api_gateway_integration.s3_credentials_readme
   ]
 
-  rest_api_id = var.rest_api_id
-  stage_name  = var.api_gateway_stage
+  triggers = {
+    redeployment = sha1(join(",", list(
+      jsonencode( aws_api_gateway_integration.s3_credentials_redirect ),
+      jsonencode( aws_api_gateway_integration.s3_credentials ),
+      jsonencode( aws_api_gateway_integration.s3_credentials_readme ),
+      )))
+  }
+
+
+  rest_api_id = var.tea_rest_api_id
+  stage_name  = var.tea_api_gateway_stage
+
 }

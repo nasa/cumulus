@@ -6,15 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
+### BREAKING CHANGES
 
-- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
+- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
+
+### Added
+
+- **CUMULUS-2328**
+  - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
+
+### Changed
+
+- **CUMULUS-2328**
+  - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
+
+## [v6.0.0] 2021-02-16
 
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
 - **CUMULUS-2328**
   - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
+
+- **CUMULUS-2350**
+  - If the  `/s3credentialsREADME`, does not appear to be working after deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html) of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
 
@@ -26,20 +41,67 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
-- **CUMULUS-2328**
-  - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
+- **CUMULUS-2300**
+  - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_granules_workflow.asl.json`.
+- **CUMULUS-2350**
+  - Adds an unprotected endpoint, `/s3credentialsREADME`, to the s3-credentials-endpoint that displays information on how to use the `/s3credentials` endpoint
+- **CUMULUS-2368**
+  - Add QueueWorkflow task
+- **CUMULUS-2391**
+  - Add reportToEms to collections.files file schema
+- **CUMULUS-2376**
+  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
+- **CUMULUS-2395**
+  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
+    custom security group mappings
+- **CUMULUS-2402**
+  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
 
 ### Changed
 
+- **CUMULUS-2323**
+  - The sync granules task when used with the s3 provider now uses the
+    `source_bucket` key in `granule.files` objects.  If incoming payloads using
+    this task have a `source_bucket` value for a file using the s3 provider, the
+    task will attempt to sync from the bucket defined in the file's
+    `source_bucket` key instead of the `provider`.
+    - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter
+      in support of the changed behavior.
+  - Removed `addBucketToFile` and related code from sync-granules task
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
-- **CUMULUS-2328**
-  - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
+  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+- **CUMULUS-2321**
+  - Updated API endpoint GET `/reconciliationReports/{name}` to return the pre-signed s3 URL in addition to report data
+- **CUMULUS-2362**
+  - Logs endpoints only work with Metrics set up
 
 ### Fixed
 
+- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
+
 - **CUMULUS-2310**
   - Use valid filename for reconciliation report
+- **CUMULUS-2351**
+  - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+
+## [v5.0.1] 2021-01-27
+
+### Changed
+
+- **CUMULUS-2344**
+  - Elasticsearch API now allows you to reindex to an index that already exists
+  - If using the Change Index operation and the new index doesn't exist, it will be created
+  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
+    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 ### Removed
 
@@ -80,9 +142,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2258**
   - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
   - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
-- **CUMULUS-2344**
-  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
-    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 ### Added
 
@@ -111,9 +170,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the formatting of granule CMR links: instead of a link to the `/search/granules.json` endpoint, now it is a direct link to `/search/concepts/conceptid.format`
 - **CUMULUS-2296**
   - Improved PDR spec compliance of `parse-pdr` by updating `@cumulus/pvl` to parse fields in a manner more consistent with the PDR ICD, with respect to numbers and dates. Anything not matching the ICD expectations, or incompatible with Javascript parsing, will be parsed as a string instead.
-- **CUMULUS-2344**
-  - Elasticsearch API now allows you to reindex to an index that already exists
-  - If using the Change Index operation and the new index doesn't exist, it will be created
 
 ### Removed
 
@@ -3779,7 +3835,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v6.0.0...HEAD
+[v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
+[v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
