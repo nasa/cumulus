@@ -387,6 +387,7 @@ describe('The S3 Ingest Granules workflow', () => {
       // TODO after ORCA fixes their iam to support multiple 'protected' buckets,
       // remove '.cmr.xml' from meta.excludeFileTypes of collection configuration,
       // and verify .cmr.xml file is copied to glacier
+      // ORCA ticket https://bugs.earthdata.nasa.gov/browse/ORCA-140
       const excludeFileTypes = get(lambdaOutput, 'meta.collection.meta.excludeFileTypes', []);
       expect(excludeFileTypes.length).toBe(2);
       const copiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
@@ -876,7 +877,7 @@ describe('The S3 Ingest Granules workflow', () => {
           expect(reingestExecution.asyncOperationId).toEqual(asyncOperationId);
         });
 
-        // TODO remove the glacier files via ORCA API when the API is available
+        // TODO remove the glacier files via ORCA API when the API is available (PI 21.3 21.4)
         it('remove files from glacier', async () => {
           const lambdaOutput = await lambdaStep.getStepOutput(reingestExecutionArn, 'copy_to_glacier');
           const copiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
