@@ -18,10 +18,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     item: PostgresGranule,
     executionCumulusId: number,
-    granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel()
+    granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
     const [granuleCumulusId] = await this.create(knexOrTrx, item);
-    await granuleExecutionHistoryPgModel.create(
+    await granulesExecutionsPgModel.create(
       knexOrTrx,
       {
         granule_cumulus_id: granuleCumulusId,
@@ -55,7 +55,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
     executionCumulusId: number,
-    granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel()
+    granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)
@@ -73,7 +73,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         .whereNotExists(
           // TODO: this effectively makes executions required for granules
           // at write time. Is that okay?
-          granuleExecutionHistoryPgModel.search(
+          granulesExecutionsPgModel.search(
             knexOrTrx,
             { execution_cumulus_id: executionCumulusId }
           )
@@ -91,7 +91,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
     executionCumulusId: number,
-    granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel()
+    granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ): Promise<number[]> {
     const [granuleCumulusId] = await this.upsert(knexOrTrx, granule, executionCumulusId);
     // granuleCumulusId could be undefined if the upsert affected no rows due to its
@@ -101,7 +101,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     if (!granuleCumulusId) {
       return [];
     }
-    await granuleExecutionHistoryPgModel.upsert(
+    await granulesExecutionsPgModel.upsert(
       knexOrTrx,
       {
         granule_cumulus_id: granuleCumulusId,

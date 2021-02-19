@@ -29,7 +29,7 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.granulePgModel = new GranulePgModel();
-  t.context.granuleExecutionHistoryPgModel = new GranulesExecutionsPgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
@@ -63,7 +63,7 @@ test('getWithExecutionHistory returns execution history for granule with one exe
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -76,7 +76,7 @@ test('getWithExecutionHistory returns execution history for granule with one exe
     granule
   );
 
-  await granuleExecutionHistoryPgModel.create(knex, {
+  await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId,
     execution_cumulus_id: executionCumulusId,
   });
@@ -103,7 +103,7 @@ test('getWithExecutionHistory returns execution history for granule with multipl
     collectionCumulusId,
     executionCumulusId,
     executionPgModel,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -116,7 +116,7 @@ test('getWithExecutionHistory returns execution history for granule with multipl
     granule
   );
 
-  await granuleExecutionHistoryPgModel.create(knex, {
+  await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId,
     execution_cumulus_id: executionCumulusId,
   });
@@ -126,7 +126,7 @@ test('getWithExecutionHistory returns execution history for granule with multipl
     fakeExecutionRecordFactory()
   );
 
-  await granuleExecutionHistoryPgModel.create(knex, {
+  await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId,
     execution_cumulus_id: newExecutionCumulusId,
   });
@@ -152,7 +152,7 @@ test('GranulePgModel.createWithExecutionHistory() creates a new granule with exe
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -179,7 +179,7 @@ test('GranulePgModel.createWithExecutionHistory() creates a new granule with exe
     }
   );
   t.deepEqual(
-    await granuleExecutionHistoryPgModel.search(
+    await granulesExecutionsPgModel.search(
       knex,
       { granule_cumulus_id: granuleCumulusId }
     ),
@@ -196,7 +196,7 @@ test('GranulePgModel.createWithExecutionHistory() works with a transaction', asy
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -226,7 +226,7 @@ test('GranulePgModel.createWithExecutionHistory() works with a transaction', asy
     }
   );
   t.deepEqual(
-    await granuleExecutionHistoryPgModel.search(
+    await granulesExecutionsPgModel.search(
       knex,
       { granule_cumulus_id: granuleCumulusId }
     ),
@@ -243,7 +243,7 @@ test('GranulePgModel.createWithExecutionHistory() when using a transaction does 
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -279,7 +279,7 @@ test('GranulePgModel.createWithExecutionHistory() when using a transaction does 
     )
   );
   t.false(
-    await granuleExecutionHistoryPgModel.exists(
+    await granulesExecutionsPgModel.exists(
       knex,
       {
         execution_cumulus_id: executionCumulusId,
@@ -489,7 +489,7 @@ test('GranulePgModel.upsertWithExecutionHistory() adds execution history', async
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -516,7 +516,7 @@ test('GranulePgModel.upsertWithExecutionHistory() adds execution history', async
     }
   );
   t.deepEqual(
-    await granuleExecutionHistoryPgModel.search(
+    await granulesExecutionsPgModel.search(
       knex,
       { granule_cumulus_id: granuleCumulusId }
     ),
@@ -532,7 +532,7 @@ test('GranulePgModel.upsertWithExecutionHistory() handles multiple executions fo
     knex,
     granulePgModel,
     executionPgModel,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
     collectionCumulusId,
     executionCumulusId,
   } = t.context;
@@ -572,7 +572,7 @@ test('GranulePgModel.upsertWithExecutionHistory() handles multiple executions fo
     }
   );
   t.deepEqual(
-    await granuleExecutionHistoryPgModel.search(
+    await granulesExecutionsPgModel.search(
       knex,
       { granule_cumulus_id: granuleCumulusId }
     ),
@@ -626,7 +626,7 @@ test('GranulePgModel.upsertWithExecutionHistory() when using a transaction does 
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -662,7 +662,7 @@ test('GranulePgModel.upsertWithExecutionHistory() when using a transaction does 
     )
   );
   t.false(
-    await granuleExecutionHistoryPgModel.exists(
+    await granulesExecutionsPgModel.exists(
       knex,
       {
         execution_cumulus_id: executionCumulusId,
@@ -676,7 +676,7 @@ test('GranulePgModel.upsertWithExecutionHistory() will allow a running status to
     knex,
     granulePgModel,
     executionPgModel,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
     collectionCumulusId,
     executionCumulusId,
   } = t.context;
@@ -721,7 +721,7 @@ test('GranulePgModel.upsertWithExecutionHistory() will allow a running status to
     }
   );
   t.deepEqual(
-    await granuleExecutionHistoryPgModel.search(
+    await granulesExecutionsPgModel.search(
       knex,
       { granule_cumulus_id: granuleCumulusId }
     ),
@@ -736,7 +736,7 @@ test('GranulePgModel.upsertWithExecutionHistory() succeeds if upsert() affects n
   const {
     knex,
     granulePgModel,
-    granuleExecutionHistoryPgModel,
+    granulesExecutionsPgModel,
     collectionCumulusId,
     executionCumulusId,
   } = t.context;
@@ -776,7 +776,7 @@ test('GranulePgModel.upsertWithExecutionHistory() succeeds if upsert() affects n
     }
   );
   t.deepEqual(
-    await granuleExecutionHistoryPgModel.search(
+    await granulesExecutionsPgModel.search(
       knex,
       { granule_cumulus_id: granuleCumulusId }
     ),
