@@ -18,7 +18,6 @@ module "python_processing_service" {
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
   image                                 = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
-  log2elasticsearch_lambda_function_arn = module.cumulus.log2elasticsearch_lambda_function_arn
 
   cpu                = 400
   memory_reservation = 700
