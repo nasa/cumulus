@@ -3,7 +3,7 @@ import Knex from 'knex';
 import { isRecordDefined } from '../database';
 import { tableNames } from '../tables';
 
-import { PostgresGranuleExecution } from '../types/granule-execution-history';
+import { PostgresGranuleExecution } from '../types/granule-execution';
 
 export default class GranuleExecutionHistoryPgModel {
   readonly tableName: tableNames;
