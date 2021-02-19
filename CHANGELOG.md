@@ -72,9 +72,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       RDS and parse Granule records to
     store File records in RDS.
   - **CUMULUS-2367**
-    - Added `granulesExecutionHistory` table to RDS schema to allow for a many-to-many relationship between granules and executions
-    - Added `createWithExecutionHistory` method to granules Postgres model to allow for inserting a granule record and its execution history to the database
-    - Added `upsertWithExecutionHistory` method to granules Postgres model to allow for upserting a granule record and its execution history to the database
+    - Added `granules_executions` table to RDS schema to allow for a many-to-many relationship between granules and executions
+    - Added `upsertWithExecutionHistory` helper to `@cumulus/db` to allow for upserting a granule record and its corresponding `granules_execution` record
 - **CUMULUS-2128**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
