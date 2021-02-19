@@ -11,7 +11,7 @@ export const upsertGranuleWithExecutionHistory = async (
   executionCumulusId: number,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-) => {
+): Promise<number[]> => {
   const [granuleCumulusId] = await granulePgModel.upsert(
     knexTransaction,
     granule,
