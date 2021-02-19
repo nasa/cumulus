@@ -11,7 +11,7 @@ export function getCmrHost(
   cmrEnvironment: string | undefined = process.env.CMR_ENVIRONMENT
 ): string {
   if (!cmrEnvironment) {
-    throw new TypeError(`Invalid CMR environment: ${cmrEnvironment}`);
+    throw new TypeError('CMR environment must be defined');
   }
   let cmrHost;
   switch (cmrEnvironment) {
