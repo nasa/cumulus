@@ -136,7 +136,7 @@ async function retrieveCredentials(authInfo) {
 
   // grant access via Post to EDL with your base64 encoded credentials
   const authRedirect = await got.post(response.headers.location, {
-    form: { credentials: base64.encode(`${authInfo.edlUsername}:${authInfo.edlPassword}`) },
+    form: { credentials: base64.encode(`&dollar;{authInfo.edlUsername}:&dollar;{authInfo.edlPassword}`) },
     headers: { Origin: authInfo.s3Endpoint },
     followRedirect: false,
   });
