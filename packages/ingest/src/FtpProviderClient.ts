@@ -6,7 +6,11 @@ import Logger from '@cumulus/logger';
 import { Socket } from 'net';
 import { recursion } from './recursion';
 import { lookupMimeType, decrypt } from './util';
-import { FtpProviderClientListItem, ProviderClientListItem } from './types';
+import {
+  FtpProviderClientListItem,
+  ProviderClient,
+  ProviderClientListItem,
+} from './types';
 
 interface FtpProviderClientConstructorParams {
   host: string;
@@ -23,7 +27,7 @@ function isJSFtpError(error: Error | ListError): error is ListError {
 
 const logger = new Logger({ sender: '@cumulus/ingest/FtpProviderClient' });
 
-class FtpProviderClient {
+class FtpProviderClient implements ProviderClient {
   private readonly providerConfig: FtpProviderClientConstructorParams;
   private readonly host: string;
   private ftpClient?: JSFtp;
@@ -194,26 +198,28 @@ class FtpProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @param {string} bucket - destination s3 bucket of the file
-   * @param {string} key - destination s3 key of the file
+   * @param {Object} params - function parameters
+   * @param {string} params.remotePath - the full path to the remote file to be fetched
+   * @param {string} params.bucket - destination s3 bucket of the file
+   * @param {string} params.key - destination s3 key of the file
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
-  async sync(
-    remotePath: string,
-    bucket: string,
-    key: string
-  ): Promise<{s3uri: string, etag: string}> {
-    const remoteUrl = `ftp://${this.host}/${remotePath}`;
-    const s3uri = S3.buildS3Uri(bucket, key);
+  async sync(params: {
+    fileRemotePath: string,
+    destinationBucket: string,
+    destinationKey: string
+  }): Promise<{s3uri: string, etag: string}> {
+    const { fileRemotePath, destinationBucket, destinationKey } = params;
+    const remoteUrl = `ftp://${this.host}/${fileRemotePath}`;
+    const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
     logger.info(`Sync ${remoteUrl} to ${s3uri}`);
 
     const client = await this.buildFtpClient();
 
     // get readable stream for remote file
     const readable = await new Promise<Socket>((resolve, reject) => {
-      client.get(remotePath, (err, socket) => {
+      client.get(fileRemotePath, (err, socket) => {
         if (err) {
           return this.errorHandler(reject, err);
         }
@@ -224,15 +230,15 @@ class FtpProviderClient {
     const pass = new PassThrough();
     readable.pipe(pass);
 
-    const params = {
-      Bucket: bucket,
-      Key: key,
+    const s3Params = {
+      Bucket: destinationBucket,
+      Key: destinationKey,
       Body: pass,
-      ContentType: lookupMimeType(key),
+      ContentType: lookupMimeType(destinationKey),
     };
 
     try {
-      const { ETag: etag } = await S3.promiseS3Upload(params);
+      const { ETag: etag } = await S3.promiseS3Upload(s3Params);
       logger.info('Uploading to s3 is complete(ftp)', s3uri);
 
       return { s3uri, etag };
