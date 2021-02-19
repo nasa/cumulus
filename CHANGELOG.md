@@ -130,31 +130,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
     ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
-### Removed
-
-- **CUMULUS-2328**
-  - Removed `distributionApiId` environment variable from `<prefix>-ApiEndpoints` and `<prefix>-PrivateApiLambda` Lambdas
-  - Removed `distribution_api_id` variable from `tf-modules/archive` module
-  - Removed `s3_credentials_redirect_uri` output from `tf-modules/cumulus` module
-  - Removed variables from `tf-modules/cumulus` module:
-    - `sts_credentials_lambda_function_arn`
-    - `deploy_distribution_s3_credentials_endpoint`
-    - `tea_api_gateway_stage`
-    - `tea_rest_api_id`
-    - `tea_rest_api_root_resource_id`
-  - Removed `s3_credentials_redirect_uri` output from `tf-modules/distribution` module
-  - Removed variables from `tf-modules/distribution` module:
-    - `deploy_s3_credentials_endpoint`
-    - `log_destination_arn`
-    - `sts_credentials_lambda_function_arn`
-    - `tea_api_gateway_stage`
-    - `tea_external_api_endpoint`
-    - `tea_rest_api_id`
-    - `tea_rest_api_root_resource_id`
-    - `urs_client_id`
-    - `urs_client_password`
-    - `urs_url`
-
 ## [v5.0.0] 2021-01-12
 
 ### BREAKING CHANGES
