@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
+### Changed
+
+- `cmr_environment` variable for `cumulus` Terraform module can now be set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`) or one of the logical environment names for NASA CMR (e.g. `OPS`, `SIT`, `UAT`).
+
 ## [v6.0.0] 2021-02-16
 
 ### MIGRATION NOTES

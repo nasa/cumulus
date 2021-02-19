@@ -15,6 +15,7 @@ variable "cmr_client_id" {
 }
 
 variable "cmr_environment" {
+  description = "Custom host or logical environment (e.g. 'UAT', 'SIT') that should be used for CMR requests"
   type = string
 }
 
