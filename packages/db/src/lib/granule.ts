@@ -5,6 +5,27 @@ import { PostgresGranule } from '../types/granule';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 
+export const createGranuleWithExecutionHistory = async (
+  knexTransaction: Knex.Transaction,
+  granule: PostgresGranule,
+  executionCumulusId: number,
+  granulePgModel = new GranulePgModel(),
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
+): Promise<number[]> => {
+  const [granuleCumulusId] = await granulePgModel.create(
+    knexTransaction,
+    granule
+  );
+  await granulesExecutionsPgModel.create(
+    knexTransaction,
+    {
+      granule_cumulus_id: granuleCumulusId,
+      execution_cumulus_id: executionCumulusId,
+    }
+  );
+  return [granuleCumulusId];
+};
+
 export const upsertGranuleWithExecutionHistory = async (
   knexTransaction: Knex.Transaction,
   granule: PostgresGranule,
