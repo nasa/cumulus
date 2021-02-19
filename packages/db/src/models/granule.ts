@@ -14,23 +14,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     });
   }
 
-  async createWithExecutionHistory(
-    knexOrTrx: Knex | Knex.Transaction,
-    item: PostgresGranule,
-    executionCumulusId: number,
-    granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-  ) {
-    const [granuleCumulusId] = await this.create(knexOrTrx, item);
-    await granulesExecutionsPgModel.create(
-      knexOrTrx,
-      {
-        granule_cumulus_id: granuleCumulusId,
-        execution_cumulus_id: executionCumulusId,
-      }
-    );
-    return [granuleCumulusId];
-  }
-
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
