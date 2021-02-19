@@ -2,9 +2,9 @@ const test = require('ava');
 
 const {
   getExecutionProcessingTimeInfo,
+  getGranuleProductVolume,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
-  getGranuleProductVolume,
 } = require('../../lib/granules');
 
 test('getExecutionProcessingTimeInfo() returns empty object if startDate is not provided', (t) => {

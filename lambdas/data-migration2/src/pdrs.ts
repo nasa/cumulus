@@ -12,7 +12,7 @@ import {
   tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -41,12 +41,23 @@ export const migratePdrRecord = async (
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
 
-  const existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
+  let existingRecord;
+
+  try {
+    existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
+  } catch (error) {
+    // Swallow any RecordDoesNotExist errors and proceed with migration,
+    // otherwise re-throw the error
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   // Throw error if it was already migrated.
   if (existingRecord) {
     throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
   }
+
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
     knex,
     { name, version }

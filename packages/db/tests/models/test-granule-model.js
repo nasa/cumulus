@@ -3,13 +3,13 @@ const cryptoRandomString = require('crypto-random-string');
 
 const {
   CollectionPgModel,
-  ExecutionPgModel,
-  GranulePgModel,
-  generateLocalTestDb,
   destroyLocalTestDb,
+  ExecutionPgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
+  generateLocalTestDb,
+  GranulePgModel,
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
