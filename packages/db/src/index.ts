@@ -71,6 +71,8 @@ export { translateApiRuleToPostgresRule } from './translate/rules';
 export { translateApiExecutionToPostgresExecution } from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
+export { upsertGranuleWithExecutionHistory } from './lib/granule';
+
 export { AsyncOperationPgModel } from './models/async_operation';
 export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';

@@ -1,10 +1,10 @@
 import Knex from 'knex';
 
-import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 
+import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
 
 export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
