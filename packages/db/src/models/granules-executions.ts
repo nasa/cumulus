@@ -22,15 +22,6 @@ export default class GranulesExecutionsPgModel {
     return knexOrTrx(this.tableName).insert(item);
   }
 
-  async delete(
-    knexOrTransaction: Knex.Transaction,
-    params: Partial<PostgresGranuleExecution>
-  ): Promise<number> {
-    return knexOrTransaction(this.tableName)
-      .where(params)
-      .del();
-  }
-
   async exists(
     knexOrTrx: Knex.Transaction,
     item: PostgresGranuleExecution
