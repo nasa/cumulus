@@ -229,21 +229,6 @@ test.beforeEach(async (t) => {
   const granuleId1 = cryptoRandomString({ length: 6 });
   const granuleId2 = cryptoRandomString({ length: 6 });
 
-  // Create a PG Collection
-  const testPgCollection = fakeCollectionRecordFactory();
-  const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
-    t.context.knex,
-    testPgCollection
-  );
-});
-
-test.beforeEach(async (t) => {
-  const { esAlias } = t.context;
-
-  const granuleId1 = cryptoRandomString({ length: 6 });
-  const granuleId2 = cryptoRandomString({ length: 6 });
-
   // create fake Dynamo granule records
   t.context.fakeGranules = [
     fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed' }),
@@ -551,14 +536,14 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
     published: true,
   });
 
-  const granuleId = newGranule.granuleId;
+  const granuleId = newDynamoGranule.granuleId;
 
   sinon.stub(
     CMR.prototype,
@@ -657,14 +642,14 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
     published: true,
   });
 
-  const granuleId = newGranule.granuleId;
+  const granuleId = newDynamoGranule.granuleId;
 
   const response = await request(app)
     .delete(`/granules/${granuleId}`)
@@ -685,7 +670,7 @@ test('DELETE deleting an existing granule that is published will fail and not de
 
   // Verify files still exist in S3 and PG
   await Promise.all(
-    newGranule.files.map(async (file) => {
+    newDynamoGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -698,7 +683,7 @@ test('DELETE deleting an existing granule that is published will fail and not de
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
@@ -706,7 +691,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   });
 
   const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
+    .delete(`/granules/${newDynamoGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -715,7 +700,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  const granuleId = newGranule.granuleId;
+  const granuleId = newDynamoGranule.granuleId;
 
   // granule have been deleted from PG and Dynamo
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
@@ -723,7 +708,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
 
   // verify the files are deleted from S3 and Postgres
   await Promise.all(
-    newGranule.files.map(async (file) => {
+    newDynamoGranule.files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -817,7 +802,7 @@ test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (
 });
 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
@@ -830,7 +815,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 
   try {
     const response = await request(app)
-      .delete(`/granules/${newGranule.granuleId}`)
+      .delete(`/granules/${newDynamoGranule.granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`);
     t.is(response.status, 400);
@@ -838,7 +823,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
     GranulePgModel.prototype.get.restore();
   }
 
-  const granuleId = newGranule.granuleId;
+  const granuleId = newDynamoGranule.granuleId;
 
   // granule not have been deleted from PG or Dynamo
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
@@ -846,7 +831,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 
   // verify the files still exist in S3 and Postgres
   await Promise.all(
-    newGranule.files.map(async (file) => {
+    newDynamoGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })

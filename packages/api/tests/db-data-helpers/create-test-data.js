@@ -34,6 +34,7 @@ const models = require('../../models');
  */
 async function createGranuleAndFiles({
   dbClient,
+  collectionId,
   collectionCumulusId,
   published,
 }) {
@@ -93,6 +94,7 @@ async function createGranuleAndFiles({
       granuleId: granuleId,
       status: 'failed',
       published: published,
+      collectionId,
     }
   );
 

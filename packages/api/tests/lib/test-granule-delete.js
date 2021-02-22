@@ -39,6 +39,8 @@ const { deleteGranuleAndFiles } = require('../../lib/granule-delete');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
+const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
+
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let collectionModel;
@@ -51,95 +53,6 @@ process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
 process.env.TOKEN_SECRET = randomId('secret');
-
-/**
- * Helper for creating a granule, and files belonging to that granule
- * @param {Knex} dbClient - Knex client
- * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
- * @param {boolean} published - if the granule should be marked published to CMR
- * @returns {Object} PG and Dynamo granules, files
- */
-async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
-  const s3Buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-  const granuleId = randomId('granule');
-  const files = [
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.hdf`,
-      key: `${randomString(5)}/${granuleId}.hdf`,
-    },
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
-      bucket: s3Buckets.public.name,
-      fileName: `${granuleId}.jpg`,
-      key: `${randomString(5)}/${granuleId}.jpg`,
-    },
-  ];
-
-  const newGranule = fakeGranuleFactoryV2({ granuleId: granuleId, status: 'failed' });
-  newGranule.published = published;
-  newGranule.files = files;
-
-  await createS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]);
-
-  // Add files to S3
-  await Promise.all(newGranule.files.map((file) => s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: `test data ${randomString()}`,
-  })));
-
-  // create a new Dynamo granule
-  await granuleModel.create(newGranule);
-
-  // create a new PG granule
-  const newPGGranule = fakeGranuleRecordFactory(
-    {
-      granule_id: granuleId,
-      status: 'failed',
-      collection_cumulus_id: collectionCumulusId,
-    }
-  );
-  newPGGranule.published = published;
-  const [granuleCumulusId] = await granulePgModel.create(dbClient, newPGGranule);
-
-  // create PG files
-  await Promise.all(
-    files.map((f) => {
-      const pgFile = {
-        granule_cumulus_id: granuleCumulusId,
-        bucket: f.bucket,
-        file_name: f.fileName,
-        key: f.key,
-      };
-
-      return filePgModel.create(dbClient, pgFile);
-    })
-  );
-
-  return {
-    newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: granuleCumulusId }),
-    newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
-    files: files,
-    s3Buckets: s3Buckets,
-  };
-}
 
 test.before(async (t) => {
   process.env = {
@@ -185,11 +98,12 @@ test.before(async (t) => {
 });
 
 test.serial('deleteGranuleAndFiles() throws an error if the granule is published', async (t) => {
-  const { newPgGranule, newDynamoGranule, s3Buckets } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    true
-  );
+  const { newPgGranule, newDynamoGranule, s3Buckets } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: true,
+  });
 
   await t.throwsAsync(
     deleteGranuleAndFiles({
@@ -216,11 +130,12 @@ test.serial('deleteGranuleAndFiles() removes granule and files from PG, Dynamo, 
     newDynamoGranule,
     files,
     s3Buckets,
-  } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   await deleteGranuleAndFiles({
     knex: t.context.knex,
@@ -296,11 +211,12 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
     newDynamoGranule,
     files,
     s3Buckets,
-  } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   const mockFileModel = {
     tableName: 'files',
@@ -343,11 +259,12 @@ test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Gr
     newDynamoGranule,
     files,
     s3Buckets,
-  } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   const mockGranuleModel = {
     tableName: 'granules',
@@ -390,11 +307,12 @@ test.serial('deleteGranuleAndFiles() will not delete PG granule if the Dynamo gr
     newDynamoGranule,
     files,
     s3Buckets,
-  } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   const mockGranuleDynamoModel = {
     delete: () => {
