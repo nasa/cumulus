@@ -4,14 +4,18 @@ export const up = async (knex: Knex): Promise<void> =>
   knex.schema.createTable('granules_executions', (table) => {
     table
       .integer('granule_cumulus_id')
+      .notNullable();
+    table.foreign('granule_cumulus_id')
       .references('cumulus_id')
       .inTable('granules')
-      .notNullable();
+      .onDelete('CASCADE');
     table
       .integer('execution_cumulus_id')
+      .notNullable();
+    table.foreign('execution_cumulus_id')
       .references('cumulus_id')
       .inTable('executions')
-      .notNullable();
+      .onDelete('CASCADE');
     table
       .unique(['granule_cumulus_id', 'execution_cumulus_id']);
   });
