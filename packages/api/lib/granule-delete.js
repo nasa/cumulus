@@ -1,7 +1,6 @@
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   GranulePgModel,
-  GranulesExecutionsPgModel,
   FilePgModel,
 } = require('@cumulus/db');
 const { DeletePublishedGranule } = require('@cumulus/errors');
@@ -46,7 +45,6 @@ const deleteGranuleAndFiles = async ({
   filePgModel = new FilePgModel(),
   granulePgModel = new GranulePgModel(),
   granuleModelClient = new Granule(),
-  granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
 }) => {
   if (pgGranule === undefined) {
     // Delete only the Dynamo Granule and S3 Files
