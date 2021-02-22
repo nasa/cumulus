@@ -5,7 +5,6 @@ import { tableNames } from '../tables';
 
 import { PostgresGranuleExecution } from '../types/granule-execution';
 
-// TODO: need model tests
 export default class GranulesExecutionsPgModel {
   readonly tableName: tableNames;
 
@@ -16,34 +15,34 @@ export default class GranulesExecutionsPgModel {
   }
 
   async create(
-    knexOrTrx: Knex.Transaction,
+    knexTransaction: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
-    return knexOrTrx(this.tableName).insert(item);
+    return knexTransaction(this.tableName).insert(item);
   }
 
   async exists(
-    knexOrTrx: Knex.Transaction,
+    knexTransaction: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
-    return isRecordDefined(await knexOrTrx(this.tableName).where(item).first());
+    return isRecordDefined(await knexTransaction(this.tableName).where(item).first());
   }
 
   async upsert(
-    knexOrTrx: Knex.Transaction,
+    knexTransaction: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
-    return knexOrTrx(this.tableName)
+    return knexTransaction(this.tableName)
       .insert(item)
       .onConflict(['granule_cumulus_id', 'execution_cumulus_id'])
       .merge();
   }
 
   search(
-    knexOrTrx: Knex | Knex.Transaction,
+    knexTransaction: Knex | Knex.Transaction,
     query: Partial<PostgresGranuleExecution>
   ) {
-    return knexOrTrx<PostgresGranuleExecution>(this.tableName)
+    return knexTransaction<PostgresGranuleExecution>(this.tableName)
       .where(query);
   }
 }

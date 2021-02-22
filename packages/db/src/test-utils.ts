@@ -104,6 +104,7 @@ export const fakeGranuleRecordFactory = (
   params: Partial<PostgresGranule>
 ): Partial<PostgresGranule> => ({
   granule_id: cryptoRandomString({ length: 5 }),
+  status: 'completed',
   ...params,
 });
 
