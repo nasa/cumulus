@@ -1,5 +1,6 @@
 'use strict';
 
+const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
 // path to module root
@@ -21,6 +22,17 @@ const ignoredPackages = [
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
+  plugins: [
+    // templates to include html for readme
+    new CopyPlugin({
+      patterns: [
+        {
+          from: 'instructions',
+          to: 'instructions',
+        },
+      ],
+    }),
+  ],
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
@@ -52,6 +64,9 @@ module.exports = {
   },
   devtool: 'inline-source-map',
   target: 'node',
+  node: {
+    __dirname: false,
+  },
   // https://github.com/webpack/webpack/issues/196#issuecomment-620227719
   stats: {
     warningsFilter: [

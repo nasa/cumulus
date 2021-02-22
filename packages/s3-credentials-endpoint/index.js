@@ -6,12 +6,17 @@ const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
+const template = require('lodash/template');
+const { promisify } = require('util');
+const fs = require('fs');
+const readFile = promisify(fs.readFile);
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
 } = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
+const { join: pathjoin } = require('path');
 const Logger = require('@cumulus/logger');
 const morgan = require('morgan');
 const urljoin = require('url-join');
@@ -72,6 +77,19 @@ async function requestTemporaryCredentialsFromNgap({
     FunctionName: lambdaFunctionName,
     Payload,
   }).promise();
+}
+
+/**
+ * Sends a sample webpage describing how to use s3Credentials endpoint
+ *
+ * @param {Object} _req - express request object (unused)
+ * @param {Object} res - express response object
+ * @returns {Object} express repose object of the s3Credentials directions.
+ */
+async function displayS3CredentialInstructions(_req, res) {
+  const instructionTemplate = await readFile(pathjoin(__dirname, 'instructions', 'index.html'), 'utf-8');
+  const compiled = template(instructionTemplate);
+  res.send(compiled(process.env));
 }
 
 /**
@@ -300,6 +318,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
 distributionRouter.get('/redirect', handleRedirectRequest);
 distributionRouter.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
+distributionRouter.get('/s3credentialsREADME', displayS3CredentialInstructions);
 
 const distributionApp = express();
 

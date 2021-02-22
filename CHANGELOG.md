@@ -6,34 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
-
-### MIGRATION NOTES
-
-- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform
-  from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your
-  deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
-
 ### BREAKING CHANGES
 
-- **CUMULUS-2185** - RDS Migration Epic
-  - **CUMULUS-2191**
-    - Removed the following from the `@cumulus/api/models.asyncOperation` class in
-      favor of the added `@cumulus/async-operations` module:
-      - `start`
-      - `startAsyncOperations`
-  - **CUMULUS-2187**
-    - The `async-operations` endpoint will now omit `output` instead
-      of returning `none` when the operation did not return output.
-- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
+- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
 ### Added
 
-- **CUMULUS-2291**
-  - Add provider filter to Granule Inventory Report
-- **CUMULUS-2185** - RDS Migration Epic
+- **CUMULUS-2345**
+  - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2362**
+  - Logs endpoints only work with Metrics set up
+  - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
     - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to RDS
@@ -66,7 +50,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added logic to `data-migration2` Lambda for migrating PDR records from
       DynamoDB to RDS
   - **CUMULUS-2235**
-     - Added initial ingest load spec test/utility
+    - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
     - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to RDS and parse Granule records to store File records in RDS.
 - **CUMULUS-2128**
@@ -127,15 +111,99 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2309**
     - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from Postgres database.
 
+## [v6.0.0] 2021-02-16
+
+### MIGRATION NOTES
+
+- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform
+  from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your
+  deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
+
+- **CUMULUS-2350**
+  - If the  `/s3credentialsREADME`, does not appear to be working after deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html) of the API-gateway stage may be necessary to finish the deployment.
+
+### BREAKING CHANGES
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Removed the following from the `@cumulus/api/models.asyncOperation` class in
+      favor of the added `@cumulus/async-operations` module:
+      - `start`
+      - `startAsyncOperations`
+  - **CUMULUS-2187**
+    - The `async-operations` endpoint will now omit `output` instead
+      of returning `none` when the operation did not return output.
+- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
+
+### Added
+
+- **CUMULUS-2291**
+  - Add provider filter to Granule Inventory Report
+- **CUMULUS-2300**
+  - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_granules_workflow.asl.json`.
+- **CUMULUS-2350**
+  - Adds an unprotected endpoint, `/s3credentialsREADME`, to the s3-credentials-endpoint that displays information on how to use the `/s3credentials` endpoint
+- **CUMULUS-2368**
+  - Add QueueWorkflow task
+- **CUMULUS-2391**
+  - Add reportToEms to collections.files file schema
+- **CUMULUS-2376**
+  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
+- **CUMULUS-2395**
+  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
+    custom security group mappings
+- **CUMULUS-2402**
+  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
+
 ### Changed
+
+- **CUMULUS-2323**
+  - The sync granules task when used with the s3 provider now uses the
+    `source_bucket` key in `granule.files` objects.  If incoming payloads using
+    this task have a `source_bucket` value for a file using the s3 provider, the
+    task will attempt to sync from the bucket defined in the file's
+    `source_bucket` key instead of the `provider`.
+    - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter
+      in support of the changed behavior.
+  - Removed `addBucketToFile` and related code from sync-granules task
 
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
+  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+- **CUMULUS-2321**
+  - Updated API endpoint GET `/reconciliationReports/{name}` to return the pre-signed s3 URL in addition to report data
 
 ### Fixed
 
+- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
+
 - **CUMULUS-2310**
   - Use valid filename for reconciliation report
+- **CUMULUS-2351**
+  - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+
+### Removed
+
+- **CUMULUS-2364**
+  - Remove the internal Cumulus logging lambda (log2elasticsearch)
+
+## [v5.0.1] 2021-01-27
+
+### Changed
+
+- **CUMULUS-2344**
+  - Elasticsearch API now allows you to reindex to an index that already exists
+  - If using the Change Index operation and the new index doesn't exist, it will be created
+  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
+    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
@@ -3891,7 +3959,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v6.0.0...HEAD
+[v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
+[v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1

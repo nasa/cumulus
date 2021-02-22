@@ -333,26 +333,83 @@ variable "ems_deploy" {
   default     = true
 }
 
-variable "async_operation_image_version" {
-  description = "docker image version to use for Cumulus async operations tasks"
+variable "ecs_custom_sg_ids" {
+  description = "User defined security groups to add to the Core ECS cluster"
+  type = list(string)
+  default = []
+}
+
+## ORCA Variables Definitions
+
+variable "platform" {
+  default = "AWS"
   type = string
-  default = "32"
+  description = "Indicates if running locally (onprem) or in AWS (AWS)."
 }
 
-variable "cumulus_process_activity_version" {
-    description = "docker image version to use for python processing service"
-    type = string
-    default = "1"
+variable "database_name" {
+  default = "orca"
+  type = string
+  description = "Name of the ORCA database that contains state information."
 }
 
-variable "ecs_task_image_version" {
-  description = "docker image version to use for Cumulus hello world task"
-    type = string
-    default = "1.7.0"
+variable "database_port" {
+  default = "5432"
+  type = string
+  description = "Port the database listens on."
 }
 
-variable "cumulus_test_ingest_image_version" {
-    description = "docker image version to use for python test ingest processing service"
-    type = string
-    default = "12"
+variable "postgres_user_pw" {
+  type = string
+  description = "postgres database user password."
 }
+
+variable "database_app_user" {
+  default = "orca_user"
+  type = string
+  description = "ORCA application database user name."
+}
+
+variable "database_app_user_pw" {
+  type = string
+  description = "ORCA application database user password."
+}
+
+variable "drop_database" {
+  default = "False"
+  type = string
+  description = "Tells ORCA to drop the database on deployments."
+}
+
+variable "ddl_dir" {
+  default = "ddl/"
+  type = string
+  description = "The location of the ddl dir that contains the sql to create the application database."
+}
+
+variable "lambda_timeout" {
+  default = 300
+  type = number
+  description = "Lambda max time before a timeout error is thrown."
+}
+
+variable "restore_complete_filter_prefix" {
+  default = ""
+  type = string
+  description = ""
+}
+
+variable "copy_retry_sleep_secs" {
+  default = 0
+  type = number
+  description = "How many seconds to wait between retry calls to `copy_object`."
+}
+
+variable "default_tags" {
+  type = object({ team = string, application = string })
+  default = {
+    team : "DR",
+    application : "disaster-recovery"
+  }
+}
+
