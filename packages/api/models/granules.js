@@ -173,6 +173,9 @@ class Granule extends Manager {
     await cmr.deleteGranule(metadata.title, granule.collectionId);
   }
 
+  /*
+  * DEPRECATED: This has moved to /lib/granule-rmove-from-cmr.js
+  */
   async removeGranuleFromCmrByGranule(granule) {
     await this._removeGranuleFromCmr(granule);
     return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);

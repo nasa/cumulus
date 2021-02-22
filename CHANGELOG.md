@@ -68,9 +68,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2235**
      - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to 
-      RDS and parse Granule records to
-    store File records in RDS.
+    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to RDS and parse Granule records to store File records in RDS.
 - **CUMULUS-2128**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
@@ -126,6 +124,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
   - **CUMULUS-2305**
     - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from Postgres database.
+  - **CUMULUS-2309**
+    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from Postgres database.
 
 ### Changed
 

@@ -210,30 +210,7 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
   ]));
 });
 
-test.serial('deleteGranuleAndFiles() removes a granule from PG and Dynamo', async (t) => {
-  const { newPgGranule, newDynamoGranule, s3Buckets } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
-
-  await deleteGranuleAndFiles({
-    knex: t.context.knex,
-    dynamoGranule: newDynamoGranule,
-    pgGranule: newPgGranule,
-  });
-
-  // Check Dynamo and RDS. The granule should have been removed from both.
-  t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
-
-  t.teardown(() => deleteS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]));
-});
-
-test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) => {
+test.serial('deleteGranuleAndFiles() removes granule and files from PG, Dynamo, and S3', async (t) => {
   const {
     newPgGranule,
     newDynamoGranule,
@@ -250,6 +227,10 @@ test.serial('deleteGranuleAndFiles() removes files from PG and S3', async (t) =>
     dynamoGranule: newDynamoGranule,
     pgGranule: newPgGranule,
   });
+
+  // Check Dynamo and RDS. The granule should have been removed from both.
+  t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
 
   // Verify files were delete from S3 and PG
   await Promise.all(

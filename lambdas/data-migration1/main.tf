@@ -43,8 +43,10 @@ data "aws_iam_policy_document" "data_migration1" {
       "dynamodb:Scan",
     ]
     resources = [
+      var.dynamo_tables.async_operations.arn,
       var.dynamo_tables.collections.arn,
-      var.dynamo_tables.providers.arn
+      var.dynamo_tables.providers.arn,
+      var.dynamo_tables.rules.arn
     ]
   }
 
@@ -73,7 +75,7 @@ resource "aws_iam_role_policy" "data_migration1" {
 resource "aws_security_group" "data_migration1" {
   count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
 
-  name   = "${var.prefix}-data-migration"
+  name   = "${var.prefix}-data-migration1"
   vpc_id = var.vpc_id
 
   egress {
@@ -99,8 +101,10 @@ resource "aws_lambda_function" "data_migration1" {
   environment {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      AsyncOperationsTable = var.dynamo_tables.async_operations.name
       CollectionsTable = var.dynamo_tables.collections.name
       ProvidersTable = var.dynamo_tables.providers.name
+      RulesTable = var.dynamo_tables.rules.name
       dbHeartBeat = var.rds_connection_heartbeat
       provider_kms_key_id = var.provider_kms_key_id
     }

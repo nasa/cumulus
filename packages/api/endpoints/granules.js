@@ -18,6 +18,7 @@ const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 
 /**
  * List all granules for a given collection.
@@ -96,7 +97,9 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    await granuleModelClient.removeGranuleFromCmrByGranule(granule);
+    const knex = await getKnexClient({ env: process.env });
+
+    await unpublishGranule(knex, granule);
 
     return res.send({
       granuleId: granule.granuleId,

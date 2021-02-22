@@ -36,6 +36,7 @@ const {
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // PG mock data factories
 const {
@@ -193,14 +194,40 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+
   // Create a Dynamo collection
   // we need this because a granule has a fk referring to collections
   t.context.testCollection = fakeCollectionFactory({
-    name: 'fakeCollection',
-    version: 'v1',
+    name: collectionName,
+    version: collectionVersion,
     duplicateHandling: 'error',
   });
-  await collectionModel.create(t.context.testCollection);
+  const dynamoCollection = await collectionModel.create(t.context.testCollection);
+  t.context.collectionId = constructCollectionId(
+    dynamoCollection.name,
+    dynamoCollection.version
+  );
+
+  // Create a PG Collection
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
+  const collectionPgModel = new CollectionPgModel();
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    testPgCollection
+  );
+});
+
+test.beforeEach(async (t) => {
+  const { esAlias } = t.context;
+
+  const granuleId1 = cryptoRandomString({ length: 6 });
+  const granuleId2 = cryptoRandomString({ length: 6 });
 
   // Create a PG Collection
   const testPgCollection = fakeCollectionRecordFactory();
@@ -524,6 +551,15 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: true,
+  });
+
+  const granuleId = newGranule.granuleId;
+
   sinon.stub(
     CMR.prototype,
     'deleteGranule'
@@ -532,11 +568,11 @@ test.serial('remove a granule from CMR', async (t) => {
   sinon.stub(
     CMR.prototype,
     'getGranuleMetadata'
-  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+  ).callsFake(() => Promise.resolve({ title: granuleId }));
 
   try {
     const response = await request(app)
-      .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+      .put(`/granules/${granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -546,15 +582,27 @@ test.serial('remove a granule from CMR', async (t) => {
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'removeFromCmr');
 
-    const updatedGranule = await granuleModel.get({
-      granuleId: t.context.fakeGranules[0].granuleId,
-    });
-    t.is(updatedGranule.published, false);
-    t.is(updatedGranule.cmrLink, undefined);
+    // Should have updated the Dynamo granule
+    const updatedDynamoGranule = await granuleModel.get({ granuleId });
+    t.is(updatedDynamoGranule.published, false);
+    t.is(updatedDynamoGranule.cmrLink, undefined);
+
+    // Should have updated the PG granule
+    const updatedPgGranule = await granulePgModel.get(
+      t.context.knex,
+      { granule_id: granuleId }
+    );
+    t.is(updatedPgGranule.published, false);
+    t.is(updatedPgGranule.cmrLink, undefined);
   } finally {
     CMR.prototype.deleteGranule.restore();
     CMR.prototype.getGranuleMetadata.restore();
   }
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('remove a granule from CMR with launchpad authentication', async (t) => {
@@ -609,13 +657,14 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const { s3Buckets, newPgGranule, files } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    true
-  );
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: true,
+  });
 
-  const granuleId = newPgGranule.granule_id;
+  const granuleId = newGranule.granuleId;
 
   const response = await request(app)
     .delete(`/granules/${granuleId}`)
@@ -636,7 +685,7 @@ test('DELETE deleting an existing granule that is published will fail and not de
 
   // Verify files still exist in S3 and PG
   await Promise.all(
-    files.map(async (file) => {
+    newGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -649,11 +698,12 @@ test('DELETE deleting an existing granule that is published will fail and not de
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)
@@ -767,11 +817,12 @@ test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (
 });
 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { s3Buckets, newGranule } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
+  const { s3Buckets, newGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    published: false,
+  });
 
   sinon
     .stub(GranulePgModel.prototype, 'get')
