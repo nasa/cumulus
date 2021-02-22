@@ -24,11 +24,13 @@ export const deleteTestDatabase = async (knex: Knex, dbName: string) =>
 
 export const generateLocalTestDb = async (
   testDbName: string,
-  migrationDir: string
+  migrationDir: string,
+  envParams: object
 ) => {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
   const knex = await getKnexClient({
     env: {
+      ...envParams,
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
       migrationDir,
