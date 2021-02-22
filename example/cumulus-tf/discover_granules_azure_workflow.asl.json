@@ -57,7 +57,8 @@
             "provider": "{$.meta.provider}",
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
-            "granuleIngestWorkflow": "${ingest_granule_workflow_name}"
+            "granuleIngestWorkflow": "${ingest_granule_workflow_name}",
+            "childWorkflowMeta": { "azure_distribution_endpoint": "{$.meta.azure_distribution_endpoint}" }
           }
         }
       },

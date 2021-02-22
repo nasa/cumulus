@@ -227,7 +227,64 @@
           "Next": "WorkflowFailed"
         }
       ],
-      "Next": "WorkflowSucceeded"
+      "Next": "UpdateGranulesCmrMetadataFileLinksStep"
+    },
+    "UpdateGranulesCmrMetadataFileLinksStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.azure_distribution_endpoint}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${update_granules_cmr_metadata_file_links_task_arn}",
+      "Next": "CmrStep",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Next": "WorkflowSucceeded",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ]
     },
     "WorkflowFailed": {
       "Type": "Fail",

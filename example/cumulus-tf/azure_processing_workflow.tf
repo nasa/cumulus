@@ -16,7 +16,9 @@ module "azure_processing_workflow" {
       move_granules_task_arn: module.cumulus.move_granules_task.task_arn,
       azure_processing_task_arn: module.cumulus.run_azure_function_task.task_arn,
       azure_processing_queue_url: var.azure_processing_queue_url,
-      azure_processing_orchestrator_url: var.azure_processing_orchestrator_url
+      azure_processing_orchestrator_url: var.azure_processing_orchestrator_url,
+      update_granules_cmr_metadata_file_links_task_arn: module.cumulus.update_granules_cmr_metadata_file_links_task.task_arn,
+      post_to_cmr_task_arn: module.cumulus.post_to_cmr_task.task_arn
     }
   )
 }

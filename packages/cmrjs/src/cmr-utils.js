@@ -30,7 +30,19 @@ const {
 } = require('./utils');
 
 function getS3KeyOfFile(file) {
-  if (file.filename) return parseS3Uri(file.filename).Key;
+  if (file.filename) {
+    if (file.filename.startsWith('s3')) {
+      return parseS3Uri(file.filename).Key;
+    }
+
+    // TO DO: This is somewhat duplicated in the granules model. Need to find the right place
+    // for this to live.
+    const match = file.filename.match('^https://(.*).blob.core.windows.net/([^/]+)/(.*)$');
+
+    if (match !== null) {
+      return match[3];
+    }
+  }
   if (file.filepath) return file.filepath;
   if (file.key) return file.key;
   throw new Error(`Unable to determine s3 key of file: ${JSON.stringify(file)}`);

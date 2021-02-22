@@ -70,7 +70,7 @@ async function handler(event, context) {
   } catch (error) {
     log.error(error);
     return sfn.sendTaskFailure({
-      error: error.message.substring(0, 256),
+      error: error.message.substring(0, 256), // this field has length limits, idk
       taskToken,
     }).promise();
   }
