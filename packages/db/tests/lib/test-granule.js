@@ -11,6 +11,7 @@ const {
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   createGranuleWithExecutionHistory,
+  deleteGranuleWithExecutionHistory,
   upsertGranuleWithExecutionHistory,
 } = require('../../dist');
 
@@ -197,7 +198,12 @@ test('deleteGranuleWithExecutionHistory() deletes granule and granule/execution 
     )
   );
 
-  await granulePgModel.delete(knex, granule);
+  await knex.transaction(
+    (trx) => deleteGranuleWithExecutionHistory(
+      trx,
+      granule
+    )
+  );
 
   t.false(
     await granulePgModel.exists(
