@@ -210,7 +210,8 @@ class HttpProviderClient {
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
-  async sync(remotePath, bucket, key) {
+  async sync(params) {
+    const { destinationBucket, destinationKey, fileRemotePath } = params;
     validateHost(this.host);
     await this.setUpGotOptions();
     await this.downloadTLSCertificate();
@@ -218,10 +219,10 @@ class HttpProviderClient {
       protocol: this.protocol,
       host: this.host,
       port: this.port,
-      path: remotePath,
+      path: fileRemotePath,
     });
 
-    const s3uri = buildS3Uri(bucket, key);
+    const s3uri = buildS3Uri(destinationBucket, destinationKey);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
     let headers = {};
@@ -231,13 +232,13 @@ class HttpProviderClient {
     } catch (error) {
       log.info(`HEAD failed for ${remoteUrl} with error: ${error}.`);
     }
-    const contentType = headers['content-type'] || lookupMimeType(key);
+    const contentType = headers['content-type'] || lookupMimeType(destinationKey);
 
     const pass = new PassThrough();
     got.stream(remoteUrl, this.gotOptions).pipe(pass);
     const { ETag: etag } = await promiseS3Upload({
-      Bucket: bucket,
-      Key: key,
+      Bucket: destinationBucket,
+      Key: destinationKey,
       Body: pass,
       ContentType: contentType,
     });

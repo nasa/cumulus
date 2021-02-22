@@ -238,25 +238,6 @@ class GranuleFetcher {
   }
 
   /**
-   * Add a bucket property to the given file
-   *
-   * Note: This returns a copy of the file parameter, it does not modify it.
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object} the file with a bucket property set
-   * @throws {Error} if the file didn't have a matching config
-   */
-  addBucketToFile(file) {
-    const fileConfig = this.findCollectionFileConfigForFile(file);
-    if (!fileConfig) {
-      throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
-    }
-    const bucket = this.buckets[fileConfig.bucket].name;
-
-    return { ...file, bucket };
-  }
-
-  /**
    * Verify a file's integrity using its checksum and throw an exception if it's invalid.
    * Verify file's size if checksum type or value is not available.
    * Logs warning if neither check is possible.
@@ -334,6 +315,7 @@ class GranuleFetcher {
    */
   async ingestFile(file, destinationBucket, duplicateHandling) {
     const fileRemotePath = path.join(file.path, file.name);
+    const sourceBucket = file.source_bucket;
     // place files in the <collectionId> subdirectory
     const stagingPath = S3.s3Join(this.fileStagingDir, this.collectionId);
     const destinationKey = S3.s3Join(stagingPath, file.name);
@@ -360,8 +342,7 @@ class GranuleFetcher {
 
       // bind arguments to sync function
       const syncFileFunction = providerClient.sync.bind(
-        providerClient,
-        fileRemotePath
+        providerClient
       );
 
       if (s3ObjAlreadyExists) {
@@ -374,10 +355,17 @@ class GranuleFetcher {
           duplicateHandling,
           checksumFunction: this.verifyFile.bind(this, file),
           syncFileFunction,
+          sourceBucket,
+          fileRemotePath,
         });
       } else {
         log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
-        await syncFileFunction(destinationBucket, destinationKey);
+        await syncFileFunction({
+          destinationBucket,
+          destinationKey,
+          bucket: sourceBucket,
+          fileRemotePath,
+        });
         // Verify file integrity
         log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);
         await this.verifyFile(file, destinationBucket, destinationKey);
