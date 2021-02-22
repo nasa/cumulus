@@ -1,11 +1,21 @@
 import Knex from 'knex';
 
 import { PostgresGranule } from '../types/granule';
-import { PostgresGranuleExecution } from '../types/granule-execution';
 
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 
+/**
+ * Create a granule and a record in the granules/executions join table.
+ *
+ * @param {Knex.Transaction} knexTransaction - A Knex client transaction
+ * @param {PostgresGranule} granule - Granule data
+ * @param {number} executionCumulusId - Execution record cumulus_id value
+ * @param {Object} [granulePgModel] - Granule PG model class instance
+ * @param {Object} [granulesExecutionsPgModel]
+ *   Granules/executions PG model class instance
+ * @returns {Promise}
+ */
 export const createGranuleWithExecutionHistory = async (
   knexTransaction: Knex.Transaction,
   granule: PostgresGranule,
@@ -27,25 +37,39 @@ export const createGranuleWithExecutionHistory = async (
   return [granuleCumulusId];
 };
 
+/**
+ * Delete a granule and its records in the granules/executions join table.
+ *
+ * This method only invokes `granulePgModel.delete()` because the foreign key
+ * column in the executions table that references the granule is defined with
+ * ON CASCADE DELETE. So deleting the record from the granule record automatically
+ * deletes the records in the granules/executions join table.
+ *
+ * @param {Knex.Transaction} knexTransaction - A Knex client transaction
+ * @param {PostgresGranule} granule - Granule data
+ * @param {Object} [granulePgModel] - Granule PG model class instance
+ * @returns {Promise}
+ */
 export const deleteGranuleWithExecutionHistory = async (
   knexTransaction: Knex.Transaction,
   granule: PostgresGranule,
-  granuleExecutionParams: Partial<PostgresGranuleExecution>,
-  granulePgModel = new GranulePgModel(),
-  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-) => {
-  await granulePgModel.delete(
-    knexTransaction,
-    granule
-  );
-  // TODO: really we should delete based on join from granules table,
-  // otherwise we have to lookup cumulus_id to delete from join table
-  return granulesExecutionsPgModel.delete(
-    knexTransaction,
-    granuleExecutionParams
-  );
-};
+  granulePgModel = new GranulePgModel()
+) => granulePgModel.delete(
+  knexTransaction,
+  granule
+);
 
+/**
+ * Upsert a granule and a record in the granules/executions join table.
+ *
+ * @param {Knex.Transaction} knexTransaction - A Knex client transaction
+ * @param {PostgresGranule} granule - Granule data
+ * @param {number} executionCumulusId - Execution record cumulus_id value
+ * @param {Object} [granulePgModel] - Granule PG model class instance
+ * @param {Object} [granulesExecutionsPgModel]
+ *   Granules/executions PG model class instance
+ * @returns {Promise<number[]>}
+ */
 export const upsertGranuleWithExecutionHistory = async (
   knexTransaction: Knex.Transaction,
   granule: PostgresGranule,

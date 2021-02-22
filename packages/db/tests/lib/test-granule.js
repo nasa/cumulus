@@ -26,6 +26,9 @@ test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
+    // {
+    //   KNEX_DEBUG: 'true',
+    // }
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
@@ -59,7 +62,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('createGranuleWithExecutionHistory() creates a new granule with execution history', async (t) => {
+test('createGranuleWithExecutionHistory() creates a new granule with granule/execution join record', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -103,7 +106,7 @@ test('createGranuleWithExecutionHistory() creates a new granule with execution h
   );
 });
 
-test('createGranuleWithExecutionHistory() does not commit granule or execution history if execution history write fails', async (t) => {
+test('createGranuleWithExecutionHistory() does not commit granule or granule/execution join record if writing join record fails', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -155,7 +158,68 @@ test('createGranuleWithExecutionHistory() does not commit granule or execution h
   );
 });
 
-test('upsertGranuleWithExecutionHistory() adds execution history', async (t) => {
+test('deleteGranuleWithExecutionHistory() deletes granule and granule/execution join records', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+    granulesExecutionsPgModel,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  await granulesExecutionsPgModel.create(knex, {
+    execution_cumulus_id: executionCumulusId,
+    granule_cumulus_id: granuleCumulusId,
+  });
+
+  t.true(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
+  );
+  t.true(
+    await granulesExecutionsPgModel.exists(
+      knex,
+      {
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      }
+    )
+  );
+
+  await granulePgModel.delete(knex, granule);
+
+  t.false(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
+  );
+  t.false(
+    await granulesExecutionsPgModel.exists(
+      knex,
+      {
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      }
+    )
+  );
+});
+
+test('upsertGranuleWithExecutionHistory() creates granule record with granule/execution join record', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -261,7 +325,7 @@ test('upsertGranuleWithExecutionHistory() handles multiple executions for a gran
   );
 });
 
-test('upsertGranuleWithExecutionHistory() does not write anything if execution history upsert fails', async (t) => {
+test('upsertGranuleWithExecutionHistory() does not write anything if upserting granule/execution join record fails', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -374,7 +438,7 @@ test('upsertGranuleWithExecutionHistory() will allow a running status to replace
   );
 });
 
-test('upsertGranuleWithExecutionHistory() succeeds if upsert() affects no rows', async (t) => {
+test('upsertGranuleWithExecutionHistory() succeeds if granulePgModel.upsert() affects no rows', async (t) => {
   const {
     knex,
     granulePgModel,
