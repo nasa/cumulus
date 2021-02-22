@@ -45,23 +45,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-<<<<<<< HEAD
-    "@cumulus/async-operations": "3.0.1-alpha.1",
-    "@cumulus/aws-client": "5.0.0",
-    "@cumulus/cmr-client": "5.0.0",
-    "@cumulus/cmrjs": "5.0.0",
-    "@cumulus/collection-config-store": "5.0.0",
-    "@cumulus/common": "5.0.0",
-    "@cumulus/db": "3.0.1-alpha.1",
-    "@cumulus/earthdata-login-client": "5.0.0",
-    "@cumulus/errors": "5.0.0",
-    "@cumulus/ingest": "5.0.0",
-    "@cumulus/launchpad-auth": "5.0.0",
-    "@cumulus/logger": "5.0.0",
-    "@cumulus/message": "5.0.0",
-    "@cumulus/pvl": "5.0.0",
-    "@cumulus/sftp-client": "5.0.0",
-=======
     "@cumulus/aws-client": "6.0.0",
     "@cumulus/cmr-client": "6.0.0",
     "@cumulus/cmrjs": "6.0.0",
@@ -75,7 +58,6 @@
     "@cumulus/message": "6.0.0",
     "@cumulus/pvl": "6.0.0",
     "@cumulus/sftp-client": "6.0.0",
->>>>>>> master
     "@elastic/elasticsearch": "^5.6.20",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
