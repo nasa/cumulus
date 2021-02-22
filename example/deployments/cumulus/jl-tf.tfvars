@@ -1,6 +1,10 @@
 prefix            = "jl-tf"
 system_bucket     = "jl-test-integration-internal"
 buckets = {
+  glacier = {
+    name = "jl-test-integration-orca-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "jl-test-integration-internal"
     type = "internal"

@@ -1,4 +1,8 @@
 buckets = {
+  glacier = {
+    name = "cumulus-sit-orca-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "cumulus-sit-internal"
     type = "internal"
