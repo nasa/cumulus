@@ -2,6 +2,7 @@ interface CmrHostParams {
   cmrEnvironment: string | undefined,
   cmrHost: string | undefined
 }
+
 /**
  * Get host to use for CMR requests.
  *
