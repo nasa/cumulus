@@ -10,6 +10,7 @@ const {
   fakeGranuleRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   createGranuleWithExecutionHistory,
 } = require('../../dist');
 
@@ -26,24 +27,23 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.granulePgModel = new GranulePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
-  const collectionResponse = await collectionPgModel.create(
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
     t.context.knex,
     t.context.collection
   );
-  t.context.collectionCumulusId = collectionResponse[0];
 
   t.context.executionPgModel = new ExecutionPgModel();
 });
 
 test.beforeEach(async (t) => {
-  const [executionCumulusId] = await t.context.executionPgModel.create(
+  [t.context.executionCumulusId] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
-  t.context.executionCumulusId = executionCumulusId;
 });
 
 test.after.always(async (t) => {
@@ -246,4 +246,73 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
 
   const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
   t.is(record.status, 'running');
+});
+
+test('GranulePgModel.delete() deletes granule and granule/execution join records', async (t) => {
+  const {
+    knex,
+    granulesExecutionsPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  const granuleCumulusId = await knex.transaction(async (trx) => {
+    const [innerGranuleCumulusId] = await granulePgModel.create(trx, granule);
+    await granulesExecutionsPgModel.create(trx, {
+      execution_cumulus_id: executionCumulusId,
+      granule_cumulus_id: innerGranuleCumulusId,
+    });
+    return innerGranuleCumulusId;
+  });
+
+  t.true(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
+  );
+  t.true(
+    await granulesExecutionsPgModel.exists(
+      knex,
+      {
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      }
+    )
+  );
+
+  await knex.transaction(
+    (trx) => granulePgModel.delete(
+      trx,
+      granule
+    )
+  );
+
+  t.false(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
+  );
+  t.false(
+    await granulesExecutionsPgModel.exists(
+      knex,
+      {
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      }
+    )
+  );
 });

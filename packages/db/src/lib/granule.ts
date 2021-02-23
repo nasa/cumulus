@@ -38,28 +38,6 @@ export const createGranuleWithExecutionHistory = async (
 };
 
 /**
- * Delete a granule and its records in the granules/executions join table.
- *
- * This method only invokes `granulePgModel.delete()` because the foreign key
- * column in the executions table that references the granule is defined with
- * ON CASCADE DELETE. So deleting the record from the granule record automatically
- * deletes the records in the granules/executions join table.
- *
- * @param {Knex.Transaction} knexTransaction - A Knex client transaction
- * @param {PostgresGranule} granule - Granule data
- * @param {Object} [granulePgModel] - Granule PG model class instance
- * @returns {Promise}
- */
-export const deleteGranuleWithExecutionHistory = async (
-  knexTransaction: Knex.Transaction,
-  granule: PostgresGranule,
-  granulePgModel = new GranulePgModel()
-) => granulePgModel.delete(
-  knexTransaction,
-  granule
-);
-
-/**
  * Upsert a granule and a record in the granules/executions join table.
  *
  * @param {Knex.Transaction} knexTransaction - A Knex client transaction

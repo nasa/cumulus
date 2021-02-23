@@ -5,19 +5,15 @@ const {
   CollectionPgModel,
   ExecutionPgModel,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   createGranuleWithExecutionHistory,
-  deleteGranuleWithExecutionHistory,
   upsertGranuleWithExecutionHistory,
 } = require('../../dist');
-
-const {
-  GranulesExecutionsPgModel,
-} = require('../../dist/models/granules-executions');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
@@ -27,9 +23,6 @@ test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
-    // {
-    //   KNEX_DEBUG: 'true',
-    // }
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
@@ -153,72 +146,6 @@ test('createGranuleWithExecutionHistory() does not commit granule or granule/exe
     await granulesExecutionsPgModel.exists(
       knex,
       {
-        execution_cumulus_id: executionCumulusId,
-      }
-    )
-  );
-});
-
-test('deleteGranuleWithExecutionHistory() deletes granule and granule/execution join records', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    executionCumulusId,
-    granulesExecutionsPgModel,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-    status: 'running',
-  });
-
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
-  await granulesExecutionsPgModel.create(knex, {
-    execution_cumulus_id: executionCumulusId,
-    granule_cumulus_id: granuleCumulusId,
-  });
-
-  t.true(
-    await granulePgModel.exists(
-      knex,
-      {
-        granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
-      }
-    )
-  );
-  t.true(
-    await granulesExecutionsPgModel.exists(
-      knex,
-      {
-        granule_cumulus_id: granuleCumulusId,
-        execution_cumulus_id: executionCumulusId,
-      }
-    )
-  );
-
-  await knex.transaction(
-    (trx) => deleteGranuleWithExecutionHistory(
-      trx,
-      granule
-    )
-  );
-
-  t.false(
-    await granulePgModel.exists(
-      knex,
-      {
-        granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
-      }
-    )
-  );
-  t.false(
-    await granulesExecutionsPgModel.exists(
-      knex,
-      {
-        granule_cumulus_id: granuleCumulusId,
         execution_cumulus_id: executionCumulusId,
       }
     )
