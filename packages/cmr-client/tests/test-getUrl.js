@@ -5,19 +5,18 @@ const test = require('ava');
 const { getCmrHost, getSearchUrl } = require('../getUrl');
 
 test('getCmrHost uses provided logical CMR environment', (t) => {
-  t.is(getCmrHost('OPS'), 'cmr.earthdata.nasa.gov');
-  t.is(getCmrHost('UAT'), 'cmr.uat.earthdata.nasa.gov');
-  t.is(getCmrHost('SIT'), 'cmr.sit.earthdata.nasa.gov');
+  t.is(getCmrHost({ cmrEnvironment: 'OPS' }), 'cmr.earthdata.nasa.gov');
+  t.is(getCmrHost({ cmrEnvironment: 'UAT' }), 'cmr.uat.earthdata.nasa.gov');
+  t.is(getCmrHost({ cmrEnvironment: 'SIT' }), 'cmr.sit.earthdata.nasa.gov');
 });
 
-test('getCmrHost uses custom CMR environment', (t) => {
-  t.is(getCmrHost('custom-host'), 'custom-host');
+test('getCmrHost uses custom CMR host', (t) => {
+  t.is(getCmrHost({ cmrHost: 'custom-host' }), 'custom-host');
 });
 
-test('getCmrHost throws error if provided environment is falsy', (t) => {
+test('getCmrHost throws error if provided environment is incorrect', (t) => {
+  t.throws(() => getCmrHost({ cmrEnvironment: 'foo' }));
   t.throws(() => getCmrHost());
-  // eslint-disable-next-line unicorn/no-null
-  t.throws(() => getCmrHost(null));
 });
 
 test.serial('getCmrHost uses process.env.CMR_ENVIRONMENT logical name, if provided', (t) => {
@@ -26,9 +25,9 @@ test.serial('getCmrHost uses process.env.CMR_ENVIRONMENT logical name, if provid
   t.is(getCmrHost(), 'cmr.earthdata.nasa.gov');
 });
 
-test.serial('getCmrHost uses process.env.CMR_ENVIRONMENT custom host, if provided', (t) => {
-  process.env.CMR_ENVIRONMENT = 'cmr-host';
-  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
+test.serial('getCmrHost uses process.env.CMR_HOST custom host, if provided', (t) => {
+  process.env.CMR_HOST = 'cmr-host';
+  t.teardown(() => delete process.env.CMR_HOST);
   t.is(getCmrHost(), 'cmr-host');
 });
 
