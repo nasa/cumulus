@@ -35,7 +35,7 @@ export function getCmrHost({
 
 export function getIngestUrl({
   host,
-  cmrEnv = process.env.CMR_ENVIRONMENT,
+  cmrEnv,
   provider,
 }: {
   host?: string,
@@ -47,7 +47,7 @@ export function getIngestUrl({
 
 export function getSearchUrl({
   host,
-  cmrEnv = process.env.CMR_ENVIRONMENT,
+  cmrEnv,
 }: {
   host?: string,
   cmrEnv?: string,
@@ -57,7 +57,7 @@ export function getSearchUrl({
 
 export function getTokenUrl({
   host,
-  cmrEnv = process.env.CMR_ENVIRONMENT,
+  cmrEnv,
 }: {
   host?: string,
   cmrEnv?: string,
@@ -67,7 +67,7 @@ export function getTokenUrl({
 
 export function getValidateUrl({
   host,
-  cmrEnv = process.env.CMR_ENVIRONMENT,
+  cmrEnv,
   provider,
 }: {
   host?: string,

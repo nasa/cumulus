@@ -140,6 +140,7 @@ resource "aws_lambda_function" "execute_migrations" {
   environment {
     variables = {
       CMR_ENVIRONMENT            = var.cmr_environment
+      CMR_HOST                   = var.cmr_custom_host
       ES_HOST                    = var.elasticsearch_hostname
       ExecutionsTable            = var.dynamo_tables.executions.name
       FilesTable                 = var.dynamo_tables.files.name

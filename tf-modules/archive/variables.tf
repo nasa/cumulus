@@ -141,6 +141,12 @@ variable "api_url" {
   description = "If not specified, the value of the API Gateway endpoint is used"
 }
 
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = ""
+}
+
 variable "cmr_limit" {
   type    = number
   default = 100
