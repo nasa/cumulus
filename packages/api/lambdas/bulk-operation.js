@@ -129,35 +129,12 @@ async function bulkGranuleDelete(payload) {
   await pMap(
     granuleIds,
     async (granuleId) => {
+      let dynamoGranule;
+      let pgGranule;
+
       try {
-        const dynamoGranule = await granuleModel.getRecord({ granuleId });
-
-        let pgGranule;
-
-        // We may not have a Postgres granule. Try to find one but
-        // if it does not exist, do not throw error.
-        try {
-          pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
-        } catch (error) {
-          if (!(error instanceof RecordDoesNotExist)) {
-            throw error;
-          }
-        }
-
-        if (dynamoGranule.published && forceRemoveFromCmr) {
-          // FUTURE: the Dynamo Granule is currently the primary record.
-          // This should be switched to pgGranule once the postgres
-          // reads are implemented.
-          await unpublishGranule(dynamoGranule);
-        }
-
-        await deleteGranuleAndFiles({
-          knex,
-          dynamoGranule,
-          pgGranule,
-        });
-
-        deletedGranules.push(granuleId);
+        dynamoGranule = await granuleModel.getRecord({ granuleId });
+        pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
       } catch (error) {
         if (error instanceof RecordDoesNotExist) {
           log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
@@ -165,6 +142,22 @@ async function bulkGranuleDelete(payload) {
         }
         throw error;
       }
+
+      // FUTURE: the Dynamo Granule is currently the primary record driving the
+      // "unpublish from CMR" logic.
+      // This should be switched to pgGranule once the postgres
+      // reads are implemented.
+      if (dynamoGranule.published && forceRemoveFromCmr) {
+        await unpublishGranule(dynamoGranule);
+      }
+
+      await deleteGranuleAndFiles({
+        knex,
+        dynamoGranule,
+        pgGranule,
+      });
+
+      deletedGranules.push(granuleId);
     },
     {
       concurrency: 10, // is this necessary?
