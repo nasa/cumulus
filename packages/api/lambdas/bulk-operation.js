@@ -7,7 +7,8 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const { GranulePgModel, getKnexClient } = require('@cumulus/db');
 
 const GranuleModel = require('../models/granules');
-const { deleteGranuleAndFiles, removeGranuleFromCmr } = require('../lib/granules');
+const { deleteGranuleAndFiles } = require('../lib/granule-delete');
+const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 
 const SCROLL_SIZE = 500; // default size in Kibana
 
@@ -131,29 +132,29 @@ async function bulkGranuleDelete(payload) {
       try {
         const dynamoGranule = await granuleModel.getRecord({ granuleId });
 
-        // We may not have a Postgres granule
         let pgGranule;
 
+        // We may not have a Postgres granule. Try to find one but
+        // if it does not exist, do not throw error.
         try {
           pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
         } catch (error) {
-          log.info(error);
+          if (!(error instanceof RecordDoesNotExist)) {
+            throw error;
+          }
         }
 
         if (dynamoGranule.published && forceRemoveFromCmr) {
           // FUTURE: the Dynamo Granule is currently the primary record.
           // This should be switched to pgGranule once the postgres
           // reads are implemented.
-
-          // TODO this throws error
-          await removeGranuleFromCmr(dynamoGranule);
+          await unpublishGranule(dynamoGranule);
         }
 
         await deleteGranuleAndFiles({
           knex,
           dynamoGranule,
           pgGranule,
-          granuleModelClient: granuleModel,
         });
 
         deletedGranules.push(granuleId);

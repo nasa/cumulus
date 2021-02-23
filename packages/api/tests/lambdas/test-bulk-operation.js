@@ -5,7 +5,7 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
-const { createS3Buckets, deleteS3Buckets } = require('@cumulus/aws-client/S3');
+const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
@@ -24,9 +24,10 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   '@elastic/elasticsearch': { Client: FakeEsClient },
 });
 
+const models = require('../../models');
+
 let applyWorkflowStub;
 let reingestStub;
-let s3Buckets = {};
 
 const envVars = {
   asyncOperationId: randomId('asyncOperationId'),
@@ -52,33 +53,22 @@ test.before(async (t) => {
   process.env.METRICS_ES_USER = randomId('user');
   process.env.METRICS_ES_PASS = randomId('pass');
   process.env.GranulesTable = randomId('granule');
+  process.env.CollectionsTable = randomId('collection');
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
 
+  // create a fake bucket
+  await createBucket(envVars.system_bucket);
+
+  await new models.Collection().createTable();
   await new Granule().createTable();
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');
   reingestStub = sandbox.stub(Granule.prototype, 'reingest');
   sandbox.stub(Granule.prototype, '_removeGranuleFromCmr').resolves();
-
-  s3Buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-
-  await createS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]);
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
@@ -298,22 +288,24 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
     createGranuleAndFiles({
       dbClient: t.context.knex,
       published: false,
-      s3Buckets,
     }),
     createGranuleAndFiles({
       dbClient: t.context.knex,
       published: false,
-      s3Buckets,
     }),
   ]);
+
+  const s3Buckets = granules[0].s3Buckets;
+  const dynamoGranuleId1 = granules[0].newDynamoGranule.granuleId;
+  const dynamoGranuleId2 = granules[1].newDynamoGranule.granuleId;
 
   const { deletedGranules } = await bulkOperation.handler({
     type: 'BULK_GRANULE_DELETE',
     envVars,
     payload: {
       ids: [
-        granules[0].granuleId,
-        granules[1].granuleId,
+        dynamoGranuleId1,
+        dynamoGranuleId2,
       ],
     },
   });
@@ -321,18 +313,18 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
   t.deepEqual(
     deletedGranules.sort(),
     [
-      granules[0].granuleId,
-      granules[1].granuleId,
+      dynamoGranuleId1,
+      dynamoGranuleId2,
     ].sort()
   );
 
   // Granules should have been deleted from Dynamo
-  t.false(await granuleModel.exists({ granuleId: granules[0].granuleId }));
-  t.false(await granuleModel.exists({ granuleId: granules[1].granuleId }));
+  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
+  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
 
   // Granules should have been deleted from PG
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granules[0].granuleId }));
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granules[1].granuleId }));
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
 
   t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,
@@ -340,6 +332,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
   ]));
 });
 
+// TODO fails if run as only
 test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do not error', async (t) => {
   const errorMessage = 'fail';
   let count = 0;
@@ -356,14 +349,13 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
     deleteStub.restore();
   });
 
-  const granuleModel = new Granule();
   const granules = await Promise.all([
-    granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2()),
-    granuleModel.create(fakeGranuleFactoryV2()),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
   ]);
 
   const aggregateError = await t.throwsAsync(bulkOperation.handler({
@@ -371,12 +363,12 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
     envVars,
     payload: {
       ids: [
-        granules[0].granuleId,
-        granules[1].granuleId,
-        granules[2].granuleId,
-        granules[3].granuleId,
-        granules[4].granuleId,
-        granules[5].granuleId,
+        granules[0].newDynamoGranule.granuleId,
+        granules[1].newDynamoGranule.granuleId,
+        granules[2].newDynamoGranule.granuleId,
+        granules[3].newDynamoGranule.granuleId,
+        granules[4].newDynamoGranule.granuleId,
+        granules[5].newDynamoGranule.granuleId,
       ],
     },
   }));
@@ -391,13 +383,19 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
       errorMessage,
     ]
   );
+
+  const s3Buckets = granules[0].s3Buckets;
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by query', async (t) => {
-  const granuleModel = new Granule();
   const granules = await Promise.all([
-    granuleModel.create(fakeGranuleFactoryV2({ published: false })),
-    granuleModel.create(fakeGranuleFactoryV2({ published: false })),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
   ]);
 
   esSearchStub.resolves({
@@ -405,11 +403,11 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
       hits: {
         hits: [{
           _source: {
-            granuleId: granules[0].granuleId,
+            granuleId: granules[0].newDynamoGranule.granuleId,
           },
         }, {
           _source: {
-            granuleId: granules[1].granuleId,
+            granuleId: granules[1].newDynamoGranule.granuleId,
           },
         }],
         total: {
@@ -432,17 +430,16 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
   t.deepEqual(
     deletedGranules.sort(),
     [
-      granules[0].granuleId,
-      granules[1].granuleId,
+      granules[0].newDynamoGranule.granuleId,
+      granules[1].newDynamoGranule.granuleId,
     ].sort()
   );
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
-  const granuleModel = new Granule();
   const granules = await Promise.all([
-    granuleModel.create(fakeGranuleFactoryV2({ published: true })),
-    granuleModel.create(fakeGranuleFactoryV2({ published: true })),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
   ]);
 
   const { deletedGranules } = await bulkOperation.handler({
@@ -450,8 +447,8 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
     envVars,
     payload: {
       ids: [
-        granules[0].granuleId,
-        granules[1].granuleId,
+        granules[0].newDynamoGranule.granuleId,
+        granules[1].newDynamoGranule.granuleId,
       ],
       forceRemoveFromCmr: true,
     },
@@ -460,8 +457,8 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
   t.deepEqual(
     deletedGranules.sort(),
     [
-      granules[0].granuleId,
-      granules[1].granuleId,
+      granules[0].newDynamoGranule.granuleId,
+      granules[1].newDynamoGranule.granuleId,
     ].sort()
   );
 });

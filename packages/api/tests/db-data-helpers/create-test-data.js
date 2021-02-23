@@ -1,12 +1,14 @@
 'use strict';
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { s3PutObject, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const {
   FilePgModel,
   GranulePgModel,
   CollectionPgModel,
 } = require('@cumulus/db');
+
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // PG mock data factories
 const {
@@ -21,6 +23,7 @@ const {
 // Dynamo mock data factories
 const {
   fakeGranuleFactoryV2,
+  fakeCollectionFactory,
 } = require('../../lib/testUtils');
 
 const models = require('../../models');
@@ -28,6 +31,7 @@ const models = require('../../models');
 /**
  * Helper for creating a granule, and files belonging to that granule
  * @param {Knex} dbClient - Knex client
+ * @param {number} collectionId - collectionId for the granule's parent collection
  * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
  * @param {boolean} published - if the granule should be marked published to CMR
  * @returns {Object} fake granule object
@@ -36,7 +40,7 @@ async function createGranuleAndFiles({
   dbClient,
   collectionId,
   collectionCumulusId,
-  published,
+  published = false,
 }) {
   const s3Buckets = {
     protected: {
@@ -60,10 +64,35 @@ async function createGranuleAndFiles({
 
   const granuleId = randomId('granule');
 
+  const collectionName = randomString(5);
+  const collectionVersion = randomString(3);
+
+  // If a collectionId for a Dynamo Collection was not passed,
+  // create one to use for the Granule creation
+  if (!collectionId) {
+    const testCollection = fakeCollectionFactory({
+      name: collectionName,
+      version: collectionVersion,
+      duplicateHandling: 'error',
+    });
+
+    const collectionDynamoModel = new models.Collection();
+    const dynamoCollection = await collectionDynamoModel.create(testCollection);
+
+    collectionId = constructCollectionId(
+      dynamoCollection.name,
+      dynamoCollection.version
+    );
+  }
+
   // If a cumulus_id for a Collection was not passed,
   // create one to use for the Granule creation
   if (!collectionCumulusId) {
-    const testPgCollection = fakeCollectionRecordFactory();
+    const testPgCollection = fakeCollectionRecordFactory({
+      name: collectionName,
+      version: collectionVersion,
+    });
+
     const collectionPgModel = new CollectionPgModel();
     [collectionCumulusId] = await collectionPgModel.create(
       dbClient,
