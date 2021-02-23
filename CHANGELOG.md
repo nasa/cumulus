@@ -10,9 +10,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
+### Added
+
+- **CUMULUS-2345**
+  - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+
 ### Changed
 
 - `cmr_environment` variable for `cumulus` Terraform module can now be set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`) or one of the logical environment names for NASA CMR (e.g. `OPS`, `SIT`, `UAT`).
+- **CUMULUS-2362**
+  - Logs endpoints only work with Metrics set up
 
 ## [v6.0.0] 2021-02-16
 
@@ -72,8 +80,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
 - **CUMULUS-2321**
   - Updated API endpoint GET `/reconciliationReports/{name}` to return the pre-signed s3 URL in addition to report data
-- **CUMULUS-2362**
-  - Logs endpoints only work with Metrics set up
 
 ### Fixed
 
@@ -83,6 +89,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Use valid filename for reconciliation report
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+
+### Removed
+
+- **CUMULUS-2364**
+  - Remove the internal Cumulus logging lambda (log2elasticsearch)
 
 ## [v5.0.1] 2021-01-27
 

@@ -357,3 +357,78 @@ variable "ecs_custom_sg_ids" {
   type = list(string)
   default = []
 }
+
+## ORCA Variables Definitions
+
+variable "platform" {
+  default = "AWS"
+  type = string
+  description = "Indicates if running locally (onprem) or in AWS (AWS)."
+}
+
+variable "database_name" {
+  default = "orca"
+  type = string
+  description = "Name of the ORCA database that contains state information."
+}
+
+variable "database_port" {
+  default = "5432"
+  type = string
+  description = "Port the database listens on."
+}
+
+variable "postgres_user_pw" {
+  type = string
+  description = "postgres database user password."
+}
+
+variable "database_app_user" {
+  default = "orca_user"
+  type = string
+  description = "ORCA application database user name."
+}
+
+variable "database_app_user_pw" {
+  type = string
+  description = "ORCA application database user password."
+}
+
+variable "drop_database" {
+  default = "False"
+  type = string
+  description = "Tells ORCA to drop the database on deployments."
+}
+
+variable "ddl_dir" {
+  default = "ddl/"
+  type = string
+  description = "The location of the ddl dir that contains the sql to create the application database."
+}
+
+variable "lambda_timeout" {
+  default = 300
+  type = number
+  description = "Lambda max time before a timeout error is thrown."
+}
+
+variable "restore_complete_filter_prefix" {
+  default = ""
+  type = string
+  description = ""
+}
+
+variable "copy_retry_sleep_secs" {
+  default = 0
+  type = number
+  description = "How many seconds to wait between retry calls to `copy_object`."
+}
+
+variable "default_tags" {
+  type = object({ team = string, application = string })
+  default = {
+    team : "DR",
+    application : "disaster-recovery"
+  }
+}
+
