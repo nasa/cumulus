@@ -121,3 +121,74 @@ test('GranulesExecutionsPgModel.exists() correctly returns false', async (t) => 
     );
   });
 });
+
+test('GranulesExecutionsPgModel.upsert() creates a new granule/execution join record', async (t) => {
+  const {
+    knex,
+    granulesExecutionsPgModel,
+    joinRecord,
+  } = t.context;
+
+  t.plan(1);
+
+  await knex.transaction(async (trx) => {
+    await granulesExecutionsPgModel.upsert(trx, joinRecord);
+    const records = await trx(tableNames.granulesExecutions).where(joinRecord);
+    t.is(
+      records.length,
+      1
+    );
+  });
+});
+
+test('GranulesExecutionsPgModel.upsert() overwrites a new granule/execution join record', async (t) => {
+  const {
+    knex,
+    granulesExecutionsPgModel,
+    joinRecord,
+  } = t.context;
+
+  t.plan(2);
+
+  await knex.transaction(async (trx) => {
+    await granulesExecutionsPgModel.upsert(trx, joinRecord);
+    t.true(await granulesExecutionsPgModel.exists(trx, joinRecord));
+    await granulesExecutionsPgModel.upsert(trx, joinRecord);
+    t.true(await granulesExecutionsPgModel.exists(trx, joinRecord));
+  });
+});
+
+test('GranulesExecutionsPgModel.search() returns all granule/execution join records matching query', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulesExecutionsPgModel,
+    executionCumulusId,
+    joinRecord,
+  } = t.context;
+
+  t.plan(1);
+
+  await knex.transaction(async (trx) => {
+    await granulesExecutionsPgModel.create(trx, joinRecord);
+    const [newExecutionCumulusId] = await executionPgModel.create(
+      trx,
+      fakeExecutionRecordFactory()
+    );
+
+    await granulesExecutionsPgModel.create(trx, {
+      ...joinRecord,
+      execution_cumulus_id: newExecutionCumulusId,
+    });
+
+    t.deepEqual(
+      await granulesExecutionsPgModel.search(trx, {
+        granule_cumulus_id: joinRecord.granule_cumulus_id,
+      }),
+      [executionCumulusId, newExecutionCumulusId].map((executionId) => ({
+        execution_cumulus_id: executionId,
+        granule_cumulus_id: joinRecord.granule_cumulus_id,
+      }))
+    );
+  });
+});
