@@ -12,13 +12,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can be used to set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`).
 - **CUMULUS-2345**
   - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
   - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
 
 ### Changed
 
-- `cmr_environment` variable for `cumulus` Terraform module can now be set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`) or one of the logical environment names for NASA CMR (e.g. `OPS`, `SIT`, `UAT`).
 - **CUMULUS-2362**
   - Logs endpoints only work with Metrics set up
 
