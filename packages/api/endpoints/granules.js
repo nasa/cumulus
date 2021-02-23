@@ -169,16 +169,18 @@ async function del(req, res) {
 
   // If the granule does not exist in PG, just log it
   try {
-    const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
-    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-      knex,
-      { name, version }
-    );
-    // Need granule_id + collection_cumulus_id to get truly unique record.
-    pgGranule = await granulePgModel.get(knex, {
-      granule_id: granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    });
+    if (dynamoGranule.collectionId) {
+      const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
+      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+        knex,
+        { name, version }
+      );
+      // Need granule_id + collection_cumulus_id to get truly unique record.
+      pgGranule = await granulePgModel.get(knex, {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      });
+    }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       log.info(`Postgres Granule with ID ${granuleId} does not exist`);
