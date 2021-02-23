@@ -200,7 +200,6 @@ const writeGranuleAndFilesViaTransaction = async ({
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
-  granulePgModel = new GranulePgModel(),
   fileUtils = FileUtils,
   trx,
 }) => {
