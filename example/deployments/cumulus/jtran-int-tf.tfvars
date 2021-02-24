@@ -4,6 +4,10 @@ cmr_oauth_provider = "launchpad"
 
 system_bucket     = "jtran-int-tf-internal"
 buckets = {
+  glacier = {
+    name = "jtran-int-tf-orca-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "jtran-int-tf-internal"
     type = "internal"
