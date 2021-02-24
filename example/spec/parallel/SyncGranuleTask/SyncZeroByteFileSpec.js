@@ -142,7 +142,8 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
       expect(syncGranuleOutput.FunctionError).toBe(undefined);
 
       const parsedPayload = JSON.parse(syncGranuleOutput.Payload);
-      expect(parsedPayload.exception).toBe('None');
+      expect(parsedPayload.errorType).toBe(undefined);
+      expect(parsedPayload.errorMessage).toBe(undefined);
     }
   });
 
