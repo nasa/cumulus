@@ -1,5 +1,5 @@
 ---
-id: version-7.0.0-run-tasks-in-lambda-or-docker
+id: version-v7.0.0-run-tasks-in-lambda-or-docker
 title: Run Step Function Tasks in AWS Lambda or Docker
 hide_title: false
 original_id: run-tasks-in-lambda-or-docker

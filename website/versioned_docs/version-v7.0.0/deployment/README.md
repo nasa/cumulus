@@ -1,5 +1,5 @@
 ---
-id: version-7.0.0-deployment-readme
+id: version-v7.0.0-deployment-readme
 title: How to Deploy Cumulus
 hide_title: false
 original_id: deployment-readme
