@@ -16,9 +16,9 @@ const { lambda } = require('@cumulus/aws-client/services');
 const S3 = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
-// const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
+const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
-describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
+describe('The SyncGranule task with a 0 byte file to be synced', () => {
   let beforeAllFailed = false;
   let collection;
   let granuleId;
@@ -26,8 +26,8 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
   let provider;
   let syncGranuleOutput;
 
-  const bucket = `sync-zero-byte-file-spec-${cryptoRandomString({ length: 10 })}`;
-  const filename = `ZeroByteFile_${cryptoRandomString({ length: 3 })}`;
+  // const bucket = `sync-zero-byte-file-spec-${cryptoRandomString({ length: 10 })}`;
+  const filename = '0byte.dat';
 
   beforeAll(async () => {
     try {
@@ -35,12 +35,11 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
 
       prefix = config.stackName;
 
-      // Create source bucket for data
-      await S3.createBucket(bucket);
+      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
 
       // Stage zero byte file for sync-granule
       await S3.s3PutObject({
-        Bucket: bucket,
+        Bucket: fakeS3ProviderBucket,
         Key: filename,
         Body: '',
       });
@@ -55,7 +54,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
       );
 
       // Create the S3 provider
-      provider = await createProvider(prefix, { host: bucket });
+      provider = await createProvider(prefix, { host: fakeS3ProviderBucket });
 
       granuleId = randomId('granule-id-');
 
@@ -114,7 +113,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
                   version: collection.version,
                   files: [
                     {
-                      bucket,
+                      bucket: fakeS3ProviderBucket,
                       name: filename,
                       path: '',
                       size: 0,

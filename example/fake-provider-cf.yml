@@ -214,6 +214,8 @@ Resources:
             dd if=/dev/zero bs=512M count=2 > ~/1G.dat
             dd if=/dev/zero bs=512M count=22 | aws s3 cp - s3://${S3ProviderBucket}/11G.dat
 
+            touch 0byte.dat | aws s3 cp - s3://${S3ProviderBucket}/0byte.dat
+
             sha256sum ~/1G.dat | awk '{printf "%s",$1}' > ~/1G.dat.sha256
 
             aws s3 cp ~/1G.dat s3://${S3ProviderBucket}/1G.dat
