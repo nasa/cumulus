@@ -5,9 +5,9 @@ const nock = require('nock');
 const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
+const errors = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
-const ValidationError = require('../ValidationError');
 
 test.before(() => {
   nock.disableNetConnect();
@@ -145,7 +145,7 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
 
   await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata),
-    { instanceOf: ValidationError }
+    { instanceOf: errors.ValidationError }
   );
 });
 

@@ -1,6 +1,6 @@
 import got from 'got';
+import { ValidationError } from '@cumulus/errors';
 import { getValidateUrl } from './getUrl';
-import ValidationError from './ValidationError';
 
 export interface UmmMetadata {
   GranuleUR?: string,

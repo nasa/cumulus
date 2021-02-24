@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const nock = require('nock');
-const ValidationError = require('../ValidationError');
+const { ValidationError } = require('@cumulus/errors');
 const validate = require('../validate');
 const { ummVersion, validateUMMG } = require('../UmmUtils');
 

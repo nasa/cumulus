@@ -3,6 +3,7 @@
 const got = require('got');
 const sinon = require('sinon');
 const test = require('ava');
+const errors = require('@cumulus/errors');
 const ingestConcept = require('../ingestConcept');
 
 const clientId = 'cumulus-test-client';
@@ -27,6 +28,11 @@ const gotResponses = {
     statusMessage: 'bad request',
     body: '<errors><error>Bad request</error></errors>',
   },
+  500: {
+    statusCode: 500,
+    statusMessage: 'internal error',
+    body: '<errors><error>Internal error</error></errors>',
+  },
 };
 
 test.serial('ingestConcept request includes CMR client id', async (t) => {
@@ -44,7 +50,13 @@ test.serial('ingestConcept request includes CMR client id', async (t) => {
     noPost.restore();
   });
 
-  await ingestConcept('granule', '<Granule><GranuleUR>granule1</GranuleUR></Granule>', 'Granule.GranuleUR', 'CUMULUS', { 'Client-Id': clientId });
+  await ingestConcept(
+    'granule',
+    '<Granule><GranuleUR>granule1</GranuleUR></Granule>',
+    'Granule.GranuleUR',
+    'CUMULUS',
+    { 'Client-Id': clientId }
+  );
   t.is(request.headers['Client-Id'], clientId);
 });
 
@@ -59,6 +71,58 @@ test.serial('ingestConcept response includes concept id', async (t) => {
     noPost.restore();
   });
 
-  const response = await ingestConcept('granule', '<Granule><GranuleUR>granule1</GranuleUR></Granule>', 'Granule.GranuleUR', 'CUMULUS', { 'Client-Id': clientId });
+  const response = await ingestConcept(
+    'granule',
+    '<Granule><GranuleUR>granule1</GranuleUR></Granule>',
+    'Granule.GranuleUR',
+    'CUMULUS',
+    { 'Client-Id': clientId }
+  );
   t.is(response.result['concept-id'], conceptId);
+});
+
+test.serial('ingestConcept returns error when CMR is down', async (t) => {
+  process.env.CMR_ENVIRONMENT = 'SIT';
+
+  const stub = sinon.stub(got, 'put').resolves(gotResponses[500]);
+  // intercept validate
+  const noPost = sinon.stub(got, 'post').resolves(gotResponses[500]);
+  t.teardown(() => {
+    stub.restore();
+    noPost.restore();
+  });
+
+  await t.throwsAsync(
+    ingestConcept(
+      'granule',
+      '<Granule><GranuleUR>granule1</GranuleUR></Granule>',
+      'Granule.GranuleUR',
+      'CUMULUS',
+      { 'Client-Id': clientId }
+    ),
+    { instanceOf: errors.CMRInternalError }
+  );
+});
+
+test.serial('ingestConcept returns Validation error for all other errors', async (t) => {
+  process.env.CMR_ENVIRONMENT = 'SIT';
+
+  const stub = sinon.stub(got, 'put').resolves(gotResponses[400]);
+  // intercept validate
+  const noPost = sinon.stub(got, 'post').resolves(gotResponses[400]);
+  t.teardown(() => {
+    stub.restore();
+    noPost.restore();
+  });
+
+  await t.throwsAsync(
+    ingestConcept(
+      'granule',
+      '<Granule><GranuleUR>granule1</GranuleUR></Granule>',
+      'Granule.GranuleUR',
+      'CUMULUS',
+      { 'Client-Id': clientId }
+    ),
+    { instanceOf: errors.ValidationError }
+  );
 });
