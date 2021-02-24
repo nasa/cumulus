@@ -53,7 +53,7 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
       deconstructCollectionId(granule.collectionId)
     );
 
-    await granulePgModel.update(
+    [pgGranule] = await granulePgModel.update(
       knexOrTransaction,
       {
         granule_id: granule.granuleId,
@@ -62,15 +62,8 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
       {
         published: false,
         cmr_link: undefined,
-      }
-    );
-
-    pgGranule = await granulePgModel.get(
-      knexOrTransaction,
-      {
-        granule_id: granule.granuleId,
-        collection_cumulus_id: collectionCumulusId,
-      }
+      },
+      ['cumulus_id']
     );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
