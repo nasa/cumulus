@@ -1,5 +1,5 @@
 ---
-id: version-7.0.0-dead_letter_queues
+id: version-v7.0.0-dead_letter_queues
 title: Dead Letter Queues
 hide_title: false
 original_id: dead_letter_queues
