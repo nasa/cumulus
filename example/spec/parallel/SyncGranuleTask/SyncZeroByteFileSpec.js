@@ -1,6 +1,5 @@
 'use strict';
 
-const cryptoRandomString = require('crypto-random-string');
 const get = require('lodash/get');
 const pAll = require('p-all');
 const pTimeout = require('p-timeout');
@@ -26,7 +25,6 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
   let provider;
   let syncGranuleOutput;
 
-  // const bucket = `sync-zero-byte-file-spec-${cryptoRandomString({ length: 10 })}`;
   const filename = '0byte.dat';
 
   beforeAll(async () => {
@@ -157,7 +155,6 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
     await pAll(
       [
         () => S3.deleteS3Object(parsedFileUrl.Bucket, parsedFileUrl.Key),
-        () => S3.recursivelyDeleteS3Bucket(bucket),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,
