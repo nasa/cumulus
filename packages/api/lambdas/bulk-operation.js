@@ -148,7 +148,7 @@ async function bulkGranuleDelete(payload) {
       // This should be switched to pgGranule once the postgres
       // reads are implemented.
       if (dynamoGranule.published && forceRemoveFromCmr) {
-        await unpublishGranule(dynamoGranule);
+        await unpublishGranule(knex, dynamoGranule);
       }
 
       await deleteGranuleAndFiles({
