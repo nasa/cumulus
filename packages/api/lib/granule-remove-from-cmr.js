@@ -45,7 +45,7 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
 
   await _removeGranuleFromCmr(granule);
 
-  // If we cannot find a PG Collection for this granule,
+  // If we cannot find a PG Collection or PG Granule,
   // don't update the PG Granule, continue to update the Dynamo granule
   try {
     const collectionCumulusId = await collectionPgModel.getRecordCumulusId(

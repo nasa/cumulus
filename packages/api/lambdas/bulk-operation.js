@@ -106,6 +106,11 @@ function applyWorkflowToGranules({
   return Promise.all(applyWorkflowRequests);
 }
 
+// FUTURE: the Dynamo Granule is currently the primary record driving the
+// "unpublish from CMR" logic.
+// This should be switched to pgGranule once the postgres
+// reads are implemented.
+
 /**
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
  * ES using the provided query and index.
@@ -132,9 +137,10 @@ async function bulkGranuleDelete(payload) {
       let dynamoGranule;
       let pgGranule;
 
+      // Try to get the Dynamo record. If it cannot be found, just log
+      // the error and skip it.
       try {
         dynamoGranule = await granuleModel.getRecord({ granuleId });
-        pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
       } catch (error) {
         if (error instanceof RecordDoesNotExist) {
           log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
@@ -143,16 +149,27 @@ async function bulkGranuleDelete(payload) {
         throw error;
       }
 
-      // FUTURE: the Dynamo Granule is currently the primary record driving the
-      // "unpublish from CMR" logic.
-      // This should be switched to pgGranule once the postgres
-      // reads are implemented.
+      // Try to get the PG record. If it cannot be found, ignore it and
+      // move along to unpublishing and deleting only the Dynamo record.
+      // If another error is thrown, throw it here.
+      try {
+        pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+      } catch (error) {
+        if (!(error instanceof RecordDoesNotExist)) {
+          throw error;
+        }
+      }
+
+      // Using the Dynamo record as the primary source, unpublish it from
+      // CMR if it's published and we need to force-remove it.
       let updateResponse;
 
       if (dynamoGranule && dynamoGranule.published && forceRemoveFromCmr) {
         updateResponse = await unpublishGranule(knex, dynamoGranule);
       }
 
+      // Delete the Dynamo Granule, the Postgres Granule (if one was found),
+      // and associated files.
       await deleteGranuleAndFiles({
         knex,
         dynamoGranule: updateResponse ? updateResponse.dynamoGranule : dynamoGranule,
