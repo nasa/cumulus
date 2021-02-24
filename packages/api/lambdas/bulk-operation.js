@@ -4,8 +4,9 @@ const pMap = require('p-map');
 
 const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { GranulePgModel, getKnexClient } = require('@cumulus/db');
+const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
 
+const { deconstructCollectionId } = require('../lib/utils');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -134,6 +135,8 @@ async function bulkGranuleDelete(payload) {
   await pMap(
     granuleIds,
     async (granuleId) => {
+      const collectionPgModel = new CollectionPgModel();
+
       let dynamoGranule;
       let pgGranule;
 
@@ -153,7 +156,16 @@ async function bulkGranuleDelete(payload) {
       // move along to unpublishing and deleting only the Dynamo record.
       // If another error is thrown, throw it here.
       try {
-        pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+        const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+          knex,
+          deconstructCollectionId(dynamoGranule.collectionId)
+        );
+
+        pgGranule = await granulePgModel.get(knex,
+          {
+            granule_id: granuleId,
+            collection_cumulus_id: collectionCumulusId,
+          });
       } catch (error) {
         if (!(error instanceof RecordDoesNotExist)) {
           throw error;
