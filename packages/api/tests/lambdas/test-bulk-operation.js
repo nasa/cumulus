@@ -3,10 +3,12 @@ const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
+const awsServices = require('@cumulus/aws-client/services');
 const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require('@cumulus/db');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
-
+const { CMR } = require('@cumulus/cmr-client');
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
 const Granule = require('../../models/granules');
@@ -73,13 +75,36 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+
+  // Store the CMR password
+  process.env.cmr_password_secret_name = randomString();
+  await awsServices.secretsManager().createSecret({
+    Name: envVars.cmr_password_secret_name,
+    SecretString: randomString(),
+  }).promise();
+
+  // Store the launchpad passphrase
+  process.env.launchpad_passphrase_secret_name = randomString();
+  await awsServices.secretsManager().createSecret({
+    Name: envVars.launchpad_passphrase_secret_name,
+    SecretString: randomString(),
+  }).promise();
 });
 
 test.afterEach.always(() => {
   sandbox.resetHistory();
 });
 
-test.after.always(() => {
+test.after.always(async () => {
+  await awsServices.secretsManager().deleteSecret({
+    SecretId: envVars.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true,
+  }).promise();
+  await awsServices.secretsManager().deleteSecret({
+    SecretId: envVars.launchpad_passphrase_secret_name,
+    ForceDeleteWithoutRecovery: true,
+  }).promise();
+
   sandbox.restore();
 });
 
@@ -182,6 +207,7 @@ test('bulk operation lambda throws error for unknown event type', async (t) => {
   }));
 });
 
+// This test must run for the following tests to pass
 test.serial('bulk operation lambda sets env vars provided in payload', async (t) => {
   const granuleModel = new Granule();
   const granule = await granuleModel.create(fakeGranuleFactoryV2());
@@ -332,7 +358,6 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
   ]));
 });
 
-// TODO fails if run as only
 test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do not error', async (t) => {
   const errorMessage = 'fail';
   let count = 0;
@@ -434,33 +459,66 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
       granules[1].newDynamoGranule.granuleId,
     ].sort()
   );
+
+  const s3Buckets = granules[0].s3Buckets;
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
   const granules = await Promise.all([
-    createGranuleAndFiles({ dbClient: t.context.knex }),
-    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
+    createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
   ]);
 
-  const { deletedGranules } = await bulkOperation.handler({
-    type: 'BULK_GRANULE_DELETE',
-    envVars,
-    payload: {
-      ids: [
+  sinon.stub(
+    DefaultProvider,
+    'decrypt'
+  ).callsFake(() => Promise.resolve('fakePassword'));
+
+  sinon.stub(
+    CMR.prototype,
+    'deleteGranule'
+  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
+
+  sinon.stub(
+    CMR.prototype,
+    'getGranuleMetadata'
+  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
+
+  try {
+    const { deletedGranules } = await bulkOperation.handler({
+      type: 'BULK_GRANULE_DELETE',
+      envVars,
+      payload: {
+        ids: [
+          granules[0].newDynamoGranule.granuleId,
+          granules[1].newDynamoGranule.granuleId,
+        ],
+        forceRemoveFromCmr: true,
+      },
+    });
+
+    t.deepEqual(
+      deletedGranules.sort(),
+      [
         granules[0].newDynamoGranule.granuleId,
         granules[1].newDynamoGranule.granuleId,
-      ],
-      forceRemoveFromCmr: true,
-    },
-  });
+      ].sort()
+    );
+  } finally {
+    CMR.prototype.deleteGranule.restore();
+    DefaultProvider.decrypt.restore();
+    CMR.prototype.getGranuleMetadata.restore();
+  }
 
-  t.deepEqual(
-    deletedGranules.sort(),
-    [
-      granules[0].newDynamoGranule.granuleId,
-      granules[1].newDynamoGranule.granuleId,
-    ].sort()
-  );
+  const s3Buckets = granules[0].s3Buckets;
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE does not throw error for granules that were already removed', async (t) => {

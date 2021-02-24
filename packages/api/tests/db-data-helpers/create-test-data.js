@@ -1,7 +1,7 @@
 'use strict';
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { s3PutObject, s3ObjectExists } = require('@cumulus/aws-client/S3');
+const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
   FilePgModel,
   GranulePgModel,
@@ -29,7 +29,8 @@ const {
 const models = require('../../models');
 
 /**
- * Helper for creating a granule, and files belonging to that granule
+ * Helper for creating a granule, a parent collection,
+ * and files belonging to that granule (in S3 and PG)
  * @param {Knex} dbClient - Knex client
  * @param {number} collectionId - collectionId for the granule's parent collection
  * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
@@ -73,7 +74,6 @@ async function createGranuleAndFiles({
     const testCollection = fakeCollectionFactory({
       name: collectionName,
       version: collectionVersion,
-      duplicateHandling: 'error',
     });
 
     const collectionDynamoModel = new models.Collection();

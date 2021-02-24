@@ -41,6 +41,8 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
 
+  let pgGranule;
+
   await _removeGranuleFromCmr(granule);
 
   // If we cannot find a PG Collection for this granule,
@@ -62,13 +64,24 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
         cmr_link: undefined,
       }
     );
+
+    pgGranule = await granulePgModel.get(
+      knexOrTransaction,
+      {
+        granule_id: granule.granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }
   }
 
-  return granuleModelClient.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+  return {
+    dynamoGranule: await granuleModelClient.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']),
+    pgGranule: pgGranule,
+  };
 };
 
 module.exports = {

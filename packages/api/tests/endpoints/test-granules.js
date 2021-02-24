@@ -538,8 +538,6 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 test.serial('remove a granule from CMR', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    collectionId: t.context.collectionId,
-    collectionCumulusId: t.context.collectionCumulusId,
     published: true,
   });
 
@@ -644,8 +642,6 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
 test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    collectionId: t.context.collectionId,
-    collectionCumulusId: t.context.collectionCumulusId,
     published: true,
   });
 
@@ -685,8 +681,6 @@ test('DELETE deleting an existing granule that is published will fail and not de
 test('DELETE deleting an existing unpublished granule', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    collectionId: t.context.collectionId,
-    collectionCumulusId: t.context.collectionCumulusId,
     published: false,
   });
 
@@ -804,8 +798,6 @@ test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    collectionId: t.context.collectionId,
-    collectionCumulusId: t.context.collectionCumulusId,
     published: false,
   });
 
