@@ -79,17 +79,39 @@ class S3ProviderClient implements ProviderClient {
   ): Promise<{s3uri: string, etag: string}> {
     const { fileRemotePath, destinationBucket, destinationKey, bucket } = params;
     const sourceBucket = bucket || this.bucket;
+    const sourceKey = fileRemotePath;
+
     try {
+      const sourceObject = await S3.headObject(sourceBucket, sourceKey);
       const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
+
+      if (sourceObject.ContentLength === 0) {
+        // TODO: fix me
+        const etag = 'fake-etag';
+        await S3.s3CopyObject({
+          // TODO: surely there is a better way of concatenating
+          CopySource: `${sourceBucket}/${sourceKey}`,
+          Bucket: destinationBucket,
+          Key: destinationKey,
+        });
+        // TODO: this is actually always present in the result but
+        // AWS SDK typings are bad
+        // if (CopyObjectResult) {
+        //   const { ETag } = CopyObjectResult;
+        //   etag = ETag;
+        // }
+        return { s3uri, etag };
+      }
+
       const { etag } = await S3.multipartCopyObject({
         sourceBucket,
-        sourceKey: fileRemotePath,
+        sourceKey,
+        sourceObject,
         destinationBucket,
         destinationKey,
         ACL: 'private',
         copyTags: true,
       });
-
       return { s3uri, etag };
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchKey') {

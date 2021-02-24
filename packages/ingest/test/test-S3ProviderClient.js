@@ -115,6 +115,7 @@ test.serial('S3ProviderClient.sync syncs a 0 byte file', async (t) => {
   await S3.s3PutObject({
     Bucket: t.context.sourceBucket,
     Key: t.context.sourceKey,
+    // ensure file has 0 bytes
     Body: '',
   });
 
