@@ -42,6 +42,10 @@ export interface ListObjectsV2Output extends AWS.S3.ListObjectsV2Output {
   Contents: Object[]
 }
 
+export interface CopyObjectOutput extends AWS.S3.CopyObjectOutput {
+  CopyObjectResult: AWS.S3.CopyObjectResult
+}
+
 const log = new Logger({ sender: 'aws-client/s3' });
 
 const buildDeprecationMessage = (
@@ -908,6 +912,7 @@ export const multipartCopyObject = async (
     sourceKey: string,
     destinationBucket: string,
     destinationKey: string,
+    sourceObject?: AWS.S3.HeadObjectOutput,
     ACL?: AWS.S3.ObjectCannedACL,
     copyTags?: boolean,
     copyMetadata?: boolean
@@ -920,9 +925,12 @@ export const multipartCopyObject = async (
     destinationKey,
     ACL,
     copyTags = false,
+    sourceObject,
   } = params;
 
-  const sourceObject = await headObject(sourceBucket, sourceKey);
+  if (!sourceObject) {
+    sourceObject = await headObject(sourceBucket, sourceKey);
+  }
 
   // Create a multi-part upload (copy) and get its UploadId
   const uploadId = await createMultipartUpload({
