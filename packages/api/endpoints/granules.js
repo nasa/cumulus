@@ -167,7 +167,9 @@ async function del(req, res) {
     throw error;
   }
 
-  // If the granule does not exist in PG, just log it
+  // If the granule does not exist in PG, just log that information. The logic that
+  // actually handles Dynamo/PG granule deletion will skip the PG deletion if the record
+  // does not exist. see deleteGranuleAndFiles().
   try {
     if (dynamoGranule.collectionId) {
       const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
