@@ -57,10 +57,6 @@ test.beforeEach(async (t) => {
   };
 });
 
-test.afterEach.always(async (t) => {
-  await t.context.knex(tableNames.granulesExecutions).where(t.context.joinRecord).del();
-});
-
 test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
