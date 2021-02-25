@@ -8,18 +8,22 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ## Pre-release testing
 
-Before releasing a new major version of Cumulus that contains breaking changes, we should test the deployment upgrade from the latest stable release of Cumulus to the upcoming release with breaking changes.
+> Note: This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`)
 
-It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since this is the officially recommended deployment configuration for the users.
+Before releasing a new major version of Cumulus, we should test the deployment upgrade path from the latest release of Cumulus to the upcoming release.
+
+It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
+
+Pre-release testing steps:
 
 1. Checkout the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo
-2. Update the deployment code to use the latest stable release artifacts if it hasn't already been updated:
+2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `5.0.1`, update the deployment files as follows:
 
     ```text
-    # for data-persistence
+    # in data-persistence-tf/main.tf
     source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
-    # for cumulus
+    # in cumulus-tf/main.tf
     source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
     ```
 
@@ -34,14 +38,14 @@ It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa
    1. Update the deployment to use the built release artifacts:
 
       ```text
-      # for data-persistence
+      # in data-persistence-tf/main.tf
       source = "[path]/cumulus/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
-      # for cumulus
+      # in cumulus-tf/main.tf
       source = "/Users/mboyd/development/cumulus/terraform-aws-cumulus.zip//tf-modules/cumulus"
       ```
 
-   2. Review the `CHANGELOG.md` for any pre-deployment migration steps and confirm that they are successful
+   2. Review the `CHANGELOG.md` for any pre-deployment migration steps. If there are, go through the steps and confirm that they are successful
    3. Run `terraform init`
    4. Run `terraform apply`
 8. Review the `CHANGELOG.md` for any post-deployment migration steps and confirm that they are successful
@@ -53,6 +57,10 @@ It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa
 #### From Master
 
 Create a branch titled `release-MAJOR.MINOR.x` for the release.
+
+```shell
+git checkout -b release-MAJOR.MINOR.x
+```
 
 If creating a new major version release from master, say `5.0.0`, then the branch would be named `release-5.0.x`. If creating a new minor version release from master, say `1.14.0` then the branch would be named `release-1.14.x`.
 
@@ -156,7 +164,7 @@ Commit and push these changes.
 
 1. Push the release branch (e.g. `release-1.2.3`) to GitHub.
 2. Create a PR against the minor version base branch (e.g. `release-1.2.x`).
-3. Configure CI to run automated tests against this PR by finding the branch plan for the release branch (`release-1.2.3`) and setting these variables:
+3. Configure Bamboo to run automated tests against this PR by finding the branch plan for the release branch (`release-1.2.3`) and setting these variables:
 
     * `GIT_PR`: `true`
     * `SKIP_AUDIT`: `true`
@@ -216,7 +224,7 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 ### 11. Create a new Cumulus release on github
 
-The CI release scripts will automatically create a Github release based on the release version tag, as well as uploading artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
+The CI release scripts will automatically create a Github release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
 * A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
 * A S3 replicator module
