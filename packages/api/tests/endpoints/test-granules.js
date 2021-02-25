@@ -629,7 +629,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   }
 });
 
-test('DELETE returns 404 if granule does not exist', async (t) => {
+test.serial('DELETE returns 404 if granule does not exist', async (t) => {
   const granuleId = randomString();
   const response = await request(app)
     .delete(`/granules/${granuleId}`)
@@ -639,7 +639,7 @@ test('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
-test('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
+test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: true,
@@ -678,7 +678,7 @@ test('DELETE deleting an existing granule that is published will fail and not de
   ]));
 });
 
-test('DELETE deleting an existing unpublished granule', async (t) => {
+test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: false,
@@ -714,7 +714,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   ]));
 });
 
-test('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
+test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
   // Create a granule in Dynamo only
   const s3Buckets = {
     protected: {
