@@ -72,7 +72,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2367**
     - Added `granules_executions` table to RDS schema to allow for a many-to-many relationship between granules and executions
       - The table refers to granule and execution records using foreign keys defined with ON CASCADE DELETE, which means that any time a granule or execution record is deleted, all of the records in the `granules_executions` table referring to that record will also be deleted.
-    - Added `createWithExecutionHistory` helper to `@cumulus/db` to allow for creating a granule record and its corresponding `granules_execution` record
     - Added `upsertWithExecutionHistory` helper to `@cumulus/db` to allow for upserting a granule record and its corresponding `granules_execution` record
 - **CUMULUS-2128**
   - Added helper functions:
