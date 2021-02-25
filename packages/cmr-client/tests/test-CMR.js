@@ -5,7 +5,7 @@ const nock = require('nock');
 const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
-const errors = require('@cumulus/errors');
+const { ValidationError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
 
@@ -145,7 +145,7 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
 
   await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata),
-    { instanceOf: errors.ValidationError }
+    { instanceOf: ValidationError }
   );
 });
 

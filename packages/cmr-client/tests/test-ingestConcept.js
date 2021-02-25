@@ -3,7 +3,7 @@
 const got = require('got');
 const sinon = require('sinon');
 const test = require('ava');
-const errors = require('@cumulus/errors');
+const { CMRInternalError, ValidationError } = require('@cumulus/errors');
 const ingestConcept = require('../ingestConcept');
 
 const clientId = 'cumulus-test-client';
@@ -100,7 +100,7 @@ test.serial('ingestConcept returns error when CMR is down', async (t) => {
       'CUMULUS',
       { 'Client-Id': clientId }
     ),
-    { instanceOf: errors.CMRInternalError }
+    { instanceOf: CMRInternalError }
   );
 });
 
@@ -123,6 +123,6 @@ test.serial('ingestConcept returns Validation error for all other errors', async
       'CUMULUS',
       { 'Client-Id': clientId }
     ),
-    { instanceOf: errors.ValidationError }
+    { instanceOf: ValidationError }
   );
 });
