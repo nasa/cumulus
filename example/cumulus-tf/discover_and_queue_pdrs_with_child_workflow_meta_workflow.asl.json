@@ -56,7 +56,7 @@
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
             "parsePdrWorkflow": "${parse_pdr_workflow_name}",
-            "childWorkflowMeta": "{$.meta.childWorkflowMeta}"
+            "childWorkflowMeta": { "staticValue": "aStaticValue", "interpolatedValueStackName": "{$.meta.stack}" }
           }
         }
       },
