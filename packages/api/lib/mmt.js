@@ -3,13 +3,10 @@
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 
-const { CMR } = require('@cumulus/cmr-client');
-const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { getCollectionsByShortNameAndVersion } = require('@cumulus/cmrjs');
+
 const Logger = require('@cumulus/logger');
-
 const log = new Logger({ sender: 'api/lib/mmt' });
-
-let cmr;
 
 /**
  * Returns the environment specific identifier for the input cmr environment.
@@ -44,23 +41,40 @@ const buildMMTLink = (conceptId, cmrEnv = process.env.CMR_ENVIRONMENT) => {
 };
 
 /**
- * Looks up the CMR collectionId of the input object, and returns a shallow copy of
- * the input object updated to include a link to the collection MMT on the 'MMTlink' key.
- *
- * @param {Object} responseObj - input collection response object
- * @param {string} responseObj.name - collection short name
- * @param {string} responseObj.version - collection version
- * @returns {Promise<Object>} Promise of an updated object
+ * Takes the Collection elasticsearch results and updates every results object
+ * with an MMTLink if the result has a collectionId in the cmrEntries.
+ * @param {Array<Object>} esResults - collection query results from Cumulus' elasticsearch
+ * @param {Array<Object>} cmrEntries - cmr response feed entry that should match the
+ *                                     results collections
+ * @returns {Array<Object>} - Array of shallow clones of esResults objects with
+ *                            MMTLinks added to them
  */
-const updateObjectWithMMT = async (responseObj) => {
-  const result = await cmr.searchCollections({
-    short_name: responseObj.name,
-    version: responseObj.version,
-  });
-  const collectionId = get(result[0], 'id');
+const updateResultsWithMMT = (esResults, cmrEntries) => esResults.map((res) => {
+  const matchedCmr = cmrEntries.filter(
+    (entry) => entry.short_name === res.name && entry.version_id === res.version
+  );
+  const collectionId = get(matchedCmr[0], 'id');
   const MMTLink = collectionId ? buildMMTLink(collectionId) : undefined;
-  return { ...responseObj, MMTLink };
-};
+  return { ...res, MMTLink };
+});
+
+/**
+ * Creates a formatted list of shortname/version objects for use in a call to
+ * CMR to retrive collection information.  transforms each object in the
+ * results array into an new objects.
+ *  inputObject.name => outputObject.short_name
+ *  inputObject.version => outputObject.version
+ * all other input object keys are ignored.
+ *
+ * @param {Object} results - an elasticsearch results array returned from either
+ *          Collection.query() or Collection.queryCollectionsWithActiveGranules()
+ * @returns {Arary<Object>} - list of Objects with two keys.
+ */
+const parseResults = (results) =>
+  results.map((object) => ({
+    short_name: object.name,
+    version: object.version,
+  }));
 
 /**
  * parses the elasticsearch collection lists and for each result inserts a "MMTLink"
@@ -74,17 +88,14 @@ const updateObjectWithMMT = async (responseObj) => {
 const insertMMTLinks = async (inputResponse) => {
   const response = cloneDeep(inputResponse);
   try {
-    cmr = new CMR(await getCmrSettings());
-
-    response.results = await Promise.all(
-      inputResponse.results.map(updateObjectWithMMT)
-    );
+    const responseList = parseResults(inputResponse.results);
+    const cmrResults = await getCollectionsByShortNameAndVersion(responseList);
+    response.results = updateResultsWithMMT(inputResponse.results, cmrResults.feed.entry);
   } catch (error) {
     log.error('Unable to update inputResponse with MMT Links');
     log.error(error);
     return inputResponse;
   }
-
   return response;
 };
 

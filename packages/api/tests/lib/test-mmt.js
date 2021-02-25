@@ -10,6 +10,7 @@ const mmt = rewire('../../lib/mmt');
 
 const insertMMTLinks = mmt.__get__('insertMMTLinks');
 const buildMMTLink = mmt.__get__('buildMMTLink');
+const parseResults = mmt.__get__('parseResults');
 const log = mmt.__get__('log');
 
 test.beforeEach(async (t) => {
@@ -24,6 +25,23 @@ test.afterEach.always(async (t) => {
   CMR.prototype.searchCollections.restore();
   t.context.restore();
   process.env.CMR_ENVIRONMENT = t.context.env;
+});
+
+test('parseResults parses results correctly', (t) => {
+  const fakeESResults = [
+    { version: '006', name: 'MOD09GQ', duplicateHandling: 'ignored' },
+    { version: '001', name: 'ICK99NO', granuleId: 'ignored' },
+    { version: '006', name: 'YUM88OK', granuleIdExtraction: 'ignored' },
+  ];
+
+  const expected = [
+    { short_name: 'MOD09GQ', version: '006' },
+    { short_name: 'ICK99NO', version: '001' },
+    { short_name: 'YUM88OK', version: '006' },
+  ];
+
+  const actual = parseResults(fakeESResults);
+  t.deepEqual(actual, expected);
 });
 
 test.serial(
