@@ -74,7 +74,7 @@ function getGranuleUr(metadata, isUmmG) {
 /**
  * getEntryTitle
  *
- * @param {Object} config - comnfiguration
+ * @param {Object} config - configuration
  * @param {Object} metadata - the granule metadata
  * @param {boolean} isUmmG - whether this is UMM-G or ECHO10 metadata
  * @returns {Promise<string>} the entry title of the collection this granule

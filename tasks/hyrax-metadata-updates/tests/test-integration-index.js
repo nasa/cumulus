@@ -182,7 +182,6 @@ const event = {
   input: {},
 };
 
-/*
 test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov')
@@ -348,7 +347,7 @@ test.serial('hyraxMetadataUpdate fails with PreconditionFailure when metadata wi
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
 });
-*/
+
 test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov')
