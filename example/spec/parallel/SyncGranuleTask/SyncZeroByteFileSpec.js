@@ -63,10 +63,6 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
 
       const Payload = JSON.stringify({
         cma: {
-          ReplaceConfig: {
-            Path: '$.payload',
-            TargetPath: '$.payload',
-          },
           task_config: {
             buckets: '{$.meta.buckets}',
             provider: '{$.meta.provider}',
@@ -74,21 +70,12 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
             stack: '{$.meta.stack}',
             downloadBucket: '{$.cumulus_meta.system_bucket}',
             duplicateHandling: '{$.meta.collection.duplicateHandling}',
-            pdr: '{$.meta.pdr}',
             cumulus_message: {
               input: '{$.payload}',
               outputs: [
                 {
-                  source: '{$.granules}',
-                  destination: '{$.meta.input_granules}',
-                },
-                {
                   source: '{$}',
                   destination: '{$.payload}',
-                },
-                {
-                  source: '{$.process}',
-                  destination: '{$.meta.process}',
                 },
               ],
             },
@@ -134,7 +121,7 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
     }
   });
 
-  it('succeeds', () => {
+  it('succeeds', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       expect(syncGranuleOutput.FunctionError).toBe(undefined);
@@ -142,6 +129,15 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
       const parsedPayload = JSON.parse(syncGranuleOutput.Payload);
       expect(parsedPayload.errorType).toBe(undefined);
       expect(parsedPayload.errorMessage).toBe(undefined);
+
+      // Confirm that file was synced
+      const syncedFile = parsedPayload.payload.granules[0].files[0];
+      expect(
+        await S3.s3ObjectExists({
+          Bucket: syncedFile.bucket,
+          Key: `${syncedFile.fileStagingDir}/${syncedFile.name}`,
+        })
+      ).toBeTrue();
     }
   });
 
