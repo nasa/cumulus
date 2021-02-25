@@ -5,7 +5,7 @@
             "Type": "GET DATA"
         },
         {
-            "URL": "https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4",
+            "URL": "https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4",
             "Type": "USE SERVICE API",
             "Subtype": "OPENDAP DATA",
             "Description": "OPeNDAP request URL"

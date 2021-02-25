@@ -119,6 +119,56 @@ async function getEntryTitle(config, metadata, isUmmG) {
 }
 
 /**
+ * getCollectionEntry
+ *
+ * @param {Object} config - comnfiguration
+ * @param {Object} metadata - the granule metadata
+ * @param {boolean} isUmmG - whether this is UMM-G or ECHO10 metadata
+ * @returns {Promise<string>} the collection url entry of the collection this granule
+ *    belongs to
+ */
+async function getCollectionEntry(config, metadata, isUmmG) {
+  let conceptId;
+  let shortName;
+  let versionId;
+  if (isUmmG === true) {
+    conceptId = metadata.Id;
+    shortName = metadata.CollectionReference.ShortName;
+    versionId = metadata.CollectionReference.Version;
+  } else {
+    conceptId = metadata.Granule.Id
+    shortName = metadata.Granule.Collection.ShortName;
+    versionId = metadata.Granule.Collection.VersionId;
+  }
+
+  const cmrSettings = await getCmrSettings({
+    ...config.cmr,
+    ...config.launchpad,
+  });
+
+  // Query CMR for collection and retrieve entry title
+  const cmrInstance = new CMR(cmrSettings);
+
+  const searchParams = {
+    short_name: shortName,
+    version: versionId,
+  };
+
+  const result = await cmrInstance.searchCollections(searchParams);
+  // Verify that we have a valid result. If we don't then something is badly wrong
+  // and we should halt.
+  // Either the code is faulty or the provider is trying to ingest granules into a collection that doesn't exist
+  conceptId = get(result, '[0].id');
+  shortName = get(result, '[0].short_name');
+  versionId = get(result, '[0].version_id');
+  if (conceptId === undefined) {
+    throw new RecordDoesNotExist(`Unable to query parent collection using short name ${shortName} and version ${versionId}`);
+  }
+  //return encodeURIComponent(datasetId);
+  return conceptId + '/' + shortName + '.' + versionId;
+}
+
+/**
  * generatePath
  *
  * @param {Object} config - the config
@@ -133,8 +183,9 @@ async function generatePath(config, metadata, isUmmG) {
   if (providerId === undefined) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
-  const entryTitle = await getEntryTitle(config, metadata, isUmmG);
-  return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
+  const collectionEntry = await getCollectionEntry(config, metadata, isUmmG);
+  //return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
+  return `collections/${collectionEntry}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
 
 /**

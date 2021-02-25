@@ -53,7 +53,7 @@
     "GranuleUR": "GLDAS_CLSM025_D.2.0:GLDAS_CLSM025_D.A20141230.020.nc4",
     "RelatedUrls": [
         {
-            "URL": "https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4",
+            "URL": "https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4",
             "Type": "USE SERVICE API",
             "Subtype": "OPENDAP DATA",
             "Description": "OPeNDAP request URL"
