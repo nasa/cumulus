@@ -42,10 +42,6 @@ export interface ListObjectsV2Output extends AWS.S3.ListObjectsV2Output {
   Contents: Object[]
 }
 
-export interface CopyObjectOutput extends AWS.S3.CopyObjectOutput {
-  CopyObjectResult: AWS.S3.CopyObjectResult
-}
-
 const log = new Logger({ sender: 'aws-client/s3' });
 
 const buildDeprecationMessage = (
@@ -925,12 +921,9 @@ export const multipartCopyObject = async (
     destinationKey,
     ACL,
     copyTags = false,
-    sourceObject,
   } = params;
 
-  if (!sourceObject) {
-    sourceObject = await headObject(sourceBucket, sourceKey);
-  }
+  const sourceObject = params.sourceObject ?? await headObject(sourceBucket, sourceKey);
 
   // Create a multi-part upload (copy) and get its UploadId
   const uploadId = await createMultipartUpload({
