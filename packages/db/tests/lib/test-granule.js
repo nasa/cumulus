@@ -11,7 +11,6 @@ const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
-  createGranuleWithExecutionHistory,
   upsertGranuleWithExecutionHistory,
 } = require('../../dist');
 
@@ -54,102 +53,6 @@ test.after.always(async (t) => {
     ...t.context,
     testDbName,
   });
-});
-
-test('createGranuleWithExecutionHistory() creates a new granule with granule/execution join record', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    executionCumulusId,
-    granulesExecutionsPgModel,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-    status: 'running',
-  });
-
-  const [granuleCumulusId] = await createGranuleWithExecutionHistory(
-    knex,
-    granule,
-    executionCumulusId
-  );
-
-  const granuleRecord = await granulePgModel.get(
-    knex,
-    granule
-  );
-
-  t.like(
-    granuleRecord,
-    {
-      ...granule,
-      cumulus_id: granuleCumulusId,
-    }
-  );
-  t.deepEqual(
-    await granulesExecutionsPgModel.search(
-      knex,
-      { granule_cumulus_id: granuleCumulusId }
-    ),
-    [{
-      granule_cumulus_id: Number(granuleCumulusId),
-      execution_cumulus_id: executionCumulusId,
-    }]
-  );
-});
-
-test('createGranuleWithExecutionHistory() does not commit granule or granule/execution join record if writing join record fails', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    executionCumulusId,
-    granulesExecutionsPgModel,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-    status: 'running',
-  });
-
-  const fakeGranulesExecutionsPgModel = {
-    create: async () => {
-      throw new Error('error');
-    },
-  };
-
-  await t.throwsAsync(
-    knex.transaction(
-      (trx) =>
-        createGranuleWithExecutionHistory(
-          trx,
-          granule,
-          executionCumulusId,
-          undefined,
-          fakeGranulesExecutionsPgModel
-        )
-    )
-  );
-
-  t.false(
-    await granulePgModel.exists(
-      knex,
-      {
-        granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
-      }
-    )
-  );
-  t.false(
-    await granulesExecutionsPgModel.exists(
-      knex,
-      {
-        execution_cumulus_id: executionCumulusId,
-      }
-    )
-  );
 });
 
 test('upsertGranuleWithExecutionHistory() creates granule record with granule/execution join record', async (t) => {

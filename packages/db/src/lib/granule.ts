@@ -6,38 +6,6 @@ import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 
 /**
- * Create a granule and a record in the granules/executions join table.
- *
- * @param {Knex.Transaction} knexTransaction - A Knex client transaction
- * @param {PostgresGranule} granule - Granule data
- * @param {number} executionCumulusId - Execution record cumulus_id value
- * @param {Object} [granulePgModel] - Granule PG model class instance
- * @param {Object} [granulesExecutionsPgModel]
- *   Granules/executions PG model class instance
- * @returns {Promise}
- */
-export const createGranuleWithExecutionHistory = async (
-  knexTransaction: Knex.Transaction,
-  granule: PostgresGranule,
-  executionCumulusId: number,
-  granulePgModel = new GranulePgModel(),
-  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-): Promise<number[]> => {
-  const [granuleCumulusId] = await granulePgModel.create(
-    knexTransaction,
-    granule
-  );
-  await granulesExecutionsPgModel.create(
-    knexTransaction,
-    {
-      granule_cumulus_id: granuleCumulusId,
-      execution_cumulus_id: executionCumulusId,
-    }
-  );
-  return [granuleCumulusId];
-};
-
-/**
  * Upsert a granule and a record in the granules/executions join table.
  *
  * @param {Knex.Transaction} knexTransaction - A Knex client transaction

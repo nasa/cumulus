@@ -72,7 +72,6 @@ export { translateApiExecutionToPostgresExecution } from './translate/executions
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export {
-  createGranuleWithExecutionHistory,
   upsertGranuleWithExecutionHistory,
 } from './lib/granule';
 

@@ -100,7 +100,7 @@ test('GranulesExecutionsPgModel.exists() correctly returns true', async (t) => {
   });
 });
 
-test('GranulesExecutionsPgModel.exists() correctly returns false', async (t) => {
+test.serial('GranulesExecutionsPgModel.exists() correctly returns false', async (t) => {
   const {
     knex,
     granulesExecutionsPgModel,
