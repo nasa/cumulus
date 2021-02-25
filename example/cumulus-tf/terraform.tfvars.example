@@ -6,6 +6,10 @@ permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
 
 prefix                   = "PREFIX"
 buckets = {
+  glacier = {
+    name = "PREFIX-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "PREFIX-internal"
     type = "internal"
@@ -52,6 +56,10 @@ cmr_oauth_provider = "earthdata"
 # Make archive API run as a private API gateway and accessible on port 8000
 archive_api_port = 8000
 private_archive_api_gateway = true
+
+# ORCA Configuration
+database_app_user_pw = "password"
+postgres_user_pw     = "password"
 
 # Optional, uncomment if needed. Required if using cmr_oauth_provider = "launchpad".
 /* 
