@@ -49,7 +49,7 @@ const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
 
-const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
+const { createGranuleAndFiles } = require('../../lib/create-test-data');
 
 // Dynamo mock data factories
 const {

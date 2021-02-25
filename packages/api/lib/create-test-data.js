@@ -24,9 +24,9 @@ const {
 const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
-} = require('../../lib/testUtils');
+} = require('./testUtils');
 
-const models = require('../../models');
+const models = require('../models');
 
 /**
  * Helper for creating a granule, a parent collection,
@@ -43,6 +43,9 @@ async function createGranuleAndFiles({
   collectionCumulusId,
   published = false,
 }) {
+  let newCollectionId;
+  let newCollectionCumulusId;
+
   const s3Buckets = {
     protected: {
       name: randomId('protected'),
@@ -79,7 +82,7 @@ async function createGranuleAndFiles({
     const collectionDynamoModel = new models.Collection();
     const dynamoCollection = await collectionDynamoModel.create(testCollection);
 
-    collectionId = constructCollectionId(
+    newCollectionId = constructCollectionId(
       dynamoCollection.name,
       dynamoCollection.version
     );
@@ -94,7 +97,7 @@ async function createGranuleAndFiles({
     });
 
     const collectionPgModel = new CollectionPgModel();
-    [collectionCumulusId] = await collectionPgModel.create(
+    [newCollectionCumulusId] = await collectionPgModel.create(
       dbClient,
       testPgCollection
     );
@@ -123,7 +126,7 @@ async function createGranuleAndFiles({
       granuleId: granuleId,
       status: 'failed',
       published: published,
-      collectionId,
+      collectionId: collectionId || newCollectionId,
     }
   );
 
@@ -144,7 +147,7 @@ async function createGranuleAndFiles({
     {
       granule_id: granuleId,
       status: 'failed',
-      collection_cumulus_id: collectionCumulusId,
+      collection_cumulus_id: collectionCumulusId || newCollectionCumulusId,
       published: published,
     }
   );

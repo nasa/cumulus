@@ -10,7 +10,7 @@ const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { createGranuleAndFiles } = require('../db-data-helpers/create-test-data');
+const { createGranuleAndFiles } = require('../../lib/create-test-data');
 const Granule = require('../../models/granules');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
