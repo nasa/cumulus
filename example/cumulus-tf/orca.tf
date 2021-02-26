@@ -1,5 +1,6 @@
 # ORCA Module
 module "orca" {
+  count                          = var.include_orca ? 1 : 0
   source                         = "https://github.com/nasa/cumulus-orca/releases/download/v2.0.1/cumulus-orca-terraform.zip//modules/orca"
   vpc_id                         = var.vpc_id
   subnet_ids                     = var.lambda_subnet_ids
