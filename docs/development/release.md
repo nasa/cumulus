@@ -196,7 +196,7 @@ Publishing of new releases is handled by a custom Bamboo branch plan and is manu
 
 The reasons for using a separate branch plan to handle releases instead of the branch plan for the minor version (e.g. `release-1.2.x`) are:
 
-* The Bamboo build for the minor version release branch is trigged **automatically** on any commits to that branch, whereas we want to manually control when the release is published.
+* The Bamboo build for the minor version release branch is triggered **automatically** on any commits to that branch, whereas we want to manually control when the release is published.
 * We want to verify that integration tests have passed on the Bamboo build for the minor version release branch **before** we manually trigger the release, so that we can be sure that our code is safe to release.
 
 If this is a new minor version branch, then you will need to create a new Bamboo branch plan for publishing the release following the instructions below:
@@ -205,7 +205,7 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 
 * In the Cumulus Core project (<https://ci.earthdata.nasa.gov/browse/CUM-CBA>), click `Actions -> Configure Plan` in the top right.
 
-* Scroll to the bottom of the branch list in the bottom left and click `Create Plan Branch`.
+* Next to `Plan branch` click the rightmost button that displays `Create Plan Branch` upon hover.
 
 * Click `Create plan branch manually`.
 
@@ -235,7 +235,7 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 ### 11. Create a new Cumulus release on github
 
-The CI release scripts will automatically create a Github release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
+The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
 * A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
 * A S3 replicator module
