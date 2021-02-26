@@ -178,6 +178,9 @@ const event = {
       username: 'xxxxxx',
       passwordSecretName: cmrPasswordSecret,
     },
+    urlConfiguration: {
+      addShortnameAndVersionIdToConceptId: true,
+    }
   },
   input: {},
 };
@@ -500,6 +503,36 @@ test.serial('Test record does not exist error when granule object has no recogni
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });
 
+test.serial('Test retrieving default entry collection from CMR using UMM-G', async (t) => {
+  const defaultEvent = {
+    config: {
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        passwordSecretName: cmrPasswordSecret,
+      },
+      urlConfiguration: {
+        addShortnameAndVersionIdToConceptId: false,
+      }
+    },
+    input: {},
+  };
+  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
+  const metadataObject = JSON.parse(data);
+  const actual = await getCollectionEntry(defaultEvent.config, metadataObject, true);
+  t.is(actual, 'C1453188197-GES_DISC');
+});
+
+test.serial('Test retrieving entry collection from CMR using UMM-G', async (t) => {
+  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
+  const metadataObject = JSON.parse(data);
+
+  const actual = await getCollectionEntry(event.config, metadataObject, true);
+  t.is(actual, 'C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0');
+});
+
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
@@ -507,11 +540,18 @@ test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
   t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
 });
 
-test.serial('Test retrieving short name from CMR using UMM-G', async (t) => {
+test.serial('Test retrieving short name ???? from CMR using UMM-G', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
   const actual = await getEntryTitle(event.config, metadataObject, true);
   t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
+});
+
+test.serial('Test retrieving entry collection from CMR using ECHO10', async (t) => {
+  const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
+  const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
+  const actual = await getCollectionEntry(event.config, metadata, false);
+  t.is(actual, 'C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0');
 });
 
 test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
@@ -520,7 +560,6 @@ test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
   const actual = await getEntryTitle(event.config, metadata, false);
   t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
 });
-
 
 test('Test generate path from UMM-G', async (t) => {
   const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
