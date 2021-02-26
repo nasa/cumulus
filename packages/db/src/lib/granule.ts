@@ -19,7 +19,7 @@ import { GranulesExecutionsPgModel } from '../models/granules-executions';
 export const upsertGranuleWithExecutionHistory = async (
   knexTransaction: Knex.Transaction,
   granule: PostgresGranule,
-  executionCumulusId: number,
+  executionCumulusId?: number,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
 ): Promise<number[]> => {
@@ -35,12 +35,14 @@ export const upsertGranuleWithExecutionHistory = async (
   if (!granuleCumulusId) {
     return [];
   }
-  await granulesExecutionsPgModel.upsert(
-    knexTransaction,
-    {
-      granule_cumulus_id: granuleCumulusId,
-      execution_cumulus_id: executionCumulusId,
-    }
-  );
+  if (executionCumulusId) {
+    await granulesExecutionsPgModel.upsert(
+      knexTransaction,
+      {
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      }
+    );
+  }
   return [granuleCumulusId];
 };
