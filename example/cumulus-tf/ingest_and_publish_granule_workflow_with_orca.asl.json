@@ -274,21 +274,13 @@
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}",
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "${should_run_orca_backup}",
-                  "destination": "{$.meta.should_run_orca_backup}"
-                }
-              ]
-            }
+            "launchpad": "{$.meta.launchpad}"
           }
         }
       },
       "Type": "Task",
       "Resource": "${hyrax_metadata_updates_task_arn}",
-      "Next": "OrcaBackupChoice",
+      "Next": "CopyToGlacier",
       "Catch": [
         {
           "ErrorEquals": [
@@ -310,17 +302,6 @@
           "MaxAttempts": 6
         }
       ]
-    },
-    "OrcaBackupChoice": {
-      "Choices": [
-        {
-          "Next": "CmrStep",
-          "BooleanEquals": true,
-          "Variable": "$.meta.should_run_orca_backup"
-        }
-      ],
-      "Default": "CopyToGlacier",
-      "Type": "Choice"
     },
     "CopyToGlacier": {
       "Parameters": {
