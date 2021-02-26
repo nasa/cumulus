@@ -4,7 +4,7 @@ buckets = {
   glacier = {
     name = "cumulus-test-sandbox-orca-glacier"
     type = "glacier"
-  },
+  }
   internal = {
     name = "mvd-internal"
     type = "internal"
