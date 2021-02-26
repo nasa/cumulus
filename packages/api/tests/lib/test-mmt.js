@@ -4,7 +4,6 @@ const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
 const path = require('path');
-const { CMR } = require('@cumulus/cmr-client');
 const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
 const cloneDeep = require('lodash/cloneDeep');
 const mmt = rewire('../../lib/mmt');
