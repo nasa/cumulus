@@ -116,8 +116,8 @@ There may be unreleased changes in the Cumulus Dashboard [project](https://githu
 
 If there is exists a PR in the cumulus-dashboard repo with a name containing: "Version Bump for Next Cumulus API Release":
 
-* There will be a placeholder `change-me` value that should be replaced with the Cumulus Core to-be-released-version.
-* Mark that PR as ready to be reviewed.
+- There will be a placeholder `change-me` value that should be replaced with the Cumulus Core to-be-released-version.
+- Mark that PR as ready to be reviewed.
 
 ### 4. Update CHANGELOG.md
 
@@ -168,15 +168,15 @@ Commit and push these changes.
 2. Create a PR against the minor version base branch (e.g. `release-1.2.x`).
 3. Configure Bamboo to run automated tests against this PR by finding the branch plan for the release branch (`release-1.2.3`) and setting only these variables:
 
-    * `GIT_PR`: `true`
-    * `SKIP_AUDIT`: `true`
+    - `GIT_PR`: `true`
+    - `SKIP_AUDIT`: `true`
 
     **IMPORTANT**: Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
 
     ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](../assets/configure-release-branch-test.png)
 
 4. Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch (`release-1.2.x`).
-    * It **is safe** to do a squash merge in this instance, but not required
+    - It **is safe** to do a squash merge in this instance, but not required
 5. You may delete your release branch (`release-1.2.3`) after merging to the base branch.
 
 ### 9. Create a git tag for the release
@@ -198,40 +198,40 @@ Publishing of new releases is handled by a custom Bamboo branch plan and is manu
 
 The reasons for using a separate branch plan to handle releases instead of the branch plan for the minor version (e.g. `release-1.2.x`) are:
 
-* The Bamboo build for the minor version release branch is triggered **automatically** on any commits to that branch, whereas we want to manually control when the release is published.
-* We want to verify that integration tests have passed on the Bamboo build for the minor version release branch **before** we manually trigger the release, so that we can be sure that our code is safe to release.
+- The Bamboo build for the minor version release branch is triggered **automatically** on any commits to that branch, whereas we want to manually control when the release is published.
+- We want to verify that integration tests have passed on the Bamboo build for the minor version release branch **before** we manually trigger the release, so that we can be sure that our code is safe to release.
 
 If this is a new minor version branch, then you will need to create a new Bamboo branch plan for publishing the release following the instructions below:
 
 #### Creating a Bamboo branch plan for the release
 
-* In the Cumulus Core project (<https://ci.earthdata.nasa.gov/browse/CUM-CBA>), click `Actions -> Configure Plan` in the top right.
+- In the Cumulus Core project (<https://ci.earthdata.nasa.gov/browse/CUM-CBA>), click `Actions -> Configure Plan` in the top right.
 
-* Next to `Plan branch` click the rightmost button that displays `Create Plan Branch` upon hover.
+- Next to `Plan branch` click the rightmost button that displays `Create Plan Branch` upon hover.
 
-* Click `Create plan branch manually`.
+- Click `Create plan branch manually`.
 
-* Add the values in that list. Choose a display name that makes it *very* clear this is a deployment branch plan. `Release (minor version branch name)` seems to work well (e.g. `Release (1.2.x)`)).
-  * **Make sure** you enter the correct branch name (e.g. `release-1.2.x`).
+- Add the values in that list. Choose a display name that makes it *very* clear this is a deployment branch plan. `Release (minor version branch name)` seems to work well (e.g. `Release (1.2.x)`)).
+  - **Make sure** you enter the correct branch name (e.g. `release-1.2.x`).
 
-* **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
+- **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
 
-* **Do Immediately** On the `Branch Details` page, enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan.
+- **Do Immediately** On the `Branch Details` page, enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan.
 You should have been redirected to the `Branch Details` tab after creating the plan. If not, navigate to the branch from the list where you clicked `Create Plan Branch` in the previous step.
 
-* Go to the `Variables` tab. Ensure that you are on your branch plan and not the `master` plan: You should not see a large list of configured variables, but instead a dropdown allowing you to select variables to override, and the tab title will be `Branch Variables`. Then set the branch variables as follow:
+- Go to the `Variables` tab. Ensure that you are on your branch plan and not the `master` plan: You should not see a large list of configured variables, but instead a dropdown allowing you to select variables to override, and the tab title will be `Branch Variables`. Then set the branch variables as follow:
 
-  * `DEPLOYMENT`: `cumulus-from-npm-tf` (**except in special cases such as incompatible backport branches**)
-    * If this variable is not set, it will default to the deployment name for the last committer on the branch
-  * `USE_CACHED_BOOTSTRAP`: `false`
-  * `USE_TERRAFORM_ZIPS`: `true` (**IMPORTANT**: MUST be set in order to run integration tests against the `.zip` files published during the build so that we are actually testing our released files)
-  * `GIT_PR`: `true`
-  * `SKIP_AUDIT`: `true`
-  * `PUBLISH_FLAG`: `true`
+  - `DEPLOYMENT`: `cumulus-from-npm-tf` (**except in special cases such as incompatible backport branches**)
+    - If this variable is not set, it will default to the deployment name for the last committer on the branch
+  - `USE_CACHED_BOOTSTRAP`: `false`
+  - `USE_TERRAFORM_ZIPS`: `true` (**IMPORTANT**: MUST be set in order to run integration tests against the `.zip` files published during the build so that we are actually testing our released files)
+  - `GIT_PR`: `true`
+  - `SKIP_AUDIT`: `true`
+  - `PUBLISH_FLAG`: `true`
 
-* Enable the branch from the `Branch Details` page.
+- Enable the branch from the `Branch Details` page.
 
-* Run the branch using the `Run` button in the top right.
+- Run the branch using the `Run` button in the top right.
 
 Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
@@ -239,11 +239,11 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
-* A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
-* A S3 replicator module
-* A workflow module
-* A distribution API module
-* An ECS service module
+- A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
+- A S3 replicator module
+- A workflow module
+- A distribution API module
+- An ECS service module
 
 Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.
 
