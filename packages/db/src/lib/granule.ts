@@ -10,7 +10,7 @@ import { GranulesExecutionsPgModel } from '../models/granules-executions';
  *
  * @param {Knex.Transaction} knexTransaction - A Knex client transaction
  * @param {PostgresGranule} granule - Granule data
- * @param {number} executionCumulusId - Execution record cumulus_id value
+ * @param {number} [executionCumulusId] - Execution record cumulus_id value
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @param {Object} [granulesExecutionsPgModel]
  *   Granules/executions PG model class instance
