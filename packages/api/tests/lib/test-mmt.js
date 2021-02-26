@@ -3,31 +3,54 @@
 const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
+const path = require('path');
 const { CMR } = require('@cumulus/cmr-client');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
 const cloneDeep = require('lodash/cloneDeep');
 const mmt = rewire('../../lib/mmt');
 
 const insertMMTLinks = mmt.__get__('insertMMTLinks');
 const buildMMTLink = mmt.__get__('buildMMTLink');
 const parseResults = mmt.__get__('parseResults');
+const updateResultsWithMMT = mmt.__get__('updateResultsWithMMT');
 const log = mmt.__get__('log');
+
+/**
+ *  fakes a CMR return feed where each item in the list contains an collection_id labeled "id"
+ * @param {Array<Object>} list - parsed list of collection results
+ * @returns {Object} Fake CMR responses
+ */
+const cmrReturnsWithIds = async (list) => {
+  const entry = list.map((l) => ({
+    id: `${l.short_name}-${l.version}`,
+    short_name: l.short_name,
+    version_id: l.version,
+  }));
+  return { feed: { entry } };
+};
+
+/**
+ *  fakes a CMR return feed where no ites in the list have a collection_id labeled "id"
+ * @param {Array<Object>} list - parsed list of collection results
+ * @returns {Object} Fake CMR responses
+ */
+const cmrReturnsWithoutIds = async (list) => {
+  const entry = list.map((l) => ({
+    short_name: l.short_name,
+    version_id: l.version,
+  }));
+  return { feed: { entry } };
+};
 
 test.beforeEach(async (t) => {
   t.context.env = process.env.CMR_ENVIRONMENT;
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
-  t.context.restore = mmt.__set__('getCmrSettings', async () => ({
-    password: 'fake',
-  }));
 });
 
 test.afterEach.always(async (t) => {
-  CMR.prototype.searchCollections.restore();
-  t.context.restore();
   process.env.CMR_ENVIRONMENT = t.context.env;
 });
 
-test('parseResults parses results correctly', (t) => {
+test.serial('parseResults parses results correctly', (t) => {
   const fakeESResults = [
     { version: '006', name: 'MOD09GQ', duplicateHandling: 'ignored' },
     { version: '001', name: 'ICK99NO', granuleId: 'ignored' },
@@ -44,10 +67,25 @@ test('parseResults parses results correctly', (t) => {
   t.deepEqual(actual, expected);
 });
 
+test.serial('updateResultsWithMMT merges entries from CMR with input collection response', async (t) => {
+  const esResults = await readJsonFixture(path.join(__dirname, './fixtures/collectionESResult.json'));
+  const cmrResults = await readJsonFixture(path.join(__dirname, './fixtures/cmrResults.json'));
+
+  const expected = cloneDeep(esResults.results);
+  process.env.CMR_ENVIRONMENT = 'UAT';
+  expected[0].MMTLink = 'https://mmt.uat.earthdata.nasa.gov/collections/C987654321-CUMULUS';
+  expected[1].MMTLink = 'https://mmt.uat.earthdata.nasa.gov/collections/C1237256734-CUMULUS';
+  expected[2].MMTLink = undefined;
+
+  const actual = updateResultsWithMMT(esResults.results, cmrResults.feed.entry);
+  t.deepEqual(actual, expected);
+});
+
 test.serial(
   'Inserts MMT links into ES results when searchCollection returns an id',
   async (t) => {
     process.env.CMR_ENVIRONMENT = 'SIT';
+    const restoreCmr = mmt.__set__('getCollectionsByShortNameAndVersion', cmrReturnsWithIds);
 
     const fakeESResponse = {
       meta: {},
@@ -58,12 +96,6 @@ test.serial(
       ],
     };
 
-    CMR.prototype.searchCollections.restore();
-    sinon.stub(CMR.prototype, 'searchCollections').callsFake((obj) => [
-      {
-        id: `${obj.short_name}-${obj.version}`,
-      },
-    ]);
     const expected = {
       meta: {},
       results: [
@@ -87,12 +119,14 @@ test.serial(
 
     const actual = await insertMMTLinks(fakeESResponse);
     t.deepEqual(actual, expected);
+    restoreCmr();
   }
 );
 
 test.serial(
   'Does not insert MMT Links if CMR does not return a collection id',
   async (t) => {
+    const restoreCmr = mmt.__set__('getCollectionsByShortNameAndVersion', cmrReturnsWithoutIds);
     const fakeESResponse = {
       meta: {},
       results: [
@@ -102,8 +136,6 @@ test.serial(
       ],
     };
 
-    CMR.prototype.searchCollections.restore();
-    sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => [{}]);
     const expected = {
       meta: {},
       results: [
@@ -115,12 +147,18 @@ test.serial(
 
     const actual = await insertMMTLinks(fakeESResponse);
     t.deepEqual(actual, expected);
+    restoreCmr();
   }
 );
 
 test.serial(
   'insertMMTLinks returns the input unchanged if an error occurs with CMR.',
   async (t) => {
+    const cmrError = new Error('CMR is Down today!');
+    const cmrIsDown = async () => {
+      throw cmrError;
+    };
+    const restoreCmr = mmt.__set__('getCollectionsByShortNameAndVersion', cmrIsDown);
     const fakeESResponse = {
       meta: {
         irrelevant: 'information',
@@ -132,17 +170,14 @@ test.serial(
     sinon.spy(log, 'error');
     const expected = cloneDeep(fakeESResponse);
 
-    CMR.prototype.searchCollections.restore();
-    const stubError = new Error('CMR is down today');
-    sinon.stub(CMR.prototype, 'searchCollections').throws(stubError);
-
     const actual = await insertMMTLinks(fakeESResponse);
 
     t.deepEqual(actual, expected);
     t.true(log.error.calledWith('Unable to update inputResponse with MMT Links'));
-    t.true(log.error.calledWith(stubError));
+    t.true(log.error.calledWith(cmrError));
 
     log.error.restore();
+    restoreCmr();
   }
 );
 
