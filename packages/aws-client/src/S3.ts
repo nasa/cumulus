@@ -897,6 +897,8 @@ const uploadPartCopy = async (
  * @param {string} params.sourceKey
  * @param {string} params.destinationBucket
  * @param {string} params.destinationKey
+ * @param {AWS.S3.HeadObjectOutput} [params.sourceObject]
+ *   Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
  * @returns {Promise.<{ etag: string }>} object containing the ETag of the
