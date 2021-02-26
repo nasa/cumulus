@@ -55,10 +55,10 @@ locals {
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       PdrsTable                        = var.dynamo_tables.pdrs.name
-      protected_buckets                = join(",", var.protected_buckets)
+      protected_buckets                = join(",", local.protected_buckets)
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
       ProvidersTable                   = var.dynamo_tables.providers.name
-      public_buckets                   = join(",", var.public_buckets)
+      public_buckets                   = join(",", local.public_buckets)
       ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
       RulesTable                       = var.dynamo_tables.rules.name
       stackName                        = var.prefix

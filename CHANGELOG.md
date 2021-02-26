@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `buckets` variable to `tf-modules/archive`
 - **CUMULUS-2345**
   - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
   - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
@@ -20,11 +21,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports accessing all buckets defined in your `buckets` variable except "internal" buckets
 - **CUMULUS-2362**
   - Logs endpoints only work with Metrics set up
 
 - **CUMULUS-2350**
   - Updates the examples on the `/s3credentialsREADME`, to include Python and JavaScript code demonstrating how to refresh the s3credential for programatic access.
+
+### Removed
+
+- Removed variables from `tf-modules/archive`:
+  - `private_buckets`
+  - `protected_buckets`
+  - `public_buckets`
 
 ## [v6.0.0] 2021-02-16
 
