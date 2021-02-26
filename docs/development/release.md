@@ -14,6 +14,8 @@ Before releasing a new major version of Cumulus, we should test the deployment u
 
 It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
 
+You should create an entirely new deployment for this testing to replicate the end user upgrade path. Using an existing test or CI deployment would not be useful because that deployment may already have been deployed with the latest changes and not match the upgrade path for end users.
+
 Pre-release testing steps:
 
 1. Checkout the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo
@@ -29,6 +31,7 @@ Pre-release testing steps:
 
 3. For both the `data-persistence-tf` and `cumulus-tf` modules:
    1. Add the necessary backend configuration (`terraform.tf`) and variables (`terraform.tfvars`)
+      - You should use an entirely new deployment for this testing, so make sure to use values for `key` in `terraform.tf` and `prefix` in `terraform.tfvars` that don't collide with existing deployments
    2. Run `terraform init`
    3. Run `terraform apply`
 4. Checkout the `master` branch of the `cumulus` repo
@@ -49,6 +52,7 @@ Pre-release testing steps:
    3. Run `terraform init`
    4. Run `terraform apply`
 8. Review the `CHANGELOG.md` for any post-deployment migration steps and confirm that they are successful
+9. Delete your test deployment by running `terraform destroy` in `cumulus-tf` and `data-persistence-tf`
 
 ## Updating Cumulus version and publishing to NPM
 
@@ -145,8 +149,6 @@ npm run docs-build-packages
 Commit and push these changes, if any.
 
 ### 7. Cut new version of Cumulus Documentation
-
-> Note: This is for version `1.10.3` or later.
 
 If this is a backport, do not create a new version of the documentation. For various reasons, we do not merge backports back to master, other than changelog notes. Documentation changes for backports will not be published to our documentation website.
 
