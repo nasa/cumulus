@@ -16,7 +16,7 @@ import { GranulesExecutionsPgModel } from '../models/granules-executions';
  *   Granules/executions PG model class instance
  * @returns {Promise<number[]>}
  */
-export const upsertGranuleWithExecutionHistory = async (
+export const upsertGranuleWithExecutionJoinRecord = async (
   knexTransaction: Knex.Transaction,
   granule: PostgresGranule,
   executionCumulusId?: number,

@@ -11,7 +11,7 @@ const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
-  upsertGranuleWithExecutionHistory,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
@@ -55,7 +55,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('upsertGranuleWithExecutionHistory() creates granule record with granule/execution join record', async (t) => {
+test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule/execution join record', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -70,7 +70,7 @@ test('upsertGranuleWithExecutionHistory() creates granule record with granule/ex
   });
 
   const [granuleCumulusId] = await knex.transaction(
-    (trx) => upsertGranuleWithExecutionHistory(
+    (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
       executionCumulusId
@@ -101,7 +101,7 @@ test('upsertGranuleWithExecutionHistory() creates granule record with granule/ex
   );
 });
 
-test('upsertGranuleWithExecutionHistory() creates granule record without granule/execution join record', async (t) => {
+test('upsertGranuleWithExecutionJoinRecord() creates granule record without granule/execution join record', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -115,7 +115,7 @@ test('upsertGranuleWithExecutionHistory() creates granule record without granule
   });
 
   const [granuleCumulusId] = await knex.transaction(
-    (trx) => upsertGranuleWithExecutionHistory(
+    (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule
     )
@@ -142,7 +142,7 @@ test('upsertGranuleWithExecutionHistory() creates granule record without granule
   );
 });
 
-test('upsertGranuleWithExecutionHistory() handles multiple executions for a granule', async (t) => {
+test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a granule', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -158,7 +158,7 @@ test('upsertGranuleWithExecutionHistory() handles multiple executions for a gran
   });
 
   const [granuleCumulusId] = await knex.transaction(
-    (trx) => upsertGranuleWithExecutionHistory(
+    (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
       executionCumulusId
@@ -171,7 +171,7 @@ test('upsertGranuleWithExecutionHistory() handles multiple executions for a gran
   );
 
   await knex.transaction(
-    (trx) => upsertGranuleWithExecutionHistory(
+    (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
       secondExecutionCumulusId
@@ -202,7 +202,7 @@ test('upsertGranuleWithExecutionHistory() handles multiple executions for a gran
   );
 });
 
-test('upsertGranuleWithExecutionHistory() does not write anything if upserting granule/execution join record fails', async (t) => {
+test('upsertGranuleWithExecutionJoinRecord() does not write anything if upserting granule/execution join record fails', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -225,7 +225,7 @@ test('upsertGranuleWithExecutionHistory() does not write anything if upserting g
   await t.throwsAsync(
     knex.transaction(
       (trx) =>
-        upsertGranuleWithExecutionHistory(
+        upsertGranuleWithExecutionJoinRecord(
           trx,
           granule,
           executionCumulusId,
@@ -254,7 +254,7 @@ test('upsertGranuleWithExecutionHistory() does not write anything if upserting g
   );
 });
 
-test('upsertGranuleWithExecutionHistory() will allow a running status to replace a non-running status for different execution', async (t) => {
+test('upsertGranuleWithExecutionJoinRecord() will allow a running status to replace a non-running status for different execution', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -269,7 +269,7 @@ test('upsertGranuleWithExecutionHistory() will allow a running status to replace
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await upsertGranuleWithExecutionHistory(
+  const [granuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
     executionCumulusId
@@ -285,7 +285,7 @@ test('upsertGranuleWithExecutionHistory() will allow a running status to replace
     status: 'running',
   };
 
-  await upsertGranuleWithExecutionHistory(
+  await upsertGranuleWithExecutionJoinRecord(
     knex,
     updatedGranule,
     secondExecutionCumulusId
@@ -315,7 +315,7 @@ test('upsertGranuleWithExecutionHistory() will allow a running status to replace
   );
 });
 
-test('upsertGranuleWithExecutionHistory() succeeds if granulePgModel.upsert() affects no rows', async (t) => {
+test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert() affects no rows', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -329,7 +329,7 @@ test('upsertGranuleWithExecutionHistory() succeeds if granulePgModel.upsert() af
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await upsertGranuleWithExecutionHistory(
+  const [granuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
     executionCumulusId
@@ -340,7 +340,7 @@ test('upsertGranuleWithExecutionHistory() succeeds if granulePgModel.upsert() af
     status: 'running',
   };
 
-  await upsertGranuleWithExecutionHistory(
+  await upsertGranuleWithExecutionJoinRecord(
     knex,
     updatedGranule,
     executionCumulusId

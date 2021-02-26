@@ -11,7 +11,7 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  upsertGranuleWithExecutionHistory,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
@@ -88,7 +88,7 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionHistory(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
   const [newExecutionCumulusId] = await executionPgModel.create(
     t.context.knex,
@@ -144,7 +144,7 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionHistory(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
   const updatedGranule = {
     ...granule,
@@ -175,7 +175,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionHistory(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
   const updatedGranule = {
     ...granule,
@@ -203,7 +203,7 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionHistory(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
   const updatedGranule = {
     ...granule,
@@ -230,7 +230,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionHistory(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
   const [newExecutionCumulusId] = await executionPgModel.create(
     t.context.knex,

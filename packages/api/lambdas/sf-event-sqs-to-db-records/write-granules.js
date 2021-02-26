@@ -10,7 +10,7 @@ const {
   translateApiFiletoPostgresFile,
   FilePgModel,
   GranulePgModel,
-  upsertGranuleWithExecutionHistory,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
@@ -227,7 +227,7 @@ const writeGranuleAndFilesViaTransaction = async ({
     processingTimeInfo,
   });
 
-  const upsertQueryResult = await upsertGranuleWithExecutionHistory(
+  const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
     granuleRecord,
     executionCumulusId

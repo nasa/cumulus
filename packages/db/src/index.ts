@@ -72,7 +72,7 @@ export { translateApiExecutionToPostgresExecution } from './translate/executions
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export {
-  upsertGranuleWithExecutionHistory,
+  upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 
 export { AsyncOperationPgModel } from './models/async_operation';

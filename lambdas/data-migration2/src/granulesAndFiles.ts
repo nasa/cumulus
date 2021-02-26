@@ -9,7 +9,7 @@ import {
   FilePgModel,
   PostgresFile,
   translateApiGranuleToPostgresGranule,
-  upsertGranuleWithExecutionHistory,
+  upsertGranuleWithExecutionJoinRecord,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
@@ -83,7 +83,7 @@ export const migrateGranuleRecord = async (
 
   const granule = await translateApiGranuleToPostgresGranule(record, knex);
 
-  const [cumulusId] = await knex.transaction((trx) => upsertGranuleWithExecutionHistory(
+  const [cumulusId] = await knex.transaction((trx) => upsertGranuleWithExecutionJoinRecord(
     trx,
     granule,
     executionCumulusId
