@@ -14,6 +14,7 @@ locals {
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       cmr_oauth_provider               = var.cmr_oauth_provider
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
