@@ -359,6 +359,11 @@ variable "ecs_custom_sg_ids" {
 
 ## ORCA Variables Definitions
 
+variable "include_orca" {
+  type    = bool
+  default = true
+}
+
 variable "platform" {
   default = "AWS"
   type = string
