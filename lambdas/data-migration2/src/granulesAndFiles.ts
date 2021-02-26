@@ -53,17 +53,16 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  // TODO: Is this safe? `execution` is a required field from Dynamo now,
-  // but maybe not for older records
-  const executionCumulusId = await executionPgModel.getRecordCumulusId(
-    knex,
-    {
-      url: record.execution,
-    }
-  );
-
   let existingRecord;
+  let executionCumulusId;
   try {
+    executionCumulusId = await executionPgModel.getRecordCumulusId(
+      knex,
+      {
+        url: record.execution,
+      }
+    );
+
     existingRecord = await granulePgModel.get(knex, {
       granule_id: record.granuleId,
       collection_cumulus_id: collectionCumulusId,
