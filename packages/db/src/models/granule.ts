@@ -21,25 +21,28 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
     if (granule.status === 'running') {
-      return knexOrTrx(this.tableName)
+      const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
         .merge({
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
-        })
+        });
+      if (executionCumulusId) {
         // Only do the upsert if there IS NOT already a record associating
         // the granule to this execution. If there IS already a record
         // linking this granule to this execution, then this upsert query
         // will not affect any rows.
-        .whereNotExists(
+        upsertQuery.whereNotExists(
           granulesExecutionsPgModel.search(
             knexOrTrx,
             { execution_cumulus_id: executionCumulusId }
           )
-        )
-        .returning('cumulus_id');
+        );
+      }
+      upsertQuery.returning('cumulus_id');
+      return upsertQuery;
     }
     return knexOrTrx(this.tableName)
       .insert(granule)

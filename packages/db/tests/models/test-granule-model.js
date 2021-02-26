@@ -248,6 +248,22 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
   t.is(record.status, 'running');
 });
 
+test('GranulePgModel.upsert() succeeds without an execution', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await granulePgModel.upsert(knex, granule);
+  t.true(await granulePgModel.exists(knex, granule));
+});
+
 test('GranulePgModel.delete() deletes granule and granule/execution join records', async (t) => {
   const {
     knex,
