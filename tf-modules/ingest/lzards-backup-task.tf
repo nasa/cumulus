@@ -14,6 +14,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
   environment {
     variables = {
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       stackName                        = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR      = "/opt/"
       system_bucket                    = var.system_bucket

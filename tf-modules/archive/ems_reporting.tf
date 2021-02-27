@@ -13,6 +13,7 @@ resource "aws_lambda_function" "ems_distribution_report" {
   environment {
     variables = {
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       CollectionsTable                 = var.dynamo_tables.collections.name
       FilesTable                       = var.dynamo_tables.files.name
       GranulesTable                    = var.dynamo_tables.granules.name
@@ -79,6 +80,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
   environment {
     variables = {
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       CollectionsTable                 = var.dynamo_tables.collections.name
       ems_dataSource                   = var.ems_datasource
       ems_host                         = var.ems_host
@@ -163,6 +165,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
   environment {
     variables = {
       CMR_ENVIRONMENT     = var.cmr_environment
+      CMR_HOST            = var.cmr_custom_host
       CollectionsTable    = var.dynamo_tables.collections.name
       ES_HOST             = var.elasticsearch_hostname
       ems_dataSource      = var.ems_datasource
