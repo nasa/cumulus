@@ -171,6 +171,7 @@ async function bulkGranuleDelete(payload) {
     granuleIds,
     async (granuleId) => {
       let dynamoGranule;
+      let pgGranule;
 
       try {
         dynamoGranule = await granuleModel.getRecord({ granuleId });
@@ -182,16 +183,14 @@ async function bulkGranuleDelete(payload) {
         throw error;
       }
 
-      let updateResponse;
-
       if (dynamoGranule && dynamoGranule.published && forceRemoveFromCmr) {
-        updateResponse = await unpublishGranule(knex, dynamoGranule);
+        ({ pgGranule, dynamoGranule } = await unpublishGranule(knex, dynamoGranule));
       }
 
       await deleteGranuleAndFiles({
         knex,
-        dynamoGranule: updateResponse ? updateResponse.dynamoGranule : dynamoGranule,
-        pgGranule: updateResponse ? updateResponse.pgGranule : await _getPgGranuleByCollection(
+        dynamoGranule,
+        pgGranule: pgGranule || await _getPgGranuleByCollection(
           granuleId, dynamoGranule.collectionId, knex
         ),
       });

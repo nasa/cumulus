@@ -468,10 +468,16 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
+  const granuleModel = new Granule();
+  const granulePgModel = new GranulePgModel();
+
   const granules = await Promise.all([
     createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
     createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
   ]);
+
+  const dynamoGranuleId1 = granules[0].newDynamoGranule.granuleId;
+  const dynamoGranuleId2 = granules[1].newDynamoGranule.granuleId;
 
   sinon.stub(
     DefaultProvider,
@@ -494,8 +500,8 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
       envVars,
       payload: {
         ids: [
-          granules[0].newDynamoGranule.granuleId,
-          granules[1].newDynamoGranule.granuleId,
+          dynamoGranuleId1,
+          dynamoGranuleId2,
         ],
         forceRemoveFromCmr: true,
       },
@@ -504,8 +510,8 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
     t.deepEqual(
       deletedGranules.sort(),
       [
-        granules[0].newDynamoGranule.granuleId,
-        granules[1].newDynamoGranule.granuleId,
+        dynamoGranuleId1,
+        dynamoGranuleId2,
       ].sort()
     );
   } finally {
@@ -513,6 +519,14 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
     DefaultProvider.decrypt.restore();
     CMR.prototype.getGranuleMetadata.restore();
   }
+
+  // Granules should have been deleted from Dynamo
+  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
+  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
+
+  // Granules should have been deleted from PG
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
 
   const s3Buckets = granules[0].s3Buckets;
   t.teardown(() => deleteS3Buckets([
