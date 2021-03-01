@@ -6,10 +6,10 @@ import {
   CollectionPgModel,
   ExecutionPgModel,
   GranulePgModel,
+  upsertGranuleWithExecutionJoinRecord,
   FilePgModel,
   PostgresFile,
   translateApiGranuleToPostgresGranule,
-  upsertGranuleWithExecutionJoinRecord,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
@@ -53,16 +53,17 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  let existingRecord;
-  let executionCumulusId;
-  try {
-    executionCumulusId = await executionPgModel.getRecordCumulusId(
-      knex,
-      {
-        url: record.execution,
-      }
-    );
+  // Schema validation on Dynamo record will fail if `record.execution`
+  // does not exist
+  const executionCumulusId = await executionPgModel.getRecordCumulusId(
+    knex,
+    {
+      url: record.execution,
+    }
+  );
 
+  let existingRecord;
+  try {
     existingRecord = await granulePgModel.get(knex, {
       granule_id: record.granuleId,
       collection_cumulus_id: collectionCumulusId,
