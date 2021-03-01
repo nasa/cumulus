@@ -152,7 +152,7 @@ async function bulkGranuleDelete(payload) {
         throw error;
       }
 
-      // Try to get the PG record. If it cannot be found, ignore it and
+      // Try to get the postgres record. If it cannot be found, ignore it and
       // move along to unpublishing and deleting only the Dynamo record.
       // If another error is thrown, throw it here.
       try {
