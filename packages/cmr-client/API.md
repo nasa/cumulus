@@ -34,8 +34,8 @@ A class to simplify requests to the CMR
     * [.getWriteHeaders(params)](#CMR+getWriteHeaders) ⇒ <code>Object</code>
     * [.getReadHeaders(params)](#CMR+getReadHeaders) ⇒ <code>Object</code>
     * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.ingestGranule(xml)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.ingestUMMGranule(ummgMetadata)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.ingestGranule(xml, cmrRevisionId)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.ingestUMMGranule(ummgMetadata, cmrRevisionId)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteCollection(datasetID)](#CMR+deleteCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteGranule(granuleUR)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.searchCollections(params, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -104,6 +104,7 @@ Return object containing CMR request headers for PUT / POST / DELETE
 | params | <code>Object</code> |  |
 | [params.token] | <code>string</code> | CMR request token |
 | [params.ummgVersion] | <code>string</code> | UMMG metadata version string or null if echo10 metadata |
+| [params.cmrRevisionId] | <code>string</code> | CMR Revision ID |
 
 <a name="CMR+getReadHeaders"></a>
 
@@ -132,7 +133,7 @@ Adds a collection record to the CMR
 
 <a name="CMR+ingestGranule"></a>
 
-### cmrClient.ingestGranule(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.ingestGranule(xml, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a granule record to the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -141,10 +142,11 @@ Adds a granule record to the CMR
 | Param | Type | Description |
 | --- | --- | --- |
 | xml | <code>string</code> | the granule XML document |
+| cmrRevisionId | <code>string</code> | Optional CMR Revision ID |
 
 <a name="CMR+ingestUMMGranule"></a>
 
-### cmrClient.ingestUMMGranule(ummgMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.ingestUMMGranule(ummgMetadata, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds/Updates UMMG json metadata in the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -153,6 +155,7 @@ Adds/Updates UMMG json metadata in the CMR
 | Param | Type | Description |
 | --- | --- | --- |
 | ummgMetadata | <code>Object</code> | UMMG metadata object |
+| cmrRevisionId | <code>string</code> | Optional CMR Revision ID |
 
 <a name="CMR+deleteCollection"></a>
 

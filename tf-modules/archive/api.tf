@@ -14,6 +14,7 @@ locals {
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       cmr_oauth_provider               = var.cmr_oauth_provider
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
@@ -55,10 +56,10 @@ locals {
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       PdrsTable                        = var.dynamo_tables.pdrs.name
-      protected_buckets                = join(",", var.protected_buckets)
+      protected_buckets                = join(",", local.protected_buckets)
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
       ProvidersTable                   = var.dynamo_tables.providers.name
-      public_buckets                   = join(",", var.public_buckets)
+      public_buckets                   = join(",", local.public_buckets)
       ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
       RulesTable                       = var.dynamo_tables.rules.name
       stackName                        = var.prefix
