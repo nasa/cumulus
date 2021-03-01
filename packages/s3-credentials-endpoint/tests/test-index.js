@@ -356,7 +356,7 @@ test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true res
     .expect(503);
 
   t.is(response.status, 503);
-  t.is(response.res.text, '{"statusCode":503,"error":"Service Unavailable","message":"S3 Credentials Endpoint has been disabled"}');
+  t.is(JSON.parse(response.text).message, 'S3 Credentials Endpoint has been disabled');
   t.teardown(() => {
     delete process.env.DISABLE_S3_CREDENTIALS;
   });
