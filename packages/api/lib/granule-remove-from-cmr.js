@@ -34,7 +34,9 @@ const _removeGranuleFromCmr = async (granule) => {
  *
  * @param {Knex | Knex.transaction} knexOrTransaction - DB client
  * @param {Object} granule - A granule record
- * @returns {Promise} - output of Granule Dynamo model's update()
+ * @returns {Object} - Updated granules
+ * @returns {Object.dynamoGranule} - Updated Dynamo Granule
+ * @returns {Object.pgGranule} - Updated Postgres Granule
  */
 const unpublishGranule = async (knexOrTransaction, granule) => {
   const granuleModelClient = new models.Granule();
