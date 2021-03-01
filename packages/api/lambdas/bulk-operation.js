@@ -161,11 +161,12 @@ async function _getPgGranuleByCollection(granuleId, collectionId, knex) {
  * @returns {Promise}
  */
 async function bulkGranuleDelete(payload) {
+  const deletedGranules = [];
+  const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const knex = await getKnexClient({ env: process.env });
-  const deletedGranules = [];
+
   await pMap(
     granuleIds,
     async (granuleId) => {
