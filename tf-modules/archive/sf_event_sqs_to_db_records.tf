@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     actions = [
       "s3:GetObject*",
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {
