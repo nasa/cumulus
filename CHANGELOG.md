@@ -7,10 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+
 - `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can be used to set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`).
 - Added `buckets` variable to `tf-modules/archive`
+
 ### Changed
+
 - `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports accessing all buckets defined in your `buckets` variable except "internal" buckets
+
 ### Removed
 
 - Removed variables from `tf-modules/archive`:
