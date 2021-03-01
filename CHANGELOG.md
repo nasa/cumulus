@@ -51,6 +51,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
 - **CUMULUS-2350**
   - Updates the examples on the `/s3credentialsREADME`, to include Python and JavaScript code demonstrating how to refresh the s3credential for programatic access.
+- **CUMULUS-2383**
+  - PostToCMR task will return CMRInternalError when a `500` status is returned from CMR
+
+### Removed
+
+- Removed variables from `tf-modules/archive`:
+  - `private_buckets`
+  - `protected_buckets`
+  - `public_buckets`
 
 ## [v6.0.0] 2021-02-16
 
