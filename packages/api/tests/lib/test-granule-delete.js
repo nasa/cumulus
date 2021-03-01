@@ -290,53 +290,6 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
   );
 });
 
-test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files if the PG file delete fails', async (t) => {
-  const {
-    newPgGranule,
-    newDynamoGranule,
-    files,
-    s3Buckets,
-  } = await createGranuleAndFiles(
-    t.context.knex,
-    t.context.collectionCumulusId,
-    false
-  );
-
-  const mockFileModel = {
-    tableName: 'files',
-    delete: () => {
-      throw new Error('Delete failed');
-    },
-  };
-
-  await t.throwsAsync(
-    deleteGranuleAndFiles({
-      knex: t.context.knex,
-      dynamoGranule: newDynamoGranule,
-      pgGranule: newPgGranule,
-      filePgModel: mockFileModel,
-    }),
-    { instanceOf: Error }
-  );
-
-  // granule should still exist in Dynamo and PG
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
-  t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
-
-  // Verify files still exist in S3 and PG
-  await Promise.all(
-    files.map(async (file) => {
-      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-    })
-  );
-
-  t.teardown(() => deleteS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]));
-});
-
 test.serial('deleteGranuleAndFiles() will not delete PG or S3 Files if the PG Granule delete fails', async (t) => {
   const {
     newPgGranule,
