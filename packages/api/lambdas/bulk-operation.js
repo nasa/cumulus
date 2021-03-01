@@ -107,6 +107,41 @@ function applyWorkflowToGranules({
   return Promise.all(applyWorkflowRequests);
 }
 
+/**
+ * Fetch a Postgres Granule by granule and collection IDs
+ *
+ * @param {string} granuleId - Granule ID
+ * @param {string} collectionId - Collection ID in "name___version" format
+ * @param {Knex } knex - DB client
+ * @returns {Promise<PostgresGranuleRecord>} - The fetched Postgres Granule
+ * @private
+ */
+async function _getPgGranuleByCollection(granuleId, collectionId, knex) {
+  const granulePgModel = new GranulePgModel();
+  const collectionPgModel = new CollectionPgModel();
+
+  let pgGranule;
+
+  try {
+    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+
+    pgGranule = granulePgModel.get(knex,
+      {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  return pgGranule;
+}
+
 // FUTURE: the Dynamo Granule is currently the primary record driving the
 // "unpublish from CMR" logic.
 // This should be switched to pgGranule once the postgres
@@ -128,20 +163,14 @@ function applyWorkflowToGranules({
 async function bulkGranuleDelete(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  const granulePgModel = new GranulePgModel();
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const knex = await getKnexClient({ env: process.env });
   const deletedGranules = [];
   await pMap(
     granuleIds,
     async (granuleId) => {
-      const collectionPgModel = new CollectionPgModel();
-
       let dynamoGranule;
-      let pgGranule;
 
-      // Try to get the Dynamo record. If it cannot be found, just log
-      // the error and skip it.
       try {
         dynamoGranule = await granuleModel.getRecord({ granuleId });
       } catch (error) {
@@ -152,40 +181,18 @@ async function bulkGranuleDelete(payload) {
         throw error;
       }
 
-      // Try to get the postgres record. If it cannot be found, ignore it and
-      // move along to unpublishing and deleting only the Dynamo record.
-      // If another error is thrown, throw it here.
-      try {
-        const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-          knex,
-          deconstructCollectionId(dynamoGranule.collectionId)
-        );
-
-        pgGranule = await granulePgModel.get(knex,
-          {
-            granule_id: granuleId,
-            collection_cumulus_id: collectionCumulusId,
-          });
-      } catch (error) {
-        if (!(error instanceof RecordDoesNotExist)) {
-          throw error;
-        }
-      }
-
-      // Using the Dynamo record as the primary source, unpublish it from
-      // CMR if it's published and we need to force-remove it.
       let updateResponse;
 
       if (dynamoGranule && dynamoGranule.published && forceRemoveFromCmr) {
         updateResponse = await unpublishGranule(knex, dynamoGranule);
       }
 
-      // Delete the Dynamo Granule, the Postgres Granule (if one was found),
-      // and associated files.
       await deleteGranuleAndFiles({
         knex,
         dynamoGranule: updateResponse ? updateResponse.dynamoGranule : dynamoGranule,
-        pgGranule: updateResponse ? updateResponse.pgGranule : pgGranule,
+        pgGranule: updateResponse ? updateResponse.pgGranule : await _getPgGranuleByCollection(
+          granuleId, dynamoGranule.collectionId, knex
+        ),
       });
 
       deletedGranules.push(granuleId);

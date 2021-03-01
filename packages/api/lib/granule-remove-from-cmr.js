@@ -65,7 +65,7 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
         published: false,
         cmr_link: undefined,
       },
-      ['cumulus_id']
+      ['cumulus_id', 'published']
     );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
