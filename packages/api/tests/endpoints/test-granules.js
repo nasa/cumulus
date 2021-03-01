@@ -38,7 +38,7 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-// PG mock data factories
+// Postgres mock data factories
 const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
@@ -210,7 +210,7 @@ test.before(async (t) => {
     dynamoCollection.version
   );
 
-  // Create a PG Collection
+  // Create a Postgres Collection
   const testPgCollection = fakeCollectionRecordFactory({
     name: collectionName,
     version: collectionVersion,
@@ -570,7 +570,7 @@ test.serial('remove a granule from CMR', async (t) => {
     t.is(updatedDynamoGranule.published, false);
     t.is(updatedDynamoGranule.cmrLink, undefined);
 
-    // Should have updated the PG granule
+    // Should have updated the Postgres granule
     const updatedPgGranule = await granulePgModel.get(
       t.context.knex,
       { granule_id: granuleId }
@@ -660,11 +660,11 @@ test.serial('DELETE deleting an existing granule that is published will fail and
     'You cannot delete a granule that is published to CMR. Remove it from CMR first'
   );
 
-  // granule should still exist in Dynamo and PG
+  // granule should still exist in Dynamo and Postgres
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
   t.true(await granuleModel.exists({ granuleId }));
 
-  // Verify files still exist in S3 and PG
+  // Verify files still exist in S3 and Postgres
   await Promise.all(
     newDynamoGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
@@ -696,7 +696,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
 
   const granuleId = newDynamoGranule.granuleId;
 
-  // granule have been deleted from PG and Dynamo
+  // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
   t.false(await granuleModel.exists({ granuleId }));
 
@@ -817,7 +817,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 
   const granuleId = newDynamoGranule.granuleId;
 
-  // granule not have been deleted from PG or Dynamo
+  // granule not have been deleted from Postgres or Dynamo
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
   t.true(await granuleModel.exists({ granuleId }));
 

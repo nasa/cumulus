@@ -30,7 +30,7 @@ const _removeGranuleFromCmr = async (granule) => {
 };
 
 /**
- * Remove granule record from CMR and update PG + Dynamo granules
+ * Remove granule record from CMR and update Postgres + Dynamo granules
  *
  * @param {Knex | Knex.transaction} knexOrTransaction - DB client
  * @param {Object} granule - A granule record
@@ -47,8 +47,8 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
 
   await _removeGranuleFromCmr(granule);
 
-  // If we cannot find a PG Collection or PG Granule,
-  // don't update the PG Granule, continue to update the Dynamo granule
+  // If we cannot find a Postgres Collection or Postgres Granule,
+  // don't update the Postgres Granule, continue to update the Dynamo granule
   try {
     const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
       knexOrTransaction,

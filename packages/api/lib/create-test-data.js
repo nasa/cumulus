@@ -10,7 +10,7 @@ const {
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-// PG mock data factories
+// Postgres mock data factories
 const {
   fakeGranuleRecordFactory,
   fakeCollectionRecordFactory,
@@ -30,7 +30,7 @@ const models = require('../models');
 
 /**
  * Helper for creating a granule, a parent collection,
- * and files belonging to that granule (in S3 and PG)
+ * and files belonging to that granule (in S3 and Postgres)
  * @param {Knex} dbClient - Knex client
  * @param {number} collectionId - collectionId for the granule's parent collection
  * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
@@ -142,7 +142,7 @@ async function createGranuleAndFiles({
   // create a new Dynamo granule
   await granuleModel.create(newGranule);
 
-  // create a new PG granule
+  // create a new Postgres granule
   const newPGGranule = fakeGranuleRecordFactory(
     {
       granule_id: granuleId,
@@ -154,7 +154,7 @@ async function createGranuleAndFiles({
 
   const [granuleCumulusId] = await granulePgModel.create(dbClient, newPGGranule);
 
-  // create PG files
+  // create Postgres files
   await Promise.all(
     files.map((f) => {
       const pgFile = {

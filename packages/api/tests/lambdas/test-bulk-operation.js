@@ -306,7 +306,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dynamo and PG', async (t) => {
+test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dynamo and Postgres', async (t) => {
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
 
@@ -348,7 +348,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
 
-  // Granules should have been deleted from PG
+  // Granules should have been deleted from Postgres
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
 
@@ -524,7 +524,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granu
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
 
-  // Granules should have been deleted from PG
+  // Granules should have been deleted from Postgres
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
 
