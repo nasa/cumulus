@@ -815,7 +815,7 @@ test(
   }
 );
 
-test('buildCMRQuery works with an empty list of objects', (t) => {
+test('buildCMRQuery works with if the input results list is empty', (t) => {
   const results = [];
   const expected = { condition: { or: [] } };
   const actual = buildCMRQuery(results);

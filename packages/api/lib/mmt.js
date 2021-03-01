@@ -41,15 +41,16 @@ const buildMMTLink = (conceptId, cmrEnv = process.env.CMR_ENVIRONMENT) => {
 };
 
 /**
- * Takes the Collection elasticsearch results and updates every results object
- * with an MMTLink if the result has a collectionId in the cmrEntries.
+ * Updates the Collection query results from ES with an MMTLink when the
+ * matching CMR entry contains a collection_id.
+ *
  * @param {Array<Object>} esResults - collection query results from Cumulus' elasticsearch
  * @param {Array<Object>} cmrEntries - cmr response feed entry that should match the
  *                                     results collections
  * @returns {Array<Object>} - Array of shallow clones of esResults objects with
  *                            MMTLinks added to them
  */
-const updateResultsWithMMT = (esResults, cmrEntries) => esResults.map((res) => {
+const updateResponseWithMMT = (esResults, cmrEntries) => esResults.map((res) => {
   const matchedCmr = cmrEntries.filter(
     (entry) => entry.short_name === res.name && entry.version_id === res.version
   );
@@ -59,16 +60,17 @@ const updateResultsWithMMT = (esResults, cmrEntries) => esResults.map((res) => {
 });
 
 /**
- * Creates a formatted list of shortname/version objects for use in a call to
- * CMR to retrive collection information.  transforms each object in the
- * results array into an new objects.
+ * Simplifies and transforms The returned ES results from a collection query
+ * into a list of objects suitable for a compound call to CMR to retrieve
+ * collection_id information.
+ *  Transforms each object in the results array into an new object.
  *  inputObject.name => outputObject.short_name
  *  inputObject.version => outputObject.version
- * all other input object keys are ignored.
+ *  all other input object keys are dropped.
  *
- * @param {Object} results - an elasticsearch results array returned from either
+ * @param {Object} results - The elasticsearch results array returned from either
  *          Collection.query() or Collection.queryCollectionsWithActiveGranules()
- * @returns {Arary<Object>} - list of Objects with two keys.
+ * @returns {Arary<Object>} - list of Objects with two keys (short_name and version).
  */
 const parseResults = (results) =>
   results.map((object) => ({
@@ -90,7 +92,7 @@ const insertMMTLinks = async (inputResponse) => {
   try {
     const responseList = parseResults(inputResponse.results);
     const cmrResults = await getCollectionsByShortNameAndVersion(responseList);
-    response.results = updateResultsWithMMT(inputResponse.results, cmrResults.feed.entry);
+    response.results = updateResponseWithMMT(inputResponse.results, cmrResults.feed.entry);
   } catch (error) {
     log.error('Unable to update inputResponse with MMT Links');
     log.error(error);

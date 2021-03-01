@@ -883,8 +883,9 @@ async function reconcileCMRMetadata({
 }
 
 /**
- * Creates the query object to post to CMR that will return all collections
- * that match both the short_name and version of any of the result objects.
+ * Creates the query object used in POSTing to CMR.
+ * This query is a compound conditional using JSONQueryLanguage supported by CMR.
+ * This returns every collection that matches any of the short_name version pairs provided.
  * the final query should be like
  *  {"condition":
  *   { "or": [{ "and": [{"short_name": "sn1"}, {"version": "001"}] },
@@ -905,12 +906,11 @@ function buildCMRQuery(results) {
 }
 
 /**
- * Call CMR to get the collections for each of the results array's collections in a single call.
+ * Call CMR to get the all matching Collections information with a compound query call.
  *
  * @param {Array<Object>} results - pared results from a Cumulus collection search.
  * @returns {Promise<Object>} - resolves to the CMR return
- * containing the found collections that were searched by short_name and
- * version.
+ * containing the found collections
  */
 async function getCollectionsByShortNameAndVersion(results) {
   const query = buildCMRQuery(results);

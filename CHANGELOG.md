@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2345**
   - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
   - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2412**
+  - Adds function `getCollectionsByShortNameAndVersion` to @cumulus/cmrjs that performs a compound query to CMR to retrieve collection information on a list of collections. This replaces a series of calls to the CMR for each collection with a single call on the `/collections` endpoint and should improve performance when CMR return times are increased.
 
 ### Changed
 

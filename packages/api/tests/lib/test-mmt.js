@@ -11,11 +11,12 @@ const mmt = rewire('../../lib/mmt');
 const insertMMTLinks = mmt.__get__('insertMMTLinks');
 const buildMMTLink = mmt.__get__('buildMMTLink');
 const parseResults = mmt.__get__('parseResults');
-const updateResultsWithMMT = mmt.__get__('updateResultsWithMMT');
+const updateResponseWithMMT = mmt.__get__('updateResponseWithMMT');
 const log = mmt.__get__('log');
 
 /**
- *  fakes a CMR return feed where each item in the list contains an collection_id labeled "id"
+ *  Fakes a CMR return feed where each item in the list contains an
+ *  collection_id labeled "id" that is made of the short_name and version
  * @param {Array<Object>} list - parsed list of collection results
  * @returns {Object} Fake CMR responses
  */
@@ -29,7 +30,7 @@ const cmrReturnsWithIds = async (list) => {
 };
 
 /**
- *  fakes a CMR return feed where no ites in the list have a collection_id labeled "id"
+ * Fakes a CMR return feed where no items in the list have a collection_id.
  * @param {Array<Object>} list - parsed list of collection results
  * @returns {Object} Fake CMR responses
  */
@@ -49,7 +50,7 @@ test.afterEach.always(async (t) => {
   process.env.CMR_ENVIRONMENT = t.context.env;
 });
 
-test.serial('parseResults parses results correctly', (t) => {
+test.serial('parseResults reshapes objects correctly', (t) => {
   const fakeESResults = [
     { version: '006', name: 'MOD09GQ', duplicateHandling: 'ignored' },
     { version: '001', name: 'ICK99NO', granuleId: 'ignored' },
@@ -66,7 +67,7 @@ test.serial('parseResults parses results correctly', (t) => {
   t.deepEqual(actual, expected);
 });
 
-test.serial('updateResultsWithMMT merges entries from CMR with input collection response', async (t) => {
+test.serial('updateResponseWithMMT merges entries from CMR with input collection response', async (t) => {
   const esResults = await readJsonFixture(path.join(__dirname, './fixtures/collectionESResult.json'));
   const cmrResults = await readJsonFixture(path.join(__dirname, './fixtures/cmrResults.json'));
 
@@ -76,7 +77,7 @@ test.serial('updateResultsWithMMT merges entries from CMR with input collection 
   expected[1].MMTLink = 'https://mmt.uat.earthdata.nasa.gov/collections/C1237256734-CUMULUS';
   expected[2].MMTLink = undefined;
 
-  const actual = updateResultsWithMMT(esResults.results, cmrResults.feed.entry);
+  const actual = updateResponseWithMMT(esResults.results, cmrResults.feed.entry);
   t.deepEqual(actual, expected);
 });
 
