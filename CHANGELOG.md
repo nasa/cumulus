@@ -130,6 +130,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from Postgres database.
   - **CUMULUS-2309**
     - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from Postgres database.
+  - **CUMULUS-2367**
+    - Updated `granule_cumulus_id` foreign key to granule in RDS `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
 
 ### Changed
 
