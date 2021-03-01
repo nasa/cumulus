@@ -5,7 +5,7 @@
             "Type": "GET DATA"
         },
         {
-            "URL": "https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4",
+            "URL": "https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4",
             "Type": "USE SERVICE API",
             "Subtype": "OPENDAP DATA",
             "Description": "OPeNDAP request URL"

@@ -179,7 +179,7 @@ const event = {
       passwordSecretName: cmrPasswordSecret,
     },
     urlConfiguration: {
-      addShortnameAndVersionIdToConceptId: true,
+      addShortnameAndVersionIdToConceptId: false,
     }
   },
   input: {},
@@ -209,7 +209,7 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
     });
     const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
 
-    t.is(actual.Body.toString(), expected);
+    t.is(actual.Body.toString(), expected.trim('\n'));
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
@@ -252,7 +252,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata f
     };
     const expectedPartial = {
       etag: outputEtag,
-      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8'),
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8').trim('\n'),
     };
 
     t.not(outputEtag, inputEtag);
@@ -314,7 +314,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     };
     const expectedPartial = {
       etag: outputEtag,
-      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8'),
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8').trim('\n'),
     };
 
     t.not(outputEtag, inputEtag);
@@ -503,8 +503,8 @@ test.serial('Test record does not exist error when granule object has no recogni
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });
 
-test.serial('Test retrieving default entry collection from CMR using UMM-G', async (t) => {
-  const defaultEvent = {
+test.serial('Test retrieving optional entry collection from CMR using UMM-G', async (t) => {
+  const optionalEvent = {
     config: {
       cmr: {
         oauthProvider: 'earthdata',
@@ -514,23 +514,23 @@ test.serial('Test retrieving default entry collection from CMR using UMM-G', asy
         passwordSecretName: cmrPasswordSecret,
       },
       urlConfiguration: {
-        addShortnameAndVersionIdToConceptId: false,
+        addShortnameAndVersionIdToConceptId: true,
       }
     },
     input: {},
   };
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
-  const actual = await getCollectionEntry(defaultEvent.config, metadataObject, true);
-  t.is(actual, 'C1453188197-GES_DISC');
+  const actual = await getCollectionEntry(optionalEvent.config, metadataObject, true);
+  t.is(actual, 'C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0');
 });
 
-test.serial('Test retrieving entry collection from CMR using UMM-G', async (t) => {
+test.serial('Test retrieving default entry collection from CMR using UMM-G', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
 
   const actual = await getCollectionEntry(event.config, metadataObject, true);
-  t.is(actual, 'C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0');
+  t.is(actual, 'C1453188197-GES_DISC');
 });
 
 test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
@@ -551,7 +551,7 @@ test.serial('Test retrieving entry collection from CMR using ECHO10', async (t) 
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const actual = await getCollectionEntry(event.config, metadata, false);
-  t.is(actual, 'C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0');
+  t.is(actual, 'C1453188197-GES_DISC');
 });
 
 test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
@@ -565,28 +565,28 @@ test('Test generate path from UMM-G', async (t) => {
   const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(metadata);
   const actual = await generatePath(event.config, metadataObject, true);
-  t.is(actual, 'collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generate path from ECHO-10', async (t) => {
   const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadataObject = await (promisify(xml2js.parseString))(metadata, xmlParseOptions);
   const actual = await generatePath(event.config, metadataObject, false);
-  t.is(actual, 'collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generating OPeNDAP URL from ECHO10 file', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const actual = await generateHyraxUrl(event.config, metadata, false);
-  t.is(actual, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generating OPeNDAP URL from UMM-G file', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
   const actual = await generateHyraxUrl(event.config, metadataObject, true);
-  t.is(actual, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generate path from ECHO-10 throws exception with broken config', async (t) => {

@@ -83,7 +83,7 @@ test('Test adding OPeNDAP URL to UMM-G file', (t) => {
   const metadata = JSON.parse(data);
   const expected = fs.readFileSync('tests/data/umm-gout.json', 'utf8');
   const expectedObject = JSON.parse(expected);
-  const actual = addHyraxUrl(metadata, true, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  const actual = addHyraxUrl(metadata, true, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(actual, JSON.stringify(expectedObject, undefined, 2));
 });
 
@@ -92,7 +92,7 @@ test('Test adding OPeNDAP URL to UMM-G file with no related urls', (t) => {
   const metadata = JSON.parse(data);
   const expected = fs.readFileSync('tests/data/umm-gout-no-related-urls.json', 'utf8');
   const expectedObject = JSON.parse(expected);
-  const actual = addHyraxUrl(metadata, true, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  const actual = addHyraxUrl(metadata, true, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(actual, JSON.stringify(expectedObject, undefined, 2));
 });
 
@@ -100,23 +100,24 @@ test('Test adding OPeNDAP URL to ECHO10 file', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
-  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
-  t.is(actual, expected);
+  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  console.info(actual);
+  t.is(actual, expected.trim('\n'));
 });
 
 test('Test adding OPeNDAP URL to ECHO10 file with no OnlineResources', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in-no-online-resource-urls.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const expected = fs.readFileSync('tests/data/echo10out-no-online-resource-urls.xml', 'utf8');
-  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
-  t.is(actual, expected);
+  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, expected.trim('\n'));
 });
 
 test('Test adding OPeNDAP URL to ECHO10 file with one OnlineResources', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in-1-online-resource-urls.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const expected = fs.readFileSync('tests/data/echo10out-1-online-resource-urls.xml', 'utf8');
-  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(actual, expected.trim('\n'));
 });
 
@@ -124,6 +125,6 @@ test('Test adding OPeNDAP URL to ECHO10 file with two OnlineResources', async (t
   const data = fs.readFileSync('tests/data/echo10in-2-online-resource-urls.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const expected = fs.readFileSync('tests/data/echo10out-2-online-resource-urls.xml', 'utf8');
-  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
-  t.is(actual, expected);
+  const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, expected.trim('\n'));
 });
