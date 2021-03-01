@@ -131,13 +131,10 @@ async function getCollectionEntry(config, metadata, isUmmG) {
   let conceptId;
   let shortName;
   let versionId;
-  let collectionEntry;
   if (isUmmG === true) {
-    conceptId = metadata.Id;
     shortName = metadata.CollectionReference.ShortName;
     versionId = metadata.CollectionReference.Version;
   } else {
-    conceptId = metadata.Granule.Id
     shortName = metadata.Granule.Collection.ShortName;
     versionId = metadata.Granule.Collection.VersionId;
   }
@@ -164,11 +161,10 @@ async function getCollectionEntry(config, metadata, isUmmG) {
   if (conceptId === undefined) {
     throw new RecordDoesNotExist(`Unable to query parent collection using short name ${shortName} and version ${versionId}`);
   }
-  collectionEntry = conceptId;
-  if (config.urlConfiguration.addShortnameAndVersionIdToConceptId === true){
-    collectionEntry = conceptId + '/' + shortName + '.' + versionId
-  }
-  return collectionEntry;
+
+  return (config.addShortnameAndVersionIdToConceptId !== undefined
+         && config.addShortnameAndVersionIdToConceptId ===true) ?
+         conceptId + '/' + shortName + '.' + versionId : conceptId;
 }
 
 /**

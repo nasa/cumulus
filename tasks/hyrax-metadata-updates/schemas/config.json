@@ -50,14 +50,10 @@
         }
       }
     },
-    "urlConfiguration": {
-      "type": "object",
+    "addShortnameAndVersionIdToConceptId": {
       "description": "Options for humanizing hyrax url",
-      "properties": {
-        "addShortnameAndVersionIdToConceptId": {
-          "type": "boolean"
-        }
-      }
+      "default": false,
+      "type": "boolean"
     }
   }
 }

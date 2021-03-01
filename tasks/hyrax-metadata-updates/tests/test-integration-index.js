@@ -54,8 +54,7 @@ const { hyraxMetadataUpdate } = proxyquire(
           async () => {
             const result = await getObject(s3Client, params);
 
-            // LocalStack does not handle pre-condition checks, so we have to
-            // manually check, and throw, if necessary.
+            // LocalStack does not handle pre-condition checks, so we have to manually check, and throw, if necessary.
             if (params.IfMatch && result.ETag !== params.IfMatch) {
               throw Object.assign(new Error(), preconditionFailedSelector);
             }
@@ -178,9 +177,6 @@ const event = {
       username: 'xxxxxx',
       passwordSecretName: cmrPasswordSecret,
     },
-    urlConfiguration: {
-      addShortnameAndVersionIdToConceptId: false,
-    }
   },
   input: {},
 };
@@ -285,8 +281,8 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     });
     metadataFile.etag = inputEtag;
 
-    // Upload dummy file to force retries in hyraxMetadataUpdate because ETag is
-    // not initially matched.
+    // Upload dummy file to force retries in hyraxMetadataUpdate
+    // because ETag is not initially matched.
     await promiseS3Upload({
       Bucket: bucket,
       Key: metadataFile.name,
@@ -513,9 +509,7 @@ test.serial('Test retrieving optional entry collection from CMR using UMM-G', as
         username: 'xxxxxx',
         passwordSecretName: cmrPasswordSecret,
       },
-      urlConfiguration: {
-        addShortnameAndVersionIdToConceptId: true,
-      }
+      addShortnameAndVersionIdToConceptId: true,
     },
     input: {},
   };
