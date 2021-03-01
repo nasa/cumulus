@@ -10,7 +10,6 @@ export interface PostgresGranule {
   time_to_process?: number,
   time_to_archive?: number,
   provider_cumulus_id?: number,
-  execution_cumulus_id?: number,
   pdr_cumulus_id?: number,
   created_at?: Date,
   updated_at?: Date,
