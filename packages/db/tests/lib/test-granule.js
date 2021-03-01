@@ -101,47 +101,6 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
   );
 });
 
-test('upsertGranuleWithExecutionJoinRecord() creates granule record without granule/execution join record', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-    collectionCumulusId,
-    granulesExecutionsPgModel,
-  } = t.context;
-
-  const granule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-    status: 'running',
-  });
-
-  const [granuleCumulusId] = await knex.transaction(
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule
-    )
-  );
-
-  const granuleRecord = await granulePgModel.get(
-    knex,
-    granule
-  );
-
-  t.like(
-    granuleRecord,
-    {
-      ...granule,
-      cumulus_id: granuleCumulusId,
-    }
-  );
-  t.deepEqual(
-    await granulesExecutionsPgModel.search(
-      knex,
-      { granule_cumulus_id: granuleCumulusId }
-    ),
-    []
-  );
-});
-
 test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a granule', async (t) => {
   const {
     knex,
