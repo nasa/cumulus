@@ -83,7 +83,7 @@ export const fakeCollectionRecordFactory = (
 export const fakeExecutionRecordFactory = (
   params: Partial<PostgresExecution>
 ): PostgresExecution => ({
-  arn: cryptoRandomString({ length: 3 }),
+  arn: cryptoRandomString({ length: 10 }),
   status: 'running',
   created_at: new Date(),
   updated_at: new Date(),
