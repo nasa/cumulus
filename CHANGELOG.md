@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+### Added
+
+- `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can be used to set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`).
+- Added `buckets` variable to `tf-modules/archive`
+
+### Changed
+
+- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports accessing all buckets defined in your `buckets` variable except "internal" buckets
+
+### Removed
+
+- Removed variables from `tf-modules/archive`:
+  - `private_buckets`
+  - `protected_buckets`
+  - `public_buckets`
+
 ## [v7.0.0] 2021-02-22
 
 ### BREAKING CHANGES
@@ -13,21 +30,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can be used to set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`).
-- Added `buckets` variable to `tf-modules/archive`
 - **CUMULUS-2345**
   - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
   - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2376**
+  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
 
 ### Changed
 
-- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports accessing all buckets defined in your `buckets` variable except "internal" buckets
 - **CUMULUS-2362**
   - Logs endpoints only work with Metrics set up
-
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
+  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
 - **CUMULUS-2350**
   - Updates the examples on the `/s3credentialsREADME`, to include Python and JavaScript code demonstrating how to refresh the s3credential for programatic access.
-
 - **CUMULUS-2383**
   - PostToCMR task will return CMRInternalError when a `500` status is returned from CMR
 
@@ -63,8 +86,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add QueueWorkflow task
 - **CUMULUS-2391**
   - Add reportToEms to collections.files file schema
-- **CUMULUS-2376**
-  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
 - **CUMULUS-2395**
   - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
     custom security group mappings
@@ -85,15 +106,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
-- **CUMULUS-2376**
-  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
-  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
-  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
-  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
-  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
-  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
-  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
-  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
 - **CUMULUS-2321**
   - Updated API endpoint GET `/reconciliationReports/{name}` to return the pre-signed s3 URL in addition to report data
 
