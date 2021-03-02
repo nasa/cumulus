@@ -130,20 +130,21 @@ class Pdr extends Manager {
     // times than the existing record, whatever the status
     updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
 
-    if (pdrRecord.status === 'running') {
-      updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
-      try {
-        return await this.dynamodbDocClient.update(updateParams).promise();
-      } catch (error) {
-        if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-          const executionArn = getMessageExecutionArn(cumulusMessage);
-          log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
-          return undefined;
-        }
-        throw error;
+    let results;
+    try {
+      if (pdrRecord.status === 'running') {
+        updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
       }
+      results = await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        const executionArn = getMessageExecutionArn(cumulusMessage);
+        log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        return undefined;
+      }
+      throw error;
     }
-    return this.dynamodbDocClient.update(updateParams).promise();
+    return results;
   }
 
   /**
