@@ -17,7 +17,7 @@ const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
-const { getMessageGranules } = require('@cumulus/message/Granules');
+const { getGranuleCreatedAt, getMessageGranules } = require('@cumulus/message/Granules');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -371,7 +371,7 @@ class Granule extends Manager {
       cmrLink: granule.cmrLink,
       files: granuleFiles,
       error: parseException(message.exception),
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
+      createdAt: getGranuleCreatedAt(message),
       timestamp: now,
       updatedAt: now,
       productVolume: getGranuleProductVolume(granuleFiles),
@@ -688,10 +688,14 @@ class Granule extends Manager {
         mutableFieldNames,
       });
 
+      // createdAt comes from cumulus_meta.workflow_start_time
+      // records should *not* be updating from createdAt times that are *older* start
+      // times than the existing record, **whatever* the status
+      updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
       // Only allow "running" granule to replace completed/failed
       // granule if the execution has changed
       if (granuleRecord.status === 'running') {
-        updateParams.ConditionExpression = '#execution <> :execution';
+        updateParams.ConditionExpression += ' and #execution <> :execution';
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();

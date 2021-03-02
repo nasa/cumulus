@@ -40,6 +40,7 @@
   "dependencies": {
     "@cumulus/aws-client": "6.0.0",
     "@cumulus/common": "6.0.0",
+    "@cumulus/errors": "6.0.0",
     "@cumulus/logger": "6.0.0",
     "@cumulus/types": "6.0.0",
     "jsonpath-plus": "^3.0.0",
