@@ -125,7 +125,7 @@ class Pdr extends Manager {
     if (!pdrRecord) return undefined;
     const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
     if (pdrRecord.status === 'running') {
-      updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
+      updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt) and (execution <> :execution OR progress < :progress)';
       try {
         return await this.dynamodbDocClient.update(updateParams).promise();
       } catch (error) {

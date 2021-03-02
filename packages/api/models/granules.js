@@ -653,10 +653,15 @@ class Granule extends Manager {
       mutableFieldNames,
     });
 
+    // createdAt comes from cumulus_meta.workflow_start_time
+    // records should *not* be updating from createdAt times that are *older* start
+    // times than the existing record, whatever the status
+    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+
     // Only allow "running" granule to replace completed/failed
     // granule if the execution has changed
     if (granuleRecord.status === 'running') {
-      updateParams.ConditionExpression = '#execution <> :execution';
+      updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
     return this.dynamodbDocClient.update(updateParams).promise();

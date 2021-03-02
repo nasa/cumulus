@@ -249,6 +249,46 @@ test(
   }
 );
 
+test(
+  'storePdrFromCumulusMessage does not update if PDR record is from an older, prior execution',
+  async (t) => {
+    const pdrName = randomId('pdr');
+    const stateMachine = randomId('parsePdr');
+    const execution = randomId('exec');
+
+    const initialMsg = createPdrMessage({
+      execution,
+      stateMachine,
+      numCompletedExecutions: 3,
+      status: 'completed',
+      createdAtTime: (Date.now() + 10000000000),
+    });
+
+    initialMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(initialMsg);
+
+    const newMsg = createPdrMessage({
+      execution: randomId('newExec'),
+      stateMachine,
+      numRunningExecutions: 2,
+      status: 'running',
+    });
+
+    newMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(newMsg);
+
+    const record = await pdrsModel.get({ pdrName });
+    t.is(record.status, 'completed');
+    t.is(record.stats.completed, 3);
+  }
+);
+
 test('storePdrFromCumulusMessage overwrites a same-execution running status if progress was made',
   async (t) => {
     const pdrName = randomId('pdr');
