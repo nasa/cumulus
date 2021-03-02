@@ -21,6 +21,8 @@
     "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/webpack --progress -w"
@@ -60,6 +62,7 @@
     "@cumulus/message": "5.0.0",
     "@cumulus/pvl": "5.0.0",
     "@cumulus/sftp-client": "5.0.0",
+    "@cumulus/types": "5.0.0",
     "@elastic/elasticsearch": "^5.6.20",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
