@@ -110,13 +110,13 @@ function applyWorkflowToGranules({
 /**
  * Fetch a Postgres Granule by granule and collection IDs
  *
+ * @param {Knex } knex - DB client
  * @param {string} granuleId - Granule ID
  * @param {string} collectionId - Collection ID in "name___version" format
- * @param {Knex } knex - DB client
  * @returns {Promise<PostgresGranuleRecord>} - The fetched Postgres Granule
  * @private
  */
-async function _getPgGranuleByCollection(granuleId, collectionId, knex) {
+async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -158,9 +158,14 @@ async function _getPgGranuleByCollection(granuleId, collectionId, knex) {
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @param {Function} [unpublishGranuleFunc] - Optional function to delete the
+ * granule from CMR. Useful for testing.
  * @returns {Promise}
  */
-async function bulkGranuleDelete(payload) {
+async function bulkGranuleDelete(
+  payload,
+  unpublishGranuleFunc = unpublishGranule
+) {
   const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granuleIds = await getGranuleIdsForPayload(payload);
@@ -184,14 +189,14 @@ async function bulkGranuleDelete(payload) {
       }
 
       if (dynamoGranule && dynamoGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule, dynamoGranule } = await unpublishGranule(knex, dynamoGranule));
+        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc(knex, dynamoGranule));
       }
 
       await deleteGranuleAndFiles({
         knex,
         dynamoGranule,
         pgGranule: pgGranule || await _getPgGranuleByCollection(
-          granuleId, dynamoGranule.collectionId, knex
+          knex, granuleId, dynamoGranule.collectionId
         ),
       });
 
@@ -273,6 +278,7 @@ async function handler(event) {
 }
 
 module.exports = {
+  bulkGranuleDelete,
   getGranuleIdsForPayload,
   handler,
 };

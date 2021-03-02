@@ -7,8 +7,6 @@ const awsServices = require('@cumulus/aws-client/services');
 const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
-const { CMR } = require('@cumulus/cmr-client');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../../lib/create-test-data');
 const Granule = require('../../models/granules');
@@ -459,74 +457,6 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granule IDs returned by 
       granules[1].newDynamoGranule.granuleId,
     ].sort()
   );
-
-  const s3Buckets = granules[0].s3Buckets;
-  t.teardown(() => deleteS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]));
-});
-
-test.serial('bulk operation BULK_GRANULE_DELETE does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
-  const granuleModel = new Granule();
-  const granulePgModel = new GranulePgModel();
-
-  const granules = await Promise.all([
-    createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
-    createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
-  ]);
-
-  const dynamoGranuleId1 = granules[0].newDynamoGranule.granuleId;
-  const dynamoGranuleId2 = granules[1].newDynamoGranule.granuleId;
-
-  sinon.stub(
-    DefaultProvider,
-    'decrypt'
-  ).callsFake(() => Promise.resolve('fakePassword'));
-
-  sinon.stub(
-    CMR.prototype,
-    'deleteGranule'
-  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
-
-  sinon.stub(
-    CMR.prototype,
-    'getGranuleMetadata'
-  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
-
-  try {
-    const { deletedGranules } = await bulkOperation.handler({
-      type: 'BULK_GRANULE_DELETE',
-      envVars,
-      payload: {
-        ids: [
-          dynamoGranuleId1,
-          dynamoGranuleId2,
-        ],
-        forceRemoveFromCmr: true,
-      },
-    });
-
-    t.deepEqual(
-      deletedGranules.sort(),
-      [
-        dynamoGranuleId1,
-        dynamoGranuleId2,
-      ].sort()
-    );
-  } finally {
-    CMR.prototype.deleteGranule.restore();
-    DefaultProvider.decrypt.restore();
-    CMR.prototype.getGranuleMetadata.restore();
-  }
-
-  // Granules should have been deleted from Dynamo
-  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
-  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
-
-  // Granules should have been deleted from Postgres
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
 
   const s3Buckets = granules[0].s3Buckets;
   t.teardown(() => deleteS3Buckets([
