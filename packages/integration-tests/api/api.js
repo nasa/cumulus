@@ -50,7 +50,7 @@ async function getAsyncOperation({ prefix, id }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleIds - the granules to be deleted
+ * @param {Array<string>} params.granuleIds - the granules to be deleted
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function postBulkDelete({ prefix, granuleIds }) {
@@ -64,6 +64,31 @@ async function postBulkDelete({ prefix, granuleIds }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ granuleIds }),
+    },
+  });
+  return verifyCumulusApiResponse(response, [202]);
+}
+
+/**
+ * POST /bulk
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Array<string>} params.ids - the granules to have bulk operation on
+ * @param {string} params.workflowName - workflowName for the bulk operation execution
+ * @returns {Promise<Object>} - the bulk operation response
+ */
+async function postBulk({ prefix, ids, workflowName }) {
+  const response = await invokeApi({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulk/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids, workflowName }),
     },
   });
   return verifyCumulusApiResponse(response, [202]);
@@ -356,6 +381,7 @@ module.exports = {
   getProvider,
   getCollection,
   getLogs,
+  postBulk,
   postBulkDelete,
   updateCollection,
   updateProvider,
