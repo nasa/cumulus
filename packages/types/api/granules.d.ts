@@ -4,4 +4,5 @@ export type GranuleStatus = 'completed' | 'failed' | 'running';
 
 export interface ApiGranule {
   status: GranuleStatus
+  files?: import('./files').ApiFile[]
 }
