@@ -49,15 +49,16 @@ const envVars = {
 };
 
 test.before(async (t) => {
-  process.env.METRICS_ES_HOST = randomId('host');
-  process.env.METRICS_ES_USER = randomId('user');
-  process.env.METRICS_ES_PASS = randomId('pass');
-  process.env.GranulesTable = randomId('granule');
-  process.env.CollectionsTable = randomId('collection');
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
+    METRICS_ES_HOST: randomId('host'),
+    METRICS_ES_USER: randomId('user'),
+    METRICS_ES_PASS: randomId('pass'),
+    GranulesTable: randomId('granule'),
+    CollectionsTable: randomId('collection'),
+    ...envVars,
   };
 
   // create a fake bucket
@@ -211,7 +212,7 @@ test.serial('bulk operation lambda sets env vars provided in payload', async (t)
   const granule = await granuleModel.create(fakeGranuleFactoryV2());
   const workflowName = randomId('workflow');
 
-  // ensure env vars aren't already set
+  // delete existing ENVs
   Object.keys(envVars).forEach((envVarKey) => {
     delete process.env[envVarKey];
   });
