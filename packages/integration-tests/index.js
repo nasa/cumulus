@@ -71,7 +71,7 @@ async function waitForAsyncOperationStatus({
   id,
   status,
   stackName,
-  retries = 10,
+  retries = 20,
 }) {
   const response = await asyncOperationsApi.getAsyncOperation({
     prefix: stackName,
