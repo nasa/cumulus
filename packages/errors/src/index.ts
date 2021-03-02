@@ -99,6 +99,11 @@ export const XmlMetaFileNotFound = createErrorType('XmlMetaFileNotFound');
 export const CMRMetaFileNotFound = createErrorType('CMRMetaFileNotFound');
 
 /**
+ * CMR returned an internal server error
+ */
+export const CMRInternalError = createErrorType('CMRInternalError');
+
+/**
  * Distribution bucket map is missing a configured value for a distribution bucket
  */
 export const MissingBucketMap = createErrorType('MissingBucketMap');
