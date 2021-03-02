@@ -81,7 +81,7 @@ async function waitForAsyncOperationStatus({
   const operation = JSON.parse(response.body);
 
   if (operation.status === status) return operation;
-  if (retries <= 0) throw new Error(`Async Operation status ${operation.status} Never Reached desired state ${status}.`);
+  if (retries <= 0) throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
 
   await delay(2000);
   return waitForAsyncOperationStatus({
