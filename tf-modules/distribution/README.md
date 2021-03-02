@@ -16,17 +16,13 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 
 ### Optional
 
-- **api_gateway_stage** (string) - The API Gateway stage to create, defaults to
-  "DEV"
+- **api_gateway_stage** (string) - The API Gateway stage to create, defaults to "DEV"
 - **distribution_url** (string) - An alternative URL used for distribution
-- **permissions_boundary_arn** (string) - The ARN of an IAM permissions boundary
-  to use when creating IAM policies
+- **permissions_boundary_arn** (string) - The ARN of an IAM permissions boundary to use when creating IAM policies
 - **protected_buckets** (list(string)) - A list of protected buckets
 - **public_buckets** (list(string)) - A list of public buckets
 - **region** (string) - The AWS region to deploy to, defaults to "us-east-1"
-- **sts_credentials_lambda_function_arn** (string) - The ARN of the Lambda
-  function for the S3 credentials endpoint to invoke, which whill return AWS API
-  keys.
+- **sts_credentials_lambda_function_arn** (string) - The ARN of the Lambda function for the S3 credentials endpoint to invoke, which will return AWS API keys.
 - **tea_api_egress_log_group** (string) - Name of the Cloudwatch log group for the Thin Egress App (TEA) Lambda
 - **tea_api_gateway_stage** (string) - Name of the API gateway stage for Thin Egress App (TEA)
 - **tea_internal_api_endpoint** (string) - URL for the Thin Egress App (TEA) API gateway

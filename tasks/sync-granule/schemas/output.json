@@ -20,15 +20,19 @@
               "required": ["name"],
               "properties": {
                 "name": {
+                  "description": "'filename' portion of S3 URI (e.g. 'foo.dat' from s3://bucket/path/foo.dat)",
                   "type": "string"
                 },
                 "filename": {
+                  "description": "full s3 URI of staged granule",
                   "type": "string"
                 },
                 "type": {
+                  "description": "",
                   "type": "string"
                 },
                 "bucket": {
+                  "description": "bucket file is staged in",
                   "type": "string"
                 },
                 "url_path": {

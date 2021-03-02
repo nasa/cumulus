@@ -5,9 +5,9 @@ const nock = require('nock');
 const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
+const { ValidationError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
-const ValidationError = require('../ValidationError');
 
 test.before(() => {
   nock.disableNetConnect();
@@ -96,6 +96,18 @@ test('getWriteHeaders returns correct Content-type for xml metadata by default',
   t.is(headers['Content-type'], 'application/echo10+xml');
   t.is(headers['Client-Id'], 'clientID');
   t.is(headers.Accept, undefined);
+});
+
+test('getWriteHeaders returns Cmr-Revision-Id when provided', (t) => {
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'clientID',
+    username: 'username',
+    password: 'password',
+  });
+  const cmrRevisionId = '100';
+  const headers = cmrInstance.getWriteHeaders({ cmrRevisionId });
+  t.is(headers['Cmr-Revision-Id'], '100');
 });
 
 test('getReadHeaders returns clientId and token', (t) => {
