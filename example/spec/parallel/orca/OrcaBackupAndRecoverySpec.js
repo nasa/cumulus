@@ -159,7 +159,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(asyncOperationId).toBeTruthy();
     });
 
-    it('recovery workflow succeeded', async () => {
+    it('starts the recovery workflow', async () => {
       const asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'SUCCEEDED',
@@ -177,7 +177,7 @@ describe('The S3 Ingest Granules workflow', () => {
       );
     });
 
-    it('request status is available through the Cumulus API', async () => {
+    it('retrieves recovery request status through the Cumulus API', async () => {
       const response = await listRequests({
         prefix: config.stackName,
         query: { asyncOperationId, granuleId },
@@ -197,7 +197,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   // TODO remove the glacier files via ORCA API when the API is available (PI 21.3 21.4)
-  it('remove files from glacier', async () => {
+  it('removes files from glacier', async () => {
     await Promise.all(filesCopiedToGlacier.map((s3uri) => deleteS3Object(config.buckets.glacier.name, parseS3Uri(s3uri).Key)));
     const deletedFromGlacier = await Promise.all(filesCopiedToGlacier.map((s3uri) => s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key })));
     deletedFromGlacier.forEach((check) => expect(check).toEqual(false));
