@@ -28,7 +28,7 @@ The ESDIS metrics pipeline expects a log message to be a JSON string representat
 
 A log message can contain the following properties:
 
-- `executions`: The AWS Step Function exection name in which this task is executing, if any
+- `executions`: The AWS Step Function execution name in which this task is executing, if any
 - `granules`: A JSON string of the array of granule IDs being processed by this code, if any
 - `level`: A string identifier for the type of message being logged. Possible values:
   - `debug`

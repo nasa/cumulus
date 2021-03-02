@@ -10,11 +10,6 @@ variable "image" {
   type = string
 }
 
-variable "log2elasticsearch_lambda_function_arn" {
-  description = "ARN of log2elasticsearch Lambda"
-  type = string
-}
-
 variable "name" {
   description = "ECS service name"
   type        = string

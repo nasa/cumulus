@@ -11,24 +11,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2328**
   - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
 
-### BREAKING CHANGES
-
-- **CUMULUS-2328**
-  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
-- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
-
 ### Added
 
+- `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can be used to set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`).
+- Added `buckets` variable to `tf-modules/archive`
 - **CUMULUS-2328**
   - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
 
 ### Changed
 
+- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports accessing all buckets defined in your `buckets` variable except "internal" buckets
 - **CUMULUS-2328**
   - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
+- **CUMULUS-2355**
+  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
 
 ### Removed
 
+- Removed variables from `tf-modules/archive`:
+  - `private_buckets`
+  - `protected_buckets`
+  - `public_buckets`
 - **CUMULUS-2328**
   - Removed `distributionApiId` environment variable from `<prefix>-ApiEndpoints` and `<prefix>-PrivateApiLambda` Lambdas
   - Removed `distribution_api_id` variable from `tf-modules/archive` module
@@ -51,6 +54,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `urs_client_id`
     - `urs_client_password`
     - `urs_url`
+
+## [v7.0.0] 2021-02-22
+
+### BREAKING CHANGES
+
+- **CUMULUS-2328**
+  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
+- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
+
+### Added
+
+- **CUMULUS-2345**
+  - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2376**
+  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
+
+### Changed
+
+- **CUMULUS-2362**
+  - Logs endpoints only work with Metrics set up
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
+  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+- **CUMULUS-2350**
+  - Updates the examples on the `/s3credentialsREADME`, to include Python and JavaScript code demonstrating how to refresh the s3credential for programatic access.
+- **CUMULUS-2383**
+  - PostToCMR task will return CMRInternalError when a `500` status is returned from CMR
 
 ## [v6.0.0] 2021-02-16
 
@@ -76,8 +113,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add QueueWorkflow task
 - **CUMULUS-2391**
   - Add reportToEms to collections.files file schema
-- **CUMULUS-2376**
-  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
 - **CUMULUS-2395**
   - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
     custom security group mappings
@@ -97,19 +132,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed `addBucketToFile` and related code from sync-granules task
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
-- **CUMULUS-2376**
-  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
-  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
-  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
-  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
-  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
-  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
-  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
-  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
 - **CUMULUS-2321**
   - Updated API endpoint GET `/reconciliationReports/{name}` to return the pre-signed s3 URL in addition to report data
-- **CUMULUS-2362**
-  - Logs endpoints only work with Metrics set up
 
 ### Fixed
 
@@ -119,6 +143,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Use valid filename for reconciliation report
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+
+### Removed
+
+- **CUMULUS-2364**
+  - Remove the internal Cumulus logging lambda (log2elasticsearch)
 
 ## [v5.0.1] 2021-01-27
 
@@ -3837,7 +3866,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v6.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v7.0.0...HEAD
+[v6.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
 [v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
 [v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0

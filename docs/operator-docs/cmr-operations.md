@@ -9,8 +9,7 @@ We rely on the Cumulus API's `ApplyWorkflow` functionality to accomplish these a
 
 ## Publishing a granule to CMR
 
-Publishing a granule requires your Cumulus deployment have workflow that contains only the `PostToCmr` task provided by Cumulus Core.
-Out of the box, Cumulus provides a workflow to do this named `PublishGranule`.
+Publishing a granule requires your Cumulus deployment have a workflow that contains only the `PostToCmr` task provided by Cumulus Core. The rest of this section will assume you have created this workflow under the name `PublishGranule`.
 
 Using either method below, Cumulus will take an unpublished granule and publish it to CMR:
 
@@ -32,8 +31,9 @@ $ curl --request PUT https://example.com/granules/MOD11A1.A2017137.h19v16.006.20
 Updating metadata access constraints can be accomplished using the applyWorkflow functionality.
 For this, we use a workflow composed of the `UpdateCmrAccessConstraints` and `PostToCmr` tasks.
 `UpdateCmrAccessConstraints` will update CMR metadata file contents on S3, and `PostToCmr` will push the updates to CMR.
+The rest of this section will assume you have created this workflow under the name `UpdateCmrAccessConstraints`.
 
-Out of the box, Cumulus provides a workflow to do this named `UpdateCmrAccessConstraints`. This workflow is available in the Cumulus dashboard's `Execute` workflow selector.
+Once created and deployed, the workflow is available in the Cumulus dashboard's `Execute` workflow selector.
 However, note that additional configuration is required for this request, to supply an access constraint integer value and optional description to the `UpdateCmrAccessConstraints` workflow, by clicking the `Add Custom Workflow Meta` option in the `Execute` popup, as shown below:
 
 ![Screenshot showing granule execute popup with 'updateCmrAccessConstraints' selected and configuration values shown in a collapsible JSON field](assets/cd_execute_updateconstraints.png)

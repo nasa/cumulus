@@ -12,6 +12,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
   environment {
     variables = {
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       ES_HOST                          = var.elasticsearch_hostname
