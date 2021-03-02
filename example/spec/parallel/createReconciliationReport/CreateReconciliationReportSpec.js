@@ -424,13 +424,18 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
-      const asyncOperation = await waitForAsyncOperationStatus({
-        id: asyncOperationId,
-        status: 'SUCCEEDED',
-        stackName: config.stackName,
-        retries: 100,
-      });
-
+      let asyncOperation;
+      try {
+        asyncOperation = await waitForAsyncOperationStatus({
+          id: asyncOperationId,
+          status: 'SUCCEEDED',
+          stackName: config.stackName,
+          retries: 100,
+        });
+      } catch (error) {
+        fail(error);
+      }
+      expect(asyncOperation.status).toEqual('SUCCEEDED');
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
@@ -563,13 +568,17 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
-      const asyncOperation = await waitForAsyncOperationStatus({
-        id: asyncOperationId,
-        status: 'SUCCEEDED',
-        stackName: config.stackName,
-        retries: 100,
-      });
-
+      let asyncOperation;
+      try {
+        asyncOperation = await waitForAsyncOperationStatus({
+          id: asyncOperationId,
+          status: 'SUCCEEDED',
+          stackName: config.stackName,
+          retries: 100,
+        });
+      } catch (error) {
+        fail(error);
+      }
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
@@ -641,12 +650,17 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
-      const asyncOperation = await waitForAsyncOperationStatus({
-        id: asyncOperationId,
-        status: 'SUCCEEDED',
-        stackName: config.stackName,
-        retries: 100,
-      });
+      let asyncOperation;
+      try {
+        asyncOperation = await waitForAsyncOperationStatus({
+          id: asyncOperationId,
+          status: 'SUCCEEDED',
+          stackName: config.stackName,
+          retries: 100,
+        });
+      } catch (error) {
+        fail(error);
+      }
 
       reportRecord = JSON.parse(asyncOperation.output);
     });
