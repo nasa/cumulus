@@ -5,9 +5,9 @@ const nock = require('nock');
 const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
+const { ValidationError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
-const ValidationError = require('../ValidationError');
 
 test.before(() => {
   nock.disableNetConnect();
