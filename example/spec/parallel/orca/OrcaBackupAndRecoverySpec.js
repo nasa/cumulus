@@ -10,7 +10,7 @@ const {
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { removePublishedGranule } = require('@cumulus/api-client/granules');
+const { bulkOperation, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { listRequests } = require('@cumulus/api-client/orca');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
@@ -20,7 +20,6 @@ const {
   waitForAsyncOperationStatus,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
-const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -148,7 +147,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let asyncOperationId;
 
     it('generates an async operation through the Cumulus API', async () => {
-      const response = await apiTestUtils.postBulk({
+      const response = await bulkOperation({
         prefix: config.stackName,
         ids: [granuleId],
         workflowName: recoveryWorkflowName,

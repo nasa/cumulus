@@ -70,31 +70,6 @@ async function postBulkDelete({ prefix, granuleIds }) {
 }
 
 /**
- * POST /bulk
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {Array<string>} params.ids - the granules to have bulk operation on
- * @param {string} params.workflowName - workflowName for the bulk operation execution
- * @returns {Promise<Object>} - the bulk operation response
- */
-async function postBulk({ prefix, ids, workflowName }) {
-  const response = await invokeApi({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'POST',
-      resource: '/{proxy+}',
-      path: '/granules/bulk/',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ids, workflowName }),
-    },
-  });
-  return verifyCumulusApiResponse(response, [202]);
-}
-
-/**
  * Delete a pdr from Cumulus via the API
  *
  * @param {Object} params - params
@@ -381,7 +356,6 @@ module.exports = {
   getProvider,
   getCollection,
   getLogs,
-  postBulk,
   postBulkDelete,
   updateCollection,
   updateProvider,
