@@ -2,7 +2,7 @@ import Knex from 'knex';
 
 import { tableNames } from '../tables';
 
-import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
+import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
 
 import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
@@ -12,6 +12,22 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     super({
       tableName: tableNames.granules,
     });
+  }
+
+  /**
+   * Deletes the item from Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
+   * @returns {Promise<number>} The number of rows deleted
+   */
+  async delete(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: PostgresGranuleUniqueColumns | { cumulus_id: number }
+  ): Promise<number> {
+    return knexOrTransaction(this.tableName)
+      .where(params)
+      .del();
   }
 
   async upsert(
