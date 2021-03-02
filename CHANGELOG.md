@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2191**
+    - Removed the following from the `@cumulus/api/models.asyncOperation` class in
+      favor of the added `@cumulus/async-operations` module:
+      - `start`
+      - `startAsyncOperations`
+  - **CUMULUS-2187**
+    - The `async-operations` endpoint will now omit `output` instead
+      of returning `none` when the operation did not return output.
+
 ### Added
 
 - `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can be used to set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`).
@@ -164,15 +176,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- **CUMULUS-2185** - RDS Migration Epic
-  - **CUMULUS-2191**
-    - Removed the following from the `@cumulus/api/models.asyncOperation` class in
-      favor of the added `@cumulus/async-operations` module:
-      - `start`
-      - `startAsyncOperations`
-  - **CUMULUS-2187**
-    - The `async-operations` endpoint will now omit `output` instead
-      of returning `none` when the operation did not return output.
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
 
 ### Added
