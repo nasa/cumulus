@@ -17,7 +17,8 @@ const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
-const { getGranuleCreatedAt, getMessageGranules } = require('@cumulus/message/Granules');
+const { getMessageGranules } = require('@cumulus/message/Granules');
+const { getMessageWorkflowStartTime } = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -371,7 +372,7 @@ class Granule extends Manager {
       cmrLink: granule.cmrLink,
       files: granuleFiles,
       error: parseException(message.exception),
-      createdAt: getGranuleCreatedAt(message),
+      createdAt: getMessageWorkflowStartTime(message),
       timestamp: now,
       updatedAt: now,
       productVolume: getGranuleProductVolume(granuleFiles),

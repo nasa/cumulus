@@ -5,7 +5,7 @@ const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
-const { getCreatedAt } = require('@cumulus/message/Message');
+const { getMessageWorkflowStartTime } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
@@ -100,7 +100,7 @@ class Pdr extends Manager {
       PANSent: get(pdr, 'PANSent', false),
       PANmessage: get(pdr, 'PANmessage', 'N/A'),
       stats,
-      createdAt: getCreatedAt(message),
+      createdAt: getMessageWorkflowStartTime(message),
       timestamp: Date.now(),
     };
 
