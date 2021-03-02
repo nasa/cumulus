@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports accessing all buckets defined in your `buckets` variable except "internal" buckets
+- **CUMULUS-2355**
+  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
 
 ### Removed
 
@@ -53,13 +55,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates the examples on the `/s3credentialsREADME`, to include Python and JavaScript code demonstrating how to refresh the s3credential for programatic access.
 - **CUMULUS-2383**
   - PostToCMR task will return CMRInternalError when a `500` status is returned from CMR
-
-### Removed
-
-- Removed variables from `tf-modules/archive`:
-  - `private_buckets`
-  - `protected_buckets`
-  - `public_buckets`
 
 ## [v6.0.0] 2021-02-16
 
