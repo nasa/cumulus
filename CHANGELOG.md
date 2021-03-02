@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-2328**
+  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
+
 ### MIGRATION NOTES
 
 - **CUMULUS-2328**
@@ -59,8 +64,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- **CUMULUS-2328**
-  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
 - **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
 
 ### Added
