@@ -1,9 +1,11 @@
 import Knex from 'knex';
 
-import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
+
+import { BasePgModel } from './base';
+import { GranulesExecutionsPgModel } from './granules-executions';
 
 export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
@@ -12,23 +14,31 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     });
   }
 
-  upsert(
+  async upsert(
     knexOrTrx: Knex | Knex.Transaction,
-    granule: PostgresGranule
+    granule: PostgresGranule,
+    executionCumulusId: number,
+    granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
         .merge({
-          execution_cumulus_id: granule.execution_cumulus_id,
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
         })
-        // execution_cumulus_id is not required, so granule.execution_cumulus_id may be
-        // undefined. so need to compare against EXCLUDED.execution_cumulus_id
-        .whereRaw(`${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`)
+        // Only do the upsert if there IS NOT already a record associating
+        // the granule to this execution. If there IS already a record
+        // linking this granule to this execution, then this upsert query
+        // will not affect any rows.
+        .whereNotExists(
+          granulesExecutionsPgModel.search(
+            knexOrTrx,
+            { execution_cumulus_id: executionCumulusId }
+          )
+        )
         .returning('cumulus_id');
     }
     return knexOrTrx(this.tableName)

@@ -7,8 +7,14 @@ const sinon = require('sinon');
 const {
   tableNames,
   doesRecordExist,
+  CollectionPgModel,
+  ProviderPgModel,
+  ExecutionPgModel,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
+  fakeProviderRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
 } = require('@cumulus/db');
@@ -59,23 +65,8 @@ test.beforeEach(async (t) => {
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
 
-  t.context.collection = {
-    name: cryptoRandomString({ length: 5 }),
-    version: '0.0.0',
-    sample_file_name: 'file.txt',
-    granule_id_extraction_regex: 'fake-regex',
-    granule_id_validation_regex: 'fake-regex',
-    files: JSON.stringify([{
-      regex: 'fake-regex',
-      sampleFileName: 'file.txt',
-    }]),
-  };
-
-  t.context.provider = {
-    id: `provider${cryptoRandomString({ length: 5 })}`,
-    host: 'test-bucket',
-    protocol: 's3',
-  };
+  t.context.collection = fakeCollectionRecordFactory();
+  t.context.provider = fakeProviderRecordFactory();
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
   t.context.files = [fakeFileFactory({ size: 5 })];
@@ -101,19 +92,26 @@ test.beforeEach(async (t) => {
     },
   };
 
-  const collectionResponse = await t.context.knex(tableNames.collections)
-    .insert(t.context.collection)
-    .returning('cumulus_id');
-  t.context.collectionCumulusId = collectionResponse[0];
+  const collectionPgModel = new CollectionPgModel();
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    t.context.collection
+  );
 
-  const providerResponse = await t.context.knex(tableNames.providers)
-    .insert({
-      name: t.context.provider.id,
-      host: t.context.provider.host,
-      protocol: t.context.provider.protocol,
-    })
-    .returning('cumulus_id');
-  t.context.providerCumulusId = providerResponse[0];
+  const executionPgModel = new ExecutionPgModel();
+  const execution = fakeExecutionRecordFactory({
+    arn: t.context.executionArn,
+  });
+  [t.context.executionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    execution
+  );
+
+  const providerPgModel = new ProviderPgModel();
+  [t.context.providerCumulusId] = await providerPgModel.create(
+    t.context.knex,
+    t.context.provider
+  );
 });
 
 test.after.always(async (t) => {
@@ -153,7 +151,6 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       workflowStatus: 'running',
       collectionCumulusId: 1,
       providerCumulusId: 2,
-      executionCumulusId: 3,
       pdrCumulusId: 4,
       timestamp,
       updatedAt,
@@ -173,7 +170,6 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
       time_to_archive: 7.81,
       collection_cumulus_id: 1,
       provider_cumulus_id: 2,
-      execution_cumulus_id: 3,
       pdr_cumulus_id: 4,
       query_fields: queryFields,
     }
@@ -297,11 +293,18 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
 });
 
 test('writeGranules() throws an error if collection is not provided', async (t) => {
-  const { cumulusMessage, knex, providerCumulusId, granuleModel } = t.context;
+  const {
+    cumulusMessage,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+  } = t.context;
   await t.throwsAsync(
     writeGranules({
       cumulusMessage,
       collectionCumulusId: undefined,
+      executionCumulusId,
       providerCumulusId,
       knex,
       granuleModel,
@@ -315,6 +318,7 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
     granuleModel,
     knex,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     granuleId,
   } = t.context;
@@ -322,6 +326,7 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
   await writeGranules({
     cumulusMessage,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,
@@ -339,6 +344,7 @@ test('writeGranules() handles successful and failing writes independently', asyn
     granuleModel,
     knex,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     granuleId,
   } = t.context;
@@ -354,6 +360,7 @@ test('writeGranules() handles successful and failing writes independently', asyn
   await t.throwsAsync(writeGranules({
     cumulusMessage,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,
@@ -370,6 +377,7 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
     cumulusMessage,
     knex,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     granuleModel,
   } = t.context;
@@ -383,6 +391,7 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
   await t.throwsAsync(writeGranules({
     cumulusMessage,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,
@@ -395,6 +404,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo
     granuleModel,
     knex,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     granuleId,
   } = t.context;
@@ -410,6 +420,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo
     writeGranules({
       cumulusMessage,
       collectionCumulusId,
+      executionCumulusId,
       providerCumulusId,
       knex,
       granuleModel: fakeGranuleModel,
@@ -429,6 +440,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
     granuleModel,
     knex,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     granuleId,
   } = t.context;
@@ -447,6 +459,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
   const [error] = await t.throwsAsync(writeGranules({
     cumulusMessage,
     collectionCumulusId,
+    executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,

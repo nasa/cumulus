@@ -24,11 +24,13 @@ export const deleteTestDatabase = async (knex: Knex, dbName: string) =>
 
 export const generateLocalTestDb = async (
   testDbName: string,
-  migrationDir: string
+  migrationDir: string,
+  envParams: object
 ) => {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
   const knex = await getKnexClient({
     env: {
+      ...envParams,
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
       migrationDir,
@@ -81,7 +83,7 @@ export const fakeCollectionRecordFactory = (
 export const fakeExecutionRecordFactory = (
   params: Partial<PostgresExecution>
 ): PostgresExecution => ({
-  arn: cryptoRandomString({ length: 3 }),
+  arn: cryptoRandomString({ length: 10 }),
   status: 'running',
   created_at: new Date(),
   updated_at: new Date(),
@@ -101,7 +103,8 @@ export const fakeProviderRecordFactory = (
 export const fakeGranuleRecordFactory = (
   params: Partial<PostgresGranule>
 ): Partial<PostgresGranule> => ({
-  granule_id: cryptoRandomString({ length: 3 }),
+  granule_id: cryptoRandomString({ length: 5 }),
+  status: 'completed',
   ...params,
 });
 

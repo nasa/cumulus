@@ -6,7 +6,6 @@ const { translateApiGranuleToPostgresGranule } = require('../../dist/translate/g
 test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
-  const executionCumulusId = 3;
   const pdrCumulusId = 4;
   const dateString = new Date().toString();
 
@@ -16,7 +15,6 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     pdrName: 'pdr-name',
     provider: 'provider',
     status: 'running',
-    execution: 'execution-id',
     cmrLink: cryptoRandomString({ length: 10 }),
     published: false,
     duration: 10,
@@ -45,9 +43,6 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
   const fakeCollectionPgModel = {
     getRecordCumulusId: async () => collectionCumulusId,
   };
-  const fakeExecutionPgModel = {
-    getRecordCumulusId: async () => executionCumulusId,
-  };
   const fakeProviderPgModel = {
     getRecordCumulusId: async () => providerCumulusId,
   };
@@ -66,7 +61,6 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     product_volume: apiGranule.productVolume,
     error: apiGranule.error,
     cmr_link: apiGranule.cmrLink,
-    execution_cumulus_id: executionCumulusId,
     pdr_cumulus_id: pdrCumulusId,
     provider_cumulus_id: providerCumulusId,
     query_fields: apiGranule.query_fields,
@@ -85,7 +79,6 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     apiGranule,
     fakeDbClient,
     fakeCollectionPgModel,
-    fakeExecutionPgModel,
     fakePdrPgModel,
     fakeProviderPgModel
   );

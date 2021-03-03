@@ -4,7 +4,9 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
   CollectionPgModel,
+  ExecutionPgModel,
   GranulePgModel,
+  upsertGranuleWithExecutionJoinRecord,
   FilePgModel,
   PostgresFile,
   translateApiGranuleToPostgresGranule,
@@ -43,6 +45,7 @@ export const migrateGranuleRecord = async (
   Manager.recordIsValid(record, schemas.granule);
   const { name, version } = deconstructCollectionId(record.collectionId);
   const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
   const granulePgModel = new GranulePgModel();
 
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
@@ -50,8 +53,16 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  let existingRecord;
+  // Schema validation on Dynamo record will fail if `record.execution`
+  // does not exist
+  const executionCumulusId = await executionPgModel.getRecordCumulusId(
+    knex,
+    {
+      url: record.execution,
+    }
+  );
 
+  let existingRecord;
   try {
     existingRecord = await granulePgModel.get(knex, {
       granule_id: record.granuleId,
@@ -71,7 +82,12 @@ export const migrateGranuleRecord = async (
   }
 
   const granule = await translateApiGranuleToPostgresGranule(record, knex);
-  const [cumulusId] = await granulePgModel.upsert(knex, granule);
+
+  const [cumulusId] = await knex.transaction((trx) => upsertGranuleWithExecutionJoinRecord(
+    trx,
+    granule,
+    executionCumulusId
+  ));
   return cumulusId;
 };
 

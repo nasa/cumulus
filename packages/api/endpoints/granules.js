@@ -10,7 +10,11 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-const { GranulePgModel, getKnexClient } = require('@cumulus/db');
+const {
+  CollectionPgModel,
+  GranulePgModel,
+  getKnexClient,
+} = require('@cumulus/db');
 
 const { deleteGranuleAndFiles } = require('../lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -145,6 +149,7 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
+  const collectionPgModel = new CollectionPgModel();
   const granulePgModel = new GranulePgModel();
 
   const knex = await getKnexClient({ env: process.env });
@@ -162,9 +167,22 @@ async function del(req, res) {
     throw error;
   }
 
-  // If the granule does not exist in PG, just log it
+  // If the granule does not exist in PG, just log that information. The logic that
+  // actually handles Dynamo/PG granule deletion will skip the PG deletion if the record
+  // does not exist. see deleteGranuleAndFiles().
   try {
-    pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+    if (dynamoGranule.collectionId) {
+      const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
+      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+        knex,
+        { name, version }
+      );
+      // Need granule_id + collection_cumulus_id to get truly unique record.
+      pgGranule = await granulePgModel.get(knex, {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      });
+    }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       log.info(`Postgres Granule with ID ${granuleId} does not exist`);
