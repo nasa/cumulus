@@ -590,20 +590,6 @@ class Granule extends Manager {
   }
 
   /**
-   * Unpublish and delete granule.
-   *
-   * @param {Object} granule - A granule record
-   * @returns {Promise}
-   */
-  async unpublishAndDeleteGranule(granule) {
-    await this._removeGranuleFromCmr(granule);
-    // Intentionally do not update the record to set `published: false`.
-    // So if _deleteRecord fails, the record is still in a state where this
-    // operation can be retried.
-    return this._deleteRecord(granule);
-  }
-
-  /**
    * Delete a granule
    *
    * @param {Object} granule record
