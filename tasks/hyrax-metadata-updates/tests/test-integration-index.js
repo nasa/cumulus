@@ -26,8 +26,7 @@ const {
   parseS3Uri,
   getObject,
 } = require('@cumulus/aws-client/S3');
-const { InvalidArgument } = require('@cumulus/errors');
-const ValidationError = require('@cumulus/cmr-client/ValidationError');
+const { InvalidArgument, ValidationError } = require('@cumulus/errors');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const rewire = require('rewire');
