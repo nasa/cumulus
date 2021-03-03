@@ -34,11 +34,8 @@ const cmrReturnsWithIds = async (list) => {
  * @param {Array<Object>} list - parsed list of collection results
  * @returns {Object} Fake CMR responses
  */
-const cmrReturnsWithoutIds = async (list) => {
-  const entry = list.map((l) => ({
-    short_name: l.short_name,
-    version_id: l.version,
-  }));
+const cmrMissingCollection = async (list) => {
+  const entry = list.map(() => ({ }));
   return { feed: { entry } };
 };
 
@@ -126,7 +123,7 @@ test.serial(
 test.serial(
   'Does not insert MMT Links if CMR does not return a collection id',
   async (t) => {
-    const restoreCmr = mmt.__set__('getCollectionsByShortNameAndVersion', cmrReturnsWithoutIds);
+    const restoreCmr = mmt.__set__('getCollectionsByShortNameAndVersion', cmrMissingCollection);
     const fakeESResponse = {
       meta: {},
       results: [
