@@ -1,7 +1,6 @@
 import Knex from 'knex';
 
 import { CollectionPgModel } from '../models/collection';
-import { ExecutionPgModel } from '../models/execution';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
@@ -14,7 +13,6 @@ const { deconstructCollectionId } = require('../../../api/lib/utils');
  *   Record from DynamoDB
  * @param {Object} knex - Knex client for reading from RDS database
  * @param {Object} collectionPgModel - Instance of the collection database model
- * @param {Object} executionPgModel - Instance of exeuction database model
  * @param {Object} pdrPgModel - Instance of the pdr database model
  * @param {Object} providerPgModel - Instance of the provider database model
  * @returns {Object} A granule PG record
@@ -23,7 +21,6 @@ export const translateApiGranuleToPostgresGranule = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
-  executionPgModel = new ExecutionPgModel(),
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel()
 ): Promise<PostgresGranule> => {
@@ -42,12 +39,6 @@ export const translateApiGranuleToPostgresGranule = async (
     product_volume: dynamoRecord.productVolume,
     error: dynamoRecord.error,
     cmr_link: dynamoRecord.cmrLink,
-    execution_cumulus_id: dynamoRecord.execution
-      ? await executionPgModel.getRecordCumulusId(
-        knex,
-        { arn: dynamoRecord.execution }
-      )
-      : undefined,
     pdr_cumulus_id: dynamoRecord.pdrName
       ? await pdrPgModel.getRecordCumulusId(
         knex,

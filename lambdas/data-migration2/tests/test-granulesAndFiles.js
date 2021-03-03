@@ -15,6 +15,7 @@ const {
   fakeExecutionRecordFactory,
   FilePgModel,
   generateLocalTestDb,
+  GranulesExecutionsPgModel,
   GranulePgModel,
   tableNames,
   translateApiGranuleToPostgresGranule,
@@ -42,13 +43,13 @@ const fakeFile = () => fakeFileFactory({
   source: 'source',
 });
 
-const generateTestGranule = (collection, executionId, pdrName, provider) => ({
+const generateTestGranule = (collection, executionUrl, pdrName, provider) => ({
   granuleId: cryptoRandomString({ length: 5 }),
   collectionId: buildCollectionId(collection.name, collection.version),
   pdrName: pdrName,
   provider: provider,
   status: 'running',
-  execution: executionId,
+  execution: executionUrl,
   cmrLink: cryptoRandomString({ length: 10 }),
   published: false,
   duration: 10,
@@ -86,6 +87,7 @@ test.before(async (t) => {
 
   t.context.granulePgModel = new GranulePgModel();
   t.context.filePgModel = new FilePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
@@ -107,7 +109,10 @@ test.beforeEach(async (t) => {
   t.context.collectionCumulusId = collectionResponse[0];
 
   const executionPgModel = new ExecutionPgModel();
-  const testExecution = fakeExecutionRecordFactory();
+  const executionUrl = cryptoRandomString({ length: 5 });
+  const testExecution = fakeExecutionRecordFactory({
+    url: executionUrl,
+  });
 
   const executionResponse = await executionPgModel.create(
     t.context.knex,
@@ -116,11 +121,13 @@ test.beforeEach(async (t) => {
   t.context.testExecution = testExecution;
   t.context.executionCumulusId = executionResponse[0];
 
-  t.context.testGranule = generateTestGranule(testCollection, testExecution.arn);
+  t.context.testGranule = generateTestGranule(testCollection, executionUrl);
 });
 
 test.afterEach.always(async (t) => {
+  // TODO: we should be just removing the records via `delete` methods
   await t.context.knex(tableNames.files).del();
+  await t.context.knex(tableNames.granulesExecutions).del();
   await t.context.knex(tableNames.granules).del();
   await t.context.knex(tableNames.collections).del();
   await t.context.knex(tableNames.executions).del();
@@ -141,6 +148,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
   const {
     collectionCumulusId,
     executionCumulusId,
+    granulesExecutionsPgModel,
     granulePgModel,
     knex,
     testGranule,
@@ -164,7 +172,6 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       product_volume: testGranule.productVolume.toString(),
       error: testGranule.error,
       cmr_link: testGranule.cmrLink,
-      execution_cumulus_id: executionCumulusId,
       pdr_cumulus_id: null,
       provider_cumulus_id: null,
       query_fields: null,
@@ -179,6 +186,16 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       updated_at: new Date(testGranule.updatedAt),
     }
   );
+  t.deepEqual(
+    await granulesExecutionsPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    [executionCumulusId].map((executionId) => ({
+      granule_cumulus_id: Number(granuleCumulusId),
+      execution_cumulus_id: executionId,
+    }))
+  );
 });
 
 test.serial('migrateFileRecord correctly migrates file record', async (t) => {
@@ -191,7 +208,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
 
   const testFile = testGranule.files[0];
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.upsert(knex, granule);
+  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(knex, { bucket: testFile.bucket, key: testFile.key });
@@ -226,7 +243,7 @@ test.serial('migrateFileRecord correctly migrates file record with null bucket a
   testGranule.files = [testFile];
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.upsert(knex, granule);
+  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(knex, { bucket: null, key: null });
@@ -265,6 +282,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
     collectionCumulusId,
     executionCumulusId,
     granulePgModel,
+    granulesExecutionsPgModel,
     knex,
     testGranule,
   } = t.context;
@@ -307,7 +325,6 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
       product_volume: null,
       error: null,
       cmr_link: null,
-      execution_cumulus_id: executionCumulusId,
       pdr_cumulus_id: null,
       provider_cumulus_id: null,
       query_fields: null,
@@ -321,6 +338,16 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
       created_at: new Date(testGranule.createdAt),
       updated_at: new Date(testGranule.updatedAt),
     }
+  );
+  t.deepEqual(
+    await granulesExecutionsPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    [executionCumulusId].map((executionId) => ({
+      granule_cumulus_id: Number(granuleCumulusId),
+      execution_cumulus_id: executionId,
+    }))
   );
 });
 
@@ -358,7 +385,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.source;
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.upsert(knex, granule);
+  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(knex, { bucket: null, key: null });
@@ -420,7 +447,7 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
   } = t.context;
 
   const testGranule1 = testGranule;
-  const testGranule2 = generateTestGranule(testCollection, testExecution.arn);
+  const testGranule2 = generateTestGranule(testCollection, testExecution.url);
 
   await Promise.all([
     granulesModel.create(testGranule1),
@@ -461,7 +488,7 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
     testGranule,
   } = t.context;
 
-  const testGranule2 = generateTestGranule(testCollection, testExecution.arn);
+  const testGranule2 = generateTestGranule(testCollection, testExecution.url);
   // remove required field so record will fail
   delete testGranule.collectionId;
 
