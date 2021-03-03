@@ -12,7 +12,7 @@ const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
 const { promiseS3Upload, recursivelyDeleteS3Bucket, s3PutObject, createBucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { CMRMetaFileNotFound } = require('@cumulus/errors');
+const { CMRMetaFileNotFound, CMRInternalError, ValidationError } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { isCMRFile } = require('@cumulus/cmrjs');
 
@@ -88,7 +88,57 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
       Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>',
     });
     await t.throwsAsync(postToCMR(newPayload),
-      { instanceOf: cmrClient.ValidationError });
+      { instanceOf: ValidationError });
+  } finally {
+    cmrClient.CMR.prototype.getToken.restore();
+  }
+});
+
+test.serial('postToCMR fails when CMR is down', async (t) => {
+  sinon.stub(cmrClient.CMR.prototype, 'getToken');
+  const { bucket, payload } = t.context;
+  const newPayload = payload;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').throws(new CMRInternalError());
+  t.teardown(() => {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  });
+
+  await s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+  });
+  try {
+    await t.throwsAsync(postToCMR(newPayload),
+      { instanceOf: CMRInternalError });
+  } finally {
+    cmrClient.CMR.prototype.getToken.restore();
+  }
+});
+
+test.serial('postToCMR raises correct error', async (t) => {
+  sinon.stub(cmrClient.CMR.prototype, 'getToken');
+  const { bucket, payload } = t.context;
+  const newPayload = payload;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').throws(new Error());
+  t.teardown(() => {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  });
+
+  await s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+  });
+  try {
+    await t.throwsAsync(postToCMR(newPayload),
+      { instanceOf: Error });
   } finally {
     cmrClient.CMR.prototype.getToken.restore();
   }
