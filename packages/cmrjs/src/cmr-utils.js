@@ -1,5 +1,6 @@
 'use strict';
 
+const got = require('got');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
@@ -882,6 +883,55 @@ async function reconcileCMRMetadata({
 }
 
 /**
+ * Creates the query object used in POSTing to CMR.
+ * This query is a compound conditional using JSONQueryLanguage supported by CMR.
+ * This returns every collection that matches any of the short_name version pairs provided.
+ * the final query should be like
+ *  {"condition":
+ *   { "or": [{ "and": [{"short_name": "sn1"}, {"version": "001"}] },
+ *            { "and": [{"short_name": "sn2"}, {"version": "006"}] },
+ *            { "and": [{"short_name": "sn3"}, {"version": "001"}] },
+ *            .... ] } }
+ *
+ * @param {Array<Object>} results - objects with keys "short_name" and "version"
+ * @returns {Object} - query object for a post to CMR that will return all of the collections that
+ *                     match any of the results.
+ */
+function buildCMRQuery(results) {
+  const query = { condition: { or: [] } };
+  results.map((r) => query.condition.or.push(
+    { and: [{ short_name: r.short_name }, { version: r.version }] }
+  ));
+  return query;
+}
+
+/**
+ * Call CMR to get the all matching Collections information with a compound query call.
+ *
+ * @param {Array<Object>} results - pared results from a Cumulus collection search.
+ * @returns {Promise<Object>} - resolves to the CMR return
+ * containing the found collections
+ */
+async function getCollectionsByShortNameAndVersion(results) {
+  const query = buildCMRQuery(results);
+  const cmrClient = new CMR(await getCmrSettings());
+  const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+
+  const response = await got.post(
+    `${getSearchUrl()}collections.json`,
+    {
+      json: query,
+      responseType: 'json',
+      headers: {
+        Accept: 'application/json',
+        ...headers,
+      },
+    }
+  );
+  return response.body;
+}
+
+/**
  * Extract temporal information from granule object
  *
  * @param {Object} granule - granule object
@@ -930,6 +980,7 @@ module.exports = {
   getFileDescription,
   getFilename,
   getGranuleTemporalInfo,
+  getCollectionsByShortNameAndVersion,
   granulesToCmrFileObjects,
   isCMRFile,
   isCMRFilename,
