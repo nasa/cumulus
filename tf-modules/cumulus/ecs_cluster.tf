@@ -236,7 +236,14 @@ locals {
     desired_capacity          = var.ecs_cluster_desired_size,
     max_size                  = var.ecs_cluster_max_size,
     region                    = data.aws_region.current.name
-    security_group_ids        = compact(concat([aws_security_group.ecs_cluster_instance.id, var.elasticsearch_security_group_id], var.ecs_custom_sg_ids))
+    security_group_ids        = compact(concat(
+      [
+        aws_security_group.ecs_cluster_instance.id,
+        var.elasticsearch_security_group_id,
+        var.rds_security_group
+      ],
+      var.ecs_custom_sg_ids
+    ))
     subnet_ids                = var.ecs_cluster_instance_subnet_ids,
     task_reaper_object        = aws_s3_bucket_object.task_reaper
   }
