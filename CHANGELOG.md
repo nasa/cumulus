@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2187**
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
+  - **CUMULUS-2309**
+    - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
 
 ### Added
 
@@ -123,6 +125,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from Postgres database.
   - **CUMULUS-2309**
     - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from Postgres database.
+    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from Postgres database.
 
 ### Removed
 
