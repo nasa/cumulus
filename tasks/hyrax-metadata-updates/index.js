@@ -183,7 +183,7 @@ async function generatePath(config, metadata, isUmmG) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
   const entryCollection = await getCollectionEntry(config, metadata, isUmmG) ;
-  //return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
+
   return `collections/${entryCollection}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
 
