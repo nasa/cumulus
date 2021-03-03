@@ -75,17 +75,17 @@ async function createGranuleAndFiles(dbClient, collectionCumulusId, published) {
     {
       bucket: s3Buckets.protected.name,
       fileName: `${granuleId}.hdf`,
-      key: `${randomString(5)}/${granuleId}.hdf`,
+      key: `${randomString(10)}/${granuleId}.hdf`,
     },
     {
       bucket: s3Buckets.protected.name,
       fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
+      key: `${randomString(10)}/${granuleId}.cmr.xml`,
     },
     {
       bucket: s3Buckets.public.name,
       fileName: `${granuleId}.jpg`,
-      key: `${randomString(5)}/${granuleId}.jpg`,
+      key: `${randomString(10)}/${granuleId}.jpg`,
     },
   ];
 
