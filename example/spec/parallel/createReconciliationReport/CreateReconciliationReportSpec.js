@@ -430,7 +430,10 @@ describe('When there are granule differences and granule reconciliation is run',
           id: asyncOperationId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
-          retries: 100,
+          retryOptions: {
+            retries: 70,
+            factor: 1.041,
+          },
         });
       } catch (error) {
         fail(error);
@@ -574,7 +577,10 @@ describe('When there are granule differences and granule reconciliation is run',
           id: asyncOperationId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
-          retries: 100,
+          retryOptions: {
+            retries: 70,
+            factor: 1.041,
+          },
         });
       } catch (error) {
         fail(error);
@@ -656,7 +662,10 @@ describe('When there are granule differences and granule reconciliation is run',
           id: asyncOperationId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
-          retries: 100,
+          retryOptions: {
+            retries: 70,
+            factor: 1.041,
+          },
         });
       } catch (error) {
         fail(error);

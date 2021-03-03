@@ -11,6 +11,7 @@ const merge = require('lodash/merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
+const pRetry = require('p-retry');
 const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
 const moment = require('moment');
@@ -56,40 +57,47 @@ const lambdaStep = new LambdaStep();
 /**
  * Wait for an AsyncOperation to reach a given status
  *
- * Retries every 2 seconds until the expected status has been reached or the
- *   number of retries has been exceeded.
+ * Retries using exponental backoff until desired has been reached.  If the
+ *   desired state is not reached an error is thrown.
  *
  * @param {Object} params - params
- * @param {string} params.TableName - the name of the AsyncOperations DynamoDB
- *   table
  * @param {string} params.id - the id of the AsyncOperation
  * @param {string} params.status - the status to wait for
- * @param {number} params.retries - the number of times to retry Default: 10
+ * @param {string} params.stackName - the Cumulus stack name
+ * @param {number} params.retryOptions - retrying options.
+ *                   The Default values result in 15 attempts in ~1 min.
+ *                   https://github.com/tim-kos/node-retry#retryoperationoptions
  * @returns {Promise<Object>} - the AsyncOperation object
  */
 async function waitForAsyncOperationStatus({
   id,
   status,
   stackName,
-  retries = 20,
+  retryOptions = {
+    retries: 15,
+    factor: 1.178,
+    minTimeout: 1000,
+    maxTimeout: 1000 * 60 * 5,
+  },
 }) {
-  const response = await asyncOperationsApi.getAsyncOperation({
-    prefix: stackName,
-    asyncOperationId: id,
-  });
+  let operation;
+  return pRetry(
+    async () => {
+      const response = await asyncOperationsApi.getAsyncOperation({
+        prefix: stackName,
+        asyncOperationId: id,
+      });
 
-  const operation = JSON.parse(response.body);
+      operation = JSON.parse(response.body);
 
-  if (operation.status === status) return operation;
-  if (retries <= 0) throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
-
-  await delay(2000);
-  return waitForAsyncOperationStatus({
-    id,
-    status,
-    stackName,
-    retries: retries - 1,
-  });
+      if (operation.status === status) return operation;
+      throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
+    },
+    {
+      onFailedAttempt: (error) => console.log(`Waiting for AsyncOperation status ${operation.status} to reach ${status}. ${error.attemptsLeft} retries remain.`),
+      ...retryOptions,
+    }
+  );
 }
 
 /**
