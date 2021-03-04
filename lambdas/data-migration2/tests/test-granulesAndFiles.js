@@ -228,41 +228,6 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   );
 });
 
-test.serial('migrateFileRecord correctly migrates file record with null bucket and key', async (t) => {
-  const {
-    filePgModel,
-    granulePgModel,
-    knex,
-    testGranule,
-  } = t.context;
-
-  const testFile = fakeFileFactory({
-    bucket: undefined,
-    key: undefined,
-  });
-  testGranule.files = [testFile];
-
-  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
-  await migrateFileRecord(testFile, granuleCumulusId, knex);
-
-  const record = await filePgModel.get(knex, { bucket: null, key: null });
-
-  t.deepEqual(
-    omit(record, fileOmitList),
-    {
-      bucket: null,
-      checksum_value: null,
-      checksum_type: null,
-      key: null,
-      path: null,
-      file_size: null,
-      file_name: testFile.fileName,
-      source: null,
-    }
-  );
-});
-
 test.serial('migrateGranuleRecord throws error on invalid source data from DynamoDB', async (t) => {
   const {
     knex,
@@ -375,11 +340,9 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
 
   const testFile = testGranule.files[0];
 
-  delete testFile.bucket;
   delete testFile.checksum;
   delete testFile.checksumType;
   delete testFile.fileName;
-  delete testFile.key;
   delete testFile.path;
   delete testFile.size;
   delete testFile.source;
@@ -388,17 +351,17 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   const [granuleCumulusId] = await granulePgModel.create(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
-  const record = await filePgModel.get(knex, { bucket: null, key: null });
+  const record = await filePgModel.get(knex, { bucket: testFile.bucket, key: testFile.key });
 
   t.deepEqual(
     omit(record, fileOmitList),
     {
-      bucket: null,
+      bucket: testFile.bucket,
+      key: testFile.key,
       checksum_value: null,
       checksum_type: null,
       file_size: null,
       file_name: null,
-      key: null,
       source: null,
       path: null,
     }
