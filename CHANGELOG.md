@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2328**
   - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
 
+### Notable changes
+
+- `sync-granule` task will now properly handle syncing 0 byte files to S3
+
 ### Added
 
 - `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can be used to set to an arbitrary host for making CMR requests (e.g. `https://custom-cmr-host.com`).
@@ -30,6 +34,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
 - **CUMULUS-2355**
   - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
+
+### Fixed
+
+- Fixed issue in `@cumulus/ingest/S3ProviderClient.sync()` preventing 0 byte files from being synced to S3.
 
 ### Removed
 
