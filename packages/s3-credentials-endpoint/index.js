@@ -101,6 +101,12 @@ async function displayS3CredentialInstructions(_req, res) {
  *                   tempoary s3 credentials for direct same-region s3 access.
  */
 async function s3credentials(req, res) {
+  const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
+
+  if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
+    return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
+  }
+
   const roleSessionName = buildRoleSessionName(
     req.authorizedMetadata.userName,
     req.authorizedMetadata.clientName
