@@ -57,7 +57,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   }
 
   /**
-   * Get cumulus_id column value for record in Postgres
+   * Checks if an item is present in Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction -
    *  DB client or transaction

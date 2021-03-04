@@ -6,6 +6,7 @@ import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 
 import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
+import { translateDateToUTC } from '../lib/timestamp';
 
 export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
@@ -20,24 +21,29 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionCumulusId: number,
     granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
+    if (!granule.created_at){
+      throw new Error(`To upsert granule record must have 'created_at' set`);
+    }
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)
         .insert(granule)
-        .onConflict(['granule_id', 'collection_cumulus_id'])
+        .onConflict(['granule_id', 'collection_cumulus_id']) // should unique_constraints be a method on the db model?
         .merge({
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
+          created_at: granule.created_at,
         })
+        .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`))
         // Only do the upsert if there IS NOT already a record associating
         // the granule to this execution. If there IS already a record
         // linking this granule to this execution, then this upsert query
         // will not affect any rows.
         .whereNotExists(
-          granulesExecutionsPgModel.search(
-            knexOrTrx,
-            { execution_cumulus_id: executionCumulusId }
-          )
+            granulesExecutionsPgModel.search(
+              knexOrTrx,
+              { execution_cumulus_id: executionCumulusId }
+            )
         )
         .returning('cumulus_id');
     }
@@ -45,6 +51,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .insert(granule)
       .onConflict(['granule_id', 'collection_cumulus_id'])
       .merge()
+      .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`))
       .returning('cumulus_id');
   }
 }
