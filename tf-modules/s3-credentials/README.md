@@ -3,9 +3,18 @@
 The Cumulus S3 credentials endpoint Terraform module deploys the S3
 credentials endpoint with a configuration targeted at Cumulus and NGAP.
 
+## Functionality
+
+This module will add three endpoints to the REST API gateway identified by the input variables to this module:
+
+- `/s3credentials` - Dispenses temporary [STS credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) that can be used for in-region access of S3 data. Users must have a valid [Earthdata login](https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/earthdata-login) to get credentials from this endpoint.
+- `/s3credentialsREADME` - Provides a "how to" guide for making requests to the `/s3credentials` endpoint
+- `/redirect` - Handles the authentication redirect from Earthdata login
+  - The full URL of this endpoint, including the domain for the API, must be added as an "allowed redirect" for the Earthdata login client application identified in the `urs_client_id` variable to this module
+
 ## Input variables
 
-See [`variables.tf`]('./../variables.tf) for the input variables to this module.
+See [`variables.tf`](./variables.tf) for the input variables to this module.
 
 ## Output values
 
@@ -16,7 +25,7 @@ See [`variables.tf`]('./../variables.tf) for the input variables to this module.
 
 ```hcl
 module "s3_credentials" {
-  source = "https://github.com/nasa/cumulus/archive/terraform-aws-cumulus-s3-credentials-1.13.1.zip"
+  source = "https://github.com/nasa/cumulus/archive/terraform-aws-cumulus-s3-credentials-8.0.0.zip"
 
   prefix        = "my-prefix"
 

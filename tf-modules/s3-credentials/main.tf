@@ -161,7 +161,7 @@ resource "aws_api_gateway_integration" "s3_credentials" {
 # GET /redirect
 resource "aws_api_gateway_resource" "s3_credentials_redirect" {
   rest_api_id = var.rest_api_id
-  parent_id = var.rest_api_root_resource_id
+  parent_id   = var.rest_api_root_resource_id
   path_part   = "redirect"
 }
 
