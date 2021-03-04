@@ -17,8 +17,8 @@ function determineIntegrationTestStackName(cb) {
   const stacks = {
     'Jenny Liu': 'jl',
     jennyhliu: 'jl',
-    kkelly51: 'kk-int',
-    'Katherine Kelly': 'kk-int',
+    kkelly51: 'kk2',
+    'Katherine Kelly': 'kk2',
     'Lauren Frederick': 'lf-test',
     laurenfrederick: 'lf-test',
     'Mark Boyd': 'mboyd-int',
@@ -26,7 +26,6 @@ function determineIntegrationTestStackName(cb) {
     'Jonathan Kovarik': 'jk',
     Menno: 'mvd',
     'Menno Van Diermen': 'mvd',
-    'Brian Tennity': 'bt-ci',
     'Jennifer Tran': 'jtran-int',
     'Danielle Peters': 'dop-ci',
   };
