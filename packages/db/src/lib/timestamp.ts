@@ -1,1 +1,1 @@
-export const translateDateToUTC = (date: Date): number => date?.getTime() / 1000;
+export const translateDateToUTC = (date: Date): number => date.getTime() / 1000;

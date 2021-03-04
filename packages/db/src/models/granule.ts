@@ -21,8 +21,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionCumulusId: number,
     granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
-    if (!granule.created_at){
-      throw new Error(`To upsert granule record must have 'created_at' set`);
+    if (!granule.created_at) {
+      throw new Error(`To upsert granule record must have 'created_at' set: ${JSON.stringify(granule)}`);
     }
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)

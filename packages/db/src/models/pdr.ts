@@ -6,7 +6,6 @@ import { tableNames } from '../tables';
 import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
 import { translateDateToUTC } from '../lib/timestamp';
 
-
 export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrRecord> {
   constructor() {
     super({
@@ -18,8 +17,8 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
     knexOrTrx: Knex | Knex.Transaction,
     pdr: PostgresPdr
   ) {
-    if(!pdr.created_at) {
-      throw new Error(`To upsert pdr record must have 'created_at' set`);
+    if (!pdr.created_at) {
+      throw new Error(`To upsert pdr record must have 'created_at' set: ${JSON.stringify(pdr)}`);
     }
     if (pdr.status === 'running') {
       return knexOrTrx(this.tableName)
@@ -31,7 +30,7 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
         .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
         .andWhere((qb: Knex.QueryBuilder) => {
           qb.where(knexOrTrx.raw(`${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`))
-          .orWhere(knexOrTrx.raw(`${this.tableName}.progress < EXCLUDED.progress`))
+            .orWhere(knexOrTrx.raw(`${this.tableName}.progress < EXCLUDED.progress`));
         })
         .returning('cumulus_id');
     }
@@ -40,7 +39,7 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
       .onConflict('name')
       .merge()
       .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
-      // .returning('cumulus_id');
+      .returning('cumulus_id');
   }
 }
 
