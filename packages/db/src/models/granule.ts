@@ -40,10 +40,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // linking this granule to this execution, then this upsert query
         // will not affect any rows.
         .whereNotExists(
-            granulesExecutionsPgModel.search(
-              knexOrTrx,
-              { execution_cumulus_id: executionCumulusId }
-            )
+          granulesExecutionsPgModel.search(
+            knexOrTrx,
+            { execution_cumulus_id: executionCumulusId }
+          )
         )
         .returning('cumulus_id');
     }
