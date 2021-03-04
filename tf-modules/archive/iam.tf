@@ -87,7 +87,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:PutBucket*",
       "s3:ListBucket*"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -98,7 +98,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:DeleteObject",
       "s3:DeleteObjectVersion"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {

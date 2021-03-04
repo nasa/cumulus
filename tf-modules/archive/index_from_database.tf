@@ -10,6 +10,7 @@ resource "aws_lambda_function" "index_from_database" {
   environment {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
+      CMR_HOST        = var.cmr_custom_host
       ES_HOST         = var.elasticsearch_hostname
       stackName       = var.prefix
       ES_CONCURRENCY  = var.es_request_concurrency

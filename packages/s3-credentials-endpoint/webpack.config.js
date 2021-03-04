@@ -52,6 +52,9 @@ module.exports = {
   },
   devtool: 'inline-source-map',
   target: 'node',
+  node: {
+    __dirname: false,
+  },
   // https://github.com/webpack/webpack/issues/196#issuecomment-620227719
   stats: {
     warningsFilter: [

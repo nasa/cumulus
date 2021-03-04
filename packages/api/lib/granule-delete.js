@@ -47,8 +47,11 @@ const deleteGranuleAndFiles = async ({
   granuleModelClient = new Granule(),
 }) => {
   if (pgGranule === undefined) {
-    // Delete only the Dynamo Granule and S3 Files
-    await _deleteS3Files(dynamoGranule.files);
+    if (dynamoGranule.files && dynamoGranule.files.length > 1) {
+      // Delete only the Dynamo Granule and S3 Files
+      await _deleteS3Files(dynamoGranule.files);
+    }
+
     await granuleModelClient.delete(dynamoGranule);
   } else if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
