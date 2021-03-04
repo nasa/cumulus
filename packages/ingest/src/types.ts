@@ -22,8 +22,11 @@ export interface ProviderClient {
   list(path: string): Promise<ProviderClientListItem[]>
 
   sync(
-    sourcePath: string,
-    destinationBucket: string,
-    destinationKey: string
+    params: {
+      fileRemotePath: string,
+      destinationBucket: string,
+      destinationKey: string,
+      bucket?: string,
+    }
   ): Promise<{s3uri: string, etag: string}>
 }

@@ -31,3 +31,4 @@
 * Phil Osip
 * Sara Chaparro Diaz
 * Seth Vincent
+* Snyk bot

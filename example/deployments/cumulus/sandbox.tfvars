@@ -1,4 +1,8 @@
 buckets = {
+  glacier = {
+    name = "cumulus-test-sandbox-orca-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "cumulus-test-sandbox-internal"
     type = "internal"
