@@ -232,7 +232,7 @@ test.serial('deleteGranuleAndFiles() removes granule and files from PG, Dynamo, 
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
 
-  // Verify files were delete from S3 and PG
+  // Verify files were deleted from S3 and PG
   await Promise.all(
     files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
