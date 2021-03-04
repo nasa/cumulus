@@ -9,6 +9,8 @@ const {
   parseS3Uri,
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
+const { sfn } = require('@cumulus/aws-client/services');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { bulkOperation, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { listRequests } = require('@cumulus/api-client/orca');
@@ -50,9 +52,27 @@ const providersDir = './data/providers/s3/';
 // after ORCA tickets are fixed ORCA-140, ORCA-144
 const collectionsDir = './data/collections/s3_MOD09GQ_006_orca';
 
+async function stateMachineExists(stateMachineName) {
+  const sfnList = await sfn().listStateMachines({ maxResults: 1 }).promise();
+  const stateMachines = get(sfnList, 'stateMachines', []);
+  if (stateMachines.length !== 1) {
+    console.log('No state machine found');
+    return false;
+  }
+  const stateMachineArn = stateMachines[0].stateMachineArn.replace(stateMachines[0].name, stateMachineName);
+  try {
+    await StepFunctions.describeStateMachine({ stateMachineArn });
+  } catch (error) {
+    if (error.code === 'StateMachineDoesNotExist') return false;
+    throw error;
+  }
+  return true;
+}
+
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
+  let isOrcaIncluded = true;
   let collection;
   let config;
   let granuleModel;
@@ -65,6 +85,14 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     config = await loadConfig();
+
+    // check if orca is deployed
+    const stateMachineName = `${config.stackName}-${workflowName}`;
+    isOrcaIncluded = await stateMachineExists(stateMachineName);
+    if (!isOrcaIncluded) {
+      console.log(`${stateMachineName} doesn't exist, skip the tests...`);
+      return;
+    }
 
     const testId = createTimestampedTestId(config.stackName, 'OrcaBackupAndRecovery');
     const testSuffix = createTestSuffix(testId);
@@ -94,6 +122,8 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
+    if (!isOrcaIncluded) return;
+
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
@@ -111,6 +141,8 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('completes execution with success status', async () => {
+    if (!isOrcaIncluded) pending();
+
     const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
@@ -119,10 +151,13 @@ describe('The S3 Ingest Granules workflow', () => {
     let lambdaOutput;
 
     beforeAll(async () => {
+      if (!isOrcaIncluded) return;
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'copy_to_glacier');
     });
 
     it('copies files configured to glacier', async () => {
+      if (!isOrcaIncluded) pending();
+
       // TODO after ORCA fixes their iam to support multiple 'protected' buckets,
       // update collection configure to place '.cmr.xml' in protected-2 bucket,
       // and verify .cmr.xml file is copied from protected-2 bucket to glacier
@@ -147,6 +182,8 @@ describe('The S3 Ingest Granules workflow', () => {
     let asyncOperationId;
 
     it('generates an async operation through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+
       const response = await bulkOperation({
         prefix: config.stackName,
         ids: [granuleId],
@@ -159,6 +196,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('starts the recovery workflow', async () => {
+      if (!isOrcaIncluded) pending();
+
       const asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'SUCCEEDED',
@@ -177,6 +216,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('retrieves recovery request status through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+
       const response = await listRequests({
         prefix: config.stackName,
         query: { asyncOperationId, granuleId },
@@ -197,6 +238,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   // TODO remove the glacier files via ORCA API when the API is available (PI 21.3 21.4)
   it('removes files from glacier', async () => {
+    if (!isOrcaIncluded) pending();
     await Promise.all(filesCopiedToGlacier.map((s3uri) => deleteS3Object(config.buckets.glacier.name, parseS3Uri(s3uri).Key)));
     const deletedFromGlacier = await Promise.all(filesCopiedToGlacier.map((s3uri) => s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key })));
     deletedFromGlacier.forEach((check) => expect(check).toEqual(false));
