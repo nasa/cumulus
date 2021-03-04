@@ -198,12 +198,20 @@ describe('The S3 Ingest Granules workflow', () => {
     it('starts the recovery workflow', async () => {
       if (!isOrcaIncluded) pending();
 
-      const asyncOperation = await waitForAsyncOperationStatus({
-        id: asyncOperationId,
-        status: 'SUCCEEDED',
-        stackName: config.stackName,
-        retries: 100,
-      });
+      let asyncOperation;
+      try {
+        asyncOperation = await waitForAsyncOperationStatus({
+          id: asyncOperationId,
+          status: 'SUCCEEDED',
+          stackName: config.stackName,
+          retryOptions: {
+            retries: 70,
+            factor: 1.041,
+          },
+        });
+      } catch (error) {
+        fail(error);
+      }
 
       const output = JSON.parse(asyncOperation.output);
       expect(output).toEqual([granuleId]);
