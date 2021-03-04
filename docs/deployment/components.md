@@ -17,7 +17,7 @@ able to make use of the large number of publicly available modules on the [Terra
 * [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus)
 * [Data persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence)
 * [ECS service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
-* [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution)
+* [S3 credentials](https://github.com/nasa/cumulus/tree/master/tf-modules/s3-credentials)
 * [Thin Egress App](./thin_egress_app)
 * [Workflow](https://github.com/nasa/cumulus/tree/master/tf-modules/workflow)
 

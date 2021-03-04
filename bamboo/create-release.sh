@@ -23,5 +23,5 @@ echo $RELEASE_URL
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus.zip
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-workflow.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-workflow.zip
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-s3-replicator.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-s3-replicator.zip
-curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-distribution.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-distribution.zip
+curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-s3-credentials.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-s3-credentials.zip
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-ecs-service.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-ecs-service.zip
