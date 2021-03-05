@@ -89,9 +89,8 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
       provider = { id: `s3_provider${testSuffix}` };
 
-      let rest;
       // populate collections, providers and test data
-      [addedCollection, ...rest] = await Promise.all([
+      [addedCollection] = await Promise.all([
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
         updateAndUploadTestDataToBucket(
           config.bucket,
