@@ -10,8 +10,6 @@ const S3 = require('@cumulus/aws-client/S3');
 
 const S3ProviderClient = require('../S3ProviderClient');
 
-const localPath = './tmp.json';
-
 test.before(async (t) => {
   t.context.sourceBucket = randomString();
   t.context.sourcePrefix = randomString();
@@ -31,13 +29,10 @@ test.before(async (t) => {
   });
 });
 
-test.after.always(async (t) => {
-  fs.unlinkSync(localPath);
-  return Promise.all([
-    S3.recursivelyDeleteS3Bucket(t.context.sourceBucket),
-    S3.recursivelyDeleteS3Bucket(t.context.targetBucket),
-  ]);
-});
+test.after.always(async (t) => Promise.all([
+  S3.recursivelyDeleteS3Bucket(t.context.sourceBucket),
+  S3.recursivelyDeleteS3Bucket(t.context.targetBucket),
+]));
 
 test('S3ProviderClient constructor throws error if no bucket specified', (t) => {
   t.throws(
@@ -69,6 +64,9 @@ test.serial('S3ProviderClient.list lists objects under a path in a bucket', asyn
 
 test.serial('S3ProviderClient.download downloads a file to local disk', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
+
+  const localPath = './tmp.json';
+  t.teardown(() => fs.unlinkSync(localPath));
 
   await s3ProviderClient.download(t.context.sourceKey, localPath);
   t.true(fs.existsSync(localPath));
@@ -108,6 +106,26 @@ test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async 
     await S3.getTextObject(t.context.targetBucket, targetKey),
     t.context.fileContent
   );
+});
+
+test.serial('S3ProviderClient.sync syncs a 0 byte file', async (t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
+  const targetKey = '0byte.dat';
+
+  await S3.s3PutObject({
+    Bucket: t.context.sourceBucket,
+    Key: t.context.sourceKey,
+    // ensure file has 0 bytes
+    Body: '',
+  });
+
+  const { s3uri, etag } = await s3ProviderClient.sync({
+    destinationBucket: t.context.targetBucket,
+    destinationKey: targetKey,
+    fileRemotePath: t.context.sourceKey,
+  });
+  t.truthy(s3uri, 'Missing s3uri');
+  t.truthy(etag, 'Missing etag');
 });
 
 test.serial('S3ProviderClient.sync throws an error if the source file does not exist', async (t) => {
