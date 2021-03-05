@@ -14,7 +14,7 @@ test('getCreatedAt returns the workflow start time', (t) => {
   t.is(result, 123456);
 });
 
-test('getMessageGranules throws when a start time is not present in the message', (t) => {
+test('getMessageWorkflowStartTime throws when a start time is not present in the message', (t) => {
   const testMessage = {};
   t.throws(() => getMessageWorkflowStartTime(testMessage));
 });
