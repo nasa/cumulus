@@ -1,7 +1,7 @@
 export interface ApiFile {
   granuleId: string
-  bucket?: string
-  key?: string
+  bucket: string
+  key: string
   fileName?: string
   name?: string
   path?: string
