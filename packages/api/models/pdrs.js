@@ -124,9 +124,8 @@ class Pdr extends Manager {
     if (pdrRecord.status === 'running') {
       updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
     }
-    let result;
     try {
-      result = await this.dynamodbDocClient.update(updateParams).promise();
+      return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
         const executionArn = getMessageExecutionArn(cumulusMessage);
@@ -135,7 +134,6 @@ class Pdr extends Manager {
       }
       throw error;
     }
-    return result;
   }
 
   /**
