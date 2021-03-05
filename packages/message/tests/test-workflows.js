@@ -4,7 +4,7 @@ const test = require('ava');
 
 const { getMessageWorkflowStartTime } = require('../workflows');
 
-test('getCreatedAt returns the workflow start time', (t) => {
+test('getMessageWorkflowStartTime returns the workflow start time', (t) => {
   const testMessage = {
     cumulus_meta: {
       workflow_start_time: 123456,
