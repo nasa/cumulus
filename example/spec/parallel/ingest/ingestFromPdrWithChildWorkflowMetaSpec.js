@@ -173,6 +173,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   });
 
   it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
     const executionInput = await getExecutionInputObject(queuePdrsOutput.payload.running[0]);
     expect(executionInput.meta.staticValue).toEqual('aStaticValue');
     expect(executionInput.meta.interpolatedValueStackName).toEqual(queuePdrsOutput.meta.stack);
