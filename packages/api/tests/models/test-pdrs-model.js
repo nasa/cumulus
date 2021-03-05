@@ -333,7 +333,7 @@ test(
 );
 
 test(
-  'storePdrFromCumulusMessage does not update if PDR record is from an older, prior completed execution',
+  'storePdrFromCumulusMessage does not update PDR record if update is from an older completed execution',
   async (t) => {
     const pdrName = randomId('pdr');
     const stateMachine = randomId('parsePdr');
