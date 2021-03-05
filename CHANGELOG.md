@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `buckets` variable to `tf-modules/archive`
 - **CUMULUS-2328**
   - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
+- **CUMULUS-2427**
+  - Added support for using a custom queue with SQS and Kinesis rules. Whatever queue URL is set on the `rule.queueUrl` property will be used to schedule workflows for that rule. This change allows SQS/Kinesis rules to use [any throttled queues defined for a deployment](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
 
 ### Changed
 
