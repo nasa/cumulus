@@ -4,7 +4,7 @@ set -ex
 
 ## Build TF modules that require source building
 
-(cd tf-modules/distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-distribution.zip ../../terraform-aws-cumulus-distribution.zip)
+(cd tf-modules/s3-credentials && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-s3-credentials.zip ../../terraform-aws-cumulus-s3-credentials.zip)
 (cd tf-modules/s3-replicator && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-s3-replicator.zip ../../terraform-aws-cumulus-s3-replicator.zip)
 
 ## Create zipfiles
