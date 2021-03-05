@@ -37,10 +37,6 @@ variable "deploy_to_ngap" {
   type        = bool
 }
 
-variable "distribution_api_id" {
-  type = string
-}
-
 variable "distribution_url" {
   type = string
 }
@@ -144,6 +140,12 @@ variable "api_url" {
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
+}
+
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = ""
 }
 
 variable "cmr_limit" {

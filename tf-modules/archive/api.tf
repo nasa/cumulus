@@ -14,13 +14,13 @@ locals {
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       cmr_oauth_provider               = var.cmr_oauth_provider
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
       CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
-      distributionApiId                = var.distribution_api_id
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
