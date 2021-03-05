@@ -89,8 +89,10 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
       provider = { id: `s3_provider${testSuffix}` };
 
+      let rest;
       // populate collections, providers and test data
-      const populatePromises = await Promise.all([
+      [addedCollection, ...rest] = await Promise.all([
+        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
         updateAndUploadTestDataToBucket(
           config.bucket,
           s3data,
@@ -105,11 +107,8 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
           unmodifiedS3Data,
           testDataFolder
         ),
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
         addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
       ]);
-
-      addedCollection = populatePromises[2][0];
 
       // Rename the PDR to avoid race conditions
       await s3().copyObject({
