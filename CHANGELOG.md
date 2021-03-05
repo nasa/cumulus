@@ -28,21 +28,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
-    - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to RDS
+    - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to PostgreSQL
   - **CUMULUS-2191**
     - Added `@cumulus/async-operations` to core packages, exposing
-      `startAsyncOperation` which will handle starting an async operation and adding an entry to both RDS and DynamoDb
+      `startAsyncOperation` which will handle starting an async operation and adding an entry to both PostgreSQL and DynamoDb
   - **CUMULUS-2127**
     - Add schema migration for `collections` table
   - **CUMULUS-2129**
-    - Added logic to `data-migration1` Lambda for migrating collection records from Dynamo to RDS
+    - Added logic to `data-migration1` Lambda for migrating collection records from Dynamo to PostgreSQL
   - **CUMULUS-2157**
     - Add schema migration for `providers` table
-    - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to RDS
+    - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to PostgreSQL
   - **CUMULUS-2187**
-    - Added logic to `data-migration1` Lambda for migrating async operation records from Dynamo to RDS
+    - Added logic to `data-migration1` Lambda for migrating async operation records from Dynamo to PostgreSQL
   - **CUMULUS-2198**
-    - Added logic to `data-migration1` Lambda for migrating rule records from DynamoDB to RDS
+    - Added logic to `data-migration1` Lambda for migrating rule records from DynamoDB to PostgreSQL
   - **CUMULUS-2182**
     - Add schema migration for PDRs table
   - **CUMULUS-2230**
@@ -52,17 +52,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2184**
     - Add schema migration for `executions` table
   - **CUMULUS-2257**
-    - Updated RDS table and column names to snake_case
+    - Updated PostgreSQL table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
   - **CUMULUS-2186**
     - Added logic to `data-migration2` Lambda for migrating PDR records from
-      DynamoDB to RDS
+      DynamoDB to PostgreSQL
   - **CUMULUS-2235**
     - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to RDS and parse Granule records to store File records in RDS.
+    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to PostgreSQL and parse Granule records to store File records in RDS.
   - **CUMULUS-2367**
-    - Added `granules_executions` table to RDS schema to allow for a many-to-many relationship between granules and executions
+    - Added `granules_executions` table to PostgreSQL schema to allow for a many-to-many relationship between granules and executions
       - The table refers to granule and execution records using foreign keys defined with ON CASCADE DELETE, which means that any time a granule or execution record is deleted, all of the records in the `granules_executions` table referring to that record will also be deleted.
     - Added `upsertGranuleWithExecutionJoinRecord` helper to `@cumulus/db` to allow for upserting a granule record and its corresponding `granules_execution` record
 - **CUMULUS-2128**
@@ -106,10 +106,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Update integration tests to utilize API calls instead of direct
       api/model/Provider calls
   - **CUMULUS-2191**
-    - Updated cumuluss/async-operation task to write async-operations to the RDS
-    database.
+    - Updated cumuluss/async-operation task to write async-operations to the PostgreSQL database.
   - **CUMULUS-2228**
-    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the Core PostgreSQL database in parallel with writes to DynamoDB
+    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the core PostgreSQL database in parallel with writes to DynamoDB
   - **CUMUlUS-2190**
     - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for PDR writes to the core PostgreSQL database
   - **CUMUlUS-2192**
@@ -118,14 +117,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
   - **CUMULUS-2167**
-    - Change Postgres Schema definition for Files to remove `filename` and `name` and only support `file_name`.
-    - Change Postgres Schema definition for Files to remove `size` to only support `file_size`.
+    - Change PostgreSQL schema definition for `files` to remove `filename` and `name` and only support `file_name`.
+    - Change PostgreSQL schema definition for `files` to remove `size` to only support `file_size`.
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
   - **CUMULUS-2305**
-    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from Postgres database.
+    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from PostgreSQL database.
   - **CUMULUS-2309**
-    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from Postgres database.
-    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from Postgres database.
+    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from PostgreSQL database.
+    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
+  - **CUMULUS-2367**
+    - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
 
 ### Removed
 

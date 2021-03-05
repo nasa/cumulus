@@ -7,8 +7,10 @@ const {
   ExecutionPgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
+  fakeFileRecordFactory,
   fakeGranuleRecordFactory,
   generateLocalTestDb,
+  FilePgModel,
   GranulePgModel,
   GranulesExecutionsPgModel,
   upsertGranuleWithExecutionJoinRecord,
@@ -329,6 +331,68 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
         granule_cumulus_id: granuleCumulusId,
         execution_cumulus_id: executionCumulusId,
       }
+    )
+  );
+});
+
+test('GranulePgModel.delete() deletes granule and file records', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+  } = t.context;
+
+  const filePgModel = new FilePgModel();
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+  let file;
+
+  await knex.transaction(async (trx) => {
+    const [innerGranuleCumulusId] = await granulePgModel.create(trx, granule);
+    file = fakeFileRecordFactory({
+      granule_cumulus_id: innerGranuleCumulusId,
+    });
+    await filePgModel.create(trx, file);
+    return innerGranuleCumulusId;
+  });
+
+  t.true(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
+  );
+  t.true(
+    await filePgModel.exists(
+      knex,
+      file
+    )
+  );
+
+  await knex.transaction(
+    (trx) => granulePgModel.delete(
+      trx,
+      granule
+    )
+  );
+
+  t.false(
+    await granulePgModel.exists(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    )
+  );
+  t.false(
+    await filePgModel.exists(
+      knex,
+      file
     )
   );
 });
