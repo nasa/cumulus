@@ -10,13 +10,13 @@ const mapKeysToOrca = {
 };
 
 /**
- * List request status
+ * List recovery request status
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res) {
+async function listRequests(req, res) {
   const query = req.query || {};
   const params = mapKeys(query, (value, key) => mapKeysToOrca[key] || key);
   const inputPayload = { function: 'query', ...params };
@@ -31,6 +31,6 @@ async function list(req, res) {
   return res.send(JSON.parse(result.Payload));
 }
 
-router.get('/', list);
+router.get('/recovery', listRequests);
 
 module.exports = router;

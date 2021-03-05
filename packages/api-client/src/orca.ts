@@ -3,7 +3,7 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
  * Query orca recovery requests
- * GET /orca
+ * GET /orca/recovery
  * @param {Object} params             - params
  * @param {string} [params.query]     - query to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
@@ -24,7 +24,7 @@ export const listRequests = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/orca',
+      path: '/orca/recovery',
       queryStringParameters: query,
     },
   });
