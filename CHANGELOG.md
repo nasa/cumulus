@@ -128,6 +128,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from Postgres database.
   - **CUMULUS-2385**
     - Changed Postgres `File` schema to require `bucket` and `key` fields.
+    - Changed Dynamo and Postgres TypeScript type definitions to require `bucket` and `key` fields.
 
 ### Removed
 
