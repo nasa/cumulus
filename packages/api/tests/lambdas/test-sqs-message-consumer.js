@@ -6,6 +6,7 @@ const test = require('ava');
 const range = require('lodash/range');
 
 const SQS = require('@cumulus/aws-client/SQS');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   putJsonS3Object,
@@ -225,6 +226,29 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   // processed messages stay in queue until workflow execution succeeds
   // in this test, workflow executions are stubbed
   t.is(numberOfMessages.numberOfMessagesNotVisible, 2);
+  t.teardown(async () => {
+    await cleanupRulesAndQueues(rules, queues);
+  });
+});
+
+test.serial('archiveMessage archives all SQS messages', async (t) => {
+  const { rules, queues } = await createRulesAndQueues();
+  const body = { testdata: randomString() };
+  const message = await SQS.sendSQSMessage(
+    queues[0].queueUrl,
+    body
+  );
+  const key = message.MessageId;
+
+  await handler(event);
+
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  const messageBody = JSON.parse(item.Body.toString());
+  t.deepEqual(JSON.parse(messageBody), body);
+
   t.teardown(async () => {
     await cleanupRulesAndQueues(rules, queues);
   });

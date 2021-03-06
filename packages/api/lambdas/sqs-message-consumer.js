@@ -1,12 +1,36 @@
 'use strict';
 
 const get = require('lodash/get');
-const { sqs } = require('@cumulus/aws-client/services');
+const { sqs, s3 } = require('@cumulus/aws-client/services');
+// const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
 const { Consumer } = require('@cumulus/ingest/consumer');
 const rulesHelpers = require('../lib/rulesHelpers');
 const Rule = require('../models/rules');
+
+/**
+ * Archives incoming SQS Message into S3
+ *
+ * @param {Object} message - SQS message
+ * @returns {void}
+ */
+async function archiveMessage(message) {
+  const bucket = process.env.system_bucket;
+  log.debug(`Archiving message with ID ${message.MessageId} to bucket ${bucket}.`);
+  const body = JSON.stringify(message.Body);
+  try {
+    await s3().putObject({
+      Bucket: bucket,
+      Key: message.MessageId,
+      Body: body,
+    }).promise();
+    log.debug(`Archived ${message.MessageId} from queue`);
+  } catch (error) {
+    log.error(`Could not write to bucket. ${error}`);
+    throw error;
+  }
+}
 
 /**
  * Looks up enabled 'sqs'-type rules, and processes the messages from
@@ -61,23 +85,26 @@ async function processQueues(event, dispatchFn) {
       visibilityTimeout,
       deleteProcessedMessage: false,
     });
-    log.info(`processing queue ${queueUrl}`);
 
-    const messageConsumerFn = dispatchFn.bind({ rulesForQueue });
+    log.info(`Processing queue ${queueUrl}`);
+    const messageConsumerFn = dispatchFn.bind({ queueUrl, rulesForQueue });
+
     return consumer.consume(messageConsumerFn);
   }));
 }
 
 /**
- * Process an SQS message
+ * Archive and process an SQS message
  *
  * @param {string} queueUrl - Queue URL for incoming message
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
  */
-function dispatch(queueUrl, message) {
+async function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const rulesForQueue = this.rulesForQueue;
+  log.info(`Archiving messages from queue ${queueUrl}`);
+  await archiveMessage(message);
 
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
