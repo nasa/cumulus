@@ -1,4 +1,5 @@
 import { receiveSQSMessages, deleteSQSMessage, SQSMessage } from '@cumulus/aws-client/SQS';
+import { deleteS3Object } from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 
 export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;
@@ -8,11 +9,13 @@ export interface ConsumerConstructorParams {
   messageLimit?: number,
   timeLimit?: number,
   visibilityTimeout: number,
-  deleteProcessedMessage?: boolean
+  deleteProcessedMessage?: boolean,
+  deleteProcessedMessageFromS3?: boolean
 }
 
 export class Consumer {
   private readonly deleteProcessedMessage: boolean;
+  private readonly deleteProcessedMessageFromS3: boolean;
   private readonly messageLimit: number;
   private readonly now: number;
   private readonly queueUrl: string;
@@ -26,6 +29,7 @@ export class Consumer {
     timeLimit = 90,
     visibilityTimeout,
     deleteProcessedMessage = true,
+    deleteProcessedMessageFromS3 = true,
   }: ConsumerConstructorParams) {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
@@ -34,6 +38,28 @@ export class Consumer {
     this.now = Date.now();
     this.timeLapsed = false;
     this.deleteProcessedMessage = deleteProcessedMessage;
+    this.deleteProcessedMessageFromS3 = deleteProcessedMessageFromS3;
+  }
+
+  /**
+   * Deletes archived SQS Message from S3
+   *
+   * @param {Object} message - SQS message
+   * @returns {void}
+   */
+  private async deleteArchivedMessage(message: SQSMessage): Promise<any> {
+    const bucket = process.env.system_bucket;
+    log.debug(`Deleting archived message with ID ${message.MessageId} from bucket ${bucket}.`);
+    const key = message.MessageId;
+    if (bucket && key) {
+      try {
+        await deleteS3Object(bucket, key);
+        log.debug(`Archived message ${message.MessageId} deleted from S3`);
+      } catch (error) {
+        log.error(`Could not delete message from bucket. ${error}`);
+        throw error;
+      }
+    }
   }
 
   private async processMessage(
@@ -42,7 +68,12 @@ export class Consumer {
   ): Promise<0 | 1> {
     try {
       await fn(this.queueUrl, message);
-      if (this.deleteProcessedMessage) await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+      if (this.deleteProcessedMessage) {
+        await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+      }
+      if (this.deleteProcessedMessageFromS3) {
+        await this.deleteArchivedMessage(message);
+      }
       return 1;
     } catch (error) {
       log.error(error);
