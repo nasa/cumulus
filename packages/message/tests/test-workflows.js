@@ -4,7 +4,7 @@ const test = require('ava');
 
 const { getMessageWorkflowStartTime } = require('../workflows');
 
-test('getCreatedAt returns the workflow start time', (t) => {
+test('getMessageWorkflowStartTime returns the workflow start time', (t) => {
   const testMessage = {
     cumulus_meta: {
       workflow_start_time: 123456,
@@ -14,7 +14,7 @@ test('getCreatedAt returns the workflow start time', (t) => {
   t.is(result, 123456);
 });
 
-test('getMessageGranules throws when a start time is not present in the message', (t) => {
+test('getMessageWorkflowStartTime throws when a start time is not present in the message', (t) => {
   const testMessage = {};
   t.throws(() => getMessageWorkflowStartTime(testMessage));
 });
