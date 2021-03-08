@@ -232,7 +232,7 @@ test('_storeGranuleRecord() will allow a running status to replace a failed stat
   t.is(fetchedItem.status, 'running');
 });
 
-test('_validateAndStoreGranuleRecord() will not allow an older final status to replace a running status for a newer execution ', async (t) => {
+test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution ', async (t) => {
   const { granuleModel } = t.context;
 
   const timeVal = Date.now();

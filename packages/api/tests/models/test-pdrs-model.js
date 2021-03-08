@@ -250,7 +250,7 @@ test(
 );
 
 test(
-  'storePdrFromCumulusMessage does not update if PDR record is from an older, prior execution',
+  'storePdrFromCumulusMessage does not update PDR record if update is from an older completed execution',
   async (t) => {
     const pdrName = randomId('pdr');
     const stateMachine = randomId('parsePdr');
@@ -275,6 +275,7 @@ test(
       stateMachine,
       numRunningExecutions: 2,
       status: 'running',
+      createdAt: Date.now(),
     });
 
     newMsg.payload.pdr = {
@@ -357,6 +358,7 @@ test('storePdrFromCumulusMessage overwrites a same-execution running status if p
       numCompletedExecutions: 4,
       stateMachine,
       status: 'running',
+      createdAt: Date.now(),
     });
 
     newMsg.payload.pdr = {

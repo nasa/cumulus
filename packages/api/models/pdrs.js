@@ -130,12 +130,11 @@ class Pdr extends Manager {
     // times than the existing record, whatever the status
     updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
 
-    let results;
     try {
       if (pdrRecord.status === 'running') {
         updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
       }
-      results = await this.dynamodbDocClient.update(updateParams).promise();
+      return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
         const executionArn = getMessageExecutionArn(cumulusMessage);
@@ -144,7 +143,6 @@ class Pdr extends Manager {
       }
       throw error;
     }
-    return results;
   }
 
   /**
