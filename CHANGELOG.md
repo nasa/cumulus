@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-2328**
+  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
+
+### MIGRATION NOTES
+
+- **CUMULUS-2328**
+  - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
+
 ### Notable changes
 
 - `sync-granule` task will now properly handle syncing 0 byte files to S3
@@ -16,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   be used to set to an arbitray  host for making CMR requests (e.g.
   `https://custom-cmr-host.com`).
 - Added `buckets` variable to `tf-modules/archive`
+- **CUMULUS-2328**
+  - Added `tf-modules/s3_credentials` module which contains resources to attach the `/s3-credentials` endpoint to an API gateway
 
 ### Fixed
 
@@ -34,6 +46,12 @@ variable except "internal" buckets
     environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the
     endpoint will not dispense S3 credentials and instead return a message
     indicating that the endpoint has been disabled.
+- **CUMULUS-2328**
+  - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
+- **CUMULUS-2355**
+  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
+- **CUMULUS-2420**
+  - Updated test function `waitForAsyncOperationStatus` to take a retryObject and use exponential backoff.  Increased the total test duration for both AsycOperation specs and the ReconciliationReports tests.
 
 ### Fixed
 
@@ -45,6 +63,28 @@ variable except "internal" buckets
   - `private_buckets`
   - `protected_buckets`
   - `public_buckets`
+- **CUMULUS-2328**
+  - Removed `distributionApiId` environment variable from `<prefix>-ApiEndpoints` and `<prefix>-PrivateApiLambda` Lambdas
+  - Removed `distribution_api_id` variable from `tf-modules/archive` module
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/cumulus` module
+  - Removed variables from `tf-modules/cumulus` module:
+    - `sts_credentials_lambda_function_arn`
+    - `deploy_distribution_s3_credentials_endpoint`
+    - `tea_api_gateway_stage`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+  - Removed `s3_credentials_redirect_uri` output from `tf-modules/distribution` module
+  - Removed variables from `tf-modules/distribution` module:
+    - `deploy_s3_credentials_endpoint`
+    - `log_destination_arn`
+    - `sts_credentials_lambda_function_arn`
+    - `tea_api_gateway_stage`
+    - `tea_external_api_endpoint`
+    - `tea_rest_api_id`
+    - `tea_rest_api_root_resource_id`
+    - `urs_client_id`
+    - `urs_client_password`
+    - `urs_url`
 
 ## [v7.0.0] 2021-02-22
 
@@ -133,7 +173,6 @@ variable except "internal" buckets
     - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter
       in support of the changed behavior.
   - Removed `addBucketToFile` and related code from sync-granules task
-
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
 - **CUMULUS-2321**

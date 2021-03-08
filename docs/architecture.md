@@ -16,7 +16,7 @@ While the diagram can feel complex, it can easily be digested in several major c
 
 ### Data Distribution
 
-End Users can access data via Cumulus's `distribution` submodule, which includes ASF's [thin egress application](https://github.com/asfadmin/thin-egress-app), this provides authenticated data egress, temporary S3 links and other statistics features.
+End Users can access data via ASF's [thin egress application](https://github.com/asfadmin/thin-egress-app), this provides authenticated data egress, temporary S3 links and other statistics features.
 
 #### Data search
 

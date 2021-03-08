@@ -1,11 +1,3 @@
-locals {
-  protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
-  public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
-
-  tea_stack_name = "${var.prefix}-thin-egress-app"
-  tea_stage_name = "DEV"
-}
-
 resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
   name_prefix = "${var.prefix}-tea-urs-creds-"
   description = "URS credentials for the ${var.prefix} Thin Egress App"
@@ -37,18 +29,18 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
 module "thin_egress_app" {
   source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.102.zip"
 
-  auth_base_url                 = "https://uat.urs.earthdata.nasa.gov"
-  bucket_map_file               = aws_s3_bucket_object.bucket_map_yaml.id
-  bucketname_prefix             = ""
-  config_bucket                 = var.system_bucket
-  domain_name                   = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
-  jwt_secret_name               = var.thin_egress_jwt_secret_name
-  permissions_boundary_name     = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
-  private_vpc                   = var.vpc_id
-  stack_name                    = local.tea_stack_name
-  stage_name                    = local.tea_stage_name
-  urs_auth_creds_secret_name    = aws_secretsmanager_secret.thin_egress_urs_creds.name
-  vpc_subnet_ids                = var.lambda_subnet_ids
+  auth_base_url              = var.urs_url
+  bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.id
+  bucketname_prefix          = ""
+  config_bucket              = var.system_bucket
+  domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
+  jwt_secret_name            = var.thin_egress_jwt_secret_name
+  permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
+  private_vpc                = var.vpc_id
+  stack_name                 = local.tea_stack_name
+  stage_name                 = local.tea_stage_name
+  urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
+  vpc_subnet_ids             = var.lambda_subnet_ids
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   tags                          = local.tags
 }

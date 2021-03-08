@@ -37,10 +37,6 @@ variable "deploy_to_ngap" {
   type        = bool
 }
 
-variable "distribution_api_id" {
-  type = string
-}
-
 variable "distribution_url" {
   type = string
 }
