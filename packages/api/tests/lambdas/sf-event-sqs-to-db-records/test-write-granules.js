@@ -236,7 +236,10 @@ test('generateGranuleRecord() includes correct error if cumulus message has an e
 });
 
 test('generateFileRecord() adds granule cumulus ID', (t) => {
-  const file = {};
+  const file = {
+    bucket: cryptoRandomString({ length: 3 }),
+    key: cryptoRandomString({ length: 3 }),
+  };
   const record = generateFileRecord({ file, granuleCumulusId: 1 });
   t.is(record.granule_cumulus_id, 1);
 });
