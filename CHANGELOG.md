@@ -117,8 +117,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
   - **CUMULUS-2167**
-    - Changed PostgreSQL Schema definition for Files to remove `filename` and `name` and only support `file_name`.
-    - Changed PostgreSQL Schema definition for Files to remove `size` to only support `file_size`.
+    - Changed PostgreSQL schema definition for `files` to remove `filename` and `name` and only support `file_name`.
+    - Changed PostgreSQL schema definition for `files` to remove `size` to only support `file_size`.
     - Changed `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
   - **CUMULUS-2305**
     - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from PostgreSQL database.
@@ -128,7 +128,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2367**
     - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
   - **CUMULUS-2385**
-    - Changed PostgreSQL `File` schema and TypeScript type definition to require `bucket` and `key` fields.
+    - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
 
 ### Removed
 
