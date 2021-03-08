@@ -33,7 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2394**
   - Updated PDR and Granule writes to check the step function start_time against
-      the `createdAt` fild  for each record to ensure old execution records do not
+      the `createdAt` field  for each record to ensure old execution records do not
       overwrite newer executions
 
 ### Changed
