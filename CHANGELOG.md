@@ -87,7 +87,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `@cumulus/message/PDRs/getPdrPercentCompletion`
     - `@cumulus/message/workflows/getWorkflowDuration`
 - **CUMULUS-2199**
-  - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API Rule to conform to Postgres Rule definition.
+  - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API Rule to conform to PostgreSQL Rule definition.
 
 ### Changed
 
@@ -118,17 +118,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
   - **CUMULUS-2167**
-    - Changed Postgres Schema definition for Files to remove `filename` and `name` and only support `file_name`.
-    - Changed Postgres Schema definition for Files to remove `size` to only support `file_size`.
+    - Changed PostgreSQL Schema definition for Files to remove `filename` and `name` and only support `file_name`.
+    - Changed PostgreSQL Schema definition for Files to remove `size` to only support `file_size`.
     - Changed `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
   - **CUMULUS-2305**
-    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from Postgres database.
+    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from PostgreSQL database.
   - **CUMULUS-2309**
-    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from Postgres database.
-    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from Postgres database.
+    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from PostgreSQL database.
+    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
   - **CUMULUS-2385**
-    - Changed Postgres `File` schema to require `bucket` and `key` fields.
-    - Changed Dynamo and Postgres TypeScript type definitions to require `bucket` and `key` fields.
+    - Changed PostgreSQL `File` schema and TypeScript type definition to require `bucket` and `key` fields.
 
 ### Removed
 
