@@ -260,3 +260,42 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
     message.cumulus_meta.execution_name.length > executionNamePrefix.length
   );
 });
+
+test.serial('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
+  const event = t.context.event;
+  event.input.pdrs = [
+    { name: randomString(), path: randomString() },
+  ];
+
+  const cnm = {
+    id: 1234,
+    body: 'string',
+  };
+  event.config.childWorkflowMeta = {
+    cnm,
+  };
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queuePdrs(event);
+
+  await validateOutput(t, output);
+
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  const messages = receiveMessageResponse.Messages;
+
+  t.is(messages.length, 1);
+
+  const message = JSON.parse(messages[0].Body);
+
+  t.deepEqual(
+    message.meta.cnm, cnm
+  );
+});
