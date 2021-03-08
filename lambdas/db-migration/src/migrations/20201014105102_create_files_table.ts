@@ -8,9 +8,13 @@ export const up = async (knex: Knex): Promise<void> =>
       .primary();
     table
       .integer('granule_cumulus_id')
+      .notNullable();
+    table.foreign('granule_cumulus_id')
       .references('cumulus_id')
       .inTable('granules')
-      .notNullable();
+      // Automatically delete records in this table whenever the
+      // referenced record in the granules table is deleted
+      .onDelete('CASCADE');
     table
       .timestamps(false, true);
     table
