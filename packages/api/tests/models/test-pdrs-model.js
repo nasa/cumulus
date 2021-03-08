@@ -251,6 +251,47 @@ test(
 );
 
 test(
+  'storePdrFromCumulusMessage does not update PDR record if update is from an older execution',
+  async (t) => {
+    const pdrName = randomId('pdr');
+    const stateMachine = randomId('parsePdr');
+    const execution = randomId('exec');
+
+    const initialMsg = createPdrMessage({
+      execution,
+      stateMachine,
+      numCompletedExecutions: 3,
+      status: 'completed',
+      createdAtTime: (Date.now() + 10000000000),
+    });
+
+    initialMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(initialMsg);
+
+    const newMsg = createPdrMessage({
+      execution: randomId('newExec'),
+      stateMachine,
+      numRunningExecutions: 2,
+      status: 'running',
+      createdAt: Date.now(),
+    });
+
+    newMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(newMsg);
+
+    const record = await pdrsModel.get({ pdrName });
+    t.is(record.status, 'completed');
+    t.is(record.stats.completed, 3);
+  }
+);
+
+test(
   'storePdrFromCumulusMessage does not update same-execution if progress is less than current',
   async (t) => {
     const pdrName = randomId('pdr');
@@ -278,6 +319,47 @@ test(
       stateMachine,
       numRunningExecutions: 3,
       status: 'running',
+    });
+
+    newMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(newMsg);
+
+    const record = await pdrsModel.get({ pdrName });
+    t.is(record.status, 'completed');
+    t.is(record.stats.completed, 3);
+  }
+);
+
+test(
+  'storePdrFromCumulusMessage does not update PDR record if update is from an older completed execution',
+  async (t) => {
+    const pdrName = randomId('pdr');
+    const stateMachine = randomId('parsePdr');
+    const execution = randomId('exec');
+
+    const initialMsg = createPdrMessage({
+      execution,
+      stateMachine,
+      numCompletedExecutions: 3,
+      status: 'completed',
+      createdAtTime: (Date.now() + 10000000000),
+    });
+
+    initialMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(initialMsg);
+
+    const newMsg = createPdrMessage({
+      execution: randomId('newExec'),
+      stateMachine,
+      numRunningExecutions: 2,
+      status: 'failed',
+      createdAt: Date.now(),
     });
 
     newMsg.payload.pdr = {
