@@ -276,6 +276,7 @@ test(
       stateMachine,
       numRunningExecutions: 2,
       status: 'running',
+      createdAt: Date.now(),
     });
 
     newMsg.payload.pdr = {
@@ -358,6 +359,7 @@ test(
       stateMachine,
       numRunningExecutions: 2,
       status: 'failed',
+      createdAt: Date.now(),
     });
 
     newMsg.payload.pdr = {
