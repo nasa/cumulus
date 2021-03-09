@@ -9,7 +9,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const models = require('../../models');
@@ -220,6 +220,24 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   await esClient.indices.delete({ index: indexName });
   await esClient.indices.delete({ index: destIndex });
+});
+
+test.serial('Reindex fails when source index matches destination index.', async (t) => {
+  const indexName = randomId('index');
+  await esClient.indices.create({
+    index: indexName,
+    body: { mappings },
+  });
+
+  const response = await request(app)
+    .post('/elasticsearch/reindex')
+    .send({ destIndex: indexName, sourceIndex: indexName })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, `source index(${indexName}) and destination index(${indexName}) must be different.`);
+  await esClient.indices.delete({ index: indexName });
 });
 
 test.serial('Reindex success', async (t) => {

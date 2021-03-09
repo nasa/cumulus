@@ -96,6 +96,10 @@ async function reindex(req, res) {
     }
   }
 
+  if (sourceIndex === destIndex) {
+    return res.boom.badRequest(`source index(${sourceIndex}) and destination index(${destIndex}) must be different.`);
+  }
+
   // reindex
   esClient.reindex({
     body: {
