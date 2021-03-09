@@ -27,7 +27,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     if (granule.status === 'running') {
       return knexOrTrx(this.tableName)
         .insert(granule)
-        .onConflict(['granule_id', 'collection_cumulus_id']) // should unique_constraints be a method on the db model?
+        .onConflict(['granule_id', 'collection_cumulus_id'])
         .merge({
           status: granule.status,
           timestamp: granule.timestamp,
