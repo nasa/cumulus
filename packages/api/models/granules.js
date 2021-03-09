@@ -608,7 +608,7 @@ class Granule extends Manager {
    */
   _getMutableFieldNames(record) {
     if (record.status === 'running') {
-      return ['updatedAt', 'timestamp', 'status', 'execution'];
+      return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
   }
