@@ -7,10 +7,10 @@ const pWaitFor = require('p-wait-for');
 
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
-  createQueue,
   deleteQueue,
   receiveSQSMessages,
   sendSQSMessage,
+  getQueueUrlByName,
 } = require('@cumulus/aws-client/SQS');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const {
@@ -22,6 +22,7 @@ const {
   readJsonFilesFromDir,
   deleteRules,
   setProcessEnvironment,
+  getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
@@ -82,7 +83,6 @@ async function cleanUp() {
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     deleteQueue(queues.sourceQueueUrl),
     deleteQueue(queues.deadLetterQueueUrl),
-    deleteQueue(queues.scheduleQueueUrl),
   ]);
 }
 
@@ -126,8 +126,7 @@ describe('The SQS rule', () => {
 
     executionNamePrefix = randomId('prefix');
 
-    const scheduleQueueName = `ScheduleQueue${testSuffix}`;
-    const scheduleQueueUrl = await createQueue(scheduleQueueName);
+    const scheduleQueueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
 
     ruleOverride = {
       name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
@@ -194,7 +193,7 @@ describe('The SQS rule', () => {
           prefix: config.stackName,
           granuleId,
           status: 'completed',
-          timeout: 60,
+          timeout: 90,
         });
       });
 
@@ -205,12 +204,13 @@ describe('The SQS rule', () => {
 
       it('the execution name starts with the expected prefix', () => {
         const executionName = record.execution.split(':').reverse()[0];
-
         expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
       });
 
-      it('messages are picked up and removed from scheduling queue', async () => {
-        await expectAsync(waitForQueueMessageCount(queues.scheduleQueueUrl, 0)).toBeResolved();
+      it('execution message references correct queue URL', async () => {
+        const executionArn = record.execution.split('/').reverse()[0];
+        const executionInput = await getExecutionInputObject(executionArn);
+        expect(executionInput.cumulus_meta.queueUrl).toBe(queues.scheduleQueueUrl);
       });
     });
 
