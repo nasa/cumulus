@@ -9,12 +9,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2328**
-  - The deployment of the `/s3credentials` endpoint has been removed from the `cumulus` module. You must now deploy the `/s3credentials` endpoint using a standalone `s3-credentials` module. See the migration notes below.
+  - The deployment of the `/s3credentials` endpoint has been removed from the
+    `cumulus` module. You must now deploy the `/s3credentials` endpoint using a
+    standalone `s3-credentials` module. See the migration notes below.
 
 ### MIGRATION NOTES
 
 - **CUMULUS-2328**
-  - If you want to use the `/s3credentials` endpoint, you must add configuration for the `s3-credentials` module. For reference on how to configure this module, see [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
+  - If you want to use the `/s3credentials` endpoint, you must add
+    configuration for the `s3-credentials` module. For reference on how to
+    configure this module, see
+    [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
 
 ### Notable changes
 
@@ -49,11 +54,17 @@ variable except "internal" buckets
 - **CUMULUS-2328**
   - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
 - **CUMULUS-2355**
-  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
+  - Added logic to disable `/s3Credentials` endpoint based upon value for
+    environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
+    endpoint will not dispense S3 credentials and instead return a message
+    indicating that the endpoint has been disabled.
 - **CUMULUS-2397**
-  - Updated `/elasticsearch` endpoint's `reindex` function to prevent reindexing when source and destination indices are the same.
+  - Updated `/elasticsearch` endpoint's `reindex` function to prevent
+    reindexing when source and destination indices are the same.
 - **CUMULUS-2420**
-  - Updated test function `waitForAsyncOperationStatus` to take a retryObject and use exponential backoff.  Increased the total test duration for both AsycOperation specs and the ReconciliationReports tests.
+  - Updated test function `waitForAsyncOperationStatus` to take a retryObject
+    and use exponential backoff.  Increased the total test duration for both
+    AsycOperation specs and the ReconciliationReports tests.
 
 ### Fixed
 
