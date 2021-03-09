@@ -249,7 +249,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
   t.is(record.status, 'running');
 });
 
-test('GranulePgModel.upsert() will not allow a completed state from an older execution to overwrite the completed state from a newer execution', async (t) => {
+test('GranulePgModel.upsert() will not allow a final state from an older execution to overwrite the completed state from a newer execution', async (t) => {
   const {
     knex,
     executionPgModel,
