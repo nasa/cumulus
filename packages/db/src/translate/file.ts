@@ -10,11 +10,11 @@ export const translateApiFiletoPostgresFile = (
 
   return {
     bucket: file.bucket,
+    key: file.key,
     checksum_type: file.checksumType,
     checksum_value: file.checksum,
     file_name: file.fileName,
     file_size: file.size,
-    key: file.key,
     path: file.path,
     source: file.source,
   };

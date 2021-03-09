@@ -401,6 +401,59 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
   }));
 });
 
+test('writeGranules() throws error if any file records are invalid', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+  } = t.context;
+
+  cumulusMessage.payload.granules[0].files[0].bucket = undefined;
+  cumulusMessage.payload.granules[0].files[0].key = undefined;
+
+  await t.throwsAsync(writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  }));
+});
+
+test('writeGranules() does not persist granule or files if any file is invalid', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.payload.granules[0].files[0].bucket = undefined;
+  cumulusMessage.payload.granules[0].files[0].key = undefined;
+
+  await t.throwsAsync(writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  }));
+
+  // If no granule was persisted, files could not have been created
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+  );
+});
+
 test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
