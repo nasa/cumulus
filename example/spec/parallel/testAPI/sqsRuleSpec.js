@@ -1,6 +1,5 @@
 'use strict';
 
-const cryptoRandomString = require('crypto-random-string');
 const delay = require('delay');
 const fs = require('fs-extra');
 const replace = require('lodash/replace');
@@ -127,7 +126,7 @@ describe('The SQS rule', () => {
 
     executionNamePrefix = randomId('prefix');
 
-    const scheduleQueueName = `ScheduleQueue_${cryptoRandomString({ length: 5 })}`;
+    const scheduleQueueName = `ScheduleQueue${testSuffix}`;
     const scheduleQueueUrl = await createQueue(scheduleQueueName);
 
     ruleOverride = {
@@ -195,10 +194,11 @@ describe('The SQS rule', () => {
           prefix: config.stackName,
           granuleId,
           status: 'completed',
+          timeout: 60,
         });
       });
 
-      it('workflow is kicked off, and the granule from the message is successfully ingested', () => {
+      it('workflow is kicked off, and the granule from the message is successfully ingested', async () => {
         expect(record.granuleId).toBe(granuleId);
         expect(record.execution).toContain(workflowName);
       });
