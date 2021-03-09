@@ -178,7 +178,7 @@ Rules are used by to start processing workflows and the transformation process. 
 |meta|`<JSON Object>` of MetaData for the rule|No|MetaData for the rule. This metadata will be available to workflows for this rule via the [Cumulus Message Adapter](workflows/input_output.md).
 |rule|`<JSON Object>` rule type and associated values - discussed [below](#rule-object)|Yes|Object defining the type and subsequent attributes of the rule|
 |state|`"ENABLED"`|No|<code>("ENABLED"&#124;"DISABLED")</code> whether or not the rule will be active. Defaults to `"ENABLED"`.|
-|queueUrl|`https://sqs.us-east-1.amazonaws.com/1234567890/queue-name`|No|URL for SQS quue that should be used to schedule workflows for this rule
+|queueUrl|`https://sqs.us-east-1.amazonaws.com/1234567890/queue-name`|No|URL for SQS queue that should be used to schedule workflows for this rule
 |tags|`["kinesis", "podaac"]`|No|An array of strings that can be used to simplify search|
 
 #### collection-object
