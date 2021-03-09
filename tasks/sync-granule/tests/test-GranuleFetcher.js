@@ -95,65 +95,6 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
   t.is(fileCollectionConfig, undefined);
 });
 
-test('addBucketToFile throws an exception if no config matches', (t) => {
-  const buckets = {
-    private: {
-      name: 'private-bucket',
-      type: 'private',
-    },
-  };
-
-  const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
-  const collectionConfig = {
-    files: [wrongCollectionFileConfig],
-  };
-
-  const testGranule = new GranuleFetcher({
-    buckets,
-    collection: collectionConfig,
-    provider: { protocol: 's3', host: 'some-bucket' },
-  });
-
-  const file = { name: 'right-file' };
-
-  t.throws(
-    () => testGranule.addBucketToFile(file),
-    {
-      message: 'Unable to update file. Cannot find file config for file right-file',
-    }
-  );
-});
-
-test('addBucketToFile adds the correct bucket when a config is found', (t) => {
-  const buckets = {
-    private: {
-      name: 'private-bucket',
-      type: 'private',
-    },
-    right: {
-      name: 'right-bucket',
-      type: 'private',
-    },
-  };
-
-  const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right' };
-  const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong' };
-  const collectionConfig = {
-    files: [rightCollectionFileConfig, wrongCollectionFileConfig],
-  };
-
-  const testGranule = new GranuleFetcher({
-    buckets,
-    collection: collectionConfig,
-    provider: { protocol: 's3', host: 'some-bucket' },
-  });
-
-  const file = { name: 'right-file' };
-  const updatedFile = testGranule.addBucketToFile(file);
-
-  t.is(updatedFile.bucket, 'right-bucket');
-});
-
 test('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
   const { collectionConfig, destBucket, internalBucket } = t.context;
 

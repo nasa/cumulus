@@ -10,16 +10,16 @@ const pickAll = require('lodash/fp/pickAll');
 
 const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
-const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { promiseS3Upload, recursivelyDeleteS3Bucket, s3PutObject, createBucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { CMRMetaFileNotFound } = require('@cumulus/errors');
+const { CMRMetaFileNotFound, CMRInternalError, ValidationError } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 const { isCMRFile } = require('@cumulus/cmrjs');
 
 const { postToCMR } = require('..');
 
 const result = {
-  'concept-id': 'testingtesting',
+  'concept-id': 'G1222482316-CUMULUS',
 };
 const resultThunk = () => ({ result });
 
@@ -31,7 +31,7 @@ test.before(async (t) => {
     SecretString: randomString(),
   }).promise();
 
-  // Store the Launchpadd passphrase
+  // Store the Launchpad passphrase
   t.context.launchpadPassphraseSecretName = randomString();
   await awsServices.secretsManager().createSecret({
     Name: t.context.launchpadPassphraseSecretName,
@@ -53,11 +53,11 @@ test.beforeEach(async (t) => {
 
   //update cmr file path
   const match = /^s3:\/\/(.*)\/(.*)$/;
-  const cmrFile = payload.input.granules[0].files[3].filename;
-  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
+  const xmlCmrFile = payload.input.granules[0].files[3].filename;
+  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(xmlCmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
 
-  return awsServices.s3().createBucket({ Bucket: t.context.bucket }).promise();
+  await createBucket(t.context.bucket);
 });
 
 test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucket));
@@ -88,42 +88,89 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
       Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>',
     });
     await t.throwsAsync(postToCMR(newPayload),
-      { instanceOf: cmrClient.ValidationError });
+      { instanceOf: ValidationError });
+  } finally {
+    cmrClient.CMR.prototype.getToken.restore();
+  }
+});
+
+test.serial('postToCMR fails when CMR is down', async (t) => {
+  sinon.stub(cmrClient.CMR.prototype, 'getToken');
+  const { bucket, payload } = t.context;
+  const newPayload = payload;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').throws(new CMRInternalError());
+  t.teardown(() => {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  });
+
+  await s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+  });
+  try {
+    await t.throwsAsync(postToCMR(newPayload),
+      { instanceOf: CMRInternalError });
+  } finally {
+    cmrClient.CMR.prototype.getToken.restore();
+  }
+});
+
+test.serial('postToCMR raises correct error', async (t) => {
+  sinon.stub(cmrClient.CMR.prototype, 'getToken');
+  const { bucket, payload } = t.context;
+  const newPayload = payload;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').throws(new Error());
+  t.teardown(() => {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  });
+
+  await s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+  });
+  try {
+    await t.throwsAsync(postToCMR(newPayload),
+      { instanceOf: Error });
   } finally {
     cmrClient.CMR.prototype.getToken.restore();
   }
 });
 
 test.serial('postToCMR succeeds with correct payload', async (t) => {
-  const newPayload = t.context.payload;
+  const { bucket, payload } = t.context;
+  const newPayload = payload;
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
   sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
-
-  try {
-    await promiseS3Upload({
-      Bucket: t.context.bucket,
-      Key: key,
-      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
-    });
-
-    const output = await postToCMR(newPayload);
-
-    t.is(output.granules.length, 1);
-
-    t.is(
-      output.granules[0].cmrLink,
-      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
-    );
-
-    output.granules.forEach((g) => {
-      t.true(Number.isInteger(g.post_to_cmr_duration));
-      t.true(g.post_to_cmr_duration >= 0);
-    });
-  } finally {
+  t.teardown(() => {
     cmrClient.CMR.prototype.ingestGranule.restore();
-  }
+  });
+
+  await s3PutObject({
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+  });
+
+  const output = await postToCMR(newPayload);
+  t.is(output.granules.length, 1);
+  t.is(
+    output.granules[0].cmrLink,
+    `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
+  );
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.post_to_cmr_duration));
+    t.true(g.post_to_cmr_duration >= 0);
+  });
 });
 
 test.serial('postToCMR immediately succeeds using metadata file ETag', async (t) => {

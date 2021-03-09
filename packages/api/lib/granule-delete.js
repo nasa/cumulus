@@ -47,8 +47,11 @@ const deleteGranuleAndFiles = async ({
   granuleModelClient = new Granule(),
 }) => {
   if (pgGranule === undefined) {
-    // Delete only the Dynamo Granule and S3 Files
-    await _deleteS3Files(dynamoGranule.files);
+    if (dynamoGranule.files && dynamoGranule.files.length > 1) {
+      // Delete only the Dynamo Granule and S3 Files
+      await _deleteS3Files(dynamoGranule.files);
+    }
+
     await granuleModelClient.delete(dynamoGranule);
   } else if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
@@ -60,13 +63,6 @@ const deleteGranuleAndFiles = async ({
     );
 
     await knex.transaction(async (trx) => {
-      await pMap(
-        files,
-        (file) => {
-          filePgModel.delete(trx, { cumulus_id: file.cumulus_id });
-        }
-      );
-
       // TODO: relying on the cumulus_id from the lookup is icky, but we need to
       // truly identify the unique record.
       await granulePgModel.delete(trx, { cumulus_id: pgGranule.cumulus_id });
