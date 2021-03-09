@@ -6,6 +6,13 @@ const test = require('ava');
 
 const SQS = require('@cumulus/aws-client/SQS');
 
+const { s3 } = require('@cumulus/aws-client/services');
+const {
+  createBucket,
+  recursivelyDeleteS3Bucket,
+} = require('@cumulus/aws-client/S3');
+const { randomString } = require('@cumulus/common/test-utils');
+
 const { Consumer } = require('../consumer');
 
 const timeToReceiveMessages = 200; // ms
@@ -89,4 +96,39 @@ test.serial('processMessage returns count of 0 for failure', async (t) => {
     throw new Error('failed');
   });
   t.is(result, 0);
+});
+
+test.serial('deleteArchivedMessages deletes messages archived in S3 as soon as they are processed', async (t) => {
+  process.env.system_bucket = randomString();
+  const consumer = new Consumer({
+    deleteProcessMessage: false,
+    deleteProcessedMessageFromS3: true,
+  });
+  await createBucket(process.env.system_bucket);
+
+  await s3().putObject({
+    Bucket: process.env.system_bucket,
+    Key: sqsMessage.MessageId,
+    Body: JSON.stringify(sqsMessage.Body),
+  }).promise();
+
+  // Check that item exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: sqsMessage.MessageId,
+  }).promise();
+  t.truthy(item.ETag);
+
+  const result = await consumer.consume(processFn);
+  t.is(result, 1);
+
+  // Check that item does not exist in S3 and therefore throws an error
+  await t.throwsAsync(s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: sqsMessage.MessageId,
+  }).promise(), { code: 'NoSuchKey' });
+
+  t.teardown(async () => {
+    await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  });
 });
