@@ -6,21 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### BREAKING CHANGES
-
-- **CUMULUS-2328**
-  - The deployment of the `/s3credentials` endpoint has been removed from the
-    `cumulus` module. You must now deploy the `/s3credentials` endpoint using a
-    standalone `s3-credentials` module. See the migration notes below.
-
-### MIGRATION NOTES
-
-- **CUMULUS-2328**
-  - If you want to use the `/s3credentials` endpoint, you must add
-    configuration for the `s3-credentials` module. For reference on how to
-    configure this module, see
-    [`example/cumulus-tf/s3_credentials.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/s3_credentials.tf)
-
 ### Notable changes
 
 - `sync-granule` task will now properly handle syncing 0 byte files to S3
