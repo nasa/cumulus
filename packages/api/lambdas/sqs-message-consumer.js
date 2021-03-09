@@ -2,7 +2,6 @@
 
 const get = require('lodash/get');
 const { sqs, s3 } = require('@cumulus/aws-client/services');
-// const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const log = require('@cumulus/common/log');
 const { Consumer } = require('@cumulus/ingest/consumer');
@@ -84,6 +83,7 @@ async function processQueues(event, dispatchFn) {
       timeLimit,
       visibilityTimeout,
       deleteProcessedMessage: false,
+      deleteProcessedMessageFromS3: true,
     });
 
     log.info(`Processing queue ${queueUrl}`);
