@@ -95,13 +95,7 @@ variable except "internal" buckets
 
 ### MIGRATION NOTES
 
-<<<<<<< HEAD
-- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform
-  from **0.12.12** to **0.13.6*.  Please see the [instructions to upgrade your
-  deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
-=======
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
->>>>>>> parent of b908cf3ab (CUMULUS-2328: Separate s3-credentials deployment to separate module (#2067))
 
 - **CUMULUS-2350**
   - If the  `/s3credentialsREADME`, does not appear to be working after
@@ -210,15 +204,7 @@ variable except "internal" buckets
 ### Added
 
 - **HYRAX-320**
-<<<<<<< HEAD
-  - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title
-    id and granule ur to alow  for values with special characters in them. For
-    example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave
-    Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such
-    values will be encoded correctly and parsable by HyraxInTheCloud
-=======
   - `@cumulus/hyrax-metadata-updates`Add component URI encoding for entry title id and granule ur to allow for values with special characters in them. For example, EntryTitleId 'Sentinel-6A MF/Jason-CS L2 Advanced Microwave Radiometer (AMR-C) NRT Geophysical Parameters' Now, URLs generated from such values will be encoded correctly and parsable by HyraxInTheCloud
->>>>>>> parent of b908cf3ab (CUMULUS-2328: Separate s3-credentials deployment to separate module (#2067))
 
 - **CUMULUS-1370**
   - Add documentation for Getting Started section including FAQs
