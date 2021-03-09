@@ -49,7 +49,7 @@ export class Consumer {
    */
   private async deleteArchivedMessage(message: SQSMessage): Promise<any> {
     const bucket = process.env.system_bucket;
-    log.debug(`Deleting archived message with ID ${message.MessageId} from bucket ${bucket}.`);
+    log.debug(`Attempting to delete archived message with ID ${message.MessageId} from bucket ${bucket}.`);
     const key = message.MessageId;
     if (bucket && key) {
       try {
