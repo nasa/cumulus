@@ -192,7 +192,7 @@ class Granule extends Manager {
    * @param {Object} granule - the granule object
    * @param {string} workflow - the workflow name
    * @param {Object} meta - optional meta object to insert in workflow message
-   * @param {string} [queueName] - specify queue to append message to
+   * @param {string} [queueUrl] - URL for SQS queue to use for scheduling workflows
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */
@@ -200,7 +200,7 @@ class Granule extends Manager {
     granule,
     workflow,
     meta = undefined,
-    queueName = undefined,
+    queueUrl = undefined,
     asyncOperationId = undefined
   ) {
     if (!workflow) {
@@ -220,7 +220,7 @@ class Granule extends Manager {
         version,
       },
       meta,
-      queueName,
+      queueUrl,
       asyncOperationId,
     });
 
