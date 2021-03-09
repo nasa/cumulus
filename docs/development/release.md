@@ -242,7 +242,7 @@ The CI release scripts will automatically create a GitHub release based on the r
 - A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
 - A S3 replicator module
 - A workflow module
-- An S3 credentials module
+- A distribution API module
 - An ECS service module
 
 Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.
