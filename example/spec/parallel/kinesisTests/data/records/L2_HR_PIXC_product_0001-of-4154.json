@@ -14,7 +14,9 @@
         "name": "L2_HR_PIXC_product_0001-of-4154.h5",
         "checksumType": "md5",
         "checksum": "cd043418380acdf69b2fb80649357cda",
-        "size": 50
+        "size": 50,
+        "bucket": "ignored-bucket",
+        "key": "/cumulus-test-data/pdrs/L2_HR_PIXC_product_0001-of-4154.h5"
       }
     ]
   }
