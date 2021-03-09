@@ -31,11 +31,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports
- accessing all buckets defined in your `buckets`
-variable except "internal" buckets
-- **CUMULUS-2328**
-  - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
+- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now
+  supports accessing all buckets defined in your `buckets` variable except
+  "internal" buckets
 - **CUMULUS-2355**
   - Added logic to disable `/s3Credentials` endpoint based upon value for
     environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
