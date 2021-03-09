@@ -385,12 +385,6 @@ Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when co
 
 The Thin Egress App is used for Cumulus distribution. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
 
-#### Optional - Configure the S3 credentials module
-
-Cumulus provides an optional component to dispense STS credentials for direct access to S3 data, but this feature is **only supported in NGAP environments**.
-
-Consult the [Cumulus wiki for guidance on how to deploy the s3-credentials module](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+Direct+S3+Access).
-
 #### Initialize Terraform
 
 Follow the [above instructions to initialize Terraform](#initialize-terraform) using `terraform init`[^3].
