@@ -64,7 +64,6 @@ async function processQueues(event, dispatchFn) {
     log.info(`processing queue ${queueUrl}`);
 
     return consumer.consume(dispatchFn.bind({
-      queueUrl,
       rulesForQueue,
     }));
   }));
@@ -73,12 +72,12 @@ async function processQueues(event, dispatchFn) {
 /**
  * Process an SQS message
  *
+ * @param {string} queueUrl - Queue URL for incoming message
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
  */
-function dispatch(message) {
+function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
-  const queueUrl = this.queueUrl;
   const rulesForQueue = this.rulesForQueue;
 
   const eventObject = JSON.parse(message.Body);
