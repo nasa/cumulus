@@ -85,6 +85,7 @@ async function processQueues(event, dispatchFn) {
       timeLimit,
       visibilityTimeout,
       deleteProcessedMessage: false,
+      deleteProcessedMessageFromS3: true,
     });
 
     log.info(`Processing queue ${queueUrl}`);
