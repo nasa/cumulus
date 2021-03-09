@@ -46,15 +46,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now supports
  accessing all buckets defined in your `buckets`
 variable except "internal" buckets
-- **CUMULUS-2355**
-  - Added logic to disable `/s3Credentials` endpoint based upon value for
-    environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the
-    endpoint will not dispense S3 credentials and instead return a message
-    indicating that the endpoint has been disabled.
 - **CUMULUS-2328**
   - Renamed `subnet_ids` variable for `tf-modules/distribution` module to `lambda_subnet_ids`
 - **CUMULUS-2355**
   - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
+- **CUMULUS-2397**
+  - Updated `/elasticsearch` endpoint's `reindex` function to prevent reindexing when source and destination indices are the same.
 - **CUMULUS-2420**
   - Updated test function `waitForAsyncOperationStatus` to take a retryObject and use exponential backoff.  Increased the total test duration for both AsycOperation specs and the ReconciliationReports tests.
 
