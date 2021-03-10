@@ -749,7 +749,7 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
   const updateFields = granuleModel._getMutableFieldNames(updatedItem);
 
   t.deepEqual(updateFields, [
-    'updatedAt', 'timestamp', 'status', 'execution',
+    'createdAt', 'updatedAt', 'timestamp', 'status', 'execution',
   ]);
 });
 
@@ -761,6 +761,7 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
     status: 'completed',
     pdrName: 'pdr',
     files: [],
+    createdAt: Date.now(),
   };
 
   const updateFields = granuleModel._getMutableFieldNames(item);
