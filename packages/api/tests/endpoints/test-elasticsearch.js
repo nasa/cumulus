@@ -222,7 +222,7 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
   await esClient.indices.delete({ index: destIndex });
 });
 
-test.serial('Reindex fails when source index matches destination index.', async (t) => {
+test.serial('Reindex request returns 400 with the expected message when source index matches destination index.', async (t) => {
   const indexName = randomId('index');
   await esClient.indices.create({
     index: indexName,
