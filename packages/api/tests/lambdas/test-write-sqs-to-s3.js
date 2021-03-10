@@ -26,7 +26,7 @@ test.serial('write-sqs-to-s3 puts one file on S3 per SQS message', async (t) => 
     messageId: uuidv4(),
     body: JSON.stringify({
       contents: {
-        body: 'json1'
+        body: 'json1',
       },
     }),
   };
@@ -34,28 +34,28 @@ test.serial('write-sqs-to-s3 puts one file on S3 per SQS message', async (t) => 
     messageId: uuidv4(),
     body: JSON.stringify({
       contents: {
-        body: 'json2'
+        body: 'json2',
       },
     }),
   };
 
   const recordsFixture = {
-    Records: [ message1, message2 ],
+    Records: [message1, message2],
   };
 
   await handler(recordsFixture);
 
-  t.true(await S3.s3ObjectExists({
-    Bucket: t.context.bucket,
-    Key: `dead_letter_archive/sqs/${message1.messageId}.json`
-  }));
-  t.true(await S3.s3ObjectExists({
-    Bucket: t.context.bucket,
-    Key: `dead_letter_archive/sqs/${message2.messageId}.json`
-  }));
+  t.deepEqual(await S3.getTextObject(
+    t.context.bucket,
+    `dead_letter_archive/sqs/${message1.messageId}.json`
+  ), message1.body);
+  t.deepEqual(await S3.getTextObject(
+    t.context.bucket,
+    `dead_letter_archive/sqs/${message2.messageId}.json`
+  ), message2.body);
 });
 
 test.serial('write-sqs-to-s3 throws error if system bucket is not defined', async (t) => {
   delete process.env.system_bucket;
   await t.throwsAsync(handler({}));
-})
+});
