@@ -63,9 +63,8 @@ async function processQueues(event, dispatchFn) {
     });
     log.info(`processing queue ${queueUrl}`);
 
-    return consumer.consume(dispatchFn.bind({
-      rulesForQueue,
-    }));
+    const messageConsumerFn = dispatchFn.bind({ rulesForQueue });
+    return consumer.consume(messageConsumerFn);
   }));
 }
 
