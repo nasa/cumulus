@@ -6,9 +6,10 @@ const test = require('ava');
 
 const SQS = require('@cumulus/aws-client/SQS');
 
-const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
+  getObject,
+  putObject,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -106,14 +107,14 @@ test.serial('deleteArchivedMessages deletes messages archived in S3 as soon as t
   });
   await createBucket(process.env.system_bucket);
 
-  await s3().putObject({
+  await putObject({
     Bucket: process.env.system_bucket,
     Key: sqsMessage.MessageId,
     Body: JSON.stringify(sqsMessage.Body),
   }).promise();
 
   // Check that item exists in S3
-  const item = await s3().getObject({
+  const item = await getObject({
     Bucket: process.env.system_bucket,
     Key: sqsMessage.MessageId,
   }).promise();
@@ -123,7 +124,7 @@ test.serial('deleteArchivedMessages deletes messages archived in S3 as soon as t
   t.is(result, 1);
 
   // Check that item does not exist in S3 and therefore throws an error
-  await t.throwsAsync(s3().getObject({
+  await t.throwsAsync(getObject({
     Bucket: process.env.system_bucket,
     Key: sqsMessage.MessageId,
   }).promise(), { code: 'NoSuchKey' });
