@@ -146,7 +146,7 @@ test.serial('deleteGranuleAndFiles() removes granule and files from Postgres, Dy
   // Check Dynamo and RDS. The granule should have been removed from both.
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
-  
+
   // Verify files were deleted from S3 and Postgres
   await Promise.all(
     files.map(async (file) => {
