@@ -278,7 +278,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
 
-    it('execution message references correct queue URL', async () => {
+    it('references the correct queue URL in the execution message', async () => {
       const executionInput = await getExecutionInputObject(workflowExecution.executionArn);
       expect(executionInput.cumulus_meta.queueUrl).toBe(scheduleQueueUrl);
     });

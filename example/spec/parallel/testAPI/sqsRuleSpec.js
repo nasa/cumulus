@@ -208,7 +208,7 @@ describe('The SQS rule', () => {
         expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
       });
 
-      it('execution message references correct queue URL', async () => {
+      it('references the correct queue URL in the execution message', async () => {
         const executionArn = record.execution.split('/').reverse()[0];
         const executionInput = await getExecutionInputObject(executionArn);
         expect(executionInput.cumulus_meta.queueUrl).toBe(queues.scheduleQueueUrl);
