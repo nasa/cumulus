@@ -53,6 +53,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated test function `waitForAsyncOperationStatus` to take a retryObject
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
+- **CUMULUS-2427**
+  - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
+  - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
 
 ### Fixed
 
