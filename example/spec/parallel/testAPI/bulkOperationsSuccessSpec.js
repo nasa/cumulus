@@ -9,6 +9,9 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
+const {
+  getQueueUrlByName,
+} = require('@cumulus/aws-client/SQS');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   api: apiTestUtils,
@@ -146,11 +149,13 @@ describe('POST /granules/bulk', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
+        const queueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
         postBulkGranulesResponse = await granules.bulkGranules({
           prefix,
           body: {
             ids: [granuleId],
             workflowName: 'HelloWorldWorkflow',
+            queueUrl,
           },
         });
         postBulkOperationsBody = JSON.parse(postBulkGranulesResponse.body);
@@ -248,13 +253,13 @@ describe('POST /granules/bulk', () => {
       expect(getAsyncOperationResponse.statusCode).toEqual(200);
       expect(getAsyncOperationBody.status).toEqual('SUCCEEDED');
 
-      // let output;
-      // try {
-      //   output = JSON.parse(getAsyncOperationBody.output);
-      // } catch (error) {
-      //   throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
-      // }
-      // expect(output).toEqual({ deletedGranules: [granuleId] });
+      let output;
+      try {
+        output = JSON.parse(getAsyncOperationBody.output);
+      } catch (error) {
+        throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+      }
+      expect(output).toEqual([granuleId]);
     });
   });
 });
