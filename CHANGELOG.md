@@ -53,7 +53,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     AsycOperation specs and the ReconciliationReports tests.
   - Updated the default scroll duration used in ESScrollSearch and part of the
     reconcilation report functions as a result of testing and seeing timeouts
-    at it's current value of 2min.
+    at its current value of 2min.
 
 ### Fixed
 
