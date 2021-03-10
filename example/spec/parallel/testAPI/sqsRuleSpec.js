@@ -215,7 +215,7 @@ describe('The SQS rule', () => {
       });
     });
 
-    xdescribe('If the message is unprocessable by the workflow', () => {
+    describe('If the message is unprocessable by the workflow', () => {
       it('is moved to dead-letter queue after retries', async () => {
         const sqsOptions = { numOfMessages: 10, visibilityTimeout: ruleList[0].meta.visibilityTimeout, waitTimeSeconds: 20 };
         let messages = await receiveSQSMessages(queues.deadLetterQueueUrl, sqsOptions);
@@ -235,7 +235,7 @@ describe('The SQS rule', () => {
       });
     });
 
-    xit('messages are picked up and removed from source queue', async () => {
+    it('messages are picked up and removed from source queue', async () => {
       await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
     });
   });

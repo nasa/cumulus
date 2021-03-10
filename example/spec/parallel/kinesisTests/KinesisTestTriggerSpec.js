@@ -403,7 +403,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
   });
 
-  xdescribe('Workflow fails because SyncGranule fails', () => {
+  describe('Workflow fails because SyncGranule fails', () => {
     let failingWorkflowExecution;
     let badRecord;
 
