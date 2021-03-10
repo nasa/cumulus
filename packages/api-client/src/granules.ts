@@ -331,6 +331,38 @@ export const listGranules = async (params: {
 };
 
 /**
+ * Bulk operations on granules stored in cumulus
+ * POST /granules/bulk
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const bulkGranules = async (params: {
+  prefix: string,
+  body: unknown,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulk',
+      body: JSON.stringify(body),
+    },
+  });
+};
+
+/**
  * Bulk delete granules stored in cumulus
  * POST /granules/bulkDelete
  * @param {Object} params             - params
