@@ -81,13 +81,12 @@ function applyWorkflowToGranules({
   workflowName,
   meta,
   queueUrl,
+  granuleModel = new GranuleModel(),
 }) {
-  const granuleModelClient = new GranuleModel();
-
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
     try {
-      const granule = await granuleModelClient.get({ granuleId });
-      await granuleModelClient.applyWorkflow(
+      const granule = await granuleModel.get({ granuleId });
+      await granuleModel.applyWorkflow(
         granule,
         workflowName,
         meta,
@@ -215,6 +214,7 @@ async function handler(event) {
 }
 
 module.exports = {
+  applyWorkflowToGranules,
   getGranuleIdsForPayload,
   handler,
 };
