@@ -62,11 +62,9 @@ test('getMessageWorkflowStartTime returns correct value', (t) => {
   );
 });
 
-test('getMessageWorkflowStartTime returns undefined if there is no start time', (t) => {
-  t.is(
-    getMessageWorkflowStartTime({}),
-    undefined
-  );
+test('getMessageWorkflowStartTime throws when a start time is not present in the message', (t) => {
+  const testMessage = {};
+  t.throws(() => getMessageWorkflowStartTime(testMessage));
 });
 
 test('getMessageWorkflowStopTime returns correct value', (t) => {

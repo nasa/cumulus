@@ -140,6 +140,8 @@ export const InvalidArgument = createErrorType('InvalidArgument');
 
 export const ApiCollisionError = createErrorType('ApiCollisionError');
 
+export const CumulusMessageError = createErrorType('CumulusMessageError');
+
 export const DeletePublishedGranule = createErrorType('DeletePublishedGranule');
 
 export const EcsStartTaskError = createErrorType('EcsStartTaskError');
