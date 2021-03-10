@@ -240,6 +240,25 @@ test.serial('Reindex request returns 400 with the expected message when source i
   await esClient.indices.delete({ index: indexName });
 });
 
+test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
+  const date = new Date();
+  const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  await esClient.indices.create({
+    index: defaultIndexName,
+    body: { mappings },
+  });
+
+  const response = await request(app)
+    .post('/elasticsearch/reindex')
+    .send({ sourceIndex: defaultIndexName })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, `source index(${defaultIndexName}) and destination index(${defaultIndexName}) must be different.`);
+  await esClient.indices.delete({ index: defaultIndexName });
+});
+
 test.serial('Reindex success', async (t) => {
   const { esAlias } = t.context;
   const destIndex = randomString();
