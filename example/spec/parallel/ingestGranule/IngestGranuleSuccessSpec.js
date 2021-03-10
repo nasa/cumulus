@@ -819,7 +819,10 @@ describe('The S3 Ingest Granules workflow', () => {
             id: asyncOperationId,
             status: 'SUCCEEDED',
             stackName: config.stackName,
-            retries: 100,
+            retryOptions: {
+              retries: 70,
+              factor: 1.041,
+            },
           });
 
           const reingestOutput = JSON.parse(asyncOperation.output);

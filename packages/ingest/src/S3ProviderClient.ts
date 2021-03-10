@@ -1,7 +1,7 @@
 import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 import * as errors from '@cumulus/errors';
-import { basename, dirname } from 'path';
+import { basename, dirname, join } from 'path';
 import { ProviderClient, S3ProviderClientListItem } from './types';
 
 class S3ProviderClient implements ProviderClient {
@@ -79,17 +79,44 @@ class S3ProviderClient implements ProviderClient {
   ): Promise<{s3uri: string, etag: string}> {
     const { fileRemotePath, destinationBucket, destinationKey, bucket } = params;
     const sourceBucket = bucket || this.bucket;
+    const sourceKey = fileRemotePath;
+
     try {
+      const sourceObject = await S3.headObject(sourceBucket, sourceKey);
       const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
+
+      // 0 byte files cannot be copied with multipart upload,
+      // so use a regular S3 PUT
+      if (sourceObject.ContentLength === 0) {
+        const { CopyObjectResult } = await S3.s3CopyObject({
+          CopySource: join(sourceBucket, sourceKey),
+          Bucket: destinationBucket,
+          Key: destinationKey,
+        });
+
+        // This error should never actually be reached in practice. It's a
+        // necessary workaround for bad typings in the AWS SDK.
+        //
+        // https://github.com/aws/aws-sdk-js/issues/1719
+        if (!CopyObjectResult || !CopyObjectResult.ETag) {
+          throw new Error(
+            `ETag could not be determined for copy of ${S3.buildS3Uri(sourceBucket, sourceKey)} to ${s3uri}`
+          );
+        }
+
+        const etag = CopyObjectResult.ETag;
+        return { s3uri, etag };
+      }
+
       const { etag } = await S3.multipartCopyObject({
         sourceBucket,
-        sourceKey: fileRemotePath,
+        sourceKey,
+        sourceObject,
         destinationBucket,
         destinationKey,
         ACL: 'private',
         copyTags: true,
       });
-
       return { s3uri, etag };
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
