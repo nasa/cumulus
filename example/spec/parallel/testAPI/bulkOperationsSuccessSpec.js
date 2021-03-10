@@ -47,7 +47,7 @@ describe('POST /granules/bulk', () => {
   describe('runs workflow on provided granules', () => {
     let beforeAllSucceeded = false;
     let postBulkGranulesResponse;
-    let postBulkDeleteBody;
+    let postBulkOperationsBody;
     let taskArn;
     let collection;
     let provider;
@@ -153,12 +153,12 @@ describe('POST /granules/bulk', () => {
             workflowName: 'HelloWorldWorkflow',
           },
         });
-        postBulkDeleteBody = JSON.parse(postBulkGranulesResponse.body);
+        postBulkOperationsBody = JSON.parse(postBulkGranulesResponse.body);
 
         // Query the AsyncOperation API to get the task ARN
         const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
           prefix,
-          id: postBulkDeleteBody.id,
+          id: postBulkOperationsBody.id,
         });
         ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
         beforeAllSucceeded = true;
@@ -185,10 +185,10 @@ describe('POST /granules/bulk', () => {
       ).catch(console.error);
     });
 
-    // it('ingested granule is published', () => {
-    //   expect(beforeAllSucceeded).toBeTrue();
-    //   expect(ingestedGranule.published).toBeTrue();
-    // });
+    it('ingested granule is archived', () => {
+      expect(beforeAllSucceeded).toBeTrue();
+      expect(ingestedGranule).toBeTruthy();
+    });
 
     it('returns a status code of 202', () => {
       expect(beforeAllSucceeded).toBeTrue();
@@ -197,22 +197,22 @@ describe('POST /granules/bulk', () => {
 
     it('returns an Async Operation Id', () => {
       expect(beforeAllSucceeded).toBeTrue();
-      expect(postBulkDeleteBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
+      expect(postBulkOperationsBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
     });
 
-    xit('creates an AsyncOperation', async () => {
+    it('creates an AsyncOperation', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
       const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id,
+        id: postBulkOperationsBody.id,
       });
 
       expect(getAsyncOperationResponse.statusCode).toEqual(200);
 
       const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
 
-      expect(getAsyncOperationBody.id).toEqual(postBulkDeleteBody.id);
+      expect(getAsyncOperationBody.id).toEqual(postBulkOperationsBody.id);
     });
 
     it('runs an ECS task', async () => {
@@ -227,7 +227,7 @@ describe('POST /granules/bulk', () => {
       expect(describeTasksResponse.tasks.length).toEqual(1);
     });
 
-    xit('eventually generates the correct output', async () => {
+    it('eventually generates the correct output', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
       await ecs().waitFor(
@@ -240,7 +240,7 @@ describe('POST /granules/bulk', () => {
 
       const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id,
+        id: postBulkOperationsBody.id,
       });
 
       const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
@@ -248,14 +248,13 @@ describe('POST /granules/bulk', () => {
       expect(getAsyncOperationResponse.statusCode).toEqual(200);
       expect(getAsyncOperationBody.status).toEqual('SUCCEEDED');
 
-      let output;
-      try {
-        output = JSON.parse(getAsyncOperationBody.output);
-      } catch (error) {
-        throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
-      }
-
-      expect(output).toEqual({ deletedGranules: [granuleId] });
+      // let output;
+      // try {
+      //   output = JSON.parse(getAsyncOperationBody.output);
+      // } catch (error) {
+      //   throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+      // }
+      // expect(output).toEqual({ deletedGranules: [granuleId] });
     });
   });
 });
