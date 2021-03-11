@@ -6,9 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-2428**
+  - Changed `/granules/bulk` to use `queueUrl` property instead of a `queueName` property for setting the queue to use for scheduling bulk granule workflows
+
 ### Notable changes
 
 - `sync-granule` task will now properly handle syncing 0 byte files to S3
+- SQS/Kinesis rules now support scheduling workflows to a custom queue via the `rule.queueUrl` property. If provided, this value should be the full URL for an SQS queue.
+- Bulk granule operations endpoint now supports setting a custom queue for scheduling workflows via the `queueUrl` property in the request body. If provided, this value should be the full URL for an SQS queue.
 
 ### Added
 
