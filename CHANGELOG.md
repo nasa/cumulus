@@ -36,6 +36,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now
   supports accessing all buckets defined in your `buckets` variable except
   "internal" buckets
+- Updated the default scroll duration used in ESScrollSearch and part of the
+  reconcilation report functions as a result of testing and seeing timeouts
+  at its current value of 2min.
 - **CUMULUS-2355**
   - Added logic to disable `/s3Credentials` endpoint based upon value for
     environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
@@ -56,9 +59,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2427**
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
-- Updated the default scroll duration used in ESScrollSearch and part of the
-  reconcilation report functions as a result of testing and seeing timeouts
-  at its current value of 2min.
 
 ### Fixed
 
