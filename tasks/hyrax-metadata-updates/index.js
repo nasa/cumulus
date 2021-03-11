@@ -128,7 +128,6 @@ async function getEntryTitle(config, metadata, isUmmG) {
  *    belongs to
  */
 async function getCollectionEntry(config, metadata, isUmmG) {
-  let conceptId;
   let shortName;
   let versionId;
   if (isUmmG === true) {
@@ -153,9 +152,10 @@ async function getCollectionEntry(config, metadata, isUmmG) {
   };
 
   const result = await cmrInstance.searchCollections(searchParams);
-  // Verify that we have a valid result. If we don't then something is badly wrong and we should halt.
-  // Either the code is faulty or the provider is trying to ingest granules into a collection that doesn't exist
-  conceptId = get(result, '[0].id');
+  // Verify that we have a valid result. If we don't then something is badly wrong and we
+  // should halt. Either the code is faulty or the provider is trying to ingest granules
+  // into a collection that doesn't exist
+  const conceptId = get(result, '[0].id');
   shortName = get(result, '[0].short_name');
   versionId = get(result, '[0].version_id');
   if (conceptId === undefined) {
@@ -163,8 +163,8 @@ async function getCollectionEntry(config, metadata, isUmmG) {
   }
 
   return (config.addShortnameAndVersionIdToConceptId !== undefined
-         && config.addShortnameAndVersionIdToConceptId ===true) ?
-         conceptId + '/' + shortName + '.' + versionId : conceptId;
+    && config.addShortnameAndVersionIdToConceptId === true)
+    ? `${conceptId}/${shortName}.${versionId}` : conceptId;
 }
 
 /**
@@ -182,7 +182,7 @@ async function generatePath(config, metadata, isUmmG) {
   if (providerId === undefined) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
-  const entryCollection = await getCollectionEntry(config, metadata, isUmmG) ;
+  const entryCollection = await getCollectionEntry(config, metadata, isUmmG);
 
   return `collections/${entryCollection}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
