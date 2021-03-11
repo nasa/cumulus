@@ -35,7 +35,6 @@ const HyraxMetadataUpdate = rewire('../index');
 
 const generateHyraxUrl = HyraxMetadataUpdate.__get__('generateHyraxUrl');
 const generatePath = HyraxMetadataUpdate.__get__('generatePath');
-const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
 const getCollectionEntry = HyraxMetadataUpdate.__get__('getCollectionEntry');
 
 const preconditionFailedSelector = {
@@ -532,13 +531,6 @@ test.serial('Test retrieving entry collection from CMR using ECHO10', async (t) 
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const actual = await getCollectionEntry(event.config, metadata, false);
   t.is(actual, 'C1453188197-GES_DISC');
-});
-
-test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
-  const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
-  const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
-  const actual = await getEntryTitle(event.config, metadata, false);
-  t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
 });
 
 test('Test generate path from UMM-G', async (t) => {
