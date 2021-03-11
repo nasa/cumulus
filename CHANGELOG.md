@@ -51,6 +51,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated test function `waitForAsyncOperationStatus` to take a retryObject
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
+      - Updated the default scroll duration used in ESScrollSearch and part of the
+    reconcilation report functions as a result of testing and seeing timeouts
+    at its current value of 2min.
 - **HYRAX-357**
   - Format of NGAP OPeNDAP URL changed and by default now is referring to concept id and optionally can include short name and version of collection.
   - `addShortnameAndVersionIdToConceptId` field has been added to the config inputs of the `hyrax-metadata-updates` task
