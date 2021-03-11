@@ -411,6 +411,8 @@ test('writeGranules() throws error if any file records are invalid', async (t) =
     granuleModel,
   } = t.context;
 
+  cumulusMessage.meta.status = 'completed';
+
   cumulusMessage.payload.granules[0].files[0].bucket = undefined;
   cumulusMessage.payload.granules[0].files[0].key = undefined;
 
@@ -434,6 +436,8 @@ test('writeGranules() does not persist granule or files if any file is invalid',
     granuleModel,
     granuleId,
   } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
 
   cumulusMessage.payload.granules[0].files[0].bucket = undefined;
   cumulusMessage.payload.granules[0].files[0].key = undefined;
