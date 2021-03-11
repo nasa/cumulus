@@ -72,53 +72,6 @@ function getGranuleUr(metadata, isUmmG) {
 }
 
 /**
- * getEntryTitle
- *
- * @param {Object} config - configuration
- * @param {Object} metadata - the granule metadata
- * @param {boolean} isUmmG - whether this is UMM-G or ECHO10 metadata
- * @returns {Promise<string>} the entry title of the collection this granule
- *    belongs to
- */
-async function getEntryTitle(config, metadata, isUmmG) {
-  let shortName;
-  let version;
-  if (isUmmG === true) {
-    shortName = metadata.CollectionReference.ShortName;
-    version = metadata.CollectionReference.Version;
-  } else {
-    shortName = metadata.Granule.Collection.ShortName;
-    version = metadata.Granule.Collection.VersionId;
-  }
-
-  const cmrSettings = await getCmrSettings({
-    ...config.cmr,
-    ...config.launchpad,
-  });
-
-  // Query CMR for collection and retrieve entry title
-  const cmrInstance = new CMR(cmrSettings);
-
-  const searchParams = {
-    short_name: shortName,
-    version: version,
-  };
-
-  const result = await cmrInstance.searchCollections(searchParams);
-  // Verify that we have a valid result. If we don't then something is badly wrong
-  // and we should halt.
-  // Either the code is faulty or the provider is trying to ingest granules
-  // into a collection that doesn't exist
-  const datasetId = get(result, '[0].dataset_id');
-
-  if (datasetId === undefined) {
-    throw new RecordDoesNotExist(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
-  }
-
-  return encodeURIComponent(datasetId);
-}
-
-/**
  * getCollectionEntry
  *
  * @param {Object} config - configuration
