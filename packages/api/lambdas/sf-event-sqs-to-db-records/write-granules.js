@@ -250,6 +250,9 @@ const writeGranuleAndFilesViaTransaction = async ({
       trx,
     });
   }
+
+  // TODO need to re-work this
+  return undefined;
 };
 
 /**
