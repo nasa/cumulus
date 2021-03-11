@@ -11,7 +11,7 @@ const {
   randomId,
 } = require('@cumulus/common/test-utils');
 
-const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
+const getCollectionEntry = HyraxMetadataUpdate.__get__('getCollectionEntry');
 
 const cmrPasswordSecret = randomId('cmrPassword');
 
@@ -55,7 +55,7 @@ test.after.always(async () => {
   }).promise();
 });
 
-test.serial('Test retrieving entry title with invalid result', async (t) => {
+test.serial('Test retrieving collection entry with invalid result', async (t) => {
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
@@ -71,9 +71,9 @@ test.serial('Test retrieving entry title with invalid result', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
 
-  await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
+  await t.throwsAsync(getCollectionEntry(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
-    message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0',
+    message: 'Unable to query parent collection using short name GLDAS_CLSM025_D and version 2.0',
   });
 });
 
@@ -93,8 +93,8 @@ test.serial('Test retrieving entry title with no results', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
 
-  await t.throwsAsync(getEntryTitle(event.config, metadataObject, true), {
+  await t.throwsAsync(getCollectionEntry(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
-    message: 'Unable to query parent collection entry title using short name GLDAS_CLSM025_D and version 2.0',
+    message: 'Unable to query parent collection using short name undefined and version undefined',
   });
 });
