@@ -101,7 +101,6 @@ test.serial('the queue receives a correctly formatted workflow message without a
   const expectedMessage = {
     cumulus_meta: {
       state_machine: stateMachineArn,
-      queueUrl,
       queueExecutionLimits: {
         [queueUrl]: queueExecutionLimit,
       },
@@ -165,7 +164,6 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     cumulus_meta: {
       state_machine: stateMachineArn,
       parentExecutionArn: arn,
-      queueUrl,
       queueExecutionLimits: {
         [queueUrl]: queueExecutionLimit,
       },

@@ -5,6 +5,9 @@ const get = require('lodash/get');
 const isMatch = require('lodash/isMatch');
 const replace = require('lodash/replace');
 const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const {
+  getQueueUrlByName,
+} = require('@cumulus/aws-client/SQS');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Execution } = require('@cumulus/api/models');
 const fs = require('fs');
@@ -23,6 +26,7 @@ const {
   readJsonFilesFromDir,
   deleteRules,
   setProcessEnvironment,
+  getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const granulesApi = require('@cumulus/api-client/granules');
@@ -87,6 +91,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let testSuffix;
   let workflowArn;
   let workflowExecution;
+  let scheduleQueueUrl;
 
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
@@ -182,6 +187,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     executionNamePrefix = randomString(3);
 
+    scheduleQueueUrl = await getQueueUrlByName(`${testConfig.stackName}-backgroundProcessing`);
+
     ruleDirectory = './spec/parallel/kinesisTests/data/rules';
     ruleOverride = {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
@@ -191,6 +198,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       },
       provider: record.provider,
       executionNamePrefix,
+      // use custom queue for scheduling workflows
+      queueUrl: scheduleQueueUrl,
     };
 
     const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
@@ -267,6 +276,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     it('creates an execution with the correct prefix', () => {
       const executionName = workflowExecution.executionArn.split(':').reverse()[0];
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
+    });
+
+    it('references the correct queue URL in the execution message', async () => {
+      const executionInput = await getExecutionInputObject(workflowExecution.executionArn);
+      expect(executionInput.cumulus_meta.queueUrl).toBe(scheduleQueueUrl);
     });
 
     describe('the TranslateMessage Lambda', () => {
