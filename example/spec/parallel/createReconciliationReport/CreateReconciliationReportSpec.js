@@ -440,6 +440,8 @@ describe('When there are granule differences and granule reconciliation is run',
       }
       expect(asyncOperation.status).toEqual('SUCCEEDED');
       reportRecord = JSON.parse(asyncOperation.output);
+      expect(reportRecord.status).toEqual('Generated');
+      console.log(`report Record: ${JSON.stringify(reportRecord)}`);
     });
 
     it('fetches a reconciliation report through the Cumulus API', async () => {

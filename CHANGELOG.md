@@ -56,6 +56,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2427**
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
+- Updated the default scroll duration used in ESScrollSearch and part of the
+  reconcilation report functions as a result of testing and seeing timeouts
+  at its current value of 2min.
 
 ### Fixed
 
