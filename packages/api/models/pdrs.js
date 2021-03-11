@@ -124,20 +124,25 @@ class Pdr extends Manager {
     const pdrRecord = this.generatePdrRecord(cumulusMessage);
     if (!pdrRecord) return undefined;
     const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
-    if (pdrRecord.status === 'running') {
-      updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
-      try {
-        return await this.dynamodbDocClient.update(updateParams).promise();
-      } catch (error) {
-        if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-          const executionArn = getMessageExecutionArn(cumulusMessage);
-          log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
-          return undefined;
-        }
-        throw error;
+
+    // createdAt comes from cumulus_meta.workflow_start_time
+    // records should *not* be updating from createdAt times that are *older* start
+    // times than the existing record, whatever the status
+    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+
+    try {
+      if (pdrRecord.status === 'running') {
+        updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
       }
+      return await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        const executionArn = getMessageExecutionArn(cumulusMessage);
+        log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        return undefined;
+      }
+      throw error;
     }
-    return this.dynamodbDocClient.update(updateParams).promise();
   }
 
   /**
