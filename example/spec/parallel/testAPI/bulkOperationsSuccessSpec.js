@@ -16,6 +16,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const {
   api: apiTestUtils,
   getClusterArn,
+  getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
@@ -57,6 +58,8 @@ describe('POST /granules/bulk', () => {
     let ingestGranuleRule;
     let granuleId;
     let ingestedGranule;
+    let scheduleQueueUrl;
+    let bulkRequestTime;
 
     beforeAll(async () => {
       try {
@@ -149,13 +152,14 @@ describe('POST /granules/bulk', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
-        const queueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
+        scheduleQueueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
+        bulkRequestTime = Date.now() - 1000 * 30;
         postBulkGranulesResponse = await granules.bulkGranules({
           prefix,
           body: {
             ids: [granuleId],
             workflowName: 'HelloWorldWorkflow',
-            queueUrl,
+            queueUrl: scheduleQueueUrl,
           },
         });
         postBulkOperationsBody = JSON.parse(postBulkGranulesResponse.body);
@@ -260,6 +264,30 @@ describe('POST /granules/bulk', () => {
         throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
       }
       expect(output).toEqual([granuleId]);
+    });
+
+    it('starts a workflow with an execution message referencing the correct queue URL', async () => {
+      // Find the execution ARN
+      const bulkOperationExecutionArn = await findExecutionArn(
+        prefix,
+        (execution) => {
+          const asyncOperationId = get(execution, 'asyncOperationId');
+          return asyncOperationId === postBulkOperationsBody.id;
+        },
+        { timestamp__from: bulkRequestTime },
+        { timeout: 60 }
+      );
+
+      // Wait for the execution to be completed
+      await getExecutionWithStatus({
+        prefix,
+        arn: bulkOperationExecutionArn,
+        status: 'completed',
+        timeout: 60,
+      });
+
+      const executionInput = await getExecutionInputObject(bulkOperationExecutionArn);
+      expect(executionInput.cumulus_meta.queueUrl).toBe(scheduleQueueUrl);
     });
   });
 });
