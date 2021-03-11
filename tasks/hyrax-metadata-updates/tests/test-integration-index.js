@@ -53,7 +53,8 @@ const { hyraxMetadataUpdate } = proxyquire(
           async () => {
             const result = await getObject(s3Client, params);
 
-            // LocalStack does not handle pre-condition checks, so we have to manually check, and throw, if necessary.
+            // LocalStack does not handle pre-condition checks, so we have to manually check,
+            // and throw, if necessary.
             if (params.IfMatch && result.ETag !== params.IfMatch) {
               throw Object.assign(new Error(), preconditionFailedSelector);
             }
@@ -524,20 +525,6 @@ test.serial('Test retrieving default entry collection from CMR using UMM-G', asy
 
   const actual = await getCollectionEntry(event.config, metadataObject, true);
   t.is(actual, 'C1453188197-GES_DISC');
-});
-
-test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadataObject = JSON.parse(data);
-  const actual = await getEntryTitle(event.config, metadataObject, true);
-  t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
-});
-
-test.serial('Test retrieving short name ???? from CMR using UMM-G', async (t) => {
-  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
-  const metadataObject = JSON.parse(data);
-  const actual = await getEntryTitle(event.config, metadataObject, true);
-  t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
 });
 
 test.serial('Test retrieving entry collection from CMR using ECHO10', async (t) => {
