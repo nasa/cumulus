@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const nock = require('nock');
-const ValidationError = require('../ValidationError');
+const { CMRInternalError, ValidationError } = require('@cumulus/errors');
 const validate = require('../validate');
 const { ummVersion, validateUMMG } = require('../UmmUtils');
 
@@ -63,6 +63,21 @@ test.serial('CMR.validateUMMG UMMG validation fails with error messages from CMR
   } catch (error) {
     t.true(error instanceof ValidationError);
     t.true(error.message.includes(cmrError));
+  }
+});
+
+test.serial('CMR.validateUMMG throws internal error when CMR is down', async (t) => {
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .post(`/ingest/providers/${provider}/validate/granule/${granuleId}`)
+    .reply(500, { message: 'Internal Error' });
+
+  process.env.CMR_ENVIRONMENT = 'UAT';
+
+  try {
+    await validateUMMG(ummMetadata, granuleId, provider);
+    t.fail('Expected a validation error to be thrown');
+  } catch (error) {
+    t.true(error instanceof CMRInternalError);
   }
 });
 

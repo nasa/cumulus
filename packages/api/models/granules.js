@@ -22,6 +22,7 @@ const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { getMessageGranules } = require('@cumulus/message/Granules');
+const { getMessageWorkflowStartTime } = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -375,7 +376,7 @@ class Granule extends Manager {
       cmrLink: granule.cmrLink,
       files: granuleFiles,
       error: parseException(message.exception),
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
+      createdAt: getMessageWorkflowStartTime(message),
       timestamp: now,
       updatedAt: now,
       productVolume: getGranuleProductVolume(granuleFiles),
@@ -638,7 +639,7 @@ class Granule extends Manager {
    */
   _getMutableFieldNames(record) {
     if (record.status === 'running') {
-      return ['updatedAt', 'timestamp', 'status', 'execution'];
+      return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
   }
@@ -719,10 +720,14 @@ class Granule extends Manager {
         mutableFieldNames,
       });
 
+      // createdAt comes from cumulus_meta.workflow_start_time
+      // records should *not* be updating from createdAt times that are *older* start
+      // times than the existing record, whatever the status
+      updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
       // Only allow "running" granule to replace completed/failed
       // granule if the execution has changed
       if (granuleRecord.status === 'running') {
-        updateParams.ConditionExpression = '#execution <> :execution';
+        updateParams.ConditionExpression += ' and #execution <> :execution';
       }
 
       await this.dynamodbDocClient.update(updateParams).promise();

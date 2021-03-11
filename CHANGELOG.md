@@ -6,20 +6,112 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable changes
+
+- `sync-granule` task will now properly handle syncing 0 byte files to S3
+
 ### Added
 
-- **CUMULUS-2368**
-  - Add QueueWorkflow task
+- `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can
+  be used to set to an arbitray  host for making CMR requests (e.g.
+  `https://custom-cmr-host.com`).
+- Added `buckets` variable to `tf-modules/archive`
+- **CUMULUS-2345**
+  - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2424**
+  - Added `childWorkflowMeta` to `queue-pdrs` config. An object passed to this config value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_and_queue_pdrs_with_child_workflow_meta_workflow.asl.json`.
 
-- **CUMULUS-2402**
-  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
+### Fixed
+
+- **CUMULUS-2394**
+  - Updated PDR and Granule writes to check the step function `workflow_start_time` against
+      the `createdAt` field  for each record to ensure old records do not
+      overwrite newer ones
+
+### Changed
+
+- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now
+  supports accessing all buckets defined in your `buckets` variable except
+  "internal" buckets
+- **CUMULUS-2355**
+  - Added logic to disable `/s3Credentials` endpoint based upon value for
+    environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
+    endpoint will not dispense S3 credentials and instead return a message
+    indicating that the endpoint has been disabled.
+- **CUMULUS-2355**
+  - Added logic to disable `/s3Credentials` endpoint based upon value for
+    environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
+    endpoint will not dispense S3 credentials and instead return a message
+    indicating that the endpoint has been disabled.
+- **CUMULUS-2397**
+  - Updated `/elasticsearch` endpoint's `reindex` function to prevent
+    reindexing when source and destination indices are the same.
+- **CUMULUS-2420**
+  - Updated test function `waitForAsyncOperationStatus` to take a retryObject
+    and use exponential backoff.  Increased the total test duration for both
+    AsycOperation specs and the ReconciliationReports tests.
+  - Updated the default scroll duration used in ESScrollSearch and part of the
+    reconcilation report functions as a result of testing and seeing timeouts
+    at its current value of 2min.
+
+### Fixed
+
+- Fixed issue in `@cumulus/ingest/S3ProviderClient.sync()` preventing 0 byte files from being synced to S3.
+
+### Removed
+
+- Removed variables from `tf-modules/archive`:
+  - `private_buckets`
+  - `protected_buckets`
+  - `public_buckets`
+
+## [v7.0.0] 2021-02-22
+
+### BREAKING CHANGES
+
+- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
+
+### Added
+
+- **CUMULUS-2345**
+  - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2376**
+  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
+- **CUMULUS-2412**
+  - Adds function `getCollectionsByShortNameAndVersion` to @cumulus/cmrjs that performs a compound query to CMR to retrieve collection information on a list of collections. This replaces a series of calls to the CMR for each collection with a single call on the `/collections` endpoint and should improve performance when CMR return times are increased.
+
+### Changed
+
+- **CUMULUS-2362**
+  - Logs endpoints only work with Metrics set up
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
+  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+- **CUMULUS-2350**
+  - Updates the examples on the `/s3credentialsREADME`, to include Python and
+    JavaScript code demonstrating how to refrsh  the s3credential for
+    programatic access.
+- **CUMULUS-2383**
+  - PostToCMR task will return CMRInternalError when a `500` status is returned from CMR
+
+## [v6.0.0] 2021-02-16
 
 ### MIGRATION NOTES
 
 - **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
 
 - **CUMULUS-2350**
-  - If the  `/s3credentialsREADME`, does not appear to be working after deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html) of the API-gateway stage may be necessary to finish the deployment.
+  - If the  `/s3credentialsREADME`, does not appear to be working after
+    deploymnt, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+    of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
 
@@ -27,23 +119,44 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-2395**
-  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
-    custom security group mappings
-
 - **CUMULUS-2291**
   - Add provider filter to Granule Inventory Report
 - **CUMULUS-2300**
-  - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_granules_workflow.asl.json`.
+  - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this
+    value will be merged into a child workflow messag's  `meta` object. For an
+    example of how this can be used, see
+    `example/cumulus-tf/discover_granules_workflow.asl.json`.
 - **CUMULUS-2350**
-  - Adds an unprotected endpoinpoint, `/s3credentialsREADME`, to the s3-credentials-endpoint that displays information on how to use the `/s3credentials` endpoint
+  - Adds an unprotected endpoint, `/s3credentialsREADME`, to the
+    s3-credentials-endpoint that dispays  information on how to use the
+    `/s3credentials` endpoint
+- **CUMULUS-2368**
+  - Add QueueWorkflow task
 - **CUMULUS-2391**
   - Add reportToEms to collections.files file schema
+- **CUMULUS-2395**
+  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
+    custom security group mappings
+- **CUMULUS-2402**
+  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
 
 ### Changed
 
+- **CUMULUS-2323**
+  - The sync granules task when used with the s3 provider now uses the
+    `source_bucket` key in `granule.files` objects.  If incoming payloads using
+    this task have a `source_bucket` value for a file using the s3 provider, the
+    task will attempt to sync from the bucket defined in the file's
+    `source_bucket` key instead of the `provider`.
+    - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter
+      in support of the changed behavior.
+  - Removed `addBucketToFile` and related code from sync-granules task
+
 - **CUMULUS-2255**
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+- **CUMULUS-2321**
+  - Updated API endpoint GET `/reconciliationReports/{name}` to return the
+    pre-signe s3 URL in addition to report data
 
 ### Fixed
 
@@ -51,9 +164,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2310**
   - Use valid filename for reconciliation report
-
 - **CUMULUS-2351**
-  - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
+  - Inventory report no longer includes the File/Granule relation object in the
+    okCountByGranules key of a report.  The information is only included when a
+    'Granule Not Found' report is run.
+
+### Removed
+
+- **CUMULUS-2364**
+  - Remove the internal Cumulus logging lambda (log2elasticsearch)
 
 ## [v5.0.1] 2021-01-27
 
@@ -62,7 +181,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2344**
   - Elasticsearch API now allows you to reindex to an index that already exists
   - If using the Change Index operation and the new index doesn't exist, it will be created
-  - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
+  - Regarding instructions for CUMULUS-2020, you can now do a change index
+    operation before a reindex operation. This will
     ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 ## [v5.0.0] 2021-01-12
@@ -70,14 +190,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
+  - Elasticsearch data mappings have been updated to improve search and the API
+    has been update to reflect those changes. See Migration notes on how to
+    update the Elasticsearch mappings.
 
 ### Migration notes
 
 - **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+  - Elasticsearch data mappings have been updated to improve search. For
+    example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will
+    return the same granule results). To use the improved Elasticsearch queries,
+    [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index
+    with the correct types. Then perform a [change
+    index](https://nasa.github.io/cumulus-api/#change-index) operation to use
+    the new index.
 - **CUMULUS-2258**
-  - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
+  - Because the `egress_lambda_log_group` and
+    `egress_lambda_log_subscription_filter` resource were removed from the
+    `cumulus` module, new definitions for these resources must be added to
+    `cumulus-tf/main.tf`. For reference on how to define these resources, see
+    [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
   - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
 
 ### Added
@@ -3773,7 +3905,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v7.0.0...HEAD
+[v6.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
+[v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
 [v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0

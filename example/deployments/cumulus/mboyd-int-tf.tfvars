@@ -6,6 +6,10 @@ cmr_oauth_provider = "launchpad"
 
 system_bucket     = "mboyd-int-tf-internal"
 buckets = {
+  glacier = {
+    name = "cumulus-test-sandbox-orca-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "mboyd-int-tf-internal"
     type = "internal"

@@ -14,6 +14,7 @@ resource "aws_lambda_function" "move_granules_task" {
     variables = {
       AZURE_STORAGE_CONNECTION_STRING = var.azure_storage_connection_string
       CMR_ENVIRONMENT             = var.cmr_environment
+      CMR_HOST                    = var.cmr_custom_host
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
       system_bucket               = var.system_bucket

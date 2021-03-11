@@ -10,23 +10,25 @@ const pickAll = require('lodash/fp/pickAll');
 const {
   buildS3Uri,
   getS3Object,
-  recursivelyDeleteS3Bucket,
-  promiseS3Upload,
-  s3GetObjectTagging,
   parseS3Uri,
+  promiseS3Upload,
+  recursivelyDeleteS3Bucket,
+  s3GetObjectTagging,
   s3TagSetToQueryString,
 } = require('@cumulus/aws-client/S3');
+const { CMR } = require('@cumulus/cmr-client');
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
-const { randomId, readJsonFixture } = require('@cumulus/common/test-utils');
+const { randomId, readJsonFixture, randomString } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
-const { xmlParseOptions } = require('../../utils');
 
 const { getCmrSettings, constructCmrConceptLink } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
+const { xmlParseOptions } = require('../../utils');
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
+const buildCMRQuery = cmrUtil.__get__('buildCMRQuery');
 const stubDistributionBucketMap = {
   'fake-bucket': 'fake-bucket',
   'mapped-bucket': 'mapped/path/example',
@@ -729,3 +731,93 @@ test(
   'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR UMMG JSON metadata file',
   testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.json')
 );
+
+test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t) => {
+  const cmrFileObject = { filename: 'test.cmr.xml', granuleId: 'testGranuleId' };
+  const updatedXmlFile = { ...cmrFileObject, metadataObject: {} };
+
+  const publishECHO10XML2CMRSpy = sinon.spy(() => Promise.resolve());
+  const revertPublishECHO10XML2CMRSpy = cmrUtil.__set__('publishECHO10XML2CMR', publishECHO10XML2CMRSpy);
+  const credentials = {};
+  const cmrRevisionId = Math.floor(Math.random() * 100);
+
+  t.teardown(() => {
+    revertPublishECHO10XML2CMRSpy();
+  });
+  await cmrUtil.publish2CMR(updatedXmlFile, credentials, cmrRevisionId);
+  t.is(publishECHO10XML2CMRSpy.getCall(0).args[2], cmrRevisionId);
+});
+
+test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t) => {
+  const cmrFileObject = { filename: 'test.cmr.json', granuleId: 'testGranuleId', metadataObject: {} };
+  const cmrRevisionId = Math.floor(Math.random() * 100);
+  const credentials = {};
+
+  const publishUMMGJSON2CMRSpy = sinon.spy(() => Promise.resolve());
+  const revertPublishUMMGJSON2CMRSpy = cmrUtil.__set__('publishUMMGJSON2CMR', publishUMMGJSON2CMRSpy);
+
+  t.teardown(() => {
+    revertPublishUMMGJSON2CMRSpy();
+  });
+
+  await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
+  t.is(publishUMMGJSON2CMRSpy.getCall(0).args[2], cmrRevisionId);
+});
+
+test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async (t) => {
+  const cmrFileObject = { filename: 'test.cmr.xml', granuleId: 'testGranuleId', metadataObject: {} };
+  const conceptId = randomString();
+  const credentials = {};
+  const cmrRevisionId = Math.floor(Math.random() * 100);
+
+  const ingestGranuleSpy = sinon.stub(CMR.prototype, 'ingestGranule').returns({ result: { 'concept-id': conceptId } });
+
+  t.teardown(() => {
+    ingestGranuleSpy.restore();
+  });
+
+  await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
+  t.is(ingestGranuleSpy.getCall(0).args[1], cmrRevisionId);
+});
+
+test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', async (t) => {
+  const cmrFileObject = { filename: 'test.cmr.json', granuleId: 'testGranuleId', metadataObject: {} };
+  const cmrRevisionId = Math.floor(Math.random() * 100);
+  const credentials = {};
+  const conceptId = randomString();
+
+  const ingestUMMGranuleSpy = sinon.stub(CMR.prototype, 'ingestUMMGranule').returns({ 'concept-id': conceptId });
+
+  t.teardown(() => {
+    ingestUMMGranuleSpy.restore();
+  });
+
+  await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
+  t.is(ingestUMMGranuleSpy.getCall(0).args[1], cmrRevisionId);
+});
+
+test(
+  'buildCMRQuery transforms a list of objects with keys short_name and version into a proper object to post to CMR',
+  (t) => {
+    const results = [
+      { short_name: 'sn1', version: '1' },
+      { short_name: 'sn2', version: '2' },
+      { short_name: 'sn3', version: '3' },
+    ];
+    const expected = { condition: { or: [
+      { and: [{ short_name: 'sn1' }, { version: '1' }] },
+      { and: [{ short_name: 'sn2' }, { version: '2' }] },
+      { and: [{ short_name: 'sn3' }, { version: '3' }] },
+    ] } };
+
+    const actual = buildCMRQuery(results);
+    t.deepEqual(actual, expected);
+  }
+);
+
+test('buildCMRQuery works with if the input results list is empty', (t) => {
+  const results = [];
+  const expected = { condition: { or: [] } };
+  const actual = buildCMRQuery(results);
+  t.deepEqual(actual, expected);
+});

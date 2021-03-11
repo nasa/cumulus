@@ -146,6 +146,17 @@ variable "azure_storage_connection_string" {
   default = ""
 }
 
+variable "buckets" {
+  type    = map(object({ name = string, type = string }))
+  default = {}
+}
+
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = ""
+}
+
 variable "cmr_limit" {
   type    = number
   default = 100
@@ -255,21 +266,6 @@ variable "oauth_user_group" {
 variable "private_archive_api_gateway" {
   type = bool
   default = true
-}
-
-variable "private_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "protected_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "public_buckets" {
-  type    = list(string)
-  default = []
 }
 
 variable "saml_entity_id" {

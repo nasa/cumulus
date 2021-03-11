@@ -167,6 +167,12 @@ variable "bucket_map_key" {
   default     = null
 }
 
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = ""
+}
+
 variable "cmr_limit" {
   description = "Limit of the number of results to return from CMR"
   type        = number
