@@ -6,7 +6,7 @@ import { PostgresFile } from '../types/file';
 export const translateApiFiletoPostgresFile = (
   file: ApiFile
 ): Omit<PostgresFile, 'granule_cumulus_id'> => {
-  if (!file.bucket || !file.key) throw new ValidationError(`bucket and key properties are required: ${file}`);
+  if (!file.bucket || !file.key) throw new ValidationError(`bucket and key properties are required: ${JSON.stringify(file)}`);
 
   return {
     bucket: file.bucket,
