@@ -50,6 +50,6 @@ test('translateApiFiletoPostgresFile throws error if file bucket or key is missi
   },
   {
     instanceOf: ValidationError,
-    message: `bucket and key properties are required: ${file}`,
+    message: `bucket and key properties are required: ${JSON.stringify(file)}`,
   });
 });
