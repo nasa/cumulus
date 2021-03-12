@@ -105,6 +105,7 @@ export const fakeGranuleRecordFactory = (
 ): Partial<PostgresGranule> => ({
   granule_id: cryptoRandomString({ length: 5 }),
   status: 'completed',
+  created_at: new Date(),
   ...params,
 });
 
@@ -133,5 +134,6 @@ export const fakePdrRecordFactory = (
 ) => ({
   name: `pdr${cryptoRandomString({ length: 3 })}`,
   status: 'running',
+  created_at: new Date(),
   ...params,
 });

@@ -26,6 +26,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `buckets` variable to `tf-modules/archive`
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2394**
+    - Updated PDR and Granule writes to check the step function
+    workflow_start_time against the createdAt field for each record to
+    ensure old records do not overwrite newer ones for legacy Dynamo and
+    Postgres writes
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
     - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to PostgreSQL
