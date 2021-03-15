@@ -35,3 +35,6 @@ saml_idp_login                  = "https://auth.launchpad-sbx.nasa.gov/affwebser
 saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml"
 
 archive_api_port = 8000
+
+include_orca = true
+drop_database = "False"
