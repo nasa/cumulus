@@ -371,7 +371,7 @@ variable "platform" {
 }
 
 variable "database_name" {
-  default = "orca"
+  default = "disaster_recovery"
   type = string
   description = "Name of the ORCA database that contains state information."
 }
@@ -388,7 +388,7 @@ variable "postgres_user_pw" {
 }
 
 variable "database_app_user" {
-  default = "orca_user"
+  default = "druser"
   type = string
   description = "ORCA application database user name."
 }
