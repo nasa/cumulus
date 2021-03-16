@@ -786,6 +786,7 @@ Copy an S3 object to another location in S3 using a multipart copy
 | params.sourceKey | <code>string</code> |  |  |
 | params.destinationBucket | <code>string</code> |  |  |
 | params.destinationKey | <code>string</code> |  |  |
+| [params.sourceObject] | <code>AWS.S3.HeadObjectOutput</code> |  | Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property |
 | [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
 
