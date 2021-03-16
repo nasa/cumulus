@@ -12,7 +12,7 @@ module "publish_granule_queue_workflow" {
     {
       post_to_cmr_task_arn: module.cumulus.post_to_cmr_task.task_arn,
       queue_workflow_task_arn: module.cumulus.queue_workflow_task.task_arn,
-      workflow_queue_url: module.cumulus.workflow_queue_url
+      start_sf_queue_url: module.cumulus.start_sf_queue_url
     }
   )
 }
