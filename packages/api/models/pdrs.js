@@ -5,6 +5,7 @@ const get = require('lodash/get');
 const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const { getMessageWorkflowStartTime } = require('@cumulus/message/workflows');
 const pvl = require('@cumulus/pvl');
 const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
@@ -99,7 +100,7 @@ class Pdr extends Manager {
       PANSent: get(pdr, 'PANSent', false),
       PANmessage: get(pdr, 'PANmessage', 'N/A'),
       stats,
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
+      createdAt: getMessageWorkflowStartTime(message),
       timestamp: Date.now(),
     };
 
@@ -118,20 +119,21 @@ class Pdr extends Manager {
     const pdrRecord = this.generatePdrRecord(cumulusMessage);
     if (!pdrRecord) return undefined;
     const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
+    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+
     if (pdrRecord.status === 'running') {
-      updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
-      try {
-        return await this.dynamodbDocClient.update(updateParams).promise();
-      } catch (error) {
-        if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-          const executionArn = getMessageExecutionArn(cumulusMessage);
-          log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
-          return undefined;
-        }
-        throw error;
-      }
+      updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
     }
-    return this.dynamodbDocClient.update(updateParams).promise();
+    try {
+      return await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        const executionArn = getMessageExecutionArn(cumulusMessage);
+        log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   /**

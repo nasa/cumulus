@@ -1,12 +1,13 @@
 type CumulusException = 'None' | object;
 
+export type WorkflowStatus = 'completed' | 'failed' | 'running';
+
 export interface QueueExecutionLimits {
   [queueUrl: string]: number
 }
 
 export interface CumulusMeta {
   execution_name: string
-  queueUrl: string
   state_machine: string
   parentExecutionArn?: string
   asyncOperationId?: string
