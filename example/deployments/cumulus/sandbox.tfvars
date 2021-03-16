@@ -52,5 +52,5 @@ ems_username          = "cumulus"
 
 thin_egress_jwt_secret_name = "cumulus_sandbox_jwt_tea_secret"
 
-include_orca = true
+include_orca = false
 drop_database = "True"
