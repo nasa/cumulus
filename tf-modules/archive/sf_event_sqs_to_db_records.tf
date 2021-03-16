@@ -86,7 +86,8 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
       "sqs:GetQueueAttributes"
     ]
     resources = [
-      aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
+      aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn,
+      aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
     ]
   }
 
