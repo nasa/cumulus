@@ -85,9 +85,6 @@ const buildRandomizedCollection = (overrides = {}) => ({
   granuleIdExtraction: '^([^.]+)\..+$',
   sampleFileName: 'asdf.jpg',
   url_path: randomId('url-path-'),
-  meta: {
-    excludeFileTypes: ['.cmr.json', '.cmr.xml', '.h5', '.hdf', '.jpg', '.md5', '.met', '.nc', '.txt'],
-  },
   files: [
     {
       bucket: 'protected',
