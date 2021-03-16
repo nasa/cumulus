@@ -13,20 +13,22 @@ const { buildExecutionArn } = require('@cumulus/message/Executions');
 *   that is passed to the next task in the workflow
 **/
 async function queueWorkflow(event) {
-  const workflow = event.input.workflow || {};
-  const workflowInput = event.input.workflowInput || {};
+  const workflow = event.config.workflow || {};
+  const workflowInput = event.config.workflowInput || {};
   const parentExecutionArn = buildExecutionArn(
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
   const executionArn = await enqueueWorkflowMessage({
     workflow,
-    workflowInput,
-    parentWorkflow: event.config.parentWorkflow,
+    workflowInput: event.input,
     queueUrl: event.input.queueUrl || event.config.queueUrl,
     parentExecutionArn,
+    provider: event.config.provider,
+    collection: event.config.collection,
     stack: event.config.stackName,
     systemBucket: event.config.internalBucket,
     executionNamePrefix: event.config.executionNamePrefix,
+    additionalCustomMeta: event.config.childWorkflowMeta,
   });
 
   return { running: executionArn, workflow, workflowInput };

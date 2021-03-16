@@ -5,9 +5,7 @@
   "required": [ "workflow", "workflowInput", "running" ],
   "additionalProperties": false,
   "properties": {
-    "workflow": {
-      "type": "object"
-    },
+    "workflow": { "type": "string" },
     "workflowInput": {
       "type": "object"
     },

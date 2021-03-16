@@ -2,7 +2,6 @@
   "title": "QueueWorkflowInput",
   "description": "Describes the input expected by the queue-workflow task",
   "type": "object",
-  "required": ["workflow", "workflowInput"],
   "properties": {
     "worfklow": {
       "type": "object"
