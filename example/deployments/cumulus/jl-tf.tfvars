@@ -36,4 +36,7 @@ saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/me
 
 archive_api_port = 8000
 
+key_name      = "jl"
+
+include_orca = true
 drop_database = "False"
