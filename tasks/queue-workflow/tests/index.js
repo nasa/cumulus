@@ -1,101 +1,100 @@
-// 'use strict';
+'use strict';
 
-// const test = require('ava');
+const test = require('ava');
 
-// const {
-//   s3,
-//   sqs,
-// } = require('@cumulus/aws-client/services');
-// const { createQueue } = require('@cumulus/aws-client/SQS');
-// const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
+const {
+  s3,
+  sqs,
+} = require('@cumulus/aws-client/services');
+const { createQueue } = require('@cumulus/aws-client/SQS');
+const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
 // const { buildExecutionArn } = require('@cumulus/message/Executions');
-// const {
-//   randomNumber,
-//   randomString,
-//   validateConfig,
-//   validateInput,
-//   validateOutput,
-// } = require('@cumulus/common/test-utils');
+const {
+  randomNumber,
+  randomString,
+  validateConfig,
+  validateInput,
+  validateOutput,
+} = require('@cumulus/common/test-utils');
 
-// const { queueWorkflow } = require('..');
+const { queueWorkflow } = require('..');
 
-// test.beforeEach(async (t) => {
-//   t.context.templateBucket = randomString();
-//   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+test.beforeEach(async (t) => {
+  t.context.templateBucket = randomString();
+  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
-//   t.context.workflow = randomString();
-//   t.context.stateMachineArn = randomString();
+  t.context.workflow = randomString();
+  t.context.stateMachineArn = randomString();
 
-//   t.context.stackName = randomString();
+  t.context.stackName = randomString();
 
-//   t.context.queueUrl = await createQueue(randomString());
+  t.context.queueUrl = await createQueue(randomString());
 
-//   t.context.queueExecutionLimits = {
-//     [t.context.queueUrl]: randomNumber(),
-//   };
-//   t.context.messageTemplate = {
-//     cumulus_meta: {
-//       queueExecutionLimits: t.context.queueExecutionLimits,
-//       state_machine: t.context.stateMachineArn,
-//     },
-//   };
-//   const workflowDefinition = {
-//     name: t.context.workflow,
-//     arn: t.context.stateMachineArn,
-//   };
-//   const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
-//   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
-//   t.context.messageTemplateKey = messageTemplateKey;
-//   await Promise.all([
-//     s3PutObject({
-//       Bucket: t.context.templateBucket,
-//       Key: messageTemplateKey,
-//       Body: JSON.stringify(t.context.messageTemplate),
-//     }),
-//     s3PutObject({
-//       Bucket: t.context.templateBucket,
-//       Key: workflowDefinitionKey,
-//       Body: JSON.stringify(workflowDefinition),
-//     }),
-//   ]);
+  t.context.queueExecutionLimits = {
+    [t.context.queueUrl]: randomNumber(),
+  };
+  t.context.messageTemplate = {
+    cumulus_meta: {
+      queueExecutionLimits: t.context.queueExecutionLimits,
+      state_machine: t.context.stateMachineArn,
+    },
+  };
+  const workflowDefinition = {
+    name: t.context.workflow,
+    arn: t.context.stateMachineArn,
+  };
+  const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
+  const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
+  t.context.messageTemplateKey = messageTemplateKey;
+  await Promise.all([
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: messageTemplateKey,
+      Body: JSON.stringify(t.context.messageTemplate),
+    }),
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: workflowDefinitionKey,
+      Body: JSON.stringify(workflowDefinition),
+    }),
+  ]);
 
-//   t.context.event = {
-//     config: {
-//       parentWorkflow: t.context.workflow,
-//       queueUrl: t.context.queueUrl,
-//       stackName: t.context.stackName,
-//       internalBucket: t.context.templateBucket,
-//     },
-//     input: {
-//       workflow: {},
-//       workflowInput: {
-//         prop1: randomString(),
-//         prop2: randomString(),
-//       },
-//     },
-//   };
-// });
+  t.context.event = {
+    config: {
+      queueUrl: t.context.queueUrl,
+      stackName: t.context.stackName,
+      internalBucket: t.context.templateBucket,
+    },
+    input: {
+      workflow: {},
+      workflowInput: {
+        prop1: randomString(),
+        prop2: randomString(),
+      },
+    },
+  };
+});
 
-// test.afterEach(async (t) => {
-//   await Promise.all([
-//     recursivelyDeleteS3Bucket(t.context.templateBucket),
-//     sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
-//   ]);
-// });
+test.afterEach(async (t) => {
+  await Promise.all([
+    recursivelyDeleteS3Bucket(t.context.templateBucket),
+    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
+  ]);
+});
 
-// test.serial('The correct output is returned when workflow is queued', async (t) => {
-//   const event = t.context.event;
-//   event.input.workflow = { name: randomString(), arn: randomString() };
+test.serial('The correct output is returned when workflow is queued', async (t) => {
+  const event = t.context.event;
+  event.input.workflow = { name: randomString(), arn: randomString() };
 
-//   await validateConfig(t, event.config);
-//   await validateInput(t, event.input);
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
-//   const output = await queueWorkflow(event);
+  const output = await queueWorkflow(event);
 
-//   await validateOutput(t, output);
+  await validateOutput(t, output);
 
-//   t.deepEqual(output.workflow, event.input.workflow);
-// });
+  t.deepEqual(output.workflow, event.input.workflow);
+});
 
 // test.serial('The correct output is returned when no workflow is queued', async (t) => {
 //   const event = t.context.event;
