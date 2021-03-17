@@ -29,7 +29,7 @@ async function deleteArchivedMessage(messageId) {
   if (bucket && key) {
     try {
       await deleteS3Object(bucket, key);
-      logger.info(`Deleted archived message ${messageId} from S3 bucket ${bucket}`);
+      logger.debug(`Deleted archived message ${messageId} from S3 bucket ${bucket}`);
     } catch (error) {
       logger.error(`Could not delete message from bucket. ${error}`);
       throw error;

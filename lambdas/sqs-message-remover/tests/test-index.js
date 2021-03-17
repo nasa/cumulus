@@ -194,6 +194,7 @@ test.serial('sqsMessageRemover lambda removes message from queue and S3 when wor
   const sqsMessage = await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify(message),
   }).promise();
+  t.truthy(item.ETag);
 
   await s3PutObject({
     Bucket: process.env.system_bucket,
