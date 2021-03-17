@@ -61,6 +61,7 @@ test.beforeEach(async (t) => {
 
   t.context.event = {
     config: {
+      workflow: t.context.workflow,
       queueUrl: t.context.queueUrl,
       stackName: t.context.stackName,
       internalBucket: t.context.templateBucket,
