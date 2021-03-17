@@ -7,6 +7,12 @@ const get = require('lodash/get');
 const awsServices = require('@cumulus/aws-client/services');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  createBucket,
+  s3PutObject,
+  recursivelyDeleteS3Bucket,
+} = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 
 const { updateSqsQueue } = require('..');
 
@@ -232,4 +238,52 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
   await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
+});
+
+test.serial.skip('deleteArchivedMessages deletes messages archived in S3 as soon as they are processed', async (t) => {
+  process.env.system_bucket = randomString();
+  const message = { testdata: randomString() };
+  await createBucket(process.env.system_bucket);
+
+  const sqsQueues = await createSqsQueues(randomString());
+  const sqsMessage = await awsServices.sqs().sendMessage({
+    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify(message),
+  }).promise();
+
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: sqsMessage.MessageId,
+    Body: JSON.stringify(sqsMessage.Body),
+  });
+
+  const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
+  const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
+  const { MessageId: messageId, ReceiptHandle: receiptHandle } = receiveMessageResponse[0];
+
+  const eventSource = createEventSource({ messageId, receiptHandle, queueUrl: sqsQueues.queueUrl });
+
+  // Check that item exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: sqsMessage.MessageId,
+  }).promise();
+  console.log(item);
+
+  t.truthy(item.ETag);
+
+  await updateSqsQueue(
+    createCloudwatchEventMessage({
+      status: 'SUCCEEDED',
+      eventSource,
+    })
+  );
+  // Check that item does not exist in S3 and therefore throws an error
+  await t.throwsAsync(s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: sqsMessage.MessageId,
+  }).promise(), { code: 'NoSuchKey' });
+
+  t.teardown(async () => {
+    await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  });
 });

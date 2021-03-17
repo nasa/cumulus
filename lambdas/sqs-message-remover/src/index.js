@@ -17,11 +17,11 @@ const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
 
 /**
-   * Deletes archived SQS Message from S3
-   *
-   * @param {Object} messageId - SQS message ID
-   * @returns {void}
-   */
+ * Deletes archived SQS Message from S3
+ *
+ * @param {Object} messageId - SQS message ID
+ * @returns {void}
+ */
 async function deleteArchivedMessage(messageId) {
   const bucket = process.env.system_bucket;
   logger.debug(`Attempting to delete archived message with ID ${messageId} from bucket ${bucket}.`);
