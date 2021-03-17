@@ -8,7 +8,7 @@ export interface ConsumerConstructorParams {
   messageLimit?: number,
   timeLimit?: number,
   visibilityTimeout: number,
-  deleteProcessedMessage?: boolean,
+  deleteProcessedMessage?: boolean
 }
 
 export class Consumer {
