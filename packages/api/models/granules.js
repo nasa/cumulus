@@ -409,7 +409,7 @@ class Granule extends Manager {
       cmrLink: cmrLink,
       files: granuleFiles,
       error,
-      createdAt: workflowStartTime,
+      createdAt: getMessageWorkflowStartTime(message),
       published,
       timestamp,
       updatedAt: now,
