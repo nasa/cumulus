@@ -5,7 +5,7 @@ const log = require('@cumulus/common/log');
 const { Consumer } = require('@cumulus/ingest/consumer');
 const { sqs } = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const { putObject } = require('@cumulus/aws-client/S3');
+const { s3PutObject } = require('@cumulus/aws-client/S3');
 
 const rulesHelpers = require('../lib/rulesHelpers');
 const Rule = require('../models/rules');
@@ -21,11 +21,11 @@ async function archiveMessage(message) {
   log.debug(`Archiving message with ID ${message.MessageId} to bucket ${bucket}.`);
   const body = JSON.stringify(message.Body);
   try {
-    await putObject({
+    await s3PutObject({
       Bucket: bucket,
       Key: message.MessageId,
       Body: body,
-    }).promise();
+    });
     log.debug(`Archived ${message.MessageId} from queue`);
   } catch (error) {
     log.error(`Could not write to bucket. ${error}`);
@@ -85,7 +85,6 @@ async function processQueues(event, dispatchFn) {
       timeLimit,
       visibilityTimeout,
       deleteProcessedMessage: false,
-      deleteProcessedMessageFromS3: true,
     });
 
     log.info(`Processing queue ${queueUrl}`);

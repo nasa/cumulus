@@ -4,6 +4,7 @@ const get = require('lodash/get');
 
 const { sqs } = require('@cumulus/aws-client/services');
 const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   getSfEventMessageObject,
   getSfEventStatus,
@@ -14,6 +15,27 @@ const {
 const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
+
+/**
+   * Deletes archived SQS Message from S3
+   *
+   * @param {Object} messageId - SQS message ID
+   * @returns {void}
+   */
+async function deleteArchivedMessage(messageId) {
+  const bucket = process.env.system_bucket;
+  logger.debug(`Attempting to delete archived message with ID ${messageId} from bucket ${bucket}.`);
+  const key = messageId;
+  if (bucket && key) {
+    try {
+      await deleteS3Object(bucket, key);
+      logger.debug(`Deleted archived message ${messageId} from S3`);
+    } catch (error) {
+      logger.error(`Could not delete message from bucket. ${error}`);
+      throw error;
+    }
+  }
+}
 
 /**
  * Determine if the SQS queue update is needed for the event
@@ -57,6 +79,7 @@ async function updateSqsQueue(event) {
   const eventMessage = getSfEventMessageObject(event, 'input', '{}');
 
   const {
+    messageId,
     queueUrl,
     receiptHandle,
   } = eventMessage.meta.eventSource;
@@ -75,6 +98,7 @@ async function updateSqsQueue(event) {
     // delete SQS message from the source queue when the workflow succeeded
     logger.debug(`remove message ${receiptHandle} from queue ${queueUrl}`);
     await deleteSQSMessage(queueUrl, receiptHandle);
+    await deleteArchivedMessage(messageId);
   }
 
   return Promise.resolve();
