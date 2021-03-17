@@ -67,7 +67,6 @@ test.beforeEach(async (t) => {
       internalBucket: t.context.templateBucket,
     },
     input: {
-      workflow: {},
       workflowInput: {
         prop1: randomString(),
         prop2: randomString(),
@@ -85,7 +84,7 @@ test.afterEach(async (t) => {
 
 test.serial('The correct output is returned when workflow is queued', async (t) => {
   const event = t.context.event;
-  event.input.workflow = { name: randomString(), arn: randomString() };
+  event.config.workflow = t.context.workflow;
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -94,7 +93,7 @@ test.serial('The correct output is returned when workflow is queued', async (t) 
 
   await validateOutput(t, output);
 
-  t.deepEqual(output.workflow, event.input.workflow);
+  t.deepEqual(output.workflow, event.config.workflow);
 });
 
 // test.serial('The correct output is returned when no workflow is queued', async (t) => {
