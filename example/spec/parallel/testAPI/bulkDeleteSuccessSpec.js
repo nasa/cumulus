@@ -26,6 +26,7 @@ const {
   createTimestampedTestId,
   createTestSuffix,
   loadConfig,
+  isValidAsyncOperationId,
 } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete', () => {
@@ -200,7 +201,7 @@ describe('POST /granules/bulkDelete', () => {
 
     it('returns an Async Operation Id', () => {
       expect(beforeAllSucceeded).toBeTrue();
-      expect(postBulkDeleteBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
+      expect(isValidAsyncOperationId(postBulkDeleteBody.id)).toBeTrue();
     });
 
     it('creates an AsyncOperation', async () => {
