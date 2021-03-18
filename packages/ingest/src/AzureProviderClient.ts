@@ -68,30 +68,35 @@ class AzureProviderClient implements ProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {string} sourceKey - the full path to the remote file to be fetched
-   * @param {string} destinationBucket - destination s3 container of the file
-   * @param {string} destinationKey - destination s3 key of the file
+   * @param {Object} params - the full path to the remote file to be fetched
+   * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
+   * @param {string} params.bucket - source Azure container of the file
+   * @param {string} params.destinationBucket - destination Azure container of the file
+   * @param {string} params.destinationKey - destination Azure key of the file
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
   async sync(
-    sourceKey: string,
-    destinationBucket: string,
-    destinationKey: string
+    params: {
+      bucket?: string,
+      destinationBucket: string,
+      destinationKey: string,
+      fileRemotePath: string,
+    }
   ): Promise<{s3uri: string, etag: string}> {
-    const blockBlobClient = this.containerClient.getBlockBlobClient(sourceKey);
+    const blockBlobClient = this.containerClient.getBlockBlobClient(params.fileRemotePath);
     const downloadBlockBlobResponse = await blockBlobClient.download();
 
     // Need to test this with large files
     const uploadResponse = await S3.promiseS3Upload({
-      Bucket: destinationBucket,
-      Key: destinationKey,
+      Bucket: params.destinationBucket,
+      Key: params.destinationKey,
       // @ts-ignore
       Body: downloadBlockBlobResponse.blobDownloadStream,
     });
 
     return {
-      s3uri: S3.buildS3Uri(destinationBucket, destinationKey),
+      s3uri: S3.buildS3Uri(params.destinationBucket, params.destinationKey),
       etag: uploadResponse.ETag,
     };
   }
