@@ -23,7 +23,7 @@ This will point Cumulus to the index in Elasticsearch that will be used when ret
 
 The reindex operation will take the data from one index and copy it into another index. The reindex operation can be found [here](https://nasa.github.io/cumulus-api/#reindex)
 
-### Reindex status
+#### Reindex status
 
 Reindexing is a long-running operation. The [reindex-status](https://nasa.github.io/cumulus-api/#reindex-status) endpoint can be used to monitor the progress of the operation.
 
@@ -70,7 +70,7 @@ To validate the reindex, use the [reindex-status](https://nasa.github.io/cumulus
 }
 ```
 
-To further drill down into what is missing, login to the Kibana instance (found in the Elasticsearch section of the AWS console) and run the following command replacing `<index>` with your index name.
+To further drill down into what is missing, log in to the Kibana instance (found in the Elasticsearch section of the AWS console) and run the following command replacing `<index>` with your index name.
 
 ```json
 GET <index>/_search
