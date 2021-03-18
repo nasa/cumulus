@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2428**
   - Changed `/granules/bulk` to use `queueUrl` property instead of a `queueName` property for setting the queue to use for scheduling bulk granule workflows
 
+## [v7.1.0] 2021-03-12
+
 ### Notable changes
 
 - `sync-granule` task will now properly handle syncing 0 byte files to S3
@@ -37,6 +39,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated PDR and Granule writes to check the step function `workflow_start_time` against
       the `createdAt` field  for each record to ensure old records do not
       overwrite newer ones
+
+- **CUMULUS-2346**
+  - Added orca API endpoint to `@cumulus/api` to get recovery status
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
 
 ### Changed
 
@@ -3917,8 +3923,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v7.0.0...HEAD
-[v6.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v7.1.0...HEAD
+[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.0.0
+[v7.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
 [v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
 [v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
