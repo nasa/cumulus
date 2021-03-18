@@ -50,7 +50,7 @@ async function getAsyncOperation({ prefix, id }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleIds - the granules to be deleted
+ * @param {Array<string>} params.granuleIds - the granules to be deleted
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function postBulkDelete({ prefix, granuleIds }) {

@@ -8,9 +8,6 @@
     "granuleIdExtraction": "(MOD14A1\\..*)(\\.hdf|\\.cmr|_1.jpg|_2.jpg)",
     "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
     "sampleFileName": "MOD14A1.A2017025.h21v00.006.2017034065104.hdf",
-    "meta": {
-        "excludeFileTypes": [".cmr.json", ".cmr.xml", ".h5", ".hdf", ".jpg", ".md5", ".met", ".nc"]
-    },
     "files": [
         {
             "bucket": "protected",
