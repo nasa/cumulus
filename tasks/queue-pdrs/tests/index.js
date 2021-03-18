@@ -141,7 +141,6 @@ test.serial('The correct message is enqueued', async (t) => {
   const {
     event,
     queueExecutionLimits,
-    queueUrl,
     stateMachineArn,
     workflow,
   } = t.context;
@@ -191,7 +190,6 @@ test.serial('The correct message is enqueued', async (t) => {
       cumulus_meta: {
         state_machine: stateMachineArn,
         parentExecutionArn: arn,
-        queueUrl,
         queueExecutionLimits,
       },
       meta: {

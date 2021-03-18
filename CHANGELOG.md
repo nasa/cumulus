@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v7.1.0] 2021-03-12
+
 ### Notable changes
 
 - `sync-granule` task will now properly handle syncing 0 byte files to S3
@@ -21,6 +23,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
 - **CUMULUS-2424**
   - Added `childWorkflowMeta` to `queue-pdrs` config. An object passed to this config value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_and_queue_pdrs_with_child_workflow_meta_workflow.asl.json`.
+- **CUMULUS-2427**
+  - Added support for using a custom queue with SQS and Kinesis rules. Whatever queue URL is set on the `rule.queueUrl` property will be used to schedule workflows for that rule. This change allows SQS/Kinesis rules to use [any throttled queues defined for a deployment](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
 
 ### Fixed
 
@@ -29,11 +33,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       the `createdAt` field  for each record to ensure old records do not
       overwrite newer ones
 
+- **CUMULUS-2346**
+  - Added orca API endpoint to `@cumulus/api` to get recovery status
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
+
 ### Changed
 
 - `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now
   supports accessing all buckets defined in your `buckets` variable except
   "internal" buckets
+- Updated the default scroll duration used in ESScrollSearch and part of the
+  reconcilation report functions as a result of testing and seeing timeouts
+  at its current value of 2min.
 - **CUMULUS-2355**
   - Added logic to disable `/s3Credentials` endpoint based upon value for
     environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
@@ -51,6 +62,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated test function `waitForAsyncOperationStatus` to take a retryObject
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
+- **CUMULUS-2427**
+  - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
+  - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
 
 ### Fixed
 
@@ -3902,8 +3916,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v7.0.0...HEAD
-[v6.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v7.1.0...HEAD
+[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.0.0
+[v7.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
 [v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
 [v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0

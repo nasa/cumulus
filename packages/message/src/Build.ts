@@ -44,14 +44,12 @@ const createExecutionName = (prefix?: string): string =>
  * @private
  */
 export const buildCumulusMeta = ({
-  queueUrl,
   stateMachine,
   asyncOperationId,
   parentExecutionArn,
   templateCumulusMeta,
   executionNamePrefix,
 }: {
-  queueUrl: string
   stateMachine: string,
   asyncOperationId?: string,
   parentExecutionArn?: string,
@@ -61,7 +59,6 @@ export const buildCumulusMeta = ({
   const cumulusMeta: Message.CumulusMeta = {
     ...templateCumulusMeta,
     execution_name: createExecutionName(executionNamePrefix),
-    queueUrl,
     state_machine: stateMachine,
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
@@ -92,7 +89,6 @@ export const buildCumulusMeta = ({
  */
 export const buildQueueMessageFromTemplate = ({
   parentExecutionArn,
-  queueUrl,
   asyncOperationId,
   messageTemplate,
   payload,
@@ -105,7 +101,6 @@ export const buildQueueMessageFromTemplate = ({
   messageTemplate: WorkflowMessageTemplate,
   payload: object
   workflow: Workflow,
-  queueUrl: string,
   asyncOperationId?: string,
   customCumulusMeta?: object
   customMeta?: object,
@@ -114,7 +109,6 @@ export const buildQueueMessageFromTemplate = ({
   const cumulusMeta = buildCumulusMeta({
     asyncOperationId,
     parentExecutionArn,
-    queueUrl,
     stateMachine: workflow.arn,
     templateCumulusMeta: messageTemplate.cumulus_meta,
     executionNamePrefix,
