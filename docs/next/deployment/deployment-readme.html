@@ -344,13 +344,13 @@ distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 <ol>
 <li>Login to URS.</li>
 <li>Under My Applications -&gt; Application Administration -&gt; use the edit icon of your application.</li>
-<li>Under Manage -&gt; redirect URIs, add the Backend API url returned from the stack deployment
+<li>Under Manage -&gt; redirect URIs, add the Archive API url returned from the stack deployment
 <ul>
-<li>e.g. <code>https://&lt;czbbkscuy6&gt;.execute-api.us-east-1.amazonaws.com/dev/token</code>.</li>
+<li>e.g. <code>archive_api_redirect_uri = https://&lt;czbbkscuy6&gt;.execute-api.us-east-1.amazonaws.com/dev/token</code>.</li>
 </ul></li>
 <li>Also add the Distribution url
 <ul>
-<li>e.g. <code>https://&lt;kido2r7kji&gt;.execute-api.us-east-1.amazonaws.com/dev/login</code><sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>.</li>
+<li>e.g. <code>distribution_redirect_uri = https://&lt;kido2r7kji&gt;.execute-api.us-east-1.amazonaws.com/dev/login</code><sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>.</li>
 </ul></li>
 <li>You may delete the placeholder url you used to create the application.</li>
 </ol>
