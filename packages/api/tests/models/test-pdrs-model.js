@@ -289,6 +289,7 @@ test(
     t.is(record.stats.completed, 3);
   }
 );
+
 test(
   'storePdrFromCumulusMessage does not update PDR record if update is from an older completed execution',
   async (t) => {
@@ -314,7 +315,7 @@ test(
       execution: randomId('newExec'),
       stateMachine,
       numRunningExecutions: 2,
-      status: 'running',
+      status: 'failed',
       createdAt: Date.now(),
     });
 
