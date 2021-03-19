@@ -193,6 +193,7 @@ class Granule extends Manager {
    * @param {string} workflow - the workflow name
    * @param {Object} [meta] - optional meta object to insert in workflow message
    * @param {string} [queueUrl] - URL for SQS queue to use for scheduling workflows
+   *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */

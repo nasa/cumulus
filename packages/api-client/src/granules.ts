@@ -343,7 +343,7 @@ export const listGranules = async (params: {
  */
 export const bulkGranules = async (params: {
   prefix: string,
-  body: unknown,
+  body: object,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
