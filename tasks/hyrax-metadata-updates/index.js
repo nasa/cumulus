@@ -115,8 +115,7 @@ async function getCollectionEntry(config, metadata, isUmmG) {
     throw new RecordDoesNotExist(`Unable to query parent collection using short name ${shortName} and version ${versionId}`);
   }
 
-  return (config.addShortnameAndVersionIdToConceptId !== undefined
-    && config.addShortnameAndVersionIdToConceptId === true)
+  return (config.addShortnameAndVersionIdToConceptId === true)
     ? `${conceptId}/${shortName}.${versionId}` : conceptId;
 }
 
