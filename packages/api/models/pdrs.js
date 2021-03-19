@@ -105,7 +105,7 @@ class Pdr extends Manager {
       PANSent: getMessagePdrPANSent(message),
       PANmessage: getMessagePdrPANMessage(message),
       stats,
-      createdAt: workflowStartTime,
+      createdAt: getMessageWorkflowStartTime(message),
       timestamp,
       duration: getWorkflowDuration(workflowStartTime, timestamp),
     };
@@ -129,11 +129,10 @@ class Pdr extends Manager {
     // records should *not* be updating from createdAt times that are *older* start
     // times than the existing record, whatever the status
     updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
-
+    if (pdrRecord.status === 'running') {
+      updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
+    }
     try {
-      if (pdrRecord.status === 'running') {
-        updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
-      }
       return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {

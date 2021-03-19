@@ -8,7 +8,6 @@ export interface QueueExecutionLimits {
 
 export interface CumulusMeta {
   execution_name: string
-  queueUrl: string
   state_machine: string
   parentExecutionArn?: string
   asyncOperationId?: string
