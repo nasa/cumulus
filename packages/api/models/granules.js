@@ -227,6 +227,8 @@ class Granule extends Manager {
       asyncOperationId,
     });
 
+    console.log('lambdaPayload', JSON.stringify(lambdaPayload, null, 2));
+
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
     await Lambda.invoke(process.env.invoke, lambdaPayload);

@@ -30,6 +30,8 @@ const getCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
+  console.log('event', JSON.stringify(event, null, 2));
+
   const [provider, collection] = await Promise.all([
     getProvider(event.provider),
     getCollection(event.collection),
@@ -44,8 +46,6 @@ async function handleScheduleEvent(event) {
   };
 
   const eventCustomMeta = get(event, 'meta', {});
-
-  console.log('event', JSON.stringify(event, null, 2));
 
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
