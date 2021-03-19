@@ -45,6 +45,8 @@ async function handleScheduleEvent(event) {
 
   const eventCustomMeta = get(event, 'meta', {});
 
+  console.log('event', JSON.stringify(event, null, 2));
+
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     asyncOperationId: get(event, 'asyncOperationId'),

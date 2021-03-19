@@ -208,6 +208,8 @@ class Granule extends Manager {
       throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
     }
 
+    console.log('asyncOperationId', asyncOperationId);
+
     const { name, version } = deconstructCollectionId(granule.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({

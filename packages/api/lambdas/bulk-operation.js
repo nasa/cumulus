@@ -83,6 +83,7 @@ function applyWorkflowToGranules({
   queueUrl,
   granuleModel = new GranuleModel(),
 }) {
+  console.log('process.env.asyncOperationId', process.env.asyncOperationId);
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
     try {
       const granule = await granuleModel.get({ granuleId });

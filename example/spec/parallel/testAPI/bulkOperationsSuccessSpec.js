@@ -278,6 +278,7 @@ describe('POST /granules/bulk', () => {
         { timestamp__from: bulkRequestTime },
         { timeout: 60 }
       );
+      console.log('bulkOperationExecutionArn', bulkOperationExecutionArn);
 
       // Wait for the execution to be completed
       await getExecutionWithStatus({
