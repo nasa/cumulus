@@ -119,9 +119,9 @@
       "operator-docs/discovery-filtering",
       "operator-docs/bulk-operations",
       "operator-docs/cmr-operations",
-      "operator-docs/discovery-filtering",
-      "operator-docs/rerunning-workflow-executions",
-      "operator-docs/replay-kinesis-messages"
+      "operator-docs/naming-executions",
+      "troubleshooting/rerunning-workflow-executions",
+      "features/replay-kinesis-messages"
     ],
     "Common Use Cases": [
       "operator-docs/ops-common-use-cases",

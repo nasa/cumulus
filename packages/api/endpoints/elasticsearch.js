@@ -85,6 +85,10 @@ async function reindex(req, res) {
     destIndex = timestampedIndexName();
   }
 
+  if (sourceIndex === destIndex) {
+    return res.boom.badRequest(`source index(${sourceIndex}) and destination index(${destIndex}) must be different.`);
+  }
+
   const destExists = await esClient.indices.exists({ index: destIndex })
     .then((response) => response.body);
 
