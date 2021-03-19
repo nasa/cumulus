@@ -12,6 +12,10 @@ This list may not be exhaustive and represents components that are open source, 
 
 [The ASF Thin Egress App](https://github.com/asfadmin/thin-egress-app#welcome-to-tea---the-thin-egress-app) is used by Cumulus for distribution. TEA can be deployed [with Cumulus](../deployment/thin_egress_app) or as part of other applications to distribute data.
 
+## Operational Cloud Recovery Archive (ORCA)
+
+[ORCA](https://nasa.github.io/cumulus-orca/) can be [deployed with Cumulus](https://nasa.github.io/cumulus-orca/docs/developer/deployment-guide/deployment) to provide a customizable baseline for creating and managing operational backups.
+
 ## Workflow Tasks
 
 ### CNM
