@@ -1,5 +1,6 @@
 'use strict';
 
+const got = require('got');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
@@ -61,6 +62,8 @@ const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
 
+const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
+
 /**
  * Returns True if this object can be determined to be a cmrMetadata object.
  *
@@ -111,22 +114,25 @@ function granulesToCmrFileObjects(granules) {
  * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
  * @param {string} cmrFile.metadata - granule xml document
  * @param {Object} cmrClient - a CMR instance
+ * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishECHO10XML2CMR(cmrFile, cmrClient) {
+async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
-  const res = await cmrClient.ingestGranule(xml);
+  const res = await cmrClient.ingestGranule(xml, revisionId);
   const conceptId = res.result['concept-id'];
+  let resultLog = `Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`;
 
-  log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
+  if (revisionId) resultLog += `, revisionId: ${revisionId}`;
+  log.info(resultLog);
 
   return {
     granuleId: cmrFile.granuleId,
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: 'echo10',
-    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
+    link: constructCmrConceptLink(conceptId, 'echo10'),
   };
 }
 
@@ -138,22 +144,28 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient) {
  * @param {Object} cmrFile.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrFile.granuleId - the metadata's granuleId
  * @param {Object} cmrClient - a CMR instance
+ * @param {string} revisionId - Optional CMR Revision ID
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
+async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
   const granuleId = cmrFile.metadataObject.GranuleUR;
-
-  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject);
+  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
   const conceptId = res['concept-id'];
 
-  log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
+  const filename = getS3UrlOfFile(cmrFile);
+  const metadataFormat = ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject));
+  const link = constructCmrConceptLink(conceptId, 'umm_json');
+  let resultLog = `Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`;
+
+  if (revisionId) resultLog += `, revisionId: ${revisionId}`;
+  log.info(resultLog);
 
   return {
     granuleId,
-    filename: getS3UrlOfFile(cmrFile),
+    filename,
     conceptId,
-    metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrFile.metadataObject)),
-    link: `${getSearchUrl()}granules.json?concept_id=${conceptId}`,
+    metadataFormat,
+    link,
   };
 }
 
@@ -171,17 +183,18 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient) {
  * @param {string} creds.username - the CMR username, not used if creds.token is provided
  * @param {string} creds.password - the CMR password, not used if creds.token is provided
  * @param {string} creds.token - the CMR or Launchpad token,
+ * @param {string} cmrRevisionId - Optional CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
-async function publish2CMR(cmrPublishObject, creds) {
+async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
 
   // choose xml or json and do the things.
   if (isECHO10File(cmrPublishObject.filename)) {
-    return publishECHO10XML2CMR(cmrPublishObject, cmrClient);
+    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
   if (isUMMGFile(cmrPublishObject.filename)) {
-    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient);
+    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
@@ -870,6 +883,55 @@ async function reconcileCMRMetadata({
 }
 
 /**
+ * Creates the query object used in POSTing to CMR.
+ * This query is a compound conditional using JSONQueryLanguage supported by CMR.
+ * This returns every collection that matches any of the short_name version pairs provided.
+ * the final query should be like
+ *  {"condition":
+ *   { "or": [{ "and": [{"short_name": "sn1"}, {"version": "001"}] },
+ *            { "and": [{"short_name": "sn2"}, {"version": "006"}] },
+ *            { "and": [{"short_name": "sn3"}, {"version": "001"}] },
+ *            .... ] } }
+ *
+ * @param {Array<Object>} results - objects with keys "short_name" and "version"
+ * @returns {Object} - query object for a post to CMR that will return all of the collections that
+ *                     match any of the results.
+ */
+function buildCMRQuery(results) {
+  const query = { condition: { or: [] } };
+  results.map((r) => query.condition.or.push(
+    { and: [{ short_name: r.short_name }, { version: r.version }] }
+  ));
+  return query;
+}
+
+/**
+ * Call CMR to get the all matching Collections information with a compound query call.
+ *
+ * @param {Array<Object>} results - pared results from a Cumulus collection search.
+ * @returns {Promise<Object>} - resolves to the CMR return
+ * containing the found collections
+ */
+async function getCollectionsByShortNameAndVersion(results) {
+  const query = buildCMRQuery(results);
+  const cmrClient = new CMR(await getCmrSettings());
+  const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+
+  const response = await got.post(
+    `${getSearchUrl()}collections.json`,
+    {
+      json: query,
+      responseType: 'json',
+      headers: {
+        Accept: 'application/json',
+        ...headers,
+      },
+    }
+  );
+  return response.body;
+}
+
+/**
  * Extract temporal information from granule object
  *
  * @param {Object} granule - granule object
@@ -909,6 +971,7 @@ async function getGranuleTemporalInfo(granule) {
 }
 
 module.exports = {
+  constructCmrConceptLink,
   constructOnlineAccessUrl,
   constructOnlineAccessUrls,
   generateEcho10XMLString,
@@ -917,6 +980,7 @@ module.exports = {
   getFileDescription,
   getFilename,
   getGranuleTemporalInfo,
+  getCollectionsByShortNameAndVersion,
   granulesToCmrFileObjects,
   isCMRFile,
   isCMRFilename,

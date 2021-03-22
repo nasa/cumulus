@@ -9,7 +9,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const models = require('../../models');
@@ -183,6 +183,7 @@ test.serial('Reindex - specify a source index that does not exist', async (t) =>
 test.serial('Reindex - specify a source index that is not aliased', async (t) => {
   const { esAlias } = t.context;
   const indexName = 'source-index';
+  const destIndex = randomString();
 
   await esClient.indices.create({
     index: indexName,
@@ -191,14 +192,71 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
-    .send({ aliasName: esAlias, sourceIndex: indexName })
+    .send({
+      aliasName: esAlias,
+      sourceIndex: indexName,
+      destIndex,
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.message, `Reindexing to ${destIndex} from ${indexName}. Check the reindex-status endpoint for status.`);
+
+  // Check the reindex status endpoint to see if the operation has completed
+  let statusResponse = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  /* eslint-disable no-await-in-loop */
+  while (Object.keys(statusResponse.body.reindexStatus.nodes).length > 0) {
+    statusResponse = await request(app)
+      .get('/elasticsearch/reindex-status')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  await esClient.indices.delete({ index: indexName });
+  await esClient.indices.delete({ index: destIndex });
+});
+
+test.serial('Reindex request returns 400 with the expected message when source index matches destination index.', async (t) => {
+  const indexName = randomId('index');
+  await esClient.indices.create({
+    index: indexName,
+    body: { mappings },
+  });
+
+  const response = await request(app)
+    .post('/elasticsearch/reindex')
+    .send({ destIndex: indexName, sourceIndex: indexName })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, `Source index source-index is not aliased with alias ${esAlias}.`);
-
+  t.is(response.body.message, `source index(${indexName}) and destination index(${indexName}) must be different.`);
   await esClient.indices.delete({ index: indexName });
+});
+
+test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
+  const date = new Date();
+  const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  await esClient.indices.create({
+    index: defaultIndexName,
+    body: { mappings },
+  });
+
+  const response = await request(app)
+    .post('/elasticsearch/reindex')
+    .send({ sourceIndex: defaultIndexName })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, `source index(${defaultIndexName}) and destination index(${defaultIndexName}) must be different.`);
+  await esClient.indices.delete({ index: defaultIndexName });
 });
 
 test.serial('Reindex success', async (t) => {
@@ -251,19 +309,40 @@ test.serial('Reindex success', async (t) => {
 
 test.serial('Reindex - destination index exists', async (t) => {
   const { esAlias } = t.context;
+  const destIndex = randomString();
+  const newAlias = randomString();
+
+  await createIndex(destIndex, newAlias);
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
     .send({
       aliasName: esAlias,
-      destIndex: esIndex,
+      destIndex: destIndex,
       sourceIndex: esIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.body.message, `Destination index ${esIndex} exists. Please specify an index name that does not exist.`);
+  t.is(response.body.message, `Reindexing to ${destIndex} from ${esIndex}. Check the reindex-status endpoint for status.`);
+
+  // Check the reindex status endpoint to see if the operation has completed
+  let statusResponse = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  /* eslint-disable no-await-in-loop */
+  while (Object.keys(statusResponse.body.reindexStatus.nodes).length > 0) {
+    statusResponse = await request(app)
+      .get('/elasticsearch/reindex-status')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  await esClient.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex status, no task running', async (t) => {
@@ -340,9 +419,11 @@ test.serial('Change index - new index does not exist', async (t) => {
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.body.message, `New index ${newIndex} does not exist.`);
+  t.is(response.body.message, `Change index success - alias ${esAlias} now pointing to ${newIndex}`);
+
+  await esClient.indices.delete({ index: newIndex });
 });
 
 test.serial('Change index - current index same as new index', async (t) => {

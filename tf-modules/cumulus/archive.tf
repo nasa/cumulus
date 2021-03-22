@@ -32,9 +32,7 @@ module "archive" {
   es_request_concurrency = var.es_request_concurrency
 
   system_bucket     = var.system_bucket
-  public_buckets    = local.public_bucket_names
-  protected_buckets = local.protected_bucket_names
-  private_buckets   = local.private_bucket_names
+  buckets           = var.buckets
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids

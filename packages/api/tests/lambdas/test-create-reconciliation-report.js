@@ -407,7 +407,7 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
   t.is(report.reportEndTime, (new Date(endTimestamp)).toISOString());
 });
 
-test.serial('Generates valid reconciliation report when everything is in sync', async (t) => {
+test.serial('Generates valid GNF reconciliation report when everything is in sync', async (t) => {
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -452,6 +452,7 @@ test.serial('Generates valid reconciliation report when everything is in sync', 
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -467,6 +468,77 @@ test.serial('Generates valid reconciliation report when everything is in sync', 
     const okCountForGranule = filesInCumulus.okCountByGranule[granuleId];
     t.is(okCountForGranule, 1);
   });
+
+  t.is(report.error, undefined);
+  t.is(filesInCumulus.okCount, files.length);
+  t.is(filesInCumulus.onlyInS3.length, 0);
+  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
+  t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
+  t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
+
+  const createStartTime = moment(report.createStartTime);
+  const createEndTime = moment(report.createEndTime);
+  t.true(createStartTime <= createEndTime);
+});
+
+test.serial('Generates a valid Inventory reconciliation report when everything is in sync', async (t) => {
+  const dataBuckets = range(2).map(() => randomId('bucket'));
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  // Create random files
+  const files = range(10).map((i) => ({
+    bucket: dataBuckets[i % dataBuckets.length],
+    key: randomId('key'),
+    granuleId: randomId('granuleId'),
+  }));
+
+  // Store the files to S3 and DynamoDB
+  await Promise.all([
+    storeFilesToS3(files),
+    GranuleFilesCache.batchUpdate({ puts: files }),
+  ]);
+
+  // Create collections that are in sync
+  const matchingColls = range(10).map(() => ({
+    name: randomId('name'),
+    version: randomId('vers'),
+  }));
+
+  const cmrCollections = sortBy(matchingColls, ['name', 'version'])
+    .map((collection) => ({
+      umm: { ShortName: collection.name, Version: collection.version },
+    }));
+
+  CMR.prototype.searchCollections.restore();
+  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
+
+  await storeCollectionsToElasticsearch(matchingColls);
+
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Inventory',
+  };
+
+  const reportRecord = await handler(event);
+  t.is(reportRecord.status, 'Generated');
+
+  const report = await fetchCompletedReport(reportRecord);
+  const filesInCumulus = report.filesInCumulus;
+  const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+  t.is(report.status, 'SUCCESS');
+
+  t.is(filesInCumulus.okCountByGranule, undefined);
 
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
@@ -511,6 +583,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -579,6 +652,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -651,6 +725,7 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -695,6 +770,7 @@ test.serial('Generates valid reconciliation report when there are both extra ES 
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -800,6 +876,7 @@ test.serial(
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
+      reportType: 'Granule Not Found',
       location: 'S3',
     };
 
@@ -1691,7 +1768,7 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   const reportArray = report.split('\n');
   const reportHeader = reportArray.slice(0, 1)[0];
   const reportRows = reportArray.slice(1, reportArray.length);
-  const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published"';
+  const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published","provider"';
   t.is(reportHeader, header);
   t.is(reportRows.length, 10);
 });

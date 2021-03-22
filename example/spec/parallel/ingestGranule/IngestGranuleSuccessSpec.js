@@ -511,8 +511,8 @@ describe('The S3 Ingest Granules workflow', () => {
       if (beforeAllError) fail(beforeAllError);
     });
 
-    it('publishes the granule metadata to CMR', () => {
-      const result = conceptExists(granule.cmrLink);
+    it('publishes the granule metadata to CMR', async () => {
+      const result = await conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
@@ -544,7 +544,7 @@ describe('The S3 Ingest Granules workflow', () => {
         'GET DATA',
         'VIEW RELATED INFORMATION',
         'VIEW RELATED INFORMATION',
-        'GET DATA',
+        'USE SERVICE API',
         'GET RELATED VISUALIZATION',
       ];
       const cmrUrls = resource.map((r) => r.URL);
@@ -553,7 +553,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(cmrUrls).toContain(s3BrowseImageUrl);
       expect(cmrUrls).toContain(s3CredsUrl);
       expect(cmrUrls).toContain(opendapFilePath);
-      expect(expectedTypes).toEqual(resource.map((r) => r.Type));
+      expect(expectedTypes.sort()).toEqual(resource.map((r) => r.Type).sort());
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
@@ -777,7 +777,10 @@ describe('The S3 Ingest Granules workflow', () => {
             id: asyncOperationId,
             status: 'SUCCEEDED',
             stackName: config.stackName,
-            retries: 100,
+            retryOptions: {
+              retries: 70,
+              factor: 1.041,
+            },
           });
 
           const reingestOutput = JSON.parse(asyncOperation.output);
@@ -1142,21 +1145,6 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(difference(expectedExecutedSteps, stepNames).length).toBe(0);
         // some steps are not executed
         expect(difference(expectedNotExecutedSteps, stepNames).length).toBe(expectedNotExecutedSteps.length);
-      });
-    });
-
-    describe('logs endpoint', () => {
-      it('returns logs with a specific execution name', async () => {
-        const executionARNTokens = workflowExecutionArn.split(':');
-        const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
-        console.log(`Log execution name: ${logsExecutionName}`);
-        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
-        const logs = JSON.parse(logsResponse.body);
-        expect(logs.meta.count).not.toEqual(0);
-        logs.results.forEach((log) => {
-          expect(log.sender).not.toBe(undefined);
-          expect(log.executions).toEqual(logsExecutionName);
-        });
       });
     });
   });

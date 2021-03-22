@@ -1,12 +1,14 @@
 terraform {
   required_providers {
-    aws = ">= 2.31.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 2.31.0"
+    }
   }
 }
 
 locals {
   all_bucket_names       = [for k, v in var.buckets : v.name]
-  private_bucket_names   = [for k, v in var.buckets : v.name if v.type == "private"]
   protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
 }

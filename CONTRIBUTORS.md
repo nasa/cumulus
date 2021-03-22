@@ -25,8 +25,11 @@
 * Mark Boyd
 * Matt Savoie
 * Menno Van Diermen
+* Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn
 * Phil Osip
 * Sara Chaparro Diaz
 * Seth Vincent
+* Snyk bot
+* Tobias Nießen

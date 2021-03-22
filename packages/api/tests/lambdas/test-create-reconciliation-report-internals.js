@@ -6,6 +6,7 @@ const rewire = require('rewire');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const CRP = rewire('../../lambdas/create-reconciliation-report');
+const linkingFilesToGranules = CRP.__get__('linkingFilesToGranules');
 const isOneWayCollectionReport = CRP.__get__('isOneWayCollectionReport');
 const isOneWayGranuleReport = CRP.__get__('isOneWayGranuleReport');
 const shouldAggregateGranulesForCollections = CRP.__get__('shouldAggregateGranulesForCollections');
@@ -117,3 +118,11 @@ test(
     t.true(shouldAggregateGranulesForCollections({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
+
+test('linkingFilesToGranules return values', (t) => {
+  const reportTypesToReturnFalse = ['Granule Inventory', 'Internal', 'Inventory'];
+  const reportTypesToReturnTrue = ['Granule Not Found'];
+
+  reportTypesToReturnFalse.map((param) => t.false(linkingFilesToGranules(param)));
+  reportTypesToReturnTrue.map((param) => t.true(linkingFilesToGranules(param)));
+});

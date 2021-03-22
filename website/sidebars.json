@@ -69,7 +69,8 @@
       "troubleshooting/troubleshooting-readme",
       "troubleshooting/troubleshooting-deployment",
       "troubleshooting/rerunning-workflow-executions",
-      "troubleshooting/troubleshooting-deployment"
+      "troubleshooting/troubleshooting-deployment",
+      "troubleshooting/reindex-elasticsearch"
     ],
     "Cumulus Development": [
       "adding-a-task",
@@ -82,7 +83,8 @@
       "integrator-guide/workflow-ts-failed-step"
     ],
     "Upgrade Notes": [
-      "upgrade-notes/migrate_tea_standalone"
+      "upgrade-notes/migrate_tea_standalone",
+      "upgrade-notes/upgrade_tf_version_0.13.6"
     ],
     "External Contributions": [
       "external-contributions/external-contributions"
@@ -117,9 +119,9 @@
       "operator-docs/discovery-filtering",
       "operator-docs/bulk-operations",
       "operator-docs/cmr-operations",
-      "operator-docs/discovery-filtering",
-      "operator-docs/rerunning-workflow-executions",
-      "operator-docs/replay-kinesis-messages"
+      "operator-docs/naming-executions",
+      "troubleshooting/rerunning-workflow-executions",
+      "features/replay-kinesis-messages"
     ],
     "Common Use Cases": [
       "operator-docs/ops-common-use-cases",

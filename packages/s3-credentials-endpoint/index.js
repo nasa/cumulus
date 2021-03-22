@@ -6,12 +6,17 @@ const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
+const template = require('lodash/template');
+const { promisify } = require('util');
+const fs = require('fs');
+const readFile = promisify(fs.readFile);
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
 } = require('@cumulus/earthdata-login-client');
 const express = require('express');
 const hsts = require('hsts');
+const { join: pathjoin } = require('path');
 const Logger = require('@cumulus/logger');
 const morgan = require('morgan');
 const urljoin = require('url-join');
@@ -75,6 +80,19 @@ async function requestTemporaryCredentialsFromNgap({
 }
 
 /**
+ * Sends a sample webpage describing how to use s3Credentials endpoint
+ *
+ * @param {Object} _req - express request object (unused)
+ * @param {Object} res - express response object
+ * @returns {Object} express repose object of the s3Credentials directions.
+ */
+async function displayS3CredentialInstructions(_req, res) {
+  const instructionTemplate = await readFile(pathjoin(__dirname, 'instructions', 'index.html'), 'utf-8');
+  const compiled = template(instructionTemplate);
+  res.send(compiled(process.env));
+}
+
+/**
  * Dispenses time-based temporary credentials for same-region direct s3 access.
  *
  * @param {Object} req - express request object
@@ -83,6 +101,12 @@ async function requestTemporaryCredentialsFromNgap({
  *                   tempoary s3 credentials for direct same-region s3 access.
  */
 async function s3credentials(req, res) {
+  const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
+
+  if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
+    return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
+  }
+
   const roleSessionName = buildRoleSessionName(
     req.authorizedMetadata.userName,
     req.authorizedMetadata.clientName
@@ -300,6 +324,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
 distributionRouter.get('/redirect', handleRedirectRequest);
 distributionRouter.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
+distributionRouter.get('/s3credentialsREADME', displayS3CredentialInstructions);
 
 const distributionApp = express();
 

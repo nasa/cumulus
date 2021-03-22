@@ -162,6 +162,12 @@ variable "bucket_map_key" {
   default     = null
 }
 
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = ""
+}
+
 variable "cmr_limit" {
   description = "Limit of the number of results to return from CMR"
   type        = number
@@ -472,12 +478,6 @@ variable "tea_rest_api_root_resource_id" {
   default     = null
 }
 
-variable "tea_stack_name" {
-  description = "Thin Egress App Cloudformation stack name"
-  type        = string
-  default     = null
-}
-
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type        = list(object({
@@ -555,3 +555,10 @@ variable "ems_deploy" {
   type        = bool
   default     = false
 }
+
+variable "ecs_custom_sg_ids" {
+  description = "User defined security groups to add to the Core ECS cluster"
+  type = list(string)
+  default = []
+}
+

@@ -14,6 +14,7 @@ locals {
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       cmr_oauth_provider               = var.cmr_oauth_provider
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
@@ -21,7 +22,7 @@ locals {
       CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
-      EARTHDATA_BASE_URL               = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
+      EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
       EcsCluster                       = var.ecs_cluster_name
@@ -55,10 +56,10 @@ locals {
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       PdrsTable                        = var.dynamo_tables.pdrs.name
-      protected_buckets                = join(",", var.protected_buckets)
+      protected_buckets                = join(",", local.protected_buckets)
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
       ProvidersTable                   = var.dynamo_tables.providers.name
-      public_buckets                   = join(",", var.public_buckets)
+      public_buckets                   = join(",", local.public_buckets)
       ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
       RulesTable                       = var.dynamo_tables.rules.name
       stackName                        = var.prefix
@@ -191,6 +192,8 @@ resource "aws_api_gateway_rest_api" "api" {
   endpoint_configuration {
     types = ["PRIVATE"]
   }
+
+  tags = var.tags
 }
 
 resource "aws_api_gateway_rest_api" "api_outside_ngap" {
@@ -233,7 +236,7 @@ resource "aws_api_gateway_integration" "any_proxy" {
 }
 
 resource "aws_api_gateway_deployment" "api" {
-  depends_on = ["aws_api_gateway_integration.any_proxy"]
+  depends_on = [aws_api_gateway_integration.any_proxy]
 
   rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   stage_name  = var.api_gateway_stage

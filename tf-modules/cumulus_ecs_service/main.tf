@@ -1,13 +1,15 @@
 terraform {
   required_providers {
-    aws = ">= 2.31.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 2.31.0"
+    }
   }
 }
 
 locals {
-  cluster_name = reverse(split("/", var.cluster_arn))[0]
-  full_name    = "${var.prefix}-${var.name}"
-  log_destination_arn = var.log_destination_arn != null ? var.log_destination_arn : var.log2elasticsearch_lambda_function_arn
+  cluster_name        = reverse(split("/", var.cluster_arn))[0]
+  full_name           = "${var.prefix}-${var.name}"
 }
 
 data "aws_region" "current" {}
@@ -55,8 +57,9 @@ resource "aws_ecs_task_definition" "default" {
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "default" {
+  count = var.log_destination_arn != null ? 1 : 0
   name            = "${local.full_name}-default"
-  destination_arn = local.log_destination_arn
+  destination_arn = var.log_destination_arn
   log_group_name  = aws_cloudwatch_log_group.default.name
   filter_pattern  = ""
 }

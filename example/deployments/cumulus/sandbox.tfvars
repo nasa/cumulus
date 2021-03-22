@@ -1,4 +1,8 @@
 buckets = {
+  glacier = {
+    name = "cumulus-test-sandbox-orca-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "cumulus-test-sandbox-internal"
     type = "internal"
@@ -47,3 +51,6 @@ ems_submit_report     = true
 ems_username          = "cumulus"
 
 thin_egress_jwt_secret_name = "cumulus_sandbox_jwt_tea_secret"
+
+include_orca = false
+drop_database = "True"
