@@ -123,7 +123,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     config = await loadConfig();
-    config.workflow = 'PublishGranuleQueue';
 
     const testId = createTimestampedTestId(config.stackName, 'IngestGranuleQueue');
     const testSuffix = createTestSuffix(testId);
@@ -244,6 +243,7 @@ describe('The S3 Ingest Granules workflow', () => {
       inputPayload,
       {
         distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
+        workflow: 'PublishGranuleQueue',
       }
     );
 

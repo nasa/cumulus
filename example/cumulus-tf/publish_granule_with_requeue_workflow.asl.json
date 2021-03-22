@@ -55,7 +55,7 @@
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
-            "workflow": "PublishGranuleRequeue",
+            "workflow": "PublishGranuleQueue",
             "queueUrl": "${start_sf_queue_url}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}"
