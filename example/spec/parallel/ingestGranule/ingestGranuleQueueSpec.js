@@ -123,6 +123,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     config = await loadConfig();
+    config.workflow = 'PublishGranuleQueue';
 
     const testId = createTimestampedTestId(config.stackName, 'IngestGranuleQueue');
     const testSuffix = createTestSuffix(testId);
