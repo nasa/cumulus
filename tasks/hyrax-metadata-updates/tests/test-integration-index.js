@@ -77,7 +77,7 @@ test.before(async () => {
 });
 
 test.beforeEach(() => {
-  // Mock out retrieval of entryTitle from CMR
+  // Mock out retrieval of collection entry from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
     .query({
