@@ -30,7 +30,10 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
-    actions   = ["s3:GetObject"]
+    actions   = [
+      "s3:GetObject",
+      "s3:PutObject"
+    ]
     resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 
@@ -187,12 +190,12 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
 resource "aws_lambda_event_source_mapping" "db_records_dlq_to_s3_mapping" {
   event_source_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
-  function_name    = aws_lambda_function.write_db_records_dlq_to_s3.arn
+  function_name    = aws_lambda_function.write_db_dlq_records_to_s3.arn
 }
 
-resource "aws_lambda_function" "write_db_records_dlq_to_s3" {
-  filename         = "${path.module}/../../packages/api/dist/writeSQStoS3/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/writeSQStoS3/lambda.zip")
+resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
+  filename         = "${path.module}/../../packages/api/dist/writeDbDlqRecordstoS3/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/writeDbDlqRecordstoS3/lambda.zip")
   function_name    = "${var.prefix}-writeDbRecordsDLQtoS3"
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
