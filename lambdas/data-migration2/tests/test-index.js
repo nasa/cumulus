@@ -33,12 +33,11 @@ const {
 const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
 
+let collectionsModel;
 let executionsModel;
 let granulesModel;
 let pdrsModel;
 let providersModel;
-
-let collectionsModel;
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const dateString = new Date().toString();
@@ -47,9 +46,9 @@ test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
 
-  process.env.GranulesTable = cryptoRandomString({ length: 10 });
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
+  process.env.GranulesTable = cryptoRandomString({ length: 10 });
   process.env.PdrsTable = cryptoRandomString({ length: 10 });
   process.env.ProvidersTable = cryptoRandomString({ length: 10 });
 
@@ -59,11 +58,11 @@ test.before(async (t) => {
     ...process.env,
     ...localStackConnectionEnv,
   };
+
+  collectionsModel = new Collection();
   executionsModel = new Execution();
   granulesModel = new Granule();
-  pdrsModel = new Pdr();
   providersModel = new Provider();
-  collectionsModel = new Collection();
   pdrsModel = new Pdr();
 
   await pdrsModel.createTable();
@@ -72,16 +71,17 @@ test.before(async (t) => {
   await granulesModel.createTable();
   await providersModel.createTable();
 
-  t.context.pdrPgModel = new PdrPgModel();
-
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 });
 
 test.beforeEach(async (t) => {
+  t.context.pdrPgModel = new PdrPgModel();
+
   const collectionPgModel = new CollectionPgModel();
   const testCollection = fakeCollectionRecordFactory();
+  t.context.collectionPgModel = collectionPgModel;
 
   const collectionResponse = await collectionPgModel.create(
     t.context.knex,
@@ -112,6 +112,7 @@ test.beforeEach(async (t) => {
     testProvider
   );
   t.context.providerCumulusId = providerResponse[0];
+
   const fakeFile = () => fakeFileFactory({
     bucket: cryptoRandomString({ length: 10 }),
     key: cryptoRandomString({ length: 10 }),
@@ -146,7 +147,6 @@ test.beforeEach(async (t) => {
     timeToArchive: 0,
     productionDateTime: dateString,
     timestamp: Date.now(),
-    // createdAt: Date.now() - 200 * 1000,
     updatedAt: Date.now(),
   };
 
@@ -213,11 +213,19 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
     tasks: {},
     cumulusVersion: '1.0.0',
   };
+
   const createdRecord = await t.context.knex.queryBuilder()
     .select('cumulus_id')
     .table('collections')
     .where({ name: t.context.testCollection.name, version: t.context.testCollection.version })
     .first();
+
+  const collectionCumulusId = await t.context.collectionPgModel.getRecordCumulusId(
+    t.context.knex,
+    { name: t.context.testCollection.name, version: t.context.testCollection.version }
+  );
+  console.log(collectionCumulusId);
+  console.log(t.context.testCollection);
   console.log(createdRecord);
   await Promise.all([
     executionsModel.create(fakeExecution),
