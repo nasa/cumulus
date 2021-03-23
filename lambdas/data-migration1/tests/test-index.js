@@ -84,9 +84,9 @@ test.before(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await t.context.knex('rules').del();
   await t.context.knex('providers').del();
   await t.context.knex('collections').del();
+  await t.context.knex('rules').del();
   await t.context.knex('async_operations').del();
 });
 
@@ -94,6 +94,7 @@ test.after.always(async (t) => {
   await providersModel.deleteTable();
   await collectionsModel.deleteTable();
   await rulesModel.deleteTable();
+  await asyncOperationsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
