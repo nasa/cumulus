@@ -105,6 +105,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let collection;
   let config;
   let executionModel;
+  let executionOutput;
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
@@ -318,7 +319,7 @@ describe('The S3 Ingest Granules workflow', () => {
       executionArn: workflowExecutionArn,
     });
 
-    const executionOutput = JSON.parse(execution.output);
+    executionOutput = JSON.parse(execution.output);
 
     const fullExecutionOutput = await pullStepFunctionEvent(executionOutput);
 
@@ -355,7 +356,7 @@ describe('The S3 Ingest Granules workflow', () => {
   it('results in the files being added to the granule files cache table', async () => {
     process.env.FilesTable = `${config.stackName}-FilesTable`;
 
-    const executionOutput = await getExecutionOutput(workflowExecutionArn);
+    executionOutput = await getExecutionOutput(workflowExecutionArn);
 
     await pMap(
       executionOutput.payload.granules[0].files,
@@ -375,18 +376,6 @@ describe('The S3 Ingest Granules workflow', () => {
       },
       { concurrency: 1 }
     );
-  });
-
-  describe('the BackupGranulesToLzards task', () => {
-    let lambdaOutput;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'LzardsBackup');
-    });
-
-    it('adds LZARDS backup output', () => {
-      expect(true, lambdaOutput.meta.backupStatus.every((file) => file.status === 'COMPLETED'));
-    });
   });
 
   describe('the SyncGranules task', () => {
@@ -648,7 +637,7 @@ describe('The S3 Ingest Granules workflow', () => {
     beforeAll(async () => {
       failedExecutionArn = failingWorkflowExecution.executionArn;
       failedExecutionName = failedExecutionArn.split(':').pop();
-      executionName = postToCmrOutput.cumulus_meta.execution_name;
+      executionName = executionOutput.cumulus_meta.execution_name;
 
       executionFailedKey = `${config.stackName}/test-output/${failedExecutionName}.output`;
       executionCompletedKey = `${config.stackName}/test-output/${executionName}.output`;
@@ -1122,7 +1111,6 @@ describe('The S3 Ingest Granules workflow', () => {
           'HyraxMetadataUpdatesTask',
           'CmrStep',
           'WorkflowSucceeded',
-          'BackupGranulesToLzards',
         ];
 
         // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited

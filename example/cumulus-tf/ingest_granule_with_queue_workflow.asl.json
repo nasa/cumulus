@@ -1,5 +1,5 @@
 {
-  "Comment": "Ingest Granule",
+  "Comment": "Ingest Granule with Queue",
   "StartAt": "SyncGranule",
   "States": {
     "SyncGranule": {
