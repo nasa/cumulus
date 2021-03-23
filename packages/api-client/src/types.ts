@@ -8,7 +8,7 @@ export interface ApiGatewayLambdaProxyPayload {
   httpMethod: HttpMethod,
   path: string,
   headers?: { [key: string]: string | undefined },
-  queryStringParameters?: { [key: string]: string }
+  queryStringParameters?: { [key: string]: unknown }
   body?: string
 }
 

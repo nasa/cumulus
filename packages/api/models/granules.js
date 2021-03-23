@@ -423,7 +423,7 @@ class Granule extends Manager {
       queryFields,
     };
 
-    return removeNilProperties(record);
+    return removeNilProperties(record); //TODO Remove granule files null properties here?
   }
 
   /**

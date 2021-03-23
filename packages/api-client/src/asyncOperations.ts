@@ -28,3 +28,36 @@ export const getAsyncOperation = async (params: {
     },
   });
 };
+
+
+/**
+ * Query  async operations stored in cumulus
+ * GET /granules
+ * @param {Object} params             - params
+ * @param {string} [params.query]     - query to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const listAsyncOperations = async (params: {
+  prefix: string,
+  query?: {
+    fields?: string[],
+    [key: string]: string | string[] | undefined
+  },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, query, callback = invokeApi } = params;
+
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/asyncOperations',
+      queryStringParameters: query,
+    },
+  });
+};

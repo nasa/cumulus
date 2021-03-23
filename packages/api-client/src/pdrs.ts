@@ -1,13 +1,14 @@
-import { ExecutionRecord } from '@cumulus/types/api/executions';
+import { ApiPdr } from '@cumulus/types/api/pdrs';
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
+
 /**
- * Fetch an execution from the Cumulus API
+ * Fetch a PDR from the Cumulus API
  *
  * @param {Object} params            - params
  * @param {string} params.prefix     - the prefix configured for the stack
- * @param {string} params.arn        - an execution arn
+ * @param {string} params.pdrName    - a PDR name
  * @param {Function} params.callback - async function to invoke the api lambda
  *                                     that takes a prefix / user payload.  Defaults
  *                                     to cumulusApiClient.invokeApi
@@ -15,17 +16,17 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  */
 export const getExecution = async (params: {
   prefix: string,
-  arn: string,
+  pdrName: string,
   callback?: InvokeApiFunction
-}): Promise<ExecutionRecord> => {
-  const { prefix, arn, callback = invokeApi } = params;
+}): Promise<ApiPdr> => {
+  const { prefix, pdrName, callback = invokeApi } = params;
 
   const response = await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/executions/${arn}`,
+      path: `/pdr/${pdrName}`,
     },
   });
 
@@ -33,21 +34,21 @@ export const getExecution = async (params: {
 };
 
 /**
- * Fetch a list of executions from the Cumulus API
+ * Fetch a list of pdrs from the Cumulus API
  *
  * @param {Object} params            - params
  * @param {string} params.prefix     - the prefix configured for the stack
  * @param {Function} params.callback - async function to invoke the api lambda
  *                                     that takes a prefix / user payload.  Defaults
  *                                     to cumulusApiClient.invokeApi
- * @returns {Promise<Object>}        - the execution list fetched by the API
+ * @returns {Promise<Object>}        - the pdr list fetched by the API
  */
-export const getExecutions = async (params: {
+export const getPdrs = async (params: {
   prefix: string,
   query?: {
-    fields?: string[] | string
+    fields?: string[],
     [key: string]: string | string[] | undefined
-  },
+  }
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
@@ -57,36 +58,8 @@ export const getExecutions = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: '/executions',
+      path: '/pdrs',
       queryStringParameters: query,
-    },
-  });
-};
-
-/**
- * get execution status from the Cumulus API
- *
- * @param {Object} params            - params
- * @param {string} params.prefix     - the prefix configured for the stack
- * @param {string} params.arn        - an execution arn
- * @param {Function} params.callback - async function to invoke the api lambda
- *                                     that takes a prefix / user payload.  Defaults
- *                                     to cumulusApiClient.invokeApi
- * @returns {Promise<Object>}        - the execution status fetched by the API
- */
-export const getExecutionStatus = async (params: {
-  prefix: string,
-  arn: string,
-  callback?: InvokeApiFunction
-}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, arn, callback = invokeApi } = params;
-
-  return callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/executions/status/${arn}`,
     },
   });
 };
