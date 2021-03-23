@@ -25,11 +25,11 @@ import {
   generateAggregateReportObj,
   generateCollectionReportObj,
   getDbCount,
-  getDynamoScanStats,
   getEsCutoffQuery,
-  getPostgresCount,
-  getPostgresModelCutoffCount,
+  getPostgresModelCount,
 } from './utils';
+
+import { StatsObject, CollectionMapping } from './types';
 
 const logger = new Logger({
   sender: '@cumulus/lambdas/rds-reconcile',
@@ -84,20 +84,17 @@ const handler = async (
   const postgresProviderModel = new ProviderPgModel();
   const postgresRulesModel = new RulePgModel();
 
-  // TODO -- should this be abstracted
   const [
     dynamoCollections,
     dynamoProviders,
     dynamoRules,
     dynamoAsyncOperations,
-  ] = await getDynamoScanStats(
-    dynamoCollectionModel,
-    dynamoProvidersModel,
-    dynamoRulesModel,
-    dynamoAsyncRulesModel,
-  );
-
-
+  ] = await Promise.all([
+    dynamoCollectionModel.getAllCollections(),
+    dynamoProvidersModel.getAllProviders(),
+    dynamoRulesModel.getAllRules(),
+    dynamoAsyncRulesModel.getAllAsyncOperations(),
+  ]);
 
   // Get dynamo table counts
   const dynamoAsyncOperationsCount = dynamoAsyncOperations.length;
@@ -106,89 +103,99 @@ const handler = async (
   const dynamoRuleCount = dynamoRules.length;
 
   // Get postgres table counts
-  const postgresProviderCount = await getPostgresModelCutoffCount(
-    postgresProviderModel,
+  const postgresProviderCount = await getPostgresModelCount({
+    model: postgresProviderModel,
     knexClient,
-    cutoffIsoString
-  );
-  const postgresRulesCount = await getPostgresModelCutoffCount(
-    postgresRulesModel,
+    cutoffIsoString,
+  });
+  const postgresRulesCount = await getPostgresModelCount({
+    model: postgresRulesModel,
     knexClient,
-    cutoffIsoString
-  );
-  const postgresAsyncOperationsCount = await getPostgresModelCutoffCount(
-    postgresAsyncOperationModel,
+    cutoffIsoString,
+  });
+  const postgresAsyncOperationsCount = await getPostgresModelCount({
+    model: postgresAsyncOperationModel,
     knexClient,
-    cutoffIsoString
-  );
-  const postgresCollectionCount = await getPostgresModelCutoffCount(
-    postgresCollectionModel,
+    cutoffIsoString,
+  });
+  const postgresCollectionCount = await getPostgresModelCount({
+    model: postgresCollectionModel,
     knexClient,
-    cutoffIsoString
-  );
-
-  const elasticSearchPdrCount = await getDbCount(
-    getPdrs({
-      prefix,
-      query: await getEsCutoffQuery(['pdrName', 'createdAt'], cutoffTime),
-    })
-  );
-  const elasticSearchGranuleCount = await getDbCount(
-    listGranules({
-      prefix,
-      query: await getEsCutoffQuery(['granuleId', 'createdAt'], cutoffTime),
-    })
-  );
-  const elasticSearchExecutionCount = await getDbCount(
-    getExecutions({
-      prefix,
-      query: await getEsCutoffQuery(['execution', 'createdAt'], cutoffTime),
-    })
-  );
-
-  console.log(`${elasticSearchPdrCount}, ${elasticSearchGranuleCount}, ${elasticSearchExecutionCount}`);
+    cutoffIsoString,
+  });
 
   const {
-    collectionMappings,
-    failedCollectionMappings,
+    collectionValues,
+    collectionFailures,
   } = await buildCollectionMappings(
     dynamoCollections,
     postgresCollectionModel,
     knexClient
   );
 
-  if (failedCollectionMappings.length > 0) {
-    logger.warn(`Warning - failed to map ${failedCollectionMappings} / ${dynamoCollectionsCount}: ${JSON.stringify(failedCollectionMappings)}`);
+  if (collectionFailures.length > 0) {
+    logger.warn(`Warning - failed to map ${collectionFailures.length} / ${dynamoCollectionsCount}: ${JSON.stringify(collectionFailures)}`);
   }
 
-  const mapper = async (collectionMap: any): Promise<StatsObject> => {
-    const [collection, pgCollectionId] = collectionMap.value;
+  const mapper = async (collectionMap: CollectionMapping): Promise<StatsObject> => {
+    const { collection, postgresCollectionId } = collectionMap;
     const collectionId = `${collection.name}___${collection.version}`;
     return {
       collectionId,
       counts: await Promise.all([
-        getDbCount(getPdrs({ prefix, query: (getEsCutoffQuery(['pdrName', 'createdAt'], cutoffTime, collectionId)) })),
-        getDbCount(listGranules({ prefix, query: (getEsCutoffQuery(['granuleId', 'createdAt'], cutoffTime, collectionId)) })),
-        getDbCount(getExecutions({ prefix, query: (getEsCutoffQuery(['execution', 'createdAt'], cutoffTime, collectionId)) })),
-        getPostgresCount(postgresPdrModel.count(
+        getDbCount(
+          getPdrs({
+            prefix,
+            query: getEsCutoffQuery(
+              ['pdrName', 'createdAt'],
+              cutoffTime,
+              collectionId
+            ),
+          })
+        ),
+        getDbCount(
+          listGranules({
+            prefix,
+            query: getEsCutoffQuery(
+              ['granuleId', 'createdAt'],
+              cutoffTime,
+              collectionId
+            ),
+          })
+        ),
+        getDbCount(
+          getExecutions({
+            prefix,
+            query: getEsCutoffQuery(
+              ['execution', 'createdAt'],
+              cutoffTime,
+              collectionId
+            ),
+          })
+        ),
+        getPostgresModelCount({
+          model: postgresGranuleModel,
           knexClient,
-          [['created_at', '<', cutoffIsoString], [{ collection_cumulus_id: pgCollectionId }]]
-        )),
-        getPostgresCount(postgresGranuleModel.count(
+          cutoffIsoString,
+          queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
+        }),
+        getPostgresModelCount({
+          model: postgresPdrModel,
           knexClient,
-          [['created_at', '<', cutoffIsoString], [{ collection_cumulus_id: pgCollectionId }]]
-        )),
-        getPostgresCount(postgresExecutionModel.count(
+          cutoffIsoString,
+          queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
+        }),
+        getPostgresModelCount({
+          model: postgresExecutionModel,
           knexClient,
-          [['created_at', '<', cutoffIsoString], [{ collection_cumulus_id: pgCollectionId }]]
-        )),
+          cutoffIsoString,
+          queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
+        }),
       ]),
     };
   };
-
-  const collectionReportObj = generateCollectionReportObj(
-    await pMap(collectionMappings, mapper, { concurrency: dbConcurrency })
-  );
+  const collectionReportResults = await pMap(collectionValues, mapper, { concurrency: dbConcurrency });
+  const collectionReportObj = await generateCollectionReportObj(collectionReportResults);
 
   const aggregateReportObj = generateAggregateReportObj({
     dynamoAsyncOperationsCount,
@@ -226,3 +233,10 @@ const handler = async (
   logger.info('Execution complete');
   return reportObj;
 };
+
+handler({
+  reportBucket: 'cumulus-test-sandbox-internal',
+  reportPath: 'jk-test-reports',
+  systemBucket: 'cumulus-test-sandbox-internal',
+  stackName: 'jk-tf4',
+});

@@ -6,8 +6,13 @@ import {
   PostgresCollection,
 } from '@cumulus/db';
 import { NewCollectionRecord } from '@cumulus/types/api/collections';
+import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 
-export const getDbCount = async (resultPromise: any): Promise<number> => {
+import { ReportObj, StatsObject, CollectionMapping } from './types';
+
+export const getDbCount = async (
+  resultPromise: Promise<ApiGatewayLambdaHttpProxyResponse>
+): Promise<number> => {
   const result = await resultPromise;
   return JSON.parse(result.body).meta.count;
 };
@@ -27,35 +32,11 @@ export const generateCollectionReportObj = (stats: StatsObject[]) => {
   return reportObj;
 };
 
-export const getDynamoScanStats = async (
-  collectionsModel: { getAllCollections: any },
-  providersModel: { getAllProviders: any },
-  rulesModel: { getAllRules: any },
-  asyncRulesModel: { getAllAsyncOperations: any }
-) => Promise.all([
-  collectionsModel.getAllCollections(),
-  providersModel.getAllProviders(),
-  rulesModel.getAllRules(),
-  asyncRulesModel.getAllAsyncOperations(),
-]);
-
-export const getPostgresCount = async (resultPromise: any) => {
-  const result = await resultPromise;
-  return Number(result[0].count);
-};
-
-// TODO consider consolidation with getPostgresCount
-export const getPostgresModelCutoffCount = <T, R extends { cumulus_id: number}>(
-  model: BasePgModel<T, R>,
-  knexClient: Knex,
-  cutoffIsoString: string
-) => getPostgresCount(model.count(knexClient, [['created_at', '<', cutoffIsoString]]));
-
 export const getPostgresModelCount = async <T, R extends { cumulus_id: number }>(params: {
   model: BasePgModel<T, R>,
   knexClient: Knex,
   cutoffIsoString?: string,
-  queryParams: ([string, string, string]|[Partial<R>])[],
+  queryParams?: ([string, string, string]|[Partial<R>])[],
 }) => {
   const {
     model,
@@ -83,7 +64,6 @@ export const getEsCutoffQuery = (
   return returnObj;
 };
 
-// TODO parameterize
 export const buildCollectionMappings = async (
   dynamoCollections: NewCollectionRecord[],
   collectionModel: CollectionPgModel,
@@ -102,7 +82,7 @@ export const buildCollectionMappings = async (
           name,
           version,
         });
-        return [collection, pgCollection.cumulus_id];
+        return { collection, postgresCollectionId: pgCollection.cumulus_id };
       } catch (error) {
         error.collection = `${name}, ${version}`;
         return Promise.reject(error);
@@ -113,16 +93,17 @@ export const buildCollectionMappings = async (
     collectionMappingPromises
   );
 
-  // TODO: This is ineffective, fix it.
   const failedCollectionMappings = collectionMappingResults.filter(
     (mapping) => mapping.status === 'rejected'
-  );
+  ) as PromiseRejectedResult[];
   const collectionMappings = collectionMappingResults.filter(
     (mapping) => mapping.status !== 'rejected'
-  );
+  ) as PromiseFulfilledResult<CollectionMapping>[];
+  const collectionValues = collectionMappings.map((result) => result.value);
+  const collectionFailures = failedCollectionMappings.map((result) => result.reason);
   return {
-    collectionMappings,
-    failedCollectionMappings,
+    collectionValues,
+    collectionFailures,
   };
 };
 

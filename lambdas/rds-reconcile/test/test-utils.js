@@ -1,7 +1,14 @@
 const test = require('ava');
 const sinon = require('sinon');
 
-const { generateAggregateReportObj, buildCollectionMappings, getEsCutoffQuery } = require('../dist/lambda/utils');
+const {
+  generateCollectionReportObj,
+  getDbCount,
+  getPostgresModelCount,
+  generateAggregateReportObj,
+  buildCollectionMappings,
+  getEsCutoffQuery
+} = require('../dist/lambda/utils');
 
 test('generateAggregateReportObj returns the expected results', (t) => {
   const dynamoAsyncOperationsCount = 1;
@@ -70,25 +77,20 @@ test('buildCollectionMappings returns the expected mappings', async (t) => {
 
   t.deepEqual(
     [
-      {
-        status: 'fulfilled',
-        value: [dynamoCollections[0], 1],
+      { collection: dynamoCollections[0],
+        postgresCollectionId: 1,
       },
-      {
-        status: 'fulfilled',
-        value: [dynamoCollections[1], 2],
+      { collection: dynamoCollections[1],
+        postgresCollectionId: 2,
       },
     ],
-    actual.collectionMappings
+    actual.collectionValues
   );
 
   const expectedError = new Error('Danger Will Robinson');
   expectedError.collection = 'BADCOLLECTION, 006';
 
-  t.like({
-    reason: expectedError,
-    status: 'rejected',
-  }, actual.failedCollectionMappings[0]);
+  t.deepEqual(expectedError, actual.collectionFailures[0]);
 });
 
 test('getEsCutoffQuery returns the expected query if a collectionId is specified', (t) => {
@@ -118,5 +120,47 @@ test('getEsCutoffQuery returns the expected query if a collectionId is not speci
   t.deepEqual(actual, expected);
 });
 
-test('getPostgresModelCutoffCount calls  ')
+test('getPostgresModelCount calls the model with the expected query string', async (t) => {
+  const modelCountSpy = sinon.spy(() => [{ count: 1 }]);
+  const modelStub = {
+    count: modelCountSpy,
+  };
+  const knexClient = {};
+  const queryParams = ['fakeQueryParams'];
 
+  const actual = await getPostgresModelCount({
+    model: modelStub,
+    knexClient,
+    cutoffIsoString: 'fakeCutoffIsoString',
+    queryParams,
+  });
+
+  t.is(actual, 1);
+  modelCountSpy.calledWith(knexClient, queryParams);
+});
+
+test('getDbCount returns the count from the query result promise', async (t) => {
+  const resultPromise = Promise.resolve({ body: '{"meta": { "count": 10}}' });
+  const actual = await getDbCount(resultPromise);
+  t.is(actual, 10);
+});
+
+test('generateCollectionReportObj generates a report object', (t) => {
+  const statsObjects = [
+    { collectionId: 'fakeCollectionId', counts: [7, 8, 9, 4, 5, 6] }
+  ];
+  const actual = generateCollectionReportObj(statsObjects);
+  const expected = {
+    fakeCollectionId: { executions: 3, granules: 3, pdrs: 3 },
+  };
+  t.deepEqual(actual, expected);
+});
+
+test('generateCollectionReportObj does not return a report object if there are no discrepancies', (t) => {
+  const statsObjects = [
+    { collectionId: 'fakeCollectionId', counts: [1, 1, 1, 1, 1, 1] },
+  ];
+  const actual = generateCollectionReportObj(statsObjects);
+  const expected = {};
+  t.deepEqual(actual, expected);
+});
