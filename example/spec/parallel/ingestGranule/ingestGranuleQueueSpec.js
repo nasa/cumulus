@@ -1088,7 +1088,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(executionStatus.stateMachine.stateMachineArn.endsWith(executionStatus.stateMachine.name)).toBeTrue();
 
         const definition = JSON.parse(executionStatus.stateMachine.definition);
-        expect(definition.Comment).toEqual('Ingest Granule');
+        expect(definition.Comment).toEqual('Ingest Granule with Queue');
 
         // definition has all the states' information
         expect(Object.keys(definition.States).length).toBe(12);
@@ -1108,9 +1108,7 @@ describe('The S3 Ingest Granules workflow', () => {
           'FilesToGranulesStep',
           'MoveGranuleStep',
           'UpdateGranulesCmrMetadataFileLinksStep',
-          'HyraxMetadataUpdatesTask',
-          'CmrStep',
-          'WorkflowSucceeded',
+          'QueueWorkflowStep',
         ];
 
         // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
