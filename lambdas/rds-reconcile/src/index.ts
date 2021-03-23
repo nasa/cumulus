@@ -3,42 +3,32 @@ import pMap from 'p-map';
 
 import { models } from '@cumulus/api';
 import * as S3 from '@cumulus/aws-client/S3';
-import { getExecutions } from '@cumulus/api-client/executions';
-import { listGranules } from '@cumulus/api-client/granules';
-import { getPdrs } from '@cumulus/api-client/pdrs';
 import { envUtils } from '@cumulus/common';
 
 import Logger from '@cumulus/logger';
 import {
-  CollectionPgModel,
-  GranulePgModel,
   AsyncOperationPgModel,
-  RulePgModel,
-  PdrPgModel,
-  ExecutionPgModel,
-  ProviderPgModel,
+  CollectionPgModel,
   getKnexClient,
+  ProviderPgModel,
+  RulePgModel,
 } from '@cumulus/db';
 
 import {
   buildCollectionMappings,
   generateAggregateReportObj,
   generateCollectionReportObj,
-  getDbCount,
-  getEsCutoffQuery,
   getPostgresModelCount,
+  getDynamoTableEntries,
 } from './utils';
 
-import { StatsObject, CollectionMapping } from './types';
+import { mapper } from './mapper';
 
 const logger = new Logger({
   sender: '@cumulus/lambdas/rds-reconcile',
 });
 
-// Required Env
-// DEPLOYMENT
-// SYSTEM_BUCKET
-const handler = async (
+export const handler = async (
   event: {
     dbConcurrency?: number,
     dbMaxPool?: number,
@@ -46,7 +36,13 @@ const handler = async (
     reportPath?: string,
     cutoffSeconds?: number,
     systemBucket?: string,
-    stackName?: string
+    stackName?: string,
+    // Arguments below are for unit injection and should not be overwritten, generally
+    getPostgresModelCountFunction?: typeof getPostgresModelCount,
+    mapperFunction?: typeof mapper,
+    buildCollectionMappingsFunction?: typeof buildCollectionMappings,
+    getDynamoTableEntriesFunction?: typeof getDynamoTableEntries,
+    getKnexClientFunction?: typeof getKnexClient,
   }
 ): Promise<any> => {
   const {
@@ -57,28 +53,29 @@ const handler = async (
     cutoffSeconds = 3600,
     systemBucket = envUtils.getRequiredEnvVar('SYSTEM_BUCKET'),
     stackName = envUtils.getRequiredEnvVar('DEPLOYMENT'),
+    getKnexClientFunction = getKnexClient,
+    getPostgresModelCountFunction = getPostgresModelCount,
+    mapperFunction = mapper,
+    buildCollectionMappingsFunction = buildCollectionMappings,
+    getDynamoTableEntriesFunction = getDynamoTableEntries,
   } = event;
   process.env.dbMaxPool = `${dbMaxPool}`;
 
   logger.debug(`Running reconciliation with ${JSON.stringify(event)}`);
   const prefix = process.env.DEPLOYMENT || '';
-  const knexClient = await getKnexClient({ env: process.env });
+  const knexClient = await getKnexClientFunction({ env: process.env });
   const cutoffTime = Date.now() - cutoffSeconds * 1000;
   const cutoffIsoString = new Date(cutoffTime).toISOString();
 
-  // Take handler structure
-  const dynamoCollectionModel = new models.Collection(); // set env var
-  const dynamoProvidersModel = new models.Provider(); // set env var
-  const dynamoRulesModel = new models.Rule(); // set env var
+  const dynamoCollectionModel = new models.Collection();
+  const dynamoProvidersModel = new models.Provider();
+  const dynamoRulesModel = new models.Rule();
 
   const dynamoAsyncRulesModel = new models.AsyncOperation({
     stackName,
     systemBucket,
   });
 
-  const postgresGranuleModel = new GranulePgModel();
-  const postgresExecutionModel = new ExecutionPgModel();
-  const postgresPdrModel = new PdrPgModel();
   const postgresAsyncOperationModel = new AsyncOperationPgModel();
   const postgresCollectionModel = new CollectionPgModel();
   const postgresProviderModel = new ProviderPgModel();
@@ -89,36 +86,35 @@ const handler = async (
     dynamoProviders,
     dynamoRules,
     dynamoAsyncOperations,
-  ] = await Promise.all([
-    dynamoCollectionModel.getAllCollections(),
-    dynamoProvidersModel.getAllProviders(),
-    dynamoRulesModel.getAllRules(),
-    dynamoAsyncRulesModel.getAllAsyncOperations(),
-  ]);
-
-  // Get dynamo table counts
+  ] = await getDynamoTableEntriesFunction({
+    dynamoCollectionModel,
+    dynamoProvidersModel,
+    dynamoRulesModel,
+    dynamoAsyncRulesModel,
+  });
   const dynamoAsyncOperationsCount = dynamoAsyncOperations.length;
   const dynamoCollectionsCount = dynamoCollections.length;
   const dynamoProvidersCount = dynamoProviders.length;
   const dynamoRuleCount = dynamoRules.length;
 
   // Get postgres table counts
-  const postgresProviderCount = await getPostgresModelCount({
+  const postgresProviderCount = await getPostgresModelCountFunction({
     model: postgresProviderModel,
     knexClient,
     cutoffIsoString,
   });
-  const postgresRulesCount = await getPostgresModelCount({
+  const postgresRulesCount = await getPostgresModelCountFunction({
     model: postgresRulesModel,
     knexClient,
     cutoffIsoString,
   });
-  const postgresAsyncOperationsCount = await getPostgresModelCount({
+  const postgresAsyncOperationsCount = await getPostgresModelCountFunction({
     model: postgresAsyncOperationModel,
     knexClient,
     cutoffIsoString,
   });
-  const postgresCollectionCount = await getPostgresModelCount({
+
+  const postgresCollectionCount = await getPostgresModelCountFunction({
     model: postgresCollectionModel,
     knexClient,
     cutoffIsoString,
@@ -127,76 +123,24 @@ const handler = async (
   const {
     collectionValues,
     collectionFailures,
-  } = await buildCollectionMappings(
+  } = await buildCollectionMappingsFunction(
     dynamoCollections,
     postgresCollectionModel,
     knexClient
   );
-
   if (collectionFailures.length > 0) {
     logger.warn(`Warning - failed to map ${collectionFailures.length} / ${dynamoCollectionsCount}: ${JSON.stringify(collectionFailures)}`);
   }
 
-  const mapper = async (collectionMap: CollectionMapping): Promise<StatsObject> => {
-    const { collection, postgresCollectionId } = collectionMap;
-    const collectionId = `${collection.name}___${collection.version}`;
-    return {
-      collectionId,
-      counts: await Promise.all([
-        getDbCount(
-          getPdrs({
-            prefix,
-            query: getEsCutoffQuery(
-              ['pdrName', 'createdAt'],
-              cutoffTime,
-              collectionId
-            ),
-          })
-        ),
-        getDbCount(
-          listGranules({
-            prefix,
-            query: getEsCutoffQuery(
-              ['granuleId', 'createdAt'],
-              cutoffTime,
-              collectionId
-            ),
-          })
-        ),
-        getDbCount(
-          getExecutions({
-            prefix,
-            query: getEsCutoffQuery(
-              ['execution', 'createdAt'],
-              cutoffTime,
-              collectionId
-            ),
-          })
-        ),
-        getPostgresModelCount({
-          model: postgresGranuleModel,
-          knexClient,
-          cutoffIsoString,
-          queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
-        }),
-        getPostgresModelCount({
-          model: postgresPdrModel,
-          knexClient,
-          cutoffIsoString,
-          queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
-        }),
-        getPostgresModelCount({
-          model: postgresExecutionModel,
-          knexClient,
-          cutoffIsoString,
-          queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
-        }),
-      ]),
-    };
-  };
-  const collectionReportResults = await pMap(collectionValues, mapper, { concurrency: dbConcurrency });
-  const collectionReportObj = await generateCollectionReportObj(collectionReportResults);
+  // Generate report of pdr/executions/granules count differences for each collection.  Return
+  // mapping of collections with differences
+  const collectionReportResults = await pMap(
+    collectionValues,
+    mapperFunction.bind(undefined, cutoffIsoString, cutoffTime, knexClient, prefix),
+    { concurrency: dbConcurrency }
+  );
 
+  const collectionReportObj = await generateCollectionReportObj(collectionReportResults);
   const aggregateReportObj = generateAggregateReportObj({
     dynamoAsyncOperationsCount,
     dynamoCollectionsCount,
@@ -209,6 +153,7 @@ const handler = async (
   });
 
   const reportObj = {
+    collectionsNotMapped: collectionFailures,
     records_in_dynamo_not_in_postgres: aggregateReportObj,
     pdr_granule_and_execution_records_not_in_postgres_by_collection: collectionReportObj,
   };
@@ -233,10 +178,3 @@ const handler = async (
   logger.info('Execution complete');
   return reportObj;
 };
-
-handler({
-  reportBucket: 'cumulus-test-sandbox-internal',
-  reportPath: 'jk-test-reports',
-  systemBucket: 'cumulus-test-sandbox-internal',
-  stackName: 'jk-tf4',
-});

@@ -1,0 +1,59 @@
+const test = require('ava');
+
+// eslint-disable-next-line unicorn/import-index
+const { handler } = require('../dist/lambda/index');
+
+test('handler returns the expected report', async (t) => {
+  process.env.SYSTEM_BUCKET = 'fake_bucket';
+  process.env.GranulesTable = 'GranulesTable';
+  process.env.ProvidersTable = 'ProvidersTable';
+  process.env.RulesTable = 'RulesTable';
+  process.env.CollectionsTable = 'CollectionsTable';
+  process.env.AsyncOperationsTable = 'AsyncOperationsTable';
+  const getPostgresModelCountStub = () => 5;
+  const mapperFunctionStub = (_val) => ({
+    collectionId: 'TEST_COLLECTION__006',
+    counts: [10, 10, 10, 0, 0, 0],
+  });
+  const buildCollectionMappingsFunctionStub = () => ({
+    collectionValues: [{
+      collection: 'TEST_COLLECTION__006',
+      postgresCollectionId: 1,
+    }],
+    collectionFailures: ['fake collection failures object'],
+  });
+  const getDynamoTableEntriesFunctionStub = () => [
+    new Array(40),
+    new Array(50),
+    new Array(60),
+    new Array(1000),
+  ];
+  const getKnexClientStub = async () => ({ val: true });
+  const actual = await handler({
+    getPostgresModelCountFunction: getPostgresModelCountStub,
+    mapperFunction: mapperFunctionStub,
+    buildCollectionMappingsFunction: buildCollectionMappingsFunctionStub,
+    getDynamoTableEntriesFunction: getDynamoTableEntriesFunctionStub,
+    getKnexClientFunction: getKnexClientStub,
+  });
+
+  const expected = {
+    collectionsNotMapped: [
+      'fake collection failures object',
+    ],
+    pdr_granule_and_execution_records_not_in_postgres_by_collection: {
+      TEST_COLLECTION__006: {
+        executions: 10,
+        granules: 10,
+        pdrs: 10,
+      },
+    },
+    records_in_dynamo_not_in_postgres: {
+      asyncOperations: 995,
+      collections: 35,
+      providers: 45,
+      rules: 55,
+    },
+  };
+  t.deepEqual(actual, expected);
+});
