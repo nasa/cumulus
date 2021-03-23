@@ -125,6 +125,25 @@ test.beforeEach(async (t) => {
   });
   t.context.fakeFile = fakeFile;
 
+  const fakeExecution = {
+    arn: randomId('arn'),
+    duration: 180.5,
+    name: randomId('name'),
+    execution: randomId('execution'),
+    parentArn: undefined,
+    error: { test: 'error' },
+    status: 'completed',
+    createdAt: Date.now() - 180.5 * 1000,
+    updatedAt: Date.now(),
+    timestamp: Date.now(),
+    type: 'fakeWorkflow',
+    originalPayload: { testInput: 'originalPayloadValue' },
+    finalPayload: { testOutput: 'finalPayloadValue' },
+    tasks: {},
+    cumulusVersion: '1.0.0',
+  };
+  t.context.fakeExecution = fakeExecution;
+
   t.context.fakeGranule = {
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: `${testCollection.name}___${testCollection.version}`,
@@ -170,20 +189,20 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await t.context.knex(tableNames.collections).del();
   await t.context.knex(tableNames.files).del();
   await t.context.knex(tableNames.granulesExecutions).del();
   await t.context.knex(tableNames.granules).del();
   await t.context.knex(tableNames.collections).del();
+  await t.context.knex(tableNames.executions).del();
   await t.context.knex(tableNames.pdrs).del();
   await t.context.knex(tableNames.providers).del();
-  await t.context.knex(tableNames.executions).del();
 });
 
 test.after.always(async (t) => {
   await executionsModel.deleteTable();
   await granulesModel.deleteTable();
   await collectionsModel.deleteTable();
+  await providersModel.deleteTable();
   await pdrsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -196,47 +215,22 @@ test.after.always(async (t) => {
 });
 
 test('handler migrates executions, granules, files, and PDRs', async (t) => {
-  const fakeExecution = {
-    arn: randomId('arn'),
-    duration: 180.5,
-    name: randomId('name'),
-    execution: randomId('execution'),
-    parentArn: undefined,
-    error: { test: 'error' },
-    status: 'completed',
-    createdAt: Date.now() - 180.5 * 1000,
-    updatedAt: Date.now(),
-    timestamp: Date.now(),
-    type: 'fakeWorkflow',
-    originalPayload: { testInput: 'originalPayloadValue' },
-    finalPayload: { testOutput: 'finalPayloadValue' },
-    tasks: {},
-    cumulusVersion: '1.0.0',
-  };
+  const {
+    fakeExecution,
+    fakeGranule,
+    testPdr,
+  } = t.context;
 
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select('cumulus_id')
-    .table('collections')
-    .where({ name: t.context.testCollection.name, version: t.context.testCollection.version })
-    .first();
-
-  const collectionCumulusId = await t.context.collectionPgModel.getRecordCumulusId(
-    t.context.knex,
-    { name: t.context.testCollection.name, version: t.context.testCollection.version }
-  );
-  console.log(collectionCumulusId);
-  console.log(t.context.testCollection);
-  console.log(createdRecord);
   await Promise.all([
     executionsModel.create(fakeExecution),
-    granulesModel.create(t.context.fakeGranule),
-    pdrsModel.create(t.context.testPdr),
+    granulesModel.create(fakeGranule),
+    pdrsModel.create(testPdr),
   ]);
 
   t.teardown(() => Promise.all([
     executionsModel.delete(fakeExecution),
-    granulesModel.delete(t.context.fakeGranule),
-    pdrsModel.delete({ pdrName: t.context.testPdr.pdrName }),
+    granulesModel.delete(fakeGranule),
+    pdrsModel.delete({ pdrName: testPdr.pdrName }),
   ]));
 
   const call = await handler({});
