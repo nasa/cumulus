@@ -83,12 +83,20 @@ test.beforeEach(async (t) => {
   const testCollection = fakeCollectionRecordFactory();
   t.context.collectionPgModel = collectionPgModel;
 
-  const collectionResponse = await collectionPgModel.create(
+  await collectionPgModel.create(
     t.context.knex,
     testCollection
   );
   t.context.testCollection = testCollection;
-  t.context.collectionCumulusId = collectionResponse[0];
+
+  const providerPgModel = new ProviderPgModel();
+  const testProvider = fakeProviderRecordFactory();
+
+  await providerPgModel.create(
+    t.context.knex,
+    testProvider
+  );
+  t.context.testProvider = testProvider;
 
   const executionPgModel = new ExecutionPgModel();
   const executionUrl = cryptoRandomString({ length: 5 });
@@ -97,21 +105,45 @@ test.beforeEach(async (t) => {
   const testExecution = fakeExecutionRecordFactory({
     url: executionUrl,
   });
-  const executionResponse = await executionPgModel.create(
+  await executionPgModel.create(
     t.context.knex,
     testExecution
   );
   t.context.testExecution = testExecution;
-  t.context.executionCumulusId = executionResponse[0];
+});
 
-  const providerPgModel = new ProviderPgModel();
-  const testProvider = fakeProviderRecordFactory();
+test.afterEach.always(async (t) => {
+  await t.context.knex(tableNames.files).del();
+  await t.context.knex(tableNames.granulesExecutions).del();
+  await t.context.knex(tableNames.granules).del();
+  await t.context.knex(tableNames.executions).del();
+  await t.context.knex(tableNames.pdrs).del();
+  await t.context.knex(tableNames.providers).del();
+  await t.context.knex(tableNames.collections).del();
+});
 
-  const providerResponse = await providerPgModel.create(
-    t.context.knex,
-    testProvider
-  );
-  t.context.providerCumulusId = providerResponse[0];
+test.after.always(async (t) => {
+  await executionsModel.deleteTable();
+  await granulesModel.deleteTable();
+  await providersModel.deleteTable();
+  await collectionsModel.deleteTable();
+  await pdrsModel.deleteTable();
+
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
+
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
+});
+
+test('handler migrates executions, granules, files, and PDRs', async (t) => {
+  const {
+    testCollection,
+    testExecution,
+    testProvider,
+  } = t.context;
 
   const fakeFile = () => fakeFileFactory({
     bucket: cryptoRandomString({ length: 10 }),
@@ -123,7 +155,6 @@ test.beforeEach(async (t) => {
     type: 'data',
     source: 'source',
   });
-  t.context.fakeFile = fakeFile;
 
   const fakeExecution = {
     arn: randomId('arn'),
@@ -142,9 +173,8 @@ test.beforeEach(async (t) => {
     tasks: {},
     cumulusVersion: '1.0.0',
   };
-  t.context.fakeExecution = fakeExecution;
 
-  t.context.fakeGranule = {
+  const fakeGranule = {
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: `${testCollection.name}___${testCollection.version}`,
     pdrName: undefined,
@@ -169,7 +199,7 @@ test.beforeEach(async (t) => {
     updatedAt: Date.now(),
   };
 
-  t.context.testPdr = {
+  const testPdr = {
     pdrName: cryptoRandomString({ length: 5 }),
     collectionId: `${testCollection.name}___${testCollection.version}`,
     provider: testProvider.name,
@@ -186,46 +216,18 @@ test.beforeEach(async (t) => {
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-});
-
-test.afterEach.always(async (t) => {
-  await t.context.knex(tableNames.files).del();
-  await t.context.knex(tableNames.granulesExecutions).del();
-  await t.context.knex(tableNames.granules).del();
-  await t.context.knex(tableNames.collections).del();
-  await t.context.knex(tableNames.executions).del();
-  await t.context.knex(tableNames.pdrs).del();
-  await t.context.knex(tableNames.providers).del();
-});
-
-test.after.always(async (t) => {
-  await executionsModel.deleteTable();
-  await granulesModel.deleteTable();
-  await collectionsModel.deleteTable();
-  await providersModel.deleteTable();
-  await pdrsModel.deleteTable();
-
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
-
-  await destroyLocalTestDb({
-    knex: t.context.knex,
-    knexAdmin: t.context.knexAdmin,
-    testDbName,
-  });
-});
-
-test('handler migrates executions, granules, files, and PDRs', async (t) => {
-  const {
-    fakeExecution,
-    fakeGranule,
-    testPdr,
-  } = t.context;
-
   await Promise.all([
     executionsModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
+
+  console.log(t.context.testCollection);
+  const collectionCumulusId = await t.context.collectionPgModel.getRecordCumulusId(
+    t.context.knex,
+    { name: t.context.testCollection.name, version: t.context.testCollection.version }
+  );
+  console.log(collectionCumulusId);
 
   t.teardown(() => Promise.all([
     executionsModel.delete(fakeExecution),
@@ -233,7 +235,7 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
   ]));
 
-  const call = await handler({});
+  const call = await handler({ env: process.env });
   const expected = `
       Migration summary:
         Executions:
