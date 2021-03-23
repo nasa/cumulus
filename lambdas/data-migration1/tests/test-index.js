@@ -45,10 +45,6 @@ test.before(async (t) => {
 
   const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
   const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
-  process.env = {
-    ...process.env,
-    ...localStackConnectionEnv,
-  };
 
   const createKeyResponse = await KMS.createKey();
   process.env.provider_kms_key_id = createKeyResponse.KeyMetadata.KeyId;
@@ -81,6 +77,12 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
 });
 
 test.afterEach.always(async (t) => {
