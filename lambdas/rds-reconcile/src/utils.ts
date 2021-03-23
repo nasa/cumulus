@@ -1,13 +1,13 @@
 import {
   Knex,
   BasePgModel,
-  CollectionPgModel,
   translateApiCollectionToPostgresCollection,
   PostgresCollection,
+  CollectionPgModel,
 } from '@cumulus/db';
+
 import { NewCollectionRecord } from '@cumulus/types/api/collections';
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
-
 import { ReportObj, StatsObject, CollectionMapping } from './types';
 
 export const getDbCount = async (
@@ -32,6 +32,18 @@ export const generateCollectionReportObj = (stats: StatsObject[]) => {
   return reportObj;
 };
 
+export const getEsCutoffQuery = (
+  fields: string[],
+  cutoffTime: number,
+  collectionId?: string
+) => {
+  const returnObj = { fields, createdAt__to: `${cutoffTime}` };
+  if (collectionId) {
+    return { ...returnObj, collectionId };
+  }
+  return returnObj;
+};
+
 export const getPostgresModelCount = async <T, R extends { cumulus_id: number }>(params: {
   model: BasePgModel<T, R>,
   knexClient: Knex,
@@ -50,18 +62,6 @@ export const getPostgresModelCount = async <T, R extends { cumulus_id: number }>
   }
   const result = await model.count(knexClient, queryParams);
   return Number(result[0].count);
-};
-
-export const getEsCutoffQuery = (
-  fields: string[],
-  cutoffTime: number,
-  collectionId?: string
-) => {
-  const returnObj = { fields, createdAt__to: `${cutoffTime}` };
-  if (collectionId) {
-    return { ...returnObj, collectionId };
-  }
-  return returnObj;
 };
 
 export const buildCollectionMappings = async (
@@ -105,6 +105,26 @@ export const buildCollectionMappings = async (
     collectionValues,
     collectionFailures,
   };
+};
+
+export const getDynamoTableEntries = async (params: {
+  dynamoCollectionModel: any,
+  dynamoProvidersModel: any,
+  dynamoRulesModel: any,
+  dynamoAsyncRulesModel: any,
+}) => {
+  const {
+    dynamoCollectionModel,
+    dynamoProvidersModel,
+    dynamoRulesModel,
+    dynamoAsyncRulesModel,
+  } = params;
+  return Promise.all([
+    dynamoCollectionModel.getAllCollections(),
+    dynamoProvidersModel.getAllProviders(),
+    dynamoRulesModel.getAllRules(),
+    dynamoAsyncRulesModel.getAllAsyncOperations(),
+  ]);
 };
 
 export const generateAggregateReportObj = (params: {

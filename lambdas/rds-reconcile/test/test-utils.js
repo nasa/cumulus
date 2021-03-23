@@ -7,7 +7,8 @@ const {
   getPostgresModelCount,
   generateAggregateReportObj,
   buildCollectionMappings,
-  getEsCutoffQuery
+  getEsCutoffQuery,
+  getDynamoTableEntries,
 } = require('../dist/lambda/utils');
 
 test('generateAggregateReportObj returns the expected results', (t) => {
@@ -163,4 +164,21 @@ test('generateCollectionReportObj does not return a report object if there are n
   const actual = generateCollectionReportObj(statsObjects);
   const expected = {};
   t.deepEqual(actual, expected);
+});
+
+test('getDynamoTableEntries calls the correct model methods', async (t) => {
+  const getAllSpy = sinon.spy(async () => true);
+  const modelStub = {
+    getAllCollections: getAllSpy,
+    getAllProviders: getAllSpy,
+    getAllRules: getAllSpy,
+    getAllAsyncOperations: getAllSpy,
+  };
+  await getDynamoTableEntries({
+    dynamoCollectionModel: modelStub,
+    dynamoProvidersModel: modelStub,
+    dynamoRulesModel: modelStub,
+    dynamoAsyncRulesModel: modelStub,
+  });
+  t.is(getAllSpy.callCount, 4);
 });
