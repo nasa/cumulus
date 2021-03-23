@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added orca API endpoint to `@cumulus/api` to get recovery status
   - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
 
+- **CUMULUS-2374**
+  - Add cookbok entry for queueing PostToCmr step
+  - Add example workflow to go with cookbook
 
 ## [v7.1.0] 2021-03-12
 
