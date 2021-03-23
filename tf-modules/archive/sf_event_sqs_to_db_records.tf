@@ -202,6 +202,7 @@ resource "aws_lambda_function" "write_db_records_dlq_to_s3" {
 
   environment {
     variables = {
+      stackName     = var.prefix
       system_bucket = var.system_bucket
     }
   }

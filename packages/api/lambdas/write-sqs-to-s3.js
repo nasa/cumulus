@@ -9,7 +9,7 @@ async function handler(event, _) {
 
   return Promise.all(sqsMessages.map(async (message) => s3PutObject({
     Bucket: process.env.system_bucket,
-    Key: `dead_letter_archive/sqs/${message.messageId}.json`,
+    Key: `${process.env.stackName}/dead-letter-archive/sqs/${message.messageId}.json`,
     Body: message.body,
   })));
 }

@@ -13,11 +13,13 @@ const {
 test.before(async (t) => {
   t.context.bucket = randomString();
   await S3.createBucket(t.context.bucket);
+  process.env.stackName = randomString();
   process.env.system_bucket = t.context.bucket;
 });
 
 test.after(async (t) => {
   delete process.env.system_bucket;
+  delete process.env.stackName
   await S3.recursivelyDeleteS3Bucket(t.context.bucket);
 });
 
@@ -47,11 +49,11 @@ test.serial('write-sqs-to-s3 puts one file on S3 per SQS message', async (t) => 
 
   t.deepEqual(await S3.getTextObject(
     t.context.bucket,
-    `dead_letter_archive/sqs/${message1.messageId}.json`
+    `${process.env.stackName}/dead-letter-archive/sqs/${message1.messageId}.json`
   ), message1.body);
   t.deepEqual(await S3.getTextObject(
     t.context.bucket,
-    `dead_letter_archive/sqs/${message2.messageId}.json`
+    `${process.env.stackName}/dead-letter-archive/sqs/${message2.messageId}.json`
   ), message2.body);
 });
 
