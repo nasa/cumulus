@@ -19,7 +19,7 @@ test.before(async (t) => {
 
 test.after(async (t) => {
   delete process.env.system_bucket;
-  delete process.env.stackName
+  delete process.env.stackName;
   await S3.recursivelyDeleteS3Bucket(t.context.bucket);
 });
 
@@ -57,7 +57,18 @@ test.serial('write-sqs-to-s3 puts one file on S3 per SQS message', async (t) => 
   ), message2.body);
 });
 
+test.serial('write-sqs-to-s3 throws error if stackName is not defined', async (t) => {
+  delete process.env.stackName;
+  await t.throwsAsync(
+    handler({}),
+    { message: 'Could not determine archive path as stackName env var is undefined.' }
+  );
+});
+
 test.serial('write-sqs-to-s3 throws error if system bucket is not defined', async (t) => {
   delete process.env.system_bucket;
-  await t.throwsAsync(handler({}));
+  await t.throwsAsync(
+    handler({}),
+    { message: 'System bucket env var is required.' }
+  );
 });
