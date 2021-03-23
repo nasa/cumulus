@@ -57,6 +57,7 @@ test.before(async (t) => {
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
   };
 
   collectionsModel = new Collection();
@@ -81,8 +82,6 @@ test.beforeEach(async (t) => {
 
   const collectionPgModel = new CollectionPgModel();
   const testCollection = fakeCollectionRecordFactory();
-  t.context.collectionPgModel = collectionPgModel;
-
   await collectionPgModel.create(
     t.context.knex,
     testCollection
@@ -116,18 +115,18 @@ test.afterEach.always(async (t) => {
   await t.context.knex(tableNames.files).del();
   await t.context.knex(tableNames.granulesExecutions).del();
   await t.context.knex(tableNames.granules).del();
-  await t.context.knex(tableNames.executions).del();
   await t.context.knex(tableNames.pdrs).del();
   await t.context.knex(tableNames.providers).del();
   await t.context.knex(tableNames.collections).del();
+  await t.context.knex(tableNames.executions).del();
 });
 
 test.after.always(async (t) => {
-  await executionsModel.deleteTable();
   await granulesModel.deleteTable();
+  await pdrsModel.deleteTable();
   await providersModel.deleteTable();
   await collectionsModel.deleteTable();
-  await pdrsModel.deleteTable();
+  await executionsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
@@ -180,7 +179,7 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
     pdrName: undefined,
     provider: undefined,
     status: 'running',
-    execution: t.context.executionUrl,
+    execution: testExecution.url,
     cmrLink: cryptoRandomString({ length: 10 }),
     published: false,
     duration: 10,
@@ -216,23 +215,17 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
+
   await Promise.all([
     executionsModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
 
-  console.log(t.context.testCollection);
-  const collectionCumulusId = await t.context.collectionPgModel.getRecordCumulusId(
-    t.context.knex,
-    { name: t.context.testCollection.name, version: t.context.testCollection.version }
-  );
-  console.log(collectionCumulusId);
-
   t.teardown(() => Promise.all([
-    executionsModel.delete(fakeExecution),
-    granulesModel.delete(fakeGranule),
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
+    granulesModel.delete({ granuleId: fakeGranule.granuleId }),
+    executionsModel.delete({ arn: fakeExecution.arn }),
   ]));
 
   const call = await handler({ env: process.env });
