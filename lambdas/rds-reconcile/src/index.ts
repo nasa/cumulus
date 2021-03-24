@@ -22,7 +22,7 @@ import {
   getDynamoTableEntries,
 } from './utils';
 
-import { mapper } from './mapper';
+import { pMapMapper } from './mapper';
 
 const logger = new Logger({
   sender: '@cumulus/lambdas/rds-reconcile',
@@ -39,7 +39,7 @@ export const handler = async (
     stackName?: string,
     // Arguments below are for unit injection and should not be overwritten, generally
     getPostgresModelCountFunction?: typeof getPostgresModelCount,
-    mapperFunction?: typeof mapper,
+    mapperFunction?: typeof pMapMapper,
     buildCollectionMappingsFunction?: typeof buildCollectionMappings,
     getDynamoTableEntriesFunction?: typeof getDynamoTableEntries,
     getKnexClientFunction?: typeof getKnexClient,
@@ -55,7 +55,7 @@ export const handler = async (
     stackName = envUtils.getRequiredEnvVar('DEPLOYMENT'),
     getKnexClientFunction = getKnexClient,
     getPostgresModelCountFunction = getPostgresModelCount,
-    mapperFunction = mapper,
+    mapperFunction = pMapMapper,
     buildCollectionMappingsFunction = buildCollectionMappings,
     getDynamoTableEntriesFunction = getDynamoTableEntries,
   } = event;
