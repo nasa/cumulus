@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2421**
+  - Added cron job to clean up docker storage blocks to ECS cluster template.
+  - Added `ecs_include_docker_cleanup_cronjob` boolean variable to the Cumulus module to enable this behavior. Default value is `false`.
+
 ## [v7.2.0] 2021-03-23
 
 ### Added
