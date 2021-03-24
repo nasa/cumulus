@@ -80,8 +80,8 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await t.context.providersModel.deleteTable();
   await t.context.rulesModel.deleteTable();
+  await t.context.providersModel.deleteTable();
   await t.context.collectionsModel.deleteTable();
   await t.context.asyncOperationsModel.deleteTable();
 
