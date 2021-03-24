@@ -26,7 +26,6 @@ const {
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
-  tableNames,
 } = require('@cumulus/db');
 
 // eslint-disable-next-line node/no-unpublished-require
