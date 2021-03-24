@@ -28,8 +28,8 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   const message1 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      detail: {
-        name: message1Name,
+      cumulus_meta: {
+        execution_name: message1Name,
       },
     }),
   };
@@ -37,8 +37,8 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      detail: {
-        name: message2Name,
+      cumulus_meta: {
+        execution_name: message2Name,
       },
     }),
   };
@@ -64,16 +64,16 @@ test.serial('write-db-dlq-records-to-s3 versions message from identical executio
   const message1 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      detail: {
-        name: messageName,
+      cumulus_meta: {
+        execution_name: messageName,
       },
     }),
   };
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      detail: {
-        name: messageName,
+      cumulus_meta: {
+        execution_name: messageName,
       },
     }),
   };
