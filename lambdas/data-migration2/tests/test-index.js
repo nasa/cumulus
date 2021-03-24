@@ -23,9 +23,9 @@ const {
   fakeExecutionRecordFactory,
   fakeProviderRecordFactory,
   generateLocalTestDb,
+  localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
-  localStackConnectionEnv,
   tableNames,
 } = require('@cumulus/db');
 
@@ -46,8 +46,8 @@ test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
   process.env.system_bucket = cryptoRandomString({ length: 10 });
 
-  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
   process.env.CollectionsTable = cryptoRandomString({ length: 10 });
+  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
   process.env.PdrsTable = cryptoRandomString({ length: 10 });
   process.env.ProvidersTable = cryptoRandomString({ length: 10 });
@@ -57,13 +57,13 @@ test.before(async (t) => {
   collectionsModel = new Collection();
   executionsModel = new Execution();
   granulesModel = new Granule();
-  providersModel = new Provider();
   pdrsModel = new Pdr();
+  providersModel = new Provider();
 
-  await pdrsModel.createTable();
   await collectionsModel.createTable();
   await executionsModel.createTable();
   await granulesModel.createTable();
+  await pdrsModel.createTable();
   await providersModel.createTable();
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
