@@ -411,3 +411,23 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
 
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
+
+test('writeRecords() does not throw error writing an out of order message that is older than an existing message', async (t) => {
+  const {
+    cumulusMessage,
+    executionModel,
+    granuleModel,
+    knex,
+    executionArn,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  await writeRecords({ cumulusMessage, knex, granuleModel });
+
+  t.true(await executionModel.exists({ arn: executionArn }));
+
+  cumulusMessage.meta.status = 'running';
+
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
+});
