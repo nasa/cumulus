@@ -23,7 +23,7 @@ import {
 import { pMapMapper } from './mapper';
 
 const logger = new Logger({
-  sender: '@cumulus/lambdas/rds-reconcile',
+  sender: '@cumulus/lambdas/postgres-migration-count-tool',
 });
 
 /**
