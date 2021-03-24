@@ -119,7 +119,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let failingWorkflowExecution;
   let granuleCompletedMessageKey;
   let granuleRunningMessageKey;
-  let opendapFilePath;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -246,8 +245,6 @@ describe('The S3 Ingest Granules workflow', () => {
         workflow: 'PublishGranuleQueue',
       }
     );
-
-    opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
   });
 
   afterAll(async () => {
@@ -519,7 +516,6 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(resourceURLs).toContain(scienceFileUrl);
         expect(resourceURLs).toContain(s3BrowseImageUrl);
         expect(resourceURLs).toContain(s3CredsUrl);
-        expect(resourceURLs).toContain(opendapFilePath);
       });
 
       it('updates the CMR metadata "online resources" with the proper types and urls', () => {
@@ -533,7 +529,6 @@ describe('The S3 Ingest Granules workflow', () => {
         const expectedTypes = [
           'GET DATA',
           'VIEW RELATED INFORMATION',
-          'VIEW RELATED INFORMATION',
           'USE SERVICE API',
           'GET RELATED VISUALIZATION',
         ];
@@ -542,7 +537,6 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(cmrUrls).toContain(distributionUrl);
         expect(cmrUrls).toContain(s3BrowseImageUrl);
         expect(cmrUrls).toContain(s3CredsUrl);
-        expect(cmrUrls).toContain(opendapFilePath);
         expect(expectedTypes.sort()).toEqual(resource.map((r) => r.Type).sort());
       });
 
