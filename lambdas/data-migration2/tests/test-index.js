@@ -106,13 +106,6 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await t.context.knex(tableNames.files).del();
-  await t.context.knex(tableNames.granulesExecutions).del();
-  await t.context.knex(tableNames.granules).del();
-  await t.context.knex(tableNames.pdrs).del();
-  await t.context.knex(tableNames.providers).del();
-  await t.context.knex(tableNames.collections).del();
-  await t.context.knex(tableNames.executions).del();
   await t.context.granulesModel.deleteTable();
   await t.context.pdrsModel.deleteTable();
   await t.context.providersModel.deleteTable();

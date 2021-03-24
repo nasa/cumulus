@@ -80,10 +80,6 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await t.context.knex('providers').del();
-  await t.context.knex('rules').del();
-  await t.context.knex('collections').del();
-  await t.context.knex('async_operations').del();
   await t.context.providersModel.deleteTable();
   await t.context.rulesModel.deleteTable();
   await t.context.collectionsModel.deleteTable();
