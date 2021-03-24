@@ -10,8 +10,8 @@ async function handler(event, _) {
   const sqsMessages = get(event, 'Records', []);
   /* eslint-disable no-restricted-syntax, no-await-in-loop */
   for (const message of sqsMessages) {
-    const executionEvent = parseSQSMessageBody(message);
-    const executionName = executionEvent.detail.name;
+    const cumulusMessage = parseSQSMessageBody(message);
+    const executionName = cumulusMessage.cumulus_meta.execution_name;
     // version messages as workflows can produce multiple messages that may all fail.
     let s3IdVersionSuffix = 1;
     let s3Identifier = `${executionName}-${s3IdVersionSuffix}`;

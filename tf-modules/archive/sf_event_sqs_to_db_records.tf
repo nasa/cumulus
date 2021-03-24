@@ -38,6 +38,13 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
+    actions   = [
+      "s3:ListBucket"
+    ]
+    resources = ["arn:aws:s3:::${var.system_bucket}"]
+  }
+
+  statement {
     actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
