@@ -33,10 +33,14 @@ test('generateAggregateReportObj returns the expected results', (t) => {
   });
 
   t.deepEqual(result, {
-    asyncOperations: 0,
-    collections: 1,
-    providers: 2,
-    rules: 3,
+    asyncOperationsDelta: 0,
+    collectionsDelta: 1,
+    providersDelta: 2,
+    rulesDelta: 3,
+    totalDynamoAsyncOperations: 1,
+    totalDynamoCollections: 2,
+    totalDynamoProviders: 3,
+    totalDynamoRules: 4,
   });
 });
 
@@ -152,15 +156,23 @@ test('generateCollectionReportObj generates a report object', (t) => {
   ];
   const actual = generateCollectionReportObj(statsObjects);
   const expected = {
-    fakeCollectionId: { executions: 3, granules: 3, pdrs: 3 },
+    fakeCollectionId: {
+      executionsDelta: 3,
+      granulesDelta: 3,
+      pdrsDelta: 3,
+      totalExecutions: 9,
+      totalGranules: 8,
+      totalPdrs: 7,
+    },
   };
   t.deepEqual(actual, expected);
 });
 
 test('generateCollectionReportObj does not return a report object if there are no discrepancies', (t) => {
-  const statsObjects = [
-    { collectionId: 'fakeCollectionId', counts: [1, 1, 1, 1, 1, 1] },
-  ];
+  const statsObjects = [{
+    collectionId: 'fakeCollectionId',
+    counts: [1, 1, 1, 1, 1, 1],
+  }];
   const actual = generateCollectionReportObj(statsObjects);
   const expected = {};
   t.deepEqual(actual, expected);

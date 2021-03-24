@@ -2,9 +2,12 @@ import { NewCollectionRecord } from '@cumulus/types/api/collections';
 
 export type ReportObj = {
   [key: string]: {
-    pdrs: number,
-    granules: number,
-    executions: number,
+    pdrsDelta: number
+    totalPdrs: number
+    granulesDelta: number
+    totalGranules: number
+    executionsDelta: number
+    totalExecutions:number
   };
 };
 

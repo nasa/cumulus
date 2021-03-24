@@ -12,6 +12,9 @@ import {
 import { getEsCutoffQuery, getDbCount, getPostgresModelCount } from './utils';
 import { StatsObject, CollectionMapping } from './types';
 
+const postgresGranuleModel = new GranulePgModel();
+const postgresExecutionModel = new ExecutionPgModel();
+const postgresPdrModel = new PdrPgModel();
 
 /**
 * pMap mapping function that returns a StatsObject from a collection map
@@ -53,12 +56,8 @@ export const mapper = async (params: {
     getExecutionsFunction = getExecutions,
     getPostgresModelCountFunction = getPostgresModelCount,
   } = { ...params };
-  const postgresGranuleModel = new GranulePgModel();
-  const postgresExecutionModel = new ExecutionPgModel();
-  const postgresPdrModel = new PdrPgModel();
-
   const { collection, postgresCollectionId } = collectionMap;
-  const collectionId = `${collection.name}__${collection.version}`;
+  const collectionId = `${collection.name}___${collection.version}`;
   return {
     collectionId,
     counts: await Promise.all([
@@ -93,13 +92,13 @@ export const mapper = async (params: {
         })
       ),
       getPostgresModelCountFunction({
-        model: postgresGranuleModel,
+        model: postgresPdrModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
       }),
       getPostgresModelCountFunction({
-        model: postgresPdrModel,
+        model: postgresGranuleModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
@@ -133,5 +132,13 @@ export const pMapMapper = async (
   knexClient: Knex,
   prefix: string,
   collectionMap: CollectionMapping
-): Promise<StatsObject> =>
-  mapper({ cutoffIsoString, cutoffTime, knexClient, prefix, collectionMap });
+): Promise<StatsObject> => {
+  const returnVal = await mapper({
+    cutoffIsoString,
+    cutoffTime,
+    knexClient,
+    prefix,
+    collectionMap,
+  });
+  return returnVal;
+};

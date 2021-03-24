@@ -43,16 +43,23 @@ test('handler returns the expected report', async (t) => {
     ],
     pdr_granule_and_execution_records_not_in_postgres_by_collection: {
       TEST_COLLECTION__006: {
-        executions: 10,
-        granules: 10,
-        pdrs: 10,
+        executionsDelta: 10,
+        granulesDelta: 10,
+        pdrsDelta: 10,
+        totalExecutions: 10,
+        totalGranules: 10,
+        totalPdrs: 10,
       },
     },
     records_in_dynamo_not_in_postgres: {
-      asyncOperations: 995,
-      collections: 35,
-      providers: 45,
-      rules: 55,
+      totalDynamoAsyncOperations: 1000,
+      totalDynamoCollections: 40,
+      totalDynamoProviders: 50,
+      totalDynamoRules: 60,
+      asyncOperationsDelta: 995,
+      collectionsDelta: 35,
+      providersDelta: 45,
+      rulesDelta: 55,
     },
   };
   t.deepEqual(actual, expected);

@@ -37,7 +37,7 @@ export const handler = async (
     cutoffSeconds?: number,
     systemBucket?: string,
     stackName?: string,
-    // Arguments below are for unit injection and should not be overwritten, generally
+    // Arguments below are for unit test injection
     getPostgresModelCountFunction?: typeof getPostgresModelCount,
     mapperFunction?: typeof pMapMapper,
     buildCollectionMappingsFunction?: typeof buildCollectionMappings,
@@ -140,6 +140,7 @@ export const handler = async (
     { concurrency: dbConcurrency }
   );
 
+  // Reformat stats objects to user-readable format
   const collectionReportObj = await generateCollectionReportObj(collectionReportResults);
   const aggregateReportObj = generateAggregateReportObj({
     dynamoAsyncOperationsCount,
