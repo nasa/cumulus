@@ -33,48 +33,42 @@ const {
 const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
 
-let collectionsModel;
-let executionsModel;
-let granulesModel;
-let pdrsModel;
-let providersModel;
-
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
 const dateString = new Date().toString();
 
 test.before(async (t) => {
-  process.env.stackName = cryptoRandomString({ length: 10 });
-  process.env.system_bucket = cryptoRandomString({ length: 10 });
-
-  process.env.CollectionsTable = cryptoRandomString({ length: 10 });
-  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-  process.env.GranulesTable = cryptoRandomString({ length: 10 });
-  process.env.PdrsTable = cryptoRandomString({ length: 10 });
-  process.env.ProvidersTable = cryptoRandomString({ length: 10 });
-
-  await createBucket(process.env.system_bucket);
-
-  collectionsModel = new Collection();
-  executionsModel = new Execution();
-  granulesModel = new Granule();
-  pdrsModel = new Pdr();
-  providersModel = new Provider();
-
-  await collectionsModel.createTable();
-  await executionsModel.createTable();
-  await granulesModel.createTable();
-  await pdrsModel.createTable();
-  await providersModel.createTable();
-
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
-
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
+    stackName: cryptoRandomString({ length: 10 }),
+    system_bucket: cryptoRandomString({ length: 10 }),
+    CollectionsTable: cryptoRandomString({ length: 10 }),
+    ExecutionsTable: cryptoRandomString({ length: 10 }),
+    GranulesTable: cryptoRandomString({ length: 10 }),
+    PdrsTable: cryptoRandomString({ length: 10 }),
+    ProvidersTable: cryptoRandomString({ length: 10 }),
   };
+
+  await createBucket(process.env.system_bucket);
+
+  t.context.collectionsModel = new Collection();
+  t.context.executionsModel = new Execution();
+  t.context.granulesModel = new Granule();
+  t.context.pdrsModel = new Pdr();
+  t.context.providersModel = new Provider();
+
+  await Promise.all([
+    t.context.collectionsModel.createTable(),
+    t.context.executionsModel.createTable(),
+    t.context.granulesModel.createTable(),
+    t.context.pdrsModel.createTable(),
+    t.context.providersModel.createTable(),
+  ]);
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
 test.beforeEach(async (t) => {
@@ -111,7 +105,7 @@ test.beforeEach(async (t) => {
   t.context.testExecution = testExecution;
 });
 
-test.afterEach.always(async (t) => {
+test.after.always(async (t) => {
   await t.context.knex(tableNames.files).del();
   await t.context.knex(tableNames.granulesExecutions).del();
   await t.context.knex(tableNames.granules).del();
@@ -119,14 +113,11 @@ test.afterEach.always(async (t) => {
   await t.context.knex(tableNames.providers).del();
   await t.context.knex(tableNames.collections).del();
   await t.context.knex(tableNames.executions).del();
-});
-
-test.after.always(async (t) => {
-  await granulesModel.deleteTable();
-  await pdrsModel.deleteTable();
-  await providersModel.deleteTable();
-  await collectionsModel.deleteTable();
-  await executionsModel.deleteTable();
+  await t.context.granulesModel.deleteTable();
+  await t.context.pdrsModel.deleteTable();
+  await t.context.providersModel.deleteTable();
+  await t.context.collectionsModel.deleteTable();
+  await t.context.executionsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
@@ -139,6 +130,9 @@ test.after.always(async (t) => {
 
 test('handler migrates executions, granules, files, and PDRs', async (t) => {
   const {
+    executionsModel,
+    granulesModel,
+    pdrsModel,
     testCollection,
     testExecution,
     testProvider,

@@ -23,25 +23,23 @@ const {
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
-
-let asyncOperationsModel;
-let collectionsModel;
-let providersModel;
-let rulesModel;
-
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const workflow = cryptoRandomString({ length: 10 });
 
 test.before(async (t) => {
-  process.env.stackName = cryptoRandomString({ length: 10 });
-  process.env.system_bucket = cryptoRandomString({ length: 10 });
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+    stackName: cryptoRandomString({ length: 10 }),
+    system_bucket: cryptoRandomString({ length: 10 }),
+    AsyncOperationsTable: cryptoRandomString({ length: 10 }),
+    CollectionsTable: cryptoRandomString({ length: 10 }),
+    ProvidersTable: cryptoRandomString({ length: 10 }),
+    RulesTable: cryptoRandomString({ length: 10 }),
+  };
 
   await createBucket(process.env.system_bucket);
-
-  process.env.AsyncOperationsTable = cryptoRandomString({ length: 10 });
-  process.env.CollectionsTable = cryptoRandomString({ length: 10 });
-  process.env.ProvidersTable = cryptoRandomString({ length: 10 });
-  process.env.RulesTable = cryptoRandomString({ length: 10 });
 
   const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
   const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
@@ -49,18 +47,20 @@ test.before(async (t) => {
   const createKeyResponse = await KMS.createKey();
   process.env.provider_kms_key_id = createKeyResponse.KeyMetadata.KeyId;
 
-  asyncOperationsModel = new AsyncOperation({
+  t.context.asyncOperationsModel = new AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
   });
-  collectionsModel = new Collection();
-  providersModel = new Provider();
-  rulesModel = new Rule();
+  t.context.collectionsModel = new Collection();
+  t.context.providersModel = new Provider();
+  t.context.rulesModel = new Rule();
 
-  await asyncOperationsModel.createTable();
-  await collectionsModel.createTable();
-  await providersModel.createTable();
-  await rulesModel.createTable();
+  await Promise.all([
+    t.context.asyncOperationsModel.createTable(),
+    t.context.collectionsModel.createTable(),
+    t.context.providersModel.createTable(),
+    t.context.rulesModel.createTable(),
+  ]);
 
   await Promise.all([
     putJsonS3Object(
@@ -77,26 +77,17 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
-
-  process.env = {
-    ...process.env,
-    ...localStackConnectionEnv,
-    PG_DATABASE: testDbName,
-  };
-});
-
-test.afterEach.always(async (t) => {
-  await t.context.knex('providers').del();
-  await t.context.knex('collections').del();
-  await t.context.knex('rules').del();
-  await t.context.knex('async_operations').del();
 });
 
 test.after.always(async (t) => {
-  await providersModel.deleteTable();
-  await collectionsModel.deleteTable();
-  await rulesModel.deleteTable();
-  await asyncOperationsModel.deleteTable();
+  await t.context.knex('providers').del();
+  await t.context.knex('rules').del();
+  await t.context.knex('collections').del();
+  await t.context.knex('async_operations').del();
+  await t.context.providersModel.deleteTable();
+  await t.context.rulesModel.deleteTable();
+  await t.context.collectionsModel.deleteTable();
+  await t.context.asyncOperationsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
@@ -107,7 +98,14 @@ test.after.always(async (t) => {
   });
 });
 
-test.only('handler migrates async operations, collections, providers, rules', async (t) => {
+test('handler migrates async operations, collections, providers, rules', async (t) => {
+  const {
+    asyncOperationsModel,
+    collectionsModel,
+    providersModel,
+    rulesModel,
+  } = t.context;
+
   const fakeCollection = {
     name: `${cryptoRandomString({ length: 10 })}collection`,
     version: '0.0.0',
