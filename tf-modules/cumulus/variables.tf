@@ -248,6 +248,12 @@ variable "ecs_efs_config" {
   default     = null
 }
 
+variable "ecs_include_docker_cleanup_cronjob" {
+  description = "Flag to configure adding cronjob to clean up unused root space"
+  type        = bool
+  default     = false
+}
+
 variable "ecs_service_alarms" {
   description = "List of Cloudwatch alarms monitoring ECS instances"
   type        = list(object({ name = string, arn = string }))

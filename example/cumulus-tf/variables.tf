@@ -188,6 +188,11 @@ variable "ecs_cluster_instance_subnet_ids" {
   default = []
 }
 
+variable "ecs_include_docker_cleanup_cronjob" {
+  type    = bool
+  default = false
+}
+
 variable "ems_datasource" {
   type        = string
   description = "the data source of EMS reports"
