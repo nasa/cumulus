@@ -4,7 +4,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
-const { URL, resolve } = require('url');
+// const { URL, resolve } = require('url');
 
 const difference = require('lodash/difference');
 const get = require('lodash/get');
@@ -29,7 +29,7 @@ const {
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { generateChecksumFromStream } = require('@cumulus/checksum');
+// const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { randomId } = require('@cumulus/common/test-utils');
 const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -39,7 +39,7 @@ const {
   buildAndStartWorkflow,
   conceptExists,
   getExecutionOutput,
-  getOnlineResources,
+  // getOnlineResources,
   waitForAsyncOperationStatus,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
@@ -49,12 +49,12 @@ const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const executionsApiTestUtils = require('@cumulus/api-client/executions');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
-const {
-  getDistributionFileUrl,
-  getTEADistributionApiRedirect,
-  getTEADistributionApiFileStream,
-  getTEARequestHeaders,
-} = require('@cumulus/integration-tests/api/distribution');
+// const {
+//   getDistributionFileUrl,
+//   getTEADistributionApiRedirect,
+//   getTEADistributionApiFileStream,
+//   getTEARequestHeaders,
+// } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
@@ -112,7 +112,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let granuleModel;
   let inputPayload;
   let pdrModel;
-  let postToCmrOutput;
+  // let postToCmrOutput;
   let provider;
   let providerModel;
   let testDataFolder;
@@ -120,7 +120,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let failingWorkflowExecution;
   let granuleCompletedMessageKey;
   let granuleRunningMessageKey;
-  let opendapFilePath;
+  // let opendapFilePath;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -248,7 +248,7 @@ describe('The S3 Ingest Granules workflow', () => {
       }
     );
 
-    opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
+    // opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
   });
 
   afterAll(async () => {
@@ -459,130 +459,145 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the PostToCmr task', () => {
-    let cmrResource;
-    let ummCmrResource;
-    let files;
-    let granule;
-    let resourceURLs;
-    let beforeAllError;
-    let teaRequestHeaders;
+  describe('the QueueWorkflow task', () => {
+    let lambdaOutput;
 
     beforeAll(async () => {
-      process.env.CMR_ENVIRONMENT = 'UAT';
-      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr');
-
-      if (postToCmrOutput === null) {
-        beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecutionArn}`);
-        return;
-      }
-
-      try {
-        granule = postToCmrOutput.payload.granules[0];
-        files = granule.files;
-
-        const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v5' };
-        const result = await Promise.all([
-          getOnlineResources(granule),
-          getOnlineResources(ummGranule),
-          getTEARequestHeaders(config.stackName),
-        ]);
-
-        cmrResource = result[0];
-        ummCmrResource = result[1];
-        resourceURLs = cmrResource.map((resource) => resource.href);
-        teaRequestHeaders = result[2];
-      } catch (error) {
-        beforeAllError = error;
-      }
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'QueueWorkflow');
     });
 
-    beforeEach(() => {
-      if (beforeAllError) fail(beforeAllError);
-    });
-
-    it('publishes the granule metadata to CMR', async () => {
-      const result = await conceptExists(granule.cmrLink);
-
-      expect(granule.published).toEqual(true);
-      expect(result).not.toEqual(false);
-    });
-
-    it('updates the CMR metadata online resources with the final metadata location', () => {
-      const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
-      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
-
-      console.log('parallel resourceURLs:', resourceURLs);
-      console.log('s3CredsUrl:', s3CredsUrl);
-
-      expect(resourceURLs).toContain(scienceFileUrl);
-      expect(resourceURLs).toContain(s3BrowseImageUrl);
-      expect(resourceURLs).toContain(s3CredsUrl);
-      expect(resourceURLs).toContain(opendapFilePath);
-    });
-
-    it('updates the CMR metadata "online resources" with the proper types and urls', () => {
-      const resource = ummCmrResource;
-      const distributionUrl = getDistributionFileUrl({
-        bucket: files[0].bucket,
-        key: files[0].filepath,
-      });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
-      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
-      const expectedTypes = [
-        'GET DATA',
-        'VIEW RELATED INFORMATION',
-        'VIEW RELATED INFORMATION',
-        'USE SERVICE API',
-        'GET RELATED VISUALIZATION',
-      ];
-      const cmrUrls = resource.map((r) => r.URL);
-
-      expect(cmrUrls).toContain(distributionUrl);
-      expect(cmrUrls).toContain(s3BrowseImageUrl);
-      expect(cmrUrls).toContain(s3CredsUrl);
-      expect(cmrUrls).toContain(opendapFilePath);
-      expect(expectedTypes.sort()).toEqual(resource.map((r) => r.Type).sort());
-    });
-
-    it('includes the Earthdata login ID for requests to protected science files', async () => {
-      const filepath = `/${files[0].bucket}/${files[0].filepath}`;
-      const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
-      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
-      expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
-    });
-
-    it('downloads the requested science file for authorized requests', async () => {
-      const scienceFileUrls = resourceURLs
-        .filter((url) =>
-          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
-          url.match(/s3\.amazonaws\.com/)) &&
-          !url.endsWith('.cmr.xml') &&
-          !url.includes('s3credentials'));
-
-      const checkFiles = await Promise.all(
-        scienceFileUrls
-          .map(async (url) => {
-            const extension = path.extname(new URL(url).pathname);
-            const sourceFile = s3data.find((d) => d.endsWith(extension));
-            const sourceChecksum = await generateChecksumFromStream(
-              'cksum',
-              fs.createReadStream(require.resolve(sourceFile))
-            );
-            const file = files.find((f) => f.name.endsWith(extension));
-
-            const filepath = `/${file.bucket}/${file.filepath}`;
-            const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
-            // Compare checksum of downloaded file with expected checksum.
-            const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
-            return downloadChecksum === sourceChecksum;
-          })
+    it('results in a successful PublishGranuleQueue workflow execution', async () => {
+      const publishGranuleExecutionStatus = await waitForCompletedExecution(
+        lambdaOutput.payload.running[0]
       );
-
-      checkFiles.forEach((fileCheck) => expect(fileCheck).toBeTrue());
+      expect(publishGranuleExecutionStatus).toEqual('SUCCEEDED');
     });
   });
+
+  // describe('the PostToCmr task', () => {
+  //   let cmrResource;
+  //   let ummCmrResource;
+  //   let files;
+  //   let granule;
+  //   let resourceURLs;
+  //   let beforeAllError;
+  //   let teaRequestHeaders;
+
+  //   beforeAll(async () => {
+  //     process.env.CMR_ENVIRONMENT = 'UAT';
+  //     postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr');
+
+  //     if (postToCmrOutput === null) {
+  //       beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecutionArn}`);
+  //       return;
+  //     }
+
+  //     try {
+  //       granule = postToCmrOutput.payload.granules[0];
+  //       files = granule.files;
+
+  //       const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v5' };
+  //       const result = await Promise.all([
+  //         getOnlineResources(granule),
+  //         getOnlineResources(ummGranule),
+  //         getTEARequestHeaders(config.stackName),
+  //       ]);
+
+  //       cmrResource = result[0];
+  //       ummCmrResource = result[1];
+  //       resourceURLs = cmrResource.map((resource) => resource.href);
+  //       teaRequestHeaders = result[2];
+  //     } catch (error) {
+  //       beforeAllError = error;
+  //     }
+  //   });
+
+  //   beforeEach(() => {
+  //     if (beforeAllError) fail(beforeAllError);
+  //   });
+
+  //   it('publishes the granule metadata to CMR', async () => {
+  //     const result = await conceptExists(granule.cmrLink);
+
+  //     expect(granule.published).toEqual(true);
+  //     expect(result).not.toEqual(false);
+  //   });
+
+  //   it('updates the CMR metadata online resources with the final metadata location', () => {
+  //     const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
+  //     const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+  //     const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+
+  //     console.log('parallel resourceURLs:', resourceURLs);
+  //     console.log('s3CredsUrl:', s3CredsUrl);
+
+  //     expect(resourceURLs).toContain(scienceFileUrl);
+  //     expect(resourceURLs).toContain(s3BrowseImageUrl);
+  //     expect(resourceURLs).toContain(s3CredsUrl);
+  //     expect(resourceURLs).toContain(opendapFilePath);
+  //   });
+
+  //   it('updates the CMR metadata "online resources" with the proper types and urls', () => {
+  //     const resource = ummCmrResource;
+  //     const distributionUrl = getDistributionFileUrl({
+  //       bucket: files[0].bucket,
+  //       key: files[0].filepath,
+  //     });
+  //     const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+  //     const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+  //     const expectedTypes = [
+  //       'GET DATA',
+  //       'VIEW RELATED INFORMATION',
+  //       'VIEW RELATED INFORMATION',
+  //       'USE SERVICE API',
+  //       'GET RELATED VISUALIZATION',
+  //     ];
+  //     const cmrUrls = resource.map((r) => r.URL);
+
+  //     expect(cmrUrls).toContain(distributionUrl);
+  //     expect(cmrUrls).toContain(s3BrowseImageUrl);
+  //     expect(cmrUrls).toContain(s3CredsUrl);
+  //     expect(cmrUrls).toContain(opendapFilePath);
+  //     expect(expectedTypes.sort()).toEqual(resource.map((r) => r.Type).sort());
+  //   });
+
+  //   it('includes the Earthdata login ID for requests to protected science files', async () => {
+  //     const filepath = `/${files[0].bucket}/${files[0].filepath}`;
+  //     const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
+  //     const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
+  //     expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
+  //   });
+
+  //   it('downloads the requested science file for authorized requests', async () => {
+  //     const scienceFileUrls = resourceURLs
+  //       .filter((url) =>
+  //         (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
+  //         url.match(/s3\.amazonaws\.com/)) &&
+  //         !url.endsWith('.cmr.xml') &&
+  //         !url.includes('s3credentials'));
+
+  //     const checkFiles = await Promise.all(
+  //       scienceFileUrls
+  //         .map(async (url) => {
+  //           const extension = path.extname(new URL(url).pathname);
+  //           const sourceFile = s3data.find((d) => d.endsWith(extension));
+  //           const sourceChecksum = await generateChecksumFromStream(
+  //             'cksum',
+  //             fs.createReadStream(require.resolve(sourceFile))
+  //           );
+  //           const file = files.find((f) => f.name.endsWith(extension));
+
+  //           const filepath = `/${file.bucket}/${file.filepath}`;
+  //           const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
+  //           // Compare checksum of downloaded file with expected checksum.
+  //           const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
+  //           return downloadChecksum === sourceChecksum;
+  //         })
+  //     );
+
+  //     checkFiles.forEach((fileCheck) => expect(fileCheck).toBeTrue());
+  //   });
+  // });
 
   describe('A Cloudwatch event', () => {
     beforeAll(async () => {
