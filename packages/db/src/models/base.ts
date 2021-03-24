@@ -21,26 +21,16 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     knexOrTransaction: Knex | Knex.Transaction,
     params: ([string, string, string] | [Partial<RecordType>])[]
   ) {
-    const query = knexOrTransaction(this.tableName).count();
-
-    params.forEach((param) => {
-      /*       if(!util.isArray(param)) {
-        query.modify((qb) => {
-          qb.where(param[0]);
-        });
-      } */
-      if (param.length === 3) {
-        query.modify((qb) => {
-          qb.where(...param);
-        });
-      }
-      if (param.length === 1) {
-        query.modify((qb) => {
-          qb.where(param[0]);
-        });
-      }
-    });
-
+    const query = knexOrTransaction(this.tableName).where((builder) => {
+      params.forEach((param) => {
+        if (param.length === 3) {
+          builder.where(...param);
+        }
+        if (param.length === 1) {
+          builder.where(param[0]);
+        }
+      });
+    }).count();
     return query;
   }
 
