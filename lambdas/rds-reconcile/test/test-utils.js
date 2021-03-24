@@ -190,7 +190,7 @@ test('getDynamoTableEntries calls the correct model methods', async (t) => {
     dynamoCollectionModel: modelStub,
     dynamoProvidersModel: modelStub,
     dynamoRulesModel: modelStub,
-    dynamoAsyncRulesModel: modelStub,
+    dynamoAsyncOperationsModel: modelStub,
   });
   t.is(getAllSpy.callCount, 4);
 });

@@ -1,10 +1,8 @@
-//import { Context } from 'aws-lambda';
 import pMap from 'p-map';
 
 import { models } from '@cumulus/api';
 import * as S3 from '@cumulus/aws-client/S3';
 import { envUtils } from '@cumulus/common';
-
 import Logger from '@cumulus/logger';
 import {
   AsyncOperationPgModel,
@@ -28,6 +26,26 @@ const logger = new Logger({
   sender: '@cumulus/lambdas/rds-reconcile',
 });
 
+/**
+* Reconciliation Handler -- generates counts comparing dynamo/es with a postgres
+* database
+* @param {Object} event - Lambda event
+* @param {string} event.systemBucket = process.env.SYSTEM_BUCKET - Cumulus
+* deployment's system bucket
+* @param {string} event.stackName = process.env.DEPLOYMENT - Cumulus
+* deployment's DEPLOYMENT
+* @param {number} [event.dbConcurrency = 20] - Max number of concurrent queries
+* when generating collection reports
+* @param {number} [event.dbMaxPool=20] - Max size of Knex db connection pool
+* @param {string} [event.reportBucket] - Bucket to write count report output to
+* @param {string} [event.reportPath] - Path to output count report to
+* @param {number} [event.cutoffSeconds = 3600] - Number of seconds in the past
+* to count backward from. This allows you to explicitly set a window relative to
+* the execution of this tool to avoid 'leading edge' ingest processes that may
+* not have completed/populated elasticsearch/etc.
+* @returns {Promise<reportObj>} -- Returns a reportObj containing the report
+* outputs from the run
+*/
 export const handler = async (
   event: {
     dbConcurrency?: number,
@@ -71,7 +89,7 @@ export const handler = async (
   const dynamoProvidersModel = new models.Provider();
   const dynamoRulesModel = new models.Rule();
 
-  const dynamoAsyncRulesModel = new models.AsyncOperation({
+  const dynamoAsyncOperationsModel = new models.AsyncOperation({
     stackName,
     systemBucket,
   });
@@ -90,7 +108,7 @@ export const handler = async (
     dynamoCollectionModel,
     dynamoProvidersModel,
     dynamoRulesModel,
-    dynamoAsyncRulesModel,
+    dynamoAsyncOperationsModel,
   });
   const dynamoAsyncOperationsCount = dynamoAsyncOperations.length;
   const dynamoCollectionsCount = dynamoCollections.length;
@@ -140,7 +158,7 @@ export const handler = async (
     { concurrency: dbConcurrency }
   );
 
-  // Reformat stats objects to user-readable format
+  // Reformat stats objects to user-readable data
   const collectionReportObj = await generateCollectionReportObj(collectionReportResults);
   const aggregateReportObj = generateAggregateReportObj({
     dynamoAsyncOperationsCount,
@@ -153,6 +171,7 @@ export const handler = async (
     postgresRulesCount,
   });
 
+  // Create output report
   const reportObj = {
     collectionsNotMapped: collectionFailures,
     records_in_dynamo_not_in_postgres: aggregateReportObj,

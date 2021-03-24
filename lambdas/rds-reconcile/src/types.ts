@@ -1,6 +1,6 @@
 import { NewCollectionRecord } from '@cumulus/types/api/collections';
 
-export type ReportObj = {
+export type CollectionReportObj = {
   [key: string]: {
     pdrsDelta: number
     totalPdrs: number
@@ -9,6 +9,12 @@ export type ReportObj = {
     executionsDelta: number
     totalExecutions:number
   };
+};
+
+export type EsCutoffQueryString = {
+  fields: string[];
+  createdAt__to: string;
+  collectionId?: string
 };
 
 export type StatsObject = {
