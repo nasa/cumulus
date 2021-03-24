@@ -8,12 +8,12 @@ const { deleteS3Object, waitForObjectToExist } = require('@cumulus/aws-client/S3
 
 const { loadConfig } = require('../../helpers/testUtils');
 
-describe('When a record with no valid collection fails processing in the DbRecords lambda', () => {
+describe('When a bad record is sent on the DLQ', () => {
   let beforeAllSucceeded = false;
   let stackName;
   let systemBucket;
   let failedMessageS3Id;
-  let dbRecordsQueueUrl;
+  let dbRecordsDLQUrl;
   let dbRecordsOriginalQueueAttributes;
 
   beforeAll(async () => {
@@ -21,27 +21,8 @@ describe('When a record with no valid collection fails processing in the DbRecor
     stackName = config.stackName;
     systemBucket = config.bucket;
 
-    const inputQueueName = `${stackName}-sfEventSqsToDbRecordsInputQueue`;
-    dbRecordsQueueUrl = await SQS.getQueueUrlByName(inputQueueName);
-    const { Attributes } = await sqs().getQueueAttributes({
-      QueueUrl: dbRecordsQueueUrl,
-      AttributeNames: [
-        'VisibilityTimeout',
-        'RedrivePolicy',
-      ],
-    }).promise();
-    dbRecordsOriginalQueueAttributes = Attributes;
-
-    const updatedRedrivePolicy = JSON.parse(Attributes.RedrivePolicy);
-    updatedRedrivePolicy.maxReceiveCount = 0;
-
-    await sqs().setQueueAttributes({
-      QueueUrl: dbRecordsQueueUrl,
-      Attributes: {
-        VisibilityTimeout: 5,
-        RedrivePolicy: JSON.stringify(updatedRedrivePolicy),
-      },
-    });
+    const DLQName = `${stackName}-sfEventSqsToDbRecordsDeadLetterQueue`;
+    dbRecordsDLQUrl = await SQS.getQueueUrlByName(DLQName);
 
     const granuleId = randomString(10);
     const files = [fakeFileFactory()];
@@ -67,13 +48,16 @@ describe('When a record with no valid collection fails processing in the DbRecor
       },
     };
 
-    await SQS.sendSQSMessage(dbRecordsQueueUrl, JSON.stringify(failingMessage));
+    // Send the message directly on the DLQ. Sending the message on the input queue results in an
+    // extremely long-duration, unreliable test (>20 mins) because updates to the redrive policy
+    // are very slow and unreliable and our normal visibilityTimeout and maxReceiveCount are high.
+    await SQS.sendSQSMessage(dbRecordsDLQUrl, JSON.stringify(failingMessage));
     beforeAllSucceeded = true;
   });
 
   afterAll(async () => {
     await sqs().setQueueAttributes({
-      QueueUrl: dbRecordsQueueUrl,
+      QueueUrl: dbRecordsDLQUrl,
       Attributes: dbRecordsOriginalQueueAttributes,
     });
     await deleteS3Object(
@@ -82,17 +66,21 @@ describe('When a record with no valid collection fails processing in the DbRecor
     );
   });
 
-  describe('it ends up on the DbRecords DLQ and the writeDbRecordsDLQtoS3 lambda', () => {
+  describe('the writeDbDlqRecordstoS3 lambda', () => {
     it('takes the message off the queue and writes it to S3', async () => {
       if (!beforeAllSucceeded) fail('beforeAll() failed');
       else {
         console.log(`Waiting for the creation of ${failedMessageS3Id}.json`);
-        expect(await waitForObjectToExist({
-          bucket: systemBucket,
-          key: `${stackName}/dead-letter-archive/sqs/${failedMessageS3Id}.json`,
-          interval: 5 * 1000,
-          timeout: 180 * 1000,
-        })).toBeTrue();
+        try {
+          expect(await waitForObjectToExist({
+            bucket: systemBucket,
+            key: `${stackName}/dead-letter-archive/sqs/${failedMessageS3Id}.json`,
+            interval: 5 * 1000,
+            timeout: 30 * 1000,
+          })).toBeUndefined();
+        } catch (err) {
+          fail(`Did not find expected S3 Object: ${err}`);
+        }
       }
     });
   });
