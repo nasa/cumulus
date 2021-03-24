@@ -761,6 +761,7 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
     status: 'completed',
     pdrName: 'pdr',
     files: [],
+    createdAt: Date.now(),
   };
 
   const updateFields = granuleModel._getMutableFieldNames(item);

@@ -29,11 +29,11 @@
     "node": ">=12.18.0"
   },
   "dependencies": {
-    "@cumulus/aws-client": "7.0.0",
-    "@cumulus/common": "7.0.0",
-    "@cumulus/errors": "7.0.0",
-    "@cumulus/logger": "7.0.0",
-    "@cumulus/types": "7.0.0",
+    "@cumulus/aws-client": "7.1.0",
+    "@cumulus/common": "7.1.0",
+    "@cumulus/errors": "7.1.0",
+    "@cumulus/logger": "7.1.0",
+    "@cumulus/types": "7.1.0",
     "is-valid-hostname": "0.0.1",
     "lodash": "^4.17.20",
     "knex": "0.21.13",

@@ -125,6 +125,15 @@ Add discovered PDRs to a queue
 
 ---
 
+### [@cumulus/queue-workflow](https://github.com/nasa/cumulus/tree/master/tasks/queue-workflow)
+
+Add workflow to the queue
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/queue-workflow/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/queue-workflow) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/queue-workflow)
+
+---
+
 ### [@cumulus/sf-sqs-report](https://github.com/nasa/cumulus/tree/master/tasks/sf-sqs-report)
 
 Sends an incoming Cumulus message to SQS

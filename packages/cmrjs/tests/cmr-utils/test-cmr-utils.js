@@ -28,6 +28,7 @@ const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const { xmlParseOptions } = require('../../utils');
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
+const buildCMRQuery = cmrUtil.__get__('buildCMRQuery');
 const stubDistributionBucketMap = {
   'fake-bucket': 'fake-bucket',
   'mapped-bucket': 'mapped/path/example',
@@ -828,4 +829,30 @@ test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', asyn
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
   t.is(ingestUMMGranuleSpy.getCall(0).args[1], cmrRevisionId);
+});
+
+test(
+  'buildCMRQuery transforms a list of objects with keys short_name and version into a proper object to post to CMR',
+  (t) => {
+    const results = [
+      { short_name: 'sn1', version: '1' },
+      { short_name: 'sn2', version: '2' },
+      { short_name: 'sn3', version: '3' },
+    ];
+    const expected = { condition: { or: [
+      { and: [{ short_name: 'sn1' }, { version: '1' }] },
+      { and: [{ short_name: 'sn2' }, { version: '2' }] },
+      { and: [{ short_name: 'sn3' }, { version: '3' }] },
+    ] } };
+
+    const actual = buildCMRQuery(results);
+    t.deepEqual(actual, expected);
+  }
+);
+
+test('buildCMRQuery works with if the input results list is empty', (t) => {
+  const results = [];
+  const expected = { condition: { or: [] } };
+  const actual = buildCMRQuery(results);
+  t.deepEqual(actual, expected);
 });

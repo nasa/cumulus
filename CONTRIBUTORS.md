@@ -32,3 +32,4 @@
 * Sara Chaparro Diaz
 * Seth Vincent
 * Snyk bot
+* Tobias Nießen
