@@ -48,7 +48,7 @@
             <Type>Bar2</Type>
         </OnlineResource>
         <OnlineResource>
-            <URL>https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/GLDAS%20Catchment%20Land%20Surface%20Model%20L4%20daily%200.25%20x%200.25%20degree%20V2.0%20(GLDAS_CLSM025_D)%20at%20GES%20DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4</URL>
+            <URL>https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4</URL>
             <Description>OPeNDAP request URL</Description>
             <Type>GET DATA : OPENDAP DATA</Type>
         </OnlineResource>

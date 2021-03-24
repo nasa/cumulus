@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
 
 
+### Changed
+
+- **HYRAX-357**
+  - Format of NGAP OPeNDAP URL changed and by default now is referring to concept id and optionally can include short name and version of collection.
+  - `addShortnameAndVersionIdToConceptId` field has been added to the config inputs of the `hyrax-metadata-updates` task
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes
@@ -67,6 +73,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated test function `waitForAsyncOperationStatus` to take a retryObject
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
+  - Updated the default scroll duration used in ESScrollSearch and part of the
+    reconcilation report functions as a result of testing and seeing timeouts
+    at its current value of 2min.
 - **CUMULUS-2427**
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
