@@ -148,7 +148,7 @@ test('getDbCount returns the count from the query result promise', async (t) => 
 
 test('generateCollectionReportObj generates a report object', (t) => {
   const statsObjects = [
-    { collectionId: 'fakeCollectionId', counts: [7, 8, 9, 4, 5, 6] }
+    { collectionId: 'fakeCollectionId', counts: [7, 8, 9, 4, 5, 6] },
   ];
   const actual = generateCollectionReportObj(statsObjects);
   const expected = {

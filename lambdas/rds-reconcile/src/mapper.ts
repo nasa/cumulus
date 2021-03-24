@@ -1,6 +1,7 @@
 import { getExecutions } from '@cumulus/api-client/executions';
 import { listGranules } from '@cumulus/api-client/granules';
 import { getPdrs } from '@cumulus/api-client/pdrs';
+
 import {
   GranulePgModel,
   PdrPgModel,
@@ -21,14 +22,26 @@ export const mapper = async (
   knexClient: Knex,
   prefix: string,
   collectionMap: CollectionMapping,
+  testParams?: {
+    getPdrsFunction?: typeof getPdrs,
+    listGranulesFunction?: typeof listGranules,
+    getExecutionsFunction?: typeof getExecutions,
+    getPostgresModelCountFunction?: typeof getPostgresModelCount
+  },
 ): Promise<StatsObject> => {
+  const {
+    getPdrsFunction = getPdrs,
+    listGranulesFunction = listGranules,
+    getExecutionsFunction = getExecutions,
+    getPostgresModelCountFunction = getPostgresModelCount,
+  } = {...testParams };
   const { collection, postgresCollectionId } = collectionMap;
-  const collectionId = `${collection.name}___${collection.version}`;
+  const collectionId = `${collection.name}__${collection.version}`;
   return {
     collectionId,
     counts: await Promise.all([
       getDbCount(
-        getPdrs({
+        getPdrsFunction({
           prefix,
           query: getEsCutoffQuery(
             ['pdrName', 'createdAt'],
@@ -38,7 +51,7 @@ export const mapper = async (
         })
       ),
       getDbCount(
-        listGranules({
+        listGranulesFunction({
           prefix,
           query: getEsCutoffQuery(
             ['granuleId', 'createdAt'],
@@ -48,7 +61,7 @@ export const mapper = async (
         })
       ),
       getDbCount(
-        getExecutions({
+        getExecutionsFunction({
           prefix,
           query: getEsCutoffQuery(
             ['execution', 'createdAt'],
@@ -57,19 +70,19 @@ export const mapper = async (
           ),
         })
       ),
-      getPostgresModelCount({
+      getPostgresModelCountFunction({
         model: postgresGranuleModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
       }),
-      getPostgresModelCount({
+      getPostgresModelCountFunction({
         model: postgresPdrModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
       }),
-      getPostgresModelCount({
+      getPostgresModelCountFunction({
         model: postgresExecutionModel,
         knexClient,
         cutoffIsoString,
