@@ -42,7 +42,9 @@ export const mapper = async (params: {
   getPdrsFunction?: typeof getPdrs,
   listGranulesFunction?: typeof listGranules,
   getExecutionsFunction?: typeof getExecutions,
-  getPostgresModelCountFunction?: typeof getPostgresModelCount,
+  getPostgresPdrModelCountFunction?: typeof getPostgresModelCount,
+  getPostgresGranuleModelCountFunction?: typeof getPostgresModelCount,
+  getPostgresExecutionModelCountFunction?: typeof getPostgresModelCount
   collectionMap: CollectionMapping,
 }): Promise<StatsObject> => {
   const {
@@ -54,7 +56,9 @@ export const mapper = async (params: {
     getPdrsFunction = getPdrs,
     listGranulesFunction = listGranules,
     getExecutionsFunction = getExecutions,
-    getPostgresModelCountFunction = getPostgresModelCount,
+    getPostgresPdrModelCountFunction = getPostgresModelCount,
+    getPostgresGranuleModelCountFunction = getPostgresModelCount,
+    getPostgresExecutionModelCountFunction = getPostgresModelCount,
   } = { ...params };
   const { collection, postgresCollectionId } = collectionMap;
   const collectionId = `${collection.name}___${collection.version}`;
@@ -91,19 +95,19 @@ export const mapper = async (params: {
           ),
         })
       ),
-      getPostgresModelCountFunction({
+      getPostgresPdrModelCountFunction({
         model: postgresPdrModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
       }),
-      getPostgresModelCountFunction({
+      getPostgresGranuleModelCountFunction({
         model: postgresGranuleModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
       }),
-      getPostgresModelCountFunction({
+      getPostgresExecutionModelCountFunction({
         model: postgresExecutionModel,
         knexClient,
         cutoffIsoString,
