@@ -214,9 +214,6 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
