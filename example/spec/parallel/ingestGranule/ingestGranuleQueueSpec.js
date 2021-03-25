@@ -63,7 +63,6 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
-
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestGranuleQueue';
 
