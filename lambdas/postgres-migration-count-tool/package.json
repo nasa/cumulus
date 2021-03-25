@@ -23,6 +23,7 @@
   "dependencies": {
     "@cumulus/api": "7.0.0",
     "@cumulus/api-client": "7.0.0",
+    "@cumulus/common": "7.0.0",
     "@cumulus/db": "3.0.1-alpha.1",
     "@cumulus/types": "7.0.0",
     "knex": "0.21.13",
