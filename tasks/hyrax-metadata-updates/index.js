@@ -72,23 +72,23 @@ function getGranuleUr(metadata, isUmmG) {
 }
 
 /**
- * getEntryTitle
+ * getCollectionEntry
  *
- * @param {Object} config - comnfiguration
+ * @param {Object} config - configuration
  * @param {Object} metadata - the granule metadata
  * @param {boolean} isUmmG - whether this is UMM-G or ECHO10 metadata
- * @returns {Promise<string>} the entry title of the collection this granule
+ * @returns {Promise<string>} the collection url entry of the collection this granule
  *    belongs to
  */
-async function getEntryTitle(config, metadata, isUmmG) {
+async function getCollectionEntry(config, metadata, isUmmG) {
   let shortName;
-  let version;
+  let versionId;
   if (isUmmG === true) {
     shortName = metadata.CollectionReference.ShortName;
-    version = metadata.CollectionReference.Version;
+    versionId = metadata.CollectionReference.Version;
   } else {
     shortName = metadata.Granule.Collection.ShortName;
-    version = metadata.Granule.Collection.VersionId;
+    versionId = metadata.Granule.Collection.VersionId;
   }
 
   const cmrSettings = await getCmrSettings({
@@ -101,21 +101,22 @@ async function getEntryTitle(config, metadata, isUmmG) {
 
   const searchParams = {
     short_name: shortName,
-    version: version,
+    version: versionId,
   };
 
   const result = await cmrInstance.searchCollections(searchParams);
-  // Verify that we have a valid result. If we don't then something is badly wrong
-  // and we should halt.
-  // Either the code is faulty or the provider is trying to ingest granules
+  // Verify that we have a valid result. If we don't then something is badly wrong and we
+  // should halt. Either the code is faulty or the provider is trying to ingest granules
   // into a collection that doesn't exist
-  const datasetId = get(result, '[0].dataset_id');
-
-  if (datasetId === undefined) {
-    throw new RecordDoesNotExist(`Unable to query parent collection entry title using short name ${shortName} and version ${version}`);
+  const conceptId = get(result, '[0].id');
+  shortName = get(result, '[0].short_name');
+  versionId = get(result, '[0].version_id');
+  if (conceptId === undefined) {
+    throw new RecordDoesNotExist(`Unable to query parent collection using short name ${shortName} and version ${versionId}`);
   }
 
-  return encodeURIComponent(datasetId);
+  return (config.addShortnameAndVersionIdToConceptId === true)
+    ? `${conceptId}/${shortName}.${versionId}` : conceptId;
 }
 
 /**
@@ -133,8 +134,9 @@ async function generatePath(config, metadata, isUmmG) {
   if (providerId === undefined) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
-  const entryTitle = await getEntryTitle(config, metadata, isUmmG);
-  return `providers/${providerId}/collections/${entryTitle}/granules/${getGranuleUr(metadata, isUmmG)}`;
+  const entryCollection = await getCollectionEntry(config, metadata, isUmmG);
+
+  return `collections/${entryCollection}/granules/${getGranuleUr(metadata, isUmmG)}`;
 }
 
 /**
