@@ -69,8 +69,8 @@ export const handler = async (
     reportBucket,
     reportPath,
     cutoffSeconds = 3600,
-    systemBucket = envUtils.getRequiredEnvVar('SYSTEM_BUCKET'),
-    stackName = envUtils.getRequiredEnvVar('DEPLOYMENT'),
+    systemBucket = envUtils.getRequiredEnvVar('systemBucket'),
+    stackName = envUtils.getRequiredEnvVar('prefix'),
     getKnexClientFunction = getKnexClient,
     getPostgresModelCountFunction = getPostgresModelCount,
     mapperFunction = pMapMapper,
@@ -80,7 +80,7 @@ export const handler = async (
   process.env.dbMaxPool = `${dbMaxPool}`;
 
   logger.debug(`Running reconciliation with ${JSON.stringify(event)}`);
-  const prefix = process.env.DEPLOYMENT || '';
+  const prefix = process.env.prefix || '';
   const knexClient = await getKnexClientFunction({ env: process.env });
   const cutoffTime = Date.now() - cutoffSeconds * 1000;
   const cutoffIsoString = new Date(cutoffTime).toISOString();

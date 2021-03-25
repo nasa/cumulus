@@ -4,7 +4,8 @@ const test = require('ava');
 const { handler } = require('../dist/lambda/index');
 
 test('handler returns the expected report', async (t) => {
-  process.env.SYSTEM_BUCKET = 'fake_bucket';
+  process.env.systemBucket = 'fake_bucket';
+  process.env.prefix = 'fakePrefix';
   process.env.GranulesTable = 'GranulesTable';
   process.env.ProvidersTable = 'ProvidersTable';
   process.env.RulesTable = 'RulesTable';
