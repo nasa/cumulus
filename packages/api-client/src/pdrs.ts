@@ -2,7 +2,6 @@ import { ApiPdr } from '@cumulus/types/api/pdrs';
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
-
 /**
  * Fetch a PDR from the Cumulus API
  *

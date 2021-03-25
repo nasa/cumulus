@@ -1,5 +1,5 @@
 const test = require('ava');
-const sinon = require('sinon')
+const sinon = require('sinon');
 
 const {
   mapper,

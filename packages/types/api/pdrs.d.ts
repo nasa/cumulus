@@ -1,4 +1,4 @@
-export type pdrStatus = 'running' | 'failed' | 'completed'
+export type pdrStatus = 'running' | 'failed' | 'completed';
 
 export interface ApiPdr {
   pdrName: string,

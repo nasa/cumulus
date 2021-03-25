@@ -29,7 +29,6 @@ export const getAsyncOperation = async (params: {
   });
 };
 
-
 /**
  * Query  async operations stored in cumulus
  * GET /granules
