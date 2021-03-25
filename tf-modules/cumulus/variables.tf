@@ -255,7 +255,7 @@ variable "ecs_efs_config" {
 }
 
 variable "ecs_include_docker_cleanup_cronjob" {
-  description = "Flag to configure adding cronjob to clean up unused root space"
+  description = "*Experimental* flag to configure a cron to run fstrim on all active container root filesystems"
   type        = bool
   default     = false
 }
@@ -567,4 +567,3 @@ variable "ecs_custom_sg_ids" {
   type = list(string)
   default = []
 }
-
