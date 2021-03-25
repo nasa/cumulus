@@ -18,9 +18,6 @@ const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
-//TODO - make this a handler value?
-const timeBound = new Date(Date.now() - 1800000).toISOString(); // 3 min prior
-
 /**
  * Return a list of environment variables that should be set but aren't
  *
