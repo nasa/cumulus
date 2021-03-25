@@ -31,7 +31,7 @@ async function queueWorkflow(event) {
     additionalCustomMeta: event.config.childWorkflowMeta,
   });
 
-  return { running: executionArn, workflow, workflowInput, ...event.input };
+  return { running: executionArn, workflow, workflowInput };
 }
 exports.queueWorkflow = queueWorkflow;
 
