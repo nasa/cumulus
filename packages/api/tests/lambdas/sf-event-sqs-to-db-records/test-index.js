@@ -10,6 +10,9 @@ const uuidv4 = require('uuid/v4');
 const {
   localStackConnectionEnv,
   getKnexClient,
+  ExecutionPgModel,
+  GranulePgModel,
+  PdrPgModel,
   tableNames,
   doesRecordExist,
 } = require('@cumulus/db');
@@ -412,22 +415,35 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('writeRecords() does not throw error writing an out of order message that is older than an existing message', async (t) => {
+test('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
   const {
     cumulusMessage,
     executionModel,
     granuleModel,
+    pdrModel,
     knex,
     executionArn,
+    pdrName,
+    granuleId,
   } = t.context;
+
+  const executionPgModel = new ExecutionPgModel();
+  const pdrPgModel = new PdrPgModel();
+  const granulePgModel = new GranulePgModel();
 
   cumulusMessage.meta.status = 'completed';
 
   await writeRecords({ cumulusMessage, knex, granuleModel });
 
-  t.true(await executionModel.exists({ arn: executionArn }));
-
   cumulusMessage.meta.status = 'running';
 
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
+
+  t.is('completed', (await executionModel.get({ arn: executionArn })).status);
+  t.is('completed', (await granuleModel.get({ granuleId })).status);
+  t.is('completed', (await pdrModel.get({ pdrName })).status);
+
+  t.is('completed', (await executionPgModel.get(knex, { arn: executionArn })).status);
+  t.is('completed', (await granulePgModel.get(knex, { granule_id: granuleId })).status);
+  t.is('completed', (await pdrPgModel.get(knex, { name: pdrName })).status);
 });
