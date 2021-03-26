@@ -92,7 +92,7 @@ class Pdr extends Manager {
 
     const stats = getMessagePdrStats(message);
     const progress = getPdrPercentCompletion(stats);
-    const timestamp = Date.now();
+    const now = Date.now();
     const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
@@ -106,8 +106,9 @@ class Pdr extends Manager {
       PANmessage: getMessagePdrPANMessage(message),
       stats,
       createdAt: getMessageWorkflowStartTime(message),
-      timestamp,
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      timestamp: now,
+      updatedAt: now,
+      duration: getWorkflowDuration(workflowStartTime, now),
     };
 
     this.constructor.recordIsValid(record, this.schema);

@@ -396,7 +396,6 @@ class Granule extends Manager {
     });
 
     const now = Date.now();
-    const timestamp = now;
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
 
     const record = {
@@ -409,12 +408,12 @@ class Granule extends Manager {
       cmrLink: cmrLink,
       files: granuleFiles,
       error,
-      createdAt: workflowStartTime,
       published,
-      timestamp,
+      createdAt: workflowStartTime,
+      timestamp: now,
       updatedAt: now,
       // Duration is also used as timeToXfer for the EMS report
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      duration: getWorkflowDuration(workflowStartTime, now),
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: getGranuleTimeToPreprocess(granule),
       timeToArchive: getGranuleTimeToArchive(granule),
