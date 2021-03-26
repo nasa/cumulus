@@ -650,7 +650,15 @@ class Granule extends Manager {
       updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
-    return this.dynamodbDocClient.update(updateParams).promise();
+    try {
+      return await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        log.info(`Did not process delayed 'running' event for granule: ${granuleRecord.granuleId} (execution: ${granuleRecord.execution})`);
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -763,7 +771,7 @@ class Granule extends Manager {
           pdrName,
           workflowStatus,
           queryFields,
-        }).catch(log.error)
+        })
     ));
   }
 }
