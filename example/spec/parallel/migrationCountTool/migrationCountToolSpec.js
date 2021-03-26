@@ -69,7 +69,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
             throw new Error('boom');
           }
         })
-      ).toNotThrow();
+      ).not.toThrow();
       expect(s3ReportObject).toEqual(parsedOutput);
     }
   });
