@@ -15,7 +15,7 @@ async function post(req, res) {
     lambdaName: process.env.MigrationCountToolLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Migration Count Tool ECS Run',
-    operationType: 'Migration Count Report', // this value is set on an ENUM field, so cannot change
+    operationType: 'Migration Count Report',
     payload: {
       reportBucket,
       reportPath,

@@ -188,10 +188,10 @@ export const handler = async (
 
   // Write report object to S3
   if (reportBucket && reportPath) {
-    logger.info(`Writing report to ${reportBucket}/${reportPath}/reconcileReport-${cutoffTime}`);
+    logger.info(`Writing report to ${reportBucket}/${S3.s3Join(reportPath)}reconcileReport-${cutoffTime}`)
     await S3.putJsonS3Object(
       reportBucket,
-      `${reportPath}/reconcileReport-${cutoffTime}`,
+      `${S3.s3Join(reportPath)}reconcileReport-${cutoffTime}`,
       reportObj
     );
   }
