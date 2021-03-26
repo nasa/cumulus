@@ -2,8 +2,6 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const pMap = require('p-map');
-const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
 const {
@@ -12,7 +10,6 @@ const {
   Pdr,
   Provider,
 } = require('@cumulus/api/models');
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
   deleteS3Object,
   parseS3Uri,
@@ -312,31 +309,6 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(collectionResult).not.toBeNull();
   });
 
-  it('results in the files being added to the granule files cache table', async () => {
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-
-    executionOutput = await getExecutionOutput(workflowExecutionArn);
-
-    await pMap(
-      executionOutput.payload.granules[0].files,
-      async (file) => {
-        const { Bucket, Key } = parseS3Uri(file.filename);
-
-        const granuleId = await pRetry(
-          async () => {
-            const id = await GranuleFilesCache.getGranuleId(Bucket, Key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
-            return id;
-          },
-          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
-        );
-
-        expect(granuleId).toEqual(executionOutput.payload.granules[0].granuleId);
-      },
-      { concurrency: 1 }
-    );
-  });
-
   describe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
@@ -610,6 +582,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let failedExecutionName;
 
     beforeAll(async () => {
+      executionOutput = await getExecutionOutput(workflowExecutionArn);
       failedExecutionArn = failingWorkflowExecution.executionArn;
       failedExecutionName = failedExecutionArn.split(':').pop();
       executionName = executionOutput.cumulus_meta.execution_name;
