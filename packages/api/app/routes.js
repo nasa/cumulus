@@ -24,6 +24,7 @@ const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
+const migrationCounts = require('../endpoints/migrationCounts');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
 
@@ -33,6 +34,9 @@ if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
 }
+
+//migrationCounts endpoint
+router.use('/migrationCounts', ensureAuthorized, migrationCounts);
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections.router);
@@ -79,7 +83,7 @@ router.use('/stats', ensureAuthorized, stats);
 
 // version endpoint
 // this endpoint is not behind authentication
-router.use('/version', version);
+router.use('/versions', version);
 
 // workflows endpoint
 router.use('/workflows', ensureAuthorized, workflows);

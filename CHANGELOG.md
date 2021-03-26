@@ -26,6 +26,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `buckets` variable to `tf-modules/archive`
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2130**
+    - Added postgres-migration-count-tool lambda/ECS task to allow for
+      evaluation of database state
+    - Added /migrationCounts api endpoint that allows running of the
+      postgres-migration-count-tool as an asyncOperation
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
     - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to PostgreSQL

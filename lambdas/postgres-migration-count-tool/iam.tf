@@ -5,6 +5,10 @@ data "aws_iam_policy_document" "migration_count_assume_role_policy" {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
     }
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
   }
 }
 
@@ -33,7 +37,13 @@ resource "aws_iam_role" "postgres_migration_count_role" {
   tags                 = var.tags
 }
 
-data "aws_iam_policy_document" "postgres_migration_count_policy" {
+data "aws_iam_policy_document" "postgres_migration_count_policy2" {
+  statement {
+    actions = [
+      "ecr:*"
+    ]
+    resources = ["*"]
+  }
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -111,5 +121,5 @@ data "aws_iam_policy_document" "postgres_migration_count_policy" {
 resource "aws_iam_role_policy" "postgres_migration_count" {
   name   = "${var.prefix}_postgres_migration_count"
   role   = aws_iam_role.postgres_migration_count_role.id
-  policy = data.aws_iam_policy_document.postgres_migration_count_policy.json
+  policy = data.aws_iam_policy_document.postgres_migration_count_policy2.json
 }
