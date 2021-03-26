@@ -9,7 +9,7 @@ async function post(req, res) {
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
 
-  const { reportBucket, reportPath } = req.body;
+  const { cutoffSeconds, dbConcurrency, dbMaxPool, reportBucket, reportPath } = req.body;
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     lambdaName: process.env.MigrationCountToolLambda,
@@ -19,6 +19,9 @@ async function post(req, res) {
     payload: {
       reportBucket,
       reportPath,
+      cutoffSeconds,
+      dbConcurrency,
+      dbMaxPool,
     },
     stackName,
     systemBucket,

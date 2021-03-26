@@ -54,8 +54,14 @@ test.serial('POST /migrationCounts starts an async-operation with the correct pa
   const { asyncOperationStartStub } = t.context;
   const reportBucket = 'reportBucket';
   const reportPath = 'reportPath';
+  const cutoffSeconds = 500;
+  const dbConcurrency = 20;
+  const dbMaxPool = 20;
 
   const body = {
+    cutoffSeconds,
+    dbConcurrency,
+    dbMaxPool,
     reportBucket,
     reportPath,
   };

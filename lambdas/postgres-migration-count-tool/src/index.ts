@@ -176,6 +176,7 @@ export const handler = async (
     collectionsNotMapped: collectionFailures,
     records_in_dynamo_not_in_postgres: aggregateReportObj,
     pdr_granule_and_execution_records_not_in_postgres_by_collection: collectionReportObj,
+    s3Uri: '',
   };
 
   // Output results
@@ -188,10 +189,12 @@ export const handler = async (
 
   // Write report object to S3
   if (reportBucket && reportPath) {
-    logger.info(`Writing report to ${reportBucket}/${S3.s3Join(reportPath)}reconcileReport-${cutoffTime}`)
+    const s3Path = `${S3.s3Join(reportPath)}/reconcileReport-${cutoffTime}`;
+    logger.info(`Writing report to ${reportBucket}/${s3Path}`);
+    reportObj.s3Uri = `s3://${reportBucket}/${s3Path}`;
     await S3.putJsonS3Object(
       reportBucket,
-      `${S3.s3Join(reportPath)}reconcileReport-${cutoffTime}`,
+      s3Path,
       reportObj
     );
   }
