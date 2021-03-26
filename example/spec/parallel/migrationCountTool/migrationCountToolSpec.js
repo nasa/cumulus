@@ -1,6 +1,6 @@
 'use strict';
 
-const { isNumber } = require('lodash');
+const { isNumber } = require('lodash/isNumber');
 const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { postMigrationCounts } = require('@cumulus/api-client/migrationCounts');
 const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
@@ -39,7 +39,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
       const asyncOutput = JSON.parse(asyncOperation.output);
       const parsedUri = parseS3Uri(asyncOutput.s3Uri);
-      s3ReportObject = await getJsonS3Object(parsedUri.Bucket, parsedUri.Key );
+      s3ReportObject = await getJsonS3Object(parsedUri.Bucket, parsedUri.Key);
     } catch (error) {
       beforeAllFailed = true;
       throw error;
@@ -64,7 +64,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         's3Uri',
       ]);
       expect(
-        Object.keys(parsedOutput.records_in_dynamo_not_in_postgres).forEach((k) => {
+        () => Object.keys(parsedOutput.records_in_dynamo_not_in_postgres).forEach((k) => {
           if (!isNumber(parsedOutput.records_in_dynamo_not_in_postgres[k])) {
             throw new Error('boom');
           }
