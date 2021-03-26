@@ -18,7 +18,7 @@ The general concept is that the last task of the ingest workflow will queue the 
 
 The last step should be the QueueWorkflow step. It should be configured with a queueUrl and workflow.
 
-```
+```json
   "QueueWorkflowStep": {
     "Parameters": {
       "cma": {
@@ -67,8 +67,7 @@ The last step should be the QueueWorkflow step. It should be configured with a q
 
 Configure the Catch section of your `PostToCmr` task to proceed to QueueWorkflow if a `CMRInternalError` is caught.
 
-
-```
+```json
   "Catch": [
     {
       "ErrorEquals": [
