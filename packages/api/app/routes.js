@@ -83,7 +83,7 @@ router.use('/stats', ensureAuthorized, stats);
 
 // version endpoint
 // this endpoint is not behind authentication
-router.use('/versions', version);
+router.use('/version', version);
 
 // workflows endpoint
 router.use('/workflows', ensureAuthorized, workflows);
