@@ -16,6 +16,7 @@
     "provider": { "type": "object" },
     "stackName": { "type": "string" },
     "executionNamePrefix": { "type": "string" },
-    "workflow": { "type": "string" }
+    "workflow": { "type": "string" },
+    "workflowInput": { "type": "object" }
   }
 }

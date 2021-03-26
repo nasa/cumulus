@@ -3,13 +3,7 @@
   "description": "Describes the input expected by the queue-workflow task",
   "type": "object",
   "properties": {
-    "worfklow": {
-      "type": "object"
-    },
-    "workflowInput": {
-      "type": "object"
-    },
-    "queue": {
+    "queueUrl": {
       "type": "string"
     }
   }

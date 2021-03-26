@@ -8,7 +8,7 @@ const {
 } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
-// const { buildExecutionArn } = require('@cumulus/message/Executions');
+const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
   randomNumber,
   randomString,
@@ -43,8 +43,15 @@ test.beforeEach(async (t) => {
     name: t.context.workflow,
     arn: t.context.stateMachineArn,
   };
+  t.context.queuedWorkflow = randomString();
+  t.context.queuedWorkflowStateMachineArn = randomString();
+  const queuedWorkflowDefinition = {
+    name: t.context.queuedWorkflow,
+    arn: t.context.queuedWorkflowStateMachineArn,
+  };
   const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
+  const queuedWorkflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.queuedWorkflow}.json`;
   t.context.messageTemplateKey = messageTemplateKey;
   await Promise.all([
     s3PutObject({
@@ -57,6 +64,11 @@ test.beforeEach(async (t) => {
       Key: workflowDefinitionKey,
       Body: JSON.stringify(workflowDefinition),
     }),
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: queuedWorkflowDefinitionKey,
+      Body: JSON.stringify(queuedWorkflowDefinition),
+    }),
   ]);
 
   t.context.event = {
@@ -67,10 +79,8 @@ test.beforeEach(async (t) => {
       internalBucket: t.context.templateBucket,
     },
     input: {
-      workflowInput: {
-        prop1: randomString(),
-        prop2: randomString(),
-      },
+      prop1: randomString(),
+      prop2: randomString(),
     },
   };
 });
@@ -96,174 +106,153 @@ test.serial('The correct output is returned when workflow is queued', async (t) 
   t.deepEqual(output.workflow, event.config.workflow);
 });
 
-// test.serial('The correct output is returned when no workflow is queued', async (t) => {
-//   const event = t.context.event;
-//   event.workflow = {};
-//   event.workflowInput = {};
+test.serial('Workflow is added to the queue', async (t) => {
+  const event = t.context.event;
+  event.config.workflow = t.context.queuedWorkflow;
 
-//   await validateConfig(t, event.config);
-//   await validateInput(t, event.input);
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
-//   const output = await queueWorkflow(event);
+  const output = await queueWorkflow(event);
 
-//   await validateOutput(t, output);
-//   t.deepEqual(output.workflow, event.input.workflow);
-// });
+  await validateOutput(t, output);
 
-// test.serial('Workflow is added to the queue', async (t) => {
-//   const event = t.context.event;
-//   event.input.workflow = { name: randomString(), arn: randomString() };
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: t.context.event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+  const messages = receiveMessageResponse.Messages;
 
-//   await validateConfig(t, event.config);
-//   await validateInput(t, event.input);
+  t.is(messages.length, 1);
+});
 
-//   const output = await queueWorkflow(event);
+test.serial('Workflow is added to the input queue', async (t) => {
+  const event = t.context.event;
+  event.config.workflow = t.context.queuedWorkflow;
+  event.input.queueUrl = await createQueue(randomString());
 
-//   await validateOutput(t, output);
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
-//   // Get messages from the queue
-//   const receiveMessageResponse = await sqs().receiveMessage({
-//     QueueUrl: t.context.event.config.queueUrl,
-//     MaxNumberOfMessages: 10,
-//     WaitTimeSeconds: 1,
-//   }).promise();
-//   const messages = receiveMessageResponse.Messages;
+  const output = await queueWorkflow(event);
 
-//   t.is(messages.length, 1);
-// });
+  await validateOutput(t, output);
 
-// test.serial('Workflow is added to the input queue', async (t) => {
-//   const event = t.context.event;
-//   event.input.workflow = { name: randomString(), arn: randomString() };
-//   event.input.queueUrl = await createQueue(randomString());
+  // Get messages from the config queue
+  const receiveConfigQueueMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+  const configQueueMessages = receiveConfigQueueMessageResponse.Messages;
 
-//   await validateConfig(t, event.config);
-//   await validateInput(t, event.input);
+  t.is(configQueueMessages, undefined);
 
-//   const output = await queueWorkflow(event);
+  // Get messages from the input queue
+  const receiveInputQueueMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.input.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+  const inputQueueMessages = receiveInputQueueMessageResponse.Messages;
 
-//   await validateOutput(t, output);
+  t.is(inputQueueMessages.length, 1);
+});
 
-//   // Get messages from the config queue
-//   const receiveConfigQueueMessageResponse = await sqs().receiveMessage({
-//     QueueUrl: event.config.queueUrl,
-//     MaxNumberOfMessages: 10,
-//     WaitTimeSeconds: 1,
-//   }).promise();
-//   const configQueueMessages = receiveConfigQueueMessageResponse.Messages;
+test.serial('The correct message is enqueued', async (t) => {
+  const {
+    event,
+    queueExecutionLimits,
+    queuedWorkflowStateMachineArn,
+  } = t.context;
 
-//   t.is(configQueueMessages, undefined);
+  // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
+  // will have 'parentExecutionArn'
+  event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
+  const arn = buildExecutionArn(
+    event.cumulus_config.state_machine, event.cumulus_config.execution_name
+  );
+  event.config.workflow = t.context.queuedWorkflow;
+  event.config.workflowInput = { prop1: randomString(), prop2: randomString() };
 
-//   // Get messages from the input queue
-//   const receiveInputQueueMessageResponse = await sqs().receiveMessage({
-//     QueueUrl: event.input.queueUrl,
-//     MaxNumberOfMessages: 10,
-//     WaitTimeSeconds: 1,
-//   }).promise();
-//   const inputQueueMessages = receiveInputQueueMessageResponse.Messages;
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
-//   t.is(inputQueueMessages.length, 1);
-// });
+  const output = await queueWorkflow(event);
 
-// test.serial('The correct message is enqueued', async (t) => {
-//   const {
-//     workflow,
-//     event,
-//     queueExecutionLimits,
-//     stateMachineArn,
-//   } = t.context;
+  await validateOutput(t, output);
 
-//   // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
-//   // will have 'parentExecutionArn'
-//   event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
-//   const arn = buildExecutionArn(
-//     event.cumulus_config.state_machine, event.cumulus_config.execution_name
-//   );
-//   event.input.workflow = { name: randomString(), arn: randomString() };
-//   event.input.workflowInput = { prop1: randomString(), prop2: randomString() };
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+  const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
-//   await validateConfig(t, event.config);
-//   await validateInput(t, event.input);
+  t.is(messages.length, 1);
 
-//   const output = await queueWorkflow(event);
+  const message = messages[0];
+  const receivedWorkflow = message.meta.workflow_name;
+  t.is(receivedWorkflow, event.config.workflow);
 
-//   await validateOutput(t, output);
+  const expectedMessage = {
+    cumulus_meta: {
+      state_machine: queuedWorkflowStateMachineArn,
+      parentExecutionArn: arn,
+      queueExecutionLimits,
+    },
+    meta: {
+      workflow_name: event.config.workflow,
+    },
+    payload: {
+      prop1: event.config.workflowInput.prop1,
+      prop2: event.config.workflowInput.prop2,
+    },
+  };
 
-//   // Get messages from the queue
-//   const receiveMessageResponse = await sqs().receiveMessage({
-//     QueueUrl: event.config.queueUrl,
-//     MaxNumberOfMessages: 10,
-//     WaitTimeSeconds: 1,
-//   }).promise();
-//   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
+  // The execution name is randomly generated, so we don't care what the value is here
+  expectedMessage.cumulus_meta.execution_name = message.cumulus_meta.execution_name;
+  t.deepEqual(message, expectedMessage);
+});
 
-//   t.is(messages.length, 1);
+test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
+  const { event } = t.context;
 
-//   const message = messages[0];
-//   const receivedWorkflow = message.payload.workflow.name;
-//   t.true(receivedWorkflow.includes(event.input.workflow.name));
+  const executionNamePrefix = randomString(3);
+  event.config.executionNamePrefix = executionNamePrefix;
 
-//   const expectedMessage = {
-//     cumulus_meta: {
-//       state_machine: stateMachineArn,
-//       parentExecutionArn: arn,
-//       queueExecutionLimits,
-//     },
-//     meta: {
-//       workflow_name: workflow,
-//     },
-//     payload: {
-//       workflow: {
-//         name: event.input.workflow.name,
-//         arn: event.input.workflow.arn,
-//       },
-//       workflowInput: {
-//         prop1: event.input.workflowInput.prop1,
-//         prop2: event.input.workflowInput.prop2,
-//       },
-//     },
-//   };
+  event.input.workflow = { name: randomString(), arn: randomString() };
 
-//   // The execution name is randomly generated, so we don't care what the value is here
-//   expectedMessage.cumulus_meta.execution_name = message.cumulus_meta.execution_name;
-//   t.deepEqual(message, expectedMessage);
-// });
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
-// test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
-//   const { event } = t.context;
+  const output = await queueWorkflow(event);
 
-//   const executionNamePrefix = randomString(3);
-//   event.config.executionNamePrefix = executionNamePrefix;
+  await validateOutput(t, output);
 
-//   event.input.workflow = { name: randomString(), arn: randomString() };
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
 
-//   await validateConfig(t, event.config);
-//   await validateInput(t, event.input);
+  const messages = receiveMessageResponse.Messages;
 
-//   const output = await queueWorkflow(event);
+  t.is(messages.length, 1);
 
-//   await validateOutput(t, output);
+  const message = JSON.parse(messages[0].Body);
 
-//   // Get messages from the queue
-//   const receiveMessageResponse = await sqs().receiveMessage({
-//     QueueUrl: event.config.queueUrl,
-//     MaxNumberOfMessages: 10,
-//     WaitTimeSeconds: 1,
-//   }).promise();
+  t.true(
+    message.cumulus_meta.execution_name.startsWith(executionNamePrefix),
+    `Expected "${message.cumulus_meta.execution_name}" to start with "${executionNamePrefix}"`
+  );
 
-//   const messages = receiveMessageResponse.Messages;
-
-//   t.is(messages.length, 1);
-
-//   const message = JSON.parse(messages[0].Body);
-
-//   t.true(
-//     message.cumulus_meta.execution_name.startsWith(executionNamePrefix),
-//     `Expected "${message.cumulus_meta.execution_name}" to start with "${executionNamePrefix}"`
-//   );
-
-//   // Make sure that the execution name isn't _just_ the prefix
-//   t.true(
-//     message.cumulus_meta.execution_name.length > executionNamePrefix.length
-//   );
-// });
+  // Make sure that the execution name isn't _just_ the prefix
+  t.true(
+    message.cumulus_meta.execution_name.length > executionNamePrefix.length
+  );
+});
