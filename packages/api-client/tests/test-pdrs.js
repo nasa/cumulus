@@ -31,7 +31,7 @@ test('getPdr calls the callback with the expected object', async (t) => {
   }));
 });
 
-test('getPdr calls the callback with the expected object', async (t) => {
+test('getPdrs calls the callback with the expected object', async (t) => {
   const query = { limit: 50 };
   const expected = {
     prefix: t.context.testPrefix,
