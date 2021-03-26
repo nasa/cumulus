@@ -1,5 +1,6 @@
 'use strict';
 
+const { isNumber } = require('lodash');
 const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { postMigrationCounts } = require('@cumulus/api-client/migrationCounts');
 const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
@@ -57,13 +58,14 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       expect(
         Object.keys(parsedOutput)
       ).toEqual([
-        'CollectionsNotMapped',
-        'pdr_granule_and_execution_records_not_in_postgres_by_collection',
+        'collectionsNotMapped',
         'records_in_dynamo_not_in_postgres',
+        'pdr_granule_and_execution_records_not_in_postgres_by_collection',
+        's3Uri',
       ]);
       expect(
         Object.keys(parsedOutput.records_in_dynamo_not_in_postgres).forEach((k) => {
-          if (!parsedOutput.records_in_dynamo_not_in_postgres[k]._isNumber) {
+          if (!isNumber(parsedOutput.records_in_dynamo_not_in_postgres[k])) {
             throw new Error('boom');
           }
         })
