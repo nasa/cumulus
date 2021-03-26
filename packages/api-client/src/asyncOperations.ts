@@ -31,7 +31,7 @@ export const getAsyncOperation = async (params: {
 
 /**
  * Query  async operations stored in cumulus
- * GET /granules
+ * GET /asyncOperations
  * @param {Object} params             - params
  * @param {string} [params.query]     - query to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
