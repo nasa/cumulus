@@ -2,23 +2,6 @@ locals {
   lambda_path         = "${path.module}/dist/webpack/lambda.zip"
   all_bucket_names    = [for k, v in var.buckets : v.name]
 }
-
-resource "aws_security_group" "postgres_migration_count_tool" {
-  count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
-  name   = "${var.prefix}-postgres-migration-count-tool"
-  vpc_id = var.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = var.tags
-}
-
-
 resource "aws_lambda_function" "postgres_migration_count_tool" {
   function_name    = "${var.prefix}-postgres-migration-count-tool"
   filename         = local.lambda_path
