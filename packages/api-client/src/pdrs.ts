@@ -13,7 +13,7 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  *                                     to cumulusApiClient.invokeApi
  * @returns {Promise<Object>}        - the execution fetched by the API
  */
-export const getExecution = async (params: {
+export const getPdr = async (params: {
   prefix: string,
   pdrName: string,
   callback?: InvokeApiFunction
