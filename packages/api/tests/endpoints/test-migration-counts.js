@@ -87,5 +87,8 @@ test.serial('POST /migrationCounts starts an async-operation with the correct pa
   t.deepEqual(payload, {
     reportBucket: 'reportBucket',
     reportPath: 'reportPath',
+    cutoffSeconds: 500,
+    dbConcurrency: 20,
+    dbMaxPool: 20,
   });
 });
