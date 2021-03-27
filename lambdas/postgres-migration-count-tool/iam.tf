@@ -5,10 +5,6 @@ data "aws_iam_policy_document" "migration_count_assume_role_policy" {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
     }
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
   }
 }
 
@@ -16,7 +12,7 @@ data "aws_iam_policy_document" "migration_count_assume_role_policy" {
 resource "aws_security_group" "postgres_migration_count" {
   count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
 
-  name   = "${var.prefix}-postgres-migration-count"
+  name   = "${var.prefix}-postgres-migration-count2"
   vpc_id = var.vpc_id
 
   egress {
@@ -31,45 +27,29 @@ resource "aws_security_group" "postgres_migration_count" {
 
 # migration_count_role
 resource "aws_iam_role" "postgres_migration_count_role" {
-  name                 = "${var.prefix}-postgres_migration_count"
+  name                 = "${var.prefix}-postgres_migration_count2"
   assume_role_policy   = data.aws_iam_policy_document.migration_count_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
 }
 
-data "aws_iam_policy_document" "postgres_migration_count_policy2" {
+data "aws_iam_policy_document" "postgres_migration_count_policy" {
   statement {
     actions = [
-      "ecr:*"
-    ]
-    resources = ["*"]
-  }
-  statement {
-    actions = [
-      "ec2:CreateNetworkInterface",
       "dynamodb:ListTables",
-      "ec2:DeleteNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
       "lambda:GetFunction",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:DescribeLogStreams",
       "logs:PutLogEvents",
-      "s3:ListAllMyBuckets",
     ]
     resources = ["*"]
   }
 
   statement {
     actions = [
-      "s3:GetAccelerateConfiguration",
-      "s3:GetLifecycleConfiguration",
-      "s3:GetReplicationConfiguration",
       "s3:GetBucket*",
-      "s3:PutAccelerateConfiguration",
-      "s3:PutLifecycleConfiguration",
-      "s3:PutReplicationConfiguration",
       "s3:PutBucket*",
       "s3:ListBucket*",
     ]
@@ -88,9 +68,7 @@ data "aws_iam_policy_document" "postgres_migration_count_policy2" {
 
   statement {
     actions = [
-      "dynamodb:DeleteItem",
       "dynamodb:GetItem",
-      "dynamodb:PutItem",
       "dynamodb:Scan",
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
@@ -119,7 +97,7 @@ data "aws_iam_policy_document" "postgres_migration_count_policy2" {
 }
 
 resource "aws_iam_role_policy" "postgres_migration_count" {
-  name   = "${var.prefix}_postgres_migration_count"
+  name   = "${var.prefix}_postgres_migration_count2"
   role   = aws_iam_role.postgres_migration_count_role.id
-  policy = data.aws_iam_policy_document.postgres_migration_count_policy2.json
+  policy = data.aws_iam_policy_document.postgres_migration_count_policy.json
 }
