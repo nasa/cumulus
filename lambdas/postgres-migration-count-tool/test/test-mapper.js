@@ -39,17 +39,17 @@ test('mapper returns expected values', async (t) => {
   const getExecutionsFunction = () => Promise.resolve({
     body: '{"meta": { "count": 7 }}',
   });
-  const getPostgresPdrModelCountFunction = () => 1;
-  const getPostgresGranuleModelCountFunction = () => 2;
-  const getPostgresExecutionModelCountFunction = () => 3;
+  const countPostgresPdrModelRecordsFunction = () => 1;
+  const countPostgresGranuleModelRecordsFunction = () => 2;
+  const countPostgresExecutionModelRecords = () => 3;
 
   const actual = await mapper({
     getPdrsFunction,
     listGranulesFunction,
     getExecutionsFunction,
-    getPostgresPdrModelCountFunction,
-    getPostgresGranuleModelCountFunction,
-    getPostgresExecutionModelCountFunction,
+    countPostgresPdrModelRecordsFunction,
+    countPostgresGranuleModelRecordsFunction,
+    countPostgresExecutionModelRecords,
     cutoffIsoString,
     cutoffTime,
     knexClient,
