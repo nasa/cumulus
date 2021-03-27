@@ -1,6 +1,6 @@
 'use strict';
 
-const { isNumber } = require('lodash/isNumber');
+const isNumber = require('lodash/isNumber');
 const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { postMigrationCounts } = require('@cumulus/api-client/migrationCounts');
 const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
@@ -34,7 +34,9 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         id: JSON.parse(response.body).id,
         status: 'SUCCEEDED',
         stackName: config.stackName,
-        retries: 120,
+        retryOptions: {
+          retries: 30 * 5,
+        },
       });
 
       const asyncOutput = JSON.parse(asyncOperation.output);
