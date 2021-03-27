@@ -1,6 +1,8 @@
 import AWS from 'aws-sdk';
-import { envUtils } from '@cumulus/common';
 import Knex from 'knex';
+
+import { envUtils } from '@cumulus/common';
+
 export const localStackConnectionEnv = {
   PG_HOST: 'localhost',
   PG_USER: 'postgres',
