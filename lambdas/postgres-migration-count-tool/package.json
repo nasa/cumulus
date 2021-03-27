@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/postgres-reconcile",
-  "version": "7.0.1",
+  "version": "7.1.0",
   "description": "A Lambda function used for generating counts between Dynamo/ES and Postgres",
   "license": "Apache-2.0",
   "engines": {
