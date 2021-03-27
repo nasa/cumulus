@@ -1,6 +1,6 @@
 import { NewCollectionRecord } from '@cumulus/types/api/collections';
 
-export type CollectionReportObj = {
+export type CollectionReportObject = {
   [key: string]: {
     pdrsDelta: number
     totalPdrs: number

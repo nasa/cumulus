@@ -9,7 +9,7 @@ import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import {
   AggregateReportObject,
   CollectionMapping,
-  CollectionReportObj,
+  CollectionReportObject,
   EsCutoffQueryString,
   StatsObject,
 } from './types';
@@ -29,14 +29,14 @@ export const getDbCount = async (
 };
 
 /**
-* Generates a CollectionReportObject
+* Generates a CollectionReportObjectect
 * @summary Generates a report containing the total Dynamo counts as well as the
 * delta relative to postgres for use in the user output
 * @param {StatsObject[]} stats - Array of stats objects to convert to user form
-* @returns {CollectionReportObj}
+* @returns {CollectionReportObject}
 */
-export const generateCollectionReportObj = (stats: StatsObject[]) => {
-  const reportObj = {} as CollectionReportObj;
+export const generateCollectionReportObject = (stats: StatsObject[]) => {
+  const reportObj = {} as CollectionReportObject;
   stats.forEach((statsObj) => {
     const counts = statsObj.counts;
     if (counts[0] !== counts[3] || counts[1] !== counts[4] || counts[2] !== counts[5]) {

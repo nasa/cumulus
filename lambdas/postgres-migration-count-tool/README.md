@@ -9,7 +9,7 @@ This lambda runs a script that does the following
 ```text
 collectionsNotMapped: {collectionFailures[]},
 records_in_dynamo_not_in_postgres: {aggregateReportObj},
-pdr_granule_and_execution_records_not_in_postgres_by_collection: {collectionReportObj},
+pdr_granule_and_execution_records_not_in_postgres_by_collection: {CollectionReportObject},
 s3Uri: 's3://uri'
 ```
 

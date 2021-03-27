@@ -5,7 +5,7 @@ const {
   buildCollectionMappings,
   countPostgresRecords,
   generateAggregateReportObj,
-  generateCollectionReportObj,
+  generateCollectionReportObject,
   getDbCount,
   getDynamoTableEntries,
   getEsCutoffQuery,
@@ -150,11 +150,11 @@ test('getDbCount returns the count from the query result promise', async (t) => 
   t.is(actual, 10);
 });
 
-test('generateCollectionReportObj generates a report object', (t) => {
+test('generateCollectionReportObject generates a report object', (t) => {
   const statsObjects = [
     { collectionId: 'fakeCollectionId', counts: [7, 8, 9, 4, 5, 6] },
   ];
-  const actual = generateCollectionReportObj(statsObjects);
+  const actual = generateCollectionReportObject(statsObjects);
   const expected = {
     fakeCollectionId: {
       executionsDelta: 3,
@@ -168,12 +168,12 @@ test('generateCollectionReportObj generates a report object', (t) => {
   t.deepEqual(actual, expected);
 });
 
-test('generateCollectionReportObj does not return a report object if there are no discrepancies', (t) => {
+test('generateCollectionReportObject does not return a report object if there are no discrepancies', (t) => {
   const statsObjects = [{
     collectionId: 'fakeCollectionId',
     counts: [1, 1, 1, 1, 1, 1],
   }];
-  const actual = generateCollectionReportObj(statsObjects);
+  const actual = generateCollectionReportObject(statsObjects);
   const expected = {};
   t.deepEqual(actual, expected);
 });

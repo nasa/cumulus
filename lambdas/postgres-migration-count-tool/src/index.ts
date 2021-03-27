@@ -16,7 +16,7 @@ import {
   buildCollectionMappings,
   countPostgresRecords,
   generateAggregateReportObj,
-  generateCollectionReportObj,
+  generateCollectionReportObject,
   getDynamoTableEntries,
 } from './utils';
 
@@ -159,7 +159,7 @@ export const handler = async (
   );
 
   // Reformat stats objects to user-readable data
-  const collectionReportObj = await generateCollectionReportObj(collectionReportResults);
+  const CollectionReportObject = await generateCollectionReportObject(collectionReportResults);
   const aggregateReportObj = generateAggregateReportObj({
     dynamoAsyncOperationsCount,
     dynamoCollectionsCount,
@@ -175,16 +175,16 @@ export const handler = async (
   const reportObj = {
     collectionsNotMapped: collectionFailures,
     records_in_dynamo_not_in_postgres: aggregateReportObj,
-    pdr_granule_and_execution_records_not_in_postgres_by_collection: collectionReportObj,
+    pdr_granule_and_execution_records_not_in_postgres_by_collection: CollectionReportObject,
     s3Uri: '',
   };
 
   // Output results
   logger.info(`Records found in dynamo not found in postgres: ${JSON.stringify(aggregateReportObj)}`);
-  if (Object.keys(collectionReportObj)) {
+  if (Object.keys(CollectionReportObject)) {
     logger.error('Collection discrepancies found!');
     logger.error('Details::');
-    logger.error(JSON.stringify(collectionReportObj));
+    logger.error(JSON.stringify(CollectionReportObject));
   }
 
   // Write report object to S3
