@@ -11,6 +11,17 @@ export type CollectionReportObj = {
   };
 };
 
+export type AggregateReportObject = {
+  collectionsDelta: number;
+  totalDynamoCollections: number;
+  providersDelta: number;
+  totalDynamoProviders: number;
+  rulesDelta: number;
+  totalDynamoRules: number;
+  asyncOperationsDelta: number;
+  totalDynamoAsyncOperations: number;
+};
+
 export type EsCutoffQueryString = {
   fields: string[];
   createdAt__to: string;

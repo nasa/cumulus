@@ -1,16 +1,17 @@
 import {
-  Knex,
   BasePgModel,
-  translateApiCollectionToPostgresCollection,
   CollectionPgModel,
+  Knex,
+  translateApiCollectionToPostgresCollection,
 } from '@cumulus/db';
 import { NewCollectionRecord } from '@cumulus/types/api/collections';
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import {
-  CollectionReportObj,
-  StatsObject,
+  AggregateReportObject,
   CollectionMapping,
+  CollectionReportObj,
   EsCutoffQueryString,
+  StatsObject,
 } from './types';
 
 /**
@@ -214,7 +215,7 @@ export const generateAggregateReportObj = (params: {
   postgresCollectionCount: number,
   postgresProviderCount: number,
   postgresRulesCount: number,
-}) => {
+}): AggregateReportObject => {
   const {
     dynamoAsyncOperationsCount,
     dynamoCollectionsCount,
