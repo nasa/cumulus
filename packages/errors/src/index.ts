@@ -113,36 +113,27 @@ export const MissingBucketMap = createErrorType('MissingBucketMap');
  */
 export const ProviderNotFound = createErrorType('ProviderNotFound');
 
-export const FTPError = createErrorType('FTPError');
-
-export const PDRParsingError = createErrorType('PDRParsingError');
-
 export const ConnectionTimeout = createErrorType('ConnectionTimeout');
 
-export const HostNotFound = createErrorType('HostNotFound');
-
-export const FileNotFound = createErrorType('FileNotFound');
-
-export const InvalidChecksum = createErrorType('InvalidChecksum');
-
-export const DuplicateFile = createErrorType('DuplicateFile');
-
-export const UnexpectedFileSize = createErrorType('UnexpectedFileSize');
-
-/**
- * Error thrown when system encounters a conflicting request.
- */
-export const InvalidArgument = createErrorType('InvalidArgument');
-
-/**
- * is raised if the PDR file doesn't match the collection
- */
-
-export const ApiCollisionError = createErrorType('ApiCollisionError');
+export const CumulusMessageError = createErrorType('CumulusMessageError');
 
 export const DeletePublishedGranule = createErrorType('DeletePublishedGranule');
 
+export const DuplicateFile = createErrorType('DuplicateFile');
+
 export const EcsStartTaskError = createErrorType('EcsStartTaskError');
+
+export const FileNotFound = createErrorType('FileNotFound');
+
+export const FTPError = createErrorType('FTPError');
+
+export const ApiCollisionError = createErrorType('ApiCollisionError');
+
+export const HostNotFound = createErrorType('HostNotFound');
+
+export const InvalidArgument = createErrorType('InvalidArgument');
+
+export const InvalidChecksum = createErrorType('InvalidChecksum');
 
 export const InvalidRegexError = createErrorType('InvalidRegexError');
 
@@ -150,7 +141,11 @@ export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
 
 export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
 
+export const PDRParsingError = createErrorType('PDRParsingError');
+
 export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
+
+export const UnexpectedFileSize = createErrorType('UnexpectedFileSize');
 
 export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 

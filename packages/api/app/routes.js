@@ -15,6 +15,7 @@ const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
 const instanceMeta = require('../endpoints/instance-meta');
 const logs = require('../endpoints/logs');
+const orca = require('../endpoints/orca');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const replays = require('../endpoints/replays');
 const schemas = require('../endpoints/schemas');
@@ -69,7 +70,10 @@ router.use('/instanceMeta', ensureAuthorized, instanceMeta);
 // logs endpoint
 router.use('/logs', ensureAuthorized, logs);
 
-// logs endpoint
+// orca endpoint
+router.use('/orca', ensureAuthorized, orca);
+
+// reconciliationReports endpoint
 router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
 
 // replays endpoint

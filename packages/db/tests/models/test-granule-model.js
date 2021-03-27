@@ -99,8 +99,9 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
 
   const updatedGranule = {
     ...granule,
-    timestamp: new Date(),
-    updated_at: new Date(),
+    timestamp: new Date(Date.now() + 1000),
+    updated_at: new Date(Date.now() + 1000),
+    created_at: new Date(Date.now() + 1000),
   };
 
   await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
@@ -248,6 +249,72 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
 
   const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
   t.is(record.status, 'running');
+});
+
+test('GranulePgModel.upsert() will not allow a final state from an older execution to overwrite the completed state from a newer execution', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+
+  const [newExecutionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'completed' })
+  );
+
+  const updatedGranule = {
+    ...granule,
+    status: 'failed',
+    created_at: new Date(Date.now() - 100000),
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
+
+  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  t.is(record.status, 'completed');
+});
+
+test('GranulePgModel.upsert() will not allow a running state from an older execution to overwrite the completed state from a newer execution', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+
+  const [newExecutionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'failed' })
+  );
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+    created_at: new Date(Date.now() - 100000),
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
+
+  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  t.is(record.status, 'completed');
 });
 
 test('GranulePgModel.upsert() succeeds without an execution', async (t) => {
