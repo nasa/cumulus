@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "migration_count_assume_role_policy" {
 resource "aws_security_group" "postgres_migration_count" {
   count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
 
-  name   = "${var.prefix}-postgres-migration-count2"
+  name   = "${var.prefix}-postgres-migration-count"
   vpc_id = var.vpc_id
 
   egress {
@@ -27,7 +27,7 @@ resource "aws_security_group" "postgres_migration_count" {
 
 # migration_count_role
 resource "aws_iam_role" "postgres_migration_count_role" {
-  name                 = "${var.prefix}-postgres_migration_count2"
+  name                 = "${var.prefix}-postgres_migration_count"
   assume_role_policy   = data.aws_iam_policy_document.migration_count_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
@@ -36,6 +36,10 @@ resource "aws_iam_role" "postgres_migration_count_role" {
 data "aws_iam_policy_document" "postgres_migration_count_policy" {
   statement {
     actions = [
+      "ec2:CreateNetworkInterface",
+      "dynamodb:ListTables",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
       "dynamodb:ListTables",
       "lambda:GetFunction",
       "lambda:invokeFunction",
@@ -97,7 +101,7 @@ data "aws_iam_policy_document" "postgres_migration_count_policy" {
 }
 
 resource "aws_iam_role_policy" "postgres_migration_count" {
-  name   = "${var.prefix}_postgres_migration_count2"
+  name   = "${var.prefix}_postgres_migration_count"
   role   = aws_iam_role.postgres_migration_count_role.id
   policy = data.aws_iam_policy_document.postgres_migration_count_policy.json
 }
