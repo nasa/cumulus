@@ -56,7 +56,7 @@ Where:
 * PAYLOAD - base64 encoded JSON object.   For example:
 
 ```bash
---payload $(echo '{"reportBucket": "cumulus-test-sandbox-internal", "reportPath": "jk-tf4/testOutput"}' | base64)
+--payload $(echo '{"reportBucket": "someBucket", "reportPath": "somePath", "cutoffSeconds": 60, "dbConcurrency": 20, "dbMaxPool": 20}' | base64)
 ```
 
 * OUTFILE - The filepath to store the output from the lambda at.
@@ -66,7 +66,7 @@ Where:
 ### Api invocation
 
 ```bash
-curl -X POST https://$API_URL/dev/migrationCounts -d 'reportBucket=someBucket&reportPath=someReportPath' --header 'Authorization: Bearer $TOKEN'
+curl -X POST https://$API_URL/dev/migrationCounts -d 'reportBucket=someBucket&reportPath=someReportPath&cutoffSeconds=60&dbConcurrency=20&dbMaxPool=20' --header 'Authorization: Bearer $TOKEN'
 ```
 
 In this instance, the API will trigger an Async Operation and return an id:
