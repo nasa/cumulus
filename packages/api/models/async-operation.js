@@ -34,7 +34,7 @@ class AsyncOperation extends Manager {
     this.stackName = params.stackName;
 
     this.dynamoDbClient = new Manager({
-      tableName: process.env.ProvidersTable,
+      tableName: params.tableName || process.env.AsyncOperationsTable,
       tableHash: { name: 'id', type: 'S' },
       schema: asyncOperationSchema,
     });
