@@ -3,7 +3,7 @@
 ## This lambda runs a script that:
 
 1) Scans DynamoDB AsyncOperations, Rules, Executions and Collections and compares their record count with the configured postgres database.
-2) Builds a mapping of collections in the DynamoDb `collections` databases to `collections` in the Postgres database, notes any that are missing and then compares `granules`, `executions` and `pdrs` between the Elasticsearch database replication and the Postgres database.
+2) Builds a mapping of collections in the DynamoDb `collections` databases to `collections` in the Postgres database, notes any that are missing from Postgres and then compares the counts of `granules`, `executions` and `pdrs` for each available collection between the Elasticsearch database replication and the Postgres database.
 3) Returns a report in the format:
 
 ```text
