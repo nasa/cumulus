@@ -11,7 +11,7 @@ test('handler returns the expected report', async (t) => {
   process.env.RulesTable = 'RulesTable';
   process.env.CollectionsTable = 'CollectionsTable';
   process.env.AsyncOperationsTable = 'AsyncOperationsTable';
-  const getPostgresModelCountStub = () => 5;
+  const countPostgresRecordsFunctionStub = () => 5;
   const mapperFunctionStub = (_val) => ({
     collectionId: 'TEST_COLLECTION__006',
     counts: [10, 10, 10, 0, 0, 0],
@@ -31,7 +31,7 @@ test('handler returns the expected report', async (t) => {
   ];
   const getKnexClientStub = async () => ({ val: true });
   const actual = await handler({
-    getPostgresModelCountFunction: getPostgresModelCountStub,
+    countPostgresRecordsFunction: countPostgresRecordsFunctionStub,
     mapperFunction: mapperFunctionStub,
     buildCollectionMappingsFunction: buildCollectionMappingsFunctionStub,
     getDynamoTableEntriesFunction: getDynamoTableEntriesFunctionStub,
@@ -62,6 +62,7 @@ test('handler returns the expected report', async (t) => {
       providersDelta: 45,
       rulesDelta: 55,
     },
+    s3Uri: '',
   };
   t.deepEqual(actual, expected);
 });

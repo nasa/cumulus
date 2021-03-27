@@ -2,13 +2,13 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const {
+  buildCollectionMappings,
+  countPostgresRecords,
+  generateAggregateReportObj,
   generateCollectionReportObj,
   getDbCount,
-  getPostgresModelCount,
-  generateAggregateReportObj,
-  buildCollectionMappings,
-  getEsCutoffQuery,
   getDynamoTableEntries,
+  getEsCutoffQuery,
 } = require('../dist/lambda/utils');
 
 test('generateAggregateReportObj returns the expected results', (t) => {
@@ -125,7 +125,7 @@ test('getEsCutoffQuery returns the expected query if a collectionId is not speci
   t.deepEqual(actual, expected);
 });
 
-test('getPostgresModelCount calls the model with the expected query string', async (t) => {
+test('countPostgresRecords calls the model with the expected query string', async (t) => {
   const modelCountSpy = sinon.spy(() => [{ count: 1 }]);
   const modelStub = {
     count: modelCountSpy,
@@ -133,7 +133,7 @@ test('getPostgresModelCount calls the model with the expected query string', asy
   const knexClient = {};
   const queryParams = ['fakeQueryParams'];
 
-  const actual = await getPostgresModelCount({
+  const actual = await countPostgresRecords({
     model: modelStub,
     knexClient,
     cutoffIsoString: 'fakeCutoffIsoString',

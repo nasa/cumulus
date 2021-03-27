@@ -31,7 +31,7 @@ const postgresPdrModel = new PdrPgModel();
 * @param {Function} params.getPdrsFunction - Optional overrides for test/mocks
 * @param {Function} params.listGranulesFunction - Optional overrides for test/mocks
 * @param {Function} params.getExecutionsFunction - Optional overrides for test/mocks
-* @param {Function} params.getPostgresModelCountFunction - Optional overrides for test/mocks
+* @param {Function} params.countPostgresRecordsFunction - Optional overrides for test/mocks
 * @returns {ReturnValueDataTypeHere} Brief description of the returning value here.
 */
 export const mapper = async (params: {

@@ -14,9 +14,9 @@ import {
 
 import {
   buildCollectionMappings,
+  countPostgresRecords,
   generateAggregateReportObj,
   generateCollectionReportObj,
-  getPostgresModelCount,
   getDynamoTableEntries,
 } from './utils';
 
@@ -56,7 +56,7 @@ export const handler = async (
     systemBucket?: string,
     stackName?: string,
     // Arguments below are for unit test injection
-    getPostgresModelCountFunction?: typeof getPostgresModelCount,
+    countPostgresRecordsFunction?: typeof countPostgresRecords,
     mapperFunction?: typeof pMapMapper,
     buildCollectionMappingsFunction?: typeof buildCollectionMappings,
     getDynamoTableEntriesFunction?: typeof getDynamoTableEntries,
@@ -72,7 +72,7 @@ export const handler = async (
     systemBucket = envUtils.getRequiredEnvVar('systemBucket'),
     stackName = envUtils.getRequiredEnvVar('prefix'),
     getKnexClientFunction = getKnexClient,
-    getPostgresModelCountFunction = getPostgresModelCount,
+    countPostgresRecordsFunction = countPostgresRecords,
     mapperFunction = pMapMapper,
     buildCollectionMappingsFunction = buildCollectionMappings,
     getDynamoTableEntriesFunction = getDynamoTableEntries,
@@ -116,23 +116,23 @@ export const handler = async (
   const dynamoRuleCount = dynamoRules.length;
 
   // Get postgres table counts
-  const postgresProviderCount = await getPostgresModelCountFunction({
+  const postgresProviderCount = await countPostgresRecordsFunction({
     model: postgresProviderModel,
     knexClient,
     cutoffIsoString,
   });
-  const postgresRulesCount = await getPostgresModelCountFunction({
+  const postgresRulesCount = await countPostgresRecordsFunction({
     model: postgresRulesModel,
     knexClient,
     cutoffIsoString,
   });
-  const postgresAsyncOperationsCount = await getPostgresModelCountFunction({
+  const postgresAsyncOperationsCount = await countPostgresRecordsFunction({
     model: postgresAsyncOperationModel,
     knexClient,
     cutoffIsoString,
   });
 
-  const postgresCollectionCount = await getPostgresModelCountFunction({
+  const postgresCollectionCount = await countPostgresRecordsFunction({
     model: postgresCollectionModel,
     knexClient,
     cutoffIsoString,

@@ -89,7 +89,7 @@ export const getEsCutoffQuery = (
 * record array
 * @returns {Promise<number>} - Returns the count (as an integer)
 */
-export const getPostgresModelCount = async <T, R extends { cumulus_id: number }>(params: {
+export const countPostgresRecords = async <T, R extends { cumulus_id: number }>(params: {
   model: BasePgModel<T, R>,
   knexClient: Knex,
   cutoffIsoString?: string,
