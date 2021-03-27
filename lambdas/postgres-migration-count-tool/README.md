@@ -1,6 +1,6 @@
 # Postgres Migration Count Tool Lambda
 
-## This lambda runs a script that:
+This lambda runs a script that does the following
 
 1) Scans DynamoDB AsyncOperations, Rules, Executions and Collections and compares their record count with the configured postgres database.
 2) Builds a mapping of collections in the DynamoDb `collections` databases to `collections` in the Postgres database, notes any that are missing from Postgres and then compares the counts of `granules`, `executions` and `pdrs` for each available collection between the Elasticsearch database replication and the Postgres database.
@@ -44,7 +44,7 @@ Where
 
 This tool can be invoked one of two ways:
 
-### Via direct lambda invocation:
+### Direct lambda invocation
 
 ```bash
 aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool --payload $PAYLOAD $OUTFILE
@@ -63,26 +63,26 @@ Where:
 
 * PREFIX - Your Cumulus deployment prefix
 
-### Via API call, for example
+### Api invocation
 
 ```bash
-curl -X POST https://$API_URL/dev/migrationCounts -d 'key1=foo&key2=bar' --header 'Authorization: Bearer $TOKEN'
+curl -X POST https://$API_URL/dev/migrationCounts -d 'reportBucket=someBucket&reportPath=someReportPath' --header 'Authorization: Bearer $TOKEN'
 ```
 
 In this instance, the API will trigger an Async Operation and return an id:
 
 ```json
-{"id":"7ccaed31-756b-40bb-855d-e5e6d00dc4b3","status":"RUNNING","taskArn":"arn:aws:ecs:us-east-1:SOMEID:task/$PREFIX-CumulusECSCluster/123456789","description":"Migration Count Tool ECS Run","operationType":"Migration Count Report"}
+{"id":"7ccaed31-756b-40bb-855d-e5e6d00dc4b3","status":"RUNNING","taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789","description":"Migration Count Tool ECS Run","operationType":"Migration Count Report"}
 ```
 
 Which you can than query the Async Operations [api endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output/status of your request.
 
-### Payload parameters:
+### Payload parameters
 
-The following parameters are used by this tool:
+The following optional parameters are used by this tool:
 
 * reportBucket (string) -- Sets the bucket used for reporting.  If this argument is used a `reportPath` must be set to generate a report
 * reportPath (string) -- Sets the path location for the tool to write a copy of the lambda payload to S3
-* cutoffSeconds (number) -- Number of seconds prior to this execution to 'cutoff' reconciliation queries.  This allows in-progress/other in-flight operations time to complete and propigate to Elasticsearch/Dynamo/postgres.  Default is 3600
+* cutoffSeconds (number) -- Number of seconds prior to this execution to 'cutoff' reconciliation queries.  This allows in-progress/other in-flight operations time to complete and propagate to Elasticsearch/Dynamo/postgres.  Default is 3600
 * dbConcurrency (number) -- Sets max number of parallel collections reports  the script will run at a time.  Default 20
 * dbMaxPool (number) -- Sets the maximum number of connections the database pool has available.   Modifying this may result in unexpected failures.    Default is 20
