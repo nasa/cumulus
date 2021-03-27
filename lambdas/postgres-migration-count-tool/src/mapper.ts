@@ -1,3 +1,4 @@
+import { constructCollectionId } from '@cumulus/message/Collections';
 import { getExecutions } from '@cumulus/api-client/executions';
 import { getPdrs } from '@cumulus/api-client/pdrs';
 import { listGranules } from '@cumulus/api-client/granules';
@@ -61,7 +62,7 @@ export const mapper = async (params: {
     countPostgresExecutionModelRecords = countPostgresRecords,
   } = { ...params };
   const { collection, postgresCollectionId } = collectionMap;
-  const collectionId = `${collection.name}___${collection.version}`;
+  const collectionId = constructCollectionId(collection.name, collection.version);
   return {
     collectionId,
     counts: await Promise.all([
