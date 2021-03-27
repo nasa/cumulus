@@ -1,6 +1,6 @@
 import { getExecutions } from '@cumulus/api-client/executions';
-import { listGranules } from '@cumulus/api-client/granules';
 import { getPdrs } from '@cumulus/api-client/pdrs';
+import { listGranules } from '@cumulus/api-client/granules';
 
 import {
   GranulePgModel,
@@ -9,7 +9,7 @@ import {
   Knex,
 } from '@cumulus/db';
 
-import { getEsCutoffQuery, getDbCount, getPostgresModelCount } from './utils';
+import { getEsCutoffQuery, getDbCount, countPostgresRecords } from './utils';
 import { StatsObject, CollectionMapping } from './types';
 
 const postgresGranuleModel = new GranulePgModel();
@@ -42,9 +42,9 @@ export const mapper = async (params: {
   getPdrsFunction?: typeof getPdrs,
   listGranulesFunction?: typeof listGranules,
   getExecutionsFunction?: typeof getExecutions,
-  getPostgresPdrModelCountFunction?: typeof getPostgresModelCount,
-  getPostgresGranuleModelCountFunction?: typeof getPostgresModelCount,
-  getPostgresExecutionModelCountFunction?: typeof getPostgresModelCount
+  countPostgresPdrModelRecordsFunction?: typeof countPostgresRecords,
+  countPostgresGranuleModelRecordsFunction?: typeof countPostgresRecords,
+  countPostgresExecutionModelRecords?: typeof countPostgresRecords
   collectionMap: CollectionMapping,
 }): Promise<StatsObject> => {
   const {
@@ -56,9 +56,9 @@ export const mapper = async (params: {
     getPdrsFunction = getPdrs,
     listGranulesFunction = listGranules,
     getExecutionsFunction = getExecutions,
-    getPostgresPdrModelCountFunction = getPostgresModelCount,
-    getPostgresGranuleModelCountFunction = getPostgresModelCount,
-    getPostgresExecutionModelCountFunction = getPostgresModelCount,
+    countPostgresPdrModelRecordsFunction = countPostgresRecords,
+    countPostgresGranuleModelRecordsFunction = countPostgresRecords,
+    countPostgresExecutionModelRecords = countPostgresRecords,
   } = { ...params };
   const { collection, postgresCollectionId } = collectionMap;
   const collectionId = `${collection.name}___${collection.version}`;
@@ -95,19 +95,19 @@ export const mapper = async (params: {
           ),
         })
       ),
-      getPostgresPdrModelCountFunction({
+      countPostgresPdrModelRecordsFunction({
         model: postgresPdrModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
       }),
-      getPostgresGranuleModelCountFunction({
+      countPostgresGranuleModelRecordsFunction({
         model: postgresGranuleModel,
         knexClient,
         cutoffIsoString,
         queryParams: [[{ collection_cumulus_id: postgresCollectionId }]],
       }),
-      getPostgresExecutionModelCountFunction({
+      countPostgresExecutionModelRecords({
         model: postgresExecutionModel,
         knexClient,
         cutoffIsoString,
