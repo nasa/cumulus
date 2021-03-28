@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2309**
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2130**
+    - Added postgres-migration-count-tool lambda/ECS task to allow for
+      evaluation of database state
+    - Added /migrationCounts api endpoint that allows running of the
+      postgres-migration-count-tool as an asyncOperation
   - **CUMULUS-2394**
     - Updated PDR and Granule writes to check the step function
     workflow_start_time against the createdAt field for each record to
