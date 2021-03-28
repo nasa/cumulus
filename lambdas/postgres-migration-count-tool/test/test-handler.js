@@ -62,7 +62,6 @@ test('handler returns the expected report', async (t) => {
       providersDelta: 45,
       rulesDelta: 55,
     },
-    s3Uri: '',
   };
   t.deepEqual(actual, expected);
 });
