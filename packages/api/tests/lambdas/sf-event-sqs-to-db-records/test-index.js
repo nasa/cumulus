@@ -439,8 +439,14 @@ test('writeRecords() discards an out of order message that is older than an exis
   t.is(timestamp, (await granuleModel.get({ granuleId })).createdAt);
   t.is(timestamp, (await pdrModel.get({ pdrName })).createdAt);
 
-  t.deepEqual(new Date(timestamp), (await granulePgModel.get(knex, { granule_id: granuleId })).created_at);
-  t.deepEqual(new Date(timestamp), (await pdrPgModel.get(knex, { name: pdrName })).created_at);
+  t.deepEqual(
+    new Date(timestamp),
+    (await granulePgModel.get(knex, { granule_id: granuleId })).created_at
+  );
+  t.deepEqual(
+    new Date(timestamp),
+    (await pdrPgModel.get(knex, { name: pdrName })).created_at
+  );
 });
 
 test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
