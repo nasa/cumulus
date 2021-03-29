@@ -15,6 +15,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Bulk granule operations endpoint now supports setting a custom queue for scheduling workflows via the `queueUrl` property in the request body. If provided, this value should be the full URL for an SQS queue.
 
+## [v7.2.0] 2021-03-23
+
+### Added
+
+- **CUMULUS-2346**
+  - Added orca API endpoint to `@cumulus/api` to get recovery status
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
+
+### Changed
+
+- **HYRAX-357**
+  - Format of NGAP OPeNDAP URL changed and by default now is referring to concept id and optionally can include short name and version of collection.
+  - `addShortnameAndVersionIdToConceptId` field has been added to the config inputs of the `hyrax-metadata-updates` task
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes
@@ -43,10 +57,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       the `createdAt` field  for each record to ensure old records do not
       overwrite newer ones
 
-- **CUMULUS-2346**
-  - Added orca API endpoint to `@cumulus/api` to get recovery status
-  - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
-
 ### Changed
 
 - `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now
@@ -72,6 +82,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated test function `waitForAsyncOperationStatus` to take a retryObject
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
+  - Updated the default scroll duration used in ESScrollSearch and part of the
+    reconcilation report functions as a result of testing and seeing timeouts
+    at its current value of 2min.
 - **CUMULUS-2427**
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
@@ -3926,8 +3939,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v7.1.0...HEAD
-[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.0.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v7.2.0...HEAD
+[v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
+[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.0.0...v7.1.0
 [v7.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
 [v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
 [v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1

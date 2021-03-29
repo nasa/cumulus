@@ -49,6 +49,11 @@
           "type": "string"
         }
       }
+    },
+    "addShortnameAndVersionIdToConceptId": {
+      "description": "Option to humanize the Hyrax URL. Humanizes when set to true.",
+      "default": false,
+      "type": "boolean"
     }
   }
 }
