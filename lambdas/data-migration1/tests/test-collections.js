@@ -183,13 +183,58 @@ test.serial('migrateCollectionRecord ignores extraneous fields from Dynamo', asy
   await t.notThrowsAsync(migrateCollectionRecord(fakeCollection, t.context.knex));
 });
 
-test.serial('migrateCollectionRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
-  const fakeCollection = generateFakeCollection();
+test.serial('migrateCollectionRecord throws RecordAlreadyMigrated error if already migrated record is newer', async (t) => {
+  const fakeCollection = generateFakeCollection({
+    updatedAt: Date.now(),
+  });
 
   await migrateCollectionRecord(fakeCollection, t.context.knex);
+
+  const olderFakeCollection = {
+    ...fakeCollection,
+    updatedAt: Date.now() - 1000, // older than fakeAsyncOp
+  };
+
   await t.throwsAsync(
-    migrateCollectionRecord(fakeCollection, t.context.knex),
+    migrateCollectionRecord(olderFakeCollection, t.context.knex),
     { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial('migrateCollectionRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const fakeCollection = generateFakeCollection({
+    updatedAt: Date.now() - 1000,
+  });
+  await migrateCollectionRecord(fakeCollection, t.context.knex);
+
+  const newerFakeCollection = generateFakeCollection({
+    ...fakeCollection,
+    updatedAt: Date.now(),
+  });
+  await migrateCollectionRecord(newerFakeCollection, t.context.knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('collections')
+    .where({ name: fakeCollection.name, version: fakeCollection.version })
+    .first();
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit(
+      {
+        ...fakeCollection,
+        sample_file_name: fakeCollection.sampleFileName,
+        granule_id_validation_regex: fakeCollection.granuleId,
+        granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
+        duplicate_handling: fakeCollection.duplicateHandling,
+        report_to_ems: fakeCollection.reportToEms,
+        ignore_files_config_for_discovery: fakeCollection.ignoreFilesConfigForDiscovery,
+        created_at: new Date(fakeCollection.createdAt),
+        updated_at: new Date(newerFakeCollection.updatedAt),
+      },
+      collectionOmitList
+    )
   );
 });
 

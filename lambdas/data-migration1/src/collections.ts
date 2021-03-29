@@ -2,7 +2,7 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
-import { PostgresCollectionRecord, translateApiCollectionToPostgresCollection } from '@cumulus/db';
+import { CollectionPgModel, PostgresCollectionRecord, translateApiCollectionToPostgresCollection } from '@cumulus/db';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 import { RecordAlreadyMigrated } from '@cumulus/errors';
@@ -28,6 +28,8 @@ export const migrateCollectionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
+  const collectionPgModel = new CollectionPgModel();
+
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.collection);
 
@@ -38,13 +40,13 @@ export const migrateCollectionRecord = async (
     })
     .first();
   // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
   }
 
   const updatedRecord = translateApiCollectionToPostgresCollection(<CollectionRecord>dynamoRecord);
 
-  await knex('collections').insert(updatedRecord);
+  await collectionPgModel.upsert(knex, updatedRecord);
 };
 
 export const migrateCollections = async (
