@@ -4,19 +4,17 @@ title: Queue PostToCmr
 hide_title: false
 ---
 
-In this document, we will walktrough handling CMR errors in workflows by queueing PostToCmr. We will assume that the user already has an ingeset workflow setup.
-
-1. Your ingest workflow will now end with the QueueWorkflow task.
-2. You can specify a queue for that task, which will then start the workflow
+In this document, we will walktrough handling CMR errors in workflows by queueing PostToCmr. We will assume that the user already has an ingest workflow setup.
 
 ## Overview
 
-The general concept is that the last task of the ingest workflow will queue the publish workflow. When there is a CMR error from `PostToCmr`, the publish workflow will add itself back onto the queue so that it can be executed when CMR is back up. This is demonstrated in the following diagram
+The general concept is that the last task of the ingest workflow will be `QueueWorkflow`, which queues the publish workflow. The publish workflow is a workflow containing the `PostToCmr` task. When there is a CMR error from `PostToCmr`, the publish workflow will add itself back onto the queue so that it can be executed when CMR is back online. This is achieved by leveraging the `QueueWorkflow` task again in the publish workflow. The following diagram demonstrates this queueing process.
+
 ![Diagram of workflow queueing](../assets/queue-workflow.png)
 
 ## Ingest Workflow
 
-The last step should be the QueueWorkflow step. It should be configured with a queueUrl and workflow.
+The last step should be the `QueueWorkflow` step. It should be configured with a queueUrl and workflow. In this case, the queueUrl is a [throttled queue](../throttling-queued-executions). You can pass any `queueUrl` here. for example, if you would like to specify a lower priority queue. The workflow is the unprefixed workflow name that you would like to queue (e.g. `PublishWorkflow`).
 
 ```json
   "QueueWorkflowStep": {
@@ -85,4 +83,46 @@ Configure the Catch section of your `PostToCmr` task to proceed to QueueWorkflow
   ],
 ```
 
-You would then configure the QueueWorkflow task similarly to its configuration in the ingest workflow. The workflow will be the same as the current workflow, thereby requeuing itself when there is a CMR failure.
+Then, configure the `QueueWorkflow` task similarly to its configuration in the ingest workflow. This time, the workflow that is passed to the task config is the same as the current workflow, which allows for the publish workflow to be requeued when there is a CMR error.
+
+```json
+  "QueueWorkflow": {
+    "Parameters": {
+      "cma": {
+        "event.$": "$",
+        "task_config": {
+          "buckets": "{$.meta.buckets}",
+          "distribution_endpoint": "{$.meta.distribution_endpoint}",
+          "workflow": "PublishGranuleQueue",
+          "queueUrl": "${start_sf_queue_url}",
+          "provider": "{$.meta.provider}",
+          "collection": "{$.meta.collection}"
+        }
+      }
+    },
+    "Type": "Task",
+    "Resource": "${queue_workflow_task_arn}",
+    "Catch": [
+      {
+        "ErrorEquals": [
+          "States.ALL"
+        ],
+        "Next": "WorkflowFailed",
+        "ResultPath": "$.exception"
+      }
+    ],
+    "Retry": [
+      {
+        "ErrorEquals": [
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 6,
+        "BackoffRate": 2
+      }
+    ],
+    "End": true
+  },
+  ```
