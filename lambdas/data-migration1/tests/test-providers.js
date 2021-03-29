@@ -297,12 +297,65 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
 
 test.serial('migrateProviderRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
   const { knex, providerKmsKeyId } = t.context;
-  const fakeProvider = generateFakeProvider();
+  const fakeProvider = generateFakeProvider({
+    updatedAt: Date.now(),
+  });
 
   await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
+
+  const olderFakeProvider = {
+    ...fakeProvider,
+    updatedAt: Date.now() - 1000, // older than fakeAsyncOp
+  };
+
   await t.throwsAsync(
-    migrateProviderRecord(fakeProvider, providerKmsKeyId, knex),
+    migrateProviderRecord(olderFakeProvider, providerKmsKeyId, knex),
     { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial('migrateProviderRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const { knex, providerKmsKeyId } = t.context;
+
+  const fakeProvider = generateFakeProvider({
+    updatedAt: Date.now() - 1000,
+  });
+  await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
+
+  const newerFakeProvider = generateFakeProvider({
+    ...fakeProvider,
+    updatedAt: Date.now(),
+  });
+  await migrateProviderRecord(newerFakeProvider, providerKmsKeyId, knex);
+
+  const createdRecord = await knex.queryBuilder()
+    .select()
+    .table('providers')
+    .where('name', fakeProvider.id)
+    .first();
+
+  t.deepEqual(
+    omit(
+      {
+        ...createdRecord,
+        username: await KMS.decryptBase64String(createdRecord.username),
+        password: await KMS.decryptBase64String(createdRecord.password),
+      },
+      ['cumulus_id']
+    ),
+    omit(
+      {
+        ...fakeProvider,
+        name: fakeProvider.id,
+        global_connection_limit: fakeProvider.globalConnectionLimit,
+        private_key: fakeProvider.privateKey,
+        cm_key_id: fakeProvider.cmKeyId,
+        certificate_uri: fakeProvider.certificateUri,
+        created_at: new Date(fakeProvider.createdAt),
+        updated_at: new Date(newerFakeProvider.updatedAt),
+      },
+      [...providerOmitList, 'encrypted']
+    )
   );
 });
 
