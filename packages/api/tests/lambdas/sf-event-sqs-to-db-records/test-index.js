@@ -427,12 +427,39 @@ test('writeRecords() discards an out of order message that is older than an exis
   const pdrPgModel = new PdrPgModel();
   const granulePgModel = new GranulePgModel();
 
-  cumulusMessage.meta.status = 'completed';
+  const timestamp = Date.now();
+  const olderTimestamp = timestamp - 10000;
 
+  cumulusMessage.cumulus_meta.workflow_start_time = timestamp;
+  await writeRecords({ cumulusMessage, knex, granuleModel });
+
+  cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
+
+  t.is(timestamp, (await granuleModel.get({ granuleId })).createdAt);
+  t.is(timestamp, (await pdrModel.get({ pdrName })).createdAt);
+
+  t.deepEqual(new Date(timestamp), (await granulePgModel.get(knex, { granule_id: granuleId })).created_at);
+  t.deepEqual(new Date(timestamp), (await pdrPgModel.get(knex, { name: pdrName })).created_at);
+});
+
+test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    pdrModel,
+    knex,
+    pdrName,
+    granuleId,
+  } = t.context;
+
+  const pdrPgModel = new PdrPgModel();
+  const granulePgModel = new GranulePgModel();
+
+  cumulusMessage.meta.status = 'completed';
   await writeRecords({ cumulusMessage, knex, granuleModel });
 
   cumulusMessage.meta.status = 'running';
-
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
 
   t.is('completed', (await granuleModel.get({ granuleId })).status);
