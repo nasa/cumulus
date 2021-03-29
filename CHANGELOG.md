@@ -112,6 +112,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Change PostgreSQL schema definition for `files` to remove `filename` and `name` and only support `file_name`.
     - Change PostgreSQL schema definition for `files` to remove `size` to only support `file_size`.
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
+  - **CUMULUS-2266**
+    - Change `sf-event-sqs-to-db-records` behavior to discard and not throw an error on an out-of-order/delayed message so as not to have it be sent to the DLQ.
   - **CUMULUS-2305**
     - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from PostgreSQL database.
   - **CUMULUS-2309**
