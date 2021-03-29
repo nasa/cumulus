@@ -72,12 +72,12 @@ describe('When a bad record is sent on the DLQ', () => {
       else {
         console.log(`Waiting for the creation of ${failedMessageS3Id}.json`);
         try {
-          expect(await waitForObjectToExist({
+          expectAsync(waitForObjectToExist({
             bucket: systemBucket,
             key: `${stackName}/dead-letter-archive/sqs/${failedMessageS3Id}.json`,
             interval: 5 * 1000,
             timeout: 30 * 1000,
-          })).toBeUndefined();
+          })).toBeResolved();
         } catch (err) {
           fail(`Did not find expected S3 Object: ${err}`);
         }
