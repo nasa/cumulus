@@ -133,13 +133,53 @@ test.serial('migrateAsyncOperationRecord migrates asyncOperation record with und
   );
 });
 
-test.serial('migrateAsyncOperationRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
-  const fakeAsyncOp = generateFakeAsyncOperation();
+test.serial('migrateAsyncOperationRecord throws RecordAlreadyMigrated error if already migrated record is newer', async (t) => {
+  const fakeAsyncOp = generateFakeAsyncOperation({
+    updatedAt: Date.now(),
+  });
 
   await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const olderFakeAsyncOp = {
+    ...fakeAsyncOp,
+    updatedAt: Date.now() - 1000, // older than fakeAsyncOp
+  };
+
   await t.throwsAsync(
-    migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex),
+    migrateAsyncOperationRecord(olderFakeAsyncOp, t.context.knex),
     { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial('migrateAsyncOperationRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const fakeAsyncOp = generateFakeAsyncOperation({
+    updatedAt: Date.now() - 1000,
+  });
+  await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const newerFakeAsyncOp = generateFakeAsyncOperation({
+    ...fakeAsyncOp,
+    updatedAt: Date.now(),
+  });
+  await migrateAsyncOperationRecord(newerFakeAsyncOp, t.context.knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('async_operations')
+    .where({ id: fakeAsyncOp.id })
+    .first();
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit({
+      ...fakeAsyncOp,
+      operation_type: fakeAsyncOp.operationType,
+      task_arn: fakeAsyncOp.taskArn,
+      output: JSON.parse(fakeAsyncOp.output),
+      created_at: new Date(fakeAsyncOp.createdAt),
+      updated_at: new Date(newerFakeAsyncOp.updatedAt),
+    },
+    ['createdAt', 'updatedAt', 'operationType', 'taskArn'])
   );
 });
 

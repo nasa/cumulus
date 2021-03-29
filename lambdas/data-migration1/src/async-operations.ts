@@ -3,13 +3,12 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
 import {
-  doesRecordExist,
-  tableNames,
+  AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
 } from '@cumulus/db';
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -22,10 +21,23 @@ export const migrateAsyncOperationRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.asyncOperation);
 
-  if (await doesRecordExist({ id: dynamoRecord.id }, knex, tableNames.asyncOperations)) {
+  let existingRecord;
+  try {
+    existingRecord = await asyncOperationPgModel.get(knex, { id: dynamoRecord.id });
+  } catch (error) {
+    // Swallow any RecordDoesNotExist errors and proceed with migration,
+    // otherwise re-throw the error
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.id} was already migrated, skipping`);
   }
 
@@ -33,7 +45,7 @@ export const migrateAsyncOperationRecord = async (
     <ApiAsyncOperation>dynamoRecord
   );
 
-  await knex('async_operations').insert(updatedRecord);
+  await asyncOperationPgModel.upsert(knex, updatedRecord);
 };
 
 export const migrateAsyncOperations = async (
