@@ -30,3 +30,32 @@ test('getAsyncOperation calls the callback with the expected object and returns 
 
   t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
 });
+
+test.only('listAsyncOperations calls the callback with the expected object and returns the parsed response', async (t) => {
+  const prefix = 'unitTestStack';
+  const query = { fake: 'query' };
+
+  const expected = {
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: '/asyncOperations',
+      queryStringParameters: query,
+    },
+  };
+
+  const callback = async (configObject) => {
+    t.deepEqual(configObject, expected);
+
+    return { body: '{ "foo": "bar" }' };
+  };
+
+  const result = await asyncOperations.listAsyncOperations({
+    prefix,
+    query,
+    callback,
+  });
+
+  t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
+});

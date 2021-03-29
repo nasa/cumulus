@@ -1,0 +1,34 @@
+{
+  "name": "@cumulus/postgres-reconcile",
+  "version": "7.1.0",
+  "description": "A Lambda function used for generating counts between Dynamo/ES and Postgres",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "main": "./dist/lambda/index.js",
+  "types": "./dist/lambda/index.d.ts",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist",
+    "webpack": "../../node_modules/.bin/webpack",
+    "build-lambda-zip": "(cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js)",
+    "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
+    "prepare": "npm run tsc",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+  },
+  "dependencies": {
+    "@cumulus/api": "7.1.0",
+    "@cumulus/api-client": "7.1.0",
+    "@cumulus/common": "7.1.0",
+    "@cumulus/db": "3.0.1-alpha.1",
+    "@cumulus/message": "7.1.0",
+    "@cumulus/types": "7.1.0",
+    "knex": "0.21.13",
+    "p-map": "^4.0.0",
+    "pg": "^8.3.0"
+  }
+}

@@ -174,6 +174,30 @@ test('BasePgModel.delete() correctly deletes records', async (t) => {
   t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId2 }));
 });
 
+test.only('BasePgModel.count() returns valid counts', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+
+  await knex(tableName)
+    .insert({ info: 1 })
+    .returning('cumulus_id');
+
+  await knex(tableName)
+    .insert({ info: 2 })
+    .returning('cumulus_id');
+
+  await knex(tableName)
+    .insert({ info: 3 })
+    .returning('cumulus_id');
+
+  t.deepEqual(await knex.transaction(
+    (trx) => basePgModel.count(trx, [[{ info: 2 }]])
+  ), [{ count: '1' }]);
+
+  t.deepEqual(await knex.transaction(
+    (trx) => basePgModel.count(trx, [['info', '=', '2']])
+  ), [{ count: '1' }]);
+});
+
 test('BasePgModel.delete() works with knex transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
