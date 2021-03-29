@@ -2,13 +2,26 @@
 
 const uuidv4 = require('uuid/v4');
 const test = require('ava');
+const proxyquire = require('proxyquire');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
+// mock uuid/v4 to make filenames predictable
+function* uuidv4Generator() {
+  yield 'A';
+  yield 'B';
+  yield 'C';
+  yield 'D';
+}
+const uuidv4Mock = uuidv4Generator();
+
 const {
   handler,
-} = require('../../lambdas/write-db-dlq-records-to-s3.js');
+} = proxyquire(
+  '../../lambdas/write-db-dlq-records-to-s3.js',
+  { 'uuid/v4': () => uuidv4Mock.next().value }
+);
 
 test.before(async (t) => {
   t.context.bucket = randomString();
@@ -51,15 +64,15 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
 
   t.deepEqual(await S3.getTextObject(
     t.context.bucket,
-    `${process.env.stackName}/dead-letter-archive/sqs/${message1Name}-1.json`
+    `${process.env.stackName}/dead-letter-archive/sqs/${message1Name}-A.json`
   ), message1.body);
   t.deepEqual(await S3.getTextObject(
     t.context.bucket,
-    `${process.env.stackName}/dead-letter-archive/sqs/${message2Name}-1.json`
+    `${process.env.stackName}/dead-letter-archive/sqs/${message2Name}-B.json`
   ), message2.body);
 });
 
-test.serial('write-db-dlq-records-to-s3 versions message from identical execution', async (t) => {
+test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execution', async (t) => {
   const messageName = randomString(12);
   const message1 = {
     messageId: uuidv4(),
@@ -86,11 +99,11 @@ test.serial('write-db-dlq-records-to-s3 versions message from identical executio
 
   t.deepEqual(await S3.getTextObject(
     t.context.bucket,
-    `${process.env.stackName}/dead-letter-archive/sqs/${messageName}-1.json`
+    `${process.env.stackName}/dead-letter-archive/sqs/${messageName}-C.json`
   ), message1.body);
   t.deepEqual(await S3.getTextObject(
     t.context.bucket,
-    `${process.env.stackName}/dead-letter-archive/sqs/${messageName}-2.json`
+    `${process.env.stackName}/dead-letter-archive/sqs/${messageName}-D.json`
   ), message2.body);
 });
 
