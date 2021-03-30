@@ -71,7 +71,7 @@ describe('When a bad record is sent on the DLQ', () => {
         console.log(`Waiting for the creation of failed message for execution ${executionName}`);
         const prefix = `${stackName}/dead-letter-archive/sqs/${executionName}`;
         try {
-          expectAsync(waitForListObjectsV2ResultCount({
+          await expectAsync(waitForListObjectsV2ResultCount({
             bucket: systemBucket,
             prefix,
             desiredCount: 1,
