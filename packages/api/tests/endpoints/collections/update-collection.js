@@ -129,7 +129,6 @@ test('PUT replaces an existing collection', async (t) => {
     createdAt: Date.now(),
     duplicateHandling: 'error',
   };
-  const updatedPgCollection = translateApiCollectionToPostgresCollection(updatedCollection);
   delete updatedCollection.process;
 
   await request(app)
@@ -149,8 +148,15 @@ test('PUT replaces an existing collection', async (t) => {
     version: originalCollection.version,
   });
 
-  t.true(actualPgCollection.updated_at > updatedPgCollection.updated_at);
+  // Endpoint logic will set an updated timestamp and ignore the value from the request
+  // body, so value on actual records should be different (greater) than the value
+  // sent in the request body
   t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
+  // createdAt timestamp from original record should have been preserved
+  t.is(actualCollection.createdAt, originalCollection.createdAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPgCollection.created_at.getTime(), actualCollection.createdAt);
+  t.is(actualPgCollection.updated_at.getTime(), actualCollection.updatedAt);
 
   t.like(actualCollection, {
     ...originalCollection,

@@ -171,13 +171,12 @@ test('POST creates a new provider', async (t) => {
 
   const [providerPgRecord] = pgRecords;
 
-  // Endpoint logic will set an updated timestamp and ignore the value from the request
-  // body, so value on actual records should be different (greater) than the value
-  // sent in the request body
-  t.true(providerPgRecord.updated_at > postgresExpectedProvider.updated_at);
+  t.true(record.createdAt > newProvider.createdAt);
   t.true(record.updatedAt > newProvider.updatedAt);
-  // PG and Dynamo records have the same timestamp
-  t.deepEqual(providerPgRecord.updated_at, new Date(record.updatedAt));
+
+  // PG and Dynamo records have the same timestamps
+  t.is(providerPgRecord.created_at.getTime(), record.createdAt);
+  t.is(providerPgRecord.updated_at.getTime(), record.updatedAt);
 
   t.deepEqual(
     omit(providerPgRecord, postgresOmitList),

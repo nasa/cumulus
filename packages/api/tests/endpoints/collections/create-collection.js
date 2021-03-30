@@ -9,7 +9,14 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const {
+  localStackConnectionEnv,
+  CollectionPgModel,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+} = require('@cumulus/db');
+
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
@@ -45,8 +52,10 @@ let collectionModel;
 let rulesModel;
 let publishStub;
 
+const testDbName = randomString(12);
+
 test.before(async (t) => {
-  process.env = { ...process.env, ...localStackConnectionEnv };
+  process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -74,16 +83,24 @@ test.before(async (t) => {
     promise: async () => true,
   });
 
-  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+  t.context.collectionPgModel = new CollectionPgModel();
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   publishStub.restore();
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -138,16 +155,22 @@ test('POST creates a new collection', async (t) => {
   t.is(fetchedDynamoRecord.name, newCollection.name);
   t.is(fetchedDynamoRecord.version, newCollection.version);
 
-  const fetchedDbRecord = await t.context.dbClient.first()
-    .from('collections')
-    .where({
+  const collectionPgRecord = await t.context.collectionPgModel.get(
+    t.context.testKnex,
+    {
       name: newCollection.name,
       version: newCollection.version,
-    });
+    }
+  );
 
-  t.not(fetchedDbRecord, undefined);
-  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
+  t.not(collectionPgRecord, undefined);
+
+  t.true(fetchedDynamoRecord.createdAt > newCollection.createdAt);
+  t.true(fetchedDynamoRecord.updatedAt > newCollection.updatedAt);
+
+  // PG and Dynamo records have the same timestamps
+  t.is(collectionPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(collectionPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST without a name returns a 400 error', async (t) => {
@@ -323,8 +346,6 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
 });
 
 test('post() does not write to the database if writing to Dynamo fails', async (t) => {
-  const { dbClient } = t.context;
-
   const collection = fakeCollectionFactory();
 
   const fakeCollectionsModel = {
@@ -337,7 +358,7 @@ test('post() does not write to the database if writing to Dynamo fails', async (
   const expressRequest = {
     body: collection,
     testContext: {
-      dbClient,
+      dbClient: t.context.testKnex,
       collectionsModel: fakeCollectionsModel,
     },
   };
@@ -348,12 +369,14 @@ test('post() does not write to the database if writing to Dynamo fails', async (
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
-  const dbRecords = await dbClient.select('name', 'version')
-    .from('collections')
-    .where({
-      name: collection.name,
-      version: collection.version,
-    });
+  const dbRecords = await t.context.collectionPgModel
+    .search(
+      t.context.testKnex,
+      {
+        name: collection.name,
+        version: collection.version,
+      }
+    );
 
   t.is(dbRecords.length, 0);
 });
