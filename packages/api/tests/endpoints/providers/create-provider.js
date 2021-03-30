@@ -12,6 +12,7 @@ const {
   tableNames,
   translateApiProviderToPostgresProvider,
   nullifyUndefinedProviderValues,
+  ProviderPgModel,
 } = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
@@ -65,6 +66,7 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
+  t.context.providerPgModel = new ProviderPgModel();
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -141,10 +143,12 @@ test('POST with invalid authorization scheme returns an invalid authorization re
 });
 
 test('POST creates a new provider', async (t) => {
+  const { providerPgModel } = t.context;
   const newProviderId = randomString();
   const newProvider = fakeProviderFactory({
     id: newProviderId,
   });
+  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(newProvider);
 
   const postgresOmitList = ['created_at', 'updated_at', 'cumulus_id'];
 
@@ -156,16 +160,27 @@ test('POST creates a new provider', async (t) => {
     .expect(200);
 
   const { message, record } = response.body;
-  const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
-    name: newProviderId,
-  });
-  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(newProvider);
+  const pgRecords = await providerPgModel.search(
+    t.context.testKnex,
+    { name: newProviderId }
+  );
+
   t.is(message, 'Record saved');
   t.is(record.id, newProviderId);
-  t.is(rdsRecord.length, 1);
+  t.is(pgRecords.length, 1);
+
+  const [providerPgRecord] = pgRecords;
+
+  // Endpoint logic will set an updated timestamp and ignore the value from the request
+  // body, so value on actual records should be different (greater) than the value
+  // sent in the request body
+  t.true(providerPgRecord.updated_at > postgresExpectedProvider.updated_at);
+  t.true(record.updatedAt > newProvider.updatedAt);
+  // PG and Dynamo records have the same timestamp
+  t.deepEqual(providerPgRecord.updated_at, new Date(record.updatedAt));
 
   t.deepEqual(
-    omit(rdsRecord[0], postgresOmitList),
+    omit(providerPgRecord, postgresOmitList),
     omit(
       nullifyUndefinedProviderValues(postgresExpectedProvider),
       postgresOmitList

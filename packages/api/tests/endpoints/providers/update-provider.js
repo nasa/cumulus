@@ -146,8 +146,13 @@ test('PUT updates existing provider', async (t) => {
     { name: id }
   );
 
+  // Endpoint logic will set an updated timestamp and ignore the value from the request
+  // body, so value on actual records should be different (greater) than the value
+  // sent in the request body
   t.true(actualPostgresProvider.updated_at > updatedPostgresProvider.updated_at);
   t.true(actualProvider.updatedAt > updatedProvider.updatedAt);
+  // PG and Dynamo records have the same timestamp
+  t.deepEqual(actualPostgresProvider.updated_at, new Date(actualProvider.updatedAt));
 
   t.deepEqual(actualProvider, {
     ...expectedProvider,
