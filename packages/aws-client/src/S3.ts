@@ -743,44 +743,6 @@ export const listS3ObjectsV2 = async (
 };
 
 /**
- * Wait for listObjectsV2 to return the expected result count for a given bucket & prefix.
- *
- * @param {Object} params - params object
- * @param {string} params.bucket - S3 bucket
- * @param {string} [params.prefix] - S3 prefix
- * @param {number} params.desiredCount - Desired count to wait for
- * @param {number} [params.interval] - pWaitFor retry interval, in ms
- * @param {number} [params.timeout] - pWaitFor timeout, in ms
- * @returns {Promise<undefined>}
- */
-export const waitForListObjectsV2ResultCount = async (params: {
-  bucket: string,
-  prefix?: string,
-  desiredCount: number,
-  interval?: number,
-  timeout?: number,
-}) => {
-  const {
-    bucket,
-    prefix,
-    desiredCount,
-    interval = 1000,
-    timeout = 30 * 1000,
-  } = params;
-
-  await pWaitFor(
-    async () => {
-      const results = await listS3ObjectsV2({
-        Bucket: bucket,
-        Prefix: prefix,
-      });
-      return results.length === desiredCount;
-    },
-    { interval, timeout }
-  );
-};
-
-/**
  * Calculate the cryptographic hash of an S3 object
  *
  * @param {Object} params

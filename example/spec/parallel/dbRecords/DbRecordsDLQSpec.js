@@ -6,8 +6,8 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   deleteS3Object,
   listS3ObjectsV2,
-  waitForListObjectsV2ResultCount,
 } = require('@cumulus/aws-client/S3');
+const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
