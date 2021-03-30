@@ -2,9 +2,12 @@
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { SQS } = require('@cumulus/aws-client');
-const { sqs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteS3Object, waitForObjectToExist } = require('@cumulus/aws-client/S3');
+const {
+  deleteS3Object,
+  listS3ObjectsV2,
+  waitForListObjectsV2ResultCount,
+} = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -12,9 +15,9 @@ describe('When a bad record is sent on the DLQ', () => {
   let beforeAllSucceeded = false;
   let stackName;
   let systemBucket;
-  let failedMessageS3Id;
   let dbRecordsDLQUrl;
-  let dbRecordsOriginalQueueAttributes;
+  let executionName;
+  let failedMessageS3Key;
 
   beforeAll(async () => {
     const config = await loadConfig();
@@ -28,8 +31,7 @@ describe('When a bad record is sent on the DLQ', () => {
     const files = [fakeFileFactory()];
     const granule = fakeGranuleFactoryV2({ files, granuleId });
 
-    const executionName = `execution-${randomString(16)}`;
-    failedMessageS3Id = `${executionName}-1`;
+    executionName = `execution-${randomString(16)}`;
 
     const failingMessage = {
       cumulus_meta: {
@@ -56,13 +58,9 @@ describe('When a bad record is sent on the DLQ', () => {
   });
 
   afterAll(async () => {
-    await sqs().setQueueAttributes({
-      QueueUrl: dbRecordsDLQUrl,
-      Attributes: dbRecordsOriginalQueueAttributes,
-    });
     await deleteS3Object(
       systemBucket,
-      `${stackName}/dead-letter-archive/sqs/${failedMessageS3Id}.json`
+      failedMessageS3Key
     );
   });
 
@@ -70,14 +68,22 @@ describe('When a bad record is sent on the DLQ', () => {
     it('takes the message off the queue and writes it to S3', async () => {
       if (!beforeAllSucceeded) fail('beforeAll() failed');
       else {
-        console.log(`Waiting for the creation of ${failedMessageS3Id}.json`);
+        console.log(`Waiting for the creation of failed message for execution ${executionName}`);
+        const prefix = `${stackName}/dead-letter-archive/sqs/${executionName}`;
         try {
-          expectAsync(waitForObjectToExist({
+          expectAsync(waitForListObjectsV2ResultCount({
             bucket: systemBucket,
-            key: `${stackName}/dead-letter-archive/sqs/${failedMessageS3Id}.json`,
+            prefix,
+            desiredCount: 1,
             interval: 5 * 1000,
             timeout: 30 * 1000,
           })).toBeResolved();
+          // fetch key for cleanup
+          const listResults = await listS3ObjectsV2({
+            Bucket: systemBucket,
+            Prefix: prefix,
+          });
+          failedMessageS3Key = listResults[0].Key;
         } catch (err) {
           fail(`Did not find expected S3 Object: ${err}`);
         }
