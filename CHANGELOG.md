@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Bulk granule operations endpoint now supports setting a custom queue for scheduling workflows via the `queueUrl` property in the request body. If provided, this value should be the full URL for an SQS queue.
 
+### Fixed
+
+- **CUMULUS-2281**
+  - Changed discover-granules task to write discovered granules directly to
+    logger, instead of via environment variable. This fixes a problem where a
+    large number of found granules prevents this lambda from running as an
+    activity with an E2BIG error.
+
 ## [v7.2.0] 2021-03-23
 
 ### Added
