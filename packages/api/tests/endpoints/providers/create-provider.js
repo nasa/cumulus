@@ -207,7 +207,8 @@ test('POST returns a 409 error if the provider already exists', async (t) => {
 test('POST returns a 409 error if the provider already exists in RDS', async (t) => {
   const newProvider = fakeProviderFactory();
 
-  await t.context.testKnex(tableNames.providers).insert(
+  await t.context.providerPgModel.create(
+    t.context.testKnex,
     await translateApiProviderToPostgresProvider(newProvider)
   );
   const response = await request(app)
