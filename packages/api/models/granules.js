@@ -770,7 +770,7 @@ class Granule extends Manager {
           pdrName,
           workflowStatus,
           queryFields,
-        })
+        }).catch(log.error)
     ));
   }
 }
