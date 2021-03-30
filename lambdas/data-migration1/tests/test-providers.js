@@ -295,7 +295,7 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
   );
 });
 
-test.serial('migrateProviderRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+test.serial('migrateProviderRecord throws RecordAlreadyMigrated error if already migrated record is newer', async (t) => {
   const { knex, providerKmsKeyId } = t.context;
   const fakeProvider = generateFakeProvider({
     updatedAt: Date.now(),
@@ -305,7 +305,7 @@ test.serial('migrateProviderRecord throws RecordAlreadyMigrated error for alread
 
   const olderFakeProvider = {
     ...fakeProvider,
-    updatedAt: Date.now() - 1000, // older than fakeAsyncOp
+    updatedAt: Date.now() - 1000,
   };
 
   await t.throwsAsync(

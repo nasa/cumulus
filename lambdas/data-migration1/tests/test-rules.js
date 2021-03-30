@@ -22,15 +22,10 @@ const testDbUser = 'postgres';
 const workflow = randomId('workflow-');
 const ruleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule'];
 
-const generateFakeRule = (collectionName, collectionVersion, providerId, enabled = true) => ({
+const generateFakeRule = (params) => ({
   name: cryptoRandomString({ length: 10 }),
   workflow: workflow,
-  provider: providerId,
-  state: enabled ? 'ENABLED' : 'DISABLED',
-  collection: {
-    name: collectionName,
-    version: collectionVersion,
-  },
+  state: 'ENABLED',
   rule: { type: 'onetime', value: randomString(), arn: randomString(), logEventArn: randomString() },
   executionNamePrefix: randomString(),
   meta: { key: 'value' },
@@ -39,6 +34,7 @@ const generateFakeRule = (collectionName, collectionVersion, providerId, enabled
   tags: ['tag1', 'tag2'],
   createdAt: Date.now(),
   updatedAt: Date.now(),
+  ...params,
 });
 
 const migrateFakeCollectionRecord = async (record, knex) => {
@@ -144,7 +140,13 @@ test.after.always(async (t) => {
 
 test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
   const { knex, fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
   await migrateFakeProviderRecord(fakeProvider, knex);
@@ -182,7 +184,13 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
 
 test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb', async (t) => {
   const { fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
 
   // make source record invalid
   delete fakeRule.workflow;
@@ -195,7 +203,13 @@ test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb
 
 test.serial('migrateRuleRecord handles nullable fields on source rule data', async (t) => {
   const { knex, fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule();
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
 
   delete fakeRule.rule.logEventArn;
   delete fakeRule.rule.value;
@@ -240,29 +254,105 @@ test.serial('migrateRuleRecord handles nullable fields on source rule data', asy
   );
 });
 
-test.serial('migrateRuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+test.serial('migrateRuleRecord throws RecordAlreadyMigrated error if already migrated record is newer', async (t) => {
   const { knex, fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+    updatedAt: Date.now(),
+  });
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
   await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateRuleRecord(fakeRule, knex);
+
+  const olderFakeRule = {
+    ...fakeRule,
+    updatedAt: Date.now() - 1000,
+  };
+
   await t.throwsAsync(
-    migrateRuleRecord(fakeRule, t.context.knex),
+    migrateRuleRecord(olderFakeRule, t.context.knex),
     { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial('migrateRuleRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const { knex, fakeCollection, fakeProvider } = t.context;
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+    updatedAt: Date.now() - 1000,
+  });
+
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+  await migrateRuleRecord(fakeRule, knex);
+
+  const newerFakeRule = generateFakeRule({
+    ...fakeRule,
+    updatedAt: Date.now(),
+  });
+  await migrateRuleRecord(newerFakeRule, knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('rules')
+    .where({ name: fakeRule.name })
+    .first();
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
+    omit(
+      {
+        name: fakeRule.name,
+        workflow: fakeRule.workflow,
+        meta: fakeRule.meta,
+        arn: fakeRule.rule.arn,
+        type: fakeRule.rule.type,
+        value: fakeRule.rule.value,
+        enabled: true,
+        log_event_arn: fakeRule.rule.logEventArn,
+        execution_name_prefix: fakeRule.executionNamePrefix,
+        payload: fakeRule.payload,
+        queue_url: fakeRule.queueUrl,
+        tags: fakeRule.tags,
+        created_at: new Date(fakeRule.createdAt),
+        updated_at: new Date(newerFakeRule.updatedAt),
+      },
+      ruleOmitList
+    )
   );
 });
 
 test.serial('migrateRules skips already migrated record', async (t) => {
   const { knex, fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
   const queueUrls = randomString();
   fakeRule.queueUrl = queueUrls.queueUrl;
+
+  // This always sets updatedAt to Date.now()
+  await rulesModel.create(fakeRule);
+
+  // We need to make the updateAt of the record we're about to migrate later
+  // than the record in the dynamo table.
+  fakeRule.updatedAt = Date.now();
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
   await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateRuleRecord(fakeRule, knex);
-  await rulesModel.create(fakeRule);
 
   t.teardown(() => rulesModel.delete(fakeRule));
   const migrationSummary = await migrateRules(process.env, knex);
@@ -290,8 +380,20 @@ test.serial('migrateRules processes multiple rules', async (t) => {
   });
   const { id } = anotherFakeProvider;
   const { name, version } = anotherFakeCollection;
-  const fakeRule1 = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
-  const fakeRule2 = generateFakeRule(name, version, id);
+  const fakeRule1 = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
+  const fakeRule2 = generateFakeRule({
+    collection: {
+      name: name,
+      version: version,
+    },
+    provider: id,
+  });
   const queueUrls1 = randomString();
   const queueUrls2 = randomString();
 
@@ -336,8 +438,20 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
   const { id } = anotherFakeProvider;
   const { name, version } = anotherFakeCollection;
 
-  const fakeRule1 = generateFakeRule(fakeCollection.name, fakeCollection.version, fakeProvider.id);
-  const fakeRule2 = generateFakeRule(name, version, id);
+  const fakeRule1 = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
+  const fakeRule2 = generateFakeRule({
+    collection: {
+      name: name,
+      version: version,
+    },
+    provider: id,
+  });
   await migrateFakeCollectionRecord(fakeCollection, knex);
   await migrateFakeCollectionRecord(anotherFakeCollection, knex);
   await migrateFakeProviderRecord(fakeProvider, knex);
