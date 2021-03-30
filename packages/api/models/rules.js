@@ -208,8 +208,6 @@ class Rule extends Manager {
     );
     const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
 
-    console.log('item.asyncOperationId', item.asyncOperationId);
-
     return {
       template,
       definition,
