@@ -8,7 +8,7 @@ const {
   api: apiTestUtils,
   getClusterArn,
 } = require('@cumulus/integration-tests');
-const { loadConfig } = require('../../helpers/testUtils');
+const { isValidAsyncOperationId, loadConfig } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
@@ -58,7 +58,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
 
   it('returns an Async Operation Id', () => {
     expect(beforeAllSucceeded).toBeTrue();
-    expect(postBulkDeleteBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
+    expect(isValidAsyncOperationId(postBulkDeleteBody.id)).toBeTrue();
   });
 
   it('creates an AsyncOperation', async () => {
