@@ -169,7 +169,7 @@ class Execution extends Manager {
 
     // Do not allow out-of-order updates to set a completed or failed execution back to running
     if (executionItem.status === 'running') {
-      updateParams.ConditionExpression = '(attribute_not_exists(status) or :status = #status)';
+      updateParams.ConditionExpression = '(attribute_not_exists(#status) or :status = #status)';
     }
 
     try {

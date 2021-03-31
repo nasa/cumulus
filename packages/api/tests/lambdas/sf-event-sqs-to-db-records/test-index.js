@@ -418,16 +418,13 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
 test('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
   const {
     cumulusMessage,
-    executionModel,
     granuleModel,
     pdrModel,
     knex,
-    executionArn,
     pdrName,
     granuleId,
   } = t.context;
 
-  const executionPgModel = new ExecutionPgModel();
   const pdrPgModel = new PdrPgModel();
   const granulePgModel = new GranulePgModel();
 
@@ -440,14 +437,9 @@ test('writeRecords() discards an out of order message that is older than an exis
   cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
 
-  t.is(timestamp, (await executionModel.get({ arn: executionArn })).createdAt);
   t.is(timestamp, (await granuleModel.get({ granuleId })).createdAt);
   t.is(timestamp, (await pdrModel.get({ pdrName })).createdAt);
 
-  t.deepEqual(
-    new Date(timestamp),
-    (await executionPgModel.get(knex, { arn: executionArn })).created_at
-  );
   t.deepEqual(
     new Date(timestamp),
     (await granulePgModel.get(knex, { granule_id: granuleId })).created_at
