@@ -10,6 +10,8 @@ const uuidv4 = require('uuid/v4');
 const {
   localStackConnectionEnv,
   getKnexClient,
+  GranulePgModel,
+  PdrPgModel,
   tableNames,
   doesRecordExist,
 } = require('@cumulus/db');
@@ -410,4 +412,65 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
   });
 
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
+});
+
+test('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    pdrModel,
+    knex,
+    pdrName,
+    granuleId,
+  } = t.context;
+
+  const pdrPgModel = new PdrPgModel();
+  const granulePgModel = new GranulePgModel();
+
+  const timestamp = Date.now();
+  const olderTimestamp = timestamp - 10000;
+
+  cumulusMessage.cumulus_meta.workflow_start_time = timestamp;
+  await writeRecords({ cumulusMessage, knex, granuleModel });
+
+  cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
+
+  t.is(timestamp, (await granuleModel.get({ granuleId })).createdAt);
+  t.is(timestamp, (await pdrModel.get({ pdrName })).createdAt);
+
+  t.deepEqual(
+    new Date(timestamp),
+    (await granulePgModel.get(knex, { granule_id: granuleId })).created_at
+  );
+  t.deepEqual(
+    new Date(timestamp),
+    (await pdrPgModel.get(knex, { name: pdrName })).created_at
+  );
+});
+
+test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    pdrModel,
+    knex,
+    pdrName,
+    granuleId,
+  } = t.context;
+
+  const pdrPgModel = new PdrPgModel();
+  const granulePgModel = new GranulePgModel();
+
+  cumulusMessage.meta.status = 'completed';
+  await writeRecords({ cumulusMessage, knex, granuleModel });
+
+  cumulusMessage.meta.status = 'running';
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
+
+  t.is('completed', (await granuleModel.get({ granuleId })).status);
+  t.is('completed', (await pdrModel.get({ pdrName })).status);
+
+  t.is('completed', (await granulePgModel.get(knex, { granule_id: granuleId })).status);
+  t.is('completed', (await pdrPgModel.get(knex, { name: pdrName })).status);
 });
