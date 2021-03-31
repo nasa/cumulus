@@ -2,7 +2,6 @@
 
 const pLimit = require('p-limit');
 
-const log = require('@cumulus/common/log');
 const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
@@ -167,20 +166,7 @@ class Execution extends Manager {
       mutableFieldNames,
     });
 
-    // Do not allow out-of-order updates to set a completed or failed execution back to running
-    if (executionItem.status === 'running') {
-      updateParams.ConditionExpression = '(attribute_not_exists(#status) or :status = #status)';
-    }
-
-    try {
-      return await this.dynamodbDocClient.update(updateParams).promise();
-    } catch (error) {
-      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-        log.info(`Did not process delayed event for execution: ${executionItem.arn}`);
-        return undefined;
-      }
-      throw error;
-    }
+    await this.dynamodbDocClient.update(updateParams).promise();
   }
 }
 
