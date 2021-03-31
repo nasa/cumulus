@@ -1,4 +1,5 @@
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 
@@ -149,6 +150,26 @@ test.serial('getGranuleIdsForPayload handles query paging', async (t) => {
     }),
     [granuleId1, granuleId2, granuleId3]
   );
+});
+
+test('applyWorkflowToGranules passed on queueUrl to granule.applyWorkflow', async (t) => {
+  const granuleIds = ['granule-1'];
+  const workflowName = 'test-workflow';
+  const queueUrl = `${cryptoRandomString({ length: 5 })}_queue`;
+
+  const applyWorkflowSpy = sinon.spy();
+  const fakeGranuleModel = {
+    get: async () => {},
+    applyWorkflow: applyWorkflowSpy,
+  };
+
+  await bulkOperation.applyWorkflowToGranules({
+    granuleIds,
+    workflowName,
+    queueUrl,
+    granuleModel: fakeGranuleModel,
+  });
+  t.is(applyWorkflowSpy.getCall(0).args[3], queueUrl);
 });
 
 test('bulk operation lambda throws error for unknown event type', async (t) => {
