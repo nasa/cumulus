@@ -191,17 +191,18 @@ class Granule extends Manager {
    *
    * @param {Object} granule - the granule object
    * @param {string} workflow - the workflow name
-   * @param {Object} meta - optional meta object to insert in workflow message
-   * @param {string} [queueName] - specify queue to append message to
+   * @param {Object} [meta] - optional meta object to insert in workflow message
+   * @param {string} [queueUrl] - URL for SQS queue to use for scheduling workflows
+   *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(
     granule,
     workflow,
-    meta = undefined,
-    queueName = undefined,
-    asyncOperationId = undefined
+    meta,
+    queueUrl,
+    asyncOperationId
   ) {
     if (!workflow) {
       throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
@@ -220,7 +221,7 @@ class Granule extends Manager {
         version,
       },
       meta,
-      queueName,
+      queueUrl,
       asyncOperationId,
     });
 
