@@ -320,7 +320,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'MoveGranules');
 
     await pMap(
-      executionOutput.payload.granules[0].files,
+      lambdaOutput.payload.granules[0].files,
       async (file) => {
         const { Bucket, Key } = parseS3Uri(file.filename);
 
