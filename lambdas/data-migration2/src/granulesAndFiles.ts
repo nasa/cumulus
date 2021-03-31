@@ -77,7 +77,7 @@ export const migrateGranuleRecord = async (
   }
 
   // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (existingRecord && existingRecord.updated_at >= new Date(record.updatedAt)) {
     throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
   }
 

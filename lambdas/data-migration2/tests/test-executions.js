@@ -224,10 +224,38 @@ test.serial('migrateExecutionRecord throws RecordAlreadyMigrated error for alrea
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
+
+  const olderExecution = {
+    ...newExecution,
+    updatedAt: Date.now() - 1000,
+  };
+
   await t.throwsAsync(
-    migrateExecutionRecord(newExecution, t.context.knex),
+    migrateExecutionRecord(olderExecution, t.context.knex),
     { instanceOf: RecordAlreadyMigrated }
   );
+});
+
+test.serial('migrateExecutionRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const fakeExecution = fakeExecutionFactoryV2({
+    parentArn: undefined,
+    updatedAt: Date.now() - 1000,
+  });
+  await migrateExecutionRecord(fakeExecution, t.context.knex);
+
+  const newerFakeExecution = {
+    ...fakeExecution,
+    updatedAt: Date.now(),
+  };
+  await migrateExecutionRecord(newerFakeExecution, t.context.knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('executions')
+    .where({ arn: fakeExecution.arn })
+    .first();
+
+  assertPgExecutionMatches(t, newerFakeExecution, createdRecord);
 });
 
 test.serial('migrateExecutions skips already migrated record', async (t) => {

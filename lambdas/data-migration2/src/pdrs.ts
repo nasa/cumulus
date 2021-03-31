@@ -54,7 +54,7 @@ export const migratePdrRecord = async (
   }
 
   // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
   }
 
