@@ -10,6 +10,7 @@ const uuidv4 = require('uuid/v4');
 const {
   localStackConnectionEnv,
   getKnexClient,
+  ExecutionPgModel,
   GranulePgModel,
   PdrPgModel,
   tableNames,
@@ -452,13 +453,16 @@ test('writeRecords() discards an out of order message that is older than an exis
 test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
   const {
     cumulusMessage,
+    executionModel,
     granuleModel,
     pdrModel,
     knex,
+    executionArn,
     pdrName,
     granuleId,
   } = t.context;
 
+  const executionPgModel = new ExecutionPgModel();
   const pdrPgModel = new PdrPgModel();
   const granulePgModel = new GranulePgModel();
 
@@ -468,9 +472,11 @@ test('writeRecords() discards an out of order message that has an older status w
   cumulusMessage.meta.status = 'running';
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
 
+  t.is('completed', (await executionModel.get({ arn: executionArn })).status);
   t.is('completed', (await granuleModel.get({ granuleId })).status);
   t.is('completed', (await pdrModel.get({ pdrName })).status);
 
+  t.is('completed', (await executionPgModel.get(knex, { arn: executionArn })).status);
   t.is('completed', (await granulePgModel.get(knex, { granule_id: granuleId })).status);
   t.is('completed', (await pdrPgModel.get(knex, { name: pdrName })).status);
 });
