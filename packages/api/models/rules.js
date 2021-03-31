@@ -145,12 +145,9 @@ class Rule extends Manager {
    *    rule
    * @returns {Promise} the response from database updates
    */
-  async update(original, updates, fieldsToDelete = []) {
+  async update(original, updates) {
     // Make a copy of the existing rule to preserve existing values
-    let updatedRuleItem = cloneDeep(original);
-
-    // Apply updates to updated rule item to be saved
-    merge(updatedRuleItem, updates);
+    let updatedRuleItem = cloneDeep(updates);
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
@@ -160,8 +157,7 @@ class Rule extends Manager {
 
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
-    return super.update({ name: original.name }, updatedRuleItem,
-      fieldsToDelete);
+    return super.create(updatedRuleItem);
   }
 
   async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
@@ -256,9 +252,6 @@ class Rule extends Manager {
     if (!item.state) {
       newRuleItem.state = 'ENABLED';
     }
-
-    // newRuleItem.createdAt = createdAt || Date.now();
-    // newRuleItem.updatedAt = Date.now();
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);

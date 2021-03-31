@@ -7,26 +7,29 @@ const request = require('supertest');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
-  getKnexClient,
+  CollectionPgModel,
+  ProviderPgModel,
   RulePgModel,
   localStackConnectionEnv,
-  tableNames,
+  destroyLocalTestDb,
+  generateLocalTestDb,
 } = require('@cumulus/db');
 const { translateApiRuleToPostgresRule } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 
 const { buildFakeExpressResponse } = require('./utils');
-const { fakeCollectionFactory, fakeProviderFactory } = require('../../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  fakeProviderFactory,
+  fakeRuleFactoryV2,
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers,
+} = require('../../lib/testUtils');
 const { post } = require('../../endpoints/rules');
 const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
 
-const {
-  createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers,
-  fakeRuleFactoryV2,
-} = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
@@ -42,12 +45,16 @@ const assertions = require('../../lib/assertions');
   // eslint-disable-next-line no-return-assign
 ].forEach((varName) => process.env[varName] = randomString());
 
+const testDbName = randomString(12);
+
+const { migrationDir } = require('../../../../lambdas/db-migration');
+
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
 const esIndex = randomString();
 const workflow = randomId('workflow-');
-const testRule = {
+const testRule = fakeRuleFactoryV2({
   name: randomId('testRule'),
   workflow: workflow,
   rule: {
@@ -57,9 +64,7 @@ const testRule = {
   },
   state: 'ENABLED',
   queueUrl: 'queue_url',
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
-};
+});
 
 const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl', 'executionNamePrefix'];
 
@@ -70,10 +75,12 @@ let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
 let buildPayloadStub;
-let pgRuleModel;
 
 test.before(async (t) => {
-  process.env = { ...process.env, ...localStackConnectionEnv };
+  process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -84,13 +91,14 @@ test.before(async (t) => {
 
   buildPayloadStub = setBuildPayloadStub();
 
-  t.context.dbClient = await getKnexClient({ env: localStackConnectionEnv });
-  pgRuleModel = new RulePgModel();
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.rulePgModel = new RulePgModel();
 
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  const ruleRecord = await ruleModel.create(testRule, testRule.createdAt);
+  const ruleRecord = await ruleModel.create(testRule);
   await indexer.indexRule(esClient, ruleRecord, esAlias);
 
   const username = randomString();
@@ -105,11 +113,8 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const newRule = fakeRuleFactoryV2();
-  newRule.createdAt = Date.now();
-  newRule.updatedAt = Date.now();
   delete newRule.collection;
   delete newRule.provider;
-
   t.context.newRule = newRule;
 });
 
@@ -118,8 +123,12 @@ test.after.always(async (t) => {
   await ruleModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 
-  await t.context.dbClient.destroy();
   buildPayloadStub.restore();
 });
 
@@ -265,16 +274,13 @@ test('When calling the API endpoint to delete an existing rule it does not retur
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
-    .select()
-    .table(tableNames.rules)
-    .where({ name: newRule.name })
-    .first();
-
   const { message, record } = response.body;
   t.is(message, 'Record deleted');
   t.is(record, undefined);
-  t.is(fetchedPostgresRecord, undefined);
+  await t.throwsAsync(t.context.rulePgModel.get(
+    t.context.testKnex,
+    { name: newRule.name }
+  ), { name: 'RecordDoesNotExist' });
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without a valid access token', async (t) => {
@@ -311,7 +317,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule', async (t) => {
-  const { dbClient, newRule } = t.context;
+  const { newRule } = t.context;
 
   const fakeCollection = fakeCollectionFactory();
   const fakeProvider = fakeProviderFactory({
@@ -352,8 +358,14 @@ test('POST creates a rule', async (t) => {
     port: fakeProvider.port,
   };
 
-  const [collectionCumulusId] = await dbClient(tableNames.collections).insert(collectionRecord).returning('cumulus_id');
-  const [providerCumulusId] = await dbClient(tableNames.providers).insert(providerRecord).returning('cumulus_id');
+  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+    t.context.testKnex,
+    collectionRecord
+  );
+  const [providerCumulusId] = await t.context.providerPgModel.create(
+    t.context.testKnex,
+    providerRecord
+  );
 
   const response = await request(app)
     .post('/rules')
@@ -367,13 +379,13 @@ test('POST creates a rule', async (t) => {
     name: newRule.name,
   });
 
-  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
-    .select()
-    .table(tableNames.rules)
-    .where({ name: newRule.name })
-    .first();
+  const fetchedPostgresRecord = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: newRule.name });
 
   t.is(message, 'Record saved');
+
+  t.true(fetchedDynamoRecord.createdAt > newRule.createdAt);
+  t.true(fetchedDynamoRecord.updatedAt > newRule.updatedAt);
 
   t.deepEqual(
     omit(fetchedPostgresRecord, ['cumulus_id', 'created_at', 'updated_at']),
@@ -398,6 +410,7 @@ test('POST creates a rule', async (t) => {
   );
 
   t.is(fetchedPostgresRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST creates a rule that is enabled by default', async (t) => {
@@ -411,11 +424,8 @@ test('POST creates a rule that is enabled by default', async (t) => {
     .send(newRule)
     .expect(200);
 
-  const fetchedPostgresRecord = await t.context.dbClient.queryBuilder()
-    .select()
-    .table(tableNames.rules)
-    .where({ name: newRule.name })
-    .first();
+  const fetchedPostgresRecord = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: newRule.name });
 
   t.true(fetchedPostgresRecord.enabled);
   t.is(response.body.record.state, 'ENABLED');
@@ -518,7 +528,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 });
 
 test.serial('POST does not write to RDS or DynamoDB if writing to RDS fails', async (t) => {
-  const { newRule, dbClient } = t.context;
+  const { newRule, testKnex } = t.context;
 
   const failingTrx = (cb) => {
     const fakeTrx = sinon.stub().returns({
@@ -529,21 +539,20 @@ test.serial('POST does not write to RDS or DynamoDB if writing to RDS fails', as
     return cb(fakeTrx);
   };
 
-  const trxStub = sinon.stub(dbClient, 'transaction').callsFake(failingTrx);
+  const trxStub = sinon.stub(testKnex, 'transaction').callsFake(failingTrx);
   t.teardown(() => trxStub.restore());
 
   const expressRequest = {
     body: newRule,
     testContext: {
-      dbClient,
+      dbClient: testKnex,
     },
   };
   const response = buildFakeExpressResponse();
   await post(expressRequest, response);
 
-  const dbRecords = await dbClient.select()
-    .from(tableNames.rules)
-    .where({ name: newRule.name });
+  const dbRecords = await t.context.rulePgModel
+    .search(t.context.testKnex, { name: newRule.name });
 
   t.true(response.boom.badImplementation.calledWithMatch('Insert Rule Error'));
   t.false(await ruleModel.exists(newRule.name));
@@ -551,7 +560,7 @@ test.serial('POST does not write to RDS or DynamoDB if writing to RDS fails', as
 });
 
 test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails', async (t) => {
-  const { newRule, dbClient } = t.context;
+  const { newRule, testKnex } = t.context;
 
   const failingRulesModel = {
     exists: () => false,
@@ -563,7 +572,7 @@ test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails
   const expressRequest = {
     body: newRule,
     testContext: {
-      dbClient,
+      dbClient: testKnex,
       model: failingRulesModel,
     },
   };
@@ -574,32 +583,33 @@ test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails
 
   t.true(response.boom.badImplementation.calledWithMatch('Rule error'));
 
-  const dbRecords = await dbClient.select()
-    .from(tableNames.rules)
-    .where({ name: newRule.name });
+  const dbRecords = await t.context.rulePgModel
+    .search(t.context.testKnex, { name: newRule.name });
 
   t.is(dbRecords.length, 0);
   t.false(await ruleModel.exists(newRule.name));
 });
 
 test('PUT replaces a rule', async (t) => {
-  const { dbClient } = t.context;
-  const putTestRule = { ...testRule, name: randomId('testRule') };
+  const putTestRule = {
+    ...t.context.newRule,
+    queueUrl: 'fake-queue-url',
+  };
   t.truthy(putTestRule.queueUrl);
-  const postgresRule = await translateApiRuleToPostgresRule(putTestRule, t.context.dbClient);
+  const postgresRule = await translateApiRuleToPostgresRule(putTestRule, t.context.testKnex);
 
-  await dbClient.transaction(async (trx) => {
-    await pgRuleModel.create(trx, postgresRule);
+  await t.context.testKnex.transaction(async (trx) => {
+    await t.context.rulePgModel.create(trx, postgresRule);
     await ruleModel.create(putTestRule, putTestRule.createdAt);
   });
 
   const updateRule = {
     ...omit(putTestRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
+    // these timestamps should not get used
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  const updatePostgresRule = await translateApiRuleToPostgresRule(updateRule, t.context.dbClient);
 
   await request(app)
     .put(`/rules/${updateRule.name}`)
@@ -609,21 +619,26 @@ test('PUT replaces a rule', async (t) => {
     .expect(200);
 
   const actualRule = await ruleModel.get({ name: updateRule.name });
-  const actualPostgresRule = await dbClient.select()
-    .from(tableNames.rules)
-    .where({ name: updateRule.name })
-    .first();
-  const postgresExpectedRule = await translateApiRuleToPostgresRule({
-    ...updateRule, createdAt: actualRule.createdAt,
-  });
+
+  const actualPostgresRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const postgresExpectedRule = await translateApiRuleToPostgresRule(
+    {
+      ...updateRule,
+      createdAt: actualRule.createdAt,
+    },
+    t.context.testKnex
+  );
   Object.keys(postgresExpectedRule).forEach((key) => {
     if (postgresExpectedRule[key] === undefined) {
       postgresExpectedRule[key] = null;
     }
   });
 
-  t.true(actualPostgresRule.updated_at > updatePostgresRule.updated_at);
   t.true(actualRule.updatedAt > updateRule.updatedAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPostgresRule.created_at.getTime(), actualRule.createdAt);
+  t.is(actualPostgresRule.updated_at.getTime(), actualRule.updatedAt);
 
   t.like(actualPostgresRule, {
     ...postgresExpectedRule,
@@ -631,6 +646,7 @@ test('PUT replaces a rule', async (t) => {
     updated_at: actualPostgresRule.updated_at,
   });
   t.deepEqual(actualRule, {
+    // should not contain a queueUrl property
     ...updateRule,
     createdAt: putTestRule.createdAt,
     updatedAt: actualRule.updatedAt,
@@ -666,7 +682,7 @@ test('PUT returns 400 for name mismatch between params and payload',
   });
 
 test('DELETE deletes a rule', async (t) => {
-  const { dbClient, newRule } = t.context;
+  const { newRule } = t.context;
 
   await request(app)
     .post('/rules')
@@ -682,9 +698,8 @@ test('DELETE deletes a rule', async (t) => {
     .expect(200);
 
   const { message } = response.body;
-  const dbRecords = await dbClient.select()
-    .from(tableNames.rules)
-    .where({ name: newRule.name });
+  const dbRecords = await t.context.rulePgModel
+    .search(t.context.testKnex, { name: newRule.name });
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
