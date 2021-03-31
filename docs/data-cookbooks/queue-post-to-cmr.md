@@ -4,7 +4,7 @@ title: Queue PostToCmr
 hide_title: false
 ---
 
-In this document, we will walktrough handling CMR errors in workflows by queueing PostToCmr. We will assume that the user already has an ingest workflow setup.
+In this document, we walktrough handling CMR errors in workflows by queueing PostToCmr. We assume that the user already has an ingest workflow setup.
 
 ## Overview
 
