@@ -10,6 +10,7 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   AsyncOperationPgModel,
+  translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
 // eslint-disable-next-line unicorn/import-index
 const { updateAsyncOperation } = require('../index');
@@ -46,16 +47,27 @@ test.before(async (t) => {
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  t.context.asyncOperationOriginalPgRecord = {
+  t.context.testAsyncOperation = {
     id: t.context.asyncOperationId,
     description: 'test description',
-    operation_type: 'ES Index',
+    operationType: 'ES Index',
     status: 'RUNNING',
-    created_at: Date.now(),
+    createdAt: Date.now(),
   };
+  t.context.testAsyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(
+    t.context.testAsyncOperation
+  );
+
+  const dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
+  t.context.dynamodbDocClient = dynamodbDocClient;
+
+  await dynamodbDocClient.put({
+    TableName: t.context.dynamoTableName,
+    Item: t.context.testAsyncOperation,
+  }).promise();
   await t.context.asyncOperationPgModel.create(
     t.context.testKnex,
-    t.context.asyncOperationOriginalPgRecord
+    t.context.testAsyncOperationPgRecord
   );
 });
 
@@ -68,7 +80,6 @@ test.after.always(async (t) => {
 });
 
 test('updateAsyncOperation updates databases as expected', async (t) => {
-  const dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
   const status = 'SUCCEEDED';
   const output = { foo: 'bar' };
   const updateTime = (Number(Date.now())).toString();
@@ -94,22 +105,24 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
   const dynamoResponse = await DynamoDb.get({
     tableName: t.context.dynamoTableName,
     item: { id: t.context.asyncOperationId },
-    client: dynamodbDocClient,
+    client: t.context.dynamodbDocClient,
     getParams: { ConsistentRead: true },
   });
 
   t.is(result.$response.httpResponse.statusCode, 200);
   t.like(asyncOperationPgRecord, {
+    ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,
     status,
     output,
     updated_at: new Date(Number(updateTime)),
   });
   t.deepEqual(dynamoResponse, {
-    output: JSON.stringify(output),
-    id: t.context.asyncOperationId,
+    ...t.context.testAsyncOperation,
     status,
+    output: JSON.stringify(output),
     updatedAt: Number(updateTime),
   });
   t.is(asyncOperationPgRecord.updated_at.getTime(), dynamoResponse.updatedAt);
+  t.is(asyncOperationPgRecord.created_at.getTime(), dynamoResponse.createdAt);
 });
