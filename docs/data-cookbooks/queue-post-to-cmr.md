@@ -14,10 +14,10 @@ The general concept is that the last task of the ingest workflow will be `QueueW
 
 ## Ingest Workflow
 
-The last step should be the `QueueWorkflow` step. It should be configured with a queueUrl and workflow. In this case, the `queueUrl` is a [throttled queue](../throttling-queued-executions). Any `queueUrl` can be specified here which is useful if you would like to use a lower priority queue. The workflow is the unprefixed workflow name that you would like to queue (e.g. `PublishWorkflow`).
+The last step should be the `QueuePublishWorkflow` step. It should be configured with a queueUrl and workflow. In this case, the `queueUrl` is a [throttled queue](../throttling-queued-executions). Any `queueUrl` can be specified here which is useful if you would like to use a lower priority queue. The workflow is the unprefixed workflow name that you would like to queue (e.g. `PublishWorkflow`).
 
 ```json
-  "QueueWorkflowStep": {
+  "QueuePublishWorkflowStep": {
     "Parameters": {
       "cma": {
         "event.$": "$",
@@ -63,7 +63,7 @@ The last step should be the `QueueWorkflow` step. It should be configured with a
 
 ## Publish Workflow
 
-Configure the Catch section of your `PostToCmr` task to proceed to QueueWorkflow if a `CMRInternalError` is caught.
+Configure the Catch section of your `PostToCmr` task to proceed to `QueueWorkflow` if a `CMRInternalError` is caught. Any other error will cause the workflow to fail.
 
 ```json
   "Catch": [
@@ -71,7 +71,7 @@ Configure the Catch section of your `PostToCmr` task to proceed to QueueWorkflow
       "ErrorEquals": [
         "CMRInternalError"
       ],
-      "Next": "QueueWorkflow"
+      "Next": "RequeueWorkflow"
     },
     {
       "ErrorEquals": [
@@ -87,7 +87,7 @@ Then, configure the `QueueWorkflow` task similarly to its configuration in the i
 
 ```json
 {
-  "QueueWorkflow": {
+  "RequeueWorkflow": {
     "Parameters": {
       "cma": {
         "event.$": "$",

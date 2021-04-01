@@ -196,7 +196,7 @@
       },
       "Type": "Task",
       "Resource": "${update_granules_cmr_metadata_file_links_task_arn}",
-      "Next": "QueueWorkflowStep",
+      "Next": "QueuePublishWorkflowStep",
       "Retry": [
         {
           "ErrorEquals": [
@@ -210,7 +210,7 @@
         }
       ]
     },
-    "QueueWorkflowStep": {
+    "QueuePublishWorkflowStep": {
       "Parameters": {
         "cma": {
           "event.$": "$",

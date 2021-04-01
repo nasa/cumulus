@@ -24,7 +24,7 @@
           "ErrorEquals": [
             "CMRInternalError"
           ],
-          "Next": "QueueWorkflow"
+          "Next": "RequeueWorkflow"
         },
         {
           "ErrorEquals": [
@@ -48,7 +48,7 @@
       ],
       "End": true
     },
-    "QueueWorkflow": {
+    "RequeueWorkflow": {
       "Parameters": {
         "cma": {
           "event.$": "$",
