@@ -86,6 +86,7 @@ Configure the Catch section of your `PostToCmr` task to proceed to QueueWorkflow
 Then, configure the `QueueWorkflow` task similarly to its configuration in the ingest workflow. This time, the workflow that is passed to the task config is the same as the current workflow, which allows for the publish workflow to be requeued when there is a CMR error.
 
 ```json
+{
   "QueueWorkflow": {
     "Parameters": {
       "cma": {
