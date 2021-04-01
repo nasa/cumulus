@@ -375,6 +375,7 @@ class Granule extends Manager {
     workflowStatus,
     queryFields,
     processingTimeInfo = {},
+    updatedAt,
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
 
@@ -412,7 +413,7 @@ class Granule extends Manager {
       createdAt: workflowStartTime,
       published,
       timestamp,
-      updatedAt: now,
+      updatedAt: updatedAt || now,
       // Duration is also used as timeToXfer for the EMS report
       duration: getWorkflowDuration(workflowStartTime, timestamp),
       productVolume: getGranuleProductVolume(granuleFiles),
@@ -696,6 +697,7 @@ class Granule extends Manager {
     pdrName,
     workflowStatus,
     queryFields,
+    updatedAt,
   }) {
     const granuleRecord = await this.generateGranuleRecord({
       s3: awsClients.s3(),
@@ -709,6 +711,7 @@ class Granule extends Manager {
       workflowStatus,
       processingTimeInfo,
       queryFields,
+      updatedAt,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }
