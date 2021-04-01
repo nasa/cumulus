@@ -1,0 +1,95 @@
+{
+  "Comment": "Publish Granule Reqeueue",
+  "StartAt": "CmrStep",
+  "States": {
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "CMRInternalError"
+          ],
+          "Next": "RequeueWorkflow"
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ],
+      "End": true
+    },
+    "RequeueWorkflow": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "workflow": "PublishGranuleQueue",
+            "queueUrl": "${start_sf_queue_url}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${queue_workflow_task_arn}",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    },
+    "WorkflowFailed": {
+      "Cause": "Workflow failed",
+      "Type": "Fail"
+    }
+  }
+}

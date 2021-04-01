@@ -104,7 +104,8 @@
       "data-cookbooks/browse-generation",
       "data-cookbooks/tracking-files",
       "data-cookbooks/run-tasks-in-lambda-or-docker",
-      "data-cookbooks/throttling-queued-executions"
+      "data-cookbooks/throttling-queued-executions",
+      "data-cookbooks/queue-post-to-cmr"
     ]
   },
   "Operator Docs": {
