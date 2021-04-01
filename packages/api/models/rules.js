@@ -2,7 +2,6 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
-const merge = require('lodash/merge');
 const set = require('lodash/set');
 
 const awsServices = require('@cumulus/aws-client/services');
