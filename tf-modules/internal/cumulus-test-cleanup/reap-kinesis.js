@@ -26,8 +26,7 @@ function filterOld(streams) {
         return s;
       }
     }
-
-    return null;
+    return undefined;
   });
   return results.filter((r) => r);
 }
@@ -37,14 +36,11 @@ function nukeStream(streamName) {
   return kinesis.deleteStream({ StreamName: streamName }).promise();
 }
 
-async function nukeStreams(listStreams) {
-  // do in serial because of aws limits
-  listStreams.forEach(async (s) => {
-    await nukeStream(s);
-  });
+function nukeStreams(listStreams) {
+  return Promise.all(listStreams.map((s) => nukeStream(s)));
 }
 
-function runReaper() {
+async function runReaper() {
   return getStreams()
     .then(filterOld)
     .then(nukeStreams);
