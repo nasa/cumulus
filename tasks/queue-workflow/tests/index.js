@@ -11,7 +11,7 @@ const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
   randomNumber,
-  randomString,
+  randomId,
   validateConfig,
   validateInput,
   validateOutput,
@@ -20,15 +20,15 @@ const {
 const { queueWorkflow } = require('..');
 
 test.beforeEach(async (t) => {
-  t.context.templateBucket = randomString();
+  t.context.templateBucket = randomId('bucket');
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
-  t.context.workflow = randomString();
-  t.context.stateMachineArn = randomString();
+  t.context.workflow = randomId('Workflow');
+  t.context.stateMachineArn = randomId('stateMachineArn');
 
-  t.context.stackName = randomString();
+  t.context.stackName = randomId('stackName');
 
-  t.context.queueUrl = await createQueue(randomString());
+  t.context.queueUrl = await createQueue(randomId('queue'));
 
   t.context.queueExecutionLimits = {
     [t.context.queueUrl]: randomNumber(),
@@ -43,8 +43,8 @@ test.beforeEach(async (t) => {
     name: t.context.workflow,
     arn: t.context.stateMachineArn,
   };
-  t.context.queuedWorkflow = randomString();
-  t.context.queuedWorkflowStateMachineArn = randomString();
+  t.context.queuedWorkflow = randomId('PublishWorkflow');
+  t.context.queuedWorkflowStateMachineArn = randomId('PublishWorkflowArn');
   const queuedWorkflowDefinition = {
     name: t.context.queuedWorkflow,
     arn: t.context.queuedWorkflowStateMachineArn,
@@ -79,8 +79,8 @@ test.beforeEach(async (t) => {
       internalBucket: t.context.templateBucket,
     },
     input: {
-      prop1: randomString(),
-      prop2: randomString(),
+      prop1: randomId('prop1'),
+      prop2: randomId('prop2'),
     },
   };
 });
@@ -131,7 +131,7 @@ test.serial('Workflow is added to the queue', async (t) => {
 test.serial('Workflow is added to the input queue', async (t) => {
   const event = t.context.event;
   event.config.workflow = t.context.queuedWorkflow;
-  event.input.queueUrl = await createQueue(randomString());
+  event.input.queueUrl = await createQueue(randomId('inputQueueUrl'));
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -170,12 +170,12 @@ test.serial('The correct message is enqueued', async (t) => {
 
   // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
-  event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
+  event.cumulus_config = { state_machine: randomId('state_machine'), execution_name: randomId('execution_name') };
   const arn = buildExecutionArn(
     event.cumulus_config.state_machine, event.cumulus_config.execution_name
   );
   event.config.workflow = t.context.queuedWorkflow;
-  event.config.workflowInput = { prop1: randomString(), prop2: randomString() };
+  event.config.workflowInput = { prop1: randomId('prop1'), prop2: randomId('prop2') };
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -221,10 +221,10 @@ test.serial('The correct message is enqueued', async (t) => {
 test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
   const { event } = t.context;
 
-  const executionNamePrefix = randomString(3);
+  const executionNamePrefix = randomId(3);
   event.config.executionNamePrefix = executionNamePrefix;
 
-  event.input.workflow = { name: randomString(), arn: randomString() };
+  event.input.workflow = { name: randomId('name'), arn: randomId('arn') };
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
