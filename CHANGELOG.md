@@ -130,6 +130,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add write-db-dlq-records-to-s3 lambda.
     - Add terraform config to automatically write db records DLQ messages to an s3 archive on the system bucket.
     - Add unit tests and a component spec test for the above.
+  - **CUMULUS-2446**
+    - Remove schema validation check against DynamoDB table for collections.
 
 ## [v7.1.0] 2021-03-12
 
