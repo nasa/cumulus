@@ -6,10 +6,10 @@ const cryptoRandomString = require('crypto-random-string');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const awsServices = require('@cumulus/aws-client/services');
 const {
-  tableNames,
-  createTestDatabase,
   localStackConnectionEnv,
-  getKnexClient,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  AsyncOperationPgModel,
 } = require('@cumulus/db');
 // eslint-disable-next-line unicorn/import-index
 const { updateAsyncOperation } = require('../index');
@@ -39,26 +39,31 @@ test.before(async (t) => {
     },
   });
 
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-    },
-  });
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
+  process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
 
-  await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
-  await t.context.knex.migrate.latest();
-  await t.context.knex(tableNames.asyncOperations).insert({
+  t.context.asyncOperationPgModel = new AsyncOperationPgModel();
+
+  t.context.asyncOperationOriginalPgRecord = {
     id: t.context.asyncOperationId,
     description: 'test description',
     operation_type: 'ES Index',
     status: 'RUNNING',
+    created_at: Date.now(),
+  };
+  await t.context.asyncOperationPgModel.create(
+    t.context.testKnex,
+    t.context.asyncOperationOriginalPgRecord
+  );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
   });
 });
 
@@ -79,10 +84,13 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
     }
   );
 
-  // Query RDS for result
-  const rdsResponse = await t.context.knex(tableNames.asyncOperations)
-    .select('id', 'status', 'output', 'updated_at')
-    .where('id', t.context.asyncOperationId);
+  const asyncOperationPgRecord = await t.context.asyncOperationPgModel
+    .get(
+      t.context.testKnex,
+      {
+        id: t.context.asyncOperationId,
+      }
+    );
   const dynamoResponse = await DynamoDb.get({
     tableName: t.context.dynamoTableName,
     item: { id: t.context.asyncOperationId },
@@ -91,16 +99,17 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
   });
 
   t.is(result.$response.httpResponse.statusCode, 200);
-  t.deepEqual(rdsResponse, [{
+  t.like(asyncOperationPgRecord, {
     id: t.context.asyncOperationId,
     status,
     output,
     updated_at: new Date(Number(updateTime)),
-  }]);
+  });
   t.deepEqual(dynamoResponse, {
     output: JSON.stringify(output),
     id: t.context.asyncOperationId,
     status,
     updatedAt: Number(updateTime),
   });
+  t.is(asyncOperationPgRecord.updated_at.getTime(), dynamoResponse.updatedAt);
 });
