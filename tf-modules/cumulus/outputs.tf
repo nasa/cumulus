@@ -92,6 +92,10 @@ output "queue_pdrs_task" {
   value = module.ingest.queue_pdrs_task
 }
 
+output "queue_workflow_task" {
+  value = module.ingest.queue_workflow_task
+}
+
 output "sf_sqs_report_task" {
   value = module.ingest.sf_sqs_report_task
 }

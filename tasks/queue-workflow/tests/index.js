@@ -11,7 +11,7 @@ const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
   randomNumber,
-  randomString,
+  randomId,
   validateConfig,
   validateInput,
   validateOutput,
@@ -20,15 +20,15 @@ const {
 const { queueWorkflow } = require('..');
 
 test.beforeEach(async (t) => {
-  t.context.templateBucket = randomString();
+  t.context.templateBucket = randomId('bucket');
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
-  t.context.workflow = randomString();
-  t.context.stateMachineArn = randomString();
+  t.context.workflow = randomId('Workflow');
+  t.context.stateMachineArn = randomId('stateMachineArn');
 
-  t.context.stackName = randomString();
+  t.context.stackName = randomId('stackName');
 
-  t.context.queueUrl = await createQueue(randomString());
+  t.context.queueUrl = await createQueue(randomId('queue'));
 
   t.context.queueExecutionLimits = {
     [t.context.queueUrl]: randomNumber(),
@@ -43,8 +43,15 @@ test.beforeEach(async (t) => {
     name: t.context.workflow,
     arn: t.context.stateMachineArn,
   };
+  t.context.queuedWorkflow = randomId('PublishWorkflow');
+  t.context.queuedWorkflowStateMachineArn = randomId('PublishWorkflowArn');
+  const queuedWorkflowDefinition = {
+    name: t.context.queuedWorkflow,
+    arn: t.context.queuedWorkflowStateMachineArn,
+  };
   const messageTemplateKey = `${t.context.stackName}/workflow_template.json`;
   const workflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.workflow}.json`;
+  const queuedWorkflowDefinitionKey = `${t.context.stackName}/workflows/${t.context.queuedWorkflow}.json`;
   t.context.messageTemplateKey = messageTemplateKey;
   await Promise.all([
     s3PutObject({
@@ -57,21 +64,23 @@ test.beforeEach(async (t) => {
       Key: workflowDefinitionKey,
       Body: JSON.stringify(workflowDefinition),
     }),
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: queuedWorkflowDefinitionKey,
+      Body: JSON.stringify(queuedWorkflowDefinition),
+    }),
   ]);
 
   t.context.event = {
     config: {
-      parentWorkflow: t.context.workflow,
+      workflow: t.context.workflow,
       queueUrl: t.context.queueUrl,
       stackName: t.context.stackName,
       internalBucket: t.context.templateBucket,
     },
     input: {
-      workflow: {},
-      workflowInput: {
-        prop1: randomString(),
-        prop2: randomString(),
-      },
+      prop1: randomId('prop1'),
+      prop2: randomId('prop2'),
     },
   };
 });
@@ -85,7 +94,7 @@ test.afterEach(async (t) => {
 
 test.serial('The correct output is returned when workflow is queued', async (t) => {
   const event = t.context.event;
-  event.input.workflow = { name: randomString(), arn: randomString() };
+  event.config.workflow = t.context.workflow;
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -94,26 +103,12 @@ test.serial('The correct output is returned when workflow is queued', async (t) 
 
   await validateOutput(t, output);
 
-  t.deepEqual(output.workflow, event.input.workflow);
-});
-
-test.serial('The correct output is returned when no workflow is queued', async (t) => {
-  const event = t.context.event;
-  event.workflow = {};
-  event.workflowInput = {};
-
-  await validateConfig(t, event.config);
-  await validateInput(t, event.input);
-
-  const output = await queueWorkflow(event);
-
-  await validateOutput(t, output);
-  t.deepEqual(output.workflow, event.input.workflow);
+  t.deepEqual(output.workflow, event.config.workflow);
 });
 
 test.serial('Workflow is added to the queue', async (t) => {
   const event = t.context.event;
-  event.input.workflow = { name: randomString(), arn: randomString() };
+  event.config.workflow = t.context.queuedWorkflow;
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -135,8 +130,8 @@ test.serial('Workflow is added to the queue', async (t) => {
 
 test.serial('Workflow is added to the input queue', async (t) => {
   const event = t.context.event;
-  event.input.workflow = { name: randomString(), arn: randomString() };
-  event.input.queueUrl = await createQueue(randomString());
+  event.config.workflow = t.context.queuedWorkflow;
+  event.input.queueUrl = await createQueue(randomId('inputQueueUrl'));
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -168,20 +163,19 @@ test.serial('Workflow is added to the input queue', async (t) => {
 
 test.serial('The correct message is enqueued', async (t) => {
   const {
-    workflow,
     event,
     queueExecutionLimits,
-    stateMachineArn,
+    queuedWorkflowStateMachineArn,
   } = t.context;
 
   // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
-  event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
+  event.cumulus_config = { state_machine: randomId('state_machine'), execution_name: randomId('execution_name') };
   const arn = buildExecutionArn(
     event.cumulus_config.state_machine, event.cumulus_config.execution_name
   );
-  event.input.workflow = { name: randomString(), arn: randomString() };
-  event.input.workflowInput = { prop1: randomString(), prop2: randomString() };
+  event.config.workflow = t.context.queuedWorkflow;
+  event.config.workflowInput = { prop1: randomId('prop1'), prop2: randomId('prop2') };
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -201,27 +195,21 @@ test.serial('The correct message is enqueued', async (t) => {
   t.is(messages.length, 1);
 
   const message = messages[0];
-  const receivedWorkflow = message.payload.workflow.name;
-  t.true(receivedWorkflow.includes(event.input.workflow.name));
+  const receivedWorkflow = message.meta.workflow_name;
+  t.is(receivedWorkflow, event.config.workflow);
 
   const expectedMessage = {
     cumulus_meta: {
-      state_machine: stateMachineArn,
+      state_machine: queuedWorkflowStateMachineArn,
       parentExecutionArn: arn,
       queueExecutionLimits,
     },
     meta: {
-      workflow_name: workflow,
+      workflow_name: event.config.workflow,
     },
     payload: {
-      workflow: {
-        name: event.input.workflow.name,
-        arn: event.input.workflow.arn,
-      },
-      workflowInput: {
-        prop1: event.input.workflowInput.prop1,
-        prop2: event.input.workflowInput.prop2,
-      },
+      prop1: event.config.workflowInput.prop1,
+      prop2: event.config.workflowInput.prop2,
     },
   };
 
@@ -233,10 +221,10 @@ test.serial('The correct message is enqueued', async (t) => {
 test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
   const { event } = t.context;
 
-  const executionNamePrefix = randomString(3);
+  const executionNamePrefix = randomId(3);
   event.config.executionNamePrefix = executionNamePrefix;
 
-  event.input.workflow = { name: randomString(), arn: randomString() };
+  event.input.workflow = { name: randomId('name'), arn: randomId('arn') };
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
