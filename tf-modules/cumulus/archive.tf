@@ -97,6 +97,7 @@ module "archive" {
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_heartbeat = var.rds_connection_heartbeat
   postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
+  postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
 
   ems_deploy = var.ems_deploy
 
