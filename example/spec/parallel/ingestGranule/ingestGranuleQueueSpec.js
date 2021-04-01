@@ -24,10 +24,8 @@ const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
   buildAndStartWorkflow,
   conceptExists,
-  getExecutionOutput,
   getOnlineResources,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
@@ -47,7 +45,6 @@ const {
   templateFile,
   uploadTestDataToBucket,
   deleteFolder,
-  getExecutionUrl,
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
@@ -83,7 +80,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let collection;
   let config;
   let executionModel;
-  let executionOutput;
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
@@ -96,7 +92,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
-  let failingWorkflowExecution;
   let granuleCompletedMessageKey;
   let granuleRunningMessageKey;
 
@@ -314,8 +309,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('results in the files being added to the granule files cache table', async () => {
     process.env.FilesTable = `${config.stackName}-FilesTable`;
-
-    executionOutput = await getExecutionOutput(workflowExecutionArn);
 
     const lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'MoveGranules');
 
@@ -558,110 +551,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
         checkFiles.forEach((fileCheck) => expect(fileCheck).toBeTrue());
       });
-    });
-  });
-
-  describe('A Cloudwatch event', () => {
-    beforeAll(async () => {
-      console.log('Start FailingExecution');
-
-      failingWorkflowExecution = await buildAndExecuteWorkflow(
-        config.stackName,
-        config.bucket,
-        workflowName,
-        collection,
-        provider,
-        {}
-      );
-    });
-
-    it('triggers the granule record being added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
-        'completed'
-      );
-      expect(record.execution).toEqual(getExecutionUrl(publishGranuleExecutionArn));
-    });
-
-    it('triggers the successful execution record being added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: workflowExecutionArn },
-        'completed'
-      );
-      expect(record.status).toEqual('completed');
-    });
-
-    it('triggers the failed execution record being added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: failingWorkflowExecution.executionArn },
-        'failed'
-      );
-      expect(record.status).toEqual('failed');
-      expect(record.error).toBeInstanceOf(Object);
-    });
-  });
-
-  describe('an SNS message', () => {
-    let executionName;
-    let executionCompletedKey;
-    let executionFailedKey;
-    let failedExecutionArn;
-    let failedExecutionName;
-
-    beforeAll(async () => {
-      failedExecutionArn = failingWorkflowExecution.executionArn;
-      failedExecutionName = failedExecutionArn.split(':').pop();
-      executionName = executionOutput.cumulus_meta.execution_name;
-
-      executionFailedKey = `${config.stackName}/test-output/${failedExecutionName}.output`;
-      executionCompletedKey = `${config.stackName}/test-output/${executionName}.output`;
-
-      granuleCompletedMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-completed.output`;
-      granuleRunningMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-running.output`;
-    });
-
-    afterAll(async () => {
-      await Promise.all([
-        executionModel.delete({ arn: failedExecutionArn }),
-        deleteS3Object(config.bucket, executionCompletedKey),
-        deleteS3Object(config.bucket, executionFailedKey),
-      ]);
-    });
-
-    it('is published for a running granule', async () => {
-      const granuleExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: granuleRunningMessageKey,
-      });
-      expect(granuleExists).toEqual(true);
-    });
-
-    it('is published for an execution on a successful workflow completion', async () => {
-      const executionExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: executionCompletedKey,
-      });
-      expect(executionExists).toEqual(true);
-    });
-
-    it('is published for a granule on a successful workflow completion', async () => {
-      const granuleExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: granuleCompletedMessageKey,
-      });
-      expect(granuleExists).toEqual(true);
-    });
-
-    it('is published for an execution on workflow failure', async () => {
-      const executionExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: executionFailedKey,
-      });
-
-      expect(executionExists).toEqual(true);
     });
   });
 });
