@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       of returning `none` when the operation did not return output.
   - **CUMULUS-2309**
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
+
+### Added
+
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
     - Added postgres-migration-count-tool lambda/ECS task to allow for
@@ -124,6 +127,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
   - **CUMULUS-2367**
     - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
+  - **CUMULUS-2406**
+    - Updated parallel write logic to ensure that updatedAt/updated_at timestamps are the same in Dynamo/PG on record write for the following data types:
+      - async operations
+      - granules
+      - executions
+      - PDRs
 
 ## [v7.1.0] 2021-03-12
 
