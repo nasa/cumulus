@@ -92,8 +92,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
-  let granuleCompletedMessageKey;
-  let granuleRunningMessageKey;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -240,8 +238,6 @@ describe('The S3 Ingest Granules workflow', () => {
       pdrModel.delete({
         pdrName: inputPayload.pdr.name,
       }),
-      deleteS3Object(config.bucket, granuleCompletedMessageKey),
-      deleteS3Object(config.bucket, granuleRunningMessageKey),
     ]);
   });
 
