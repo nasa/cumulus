@@ -252,8 +252,6 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if 
     knex,
   });
 
-  // t.true(await pdrModel.exists({ pdrName: pdr.name }));
-  // t.true(await pdrPgModel.exists(knex, { name: pdr.name }));
   const dynamoRecord = await pdrModel.get({ pdrName: pdr.name });
   const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
   t.true(dynamoRecord !== undefined);

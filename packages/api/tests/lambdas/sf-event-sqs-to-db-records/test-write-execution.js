@@ -231,8 +231,12 @@ test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id 
 
   await writeExecution({ cumulusMessage, knex });
 
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(await executionPgModel.exists(knex, { arn: executionArn }));
+  const dynamoRecord = await executionModel.get({ arn: executionArn });
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.true(dynamoRecord !== undefined);
+  t.true(pgRecord !== undefined);
+  t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
 
 test.serial('writeExecution() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
