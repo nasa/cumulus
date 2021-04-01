@@ -14,7 +14,6 @@ const {
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
-  deleteS3Object,
   parseS3Uri,
   s3GetObjectTagging,
   s3ObjectExists,
