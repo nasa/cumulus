@@ -441,3 +441,7 @@ variable "default_tags" {
   }
 }
 
+variable "optional_dynamo_tables" {
+  type = map(object({ name = string, arn = string }))
+  default = {}
+}

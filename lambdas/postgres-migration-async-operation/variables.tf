@@ -50,3 +50,14 @@ variable "rds_security_group_id" {
   type = string
 }
 
+variable "ecs_cluster_name" {
+  type = string
+}
+
+variable "async_operation_task_definition_arn" {
+  type = string
+}
+
+variable "data_migration2_function_arn" {
+  type = string
+}

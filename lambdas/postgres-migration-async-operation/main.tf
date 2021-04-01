@@ -14,11 +14,14 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
 
   environment {
     variables = {
-      databaseCredentialSecretArn = var.rds_user_access_secret_arn
-      dbHeartBeat                 = var.rds_connection_heartbeat
-      system_bucket               = var.system_bucket
-      AsyncOperationsTable        = var.dynamo_tables.async_operations.name
-      prefix                      = var.prefix
+      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
+      dbHeartBeat                  = var.rds_connection_heartbeat
+      system_bucket                = var.system_bucket
+      AsyncOperationsTable         = var.dynamo_tables.async_operations.name
+      stackName                    = var.prefix
+      MigrationLambda              = var.data_migration2_function_arn
+      EcsCluster                   = var.ecs_cluster_name
+      AsyncOperationTaskDefinition = var.async_operation_task_definition_arn
     }
   }
 

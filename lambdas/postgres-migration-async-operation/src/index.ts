@@ -14,16 +14,16 @@ exports.handler = async () => {
   logger.info(stackName);
   logger.info(systemBucket);
   logger.info(tableName);
-  logger.info(process.env.MigrationAsyncOperationLambda);
+  logger.info(process.env.MigrationLambda);
   logger.info(process.env.EcsCluster);
   logger.info(process.env.AsyncOperationTaskDefinition);
 
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
-    lambdaName: process.env.MigrationAsyncOperationLambda,
+    lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Data Migration 2 Lambda ECS Run',
-    operationType: 'Migration Count Report',
+    operationType: 'Reconciliation Report',
     payload: {
     },
     stackName,

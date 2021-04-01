@@ -15,5 +15,11 @@ module "postgres_migration_async_operation" {
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_heartbeat   = var.rds_connection_heartbeat
 
+  ecs_cluster_name      = aws_ecs_cluster.default.name
+
+  async_operation_task_definition_arn = module.archive.async_operation_task_definition_arn
+
+  data_migration2_function_arn = module.data_migration2.data_migration2_function_arn
+
   tags = var.tags
 }
