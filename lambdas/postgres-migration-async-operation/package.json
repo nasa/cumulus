@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/data-migration-asyncOperation",
+  "name": "@cumulus/postgres-migration-async-operation",
   "version": "1.0.0",
   "license": "Apache-2.0",
   "engines": {

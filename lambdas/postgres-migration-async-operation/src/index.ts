@@ -11,19 +11,12 @@ exports.handler = async () => {
   const tableName = process.env.AsyncOperationsTable;
 
   logger.info('Starting Postgres Migration Async Operation');
-  logger.info(stackName);
-  logger.info(systemBucket);
-  logger.info(tableName);
-  logger.info(process.env.MigrationLambda);
-  logger.info(process.env.EcsCluster);
-  logger.info(process.env.AsyncOperationTaskDefinition);
-
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Data Migration 2 Lambda ECS Run',
-    operationType: 'Reconciliation Report',
+    operationType: 'Data Migration 2',
     payload: {
     },
     stackName,
@@ -33,6 +26,6 @@ exports.handler = async () => {
     useLambdaEnvironmentVariables: true,
   }, models.AsyncOperation);
 
-  logger.info('completed Postgres Migration Async Operation');
+  logger.info('Completed Postgres Migration Async Operation');
   return asyncOperation;
 };
