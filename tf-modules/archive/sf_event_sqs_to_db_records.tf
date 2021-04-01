@@ -30,8 +30,18 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
-    actions   = ["s3:GetObject"]
+    actions   = [
+      "s3:GetObject",
+      "s3:PutObject"
+    ]
     resources = ["arn:aws:s3:::${var.system_bucket}/*"]
+  }
+
+  statement {
+    actions   = [
+      "s3:ListBucket"
+    ]
+    resources = ["arn:aws:s3:::${var.system_bucket}"]
   }
 
   statement {
@@ -86,7 +96,8 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
       "sqs:GetQueueAttributes"
     ]
     resources = [
-      aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
+      aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn,
+      aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
     ]
   }
 
@@ -183,3 +194,41 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
   tags = var.tags
 }
+
+resource "aws_lambda_event_source_mapping" "db_records_dlq_to_s3_mapping" {
+  event_source_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
+  function_name    = aws_lambda_function.write_db_dlq_records_to_s3.arn
+}
+
+resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
+  filename         = "${path.module}/../../packages/api/dist/writeDbDlqRecordstoS3/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/writeDbDlqRecordstoS3/lambda.zip")
+  function_name    = "${var.prefix}-writeDbRecordsDLQtoS3"
+  role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
+  handler          = "index.handler"
+  runtime          = "nodejs12.x"
+  timeout          = local.sf_event_sqs_lambda_timeout
+  memory_size      = 256
+
+  environment {
+    variables = {
+      stackName     = var.prefix
+      system_bucket = var.system_bucket
+    }
+  }
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = compact([
+        aws_security_group.no_ingress_all_egress[0].id,
+        var.rds_security_group
+      ])
+    }
+  }
+
+  tags = var.tags
+}
+
+

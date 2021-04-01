@@ -120,6 +120,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Change PostgreSQL schema definition for `files` to remove `filename` and `name` and only support `file_name`.
     - Change PostgreSQL schema definition for `files` to remove `size` to only support `file_size`.
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
+  - **CUMULUS-2266**
+    - Change `sf-event-sqs-to-db-records` behavior to discard and not throw an error on an out-of-order/delayed message so as not to have it be sent to the DLQ.
   - **CUMULUS-2305**
     - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from PostgreSQL database.
   - **CUMULUS-2309**
@@ -127,6 +129,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
   - **CUMULUS-2367**
     - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
+  - **CUMULUS-2329**
+    - Add write-db-dlq-records-to-s3 lambda.
+    - Add terraform config to automatically write db records DLQ messages to an s3 archive on the system bucket.
+    - Add unit tests and a component spec test for the above.
   - **CUMULUS-2406**
     - Updated parallel write logic to ensure that updatedAt/updated_at timestamps are the same in Dynamo/PG on record write for the following data types:
       - async operations

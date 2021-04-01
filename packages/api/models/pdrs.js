@@ -93,7 +93,7 @@ class Pdr extends Manager {
 
     const stats = getMessagePdrStats(message);
     const progress = getPdrPercentCompletion(stats);
-    const timestamp = Date.now();
+    const now = Date.now();
     const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
@@ -107,9 +107,9 @@ class Pdr extends Manager {
       PANmessage: getMessagePdrPANMessage(message),
       stats,
       createdAt: getMessageWorkflowStartTime(message),
-      timestamp,
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      timestamp: now,
       updatedAt,
+      duration: getWorkflowDuration(workflowStartTime, now),
     };
 
     this.constructor.recordIsValid(record, this.schema);
@@ -140,7 +140,7 @@ class Pdr extends Manager {
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
         const executionArn = getMessageExecutionArn(cumulusMessage);
-        log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        log.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
         return undefined;
       }
       throw error;

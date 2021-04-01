@@ -397,7 +397,6 @@ class Granule extends Manager {
     });
 
     const now = Date.now();
-    const timestamp = now;
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
 
     const record = {
@@ -410,12 +409,12 @@ class Granule extends Manager {
       cmrLink: cmrLink,
       files: granuleFiles,
       error,
-      createdAt: workflowStartTime,
       published,
-      timestamp,
+      createdAt: workflowStartTime,
+      timestamp: now,
       updatedAt: updatedAt || now,
       // Duration is also used as timeToXfer for the EMS report
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      duration: getWorkflowDuration(workflowStartTime, now),
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: getGranuleTimeToPreprocess(granule),
       timeToArchive: getGranuleTimeToArchive(granule),
@@ -651,7 +650,15 @@ class Granule extends Manager {
       updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
-    return this.dynamodbDocClient.update(updateParams).promise();
+    try {
+      return await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        log.info(`Did not process delayed event for granule: ${granuleRecord.granuleId} (execution: ${granuleRecord.execution})`);
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   /**
