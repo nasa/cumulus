@@ -53,8 +53,13 @@ export const migratePdrRecord = async (
     }
   }
 
-  // Throw error if it was already migrated.
-  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
+  const isExistingRecordNewer = existingRecord
+    && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt);
+
+  // Check the record's status here to prevent a granule from being written
+  // out-of-order. If we have already migrated this granule and the status
+  // of the new granule is 'running', skip it.
+  if (isExistingRecordNewer || (existingRecord && dynamoRecord.status === 'running')) {
     throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
   }
 

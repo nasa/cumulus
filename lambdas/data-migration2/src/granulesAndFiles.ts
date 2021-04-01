@@ -76,8 +76,13 @@ export const migrateGranuleRecord = async (
     }
   }
 
-  // Throw error if it was already migrated.
-  if (existingRecord && existingRecord.updated_at >= new Date(record.updatedAt)) {
+  const isExistingRecordNewer = existingRecord
+    && existingRecord.updated_at >= new Date(record.updatedAt);
+
+  // Check the record's status here to prevent a granule from being written
+  // out-of-order. If we have already migrated this granule and the status
+  // of the new granule is 'running', skip it.
+  if (isExistingRecordNewer || (existingRecord && record.status === 'running')) {
     throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
   }
 

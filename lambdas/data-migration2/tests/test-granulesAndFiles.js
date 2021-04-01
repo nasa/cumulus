@@ -351,7 +351,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   );
 });
 
-test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error if previously migrated record is newer', async (t) => {
   const {
     knex,
     testGranule,
@@ -371,13 +371,41 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already
   );
 });
 
-test.only('migrateGranuleRecord updates an already migrated record if the updated date is newer', async (t) => {
+test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error the record was previously migrated and the new record is "running"', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
+
+  const testGranule1 = testGranule;
+  const testGranule2 = {
+    ...testGranule1,
+    status: 'running',
+    updatedAt: Date.now(),
+  };
+
+  await migrateGranuleRecord(testGranule1, knex);
+
+  await t.throwsAsync(
+    migrateGranuleRecord(testGranule2, knex),
+    { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial('migrateGranuleRecord updates an already migrated record if the updated date is newer', async (t) => {
   const {
     knex,
     granulePgModel,
-    testGranule,
+    testCollection,
+    testExecution,
     collectionCumulusId,
   } = t.context;
+
+  const testGranule = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+    status: 'completed',
+  });
 
   await migrateGranuleRecord(testGranule, knex);
 

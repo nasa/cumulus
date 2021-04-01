@@ -25,18 +25,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       throw new Error(`To upsert granule record must have 'created_at' set: ${JSON.stringify(granule)}`);
     }
     if (granule.status === 'running') {
-      const existing = granulesExecutionsPgModel.search(
-        knexOrTrx,
-        { execution_cumulus_id: executionCumulusId }
-      );
-
-      const existingR = await granulesExecutionsPgModel.search(
-        knexOrTrx,
-        { execution_cumulus_id: executionCumulusId }
-      );
-      console.log(existing);
-      console.log(existingR);
-
       return knexOrTrx(this.tableName)
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
@@ -51,9 +39,12 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // the granule to this execution. If there IS already a record
         // linking this granule to this execution, then this upsert query
         // will not affect any rows.
-        // .whereNotExists(
-        //   existing
-        // )
+        .whereNotExists(
+          granulesExecutionsPgModel.search(
+            knexOrTrx,
+            { execution_cumulus_id: executionCumulusId }
+          )
+        )
         .returning('cumulus_id');
     }
     return knexOrTrx(this.tableName)
