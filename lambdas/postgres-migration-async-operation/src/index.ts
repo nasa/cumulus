@@ -5,13 +5,13 @@ const { models } = require('@cumulus/api');
 const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/postgres-migration-async-operation' });
-exports.handler = async (asyncOperationsFn = asyncOperations) => {
+exports.handler = async () => {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
 
   logger.info('Starting Postgres Migration Async Operation');
-  const asyncOperation = await asyncOperationsFn.startAsyncOperation({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
