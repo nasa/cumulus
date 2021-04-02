@@ -220,7 +220,22 @@ test('buildExecutionRecord returns record with error', (t) => {
   t.deepEqual(record.error, exception);
 });
 
-test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id if write to RDS is enabled', async (t) => {
+test('writeExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionModel,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  await writeExecution({ cumulusMessage, knex });
+
+  t.true(await executionModel.exists({ arn: executionArn }));
+  t.true(await executionPgModel.exists(knex, { arn: executionArn }));
+});
+
+test('writeExecution() saves execution to Dynamo and RDS with same timestamps', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -233,8 +248,6 @@ test('writeExecution() saves execution to Dynamo and RDS and returns cumulus_id 
 
   const dynamoRecord = await executionModel.get({ arn: executionArn });
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  t.true(dynamoRecord !== undefined);
-  t.true(pgRecord !== undefined);
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });

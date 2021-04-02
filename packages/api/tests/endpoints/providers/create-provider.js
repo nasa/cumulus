@@ -9,7 +9,6 @@ const {
   localStackConnectionEnv,
   generateLocalTestDb,
   destroyLocalTestDb,
-  tableNames,
   translateApiProviderToPostgresProvider,
   nullifyUndefinedProviderValues,
   ProviderPgModel,
@@ -171,13 +170,6 @@ test('POST creates a new provider', async (t) => {
 
   const [providerPgRecord] = pgRecords;
 
-  t.true(record.createdAt > newProvider.createdAt);
-  t.true(record.updatedAt > newProvider.updatedAt);
-
-  // PG and Dynamo records have the same timestamps
-  t.is(providerPgRecord.created_at.getTime(), record.createdAt);
-  t.is(providerPgRecord.updated_at.getTime(), record.updatedAt);
-
   t.deepEqual(
     omit(providerPgRecord, postgresOmitList),
     omit(
@@ -185,6 +177,36 @@ test('POST creates a new provider', async (t) => {
       postgresOmitList
     )
   );
+});
+
+test('POST creates a new provider in Dynamo and PG with correct timestamps', async (t) => {
+  const { providerPgModel } = t.context;
+  const newProviderId = randomString();
+  const newProvider = fakeProviderFactory({
+    id: newProviderId,
+  });
+
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { record } = response.body;
+  const pgRecords = await providerPgModel.search(
+    t.context.testKnex,
+    { name: newProviderId }
+  );
+
+  const [providerPgRecord] = pgRecords;
+
+  t.true(record.createdAt > newProvider.createdAt);
+  t.true(record.updatedAt > newProvider.updatedAt);
+
+  // PG and Dynamo records have the same timestamps
+  t.is(providerPgRecord.created_at.getTime(), record.createdAt);
+  t.is(providerPgRecord.updated_at.getTime(), record.updatedAt);
 });
 
 test('POST returns a 409 error if the provider already exists', async (t) => {

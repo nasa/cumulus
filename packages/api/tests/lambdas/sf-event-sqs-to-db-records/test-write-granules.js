@@ -333,10 +333,32 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
     granuleModel,
   });
 
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
+});
+
+test('writeGranules() saves granule records to Dynamo and RDS with same timestamps', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
   const dynamoRecord = await granuleModel.get({ granuleId });
   const pgRecord = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
-  t.true(dynamoRecord !== undefined);
-  t.true(pgRecord !== undefined);
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });

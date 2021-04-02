@@ -155,6 +155,30 @@ test('POST creates a new collection', async (t) => {
   t.is(fetchedDynamoRecord.name, newCollection.name);
   t.is(fetchedDynamoRecord.version, newCollection.version);
 
+  t.true(await t.context.collectionPgModel.exists(
+    t.context.testKnex,
+    {
+      name: newCollection.name,
+      version: newCollection.version,
+    }
+  ));
+});
+
+test('POST creates a new collection in Dynamo and PG with correct timestamps', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
+  await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const fetchedDynamoRecord = await collectionModel.get({
+    name: newCollection.name,
+    version: newCollection.version,
+  });
+
   const collectionPgRecord = await t.context.collectionPgModel.get(
     t.context.testKnex,
     {
@@ -162,8 +186,6 @@ test('POST creates a new collection', async (t) => {
       version: newCollection.version,
     }
   );
-
-  t.not(collectionPgRecord, undefined);
 
   t.true(fetchedDynamoRecord.createdAt > newCollection.createdAt);
   t.true(fetchedDynamoRecord.updatedAt > newCollection.updatedAt);

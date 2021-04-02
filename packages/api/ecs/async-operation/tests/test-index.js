@@ -123,6 +123,38 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
     output: JSON.stringify(output),
     updatedAt: Number(updateTime),
   });
+});
+
+test('updateAsyncOperation updates databases with correct timestamps', async (t) => {
+  const status = 'SUCCEEDED';
+  const output = { foo: 'bar' };
+  const updateTime = (Number(Date.now())).toString();
+  await updateAsyncOperation(
+    status,
+    output,
+    {
+      asyncOperationsTable: t.context.dynamoTableName,
+      asyncOperationId: t.context.asyncOperationId,
+      ...localStackConnectionEnv,
+      PG_DATABASE: testDbName,
+      updateTime,
+    }
+  );
+
+  const asyncOperationPgRecord = await t.context.asyncOperationPgModel
+    .get(
+      t.context.testKnex,
+      {
+        id: t.context.asyncOperationId,
+      }
+    );
+  const dynamoResponse = await DynamoDb.get({
+    tableName: t.context.dynamoTableName,
+    item: { id: t.context.asyncOperationId },
+    client: t.context.dynamodbDocClient,
+    getParams: { ConsistentRead: true },
+  });
+
   t.is(asyncOperationPgRecord.updated_at.getTime(), dynamoResponse.updatedAt);
   t.is(asyncOperationPgRecord.created_at.getTime(), dynamoResponse.createdAt);
 });

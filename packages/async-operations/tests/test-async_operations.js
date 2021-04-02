@@ -278,6 +278,41 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
     translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
   );
   t.deepEqual(omit(asyncOpDynamoSpyRecord, ['createdAt', 'updatedAt']), omit(expected, ['createdAt', 'updatedAt']));
+});
+
+test.serial('The startAsyncOperation writes records to the databases with correct timestamps', async (t) => {
+  const createSpy = sinon.spy((createObject) => createObject);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+  const description = randomString();
+  const stackName = randomString();
+  const operationType = 'ES Index';
+  const taskArn = randomString();
+
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn }],
+    failures: [],
+  };
+
+  const { id } = await startAsyncOperation({
+    asyncOperationTaskDefinition: randomString(),
+    cluster: randomString(),
+    lambdaName: randomString(),
+    description,
+    operationType,
+    payload: {},
+    stackName,
+    dynamoTableName: dynamoTableName,
+    knexConfig: knexConfig,
+    systemBucket,
+  }, stubbedAsyncOperationsModel);
+
+  const asyncOpDynamoSpyRecord = createSpy.getCall(0).args[0];
+  const asyncOperationPgRecord = await t.context.asyncOperationPgModel.get(
+    t.context.testKnex,
+    { id }
+  );
   t.is(asyncOperationPgRecord.created_at.getTime(), asyncOpDynamoSpyRecord.createdAt);
   t.is(asyncOperationPgRecord.updated_at.getTime(), asyncOpDynamoSpyRecord.updatedAt);
 });

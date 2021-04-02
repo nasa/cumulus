@@ -232,7 +232,31 @@ test('writePdr() throws an error if provider is not provided', async (t) => {
   );
 });
 
-test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if RDS write is enabled', async (t) => {
+test('writePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdr,
+    pdrPgModel,
+  } = t.context;
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  t.true(await pdrModel.exists({ pdrName: pdr.name }));
+  t.true(await pdrPgModel.exists(knex, { name: pdr.name }));
+});
+
+test('writePdr() saves a PDR record to Dynamo and RDS with same timestamps', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -254,8 +278,6 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if 
 
   const dynamoRecord = await pdrModel.get({ pdrName: pdr.name });
   const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
-  t.true(dynamoRecord !== undefined);
-  t.true(pgRecord !== undefined);
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });

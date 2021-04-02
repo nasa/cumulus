@@ -13,6 +13,8 @@ const {
   localStackConnectionEnv,
   destroyLocalTestDb,
   generateLocalTestDb,
+  translateApiProviderToPostgresProvider,
+  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { translateApiRuleToPostgresRule } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
@@ -335,36 +337,13 @@ test('POST creates a rule', async (t) => {
     version: fakeCollection.version,
   };
 
-  const collectionRecord = {
-    name: fakeCollection.name,
-    version: fakeCollection.version,
-    duplicate_handling: fakeCollection.duplicateHandling,
-    granule_id_validation_regex: fakeCollection.granuleId,
-    granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
-    files: (JSON.stringify(fakeCollection.files)),
-    report_to_ems: fakeCollection.reportToEms,
-    sample_file_name: fakeCollection.sampleFileName,
-    created_at: new Date(fakeCollection.createdAt),
-    updated_at: new Date(fakeCollection.updatedAt),
-  };
-  const providerRecord = {
-    created_at: fakeProvider.createdAt,
-    updated_at: fakeProvider.updatedAt,
-    name: fakeProvider.id,
-    cm_key_id: fakeProvider.cmKeyId,
-    certificate_uri: fakeProvider.certificateUri,
-    private_key: fakeProvider.privateKey,
-    host: fakeProvider.host,
-    port: fakeProvider.port,
-  };
-
   const [collectionCumulusId] = await t.context.collectionPgModel.create(
     t.context.testKnex,
-    collectionRecord
+    translateApiCollectionToPostgresCollection(fakeCollection)
   );
   const [providerCumulusId] = await t.context.providerPgModel.create(
     t.context.testKnex,
-    providerRecord
+    await translateApiProviderToPostgresProvider(fakeProvider)
   );
 
   const response = await request(app)
@@ -383,9 +362,6 @@ test('POST creates a rule', async (t) => {
     .get(t.context.testKnex, { name: newRule.name });
 
   t.is(message, 'Record saved');
-
-  t.true(fetchedDynamoRecord.createdAt > newRule.createdAt);
-  t.true(fetchedDynamoRecord.updatedAt > newRule.updatedAt);
 
   t.deepEqual(
     omit(fetchedPostgresRecord, ['cumulus_id', 'created_at', 'updated_at']),
@@ -408,6 +384,51 @@ test('POST creates a rule', async (t) => {
       dynamoRuleOmitList
     )
   );
+});
+
+test('POST creates a rule in Dynamo and PG with correct timestamps', async (t) => {
+  const { newRule } = t.context;
+
+  const fakeCollection = fakeCollectionFactory();
+  const fakeProvider = fakeProviderFactory({
+    encrypted: true,
+    privateKey: 'key',
+    cmKeyId: 'key-id',
+    certificateUri: 'uri',
+    createdAt: new Date(2020, 11, 17),
+    updatedAt: new Date(2020, 12, 2),
+  });
+
+  newRule.provider = fakeProvider.id;
+  newRule.collection = {
+    name: fakeCollection.name,
+    version: fakeCollection.version,
+  };
+
+  await t.context.collectionPgModel.create(
+    t.context.testKnex,
+    translateApiCollectionToPostgresCollection(fakeCollection)
+  );
+  await t.context.providerPgModel.create(
+    t.context.testKnex,
+    await translateApiProviderToPostgresProvider(fakeProvider)
+  );
+
+  await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
+  const fetchedDynamoRecord = await ruleModel.get({
+    name: newRule.name,
+  });
+  const fetchedPostgresRecord = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: newRule.name });
+
+  t.true(fetchedDynamoRecord.createdAt > newRule.createdAt);
+  t.true(fetchedDynamoRecord.updatedAt > newRule.updatedAt);
 
   t.is(fetchedPostgresRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
   t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
