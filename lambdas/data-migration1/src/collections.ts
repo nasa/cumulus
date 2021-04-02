@@ -9,9 +9,6 @@ import { RecordAlreadyMigrated } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
-
 const logger = new Logger({ sender: '@cumulus/data-migration/collections' });
 
 /**
@@ -28,9 +25,6 @@ export const migrateCollectionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  // Use API model schema to validate record before processing
-  Manager.recordIsValid(dynamoRecord, schemas.collection);
-
   const existingRecord = await knex<PostgresCollectionRecord>('collections')
     .where({
       name: dynamoRecord.name,

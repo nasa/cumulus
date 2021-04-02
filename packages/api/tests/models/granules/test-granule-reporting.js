@@ -164,7 +164,7 @@ test('_storeGranuleRecord() will not allow a running status to replace a complet
     status: 'running',
   };
 
-  await t.throwsAsync(granuleModel._storeGranuleRecord(updatedGranule));
+  await t.notThrowsAsync(granuleModel._storeGranuleRecord(updatedGranule));
 
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
@@ -183,7 +183,7 @@ test('_storeGranuleRecord() will not allow a running status to replace a failed 
     status: 'running',
   };
 
-  await t.throwsAsync(granuleModel._storeGranuleRecord(updatedGranule));
+  await t.notThrowsAsync(granuleModel._storeGranuleRecord(updatedGranule));
 
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
@@ -271,7 +271,7 @@ test('_validateAndStoreGranuleRecord() will not allow a final status for an olde
     status: 'failed',
   };
 
-  await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
+  await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
@@ -299,7 +299,7 @@ test('_validateAndStoreGranuleRecord() will not allow a final status for an olde
     status: 'failed',
   };
 
-  await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
+  await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
   t.deepEqual(fetchedItem, originalGranule);
@@ -351,7 +351,7 @@ test('_validateAndStoreGranuleRecord() throws an error if trying to update granu
     status: 'running',
   };
 
-  await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
+  await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 });
 
 test('storeGranuleFromCumulusMessage() throws an error for a failing record', async (t) => {
