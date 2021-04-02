@@ -124,6 +124,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
   - **CUMULUS-2367**
     - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
+  - **CUMULUS-2313**
+    - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
+    - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
+    - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
 
 ## [v7.1.0] 2021-03-12
 

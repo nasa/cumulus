@@ -30,11 +30,13 @@ variable "vpc_id" {
   type    = string
   default = null
 }
+
 variable "tags" {
   description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)
   default     = {}
 }
+
 variable "rds_user_access_secret_arn" {
   description = "RDS User Database Login Credential Secret ID"
   type        = string
