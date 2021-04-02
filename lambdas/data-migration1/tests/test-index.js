@@ -177,8 +177,7 @@ test('handler migrates async operations, collections, providers, rules', async (
     rulesModel.delete(fakeRule),
     providersModel.delete(fakeProvider),
     asyncOperationsModel.delete({ id: fakeAsyncOperation.id }),
-    collectionsModel.delete(fakeCollection),
-  ]));
+  ]).then(() => collectionsModel.delete(fakeCollection)));
 
   const call = await handler({});
   const expected = `

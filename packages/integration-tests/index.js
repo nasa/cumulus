@@ -20,7 +20,7 @@ const {
   ecs,
   sfn,
 } = require('@cumulus/aws-client/services');
-const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   templateKey,
@@ -881,6 +881,36 @@ async function waitForAllTestSf(
   throw new Error('Never found started workflow.');
 }
 
+/**
+ * Wait for listObjectsV2 to return the expected result count for a given bucket & prefix.
+ *
+ * @param {Object} params - params object
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} [params.prefix] - S3 prefix
+ * @param {number} params.desiredCount - Desired count to wait for
+ * @param {number} [params.interval] - pWaitFor retry interval, in ms
+ * @param {number} [params.timeout] - pWaitFor timeout, in ms
+ * @returns {Promise<undefined>}
+ */
+async function waitForListObjectsV2ResultCount({
+  bucket,
+  prefix = '',
+  desiredCount,
+  interval = 1000,
+  timeout = 30 * 1000,
+}) {
+  await pWaitFor(
+    async () => {
+      const results = await listS3ObjectsV2({
+        Bucket: bucket,
+        Prefix: prefix,
+      });
+      return results.length === desiredCount;
+    },
+    { interval, timeout }
+  );
+}
+
 module.exports = {
   ActivityStep,
   addCollections,
@@ -932,5 +962,6 @@ module.exports = {
   waitForStartedExecution,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitForDeploymentHandler: waitForDeployment.handler,
+  waitForListObjectsV2ResultCount,
   waitForTestExecutionStart,
 };
