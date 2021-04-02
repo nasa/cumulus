@@ -74,6 +74,7 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
     actions = [
       "dynamodb:GetItem",
       "dynamodb:Scan",
+      "dynamodb:PutItem"
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
   }
