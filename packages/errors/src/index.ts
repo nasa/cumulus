@@ -167,3 +167,5 @@ export class PostgresValidationError extends ValidationError {
     Error.captureStackTrace(this, this.constructor);
   }
 }
+
+export const PostgresUpdateFailed = createErrorType('PostgresUpdateFailed');

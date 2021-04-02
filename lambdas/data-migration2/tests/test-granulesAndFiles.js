@@ -20,7 +20,7 @@ const {
   tableNames,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
-const { RecordAlreadyMigrated } = require('@cumulus/errors');
+const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -371,24 +371,28 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error if previous
   );
 });
 
-test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error the record was previously migrated and the new record is "running"', async (t) => {
+test.serial('migrateGranuleRecord throws error if upsert does not return any rows', async (t) => {
   const {
     knex,
-    testGranule,
+    testCollection,
+    testExecution,
   } = t.context;
 
-  const testGranule1 = testGranule;
-  const testGranule2 = {
-    ...testGranule1,
-    status: 'running',
+  const testGranule = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+  });
+
+  await migrateGranuleRecord(testGranule, knex);
+
+  const newerGranule = {
+    ...testGranule,
     updatedAt: Date.now(),
   };
 
-  await migrateGranuleRecord(testGranule1, knex);
-
   await t.throwsAsync(
-    migrateGranuleRecord(testGranule2, knex),
-    { instanceOf: RecordAlreadyMigrated }
+    migrateGranuleRecord(newerGranule, knex),
+    { instanceOf: PostgresUpdateFailed }
   );
 });
 
