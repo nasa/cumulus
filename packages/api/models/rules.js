@@ -252,6 +252,9 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
+    newRuleItem.createdAt = item.createdAt || Date.now();
+    newRuleItem.updatedAt = item.updatedAt || Date.now();
+
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
 

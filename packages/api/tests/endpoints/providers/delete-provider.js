@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const request = require('supertest');
-const omit = require('lodash/omit');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -10,11 +9,13 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   destroyLocalTestDb,
-  doesRecordExist,
   generateLocalTestDb,
   localStackConnectionEnv,
-  tableNames,
   translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRule,
+  CollectionPgModel,
+  RulePgModel,
+  ProviderPgModel,
 } = require('@cumulus/db');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -56,6 +57,10 @@ test.before(async (t) => {
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
 
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.rulePgModel = new RulePgModel();
+
   process.env.stackName = randomString();
 
   process.env.system_bucket = randomString();
@@ -93,7 +98,11 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.testProvider = fakeProviderFactory();
   const createObject = await translateApiProviderToPostgresProvider(t.context.testProvider);
-  await t.context.testKnex(tableNames.providers).insert(createObject);
+  [t.context.providerCumulusId] = await t.context.providerPgModel
+    .create(
+      t.context.testKnex,
+      createObject
+    );
   await providerModel.create(t.context.testProvider);
 });
 
@@ -144,7 +153,7 @@ test('Deleting a provider removes the provider', async (t) => {
     .expect(200);
 
   t.false(await providerModel.exists(testProvider.id));
-  t.false(await doesRecordExist({ name: id }, t.context.testKnex, tableNames.providers));
+  t.false(await t.context.providerPgModel.exists(t.context.testKnex, { name: id }));
 });
 
 test('Deleting a provider that does not exist succeeds', async (t) => {
@@ -171,31 +180,31 @@ test('Attempting to delete a provider with an associated postgres rule returns a
     Body: JSON.stringify({}),
   }).promise();
 
-  // This block will need to be refactored as the Collection and Rule endpoints
-  // are updated on the feature branch
-  // ---
-  const providerResult = await t.context.testKnex(tableNames.providers)
-    .select('cumulus_id')
-    .where('name', testProvider.id);
-
-  const collectionResult = await t.context.testKnex(tableNames.collections).insert({
+  const collection = {
     name: randomString(10),
     version: '001',
     sample_file_name: 'fake',
     granule_id_validation_regex: 'fake',
     granule_id_extraction_regex: 'fake',
     files: {},
-  }).returning('cumulus_id');
+  };
+  await t.context.collectionPgModel
+    .create(
+      t.context.testKnex,
+      collection
+    );
 
-  await t.context.testKnex(tableNames.rules).insert({
-    ...(omit(rule, ['collection', 'provider', 'rule', 'state'])),
-    collection_cumulus_id: collectionResult[0],
-    provider_cumulus_id: providerResult[0].cumulus_id,
-    type: 'onetime',
-    enabled: 'true',
-  });
+  await t.context.rulePgModel.create(
+    t.context.testKnex,
+    await translateApiRuleToPostgresRule(
+      {
+        ...rule,
+        collection,
+      },
+      t.context.testKnex
+    )
+  );
 
-  // ----
   const response = await request(app)
     .delete(`/providers/${testProvider.id}`)
     .set('Accept', 'application/json')
