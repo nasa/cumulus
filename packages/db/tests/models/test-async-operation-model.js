@@ -11,7 +11,7 @@ const { fakeAsyncOperationRecordFactory } = require('../../dist/test-utils');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
-const testDbName = `rule_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `async_operation_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
