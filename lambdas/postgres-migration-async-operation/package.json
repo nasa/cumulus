@@ -1,5 +1,6 @@
 {
   "name": "@cumulus/postgres-migration-async-operation",
+  "description": "A Lambda function used to start an ECS task to run data-migrations2 lambda",
   "version": "1.0.0",
   "license": "Apache-2.0",
   "engines": {
