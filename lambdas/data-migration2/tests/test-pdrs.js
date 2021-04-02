@@ -327,8 +327,7 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
     ...testPdr,
     updatedAt: Date.now(),
   };
-  console.log(testPdr.updatedAt);
-  console.log(newerTestPdr.updatedAt);
+
   await migratePdrRecord(newerTestPdr, knex);
 
   const createdRecord = await pdrPgModel.get(knex, { name: testPdr.pdrName });
