@@ -132,6 +132,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add unit tests and a component spec test for the above.
   - **CUMULUS-2446**
     - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
+  - **CUMULUS-2447**
+    - Changed `translateApiAsyncOperationToPostgresAsyncOperation` to call `JSON.stringify` and then `JSON.parse` on output.
 
 ## [v7.1.0] 2021-03-12
 
