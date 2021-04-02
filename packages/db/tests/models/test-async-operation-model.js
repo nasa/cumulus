@@ -59,17 +59,17 @@ test('AsyncOperationPgModel.upsert() overwrites an async operation record', asyn
 
   await asyncOperationPgModel.create(knex, asyncOperationRecord);
 
-  const updatedRule = {
+  const updatedAsyncOperation = {
     ...asyncOperationRecord,
     description: cryptoRandomString({ length: 5 }),
   };
 
-  await asyncOperationPgModel.upsert(knex, updatedRule);
+  await asyncOperationPgModel.upsert(knex, updatedAsyncOperation);
 
   t.like(
     await asyncOperationPgModel.get(knex, {
       id: asyncOperationRecord.id,
     }),
-    updatedRule
+    updatedAsyncOperation
   );
 });
