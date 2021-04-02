@@ -12,7 +12,11 @@ import {
   tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
-import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
+import {
+  RecordAlreadyMigrated,
+  RecordDoesNotExist,
+  PostgresUpdateFailed,
+} from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -56,10 +60,7 @@ export const migratePdrRecord = async (
   const isExistingRecordNewer = existingRecord
     && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt);
 
-  // Check the record's status here to prevent a granule from being written
-  // out-of-order. If we have already migrated this granule and the status
-  // of the new granule is 'running', skip it.
-  if (isExistingRecordNewer || (existingRecord && dynamoRecord.status === 'running')) {
+  if (isExistingRecordNewer) {
     throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
   }
 
@@ -100,7 +101,11 @@ export const migratePdrRecord = async (
     updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  await pdrPgModel.upsert(knex, updatedRecord);
+  const [cumulusId] = await pdrPgModel.upsert(knex, updatedRecord);
+
+  if (!cumulusId) {
+    throw new PostgresUpdateFailed(`PDR ${dynamoRecord.pdrName} was not able to be updated in the Postgres table`);
+  }
 };
 
 export const migratePdrs = async (

@@ -22,7 +22,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { RecordAlreadyMigrated } = require('@cumulus/errors');
+const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -255,7 +255,7 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error if previously m
   );
 });
 
-test.serial('migratePdrRecord throws RecordAlreadyMigrated error if the record was previously migrated and the new record is "running"', async (t) => {
+test.serial('migratePdrRecord throws RecordAlreadyMigrated error if previously migrated record is newer', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
   const testPdr = generateTestPdr({
@@ -264,15 +264,35 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error if the record w
   });
   await migratePdrRecord(testPdr, knex);
 
+  const olderTestPdr = {
+    ...testPdr,
+    updatedAt: Date.now() - 1000,
+  };
+
+  await t.throwsAsync(
+    migratePdrRecord(olderTestPdr, knex),
+    { instanceOf: RecordAlreadyMigrated }
+  );
+});
+
+test.serial('migratePdrRecord throws error if upsert does not return any rows', async (t) => {
+  const { knex, testCollection, testProvider } = t.context;
+
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
+
+  await migratePdrRecord(testPdr, knex);
+
   const newerTestPdr = {
     ...testPdr,
     updatedAt: Date.now(),
-    status: 'running',
   };
 
   await t.throwsAsync(
     migratePdrRecord(newerTestPdr, knex),
-    { instanceOf: RecordAlreadyMigrated }
+    { instanceOf: PostgresUpdateFailed }
   );
 });
 
