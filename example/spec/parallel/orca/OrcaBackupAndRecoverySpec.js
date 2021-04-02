@@ -14,6 +14,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { bulkOperation, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { listRequests } = require('@cumulus/api-client/orca');
+const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   addCollections,
@@ -241,6 +242,35 @@ describe('The S3 Ingest Granules workflow', () => {
       // CUMULUS-2414/ORCA ticket
       const checkRequests = requests.map((request) => request.granule_id === granuleId && status.includes(request.job_status));
       checkRequests.forEach((check) => expect(check).toEqual(true));
+    });
+  });
+
+  describe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
+    it('returns list of granules with recovery status', async () => {
+      const response = await granulesApiTestUtils.listGranules({
+        prefix: config.stackName,
+        query: {
+          granuleId,
+          getRecoveryStatus: true,
+        },
+      });
+
+      const granules = JSON.parse(response.body).results;
+      expect(granules.length).toBe(1);
+      expect(granules[0].granuleId).toEqual(granuleId);
+      expect(['completed', 'running'].includes(granules[0].recoveryStatus)).toBeTrue();
+    });
+
+    it('returns granule information with recovery status', async () => {
+      const granuleResponse = await granulesApiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId,
+        query: { getRecoveryStatus: true },
+      });
+      const granule = JSON.parse(granuleResponse.body);
+
+      expect(granule.granuleId).toEqual(granuleId);
+      expect((granule.recoveryStatus === 'running') || (granule.recoveryStatus === 'completed')).toBeTrue();
     });
   });
 
