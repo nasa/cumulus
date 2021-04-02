@@ -314,7 +314,7 @@ test.serial('migrateProviderRecord throws RecordAlreadyMigrated error if already
   );
 });
 
-test.serial('migrateProviderRecord updates an already migrated record if the updated date is newer', async (t) => {
+test.serial('migrateProviderRecord updates an already migrated record if the updated timestamp on incoming record is newer', async (t) => {
   const { knex, providerKmsKeyId } = t.context;
 
   const fakeProvider = generateFakeProvider({
