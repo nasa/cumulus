@@ -165,9 +165,8 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
         tags: null,
         created_at: new Date(fakeCollection.createdAt),
         updated_at: new Date(fakeCollection.updatedAt),
-        // schema validation will add default values
-        duplicate_handling: 'error',
-        report_to_ems: true,
+        duplicate_handling: null,
+        report_to_ems: null,
       },
       collectionOmitList
     )
