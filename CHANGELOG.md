@@ -139,6 +139,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - granules
       - executions
       - PDRs
+  - **CUMULUS-2446**
+    - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
 
 ## [v7.1.0] 2021-03-12
 
