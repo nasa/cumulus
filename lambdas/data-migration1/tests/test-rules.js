@@ -280,7 +280,7 @@ test.serial('migrateRuleRecord throws RecordAlreadyMigrated error if already mig
   );
 });
 
-test.serial('migrateRuleRecord updates an already migrated record if the updated date is newer', async (t) => {
+test.serial('migrateRuleRecord updates an already migrated record if the updated timestamp on incoming record is newer', async (t) => {
   const { knex, fakeCollection, fakeProvider } = t.context;
   const fakeRule = generateFakeRule({
     collection: {
