@@ -24,12 +24,12 @@ const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
  */
 async function deleteArchivedMessage(messageId) {
   const bucket = process.env.system_bucket;
-  logger.debug(`Attempting to delete archived message with ID ${messageId} from bucket ${bucket}.`);
+  logger.info(`Attempting to delete archived message with ID ${messageId} from bucket ${bucket}.`);
   const key = messageId;
   if (bucket && key) {
     try {
       await deleteS3Object(bucket, key);
-      logger.debug(`Deleted archived message ${messageId} from S3 bucket ${bucket}`);
+      logger.info(`Deleted archived message ${messageId} from S3 bucket ${bucket}`);
     } catch (error) {
       logger.error(`Could not delete message from bucket. ${error}`);
       throw error;
@@ -97,8 +97,10 @@ async function updateSqsQueue(event) {
   } else {
     // delete SQS message from the source queue when the workflow succeeded
     logger.debug(`remove message ${receiptHandle} from queue ${queueUrl}`);
-    await deleteSQSMessage(queueUrl, receiptHandle);
-    await deleteArchivedMessage(messageId);
+    await Promise.all([
+      deleteSQSMessage(queueUrl, receiptHandle),
+      deleteArchivedMessage(messageId),
+    ]);
   }
 
   return Promise.resolve();

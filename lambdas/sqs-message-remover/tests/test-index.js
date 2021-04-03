@@ -185,7 +185,7 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
   assertInvalidSqsQueueUpdateEvent(t, output);
 });
 
-test.serial('sqsMessageRemover lambda removes message from queue and S3 when workflow succeeded', async (t) => {
+test.serial.only('sqsMessageRemover lambda removes message from queue and S3 when workflow succeeded', async (t) => {
   process.env.system_bucket = randomString();
   const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);
@@ -200,13 +200,6 @@ test.serial('sqsMessageRemover lambda removes message from queue and S3 when wor
     Key: sqsMessage.MessageId,
     Body: JSON.stringify(sqsMessage.Body),
   });
-
-  // Check that item exists in S3
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: sqsMessage.MessageId,
-  }).promise();
-  t.truthy(item.ETag);
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
   const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
@@ -224,12 +217,6 @@ test.serial('sqsMessageRemover lambda removes message from queue and S3 when wor
   const numberOfMessages = await getSqsQueueMessageCounts(sqsQueues.queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
-
-  // Check that item does not exist in S3 and therefore throws an error
-  await t.throwsAsync(s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: messageId,
-  }).promise(), { code: 'NoSuchKey' });
 
   t.teardown(async () => {
     await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();

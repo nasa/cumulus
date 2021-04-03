@@ -306,6 +306,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     logger, instead of via environment variable. This fixes a problem where a
     large number of found granules prevents this lambda from running as an
     activity with an E2BIG error.
+- **CUMULUS-2371**
+  - Add `archiveMessage` to `sqs-message-consumer` which archives all incoming SQS messages to S3.
+  - Add `deleteArchivedMessage` to `sqs-message-remover` which deletes archived SQS message from S3 once it has been processed.
+
 
 ## [v7.2.0] 2021-03-23
 
