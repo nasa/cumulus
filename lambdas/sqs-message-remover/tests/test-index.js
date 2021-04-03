@@ -185,7 +185,7 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
   assertInvalidSqsQueueUpdateEvent(t, output);
 });
 
-test.serial.only('sqsMessageRemover lambda removes message from queue and S3 when workflow succeeded', async (t) => {
+test.serial('sqsMessageRemover lambda removes message from queue and S3 when workflow succeeded', async (t) => {
   process.env.system_bucket = randomString();
   const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);
