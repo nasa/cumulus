@@ -378,9 +378,15 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
     testExecution,
   } = t.context;
 
+  // Create a granule in the "running" status.
+  // We do not allow updates on granules where the status is "running"
+  // and a GranulesExecutions record has already been created to prevent out-of-order writes.
+  // This will cause the upsert to return 0 rows and the migration of this record to fail.
   const testGranule = generateTestGranule({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
+    updatedAt: Date.now() - 1000,
+    status: 'running',
   });
 
   await migrateGranuleRecord(testGranule, knex);
