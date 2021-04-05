@@ -9,7 +9,7 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv, CollectionPgModel } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 const {
@@ -60,6 +60,8 @@ test.before(async (t) => {
   rulesModel = new Rule();
   await rulesModel.createTable();
 
+  t.context.collectionPgModel = new CollectionPgModel();
+
   t.context.knexAdmin = await getKnexClient({
     env: {
       ...localStackConnectionEnv,
@@ -94,13 +96,15 @@ test.after.always(async (t) => {
 });
 
 test.serial('migrateCollectionRecord correctly migrates collection record', async (t) => {
+  const { knex, collectionPgModel } = t.context;
+
   const fakeCollection = generateFakeCollection();
   await migrateCollectionRecord(fakeCollection, t.context.knex);
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('collections')
-    .where({ name: fakeCollection.name, version: fakeCollection.version })
-    .first();
+
+  const createdRecord = await collectionPgModel.get(
+    knex,
+    { name: fakeCollection.name, version: fakeCollection.version },
+  );
 
   t.deepEqual(
     omit(createdRecord, ['cumulus_id']),
@@ -144,11 +148,12 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
   delete fakeCollection.tags;
 
   await migrateCollectionRecord(fakeCollection, t.context.knex);
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('collections')
-    .where({ name: fakeCollection.name, version: fakeCollection.version })
-    .first();
+  const { knex, collectionPgModel } = t.context;
+
+  const createdRecord = await collectionPgModel.get(
+    knex,
+    { name: fakeCollection.name, version: fakeCollection.version },
+  );
 
   t.deepEqual(
     omit(createdRecord, ['cumulus_id']),
@@ -202,6 +207,8 @@ test.serial('migrateCollectionRecord throws RecordAlreadyMigrated error if alrea
 });
 
 test.serial('migrateCollectionRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const { knex, collectionPgModel } = t.context;
+
   const fakeCollection = generateFakeCollection({
     updatedAt: Date.now() - 1000,
   });
@@ -213,11 +220,10 @@ test.serial('migrateCollectionRecord updates an already migrated record if the u
   });
   await migrateCollectionRecord(newerFakeCollection, t.context.knex);
 
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('collections')
-    .where({ name: fakeCollection.name, version: fakeCollection.version })
-    .first();
+  const createdRecord = await collectionPgModel.get(
+    knex,
+    { name: fakeCollection.name, version: fakeCollection.version },
+  );
 
   t.deepEqual(
     omit(createdRecord, ['cumulus_id']),
@@ -239,6 +245,8 @@ test.serial('migrateCollectionRecord updates an already migrated record if the u
 });
 
 test.serial('migrateCollections skips already migrated record', async (t) => {
+  const { knex, collectionPgModel } = t.context;
+
   const fakeCollection = generateFakeCollection();
 
   await migrateCollectionRecord(fakeCollection, t.context.knex);
@@ -251,11 +259,16 @@ test.serial('migrateCollections skips already migrated record', async (t) => {
     failed: 0,
     success: 0,
   });
-  const records = await t.context.knex.queryBuilder().select().table('collections');
+  const records = await collectionPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 1);
 });
 
 test.serial('migrateCollections processes multiple collections', async (t) => {
+  const { knex, collectionPgModel } = t.context;
+
   const fakeCollection1 = generateFakeCollection();
   const fakeCollection2 = generateFakeCollection();
 
@@ -275,11 +288,16 @@ test.serial('migrateCollections processes multiple collections', async (t) => {
     failed: 0,
     success: 2,
   });
-  const records = await t.context.knex.queryBuilder().select().table('collections');
+  const records = await collectionPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 2);
 });
 
 test.serial('migrateCollections processes all non-failing records', async (t) => {
+  const { knex, collectionPgModel } = t.context;
+
   const fakeCollection1 = generateFakeCollection();
   const fakeCollection2 = generateFakeCollection();
 
@@ -307,6 +325,9 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
     failed: 1,
     success: 1,
   });
-  const records = await t.context.knex.queryBuilder().select().table('collections');
+  const records = await collectionPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 1);
 });

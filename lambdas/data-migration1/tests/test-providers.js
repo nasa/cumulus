@@ -12,7 +12,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const { getKnexClient, localStackConnectionEnv, ProviderPgModel } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 const {
@@ -74,6 +74,8 @@ test.before(async (t) => {
   providersModel = new Provider();
   await providersModel.createTable();
 
+  t.context.providerPgModel = new ProviderPgModel();
+
   rulesModel = new Rule();
   await rulesModel.createTable();
 
@@ -111,14 +113,14 @@ test.after.always(async (t) => {
 });
 
 test.serial('migrateProviderRecord correctly migrates provider record', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
   const fakeProvider = generateFakeProvider();
   await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
-  const createdRecord = await knex.queryBuilder()
-    .select()
-    .table('providers')
-    .where('name', fakeProvider.id)
-    .first();
+
+  const createdRecord = await providerPgModel.get(
+    knex,
+    { name: fakeProvider.id }
+  );
 
   t.deepEqual(
     omit(
@@ -146,7 +148,7 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
 });
 
 test.serial('migrateProviderRecord correctly migrates record without credentials', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
   const fakeProvider = generateFakeProvider({
     encrypted: false,
   });
@@ -155,11 +157,10 @@ test.serial('migrateProviderRecord correctly migrates record without credentials
   delete fakeProvider.password;
 
   await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
-  const createdRecord = await knex.queryBuilder()
-    .select()
-    .table('providers')
-    .where('name', fakeProvider.id)
-    .first();
+  const createdRecord = await providerPgModel.get(
+    knex,
+    { name: fakeProvider.id }
+  );
 
   t.is(createdRecord.username, null);
   t.is(createdRecord.password, null);
@@ -177,7 +178,7 @@ test.serial('migrateProviderRecord throws error for un-decryptable credentials',
 });
 
 test.serial('migrateProviderRecord correctly encrypts plaintext credentials', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
   const username = 'my-username';
   const password = 'my-password';
 
@@ -188,18 +189,17 @@ test.serial('migrateProviderRecord correctly encrypts plaintext credentials', as
   });
 
   await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
-  const createdRecord = await knex.queryBuilder()
-    .select()
-    .table('providers')
-    .where('name', fakeProvider.id)
-    .first();
+  const createdRecord = await providerPgModel.get(
+    knex,
+    { name: fakeProvider.id }
+  );
 
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
   t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
 });
 
 test.serial('migrateProviderRecord correctly encrypts S3KeyPairProvider-encrypted credentials', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
   const username = await S3KeyPairProvider.encrypt('my-username');
   const password = await S3KeyPairProvider.encrypt('my-password');
 
@@ -210,18 +210,17 @@ test.serial('migrateProviderRecord correctly encrypts S3KeyPairProvider-encrypte
   });
 
   await migrateProviderRecord(s3EncryptedProvider, providerKmsKeyId, knex);
-  const createdRecord = await knex.queryBuilder()
-    .select()
-    .table('providers')
-    .where('name', s3EncryptedProvider.id)
-    .first();
+  const createdRecord = await providerPgModel.get(
+    knex,
+    { name: s3EncryptedProvider.id }
+  );
 
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
   t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
 });
 
 test.serial('migrateProviderRecord correctly preserves KMS-encrypted credentials', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
   const username = await KMS.encrypt(providerKmsKeyId, 'my-username');
   const password = await KMS.encrypt(providerKmsKeyId, 'my-password');
 
@@ -232,11 +231,10 @@ test.serial('migrateProviderRecord correctly preserves KMS-encrypted credentials
   });
 
   await migrateProviderRecord(KMSEncryptedProvider, providerKmsKeyId, knex);
-  const createdRecord = await knex.queryBuilder()
-    .select()
-    .table('providers')
-    .where('name', KMSEncryptedProvider.id)
-    .first();
+  const createdRecord = await providerPgModel.get(
+    knex,
+    { name: KMSEncryptedProvider.id }
+  );
 
   t.is(await KMS.decryptBase64String(createdRecord.username), 'my-username');
   t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
@@ -253,7 +251,7 @@ test.serial('migrateProviderRecord throws error on invalid source data from Dyna
 });
 
 test.serial('migrateProviderRecord handles nullable fields on source collection data', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel} = t.context;
   const fakeProvider = generateFakeProvider();
 
   // remove nullable fields
@@ -267,11 +265,10 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
   delete fakeProvider.updatedAt;
 
   await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
-  const createdRecord = await knex.queryBuilder()
-    .select()
-    .table('providers')
-    .where('name', fakeProvider.id)
-    .first();
+  const createdRecord = await providerPgModel.get(
+    knex,
+    { name: fakeProvider.id }
+  );
 
   // ensure updated_at was set
   t.false(Number.isNaN(Date.parse(createdRecord.updated_at)));
@@ -315,7 +312,7 @@ test.serial('migrateProviderRecord throws RecordAlreadyMigrated error if already
 });
 
 test.serial('migrateProviderRecord updates an already migrated record if the updated timestamp on incoming record is newer', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
 
   const fakeProvider = generateFakeProvider({
     updatedAt: Date.now() - 1000,
@@ -328,11 +325,10 @@ test.serial('migrateProviderRecord updates an already migrated record if the upd
   });
   await migrateProviderRecord(newerFakeProvider, providerKmsKeyId, knex);
 
-  const createdRecord = await knex.queryBuilder()
-    .select()
-    .table('providers')
-    .where('name', fakeProvider.id)
-    .first();
+  const createdRecord = await providerPgModel.get(
+    knex,
+    { name: fakeProvider.id }
+  );
 
   t.deepEqual(
     omit(
@@ -360,7 +356,7 @@ test.serial('migrateProviderRecord updates an already migrated record if the upd
 });
 
 test.serial('migrateProviders skips already migrated record', async (t) => {
-  const { knex, providerKmsKeyId } = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
   const fakeProvider = generateFakeProvider();
 
   await migrateProviderRecord(fakeProvider, providerKmsKeyId, knex);
@@ -373,12 +369,15 @@ test.serial('migrateProviders skips already migrated record', async (t) => {
     failed: 0,
     success: 0,
   });
-  const records = await knex.queryBuilder().select().table('providers');
+  const records = await providerPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 1);
 });
 
 test.serial('migrateProviders processes multiple providers', async (t) => {
-  const { knex } = t.context;
+  const { knex, providerPgModel } = t.context;
   const fakeProvider1 = generateFakeProvider();
   const fakeProvider2 = generateFakeProvider();
 
@@ -398,12 +397,15 @@ test.serial('migrateProviders processes multiple providers', async (t) => {
     failed: 0,
     success: 2,
   });
-  const records = await knex.queryBuilder().select().table('providers');
+  const records = await providerPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 2);
 });
 
 test.serial('migrateProviders processes all non-failing records', async (t) => {
-  const { knex } = t.context;
+  const { knex, providerPgModel } = t.context;
   const fakeProvider1 = generateFakeProvider();
   const fakeProvider2 = generateFakeProvider();
 
@@ -431,6 +433,9 @@ test.serial('migrateProviders processes all non-failing records', async (t) => {
     failed: 1,
     success: 1,
   });
-  const records = await knex.queryBuilder().select().table('providers');
+  const records = await providerPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 1);
 });
