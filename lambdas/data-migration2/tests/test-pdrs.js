@@ -297,6 +297,7 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
     provider: testProvider.name,
     execution: execution.arn,
     status: 'completed',
+    updatedAt: Date.now() - 1000,
   });
   await migratePdrRecord(testPdr, knex);
 

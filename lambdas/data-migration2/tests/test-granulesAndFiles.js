@@ -408,6 +408,7 @@ test.serial('migrateGranuleRecord updates an already migrated record if the upda
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
     status: 'completed',
+    updatedAt: Date.now() - 1000,
   });
 
   await migrateGranuleRecord(testGranule, knex);
