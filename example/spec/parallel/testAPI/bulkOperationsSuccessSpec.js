@@ -277,7 +277,7 @@ describe('POST /granules/bulk', () => {
       }
     });
 
-    it('starts a workflow with an execution message referencing the correct queue URL', async () => {
+    xit('starts a workflow with an execution message referencing the correct queue URL', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         // Find the execution ARN

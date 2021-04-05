@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Bulk granule operations endpoint now supports setting a custom queue for scheduling workflows via the `queueUrl` property in the request body. If provided, this value should be the full URL for an SQS queue.
 
+### Added
+
+- **CUMULUS-2374**
+  - Add cookbok entry for queueing PostToCmr step
+  - Add example workflow to go with cookbook
+
 ## [v7.2.0] 2021-03-23
 
 ### Added
