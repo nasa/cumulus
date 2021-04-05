@@ -306,28 +306,7 @@ test.serial('migrateRuleRecord updates an already migrated record if the updated
     { name: fakeRule.name }
   );
 
-  t.deepEqual(
-    omit(createdRecord, ['cumulus_id', 'collection_cumulus_id', 'provider_cumulus_id']),
-    omit(
-      {
-        name: fakeRule.name,
-        workflow: fakeRule.workflow,
-        meta: fakeRule.meta,
-        arn: fakeRule.rule.arn,
-        type: fakeRule.rule.type,
-        value: fakeRule.rule.value,
-        enabled: true,
-        log_event_arn: fakeRule.rule.logEventArn,
-        execution_name_prefix: fakeRule.executionNamePrefix,
-        payload: fakeRule.payload,
-        queue_url: fakeRule.queueUrl,
-        tags: fakeRule.tags,
-        created_at: new Date(fakeRule.createdAt),
-        updated_at: new Date(newerFakeRule.updatedAt),
-      },
-      ruleOmitList
-    )
-  );
+  t.deepEqual(createdRecord.updated_at, new Date(newerFakeRule.updatedAt));
 });
 
 test.serial('migrateRules skips already migrated record', async (t) => {

@@ -222,26 +222,10 @@ test.serial('migrateCollectionRecord updates an already migrated record if the u
 
   const createdRecord = await collectionPgModel.get(
     knex,
-    { name: fakeCollection.name, version: fakeCollection.version },
+    { name: fakeCollection.name, version: fakeCollection.version }
   );
 
-  t.deepEqual(
-    omit(createdRecord, ['cumulus_id']),
-    omit(
-      {
-        ...fakeCollection,
-        sample_file_name: fakeCollection.sampleFileName,
-        granule_id_validation_regex: fakeCollection.granuleId,
-        granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
-        duplicate_handling: fakeCollection.duplicateHandling,
-        report_to_ems: fakeCollection.reportToEms,
-        ignore_files_config_for_discovery: fakeCollection.ignoreFilesConfigForDiscovery,
-        created_at: new Date(fakeCollection.createdAt),
-        updated_at: new Date(newerFakeCollection.updatedAt),
-      },
-      collectionOmitList
-    )
-  );
+  t.deepEqual(createdRecord.updated_at, new Date(newerFakeCollection.updatedAt));
 });
 
 test.serial('migrateCollections skips already migrated record', async (t) => {

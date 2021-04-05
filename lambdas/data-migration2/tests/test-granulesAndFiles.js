@@ -402,7 +402,6 @@ test.serial('migrateGranuleRecord updates an already migrated record if the upda
     granulePgModel,
     testCollection,
     testExecution,
-    collectionCumulusId,
   } = t.context;
 
   const testGranule = generateTestGranule({
@@ -423,33 +422,7 @@ test.serial('migrateGranuleRecord updates an already migrated record if the upda
     cumulus_id: granuleCumulusId,
   });
 
-  t.deepEqual(
-    omit(record, ['cumulus_id']),
-    {
-      granule_id: testGranule.granuleId,
-      status: testGranule.status,
-      collection_cumulus_id: collectionCumulusId,
-      published: testGranule.published,
-      duration: testGranule.duration,
-      time_to_archive: testGranule.timeToArchive,
-      time_to_process: testGranule.timeToPreprocess,
-      product_volume: testGranule.productVolume.toString(),
-      error: testGranule.error,
-      cmr_link: testGranule.cmrLink,
-      pdr_cumulus_id: null,
-      provider_cumulus_id: null,
-      query_fields: null,
-      beginning_date_time: new Date(testGranule.beginningDateTime),
-      ending_date_time: new Date(testGranule.endingDateTime),
-      last_update_date_time: new Date(testGranule.lastUpdateDateTime),
-      processing_end_date_time: new Date(testGranule.processingEndDateTime),
-      processing_start_date_time: new Date(testGranule.processingStartDateTime),
-      production_date_time: new Date(testGranule.productionDateTime),
-      timestamp: new Date(testGranule.timestamp),
-      created_at: new Date(testGranule.createdAt),
-      updated_at: new Date(newerGranule.updatedAt),
-    }
-  );
+  t.deepEqual(record.updated_at, new Date(newerGranule.updatedAt));
 });
 
 test.serial('migrateFileRecord handles nullable fields on source file data', async (t) => {

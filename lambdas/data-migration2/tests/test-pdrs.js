@@ -255,26 +255,6 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error if previously m
   );
 });
 
-test.serial('migratePdrRecord throws RecordAlreadyMigrated error if previously migrated record is newer', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
-
-  const testPdr = generateTestPdr({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
-    provider: testProvider.name,
-  });
-  await migratePdrRecord(testPdr, knex);
-
-  const olderTestPdr = {
-    ...testPdr,
-    updatedAt: Date.now() - 1000,
-  };
-
-  await t.throwsAsync(
-    migratePdrRecord(olderTestPdr, knex),
-    { instanceOf: RecordAlreadyMigrated }
-  );
-});
-
 test.serial('migratePdrRecord throws error if upsert does not return any rows', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
@@ -302,18 +282,15 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
     testCollection,
     testProvider,
     pdrPgModel,
-    providerCumulusId,
-    collectionCumulusId,
   } = t.context;
 
   const executionPgModel = new ExecutionPgModel();
   const execution = fakeExecutionRecordFactory();
 
-  const executionResponse = await executionPgModel.create(
+  await executionPgModel.create(
     knex,
     execution
   );
-  const executionCumulusId = executionResponse[0];
 
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
@@ -332,26 +309,7 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
 
   const createdRecord = await pdrPgModel.get(knex, { name: testPdr.pdrName });
 
-  t.like(
-    createdRecord,
-    {
-      name: testPdr.pdrName,
-      provider_cumulus_id: providerCumulusId,
-      collection_cumulus_id: collectionCumulusId,
-      execution_cumulus_id: executionCumulusId,
-      status: testPdr.status,
-      progress: testPdr.progress,
-      pan_sent: testPdr.PANSent,
-      pan_message: testPdr.PANmessage,
-      stats: testPdr.stats,
-      address: testPdr.address,
-      original_url: testPdr.originalUrl,
-      timestamp: new Date(testPdr.timestamp),
-      duration: testPdr.duration,
-      created_at: new Date(testPdr.createdAt),
-      updated_at: new Date(newerTestPdr.updatedAt),
-    }
-  );
+  t.deepEqual(createdRecord.updated_at, new Date(newerTestPdr.updatedAt));
 });
 
 test.serial('migratePdrs skips already migrated record', async (t) => {

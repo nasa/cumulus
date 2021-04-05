@@ -178,18 +178,7 @@ test.serial('migrateAsyncOperationRecord updates an already migrated record if t
     { id: fakeAsyncOp.id }
   );
 
-  t.deepEqual(
-    omit(createdRecord, ['cumulus_id']),
-    omit({
-      ...fakeAsyncOp,
-      operation_type: fakeAsyncOp.operationType,
-      task_arn: fakeAsyncOp.taskArn,
-      output: JSON.parse(fakeAsyncOp.output),
-      created_at: new Date(fakeAsyncOp.createdAt),
-      updated_at: new Date(newerFakeAsyncOp.updatedAt),
-    },
-    ['createdAt', 'updatedAt', 'operationType', 'taskArn'])
-  );
+  t.deepEqual(createdRecord.updated_at, new Date(newerFakeAsyncOp.updatedAt));
 });
 
 test.serial('migrateAsyncOperations processes multiple async operations', async (t) => {

@@ -330,29 +330,7 @@ test.serial('migrateProviderRecord updates an already migrated record if the upd
     { name: fakeProvider.id }
   );
 
-  t.deepEqual(
-    omit(
-      {
-        ...createdRecord,
-        username: await KMS.decryptBase64String(createdRecord.username),
-        password: await KMS.decryptBase64String(createdRecord.password),
-      },
-      ['cumulus_id']
-    ),
-    omit(
-      {
-        ...fakeProvider,
-        name: fakeProvider.id,
-        global_connection_limit: fakeProvider.globalConnectionLimit,
-        private_key: fakeProvider.privateKey,
-        cm_key_id: fakeProvider.cmKeyId,
-        certificate_uri: fakeProvider.certificateUri,
-        created_at: new Date(fakeProvider.createdAt),
-        updated_at: new Date(newerFakeProvider.updatedAt),
-      },
-      [...providerOmitList, 'encrypted']
-    )
-  );
+  t.deepEqual(createdRecord.updated_at, new Date(newerFakeProvider.updatedAt));
 });
 
 test.serial('migrateProviders skips already migrated record', async (t) => {
