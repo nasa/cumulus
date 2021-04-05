@@ -40,8 +40,6 @@ export const migrateExecutionRecord = async (
       arn: dynamoRecord.arn,
     });
   } catch (error) {
-    // Swallow any RecordDoesNotExist errors and proceed with migration,
-    // otherwise re-throw the error
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }

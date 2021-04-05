@@ -31,8 +31,6 @@ export const migrateAsyncOperationRecord = async (
   try {
     existingRecord = await asyncOperationPgModel.get(knex, { id: dynamoRecord.id });
   } catch (error) {
-    // Swallow any RecordDoesNotExist errors and proceed with migration,
-    // otherwise re-throw the error
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }
