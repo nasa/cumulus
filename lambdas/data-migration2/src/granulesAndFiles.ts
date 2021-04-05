@@ -99,7 +99,7 @@ export const migrateGranuleRecord = async (
   ));
 
   if (!cumulusId) {
-    throw new PostgresUpdateFailed(`Granule ${record.granuleId} was not able to be updated in the Postgres table`);
+    throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);
   }
 
   return cumulusId;

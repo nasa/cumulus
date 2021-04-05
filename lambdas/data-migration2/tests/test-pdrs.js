@@ -258,13 +258,17 @@ test.serial('migratePdrRecord throws RecordAlreadyMigrated error if previously m
 test.serial('migratePdrRecord throws error if upsert does not return any rows', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
+  // Create a PDR in the "running" status.
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
+    status: 'running',
   });
 
   await migratePdrRecord(testPdr, knex);
 
+  // An upsert of a PDR in the "running" state may return 0 rows if the upsert
+  // conditions are not met. In this case the migration of this record will fail.
   const newerTestPdr = {
     ...testPdr,
     updatedAt: Date.now(),

@@ -33,6 +33,7 @@ const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordAlreadyMigrated} if record was already migrated
+ * @throws {PostgresUpdateFailed} if the upsert effected 0 rows
  */
 export const migratePdrRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
@@ -104,7 +105,7 @@ export const migratePdrRecord = async (
   const [cumulusId] = await pdrPgModel.upsert(knex, updatedRecord);
 
   if (!cumulusId) {
-    throw new PostgresUpdateFailed(`PDR ${dynamoRecord.pdrName} was not able to be updated in the Postgres table`);
+    throw new PostgresUpdateFailed(`Upsert for PDR ${dynamoRecord.pdrName} returned no rows. Record was not updated in the Postgres table.`);
   }
 };
 
