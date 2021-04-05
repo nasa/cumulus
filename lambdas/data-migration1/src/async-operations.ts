@@ -27,6 +27,7 @@ export const migrateAsyncOperationRecord = async (
   Manager.recordIsValid(dynamoRecord, schemas.asyncOperation);
 
   let existingRecord;
+
   try {
     existingRecord = await asyncOperationPgModel.get(knex, { id: dynamoRecord.id });
   } catch (error) {

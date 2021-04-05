@@ -4,8 +4,8 @@ import Logger from '@cumulus/logger';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
-import { ExecutionPgModel, PostgresExecutionRecord, translateApiExecutionToPostgresExecution } from '@cumulus/db';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const Manager = require('@cumulus/api/models/base');
@@ -33,11 +33,19 @@ export const migrateExecutionRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.execution);
 
-  const existingRecord = await knex<PostgresExecutionRecord>('executions')
-    .where({
+  let existingRecord;
+
+  try {
+    existingRecord = await executionPgModel.get(knex, {
       arn: dynamoRecord.arn,
-    })
-    .first();
+    });
+  } catch (error) {
+    // Swallow any RecordDoesNotExist errors and proceed with migration,
+    // otherwise re-throw the error
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
   // Throw error if it was already migrated.
   if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Execution arn ${dynamoRecord.arn} was already migrated, skipping`);

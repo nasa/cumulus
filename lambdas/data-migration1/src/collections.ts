@@ -2,10 +2,10 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
-import { CollectionPgModel, PostgresCollectionRecord, translateApiCollectionToPostgresCollection } from '@cumulus/db';
+import { CollectionPgModel, translateApiCollectionToPostgresCollection } from '@cumulus/db';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -33,12 +33,20 @@ export const migrateCollectionRecord = async (
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.collection);
 
-  const existingRecord = await knex<PostgresCollectionRecord>('collections')
-    .where({
+  let existingRecord;
+
+  try {
+    existingRecord = await collectionPgModel.get(knex, {
       name: dynamoRecord.name,
       version: dynamoRecord.version,
-    })
-    .first();
+    });
+  } catch (error) {
+    // Swallow any RecordDoesNotExist errors and proceed with migration,
+    // otherwise re-throw the error
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
   // Throw error if it was already migrated.
   if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);

@@ -68,6 +68,7 @@ export const migrateGranuleRecord = async (
   );
 
   let existingRecord;
+
   try {
     existingRecord = await granulePgModel.get(knex, {
       granule_id: record.granuleId,
