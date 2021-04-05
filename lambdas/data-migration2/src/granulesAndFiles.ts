@@ -41,6 +41,7 @@ export interface GranulesAndFilesMigrationSummary {
  * @param {Knex.Transaction} knex - Knex transaction
  * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
+ * @throws {PostgresUpdateFailed} if the granule upsert effected 0 rows
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
