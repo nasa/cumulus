@@ -103,7 +103,7 @@ test.serial('migrateCollectionRecord correctly migrates collection record', asyn
 
   const createdRecord = await collectionPgModel.get(
     knex,
-    { name: fakeCollection.name, version: fakeCollection.version },
+    { name: fakeCollection.name, version: fakeCollection.version }
   );
 
   t.deepEqual(
@@ -152,7 +152,7 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
 
   const createdRecord = await collectionPgModel.get(
     knex,
-    { name: fakeCollection.name, version: fakeCollection.version },
+    { name: fakeCollection.name, version: fakeCollection.version }
   );
 
   t.deepEqual(

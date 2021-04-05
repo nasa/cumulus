@@ -251,7 +251,7 @@ test.serial('migrateProviderRecord throws error on invalid source data from Dyna
 });
 
 test.serial('migrateProviderRecord handles nullable fields on source collection data', async (t) => {
-  const { knex, providerKmsKeyId, providerPgModel} = t.context;
+  const { knex, providerKmsKeyId, providerPgModel } = t.context;
   const fakeProvider = generateFakeProvider();
 
   // remove nullable fields

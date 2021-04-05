@@ -17,7 +17,7 @@ import Logger from '@cumulus/logger';
 import {
   RecordAlreadyMigrated,
   RecordDoesNotExist,
-  PostgresUpdateFailed
+  PostgresUpdateFailed,
 } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
