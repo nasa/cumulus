@@ -31,13 +31,22 @@ async function listRequests(req, res) {
   const inputPayload = { function: 'query', ...params };
   const functionName = `${process.env.stackName}_request_status`;
 
-  const result = await lambda().invoke({
-    FunctionName: functionName,
-    Payload: JSON.stringify(inputPayload),
-    InvocationType: 'RequestResponse',
-  }).promise();
+  try {
+    const result = await lambda().invoke({
+      FunctionName: functionName,
+      Payload: JSON.stringify(inputPayload),
+      InvocationType: 'RequestResponse',
+    }).promise();
 
-  return res.send(JSON.parse(result.Payload));
+    return res.send(JSON.parse(result.Payload));
+  } catch (error) {
+    if (error.code === 'ResourceNotFoundException' && error.message.includes(functionName)) {
+      const errMsg = `${error.message}, please check if orca is deployed`;
+      logger.error(errMsg, error);
+      return res.boom.notFound(errMsg);
+    }
+    throw error;
+  }
 }
 
 router.get('/recovery', listRequests);
