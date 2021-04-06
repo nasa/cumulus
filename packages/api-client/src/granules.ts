@@ -33,7 +33,7 @@ export const getGranule = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
-      queryStringParameters: query,
+      ...(query && { queryStringParameters: query }),
     },
   });
 };

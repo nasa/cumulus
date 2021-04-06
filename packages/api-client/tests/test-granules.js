@@ -29,6 +29,30 @@ test('getGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
+test('getGranule calls the callback with the expected object when there is query param', async (t) => {
+  const query = { getRecoveryStatus: true };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}`,
+      queryStringParameters: query,
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    query,
+  }));
+});
+
 test('waitForGranules calls getGranules with the expected payload', async (t) => {
   const callback = async ({ prefix, payload }) => {
     t.true(payload.path.endsWith(t.context.granuleId));

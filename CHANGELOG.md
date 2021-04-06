@@ -21,6 +21,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add cookbok entry for queueing PostToCmr step
   - Add example workflow to go with cookbook
 
+- **CUMULUS-2348**
+  - The `@cumulus/api` `/granules` and `/granules/{granuleId}` endpoints now take `getRecoveryStatus` parameter
+  to include recoveryStatus in result granule(s)
+  - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
+  request additional granule information.
+
 ## [v7.2.0] 2021-03-23
 
 ### Added
