@@ -11,6 +11,7 @@ const merge = require('lodash/merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
+const pRetry = require('p-retry');
 const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
 const moment = require('moment');
@@ -19,7 +20,7 @@ const {
   ecs,
   sfn,
 } = require('@cumulus/aws-client/services');
-const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   templateKey,
@@ -55,37 +56,47 @@ const lambdaStep = new LambdaStep();
 /**
  * Wait for an AsyncOperation to reach a given status
  *
- * Retries every 2 seconds until the expected status has been reached or the
- *   number of retries has been exceeded.
+ * Retries using exponental backoff until desired has been reached.  If the
+ *   desired state is not reached an error is thrown.
  *
  * @param {Object} params - params
  * @param {string} params.id - the id of the AsyncOperation
  * @param {string} params.status - the status to wait for
- * @param {number} params.retries - the number of times to retry Default: 10
+ * @param {string} params.stackName - the Cumulus stack name
+ * @param {number} params.retryOptions - retrying options.
+ *                   The Default values result in 15 attempts in ~1 min.
+ *                   https://github.com/tim-kos/node-retry#retryoperationoptions
  * @returns {Promise<Object>} - the AsyncOperation object
  */
 async function waitForAsyncOperationStatus({
   id,
   status,
   stackName,
-  retries = 10,
+  retryOptions = {
+    retries: 15,
+    factor: 1.178,
+    minTimeout: 1000,
+    maxTimeout: 1000 * 60 * 5,
+  },
 }) {
-  const response = await asyncOperationsApi.getAsyncOperation({
-    prefix: stackName,
-    asyncOperationId: id,
-  });
+  let operation;
+  return pRetry(
+    async () => {
+      const response = await asyncOperationsApi.getAsyncOperation({
+        prefix: stackName,
+        asyncOperationId: id,
+      });
 
-  const operation = JSON.parse(response.body);
+      operation = JSON.parse(response.body);
 
-  if (operation.status === status || retries <= 0) return operation;
-
-  await delay(2000);
-  return waitForAsyncOperationStatus({
-    id,
-    status,
-    stackName,
-    retries: retries - 1,
-  });
+      if (operation.status === status) return operation;
+      throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
+    },
+    {
+      onFailedAttempt: (error) => console.log(`Waiting for AsyncOperation status ${operation.status} to reach ${status}. ${error.attemptsLeft} retries remain.`),
+      ...retryOptions,
+    }
+  );
 }
 
 /**
@@ -870,6 +881,36 @@ async function waitForAllTestSf(
   throw new Error('Never found started workflow.');
 }
 
+/**
+ * Wait for listObjectsV2 to return the expected result count for a given bucket & prefix.
+ *
+ * @param {Object} params - params object
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} [params.prefix] - S3 prefix
+ * @param {number} params.desiredCount - Desired count to wait for
+ * @param {number} [params.interval] - pWaitFor retry interval, in ms
+ * @param {number} [params.timeout] - pWaitFor timeout, in ms
+ * @returns {Promise<undefined>}
+ */
+async function waitForListObjectsV2ResultCount({
+  bucket,
+  prefix = '',
+  desiredCount,
+  interval = 1000,
+  timeout = 30 * 1000,
+}) {
+  await pWaitFor(
+    async () => {
+      const results = await listS3ObjectsV2({
+        Bucket: bucket,
+        Prefix: prefix,
+      });
+      return results.length === desiredCount;
+    },
+    { interval, timeout }
+  );
+}
+
 module.exports = {
   ActivityStep,
   addCollections,
@@ -921,5 +962,6 @@ module.exports = {
   waitForStartedExecution,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitForDeploymentHandler: waitForDeployment.handler,
+  waitForListObjectsV2ResultCount,
   waitForTestExecutionStart,
 };

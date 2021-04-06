@@ -6,7 +6,6 @@ const get = require('lodash/get');
 const { sfn } = require('@cumulus/aws-client/services');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const {
-  getQueueUrl,
   getMaximumExecutions,
 } = require('@cumulus/message/Queue');
 const { Consumer } = require('@cumulus/ingest/consumer');
@@ -19,10 +18,11 @@ const {
 /**
  * Starts a new stepfunction with the given payload
  *
+ * @param {string} queueUrl - SQS queue URL
  * @param {Object} message - incoming SQS message object
  * @returns {Promise} - AWS SF Start Execution response
  */
-function dispatch(message) {
+function dispatch(queueUrl, message) {
   const input = parseSQSMessageBody(message);
 
   input.cumulus_meta.workflow_start_time = Date.now();
@@ -30,6 +30,9 @@ function dispatch(message) {
   if (!input.cumulus_meta.execution_name) {
     input.cumulus_meta.execution_name = uuidv4();
   }
+
+  // Set this value to the queue actually read by this Lambda
+  input.cumulus_meta.queueUrl = queueUrl;
 
   return sfn().startExecution({
     stateMachineArn: input.cumulus_meta.state_machine,
@@ -44,14 +47,14 @@ function dispatch(message) {
  * If `incrementQueueSemaphore()` is unable to increment the semaphore,
  * it throws an error and `dispatch()` is not called.
  *
+ * @param {string} queueUrl - SQS queue URL
  * @param {Object} queueMessage - SQS message
  * @returns {Promise} - Promise returned by `dispatch()`
  * @throws {Error}
  */
-async function incrementAndDispatch(queueMessage) {
-  const workflowMessage = JSON.parse(get(queueMessage, 'Body', '{}'));
+async function incrementAndDispatch(queueUrl, queueMessage) {
+  const workflowMessage = parseSQSMessageBody(queueMessage);
 
-  const queueUrl = getQueueUrl(workflowMessage);
   const maxExecutions = getMaximumExecutions(workflowMessage, queueUrl);
 
   await incrementQueueSemaphore(queueUrl, maxExecutions);
@@ -60,7 +63,7 @@ async function incrementAndDispatch(queueMessage) {
   // never be decremented for the above increment, so we decrement it
   // manually.
   try {
-    return await dispatch(queueMessage);
+    return await dispatch(queueUrl, queueMessage);
   } catch (error) {
     await decrementQueueSemaphore(queueUrl);
     throw error;
@@ -128,7 +131,7 @@ function handleThrottledEvent(event, visibilityTimeout) {
 
 async function handleSourceMappingEvent(event) {
   const sqsRecords = event.Records;
-  return Promise.all(sqsRecords.map(dispatch));
+  return Promise.all(sqsRecords.map((sqsRecord) => dispatch(sqsRecord.eventSourceARN, sqsRecord)));
 }
 
 /**

@@ -5,9 +5,6 @@
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
   "sampleFileName": "A2_SI25_NRT_product_0001-of-4154.h5",
-  "meta": {
-    "excludeFileTypes": [".cmr.json", ".cmr.xml", ".h5", ".hdf", ".jpg", ".md5", ".met", ".nc", ".txt"]
-  },
   "files": [
     {
       "bucket": "private",

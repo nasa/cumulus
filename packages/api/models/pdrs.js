@@ -92,7 +92,7 @@ class Pdr extends Manager {
 
     const stats = getMessagePdrStats(message);
     const progress = getPdrPercentCompletion(stats);
-    const timestamp = Date.now();
+    const now = Date.now();
     const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
@@ -105,9 +105,10 @@ class Pdr extends Manager {
       PANSent: getMessagePdrPANSent(message),
       PANmessage: getMessagePdrPANMessage(message),
       stats,
-      createdAt: workflowStartTime,
-      timestamp,
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      createdAt: getMessageWorkflowStartTime(message),
+      timestamp: now,
+      updatedAt: now,
+      duration: getWorkflowDuration(workflowStartTime, now),
     };
 
     this.constructor.recordIsValid(record, this.schema);
@@ -129,16 +130,15 @@ class Pdr extends Manager {
     // records should *not* be updating from createdAt times that are *older* start
     // times than the existing record, whatever the status
     updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
-
+    if (pdrRecord.status === 'running') {
+      updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
+    }
     try {
-      if (pdrRecord.status === 'running') {
-        updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
-      }
       return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
         const executionArn = getMessageExecutionArn(cumulusMessage);
-        log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        log.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
         return undefined;
       }
       throw error;

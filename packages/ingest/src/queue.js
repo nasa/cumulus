@@ -55,7 +55,6 @@ async function enqueueParsePdrMessage({
     messageTemplate,
     parentExecutionArn,
     payload,
-    queueUrl,
     workflow,
     customMeta: {
       ...additionalCustomMeta,
@@ -128,7 +127,6 @@ async function enqueueGranuleIngestMessage({
     messageTemplate,
     parentExecutionArn,
     payload,
-    queueUrl,
     workflow,
     customMeta: {
       ...additionalCustomMeta,
@@ -193,7 +191,6 @@ async function enqueueWorkflowMessage({
     messageTemplate,
     parentExecutionArn,
     payload,
-    queueUrl,
     workflow: parentWorkflowDefinition,
     executionNamePrefix,
   });

@@ -1,6 +1,6 @@
 import isNil from 'lodash/isNil';
-import { Message } from '@cumulus/types';
 import { CumulusMessageError } from '@cumulus/errors';
+import { Message } from '@cumulus/types';
 
 type MessageWithOptionalWorkflowInfo = Message.CumulusMessage & {
   cumulus_meta: {
@@ -53,6 +53,7 @@ export const getMessageWorkflowStartTime = (
   }
   return message.cumulus_meta.workflow_start_time;
 };
+
 /**
  * Get the workflow stop time, if any.
  *

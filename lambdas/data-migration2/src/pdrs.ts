@@ -12,7 +12,11 @@ import {
   tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
-import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
+import {
+  RecordAlreadyMigrated,
+  RecordDoesNotExist,
+  PostgresUpdateFailed,
+} from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -29,6 +33,7 @@ const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordAlreadyMigrated} if record was already migrated
+ * @throws {PostgresUpdateFailed} if the upsert effected 0 rows
  */
 export const migratePdrRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
@@ -46,15 +51,15 @@ export const migratePdrRecord = async (
   try {
     existingRecord = await pdrPgModel.get(knex, { name: dynamoRecord.pdrName });
   } catch (error) {
-    // Swallow any RecordDoesNotExist errors and proceed with migration,
-    // otherwise re-throw the error
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }
   }
 
-  // Throw error if it was already migrated.
-  if (existingRecord) {
+  const isExistingRecordNewer = existingRecord
+    && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt);
+
+  if (isExistingRecordNewer) {
     throw new RecordAlreadyMigrated(`PDR name ${dynamoRecord.pdrName} was already migrated, skipping.`);
   }
 
@@ -95,7 +100,11 @@ export const migratePdrRecord = async (
     updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  await pdrPgModel.upsert(knex, updatedRecord);
+  const [cumulusId] = await pdrPgModel.upsert(knex, updatedRecord);
+
+  if (!cumulusId) {
+    throw new PostgresUpdateFailed(`Upsert for PDR ${dynamoRecord.pdrName} returned no rows. Record was not updated in the Postgres table.`);
+  }
 };
 
 export const migratePdrs = async (

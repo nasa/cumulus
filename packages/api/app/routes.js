@@ -15,6 +15,7 @@ const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
 const instanceMeta = require('../endpoints/instance-meta');
 const logs = require('../endpoints/logs');
+const orca = require('../endpoints/orca');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const replays = require('../endpoints/replays');
 const schemas = require('../endpoints/schemas');
@@ -24,6 +25,7 @@ const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
+const migrationCounts = require('../endpoints/migrationCounts');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
 
@@ -33,6 +35,9 @@ if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
 }
+
+//migrationCounts endpoint
+router.use('/migrationCounts', ensureAuthorized, migrationCounts);
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections.router);
@@ -65,7 +70,10 @@ router.use('/instanceMeta', ensureAuthorized, instanceMeta);
 // logs endpoint
 router.use('/logs', ensureAuthorized, logs);
 
-// logs endpoint
+// orca endpoint
+router.use('/orca', ensureAuthorized, orca);
+
+// reconciliationReports endpoint
 router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
 
 // replays endpoint

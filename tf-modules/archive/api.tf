@@ -55,6 +55,7 @@ locals {
       METRICS_ES_HOST                  = var.metrics_es_host
       METRICS_ES_PASS                  = var.metrics_es_password
       METRICS_ES_USER                  = var.metrics_es_username
+      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       PdrsTable                        = var.dynamo_tables.pdrs.name

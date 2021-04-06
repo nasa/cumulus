@@ -25,6 +25,12 @@ class Rule extends Manager {
       schema: ruleSchema,
     });
 
+    this.dynamoDbClient = new Manager({
+      tableName: process.env.RulesTable,
+      tableHash: { name: 'name', type: 'S' },
+      schema: ruleSchema,
+    });
+
     this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
     this.kinesisSourceEvents = [{ name: process.env.messageConsumer, eventType: 'arn' },
       { name: process.env.KinesisInboundEventLogger, eventType: 'logEventArn' }];
@@ -78,6 +84,15 @@ class Rule extends Manager {
       break;
     }
     return super.delete({ name: item.name });
+  }
+
+  async getAllRules() {
+    return this.dynamoDbClient.scan({
+      names: {
+        '#name': 'name',
+      },
+    },
+    '#name').then((result) => result.Items);
   }
 
   /**

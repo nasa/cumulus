@@ -20,7 +20,7 @@ const {
   tableNames,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
-const { RecordAlreadyMigrated } = require('@cumulus/errors');
+const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -43,13 +43,9 @@ const fakeFile = () => fakeFileFactory({
   source: 'source',
 });
 
-const generateTestGranule = (collection, executionUrl, pdrName, provider) => ({
+const generateTestGranule = (params) => ({
   granuleId: cryptoRandomString({ length: 5 }),
-  collectionId: buildCollectionId(collection.name, collection.version),
-  pdrName: pdrName,
-  provider: provider,
   status: 'running',
-  execution: executionUrl,
   cmrLink: cryptoRandomString({ length: 10 }),
   published: false,
   duration: 10,
@@ -69,6 +65,7 @@ const generateTestGranule = (collection, executionUrl, pdrName, provider) => ({
   timestamp: Date.now(),
   createdAt: Date.now() - 200 * 1000,
   updatedAt: Date.now(),
+  ...params,
 });
 
 let granulesModel;
@@ -121,7 +118,10 @@ test.beforeEach(async (t) => {
   t.context.testExecution = testExecution;
   t.context.executionCumulusId = executionResponse[0];
 
-  t.context.testGranule = generateTestGranule(testCollection, executionUrl);
+  t.context.testGranule = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: executionUrl,
+  });
 });
 
 test.afterEach.always(async (t) => {
@@ -316,18 +316,86 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   );
 });
 
-test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error if previously migrated record is newer', async (t) => {
   const {
     knex,
     testGranule,
   } = t.context;
 
-  await migrateGranuleRecord(testGranule, knex);
+  const testGranule1 = testGranule;
+  const testGranule2 = {
+    ...testGranule1,
+    updatedAt: Date.now() - 1000,
+  };
+
+  await migrateGranuleRecord(testGranule1, knex);
 
   await t.throwsAsync(
-    migrateGranuleRecord(testGranule, knex),
+    migrateGranuleRecord(testGranule2, knex),
     { instanceOf: RecordAlreadyMigrated }
   );
+});
+
+test.serial('migrateGranuleRecord throws error if upsert does not return any rows', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  // Create a granule in the "running" status.
+  const testGranule = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+    updatedAt: Date.now() - 1000,
+    status: 'running',
+  });
+
+  await migrateGranuleRecord(testGranule, knex);
+
+  // We do not allow updates on granules where the status is "running"
+  // and a GranulesExecutions record has already been created to prevent out-of-order writes.
+  // Attempting to migrate this granule will cause the upsert to
+  // return 0 rows and the migration will fail
+  const newerGranule = {
+    ...testGranule,
+    updatedAt: Date.now(),
+  };
+
+  await t.throwsAsync(
+    migrateGranuleRecord(newerGranule, knex),
+    { instanceOf: PostgresUpdateFailed }
+  );
+});
+
+test.serial('migrateGranuleRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const testGranule = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+    status: 'completed',
+    updatedAt: Date.now() - 1000,
+  });
+
+  await migrateGranuleRecord(testGranule, knex);
+
+  const newerGranule = {
+    ...testGranule,
+    updatedAt: Date.now(),
+  };
+
+  const [granuleCumulusId] = await migrateGranuleRecord(newerGranule, knex);
+  const record = await granulePgModel.get(knex, {
+    cumulus_id: granuleCumulusId,
+  });
+
+  t.deepEqual(record.updated_at, new Date(newerGranule.updatedAt));
 });
 
 test.serial('migrateFileRecord handles nullable fields on source file data', async (t) => {
@@ -410,7 +478,11 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
   } = t.context;
 
   const testGranule1 = testGranule;
-  const testGranule2 = generateTestGranule(testCollection, testExecution.url);
+
+  const testGranule2 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+  });
 
   await Promise.all([
     granulesModel.create(testGranule1),
@@ -451,7 +523,11 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
     testGranule,
   } = t.context;
 
-  const testGranule2 = generateTestGranule(testCollection, testExecution.url);
+  const testGranule2 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+  });
+
   // remove required field so record will fail
   delete testGranule.collectionId;
 
