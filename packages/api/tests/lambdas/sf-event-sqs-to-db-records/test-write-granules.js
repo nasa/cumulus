@@ -307,7 +307,7 @@ test('writeGranules() throws an error if collection is not provided', async (t) 
       collectionCumulusId: undefined,
       executionCumulusId,
       providerCumulusId,
-      knex: knex,
+      knex,
       granuleModel,
     })
   );
@@ -329,7 +329,7 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
     collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
-    knex: knex,
+    knex,
     granuleModel,
   });
 
@@ -387,7 +387,7 @@ test('writeGranules() handles successful and failing writes independently', asyn
     collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
-    knex: knex,
+    knex,
     granuleModel,
   }));
 
@@ -418,7 +418,7 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
     collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
-    knex: knex,
+    knex,
     granuleModel,
   }));
 });
@@ -447,7 +447,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if Dynamo
       collectionCumulusId,
       executionCumulusId,
       providerCumulusId,
-      knex: knex,
+      knex,
       granuleModel: fakeGranuleModel,
     })
   );
@@ -486,7 +486,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
     collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
-    knex: knex,
+    knex,
     granuleModel,
   }));
 
