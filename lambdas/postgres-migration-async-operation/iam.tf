@@ -53,10 +53,8 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
   statement {
     actions = [
       "s3:GetBucket*",
-      "s3:PutBucket*",
-      "s3:ListBucket*",
     ]
-    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}"]
+    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
   }
 
   statement {
@@ -66,7 +64,7 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
       "s3:PutObject*",
       "s3:ListMultipartUploadParts",
     ]
-    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}/*"]
+    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
   }
   statement {
     actions = [

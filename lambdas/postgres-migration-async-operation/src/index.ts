@@ -18,7 +18,7 @@ exports.handler = async () => {
     payload: {},
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
-    dynamoTableName: dynamoTableName,
+    dynamoTableName,
     knexConfig: process.env,
     useLambdaEnvironmentVariables: true,
   }, models.AsyncOperation);
