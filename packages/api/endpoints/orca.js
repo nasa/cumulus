@@ -43,7 +43,7 @@ async function listRequests(req, res) {
     if (error.code === 'ResourceNotFoundException' && error.message.includes(functionName)) {
       const errMsg = `${error.message}, please check if orca is deployed`;
       logger.error(errMsg, error);
-      return res.boom.notFound(errMsg);
+      return res.boom.badRequest(errMsg);
     }
     throw error;
   }

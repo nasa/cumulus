@@ -30,6 +30,21 @@ test.after.always(() => {
 });
 
 test.serial(
+  'getOrcaRecoveryStatusByGranuleId returns undefined status when orca endpoint returns error',
+  async (t) => {
+    const granuleId = randomId('granId');
+    const recoveryRequests = [];
+    fakeListRequests.resolves({
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Function not found: prefix_request_status, please check if orca is deployed'
+    });
+    const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
+    t.is(status, undefined);
+  }
+);
+
+test.serial(
   'getOrcaRecoveryStatusByGranuleId returns undefined status when recovery request for granule is not found',
   async (t) => {
     const granuleId = randomId('granId');

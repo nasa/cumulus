@@ -28,6 +28,11 @@ const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
     return undefined;
   }
 
+  if (response.statusCode && response.statusCode !== 200) {
+    log.error(`Unable to get orca recovery status, listRequests failed: ${JSON.stringify(response)}`);
+    return undefined;
+  }
+
   const requests = JSON.parse(response.body);
   const jobStatuses = requests.map((request) => request.job_status);
 
