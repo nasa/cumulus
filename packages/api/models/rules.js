@@ -3,6 +3,7 @@
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const set = require('lodash/set');
+const merge = require('lodash/merge');
 
 const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
@@ -144,9 +145,12 @@ class Rule extends Manager {
    *    rule
    * @returns {Promise} the response from database updates
    */
-  async update(original, updates) {
+  async update(original, updates, fieldsToDelete = []) {
     // Make a copy of the existing rule to preserve existing values
-    let updatedRuleItem = cloneDeep(updates);
+    let updatedRuleItem = cloneDeep(original);
+
+    // Apply updates to updated rule item to be saved
+    merge(updatedRuleItem, updates);
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
@@ -156,7 +160,7 @@ class Rule extends Manager {
 
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
-    return super.create(updatedRuleItem);
+    return super.update({ name: original.name }, updatedRuleItem, fieldsToDelete);
   }
 
   async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {

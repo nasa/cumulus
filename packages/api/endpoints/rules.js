@@ -135,11 +135,14 @@ async function put({ params: { name }, body }, res) {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
 
+    const fieldsToDelete = Object.keys(oldRule).filter(
+      (key) => !(key in apiRule) && key !== 'createdAt'
+    );
     const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await rulePgModel.upsert(trx, postgresRule);
-      newRule = await model.update(oldRule, apiRule);
+      newRule = await model.update(oldRule, apiRule, fieldsToDelete);
     });
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
