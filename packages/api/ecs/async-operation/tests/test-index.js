@@ -21,7 +21,6 @@ const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 test.before(async (t) => {
   t.context.dynamoTableName = cryptoRandomString({ length: 10 });
-  t.context.asyncOperationId = uuidv4();
 
   const tableHash = { name: 'id', type: 'S' };
   await DynamoDb.createAndWaitForDynamoDbTable({
@@ -47,6 +46,13 @@ test.before(async (t) => {
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
+  const dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
+  t.context.dynamodbDocClient = dynamodbDocClient;
+});
+
+test.beforeEach(async (t) => {
+  t.context.asyncOperationId = uuidv4();
+
   t.context.testAsyncOperation = {
     id: t.context.asyncOperationId,
     description: 'test description',
@@ -58,10 +64,7 @@ test.before(async (t) => {
     t.context.testAsyncOperation
   );
 
-  const dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
-  t.context.dynamodbDocClient = dynamodbDocClient;
-
-  await dynamodbDocClient.put({
+  await t.context.dynamodbDocClient.put({
     TableName: t.context.dynamoTableName,
     Item: t.context.testAsyncOperation,
   }).promise();
@@ -72,6 +75,9 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
+  await DynamoDb.deleteAndWaitForDynamoDbTableNotExists({
+    TableName: t.context.dynamoTableName,
+  });
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
