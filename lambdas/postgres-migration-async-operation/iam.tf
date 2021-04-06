@@ -53,25 +53,6 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
 
   statement {
     actions = [
-      "s3:GetBucket*",
-      "s3:PutBucket*",
-      "s3:ListBucket*",
-    ]
-    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}"]
-  }
-
-  statement {
-    actions = [
-      "s3:AbortMultipartUpload",
-      "s3:GetObject*",
-      "s3:PutObject*",
-      "s3:ListMultipartUploadParts",
-    ]
-    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}/*"]
-  }
-
-  statement {
-    actions = [
       "dynamodb:GetItem",
       "dynamodb:Scan",
       "dynamodb:PutItem"
