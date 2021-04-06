@@ -444,4 +444,5 @@ variable "default_tags" {
 variable "optional_dynamo_tables" {
   type = map(object({ name = string, arn = string }))
   default = {}
+  description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
 }
