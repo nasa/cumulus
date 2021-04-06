@@ -161,7 +161,6 @@ const writeAsyncOperationToPostgres = async (params) => {
       {
         status,
         output: dbOutput,
-        // updated_at: trx.raw(`to_timestamp(${Number(updatedTime / 1000)})`),
         updated_at: new Date(Number(updatedTime)),
       }
     );
