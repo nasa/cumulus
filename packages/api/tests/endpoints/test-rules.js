@@ -7,14 +7,14 @@ const request = require('supertest');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  RulePgModel,
   CollectionPgModel,
   ProviderPgModel,
-  RulePgModel,
-  localStackConnectionEnv,
-  destroyLocalTestDb,
-  generateLocalTestDb,
-  translateApiProviderToPostgresProvider,
   translateApiCollectionToPostgresCollection,
+  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 const { translateApiRuleToPostgresRule } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
@@ -36,6 +36,8 @@ const { Search } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
 
+const { migrationDir } = require('../../../../lambdas/db-migration');
+
 [
   'AccessTokensTable',
   'RulesTable',
@@ -48,8 +50,6 @@ const assertions = require('../../lib/assertions');
 ].forEach((varName) => process.env[varName] = randomString());
 
 const testDbName = randomString(12);
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -79,7 +79,12 @@ let ruleModel;
 let buildPayloadStub;
 
 test.before(async (t) => {
-  process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
@@ -93,9 +98,9 @@ test.before(async (t) => {
 
   buildPayloadStub = setBuildPayloadStub();
 
+  t.context.rulePgModel = new RulePgModel();
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.providerPgModel = new ProviderPgModel();
-  t.context.rulePgModel = new RulePgModel();
 
   ruleModel = new Rule();
   await ruleModel.createTable();
@@ -125,13 +130,13 @@ test.after.always(async (t) => {
   await ruleModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+
+  buildPayloadStub.restore();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
     testDbName,
   });
-
-  buildPayloadStub.restore();
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -279,10 +284,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
   const { message, record } = response.body;
   t.is(message, 'Record deleted');
   t.is(record, undefined);
-  await t.throwsAsync(t.context.rulePgModel.get(
-    t.context.testKnex,
-    { name: newRule.name }
-  ), { name: 'RecordDoesNotExist' });
+  t.false(await t.context.rulePgModel.exists(t.context.testKnex, { name: newRule.name }));
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without a valid access token', async (t) => {
