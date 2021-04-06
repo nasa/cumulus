@@ -6,4 +6,4 @@ The resources migrated in the `data-migration2` lambda include:
 - Executions
 - PDRs
 - Granules
-- Files
+- Files from Granules.files

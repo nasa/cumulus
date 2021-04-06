@@ -6,8 +6,6 @@ const { models } = require('@cumulus/api');
 
 const logger = new Logger({ sender: '@cumulus/postgres-migration-async-operation' });
 exports.handler = async () => {
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
   const dynamoTableName = process.env.AsyncOperationsTable;
 
   logger.info('Starting Postgres Migration Async Operation');
@@ -18,8 +16,8 @@ exports.handler = async () => {
     description: 'Data Migration 2 Lambda ECS Run',
     operationType: 'Data Migration',
     payload: {},
-    stackName,
-    systemBucket,
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
     dynamoTableName: dynamoTableName,
     knexConfig: process.env,
     useLambdaEnvironmentVariables: true,
