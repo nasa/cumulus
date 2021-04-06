@@ -1,8 +1,8 @@
 'use strict';
 
 const asyncOperations = require('@cumulus/async-operations');
-const { models } = require('@cumulus/api');
 const Logger = require('@cumulus/logger');
+const { models } = require('@cumulus/api');
 
 const logger = new Logger({ sender: '@cumulus/postgres-migration-async-operation' });
 exports.handler = async () => {

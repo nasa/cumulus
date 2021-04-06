@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
       "ec2:DeleteNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "dynamodb:ListTables",
-      "lambda:GetFunction",
+      // "lambda:GetFunction",
       "lambda:GetFunctionConfiguration",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
@@ -51,6 +51,24 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
     resources = ["*"]
   }
 
+  statement {
+    actions = [
+      "s3:GetBucket*",
+      "s3:PutBucket*",
+      "s3:ListBucket*",
+    ]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}"]
+  }
+
+  statement {
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:GetObject*",
+      "s3:PutObject*",
+      "s3:ListMultipartUploadParts",
+    ]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}/*"]
+  }
   statement {
     actions = [
       "dynamodb:GetItem",

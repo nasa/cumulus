@@ -3,6 +3,8 @@ module "postgres_migration_async_operation" {
 
   async_operation_task_definition_arn = module.archive.async_operation_task_definition_arn
 
+  buckets                    = var.buckets
+
   data_migration2_function_arn = module.data_migration2.data_migration2_function_arn
 
   dynamo_tables              = var.dynamo_tables

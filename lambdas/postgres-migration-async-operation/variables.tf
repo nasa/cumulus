@@ -2,6 +2,10 @@ variable "async_operation_task_definition_arn" {
   type = string
 }
 
+variable "buckets" {
+  type    = map(object({ name = string, type = string }))
+  default = {}
+}
 variable "data_migration2_function_arn" {
   type = string
 }
