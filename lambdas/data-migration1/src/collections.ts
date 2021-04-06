@@ -2,10 +2,10 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
-import { PostgresCollectionRecord, translateApiCollectionToPostgresCollection } from '@cumulus/db';
+import { CollectionPgModel, translateApiCollectionToPostgresCollection } from '@cumulus/db';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -25,20 +25,28 @@ export const migrateCollectionRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  const existingRecord = await knex<PostgresCollectionRecord>('collections')
-    .where({
+  const collectionPgModel = new CollectionPgModel();
+
+  let existingRecord;
+
+  try {
+    existingRecord = await collectionPgModel.get(knex, {
       name: dynamoRecord.name,
       version: dynamoRecord.version,
-    })
-    .first();
+    });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
   // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Collection name ${dynamoRecord.name}, version ${dynamoRecord.version} was already migrated, skipping`);
   }
 
   const updatedRecord = translateApiCollectionToPostgresCollection(<CollectionRecord>dynamoRecord);
 
-  await knex('collections').insert(updatedRecord);
+  await collectionPgModel.upsert(knex, updatedRecord);
 };
 
 export const migrateCollections = async (

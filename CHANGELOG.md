@@ -129,6 +129,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
   - **CUMULUS-2367**
     - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
+  - **CUMULUS-2407**
+    - Updated data-migration1 and data-migration2 Lambdas to use UPSERT instead of UPDATE when migrating dynamoDB records to PostgreSQL.
+    - Changed data-migration1 and data-migration2 logic to only update already migrated records if the incoming record update has a newer timestamp
   - **CUMULUS-2329**
     - Add write-db-dlq-records-to-s3 lambda.
     - Add terraform config to automatically write db records DLQ messages to an s3 archive on the system bucket.

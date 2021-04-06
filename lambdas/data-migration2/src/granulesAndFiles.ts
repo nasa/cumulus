@@ -14,7 +14,12 @@ import {
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
-import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
+import {
+  RecordAlreadyMigrated,
+  RecordDoesNotExist,
+  PostgresUpdateFailed,
+} from '@cumulus/errors';
+
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
@@ -36,6 +41,7 @@ export interface GranulesAndFilesMigrationSummary {
  * @param {Knex.Transaction} knex - Knex transaction
  * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
+ * @throws {PostgresUpdateFailed} if the granule upsert effected 0 rows
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
@@ -63,21 +69,22 @@ export const migrateGranuleRecord = async (
   );
 
   let existingRecord;
+
   try {
     existingRecord = await granulePgModel.get(knex, {
       granule_id: record.granuleId,
       collection_cumulus_id: collectionCumulusId,
     });
   } catch (error) {
-    // Swallow any RecordDoesNotExist errors and proceed with migration,
-    // otherwise re-throw the error
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }
   }
 
-  // Throw error if it was already migrated.
-  if (existingRecord) {
+  const isExistingRecordNewer = existingRecord
+    && existingRecord.updated_at >= new Date(record.updatedAt);
+
+  if (isExistingRecordNewer) {
     throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
   }
 
@@ -88,6 +95,11 @@ export const migrateGranuleRecord = async (
     granule,
     executionCumulusId
   ));
+
+  if (!cumulusId) {
+    throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);
+  }
+
   return cumulusId;
 };
 

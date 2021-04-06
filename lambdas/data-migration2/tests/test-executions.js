@@ -9,7 +9,7 @@ const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
 
 // PG models
-const { CollectionPgModel, AsyncOperationPgModel } = require('@cumulus/db');
+const { CollectionPgModel, AsyncOperationPgModel, ExecutionPgModel } = require('@cumulus/db');
 
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
@@ -91,6 +91,8 @@ test.before(async (t) => {
   collectionsModel = new Collection();
   rulesModel = new Rule();
 
+  t.context.executionPgModel = new ExecutionPgModel();
+
   await executionsModel.createTable();
   await asyncOperationsModel.createTable();
   await collectionsModel.createTable();
@@ -121,6 +123,8 @@ test.after.always(async (t) => {
 });
 
 test.serial('migrateExecutionRecord correctly migrates execution record', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   // This will be the top-level execution (no parent execution)
   const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
   const fakeCollection = fakeCollectionRecordFactory();
@@ -147,11 +151,10 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // we can use it as the parent for the next execution
   await migrateExecutionRecord(existingExecution, t.context.knex);
 
-  const existingPostgresExecution = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: existingExecution.arn })
-    .first();
+  const existingPostgresExecution = await executionPgModel.get(
+    knex,
+    { arn: existingExecution.arn }
+  );
 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
@@ -162,11 +165,10 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
 
   await migrateExecutionRecord(newExecution, t.context.knex);
 
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: newExecution.arn })
-    .first();
+  const createdRecord = await executionPgModel.get(
+    knex,
+    { arn: newExecution.arn }
+  );
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
     async_operation_cumulus_id: asyncOperationCumulusId,
@@ -185,6 +187,8 @@ test.serial('migrateExecutionRecord throws error on invalid source data from Dyn
 });
 
 test.serial('migrateExecutionRecord handles nullable fields on source execution data', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   const newExecution = fakeExecutionFactoryV2();
 
   // // remove nullable fields
@@ -202,11 +206,10 @@ test.serial('migrateExecutionRecord handles nullable fields on source execution 
 
   await migrateExecutionRecord(newExecution, t.context.knex);
 
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: newExecution.arn })
-    .first();
+  const createdRecord = await executionPgModel.get(
+    knex,
+    { arn: newExecution.arn }
+  );
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
     duration: null,
@@ -224,13 +227,44 @@ test.serial('migrateExecutionRecord throws RecordAlreadyMigrated error for alrea
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
+
+  const olderExecution = {
+    ...newExecution,
+    updatedAt: Date.now() - 1000,
+  };
+
   await t.throwsAsync(
-    migrateExecutionRecord(newExecution, t.context.knex),
+    migrateExecutionRecord(olderExecution, t.context.knex),
     { instanceOf: RecordAlreadyMigrated }
   );
 });
 
+test.serial('migrateExecutionRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
+  const fakeExecution = fakeExecutionFactoryV2({
+    parentArn: undefined,
+    updatedAt: Date.now() - 1000,
+  });
+  await migrateExecutionRecord(fakeExecution, t.context.knex);
+
+  const newerFakeExecution = {
+    ...fakeExecution,
+    updatedAt: Date.now(),
+  };
+  await migrateExecutionRecord(newerFakeExecution, t.context.knex);
+
+  const createdRecord = await executionPgModel.get(
+    knex,
+    { arn: fakeExecution.arn }
+  );
+
+  assertPgExecutionMatches(t, newerFakeExecution, createdRecord);
+});
+
 test.serial('migrateExecutions skips already migrated record', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
 
   await migrateExecutionRecord(newExecution, t.context.knex);
@@ -245,11 +279,16 @@ test.serial('migrateExecutions skips already migrated record', async (t) => {
     success: 0,
   });
 
-  const records = await t.context.knex.queryBuilder().select().table('executions');
+  const records = await executionPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 1);
 });
 
 test.serial('migrateExecutionRecord migrates parent execution if not already migrated', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   // This will be the child execution (no parent execution)
   const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
   const fakeExecution2 = fakeExecutionFactoryV2({ parentArn: fakeExecution.arn });
@@ -270,17 +309,15 @@ test.serial('migrateExecutionRecord migrates parent execution if not already mig
   // explicitly migrate only the child. This should also find and migrate the parent
   await migrateExecutionRecord(childExecution, t.context.knex);
 
-  const parentPgRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: parentExecution.arn })
-    .first();
+  const parentPgRecord = await executionPgModel.get(
+    knex,
+    { arn: parentExecution.arn }
+  );
 
-  const childPgRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: childExecution.arn })
-    .first();
+  const childPgRecord = await executionPgModel.get(
+    knex,
+    { arn: childExecution.arn }
+  );
 
   // Check that the parent execution was correctly migrated to Postgres
   // Check that the original (child) execution was correctly migrated to Postgres
@@ -295,6 +332,8 @@ test.serial('migrateExecutionRecord migrates parent execution if not already mig
 });
 
 test.serial('migrateExecutionRecord recursively migrates grandparent executions', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   const fakeExecution = fakeExecutionFactoryV2({ parentArn: undefined });
   const fakeExecution2 = fakeExecutionFactoryV2({ parentArn: fakeExecution.arn });
   const fakeExecution3 = fakeExecutionFactoryV2({ parentArn: fakeExecution2.arn });
@@ -318,23 +357,20 @@ test.serial('migrateExecutionRecord recursively migrates grandparent executions'
   // explicitly migrate only the child. This should also find and migrate the parent and grandparent
   await migrateExecutionRecord(childExecution, t.context.knex);
 
-  const grandparentPgRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: grandparentExecution.arn })
-    .first();
+  const grandparentPgRecord = await executionPgModel.get(
+    knex,
+    { arn: grandparentExecution.arn }
+  );
 
-  const parentPgRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: parentExecution.arn })
-    .first();
+  const parentPgRecord = await executionPgModel.get(
+    knex,
+    { arn: parentExecution.arn }
+  );
 
-  const childPgRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('executions')
-    .where({ arn: childExecution.arn })
-    .first();
+  const childPgRecord = await executionPgModel.get(
+    knex,
+    { arn: childExecution.arn }
+  );
 
   // Check that the grandparent execution was correctly migrated to Postgres
   // Check that the original (child) and parent executions were correctly migrated to Postgres
@@ -356,6 +392,8 @@ test.serial('migrateExecutionRecord recursively migrates grandparent executions'
 });
 
 test.serial('child execution migration fails if parent execution cannot be migrated', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   const parentExecution = fakeExecutionFactoryV2({ parentArn: undefined });
   const childExecution = fakeExecutionFactoryV2({ parentArn: parentExecution.arn });
 
@@ -383,11 +421,16 @@ test.serial('child execution migration fails if parent execution cannot be migra
     failed: 2,
     success: 0,
   });
-  const records = await t.context.knex.queryBuilder().select().table('executions');
+  const records = await executionPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 0);
 });
 
 test.serial('migrateExecutions processes multiple executions', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
   const newExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
 
@@ -407,11 +450,16 @@ test.serial('migrateExecutions processes multiple executions', async (t) => {
     failed: 0,
     success: 2,
   });
-  const records = await t.context.knex.queryBuilder().select().table('executions');
+  const records = await executionPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 2);
 });
 
 test.serial('migrateExecutions processes all non-failing records', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
   const newExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
 
@@ -439,6 +487,9 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
     failed: 1,
     success: 1,
   });
-  const records = await t.context.knex.queryBuilder().select().table('executions');
+  const records = await executionPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 1);
 });

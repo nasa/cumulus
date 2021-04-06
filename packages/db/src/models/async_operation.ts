@@ -1,3 +1,5 @@
+import Knex from 'knex';
+
 import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
@@ -9,6 +11,17 @@ class AsyncOperationPgModel extends BasePgModel<PostgresAsyncOperation, Postgres
     super({
       tableName: tableNames.asyncOperations,
     });
+  }
+
+  async upsert(
+    knexOrTrx: Knex | Knex.Transaction,
+    asyncOperation: PostgresAsyncOperation
+  ) {
+    return knexOrTrx(this.tableName)
+      .insert(asyncOperation)
+      .onConflict('id')
+      .merge()
+      .returning('cumulus_id');
   }
 }
 

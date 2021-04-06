@@ -3,9 +3,9 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import * as KMS from '@cumulus/aws-client/KMS';
 import { envUtils, keyPairProvider } from '@cumulus/common';
-import { PostgresProviderRecord } from '@cumulus/db';
+import { ProviderPgModel } from '@cumulus/db';
 import Logger from '@cumulus/logger';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -59,14 +59,24 @@ export const migrateProviderRecord = async (
   providerKmsKeyId: string,
   knex: Knex
 ): Promise<void> => {
+  const providerPgModel = new ProviderPgModel();
+
   // Use API model schema to validate record before processing
   Manager.recordIsValid(dynamoRecord, schemas.provider);
 
-  const existingRecord = await knex<PostgresProviderRecord>('providers')
-    .where('name', dynamoRecord.id)
-    .first();
+  let existingRecord;
+
+  try {
+    existingRecord = await providerPgModel.get(knex, {
+      name: dynamoRecord.id,
+    });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
   // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Provider name ${dynamoRecord.id} was already migrated, skipping`);
   }
 
@@ -99,7 +109,7 @@ export const migrateProviderRecord = async (
     updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  await knex('providers').insert(updatedRecord);
+  await providerPgModel.upsert(knex, updatedRecord);
 };
 
 export const migrateProviders = async (
