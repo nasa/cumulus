@@ -40,7 +40,6 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
       "ec2:DeleteNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "dynamodb:ListTables",
-      // "lambda:GetFunction",
       "lambda:GetFunctionConfiguration",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
