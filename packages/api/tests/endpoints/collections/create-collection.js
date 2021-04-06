@@ -11,9 +11,9 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
-  CollectionPgModel,
-  destroyLocalTestDb,
   generateLocalTestDb,
+  destroyLocalTestDb,
+  CollectionPgModel,
 } = require('@cumulus/db');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
@@ -55,7 +55,17 @@ let publishStub;
 const testDbName = randomString(12);
 
 test.before(async (t) => {
-  process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
+  t.context.collectionPgModel = new CollectionPgModel();
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -82,11 +92,6 @@ test.before(async (t) => {
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
     promise: async () => true,
   });
-
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.testKnex = knex;
-  t.context.testKnexAdmin = knexAdmin;
-  t.context.collectionPgModel = new CollectionPgModel();
 });
 
 test.after.always(async (t) => {
@@ -368,6 +373,8 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
 });
 
 test('post() does not write to the database if writing to Dynamo fails', async (t) => {
+  const { testKnex } = t.context;
+
   const collection = fakeCollectionFactory();
 
   const fakeCollectionsModel = {
@@ -380,7 +387,7 @@ test('post() does not write to the database if writing to Dynamo fails', async (
   const expressRequest = {
     body: collection,
     testContext: {
-      dbClient: t.context.testKnex,
+      dbClient: testKnex,
       collectionsModel: fakeCollectionsModel,
     },
   };
@@ -392,13 +399,10 @@ test('post() does not write to the database if writing to Dynamo fails', async (
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
   const dbRecords = await t.context.collectionPgModel
-    .search(
-      t.context.testKnex,
-      {
-        name: collection.name,
-        version: collection.version,
-      }
-    );
+    .search(t.context.testKnex, {
+      name: collection.name,
+      version: collection.version,
+    });
 
   t.is(dbRecords.length, 0);
 });

@@ -15,8 +15,8 @@ const {
   ProviderPgModel,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
-const { translateApiRuleToPostgresRule } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 
 const { buildFakeExpressResponse } = require('./utils');

@@ -48,7 +48,17 @@ let ruleModel;
 const testDbName = randomString(12);
 
 test.before(async (t) => {
-  process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
+  t.context.collectionPgModel = new CollectionPgModel();
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -78,11 +88,6 @@ test.before(async (t) => {
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
   }).promise();
-
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.testKnex = knex;
-  t.context.testKnexAdmin = knexAdmin;
-  t.context.collectionPgModel = new CollectionPgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -152,13 +157,10 @@ test('Deleting a collection removes it', async (t) => {
 
   t.is(response.status, 404);
 
-  t.false(
-    await t.context.collectionPgModel
-      .exists(t.context.testKnex, {
-        name: collection.name,
-        version: collection.version,
-      })
-  );
+  t.false(await t.context.collectionPgModel.exists(t.context.testKnex, {
+    name: collection.name,
+    version: collection.version,
+  }));
 });
 
 test('Deleting a collection without a record in RDS succeeds', async (t) => {
