@@ -67,6 +67,8 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
   t.context.providerPgModel = new ProviderPgModel();
 
+  t.context.providerPgModel = new ProviderPgModel();
+
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const esAlias = randomString();
