@@ -8,7 +8,7 @@ const logger = new Logger({ sender: '@cumulus/postgres-migration-async-operation
 exports.handler = async () => {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
+  const dynamoTableName = process.env.AsyncOperationsTable;
 
   logger.info('Starting Postgres Migration Async Operation');
   const asyncOperation = await asyncOperations.startAsyncOperation({
@@ -16,12 +16,11 @@ exports.handler = async () => {
     lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Data Migration 2 Lambda ECS Run',
-    operationType: 'Data Migration 2',
-    payload: {
-    },
+    operationType: 'Data Migration',
+    payload: {},
     stackName,
     systemBucket,
-    dynamoTableName: tableName,
+    dynamoTableName: dynamoTableName,
     knexConfig: process.env,
     useLambdaEnvironmentVariables: true,
   }, models.AsyncOperation);
