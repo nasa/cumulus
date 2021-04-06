@@ -1,6 +1,5 @@
 locals {
   lambda_path      = "${path.module}/dist/webpack/lambda.zip"
-  all_bucket_names = [for k, v in var.buckets : v.name]
 }
 resource "aws_lambda_function" "postgres-migration-async-operation" {
   function_name    = "${var.prefix}-postgres-migration-async-operation"
