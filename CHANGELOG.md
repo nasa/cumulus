@@ -19,7 +19,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       of returning `none` when the operation did not return output.
   - **CUMULUS-2309**
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
-- **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
     - Added postgres-migration-count-tool lambda/ECS task to allow for
       evaluation of database state
@@ -135,6 +134,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add unit tests and a component spec test for the above.
   - **CUMULUS-2446**
     - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
+  - **CUMULUS-2385**
+    - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
 
 ## [v7.1.0] 2021-03-12
 
