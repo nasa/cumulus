@@ -4,14 +4,14 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import {
   PostgresCollectionRecord,
   PostgresProviderRecord,
-  PostgresRuleRecord,
   PostgresRule,
   getRecordCumulusId,
   tableNames,
+  RulePgModel,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
@@ -32,15 +32,25 @@ export const migrateRuleRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
+  const rulePgModel = new RulePgModel();
+
   // Validate record before processing using API model schema
   Manager.recordIsValid(dynamoRecord, schemas.rule);
 
-  const existingRecord = await knex<PostgresRuleRecord>('rules')
-    .where({ name: dynamoRecord.name })
-    .first();
+  let existingRecord;
+
+  try {
+    existingRecord = await rulePgModel.get(knex, {
+      name: dynamoRecord.name,
+    });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
@@ -79,7 +89,7 @@ export const migrateRuleRecord = async (
     updated_at: new Date(dynamoRecord.updatedAt),
   };
 
-  await knex('rules').insert(updatedRecord);
+  await rulePgModel.upsert(knex, updatedRecord);
 };
 
 export const migrateRules = async (
