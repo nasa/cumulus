@@ -11,6 +11,7 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const Rule = require('../../../models/rules');
+const { ResourceNotFoundError } = require('../../../lib/errors');
 
 const workflow = randomString();
 let rulesModel;
@@ -307,5 +308,48 @@ test.serial('multiple rules using same SNS topic can be created and deleted', as
     await awsServices.sns().deleteTopic({
       TopicArn,
     });
+  });
+});
+
+test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async (t) => {
+  const error = new Error('Resource is not found in resource policy.');
+  error.code = 'ResourceNotFoundException';
+  const snsTopicArn = randomString();
+  const lambdaStub = sinon.stub(awsServices.lambda(), 'removePermission').throws(error);
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+
+  const rule = await rulesModel.create(fakeRuleFactoryV2({
+    rule: {
+      type: 'sns',
+      value: snsTopicArn,
+    },
+    workflow,
+    state: 'ENABLED',
+  }));
+
+  await t.throwsAsync(
+    rulesModel.deleteSnsTrigger(rule), {
+      instanceOf: ResourceNotFoundError,
+      message: 'Resource is not found in resource policy. Check if trigger was deleted from lambda.',
+    }
+  );
+
+  t.teardown(async () => {
+    lambdaStub.restore();
+    snsStub.restore();
+    await rulesModel.delete(rule);
   });
 });

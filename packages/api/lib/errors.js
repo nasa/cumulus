@@ -10,6 +10,9 @@ const {
 const isBadRequestError = (err) =>
   err.name === 'SchemaValidationError' || err instanceof ValidationError;
 
+const isResourceNotFoundException = (error) =>
+  error.code === 'ResourceNotFoundException';
+
 const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 const IndexExistsError = createErrorType('IndexExistsError');
 
@@ -32,10 +35,23 @@ class EarthdataLoginError extends Error {
   }
 }
 
+class ResourceNotFoundError extends Error {
+  constructor(error) {
+    super(`${error.message} Check if trigger was deleted from lambda.`);
+
+    this.name = 'ResourceNotFoundError';
+    this.code = error.code;
+
+    Error.captureStackTrace(this, ResourceNotFoundError);
+  }
+}
+
 module.exports = {
   AssociatedRulesError,
   IndexExistsError,
   TokenUnauthorizedUserError,
   EarthdataLoginError,
   isBadRequestError,
+  isResourceNotFoundException,
+  ResourceNotFoundError,
 };

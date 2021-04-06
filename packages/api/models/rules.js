@@ -16,6 +16,7 @@ const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
+const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
 
 class Rule extends Manager {
   constructor() {
@@ -470,7 +471,14 @@ class Rule extends Manager {
       FunctionName: process.env.messageConsumer,
       StatementId: `${item.name}Permission`,
     };
-    await awsServices.lambda().removePermission(permissionParams).promise();
+    try {
+      await awsServices.lambda().removePermission(permissionParams).promise();
+    } catch (error) {
+      if (isResourceNotFoundException(error)) {
+        throw new ResourceNotFoundError(error);
+      }
+      throw error;
+    }
     // delete sns subscription
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn,
