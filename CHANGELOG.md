@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2374**
+  - Add cookbok entry for queueing PostToCmr step
+  - Add example workflow to go with cookbook
 - **CUMULUS-2421**
   - Added cron job to clean up docker storage blocks to ECS cluster template.
   - Added `ecs_include_docker_cleanup_cronjob` boolean variable to the Cumulus module to enable this behavior. Default value is `false`.

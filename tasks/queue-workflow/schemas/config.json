@@ -5,15 +5,18 @@
   "required": [
     "stackName",
     "internalBucket",
-    "parentWorkflow",
-    "queueUrl"
+    "queueUrl",
+    "workflow"
   ],
   "additionalProperties": false,
   "properties": {
     "queueUrl": { "type": "string" },
     "internalBucket": { "type": "string" },
-    "parentWorkflow": { "type": "string" },
+    "collection": { "type": "object" },
+    "provider": { "type": "object" },
     "stackName": { "type": "string" },
-    "executionNamePrefix": { "type": "string" }
+    "executionNamePrefix": { "type": "string" },
+    "workflow": { "type": "string" },
+    "workflowInput": { "type": "object" }
   }
 }
