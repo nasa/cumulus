@@ -10,6 +10,7 @@ import { RecordAlreadyMigrated } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/collections' });
+// const logSummary = (summary: string) => logger.info(summary);
 
 /**
  * Migrate collection record from Dynamo to RDS.
@@ -58,6 +59,8 @@ export const migrateCollections = async (
     skipped: 0,
   };
 
+  // const progressSummary = `Successfully migrated ${migrationSummary.success} collection records so far.`;
+  // setInterval(() => logSummary(progressSummary), 1);
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {

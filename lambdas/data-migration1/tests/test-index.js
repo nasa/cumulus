@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const sinon = require('sinon');
 const uuid = require('uuid/v4');
 
 const AsyncOperation = require('@cumulus/api/models/async-operation');
@@ -7,6 +8,8 @@ const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Rule = require('@cumulus/api/models/rules');
 const KMS = require('@cumulus/aws-client/KMS');
+
+const Logger = require('@cumulus/logger');
 
 const {
   createBucket,
@@ -180,28 +183,48 @@ test('handler migrates async operations, collections, providers, rules', async (
   ]).then(() => collectionsModel.delete(fakeCollection)));
 
   const call = await handler({});
-  const expected = `
-      Migration summary:
-        Collections:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Providers:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        AsyncOperations:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Rules:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-    `;
-  t.is(call, expected);
+  const expected = {
+    MigrationSummary: {
+      async_operations: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      collections: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      providers: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      rules: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+    },
+  };
+  t.deepEqual(call, expected);
+});
+
+test.serial('handler logs a summary within the defined interval', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  await handler({ env: process.env });
+  this.clock = sinon.useFakeTimers();
+  t.true(logSpy.called);
+
+  this.clock.tick(90001);
+  t.true(logSpy.called);
+
+  t.teardown(() => {
+    logSpy.restore();
+    this.clock.restore();
+  });
 });
