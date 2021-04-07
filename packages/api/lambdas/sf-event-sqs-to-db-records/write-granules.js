@@ -240,14 +240,10 @@ const writeGranuleAndFilesViaTransaction = async ({
     granuleRecord,
   });
 
-  let fileRecords = [];
-
-  if (workflowStatus !== 'running') {
-    fileRecords = await generateFileRecords({
-      files: updatedFiles,
-      granuleCumulusId,
-    });
-  }
+  const fileRecords = await generateFileRecords({
+    files: updatedFiles,
+    granuleCumulusId,
+  });
 
   return writeFilesViaTransaction({
     fileRecords,
