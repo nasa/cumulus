@@ -144,6 +144,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - PDRs
   - **CUMULUS-2446**
     - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
+  - **CUMULUS-2447**
+    - Changed `translateApiAsyncOperationToPostgresAsyncOperation` to call `JSON.stringify` and then `JSON.parse` on output.
   - **CUMULUS-2313**
     - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
     - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
