@@ -10,13 +10,14 @@ const granules = require('@cumulus/api-client/granules');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
-const logger = () => new Logger({
+const logger = (logOptions) => new Logger({
   executions: process.env.EXECUTIONS,
   granules: process.env.GRANULES ? JSON.parse(process.env.GRANULES) : undefined,
   parentArn: process.env.PARENTARN,
-  sender: process.env.SENDER,
+  sender: process.env.SENDER || '@cumulus/discover-granules',
   stackName: process.env.STACKNAME,
   version: process.env.TASKVERSION,
+  ...logOptions,
 });
 
 /**
@@ -288,12 +289,7 @@ const discoverGranules = async ({ config }) => {
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 
-  // Set the environment variable for the logger
-  if (discoveredGranules) {
-    process.env.GRANULES = JSON.stringify(discoveredGranules.map((g) => g.granuleId));
-  }
-
-  logger().info(`Discovered ${discoveredGranules.length} granules.`);
+  logger({ granules: discoveredGranules.map((g) => g.granuleId) }).info(`Discovered ${discoveredGranules.length} granules.`);
   return { granules: discoveredGranules };
 };
 
