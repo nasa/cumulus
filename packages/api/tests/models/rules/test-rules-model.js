@@ -75,7 +75,7 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  t.context.onetimeRule = {
+  t.context.onetimeRule = fakeRuleFactoryV2({
     name: randomString(),
     workflow,
     provider: 'my-provider',
@@ -87,9 +87,9 @@ test.beforeEach(async (t) => {
       type: 'onetime',
     },
     state: 'ENABLED',
-  };
+  });
 
-  t.context.kinesisRule = {
+  t.context.kinesisRule = fakeRuleFactoryV2({
     name: randomString(),
     workflow,
     provider: 'my-provider',
@@ -102,7 +102,7 @@ test.beforeEach(async (t) => {
       value: 'my-kinesis-arn',
     },
     state: 'ENABLED',
-  };
+  });
 });
 
 test.after.always(async () => {

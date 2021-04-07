@@ -131,8 +131,6 @@ test('PUT updates existing provider', async (t) => {
     updatedAt: Date.now(),
   };
 
-  const updatedPostgresProvider = await translateApiProviderToPostgresProvider(updatedProvider);
-
   await request(app)
     .put(`/providers/${id}`)
     .send(updatedProvider)
@@ -145,9 +143,6 @@ test('PUT updates existing provider', async (t) => {
     t.context.testKnex,
     { name: id }
   );
-
-  t.true(actualPostgresProvider.updated_at > updatedPostgresProvider.updated_at);
-  t.true(actualProvider.updatedAt > updatedProvider.updatedAt);
 
   t.deepEqual(actualProvider, {
     ...expectedProvider,
@@ -171,6 +166,38 @@ test('PUT updates existing provider', async (t) => {
       postgresOmitList
     )
   );
+});
+
+test('PUT updates existing provider in Dynamo and PG with correct timestamps', async (t) => {
+  const { testProvider, testProvider: { id } } = t.context;
+  const expectedProvider = omit(testProvider,
+    ['globalConnectionLimit', 'protocol', 'cmKeyId']);
+
+  const updatedProvider = {
+    ...expectedProvider,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await request(app)
+    .put(`/providers/${id}`)
+    .send(updatedProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const actualProvider = await providerModel.get({ id });
+  const actualPostgresProvider = await t.context.providerPgModel.get(
+    t.context.testKnex,
+    { name: id }
+  );
+
+  t.true(actualProvider.updatedAt > updatedProvider.updatedAt);
+  // createdAt timestamp from original record should have been preserved
+  t.is(actualProvider.createdAt, testProvider.createdAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPostgresProvider.created_at.getTime(), actualProvider.createdAt);
+  t.is(actualPostgresProvider.updated_at.getTime(), actualProvider.updatedAt);
 });
 
 test('PUT returns 404 for non-existent provider', async (t) => {
