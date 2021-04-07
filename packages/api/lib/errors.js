@@ -35,9 +35,11 @@ class EarthdataLoginError extends Error {
   }
 }
 
+const resourceNotFoundInfo = 'Check if topic subscription and/or lambda trigger have been manually deleted from AWS. If so, rule may need to be manually disabled/deleted.';
+
 class ResourceNotFoundError extends Error {
   constructor(error) {
-    super(`${error.message} Check if trigger was deleted from lambda.`);
+    super(`${error.message} ${resourceNotFoundInfo}`);
 
     this.name = 'ResourceNotFoundError';
     this.code = error.code;
@@ -54,4 +56,5 @@ module.exports = {
   isBadRequestError,
   isResourceNotFoundException,
   ResourceNotFoundError,
+  resourceNotFoundInfo,
 };
