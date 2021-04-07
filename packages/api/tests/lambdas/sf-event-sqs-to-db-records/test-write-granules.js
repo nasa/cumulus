@@ -10,6 +10,7 @@ const {
   CollectionPgModel,
   ProviderPgModel,
   ExecutionPgModel,
+  GranulePgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,
@@ -47,6 +48,8 @@ test.before(async (t) => {
   });
   await granuleModel.createTable();
   t.context.granuleModel = granuleModel;
+
+  t.context.granulePgModel = new GranulePgModel();
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
 
@@ -335,6 +338,78 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
   t.true(await granuleModel.exists({ granuleId }));
   t.true(
     await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+  );
+});
+
+test('writeGranules() saves file records to RDS if RDS write is enabled and workflow status is "completed"', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    granulePgModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const granule = await granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  t.true(
+    await doesRecordExist({ granule_cumulus_id: granule.cumulus_id }, knex, tableNames.files)
+  );
+});
+
+test.serial('writeGranules() does not persist file records to RDS if the worflow status is "running"', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    granulePgModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'running';
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const granule = await granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  t.false(
+    await doesRecordExist({ granule_cumulus_id: granule.cumulus_id }, knex, tableNames.files)
   );
 });
 
