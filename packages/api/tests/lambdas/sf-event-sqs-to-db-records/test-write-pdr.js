@@ -124,6 +124,7 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
     workflowStartTime,
   } = t.context;
   const now = workflowStartTime + 3500;
+  const updatedAt = Date.now();
 
   cumulusMessage.payload = {
     ...cumulusMessage.payload,
@@ -139,6 +140,7 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
       providerCumulusId: 2,
       executionCumulusId: 3,
       now,
+      updatedAt,
     }),
     {
       name: pdr.name,
@@ -156,6 +158,7 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
       collection_cumulus_id: 1,
       provider_cumulus_id: 2,
       created_at: new Date(workflowStartTime),
+      updated_at: new Date(updatedAt),
       timestamp: new Date(now),
       duration: 3.5,
     }
@@ -229,7 +232,7 @@ test('writePdr() throws an error if provider is not provided', async (t) => {
   );
 });
 
-test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if RDS write is enabled', async (t) => {
+test('writePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -251,6 +254,32 @@ test('writePdr() saves a PDR record to Dynamo and RDS and returns cumulus_id if 
 
   t.true(await pdrModel.exists({ pdrName: pdr.name }));
   t.true(await pdrPgModel.exists(knex, { name: pdr.name }));
+});
+
+test('writePdr() saves a PDR record to Dynamo and RDS with same timestamps', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdr,
+    pdrPgModel,
+  } = t.context;
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  const dynamoRecord = await pdrModel.get({ pdrName: pdr.name });
+  const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
+  t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
 
 test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write fails', async (t) => {
