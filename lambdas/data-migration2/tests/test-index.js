@@ -1,4 +1,5 @@
 const test = require('ava');
+const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
 const Collection = require('@cumulus/api/models/collections');
@@ -6,6 +7,8 @@ const Execution = require('@cumulus/api/models/executions');
 const Granule = require('@cumulus/api/models/granules');
 const Pdr = require('@cumulus/api/models/pdrs');
 const Provider = require('@cumulus/api/models/providers');
+
+const Logger = require('@cumulus/logger');
 
 const { fakeFileFactory } = require('@cumulus/api/lib/testUtils');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -120,7 +123,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('handler migrates executions, granules, files, and PDRs', async (t) => {
+test.serial('handler migrates executions, granules, files, and PDRs', async (t) => {
   const {
     executionsModel,
     granulesModel,
@@ -215,27 +218,48 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
   ]));
 
   const call = await handler({ env: process.env });
-  const expected = `
-      Migration summary:
-        Executions:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Granules:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Files:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records failed
-        PDRs:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-    `;
-  t.is(call, expected);
+  const expected = {
+    MigrationSummary: {
+      executions: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      granules: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      files: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      pdrs: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+    },
+  };
+  t.deepEqual(call, expected);
+});
+
+test.serial('handler logs a summary within the defined interval', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  await handler({ env: process.env });
+  this.clock = sinon.useFakeTimers();
+  t.true(logSpy.called);
+
+  this.clock.tick(90001);
+  t.true(logSpy.called);
+
+  t.teardown(() => {
+    logSpy.restore();
+    this.clock.restore();
+  });
 });
