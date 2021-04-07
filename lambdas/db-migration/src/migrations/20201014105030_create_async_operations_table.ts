@@ -23,6 +23,7 @@ export const up = async (knex: Knex): Promise<void> =>
           'Kinesis Replay',
           'Reconciliation Report',
           'Migration Count Report',
+          'Data Migration',
         ])
       .comment('type of async operation')
       .notNullable();
