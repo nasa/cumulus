@@ -183,25 +183,6 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
   );
 });
 
-test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb', async (t) => {
-  const { fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule({
-    collection: {
-      name: fakeCollection.name,
-      version: fakeCollection.version,
-    },
-    provider: fakeProvider.id,
-  });
-
-  // make source record invalid
-  delete fakeRule.workflow;
-
-  await t.throwsAsync(
-    migrateRuleRecord(fakeRule, t.context.knex),
-    { name: 'SchemaValidationError' }
-  );
-});
-
 test.serial('migrateRuleRecord handles nullable fields on source rule data', async (t) => {
   const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
   const fakeRule = generateFakeRule({
@@ -410,7 +391,10 @@ test.serial('migrateRules processes multiple rules', async (t) => {
 
 test.serial('migrateRules processes all non-failing records', async (t) => {
   const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
-  const anotherFakeCollection = fakeCollectionFactory();
+
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+
   const anotherFakeProvider = fakeProviderFactory({
     encrypted: false,
     privateKey: 'key',
@@ -419,8 +403,8 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
     createdAt: new Date(2020, 11, 17),
     updatedAt: new Date(2020, 11, 17),
   });
-  const { id } = anotherFakeProvider;
-  const { name, version } = anotherFakeCollection;
+
+  await migrateFakeProviderRecord(anotherFakeProvider, knex);
 
   const fakeRule1 = generateFakeRule({
     collection: {
@@ -431,18 +415,13 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
   });
   const fakeRule2 = generateFakeRule({
     collection: {
-      name: name,
-      version: version,
+      // reference collection that doesn't exist so
+      // record migration fails
+      name: cryptoRandomString({ length: 5 }),
+      version: '1',
     },
-    provider: id,
+    provider: anotherFakeProvider.id,
   });
-  await migrateFakeCollectionRecord(fakeCollection, knex);
-  await migrateFakeCollectionRecord(anotherFakeCollection, knex);
-  await migrateFakeProviderRecord(fakeProvider, knex);
-  await migrateFakeProviderRecord(anotherFakeProvider, knex);
-
-  // remove required source field so that record will fail
-  delete fakeRule1.state;
 
   await Promise.all([
     // Have to use Dynamo client directly because creating

@@ -25,7 +25,6 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "7.1.0",
     "@cumulus/aws-client": "7.1.0",
     "@cumulus/common": "7.1.0",
     "@cumulus/db": "3.0.1-alpha.1",
@@ -37,6 +36,7 @@
     "pg": "^8.3.0"
   },
   "devDependencies": {
+    "@cumulus/api": "7.1.0",
     "@cumulus/test-data": "7.1.0"
   }
 }

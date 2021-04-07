@@ -16,8 +16,6 @@ import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
 
 /**
  * Migrate rules record from Dynamo to RDS.
@@ -33,9 +31,6 @@ export const migrateRuleRecord = async (
   knex: Knex
 ): Promise<void> => {
   const rulePgModel = new RulePgModel();
-
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.rule);
 
   let existingRecord;
 
