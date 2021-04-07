@@ -13,7 +13,7 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
-const { tableNames, getKnexClient } = require('@cumulus/db');
+const { getKnexClient, AsyncOperationPgModel } = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
@@ -150,17 +150,20 @@ function buildErrorOutput(error) {
   };
 }
 
-const writeAsyncOperationToRds = async (params) => {
+const writeAsyncOperationToPostgres = async (params) => {
   const { trx, env, dbOutput, status, updatedTime } = params;
   const id = env.asyncOperationId;
-  const knex = await getKnexClient({ env });
-  return trx(tableNames.asyncOperations)
-    .where({ id })
-    .update({
-      status,
-      output: dbOutput,
-      updated_at: knex.raw(`to_timestamp(${Number(updatedTime / 1000)})`),
-    });
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  return asyncOperationPgModel
+    .update(
+      trx,
+      { id },
+      {
+        status,
+        output: dbOutput,
+        updated_at: new Date(Number(updatedTime)),
+      }
+    );
 };
 
 const writeAsyncOperationToDynamoDb = async (params) => {
@@ -201,7 +204,7 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
   const env = { ...process.env, ...envOverride };
   const knex = await getKnexClient({ env });
   return knex.transaction(async (trx) => {
-    await writeAsyncOperationToRds({
+    await writeAsyncOperationToPostgres({
       dbOutput,
       env,
       status,

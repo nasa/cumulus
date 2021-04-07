@@ -9,12 +9,13 @@ const uuidv4 = require('uuid/v4');
 
 const {
   localStackConnectionEnv,
-  getKnexClient,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  CollectionPgModel,
+  ProviderPgModel,
+  PdrPgModel,
   ExecutionPgModel,
   GranulePgModel,
-  PdrPgModel,
-  tableNames,
-  doesRecordExist,
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
@@ -99,6 +100,23 @@ const generateRDSCollectionRecord = (params) => ({
 });
 
 test.before(async (t) => {
+  t.context.testDbName = `sfEventSqsToDbRecords_${cryptoRandomString({ length: 10 })}`;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: t.context.testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
+  t.context.pdrPgModel = new PdrPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+
   process.env.ExecutionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.PdrsTable = randomString();
@@ -123,21 +141,6 @@ test.before(async (t) => {
   const pdrModel = new Pdr();
   await pdrModel.createTable();
   t.context.pdrModel = pdrModel;
-
-  t.context.testDbName = `sfEventSqsToDbRecords_${cryptoRandomString({ length: 10 })}`;
-
-  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
-  await t.context.knexAdmin.raw(`create database "${t.context.testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${t.context.testDbName}" to "${localStackConnectionEnv.PG_USER}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: t.context.testDbName,
-      migrationDir,
-    },
-  });
-  await t.context.knex.migrate.latest();
 
   fixture = await loadFixture('execution-running-event.json');
 });
@@ -191,19 +194,15 @@ test.beforeEach(async (t) => {
     },
   };
 
-  const collectionResponse = await t.context.knex(tableNames.collections)
-    .insert(t.context.collection)
-    .returning('cumulus_id');
-  t.context.collectionCumulusId = collectionResponse[0];
+  [t.context.collectionCumulusId] = await t.context.collectionPgModel
+    .create(t.context.testKnex, t.context.collection);
 
-  const providerResponse = await t.context.knex(tableNames.providers)
-    .insert({
+  [t.context.providerCumulusId] = await t.context.providerPgModel
+    .create(t.context.testKnex, {
       name: t.context.provider.id,
       host: t.context.provider.host,
       protocol: t.context.provider.protocol,
-    })
-    .returning('cumulus_id');
-  t.context.providerCumulusId = providerResponse[0];
+    });
 });
 
 test.after.always(async (t) => {
@@ -215,15 +214,17 @@ test.after.always(async (t) => {
   await executionModel.deleteTable();
   await pdrModel.deleteTable();
   await granuleModel.deleteTable();
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${t.context.testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName: t.context.testDbName,
+  });
 });
 
 test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
   const {
     cumulusMessage,
-    knex,
+    testKnex,
     executionModel,
     pdrModel,
     granuleModel,
@@ -237,7 +238,7 @@ test('writeRecords() writes records only to Dynamo if message comes from pre-RDS
 
   await writeRecords({
     cumulusMessage,
-    knex,
+    knex: testKnex,
     granuleModel,
   });
 
@@ -246,19 +247,13 @@ test('writeRecords() writes records only to Dynamo if message comes from pre-RDS
   t.true(await pdrModel.exists({ pdrName }));
 
   t.false(
-    await doesRecordExist({
-      arn: executionArn,
-    }, knex, tableNames.executions)
+    await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
   );
   t.false(
-    await doesRecordExist({
-      name: pdrName,
-    }, knex, tableNames.pdrs)
+    await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await doesRecordExist({
-      granule_id: granuleId,
-    }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
   );
 });
 
@@ -266,13 +261,13 @@ test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env v
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
   const {
     cumulusMessage,
-    knex,
+    testKnex,
   } = t.context;
 
   await t.throwsAsync(
     writeRecords({
       cumulusMessage,
-      knex,
+      knex: testKnex,
     }),
     { instanceOf: MissingRequiredEnvVarError }
   );
@@ -284,7 +279,7 @@ test('writeRecords() writes records only to Dynamo if requirements to write exec
     executionModel,
     granuleModel,
     pdrModel,
-    knex,
+    testKnex,
     executionArn,
     pdrName,
     granuleId,
@@ -295,7 +290,7 @@ test('writeRecords() writes records only to Dynamo if requirements to write exec
 
   await writeRecords({
     cumulusMessage,
-    knex,
+    knex: testKnex,
     granuleModel,
   });
 
@@ -304,19 +299,13 @@ test('writeRecords() writes records only to Dynamo if requirements to write exec
   t.true(await pdrModel.exists({ pdrName }));
 
   t.false(
-    await doesRecordExist({
-      arn: executionArn,
-    }, knex, tableNames.executions)
+    await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
   );
   t.false(
-    await doesRecordExist({
-      name: pdrName,
-    }, knex, tableNames.pdrs)
+    await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await doesRecordExist({
-      granule_id: granuleId,
-    }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
   );
 });
 
@@ -326,7 +315,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
     executionModel,
     granuleModel,
     pdrModel,
-    knex,
+    testKnex,
     executionArn,
     pdrName,
     granuleId,
@@ -336,7 +325,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
 
   await t.throwsAsync(writeRecords({
     cumulusMessage,
-    knex,
+    knex: testKnex,
     granuleModel,
   }));
 
@@ -345,19 +334,13 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   t.false(await granuleModel.exists({ granuleId }));
 
   t.false(
-    await doesRecordExist({
-      arn: executionArn,
-    }, knex, tableNames.executions)
+    await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
   );
   t.false(
-    await doesRecordExist({
-      name: pdrName,
-    }, knex, tableNames.pdrs)
+    await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await doesRecordExist({
-      granule_id: granuleId,
-    }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
   );
 });
 
@@ -367,32 +350,26 @@ test('writeRecords() writes records to Dynamo and RDS', async (t) => {
     executionModel,
     granuleModel,
     pdrModel,
-    knex,
+    testKnex,
     executionArn,
     pdrName,
     granuleId,
   } = t.context;
 
-  await writeRecords({ cumulusMessage, knex, granuleModel });
+  await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await granuleModel.exists({ granuleId }));
   t.true(await pdrModel.exists({ pdrName }));
 
   t.true(
-    await doesRecordExist({
-      arn: executionArn,
-    }, knex, tableNames.executions)
+    await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
   );
   t.true(
-    await doesRecordExist({
-      name: pdrName,
-    }, knex, tableNames.pdrs)
+    await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.true(
-    await doesRecordExist({
-      granule_id: granuleId,
-    }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
   );
 });
 
@@ -420,7 +397,7 @@ test('writeRecords() discards an out of order message that is older than an exis
     cumulusMessage,
     granuleModel,
     pdrModel,
-    knex,
+    testKnex,
     pdrName,
     granuleId,
   } = t.context;
@@ -432,21 +409,21 @@ test('writeRecords() discards an out of order message that is older than an exis
   const olderTimestamp = timestamp - 10000;
 
   cumulusMessage.cumulus_meta.workflow_start_time = timestamp;
-  await writeRecords({ cumulusMessage, knex, granuleModel });
+  await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
 
   cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
-  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }));
 
   t.is(timestamp, (await granuleModel.get({ granuleId })).createdAt);
   t.is(timestamp, (await pdrModel.get({ pdrName })).createdAt);
 
   t.deepEqual(
     new Date(timestamp),
-    (await granulePgModel.get(knex, { granule_id: granuleId })).created_at
+    (await granulePgModel.get(testKnex, { granule_id: granuleId })).created_at
   );
   t.deepEqual(
     new Date(timestamp),
-    (await pdrPgModel.get(knex, { name: pdrName })).created_at
+    (await pdrPgModel.get(testKnex, { name: pdrName })).created_at
   );
 });
 
@@ -456,7 +433,7 @@ test('writeRecords() discards an out of order message that has an older status w
     executionModel,
     granuleModel,
     pdrModel,
-    knex,
+    testKnex,
     executionArn,
     pdrName,
     granuleId,
@@ -467,16 +444,16 @@ test('writeRecords() discards an out of order message that has an older status w
   const granulePgModel = new GranulePgModel();
 
   cumulusMessage.meta.status = 'completed';
-  await writeRecords({ cumulusMessage, knex, granuleModel });
+  await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
 
   cumulusMessage.meta.status = 'running';
-  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex, granuleModel }));
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }));
 
   t.is('completed', (await executionModel.get({ arn: executionArn })).status);
   t.is('completed', (await granuleModel.get({ granuleId })).status);
   t.is('completed', (await pdrModel.get({ pdrName })).status);
 
-  t.is('completed', (await executionPgModel.get(knex, { arn: executionArn })).status);
-  t.is('completed', (await granulePgModel.get(knex, { granule_id: granuleId })).status);
-  t.is('completed', (await pdrPgModel.get(knex, { name: pdrName })).status);
+  t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
+  t.is('completed', (await granulePgModel.get(testKnex, { granule_id: granuleId })).status);
+  t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
 });
