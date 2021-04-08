@@ -6,16 +6,12 @@ import { migrateGranulesAndFiles } from './granulesAndFiles';
 import { migratePdrs } from './pdrs';
 
 const logger = new Logger({ sender: '@cumulus/data-migration2' });
-const logSummary = (summary: any) => logger.info(summary);
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
 }
 
 export const handler = async (event: HandlerEvent): Promise<object> => {
   const env = event.env ?? process.env;
-  const logInterval : number = process.env.logSummaryInterval
-    ? Number.parseInt(process.env.logSummaryInterval, 10) : 90000;
-
   const knex = await getKnexClient({ env });
 
   try {
@@ -49,11 +45,11 @@ export const handler = async (event: HandlerEvent): Promise<object> => {
         failed: pdrsMigrationSummary.failed,
       },
     };
-
     const result: MigrationSummary = {
       MigrationSummary: summary,
     };
-    setInterval(() => logSummary(result), logInterval);
+
+    logger.info(result);
     return result;
   } finally {
     await knex.destroy();

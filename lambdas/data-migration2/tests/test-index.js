@@ -1,5 +1,4 @@
 const test = require('ava');
-const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
 const Collection = require('@cumulus/api/models/collections');
@@ -7,8 +6,6 @@ const Execution = require('@cumulus/api/models/executions');
 const Granule = require('@cumulus/api/models/granules');
 const Pdr = require('@cumulus/api/models/pdrs');
 const Provider = require('@cumulus/api/models/providers');
-
-const Logger = require('@cumulus/logger');
 
 const { fakeFileFactory } = require('@cumulus/api/lib/testUtils');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -123,7 +120,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('handler migrates executions, granules, files, and PDRs', async (t) => {
+test('handler migrates executions, granules, files, and PDRs', async (t) => {
   const {
     executionsModel,
     granulesModel,
@@ -247,19 +244,4 @@ test.serial('handler migrates executions, granules, files, and PDRs', async (t) 
     },
   };
   t.deepEqual(call, expected);
-});
-
-test.serial('handler logs a summary within the defined interval', async (t) => {
-  const logSpy = sinon.spy(Logger.prototype, 'info');
-  await handler({ env: process.env });
-  this.clock = sinon.useFakeTimers();
-  t.true(logSpy.called);
-
-  this.clock.tick(90001);
-  t.true(logSpy.called);
-
-  t.teardown(() => {
-    logSpy.restore();
-    this.clock.restore();
-  });
 });

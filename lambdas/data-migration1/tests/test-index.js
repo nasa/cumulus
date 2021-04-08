@@ -1,6 +1,5 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const sinon = require('sinon');
 const uuid = require('uuid/v4');
 
 const AsyncOperation = require('@cumulus/api/models/async-operation');
@@ -8,8 +7,6 @@ const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Rule = require('@cumulus/api/models/rules');
 const KMS = require('@cumulus/aws-client/KMS');
-
-const Logger = require('@cumulus/logger');
 
 const {
   createBucket,
@@ -212,19 +209,4 @@ test('handler migrates async operations, collections, providers, rules', async (
     },
   };
   t.deepEqual(call, expected);
-});
-
-test.serial('handler logs a summary within the defined interval', async (t) => {
-  const logSpy = sinon.spy(Logger.prototype, 'info');
-  await handler({ env: process.env });
-  this.clock = sinon.useFakeTimers();
-  t.true(logSpy.called);
-
-  this.clock.tick(90001);
-  t.true(logSpy.called);
-
-  t.teardown(() => {
-    logSpy.restore();
-    this.clock.restore();
-  });
 });
