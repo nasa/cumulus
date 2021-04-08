@@ -67,10 +67,11 @@ class Pdr extends Manager {
    * Generate a PDR record.
    *
    * @param {Object} message - A workflow execution message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    * @returns {Object|undefined} - A PDR record, or null if `message.payload.pdr` is
    *   not set
    */
-  generatePdrRecord(message) {
+  generatePdrRecord(message, updatedAt = Date.now()) {
     const pdr = getMessagePdr(message);
 
     if (!pdr) { // We got a message with no PDR (OK)
@@ -107,7 +108,7 @@ class Pdr extends Manager {
       stats,
       createdAt: getMessageWorkflowStartTime(message),
       timestamp: now,
-      updatedAt: now,
+      updatedAt,
       duration: getWorkflowDuration(workflowStartTime, now),
     };
 
@@ -120,9 +121,10 @@ class Pdr extends Manager {
    * If the record already exists, only update if the execution is different (re-run case).
    *
    * @param {Object} cumulusMessage - cumulus message object
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    */
-  async storePdrFromCumulusMessage(cumulusMessage) {
-    const pdrRecord = this.generatePdrRecord(cumulusMessage);
+  async storePdrFromCumulusMessage(cumulusMessage, updatedAt) {
+    const pdrRecord = this.generatePdrRecord(cumulusMessage, updatedAt);
     if (!pdrRecord) return undefined;
     const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
 

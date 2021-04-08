@@ -5,8 +5,6 @@ const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 
 const {
-  tableNames,
-  doesRecordExist,
   CollectionPgModel,
   ProviderPgModel,
   ExecutionPgModel,
@@ -59,6 +57,8 @@ test.before(async (t) => {
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
+
+  t.context.granulePgModel = new GranulePgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -336,9 +336,33 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
   });
 
   t.true(await granuleModel.exists({ granuleId }));
-  t.true(
-    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
-  );
+  t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
+});
+
+test('writeGranules() saves granule records to Dynamo and RDS with same timestamps', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const pgRecord = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
+  t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
 
 test('writeGranules() saves file records to RDS if RDS write is enabled and workflow status is "completed"', async (t) => {
@@ -443,7 +467,7 @@ test('writeGranules() handles successful and failing writes independently', asyn
 
   t.true(await granuleModel.exists({ granuleId }));
   t.true(
-    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
   );
 });
 
@@ -505,7 +529,7 @@ test('writeGranules() does not persist records to Dynamo or RDS if Dynamo write 
   t.true(error.message.includes('Granules dynamo error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
   );
 });
 
@@ -543,6 +567,6 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
   t.true(error.message.includes('Granules RDS error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
   );
 });

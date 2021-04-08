@@ -104,6 +104,8 @@ function fakeRuleFactoryV2(params = {}) {
       type: 'onetime',
     },
     state: 'DISABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 
   return { ...rule, ...params };

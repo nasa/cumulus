@@ -202,6 +202,7 @@ const writeGranuleAndFilesViaTransaction = async ({
   pdrCumulusId,
   fileUtils = FileUtils,
   trx,
+  updatedAt,
 }) => {
   const { files = [] } = granule;
   // This is necessary to set properties like
@@ -225,6 +226,7 @@ const writeGranuleAndFilesViaTransaction = async ({
     providerCumulusId,
     pdrCumulusId,
     processingTimeInfo,
+    updatedAt,
   });
 
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
@@ -300,6 +302,7 @@ const writeGranule = async ({
   providerCumulusId,
   pdrCumulusId,
   granuleModel,
+  updatedAt = Date.now(),
 }) =>
   knex.transaction(async (trx) => {
     await writeGranuleAndFilesViaTransaction({
@@ -315,6 +318,7 @@ const writeGranule = async ({
       executionCumulusId,
       pdrCumulusId,
       trx,
+      updatedAt,
     });
     return granuleModel.storeGranuleFromCumulusMessage({
       granule,
@@ -327,6 +331,7 @@ const writeGranule = async ({
       workflowStatus,
       processingTimeInfo,
       queryFields,
+      updatedAt,
     });
   });
 

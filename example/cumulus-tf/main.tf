@@ -142,7 +142,7 @@ module "cumulus" {
   elasticsearch_security_group_id = local.elasticsearch_security_group_id
   es_index_shards                 = var.es_index_shards
 
-  dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
+  dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
 
   # Archive API settings
   token_secret = var.token_secret

@@ -30,8 +30,8 @@ const testDbUser = 'postgres';
 const generateFakeAsyncOperation = (params) => ({
   id: uuid(),
   description: 'unittest async operation',
+  output: '\"Index from database complete\"',
   operationType: 'ES Index',
-  output: '{ "output": "test" }',
   status: 'SUCCEEDED',
   taskArn: 'arn:aws:ecs:task:1234',
   createdAt: (Date.now() - 1000),
@@ -99,6 +99,31 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
     knex,
     { id: fakeAsyncOp.id }
   );
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit({
+      ...fakeAsyncOp,
+      operation_type: fakeAsyncOp.operationType,
+      task_arn: fakeAsyncOp.taskArn,
+      output: JSON.parse(fakeAsyncOp.output),
+      created_at: new Date(fakeAsyncOp.createdAt),
+      updated_at: new Date(fakeAsyncOp.updatedAt),
+    },
+    ['createdAt', 'updatedAt', 'operationType', 'taskArn'])
+  );
+});
+
+test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation record where record.output is an array', async (t) => {
+  const output = { output: '[\"string\",\"test-string"]' };
+  const fakeAsyncOp = generateFakeAsyncOperation(output);
+  await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('async_operations')
+    .where({ id: fakeAsyncOp.id })
+    .first();
 
   t.deepEqual(
     omit(createdRecord, ['cumulus_id']),
