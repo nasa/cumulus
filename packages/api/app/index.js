@@ -68,13 +68,10 @@ const handler = async (event, context) => {
   }
 
   const ssmClient = context.ssmClient || services.systemsManager();
-
   const dynamoTableNamesParameter = await ssmClient.getParameter({
     Name: dynamoTableNamesParameterName,
   }).promise();
-  console.log(dynamoTableNamesParameter);
   const dynamoTableNames = JSON.parse(dynamoTableNamesParameter.Parameter.Value);
-  console.log(dynamoTableNames);
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
@@ -86,7 +83,14 @@ const handler = async (event, context) => {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
-  awsServerlessExpress.proxy(server, modifiedEvent, context);
+  // see https://github.com/vendia/serverless-express/issues/297
+  return new Promise((resolve, reject) => {
+    awsServerlessExpress.proxy(
+      server,
+      modifiedEvent,
+      { ...context, succeed: resolve, fail: reject }
+    );
+  });
 };
 
 module.exports = {

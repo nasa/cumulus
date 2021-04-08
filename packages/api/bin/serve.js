@@ -16,7 +16,6 @@ const {
   localUserName,
   getESClientAndIndex,
 } = require('./local-test-defaults');
-const { constructOnlineAccessUrl } = require('@cumulus/cmrjs/cmr-utils');
 
 const workflowList = testUtils.getWorkflowList();
 
