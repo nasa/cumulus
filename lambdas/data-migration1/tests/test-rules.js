@@ -9,7 +9,10 @@ const { createBucket, putJsonS3Object, recursivelyDeleteS3Bucket } = require('@c
 const { translateApiCollectionToPostgresCollection, translateApiProviderToPostgresProvider, RulePgModel } = require('@cumulus/db');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -18,7 +21,6 @@ const { migrationDir } = require('../../db-migration');
 const { migrateRuleRecord, migrateRules } = require('../dist/lambda/rules');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 const workflow = randomId('workflow-');
 const ruleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule'];
 
@@ -73,26 +75,11 @@ test.before(async (t) => {
   await rulesModel.createTable();
   await createBucket(process.env.system_bucket);
 
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
   t.context.rulePgModel = new RulePgModel();
-
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
 
   await Promise.all([
     putJsonS3Object(
@@ -135,9 +122,11 @@ test.after.always(async (t) => {
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {

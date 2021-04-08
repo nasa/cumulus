@@ -12,7 +12,11 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { S3KeyPairProvider } = require('@cumulus/common/key-pair-provider');
-const { getKnexClient, localStackConnectionEnv, ProviderPgModel } = require('@cumulus/db');
+const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  ProviderPgModel,
+} = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 const {
@@ -24,7 +28,6 @@ const {
 const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 
 const generateFakeProvider = (params) => ({
   id: cryptoRandomString({ length: 10 }),
@@ -79,24 +82,9 @@ test.before(async (t) => {
   rulesModel = new Rule();
   await rulesModel.createTable();
 
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
 test.afterEach.always(async (t) => {
@@ -107,9 +95,11 @@ test.after.always(async (t) => {
   await providersModel.deleteTable();
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('migrateProviderRecord correctly migrates provider record', async (t) => {
