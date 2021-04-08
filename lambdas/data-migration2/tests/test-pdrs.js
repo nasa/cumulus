@@ -1,9 +1,11 @@
-const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const test = require('ava');
+const sinon = require('sinon');
 
 const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Pdr = require('@cumulus/api/models/pdrs');
+const Logger = require('@cumulus/logger');
 
 const {
   CollectionPgModel,
@@ -419,4 +421,32 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 1);
+});
+
+test.serial('migratePdrs logs summary of migration every 100 records', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  const {
+    knex,
+    testCollection,
+    testProvider,
+  } = t.context;
+
+  const pdrs = [];
+  for (let i = 0; i <= 200; i += 1) {
+    const testPdr = generateTestPdr({
+      collectionId: buildCollectionId(testCollection.name, testCollection.version),
+      provider: testProvider.name,
+    });
+    pdrs.push(testPdr);
+  }
+
+  await Promise.all(pdrs.map((p) => pdrsModel.create(p)));
+
+  t.teardown(async () => {
+    logSpy.restore();
+    await Promise.all(pdrs.map((p) => pdrsModel.delete({ pdrName: p.pdrName })));
+  });
+
+  await migratePdrs(process.env, knex);
+  t.true(logSpy.calledWith('Batch of 100 PDR records processed, 200 total'));
 });

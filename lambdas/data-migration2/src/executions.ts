@@ -91,6 +91,10 @@ export const migrateExecutions = async (
   while (record) {
     migrationSummary.dynamoRecords += 1;
 
+    if (migrationSummary.dynamoRecords % 100 === 0) {
+      logger.info(`Batch of 100 execution records processed, ${migrationSummary.dynamoRecords} total`);
+    }
+
     try {
       await migrateExecutionRecord(<ExecutionRecord>record, knex);
       migrationSummary.success += 1;

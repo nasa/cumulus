@@ -155,6 +155,10 @@ export const migrateGranuleAndFilesViaTransaction = async (
   granulesSummary.dynamoRecords += 1;
   filesSummary.dynamoRecords += files.length;
 
+  if (granulesSummary.dynamoRecords % 100 === 0) {
+    logger.info(`Batch of 100 granule records processed, ${granulesSummary.dynamoRecords} total`);
+  }
+
   try {
     await knex.transaction(async (trx) => {
       const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx);

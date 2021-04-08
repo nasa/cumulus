@@ -1,9 +1,11 @@
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
+const sinon = require('sinon');
 const test = require('ava');
 
 const Granule = require('@cumulus/api/models/granules');
 const s3Utils = require('@cumulus/aws-client/S3');
+const Logger = require('@cumulus/logger');
 
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeFileFactory } = require('@cumulus/api/lib/testUtils');
@@ -600,4 +602,32 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   const fileRecords = await knex(tableNames.files);
   t.is(records.length, 1);
   t.is(fileRecords.length, 1);
+});
+
+test.serial('migrateGranulesAndFiles logs summary of migration every 100 records', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  const {
+    knex,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const granules = [];
+  for (let i = 0; i <= 200; i += 1) {
+    const testGranule = generateTestGranule({
+      collectionId: buildCollectionId(testCollection.name, testCollection.version),
+      execution: testExecution.url,
+    });
+    granules.push(testGranule);
+  }
+
+  await Promise.all(granules.map((g) => granulesModel.create(g)));
+
+  t.teardown(async () => {
+    logSpy.restore();
+    await Promise.all(granules.map((g) => granulesModel.delete(g)));
+  });
+
+  await migrateGranulesAndFiles(process.env, knex);
+  t.true(logSpy.calledWith('Batch of 100 granule records processed, 200 total'));
 });
