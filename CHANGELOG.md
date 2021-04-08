@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add cookbok entry for queueing PostToCmr step
   - Add example workflow to go with cookbook
 
+- **CUMULUS-1808**
+  - Add additional error messaging in `deleteSnsTrigger` to give users more context about where to look to resolve ResourceNotFound error when disabling or deleting a rule.
+
 ### Fixed
 - **CUMULUS-2281**
   - Changed discover-granules task to write discovered granules directly to
