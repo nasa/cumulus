@@ -198,13 +198,14 @@ test.serial('queryRules returns correct rules for given state and type', async (
 });
 
 test.serial('queryRules defaults to returning only ENABLED rules', async (t) => {
+  const enabledRule = fakeRuleFactoryV2({
+    rule: {
+      type: 'onetime',
+    },
+    state: 'ENABLED',
+  });
   const rules = [
-    fakeRuleFactoryV2({
-      rule: {
-        type: 'onetime',
-      },
-      state: 'ENABLED',
-    }),
+    enabledRule,
     fakeRuleFactoryV2({
       rule: {
         type: 'onetime',
@@ -217,10 +218,7 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
     type: 'onetime',
   });
   t.is(results.length, 1);
-  const expectedRule = results[0];
-  delete expectedRule.createdAt;
-  delete expectedRule.updatedAt;
-  t.deepEqual(rules[0], expectedRule);
+  t.deepEqual(rules[0], enabledRule);
 
   t.teardown(async () => {
     await Promise.all(rules.map((rule) => rulesModel.delete(rule)));

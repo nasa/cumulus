@@ -9,9 +9,9 @@ const {
   localStackConnectionEnv,
   generateLocalTestDb,
   destroyLocalTestDb,
-  tableNames,
   translateApiProviderToPostgresProvider,
   nullifyUndefinedProviderValues,
+  ProviderPgModel,
 } = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
@@ -65,6 +65,9 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
+  t.context.providerPgModel = new ProviderPgModel();
+
+  t.context.providerPgModel = new ProviderPgModel();
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -141,10 +144,12 @@ test('POST with invalid authorization scheme returns an invalid authorization re
 });
 
 test('POST creates a new provider', async (t) => {
+  const { providerPgModel } = t.context;
   const newProviderId = randomString();
   const newProvider = fakeProviderFactory({
     id: newProviderId,
   });
+  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(newProvider);
 
   const postgresOmitList = ['created_at', 'updated_at', 'cumulus_id'];
 
@@ -156,21 +161,54 @@ test('POST creates a new provider', async (t) => {
     .expect(200);
 
   const { message, record } = response.body;
-  const rdsRecord = await t.context.testKnex(tableNames.providers).select().where({
-    name: newProviderId,
-  });
-  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(newProvider);
+  const pgRecords = await providerPgModel.search(
+    t.context.testKnex,
+    { name: newProviderId }
+  );
+
   t.is(message, 'Record saved');
   t.is(record.id, newProviderId);
-  t.is(rdsRecord.length, 1);
+  t.is(pgRecords.length, 1);
+
+  const [providerPgRecord] = pgRecords;
 
   t.deepEqual(
-    omit(rdsRecord[0], postgresOmitList),
+    omit(providerPgRecord, postgresOmitList),
     omit(
       nullifyUndefinedProviderValues(postgresExpectedProvider),
       postgresOmitList
     )
   );
+});
+
+test('POST creates a new provider in Dynamo and PG with correct timestamps', async (t) => {
+  const { providerPgModel } = t.context;
+  const newProviderId = randomString();
+  const newProvider = fakeProviderFactory({
+    id: newProviderId,
+  });
+
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { record } = response.body;
+  const pgRecords = await providerPgModel.search(
+    t.context.testKnex,
+    { name: newProviderId }
+  );
+
+  const [providerPgRecord] = pgRecords;
+
+  t.true(record.createdAt > newProvider.createdAt);
+  t.true(record.updatedAt > newProvider.updatedAt);
+
+  // PG and Dynamo records have the same timestamps
+  t.is(providerPgRecord.created_at.getTime(), record.createdAt);
+  t.is(providerPgRecord.updated_at.getTime(), record.updatedAt);
 });
 
 test('POST returns a 409 error if the provider already exists', async (t) => {
@@ -192,7 +230,8 @@ test('POST returns a 409 error if the provider already exists', async (t) => {
 test('POST returns a 409 error if the provider already exists in RDS', async (t) => {
   const newProvider = fakeProviderFactory();
 
-  await t.context.testKnex(tableNames.providers).insert(
+  await t.context.providerPgModel.create(
+    t.context.testKnex,
     await translateApiProviderToPostgresProvider(newProvider)
   );
   const response = await request(app)
