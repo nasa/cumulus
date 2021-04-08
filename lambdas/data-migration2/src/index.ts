@@ -10,7 +10,7 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
 }
 
-export const handler = async (event: HandlerEvent): Promise<object> => {
+export const handler = async (event: HandlerEvent): Promise<MigrationSummary> => {
   const env = event.env ?? process.env;
   const knex = await getKnexClient({ env });
 
