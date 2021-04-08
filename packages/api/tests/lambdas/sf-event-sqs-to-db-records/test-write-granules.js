@@ -377,7 +377,7 @@ test('writeGranules() saves file records to RDS if RDS write is enabled and work
   );
 });
 
-test.serial('writeGranules() does not persist file records to RDS if the worflow status is "running"', async (t) => {
+test('writeGranules() does not persist file records to RDS if the worflow status is "running"', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
