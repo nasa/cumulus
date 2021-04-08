@@ -367,14 +367,15 @@ test('writeGranules() saves granule records to Dynamo and RDS with same timestam
 
 test('writeGranules() saves file records to RDS if RDS write is enabled and workflow status is "completed"', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
+    executionCumulusId,
+    filePgModel,
+    granuleId,
     granuleModel,
     granulePgModel,
     knex,
-    collectionCumulusId,
-    executionCumulusId,
     providerCumulusId,
-    granuleId,
   } = t.context;
 
   cumulusMessage.meta.status = 'completed';
@@ -397,20 +398,21 @@ test('writeGranules() saves file records to RDS if RDS write is enabled and work
   );
 
   t.true(
-    await doesRecordExist({ granule_cumulus_id: granule.cumulus_id }, knex, tableNames.files)
+    await filePgModel.exists(knex, { granule_cumulus_id: granule.cumulus_id })
   );
 });
 
 test('writeGranules() does not persist file records to RDS if the worflow status is "running"', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
+    executionCumulusId,
+    filePgModel,
+    granuleId,
     granuleModel,
     granulePgModel,
     knex,
-    collectionCumulusId,
-    executionCumulusId,
     providerCumulusId,
-    granuleId,
   } = t.context;
 
   cumulusMessage.meta.status = 'running';
@@ -433,7 +435,7 @@ test('writeGranules() does not persist file records to RDS if the worflow status
   );
 
   t.false(
-    await doesRecordExist({ granule_cumulus_id: granule.cumulus_id }, knex, tableNames.files)
+    await filePgModel.exists(knex, { granule_cumulus_id: granule.cumulus_id })
   );
 });
 
