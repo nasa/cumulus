@@ -37,7 +37,8 @@ variable "cluster_identifier" {
 
 variable "db_admin_username" {
   description = "Username for RDS database administrator authentication"
-  type = string
+  type        = string
+  default     = "postgres"
 }
 
 variable "db_admin_password" {
@@ -52,7 +53,7 @@ variable "profile" {
 }
 
 variable "region" {
-  description = "Region to deploy to"
+  description = "Region to deploy module to"
   type        = string
   default     = "us-east-1"
 }
@@ -60,7 +61,7 @@ variable "region" {
 variable "security_group_name" {
   description = "Name for RDS access security group"
   type        = string
-  default     = "cumulus_rds_cluster_access_ingress"
+  default     = "cumulus_rds_cluster_acess_ingress"
 }
 
 variable "snapshot_identifier" {
@@ -88,4 +89,35 @@ variable "engine_version" {
   description = "Postgres engine version for serverless cluster"
   type        = string
   default     = "10.12"
+}
+
+variable "max_capacity" {
+  type = number
+  default = 4
+}
+
+variable "min_capacity" {
+  type = number
+  default = 2
+}
+
+### Required for user/database provisioning
+variable "provision_user_database" {
+  description = "true/false flag to configure if the module should provision a user and database using default settings"
+  type = bool
+  default = false
+}
+
+variable "prefix" {
+  type = string
+  default = "cumulus-rds-tf"
+}
+variable "permissions_boundary_arn" {
+  type    = string
+  default = ""
+}
+
+variable "rds_user_password" {
+  type    = string
+  default = "changeme"
 }

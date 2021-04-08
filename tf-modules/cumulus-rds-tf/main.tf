@@ -6,7 +6,6 @@ terraform {
     }
   }
 }
-
 provider "aws" {
   region  = var.region
   profile = var.profile
@@ -14,7 +13,6 @@ provider "aws" {
     key_prefixes = ["gsfc-ngap"]
   }
 }
-
 resource "aws_db_subnet_group" "default" {
   name_prefix = var.aws_db_subnet_group_prefix
   subnet_ids  = var.subnets
@@ -68,8 +66,8 @@ resource "aws_rds_cluster" "cumulus" {
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
   scaling_configuration {
-    max_capacity = 4
-    min_capacity = 2
+    max_capacity = var.max_capacity
+    min_capacity = var.min_capacity
   }
   vpc_security_group_ids    = [aws_security_group.rds_cluster_access.id]
   deletion_protection       = var.deletion_protection

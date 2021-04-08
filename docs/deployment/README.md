@@ -20,6 +20,7 @@ The process involves:
 - Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
 - Configuring a VPC, if necessary
 - Configuring an Earthdata application, if necessary
+- Creating/configuring a Postgres 10.2 compatible database, and an AWS KMS secret to allow database access
 - Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
@@ -215,6 +216,36 @@ $ aws dynamodb create-table \
     --region us-east-1
 ```
 
+### Create the database cluster
+
+Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](postgres-database-deployment) utilizing Aurora Serverless, however any cluster setup will work, given the following:
+
+- The database cluster is configured with a security group that allows access to the cluster that can be provided as a config input to Core for use in Core's lambdas/ECS instances and other components.
+- The database cluster is configured such that it's endpoint is accessible within the VPC and subnets configured for the Core deployment.
+- A KMS secret exists that the Cumulus deployment user can assign IAM roles with access that has the following format:
+
+```json
+{
+  "database": "postgres",
+  "dbClusterIdentifier": "clusterName",
+  "engine": "postgres",
+  "host": "xxx",
+  "password": "defaultPassword",
+  "port": 5432,
+  "username": "xxx"
+}
+```
+
+- `database` -- the postgres database used by the configured user
+- `dbClusterIdentifier` -- the value set by the  `cluster_identifier` variable in the terraform module
+- `engine` -- the Aurora/RDS database engine
+- `host` -- the RDS service host for the database in the form (dbClusterIdentifier)-(AWS ID string).(region).rds.amazonaws.com
+- `password` -- the database password
+- `username` -- the account username
+- `port` -- The database connection port, should always be 5432
+
+This secret should provide access to a postgres database provisioned on the cluster.
+
 ---
 
 ## Deploy the Cumulus instance
@@ -378,6 +409,10 @@ Notes on specific variables:
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 - **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
+- **`rds_security_group`**: The security group used to allow access to the Postgres database
+- **`rds_user_access_secret_arn`**: The ARN for the KMS secret that provides database access information
+- **`rds_connection_heartbeat`**:  When using RDS/Aurora Serverless as a database backend, this should be set to `true`, this tells Core to always use a 'heartbeat' query when establishing a database connection to avoid spin-up timeout failures.
+
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
 
