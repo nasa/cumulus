@@ -94,8 +94,6 @@ async function checkOrCreateTables(stackName) {
   const tables = await setTableEnvVariables(stackName);
   const limit = pLimit(1);
 
-  // console.log('tables', tables);
-
   let i = -1;
   const promises = tables.tableModels.map((t) => limit(() => {
     i += 1;
