@@ -183,13 +183,34 @@ export const migrateGranuleAndFilesViaTransaction = async (
 
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
-  knex: Knex
+  knex: Knex,
+  granuleSearchParams?: { collectionId: string }
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
 
-  const searchQueue = new DynamoDbSearchQueue({
+  const defaultSearchParams = {
     TableName: granulesTable,
-  });
+  };
+  let extraSearchParams = {};
+
+  if (granuleSearchParams) {
+    if (granuleSearchParams.collectionId) {
+      extraSearchParams = {
+        KeyConditionExpression: 'collectionId = :collectionIdValue',
+        ExpressionAttributeValues: {
+          ':collectionIdValue': granuleSearchParams.collectionId,
+        },
+      };
+    }
+  }
+
+  const searchQueue = new DynamoDbSearchQueue(
+    {
+      ...defaultSearchParams,
+      ...extraSearchParams,
+    },
+    granuleSearchParams ? 'query' : 'scan'
+  );
 
   const granuleMigrationSummary = {
     dynamoRecords: 0,
