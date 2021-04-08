@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       of returning `none` when the operation did not return output.
   - **CUMULUS-2309**
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
+  - **CUMULUS-2385**
+    - Update `sf-event-sqs-to-db-records` to write a granule's files to Postgres
+    only after the workflow as exited the `Running` status.
 
 ### Added
 
@@ -150,7 +153,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
     - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
     - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
-   
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes
