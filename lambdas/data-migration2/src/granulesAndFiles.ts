@@ -171,7 +171,6 @@ export const migrateGranuleAndFilesViaTransaction = async (
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
       granulesSummary.skipped += 1;
-      logger.info(error);
     } else {
       granulesSummary.failed += 1;
       filesSummary.failed += files.length;
