@@ -9,6 +9,7 @@ const {
   ProviderPgModel,
   ExecutionPgModel,
   GranulePgModel,
+  FilePgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,
@@ -48,6 +49,7 @@ test.before(async (t) => {
   t.context.granuleModel = granuleModel;
 
   t.context.granulePgModel = new GranulePgModel();
+  t.context.filePgModel = new FilePgModel();
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
 
