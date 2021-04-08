@@ -6,18 +6,17 @@ hide_title: false
 
 ## Overview
 
-Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided as the primary database moving forward
-in addition to the existing DynamoDB/ElasticSearch backend.
+Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided in addition to the existing DynamoDB/ElasticSearch backend with the eventual goal of utilizing the Postgres database as the primary data store for Cumulus.
 
 Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
 
-For some scenarios (such as single tenant, test deployments, heavy but infrequent ingest and the like) a properly
+For some scenarios (such as single tenant, test deployments, infrequent ingest and the like) a properly
 configured [Aurora Serverless](https://aws.amazon.com/rds/aurora/serverless/) cluster
 *may* suffice.
 
 To that end, Cumulus provides a terraform module
 [`cumulus-rds-tf`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-rds-tf)
-that will deploy an AWS RDS Aurora Serverless Postgres 10 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
+that will deploy an AWS RDS Aurora Serverless Postgres 10.2 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
 
 We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/rds-cluster-tf/) on github.
 
@@ -34,8 +33,8 @@ Configuration/installation of this module requires the following:
 
 - [Terraform](https://www.terraform.io)
 - git
-- A VPC configured for use with Cumulus Core.  This should match the subnets you provide when [Deploying Cumulus](/deployment/deployment-readme) to allow Core's lambdas to properly access the database.
-- At least two subnets across multiple AZs.  These should match the subnets you provide as configuration when [Deploying Cumulus](/deployment/deployment-readme), and should be within the same VPC.
+- A VPC configured for use with Cumulus Core.  This should match the subnets you provide when [Deploying Cumulus](deployment-readme) to allow Core's lambdas to properly access the database.
+- At least two subnets across multiple AZs.  These should match the subnets you provide as configuration when [Deploying Cumulus](deployment-readme), and should be within the same VPC.
 
 ### Needed Git Repositories
 
@@ -60,7 +59,7 @@ For Cumulus specific instructions on installation of Terraform, refer to the mai
 
 #### Aurora/RDS
 
-This document also assumes some basic familiarity with Postgres databases, and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the AWS docs [here](https://aws.amazon.com/rds/aurora/), and the Aurora Serverless V1 docs [here](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.html).
+This document also assumes some basic familiarity with Postgres databases, and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the [AWS docs](https://aws.amazon.com/rds/aurora/), and the [Aurora Serverless V1 docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.html).
 
 ## Prepare deployment repository
 
@@ -110,7 +109,7 @@ If you don't want to set environment variables, [access keys can be stored local
 
 ## Create resources for Terraform state
 
-> _If you're re-deploying an existing postgres-database cluster  you should skip to [Deploy the module](postgres-database-deployment#deploy-the-module), as these values should already be configured._
+> _If you're re-deploying an existing postgres-database cluster  you should skip to [Deploy](postgres_database_deployment#deploy), as these values should already be configured._
 
 The state of the Terraform deployment is stored in S3. In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`.
 
@@ -372,7 +371,7 @@ security_group_id = xxxxxxxxx
 user_credentials_secret_arn = arn:aws:secretsmanager:us-east-1:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA
 ```
 
-Note the output values for `admin_db_login_secret_arn` (and optionally `user_credentials_secret_arn`) as these provide the AWS KMS secret required to access the database as the administrative user and, optionally, the user database credentials Cumulus requires as well.
+Note the output values for `admin_db_login_secret_arn` (and optionally `user_credentials_secret_arn`) as these provide the AWS Secrets Manager secret required to access the database as the administrative user and, optionally, the user database credentials Cumulus requires as well.
 
 The content of each of these secrets are is in the form:
 

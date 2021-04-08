@@ -216,13 +216,15 @@ $ aws dynamodb create-table \
     --region us-east-1
 ```
 
-### Create the database cluster
+---
 
-Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](postgres-database-deployment) utilizing Aurora Serverless, however any cluster setup will work, given the following:
+## Configure the Postgres database
+
+Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](postgres_database_deployment) utilizing Aurora Serverless, however any cluster setup will work, given the following:
 
 - The database cluster is configured with a security group that allows access to the cluster that can be provided as a config input to Core for use in Core's lambdas/ECS instances and other components.
 - The database cluster is configured such that it's endpoint is accessible within the VPC and subnets configured for the Core deployment.
-- A KMS secret exists that the Cumulus deployment user can assign IAM roles with access that has the following format:
+- An AWS Secrets Manager secret exists that the Cumulus deployment user can assign IAM roles with access that has the following format:
 
 ```json
 {
@@ -245,6 +247,11 @@ Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.   
 - `port` -- The database connection port, should always be 5432
 
 This secret should provide access to a postgres database provisioned on the cluster.
+
+To configure Cumulus you will need:
+
+- The AWS Secrets Manager ARN for the *user* Core will write with (e.g. `arn:aws:secretsmanager:AWS-REGION:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA` ) for use in configuring `rds_user_access_secret_arn`.
+- The security group that provides access to the cluster to configure `rds_security_group`.
 
 ---
 
