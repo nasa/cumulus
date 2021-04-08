@@ -44,7 +44,7 @@ services:
     image: maven.earthdata.nasa.gov/localstack/localstack:0.10.7
     network_mode: "service:build_env"
     environment:
-      SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions"
+      SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm"
   build_env:
     image: maven.earthdata.nasa.gov/cumulus:latest
     volumes:
