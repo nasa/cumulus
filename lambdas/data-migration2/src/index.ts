@@ -13,6 +13,8 @@ export interface HandlerEvent {
 
 export const handler = async (event: HandlerEvent): Promise<object> => {
   const env = event.env ?? process.env;
+  const logInterval : number = process.env.logSummaryInterval
+    ? Number.parseInt(process.env.logSummaryInterval, 10) : 90000;
 
   const knex = await getKnexClient({ env });
 
@@ -51,7 +53,7 @@ export const handler = async (event: HandlerEvent): Promise<object> => {
     const result: MigrationSummary = {
       MigrationSummary: summary,
     };
-    setInterval(() => logSummary(result), 90000);
+    setInterval(() => logSummary(result), logInterval);
     return result;
   } finally {
     await knex.destroy();
