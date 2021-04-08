@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
   - **CUMULUS-2385**
     - Update `sf-event-sqs-to-db-records` to write a granule's files to Postgres
-    only after the workflow as exited the `Running` status.
+    only after the workflow has exited the `Running` status.
 
 ### Added
 
