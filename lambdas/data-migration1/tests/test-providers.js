@@ -240,11 +240,11 @@ test.serial('migrateProviderRecord correctly preserves KMS-encrypted credentials
   t.is(await KMS.decryptBase64String(createdRecord.password), 'my-password');
 });
 
-test.serial('migrateProviderRecord throws error on invalid source data from Dynamo', async (t) => {
+test.serial('migrateProviderRecord throws error on invalid PG record', async (t) => {
   const { knex } = t.context;
   const fakeProvider = generateFakeProvider();
 
-  // make source record invalid
+  // make source record invalid so PG record will be invalid
   delete fakeProvider.id;
 
   await t.throwsAsync(migrateProviderRecord(fakeProvider, knex));
