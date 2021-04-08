@@ -629,5 +629,6 @@ test.serial('migrateGranulesAndFiles logs summary of migration every 100 records
   });
 
   await migrateGranulesAndFiles(process.env, knex);
+  t.true(logSpy.calledWith('Batch of 100 granule records processed, 100 total'));
   t.true(logSpy.calledWith('Batch of 100 granule records processed, 200 total'));
 });

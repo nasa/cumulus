@@ -448,5 +448,6 @@ test.serial('migratePdrs logs summary of migration every 100 records', async (t)
   });
 
   await migratePdrs(process.env, knex);
+  t.true(logSpy.calledWith('Batch of 100 PDR records processed, 100 total'));
   t.true(logSpy.calledWith('Batch of 100 PDR records processed, 200 total'));
 });

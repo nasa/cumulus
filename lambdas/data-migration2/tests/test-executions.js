@@ -511,5 +511,6 @@ test.serial('migrateExecutions logs summary of migration every 100 records', asy
   });
 
   await migrateExecutions(process.env, t.context.knex);
+  t.true(logSpy.calledWith('Batch of 100 execution records processed, 100 total'));
   t.true(logSpy.calledWith('Batch of 100 execution records processed, 200 total'));
 });
