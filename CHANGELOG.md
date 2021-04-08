@@ -150,7 +150,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
     - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
     - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
-   
+  - **CUMULUS-2451**
+    - Added summary type file `packages/db/src/types/summary.ts` with `MigrationSummary` and `DataMigration1` and `DataMigration2` types.
+    - Updated `data-migration1` and `data-migration2` lambdas to return summary objects.
+    - Added intermittent logging based on batch of 100 records processed for executions, granules and files, and PDRs.
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes
