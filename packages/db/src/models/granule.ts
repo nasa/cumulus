@@ -18,14 +18,14 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
-    executionCumulusId: number,
+    executionCumulusId?: number,
     granulesExecutionsPgModel = new GranulesExecutionsPgModel()
   ) {
     if (!granule.created_at) {
       throw new Error(`To upsert granule record must have 'created_at' set: ${JSON.stringify(granule)}`);
     }
     if (granule.status === 'running') {
-      return knexOrTrx(this.tableName)
+      const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
         .merge({
@@ -34,18 +34,23 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           updated_at: granule.updated_at,
           created_at: granule.created_at,
         })
-        .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`))
+        .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`));
+
+      if (executionCumulusId) {
         // Only do the upsert if there IS NOT already a record associating
         // the granule to this execution. If there IS already a record
         // linking this granule to this execution, then this upsert query
         // will not affect any rows.
-        .whereNotExists(
+        upsertQuery.whereNotExists(
           granulesExecutionsPgModel.search(
             knexOrTrx,
             { execution_cumulus_id: executionCumulusId }
           )
-        )
-        .returning('cumulus_id');
+        );
+      }
+
+      upsertQuery.returning('cumulus_id');
+      return upsertQuery;
     }
     return knexOrTrx(this.tableName)
       .insert(granule)
