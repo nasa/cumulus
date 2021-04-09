@@ -39,6 +39,11 @@ Resources:
           sed -i '/^\s*DOCKER_STORAGE_OPTIONS=/d' /etc/sysconfig/docker-storage
           echo 'DOCKER_STORAGE_OPTIONS="--storage-driver ${docker_storage_driver}"' >> /etc/sysconfig/docker-storage
 %{ endif ~}
+
+%{ if include_docker_cleanup_cronjob == true ~}
+          echo '* * * * * sudo sh -c "docker ps -q | xargs docker inspect --format='\{{.State.Pid}}' | xargs -IZ fstrim /proc/Z/root/"' | crontab -
+%{ endif ~}
+
           --==BOUNDARY==
           Content-Type: text/x-shellscript; charset="us-ascii"
 
