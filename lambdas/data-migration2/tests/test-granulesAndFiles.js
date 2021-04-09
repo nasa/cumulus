@@ -17,7 +17,6 @@ const {
   generateLocalTestDb,
   GranulesExecutionsPgModel,
   GranulePgModel,
-  // tableNames,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
@@ -111,27 +110,17 @@ test.beforeEach(async (t) => {
     url: executionUrl,
   });
 
-  const executionResponse = await executionPgModel.create(
+  [t.context.executionCumulusId] = await executionPgModel.create(
     t.context.knex,
     testExecution
   );
   t.context.testExecution = testExecution;
-  t.context.executionCumulusId = executionResponse[0];
 
   t.context.testGranule = generateTestGranule({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     execution: executionUrl,
   });
 });
-
-// test.afterEach.always(async (t) => {
-//   // TODO: we should be just removing the records via `delete` methods
-//   // await t.context.knex(tableNames.files).del();
-//   // await t.context.knex(tableNames.granulesExecutions).del();
-//   // await t.context.knex(tableNames.granules).del();
-//   // await t.context.knex(tableNames.collections).del();
-//   // await t.context.knex(tableNames.executions).del();
-// });
 
 test.after.always(async (t) => {
   await granulesModel.deleteTable();
@@ -154,7 +143,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
     testGranule,
   } = t.context;
 
-  const [granuleCumulusId] = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -318,7 +307,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   delete testGranule.queryFields;
   delete testGranule.version;
 
-  const [granuleCumulusId] = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -378,7 +367,7 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error if previous
     updatedAt: Date.now() - 1000,
   };
 
-  const [granuleCumulusId] = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -404,7 +393,7 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
     status: 'running',
   });
 
-  const [granuleCumulusId] = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
 
   // We do not allow updates on granules where the status is "running"
   // and a GranulesExecutions record has already been created to prevent out-of-order writes.
@@ -508,11 +497,7 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
     testGranule,
   } = t.context;
 
-  const [granuleCumulusId] = await migrateGranuleRecord(testGranule, knex);
-  t.teardown(async () => {
-    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
-  });
-
+  await migrateGranuleRecord(testGranule, knex);
   await granulesModel.create(testGranule);
 
   t.teardown(() => {
@@ -537,6 +522,10 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
 
   const records = await t.context.granulePgModel.search(t.context.knex, {});
   t.is(records.length, 1);
+
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
+  });
 });
 
 test.serial('migrateGranulesAndFiles processes multiple granules and files', async (t) => {
@@ -548,7 +537,6 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
   } = t.context;
 
   const testGranule1 = testGranule;
-
   const testGranule2 = generateTestGranule({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
