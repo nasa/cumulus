@@ -3,13 +3,11 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import Logger from '@cumulus/logger';
 import {
-  getRecordCumulusId,
   CollectionPgModel,
+  ExecutionPgModel,
   PdrPgModel,
-  PostgresExecutionRecord,
   PostgresPdr,
   ProviderPgModel,
-  tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import {
@@ -43,6 +41,7 @@ export const migratePdrRecord = async (
   Manager.recordIsValid(dynamoRecord, schemas.pdr);
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
 
@@ -74,10 +73,9 @@ export const migratePdrRecord = async (
   );
 
   const executionCumulusId = dynamoRecord.execution
-    ? await getRecordCumulusId<PostgresExecutionRecord>(
-      { arn: dynamoRecord.execution },
-      tableNames.executions,
-      knex
+    ? await executionPgModel.getRecordCumulusId(
+      knex,
+      { arn: dynamoRecord.execution }
     )
     : undefined;
 
