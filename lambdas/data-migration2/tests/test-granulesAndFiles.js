@@ -602,7 +602,7 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   t.is(fileRecords.length, 1);
 });
 
-test.serial.only('migrateGranulesAndFiles only processes records for specified collection', async (t) => {
+test.serial('migrateGranulesAndFiles only processes records for specified collection', async (t) => {
   const {
     knex,
     testCollection,
@@ -617,6 +617,7 @@ test.serial.only('migrateGranulesAndFiles only processes records for specified c
     execution: testExecution.url,
   });
 
+  // this record should not be migrated
   const testGranule3 = generateTestGranule({
     collectionId: buildCollectionId(cryptoRandomString({ length: 3 }), testCollection.version),
     execution: testExecution.url,
@@ -651,8 +652,57 @@ test.serial.only('migrateGranulesAndFiles only processes records for specified c
       success: 2,
     },
   });
-  const records = await knex(tableNames.granules);
-  const fileRecords = await knex(tableNames.files);
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
+  t.is(records.length, 2);
+});
+
+test.serial('migrateGranulesAndFiles only processes records for specified granuleId', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testExecution,
+    testGranule,
+  } = t.context;
+
+  const testGranule2 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+  });
+  const testGranule3 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+  });
+
+  await Promise.all([
+    // only this first record should be migrated
+    granulesModel.create(testGranule),
+    granulesModel.create(testGranule2),
+    granulesModel.create(testGranule3),
+  ]);
+
+  t.teardown(async () => {
+    granulesModel.delete({ granuleId: testGranule.granuleId });
+    granulesModel.delete({ granuleId: testGranule2.granuleId });
+    granulesModel.delete({ granuleId: testGranule3.granuleId });
+  });
+
+  const migrationSummary = await migrateGranulesAndFiles(process.env, knex, {
+    granuleId: testGranule.granuleId,
+  });
+  t.deepEqual(migrationSummary, {
+    filesSummary: {
+      dynamoRecords: 1,
+      failed: 0,
+      skipped: 0,
+      success: 1,
+    },
+    granulesSummary: {
+      dynamoRecords: 1,
+      failed: 0,
+      skipped: 0,
+      success: 1,
+    },
+  });
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
   t.is(records.length, 1);
-  t.is(fileRecords.length, 1);
 });

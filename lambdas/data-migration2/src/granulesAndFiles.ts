@@ -33,6 +33,11 @@ export interface GranulesAndFilesMigrationSummary {
   filesSummary: MigrationSummary,
 }
 
+interface GranuleDynamoSearchParams {
+  collectionId?: string
+  granuleId?: string
+}
+
 /**
  * Migrate granules record from Dynamo to RDS.
  *
@@ -184,7 +189,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
-  granuleSearchParams?: { collectionId: string }
+  granuleSearchParams: GranuleDynamoSearchParams = {}
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
 
@@ -193,15 +198,21 @@ export const migrateGranulesAndFiles = async (
   };
   let extraSearchParams = {};
 
-  if (granuleSearchParams) {
-    if (granuleSearchParams.collectionId) {
-      extraSearchParams = {
-        KeyConditionExpression: 'collectionId = :collectionIdValue',
-        ExpressionAttributeValues: {
-          ':collectionIdValue': granuleSearchParams.collectionId,
-        },
-      };
-    }
+  if (granuleSearchParams.granuleId) {
+    extraSearchParams = {
+      KeyConditionExpression: 'granuleId = :granuleId',
+      ExpressionAttributeValues: {
+        ':granuleId': granuleSearchParams.granuleId,
+      },
+    };
+  } else if (granuleSearchParams.collectionId) {
+    extraSearchParams = {
+      IndexName: 'collectionId-granuleId-index',
+      KeyConditionExpression: 'collectionId = :collectionId',
+      ExpressionAttributeValues: {
+        ':collectionId': granuleSearchParams.collectionId,
+      },
+    };
   }
 
   const searchQueue = new DynamoDbSearchQueue(
