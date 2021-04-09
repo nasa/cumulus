@@ -38,12 +38,16 @@ module "provision_database" {
 }
 
 module "data_persistence" {
-  source                      = "../../tf-modules/data-persistence"
-  prefix                      = var.prefix
-  subnet_ids                  = var.subnet_ids
-  enable_point_in_time_tables = var.enable_point_in_time_tables
+  depends_on                     = [module.provision_database.user_database_provision]
+  source                         = "../../tf-modules/data-persistence"
+  prefix                         = var.prefix
+  subnet_ids                     = var.subnet_ids
+  enable_point_in_time_tables    = var.enable_point_in_time_tables
 
-  elasticsearch_config = var.elasticsearch_config
+  elasticsearch_config           = var.elasticsearch_config
 
+  rds_security_group_id          = var.rds_security_group
+  rds_user_access_secret_arn     = module.provision_database.database_credentials_secret_arn
+  permissions_boundary_arn       = var.permissions_boundary_arn
   tags = merge(var.tags, { Deployment = var.prefix })
 }

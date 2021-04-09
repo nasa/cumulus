@@ -61,14 +61,14 @@ resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
 
 # Elasticsearch domain in a VPC
 
-data "aws_subnet" "first_es_domain_subnet" {
+data "aws_subnet" "first_module_subnet" {
   count = local.deploy_inside_vpc ? 1 : 0
   id    = var.subnet_ids[0]
 }
 
 resource "aws_security_group" "es_vpc" {
   count  = local.deploy_inside_vpc ? 1 : 0
-  vpc_id = data.aws_subnet.first_es_domain_subnet[0].vpc_id
+  vpc_id = data.aws_subnet.first_module_subnet[0].vpc_id
 
   egress {
     from_port   = 0
