@@ -7,8 +7,11 @@ const Granule = require('@cumulus/api/models/granules');
 const Pdr = require('@cumulus/api/models/pdrs');
 const Provider = require('@cumulus/api/models/providers');
 
-const { fakeFileFactory } = require('@cumulus/api/lib/testUtils');
-const { randomId } = require('@cumulus/common/test-utils');
+const {
+  fakeGranuleFactoryV2,
+  fakeExecutionFactoryV2,
+  fakePdrFactoryV2,
+} = require('@cumulus/api/lib/testUtils');
 
 const {
   createBucket,
@@ -20,12 +23,12 @@ const {
   destroyLocalTestDb,
   ExecutionPgModel,
   fakeCollectionRecordFactory,
-  fakeExecutionRecordFactory,
   fakeProviderRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
+  GranulePgModel,
 } = require('@cumulus/db');
 
 // eslint-disable-next-line node/no-unpublished-require
@@ -33,7 +36,6 @@ const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
-const dateString = new Date().toString();
 
 test.before(async (t) => {
   process.env = {
@@ -68,49 +70,34 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+
+  t.context.pdrPgModel = new PdrPgModel();
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
 });
 
 test.beforeEach(async (t) => {
-  t.context.pdrPgModel = new PdrPgModel();
-
-  const collectionPgModel = new CollectionPgModel();
   const testCollection = fakeCollectionRecordFactory();
-  await collectionPgModel.create(
+  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
     t.context.knex,
     testCollection
   );
   t.context.testCollection = testCollection;
 
-  const providerPgModel = new ProviderPgModel();
   const testProvider = fakeProviderRecordFactory();
-
-  await providerPgModel.create(
+  await t.context.providerPgModel.create(
     t.context.knex,
     testProvider
   );
   t.context.testProvider = testProvider;
 
-  const executionPgModel = new ExecutionPgModel();
   const executionUrl = cryptoRandomString({ length: 5 });
   t.context.executionUrl = executionUrl;
-
-  const testExecution = fakeExecutionRecordFactory({
-    url: executionUrl,
-  });
-  await executionPgModel.create(
-    t.context.knex,
-    testExecution
-  );
-  t.context.testExecution = testExecution;
 });
 
 test.after.always(async (t) => {
-  await t.context.granulesModel.deleteTable();
-  await t.context.pdrsModel.deleteTable();
-  await t.context.providersModel.deleteTable();
-  await t.context.collectionsModel.deleteTable();
-  await t.context.executionsModel.deleteTable();
-
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   await destroyLocalTestDb({
@@ -126,81 +113,21 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
     granulesModel,
     pdrsModel,
     testCollection,
-    testExecution,
     testProvider,
   } = t.context;
 
-  const fakeFile = () => fakeFileFactory({
-    bucket: cryptoRandomString({ length: 10 }),
-    key: cryptoRandomString({ length: 10 }),
-    size: 1098034,
-    fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
-    checksum: 'checkSum01',
-    checksumType: 'md5',
-    type: 'data',
-    source: 'source',
-  });
-
-  const fakeExecution = {
-    arn: randomId('arn'),
-    duration: 180.5,
-    name: randomId('name'),
-    execution: randomId('execution'),
+  const collectionId = `${testCollection.name}___${testCollection.version}`;
+  const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
-    error: { test: 'error' },
-    status: 'completed',
-    createdAt: Date.now() - 180.5 * 1000,
-    updatedAt: Date.now(),
-    timestamp: Date.now(),
-    type: 'fakeWorkflow',
-    originalPayload: { testInput: 'originalPayloadValue' },
-    finalPayload: { testOutput: 'finalPayloadValue' },
-    tasks: {},
-    cumulusVersion: '1.0.0',
-  };
-
-  const fakeGranule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    collectionId: `${testCollection.name}___${testCollection.version}`,
-    pdrName: undefined,
-    provider: undefined,
-    status: 'running',
-    execution: testExecution.url,
-    cmrLink: cryptoRandomString({ length: 10 }),
-    published: false,
-    duration: 10,
-    files: [fakeFile()],
-    error: {},
-    productVolume: 1119742,
-    timeToPreprocess: 0,
-    beginningDateTime: dateString,
-    endingDateTime: dateString,
-    processingStartDateTime: dateString,
-    processingEndDateTime: dateString,
-    lastUpdateDateTime: dateString,
-    timeToArchive: 0,
-    productionDateTime: dateString,
-    timestamp: Date.now(),
-    updatedAt: Date.now(),
-  };
-
-  const testPdr = {
-    pdrName: cryptoRandomString({ length: 5 }),
-    collectionId: `${testCollection.name}___${testCollection.version}`,
+  });
+  const fakeGranule = fakeGranuleFactoryV2({
+    collectionId,
+    execution: fakeExecution.execution,
+  });
+  const testPdr = fakePdrFactoryV2({
+    collectionId,
     provider: testProvider.name,
-    status: 'running',
-    progress: 10,
-    execution: testExecution.arn,
-    PANSent: false,
-    PANmessage: 'message',
-    stats: { total: 1, completed: 0, failed: 0, processing: 1 },
-    address: cryptoRandomString({ length: 5 }),
-    originalUrl: cryptoRandomString({ length: 5 }),
-    timestamp: Date.now(),
-    duration: 10,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  });
 
   await Promise.all([
     executionsModel.create(fakeExecution),
@@ -208,34 +135,44 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
     pdrsModel.create(testPdr),
   ]);
 
+  await handler({ env: process.env });
+
+  const executionRecords = await t.context.executionPgModel.search(
+    t.context.knex,
+    {}
+  );
+  t.is(
+    executionRecords.length,
+    1
+  );
+
+  const granuleRecords = await t.context.granulePgModel.search(
+    t.context.knex,
+    {}
+  );
+  t.is(
+    granuleRecords.length,
+    1
+  );
+
+  const pdrRecords = await t.context.pdrPgModel.search(
+    t.context.knex,
+    {}
+  );
+  t.is(
+    pdrRecords.length,
+    1
+  );
+
   t.teardown(() => Promise.all([
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
     granulesModel.delete({ granuleId: fakeGranule.granuleId }),
     executionsModel.delete({ arn: fakeExecution.arn }),
+    t.context.executionPgModel.delete(
+      t.context.knex,
+      { cumulus_id: executionRecords[0].cumulus_id }
+    ),
+    t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleRecords[0].cumulus_id }),
+    t.context.pdrPgModel.delete(t.context.knex, { cumulus_id: pdrRecords[0].cumulus_id }),
   ]));
-
-  const call = await handler({ env: process.env });
-  const expected = `
-      Migration summary:
-        Executions:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Granules:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Files:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records failed
-        PDRs:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-    `;
-  t.is(call, expected);
 });

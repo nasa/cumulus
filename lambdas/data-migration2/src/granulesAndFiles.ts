@@ -59,14 +59,15 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  // Schema validation on Dynamo record will fail if `record.execution`
-  // does not exist
-  const executionCumulusId = await executionPgModel.getRecordCumulusId(
-    knex,
-    {
-      url: record.execution,
-    }
-  );
+  // It's possible that very old records could have this field be undefined
+  const executionCumulusId = record.execution
+    ? await executionPgModel.getRecordCumulusId(
+      knex,
+      {
+        url: record.execution,
+      }
+    )
+    : undefined;
 
   let existingRecord;
 
