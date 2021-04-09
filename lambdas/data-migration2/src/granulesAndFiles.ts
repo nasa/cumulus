@@ -20,7 +20,7 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { MigrationSummary } from './types';
+import { GranuleDynamoSearchParams, MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const Manager = require('@cumulus/api/models/base');
@@ -31,11 +31,6 @@ const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 export interface GranulesAndFilesMigrationSummary {
   granulesSummary: MigrationSummary,
   filesSummary: MigrationSummary,
-}
-
-interface GranuleDynamoSearchParams {
-  collectionId?: string
-  granuleId?: string
 }
 
 /**

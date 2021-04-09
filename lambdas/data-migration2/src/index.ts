@@ -5,9 +5,13 @@ import { migrateExecutions } from './executions';
 import { migrateGranulesAndFiles } from './granulesAndFiles';
 import { migratePdrs } from './pdrs';
 
+import { GranuleDynamoSearchParams } from './types';
+
 const logger = new Logger({ sender: '@cumulus/data-migration2' });
+
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
+  granuleSearchParams?: GranuleDynamoSearchParams
 }
 
 export const handler = async (event: HandlerEvent): Promise<string> => {
@@ -17,7 +21,11 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
 
   try {
     const executionsMigrationSummary = await migrateExecutions(env, knex);
-    const granulesAndFilesMigrationSummary = await migrateGranulesAndFiles(env, knex);
+    const granulesAndFilesMigrationSummary = await migrateGranulesAndFiles(
+      env,
+      knex,
+      event.granuleSearchParams
+    );
     const pdrsMigrationSummary = await migratePdrs(env, knex);
 
     const summary = `
