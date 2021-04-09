@@ -16,10 +16,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Bulk granule operations endpoint now supports setting a custom queue for scheduling workflows via the `queueUrl` property in the request body. If provided, this value should be the full URL for an SQS queue.
 
 ### Added
-
 - **CUMULUS-2374**
   - Add cookbok entry for queueing PostToCmr step
   - Add example workflow to go with cookbook
+- **CUMULUS-2421**
+  - Added **experimental** `ecs_include_docker_cleanup_cronjob` boolean variable to the Cumulus module to enable cron job to clean up docker root storage blocks in ECS cluster template for non-`device-mapper` storage drivers. Default value is `false`. This fulfills a specific user support request. This feature is otherwise untested and will remain so until we can iterate with a better, more general-purpose solution. Use of this feature is **NOT** recommended unless you are certain you need it.
+
+### Fixed
+- **CUMULUS-2281**
+  - Changed discover-granules task to write discovered granules directly to
+    logger, instead of via environment variable. This fixes a problem where a
+    large number of found granules prevents this lambda from running as an
+    activity with an E2BIG error.
 
 - **CUMULUS-2348**
   - The `@cumulus/api` `/granules` and `/granules/{granuleId}` endpoints now take `getRecoveryStatus` parameter
