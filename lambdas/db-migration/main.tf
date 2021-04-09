@@ -50,7 +50,7 @@ resource "aws_iam_role_policy" "db_migration" {
 resource "aws_security_group" "db_migration" {
   count = length(var.subnet_ids) == 0 ? 0 : 1
 
-  name   = "${var.prefix}-db-migration"
+  name   = "${var.prefix}-postgres-db-migration"
   vpc_id = var.vpc_id
 
   egress {
