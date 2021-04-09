@@ -1,6 +1,7 @@
 # cumulus-rds-tf
 
 This module provides a configurable "off the shelf" serverless RDS postgres database deployment that will provision a RDS Serverless postgres compatible database and provide a AWS Secrets Manager secret as required by Cumulus Core.
+
 ## Input variables
 
 See [variables.tf](./variables.tf) for the input variables to this module and the default values for optional variables.
