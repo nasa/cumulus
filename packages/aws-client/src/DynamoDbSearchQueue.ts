@@ -2,6 +2,7 @@ import * as AWS from 'aws-sdk';
 import { dynamodbDocClient } from './services';
 
 type searchType = 'scan' | 'query';
+type searchParams = AWS.DynamoDB.DocumentClient.ScanInput | AWS.DynamoDB.DocumentClient.QueryInput;
 
 /**
  * Class to efficiently search all of the items in a DynamoDB table, without loading them all into
@@ -10,7 +11,7 @@ type searchType = 'scan' | 'query';
 class DynamoDbSearchQueue {
   private readonly dynamodbDocClient: AWS.DynamoDB.DocumentClient;
   private readonly searchType: searchType;
-  private readonly params: AWS.DynamoDB.DocumentClient.ScanInput | AWS.DynamoDB.DocumentClient.QueryInput;
+  private readonly params: searchParams;
   private items: Array<AWS.DynamoDB.DocumentClient.AttributeMap|null>;
 
   constructor(params: AWS.DynamoDB.DocumentClient.ScanInput, searchType: searchType = 'scan') {
