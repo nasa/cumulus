@@ -105,9 +105,9 @@ test.beforeEach(async (t) => {
   t.context.collectionCumulusId = collectionResponse[0];
 
   const executionPgModel = new ExecutionPgModel();
-  const executionUrl = cryptoRandomString({ length: 5 });
+  t.context.executionUrl = cryptoRandomString({ length: 5 });
   const testExecution = fakeExecutionRecordFactory({
-    url: executionUrl,
+    url: t.context.executionUrl,
   });
 
   [t.context.executionCumulusId] = await executionPgModel.create(
@@ -118,7 +118,7 @@ test.beforeEach(async (t) => {
 
   t.context.testGranule = generateTestGranule({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
-    execution: executionUrl,
+    execution: t.context.executionUrl,
   });
 });
 
@@ -522,6 +522,34 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
 
   const records = await t.context.granulePgModel.search(t.context.knex, {});
   t.is(records.length, 1);
+
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
+  });
+});
+
+test.serial('migrateGranulesAndFiles processes granule with no files', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
+
+  delete testGranule.files;
+
+  await Promise.all([
+    granulesModel.create(testGranule),
+  ]);
+
+  t.teardown(async () => {
+    await granulesModel.delete({ granuleId: testGranule.granuleId });
+  });
+
+  await migrateGranulesAndFiles(process.env, knex);
+
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
+  const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
+  t.is(records.length, 1);
+  t.is(fileRecords.length, 0);
 
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });

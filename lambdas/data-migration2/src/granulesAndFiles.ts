@@ -149,7 +149,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
   granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
   knex: Knex
 ): Promise<GranulesAndFilesMigrationSummary> => {
-  const files = dynamoRecord.files;
+  const files = dynamoRecord.files ?? [];
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
 
   granulesSummary.dynamoRecords += 1;
