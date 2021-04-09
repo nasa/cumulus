@@ -63,7 +63,7 @@ variable "include_elasticsearch" {
 }
 
 variable "subnet_ids" {
-  description = "Subnet IDs that should be used when deploying Elasticsearch inside of a VPC"
+  description = "Subnet IDs that should be used when deploying Elasticsearch/using a Postgres database inside of a VPC"
   type        = list(string)
   default     = []
 }

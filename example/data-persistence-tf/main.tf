@@ -46,6 +46,7 @@ module "data_persistence" {
 
   elasticsearch_config           = var.elasticsearch_config
 
+  vpc_id                         = var.vpc_id
   rds_security_group_id          = var.rds_security_group
   rds_user_access_secret_arn     = module.provision_database.database_credentials_secret_arn
   permissions_boundary_arn       = var.permissions_boundary_arn
