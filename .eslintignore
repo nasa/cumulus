@@ -26,3 +26,4 @@ website/**
 /packages/launchpad-auth/*.js
 /packages/message/*.d.ts
 /packages/message/*.js
+/tf-modules/cumulus-rds-tf/provision_database*
