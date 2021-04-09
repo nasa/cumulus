@@ -3,7 +3,6 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
   type = "String"
   value = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    RulesTable                 = var.dynamo_tables.rules.name
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
     CollectionsTable           = var.dynamo_tables.collections.name
     ExecutionsTable            = var.dynamo_tables.executions.name
