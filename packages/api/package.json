@@ -51,7 +51,7 @@
     "@cumulus/cmrjs": "7.1.0",
     "@cumulus/collection-config-store": "7.1.0",
     "@cumulus/common": "7.1.0",
-    "@cumulus/db": "3.0.1-alpha.1",
+    "@cumulus/db": "7.1.0-alpha.1",
     "@cumulus/earthdata-login-client": "7.1.0",
     "@cumulus/errors": "7.1.0",
     "@cumulus/ingest": "7.1.0",
