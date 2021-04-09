@@ -423,31 +423,27 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
   t.is(records.length, 1);
 });
 
-test.serial('migratePdrs logs summary of migration every 100 records', async (t) => {
+test.serial('migratePdrs logs summary of migration every for a specified interval', async (t) => {
   const logSpy = sinon.spy(Logger.prototype, 'info');
   const {
     knex,
     testCollection,
     testProvider,
   } = t.context;
+  process.env.loggingInterval = 1;
 
-  const pdrs = [];
-  for (let i = 0; i <= 200; i += 1) {
-    const testPdr = generateTestPdr({
-      collectionId: buildCollectionId(testCollection.name, testCollection.version),
-      provider: testProvider.name,
-    });
-    pdrs.push(testPdr);
-  }
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
 
-  await Promise.all(pdrs.map((p) => pdrsModel.create(p)));
+  await pdrsModel.create(testPdr);
 
   t.teardown(async () => {
     logSpy.restore();
-    await Promise.all(pdrs.map((p) => pdrsModel.delete({ pdrName: p.pdrName })));
+    await pdrsModel.delete({ pdrName: testPdr.pdrName });
   });
 
   await migratePdrs(process.env, knex);
-  t.true(logSpy.calledWith('Batch of 100 PDR records processed, 100 total'));
-  t.true(logSpy.calledWith('Batch of 100 PDR records processed, 200 total'));
+  t.true(logSpy.calledWith('Batch of 1 PDR records processed, 1 total'));
 });

@@ -142,12 +142,14 @@ export const migrateFileRecord = async (
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
  * @param {Knex} knex
+ * @param {number} loggingInterval
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
-  knex: Knex
+  knex: Knex,
+  loggingInterval: number
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const files = dynamoRecord.files;
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
@@ -155,8 +157,8 @@ export const migrateGranuleAndFilesViaTransaction = async (
   granulesSummary.dynamoRecords += 1;
   filesSummary.dynamoRecords += files.length;
 
-  if (granulesSummary.dynamoRecords % 100 === 0) {
-    logger.info(`Batch of 100 granule records processed, ${granulesSummary.dynamoRecords} total`);
+  if (granulesSummary.dynamoRecords % loggingInterval === 0) {
+    logger.info(`Batch of ${loggingInterval} granule records processed, ${granulesSummary.dynamoRecords} total`);
   }
 
   try {
@@ -188,6 +190,7 @@ export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
 ): Promise<GranulesAndFilesMigrationSummary> => {
+  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
@@ -217,7 +220,8 @@ export const migrateGranulesAndFiles = async (
 
   /* eslint-disable no-await-in-loop */
   while (record) {
-    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex);
+    // eslint-disable-next-line max-len
+    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex, loggingInterval);
     summary.granulesSummary = migrationSummary.granulesSummary;
     summary.filesSummary = migrationSummary.filesSummary;
 

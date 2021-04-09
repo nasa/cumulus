@@ -496,21 +496,18 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   t.is(records.length, 1);
 });
 
-test.serial('migrateExecutions logs summary of migration every 100 records', async (t) => {
+test.serial('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
   const logSpy = sinon.spy(Logger.prototype, 'info');
+  process.env.loggingInterval = 1;
 
-  const executions = [];
-  for (let i = 0; i <= 200; i += 1) {
-    executions.push(fakeExecutionFactoryV2({ parentArn: undefined }));
-  }
-  await Promise.all(executions.map((e) => executionsModel.create(e)));
+  const execution = fakeExecutionFactoryV2({ parentArn: undefined });
+  await executionsModel.create(execution);
 
   t.teardown(async () => {
     logSpy.restore();
-    await Promise.all(executions.map((e) => executionsModel.delete({ arn: e.arn })));
+    await executionsModel.delete({ arn: execution.arn });
   });
 
   await migrateExecutions(process.env, t.context.knex);
-  t.true(logSpy.calledWith('Batch of 100 execution records processed, 100 total'));
-  t.true(logSpy.calledWith('Batch of 100 execution records processed, 200 total'));
+  t.true(logSpy.calledWith('Batch of 1 execution records processed, 1 total'));
 });

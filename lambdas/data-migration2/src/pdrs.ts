@@ -112,6 +112,7 @@ export const migratePdrs = async (
   knex: Knex
 ): Promise<MigrationSummary> => {
   const pdrsTable = envUtils.getRequiredEnvVar('PdrsTable', env);
+  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: pdrsTable,
@@ -129,8 +130,8 @@ export const migratePdrs = async (
   while (record) {
     migrationSummary.dynamoRecords += 1;
 
-    if (migrationSummary.dynamoRecords % 100 === 0) {
-      logger.info(`Batch of 100 PDR records processed, ${migrationSummary.dynamoRecords} total`);
+    if (migrationSummary.dynamoRecords % loggingInterval === 0) {
+      logger.info(`Batch of ${loggingInterval} PDR records processed, ${migrationSummary.dynamoRecords} total`);
     }
     try {
       await migratePdrRecord(record, knex);

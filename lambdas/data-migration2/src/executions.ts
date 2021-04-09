@@ -21,6 +21,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
  *   Source record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
+ * @throws {RecordAlreadyMigrated}
  */
 export const migrateExecutionRecord = async (
   dynamoRecord: ExecutionRecord,
@@ -71,6 +72,7 @@ export const migrateExecutions = async (
   knex: Knex
 ): Promise<MigrationSummary> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
+  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: executionsTable,
@@ -88,8 +90,8 @@ export const migrateExecutions = async (
   while (record) {
     migrationSummary.dynamoRecords += 1;
 
-    if (migrationSummary.dynamoRecords % 100 === 0) {
-      logger.info(`Batch of 100 execution records processed, ${migrationSummary.dynamoRecords} total`);
+    if (migrationSummary.dynamoRecords % loggingInterval === 0) {
+      logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationSummary.dynamoRecords} total`);
     }
 
     try {

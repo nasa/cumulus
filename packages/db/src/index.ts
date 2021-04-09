@@ -63,7 +63,7 @@ export {
   DataMigration1,
   DataMigration2,
   MigrationSummary,
-} from './types/summary';
+} from './types/migration';
 
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
