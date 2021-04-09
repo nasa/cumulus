@@ -193,7 +193,11 @@ export const migrateGranulesAndFiles = async (
   };
   let extraSearchParams = {};
 
+  type searchType = 'scan' | 'query';
+  let dynamoSearchType: searchType = 'scan';
+
   if (granuleSearchParams.granuleId) {
+    dynamoSearchType = 'query';
     extraSearchParams = {
       KeyConditionExpression: 'granuleId = :granuleId',
       ExpressionAttributeValues: {
@@ -201,6 +205,7 @@ export const migrateGranulesAndFiles = async (
       },
     };
   } else if (granuleSearchParams.collectionId) {
+    dynamoSearchType = 'query';
     extraSearchParams = {
       IndexName: 'collectionId-granuleId-index',
       KeyConditionExpression: 'collectionId = :collectionId',
@@ -215,7 +220,7 @@ export const migrateGranulesAndFiles = async (
       ...defaultSearchParams,
       ...extraSearchParams,
     },
-    granuleSearchParams ? 'query' : 'scan'
+    dynamoSearchType
   );
 
   const granuleMigrationSummary = {
