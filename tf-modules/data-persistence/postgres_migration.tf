@@ -5,6 +5,6 @@ module "db_migration" {
   prefix                     = var.prefix
   subnet_ids                 = var.subnet_ids
   tags                       = merge(var.tags, { Deployment = var.prefix })
-  vpc_id                     = length(var.subnet_ids) > 0 ? data.aws_subnet.first_es_domain_subnet[0].vpc_id : null
+  vpc_id                     = var.vpc_id
   rds_security_group_id      = var.rds_security_group_id
 }
