@@ -2,6 +2,7 @@ import Knex from 'knex';
 import Logger from '@cumulus/logger';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+import { s3PutObject } from '@cumulus/aws-client/S3';
 import { envUtils } from '@cumulus/common';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
@@ -13,6 +14,19 @@ const schemas = require('@cumulus/api/models/schemas');
 const Execution = require('@cumulus/api/models/executions');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
+
+/**
+ * Store migration error in S3
+ * @param {string} bucket
+ * @param {string} message
+ */
+const storeError = async (bucket: string, message: string[]) => {
+  await s3PutObject({
+    Bucket: bucket,
+    Key: 'data-migration2-executions-errors',
+    Body: message,
+  });
+};
 
 /**
  * Migrate execution record from Dynamo to RDS.
@@ -74,6 +88,7 @@ export const migrateExecutions = async (
   knex: Knex
 ): Promise<MigrationSummary> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
+  const bucket = process.env.system_bucket;
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: executionsTable,
@@ -87,6 +102,8 @@ export const migrateExecutions = async (
   };
 
   let record = await searchQueue.peek();
+  const errorFile = [];
+  let errorMessage;
   /* eslint-disable no-await-in-loop */
   while (record) {
     migrationSummary.dynamoRecords += 1;
@@ -100,13 +117,15 @@ export const migrateExecutions = async (
         logger.info(error);
       } else {
         migrationSummary.failed += 1;
-        logger.error(
-          `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`,
-          error
-        );
+        errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
+        logger.error(errorMessage, error);
+        errorFile.push(JSON.stringify(errorMessage));
       }
     }
 
+    if (bucket) {
+      storeError(bucket, errorFile);
+    }
     await searchQueue.shift();
     record = await searchQueue.peek();
   }
