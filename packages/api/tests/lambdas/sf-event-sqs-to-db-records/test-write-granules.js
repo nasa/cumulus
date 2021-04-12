@@ -317,7 +317,7 @@ test('writeGranules() throws an error if collection is not provided', async (t) 
   );
 });
 
-test('writeGranules() saves granule records to Dynamo and RDS if RDS write is enabled', async (t) => {
+test('writeGranules() saves granule records to Dynamo and Postgres if Postgres write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -341,7 +341,7 @@ test('writeGranules() saves granule records to Dynamo and RDS if RDS write is en
   t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
 });
 
-test('writeGranules() saves granule records to Dynamo and RDS with same timestamps', async (t) => {
+test('writeGranules() saves granule records to Dynamo and Postgres with same timestamps', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -367,7 +367,7 @@ test('writeGranules() saves granule records to Dynamo and RDS with same timestam
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
 
-test('writeGranules() saves file records to RDS if RDS write is enabled and workflow status is "completed"', async (t) => {
+test('writeGranules() saves file records to Postgres if Postgres write is enabled and workflow status is "completed"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -404,7 +404,7 @@ test('writeGranules() saves file records to RDS if RDS write is enabled and work
   );
 });
 
-test('writeGranules() does not persist file records to RDS if the worflow status is "running"', async (t) => {
+test('writeGranules() does not persist file records to Postgres if the worflow status is "running"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -501,7 +501,7 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
   }));
 });
 
-test('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test('writeGranules() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -537,7 +537,7 @@ test('writeGranules() does not persist records to Dynamo or RDS if Dynamo write 
   );
 });
 
-test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -551,7 +551,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
   const fakeTrxCallback = (cb) => {
     const fakeTrx = sinon.stub().returns({
       insert: () => {
-        throw new Error('Granules RDS error');
+        throw new Error('Granules Postgres error');
       },
     });
     return cb(fakeTrx);
@@ -568,7 +568,7 @@ test.serial('writeGranules() does not persist records to Dynamo or RDS if RDS wr
     granuleModel,
   }));
 
-  t.true(error.message.includes('Granules RDS error'));
+  t.true(error.message.includes('Granules Postgres error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
