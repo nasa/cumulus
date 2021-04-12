@@ -20,8 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2309**
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
   - **CUMULUS-2385**
-    - Update `sf-event-sqs-to-db-records` to write a granule's files to Postgres
-    only after the workflow has exited the `Running` status.
+    - Updated `sf-event-sqs-to-db-records` to write a granule's files to PostgreSQL only after the workflow has exited the `Running` status.
 
 ### Added
 
@@ -35,7 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated PDR and Granule writes to check the step function
     workflow_start_time against the createdAt field for each record to
     ensure old records do not overwrite newer ones for legacy Dynamo and
-    Postgres writes
+    PostgreSQL writes
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
     - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to PostgreSQL
