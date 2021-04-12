@@ -537,7 +537,7 @@ test('writeGranules() does not persist records to Dynamo or Postgres if Dynamo w
   );
 });
 
-test.serial('writeGranules() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
+test('writeGranules() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
