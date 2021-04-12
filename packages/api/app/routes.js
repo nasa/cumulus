@@ -26,6 +26,7 @@ const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
 const migrationCounts = require('../endpoints/migrationCounts');
+const deadLetters = require('../endpoints/dead-letters');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
 
@@ -35,6 +36,9 @@ if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
 }
+
+// dead letters endpoint
+router.use('/deadLetters', ensureAuthorized, deadLetters);
 
 //migrationCounts endpoint
 router.use('/migrationCounts', ensureAuthorized, migrationCounts);

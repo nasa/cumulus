@@ -3,6 +3,7 @@
 const fs = require('fs');
 const moment = require('moment');
 const path = require('path');
+const merge = require('lodash/merge');
 
 const { randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
@@ -284,6 +285,28 @@ function fakeAccessTokenFactory(params = {}) {
   };
 }
 
+function fakeCumulusMessageFactory(params = {}) {
+  return merge({
+    cumulus_meta: {
+      workflow_start_time: 122,
+      cumulus_version: '7.1.0',
+      state_machine: randomId('arn:aws:states:us-east-1:1234:stateMachine:'),
+      execution_name: randomId('cumulus-execution-name'),
+    },
+    meta: {
+      status: 'completed',
+      collection: {
+        name: randomId('MOD', 3),
+        version: '006',
+      },
+      provider: 'fake-provider',
+    },
+    payload: {
+      granules: [fakeGranuleFactoryV2()],
+    },
+  }, params);
+}
+
 const setAuthorizedOAuthUsers = (users) =>
   putJsonS3Object(process.env.system_bucket, authorizedOAuthUsersKey(), users);
 
@@ -379,6 +402,7 @@ module.exports = {
   fakePdrFactory,
   fakePdrFactoryV2,
   fakeCollectionFactory,
+  fakeCumulusMessageFactory,
   fakeExecutionFactory,
   fakeExecutionFactoryV2,
   fakeAsyncOperationFactory,
