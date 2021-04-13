@@ -105,32 +105,3 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
     updatedFile
   );
 });
-
-test.serial('FilePgModel.upsert() creates a new file record if bucket/key are undefined', async (t) => {
-  const {
-    knex,
-    filePgModel,
-    granuleCumulusId,
-  } = t.context;
-
-  const file = fakeFileRecordFactory({
-    granule_cumulus_id: granuleCumulusId,
-    checksum_value: cryptoRandomString({ length: 3 }),
-    bucket: undefined,
-    key: undefined,
-  });
-  await filePgModel.create(knex, file);
-
-  const updatedFile = {
-    ...file,
-    checksum_value: cryptoRandomString({ length: 3 }),
-  };
-  await filePgModel.upsert(knex, updatedFile);
-
-  const records = await filePgModel.search(
-    knex,
-    { granule_cumulus_id: granuleCumulusId }
-  );
-
-  t.is(records.length, 2);
-});
