@@ -22,15 +22,17 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('storeErrors calls s3PutObject', async (t) => {
+test('storeErrors stores file on s3', async (t) => {
   const recordClassification = 'classification';
   await storeErrors(process.env.system_bucket, 'message', recordClassification, process.env.stackName);
   const filename = `data-migration2-${recordClassification}-errors.json`;
   const key = `${process.env.stackName}/${filename}`;
+
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
     Key: key,
   }).promise();
   const messageBody = JSON.parse(item.Body);
+
   t.deepEqual(messageBody, { errors: 'message' });
 });

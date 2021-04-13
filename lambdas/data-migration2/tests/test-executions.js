@@ -29,6 +29,7 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -37,6 +38,7 @@ const {
   migrateExecutionRecord,
   migrateExecutions,
 } = require('../dist/lambda/executions');
+const { storeErrors } = require('../dist/lambda/storeErrors');
 
 let collectionsModel;
 let executionsModel;
@@ -492,4 +494,31 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
     {}
   );
   t.is(records.length, 1);
+});
+
+test.serial('migrateExecutions calls storeError when system bucket is provided', async (t) => {
+  const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const key = `${process.env.stackName}/data-migration2-executions-errors.json`;
+
+  // remove required source field so that record will fail
+  delete newExecution.name;
+
+  await dynamodbDocClient().put({
+    TableName: process.env.ExecutionsTable,
+    Item: newExecution,
+  }).promise();
+
+  t.teardown(async () => {
+    executionsModel.delete({ arn: newExecution.arn });
+  });
+
+  await migrateExecutions(process.env, t.context.knex);
+
+  // Check that error file exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  const messageBody = JSON.parse(item.Body);
+  t.truthy(messageBody.errors[0]);
 });

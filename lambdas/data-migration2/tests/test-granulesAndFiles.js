@@ -21,6 +21,7 @@ const {
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
+const { s3 } = require('@cumulus/aws-client/services');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -600,4 +601,34 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   const fileRecords = await knex(tableNames.files);
   t.is(records.length, 1);
   t.is(fileRecords.length, 1);
+});
+
+test.serial('migrateGranulesAndFiles calls storeError when system bucket is provided', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
+  const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors.json`;
+
+  // remove required field so record will fail
+  delete testGranule.collectionId;
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: testGranule,
+  }).promise();
+
+  t.teardown(async () => {
+    granulesModel.delete({ granuleId: testGranule.granuleId });
+  });
+
+  await migrateGranulesAndFiles(process.env, knex);
+
+  // Check that error file exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  const messageBody = JSON.parse(item.Body);
+  t.truthy(messageBody.errors[0]);
 });
