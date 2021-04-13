@@ -49,7 +49,7 @@ export const handler = async (event: HandlerEvent): Promise<MigrationSummary> =>
         },
       },
     };
-    logger.info(result);
+    logger.info(JSON.stringify(result));
     return result;
   } finally {
     await knex.destroy();
