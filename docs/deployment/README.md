@@ -412,7 +412,7 @@ Notes on specific variables:
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 - **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
-- **`rds_security_group`**: The security group used to allow access to the Postgres database
+- **`rds_security_group`**: The ID of the security group used to allow access to the Postgres database
 - **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
 - **`rds_connection_heartbeat`**:  When using RDS/Aurora Serverless as a database backend, this should be set to `true`, this tells Core to always use a 'heartbeat' query when establishing a database connection to avoid spin-up timeout failures.
 
