@@ -99,3 +99,40 @@ test.serial('DynamoDbSearchQueue can handle paging', async (t) => {
 
   t.is(returnedItemsCount, 11);
 });
+
+test.serial('DynamoDbSearchQueue returns results in query mode', async (t) => {
+  const bucket = randomString();
+
+  await Promise.all(range(11).map(() =>
+    awsServices.dynamodb().putItem({
+      TableName: t.context.tableName,
+      Item: {
+        bucket: { S: bucket },
+        key: { S: randomString() },
+      },
+    }).promise()));
+
+  const queue = new DynamoDbSearchQueue(
+    {
+      TableName: t.context.tableName,
+      Limit: 2,
+      KeyConditionExpression: '#bucket = :bucket',
+      ExpressionAttributeNames: {
+        '#bucket': 'bucket',
+      },
+      ExpressionAttributeValues: {
+        ':bucket': bucket,
+      },
+    },
+    'query'
+  );
+
+  let returnedItemsCount = 0;
+  let nextItem = await queue.shift();
+  while (nextItem) {
+    returnedItemsCount += 1;
+    nextItem = await queue.shift(); // eslint-disable-line no-await-in-loop
+  }
+
+  t.is(returnedItemsCount, 11);
+});
