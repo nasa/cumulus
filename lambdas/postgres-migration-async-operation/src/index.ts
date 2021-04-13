@@ -11,8 +11,8 @@ const logger = new Logger({ sender: '@cumulus/postgres-migration-async-operation
 exports.handler = async (event: DataMigration2HandlerEvent) => {
   const dynamoTableName = process.env.AsyncOperationsTable;
 
-  logger.info('Starting async operation for Data Migration 2');
-  const asyncOperation = await asyncOperations.startAsyncOperation({
+  logger.info('About to start async operation for Data Migration 2');
+  const asyncOperationId = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
@@ -26,5 +26,6 @@ exports.handler = async (event: DataMigration2HandlerEvent) => {
     useLambdaEnvironmentVariables: true,
   }, models.AsyncOperation);
 
-  return asyncOperation;
+  logger.info(`Started async operation ${asyncOperationId} for Data Migration 2`);
+  return asyncOperationId;
 };

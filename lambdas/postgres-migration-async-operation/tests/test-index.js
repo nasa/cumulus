@@ -15,7 +15,7 @@ test('handler calls startAsyncOperation with the expected parameters', async (t)
       foo: 'bar',
     },
   };
-  t.is(await handler(), 1);
+  t.is(await handler(event), 1);
   t.true(stub.calledWith({
     cluster: undefined,
     lambdaName: undefined,
