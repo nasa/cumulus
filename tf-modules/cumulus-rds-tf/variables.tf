@@ -102,16 +102,15 @@ variable "min_capacity" {
 }
 
 ### Required for user/database provisioning
+variable "prefix" {
+  type = string
+}
 variable "provision_user_database" {
   description = "true/false flag to configure if the module should provision a user and database using default settings"
   type = bool
   default = false
 }
 
-variable "prefix" {
-  type = string
-  default = "cumulus-rds-tf"
-}
 variable "permissions_boundary_arn" {
   type    = string
   default = ""
