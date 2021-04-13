@@ -6,7 +6,7 @@ import { migrateProviders } from './providers';
 import { migrateAsyncOperations } from './async-operations';
 import { migrateRules } from './rules';
 
-const logger = new Logger({ sender: '@cumulus/data-migration2' });
+const logger = new Logger({ sender: '@cumulus/data-migration1' });
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
 }

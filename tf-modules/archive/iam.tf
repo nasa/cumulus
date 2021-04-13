@@ -179,6 +179,13 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       var.rds_user_access_secret_arn
     ]
   }
+
+  statement {
+    actions = [
+      "ssm:GetParameter"
+    ]
+    resources = [aws_ssm_parameter.dynamo_table_names.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_api_gateway" {

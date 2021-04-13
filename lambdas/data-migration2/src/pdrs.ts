@@ -21,8 +21,6 @@ import {
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
@@ -39,8 +37,6 @@ export const migratePdrRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.pdr);
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const collectionPgModel = new CollectionPgModel();
   const pdrPgModel = new PdrPgModel();
