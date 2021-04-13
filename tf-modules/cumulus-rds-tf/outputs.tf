@@ -15,6 +15,5 @@ output "admin_db_login_secret_version" {
 }
 
 output "user_credentials_secret_arn" {
-  value = length(aws_secretsmanager_secret.db_credentials) > 0 ? aws_secretsmanager_secret.db_credentials[0].arn : ""
+  value = var.provision_user_database ? aws_secretsmanager_secret.db_credentials[0].arn : null
 }
-
