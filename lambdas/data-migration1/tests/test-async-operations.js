@@ -10,8 +10,8 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const {
-  getKnexClient,
-  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
   AsyncOperationPgModel,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
@@ -25,13 +25,12 @@ const {
 const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 
 const generateFakeAsyncOperation = (params) => ({
   id: uuid(),
   description: 'unittest async operation',
+  output: '\"Index from database complete\"',
   operationType: 'ES Index',
-  output: '{ "output": "test" }',
   status: 'SUCCEEDED',
   taskArn: 'arn:aws:ecs:task:1234',
   createdAt: (Date.now() - 1000),
@@ -56,25 +55,9 @@ test.before(async (t) => {
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
 test.afterEach.always(async (t) => {
@@ -84,9 +67,11 @@ test.afterEach.always(async (t) => {
 test.after.always(async (t) => {
   await asyncOperationsModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation record', async (t) => {
@@ -99,6 +84,31 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
     knex,
     { id: fakeAsyncOp.id }
   );
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit({
+      ...fakeAsyncOp,
+      operation_type: fakeAsyncOp.operationType,
+      task_arn: fakeAsyncOp.taskArn,
+      output: JSON.parse(fakeAsyncOp.output),
+      created_at: new Date(fakeAsyncOp.createdAt),
+      updated_at: new Date(fakeAsyncOp.updatedAt),
+    },
+    ['createdAt', 'updatedAt', 'operationType', 'taskArn'])
+  );
+});
+
+test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation record where record.output is an array', async (t) => {
+  const output = { output: '[\"string\",\"test-string"]' };
+  const fakeAsyncOp = generateFakeAsyncOperation(output);
+  await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('async_operations')
+    .where({ id: fakeAsyncOp.id })
+    .first();
 
   t.deepEqual(
     omit(createdRecord, ['cumulus_id']),

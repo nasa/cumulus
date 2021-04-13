@@ -132,10 +132,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add write-db-dlq-records-to-s3 lambda.
     - Add terraform config to automatically write db records DLQ messages to an s3 archive on the system bucket.
     - Add unit tests and a component spec test for the above.
+  - **CUMULUS-2406**
+    - Updated parallel write logic to ensure that updatedAt/updated_at timestamps are the same in Dynamo/PG on record write for the following data types:
+      - async operations
+      - granules
+      - executions
+      - PDRs
   - **CUMULUS-2446**
     - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
   - **CUMULUS-2385**
     - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
+  - **CUMULUS-2447**
+    - Changed `translateApiAsyncOperationToPostgresAsyncOperation` to call `JSON.stringify` and then `JSON.parse` on output.
+  - **CUMULUS-2313**
+    - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
+    - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
+    - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
 
 ## [v7.1.0] 2021-03-12
 

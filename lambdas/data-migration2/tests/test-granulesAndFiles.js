@@ -283,7 +283,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
       granule_id: testGranule.granuleId,
       status: testGranule.status,
       collection_cumulus_id: collectionCumulusId,
-      published: testGranule.published,
+      published: null,
       duration: null,
       time_to_archive: null,
       time_to_process: null,
