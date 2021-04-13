@@ -45,3 +45,10 @@ variable "permissions_boundary_arn" {
   description = "Optional permissions boundary for lambda role bounds"
   default = null
 }
+
+variable "dbRecreation" {
+  type        = bool
+  description = "**Warning** Data loss will occur if set to 'true'. Boolean flag to set user database to be wiped and recreated on provision for each deploy"
+  default     = false
+}
+

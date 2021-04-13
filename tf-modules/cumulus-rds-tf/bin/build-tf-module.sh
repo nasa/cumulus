@@ -8,4 +8,5 @@ mkdir -p dist
 
 zip dist/terraform-aws-cumulus-rds.zip \
   *.tf \
-  provision_database/lambda.zip
+  db-provision-user-database/*.tf \
+  db-provision-user-database/dist/webpack/lambda.zip
