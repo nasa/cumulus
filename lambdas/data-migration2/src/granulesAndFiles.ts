@@ -21,6 +21,7 @@ import {
 } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
+import { storeErrors } from './storeErrors';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const Manager = require('@cumulus/api/models/base');
@@ -142,15 +143,21 @@ export const migrateFileRecord = async (
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
  * @param {Knex} knex
+ * @param {string} stackName
+ * @param {string} bucket
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
-  knex: Knex
+  knex: Knex,
+  stackName?: string,
+  bucket?: string
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const files = dynamoRecord.files;
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
+  const errorFile = [];
+  let errorMessage;
 
   granulesSummary.dynamoRecords += 1;
   filesSummary.dynamoRecords += files.length;
@@ -171,10 +178,13 @@ export const migrateGranuleAndFilesViaTransaction = async (
     } else {
       granulesSummary.failed += 1;
       filesSummary.failed += files.length;
-      logger.error(
-        `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`,
-        error
-      );
+      errorMessage = `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`;
+      errorFile.push(`Error: ${error} ${errorMessage}`);
+      logger.error(errorMessage, error);
+    }
+
+    if (bucket) {
+      storeErrors(bucket, errorFile, 'granulesAndFiles', stackName);
     }
   }
 
@@ -186,6 +196,8 @@ export const migrateGranulesAndFiles = async (
   knex: Knex
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
+  const bucket = process.env.system_bucket;
+  const stackName = process.env.stackName;
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: granulesTable,
@@ -214,7 +226,8 @@ export const migrateGranulesAndFiles = async (
 
   /* eslint-disable no-await-in-loop */
   while (record) {
-    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex);
+    // eslint-disable-next-line max-len
+    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex, stackName, bucket);
     summary.granulesSummary = migrationSummary.granulesSummary;
     summary.filesSummary = migrationSummary.filesSummary;
 
