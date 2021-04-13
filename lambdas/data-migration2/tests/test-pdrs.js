@@ -171,22 +171,6 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   );
 });
 
-test.serial('migratePdrRecord throws SchemaValidationError on invalid source data from DynamoDB', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
-
-  const testPdr = generateTestPdr({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
-    provider: testProvider.name,
-  });
-
-  delete testPdr.status;
-
-  await t.throwsAsync(
-    migratePdrRecord(testPdr, knex),
-    { name: 'SchemaValidationError' }
-  );
-});
-
 test.serial('migratePdrRecord handles nullable fields on source PDR data', async (t) => {
   const {
     collectionCumulusId,

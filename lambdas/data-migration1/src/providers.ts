@@ -3,31 +3,17 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import * as KMS from '@cumulus/aws-client/KMS';
 import { envUtils, keyPairProvider } from '@cumulus/common';
-import { ProviderPgModel } from '@cumulus/db';
+import {
+  ProviderPgModel,
+  translateApiProviderToPostgresProvider,
+} from '@cumulus/db';
 import Logger from '@cumulus/logger';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
+import { ApiProvider } from '@cumulus/types/api/providers';
 
 import { MigrationSummary } from './types';
 
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
-
 const logger = new Logger({ sender: '@cumulus/data-migration/providers' });
-
-interface ProviderInsertData {
-  name: string
-  protocol: string
-  host: string
-  port?: number
-  username?: string
-  password?: string
-  global_connection_limit?: number
-  private_key?: string
-  cm_key_id?: string
-  certificate_uri?: string
-  created_at: Date
-  updated_at?: Date
-}
 
 const decrypt = async (value: string): Promise<string> => {
   try {
@@ -48,7 +34,6 @@ const decrypt = async (value: string): Promise<string> => {
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Source record from DynamoDB
- * @param {string} providerKmsKeyId - KMS key ID for encrypting provider credentials
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordAlreadyMigrated}
@@ -56,13 +41,9 @@ const decrypt = async (value: string): Promise<string> => {
  */
 export const migrateProviderRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  providerKmsKeyId: string,
   knex: Knex
 ): Promise<void> => {
   const providerPgModel = new ProviderPgModel();
-
-  // Use API model schema to validate record before processing
-  Manager.recordIsValid(dynamoRecord, schemas.provider);
 
   let existingRecord;
 
@@ -84,30 +65,21 @@ export const migrateProviderRecord = async (
   const { encrypted } = dynamoRecord;
 
   if (username) {
-    const plaintext = encrypted ? await decrypt(username) : username;
-    username = await KMS.encrypt(providerKmsKeyId, plaintext);
+    username = encrypted ? await decrypt(username) : username;
   }
 
   if (password) {
-    const plaintext = encrypted ? await decrypt(password) : password;
-    password = await KMS.encrypt(providerKmsKeyId, plaintext);
+    password = encrypted ? await decrypt(password) : password;
   }
 
   // Map old record to new schema.
-  const updatedRecord: ProviderInsertData = {
-    name: dynamoRecord.id,
-    protocol: dynamoRecord.protocol,
-    host: dynamoRecord.host,
-    port: dynamoRecord.port,
-    username,
-    password,
-    global_connection_limit: dynamoRecord.globalConnectionLimit,
-    private_key: dynamoRecord.privateKey,
-    cm_key_id: dynamoRecord.cmKeyId,
-    certificate_uri: dynamoRecord.certificateUri,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
-  };
+  const updatedRecord = await translateApiProviderToPostgresProvider(
+    <ApiProvider>{
+      ...dynamoRecord,
+      username,
+      password,
+    }
+  );
 
   await providerPgModel.upsert(knex, updatedRecord);
 };
@@ -117,7 +89,6 @@ export const migrateProviders = async (
   knex: Knex
 ): Promise<MigrationSummary> => {
   const providersTable = envUtils.getRequiredEnvVar('ProvidersTable', env);
-  const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id', env);
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: providersTable,
@@ -136,7 +107,7 @@ export const migrateProviders = async (
     migrationSummary.dynamoRecords += 1;
 
     try {
-      await migrateProviderRecord(record, providerKmsKeyId, knex);
+      await migrateProviderRecord(record, knex);
       migrationSummary.success += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
