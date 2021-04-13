@@ -59,11 +59,6 @@ export {
   PostgresFile,
   PostgresFileRecord,
 } from './types/file';
-export {
-  DataMigration1,
-  DataMigration2,
-  MigrationSummary,
-} from './types/migration';
 
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {

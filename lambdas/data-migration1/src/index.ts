@@ -1,4 +1,5 @@
-import { MigrationSummary, getKnexClient } from '@cumulus/db';
+import { getKnexClient } from '@cumulus/db';
+import { MigrationSummary } from '@cumulus/types/migration';
 import Logger from '@cumulus/logger';
 
 import { migrateCollections } from './collections';
