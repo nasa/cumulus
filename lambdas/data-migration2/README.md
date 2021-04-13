@@ -42,3 +42,5 @@ Migration summary:
         $ 1 records skipped
         $ 0 records failed
 ```
+
+Records skipped indicates if a record was already migrated (which the lambda will throw with a `RecordAlreadyMigrated` error.)
