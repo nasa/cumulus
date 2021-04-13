@@ -9,7 +9,10 @@ const { createBucket, putJsonS3Object, recursivelyDeleteS3Bucket } = require('@c
 const { translateApiCollectionToPostgresCollection, translateApiProviderToPostgresProvider, RulePgModel } = require('@cumulus/db');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib/testUtils');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -18,7 +21,6 @@ const { migrationDir } = require('../../db-migration');
 const { migrateRuleRecord, migrateRules } = require('../dist/lambda/rules');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 const workflow = randomId('workflow-');
 const ruleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule'];
 
@@ -73,26 +75,11 @@ test.before(async (t) => {
   await rulesModel.createTable();
   await createBucket(process.env.system_bucket);
 
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
   t.context.rulePgModel = new RulePgModel();
-
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
 
   await Promise.all([
     putJsonS3Object(
@@ -135,9 +122,11 @@ test.after.always(async (t) => {
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
@@ -180,25 +169,6 @@ test.serial('migrateRuleRecord correctly migrates rule record', async (t) => {
       },
       ruleOmitList
     )
-  );
-});
-
-test.serial('migrateRuleRecord throws error on invalid source data from DynamoDb', async (t) => {
-  const { fakeCollection, fakeProvider } = t.context;
-  const fakeRule = generateFakeRule({
-    collection: {
-      name: fakeCollection.name,
-      version: fakeCollection.version,
-    },
-    provider: fakeProvider.id,
-  });
-
-  // make source record invalid
-  delete fakeRule.workflow;
-
-  await t.throwsAsync(
-    migrateRuleRecord(fakeRule, t.context.knex),
-    { name: 'SchemaValidationError' }
   );
 });
 
@@ -410,7 +380,10 @@ test.serial('migrateRules processes multiple rules', async (t) => {
 
 test.serial('migrateRules processes all non-failing records', async (t) => {
   const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
-  const anotherFakeCollection = fakeCollectionFactory();
+
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+
   const anotherFakeProvider = fakeProviderFactory({
     encrypted: false,
     privateKey: 'key',
@@ -419,8 +392,8 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
     createdAt: new Date(2020, 11, 17),
     updatedAt: new Date(2020, 11, 17),
   });
-  const { id } = anotherFakeProvider;
-  const { name, version } = anotherFakeCollection;
+
+  await migrateFakeProviderRecord(anotherFakeProvider, knex);
 
   const fakeRule1 = generateFakeRule({
     collection: {
@@ -431,18 +404,13 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
   });
   const fakeRule2 = generateFakeRule({
     collection: {
-      name: name,
-      version: version,
+      // reference collection that doesn't exist so
+      // record migration fails
+      name: cryptoRandomString({ length: 5 }),
+      version: '1',
     },
-    provider: id,
+    provider: anotherFakeProvider.id,
   });
-  await migrateFakeCollectionRecord(fakeCollection, knex);
-  await migrateFakeCollectionRecord(anotherFakeCollection, knex);
-  await migrateFakeProviderRecord(fakeProvider, knex);
-  await migrateFakeProviderRecord(anotherFakeProvider, knex);
-
-  // remove required source field so that record will fail
-  delete fakeRule1.state;
 
   await Promise.all([
     // Have to use Dynamo client directly because creating
