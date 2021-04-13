@@ -1,6 +1,8 @@
 import Knex from 'knex';
+import pMap from 'p-map';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
   CollectionPgModel,
@@ -194,14 +196,14 @@ export const migrateGranulesAndFiles = async (
   const defaultSearchParams = {
     TableName: granulesTable,
   };
-  let extraSearchParams = {};
+  let extraQueryParams = {};
 
   type searchType = 'scan' | 'query';
   let dynamoSearchType: searchType = 'scan';
 
   if (granuleSearchParams.granuleId) {
     dynamoSearchType = 'query';
-    extraSearchParams = {
+    extraQueryParams = {
       KeyConditionExpression: 'granuleId = :granuleId',
       ExpressionAttributeValues: {
         ':granuleId': granuleSearchParams.granuleId,
@@ -209,7 +211,7 @@ export const migrateGranulesAndFiles = async (
     };
   } else if (granuleSearchParams.collectionId) {
     dynamoSearchType = 'query';
-    extraSearchParams = {
+    extraQueryParams = {
       IndexName: 'collectionId-granuleId-index',
       KeyConditionExpression: 'collectionId = :collectionId',
       ExpressionAttributeValues: {
@@ -217,14 +219,6 @@ export const migrateGranulesAndFiles = async (
       },
     };
   }
-
-  const searchQueue = new DynamoDbSearchQueue(
-    {
-      ...defaultSearchParams,
-      ...extraSearchParams,
-    },
-    dynamoSearchType
-  );
 
   const granuleMigrationSummary = {
     total_dynamo_db_records: 0,
@@ -245,19 +239,58 @@ export const migrateGranulesAndFiles = async (
     filesResult: fileMigrationSummary,
   };
 
-  let record = await searchQueue.peek();
+  if (dynamoSearchType === 'scan') {
+    const totalSegments = 5;
+    await pMap([...new Array(totalSegments).keys()], async (_, segmentIndex) => {
+      const { Items } = await dynamodbDocClient().scan({
+        TableName: granulesTable,
+        TotalSegments: totalSegments,
+        Segment: segmentIndex,
+      }).promise();
+      if (!Items) {
+        return Promise.resolve();
+      }
+      return Promise.all(Items.map(
+        async (record) => {
+          const result = await migrateGranuleAndFilesViaTransaction(
+            record,
+            migrationResult,
+            knex,
+            loggingInterval
+          );
+          migrationResult.granulesResult = result.granulesResult;
+          migrationResult.filesResult = result.filesResult;
+        }
+      ));
+    });
+  } else {
+    const searchQueue = new DynamoDbSearchQueue(
+      {
+        ...defaultSearchParams,
+        ...extraQueryParams,
+      },
+      dynamoSearchType
+    );
 
-  /* eslint-disable no-await-in-loop */
-  while (record) {
-    // eslint-disable-next-line max-len
-    const result = await migrateGranuleAndFilesViaTransaction(record, migrationResult, knex, loggingInterval);
-    migrationResult.granulesResult = result.granulesResult;
-    migrationResult.filesResult = result.filesResult;
+    let record = await searchQueue.peek();
 
-    await searchQueue.shift();
-    record = await searchQueue.peek();
+    /* eslint-disable no-await-in-loop */
+    while (record) {
+      const result = await migrateGranuleAndFilesViaTransaction(
+        record,
+        migrationResult,
+        knex,
+        loggingInterval
+      );
+      migrationResult.granulesResult = result.granulesResult;
+      migrationResult.filesResult = result.filesResult;
+
+      await searchQueue.shift();
+      record = await searchQueue.peek();
+    }
+    /* eslint-enable no-await-in-loop */
   }
-  /* eslint-enable no-await-in-loop */
+
   logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
   logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);
   return migrationResult;
