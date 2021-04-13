@@ -20,7 +20,7 @@ The process involves:
 - Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
 - Configuring a VPC, if necessary
 - Configuring an Earthdata application, if necessary
-- Creating/configuring a Postgres 10.2 compatible database, and an AWS KMS secret to allow database access
+- Creating/configuring a Postgres 10.2 compatible database, and an AWS Secrets Manager secret to allow database access
 - Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
