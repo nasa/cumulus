@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import pMap from 'p-map';
+import range from 'lodash/range';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { dynamodbDocClient } from '@cumulus/aws-client/services';
@@ -241,28 +242,36 @@ export const migrateGranulesAndFiles = async (
 
   if (dynamoSearchType === 'scan') {
     const totalSegments = 5;
-    await pMap([...new Array(totalSegments).keys()], async (_, segmentIndex) => {
-      const { Items } = await dynamodbDocClient().scan({
-        TableName: granulesTable,
-        TotalSegments: totalSegments,
-        Segment: segmentIndex,
-      }).promise();
-      if (!Items) {
-        return Promise.resolve();
-      }
-      return Promise.all(Items.map(
-        async (record) => {
-          const result = await migrateGranuleAndFilesViaTransaction(
-            record,
-            migrationResult,
-            knex,
-            loggingInterval
-          );
-          migrationResult.granulesResult = result.granulesResult;
-          migrationResult.filesResult = result.filesResult;
+
+    await pMap(
+      range(totalSegments),
+      async (_, segmentIndex) => {
+        const { Items } = await dynamodbDocClient().scan({
+          TableName: granulesTable,
+          TotalSegments: totalSegments,
+          Segment: segmentIndex,
+        }).promise();
+        if (!Items) {
+          return Promise.resolve();
         }
-      ));
-    });
+        return Promise.all(Items.map(
+          async (record) => {
+            const result = await migrateGranuleAndFilesViaTransaction(
+              record,
+              migrationResult,
+              knex,
+              loggingInterval
+            );
+            migrationResult.granulesResult = result.granulesResult;
+            migrationResult.filesResult = result.filesResult;
+          }
+        ));
+      },
+      // TODO: should this be false?
+      {
+        stopOnError: true,
+      }
+    );
   } else {
     const searchQueue = new DynamoDbSearchQueue(
       {
