@@ -2,22 +2,17 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import {
-  PostgresCollectionRecord,
-  PostgresProviderRecord,
-  PostgresRule,
-  getRecordCumulusId,
-  tableNames,
   RulePgModel,
+  translateApiRuleToPostgresRule,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
+import { RuleRecord } from '@cumulus/types/api/rules';
 
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
 
 /**
  * Migrate rules record from Dynamo to RDS.
@@ -33,9 +28,6 @@ export const migrateRuleRecord = async (
   knex: Knex
 ): Promise<void> => {
   const rulePgModel = new RulePgModel();
-
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.rule);
 
   let existingRecord;
 
@@ -54,40 +46,8 @@ export const migrateRuleRecord = async (
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
-  const collectionCumulusId = dynamoRecord.collection
-    ? await getRecordCumulusId<PostgresCollectionRecord>(
-      { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
-      tableNames.collections,
-      knex
-    )
-    : undefined;
-  const providerCumulusId = dynamoRecord.provider
-    ? await getRecordCumulusId<PostgresProviderRecord>(
-      { name: dynamoRecord.provider },
-      tableNames.providers,
-      knex
-    )
-    : undefined;
-
   // Map old record to new schema.
-  const updatedRecord: PostgresRule = {
-    name: dynamoRecord.name,
-    workflow: dynamoRecord.workflow,
-    provider_cumulus_id: (providerCumulusId === undefined) ? undefined : providerCumulusId,
-    collection_cumulus_id: (collectionCumulusId === undefined) ? undefined : collectionCumulusId,
-    enabled: dynamoRecord.state === 'ENABLED',
-    type: dynamoRecord.rule.type,
-    value: dynamoRecord.rule.value,
-    arn: dynamoRecord.rule.arn,
-    log_event_arn: dynamoRecord.rule.logEventArn,
-    execution_name_prefix: dynamoRecord.executionNamePrefix,
-    payload: dynamoRecord.payload,
-    meta: dynamoRecord.meta,
-    tags: dynamoRecord.tags ? JSON.stringify(dynamoRecord.tags) : undefined,
-    queue_url: dynamoRecord.queueUrl,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
-  };
+  const updatedRecord = await translateApiRuleToPostgresRule(<RuleRecord>dynamoRecord, knex);
 
   await rulePgModel.upsert(knex, updatedRecord);
 };
