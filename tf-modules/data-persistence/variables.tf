@@ -89,6 +89,7 @@ variable "rds_security_group_id" {
   type = string
   default = ""
 }
+
 variable "vpc_id" {
   type    = string
   default = null
