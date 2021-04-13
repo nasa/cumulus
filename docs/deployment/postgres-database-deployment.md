@@ -93,58 +93,11 @@ You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-re
 
 ## Prepare AWS configuration
 
-### Set Access Keys
+To deploy this module, you need to make sure that you have the following steps from the [Cumulus deployment instructions](deployment-readme#prepare-aws-configuration) in similar fashion *for this module*:
 
-You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must [Create Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for such a user with IAM Create-User permissions, then export the access keys:
-
-```bash
-  export AWS_ACCESS_KEY_ID=<AWS access key>
-  export AWS_SECRET_ACCESS_KEY=<AWS secret key>
-  export AWS_REGION=<region>
-```
-
-If you don't want to set environment variables, [access keys can be stored locally via the AWS CLI.](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
-
----
-
-## Create resources for Terraform state
-
-> _If you're re-deploying an existing postgres-database cluster  you should skip to [Deploy](postgres_database_deployment#deploy), as these values should already be configured._
-
-The state of the Terraform deployment is stored in S3. In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`.
-
-### Create a state bucket
-
-*In the case of an existing Cumulus/module deployment, you can skip this step and utilize an existing state bucket.*
-
-```shell
-aws s3api create-bucket --bucket my-tf-state
-```
-
-In order to help prevent loss of state information, **it is strongly recommended that versioning be enabled on the state bucket**.
-
-```shell
-aws s3api put-bucket-versioning \
-    --bucket my-tf-state \
-    --versioning-configuration Status=Enabled
-```
-
-⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources. In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide.
-
-### Create a locks table
-
-*In the case of an existing Cumulus/module deployment, you can skip this step and utilize an existing table.*
-
-Terraform uses a lock stored in DynamoDB in order to prevent multiple simultaneous updates. In the following examples, that table will be called `my-tf-locks`.
-
-```shell
-$ aws dynamodb create-table \
-    --table-name my-tf-locks \
-    --attribute-definitions AttributeName=LockID,AttributeType=S \
-    --key-schema AttributeName=LockID,KeyType=HASH \
-    --billing-mode PAY_PER_REQUEST \
-    --region us-east-1
-```
+- [Set Access Keys](deployment-readme#set-access-keys)
+- [Create the state bucket](deployment-readme#create-the-state-bucket)
+- [Create the locks table](deployment-readme#create-the-locks-table)
 
 --
 
