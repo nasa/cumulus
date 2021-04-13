@@ -24,8 +24,6 @@ import { MigrationSummary } from './types';
 import { storeErrors } from './storeErrors';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
@@ -48,8 +46,6 @@ export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex.Transaction
 ): Promise<number> => {
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(record, schemas.granule);
   const { name, version } = deconstructCollectionId(record.collectionId);
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();

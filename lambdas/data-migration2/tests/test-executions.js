@@ -396,11 +396,13 @@ test.serial('migrateExecutionRecord recursively migrates grandparent executions'
 test.serial('child execution migration fails if parent execution cannot be migrated', async (t) => {
   const { knex, executionPgModel } = t.context;
 
-  const parentExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const parentExecution = fakeExecutionFactoryV2({
+    parentArn: undefined,
+    // make parent record reference to non-existent async operation
+    // so that it fails to migrate
+    asyncOperationId: cryptoRandomString({ length: 5 }),
+  });
   const childExecution = fakeExecutionFactoryV2({ parentArn: parentExecution.arn });
-
-  // make parent record invalid
-  delete parentExecution.name;
 
   await Promise.all([
     // Have to use Dynamo client directly because creating
@@ -463,10 +465,11 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   const { knex, executionPgModel } = t.context;
 
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
-  const newExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
-
-  // remove required source field so that record will fail
-  delete newExecution.name;
+  const newExecution2 = fakeExecutionFactoryV2({
+    parentArn: undefined,
+    // reference non-existent async operation so migration fails
+    asyncOperationId: cryptoRandomString({ length: 5 }),
+  });
 
   await Promise.all([
     // Have to use Dynamo client directly because creating
