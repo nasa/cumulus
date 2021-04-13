@@ -224,7 +224,7 @@ Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.   
 
 - Appropriate testing/evaluation is given to ensure the database capacity will scale and the database deployment will allow access to Cumulus's internal components.   Core provides for security-group oriented permissions management via the `rds_security_group` configuration parameter.
 - The database is configured such that its endpoint is accessible from the VPC and subnets configured for the Core deployment.
-- An AWS Secrets Manager secret exists that the Cumulus deployment user can create/update IAM roles to access that has the following format:
+- An AWS Secrets Manager secret exists that the Cumulus deployment AWS credentials can create/update IAM roles to access that has the following format:
 
 ```json
 {
