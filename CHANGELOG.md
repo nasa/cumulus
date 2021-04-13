@@ -150,7 +150,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
     - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
     - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
-   
+  - **CUMULUS-2453**
+    - Created `storeErrors` function which stores errors in system bucket.
+    - Updated `executions` and `granulesAndFiles` to call `storeErrors` to store migration errors.
+    - Modified terraform files for `data-migration1` and `data-migration2` to account for use of stackName and system bucket.
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes
