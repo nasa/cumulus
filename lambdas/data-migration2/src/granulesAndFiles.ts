@@ -178,7 +178,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
     } else {
       granulesSummary.failed += 1;
       filesSummary.failed += files.length;
-      errorMessage = `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`;
+      errorMessage = `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${JSON.stringify(dynamoRecord.files)}`;
       errorFile.push(`Error: ${error} ${errorMessage}`);
       logger.error(errorMessage, error);
     }
