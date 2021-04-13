@@ -413,7 +413,7 @@ Notes on specific variables:
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 - **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
 - **`rds_security_group`**: The security group used to allow access to the Postgres database
-- **`rds_user_access_secret_arn`**: The ARN for the KMS secret that provides database access information
+- **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
 - **`rds_connection_heartbeat`**:  When using RDS/Aurora Serverless as a database backend, this should be set to `true`, this tells Core to always use a 'heartbeat' query when establishing a database connection to avoid spin-up timeout failures.
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
