@@ -1,21 +1,24 @@
 'use strict';
 
+import Logger from '@cumulus/logger';
+import { DataMigration2HandlerEvent } from '@cumulus/types/migrations';
+
 const asyncOperations = require('@cumulus/async-operations');
-const Logger = require('@cumulus/logger');
 const { models } = require('@cumulus/api');
 
 const logger = new Logger({ sender: '@cumulus/postgres-migration-async-operation' });
-exports.handler = async () => {
+
+exports.handler = async (event: DataMigration2HandlerEvent) => {
   const dynamoTableName = process.env.AsyncOperationsTable;
 
-  logger.info('Starting Postgres Migration Async Operation');
+  logger.info('Starting async operation for Data Migration 2');
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Data Migration 2 Lambda ECS Run',
     operationType: 'Data Migration',
-    payload: {},
+    payload: event,
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
     dynamoTableName,
@@ -23,6 +26,5 @@ exports.handler = async () => {
     useLambdaEnvironmentVariables: true,
   }, models.AsyncOperation);
 
-  logger.info('Completed Postgres Migration Async Operation');
   return asyncOperation;
 };

@@ -1,23 +1,15 @@
 import { getKnexClient } from '@cumulus/db';
 import Logger from '@cumulus/logger';
+import { DataMigration2HandlerEvent } from '@cumulus/types/migrations';
 
 import { migrateExecutions } from './executions';
 import { migrateGranulesAndFiles } from './granulesAndFiles';
 import { migratePdrs } from './pdrs';
 
-import { GranuleDynamoSearchParams } from './types';
-
 const logger = new Logger({ sender: '@cumulus/data-migration2' });
 
-type allowedMigrations = 'granules' | 'executions' | 'pdrs';
-export interface HandlerEvent {
-  env?: NodeJS.ProcessEnv
-  granuleSearchParams?: GranuleDynamoSearchParams
-  migrationsList?: allowedMigrations[]
-}
-
 export const handler = async (
-  event: HandlerEvent
+  event: DataMigration2HandlerEvent
 ): Promise<string> => {
   const env = event.env ?? process.env;
   const migrationsToRun = event.migrationsList ?? ['executions', 'granules', 'pdrs'];

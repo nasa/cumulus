@@ -20,7 +20,7 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { GranuleDynamoSearchParams, MigrationSummary } from './types';
+import { GranuleDynamoSearchParams, MigrationSummary } from '@cumulus/types/migrations';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');

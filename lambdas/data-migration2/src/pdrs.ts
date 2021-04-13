@@ -16,7 +16,7 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { MigrationSummary } from './types';
+import { MigrationSummary } from '@cumulus/types/migrations';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');

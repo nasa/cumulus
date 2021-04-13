@@ -10,6 +10,11 @@ test('handler calls startAsyncOperation with the expected parameters', async (t)
   t.teardown(() => {
     stub.restore();
   });
+  const event = {
+    granuleSearchParams: {
+      foo: 'bar',
+    },
+  };
   t.is(await handler(), 1);
   t.true(stub.calledWith({
     cluster: undefined,
@@ -17,8 +22,7 @@ test('handler calls startAsyncOperation with the expected parameters', async (t)
     asyncOperationTaskDefinition: undefined,
     description: 'Data Migration 2 Lambda ECS Run',
     operationType: 'Data Migration',
-    payload: {
-    },
+    payload: event,
     stackName: undefined,
     systemBucket: undefined,
     dynamoTableName: undefined,
