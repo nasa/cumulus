@@ -1,13 +1,27 @@
+resource "aws_ssm_parameter" "dynamo_table_names" {
+  name = "${var.prefix}-dynamo-table-names"
+  type = "String"
+  value = jsonencode({
+    AccessTokensTable          = var.dynamo_tables.access_tokens.name
+    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
+    CollectionsTable           = var.dynamo_tables.collections.name
+    ExecutionsTable            = var.dynamo_tables.executions.name
+    GranulesTable              = var.dynamo_tables.granules.name
+    PdrsTable                  = var.dynamo_tables.pdrs.name
+    ProvidersTable             = var.dynamo_tables.providers.name
+    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+    RulesTable                 = var.dynamo_tables.rules.name
+  })
+}
+
 locals {
   api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
   api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}token"
   api_env_variables = {
-      AccessTokensTable                = var.dynamo_tables.access_tokens.name
       API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
-      AsyncOperationsTable             = var.dynamo_tables.async_operations.name
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
       auth_mode                        = "public"
       backgroundQueueUrl               = var.background_queue_url
@@ -19,11 +33,11 @@ locals {
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
-      CollectionsTable                 = var.dynamo_tables.collections.name
       databaseCredentialSecretArn      = var.rds_user_access_secret_arn
       dbHeartBeat                      = var.rds_connection_heartbeat
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
+      dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
@@ -36,8 +50,6 @@ locals {
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname
       ES_INDEX_SHARDS                  = var.es_index_shards
-      ExecutionsTable                  = var.dynamo_tables.executions.name
-      GranulesTable                    = var.dynamo_tables.granules.name
       IDP_LOGIN                        = var.saml_idp_login
       IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn
       invoke                           = var.schedule_sf_function_arn
@@ -59,13 +71,9 @@ locals {
       MigrationAsyncOperationLambda    = var.postgres_migration_async_operation_function_arn
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
-      PdrsTable                        = var.dynamo_tables.pdrs.name
       protected_buckets                = join(",", local.protected_buckets)
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
-      ProvidersTable                   = var.dynamo_tables.providers.name
       public_buckets                   = join(",", local.public_buckets)
-      ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
-      RulesTable                       = var.dynamo_tables.rules.name
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
       TOKEN_REDIRECT_ENDPOINT          = local.api_redirect_uri
