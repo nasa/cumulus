@@ -240,7 +240,7 @@ Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.   
 - `host` -- the RDS service host for the database in the form (dbClusterIdentifier)-(AWS ID string).(region).rds.amazonaws.com
 - `password` -- the database password
 - `port` -- The database connection port, should always be 5432
-- `username` -- the account username
+- `username` -- the database username
 
 This secret should provide access to a postgres database provisioned on the cluster.
 
