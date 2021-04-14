@@ -215,27 +215,33 @@ test('handler migrates executions, granules, files, and PDRs', async (t) => {
   ]));
 
   const call = await handler({ env: process.env });
-  const expected = `
-      Migration summary:
-        Executions:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Granules:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Files:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records failed
-        PDRs:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-    `;
-  t.is(call, expected);
+  const expected = {
+    MigrationSummary: {
+      executions: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      granules: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      files: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      pdrs: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+    },
+  };
+  t.deepEqual(call, expected);
 });

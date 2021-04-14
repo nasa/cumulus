@@ -118,5 +118,5 @@ variable "permissions_boundary_arn" {
 
 variable "rds_user_password" {
   type    = string
-  default = "changeme"
+  default = ""
 }
