@@ -20,7 +20,6 @@ const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordAlreadyMigrated}
- *   if record was already migrated
  */
 export const migrateExecutionRecord = async (
   dynamoRecord: ExecutionRecord,
@@ -39,7 +38,6 @@ export const migrateExecutionRecord = async (
       throw error;
     }
   }
-  // Throw error if it was already migrated.
   if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Execution arn ${dynamoRecord.arn} was already migrated, skipping`);
   }
@@ -69,6 +67,7 @@ export const migrateExecutions = async (
   knex: Knex
 ): Promise<MigrationSummary> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
+  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: executionsTable,
@@ -86,13 +85,16 @@ export const migrateExecutions = async (
   while (record) {
     migrationSummary.dynamoRecords += 1;
 
+    if (migrationSummary.dynamoRecords % loggingInterval === 0) {
+      logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationSummary.dynamoRecords} total`);
+    }
+
     try {
       await migrateExecutionRecord(<ExecutionRecord>record, knex);
       migrationSummary.success += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
         migrationSummary.skipped += 1;
-        logger.info(error);
       } else {
         migrationSummary.failed += 1;
         logger.error(

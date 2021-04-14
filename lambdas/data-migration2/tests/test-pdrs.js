@@ -1,9 +1,11 @@
-const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const test = require('ava');
+const sinon = require('sinon');
 
 const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Pdr = require('@cumulus/api/models/pdrs');
+const Logger = require('@cumulus/logger');
 
 const {
   CollectionPgModel,
@@ -403,4 +405,29 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 1);
+});
+
+test.serial('migratePdrs logs summary of migration every for a specified interval', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  const {
+    knex,
+    testCollection,
+    testProvider,
+  } = t.context;
+  process.env.loggingInterval = 1;
+
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
+
+  await pdrsModel.create(testPdr);
+
+  t.teardown(async () => {
+    logSpy.restore();
+    await pdrsModel.delete({ pdrName: testPdr.pdrName });
+  });
+
+  await migratePdrs(process.env, knex);
+  t.true(logSpy.calledWith('Batch of 1 PDR records processed, 1 total'));
 });
