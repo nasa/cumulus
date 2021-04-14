@@ -1,11 +1,13 @@
 import { s3PutObject } from '@cumulus/aws-client/S3';
 
 /**
- * Store migration errors in JSON file in S3
+ * Store migration errors JSON file on S3.
+ *
  * @param {string} bucket
  * @param {string[]} message
  * @param {string} recordClassification
  * @param {string | undefined} stackName
+ * @returns {void}
  */
 export const storeErrors = async (
   bucket: string,
