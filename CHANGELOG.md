@@ -155,7 +155,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2453**
     - Created `storeErrors` function which stores errors in system bucket.
     - Updated `executions` and `granulesAndFiles` to call `storeErrors` to store migration errors.
-    - Modified terraform files for `data-migration1` and `data-migration2` to account for use of stackName and system bucket.
+    - Added `system_bucket` variable to `data-migration2`.
   - **CUMULUS-2451**
     - Added summary type file `packages/db/src/types/summary.ts` with `MigrationSummary` and `DataMigration1` and `DataMigration2` types.
     - Updated `data-migration1` and `data-migration2` lambdas to return `MigrationSummary` objects.
