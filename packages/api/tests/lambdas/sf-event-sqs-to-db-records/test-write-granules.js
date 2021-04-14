@@ -561,7 +561,7 @@ test('writeGranules() does not persist granule or files if any file is invalid',
   );
 });
 
-test('writeGranules() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test('writeGranules() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
