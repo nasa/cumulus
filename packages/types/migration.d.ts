@@ -23,15 +23,16 @@ export interface MigrationSummary {
   MigrationSummary: DataMigration1Summary | DataMigration2Summary
 }
 
-export interface GranuleDynamoSearchParams {
+export interface GranuleMigrationParams {
   collectionId?: string
   granuleId?: string
+  parallelScanSegments?: number
 }
 
 type DataMigration2AllowedMigrations = 'granules' | 'executions' | 'pdrs';
 
 export interface DataMigration2HandlerEvent {
   env?: NodeJS.ProcessEnv
-  granuleSearchParams?: GranuleDynamoSearchParams
+  granuleMigrationParams?: GranuleMigrationParams
   migrationsList?: DataMigration2AllowedMigrations[]
 }

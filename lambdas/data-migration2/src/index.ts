@@ -37,7 +37,7 @@ export const handler = async (
       const { granulesResult, filesResult } = await migrateGranulesAndFiles(
         env,
         knex,
-        event.granuleSearchParams
+        event.granuleMigrationParams
       );
       migrationSummary.granules = {
         total_dynamo_db_records: granulesResult.total_dynamo_db_records,

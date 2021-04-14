@@ -23,7 +23,7 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { GranuleDynamoSearchParams, MigrationResult } from '@cumulus/types/migration';
+import { GranuleMigrationParams, MigrationResult } from '@cumulus/types/migration';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
@@ -189,7 +189,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
-  granuleSearchParams: GranuleDynamoSearchParams = {}
+  granuleMigrationParams: GranuleMigrationParams = {}
 ): Promise<GranulesAndFilesMigrationResult> => {
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
@@ -202,21 +202,21 @@ export const migrateGranulesAndFiles = async (
   type searchType = 'scan' | 'query';
   let dynamoSearchType: searchType = 'scan';
 
-  if (granuleSearchParams.granuleId) {
+  if (granuleMigrationParams.granuleId) {
     dynamoSearchType = 'query';
     extraQueryParams = {
       KeyConditionExpression: 'granuleId = :granuleId',
       ExpressionAttributeValues: {
-        ':granuleId': granuleSearchParams.granuleId,
+        ':granuleId': granuleMigrationParams.granuleId,
       },
     };
-  } else if (granuleSearchParams.collectionId) {
+  } else if (granuleMigrationParams.collectionId) {
     dynamoSearchType = 'query';
     extraQueryParams = {
       IndexName: 'collectionId-granuleId-index',
       KeyConditionExpression: 'collectionId = :collectionId',
       ExpressionAttributeValues: {
-        ':collectionId': granuleSearchParams.collectionId,
+        ':collectionId': granuleMigrationParams.collectionId,
       },
     };
   }
@@ -241,16 +241,21 @@ export const migrateGranulesAndFiles = async (
   };
 
   if (dynamoSearchType === 'scan') {
-    const totalSegments = 5;
+    const totalSegments = granuleMigrationParams.parallelScanSegments ?? 5;
+
+    logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
 
     await pMap(
       range(totalSegments),
       async (_, segmentIndex) => {
-        const { Items } = await dynamodbDocClient().scan({
+        const { Items, LastEvaluatedKey } = await dynamodbDocClient().scan({
           TableName: granulesTable,
           TotalSegments: totalSegments,
           Segment: segmentIndex,
+          // Limit: 1,
         }).promise();
+        console.log('LastEvaluatedKey', LastEvaluatedKey);
+
         if (!Items) {
           return Promise.resolve();
         }
@@ -272,6 +277,8 @@ export const migrateGranulesAndFiles = async (
         stopOnError: true,
       }
     );
+
+    logger.info(`Finished parallel scan of granules with ${totalSegments}.`);
   } else {
     const searchQueue = new DynamoDbSearchQueue(
       {
