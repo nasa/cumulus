@@ -557,7 +557,7 @@ test('writeGranules() does not persist granule or files if any file is invalid',
   // If no granule was persisted, files could not have been created
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await doesRecordExist({ granule_id: granuleId }, knex, tableNames.granules)
+    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
   );
 });
 
