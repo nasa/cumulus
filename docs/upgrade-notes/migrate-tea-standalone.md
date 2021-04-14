@@ -10,7 +10,7 @@ hide_title: false
 
 Previous versions of Cumulus included deployment of the Thin Egress App (TEA) by default in the `distribution` module. As a result, Cumulus users who wanted to deploy a new version of TEA to wait on a new release of Cumulus that incorporated that release.
 
-In order to give Cumulus users the flexibility to deploy newer versions of TEA whenever they want, deployment of TEA has been removed from the `distribution` module and **Cumulus users must now add the TEA module tno their deployment**. [Guidance on integrating the TEA module to your deployment is provided](../deployment/thin-egress-app.md), or you can refer to [Cumulus core example deployment code for the `thin_egress_app` module](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
+In order to give Cumulus users the flexibility to deploy newer versions of TEA whenever they want, deployment of TEA has been removed from the `distribution` module and **Cumulus users must now add the TEA module to their deployment**. [Guidance on integrating the TEA module to your deployment is provided](../deployment/thin-egress-app.md), or you can refer to [Cumulus core example deployment code for the `thin_egress_app` module](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
 
 By default, when upgrading Cumulus and moving from TEA deployed via the `distribution` module to deployed as a separate module, your API gateway for TEA would be destroyed and re-created, which could cause outages for any Cloudfront endpoints pointing at that API gateway.
 

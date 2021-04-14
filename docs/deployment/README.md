@@ -20,7 +20,7 @@ The process involves:
 - Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
 - Configuring a VPC, if necessary
 - Configuring an Earthdata application, if necessary
-- Creating/configuring a Postgres 10.2 compatible database, and an AWS KMS secret to allow database access
+- Creating/configuring a PostgreSQL 10.2 compatible database, and an AWS Secrets Manager secret to allow database access
 - Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
@@ -218,13 +218,13 @@ $ aws dynamodb create-table \
 
 ---
 
-## Configure the Postgres database
+## Configure the PostgreSQL database
 
-Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](postgres_database_deployment) utilizing Aurora Serverless, however Core intentonally provides for a "bring your own" approach, and any well-planned cluster setup should work, given the following:
+Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](PostgreSQL_database_deployment) utilizing Aurora Serverless. However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
 
 - Appropriate testing/evaluation is given to ensure the database capacity will scale and the database deployment will allow access to Cumulus's internal components.   Core provides for security-group oriented permissions management via the `rds_security_group` configuration parameter.
-- The database is configured such that it's endpoint is accessible from the VPC and subnets configured for the Core deployment.
-- An AWS Secrets Manager secret exists that the Cumulus deployment user can assign IAM roles with access that has the following format:
+- The database is configured such that its endpoint is accessible from the VPC and subnets configured for the Core deployment.
+- An AWS Secrets Manager secret exists that has the following format:
 
 ```json
 {
@@ -236,13 +236,13 @@ Cumulus requires a Postgres 10.2 compatible database cluster deployed to AWS.   
 }
 ```
 
-- `database` -- the postgres database used by the configured user
+- `database` -- the PostgreSQL database used by the configured user
 - `host` -- the RDS service host for the database in the form (dbClusterIdentifier)-(AWS ID string).(region).rds.amazonaws.com
 - `password` -- the database password
 - `port` -- The database connection port, should always be 5432
-- `username` -- the account username
+- `username` -- the database username
 
-This secret should provide access to a postgres database provisioned on the cluster.
+This secret should provide access to a PostgreSQL database provisioned on the cluster.
 
 To configure Cumulus you will need:
 
@@ -412,8 +412,8 @@ Notes on specific variables:
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 - **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
-- **`rds_security_group`**: The security group used to allow access to the Postgres database
-- **`rds_user_access_secret_arn`**: The ARN for the KMS secret that provides database access information
+- **`rds_security_group`**: The ID of the security group used to allow access to the PostgreSQL database
+- **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
 - **`rds_connection_heartbeat`**:  When using RDS/Aurora Serverless as a database backend, this should be set to `true`, this tells Core to always use a 'heartbeat' query when establishing a database connection to avoid spin-up timeout failures.
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.

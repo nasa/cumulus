@@ -12,9 +12,6 @@ import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
-
 const logger = new Logger({ sender: '@cumulus/data-migration/async-operations' });
 
 export const migrateAsyncOperationRecord = async (
@@ -22,9 +19,6 @@ export const migrateAsyncOperationRecord = async (
   knex: Knex
 ): Promise<void> => {
   const asyncOperationPgModel = new AsyncOperationPgModel();
-
-  // Use API model schema to validate record before processing
-  Manager.recordIsValid(dynamoRecord, schemas.asyncOperation);
 
   let existingRecord;
 

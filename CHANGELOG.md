@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       of returning `none` when the operation did not return output.
   - **CUMULUS-2309**
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
+  - **CUMULUS-2385**
+    - Updated `sf-event-sqs-to-db-records` to write a granule's files to PostgreSQL only after the workflow has exited the `Running` status.    Please note that any workflow that uses `sf_sqs_report_task` for mid-workflow updates will be impacted.
 
 ### Added
 
@@ -32,7 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated PDR and Granule writes to check the step function
     workflow_start_time against the createdAt field for each record to
     ensure old records do not overwrite newer ones for legacy Dynamo and
-    Postgres writes
+    PostgreSQL writes
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
     - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to PostgreSQL
@@ -150,7 +152,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
     - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
     - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
-   
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes

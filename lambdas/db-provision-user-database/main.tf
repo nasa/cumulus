@@ -115,6 +115,6 @@ data "aws_lambda_invocation" "provision_database" {
     userLoginSecret    = aws_secretsmanager_secret.db_credentials.name
     dbPassword         = var.rds_user_password
     replacementTrigger = timestamp()
-    dbRecreation         = true
+    dbRecreation       = var.dbRecreation
   })
 }
