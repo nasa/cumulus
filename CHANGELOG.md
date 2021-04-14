@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-2348**
+  - The `@cumulus/api` `/granules` and `/granules/{granuleId}` endpoints now take `getRecoveryStatus` parameter
+  to include recoveryStatus in result granule(s)
+  - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
+  request additional granule information.
+  - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
+
 ## [v8.0.0] 2021-04-08
 
 ### BREAKING CHANGES
@@ -30,12 +38,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     logger, instead of via environment variable. This fixes a problem where a
     large number of found granules prevents this lambda from running as an
     activity with an E2BIG error.
-
-- **CUMULUS-2348**
-  - The `@cumulus/api` `/granules` and `/granules/{granuleId}` endpoints now take `getRecoveryStatus` parameter
-  to include recoveryStatus in result granule(s)
-  - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
-  request additional granule information.
 
 ## [v7.2.0] 2021-03-23
 
