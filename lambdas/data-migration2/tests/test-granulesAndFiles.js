@@ -228,20 +228,6 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   );
 });
 
-test.serial('migrateGranuleRecord throws error on invalid source data from DynamoDB', async (t) => {
-  const {
-    knex,
-    testGranule,
-  } = t.context;
-
-  delete testGranule.collectionId;
-
-  await t.throwsAsync(
-    migrateGranuleRecord(testGranule, knex),
-    { name: 'SchemaValidationError' }
-  );
-});
-
 test.serial('migrateGranuleRecord handles nullable fields on source granule data', async (t) => {
   const {
     collectionCumulusId,
