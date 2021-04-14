@@ -1,12 +1,12 @@
 ---
 id: postgres_database_deployment
-title: Postgres Database Deployment
+title: PostgreSQL Database Deployment
 hide_title: false
 ---
 
 ## Overview
 
-Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided in addition to the existing DynamoDB/ElasticSearch backend with the eventual goal of utilizing the Postgres database as the primary data store for Cumulus.
+Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided in addition to the existing DynamoDB/ElasticSearch backend with the eventual goal of utilizing the PostgreSQL database as the primary data store for Cumulus.
 
 Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
 
@@ -16,7 +16,7 @@ configured [Aurora Serverless](https://aws.amazon.com/rds/aurora/serverless/) cl
 
 To that end, Cumulus provides a terraform module
 [`cumulus-rds-tf`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-rds-tf)
-that will deploy an AWS RDS Aurora Serverless Postgres 10.2 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
+that will deploy an AWS RDS Aurora Serverless PostgreSQL 10.2 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
 
 We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/rds-cluster-tf/) on github.
 
@@ -59,7 +59,7 @@ For Cumulus specific instructions on installation of Terraform, refer to the mai
 
 #### Aurora/RDS
 
-This document also assumes some basic familiarity with Postgres databases, and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the [AWS docs](https://aws.amazon.com/rds/aurora/), and the [Aurora Serverless V1 docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.html).
+This document also assumes some basic familiarity with PostgreSQL databases, and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the [AWS docs](https://aws.amazon.com/rds/aurora/), and the [Aurora Serverless V1 docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.html).
 
 ## Prepare deployment repository
 
@@ -132,7 +132,7 @@ Fill in the appropriate values in `terraform.tfvars`. See the [rds-cluster-tf mo
 
 #### Provision user and user database
 
-If you wish for the module to provision a Postgres database on your new cluster and provide a secret for access in the module output, *in addition to* managing the cluster itself, the following configuration keys are required:
+If you wish for the module to provision a PostgreSQL database on your new cluster and provide a secret for access in the module output, *in addition to* managing the cluster itself, the following configuration keys are required:
 
 - `provision_user_database` -- must be set to `true`, this configures the module to deploy a lambda that will create the user database, and update the provided configuration on deploy.
 - `permissions_boundary_arn` -- the permissions boundary to use in creating the roles for access the provisioning lambda will need.  This should in most use cases be the same one used for Cumulus Core deployment.
@@ -284,7 +284,7 @@ Terraform will perform the following actions:
       + vpc_id                 = "vpc-xxxxxxxxx"
     }
 
-  # module.rds_cluster.aws_security_group_rule.rds_security_group_allow_postgres will be created
+  # module.rds_cluster.aws_security_group_rule.rds_security_group_allow_PostgreSQL will be created
   + resource "aws_security_group_rule" "rds_security_group_allow_postgres" {
       + from_port                = 5432
       + id                       = (known after apply)
@@ -340,7 +340,7 @@ The content of each of these secrets are is in the form:
 }
 ```
 
-- `database` -- the postgres database used by the configured user
+- `database` -- the PostgreSQL database used by the configured user
 - `dbClusterIdentifier` -- the value set by the  `cluster_identifier` variable in the terraform module
 - `engine` -- the Aurora/RDS database engine
 - `host` -- the RDS service host for the database in the form (dbClusterIdentifier)-(AWS ID string).(region).rds.amazonaws.com
