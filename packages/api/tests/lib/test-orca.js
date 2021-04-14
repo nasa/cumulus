@@ -49,6 +49,7 @@ test.serial(
     const granuleId = randomId('granId');
     const recoveryRequests = [];
     fakeListRequests.resolves({
+      statusCode: 200,
       body: JSON.stringify(recoveryRequests),
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
@@ -66,6 +67,7 @@ test.serial(
       recoveryRequestFactory({ granuleId, status: 'error' }),
     ];
     fakeListRequests.resolves({
+      statusCode: 200,
       body: JSON.stringify(recoveryRequests),
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
@@ -82,6 +84,7 @@ test.serial(
       recoveryRequestFactory({ granuleId, status: 'complete' }),
     ];
     fakeListRequests.resolves({
+      statusCode: 200,
       body: JSON.stringify(recoveryRequests),
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
@@ -98,6 +101,7 @@ test.serial(
       recoveryRequestFactory({ granuleId, status: 'error' }),
     ];
     fakeListRequests.resolves({
+      statusCode: 200,
       body: JSON.stringify(recoveryRequests),
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
@@ -125,9 +129,9 @@ test.serial(
     ];
 
     fakeListRequests.onCall(0)
-      .returns({ body: JSON.stringify(recoveryRequestsGranule1) });
+      .returns({ statusCode: 200, body: JSON.stringify(recoveryRequestsGranule1) });
     fakeListRequests.onCall(1)
-      .returns({ body: JSON.stringify(recoveryRequestsGranule2) });
+      .returns({ statusCode: 200, body: JSON.stringify(recoveryRequestsGranule2) });
 
     const updatedResponse = await orca.addOrcaRecoveryStatus(inputResponse);
     const granules = updatedResponse.results;
