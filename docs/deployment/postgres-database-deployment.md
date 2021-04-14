@@ -103,7 +103,9 @@ To deploy this module, you need to make sure that you have the following steps f
 
 ### Configure and deploy the module
 
-These steps should be executed in the `rds-cluster-tf` directory of the template deploy repo that you previously cloned. Run the following to copy the example files.
+When configuring this module, please keep in mind that unlike Cumulus deployment, the module should be deployed once to create the database cluster and only thereafter to make changes to that configuration/upgrade/etc, it does not need to be re-deployed for each Core update.
+
+These steps should be executed in the `rds-cluster-tf` directory of the template deploy repo that you previously cloned. Run the following to copy the example files:
 
 ```shell
 cd rds-cluster-tf/
