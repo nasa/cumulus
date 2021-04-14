@@ -500,33 +500,6 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   t.is(records.length, 1);
 });
 
-test.serial('migrateExecutions calls storeError when system bucket is provided', async (t) => {
-  const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
-  const key = `${process.env.stackName}/data-migration2-executions-errors.json`;
-
-  // remove required source field so that record will fail
-  delete newExecution.name;
-
-  await dynamodbDocClient().put({
-    TableName: process.env.ExecutionsTable,
-    Item: newExecution,
-  }).promise();
-
-  t.teardown(async () => {
-    executionsModel.delete({ arn: newExecution.arn });
-  });
-
-  await migrateExecutions(process.env, t.context.knex);
-
-  // Check that error file exists in S3
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  }).promise();
-  const messageBody = JSON.parse(item.Body);
-  t.truthy(messageBody.errors[0]);
-});
-
 test.serial('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
   const logSpy = sinon.spy(Logger.prototype, 'info');
   process.env.loggingInterval = 1;
@@ -541,4 +514,39 @@ test.serial('migrateExecutions logs summary of migration for a specified logging
 
   await migrateExecutions(process.env, t.context.knex);
   t.true(logSpy.calledWith('Batch of 1 execution records processed, 1 total'));
+});
+
+test.serial('migrateExecutions calls storeError when system bucket is provided', async (t) => {
+  const key = `${process.env.stackName}/data-migration2-executions-errors.json`;
+
+  const parentExecution = fakeExecutionFactoryV2({
+    parentArn: undefined,
+    asyncOperationId: cryptoRandomString({ length: 10 }),
+  });
+  const childExecution = fakeExecutionFactoryV2({ parentArn: parentExecution.arn });
+
+  await Promise.all([
+    // Have to use Dynamo client directly because creating
+    // via model won't allow creation of an invalid record
+    dynamodbDocClient().put({
+      TableName: process.env.ExecutionsTable,
+      Item: parentExecution,
+    }).promise(),
+    executionsModel.create(childExecution),
+  ]);
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: parentExecution.arn }),
+    executionsModel.delete({ arn: childExecution.arn }),
+  ]));
+
+  await migrateExecutions(process.env, t.context.knex);
+
+  // Check that error file exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  const messageBody = JSON.parse(item.Body);
+
+  t.truthy(messageBody.errors[0]);
 });
