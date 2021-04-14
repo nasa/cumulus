@@ -1,3 +1,8 @@
+resource "random_string" "db_pass" {
+  length  = 50
+  upper   = true
+  special = false
+}
 
 module "provision_database" {
   count = var.provision_user_database ? 1 : 0
@@ -9,7 +14,6 @@ module "provision_database" {
   tags                        = var.tags
   permissions_boundary_arn    = var.permissions_boundary_arn
   vpc_id                      = var.vpc_id
-  rds_user_password           = var.rds_user_password
+  rds_user_password           = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
   rds_connection_heartbeat    = true
 }
-
