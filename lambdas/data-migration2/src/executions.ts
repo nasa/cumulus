@@ -1,12 +1,14 @@
 import Knex from 'knex';
-import Logger from '@cumulus/logger';
+import pMap from 'p-map';
+import range from 'lodash/range';
 
-import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import { envUtils } from '@cumulus/common';
+import Logger from '@cumulus/logger';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
-import { MigrationResult } from '@cumulus/types/migration';
+import { ExecutionMigrationParams, MigrationResult } from '@cumulus/types/migration';
 
 const Execution = require('@cumulus/api/models/executions');
 
@@ -43,7 +45,8 @@ export const migrateExecutionRecord = async (
   }
 
   const updatedRecord = await translateApiExecutionToPostgresExecution(
-    dynamoRecord, knex
+    dynamoRecord,
+    knex
   );
 
   // If we have a parent ARN from the dynamo record but we couldn't find a cumulus_id in Postgres,
@@ -64,14 +67,11 @@ export const migrateExecutionRecord = async (
 
 export const migrateExecutions = async (
   env: NodeJS.ProcessEnv,
-  knex: Knex
+  knex: Knex,
+  executionMigrationParams: ExecutionMigrationParams = {}
 ): Promise<MigrationResult> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
-
-  const searchQueue = new DynamoDbSearchQueue({
-    TableName: executionsTable,
-  });
 
   const migrationResult = {
     total_dynamo_db_records: 0,
@@ -80,34 +80,85 @@ export const migrateExecutions = async (
     skipped: 0,
   };
 
-  let record = await searchQueue.peek();
-  /* eslint-disable no-await-in-loop */
-  while (record) {
-    migrationResult.total_dynamo_db_records += 1;
+  const totalSegments = executionMigrationParams.parallelScanSegments ?? 5;
 
-    if (migrationResult.total_dynamo_db_records % loggingInterval === 0) {
-      logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationResult.total_dynamo_db_records} total`);
-    }
+  logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
-    try {
-      await migrateExecutionRecord(<ExecutionRecord>record, knex);
-      migrationResult.migrated += 1;
-    } catch (error) {
-      if (error instanceof RecordAlreadyMigrated) {
-        migrationResult.skipped += 1;
-      } else {
-        migrationResult.failed += 1;
-        logger.error(
-          `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`,
-          error
+  type ScanParams = {
+    ExclusiveStartKey?: any
+  };
+
+  await pMap(
+    range(totalSegments),
+    async (_, segmentIndex) => {
+      let ExclusiveStartKey;
+      const scanParams: ScanParams = {};
+
+      /* eslint-disable no-await-in-loop */
+      do {
+        console.log(`processing segmentIndex ${segmentIndex}`);
+
+        if (ExclusiveStartKey) {
+          console.log(`segmentIndex ${segmentIndex} ExclusiveStartKey ${JSON.stringify(ExclusiveStartKey, null, 2)}`);
+          scanParams.ExclusiveStartKey = ExclusiveStartKey;
+        }
+
+        const { Items, LastEvaluatedKey } = await dynamodbDocClient().scan({
+          ...scanParams,
+          TableName: executionsTable,
+          TotalSegments: totalSegments,
+          Segment: segmentIndex,
+          Limit: executionMigrationParams.parallelScanLimit,
+        }).promise();
+
+        ExclusiveStartKey = LastEvaluatedKey;
+
+        console.log(`segmentIndex ${segmentIndex} LastEvaluatedKey ${JSON.stringify(LastEvaluatedKey, null, 2)}`);
+
+        if (!Items) {
+          return Promise.resolve();
+        }
+
+        console.log(`Found ${Items.length} items for segmentIndex ${segmentIndex}`);
+
+        return pMap(
+          Items,
+          async (dynamoRecord) => {
+            migrationResult.total_dynamo_db_records += 1;
+
+            if (migrationResult.total_dynamo_db_records % loggingInterval === 0) {
+              logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationResult.total_dynamo_db_records} total`);
+            }
+
+            try {
+              await migrateExecutionRecord(
+                <ExecutionRecord>dynamoRecord,
+                knex
+              );
+              migrationResult.migrated += 1;
+            } catch (error) {
+              if (error instanceof RecordAlreadyMigrated) {
+                migrationResult.skipped += 1;
+              } else {
+                migrationResult.failed += 1;
+                logger.error(
+                  `Could not create execution record in RDS for DynamoDB execution arn: ${dynamoRecord.arn}}`,
+                  error
+                );
+              }
+            }
+          }
         );
-      }
+      } while (ExclusiveStartKey);
+      /* eslint-enable no-await-in-loop */
+    },
+    // TODO: should this be false?
+    {
+      stopOnError: true,
     }
+  );
 
-    await searchQueue.shift();
-    record = await searchQueue.peek();
-  }
-  /* eslint-enable no-await-in-loop */
+  logger.info(`Finished parallel scan of executions with ${totalSegments} parallel segments.`);
   logger.info(`successfully migrated ${migrationResult.migrated} execution records`);
   return migrationResult;
 };

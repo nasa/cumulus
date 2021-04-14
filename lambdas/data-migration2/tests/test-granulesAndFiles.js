@@ -775,16 +775,33 @@ test.serial('migrateGranulesAndFiles logs summary of migration for a specified l
   const {
     knex,
     testGranule,
+    testCollection,
   } = t.context;
-  process.env.loggingInterval = 1;
+
+  const testGranule2 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    execution: t.context.executionUrl,
+  });
 
   await granulesModel.create(testGranule);
+  await granulesModel.create(testGranule2);
 
   t.teardown(async () => {
     logSpy.restore();
     await granulesModel.delete(testGranule);
+    await granulesModel.delete(testGranule2);
   });
 
-  await migrateGranulesAndFiles(process.env, knex);
+  await migrateGranulesAndFiles(
+    {
+      ...process.env,
+      loggingInterval: 1,
+    },
+    knex,
+    {
+      parallelScanLimit: 1,
+    }
+  );
   t.true(logSpy.calledWith('Batch of 1 granule records processed, 1 total'));
+  t.true(logSpy.calledWith('Batch of 1 granule records processed, 2 total'));
 });

@@ -432,7 +432,7 @@ test.serial('child execution migration fails if parent execution cannot be migra
   t.is(records.length, 0);
 });
 
-test.serial('migrateExecutions processes multiple executions', async (t) => {
+test.serial.only('migrateExecutions processes multiple executions', async (t) => {
   const { knex, executionPgModel } = t.context;
 
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
@@ -442,17 +442,29 @@ test.serial('migrateExecutions processes multiple executions', async (t) => {
     executionsModel.create(newExecution),
     executionsModel.create(newExecution2),
   ]);
+
+  console.log('newExecution.arn', newExecution.arn);
+  console.log('newExecution2.arn', newExecution2.arn);
+
   t.teardown(() => Promise.all([
     executionsModel.delete({ arn: newExecution.arn }),
     executionsModel.delete({ arn: newExecution2.arn }),
   ]));
 
-  const migrationSummary = await migrateExecutions(process.env, t.context.knex);
+  const migrationSummary = await migrateExecutions(
+    process.env,
+    t.context.knex,
+    {
+      parallelScanLimit: 1,
+      parallelScanSegments: 2,
+    }
+  );
   t.deepEqual(migrationSummary, {
     total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    migrated: 2,
+    migrated: 0,
+    // migrated: 2,
   });
   const records = await executionPgModel.search(
     knex,
@@ -501,16 +513,29 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
 
 test.serial('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
   const logSpy = sinon.spy(Logger.prototype, 'info');
-  process.env.loggingInterval = 1;
 
   const execution = fakeExecutionFactoryV2({ parentArn: undefined });
   await executionsModel.create(execution);
+  const execution2 = fakeExecutionFactoryV2({ parentArn: undefined });
+  await executionsModel.create(execution2);
 
   t.teardown(async () => {
     logSpy.restore();
     await executionsModel.delete({ arn: execution.arn });
+    await executionsModel.delete({ arn: execution2.arn });
   });
 
-  await migrateExecutions(process.env, t.context.knex);
+  await migrateExecutions(
+    {
+      ...process.env,
+      loggingInterval: 1,
+    },
+    t.context.knex,
+    {
+      parallelScanLimit: 1,
+      parallelScanSegments: 2,
+    }
+  );
   t.true(logSpy.calledWith('Batch of 1 execution records processed, 1 total'));
+  t.true(logSpy.calledWith('Batch of 1 execution records processed, 2 total'));
 });

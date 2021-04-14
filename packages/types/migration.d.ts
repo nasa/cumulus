@@ -27,12 +27,19 @@ export interface GranuleMigrationParams {
   collectionId?: string
   granuleId?: string
   parallelScanSegments?: number
+  parallelScanLimit?: number
+}
+
+export interface ExecutionMigrationParams {
+  parallelScanSegments?: number
+  parallelScanLimit?: number
 }
 
 type DataMigration2AllowedMigrations = 'granules' | 'executions' | 'pdrs';
 
 export interface DataMigration2HandlerEvent {
   env?: NodeJS.ProcessEnv
+  executionMigrationParams?: ExecutionMigrationParams
   granuleMigrationParams?: GranuleMigrationParams
   migrationsList?: DataMigration2AllowedMigrations[]
 }
