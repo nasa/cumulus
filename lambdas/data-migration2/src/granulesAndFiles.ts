@@ -191,8 +191,9 @@ export const migrateGranulesAndFiles = async (
   knex: Knex,
   granuleMigrationParams: GranuleMigrationParams = {}
 ): Promise<GranulesAndFilesMigrationResult> => {
-  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
+
+  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
 
   const defaultSearchParams = {
     TableName: granulesTable,
