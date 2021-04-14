@@ -180,28 +180,33 @@ test('handler migrates async operations, collections, providers, rules', async (
   ]).then(() => collectionsModel.delete(fakeCollection)));
 
   const call = await handler({});
-  const expected = `
-      Migration summary:
-        Collections:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Providers:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        AsyncOperations:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-        Rules:
-          Out of 1 DynamoDB records:
-            1 records migrated
-            0 records skipped
-            0 records failed
-    `;
-  t.is(call, expected);
+  const expected = {
+    MigrationSummary: {
+      async_operations: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      collections: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      providers: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+      rules: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+    },
+  };
+  t.deepEqual(call, expected);
 });
