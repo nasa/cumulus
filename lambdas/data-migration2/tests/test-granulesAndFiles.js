@@ -494,17 +494,17 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
 
   const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
   t.deepEqual(migrationSummary, {
-    filesSummary: {
-      dynamoRecords: 1,
+    filesResult: {
+      total_dynamo_db_records: 1,
       failed: 0,
       skipped: 0,
-      success: 0,
+      migrated: 0,
     },
-    granulesSummary: {
-      dynamoRecords: 1,
+    granulesResult: {
+      total_dynamo_db_records: 1,
       failed: 0,
       skipped: 1,
-      success: 0,
+      migrated: 0,
     },
   });
 
@@ -572,17 +572,17 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
 
   const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
   t.deepEqual(migrationSummary, {
-    filesSummary: {
-      dynamoRecords: 2,
+    filesResult: {
+      total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
-      success: 2,
+      migrated: 2,
     },
-    granulesSummary: {
-      dynamoRecords: 2,
+    granulesResult: {
+      total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
-      success: 2,
+      migrated: 2,
     },
   });
   const records = await t.context.granulePgModel.search(t.context.knex, {});
@@ -629,17 +629,17 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
 
   const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
   t.deepEqual(migrationSummary, {
-    filesSummary: {
-      dynamoRecords: 2,
+    filesResult: {
+      total_dynamo_db_records: 2,
       failed: 1,
       skipped: 0,
-      success: 1,
+      migrated: 1,
     },
-    granulesSummary: {
-      dynamoRecords: 2,
+    granulesResult: {
+      total_dynamo_db_records: 2,
       failed: 1,
       skipped: 0,
-      success: 1,
+      migrated: 1,
     },
   });
   const records = await t.context.granulePgModel.search(t.context.knex, {});
@@ -691,17 +691,17 @@ test.serial('migrateGranulesAndFiles only processes records for specified collec
     collectionId: collectionIdFilter,
   });
   t.deepEqual(migrationSummary, {
-    filesSummary: {
-      dynamoRecords: 2,
+    filesResult: {
+      total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
-      success: 2,
+      migrated: 2,
     },
-    granulesSummary: {
-      dynamoRecords: 2,
+    granulesResult: {
+      total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
-      success: 2,
+      migrated: 2,
     },
   });
   const records = await t.context.granulePgModel.search(t.context.knex, {});
@@ -749,17 +749,17 @@ test.serial('migrateGranulesAndFiles only processes records for specified granul
     granuleId: testGranule.granuleId,
   });
   t.deepEqual(migrationSummary, {
-    filesSummary: {
-      dynamoRecords: 1,
+    filesResult: {
+      total_dynamo_db_records: 1,
       failed: 0,
       skipped: 0,
-      success: 1,
+      migrated: 1,
     },
-    granulesSummary: {
-      dynamoRecords: 1,
+    granulesResult: {
+      total_dynamo_db_records: 1,
       failed: 0,
       skipped: 0,
-      success: 1,
+      migrated: 1,
     },
   });
   const records = await t.context.granulePgModel.search(t.context.knex, {});

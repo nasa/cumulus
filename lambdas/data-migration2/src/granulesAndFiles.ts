@@ -20,15 +20,15 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { GranuleDynamoSearchParams, MigrationSummary } from '@cumulus/types/migrations';
+import { GranuleDynamoSearchParams, MigrationResult } from '@cumulus/types/migration';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
-export interface GranulesAndFilesMigrationSummary {
-  granulesSummary: MigrationSummary,
-  filesSummary: MigrationSummary,
+export interface GranulesAndFilesMigrationResult {
+  granulesResult: MigrationResult,
+  filesResult: MigrationResult,
 }
 
 /**
@@ -137,25 +137,25 @@ export const migrateFileRecord = async (
 /**
  * Migrate granule and files from DynamoDB to RDS
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
+ * @param {GranulesAndFilesMigrationResult} granuleAndFileMigrationSummary
  * @param {Knex} knex
  * @param {number} loggingInterval
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
+  granuleAndFileMigrationSummary: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number
-): Promise<GranulesAndFilesMigrationSummary> => {
+): Promise<GranulesAndFilesMigrationResult> => {
   const files = dynamoRecord.files ?? [];
-  const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
+  const { granulesResult, filesResult } = granuleAndFileMigrationSummary;
 
-  granulesSummary.dynamoRecords += 1;
-  filesSummary.dynamoRecords += files.length;
+  granulesResult.total_dynamo_db_records += 1;
+  filesResult.total_dynamo_db_records += files.length;
 
-  if (granulesSummary.dynamoRecords % loggingInterval === 0) {
-    logger.info(`Batch of ${loggingInterval} granule records processed, ${granulesSummary.dynamoRecords} total`);
+  if (granulesResult.total_dynamo_db_records % loggingInterval === 0) {
+    logger.info(`Batch of ${loggingInterval} granule records processed, ${granulesResult.total_dynamo_db_records} total`);
   }
 
   try {
@@ -165,14 +165,14 @@ export const migrateGranuleAndFilesViaTransaction = async (
         async (file : ApiFile) => migrateFileRecord(file, granuleCumulusId, trx)
       ));
     });
-    granulesSummary.success += 1;
-    filesSummary.success += files.length;
+    granulesResult.migrated += 1;
+    filesResult.migrated += files.length;
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
-      granulesSummary.skipped += 1;
+      granulesResult.skipped += 1;
     } else {
-      granulesSummary.failed += 1;
-      filesSummary.failed += files.length;
+      granulesResult.failed += 1;
+      filesResult.failed += files.length;
       logger.error(
         `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${dynamoRecord.files}`,
         error
@@ -180,14 +180,14 @@ export const migrateGranuleAndFilesViaTransaction = async (
     }
   }
 
-  return { granulesSummary, filesSummary };
+  return { granulesResult, filesResult };
 };
 
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
   granuleSearchParams: GranuleDynamoSearchParams = {}
-): Promise<GranulesAndFilesMigrationSummary> => {
+): Promise<GranulesAndFilesMigrationResult> => {
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
 
@@ -227,22 +227,22 @@ export const migrateGranulesAndFiles = async (
   );
 
   const granuleMigrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
+    total_dynamo_db_records: 0,
+    migrated: 0,
     failed: 0,
     skipped: 0,
   };
 
   const fileMigrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
+    total_dynamo_db_records: 0,
+    migrated: 0,
     failed: 0,
     skipped: 0,
   };
 
-  const summary = {
-    granulesSummary: granuleMigrationSummary,
-    filesSummary: fileMigrationSummary,
+  const migrationResult = {
+    granulesResult: granuleMigrationSummary,
+    filesResult: fileMigrationSummary,
   };
 
   let record = await searchQueue.peek();
@@ -250,15 +250,15 @@ export const migrateGranulesAndFiles = async (
   /* eslint-disable no-await-in-loop */
   while (record) {
     // eslint-disable-next-line max-len
-    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex, loggingInterval);
-    summary.granulesSummary = migrationSummary.granulesSummary;
-    summary.filesSummary = migrationSummary.filesSummary;
+    const result = await migrateGranuleAndFilesViaTransaction(record, migrationResult, knex, loggingInterval);
+    migrationResult.granulesResult = result.granulesResult;
+    migrationResult.filesResult = result.filesResult;
 
     await searchQueue.shift();
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`Successfully migrated ${summary.granulesSummary.success} granule records.`);
-  logger.info(`Successfully migrated ${summary.filesSummary.success} file records.`);
-  return { granulesSummary: summary.granulesSummary, filesSummary: summary.filesSummary };
+  logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
+  logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);
+  return migrationResult;
 };

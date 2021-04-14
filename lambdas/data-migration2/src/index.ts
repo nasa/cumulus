@@ -1,7 +1,10 @@
 import { getKnexClient } from '@cumulus/db';
 import Logger from '@cumulus/logger';
-import { DataMigration2, MigrationSummary } from '@cumulus/types/migration';
-import { DataMigration2HandlerEvent } from '@cumulus/types/migrations';
+import {
+  DataMigration2Summary,
+  DataMigration2HandlerEvent,
+  MigrationSummary,
+} from '@cumulus/types/migration';
 
 import { migrateExecutions } from './executions';
 import { migrateGranulesAndFiles } from './granulesAndFiles';
@@ -18,45 +21,45 @@ export const handler = async (
   const knex = await getKnexClient({ env });
 
   try {
-    const migrationSummary: DataMigration2 = {};
+    const migrationSummary: DataMigration2Summary = {};
 
     if (migrationsToRun.includes('executions')) {
-      const executionsMigrationSummary = await migrateExecutions(env, knex);
+      const executionsMigrationResult = await migrateExecutions(env, knex);
       migrationSummary.executions = {
-        total_dynamo_db_records: executionsMigrationSummary.dynamoRecords,
-        migrated: executionsMigrationSummary.success,
-        skipped: executionsMigrationSummary.skipped,
-        failed: executionsMigrationSummary.failed,
+        total_dynamo_db_records: executionsMigrationResult.total_dynamo_db_records,
+        migrated: executionsMigrationResult.migrated,
+        skipped: executionsMigrationResult.skipped,
+        failed: executionsMigrationResult.failed,
       };
     }
 
     if (migrationsToRun.includes('granules')) {
-      const granulesAndFilesMigrationSummary = await migrateGranulesAndFiles(
+      const { granulesResult, filesResult } = await migrateGranulesAndFiles(
         env,
         knex,
         event.granuleSearchParams
       );
       migrationSummary.granules = {
-        total_dynamo_db_records: granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords,
-        migrated: granulesAndFilesMigrationSummary.granulesSummary.success,
-        skipped: granulesAndFilesMigrationSummary.granulesSummary.skipped,
-        failed: granulesAndFilesMigrationSummary.granulesSummary.failed,
+        total_dynamo_db_records: granulesResult.total_dynamo_db_records,
+        migrated: granulesResult.migrated,
+        skipped: granulesResult.skipped,
+        failed: granulesResult.failed,
       };
       migrationSummary.files = {
-        total_dynamo_db_records: granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords,
-        migrated: granulesAndFilesMigrationSummary.filesSummary.success,
-        skipped: granulesAndFilesMigrationSummary.filesSummary.skipped,
-        failed: granulesAndFilesMigrationSummary.filesSummary.failed,
+        total_dynamo_db_records: granulesResult.total_dynamo_db_records,
+        migrated: filesResult.migrated,
+        skipped: filesResult.skipped,
+        failed: filesResult.failed,
       };
     }
 
     if (migrationsToRun.includes('pdrs')) {
-      const pdrsMigrationSummary = await migratePdrs(env, knex);
+      const pdrsMigrationResult = await migratePdrs(env, knex);
       migrationSummary.pdrs = {
-        total_dynamo_db_records: pdrsMigrationSummary.dynamoRecords,
-        migrated: pdrsMigrationSummary.success,
-        skipped: pdrsMigrationSummary.skipped,
-        failed: pdrsMigrationSummary.failed,
+        total_dynamo_db_records: pdrsMigrationResult.total_dynamo_db_records,
+        migrated: pdrsMigrationResult.migrated,
+        skipped: pdrsMigrationResult.skipped,
+        failed: pdrsMigrationResult.failed,
       };
     }
 
