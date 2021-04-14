@@ -38,7 +38,6 @@ const {
   migrateExecutionRecord,
   migrateExecutions,
 } = require('../dist/lambda/executions');
-const { storeErrors } = require('../dist/lambda/storeErrors');
 
 let collectionsModel;
 let executionsModel;
