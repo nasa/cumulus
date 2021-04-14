@@ -1,7 +1,7 @@
 'use strict';
 
 import Logger from '@cumulus/logger';
-import { DataMigration2HandlerEvent } from '@cumulus/types/migrations';
+import { DataMigration2HandlerEvent } from '@cumulus/types/migration';
 
 const asyncOperations = require('@cumulus/async-operations');
 const { models } = require('@cumulus/api');
