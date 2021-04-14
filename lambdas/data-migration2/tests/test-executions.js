@@ -1,12 +1,14 @@
-const omit = require('lodash/omit');
-const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
+const sinon = require('sinon');
+const test = require('ava');
 
 // Dynamo models
 const Execution = require('@cumulus/api/models/executions');
 const AsyncOperation = require('@cumulus/api/models/async-operation');
 const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
+const Logger = require('@cumulus/logger');
 
 // PG models
 const { CollectionPgModel, AsyncOperationPgModel, ExecutionPgModel } = require('@cumulus/db');
@@ -523,4 +525,20 @@ test.serial('migrateExecutions calls storeError when system bucket is provided',
   }).promise();
   const messageBody = JSON.parse(item.Body);
   t.truthy(messageBody.errors[0]);
+});
+
+test.serial('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  process.env.loggingInterval = 1;
+
+  const execution = fakeExecutionFactoryV2({ parentArn: undefined });
+  await executionsModel.create(execution);
+
+  t.teardown(async () => {
+    logSpy.restore();
+    await executionsModel.delete({ arn: execution.arn });
+  });
+
+  await migrateExecutions(process.env, t.context.knex);
+  t.true(logSpy.calledWith('Batch of 1 execution records processed, 1 total'));
 });

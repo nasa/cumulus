@@ -139,6 +139,7 @@ export const migrateFileRecord = async (
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
  * @param {Knex} knex
+ * @param {number} loggingInterval
  * @param {string} stackName
  * @param {string} bucket
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
@@ -147,6 +148,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
   knex: Knex,
+  loggingInterval: number,
   stackName?: string,
   bucket?: string
 ): Promise<GranulesAndFilesMigrationSummary> => {
@@ -157,6 +159,10 @@ export const migrateGranuleAndFilesViaTransaction = async (
 
   granulesSummary.dynamoRecords += 1;
   filesSummary.dynamoRecords += files.length;
+
+  if (granulesSummary.dynamoRecords % loggingInterval === 0) {
+    logger.info(`Batch of ${loggingInterval} granule records processed, ${granulesSummary.dynamoRecords} total`);
+  }
 
   try {
     await knex.transaction(async (trx) => {
@@ -170,7 +176,6 @@ export const migrateGranuleAndFilesViaTransaction = async (
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
       granulesSummary.skipped += 1;
-      logger.info(error);
     } else {
       granulesSummary.failed += 1;
       filesSummary.failed += files.length;
@@ -191,6 +196,7 @@ export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
 ): Promise<GranulesAndFilesMigrationSummary> => {
+  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
   const bucket = process.env.system_bucket;
   const stackName = process.env.stackName;
@@ -223,7 +229,7 @@ export const migrateGranulesAndFiles = async (
   /* eslint-disable no-await-in-loop */
   while (record) {
     // eslint-disable-next-line max-len
-    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex, stackName, bucket);
+    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex, loggingInterval, stackName, bucket);
     summary.granulesSummary = migrationSummary.granulesSummary;
     summary.filesSummary = migrationSummary.filesSummary;
 
