@@ -45,4 +45,4 @@ Migration summary:
 
 Records skipped indicates if a record was already migrated (which the lambda will throw with a `RecordAlreadyMigrated` error.)
 
-For `executions`, `granules`, and `files`, all data migration error messages will be written to JSON files `data-migration2-execution-errors.json` and `data-migration2-granulesAndFiles-errors.json` and uploaded to S3.
+For `executions`, `granules`, and `files`, all data migration error messages will be written to JSON files `data-migration2-execution-errors.json` and `data-migration2-granulesAndFiles-errors.json` and uploaded to S3 to your configured system bucket at `${prefix}/data-migration-${type}-errors.json`.

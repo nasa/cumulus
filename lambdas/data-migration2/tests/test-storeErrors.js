@@ -1,10 +1,10 @@
 const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
-const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 
 const { storeErrors } = require('../dist/lambda/storeErrors');
 
@@ -28,11 +28,6 @@ test('storeErrors stores file on s3', async (t) => {
   const filename = `data-migration2-${recordClassification}-errors.json`;
   const key = `${process.env.stackName}/${filename}`;
 
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  }).promise();
-  const messageBody = JSON.parse(item.Body);
-
-  t.deepEqual(messageBody, { errors: 'message' });
+  const item = await getJsonS3Object(process.env.system_bucket, key);
+  t.deepEqual(item, { errors: 'message' });
 });

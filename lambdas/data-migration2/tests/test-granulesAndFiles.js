@@ -23,7 +23,7 @@ const {
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
-const { s3 } = require('@cumulus/aws-client/services');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -613,12 +613,8 @@ test.serial('migrateGranulesAndFiles calls storeError when system bucket is prov
   await migrateGranulesAndFiles(process.env, knex);
 
   // Check that error file exists in S3
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  }).promise();
-  const messageBody = JSON.parse(item.Body);
-  t.truthy(messageBody.errors[0]);
+  const item = await getJsonS3Object(process.env.system_bucket, key);
+  t.is(item.errors.length, 1);
 });
 
 test.serial('migrateGranulesAndFiles logs summary of migration for a specified loggingInterval', async (t) => {
