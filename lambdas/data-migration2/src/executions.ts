@@ -84,35 +84,31 @@ export const migrateExecutions = async (
 
   logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
-  type ScanParams = {
+  type AdditionalScanParams = {
     ExclusiveStartKey?: any
   };
 
   await pMap(
     range(totalSegments),
     async (_, segmentIndex) => {
-      let ExclusiveStartKey;
-      const scanParams: ScanParams = {};
+      let exclusiveStartKey;
+      const additionalScanParams: AdditionalScanParams = {};
 
       /* eslint-disable no-await-in-loop */
       do {
-        if (ExclusiveStartKey) {
-          scanParams.ExclusiveStartKey = ExclusiveStartKey;
+        if (exclusiveStartKey) {
+          additionalScanParams.ExclusiveStartKey = exclusiveStartKey;
         }
 
-        const { Items, LastEvaluatedKey } = await dynamodbDocClient().scan({
-          ...scanParams,
+        const { Items = [], LastEvaluatedKey } = await dynamodbDocClient().scan({
+          ...additionalScanParams,
           TableName: executionsTable,
           TotalSegments: totalSegments,
           Segment: segmentIndex,
           Limit: executionMigrationParams.parallelScanLimit,
         }).promise();
 
-        ExclusiveStartKey = LastEvaluatedKey;
-
-        if (!Items) {
-          return Promise.resolve();
-        }
+        exclusiveStartKey = LastEvaluatedKey;
 
         await pMap(
           Items,
@@ -140,16 +136,17 @@ export const migrateExecutions = async (
                 );
               }
             }
+          }, {
+            stopOnError: false,
           }
         );
-      } while (ExclusiveStartKey);
+      } while (exclusiveStartKey);
       /* eslint-enable no-await-in-loop */
 
       return Promise.resolve();
     },
-    // TODO: should this be false?
     {
-      stopOnError: true,
+      stopOnError: false,
     }
   );
 

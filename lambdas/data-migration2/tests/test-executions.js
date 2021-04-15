@@ -432,7 +432,7 @@ test.serial('child execution migration fails if parent execution cannot be migra
   t.is(records.length, 0);
 });
 
-test.serial.only('migrateExecutions processes multiple executions', async (t) => {
+test.serial('migrateExecutions processes multiple executions', async (t) => {
   const { knex, executionPgModel } = t.context;
 
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
@@ -511,7 +511,7 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   t.is(records.length, 1);
 });
 
-test.serial.only('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
+test.serial('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
   const logSpy = sinon.spy(Logger.prototype, 'info');
 
   const execution = fakeExecutionFactoryV2({ parentArn: undefined });
