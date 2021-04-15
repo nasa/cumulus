@@ -77,7 +77,6 @@ export const migrateCollections = async (
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
         migrationSummary.skipped += 1;
-        logger.info(error);
       } else {
         migrationSummary.failed += 1;
         logger.error(

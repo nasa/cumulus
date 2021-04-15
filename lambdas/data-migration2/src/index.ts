@@ -1,4 +1,5 @@
 import { getKnexClient } from '@cumulus/db';
+import { MigrationSummary } from '@cumulus/types/migration';
 import Logger from '@cumulus/logger';
 
 import { migrateExecutions } from './executions';
@@ -10,9 +11,8 @@ export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
 }
 
-export const handler = async (event: HandlerEvent): Promise<string> => {
+export const handler = async (event: HandlerEvent): Promise<MigrationSummary> => {
   const env = event.env ?? process.env;
-
   const knex = await getKnexClient({ env });
 
   try {
@@ -20,29 +20,35 @@ export const handler = async (event: HandlerEvent): Promise<string> => {
     const granulesAndFilesMigrationSummary = await migrateGranulesAndFiles(env, knex);
     const pdrsMigrationSummary = await migratePdrs(env, knex);
 
-    const summary = `
-      Migration summary:
-        Executions:
-          Out of ${executionsMigrationSummary.dynamoRecords} DynamoDB records:
-            ${executionsMigrationSummary.success} records migrated
-            ${executionsMigrationSummary.skipped} records skipped
-            ${executionsMigrationSummary.failed} records failed
-        Granules:
-          Out of ${granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords} DynamoDB records:
-            ${granulesAndFilesMigrationSummary.granulesSummary.success} records migrated
-            ${granulesAndFilesMigrationSummary.granulesSummary.skipped} records skipped
-            ${granulesAndFilesMigrationSummary.granulesSummary.failed} records failed
-        Files:
-          Out of ${granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords} DynamoDB records:
-            ${granulesAndFilesMigrationSummary.filesSummary.success} records migrated
-            ${granulesAndFilesMigrationSummary.filesSummary.failed} records failed
-        PDRs:
-          Out of ${pdrsMigrationSummary.dynamoRecords} DynamoDB records:
-            ${pdrsMigrationSummary.success} records migrated
-            ${pdrsMigrationSummary.skipped} records skipped
-            ${pdrsMigrationSummary.failed} records failed
-    `;
-    logger.info(summary);
+    const summary: MigrationSummary = {
+      MigrationSummary: {
+        executions: {
+          total_dynamo_db_records: executionsMigrationSummary.dynamoRecords,
+          migrated: executionsMigrationSummary.success,
+          skipped: executionsMigrationSummary.skipped,
+          failed: executionsMigrationSummary.failed,
+        },
+        granules: {
+          total_dynamo_db_records: granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords,
+          migrated: granulesAndFilesMigrationSummary.granulesSummary.success,
+          skipped: granulesAndFilesMigrationSummary.granulesSummary.skipped,
+          failed: granulesAndFilesMigrationSummary.granulesSummary.failed,
+        },
+        files: {
+          total_dynamo_db_records: granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords,
+          migrated: granulesAndFilesMigrationSummary.filesSummary.success,
+          skipped: granulesAndFilesMigrationSummary.filesSummary.skipped,
+          failed: granulesAndFilesMigrationSummary.filesSummary.failed,
+        },
+        pdrs: {
+          total_dynamo_db_records: pdrsMigrationSummary.dynamoRecords,
+          migrated: pdrsMigrationSummary.success,
+          skipped: pdrsMigrationSummary.skipped,
+          failed: pdrsMigrationSummary.failed,
+        },
+      },
+    };
+    logger.info(JSON.stringify(summary));
     return summary;
   } finally {
     await knex.destroy();
