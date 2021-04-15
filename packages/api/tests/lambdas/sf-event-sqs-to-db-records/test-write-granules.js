@@ -504,63 +504,6 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
   }));
 });
 
-test('writeGranules() throws error if any file records are invalid', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    granuleModel,
-  } = t.context;
-
-  cumulusMessage.meta.status = 'completed';
-
-  cumulusMessage.payload.granules[0].files[0].bucket = undefined;
-  cumulusMessage.payload.granules[0].files[0].key = undefined;
-
-  await t.throwsAsync(writeGranules({
-    cumulusMessage,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    knex,
-    granuleModel,
-  }));
-});
-
-test('writeGranules() does not persist granule or files if any file is invalid', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    granuleModel,
-    granuleId,
-  } = t.context;
-
-  cumulusMessage.meta.status = 'completed';
-
-  cumulusMessage.payload.granules[0].files[0].bucket = undefined;
-  cumulusMessage.payload.granules[0].files[0].key = undefined;
-
-  await t.throwsAsync(writeGranules({
-    cumulusMessage,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    knex,
-    granuleModel,
-  }));
-
-  // If no granule was persisted, files could not have been created
-  t.false(await granuleModel.exists({ granuleId }));
-  t.false(
-    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
-  );
-});
-
 test('writeGranules() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
@@ -634,3 +577,37 @@ test('writeGranules() does not persist records to Dynamo or Postgres if Postgres
     await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
   );
 });
+
+test.serial('writeGranules() writes a granule and marks as failed if any file writes fail', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  cumulusMessage.payload.granules[0].files[0].bucket = undefined;
+  cumulusMessage.payload.granules[0].files[0].key = undefined;
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+
+  const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
+  t.is(pgGranule.status, 'failed');
+  t.deepEqual(pgGranule.error.Error, 'Failed writing files to Postgres.');
+});
+
+test.skip('writeGranules() writes all valid files if any non-valid file fails', async (t) => {});

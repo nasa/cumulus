@@ -204,6 +204,8 @@ const writeGranuleAndFilesViaTransaction = async ({
   trx,
   updatedAt,
 }) => {
+  const granulePgModel = new GranulePgModel();
+
   const { files = [] } = granule;
   // This is necessary to set properties like
   // `key`, which is required for the Postgres schema. And
@@ -244,11 +246,26 @@ const writeGranuleAndFilesViaTransaction = async ({
 
   let fileRecords = [];
 
+  // TODO don’t stop on the first file failure
   if (workflowStatus !== 'running') {
-    fileRecords = await generateFileRecords({
-      files: updatedFiles,
-      granuleCumulusId,
-    });
+    try {
+      fileRecords = await generateFileRecords({
+        files: updatedFiles,
+        granuleCumulusId,
+      });
+    } catch (e) {
+      await granulePgModel.upsert(
+        trx,
+        {
+          ...granuleRecord,
+          status: 'failed',
+          error: {
+            Error: 'Failed writing files to Postgres.',
+            Cause: new Error(e),
+          },
+        }
+      );
+    }
   }
 
   return writeFilesViaTransaction({
