@@ -96,10 +96,7 @@ export const migrateExecutions = async (
 
       /* eslint-disable no-await-in-loop */
       do {
-        console.log(`processing segmentIndex ${segmentIndex}`);
-
         if (ExclusiveStartKey) {
-          console.log(`segmentIndex ${segmentIndex} ExclusiveStartKey ${JSON.stringify(ExclusiveStartKey, null, 2)}`);
           scanParams.ExclusiveStartKey = ExclusiveStartKey;
         }
 
@@ -113,15 +110,11 @@ export const migrateExecutions = async (
 
         ExclusiveStartKey = LastEvaluatedKey;
 
-        console.log(`segmentIndex ${segmentIndex} LastEvaluatedKey ${JSON.stringify(LastEvaluatedKey, null, 2)}`);
-
         if (!Items) {
           return Promise.resolve();
         }
 
-        console.log(`Found ${Items.length} items for segmentIndex ${segmentIndex}`);
-
-        return pMap(
+        await pMap(
           Items,
           async (dynamoRecord) => {
             migrationResult.total_dynamo_db_records += 1;
@@ -151,6 +144,8 @@ export const migrateExecutions = async (
         );
       } while (ExclusiveStartKey);
       /* eslint-enable no-await-in-loop */
+
+      return Promise.resolve();
     },
     // TODO: should this be false?
     {
@@ -159,6 +154,6 @@ export const migrateExecutions = async (
   );
 
   logger.info(`Finished parallel scan of executions with ${totalSegments} parallel segments.`);
-  logger.info(`successfully migrated ${migrationResult.migrated} execution records`);
+  logger.info(`successfully migrated ${migrationResult.migrated} out of ${migrationResult.total_dynamo_db_records} execution records`);
   return migrationResult;
 };

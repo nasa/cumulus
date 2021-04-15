@@ -463,8 +463,7 @@ test.serial.only('migrateExecutions processes multiple executions', async (t) =>
     total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    migrated: 0,
-    // migrated: 2,
+    migrated: 2,
   });
   const records = await executionPgModel.search(
     knex,
@@ -486,10 +485,11 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   await Promise.all([
     // Have to use Dynamo client directly because creating
     // via model won't allow creation of an invalid record
-    dynamodbDocClient().put({
-      TableName: process.env.ExecutionsTable,
-      Item: newExecution,
-    }).promise(),
+    // dynamodbDocClient().put({
+    //   TableName: process.env.ExecutionsTable,
+    //   Item: newExecution,
+    // }).promise(),
+    executionsModel.create(newExecution),
     executionsModel.create(newExecution2),
   ]);
   t.teardown(() => Promise.all([
@@ -511,7 +511,7 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   t.is(records.length, 1);
 });
 
-test.serial('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
+test.serial.only('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
   const logSpy = sinon.spy(Logger.prototype, 'info');
 
   const execution = fakeExecutionFactoryV2({ parentArn: undefined });
