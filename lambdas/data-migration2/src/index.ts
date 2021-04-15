@@ -24,7 +24,11 @@ export const handler = async (
     const migrationSummary: DataMigration2Summary = {};
 
     if (migrationsToRun.includes('executions')) {
-      const executionsMigrationResult = await migrateExecutions(env, knex);
+      const executionsMigrationResult = await migrateExecutions(
+        env,
+        knex,
+        event.executionMigrationParams
+      );
       migrationSummary.executions = {
         total_dynamo_db_records: executionsMigrationResult.total_dynamo_db_records,
         migrated: executionsMigrationResult.migrated,
