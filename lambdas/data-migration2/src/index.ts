@@ -70,7 +70,7 @@ export const handler = async (
     const summary: MigrationSummary = {
       MigrationSummary: migrationSummary,
     };
-    logger.info(JSON.stringify(summary));
+    logger.info(JSON.stringify(summary, null, 2));
     return summary;
   } finally {
     await knex.destroy();
