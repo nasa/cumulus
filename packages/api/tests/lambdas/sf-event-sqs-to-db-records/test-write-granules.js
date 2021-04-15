@@ -610,4 +610,4 @@ test.serial('writeGranules() writes a granule and marks as failed if any file wr
   t.deepEqual(pgGranule.error.Error, 'Failed writing files to Postgres.');
 });
 
-test.skip('writeGranules() writes all valid files if any non-valid file fails', async (t) => {});
+test.skip('writeGranules() writes all valid files if any non-valid file fails', async () => {});
