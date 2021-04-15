@@ -17,20 +17,20 @@ module "data_migration2" {
   tags = var.tags
 }
 
-module "data_migration2_ecs_service" {
-  source = "../../tf-modules/cumulus_ecs_service"
+# module "data_migration2_ecs_service" {
+#   source = "../../tf-modules/cumulus_ecs_service"
 
-  prefix = var.prefix
-  name   = "DataMigration2Service"
+#   prefix = var.prefix
+#   name   = "DataMigration2Service"
 
-  cluster_arn                           = aws_ecs_cluster.default.arn
-  desired_count                         = 1
-  image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
+#   cluster_arn                           = aws_ecs_cluster.default.arn
+#   desired_count                         = 1
+#   image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
 
-  command = [
-    "cumulus-ecs-task",
-    "--lambdaArn",
-    module.data_migration2.data_migration2_function_arn
-  ]
-}
+#   command = [
+#     "cumulus-ecs-task",
+#     "--lambdaArn",
+#     module.data_migration2.data_migration2_function_arn
+#   ]
+# }
 
