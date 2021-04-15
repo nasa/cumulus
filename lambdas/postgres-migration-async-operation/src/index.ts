@@ -12,7 +12,7 @@ exports.handler = async (event: DataMigration2HandlerEvent) => {
   const dynamoTableName = process.env.AsyncOperationsTable;
 
   logger.info('About to start async operation for Data Migration 2');
-  const asyncOperationId = await asyncOperations.startAsyncOperation({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
@@ -26,6 +26,6 @@ exports.handler = async (event: DataMigration2HandlerEvent) => {
     useLambdaEnvironmentVariables: true,
   }, models.AsyncOperation);
 
-  logger.info(`Started async operation ${asyncOperationId} for Data Migration 2`);
-  return asyncOperationId;
+  logger.info(`Started async operation ${asyncOperation.id} for Data Migration 2`);
+  return asyncOperation;
 };
