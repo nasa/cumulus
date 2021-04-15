@@ -68,8 +68,8 @@ export const migrateExecutions = async (
   knex: Knex
 ): Promise<MigrationSummary> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
-  const bucket = process.env.system_bucket;
-  const stackName = process.env.stackName;
+  const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
+  const stackName = envUtils.getRequiredEnvVar('stackName', env);
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
 
   const searchQueue = new DynamoDbSearchQueue({
@@ -108,9 +108,7 @@ export const migrateExecutions = async (
       }
     }
 
-    if (bucket) {
-      storeErrors(bucket, errorFile, 'executions', stackName);
-    }
+    storeErrors(bucket, errorFile, 'executions', stackName);
     await searchQueue.shift();
     record = await searchQueue.peek();
   }

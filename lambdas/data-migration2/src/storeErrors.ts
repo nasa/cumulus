@@ -13,12 +13,12 @@ export const storeErrors = async (
   bucket: string,
   message: string[],
   recordClassification: string,
-  stackName?: string) => {
+  stackName: string) => {
   const file = `{
     "errors": ${JSON.stringify(message)}
   }`;
   const filename = `data-migration2-${recordClassification}-errors.json`;
-  const key = `${stackName}/${filename}` || filename;
+  const key = `${stackName}/${filename}`;
   await s3PutObject({
     Bucket: bucket,
     Key: key,

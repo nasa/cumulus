@@ -136,22 +136,31 @@ export const migrateFileRecord = async (
 
 /**
  * Migrate granule and files from DynamoDB to RDS
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- * @param {GranulesAndFilesMigrationSummary} granuleAndFileMigrationSummary
- * @param {Knex} knex
- * @param {number} loggingInterval
- * @param {string} stackName
- * @param {string} bucket
+ * @param {Object} params
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ * @param {GranulesAndFilesMigrationSummary} params.granuleAndFileMigrationSummary
+ * @param {Knex} params.knex
+ * @param {number} params.loggingInterval
+ * @param {string} params.bucket
+ * @param {string} params.stackName
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
-export const migrateGranuleAndFilesViaTransaction = async (
+export const migrateGranuleAndFilesViaTransaction = async (params: {
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
   knex: Knex,
   loggingInterval: number,
-  stackName?: string,
-  bucket?: string
-): Promise<GranulesAndFilesMigrationSummary> => {
+  bucket: string
+  stackName: string,
+}): Promise<GranulesAndFilesMigrationSummary> => {
+  const {
+    dynamoRecord,
+    granuleAndFileMigrationSummary,
+    knex,
+    loggingInterval,
+    bucket,
+    stackName,
+  } = params;
   const files = dynamoRecord.files;
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
   const errorFile = [];
@@ -184,9 +193,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
       logger.error(errorMessage, error);
     }
 
-    if (bucket) {
-      storeErrors(bucket, errorFile, 'granulesAndFiles', stackName);
-    }
+    storeErrors(bucket, errorFile, 'granulesAndFiles', stackName);
   }
 
   return { granulesSummary, filesSummary };
@@ -198,8 +205,8 @@ export const migrateGranulesAndFiles = async (
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
-  const bucket = process.env.system_bucket;
-  const stackName = process.env.stackName;
+  const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
+  const stackName = envUtils.getRequiredEnvVar('stackName', env);
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: granulesTable,
@@ -228,8 +235,14 @@ export const migrateGranulesAndFiles = async (
 
   /* eslint-disable no-await-in-loop */
   while (record) {
-    // eslint-disable-next-line max-len
-    const migrationSummary = await migrateGranuleAndFilesViaTransaction(record, summary, knex, loggingInterval, stackName, bucket);
+    const migrationSummary = await migrateGranuleAndFilesViaTransaction({
+      dynamoRecord: record,
+      granuleAndFileMigrationSummary: summary,
+      knex,
+      loggingInterval,
+      stackName,
+      bucket,
+    });
     summary.granulesSummary = migrationSummary.granulesSummary;
     summary.filesSummary = migrationSummary.filesSummary;
 
