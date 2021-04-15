@@ -22,6 +22,7 @@ locals {
       CollectionsTable                 = var.dynamo_tables.collections.name
       databaseCredentialSecretArn      = var.rds_user_access_secret_arn
       dbHeartBeat                      = var.rds_connection_heartbeat
+      DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash

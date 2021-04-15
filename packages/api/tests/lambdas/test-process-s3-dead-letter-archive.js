@@ -52,11 +52,11 @@ test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus m
   t.true(writeRecordsFunctionSpy.calledTwice);
   const messageArgs = writeRecordsFunctionSpy.getCalls().map((call) => call.args[0].cumulusMessage);
   t.is(messageArgs.filter(
-    (argMsg) => 
+    (argMsg) =>
       getMessageExecutionName(argMsg) === getMessageExecutionName(t.context.cumulusMessages[0])
   ).length, 1);
   t.is(messageArgs.filter(
-    (argMsg) => 
+    (argMsg) =>
       getMessageExecutionName(argMsg) === getMessageExecutionName(t.context.cumulusMessages[1])
   ).length, 1);
 });
