@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
 }
 
 resource "aws_iam_role" "db_migration" {
-  name                 = "${var.prefix}-db-migration"
+  name                 = "${var.prefix}-postgres-db-migration"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
 
@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "db_migration" {
 }
 
 resource "aws_iam_role_policy" "db_migration" {
-  name   = "${var.prefix}_db_migration"
+  name   = "${var.prefix}_postgres_db_migration"
   role   = aws_iam_role.db_migration.id
   policy = data.aws_iam_policy_document.db_migration.json
 }
@@ -50,7 +50,7 @@ resource "aws_iam_role_policy" "db_migration" {
 resource "aws_security_group" "db_migration" {
   count = length(var.subnet_ids) == 0 ? 0 : 1
 
-  name   = "${var.prefix}-db-migration"
+  name   = "${var.prefix}-postgres-db-migration"
   vpc_id = var.vpc_id
 
   egress {
@@ -64,7 +64,7 @@ resource "aws_security_group" "db_migration" {
 }
 
 resource "aws_lambda_function" "db_migration" {
-  function_name    = "${var.prefix}-db-migration"
+  function_name    = "${var.prefix}-postgres-db-migration"
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
