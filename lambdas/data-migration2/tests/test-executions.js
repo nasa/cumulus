@@ -276,10 +276,10 @@ test.serial('migrateExecutions skips already migrated record', async (t) => {
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 1,
+    total_dynamo_db_records: 1,
     skipped: 1,
     failed: 0,
-    success: 0,
+    migrated: 0,
   });
 
   const records = await executionPgModel.search(
@@ -421,10 +421,10 @@ test.serial('child execution migration fails if parent execution cannot be migra
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 2,
-    success: 0,
+    migrated: 0,
   });
   const records = await executionPgModel.search(
     knex,
@@ -450,10 +450,10 @@ test.serial('migrateExecutions processes multiple executions', async (t) => {
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    success: 2,
+    migrated: 2,
   });
   const records = await executionPgModel.search(
     knex,
@@ -488,10 +488,10 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 1,
-    success: 1,
+    migrated: 1,
   });
   const records = await executionPgModel.search(
     knex,

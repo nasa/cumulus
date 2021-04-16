@@ -19,18 +19,21 @@ import {
   RecordDoesNotExist,
   PostgresUpdateFailed,
 } from '@cumulus/errors';
-
-import { MigrationSummary } from './types';
 import { storeErrors } from './storeErrors';
+import {
+  GranuleDynamoDbSearchParams,
+  MigrationResult,
+  GranulesMigrationResult,
+} from '@cumulus/types/migration';
 
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const fs = require('fs');
 
-export interface GranulesAndFilesMigrationSummary {
-  granulesSummary: MigrationSummary,
-  filesSummary: MigrationSummary,
+export interface GranulesAndFilesMigrationResult {
+  granulesResult: GranulesMigrationResult,
+  filesResult: MigrationResult,
 }
 
 /**
@@ -57,14 +60,15 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  // Schema validation on Dynamo record will fail if `record.execution`
-  // does not exist
-  const executionCumulusId = await executionPgModel.getRecordCumulusId(
-    knex,
-    {
-      url: record.execution,
-    }
-  );
+  // It's possible that very old records could have this field be undefined
+  const executionCumulusId = record.execution
+    ? await executionPgModel.getRecordCumulusId(
+      knex,
+      {
+        url: record.execution,
+      }
+    )
+    : undefined;
 
   let existingRecord;
 
@@ -147,11 +151,11 @@ export const migrateFileRecord = async (
  */
 export const migrateGranuleAndFilesViaTransaction = async (params: {
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
+  granuleAndFileMigrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number,
   stream: any,
-}): Promise<GranulesAndFilesMigrationSummary> => {
+}): Promise<GranulesAndFilesMigrationResult> => {
   const {
     dynamoRecord,
     granuleAndFileMigrationSummary,
@@ -159,14 +163,14 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
     loggingInterval,
     stream,
   } = params;
-  const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
+  const { granulesSummary, filesSummary } = granuleAndFileMigrationResult;
   const files = dynamoRecord.files;
 
-  granulesSummary.dynamoRecords += 1;
-  filesSummary.dynamoRecords += files.length;
+  granulesResult.total_dynamo_db_records += 1;
+  filesResult.total_dynamo_db_records += files.length;
 
-  if (granulesSummary.dynamoRecords % loggingInterval === 0) {
-    logger.info(`Batch of ${loggingInterval} granule records processed, ${granulesSummary.dynamoRecords} total`);
+  if (granulesResult.total_dynamo_db_records % loggingInterval === 0) {
+    logger.info(`Batch of ${loggingInterval} granule records processed, ${granulesResult.total_dynamo_db_records} total`);
   }
 
   try {
@@ -176,14 +180,14 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
         async (file : ApiFile) => migrateFileRecord(file, granuleCumulusId, trx)
       ));
     });
-    granulesSummary.success += 1;
-    filesSummary.success += files.length;
+    granulesResult.migrated += 1;
+    filesResult.migrated += files.length;
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
-      granulesSummary.skipped += 1;
+      granulesResult.skipped += 1;
     } else {
       const errorMessage = `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${JSON.stringify(dynamoRecord.files)}`;
-      granulesSummary.failed += 1;
+      granulesResult.failed += 1;
       filesSummary.failed += files.length;
 
       stream.write(JSON.stringify(`Error: ${error} ${errorMessage}`));
@@ -191,50 +195,90 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
     }
   }
 
-  return { granulesSummary, filesSummary };
+  return { granulesResult, filesResult };
 };
 
 /**
- * Migrate granules and files
- * @param {NodeJS.ProcessEnv} env
- * @param {Knex} knex
+ * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
+ *
+ * @param {NodeJS.ProcessEnv} env - Environment variables which may contain configuration
+ * @param {number} env.loggingInterval
+ *   Sets the interval number of records when a log message will be written on migration progress
+ * @param {Knex} knex - Instance of a database client
+ * @param {GranuleDynamoDbSearchParams} granuleSearchParams
+ *   Parameters to control data selected for migration
+ * @param {string} granuleSearchParams.granuleId
+ *   Granule ID to use for querying granules to migrate
+ * @param {string} granuleSearchParams.collectionId
+ *   Collection name/version to use for querying granules to migrate
  * @param {string | undefined} testTimestamp - used for unit testing
+ * @returns {Promise<GranulesAndFilesMigrationResult>}
+ *   Result object summarizing the granule/files migration
  */
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
+  granuleSearchParams: GranuleDynamoDbSearchParams = {},
   testTimestamp?: string
-): Promise<GranulesAndFilesMigrationSummary> => {
+): Promise<GranulesAndFilesMigrationResult> => {
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
   const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
   const stackName = envUtils.getRequiredEnvVar('stackName', env);
 
-  const searchQueue = new DynamoDbSearchQueue({
-    TableName: granulesTable,
-  });
-
-  const granuleMigrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
+  const granuleMigrationResult: GranulesMigrationResult = {
+    filters: granuleSearchParams,
+    total_dynamo_db_records: 0,
+    migrated: 0,
     failed: 0,
     skipped: 0,
   };
 
-  const fileMigrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
+  const fileMigrationResult: MigrationResult = {
+    total_dynamo_db_records: 0,
+    migrated: 0,
     failed: 0,
     skipped: 0,
   };
 
-  const summary = {
-    granulesSummary: granuleMigrationSummary,
-    filesSummary: fileMigrationSummary,
+  const migrationResult = {
+    granulesResult: granuleMigrationResult,
+    filesResult: fileMigrationResult,
   };
   const filename = 'granulesAndFilesMigrationErrorLog.json';
   const errorFileWriteStream = fs.createWriteStream(filename);
   errorFileWriteStream.write('{ "errors": [\n');
+
+  let extraSearchParams = {};
+  type searchType = 'scan' | 'query';
+  let dynamoSearchType: searchType = 'scan';
+
+  if (granuleSearchParams.granuleId) {
+    dynamoSearchType = 'query';
+    extraSearchParams = {
+      KeyConditionExpression: 'granuleId = :granuleId',
+      ExpressionAttributeValues: {
+        ':granuleId': granuleSearchParams.granuleId,
+      },
+    };
+  } else if (granuleSearchParams.collectionId) {
+    dynamoSearchType = 'query';
+    extraSearchParams = {
+      IndexName: 'collectionId-granuleId-index',
+      KeyConditionExpression: 'collectionId = :collectionId',
+      ExpressionAttributeValues: {
+        ':collectionId': granuleSearchParams.collectionId,
+      },
+    };
+  }
+
+  const searchQueue = new DynamoDbSearchQueue(
+    {
+      TableName: granulesTable,
+      ...extraSearchParams,
+    },
+    dynamoSearchType
+  );
 
   let record = await searchQueue.peek();
 
@@ -260,7 +304,7 @@ export const migrateGranulesAndFiles = async (
   errorFileWriteStream.write('\n]}');
   await storeErrors({ bucket, filename, recordClassification: 'granulesAndFiles', stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
-  logger.info(`Successfully migrated ${summary.granulesSummary.success} granule records.`);
-  logger.info(`Successfully migrated ${summary.filesSummary.success} file records.`);
-  return { granulesSummary: summary.granulesSummary, filesSummary: summary.filesSummary };
+  logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
+  logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);
+  return migrationResult;
 };

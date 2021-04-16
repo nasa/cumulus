@@ -25,7 +25,7 @@ resource "random_string" "db_pass" {
 }
 
 module "provision_database" {
-  source                      = "../lambdas/db-provision-user-database"
+  source                      = "../../lambdas/db-provision-user-database"
   prefix                      = var.prefix
   subnet_ids                  = var.subnet_ids
   rds_security_group          = var.rds_security_group
@@ -35,15 +35,21 @@ module "provision_database" {
   vpc_id                      = var.vpc_id
   rds_user_password           = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
   rds_connection_heartbeat    = var.rds_connection_heartbeat
+  dbRecreation                = true
 }
 
 module "data_persistence" {
-  source                      = "../../tf-modules/data-persistence"
-  prefix                      = var.prefix
-  subnet_ids                  = var.subnet_ids
-  enable_point_in_time_tables = var.enable_point_in_time_tables
+  depends_on                     = [module.provision_database.user_database_provision]
+  source                         = "../../tf-modules/data-persistence"
+  prefix                         = var.prefix
+  subnet_ids                     = var.subnet_ids
+  enable_point_in_time_tables    = var.enable_point_in_time_tables
 
-  elasticsearch_config = var.elasticsearch_config
+  elasticsearch_config           = var.elasticsearch_config
 
+  vpc_id                         = var.vpc_id
+  rds_security_group_id          = var.rds_security_group
+  rds_user_access_secret_arn     = module.provision_database.database_credentials_secret_arn
+  permissions_boundary_arn       = var.permissions_boundary_arn
   tags = merge(var.tags, { Deployment = var.prefix })
 }

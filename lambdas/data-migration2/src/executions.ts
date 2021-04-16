@@ -6,8 +6,8 @@ import { envUtils } from '@cumulus/common';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
-import { MigrationSummary } from './types';
 import { storeErrors } from './storeErrors';
+import { MigrationResult } from '@cumulus/types/migration';
 
 const Execution = require('@cumulus/api/models/executions');
 
@@ -74,7 +74,7 @@ export const migrateExecutions = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
   testTimestamp?: string
-): Promise<MigrationSummary> => {
+): Promise<MigrationResult> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
   const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
   const stackName = envUtils.getRequiredEnvVar('stackName', env);
@@ -84,9 +84,9 @@ export const migrateExecutions = async (
     TableName: executionsTable,
   });
 
-  const migrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
+  const migrationResult = {
+    total_dynamo_db_records: 0,
+    migrated: 0,
     failed: 0,
     skipped: 0,
   };
@@ -97,20 +97,20 @@ export const migrateExecutions = async (
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
-    migrationSummary.dynamoRecords += 1;
+    migrationResult.total_dynamo_db_records += 1;
 
-    if (migrationSummary.dynamoRecords % loggingInterval === 0) {
-      logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationSummary.dynamoRecords} total`);
+    if (migrationResult.total_dynamo_db_records % loggingInterval === 0) {
+      logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationResult.total_dynamo_db_records} total`);
     }
 
     try {
       await migrateExecutionRecord(<ExecutionRecord>record, knex);
-      migrationSummary.success += 1;
+      migrationResult.migrated += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
-        migrationSummary.skipped += 1;
+        migrationResult.skipped += 1;
       } else {
-        migrationSummary.failed += 1;
+        migrationResult.failed += 1;
         const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
         errorFileWriteStream.write(JSON.stringify(`Error: ${error} ${errorMessage}`));
         logger.error(errorMessage, error);
@@ -127,6 +127,6 @@ export const migrateExecutions = async (
   errorFileWriteStream.write(']}');
   await storeErrors({ bucket, filename, recordClassification: 'executions', stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
-  logger.info(`successfully migrated ${migrationSummary.success} execution records`);
-  return migrationSummary;
+  logger.info(`successfully migrated ${migrationResult.migrated} execution records`);
+  return migrationResult;
 };
