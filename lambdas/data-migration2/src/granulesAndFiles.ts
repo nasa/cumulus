@@ -183,6 +183,22 @@ export const migrateGranuleAndFilesViaTransaction = async (
   return { granulesResult, filesResult };
 };
 
+/**
+ * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
+ *
+ * @param {NodeJS.ProcessEnv} env - Environment variables which may contain configuration
+ * @param {number} env.loggingInterval
+ *   Sets the interval number of records when a log message will be written on migration progress
+ * @param {Knex} knex - Instance of a database client
+ * @param {GranuleDynamoDbSearchParams} granuleSearchParams
+ *   Parameters to control data selected for migration
+ * @param {string} granuleSearchParams.granuleId
+ *   Granule ID to use for querying granules to migrate
+ * @param {string} granuleSearchParams.collectionId
+ *   Collection name/version to use for querying granules to migrate
+ * @returns {Promise<GranulesAndFilesMigrationResult>}
+ *   Result object summarizing the granule/files migration
+ */
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
