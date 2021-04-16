@@ -75,6 +75,7 @@ module "cumulus" {
   ecs_cluster_min_size            = 2
   ecs_cluster_desired_size        = 2
   ecs_cluster_max_size            = 3
+  ecs_include_docker_cleanup_cronjob = var.ecs_include_docker_cleanup_cronjob
   key_name                        = var.key_name
   ecs_custom_sg_ids               = var.ecs_custom_sg_ids
 

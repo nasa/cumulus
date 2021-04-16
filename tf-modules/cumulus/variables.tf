@@ -254,6 +254,12 @@ variable "ecs_efs_config" {
   default     = null
 }
 
+variable "ecs_include_docker_cleanup_cronjob" {
+  description = "*Experimental* flag to configure a cron to run fstrim on all active container root filesystems"
+  type        = bool
+  default     = false
+}
+
 variable "ecs_service_alarms" {
   description = "List of Cloudwatch alarms monitoring ECS instances"
   type        = list(object({ name = string, arn = string }))
@@ -561,4 +567,3 @@ variable "ecs_custom_sg_ids" {
   type = list(string)
   default = []
 }
-

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-2348**
+  - The `@cumulus/api` `/granules` and `/granules/{granuleId}` endpoints now take `getRecoveryStatus` parameter
+  to include recoveryStatus in result granule(s)
+  - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
+  request additional granule information.
+  - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
+
+## [v8.0.0] 2021-04-08
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2428**
@@ -19,6 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2374**
   - Add cookbok entry for queueing PostToCmr step
   - Add example workflow to go with cookbook
+- **CUMULUS-2421**
+  - Added **experimental** `ecs_include_docker_cleanup_cronjob` boolean variable to the Cumulus module to enable cron job to clean up docker root storage blocks in ECS cluster template for non-`device-mapper` storage drivers. Default value is `false`. This fulfills a specific user support request. This feature is otherwise untested and will remain so until we can iterate with a better, more general-purpose solution. Use of this feature is **NOT** recommended unless you are certain you need it.
 
 - **CUMULUS-1808**
   - Add additional error messaging in `deleteSnsTrigger` to give users more context about where to look to resolve ResourceNotFound error when disabling or deleting a rule.
@@ -3954,7 +3966,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v7.2.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v8.0.0...HEAD
+[v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
 [v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
 [v7.1.0]: https://github.com/nasa/cumulus/compare/v7.0.0...v7.1.0
 [v7.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
