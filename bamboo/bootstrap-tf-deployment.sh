@@ -71,6 +71,7 @@ echo "terraform {
 ../terraform init \
   -input=false
 
+## TODO: This can be removed entirely once most stacks have run through Bamboo
 echo "Deploying the Cumulus database schema migration module to $DEPLOYMENT"
 ../terraform apply \
   -auto-approve \
