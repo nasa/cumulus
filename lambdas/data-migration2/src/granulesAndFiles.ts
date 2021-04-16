@@ -262,36 +262,52 @@ export const migrateGranulesAndFiles = async (
 
     logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
 
+    type AdditionalScanParams = {
+      ExclusiveStartKey?: any
+    };
+
     await pMap(
       range(totalSegments),
       async (_, segmentIndex) => {
-        const { Items } = await dynamodbDocClient().scan({
-          TableName: granulesTable,
-          TotalSegments: totalSegments,
-          Segment: segmentIndex,
-          Limit: granuleMigrationParams.parallelScanLimit,
-        }).promise();
+        let exclusiveStartKey;
+        const additionalScanParams: AdditionalScanParams = {};
 
-        if (!Items) {
-          return Promise.resolve();
-        }
-        return pMap(
-          Items,
-          async (record) => {
-            const result = await migrateGranuleAndFilesViaTransaction(
-              record,
-              migrationResult,
-              knex,
-              loggingInterval
-            );
-            migrationResult.granulesResult = result.granulesResult;
-            migrationResult.filesResult = result.filesResult;
+        /* eslint-disable no-await-in-loop */
+        do {
+          if (exclusiveStartKey) {
+            additionalScanParams.ExclusiveStartKey = exclusiveStartKey;
           }
-        );
+
+          const { Items = [], LastEvaluatedKey } = await dynamodbDocClient().scan({
+            ...additionalScanParams,
+            TableName: granulesTable,
+            TotalSegments: totalSegments,
+            Segment: segmentIndex,
+            Limit: granuleMigrationParams.parallelScanLimit,
+          }).promise();
+
+          exclusiveStartKey = LastEvaluatedKey;
+
+          await pMap(
+            Items,
+            async (record) => {
+              const result = await migrateGranuleAndFilesViaTransaction(
+                record,
+                migrationResult,
+                knex,
+                loggingInterval
+              );
+              migrationResult.granulesResult = result.granulesResult;
+              migrationResult.filesResult = result.filesResult;
+            }
+          );
+        } while (exclusiveStartKey);
+        /* eslint-enable no-await-in-loop */
+
+        return Promise.resolve();
       },
-      // TODO: should this be false?
       {
-        stopOnError: true,
+        stopOnError: false,
       }
     );
 
