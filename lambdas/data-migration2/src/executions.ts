@@ -1,8 +1,9 @@
 import Knex from 'knex';
 import pMap from 'p-map';
-import range from 'lodash/range';
+// import range from 'lodash/range';
 
-import { dynamodbDocClient } from '@cumulus/aws-client/services';
+// import { dynamodbDocClient } from '@cumulus/aws-client/services';
+import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
@@ -65,6 +66,45 @@ export const migrateExecutionRecord = async (
   return cumulusId;
 };
 
+const processExecutionItems = async (
+  items: AWS.DynamoDB.DocumentClient.AttributeMap[],
+  migrationResult: MigrationResult,
+  knex: Knex,
+  loggingInterval: number
+) => {
+  const updatedResult = migrationResult;
+  await pMap(
+    items,
+    async (dynamoRecord) => {
+      updatedResult.total_dynamo_db_records += 1;
+
+      if (updatedResult.total_dynamo_db_records % loggingInterval === 0) {
+        logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationResult.total_dynamo_db_records} total`);
+      }
+
+      try {
+        await migrateExecutionRecord(
+          <ExecutionRecord>dynamoRecord,
+          knex
+        );
+        updatedResult.migrated += 1;
+      } catch (error) {
+        if (error instanceof RecordAlreadyMigrated) {
+          updatedResult.skipped += 1;
+        } else {
+          updatedResult.failed += 1;
+          logger.error(
+            `Could not create execution record in RDS for DynamoDB execution arn: ${dynamoRecord.arn}}`,
+            error
+          );
+        }
+      }
+    }, {
+      stopOnError: false,
+    }
+  );
+};
+
 export const migrateExecutions = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
@@ -84,70 +124,18 @@ export const migrateExecutions = async (
 
   logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
-  type AdditionalScanParams = {
-    ExclusiveStartKey?: any
-  };
-
-  await pMap(
-    range(totalSegments),
-    async (_, segmentIndex) => {
-      let exclusiveStartKey;
-      const additionalScanParams: AdditionalScanParams = {};
-
-      /* eslint-disable no-await-in-loop */
-      do {
-        if (exclusiveStartKey) {
-          additionalScanParams.ExclusiveStartKey = exclusiveStartKey;
-        }
-
-        const { Items = [], LastEvaluatedKey } = await dynamodbDocClient().scan({
-          ...additionalScanParams,
-          TableName: executionsTable,
-          TotalSegments: totalSegments,
-          Segment: segmentIndex,
-          Limit: executionMigrationParams.parallelScanLimit,
-        }).promise();
-
-        exclusiveStartKey = LastEvaluatedKey;
-
-        await pMap(
-          Items,
-          async (dynamoRecord) => {
-            migrationResult.total_dynamo_db_records += 1;
-
-            if (migrationResult.total_dynamo_db_records % loggingInterval === 0) {
-              logger.info(`Batch of ${loggingInterval} execution records processed, ${migrationResult.total_dynamo_db_records} total`);
-            }
-
-            try {
-              await migrateExecutionRecord(
-                <ExecutionRecord>dynamoRecord,
-                knex
-              );
-              migrationResult.migrated += 1;
-            } catch (error) {
-              if (error instanceof RecordAlreadyMigrated) {
-                migrationResult.skipped += 1;
-              } else {
-                migrationResult.failed += 1;
-                logger.error(
-                  `Could not create execution record in RDS for DynamoDB execution arn: ${dynamoRecord.arn}}`,
-                  error
-                );
-              }
-            }
-          }, {
-            stopOnError: false,
-          }
-        );
-      } while (exclusiveStartKey);
-      /* eslint-enable no-await-in-loop */
-
-      return Promise.resolve();
-    },
+  await parallelScan(
+    totalSegments,
     {
-      stopOnError: false,
-    }
+      TableName: executionsTable,
+      Limit: executionMigrationParams.parallelScanLimit,
+    },
+    (items) => processExecutionItems(
+      items,
+      migrationResult,
+      knex,
+      loggingInterval
+    )
   );
 
   logger.info(`Finished parallel scan of executions with ${totalSegments} parallel segments.`);
