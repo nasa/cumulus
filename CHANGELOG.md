@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
   - **CUMULUS-2385**
     - Updated `sf-event-sqs-to-db-records` to write a granule's files to PostgreSQL only after the workflow has exited the `Running` status.    Please note that any workflow that uses `sf_sqs_report_task` for mid-workflow updates will be impacted.
+    - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
+    - Updated granule/file write logic to mark a granule's status as "failed"
+    if a file write fails.
   - **CUMULUS-2130**
     - Added postgres-migration-count-tool lambda/ECS task to allow for
       evaluation of database state
@@ -142,8 +145,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - PDRs
   - **CUMULUS-2446**
     - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
-  - **CUMULUS-2385**
-    - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
   - **CUMULUS-2447**
     - Changed `translateApiAsyncOperationToPostgresAsyncOperation` to call `JSON.stringify` and then `JSON.parse` on output.
   - **CUMULUS-2313**
