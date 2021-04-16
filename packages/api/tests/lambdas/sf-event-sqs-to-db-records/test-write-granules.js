@@ -19,8 +19,6 @@ const {
   destroyLocalTestDb,
 } = require('@cumulus/db');
 
-const { ValidationError } = require('@cumulus/errors');
-
 const {
   generateFileRecord,
   generateGranuleRecord,
