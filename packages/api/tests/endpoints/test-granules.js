@@ -13,6 +13,8 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
+  translateApiGranuleToPostgresGranule,
+  translateApiFiletoPostgresFile
 } = require('@cumulus/db');
 const {
   buildS3Uri,
@@ -843,8 +845,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
     async () => {
-      const newGranule = fakeGranuleFactoryV2();
-
+      const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
       newGranule.files = [
         {
           bucket,
@@ -863,6 +864,24 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         },
       ];
 
+      const postgresNewGranule = await translateApiGranuleToPostgresGranule(
+        newGranule,
+        t.context.knex
+      );
+      postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
+
+      const [postgresGranuleCumulusId] = await granulePgModel.create(
+        t.context.knex, postgresNewGranule
+      );
+      const postgresNewGranuleFiles = newGranule.files.map((file) => {
+        const translatedFile = translateApiFiletoPostgresFile(file);
+        translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
+        return translatedFile;
+      });
+      await Promise.all(
+        postgresNewGranuleFiles.map((file) =>
+          filePgModel.create(t.context.knex, file))
+      );
       await granuleModel.create(newGranule);
 
       await Promise.all(
@@ -941,11 +960,23 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         t.is(item.Key.indexOf(destinationFilepath), 0);
       });
 
-      // check the granule in table is updated
+      // check the granule in dynamoDb is updated
       const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
       updatedGranule.files.forEach((file) => {
         t.true(file.key.startsWith(destinationFilepath));
         const destination = destinations.find((dest) => file.fileName.match(dest.regex));
+        t.is(destination.bucket, file.bucket);
+        t.is(file.bucket, destination.bucket);
+      });
+
+      // check the granule in postgres is updated
+      const pgFiles = await filePgModel.search(t.context.knex, {
+        granule_cumulus_id: postgresGranuleCumulusId,
+      });
+
+      pgFiles.forEach((file) => {
+        t.true(file.key.startsWith(destinationFilepath));
+        const destination = destinations.find((dest) => file.file_name.match(dest.regex));
         t.is(destination.bucket, file.bucket);
         t.is(file.bucket, destination.bucket);
       });
@@ -955,7 +986,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 
 test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
-  const newGranule = fakeGranuleFactoryV2();
+  const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
 
   newGranule.files = [
     {
@@ -971,6 +1002,26 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   ];
 
   await granuleModel.create(newGranule);
+
+  const postgresNewGranule = await translateApiGranuleToPostgresGranule(
+    newGranule,
+    t.context.knex
+  );
+  postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
+
+  const [postgresGranuleCumulusId] = await granulePgModel.create(
+    t.context.knex, postgresNewGranule
+  );
+  const postgresNewGranuleFiles = newGranule.files.map((file) => {
+    const translatedFile = translateApiFiletoPostgresFile(file);
+    translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
+    return translatedFile;
+  });
+  await Promise.all(
+    postgresNewGranuleFiles.map((file) =>
+      filePgModel.create(t.context.knex, file))
+  );
+  await granuleModel.create(newGranule, t.context.knex);
 
   await s3PutObject({
     Bucket: newGranule.files[0].bucket,
@@ -1053,7 +1104,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
 test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
 
-  const newGranule = fakeGranuleFactoryV2();
+  const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
   const ummgMetadataString = fs.readFileSync(path.resolve(__dirname, '../data/ummg-meta.json'));
   const originalUMMG = JSON.parse(ummgMetadataString);
 
@@ -1070,6 +1121,24 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     },
   ];
 
+  const postgresNewGranule = await translateApiGranuleToPostgresGranule(
+    newGranule,
+    t.context.knex
+  );
+  postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
+
+  const [postgresGranuleCumulusId] = await granulePgModel.create(
+    t.context.knex, postgresNewGranule
+  );
+  const postgresNewGranuleFiles = newGranule.files.map((file) => {
+    const translatedFile = translateApiFiletoPostgresFile(file);
+    translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
+    return translatedFile;
+  });
+  await Promise.all(
+    postgresNewGranuleFiles.map((file) =>
+      filePgModel.create(t.context.knex, file))
+  );
   await granuleModel.create(newGranule);
 
   await Promise.all(newGranule.files.map((file) => {
