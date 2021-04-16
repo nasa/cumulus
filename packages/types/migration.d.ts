@@ -23,7 +23,7 @@ export interface MigrationSummary {
   MigrationSummary: DataMigration1Summary | DataMigration2Summary
 }
 
-export interface GranuleDynamoSearchParams {
+export interface GranuleDynamoDbSearchParams {
   collectionId?: string
   granuleId?: string
 }
