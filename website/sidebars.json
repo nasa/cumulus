@@ -20,6 +20,7 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
+      "deployment/postgres_database_deployment",
       "deployment/terraform-best-practices",
       "deployment/upgrade-readme",
       "deployment/components",
