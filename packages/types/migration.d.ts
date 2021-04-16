@@ -32,6 +32,6 @@ type DataMigration2AllowedMigrations = 'granules' | 'executions' | 'pdrs';
 
 export interface DataMigration2HandlerEvent {
   env?: NodeJS.ProcessEnv
-  granuleSearchParams?: GranuleDynamoSearchParams
+  granuleSearchParams?: GranuleDynamoDbSearchParams
   migrationsList?: DataMigration2AllowedMigrations[]
 }

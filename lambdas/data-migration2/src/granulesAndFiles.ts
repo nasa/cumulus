@@ -20,7 +20,7 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { GranuleDynamoSearchParams, MigrationResult } from '@cumulus/types/migration';
+import { GranuleDynamoDbSearchParams, MigrationResult } from '@cumulus/types/migration';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
@@ -186,7 +186,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
-  granuleSearchParams: GranuleDynamoSearchParams = {}
+  granuleSearchParams: GranuleDynamoDbSearchParams = {}
 ): Promise<GranulesAndFilesMigrationResult> => {
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
