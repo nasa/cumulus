@@ -32,23 +32,18 @@ export interface MigrationSummary {
   MigrationSummary: DataMigration1Summary | DataMigration2Summary
 }
 
-export interface GranuleMigrationParams {
-  collectionId?: string
-  granuleId?: string
+export interface DynamoDbParallelScanParams {
   parallelScanSegments?: number
   parallelScanLimit?: number
 }
 
-export interface ExecutionMigrationParams {
-  parallelScanSegments?: number
-  parallelScanLimit?: number
-}
+export type GranuleMigrationParams = GranuleDynamoDbSearchParams & DynamoDbParallelScanParams;
 
 type DataMigration2AllowedMigrations = 'granules' | 'executions' | 'pdrs';
 
 export interface DataMigration2HandlerEvent {
   env?: NodeJS.ProcessEnv
-  executionMigrationParams?: ExecutionMigrationParams
+  executionMigrationParams?: DynamoDbParallelScanParams
   granuleMigrationParams?: GranuleMigrationParams
   migrationsList?: DataMigration2AllowedMigrations[]
 }

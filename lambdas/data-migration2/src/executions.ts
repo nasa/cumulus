@@ -8,7 +8,7 @@ import Logger from '@cumulus/logger';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
-import { ExecutionMigrationParams, MigrationResult } from '@cumulus/types/migration';
+import { DynamoDbParallelScanParams, MigrationResult } from '@cumulus/types/migration';
 
 const Execution = require('@cumulus/api/models/executions');
 
@@ -68,7 +68,7 @@ export const migrateExecutionRecord = async (
 export const migrateExecutions = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
-  executionMigrationParams: ExecutionMigrationParams = {}
+  executionMigrationParams: DynamoDbParallelScanParams = {}
 ): Promise<MigrationResult> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
