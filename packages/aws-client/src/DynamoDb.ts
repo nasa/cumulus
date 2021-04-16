@@ -2,8 +2,12 @@
  * @module DynamoDb
  */
 
+import pMap from 'p-map';
+import range from 'lodash/range';
+import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
+
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { dynamodb } from './services';
+import { dynamodb, dynamodbDocClient } from './services';
 import { improveStackTrace } from './utils';
 
 /**
@@ -134,6 +138,42 @@ export const scan = improveStackTrace(
     }
 
     return response;
+  }
+);
+
+export const parallelScan = async (
+  totalSegments: number,
+  scanParams: DocumentClient.ScanInput,
+  processItemsFunc: (items: DocumentClient.ItemList) => Promise<void>
+) => pMap(
+  range(totalSegments),
+  async (_, segmentIndex) => {
+    let exclusiveStartKey: DocumentClient.Key | undefined;
+
+    const segmentScanParams: DocumentClient.ScanInput = {
+      ...scanParams,
+      TotalSegments: totalSegments,
+      Segment: segmentIndex,
+    };
+
+    /* eslint-disable no-await-in-loop */
+    do {
+      const {
+        Items = [],
+        LastEvaluatedKey,
+      } = await dynamodbDocClient().scan(segmentScanParams).promise();
+
+      exclusiveStartKey = LastEvaluatedKey;
+      segmentScanParams.ExclusiveStartKey = exclusiveStartKey;
+
+      await processItemsFunc(Items);
+    } while (exclusiveStartKey);
+    /* eslint-enable no-await-in-loop */
+
+    return Promise.resolve();
+  },
+  {
+    stopOnError: false,
   }
 );
 
