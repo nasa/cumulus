@@ -1,9 +1,10 @@
 import Knex from 'knex';
 import pMap from 'p-map';
-import range from 'lodash/range';
+// import range from 'lodash/range';
 
+import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-import { dynamodbDocClient } from '@cumulus/aws-client/services';
+// import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
   CollectionPgModel,
@@ -190,6 +191,28 @@ export const migrateGranuleAndFilesViaTransaction = async (
   return { granulesResult, filesResult };
 };
 
+const processGranuleItems = async (
+  items: AWS.DynamoDB.DocumentClient.AttributeMap[],
+  migrationResult: GranulesAndFilesMigrationResult,
+  knex: Knex,
+  loggingInterval: number
+) => {
+  const updatedResult = migrationResult;
+  await pMap(
+    items,
+    async (record) => {
+      const result = await migrateGranuleAndFilesViaTransaction(
+        record,
+        migrationResult,
+        knex,
+        loggingInterval
+      );
+      updatedResult.granulesResult = result.granulesResult;
+      updatedResult.filesResult = result.filesResult;
+    }
+  );
+};
+
 /**
  * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
  *
@@ -262,53 +285,18 @@ export const migrateGranulesAndFiles = async (
 
     logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
 
-    type AdditionalScanParams = {
-      ExclusiveStartKey?: any
-    };
-
-    await pMap(
-      range(totalSegments),
-      async (_, segmentIndex) => {
-        let exclusiveStartKey;
-        const additionalScanParams: AdditionalScanParams = {};
-
-        /* eslint-disable no-await-in-loop */
-        do {
-          if (exclusiveStartKey) {
-            additionalScanParams.ExclusiveStartKey = exclusiveStartKey;
-          }
-
-          const { Items = [], LastEvaluatedKey } = await dynamodbDocClient().scan({
-            ...additionalScanParams,
-            TableName: granulesTable,
-            TotalSegments: totalSegments,
-            Segment: segmentIndex,
-            Limit: granuleMigrationParams.parallelScanLimit,
-          }).promise();
-
-          exclusiveStartKey = LastEvaluatedKey;
-
-          await pMap(
-            Items,
-            async (record) => {
-              const result = await migrateGranuleAndFilesViaTransaction(
-                record,
-                migrationResult,
-                knex,
-                loggingInterval
-              );
-              migrationResult.granulesResult = result.granulesResult;
-              migrationResult.filesResult = result.filesResult;
-            }
-          );
-        } while (exclusiveStartKey);
-        /* eslint-enable no-await-in-loop */
-
-        return Promise.resolve();
-      },
+    await parallelScan(
+      totalSegments,
       {
-        stopOnError: false,
-      }
+        TableName: granulesTable,
+        Limit: granuleMigrationParams.parallelScanLimit,
+      },
+      (items) => processGranuleItems(
+        items,
+        migrationResult,
+        knex,
+        loggingInterval
+      )
     );
 
     logger.info(`Finished parallel scan of granules with ${totalSegments} parallel segments.`);

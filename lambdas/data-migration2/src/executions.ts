@@ -1,8 +1,6 @@
 import Knex from 'knex';
 import pMap from 'p-map';
-// import range from 'lodash/range';
 
-// import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
