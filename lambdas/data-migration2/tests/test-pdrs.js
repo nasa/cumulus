@@ -320,10 +320,10 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary,
     {
-      dynamoRecords: 1,
+      total_dynamo_db_records: 1,
       skipped: 1,
       failed: 0,
-      success: 0,
+      migrated: 0,
     });
 
   const records = await knex(tableNames.pdrs).where({ name: testPdr.pdrName });
@@ -357,10 +357,10 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    success: 2,
+    migrated: 2,
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 2);
@@ -398,10 +398,10 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 1,
-    success: 1,
+    migrated: 1,
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 1);
