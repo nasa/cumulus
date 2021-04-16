@@ -99,6 +99,12 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async (t) => {
+  await t.context.granulesModel.deleteTable();
+  await t.context.pdrsModel.deleteTable();
+  await t.context.providersModel.deleteTable();
+  await t.context.collectionsModel.deleteTable();
+  await t.context.executionsModel.deleteTable();
+
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   await destroyLocalTestDb({
