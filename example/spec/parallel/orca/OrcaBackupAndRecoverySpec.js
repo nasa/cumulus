@@ -247,6 +247,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
     it('returns list of granules with recovery status', async () => {
+      if (!isOrcaIncluded) pending();
       const response = await granulesApiTestUtils.listGranules({
         prefix: config.stackName,
         query: {
@@ -262,6 +263,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('returns granule information with recovery status', async () => {
+      if (!isOrcaIncluded) pending();
       const granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId,
