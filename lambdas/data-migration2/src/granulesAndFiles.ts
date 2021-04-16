@@ -207,11 +207,7 @@ export const migrateGranulesAndFiles = async (
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
 
-  const defaultSearchParams = {
-    TableName: granulesTable,
-  };
   let extraSearchParams = {};
-
   type searchType = 'scan' | 'query';
   let dynamoSearchType: searchType = 'scan';
 
@@ -236,7 +232,7 @@ export const migrateGranulesAndFiles = async (
 
   const searchQueue = new DynamoDbSearchQueue(
     {
-      ...defaultSearchParams,
+      TableName: granulesTable,
       ...extraSearchParams,
     },
     dynamoSearchType
