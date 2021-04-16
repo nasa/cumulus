@@ -29,12 +29,7 @@ export const handler = async (
         knex,
         event.executionMigrationParams
       );
-      migrationSummary.executions = {
-        total_dynamo_db_records: executionsMigrationResult.total_dynamo_db_records,
-        migrated: executionsMigrationResult.migrated,
-        skipped: executionsMigrationResult.skipped,
-        failed: executionsMigrationResult.failed,
-      };
+      migrationSummary.executions = executionsMigrationResult;
     }
 
     if (migrationsToRun.includes('granules')) {
@@ -43,28 +38,13 @@ export const handler = async (
         knex,
         event.granuleMigrationParams
       );
-      migrationSummary.granules = {
-        total_dynamo_db_records: granulesResult.total_dynamo_db_records,
-        migrated: granulesResult.migrated,
-        skipped: granulesResult.skipped,
-        failed: granulesResult.failed,
-      };
-      migrationSummary.files = {
-        total_dynamo_db_records: granulesResult.total_dynamo_db_records,
-        migrated: filesResult.migrated,
-        skipped: filesResult.skipped,
-        failed: filesResult.failed,
-      };
+      migrationSummary.granules = granulesResult;
+      migrationSummary.files = filesResult;
     }
 
     if (migrationsToRun.includes('pdrs')) {
       const pdrsMigrationResult = await migratePdrs(env, knex);
-      migrationSummary.pdrs = {
-        total_dynamo_db_records: pdrsMigrationResult.total_dynamo_db_records,
-        migrated: pdrsMigrationResult.migrated,
-        skipped: pdrsMigrationResult.skipped,
-        failed: pdrsMigrationResult.failed,
-      };
+      migrationSummary.pdrs = pdrsMigrationResult;
     }
 
     const summary: MigrationSummary = {

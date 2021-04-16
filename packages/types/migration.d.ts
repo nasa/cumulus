@@ -12,9 +12,18 @@ export interface DataMigration1Summary {
   rules: MigrationResult,
 }
 
+export interface GranuleDynamoDbSearchParams {
+  collectionId?: string
+  granuleId?: string
+}
+
+export interface GranulesMigrationResult extends MigrationResult {
+  filters?: GranuleDynamoDbSearchParams
+}
+
 export interface DataMigration2Summary {
   executions?: MigrationResult,
-  granules?: MigrationResult,
+  granules?: GranulesMigrationResult,
   files?: MigrationResult,
   pdrs?: MigrationResult,
 }

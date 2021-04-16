@@ -23,14 +23,18 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { GranuleMigrationParams, MigrationResult } from '@cumulus/types/migration';
+import {
+  GranuleMigrationParams,
+  MigrationResult,
+  GranulesMigrationResult,
+} from '@cumulus/types/migration';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 export interface GranulesAndFilesMigrationResult {
-  granulesResult: MigrationResult,
+  granulesResult: GranulesMigrationResult,
   filesResult: MigrationResult,
 }
 
@@ -186,20 +190,51 @@ export const migrateGranuleAndFilesViaTransaction = async (
   return { granulesResult, filesResult };
 };
 
+/**
+ * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
+ *
+ * @param {NodeJS.ProcessEnv} env - Environment variables which may contain configuration
+ * @param {number} env.loggingInterval
+ *   Sets the interval number of records when a log message will be written on migration progress
+ * @param {Knex} knex - Instance of a database client
+ * @param {GranuleMigrationParams} granuleMigrationParams
+ *   Parameters to control data selected for migration
+ * @param {string} granuleMigrationParams.granuleId
+ *   Granule ID to use for querying granules to migrate
+ * @param {string} granuleMigrationParams.collectionId
+ *   Collection name/version to use for querying granules to migrate
+ * @returns {Promise<GranulesAndFilesMigrationResult>}
+ *   Result object summarizing the granule/files migration
+ */
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
   granuleMigrationParams: GranuleMigrationParams = {}
 ): Promise<GranulesAndFilesMigrationResult> => {
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
-
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
 
-  const defaultSearchParams = {
-    TableName: granulesTable,
+  const granuleMigrationResult: GranulesMigrationResult = {
+    filters: granuleMigrationParams,
+    total_dynamo_db_records: 0,
+    migrated: 0,
+    failed: 0,
+    skipped: 0,
   };
-  let extraQueryParams = {};
 
+  const fileMigrationResult: MigrationResult = {
+    total_dynamo_db_records: 0,
+    migrated: 0,
+    failed: 0,
+    skipped: 0,
+  };
+
+  const migrationResult = {
+    granulesResult: granuleMigrationResult,
+    filesResult: fileMigrationResult,
+  };
+
+  let extraQueryParams = {};
   type searchType = 'scan' | 'query';
   let dynamoSearchType: searchType = 'scan';
 
@@ -221,25 +256,6 @@ export const migrateGranulesAndFiles = async (
       },
     };
   }
-
-  const granuleMigrationSummary = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  const fileMigrationSummary = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  const migrationResult = {
-    granulesResult: granuleMigrationSummary,
-    filesResult: fileMigrationSummary,
-  };
 
   if (dynamoSearchType === 'scan') {
     const totalSegments = granuleMigrationParams.parallelScanSegments ?? 5;
@@ -283,7 +299,7 @@ export const migrateGranulesAndFiles = async (
   } else {
     const searchQueue = new DynamoDbSearchQueue(
       {
-        ...defaultSearchParams,
+        TableName: granulesTable,
         ...extraQueryParams,
       },
       dynamoSearchType

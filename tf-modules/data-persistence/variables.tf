@@ -5,6 +5,10 @@ variable "prefix" {
   type        = string
 }
 
+variable "permissions_boundary_arn" {
+  type = string
+}
+
 # Optional
 
 variable "custom_domain_name" {
@@ -59,7 +63,7 @@ variable "include_elasticsearch" {
 }
 
 variable "subnet_ids" {
-  description = "Subnet IDs (for Elasticsearch)"
+  description = "Subnet IDs that should be used when deploying Elasticsearch/using a Postgres database inside of a VPC"
   type        = list(string)
   default     = []
 }
@@ -74,4 +78,19 @@ variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)
   default     = {}
+}
+
+variable "rds_user_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
+  type = string
+}
+
+variable "rds_security_group_id" {
+  type = string
+  default = ""
+}
+
+variable "vpc_id" {
+  type    = string
+  default = null
 }

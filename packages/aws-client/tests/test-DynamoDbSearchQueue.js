@@ -100,7 +100,7 @@ test.serial('DynamoDbSearchQueue can handle paging', async (t) => {
   t.is(returnedItemsCount, 11);
 });
 
-test.serial('DynamoDbSearchQueue returns results in query mode', async (t) => {
+test.serial('DynamoDbSearchQueue returns results with searchType set to "query"', async (t) => {
   const bucket = randomString();
 
   await Promise.all(range(11).map(() =>
