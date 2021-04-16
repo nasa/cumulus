@@ -35,7 +35,7 @@ class EarthdataLoginError extends Error {
   }
 }
 
-const resourceNotFoundInfo = 'Check if topic subscription and/or lambda trigger have been manually deleted from AWS. If so, rule may need to be manually disabled/deleted.';
+const resourceNotFoundInfo = 'One solution may be to check if topic subscription and/or lambda trigger have been manually deleted from AWS. If so, rule may need to be manually disabled/deleted.';
 
 class ResourceNotFoundError extends Error {
   constructor(error) {
