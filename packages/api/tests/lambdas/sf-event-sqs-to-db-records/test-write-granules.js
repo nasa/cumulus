@@ -19,6 +19,8 @@ const {
   destroyLocalTestDb,
 } = require('@cumulus/db');
 
+const { ValidationError } = require('@cumulus/errors');
+
 const {
   generateFileRecord,
   generateGranuleRecord,
@@ -603,11 +605,49 @@ test.serial('writeGranules() writes a granule and marks as failed if any file wr
     granuleModel,
   });
 
+  const file = cumulusMessage.payload.granules[0].files[0];
+
   t.true(await granuleModel.exists({ granuleId }));
 
   const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
+
   t.is(pgGranule.status, 'failed');
   t.deepEqual(pgGranule.error.Error, 'Failed writing files to Postgres.');
+  t.is(pgGranule.error.Cause, `bucket and key properties are required: {"size":${file.size},"fileName":"${file.fileName}"}`);
 });
 
-test.skip('writeGranules() writes all valid files if any non-valid file fails', async () => {});
+test.serial('writeGranules() writes all valid files if any non-valid file fails', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+    filePgModel,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  const invalidFile = fakeFileFactory(
+    {
+      bucket: undefined,
+    }
+  );
+
+  const validFile = fakeFileFactory();
+
+  cumulusMessage.payload.granules[0].files.push(invalidFile, validFile);
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.false(await filePgModel.exists(knex, { key: invalidFile.key }));
+  t.true(await filePgModel.exists(knex, { bucket: validFile.bucket, key: validFile.key }));
+});

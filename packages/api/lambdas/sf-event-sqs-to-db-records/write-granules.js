@@ -147,7 +147,26 @@ const generateFileRecord = ({ file, granuleCumulusId }) => ({
 const generateFileRecords = async ({
   files,
   granuleCumulusId,
-}) => files.map((file) => generateFileRecord({ file, granuleCumulusId }));
+}) => {
+  const errors = [];
+
+  const generatedFiles = files.map((file) => {
+    let generatedFile;
+
+    try {
+      generatedFile = generateFileRecord({ file, granuleCumulusId });
+    } catch (error) {
+      errors.push(error);
+    }
+
+    return generatedFile;
+  });
+
+  return {
+    files: generatedFiles,
+    errors: errors,
+  };
+};
 
 const writeFilesViaTransaction = async ({
   fileRecords,
@@ -246,14 +265,19 @@ const writeGranuleAndFilesViaTransaction = async ({
 
   let fileRecords = [];
 
-  // TODO don’t stop on the first file failure
   if (workflowStatus !== 'running') {
     try {
-      fileRecords = await generateFileRecords({
+      const filesAndErrors = await generateFileRecords({
         files: updatedFiles,
         granuleCumulusId,
       });
-    } catch (e) {
+
+      fileRecords = filesAndErrors.files;
+
+      filesAndErrors.errors.map((e) => {
+        throw e;
+      });
+    } catch (error_) {
       await granulePgModel.upsert(
         trx,
         {
@@ -261,7 +285,7 @@ const writeGranuleAndFilesViaTransaction = async ({
           status: 'failed',
           error: {
             Error: 'Failed writing files to Postgres.',
-            Cause: new Error(e),
+            Cause: error_.message,
           },
         }
       );
