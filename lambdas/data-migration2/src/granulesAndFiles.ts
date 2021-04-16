@@ -20,14 +20,18 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { GranuleDynamoDbSearchParams, MigrationResult } from '@cumulus/types/migration';
+import {
+  GranuleDynamoDbSearchParams,
+  MigrationResult,
+  GranulesMigrationResult,
+} from '@cumulus/types/migration';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 export interface GranulesAndFilesMigrationResult {
-  granulesResult: MigrationResult,
+  granulesResult: GranulesMigrationResult,
   filesResult: MigrationResult,
 }
 
@@ -137,19 +141,19 @@ export const migrateFileRecord = async (
 /**
  * Migrate granule and files from DynamoDB to RDS
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- * @param {GranulesAndFilesMigrationResult} granuleAndFileMigrationSummary
+ * @param {GranulesAndFilesMigrationResult} granuleAndFileMigrationResult
  * @param {Knex} knex
  * @param {number} loggingInterval
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  granuleAndFileMigrationSummary: GranulesAndFilesMigrationResult,
+  granuleAndFileMigrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number
 ): Promise<GranulesAndFilesMigrationResult> => {
   const files = dynamoRecord.files ?? [];
-  const { granulesResult, filesResult } = granuleAndFileMigrationSummary;
+  const { granulesResult, filesResult } = granuleAndFileMigrationResult;
 
   granulesResult.total_dynamo_db_records += 1;
   filesResult.total_dynamo_db_records += files.length;
@@ -207,6 +211,26 @@ export const migrateGranulesAndFiles = async (
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
 
+  const granuleMigrationResult: GranulesMigrationResult = {
+    filters: granuleSearchParams,
+    total_dynamo_db_records: 0,
+    migrated: 0,
+    failed: 0,
+    skipped: 0,
+  };
+
+  const fileMigrationResult: MigrationResult = {
+    total_dynamo_db_records: 0,
+    migrated: 0,
+    failed: 0,
+    skipped: 0,
+  };
+
+  const migrationResult = {
+    granulesResult: granuleMigrationResult,
+    filesResult: fileMigrationResult,
+  };
+
   let extraSearchParams = {};
   type searchType = 'scan' | 'query';
   let dynamoSearchType: searchType = 'scan';
@@ -237,25 +261,6 @@ export const migrateGranulesAndFiles = async (
     },
     dynamoSearchType
   );
-
-  const granuleMigrationSummary = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  const fileMigrationSummary = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  const migrationResult = {
-    granulesResult: granuleMigrationSummary,
-    filesResult: fileMigrationSummary,
-  };
 
   let record = await searchQueue.peek();
 

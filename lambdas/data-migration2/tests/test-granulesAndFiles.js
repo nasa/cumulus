@@ -501,6 +501,7 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
       migrated: 0,
     },
     granulesResult: {
+      filters: {},
       total_dynamo_db_records: 1,
       failed: 0,
       skipped: 1,
@@ -579,6 +580,7 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
       migrated: 2,
     },
     granulesResult: {
+      filters: {},
       total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
@@ -636,6 +638,7 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
       migrated: 1,
     },
     granulesResult: {
+      filters: {},
       total_dynamo_db_records: 2,
       failed: 1,
       skipped: 0,
@@ -698,6 +701,9 @@ test.serial('migrateGranulesAndFiles only processes records for specified collec
       migrated: 2,
     },
     granulesResult: {
+      filters: {
+        collectionId: collectionIdFilter,
+      },
       total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
@@ -756,6 +762,9 @@ test.serial('migrateGranulesAndFiles only processes records for specified granul
       migrated: 1,
     },
     granulesResult: {
+      filters: {
+        granuleId: testGranule.granuleId,
+      },
       total_dynamo_db_records: 1,
       failed: 0,
       skipped: 0,
