@@ -23,9 +23,10 @@ import {
 import { MigrationSummary } from './types';
 import { storeErrors } from './storeErrors';
 
-const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
+const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
+const fs = require('fs');
 
 export interface GranulesAndFilesMigrationSummary {
   granulesSummary: MigrationSummary,
@@ -141,8 +142,7 @@ export const migrateFileRecord = async (
  * @param {GranulesAndFilesMigrationSummary} params.granuleAndFileMigrationSummary
  * @param {Knex} params.knex
  * @param {number} params.loggingInterval
- * @param {string} params.bucket
- * @param {string} params.stackName
+ * @param {any} params.stream
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (params: {
@@ -150,21 +150,17 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
   granuleAndFileMigrationSummary: GranulesAndFilesMigrationSummary,
   knex: Knex,
   loggingInterval: number,
-  bucket: string
-  stackName: string,
+  stream: any,
 }): Promise<GranulesAndFilesMigrationSummary> => {
   const {
     dynamoRecord,
     granuleAndFileMigrationSummary,
     knex,
     loggingInterval,
-    bucket,
-    stackName,
+    stream,
   } = params;
-  const files = dynamoRecord.files;
   const { granulesSummary, filesSummary } = granuleAndFileMigrationSummary;
-  const errorFile = [];
-  let errorMessage;
+  const files = dynamoRecord.files;
 
   granulesSummary.dynamoRecords += 1;
   filesSummary.dynamoRecords += files.length;
@@ -186,22 +182,28 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
     if (error instanceof RecordAlreadyMigrated) {
       granulesSummary.skipped += 1;
     } else {
+      const errorMessage = `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${JSON.stringify(dynamoRecord.files)}`;
       granulesSummary.failed += 1;
       filesSummary.failed += files.length;
-      errorMessage = `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${JSON.stringify(dynamoRecord.files)}`;
-      errorFile.push(`Error: ${error} ${errorMessage}`);
+
+      stream.write(JSON.stringify(`Error: ${error} ${errorMessage}`));
       logger.error(errorMessage, error);
     }
-
-    storeErrors(bucket, errorFile, 'granulesAndFiles', stackName);
   }
 
   return { granulesSummary, filesSummary };
 };
 
+/**
+ * Migrate granules and files
+ * @param {NodeJS.ProcessEnv} env
+ * @param {Knex} knex
+ * @param {string | undefined} testTimestamp - used for unit testing
+ */
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,
-  knex: Knex
+  knex: Knex,
+  testTimestamp?: string
 ): Promise<GranulesAndFilesMigrationSummary> => {
   const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
@@ -230,6 +232,9 @@ export const migrateGranulesAndFiles = async (
     granulesSummary: granuleMigrationSummary,
     filesSummary: fileMigrationSummary,
   };
+  const filename = 'granulesAndFilesMigrationErrorLog.json';
+  const errorFileWriteStream = fs.createWriteStream(filename);
+  errorFileWriteStream.write('{ "errors": [\n');
 
   let record = await searchQueue.peek();
 
@@ -240,15 +245,20 @@ export const migrateGranulesAndFiles = async (
       granuleAndFileMigrationSummary: summary,
       knex,
       loggingInterval,
-      stackName,
-      bucket,
+      stream: errorFileWriteStream,
     });
     summary.granulesSummary = migrationSummary.granulesSummary;
     summary.filesSummary = migrationSummary.filesSummary;
 
     await searchQueue.shift();
     record = await searchQueue.peek();
+
+    if (record) {
+      errorFileWriteStream.write(',\n');
+    }
   }
+  errorFileWriteStream.write('\n]}');
+  await storeErrors({ bucket, filename, recordClassification: 'granulesAndFiles', stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
   logger.info(`Successfully migrated ${summary.granulesSummary.success} granule records.`);
   logger.info(`Successfully migrated ${summary.filesSummary.success} file records.`);

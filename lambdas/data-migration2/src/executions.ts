@@ -12,6 +12,7 @@ import { storeErrors } from './storeErrors';
 const Execution = require('@cumulus/api/models/executions');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
+const fs = require('fs');
 
 /**
  * Migrate execution record from Dynamo to RDS.
@@ -63,9 +64,16 @@ export const migrateExecutionRecord = async (
   return cumulusId;
 };
 
+/**
+ * Migrate executions
+ * @param {NodeJS.ProcessEnv} env
+ * @param {Knex} knex
+ * @param {string | undefined} testTimestamp - used for unit testing
+ */
 export const migrateExecutions = async (
   env: NodeJS.ProcessEnv,
-  knex: Knex
+  knex: Knex,
+  testTimestamp?: string
 ): Promise<MigrationSummary> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
   const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
@@ -82,8 +90,9 @@ export const migrateExecutions = async (
     failed: 0,
     skipped: 0,
   };
-  const errorFile = [];
-  let errorMessage;
+  const filename = 'executionMigrationErrorLog.json';
+  const errorFileWriteStream = fs.createWriteStream(filename);
+  errorFileWriteStream.write('{ "errors": [\n');
 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
@@ -102,16 +111,21 @@ export const migrateExecutions = async (
         migrationSummary.skipped += 1;
       } else {
         migrationSummary.failed += 1;
-        errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
-        errorFile.push(`Error: ${error} ${errorMessage}`);
+        const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
+        errorFileWriteStream.write(JSON.stringify(`Error: ${error} ${errorMessage}`));
         logger.error(errorMessage, error);
       }
     }
 
-    storeErrors(bucket, errorFile, 'executions', stackName);
     await searchQueue.shift();
     record = await searchQueue.peek();
+
+    if (record) {
+      errorFileWriteStream.write(',\n');
+    }
   }
+  errorFileWriteStream.write(']}');
+  await storeErrors({ bucket, filename, recordClassification: 'executions', stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
   logger.info(`successfully migrated ${migrationSummary.success} execution records`);
   return migrationSummary;

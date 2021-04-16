@@ -31,7 +31,7 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -516,32 +516,36 @@ test.serial('migrateExecutions logs summary of migration for a specified logging
   t.true(logSpy.calledWith('Batch of 1 execution records processed, 1 total'));
 });
 
-test.serial('migrateExecutions calls storeError when system bucket is provided', async (t) => {
-  const key = `${process.env.stackName}/data-migration2-executions-errors.json`;
+test.serial('migrateExecutions writes errors to S3 object', async (t) => {
+  const key = `${process.env.stackName}/data-migration2-executions-errors_123.json`;
 
-  const parentExecution = fakeExecutionFactoryV2({
-    parentArn: undefined,
-    asyncOperationId: cryptoRandomString({ length: 10 }),
+  const execution1 = fakeExecutionFactoryV2({
+    asyncOperationId: undefined,
   });
-  const childExecution = fakeExecutionFactoryV2({ parentArn: parentExecution.arn });
+  const execution2 = fakeExecutionFactoryV2({
+    asyncOperationId: undefined,
+  });
 
   await Promise.all([
-    // Have to use Dynamo client directly because creating
-    // via model won't allow creation of an invalid record
-    dynamodbDocClient().put({
-      TableName: process.env.ExecutionsTable,
-      Item: parentExecution,
-    }).promise(),
-    executionsModel.create(childExecution),
+    executionsModel.create(execution1),
+    executionsModel.create(execution2),
   ]);
   t.teardown(() => Promise.all([
-    executionsModel.delete({ arn: parentExecution.arn }),
-    executionsModel.delete({ arn: childExecution.arn }),
+    executionsModel.delete({ arn: execution1.arn }),
+    executionsModel.delete({ arn: execution2.arn }),
   ]));
 
-  await migrateExecutions(process.env, t.context.knex);
+  await migrateExecutions(process.env, t.context.knex, '123');
 
   // Check that error file exists in S3
-  const item = await getJsonS3Object(process.env.system_bucket, key);
-  t.is(item.errors.length, 2);
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  const errors = JSON.parse(item.Body.toString()).errors;
+  const expectedResult = /RecordDoesNotExist/;
+
+  t.is(errors.length, 2);
+  t.true(expectedResult.test(errors[0]));
+  t.true(expectedResult.test(errors[1]));
 });
