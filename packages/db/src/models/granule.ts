@@ -36,6 +36,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         })
         .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`));
 
+      // In reality, the only place where executionCumulusId should be
+      // undefined is from the data migrations
       if (executionCumulusId) {
         // Only do the upsert if there IS NOT already a record associating
         // the granule to this execution. If there IS already a record
