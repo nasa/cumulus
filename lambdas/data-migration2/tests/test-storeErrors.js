@@ -36,7 +36,7 @@ test('storeErrors stores file on s3', async (t) => {
 
   await storeErrors({
     bucket: process.env.system_bucket,
-    file,
+    filename: file,
     recordClassification,
     stackName: process.env.stackName,
     timestamp: '0123',

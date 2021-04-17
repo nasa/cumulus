@@ -6,8 +6,8 @@ import { envUtils } from '@cumulus/common';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
-import { storeErrors } from './storeErrors';
 import { MigrationResult } from '@cumulus/types/migration';
+import { storeErrors } from './storeErrors';
 
 const Execution = require('@cumulus/api/models/executions');
 

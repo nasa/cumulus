@@ -19,12 +19,12 @@ import {
   RecordDoesNotExist,
   PostgresUpdateFailed,
 } from '@cumulus/errors';
-import { storeErrors } from './storeErrors';
 import {
   GranuleDynamoDbSearchParams,
-  MigrationResult,
   GranulesMigrationResult,
+  MigrationResult,
 } from '@cumulus/types/migration';
+import { storeErrors } from './storeErrors';
 
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
@@ -158,13 +158,13 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
 }): Promise<GranulesAndFilesMigrationResult> => {
   const {
     dynamoRecord,
-    granuleAndFileMigrationSummary,
+    granuleAndFileMigrationResult,
     knex,
     loggingInterval,
     stream,
   } = params;
-  const { granulesSummary, filesSummary } = granuleAndFileMigrationResult;
-  const files = dynamoRecord.files;
+  const { granulesResult, filesResult } = granuleAndFileMigrationResult;
+  const files = dynamoRecord.files ?? [];
 
   granulesResult.total_dynamo_db_records += 1;
   filesResult.total_dynamo_db_records += files.length;
@@ -188,7 +188,7 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
     } else {
       const errorMessage = `Could not create granule record and file records in RDS for DynamoDB Granule granuleId: ${dynamoRecord.granuleId} with files ${JSON.stringify(dynamoRecord.files)}`;
       granulesResult.failed += 1;
-      filesSummary.failed += files.length;
+      filesResult.failed += files.length;
 
       stream.write(JSON.stringify(`Error: ${error} ${errorMessage}`));
       logger.error(errorMessage, error);
@@ -284,15 +284,15 @@ export const migrateGranulesAndFiles = async (
 
   /* eslint-disable no-await-in-loop */
   while (record) {
-    const migrationSummary = await migrateGranuleAndFilesViaTransaction({
+    const result = await migrateGranuleAndFilesViaTransaction({
       dynamoRecord: record,
-      granuleAndFileMigrationSummary: summary,
+      granuleAndFileMigrationResult: migrationResult,
       knex,
       loggingInterval,
       stream: errorFileWriteStream,
     });
-    summary.granulesSummary = migrationSummary.granulesSummary;
-    summary.filesSummary = migrationSummary.filesSummary;
+    migrationResult.granulesResult = result.granulesResult;
+    migrationResult.filesResult = result.filesResult;
 
     await searchQueue.shift();
     record = await searchQueue.peek();
