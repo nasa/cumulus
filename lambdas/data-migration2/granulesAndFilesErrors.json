@@ -1,1 +1,0 @@
-Error: TypeError: Cannot read property 'split' of undefined Could not create granule record and file records in RDS for DynamoDB Granule granuleId: 00328 with files [{"bucket":"143e847622","fileName":"MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf","size":1098034,"checksum":"checkSum01","checksumType":"md5","source":"source","type":"data","key":"1eb561bda5"}]
