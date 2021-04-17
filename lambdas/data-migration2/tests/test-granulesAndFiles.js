@@ -813,7 +813,7 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
     granulesModel.delete({ granuleId: testGranule2.granuleId });
   });
 
-  await migrateGranulesAndFiles(process.env, knex, {},'123');
+  await migrateGranulesAndFiles(process.env, knex, {}, '123');
   // Check that error file exists in S3
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
