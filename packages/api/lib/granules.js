@@ -13,6 +13,7 @@ const {
 } = require('@cumulus/ingest/granule');
 
 const {
+  CollectionPgModel,
   FilePgModel,
   getKnexClient,
   GranulePgModel,
@@ -24,6 +25,8 @@ const {
   getDistributionBucketMapKey,
 } = require('@cumulus/common/stack');
 
+
+const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
 
 const translateGranule = async (
@@ -88,45 +91,25 @@ const renameProperty = (from, to, obj) => {
   return newObj;
 };
 
-// TODO: put this in api/lib?
+// TODO -- Docstring
 async function updateGranuleFilesInDataStore(apiGranule, granulesModel, updatedFiles) {
-  try {
-    const dbClient = await getKnexClient();
-    const filesPgModel = new FilePgModel();
-    const granulePgModel = new GranulePgModel();
+  const dbClient = await getKnexClient();
+  const filesPgModel = new FilePgModel();
+  const granulePgModel = new GranulePgModel();
+  const collectionPgModel = new CollectionPgModel();
+  let postgresCumulusGranuleId;
 
-    const postgresGranules = await granulePgModel.search(dbClient, {
+  try {
+    const { name, version } = deconstructCollectionId(apiGranule.collectionId);
+    postgresCumulusGranuleId = await granulePgModel.getRecordCumulusId(dbClient, {
       granule_id: apiGranule.granuleId,
+      collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+        dbClient,
+        { name, version }
+      ),
     });
-    // If there's a granule record in Postgres
-    if (postgresGranules.length === 1) {
-      let granuleModelUpdate;
-      const granuleCumulusId = postgresGranules[0].cumulus_id;
-      if (!granuleCumulusId) {
-        // This is bad as files have moved, but the DB write failed.   Yikes.
-        throw new Error('Granule returned without granule_id, cannot proceed with database write');
-      }
-      await dbClient.transaction(async (trx) => {
-        // Delete all files associated with this granuleCumulusId
-        // Again, we've already moved the files.   Yikes.
-        await filesPgModel.delete(trx, { granule_cumulus_id: granuleCumulusId });
-        await Promise.all(updatedFiles.map((file) => {
-          // Translate dynamo file to postgres file
-          const translatedFile = translateApiFiletoPostgresFile(renameProperty('name', 'fileName', file));
-          return filesPgModel.upsert(trx, { ...translatedFile, granule_cumulus_id: granuleCumulusId });
-        }));
-        // Call update, set files equal to updatedFiles in Dynamo
-        granuleModelUpdate = granulesModel.update(
-          { granuleId: apiGranule.granuleId },
-          {
-            files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
-          }
-        );
-      });
-      return granuleModelUpdate;
-    }
-    if (postgresGranules.length === 0) {
-      // TODO abstract this
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
       return granulesModel.update(
         { granuleId: apiGranule.granuleId },
         {
@@ -134,11 +117,27 @@ async function updateGranuleFilesInDataStore(apiGranule, granulesModel, updatedF
         }
       );
     }
-    throw new Error('Invalid return from postgres - multiple records matched granuleId search');
-  } catch (error) {
-    console.log(error);
     throw error;
   }
+
+  return dbClient.transaction(async (trx) => {
+    await filesPgModel.delete(trx, { granule_cumulus_id: postgresCumulusGranuleId });
+
+    await Promise.all(updatedFiles.map((file) => {
+      const translatedFile = translateApiFiletoPostgresFile(renameProperty('name', 'fileName', file));
+      return filesPgModel.upsert(trx, {
+        ...translatedFile,
+        granule_cumulus_id: postgresCumulusGranuleId,
+      });
+    }));
+
+    return granulesModel.update(
+      { granuleId: apiGranule.granuleId },
+      {
+        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
+      }
+    );
+  });
 }
 
 /**
@@ -173,8 +172,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     getDistributionBucketMapKey(process.env.stackName)
   );
 
-  // TODO: This is *terrible* -
-  //  it has a Promise.all with no rollback of any sort if a file move fails.
+  // TODO: moveGranuleFiles has a Promise.all with no rollback of any sort if a file move fails.
   const updatedFiles = await moveGranuleFiles(apiGranule.files, destinations);
   await granulesModel.cmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
