@@ -35,9 +35,16 @@ export interface MigrationSummary {
 export interface DynamoDbParallelScanParams {
   parallelScanSegments?: number
   parallelScanLimit?: number
+  writeConcurrency?: number
 }
 
-export type GranuleMigrationParams = GranuleDynamoDbSearchParams & DynamoDbParallelScanParams;
+export interface MigrationLoggingParams {
+  loggingInterval?: number
+}
+
+export type ParallelScanMigrationParams = MigrationLoggingParams & DynamoDbParallelScanParams;
+
+export type GranuleMigrationParams = ParallelScanMigrationParams & GranuleDynamoDbSearchParams;
 
 type DataMigration2AllowedMigrations = 'granules' | 'executions' | 'pdrs';
 

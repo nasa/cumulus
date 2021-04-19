@@ -195,7 +195,8 @@ const processGranuleItems = async (
   items: AWS.DynamoDB.DocumentClient.AttributeMap[],
   migrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
-  loggingInterval: number
+  loggingInterval: number,
+  writeConcurrency: number
 ) => {
   const updatedResult = migrationResult;
   await pMap(
@@ -209,6 +210,9 @@ const processGranuleItems = async (
       );
       updatedResult.granulesResult = result.granulesResult;
       updatedResult.filesResult = result.filesResult;
+    },
+    {
+      concurrency: writeConcurrency,
     }
   );
 };
@@ -235,7 +239,8 @@ export const migrateGranulesAndFiles = async (
   granuleMigrationParams: GranuleMigrationParams = {}
 ): Promise<GranulesAndFilesMigrationResult> => {
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
-  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
+  const loggingInterval = granuleMigrationParams.loggingInterval ?? 10;
+  const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 2;
 
   const granuleMigrationResult: GranulesMigrationResult = {
     filters: granuleMigrationParams,
@@ -295,7 +300,8 @@ export const migrateGranulesAndFiles = async (
         items,
         migrationResult,
         knex,
-        loggingInterval
+        loggingInterval,
+        writeConcurrency
       )
     );
 
