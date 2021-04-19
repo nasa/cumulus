@@ -63,15 +63,22 @@ export const migrateGranuleRecord = async (
     { name, version }
   );
 
-  // It's possible that very old records could have this field be undefined
-  const executionCumulusId = record.execution
-    ? await executionPgModel.getRecordCumulusId(
+  // It's possible that executions may not exist in PG because they
+  // don't exist in DynamoDB, so were never migrated to PG. We DO NOT
+  // fail granule migration if execution cannot be found.
+  let executionCumulusId: number | undefined;
+  try {
+    executionCumulusId = await executionPgModel.getRecordCumulusId(
       knex,
       {
         url: record.execution,
       }
-    )
-    : undefined;
+    );
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   let existingRecord;
 

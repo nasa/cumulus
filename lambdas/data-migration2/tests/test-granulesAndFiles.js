@@ -192,6 +192,28 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
   );
 });
 
+test.serial('migrateGranuleRecord successfully migrates granule record with missing execution', async (t) => {
+  const {
+    granulePgModel,
+    knex,
+    testGranule,
+  } = t.context;
+
+  // refer to non-existent execution
+  testGranule.execution = cryptoRandomString({ length: 10 });
+
+  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
+  });
+
+  t.true(
+    await granulePgModel.exists(knex, {
+      cumulus_id: granuleCumulusId,
+    })
+  );
+});
+
 test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   const {
     filePgModel,
