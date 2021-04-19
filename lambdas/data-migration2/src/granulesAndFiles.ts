@@ -58,55 +58,57 @@ export const migrateGranuleRecord = async (
   const executionPgModel = new ExecutionPgModel();
   const granulePgModel = new GranulePgModel();
 
-  const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-    knex,
-    { name, version }
-  );
-
-  // It's possible that executions may not exist in PG because they
-  // don't exist in DynamoDB, so were never migrated to PG. We DO NOT
-  // fail granule migration if execution cannot be found.
-  let executionCumulusId: number | undefined;
-  try {
-    executionCumulusId = await executionPgModel.getRecordCumulusId(
-      knex,
-      {
-        url: record.execution,
-      }
+  const [cumulusId] = await knex.transaction(async (trx) => {
+    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      trx,
+      { name, version }
     );
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
+
+    // It's possible that executions may not exist in PG because they
+    // don't exist in DynamoDB, so were never migrated to PG. We DO NOT
+    // fail granule migration if execution cannot be found.
+    let executionCumulusId: number | undefined;
+    try {
+      executionCumulusId = await executionPgModel.getRecordCumulusId(
+        trx,
+        {
+          url: record.execution,
+        }
+      );
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
     }
-  }
 
-  let existingRecord;
+    let existingRecord;
 
-  try {
-    existingRecord = await granulePgModel.get(knex, {
-      granule_id: record.granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
+    try {
+      existingRecord = await granulePgModel.get(trx, {
+        granule_id: record.granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      });
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
     }
-  }
 
-  const isExistingRecordNewer = existingRecord
-    && existingRecord.updated_at >= new Date(record.updatedAt);
+    const isExistingRecordNewer = existingRecord
+      && existingRecord.updated_at >= new Date(record.updatedAt);
 
-  if (isExistingRecordNewer) {
-    throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
-  }
+    if (isExistingRecordNewer) {
+      throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
+    }
 
-  const granule = await translateApiGranuleToPostgresGranule(record, knex);
+    const granule = await translateApiGranuleToPostgresGranule(record, knex);
 
-  const [cumulusId] = await knex.transaction((trx) => upsertGranuleWithExecutionJoinRecord(
-    trx,
-    granule,
-    executionCumulusId
-  ));
+    return upsertGranuleWithExecutionJoinRecord(
+      trx,
+      granule,
+      executionCumulusId
+    );
+  });
 
   if (!cumulusId) {
     throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);
