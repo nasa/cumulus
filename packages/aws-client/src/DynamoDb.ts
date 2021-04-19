@@ -141,6 +141,18 @@ export const scan = improveStackTrace(
   }
 );
 
+/**
+ * Do a parallel scan of DynamoDB table using a document client.
+ *
+ * See https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan.
+ * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property).
+ *
+ * @param {number} totalSegments
+ *   Total number of segments to divide table into for parallel scanning
+ * @param {DocumentClient.ScanInput} scanParams - Params for the DynamoDB client scan operation
+ * @param {function} processItemsFunc - Function used to process returned items by scan
+ * @returns {Promise}
+ */
 export const parallelScan = async (
   totalSegments: number,
   scanParams: DocumentClient.ScanInput,
