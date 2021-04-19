@@ -44,71 +44,69 @@ export interface GranulesAndFilesMigrationResult {
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
  *   Record from DynamoDB
- * @param {Knex.Transaction} knex - Knex transaction
+ * @param {Knex.Transaction} trx - Knex transaction
  * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  * @throws {PostgresUpdateFailed} if the granule upsert effected 0 rows
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knex: Knex.Transaction
+  trx: Knex.Transaction
 ): Promise<number> => {
   const { name, version } = deconstructCollectionId(record.collectionId);
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();
   const granulePgModel = new GranulePgModel();
 
-  const [cumulusId] = await knex.transaction(async (trx) => {
-    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+  const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+    trx,
+    { name, version }
+  );
+
+  // It's possible that executions may not exist in PG because they
+  // don't exist in DynamoDB, so were never migrated to PG. We DO NOT
+  // fail granule migration if execution cannot be found.
+  let executionCumulusId: number | undefined;
+  try {
+    executionCumulusId = await executionPgModel.getRecordCumulusId(
       trx,
-      { name, version }
-    );
-
-    // It's possible that executions may not exist in PG because they
-    // don't exist in DynamoDB, so were never migrated to PG. We DO NOT
-    // fail granule migration if execution cannot be found.
-    let executionCumulusId: number | undefined;
-    try {
-      executionCumulusId = await executionPgModel.getRecordCumulusId(
-        trx,
-        {
-          url: record.execution,
-        }
-      );
-    } catch (error) {
-      if (!(error instanceof RecordDoesNotExist)) {
-        throw error;
+      {
+        url: record.execution,
       }
-    }
-
-    let existingRecord;
-
-    try {
-      existingRecord = await granulePgModel.get(trx, {
-        granule_id: record.granuleId,
-        collection_cumulus_id: collectionCumulusId,
-      });
-    } catch (error) {
-      if (!(error instanceof RecordDoesNotExist)) {
-        throw error;
-      }
-    }
-
-    const isExistingRecordNewer = existingRecord
-      && existingRecord.updated_at >= new Date(record.updatedAt);
-
-    if (isExistingRecordNewer) {
-      throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
-    }
-
-    const granule = await translateApiGranuleToPostgresGranule(record, knex);
-
-    return upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule,
-      executionCumulusId
     );
-  });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  let existingRecord;
+
+  try {
+    existingRecord = await granulePgModel.get(trx, {
+      granule_id: record.granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  const isExistingRecordNewer = existingRecord
+    && existingRecord.updated_at >= new Date(record.updatedAt);
+
+  if (isExistingRecordNewer) {
+    throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
+  }
+
+  const granule = await translateApiGranuleToPostgresGranule(record, trx);
+
+  const [cumulusId] = await upsertGranuleWithExecutionJoinRecord(
+    trx,
+    granule,
+    executionCumulusId
+  );
 
   if (!cumulusId) {
     throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);

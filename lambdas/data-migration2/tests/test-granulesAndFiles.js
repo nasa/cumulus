@@ -145,7 +145,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
     testGranule,
   } = t.context;
 
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -202,7 +202,7 @@ test.serial('migrateGranuleRecord successfully migrates granule record with miss
   // refer to non-existent execution
   testGranule.execution = cryptoRandomString({ length: 10 });
 
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -317,7 +317,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   delete testGranule.queryFields;
   delete testGranule.version;
 
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -377,7 +377,7 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error if previous
     updatedAt: Date.now() - 1000,
   };
 
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -403,7 +403,7 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
     status: 'running',
   });
 
-  const granuleCumulusId = await migrateGranuleRecord(testGranule, knex);
+  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
 
   // We do not allow updates on granules where the status is "running"
   // and a GranulesExecutions record has already been created to prevent out-of-order writes.
@@ -439,14 +439,14 @@ test.serial('migrateGranuleRecord updates an already migrated record if the upda
     updatedAt: Date.now() - 1000,
   });
 
-  await migrateGranuleRecord(testGranule, knex);
+  await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
 
   const newerGranule = {
     ...testGranule,
     updatedAt: Date.now(),
   };
 
-  const [granuleCumulusId] = await migrateGranuleRecord(newerGranule, knex);
+  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(newerGranule, trx));
   const record = await granulePgModel.get(knex, {
     cumulus_id: granuleCumulusId,
   });
