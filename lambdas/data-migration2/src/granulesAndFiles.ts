@@ -239,7 +239,7 @@ export const migrateGranulesAndFiles = async (
   granuleMigrationParams: GranuleMigrationParams = {}
 ): Promise<GranulesAndFilesMigrationResult> => {
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
-  const loggingInterval = granuleMigrationParams.loggingInterval ?? 10;
+  const loggingInterval = granuleMigrationParams.loggingInterval ?? 100;
   const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 2;
 
   const granuleMigrationResult: GranulesMigrationResult = {

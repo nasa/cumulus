@@ -802,12 +802,10 @@ test.serial('migrateGranulesAndFiles logs summary of migration for a specified l
   });
 
   await migrateGranulesAndFiles(
-    {
-      ...process.env,
-      loggingInterval: 1,
-    },
+    process.env,
     knex,
     {
+      loggingInterval: 1,
       parallelScanLimit: 1,
     }
   );

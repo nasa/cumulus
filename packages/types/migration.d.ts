@@ -50,7 +50,7 @@ type DataMigration2AllowedMigrations = 'granules' | 'executions' | 'pdrs';
 
 export interface DataMigration2HandlerEvent {
   env?: NodeJS.ProcessEnv
-  executionMigrationParams?: DynamoDbParallelScanParams
+  executionMigrationParams?: ParallelScanMigrationParams
   granuleMigrationParams?: GranuleMigrationParams
   migrationsList?: DataMigration2AllowedMigrations[]
 }

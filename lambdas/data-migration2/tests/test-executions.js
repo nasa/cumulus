@@ -526,12 +526,10 @@ test.serial('migrateExecutions logs summary of migration for a specified logging
   });
 
   await migrateExecutions(
-    {
-      ...process.env,
-      loggingInterval: 1,
-    },
+    process.env,
     t.context.knex,
     {
+      loggingInterval: 1,
       parallelScanLimit: 1,
       parallelScanSegments: 2,
     }
