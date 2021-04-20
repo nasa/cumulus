@@ -145,7 +145,7 @@ const generateFileRecord = ({ file, granuleCumulusId }) => ({
  *   Cumulus ID of the granule for this file
  * @returns {Array<Object>} - file records
  */
-const _generateFileRecords = async ({
+const _generateFileRecords = ({
   files,
   granuleCumulusId,
 }) => files.map((file) => generateFileRecord({ file, granuleCumulusId }));
@@ -290,7 +290,7 @@ const _writeGranuleFiles = async ({
   let fileRecords = [];
 
   if (workflowStatus !== 'running') {
-    fileRecords = await _generateFileRecords({
+    fileRecords = _generateFileRecords({
       files: files,
       granuleCumulusId,
     });
