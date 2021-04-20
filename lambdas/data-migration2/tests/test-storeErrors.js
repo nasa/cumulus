@@ -26,8 +26,8 @@ test.after.always(async () => {
 
 test.serial('storeErrors stores file on s3', async (t) => {
   const file = 'message';
-  const recordClassification = 'classification';
-  const filename = `data-migration2-${recordClassification}-errors`;
+  const migrationName = 'classification';
+  const filename = `data-migration2-${migrationName}-errors`;
   const key = `${process.env.stackName}/${filename}_0123.json`;
 
   const stream = fs.createWriteStream(file);
@@ -37,7 +37,7 @@ test.serial('storeErrors stores file on s3', async (t) => {
   await storeErrors({
     bucket: process.env.system_bucket,
     filepath: file,
-    recordClassification,
+    migrationName,
     stackName: process.env.stackName,
     timestamp: '0123',
   });
