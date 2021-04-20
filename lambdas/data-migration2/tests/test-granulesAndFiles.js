@@ -237,7 +237,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
   const testFile = fakeFileFactory({
     bucket: undefined,
     key: undefined,
-    filename: 's3://cumulus-test-sandbox-private/notUsed',
+    filename: 's3://cumulus-test-sandbox-private/someKey',
   });
   testGranule.files = [testFile];
 
@@ -247,7 +247,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
 
   const record = await filePgModel.get(
     knex,
-    { bucket: 'cumulus-test-sandbox-private', key: 'notUsed' }
+    { bucket: 'cumulus-test-sandbox-private', key: 'someKey' }
   );
 
   t.teardown(async () => {
@@ -260,7 +260,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
       bucket: 'cumulus-test-sandbox-private',
       checksum_value: null,
       checksum_type: null,
-      key: 'notUsed',
+      key: 'someKey',
       path: null,
       file_size: null,
       file_name: testFile.fileName,

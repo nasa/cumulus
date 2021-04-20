@@ -2,11 +2,9 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 
-const { ValidationError } = require('@cumulus/errors');
-
 const { translateApiFiletoPostgresFile } = require('../../dist/translate/file');
 
-const fileOmitKeys = ['checksum', 'checksumType', 'fileName', 'size'];
+const fileOmitKeys = ['checksum', 'checksumType', 'fileName', 'size', 'filename'];
 
 test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
   const file = {
@@ -34,22 +32,31 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
   );
 });
 
-test('translateApiFiletoPostgresFile throws error if file bucket or key is missing', (t) => {
+test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) => {
   const file = {
     bucket: undefined,
     key: undefined,
     fileName: cryptoRandomString({ length: 3 }),
+    filename: 's3://cumulus-test-sandbox-private/somekey',
     checksumType: 'md5',
     checksum: 'bogus-value',
     size: 100,
     source: 'fake-source',
   };
-
-  t.throws(() => {
-    translateApiFiletoPostgresFile(file);
-  },
-  {
-    instanceOf: ValidationError,
-    message: `bucket and key properties are required: ${JSON.stringify(file)}`,
-  });
+  t.deepEqual(
+    translateApiFiletoPostgresFile(file),
+    omit(
+      {
+        ...file,
+        bucket: 'cumulus-test-sandbox-private',
+        key: 'somekey',
+        checksum_type: file.checksumType,
+        checksum_value: file.checksum,
+        file_name: file.fileName,
+        file_size: file.size,
+        path: undefined,
+      },
+      fileOmitKeys
+    )
+  );
 });
