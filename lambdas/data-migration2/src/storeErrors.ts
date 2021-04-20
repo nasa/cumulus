@@ -9,7 +9,7 @@ const fs = require('fs');
  * @param {Object} params
  * @param {string} params.bucket - Name of S3 bucket where file will be uploaded
  * @param {string[]} params.filepath - Write Stream file path
- * @param {string} params.recordClassification - Classification of record
+ * @param {string} params.migrationName - Name of migration
  * @param {string} params.stackName - User stack name/prefix
  * @param {string | undefined} params.timestamp - Timestamp for unit testing
  * @returns {void}
@@ -17,12 +17,12 @@ const fs = require('fs');
 export const storeErrors = async (params: {
   bucket: string,
   filepath: string,
-  recordClassification: string,
+  migrationName: string,
   stackName: string,
   timestamp?: string,
 }) => {
-  const { bucket, filepath, recordClassification, stackName, timestamp } = params;
-  const fileKey = `data-migration2-${recordClassification}-errors`;
+  const { bucket, filepath, migrationName, stackName, timestamp } = params;
+  const fileKey = `data-migration2-${migrationName}-errors`;
   const dateString = timestamp || moment.utc().format('YYYY-MM-DD_HH:MM:SS');
   const key = `${stackName}/${fileKey}_${dateString}.json`;
   await s3().putObject({

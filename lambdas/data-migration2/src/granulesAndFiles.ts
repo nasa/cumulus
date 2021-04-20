@@ -302,7 +302,7 @@ export const migrateGranulesAndFiles = async (
     }
   }
   errorFileWriteStream.end('\n]}');
-  await storeErrors({ bucket, filepath, recordClassification: 'granulesAndFiles', stackName, timestamp: testTimestamp });
+  await storeErrors({ bucket, filepath, migrationName: 'granulesAndFiles', stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
   logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
   logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);

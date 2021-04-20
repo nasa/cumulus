@@ -125,7 +125,7 @@ export const migrateExecutions = async (
     }
   }
   errorFileWriteStream.end('\n]}');
-  await storeErrors({ bucket, filepath, recordClassification: 'executions', stackName, timestamp: testTimestamp });
+  await storeErrors({ bucket, filepath, migrationName: 'executions', stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
   logger.info(`successfully migrated ${migrationResult.migrated} execution records`);
   return migrationResult;
