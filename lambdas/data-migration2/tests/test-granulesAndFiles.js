@@ -230,6 +230,45 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   );
 });
 
+test.serial('migrateFileRecord correctly migrates file record with filename instead of bucket and key', async (t) => {
+  const {
+    filePgModel,
+    granulePgModel,
+    knex,
+    testGranule,
+  } = t.context;
+
+  const testFile = fakeFileFactory({
+    bucket: undefined,
+    key: undefined,
+    filename: 's3://cumulus-test-sandbox-private/notUsed',
+  });
+  testGranule.files = [testFile];
+
+  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
+  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  await migrateFileRecord(testFile, granuleCumulusId, knex);
+
+  const record = await filePgModel.get(
+    knex,
+    { bucket: 'cumulus-test-sandbox-private', key: 'notUsed' }
+  );
+
+  t.deepEqual(
+    omit(record, fileOmitList),
+    {
+      bucket: 'cumulus-test-sandbox-private',
+      checksum_value: null,
+      checksum_type: null,
+      key: 'notUsed',
+      path: null,
+      file_size: null,
+      file_name: testFile.fileName,
+      source: null,
+    }
+  );
+});
+
 test.serial('migrateGranuleRecord handles nullable fields on source granule data', async (t) => {
   const {
     collectionCumulusId,
