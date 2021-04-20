@@ -24,7 +24,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('storeErrors stores file on s3', async (t) => {
+test.serial('storeErrors stores file on s3', async (t) => {
   const file = 'message';
   const recordClassification = 'classification';
   const filename = `data-migration2-${recordClassification}-errors`;
@@ -32,11 +32,11 @@ test('storeErrors stores file on s3', async (t) => {
 
   const stream = fs.createWriteStream(file);
   const message = 'test message';
-  stream.write(message);
+  stream.end(message);
 
   await storeErrors({
     bucket: process.env.system_bucket,
-    filename: file,
+    filepath: file,
     recordClassification,
     stackName: process.env.stackName,
     timestamp: '0123',

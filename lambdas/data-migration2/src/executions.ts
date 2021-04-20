@@ -90,8 +90,8 @@ export const migrateExecutions = async (
     failed: 0,
     skipped: 0,
   };
-  const filename = 'executionMigrationErrorLog.json';
-  const errorFileWriteStream = fs.createWriteStream(filename);
+  const filepath = 'executionMigrationErrorLog.json';
+  const errorFileWriteStream = fs.createWriteStream(filepath);
   errorFileWriteStream.write('{ "errors": [\n');
 
   let record = await searchQueue.peek();
@@ -124,8 +124,8 @@ export const migrateExecutions = async (
       errorFileWriteStream.write(',\n');
     }
   }
-  errorFileWriteStream.write(']}');
-  await storeErrors({ bucket, filename, recordClassification: 'executions', stackName, timestamp: testTimestamp });
+  errorFileWriteStream.end('\n]}');
+  await storeErrors({ bucket, filepath, recordClassification: 'executions', stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
   logger.info(`successfully migrated ${migrationResult.migrated} execution records`);
   return migrationResult;
