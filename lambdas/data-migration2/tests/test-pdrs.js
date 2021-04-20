@@ -1,9 +1,11 @@
-const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const test = require('ava');
+const sinon = require('sinon');
 
 const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Pdr = require('@cumulus/api/models/pdrs');
+const Logger = require('@cumulus/logger');
 
 const {
   CollectionPgModel,
@@ -169,22 +171,6 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   );
 });
 
-test.serial('migratePdrRecord throws SchemaValidationError on invalid source data from DynamoDB', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
-
-  const testPdr = generateTestPdr({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
-    provider: testProvider.name,
-  });
-
-  delete testPdr.status;
-
-  await t.throwsAsync(
-    migratePdrRecord(testPdr, knex),
-    { name: 'SchemaValidationError' }
-  );
-});
-
 test.serial('migratePdrRecord handles nullable fields on source PDR data', async (t) => {
   const {
     collectionCumulusId,
@@ -334,10 +320,10 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary,
     {
-      dynamoRecords: 1,
+      total_dynamo_db_records: 1,
       skipped: 1,
       failed: 0,
-      success: 0,
+      migrated: 0,
     });
 
   const records = await knex(tableNames.pdrs).where({ name: testPdr.pdrName });
@@ -371,10 +357,10 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    success: 2,
+    migrated: 2,
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 2);
@@ -412,11 +398,36 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 1,
-    success: 1,
+    migrated: 1,
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 1);
+});
+
+test.serial('migratePdrs logs summary of migration every for a specified interval', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  const {
+    knex,
+    testCollection,
+    testProvider,
+  } = t.context;
+  process.env.loggingInterval = 1;
+
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
+
+  await pdrsModel.create(testPdr);
+
+  t.teardown(async () => {
+    logSpy.restore();
+    await pdrsModel.delete({ pdrName: testPdr.pdrName });
+  });
+
+  await migratePdrs(process.env, knex);
+  t.true(logSpy.calledWith('Batch of 1 PDR records processed, 1 total'));
 });

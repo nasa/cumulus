@@ -3,13 +3,11 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import Logger from '@cumulus/logger';
 import {
-  getRecordCumulusId,
   CollectionPgModel,
+  ExecutionPgModel,
   PdrPgModel,
-  PostgresExecutionRecord,
   PostgresPdr,
   ProviderPgModel,
-  tableNames,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import {
@@ -18,11 +16,9 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { MigrationSummary } from './types';
+import { MigrationResult } from '@cumulus/types/migration';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
@@ -39,10 +35,9 @@ export const migratePdrRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.pdr);
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
 
@@ -74,10 +69,9 @@ export const migratePdrRecord = async (
   );
 
   const executionCumulusId = dynamoRecord.execution
-    ? await getRecordCumulusId<PostgresExecutionRecord>(
-      { arn: dynamoRecord.execution },
-      tableNames.executions,
-      knex
+    ? await executionPgModel.getRecordCumulusId(
+      knex,
+      { arn: dynamoRecord.execution }
     )
     : undefined;
 
@@ -110,16 +104,17 @@ export const migratePdrRecord = async (
 export const migratePdrs = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
-): Promise<MigrationSummary> => {
+): Promise<MigrationResult> => {
   const pdrsTable = envUtils.getRequiredEnvVar('PdrsTable', env);
+  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
 
   const searchQueue = new DynamoDbSearchQueue({
     TableName: pdrsTable,
   });
 
-  const migrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
+  const migrationResult = {
+    total_dynamo_db_records: 0,
+    migrated: 0,
     failed: 0,
     skipped: 0,
   };
@@ -127,17 +122,19 @@ export const migratePdrs = async (
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
-    migrationSummary.dynamoRecords += 1;
+    migrationResult.total_dynamo_db_records += 1;
 
+    if (migrationResult.total_dynamo_db_records % loggingInterval === 0) {
+      logger.info(`Batch of ${loggingInterval} PDR records processed, ${migrationResult.total_dynamo_db_records} total`);
+    }
     try {
       await migratePdrRecord(record, knex);
-      migrationSummary.success += 1;
+      migrationResult.migrated += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
-        migrationSummary.skipped += 1;
-        logger.info(error);
+        migrationResult.skipped += 1;
       } else {
-        migrationSummary.failed += 1;
+        migrationResult.failed += 1;
         logger.error(
           `Could not create PDR record in RDS for Dynamo PDR name: ${record.pdrName}`,
           error
@@ -149,6 +146,6 @@ export const migratePdrs = async (
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`Successfully migrated ${migrationSummary.success} PDR records.`);
-  return migrationSummary;
+  logger.info(`Successfully migrated ${migrationResult.migrated} PDR records.`);
+  return migrationResult;
 };

@@ -1,12 +1,14 @@
-const omit = require('lodash/omit');
-const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
+const sinon = require('sinon');
+const test = require('ava');
 
 // Dynamo models
 const Execution = require('@cumulus/api/models/executions');
 const AsyncOperation = require('@cumulus/api/models/async-operation');
 const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
+const Logger = require('@cumulus/logger');
 
 // PG models
 const { CollectionPgModel, AsyncOperationPgModel, ExecutionPgModel } = require('@cumulus/db');
@@ -273,10 +275,10 @@ test.serial('migrateExecutions skips already migrated record', async (t) => {
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 1,
+    total_dynamo_db_records: 1,
     skipped: 1,
     failed: 0,
-    success: 0,
+    migrated: 0,
   });
 
   const records = await executionPgModel.search(
@@ -394,11 +396,13 @@ test.serial('migrateExecutionRecord recursively migrates grandparent executions'
 test.serial('child execution migration fails if parent execution cannot be migrated', async (t) => {
   const { knex, executionPgModel } = t.context;
 
-  const parentExecution = fakeExecutionFactoryV2({ parentArn: undefined });
+  const parentExecution = fakeExecutionFactoryV2({
+    parentArn: undefined,
+    // make parent record reference to non-existent async operation
+    // so that it fails to migrate
+    asyncOperationId: cryptoRandomString({ length: 5 }),
+  });
   const childExecution = fakeExecutionFactoryV2({ parentArn: parentExecution.arn });
-
-  // make parent record invalid
-  delete parentExecution.name;
 
   await Promise.all([
     // Have to use Dynamo client directly because creating
@@ -416,10 +420,10 @@ test.serial('child execution migration fails if parent execution cannot be migra
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 2,
-    success: 0,
+    migrated: 0,
   });
   const records = await executionPgModel.search(
     knex,
@@ -445,10 +449,10 @@ test.serial('migrateExecutions processes multiple executions', async (t) => {
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    success: 2,
+    migrated: 2,
   });
   const records = await executionPgModel.search(
     knex,
@@ -461,10 +465,11 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   const { knex, executionPgModel } = t.context;
 
   const newExecution = fakeExecutionFactoryV2({ parentArn: undefined });
-  const newExecution2 = fakeExecutionFactoryV2({ parentArn: undefined });
-
-  // remove required source field so that record will fail
-  delete newExecution.name;
+  const newExecution2 = fakeExecutionFactoryV2({
+    parentArn: undefined,
+    // reference non-existent async operation so migration fails
+    asyncOperationId: cryptoRandomString({ length: 5 }),
+  });
 
   await Promise.all([
     // Have to use Dynamo client directly because creating
@@ -482,14 +487,30 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
 
   const migrationSummary = await migrateExecutions(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 1,
-    success: 1,
+    migrated: 1,
   });
   const records = await executionPgModel.search(
     knex,
     {}
   );
   t.is(records.length, 1);
+});
+
+test.serial('migrateExecutions logs summary of migration for a specified loggingInterval', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  process.env.loggingInterval = 1;
+
+  const execution = fakeExecutionFactoryV2({ parentArn: undefined });
+  await executionsModel.create(execution);
+
+  t.teardown(async () => {
+    logSpy.restore();
+    await executionsModel.delete({ arn: execution.arn });
+  });
+
+  await migrateExecutions(process.env, t.context.knex);
+  t.true(logSpy.calledWith('Batch of 1 execution records processed, 1 total'));
 });
