@@ -1,52 +1,50 @@
 import { getKnexClient } from '@cumulus/db';
-import { MigrationSummary } from '@cumulus/types/migration';
 import Logger from '@cumulus/logger';
+import {
+  DataMigration2Summary,
+  DataMigration2HandlerEvent,
+  MigrationSummary,
+} from '@cumulus/types/migration';
 
 import { migrateExecutions } from './executions';
 import { migrateGranulesAndFiles } from './granulesAndFiles';
 import { migratePdrs } from './pdrs';
 
 const logger = new Logger({ sender: '@cumulus/data-migration2' });
-export interface HandlerEvent {
-  env?: NodeJS.ProcessEnv
-}
 
-export const handler = async (event: HandlerEvent): Promise<MigrationSummary> => {
+export const handler = async (
+  event: DataMigration2HandlerEvent
+): Promise<MigrationSummary> => {
   const env = event.env ?? process.env;
+  const migrationsToRun = event.migrationsList ?? ['executions', 'granules', 'pdrs'];
+
   const knex = await getKnexClient({ env });
 
   try {
-    const executionsMigrationSummary = await migrateExecutions(env, knex);
-    const granulesAndFilesMigrationSummary = await migrateGranulesAndFiles(env, knex);
-    const pdrsMigrationSummary = await migratePdrs(env, knex);
+    const migrationSummary: DataMigration2Summary = {};
+
+    if (migrationsToRun.includes('executions')) {
+      const executionsMigrationResult = await migrateExecutions(env, knex);
+      migrationSummary.executions = executionsMigrationResult;
+    }
+
+    if (migrationsToRun.includes('granules')) {
+      const { granulesResult, filesResult } = await migrateGranulesAndFiles(
+        env,
+        knex,
+        event.granuleSearchParams
+      );
+      migrationSummary.granules = granulesResult;
+      migrationSummary.files = filesResult;
+    }
+
+    if (migrationsToRun.includes('pdrs')) {
+      const pdrsMigrationResult = await migratePdrs(env, knex);
+      migrationSummary.pdrs = pdrsMigrationResult;
+    }
 
     const summary: MigrationSummary = {
-      MigrationSummary: {
-        executions: {
-          total_dynamo_db_records: executionsMigrationSummary.dynamoRecords,
-          migrated: executionsMigrationSummary.success,
-          skipped: executionsMigrationSummary.skipped,
-          failed: executionsMigrationSummary.failed,
-        },
-        granules: {
-          total_dynamo_db_records: granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords,
-          migrated: granulesAndFilesMigrationSummary.granulesSummary.success,
-          skipped: granulesAndFilesMigrationSummary.granulesSummary.skipped,
-          failed: granulesAndFilesMigrationSummary.granulesSummary.failed,
-        },
-        files: {
-          total_dynamo_db_records: granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords,
-          migrated: granulesAndFilesMigrationSummary.filesSummary.success,
-          skipped: granulesAndFilesMigrationSummary.filesSummary.skipped,
-          failed: granulesAndFilesMigrationSummary.filesSummary.failed,
-        },
-        pdrs: {
-          total_dynamo_db_records: pdrsMigrationSummary.dynamoRecords,
-          migrated: pdrsMigrationSummary.success,
-          skipped: pdrsMigrationSummary.skipped,
-          failed: pdrsMigrationSummary.failed,
-        },
-      },
+      MigrationSummary: migrationSummary,
     };
     logger.info(JSON.stringify(summary));
     return summary;

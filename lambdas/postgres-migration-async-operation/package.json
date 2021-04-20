@@ -30,7 +30,8 @@
   "dependencies": {
     "@cumulus/api": "7.1.0",
     "@cumulus/async-operations": "7.1.0-alpha.1",
-    "@cumulus/logger": "7.1.0"
+    "@cumulus/logger": "7.1.0",
+    "@cumulus/types": "7.1.0"
   },
   "devDependencies": {
     "@cumulus/test-data": "7.1.0"
