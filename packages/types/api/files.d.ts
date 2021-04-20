@@ -3,6 +3,7 @@ export interface ApiFile {
   bucket?: string
   key?: string
   fileName?: string
+  filename?: string
   name?: string
   path?: string
   size?: number

@@ -17,6 +17,7 @@ const {
   fakeProviderRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
+  tableNames,
 } = require('@cumulus/db');
 
 const {
@@ -117,6 +118,12 @@ test.beforeEach(async (t) => {
     t.context.knex,
     t.context.provider
   );
+});
+
+test.afterEach.always(async (t) => {
+  await t.context.knex(tableNames.files).del();
+  await t.context.knex(tableNames.granulesExecutions).del();
+  await t.context.knex(tableNames.granules).del();
 });
 
 test.after.always(async (t) => {
@@ -300,7 +307,7 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
   );
 });
 
-test('writeGranules() throws an error if collection is not provided', async (t) => {
+test.serial('writeGranules() throws an error if collection is not provided', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -320,7 +327,7 @@ test('writeGranules() throws an error if collection is not provided', async (t) 
   );
 });
 
-test('writeGranules() saves granule records to Dynamo and Postgres if Postgres write is enabled', async (t) => {
+test.serial('writeGranules() saves granule records to Dynamo and Postgres if Postgres write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -344,7 +351,7 @@ test('writeGranules() saves granule records to Dynamo and Postgres if Postgres w
   t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
 });
 
-test('writeGranules() saves granule records to Dynamo and Postgres with same timestamps', async (t) => {
+test.serial('writeGranules() saves granule records to Dynamo and Postgres with same timestamps', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -370,7 +377,7 @@ test('writeGranules() saves granule records to Dynamo and Postgres with same tim
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
 
-test('writeGranules() saves file records to Postgres if Postgres write is enabled and workflow status is "completed"', async (t) => {
+test.serial('writeGranules() saves file records to Postgres if Postgres write is enabled and workflow status is "completed"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -407,7 +414,7 @@ test('writeGranules() saves file records to Postgres if Postgres write is enable
   );
 });
 
-test('writeGranules() does not persist file records to Postgres if the worflow status is "running"', async (t) => {
+test.serial('writeGranules() does not persist file records to Postgres if the worflow status is "running"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -444,7 +451,7 @@ test('writeGranules() does not persist file records to Postgres if the worflow s
   );
 });
 
-test('writeGranules() handles successful and failing writes independently', async (t) => {
+test.serial('writeGranules() handles successful and failing writes independently', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -478,7 +485,7 @@ test('writeGranules() handles successful and failing writes independently', asyn
   );
 });
 
-test('writeGranules() throws error if any granule writes fail', async (t) => {
+test.serial('writeGranules() throws error if any granule writes fail', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -504,7 +511,7 @@ test('writeGranules() throws error if any granule writes fail', async (t) => {
   }));
 });
 
-test('writeGranules() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -540,7 +547,7 @@ test('writeGranules() does not persist records to Dynamo or Postgres if Dynamo w
   );
 });
 
-test('writeGranules() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -603,15 +610,12 @@ test.serial('writeGranules() writes a granule and marks as failed if any file wr
     granuleModel,
   });
 
-  const file = cumulusMessage.payload.granules[0].files[0];
-
   t.true(await granuleModel.exists({ granuleId }));
 
   const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
 
   t.is(pgGranule.status, 'failed');
   t.deepEqual(pgGranule.error.Error, 'Failed writing files to Postgres.');
-  t.is(pgGranule.error.Cause, `bucket and key properties are required: {"size":${file.size},"fileName":"${file.fileName}"}`);
 });
 
 test.serial('writeGranules() writes all valid files if any non-valid file fails', async (t) => {
@@ -633,9 +637,20 @@ test.serial('writeGranules() writes all valid files if any non-valid file fails'
     }
   );
 
-  const validFile = fakeFileFactory();
+  const validFiles = 10;
+  const invalidFiles = 1;
 
-  cumulusMessage.payload.granules[0].files.push(invalidFile, validFile);
+  for (let i = 0; i < invalidFiles; i += 1) {
+    cumulusMessage.payload.granules[0].files.push(
+      invalidFile
+    );
+  }
+
+  for (let i = 0; i < validFiles; i += 1) {
+    cumulusMessage.payload.granules[0].files.push(fakeFileFactory());
+  }
+
+  const validFileCount = cumulusMessage.payload.granules[0].files.length - invalidFiles;
 
   await writeGranules({
     cumulusMessage,
@@ -647,5 +662,7 @@ test.serial('writeGranules() writes all valid files if any non-valid file fails'
   });
 
   t.false(await filePgModel.exists(knex, { key: invalidFile.key }));
-  t.true(await filePgModel.exists(knex, { bucket: validFile.bucket, key: validFile.key }));
+
+  const fileRecords = await filePgModel.search(knex, {});
+  t.is(fileRecords.length, validFileCount);
 });
