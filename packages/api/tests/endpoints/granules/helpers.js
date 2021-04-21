@@ -38,6 +38,7 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     filePgModel,
     granuleModel,
     granuleFileName,
+    createPostgresEntries = true,
   } = params;
   const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
   // TODO: File factory?
@@ -65,25 +66,30 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     },
   ];
 
-  const postgresNewGranule = await translateApiGranuleToPostgresGranule(
-    newGranule,
-    t.context.knex
-  );
-  postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
-
-  const [postgresGranuleCumulusId] = await granulePgModel.create(
-    t.context.knex, postgresNewGranule
-  );
-  const postgresNewGranuleFiles = newGranule.files.map((file) => {
-    const translatedFile = translateApiFiletoPostgresFile(file);
-    translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
-    return translatedFile;
-  });
-  await Promise.all(
-    postgresNewGranuleFiles.map((file) =>
-      filePgModel.create(t.context.knex, file))
-  );
   await granuleModel.create(newGranule);
+
+  let postgresNewGranule;
+  let postgresGranuleCumulusId;
+  if (createPostgresEntries) {
+    postgresNewGranule = await translateApiGranuleToPostgresGranule(
+      newGranule,
+      t.context.knex
+    );
+    postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
+
+    [postgresGranuleCumulusId] = await granulePgModel.create(
+      t.context.knex, postgresNewGranule
+    );
+    const postgresNewGranuleFiles = newGranule.files.map((file) => {
+      const translatedFile = translateApiFiletoPostgresFile(file);
+      translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
+      return translatedFile;
+    });
+    await Promise.all(
+      postgresNewGranuleFiles.map((file) =>
+        filePgModel.create(t.context.knex, file))
+    );
+  }
 
   await Promise.all(
     newGranule.files.map(

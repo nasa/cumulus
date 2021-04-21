@@ -419,26 +419,27 @@ export async function moveGranuleFile(
   moveFileParam: MoveFileParams,
   filesPgModel: FilePgModel,
   trx: Knex.Transaction,
-  postgresCumulusGranuleId: number
+  postgresCumulusGranuleId: number,
+  writeToPostgres: boolean
 ): Promise<MovedGranuleFile> {
   const { source, target, file } = moveFileParam;
   if (moveFileParam.source && moveFileParam.target) {
     log.debug('moveGranuleS3Object', source, target);
-
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    const { cumulus_id } = await filesPgModel.get(trx, {
-      granule_cumulus_id: postgresCumulusGranuleId,
-      bucket: moveFileParam.source.Bucket,
-      key: moveFileParam.source.Key,
-    });
-    await filesPgModel.upsertById(trx, {
-      cumulus_id,
-      granule_cumulus_id: postgresCumulusGranuleId,
-      bucket: moveFileParam.target.Bucket,
-      key: moveFileParam.target.Key,
-      file_name: getNameOfFile(file),
-    });
-
+    if (writeToPostgres) {
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      const { cumulus_id } = await filesPgModel.get(trx, {
+        granule_cumulus_id: postgresCumulusGranuleId,
+        bucket: moveFileParam.source.Bucket,
+        key: moveFileParam.source.Key,
+      });
+      await filesPgModel.upsertById(trx, {
+        cumulus_id,
+        granule_cumulus_id: postgresCumulusGranuleId,
+        bucket: moveFileParam.target.Bucket,
+        key: moveFileParam.target.Key,
+        file_name: getNameOfFile(file),
+      });
+    }
     await S3.moveObject({
       sourceBucket: moveFileParam.source.Bucket,
       sourceKey: moveFileParam.source.Key,
@@ -467,7 +468,6 @@ export async function moveGranuleFile(
       `Unable to determine location of file: ${JSON.stringify(file)}`
     );
   }
-
   return {
     bucket: fileBucket,
     key: fileKey,

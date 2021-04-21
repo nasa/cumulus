@@ -847,7 +847,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   ]));
 });
 
-test.only('move a granule with no .cmr.xml file', async (t) => {
+test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
@@ -956,7 +956,7 @@ test.only('move a granule with no .cmr.xml file', async (t) => {
   );
 });
 
-test.only('a granule that fails to move a file correctly reports the granule status', async (t) => {
+test.serial('a granule that fails to move a file correctly reports the granule status', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
@@ -1082,45 +1082,26 @@ test.only('a granule that fails to move a file correctly reports the granule sta
   );
 });
 
-test.only('move an unmigrated granule', async (t) => {
+test('move an unmigrated granule', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
-
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
     async () => {
-      const newGranule = fakeGranuleFactoryV2();
-      newGranule.files = [
-        {
-          bucket,
-          fileName: `${newGranule.granuleId}.txt`,
-          key: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
-        },
-        {
-          bucket,
-          fileName: `${newGranule.granuleId}.md`,
-          key: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.md`,
-        },
-        {
-          bucket: secondBucket,
-          fileName: `${newGranule.granuleId}.jpg`,
-          key: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`,
-        },
-      ];
-
-      await granuleModel.create(newGranule);
-
-      await Promise.all(
-        newGranule.files.map(
-          (file) =>
-            s3PutObject({
-              Bucket: file.bucket,
-              Key: file.key,
-              Body: 'test data',
-            })
-        )
-      );
+      const granuleFileName = randomId('granuleFileName');
+      const {
+        newGranule,
+      } = await generateMoveGranuleTestFilesAndEntries({
+        t,
+        bucket,
+        secondBucket,
+        granulePgModel,
+        filePgModel,
+        granuleModel,
+        granuleFileName,
+        createPostgresEntries: false,
+      });
 
       const destinationFilepath = `${process.env.stackName}/unmigrated_granules_moved`;
       const destinations = [
@@ -1140,18 +1121,6 @@ test.only('move an unmigrated granule', async (t) => {
           filepath: destinationFilepath,
         },
       ];
-
-      await putJsonS3Object(
-        process.env.system_bucket,
-        getBucketsConfigKey(process.env.stackName),
-        {}
-      );
-
-      await putJsonS3Object(
-        process.env.system_bucket,
-        getDistributionBucketMapKey(process.env.stackName),
-        {}
-      );
 
       const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)
@@ -1194,6 +1163,11 @@ test.only('move an unmigrated granule', async (t) => {
         const destination = destinations.find((dest) => file.fileName.match(dest.regex));
         t.is(destination.bucket, file.bucket);
       });
+
+      // check there is no granule in postgresGranuleCumulusId
+      await t.throwsAsync(granulePgModel.getRecordCumulusId(t.context.knex, {
+        granule_id: updatedGranule.granuleId,
+      }), { name: 'RecordDoesNotExist' });
     }
   );
 });

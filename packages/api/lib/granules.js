@@ -99,11 +99,11 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     destinations,
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    moveGranuleFilesFunction = moveGranuleFiles,
     filesPgModel = new FilePgModel(),
     dbClient = await getKnexClient(),
   } = params;
   let postgresCumulusGranuleId;
+  let writeToPostgres = true;
 
   try {
     const { name, version } = deconstructCollectionId(apiGranule.collectionId);
@@ -117,18 +117,11 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
   } catch (error) {
     // If the granule or associated record hasn't been migrated yet
     // run the 'original' dynamo update
-    log.info(`Granule ${JSON.stringify(apiGranule)} has not been migrated yet, updating DynamoDb records only`);
-    if (error.name === 'RecordDoesNotExist') {
-      const updatedFiles = await moveGranuleFilesFunction(apiGranule.files, destinations);
-      await granulesModel.update(
-        { granuleId: apiGranule.granuleId },
-        {
-          files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
-        }
-      );
-      return { updatedFiles, moveGranuleErrors: [] };
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
     }
-    throw error;
+    log.info(`Granule ${JSON.stringify(apiGranule)} has not been migrated yet, updating DynamoDb records only`);
+    writeToPostgres = false;
   }
 
   const updatedFiles = [];
@@ -142,7 +135,8 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
           moveFileParam,
           filesPgModel,
           trx,
-          postgresCumulusGranuleId
+          postgresCumulusGranuleId,
+          writeToPostgres
         );
         updatedFiles.push(renameProperty('name', 'fileName', updatedFile));
       });
