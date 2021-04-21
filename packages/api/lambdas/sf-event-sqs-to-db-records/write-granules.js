@@ -319,7 +319,7 @@ const _writeGranuleFiles = async ({
 };
 
 /**
- * Create Postgres File objects from a granule's files
+ * Transform granule files to latest file API structure
  *
  * @param {Object} params
  * @param {Object} params.granule - An API granule object
