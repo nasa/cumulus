@@ -422,14 +422,17 @@ export async function moveGranuleFiles(
 export async function moveGranuleFile(
   moveFileParam: MoveFileParams,
   filesPgModel: FilePgModel,
-  trx: Knex.Transaction,
-  postgresCumulusGranuleId: number,
-  writeToPostgres: boolean
+  trx: Knex.Transaction | Knex,
+  postgresCumulusGranuleId: number | undefined,
+  writeToPostgres: boolean = true
 ): Promise<MovedGranuleFile> {
   const { source, target, file } = moveFileParam;
   if (moveFileParam.source && moveFileParam.target) {
     log.debug('moveGranuleS3Object', source, target);
     if (writeToPostgres) {
+      if (!postgresCumulusGranuleId) {
+        throw new Error('postgresCumulusGranuleId must be defined to move granule file if writeToPostgres is true');
+      }
       // eslint-disable-next-line @typescript-eslint/camelcase
       const { cumulus_id } = await filesPgModel.get(trx, {
         granule_cumulus_id: postgresCumulusGranuleId,

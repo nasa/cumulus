@@ -4,6 +4,8 @@ const moment = require('moment');
 const test = require('ava');
 const sinon = require('sinon');
 
+const cryptoRandomString = require('crypto-random-string');
+
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -14,7 +16,63 @@ const {
   moveGranuleFiles,
   renameS3FileWithTimestamp,
   unversionFilename,
+  moveGranuleFile,
 } = require('../granule');
+
+const {
+  CollectionPgModel,
+  destroyLocalTestDb,
+  FilePgModel,
+  generateLocalTestDb,
+  GranulePgModel,
+  localStackConnectionEnv,
+  translateApiGranuleToPostgresGranule,
+  translateApiFiletoPostgresFile,
+  nullifyUndefinedProviderValues,
+} = require('@cumulus/db');
+
+const {
+  fakeGranuleRecordFactory,
+  fakeCollectionRecordFactory,
+} = require('@cumulus/db/dist/test-utils');
+
+const { migrationDir } = require('../../../lambdas/db-migration');
+
+const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
+
+test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
+  const collectionPgModel = new CollectionPgModel();
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    testPgCollection
+  );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
+});
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = randomId('internal-bucket');
@@ -552,4 +610,242 @@ test('handleDuplicateFile calls S3.moveObject with expected arguments if duplica
       sourceKey: 'sourceKey',
     }
   );
+});
+
+test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
+  // Create granule in postgres
+  const bucket = t.context.internalBucket;
+  const secondBucket = t.context.destBucket;
+  const testPrefix = cryptoRandomString({ length: 10 });
+  const fileName = cryptoRandomString({ length: 10 });
+  const key = `${testPrefix}/${fileName}`;
+
+  const granulePgModel = new GranulePgModel();
+  const filePgModel = new FilePgModel();
+  const granuleId = cryptoRandomString({ length: 6 });
+
+
+  // eslint-disable-next-line camelcase
+  const [cumulus_id] = await granulePgModel.create(
+    t.context.knex,
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId,
+        status: 'completed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }
+    )
+  );
+  const moveFileParam = {
+    source: {
+      Bucket: bucket,
+      Key: key,
+    },
+    target: {
+      Bucket: secondBucket,
+      Key: key,
+    },
+    file: {
+      bucket,
+      key,
+      name: key,
+    },
+  };
+
+  const params = { Bucket: bucket, Key: key, Body: randomString() };
+  await S3.s3PutObject(params);
+  await filePgModel.create(t.context.knex, {
+    granule_cumulus_id: cumulus_id,
+    bucket,
+    key,
+  });
+
+  const result = await moveGranuleFile(
+    moveFileParam,
+    filePgModel,
+    t.context.knex,
+    cumulus_id,
+    true
+  );
+
+  t.deepEqual({
+    bucket: secondBucket,
+    key,
+    name: key,
+  }, result);
+
+  const listObjectsResponse = await s3().listObjects({
+    Bucket: secondBucket,
+    Prefix: testPrefix,
+  }).promise();
+  t.is(listObjectsResponse.Contents.length, 1);
+  t.is(listObjectsResponse.Contents[0].Key, key);
+
+  const pgFile = await filePgModel.search(t.context.knex, {
+    granule_cumulus_id: cumulus_id,
+    file_name: key,
+  });
+
+  t.is(pgFile.length, 1);
+  t.like(pgFile[0], {
+    bucket: secondBucket,
+    key,
+  });
+});
+
+test('moveGranuleFile moves a granule file and does not update postgres when writeToPostgres is false', async (t) => {
+  const bucket = t.context.internalBucket;
+  const secondBucket = t.context.destBucket;
+  const testPrefix = cryptoRandomString({ length: 10 });
+  const fileName = cryptoRandomString({ length: 10 });
+  const key = `${testPrefix}/${fileName}`;
+
+  const filePgModel = new FilePgModel();
+
+  const moveFileParam = {
+    source: {
+      Bucket: bucket,
+      Key: key,
+    },
+    target: {
+      Bucket: secondBucket,
+      Key: key,
+    },
+    file: {
+      bucket,
+      key,
+      name: key,
+    },
+  };
+
+  const params = { Bucket: bucket, Key: key, Body: randomString() };
+  await S3.s3PutObject(params);
+
+  const result = await moveGranuleFile(
+    moveFileParam,
+    filePgModel,
+    t.context.knex,
+    undefined,
+    false
+  );
+
+  t.deepEqual({
+    bucket: secondBucket,
+    key,
+    name: key,
+  }, result);
+
+  const listObjectsResponse = await s3().listObjects({
+    Bucket: secondBucket,
+    Prefix: testPrefix,
+  }).promise();
+  t.is(listObjectsResponse.Contents.length, 1);
+  t.is(listObjectsResponse.Contents[0].Key, key);
+
+  const pgFile = await filePgModel.search(t.context.knex, {
+    file_name: key,
+  });
+
+  t.is(pgFile.length, 0);
+});
+
+test('moveGranuleFile throws when writeToPostgres is true but postgresCumulusGranuleId is defined', async (t) => {
+  const bucket = t.context.internalBucket;
+  const secondBucket = t.context.destBucket;
+  const testPrefix = cryptoRandomString({ length: 10 });
+  const fileName = cryptoRandomString({ length: 10 });
+  const key = `${testPrefix}/${fileName}`;
+
+  const filePgModel = new FilePgModel();
+
+  const moveFileParam = {
+    source: {
+      Bucket: bucket,
+      Key: key,
+    },
+    target: {
+      Bucket: secondBucket,
+      Key: key,
+    },
+    file: {
+      bucket,
+      key,
+      name: key,
+    },
+  };
+
+  await t.throwsAsync(moveGranuleFile(
+    moveFileParam,
+    filePgModel,
+    t.context.knex,
+    undefined,
+    true
+  ));
+});
+
+test('moveGranuleFile returns the expected MovedGranuleFile object if a source and target is missing from the moveFileParams', async(t) => {
+  const bucket = t.context.internalBucket;
+  const testPrefix = cryptoRandomString({ length: 10 });
+  const fileName = cryptoRandomString({ length: 10 });
+  const key = `${testPrefix}/${fileName}`;
+
+  const moveFileParam = {
+    file: {
+      bucket,
+      key,
+      name: key,
+    },
+  };
+
+  const actual = await moveGranuleFile(
+    moveFileParam,
+    undefined,
+    undefined,
+    undefined,
+    false
+  );
+
+  t.deepEqual(actual, {
+    bucket,
+    key,
+    name: key,
+  });
+});
+
+test('moveGranuleFile returns the expected MovedGranuleFile object the file only has a filename', async (t) => {
+  const moveFileParam = {
+    file: {
+      filename: 's3://some/objectPath',
+    },
+  };
+
+  const actual = await moveGranuleFile(
+    moveFileParam,
+    undefined,
+    undefined,
+    undefined,
+    false
+  );
+
+  t.deepEqual(actual, {
+    bucket: 'some',
+    key: 'objectPath',
+    name: undefined,
+  });
+});
+
+test('moveGranuleFile throws if the file does not have expected keys and no source or target', async (t) => {
+  const moveFileParam = {
+    file: {
+      foobar: 's3://some/objectPath',
+    },
+  };
+
+  await t.throwsAsync(moveGranuleFile(
+    moveFileParam,
+    undefined,
+    undefined,
+    undefined,
+    false
+  ));
 });
