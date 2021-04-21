@@ -3,7 +3,6 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
-const partial = require('lodash/partial');
 const path = require('path');
 
 const awsClients = require('@cumulus/aws-client/services');
@@ -36,8 +35,6 @@ const {
 } = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
-const {
-} = require('@cumulus/common/stack');
 const {
   DeletePublishedGranule,
 } = require('@cumulus/errors');

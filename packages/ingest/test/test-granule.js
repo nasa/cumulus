@@ -10,14 +10,9 @@ const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
-  generateMoveFileParams,
-  handleDuplicateFile,
-  listVersionedObjects,
-  moveGranuleFiles,
-  renameS3FileWithTimestamp,
-  unversionFilename,
-  moveGranuleFile,
-} = require('../granule');
+  fakeGranuleRecordFactory,
+  fakeCollectionRecordFactory,
+} = require('@cumulus/db/dist/test-utils');
 
 const {
   CollectionPgModel,
@@ -26,15 +21,17 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
-  translateApiGranuleToPostgresGranule,
-  translateApiFiletoPostgresFile,
-  nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 
 const {
-  fakeGranuleRecordFactory,
-  fakeCollectionRecordFactory,
-} = require('@cumulus/db/dist/test-utils');
+  generateMoveFileParams,
+  handleDuplicateFile,
+  listVersionedObjects,
+  moveGranuleFiles,
+  renameS3FileWithTimestamp,
+  unversionFilename,
+  moveGranuleFile,
+} = require('../granule');
 
 const { migrationDir } = require('../../../lambdas/db-migration');
 
@@ -623,7 +620,6 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   const granulePgModel = new GranulePgModel();
   const filePgModel = new FilePgModel();
   const granuleId = cryptoRandomString({ length: 6 });
-
 
   // eslint-disable-next-line camelcase
   const [cumulus_id] = await granulePgModel.create(

@@ -40,7 +40,7 @@ const createFakeGranule = async (dbClient) => {
   return Number.parseInt(granuleCumulusId, 10);
 };
 
-test.before(async (t) => {
+test.before(async (t) => {however in theory the code is processing 50 segments in parallel,
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir

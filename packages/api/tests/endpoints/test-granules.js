@@ -205,7 +205,6 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections
   const collectionName = 'fakeCollection';
@@ -853,7 +852,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
     async () => {
-
       // Generate Granule/Files, S3 objects and database entries
       const granuleFileName = randomId('granuleFileName');
       const {

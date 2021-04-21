@@ -365,13 +365,13 @@ export async function moveGranuleFiles(
     regex: string,
     bucket: string,
     filepath: string
-  }[],
+  }[]
 ): Promise<MovedGranuleFile[]> {
   deprecate(
     '@cumulus/ingest/moveGranuleFiles',
     '9.0.0'
   );
-  const moveFileParams = generateMoveFileParams(sourceFiles, destinations)
+  const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
   const movedGranuleFiles: MovedGranuleFile[] = [];
   const moveFileRequests = moveFileParams.map(
     async (moveFileParam) => {
