@@ -94,56 +94,7 @@ test('getGranuleProductVolume() returns correct product volume', (t) => {
   );
 });
 
-test('moveGranuleFilesAndUpdateDatastore calls granulesModel.update if granulePgModel.getRecordCumulusId throws RecordDoesNotExist', async (t) => {
-  const updateStub = sinon.stub().returns(Promise.resolve());
-  const granulesModel = {
-    update: updateStub,
-  };
-
-  const granulePgModel = {
-    getRecordCumulusId: () => {
-      const thrownError = new Error('Test error');
-      thrownError.name = 'RecordDoesNotExist';
-      throw thrownError;
-    },
-  };
-
-  const collectionPgModel = {
-    getRecordCumulusId: () => 1,
-  };
-
-  const moveGranuleFilesFunction = () => [{
-    bucket: 'fakeBucket',
-    key: 'fakeKey',
-    name: 'fakeName',
-  }];
-
-  const apiGranule = { granuleId: 'fakeGranule', collectionId: 'fakeCollection___001' };
-  await moveGranuleFilesAndUpdateDatastore({
-    apiGranule,
-    granulesModel,
-    destinations: undefined,
-    granulePgModel,
-    collectionPgModel,
-    moveGranuleFilesFunction,
-    dbClient: {},
-  });
-
-  t.true(updateStub.calledWith(
-    {
-      granuleId: apiGranule.granuleId,
-    },
-    {
-      files: [{
-        bucket: 'fakeBucket',
-        key: 'fakeKey',
-        fileName: 'fakeName',
-      }],
-    }
-  ));
-});
-
-test('moveGranuleFilesAndUpdateDatastore throws granulesModel.update if granulePgModel.getRecordCumulusId throws unexpected error', async (t) => {
+test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumulusId throws unexpected error', async (t) => {
   const updateStub = sinon.stub().returns(Promise.resolve());
   const granulesModel = {
     update: updateStub,
