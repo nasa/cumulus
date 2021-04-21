@@ -779,7 +779,7 @@ test('moveGranuleFile throws when writeToPostgres is true but postgresCumulusGra
   ));
 });
 
-test('moveGranuleFile returns the expected MovedGranuleFile object if a source and target is missing from the moveFileParams', async(t) => {
+test('moveGranuleFile returns the expected MovedGranuleFile object if a source and target is missing from the moveFileParams', async (t) => {
   const bucket = t.context.internalBucket;
   const testPrefix = cryptoRandomString({ length: 10 });
   const fileName = cryptoRandomString({ length: 10 });
