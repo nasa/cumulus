@@ -16,6 +16,10 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
     knexOrTrx: Knex | Knex.Transaction,
     file: PostgresFile
   ) {
+    console.log('Connections Used::::');
+    console.log(knexOrTrx.client.pool.numUsed());
+    console.log('Connections Free::::');
+    console.log(knexOrTrx.client.pool.numFree());
     return knexOrTrx(this.tableName)
       .insert(file)
       .onConflict(['bucket', 'key'])

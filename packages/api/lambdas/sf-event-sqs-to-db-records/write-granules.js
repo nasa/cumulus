@@ -301,7 +301,9 @@ const _writeGranuleFiles = async ({
       fileRecords,
       knex,
     });
-  } catch (error_) {
+  } catch (error) {
+    log.error('Failed writing some files to Postgres', error);
+
     const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
     granulePgModel.upsert(
@@ -311,7 +313,7 @@ const _writeGranuleFiles = async ({
         status: 'failed',
         error: {
           Error: 'Failed writing files to Postgres.',
-          Cause: error_.message,
+          Cause: error.message,
         },
       }
     );
