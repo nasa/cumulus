@@ -106,7 +106,7 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
   );
 });
 
-test.only('FilePgModel.upsertById() updates the unique indentifiers for a file record', async (t) => {
+test('FilePgModel.upsertById() updates the unique indentifiers for a file record', async (t) => {
   const {
     knex,
     filePgModel,
@@ -136,7 +136,7 @@ test.only('FilePgModel.upsertById() updates the unique indentifiers for a file r
   );
 });
 
-test.only('FilePgModel.upsertById() fails if updating by ID and a unique identifer collision occurs', async (t) => {
+test('FilePgModel.upsertById() fails if updating by ID and a unique identifer collision occurs', async (t) => {
   const {
     knex,
     filePgModel,
