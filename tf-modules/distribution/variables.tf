@@ -22,9 +22,21 @@ variable "tea_internal_api_endpoint" {
 
 # Optional
 
+variable "cmr_provider" {
+  description = "The provider used to search CMR ACLs"
+  type        = string
+  default     = null
+}
+
+variable "deploy_to_ngap" {
+  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
+  type        = bool
+}
+
 variable "deploy_s3_credentials_endpoint" {
-  type    = bool
-  default = true
+  type         = bool
+  default      = true
+  description  = "Option to deploy the s3 credentials endpoint."
 }
 
 variable "log_destination_arn" {
@@ -52,8 +64,15 @@ variable "public_buckets" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type    = string
-  default = null
+  type        = string
+  default     = null
+  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
+}
+
+variable "sts_policy_helper_lambda_function_arn" {
+  type        = string
+  default     = null
+  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
 }
 
 variable "subnet_ids" {
@@ -108,13 +127,14 @@ variable "urs_url" {
   description = "The URL of the Earthdata Login site"
 }
 
+variable "cmr_acl_based_tokens" {
+  type = bool
+  default = true
+  description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
+}
+
 variable "vpc_id" {
   type        = string
   description = "VPC used by Lambda functions"
   default     = null
-}
-
-variable "deploy_to_ngap" {
-  description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
-  type        = bool
 }

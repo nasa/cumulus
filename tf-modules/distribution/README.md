@@ -16,7 +16,9 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 
 ### Optional
 
-- **api_gateway_stage** (string) - The API Gateway stage to create, defaults to "DEV"
+- **api_gateway_stage** (string) - The API Gateway stage to create, defaults to `DEV`
+- **cmr_provider** (string) - The provider used to search CMR ACLs, defaults to `null`
+- **deploy_s3_credentials_endpoint** - (bool) Option to deploy the s3 credentials endpoint, defaults to `true`
 - **distribution_url** (string) - An alternative URL used for distribution
 - **permissions_boundary_arn** (string) - The ARN of an IAM permissions boundary to use when creating IAM policies
 - **protected_buckets** (list(string)) - A list of protected buckets
@@ -32,6 +34,7 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
   module
 - **urs_url** (string) - The URL of the Earthdata Login site, defaults to
   <https://urs.earthdata.nasa.gov>
+- **cmr_acl_based_tokens** (bool) - Option to enable/disable user specific CMR ACLs to derive permission for S3 access tokens, defaults to true
 
 ## Output variables
 
@@ -56,6 +59,10 @@ module "distribution" {
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = "abc123"
   urs_client_password = "password"
+
+  deploy_s3_credentials_endpoint = true
+  cmr_provider                   = "CUMULUS"
+  cmr_acl_based_tokens      = true
 
   vpc_id     = "vpc-123"
   subnet_ids = ["subnet-123", "subnet-456"]

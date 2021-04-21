@@ -114,7 +114,7 @@ async function s3credentials(req, res) {
 
   const credentials = await requestTemporaryCredentialsFromNgap({
     lambda: req.lambda,
-    lambdaFunctionName: process.env.STSCredentialsLambda,
+    lambdaFunctionName: process.env.STS_CREDENTIALS_LAMBDA,
     userId: req.authorizedMetadata.userName,
     roleSessionName,
   });
