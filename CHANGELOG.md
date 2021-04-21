@@ -158,9 +158,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added logging for every batch of 100 records processed for executions, granules and files, and PDRs.
     - Remove `RecordAlreadyMigrated` logs in `data-migration1` and `data-migration2`
   - **CUMULUS-2452**
-    - Added support for only migrating certain granules by specifying the `granuleSearchParams.granuleId` or `granuleSearchParams.collectionId` properties in the payload for the `<prefix>-postgres-migration-async-operation` Lambda
+    - Added support for only migrating certain granules by specifying the `granuleMigrationParams.granuleId` or `granuleMigrationParams.collectionId` properties in the payload for the `<prefix>-postgres-migration-async-operation` Lambda
     - Added support for only running certain migrations for data-migration2 by specifying the `migrationsList` property in the payload for the
-    `<prefix>-postgres-migration-async-operation` Lambda
+    `<prefix>-postgres-migration-async-operation` Lambda, which can be an array containing any of these values: `granules`, `executions`, and `pdrs`
+  - **CUMULUS-2468**
+    - Added support for doing [DynamoDB parallel scanning](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan) for `executions` and `granules` migrations to improve performance. The behavior of the parallel scanning and writes can be controlled via the following properties on the event input to the `<prefix>-postgres-migration-async-operation` Lambda:
+      - `granuleMigrationParams.parallelScanSegments`: How many segments to divide your granules DynamoDB table into for parallel scanning
+      - `granuleMigrationParams.parallelScanLimit`: The maximum number of granule records to evaluate for each parallel scanning segment of the DynamoDB table
+      - `granuleMigrationParams.writeConcurrency`: The maximum number of concurrent granule/file writes to perform to the PostgreSQL database across all DynamoDB segments
+      - `executionMigrationParams.parallelScanSegments`: How many segments to divide your executions DynamoDB table into for parallel scanning
+      - `executionMigrationParams.parallelScanLimit`: The maximum number of execution records to evaluate for each parallel scanning segment of the DynamoDB table
+      - `executionMigrationParams.writeConcurrency`: The maximum number of concurrent execution writes to perform to the PostgreSQL database across all DynamoDB segments
 
 ## [v7.1.0] 2021-03-12
 
