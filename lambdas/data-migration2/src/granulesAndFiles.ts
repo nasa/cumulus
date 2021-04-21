@@ -1,10 +1,8 @@
 import Knex from 'knex';
 import pMap from 'p-map';
-// import range from 'lodash/range';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-// import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
   CollectionPgModel,
