@@ -89,7 +89,20 @@ const renameProperty = (from, to, obj) => {
   return newObj;
 };
 
-// TODO -- Docstring
+/**
+* Move granule 'file' S3 Objects and update Postgres/Dynamo/CMR metadata with new locations
+*
+* @param {Object} params                       - params object
+* @param {Object} params.apiGranule            - API 'granule' object to move
+* @param {Object} params.granulesModel         - DynamoDB granules model instance
+* @param {Object} params.destinations          - 'Destinations' API object ()
+* @param {Object} params.granulePgModel        - parameter override, used for unit testing
+* @param {Object} params.collectionPgModel     - parameter override, used for unit testing
+* @param {Object} params.filesPgModel          - parameter override, used for unit testing
+* @param {Object} params.dbClient              - parameter override, used for unit testing
+* @returns {{updatedFiles, moveGranuleErrors}} - Object containing an 'updated' files object
+* with current file key values and an error object containing a set of Promise.allSettled errors
+*/
 async function moveGranuleFilesAndUpdateDatastore(params) {
   const {
     apiGranule,
