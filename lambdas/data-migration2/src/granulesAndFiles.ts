@@ -340,7 +340,6 @@ export const migrateGranulesAndFiles = async (
     }
     /* eslint-enable no-await-in-loop */
   }
-
   logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
   logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);
   return migrationResult;
