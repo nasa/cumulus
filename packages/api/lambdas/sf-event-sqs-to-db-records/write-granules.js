@@ -131,7 +131,7 @@ const generateGranuleRecord = async ({
  *   Cumulus ID of the granule for this file
  * @returns {Object} - a file record
  */
-const generateFileRecord = ({ file, granuleCumulusId }) => ({
+const generateFilePgRecord = ({ file, granuleCumulusId }) => ({
   ...translateApiFiletoPostgresFile(file),
   granule_cumulus_id: granuleCumulusId,
 });
@@ -145,10 +145,10 @@ const generateFileRecord = ({ file, granuleCumulusId }) => ({
  *   Cumulus ID of the granule for this file
  * @returns {Array<Object>} - file records
  */
-const _generateFileRecords = ({
+const _generateFilePgRecords = ({
   files,
   granuleCumulusId,
-}) => files.map((file) => generateFileRecord({ file, granuleCumulusId }));
+}) => files.map((file) => generateFilePgRecord({ file, granuleCumulusId }));
 
 /**
  * Write an array of file records to the database
@@ -290,7 +290,7 @@ const _writeGranuleFiles = async ({
   let fileRecords = [];
 
   if (workflowStatus !== 'running') {
-    fileRecords = _generateFileRecords({
+    fileRecords = _generateFilePgRecords({
       files: files,
       granuleCumulusId,
     });
@@ -327,7 +327,7 @@ const _writeGranuleFiles = async ({
  *
 * @returns {Promise<Array>} - A list of file objects once resolved
  */
-const _generateFiles = async ({
+const _generateFilesFromGranule = async ({
   granule,
   provider,
 }) => {
@@ -390,7 +390,7 @@ const _writeGranule = async ({
   granuleModel,
   updatedAt = Date.now(),
 }) => {
-  const files = await _generateFiles({ granule, provider });
+  const files = await _generateFilesFromGranule({ granule, provider });
 
   let granuleCumulusId;
 
@@ -519,7 +519,7 @@ const writeGranules = async ({
 };
 
 module.exports = {
-  generateFileRecord,
+  generateFilePgRecord,
   generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeGranules,
