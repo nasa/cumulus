@@ -41,6 +41,7 @@ test.beforeEach(async (t) => {
       userLoginSecret: 'bogus',
       dbPassword: 'testPassword',
       secretsManager: t.context.secretsManager,
+      dbRecreation: true,
     },
   };
 });
@@ -58,7 +59,7 @@ test.afterEach.always(async (t) => {
   }
 });
 
-test('provision user database handler database creates the expected database', async (t) => {
+test('provision user database handler database creates the expected database when dbRecreation is set to `false`', async (t) => {
   const {
     expectedDbUser,
     expectedTestDb,
@@ -66,7 +67,30 @@ test('provision user database handler database creates the expected database', a
     knex,
   } = t.context;
 
-  await handler(handlerEvent);
+  const event = { ...handlerEvent, dbRecreation: false };
+  await handler(event);
+
+  const userResults = await knex('pg_catalog.pg_user')
+    .where(knex.raw(`usename = CAST('${expectedDbUser}' as name)`));
+  const dbResults = await knex('pg_database')
+    .select('datname')
+    .where(knex.raw(`datname = CAST('${expectedTestDb}' as name)`));
+  t.is(userResults.length, 1);
+  t.is(dbResults.length, 1);
+  t.is(dbResults[0].datname, `${expectedTestDb}`);
+  t.is(userResults[0].usename, `${expectedDbUser}`);
+});
+
+test('provision user database handler database creates the expected database when dbRecreation is set to `true`', async (t) => {
+  const {
+    expectedDbUser,
+    expectedTestDb,
+    handlerEvent,
+    knex,
+  } = t.context;
+
+  const event = { ...handlerEvent, dbRecreation: true };
+  await handler(event);
 
   const userResults = await knex('pg_catalog.pg_user')
     .where(knex.raw(`usename = CAST('${expectedDbUser}' as name)`));
@@ -127,6 +151,57 @@ test('provision user database handler updates the user password', async (t) => {
   await t.context.testKnex.destroy();
 });
 
+test('provision user database handler does not recreate the database if it exists and event.dbRecreation is set to `false`', async (t) => {
+  const {
+    dbUser,
+    expectedDbUser,
+    expectedTestDb,
+    secretsManager,
+  } = t.context;
+
+  const handlerEvent = {
+    rootLoginSecret: 'bogusSecret',
+    dbPassword: 'testPassword',
+    prefix: dbUser,
+    secretsManager,
+  };
+  const testTable = 'testTable';
+  const knexConfig = {
+    client: 'pg',
+    connection: {
+      host: 'localhost',
+      user: expectedDbUser,
+      password: 'testPassword',
+      database: expectedTestDb,
+    },
+  };
+
+  const tableExistsQuery = `select * from pg_tables where tablename = '${testTable}'`;
+  await handler(handlerEvent);
+
+  t.context.testKnex = Knex(knexConfig);
+  await t.context.testKnex.schema.createTable(testTable, (table) => {
+    table.string('name').primary();
+  });
+  await t.context.testKnex.destroy();
+
+  // Validate the table exists in the created database
+  t.context.testKnex = Knex(knexConfig);
+  const validateCreateTable = await t.context.testKnex.raw(tableExistsQuery);
+  t.is(validateCreateTable.rows[0].tablename, 'testTable');
+  await t.context.testKnex.destroy();
+
+  await handler(handlerEvent);
+
+  t.context.testKnex = Knex(knexConfig);
+  const heartBeat = await t.context.testKnex.raw('SELECT 1');
+  const tableQuery = await t.context.testKnex.raw(tableExistsQuery);
+  await t.context.testKnex.destroy();
+
+  t.is(heartBeat.rowCount, 1);
+  t.is(tableQuery.rowCount, 1);
+});
+
 test('provision user database handler recreates the database if it exists and has an open connection', async (t) => {
   const {
     dbUser,
@@ -140,6 +215,7 @@ test('provision user database handler recreates the database if it exists and ha
     dbPassword: 'testPassword',
     prefix: dbUser,
     secretsManager,
+    dbRecreation: true,
   };
   const testTable = 'testTable';
   const knexConfig = {

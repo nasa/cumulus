@@ -317,7 +317,7 @@ test('GranulePgModel.upsert() will not allow a running state from an older execu
   t.is(record.status, 'completed');
 });
 
-test('GranulePgModel.upsert() succeeds without an execution', async (t) => {
+test('GranulePgModel.upsert() succeeds without an execution for completed granule', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -326,6 +326,22 @@ test('GranulePgModel.upsert() succeeds without an execution', async (t) => {
 
   const granule = fakeGranuleRecordFactory({
     status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await granulePgModel.upsert(knex, granule);
+  t.true(await granulePgModel.exists(knex, granule));
+});
+
+test('GranulePgModel.upsert() succeeds without an execution for running granule', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
     collection_cumulus_id: collectionCumulusId,
   });
 

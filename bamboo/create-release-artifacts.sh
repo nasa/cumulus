@@ -6,6 +6,7 @@ set -ex
 
 (cd tf-modules/distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-distribution.zip ../../terraform-aws-cumulus-distribution.zip)
 (cd tf-modules/s3-replicator && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-s3-replicator.zip ../../terraform-aws-cumulus-s3-replicator.zip)
+(cd tf-modules/cumulus-rds-tf && ./bin/build-tf-module.sh && cp ./dist/cumulus-rds-tf.zip ../../terraform-aws-cumulus-rds.zip)
 
 ## Create zipfiles
 zip -FS -r -x \*node_modules\* \*internal\* -o terraform-aws-cumulus.zip tf-modules lambdas tasks/**/dist/** packages/**/dist/**
