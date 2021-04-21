@@ -17,7 +17,6 @@ const {
   fakeGranuleFactoryV2,
 } = require('../../../lib/testUtils');
 
-
 const getPostgresFilesInOrder = async (knex, newGranule, filePgModel, postgresGranuleCumulusId) => {
   const pgFiles = await Promise.all(newGranule.files.map(async (file) => {
     const [pgFile] = await filePgModel.search(knex, {
