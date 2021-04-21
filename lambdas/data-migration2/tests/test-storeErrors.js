@@ -49,7 +49,7 @@ test.serial('storeErrors stores file on s3', async (t) => {
   t.deepEqual(item.Body.toString(), message);
 });
 
-test.serial('createErrorFileWriteStream returns a write stream and string', async (t) => {
+test.serial('createErrorFileWriteStream returns a write stream and string', (t) => {
   const migrationName = 'migration';
   const timestamp = Date.now();
 
