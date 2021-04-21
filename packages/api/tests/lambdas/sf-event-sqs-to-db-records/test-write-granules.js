@@ -20,8 +20,6 @@ const {
   tableNames,
 } = require('@cumulus/db');
 
-const AggregateError = require('aggregate-error');
-
 const {
   generateFilePgRecord,
   generateGranuleRecord,
