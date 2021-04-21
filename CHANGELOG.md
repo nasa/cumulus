@@ -154,14 +154,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
   - **CUMULUS-2453**
     - Created `storeErrors` function which stores errors in system bucket.
-    - Updated `executions` and `granulesAndFiles` to call `storeErrors` to store migration errors.
+    - Updated `executions` and `granulesAndFiles` data migrations to call `storeErrors` to store migration errors.
     - Added `system_bucket` variable to `data-migration2`.
   - **CUMULUS-2451**
     - Added summary type file `packages/db/src/types/summary.ts` with `MigrationSummary` and `DataMigration1` and `DataMigration2` types.
     - Updated `data-migration1` and `data-migration2` lambdas to return `MigrationSummary` objects.
     - Added logging for every batch of 100 records processed for executions, granules and files, and PDRs.
     - Removed `RecordAlreadyMigrated` logs in `data-migration1` and `data-migration2`
-    - Remove `RecordAlreadyMigrated` logs in `data-migration1` and `data-migration2`
   - **CUMULUS-2452**
     - Added support for only migrating certain granules by specifying the `granuleSearchParams.granuleId` or `granuleSearchParams.collectionId` properties in the payload for the `<prefix>-postgres-migration-async-operation` Lambda
     - Added support for only running certain migrations for data-migration2 by specifying the `migrationsList` property in the payload for the

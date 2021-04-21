@@ -8,7 +8,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
-const { storeErrors } = require('../dist/lambda/storeErrors');
+const { createErrorFileWriteStream, storeErrors } = require('../dist/lambda/storeErrors');
 
 test.before(async () => {
   process.env = {
@@ -28,7 +28,7 @@ test.serial('storeErrors stores file on s3', async (t) => {
   const file = 'message';
   const migrationName = 'classification';
   const filename = `data-migration2-${migrationName}-errors`;
-  const key = `${process.env.stackName}/${filename}_0123.json`;
+  const key = `${process.env.stackName}/${filename}-0123.json`;
 
   const stream = fs.createWriteStream(file);
   const message = 'test message';
@@ -47,4 +47,16 @@ test.serial('storeErrors stores file on s3', async (t) => {
     Key: key,
   }).promise();
   t.deepEqual(item.Body.toString(), message);
+});
+
+test.serial('createErrorFileWriteStream returns a write stream and string', async (t) => {
+  const migrationName = 'migration';
+  const timestamp = Date.now();
+
+  const { errorFileWriteStream, filepath } = createErrorFileWriteStream(migrationName, timestamp);
+  t.is(filepath, `${migrationName}ErrorLog-${timestamp}.json`);
+  t.true(errorFileWriteStream instanceof fs.WriteStream);
+  t.teardown(() => {
+    fs.unlinkSync(filepath);
+  });
 });

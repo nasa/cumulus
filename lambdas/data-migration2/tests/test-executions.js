@@ -517,7 +517,7 @@ test.serial('migrateExecutions logs summary of migration for a specified logging
 });
 
 test.serial('migrateExecutions writes errors to S3 object', async (t) => {
-  const key = `${process.env.stackName}/data-migration2-executions-errors_123.json`;
+  const key = `${process.env.stackName}/data-migration2-executions-errors-123.json`;
 
   const execution1 = fakeExecutionFactoryV2({
     asyncOperationId: undefined,

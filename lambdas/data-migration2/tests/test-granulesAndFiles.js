@@ -789,7 +789,7 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
     testExecution,
     testGranule,
   } = t.context;
-  const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors_123.json`;
+  const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors-123.json`;
 
   const testCollection2 = fakeCollectionRecordFactory();
   const testGranule2 = generateTestGranule({

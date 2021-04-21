@@ -24,12 +24,11 @@ import {
   GranulesMigrationResult,
   MigrationResult,
 } from '@cumulus/types/migration';
-import { storeErrors } from './storeErrors';
+import { createErrorFileWriteStream, storeErrors } from './storeErrors';
 
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
-const fs = require('fs');
 
 export interface GranulesAndFilesMigrationResult {
   granulesResult: GranulesMigrationResult,
@@ -190,7 +189,7 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
       granulesResult.failed += 1;
       filesResult.failed += files.length;
 
-      stream.write(JSON.stringify(`Error: ${error} ${errorMessage}`));
+      stream.write(JSON.stringify(`${errorMessage}, Cause ${error}`));
       logger.error(errorMessage, error);
     }
   }
@@ -245,9 +244,8 @@ export const migrateGranulesAndFiles = async (
     granulesResult: granuleMigrationResult,
     filesResult: fileMigrationResult,
   };
-  const filepath = 'granulesAndFilesMigrationErrorLog.json';
-  const errorFileWriteStream = fs.createWriteStream(filepath);
-  errorFileWriteStream.write('{ "errors": [\n');
+  const migrationName = 'granulesAndFiles';
+  const { errorFileWriteStream, filepath } = createErrorFileWriteStream(migrationName);
 
   let extraSearchParams = {};
   type searchType = 'scan' | 'query';
@@ -302,7 +300,7 @@ export const migrateGranulesAndFiles = async (
     }
   }
   errorFileWriteStream.end('\n]}');
-  await storeErrors({ bucket, filepath, migrationName: 'granulesAndFiles', stackName, timestamp: testTimestamp });
+  await storeErrors({ bucket, filepath, migrationName, stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
   logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
   logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);

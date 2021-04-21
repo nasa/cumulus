@@ -17,32 +17,8 @@ The resources migrated in Data Migration 2 are:
 - Granules
 - Files
 
-The result will be a migration summary. For example:
-
-```
-Migration summary:
-    Executions:
-        Out of 1000 DynamoDB records:
-        $ 998 records migrated
-        $ 1 records skipped
-        $ 1 records failed
-    PDRs:
-        Out of 2987 DynamoDB records:
-        $ 2980 records migrated
-        $ 6 records skipped
-        $ 1 records failed
-    Granules:
-        Out of 48 DynamoDB records:
-        $ 48 records migrated
-        $ 0 records skipped
-        $ 0 records failed
-    Files:
-        Out of 27 DynamoDB records:
-        $ 26 records migrated
-        $ 1 records skipped
-        $ 0 records failed
-```
+The result will be a migration summary object.
 
 Records skipped indicates if a record was already migrated (which the lambda will throw with a `RecordAlreadyMigrated` error.)
 
-For `executions`, `granules`, and `files`, all data migration error messages will be written to JSON files `data-migration2-execution-errors.json` and `data-migration2-granulesAndFiles-errors.json` and uploaded to S3 to your configured system bucket at `${prefix}/data-migration-${type}-errors.json`.
+For `executions`, `granules`, and `files`, all data migration error messages will be written to JSON files `data-migration2-execution-errors-${timestamp}.json` and `data-migration2-granulesAndFiles-errors-${timestamp}.json` and uploaded to S3 to your configured system bucket at `${prefix}/data-migration-${type}-errors-${timestamp}.json`.

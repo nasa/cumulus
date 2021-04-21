@@ -7,12 +7,11 @@ import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { MigrationResult } from '@cumulus/types/migration';
-import { storeErrors } from './storeErrors';
+import { createErrorFileWriteStream, storeErrors } from './storeErrors';
 
 const Execution = require('@cumulus/api/models/executions');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
-const fs = require('fs');
 
 /**
  * Migrate execution record from Dynamo to RDS.
@@ -90,9 +89,9 @@ export const migrateExecutions = async (
     failed: 0,
     skipped: 0,
   };
-  const filepath = 'executionMigrationErrorLog.json';
-  const errorFileWriteStream = fs.createWriteStream(filepath);
-  errorFileWriteStream.write('{ "errors": [\n');
+
+  const migrationName = 'executions';
+  const { errorFileWriteStream, filepath } = createErrorFileWriteStream(migrationName);
 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
@@ -112,7 +111,7 @@ export const migrateExecutions = async (
       } else {
         migrationResult.failed += 1;
         const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
-        errorFileWriteStream.write(JSON.stringify(`Error: ${error} ${errorMessage}`));
+        errorFileWriteStream.write(JSON.stringify(`${errorMessage}, Cause ${error}`));
         logger.error(errorMessage, error);
       }
     }
@@ -125,7 +124,13 @@ export const migrateExecutions = async (
     }
   }
   errorFileWriteStream.end('\n]}');
-  await storeErrors({ bucket, filepath, migrationName: 'executions', stackName, timestamp: testTimestamp });
+  await storeErrors({
+    bucket,
+    filepath,
+    migrationName,
+    stackName,
+    timestamp: testTimestamp,
+  });
   /* eslint-enable no-await-in-loop */
   logger.info(`successfully migrated ${migrationResult.migrated} execution records`);
   return migrationResult;
