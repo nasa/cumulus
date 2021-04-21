@@ -1,7 +1,6 @@
 import Knex from 'knex';
 
 import { PostgresGranule } from '../types/granule';
-
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 

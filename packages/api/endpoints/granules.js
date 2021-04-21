@@ -127,7 +127,6 @@ async function put(req, res) {
       return res.boom.conflict(message);
     }
 
-    // await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
     await moveGranule(
       granule,
       body.destinations,

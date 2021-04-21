@@ -9,7 +9,9 @@ const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
 const {
+  generateMoveFileParams,
   moveGranuleFiles,
+  moveGranuleFile,
 } = require('@cumulus/ingest/granule');
 
 const {
@@ -17,14 +19,12 @@ const {
   FilePgModel,
   getKnexClient,
   GranulePgModel,
-  translateApiFiletoPostgresFile,
 } = require('@cumulus/db');
 
 const {
   getBucketsConfigKey,
   getDistributionBucketMapKey,
 } = require('@cumulus/common/stack');
-
 
 const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
@@ -92,11 +92,17 @@ const renameProperty = (from, to, obj) => {
 };
 
 // TODO -- Docstring
-async function updateGranuleFilesInDataStore(apiGranule, granulesModel, updatedFiles) {
-  const dbClient = await getKnexClient();
-  const filesPgModel = new FilePgModel();
-  const granulePgModel = new GranulePgModel();
-  const collectionPgModel = new CollectionPgModel();
+async function moveGranuleFilesAndUpdateDatastore(params) {
+  const {
+    apiGranule,
+    granulesModel,
+    destinations,
+    granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
+    moveGranuleFilesFunction = moveGranuleFiles,
+    filesPgModel = new FilePgModel(),
+    dbClient = await getKnexClient(),
+  } = params;
   let postgresCumulusGranuleId;
 
   try {
@@ -109,35 +115,54 @@ async function updateGranuleFilesInDataStore(apiGranule, granulesModel, updatedF
       ),
     });
   } catch (error) {
-    if (error.name !== 'RecordDoesNotExist') {
-      return granulesModel.update(
+    // If the granule or associated record hasn't been migrated yet
+    // run the 'original' dynamo update
+    log.info(`Granule ${JSON.stringify(apiGranule)} has not been migrated yet, updating DynamoDb records only`);
+    if (error.name === 'RecordDoesNotExist') {
+      const updatedFiles = await moveGranuleFilesFunction(apiGranule.files, destinations);
+      await granulesModel.update(
         { granuleId: apiGranule.granuleId },
         {
           files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
         }
       );
+      return { updatedFiles, moveGranuleErrors: [] };
     }
     throw error;
   }
 
-  return dbClient.transaction(async (trx) => {
-    await filesPgModel.delete(trx, { granule_cumulus_id: postgresCumulusGranuleId });
-
-    await Promise.all(updatedFiles.map((file) => {
-      const translatedFile = translateApiFiletoPostgresFile(renameProperty('name', 'fileName', file));
-      return filesPgModel.upsert(trx, {
-        ...translatedFile,
-        granule_cumulus_id: postgresCumulusGranuleId,
+  const updatedFiles = [];
+  const moveFileParams = generateMoveFileParams(apiGranule.files, destinations);
+  const moveFilePromises = moveFileParams.map(async (moveFileParam) => {
+    const { file } = moveFileParam;
+    try {
+      // Update the datastores, then move files
+      await dbClient.transaction(async (trx) => {
+        const updatedFile = await moveGranuleFile(
+          moveFileParam,
+          filesPgModel,
+          trx,
+          postgresCumulusGranuleId
+        );
+        updatedFiles.push(renameProperty('name', 'fileName', updatedFile));
       });
-    }));
-
-    return granulesModel.update(
-      { granuleId: apiGranule.granuleId },
-      {
-        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
-      }
-    );
+      // Add updated file to postgresDatabase
+    } catch (error) {
+      updatedFiles.push(file);
+      log.error(`Failed to move file ${JSON.stringify(file)} -- ${JSON.stringify(error.message)}`);
+      throw error;
+    }
   });
+
+  const moveResults = await Promise.allSettled(moveFilePromises);
+  await granulesModel.update(
+    { granuleId: apiGranule.granuleId },
+    {
+      files: updatedFiles,
+    }
+  );
+  const moveGranuleErrors = moveResults.filter((r) => r.reason);
+  return { updatedFiles, moveGranuleErrors };
 }
 
 /**
@@ -172,8 +197,10 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     getDistributionBucketMapKey(process.env.stackName)
   );
 
-  // TODO: moveGranuleFiles has a Promise.all with no rollback of any sort if a file move fails.
-  const updatedFiles = await moveGranuleFiles(apiGranule.files, destinations);
+  const {
+    updatedFiles,
+    moveGranuleErrors,
+  } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, granulesModel, destinations });
   await granulesModel.cmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
     updatedFiles,
@@ -182,7 +209,11 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     distributionBucketMap,
     bucketTypes,
   });
-  await updateGranuleFilesInDataStore(apiGranule, granulesModel, updatedFiles);
+  if (moveGranuleErrors.length > 0) {
+    log.error(`Granule ${JSON.stringify(apiGranule)} failed to move.`);
+    log.error(JSON.stringify(moveGranuleErrors));
+    throw new Error(`Failed to move granule: ${JSON.stringify(apiGranule)}. Errors: ${JSON.stringify(moveGranuleErrors)}.  Granule Files final state: ${JSON.stringify(updatedFiles)}`);
+  }
 }
 
 module.exports = {
@@ -192,4 +223,5 @@ module.exports = {
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
   getGranuleProductVolume,
+  moveGranuleFilesAndUpdateDatastore,
 };

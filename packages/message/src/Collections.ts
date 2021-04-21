@@ -29,6 +29,14 @@ type CollectionInfo = {
 export const constructCollectionId = (name: string, version: string) =>
   `${name}___${version}`;
 
+export const deconstructCollectionId = (collectionId: string): {
+  name: string,
+  version: string,
+} => {
+  const [name, version] = collectionId.split('___');
+  return { name, version };
+};
+
 /**
  * Get collection name from execution message.
  *

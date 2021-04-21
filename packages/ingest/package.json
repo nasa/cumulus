@@ -39,6 +39,7 @@
   "dependencies": {
     "@cumulus/aws-client": "7.1.0",
     "@cumulus/common": "7.1.0",
+    "@cumulus/db": "7.1.0-alpha.1",
     "@cumulus/errors": "7.1.0",
     "@cumulus/message": "7.1.0",
     "@cumulus/sftp-client": "7.1.0",

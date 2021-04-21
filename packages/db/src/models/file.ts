@@ -21,6 +21,16 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
       .onConflict(['bucket', 'key'])
       .merge();
   }
+
+  upsertById(
+    knexOrTrx: Knex | Knex.Transaction,
+    file: Partial<PostgresFileRecord>
+  ) {
+    return knexOrTrx(this.tableName)
+      .insert(file)
+      .onConflict(['cumulus_id'])
+      .merge();
+  }
 }
 
 export { FilePgModel };

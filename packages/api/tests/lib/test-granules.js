@@ -1,10 +1,12 @@
 const test = require('ava');
+const sinon = require('sinon');
 
 const {
   getExecutionProcessingTimeInfo,
   getGranuleProductVolume,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
+  moveGranuleFilesAndUpdateDatastore,
 } = require('../../lib/granules');
 
 test('getExecutionProcessingTimeInfo() returns empty object if startDate is not provided', (t) => {
@@ -90,4 +92,82 @@ test('getGranuleProductVolume() returns correct product volume', (t) => {
     }]),
     0
   );
+});
+
+test('moveGranuleFilesAndUpdateDatastore calls granulesModel.update if granulePgModel.getRecordCumulusId throws RecordDoesNotExist', async (t) => {
+  const updateStub = sinon.stub().returns(Promise.resolve());
+  const granulesModel = {
+    update: updateStub,
+  };
+
+  const granulePgModel = {
+    getRecordCumulusId: () => {
+      const thrownError = new Error('Test error');
+      thrownError.name = 'RecordDoesNotExist';
+      throw thrownError;
+    },
+  };
+
+  const collectionPgModel = {
+    getRecordCumulusId: () => 1,
+  };
+
+  const moveGranuleFilesFunction = () => [{
+    bucket: 'fakeBucket',
+    key: 'fakeKey',
+    name: 'fakeName',
+  }];
+
+  const apiGranule = { granuleId: 'fakeGranule', collectionId: 'fakeCollection___001' };
+  await moveGranuleFilesAndUpdateDatastore({
+    apiGranule,
+    granulesModel,
+    destinations: undefined,
+    granulePgModel,
+    collectionPgModel,
+    moveGranuleFilesFunction,
+    dbClient: {},
+  });
+
+  t.true(updateStub.calledWith(
+    {
+      granuleId: apiGranule.granuleId,
+    },
+    {
+      files: [{
+        bucket: 'fakeBucket',
+        key: 'fakeKey',
+        fileName: 'fakeName',
+      }],
+    }
+  ));
+});
+
+test('moveGranuleFilesAndUpdateDatastore throws granulesModel.update if granulePgModel.getRecordCumulusId throws unexpected error', async (t) => {
+  const updateStub = sinon.stub().returns(Promise.resolve());
+  const granulesModel = {
+    update: updateStub,
+  };
+
+  const granulePgModel = {
+    getRecordCumulusId: () => {
+      const thrownError = new Error('Test error');
+      thrownError.name = 'TestError';
+      throw thrownError;
+    },
+  };
+
+  const collectionPgModel = {
+    getRecordCumulusId: () => 1,
+  };
+
+  const apiGranule = { granuleId: 'fakeGranule', collectionId: 'fakeCollection___001' };
+  await t.throwsAsync(moveGranuleFilesAndUpdateDatastore({
+    apiGranule,
+    granulesModel,
+    destinations: undefined,
+    granulePgModel,
+    collectionPgModel,
+    dbClient: {},
+  }));
 });
