@@ -20,6 +20,8 @@ const {
   tableNames,
 } = require('@cumulus/db');
 
+const AggregateError = require('aggregate-error');
+
 const {
   generateFilePgRecord,
   generateGranuleRecord,
@@ -631,26 +633,19 @@ test.serial('writeGranules() writes all valid files if any non-valid file fails'
 
   cumulusMessage.meta.status = 'completed';
 
-  const invalidFile = fakeFileFactory(
-    {
-      bucket: undefined,
-    }
-  );
+  const invalidFiles = [
+    fakeFileFactory({ bucket: undefined }),
+    fakeFileFactory({ bucket: undefined }),
+  ];
+
+  const existingFiles = cumulusMessage.payload.granules[0].files;
+  cumulusMessage.payload.granules[0].files = existingFiles.concat(invalidFiles);
 
   const validFiles = 10;
-  const invalidFiles = 1;
-
-  for (let i = 0; i < invalidFiles; i += 1) {
-    cumulusMessage.payload.granules[0].files.push(
-      invalidFile
-    );
-  }
-
   for (let i = 0; i < validFiles; i += 1) {
     cumulusMessage.payload.granules[0].files.push(fakeFileFactory());
   }
-
-  const validFileCount = cumulusMessage.payload.granules[0].files.length - invalidFiles;
+  const validFileCount = cumulusMessage.payload.granules[0].files.length - invalidFiles.length;
 
   await writeGranules({
     cumulusMessage,
@@ -661,8 +656,49 @@ test.serial('writeGranules() writes all valid files if any non-valid file fails'
     granuleModel,
   });
 
-  t.false(await filePgModel.exists(knex, { key: invalidFile.key }));
+  t.false(await filePgModel.exists(knex, { key: invalidFiles[0].key }));
+  t.false(await filePgModel.exists(knex, { key: invalidFiles[1].key }));
 
   const fileRecords = await filePgModel.search(knex, {});
   t.is(fileRecords.length, validFileCount);
+});
+
+test.serial('writeGranules() stores error on granule if any file fails', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+    granuleModel,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  const invalidFiles = [
+    fakeFileFactory({ bucket: undefined }),
+    fakeFileFactory({ bucket: undefined }),
+  ];
+
+  const existingFiles = cumulusMessage.payload.granules[0].files;
+  cumulusMessage.payload.granules[0].files = existingFiles.concat(invalidFiles);
+
+  const validFiles = 10;
+  for (let i = 0; i < validFiles; i += 1) {
+    cumulusMessage.payload.granules[0].files.push(fakeFileFactory());
+  }
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
+  t.is(pgGranule.error.Error, 'Failed writing files to Postgres.');
+  t.is(pgGranule.error.Cause.name, 'AggregateError');
 });

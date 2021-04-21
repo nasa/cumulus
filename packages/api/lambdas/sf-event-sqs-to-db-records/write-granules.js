@@ -165,7 +165,8 @@ const _writeFiles = async ({
   filePgModel = new FilePgModel(),
 }) => pMap(
   fileRecords,
-  async (fileRecord) => filePgModel.upsert(knex, fileRecord)
+  async (fileRecord) => filePgModel.upsert(knex, fileRecord),
+  { stopOnError: false }
 );
 
 /**
@@ -278,7 +279,7 @@ const _writeGranuleViaTransaction = async ({
  * @param {string} params.workflowStatus - Workflow status
  * @param {Knex} params.knex - Client to interact with Postgres database
  * @param {Object} params.granulePgModel - Optional Granule model override
- * @returns {Promise} - Promise resolved once all file writes resolve
+ * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
   files,
@@ -306,14 +307,14 @@ const _writeGranuleFiles = async ({
 
     const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
-    granulePgModel.upsert(
+    await granulePgModel.upsert(
       knex,
       {
         ...granule,
         status: 'failed',
         error: {
           Error: 'Failed writing files to Postgres.',
-          Cause: error.message,
+          Cause: error,
         },
       }
     );
@@ -430,7 +431,7 @@ const _writeGranule = async ({
   });
 
   return knex.transaction(async (trx) => {
-    _writeGranuleFiles({
+    await _writeGranuleFiles({
       trx,
       knex,
       granuleCumulusId,
