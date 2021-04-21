@@ -68,7 +68,8 @@ const processExecutionItems = async (
   items: AWS.DynamoDB.DocumentClient.AttributeMap[],
   migrationResult: MigrationResult,
   knex: Knex,
-  loggingInterval: number
+  loggingInterval: number,
+  writeConcurrency?: number
 ) => {
   const updatedResult = migrationResult;
   await pMap(
@@ -97,8 +98,10 @@ const processExecutionItems = async (
           );
         }
       }
-    }, {
+    },
+    {
       stopOnError: false,
+      concurrency: writeConcurrency,
     }
   );
 };
@@ -132,7 +135,8 @@ export const migrateExecutions = async (
       items,
       migrationResult,
       knex,
-      loggingInterval
+      loggingInterval,
+      executionMigrationParams.writeConcurrency
     )
   );
 
