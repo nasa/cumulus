@@ -3,6 +3,7 @@ import moment from 'moment';
 import { s3 } from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
+import { deprecate } from '@cumulus/common/util';
 import { DuplicateHandling } from '@cumulus/types';
 import { FilePgModel, Knex } from '@cumulus/db';
 
@@ -365,8 +366,12 @@ export async function moveGranuleFiles(
     bucket: string,
     filepath: string
   }[],
-  moveFileParams: MoveFileParams[] = generateMoveFileParams(sourceFiles, destinations)
 ): Promise<MovedGranuleFile[]> {
+  deprecate(
+    '@cumulus/ingest/moveGranuleFiles',
+    '9.0.0'
+  );
+  const moveFileParams = generateMoveFileParams(sourceFiles, destinations)
   const movedGranuleFiles: MovedGranuleFile[] = [];
   const moveFileRequests = moveFileParams.map(
     async (moveFileParam) => {
@@ -411,7 +416,6 @@ export async function moveGranuleFiles(
     }
   );
   await Promise.all(moveFileRequests);
-
   return movedGranuleFiles;
 }
 

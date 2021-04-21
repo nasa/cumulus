@@ -2,7 +2,6 @@
 
 const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
-const partial = require('lodash/partial');
 
 const awsClients = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -10,7 +9,6 @@ const log = require('@cumulus/common/log');
 
 const {
   generateMoveFileParams,
-  moveGranuleFiles,
   moveGranuleFile,
 } = require('@cumulus/ingest/granule');
 

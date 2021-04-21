@@ -23,12 +23,10 @@ const {
   createBucket,
   createS3Buckets,
   deleteS3Buckets,
-  putJsonS3Object,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-
 
 const {
   secretsManager,
@@ -41,7 +39,7 @@ const {
 } = require('@cumulus/cmrjs/cmr-utils');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Postgres mock data factories
