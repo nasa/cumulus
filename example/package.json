@@ -45,7 +45,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/async-operations": "7.1.0-alpha.1",
+    "@cumulus/async-operations": "8.0.0-alpha.1",
     "@cumulus/api": "8.0.0",
     "@cumulus/api-client": "8.0.0",
     "@cumulus/aws-client": "8.0.0",
