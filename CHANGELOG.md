@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2455**
+    - API move granule endpoint now moves granule files on a per-file basis, and
+      on failure to update either the postgres record or move the file will
+      result in retention of the granule/file record in it's original
+      location, instead of aborting the move.
   - **CUMULUS-2191**
     - Removed the following from the `@cumulus/api/models.asyncOperation` class in
       favor of the added `@cumulus/async-operations` module:
@@ -25,6 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2455**
+    - Move granules API endpoint records move updates for migrated granule files
   - **CUMULUS-2130**
     - Added postgres-migration-count-tool lambda/ECS task to allow for
       evaluation of database state
