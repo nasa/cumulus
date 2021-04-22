@@ -418,7 +418,16 @@ export async function moveGranuleFiles(
   await Promise.all(moveFileRequests);
   return movedGranuleFiles;
 }
-
+/**
+* Moves a granule file and updates the postgres database accordingly
+* @summary Moves a granule file record according to MoveFileParams and updates database accordingly
+* @param {MoveFileParams} moveFileParam - Parameter object describing the move operation
+* @param {FilePgModel} filesPgModel - FilePgModel instance
+* @param {Knex.Transaction | Knex} trx - Knex transaction or (optionally) Knex object
+* @param {number | undefined } postgresCumulusGranuleId - postgres internal granule id
+* @param {boolean} writeToPostgres - explicit flag to enable/disable postgres database updates
+* @returns {ReturnValueDataTypeHere} Brief description of the returning value here.
+*/
 export async function moveGranuleFile(
   moveFileParam: MoveFileParams,
   filesPgModel: FilePgModel,
