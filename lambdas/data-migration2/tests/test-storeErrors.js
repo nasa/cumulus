@@ -1,6 +1,8 @@
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
+const stream = require('stream');
 const test = require('ava');
+const util = require('util');
 
 const {
   createBucket,
@@ -8,7 +10,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
-const { createErrorFileWriteStream, storeErrors } = require('../dist/lambda/storeErrors');
+const { closeErrorFileWriteStream, createErrorFileWriteStream, storeErrors } = require('../dist/lambda/storeErrors');
 
 test.before(async () => {
   process.env = {
@@ -30,9 +32,9 @@ test.serial('storeErrors stores file on s3', async (t) => {
   const filename = `data-migration2-${migrationName}-errors`;
   const key = `${process.env.stackName}/${filename}-0123.json`;
 
-  const stream = fs.createWriteStream(file);
+  const writeStream = fs.createWriteStream(file);
   const message = 'test message';
-  stream.end(message);
+  writeStream.end(message);
 
   await storeErrors({
     bucket: process.env.system_bucket,
@@ -50,13 +52,29 @@ test.serial('storeErrors stores file on s3', async (t) => {
 });
 
 test.serial('createErrorFileWriteStream returns a write stream and string', (t) => {
-  const migrationName = 'migration';
-  const timestamp = Date.now();
+  const migrationName = 'test-migration-name';
+  const timestamp = new Date().toISOString();
+  const expectedFilePath = `${migrationName}ErrorLog-${timestamp}.json`;
 
-  const { errorFileWriteStream, filepath } = createErrorFileWriteStream(migrationName, timestamp);
-  t.is(filepath, `${migrationName}ErrorLog-${timestamp}.json`);
+  const {
+    errorFileWriteStream,
+    filepath,
+  } = createErrorFileWriteStream(migrationName, timestamp);
+  t.is(filepath, expectedFilePath);
   t.true(errorFileWriteStream instanceof fs.WriteStream);
-  t.teardown(() => {
+  t.teardown(async () => {
+    errorFileWriteStream.end('');
+    const finished = util.promisify(stream.finished);
+    await finished(errorFileWriteStream);
+    fs.unlinkSync(expectedFilePath);
+  });
+});
+
+test.serial('closeErrorFileWriteStream closes write stream', async (t) => {
+  const filepath = 'test';
+  const writeStream = fs.createWriteStream(filepath);
+  await t.notThrowsAsync(closeErrorFileWriteStream(writeStream));
+  t.teardown(async () => {
     fs.unlinkSync(filepath);
   });
 });

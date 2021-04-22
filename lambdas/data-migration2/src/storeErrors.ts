@@ -1,21 +1,35 @@
-import moment from 'moment';
+import { WriteStream } from 'node:fs';
 
-const { s3 } = require('@cumulus/aws-client/services');
 const fs = require('fs');
+const moment = require('moment');
+const stream = require('stream');
+const util = require('util');
+const { s3 } = require('@cumulus/aws-client/services');
 
 /**
- *  Create write stream helper
+ *  Create error file write stream helper
  * @param {string} migrationName - Name of migration
  * @param {string | undefined} timestamp - Timestamp for unit testing
  * @returns {Object} - Object containing error write stream and file path string
  */
 export const createErrorFileWriteStream = (migrationName: string, timestamp?: string) => {
-  const dateString = timestamp || moment.utc().format('YYYY-MM-DD_HH:MM:SS.SSS');
+  const dateString = timestamp || moment.utc().format('YYYY-MM-DD_HH:MM:SS.SSSS');
   const filepath = `${migrationName}ErrorLog-${dateString}.json`;
   const errorFileWriteStream = fs.createWriteStream(filepath);
   errorFileWriteStream.write('{ "errors": [\n');
 
   return { errorFileWriteStream, filepath };
+};
+
+/**
+ *  End error file write stream helper
+ * @param {WriteStream} errorFileWriteStream - Error file write stream to close
+ * @returns {Promise<void>}
+ */
+export const closeErrorFileWriteStream = async (errorFileWriteStream: WriteStream) => {
+  errorFileWriteStream.end('\n]}');
+  const finished = util.promisify(stream.finished);
+  await finished(errorFileWriteStream);
 };
 
 /**
