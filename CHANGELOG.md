@@ -20,15 +20,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `start`
       - `startAsyncOperations`
   - **CUMULUS-2187**
-    - The `async-operations` endpoint will now omit `output` instead
-      of returning `none` when the operation did not return output.
+    - The `async-operations` endpoint will now omit `output` instead of
+      returning `none` when the operation did not return output.
   - **CUMULUS-2309**
-    - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
+    - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor
+      of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and
+      `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
   - **CUMULUS-2385**
-    - Updated `sf-event-sqs-to-db-records` to write a granule's files to PostgreSQL only after the workflow has exited the `Running` status.    Please note that any workflow that uses `sf_sqs_report_task` for mid-workflow updates will be impacted.
-    - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
+    - Updated `sf-event-sqs-to-db-records` to write a granule's files to
+      PostgreSQL only after the workflow has exited the `Running` status.
+      Please note that any workflow that uses `sf_sqs_report_task` for
+      mid-workflow updates will be impacted.
+    - Changed PostgreSQL `file` schema and TypeScript type definition to require
+      `bucket` and `key` fields.
     - Updated granule/file write logic to mark a granule's status as "failed"
-    
+
 ### Added
 
 - **CUMULUS-2185** - RDS Migration Epic
