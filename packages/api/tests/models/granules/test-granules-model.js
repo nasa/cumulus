@@ -784,7 +784,7 @@ test('applyWorkflow throws error if workflow argument is missing', async (t) => 
   );
 });
 
-test('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
+test.serial('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -811,4 +811,28 @@ test('applyWorkflow updates granule status and invokes Lambda to schedule workfl
 
   t.true(lambdaInvokeStub.called);
   t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
+});
+
+test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+  const workflow = randomString();
+  const queueUrl = randomString();
+
+  await granuleModel.create(granule);
+
+  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
+  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
+  t.teardown(() => {
+    buildPayloadStub.restore();
+    lambdaInvokeStub.restore();
+  });
+
+  await granuleModel.applyWorkflow(granule, workflow, undefined, queueUrl);
+
+  t.true(buildPayloadStub.called);
+  t.like(buildPayloadStub.args[0][0], {
+    queueUrl,
+  });
 });

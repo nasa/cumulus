@@ -103,6 +103,13 @@ output "queue_pdrs_task" {
   }
 }
 
+output "queue_workflow_task" {
+  value = {
+    task_arn = aws_lambda_function.queue_workflow_task.arn
+    task_log_group = aws_cloudwatch_log_group.queue_workflow_task.name
+  }
+}
+
 output "schedule_sf_lambda_function_arn" {
   value = aws_lambda_function.schedule_sf.arn
 }
