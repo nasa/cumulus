@@ -1,5 +1,5 @@
-module "distribution" {
-  source = "../distribution"
+module "tea_distribution" {
+  source = "../tea_distribution"
 
   tea_api_gateway_stage         = var.tea_api_gateway_stage
   tea_external_api_endpoint     = var.tea_external_api_endpoint

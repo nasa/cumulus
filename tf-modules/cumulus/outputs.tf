@@ -1,7 +1,7 @@
 # API outputs
 
 output "distribution_bucket_map" {
-  value = module.distribution.distribution_bucket_map
+  value = module.tea_distribution.distribution_bucket_map
 }
 
 output "archive_api_uri" {
@@ -13,7 +13,7 @@ output "archive_api_redirect_uri" {
 }
 
 output "s3_credentials_redirect_uri" {
-  value = module.distribution.s3_credentials_redirect_uri
+  value = module.tea_distribution.s3_credentials_redirect_uri
 }
 
 # Reporting queue and topics
