@@ -2,7 +2,7 @@ const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
 const stream = require('stream');
 const test = require('ava');
-const util = require('util');
+const { promisify } = require('util');
 
 const {
   createBucket,
@@ -64,7 +64,7 @@ test.serial('createErrorFileWriteStream returns a write stream and string', (t) 
   t.true(errorFileWriteStream instanceof fs.WriteStream);
   t.teardown(async () => {
     errorFileWriteStream.end('');
-    const finished = util.promisify(stream.finished);
+    const finished = promisify(stream.finished);
     await finished(errorFileWriteStream);
     fs.unlinkSync(expectedFilePath);
   });
