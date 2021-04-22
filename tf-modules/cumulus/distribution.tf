@@ -7,6 +7,7 @@ module "distribution" {
   tea_rest_api_id               = var.tea_rest_api_id
   tea_rest_api_root_resource_id = var.tea_rest_api_root_resource_id
 
+  cmr_environment                                = var.cmr_environment
   cmr_provider                                   = var.cmr_provider
   deploy_s3_credentials_endpoint                 = var.deploy_distribution_s3_credentials_endpoint
   lambda_processing_role_arn                     = aws_iam_role.lambda_processing.arn

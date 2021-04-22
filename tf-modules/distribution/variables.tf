@@ -22,6 +22,12 @@ variable "tea_internal_api_endpoint" {
 
 # Optional
 
+variable "cmr_environment" {
+  description = "The CMR environment to access"
+  type        = string
+  default     = null
+}
+
 variable "cmr_provider" {
   description = "The provider used to search CMR ACLs"
   type        = string

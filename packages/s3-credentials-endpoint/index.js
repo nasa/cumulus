@@ -63,6 +63,7 @@ async function requestTemporaryCredentialsFromNgap({
   lambda,
   lambdaFunctionName,
   userId,
+  policy = undefined,
   roleSessionName,
 }) {
   const Payload = JSON.stringify({
@@ -71,6 +72,7 @@ async function requestTemporaryCredentialsFromNgap({
     duration: '3600', // one hour max allowed by AWS.
     rolesession: roleSessionName, // <- shows up in S3 server access logs
     userid: userId, // <- used by NGAP
+    policy,
   });
 
   return lambda.invoke({
@@ -92,6 +94,27 @@ async function displayS3CredentialInstructions(_req, res) {
   res.send(compiled(process.env));
 }
 
+function ensureEndpointEnabled(res) {
+  const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
+
+  if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
+    return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
+  }
+  return undefined;
+}
+
+/**
+ *  Retrieve the sts session policy for a user when s3 credentials endpoint is
+ *  configured to use CMR ACLs. If the endpoint is not configured for CMR ACLs,
+ *  return undefined.
+ *
+ * @param {string} userName - earthdatalogin username
+ * @returns {Object} session policy generated from user's CMR ACLs or undefined.
+ */
+async function fetchPolicyForUser(userName) {
+  return undefined;
+}
+
 /**
  * Dispenses time-based temporary credentials for same-region direct s3 access.
  *
@@ -101,22 +124,21 @@ async function displayS3CredentialInstructions(_req, res) {
  *                   tempoary s3 credentials for direct same-region s3 access.
  */
 async function s3credentials(req, res) {
-  const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
-
-  if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
-    return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
-  }
+  ensureEndpointEnabled(res);
 
   const roleSessionName = buildRoleSessionName(
     req.authorizedMetadata.userName,
     req.authorizedMetadata.clientName
   );
 
+  const policy = await fetchPolicyForUser(req.authorizedMetadata.userName);
+
   const credentials = await requestTemporaryCredentialsFromNgap({
     lambda: req.lambda,
     lambdaFunctionName: process.env.STS_CREDENTIALS_LAMBDA,
     userId: req.authorizedMetadata.userName,
     roleSessionName,
+    policy,
   });
 
   const creds = JSON.parse(credentials.Payload);

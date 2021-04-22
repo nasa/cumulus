@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
 
   statement {
     actions   = ["lambda:InvokeFunction"]
-    resources = [var.sts_credentials_lambda_function_arn]
+    resources = [var.sts_credentials_lambda_function_arn, var.sts_policy_helper_lambda_function_arn]
   }
 
   statement {
@@ -147,7 +147,7 @@ resource "aws_lambda_function" "s3_credentials" {
     variables = {
       AccessTokensTable              = aws_dynamodb_table.access_tokens[0].id
       CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_tokens
-      CMR_PROVIDER                   = var.cmr_provider
+      CMR_ENVIRONMENT                = var.cmr_environment
       DISTRIBUTION_ENDPOINT          = var.tea_external_api_endpoint
       DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_external_api_endpoint}redirect"
       EARTHDATA_BASE_URL             = var.urs_url
@@ -155,6 +155,7 @@ resource "aws_lambda_function" "s3_credentials" {
       EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
       STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
       STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
+      cmr_provider                   = var.cmr_provider
       public_buckets                 = join(",", var.public_buckets)
     }
   }
