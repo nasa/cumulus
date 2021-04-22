@@ -86,11 +86,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2235**
     - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to PostgreSQL and parse Granule records to store File records in RDS.
+    - Added logic to `data-migration2` Lambda for migrating Granule records from
+      DynamoDB to PostgreSQL and parse Granule records to store File records in
+      RDS.
   - **CUMULUS-2367**
-    - Added `granules_executions` table to PostgreSQL schema to allow for a many-to-many relationship between granules and executions
-      - The table refers to granule and execution records using foreign keys defined with ON CASCADE DELETE, which means that any time a granule or execution record is deleted, all of the records in the `granules_executions` table referring to that record will also be deleted.
-    - Added `upsertGranuleWithExecutionJoinRecord` helper to `@cumulus/db` to allow for upserting a granule record and its corresponding `granules_execution` record
+    - Added `granules_executions` table to PostgreSQL schema to allow for a
+      many-to-many relationship between granules and executions
+      - The table refers to granule and execution records using foreign keys
+        defined with ON CASCADE DELETE, which means that any time a granule or
+        execution record is deleted, all of the records in the
+        `granules_executions` table referring to that record will also be
+        deleted.
+    - Added `upsertGranuleWithExecutionJoinRecord` helper to `@cumulus/db` to
+      allow for upserting a granule record and its corresponding
+      `granules_execution` record
   - **CUMULUS-2128**
     - Added helper functions:
       - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
@@ -113,71 +122,110 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `@cumulus/message/PDRs/getPdrPercentCompletion`
       - `@cumulus/message/workflows/getWorkflowDuration`
   - **CUMULUS-2199**
-    - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API Rule to conform to Postgres Rule definition.
+    - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API
+      Rule to conform to Postgres Rule definition.
   - **CUMUlUS-2128**
-    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for granule and file writes to the core PostgreSQL database
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for granule and
+      file writes to the core PostgreSQL database
   - **CUMULUS-2199**
-    - Updated Rules endpoint to write rules to core PostgreSQL database in addition to DynamoDB and to delete rules from the PostgreSQL database in addition to DynamoDB.
-    - Updated `create` in Rules Model to take in optional `createdAt` parameter which sets the value of createdAt if not specified during function call.
+    - Updated Rules endpoint to write rules to core PostgreSQL database in
+      addition to DynamoDB and to delete rules from the PostgreSQL database in
+      addition to DynamoDB.
+    - Updated `create` in Rules Model to take in optional `createdAt` parameter
+      which sets the value of createdAt if not specified during function call.
   - **CUMULUS-2189**
     - Updated Provider endpoint logic to write providers in parallel to Core
       PostgreSQL database
     - Update integration tests to utilize API calls instead of direct
       api/model/Provider calls
   - **CUMULUS-2191**
-    - Updated cumuluss/async-operation task to write async-operations to the PostgreSQL database.
+    - Updated cumuluss/async-operation task to write async-operations to the
+      PostgreSQL database.
   - **CUMULUS-2228**
-    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the core PostgreSQL database in parallel with writes to DynamoDB
+    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR,
+      and granule records to the core PostgreSQL database in parallel with
+      writes to DynamoDB
   - **CUMUlUS-2190**
-    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for PDR writes to the core PostgreSQL database
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for PDR writes
+      to the core PostgreSQL database
   - **CUMUlUS-2192**
-    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for execution writes to the core PostgreSQL database
+    - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for execution
+      writes to the core PostgreSQL database
   - **CUMULUS-2187**
-    - The `async-operations` endpoint will now omit `output` instead
-      of returning `none` when the operation did not return output.
+    - The `async-operations` endpoint will now omit `output` instead of
+      returning `none` when the operation did not return output.
   - **CUMULUS-2167**
-    - Change PostgreSQL schema definition for `files` to remove `filename` and `name` and only support `file_name`.
-    - Change PostgreSQL schema definition for `files` to remove `size` to only support `file_size`.
-    - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
+    - Change PostgreSQL schema definition for `files` to remove `filename` and
+      `name` and only support `file_name`.
+    - Change PostgreSQL schema definition for `files` to remove `size` to only
+      support `file_size`.
+    - Change `PostgresFile` to remove duplicate fields `filename` and `name` and
+      rename `size` to `file_size`.
   - **CUMULUS-2266**
-    - Change `sf-event-sqs-to-db-records` behavior to discard and not throw an error on an out-of-order/delayed message so as not to have it be sent to the DLQ.
+    - Change `sf-event-sqs-to-db-records` behavior to discard and not throw an
+      error on an out-of-order/delayed message so as not to have it be sent to
+      the DLQ.
   - **CUMULUS-2305**
-    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from PostgreSQL database.
+    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from
+      PostgreSQL database.
   - **CUMULUS-2309**
-    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from PostgreSQL database.
-    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
+    - Changed `DELETE /granules/{granuleName}` API behavior to also delete
+      record from PostgreSQL database.
+    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete
+      records from PostgreSQL database.
   - **CUMULUS-2367**
-    - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
+    - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files`
+      table to use a CASCADE delete, so records in the files table are
+      automatically deleted by the database when the corresponding granule is
+      deleted.
   - **CUMULUS-2407**
-    - Updated data-migration1 and data-migration2 Lambdas to use UPSERT instead of UPDATE when migrating dynamoDB records to PostgreSQL.
-    - Changed data-migration1 and data-migration2 logic to only update already migrated records if the incoming record update has a newer timestamp
+    - Updated data-migration1 and data-migration2 Lambdas to use UPSERT instead
+      of UPDATE when migrating dynamoDB records to PostgreSQL.
+    - Changed data-migration1 and data-migration2 logic to only update already
+      migrated records if the incoming record update has a newer timestamp
   - **CUMULUS-2329**
     - Add write-db-dlq-records-to-s3 lambda.
-    - Add terraform config to automatically write db records DLQ messages to an s3 archive on the system bucket.
+    - Add terraform config to automatically write db records DLQ messages to an
+      s3 archive on the system bucket.
     - Add unit tests and a component spec test for the above.
   - **CUMULUS-2406**
-    - Updated parallel write logic to ensure that updatedAt/updated_at timestamps are the same in Dynamo/PG on record write for the following data types:
+    - Updated parallel write logic to ensure that updatedAt/updated_at
+      timestamps are the same in Dynamo/PG on record write for the following
+      data types:
       - async operations
       - granules
       - executions
       - PDRs
   - **CUMULUS-2446**
-    - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
+    - Remove schema validation check against DynamoDB table for collections when
+      migrating records from DynamoDB to core PostgreSQL database.
   - **CUMULUS-2447**
-    - Changed `translateApiAsyncOperationToPostgresAsyncOperation` to call `JSON.stringify` and then `JSON.parse` on output.
+    - Changed `translateApiAsyncOperationToPostgresAsyncOperation` to call
+      `JSON.stringify` and then `JSON.parse` on output.
   - **CUMULUS-2313**
-    - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
-    - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
-    - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
+    - Added `postgres-migration-async-operation` lambda to start an ECS task to
+      run a the `data-migration2` lambda.
+    - Updated `async_operations` table to include `Data Migration 2` as a new
+      `operation_type`.
+    - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that
+      will be merged with `dynamo_tables`.
   - **CUMULUS-2451**
-    - Added summary type file `packages/db/src/types/summary.ts` with `MigrationSummary` and `DataMigration1` and `DataMigration2` types.
-    - Updated `data-migration1` and `data-migration2` lambdas to return `MigrationSummary` objects.
-    - Added logging for every batch of 100 records processed for executions, granules and files, and PDRs.
-    - Remove `RecordAlreadyMigrated` logs in `data-migration1` and `data-migration2`
+    - Added summary type file `packages/db/src/types/summary.ts` with
+      `MigrationSummary` and `DataMigration1` and `DataMigration2` types.
+    - Updated `data-migration1` and `data-migration2` lambdas to return
+      `MigrationSummary` objects.
+    - Added logging for every batch of 100 records processed for executions,
+      granules and files, and PDRs.
+    - Remove `RecordAlreadyMigrated` logs in `data-migration1` and
+      `data-migration2`
   - **CUMULUS-2452**
-    - Added support for only migrating certain granules by specifying the `granuleSearchParams.granuleId` or `granuleSearchParams.collectionId` properties in the payload for the `<prefix>-postgres-migration-async-operation` Lambda
-    - Added support for only running certain migrations for data-migration2 by specifying the `migrationsList` property in the payload for the
-    `<prefix>-postgres-migration-async-operation` Lambda
+    - Added support for only migrating certain granules by specifying the
+      `granuleSearchParams.granuleId` or `granuleSearchParams.collectionId`
+      properties in the payload for the
+      `<prefix>-postgres-migration-async-operation` Lambda
+    - Added support for only running certain migrations for data-migration2 by
+      specifying the `migrationsList` property in the payload for the
+      `<prefix>-postgres-migration-async-operation` Lambda
 
 ## [v7.1.0] 2021-03-12
 
