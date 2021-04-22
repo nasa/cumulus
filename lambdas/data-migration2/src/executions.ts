@@ -111,7 +111,7 @@ export const migrateExecutions = async (
       } else {
         migrationResult.failed += 1;
         const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
-        errorFileWriteStream.write(JSON.stringify(`${errorMessage}, Cause ${error}`));
+        errorFileWriteStream.write(JSON.stringify(`${errorMessage}, Cause: ${error}`));
         logger.error(errorMessage, error);
       }
     }

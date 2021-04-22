@@ -22,7 +22,7 @@ export const createErrorFileWriteStream = (migrationName: string, timestamp?: st
 };
 
 /**
- *  End error file write stream helper
+ *  Close error file write stream helper
  * @param {WriteStream} errorFileWriteStream - Error file write stream to close
  * @returns {Promise<void>}
  */

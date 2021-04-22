@@ -189,7 +189,7 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
       granulesResult.failed += 1;
       filesResult.failed += files.length;
 
-      stream.write(JSON.stringify(`${errorMessage}, Cause ${error}`));
+      stream.write(JSON.stringify(`${errorMessage}, Cause: ${error}`));
       logger.error(errorMessage, error);
     }
   }
