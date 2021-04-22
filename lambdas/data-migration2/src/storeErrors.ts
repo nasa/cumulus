@@ -2,7 +2,7 @@ import { WriteStream } from 'node:fs';
 
 const fs = require('fs');
 const moment = require('moment');
-const stream = require('stream');
+const { finished } = require('stream');
 const { promisify } = require('util');
 const { s3 } = require('@cumulus/aws-client/services');
 
@@ -28,8 +28,8 @@ export const createErrorFileWriteStream = (migrationName: string, timestamp?: st
  */
 export const closeErrorFileWriteStream = async (errorFileWriteStream: WriteStream) => {
   errorFileWriteStream.end('\n]}');
-  const finished = promisify(stream.finished);
-  await finished(errorFileWriteStream);
+  const asyncFinished = promisify(finished);
+  await asyncFinished(errorFileWriteStream);
 };
 
 /**
