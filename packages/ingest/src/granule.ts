@@ -191,6 +191,10 @@ export async function moveGranuleFileWithVersioning(
  * Syncs to temporary source location for `version` case and to target location for `replace` case.
  * Called as `await syncFileFunction(bucket, key);`, expected to create file on S3.
  * For example of function prepared with partial application see `ingestFile` in this module.
+ * @param {Function} [params.moveGranuleFileWithVersioningFunction] - optional -
+ * override for moveGranuleFileWithVersioning.  Defaults to local module method
+ * @param {Object} [params.s3Object] - optional - replacement for S3 import object,
+ * intended for use in testing
  * @throws {DuplicateFile} DuplicateFile error in `error` case.
  * @returns {Array<Object>} List of file version S3 Objects in `version` case, otherwise empty.
  */
@@ -199,16 +203,29 @@ export async function handleDuplicateFile(params: {
   target: { Bucket: string, Key: string },
   duplicateHandling: DuplicateHandling,
   checksumFunction?: (bucket: string, key: string) => Promise<[string, string]>,
-  syncFileFunction?: (bucket: string, key: string) => Promise<void>,
-  ACL?: string
+  syncFileFunction?: (params: {
+    destinationBucket: string,
+    destinationKey: string,
+    bucket?: string,
+    fileRemotePath: string,
+  }) => Promise<void>,
+  ACL?: string,
+  sourceBucket?: string,
+  fileRemotePath: string,
+  s3Object?: { moveObject: Function },
+  moveGranuleFileWithVersioningFunction?: Function,
 }): Promise<VersionedObject[]> {
   const {
-    source,
-    target,
-    duplicateHandling,
-    checksumFunction,
-    syncFileFunction,
     ACL,
+    checksumFunction,
+    duplicateHandling,
+    fileRemotePath,
+    moveGranuleFileWithVersioningFunction = moveGranuleFileWithVersioning,
+    s3Object = S3,
+    source,
+    sourceBucket,
+    syncFileFunction,
+    target,
   } = params;
 
   if (duplicateHandling === 'error') {
@@ -217,7 +234,14 @@ export async function handleDuplicateFile(params: {
     throw new errors.DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
   } else if (duplicateHandling === 'version') {
     // sync to staging location if required
-    if (syncFileFunction) await syncFileFunction(source.Bucket, source.Key);
+    if (syncFileFunction) {
+      await syncFileFunction({
+        bucket: sourceBucket,
+        destinationBucket: source.Bucket,
+        destinationKey: source.Key,
+        fileRemotePath,
+      });
+    }
     let sourceChecksumObject = {};
     if (checksumFunction) {
       // verify integrity
@@ -225,7 +249,7 @@ export async function handleDuplicateFile(params: {
       sourceChecksumObject = { checksumType, checksum };
     }
     // return list of renamed files
-    return moveGranuleFileWithVersioning(
+    return moveGranuleFileWithVersioningFunction(
       source,
       target,
       sourceChecksumObject,
@@ -234,21 +258,26 @@ export async function handleDuplicateFile(params: {
   } else if (duplicateHandling === 'replace') {
     if (syncFileFunction) {
       // sync directly to target location
-      await syncFileFunction(target.Bucket, target.Key);
-    } else {
-      await S3.moveObject({
-        sourceBucket: source.Bucket,
-        sourceKey: source.Key,
+      await syncFileFunction({
         destinationBucket: target.Bucket,
         destinationKey: target.Key,
-        copyTags: true,
+        bucket: sourceBucket,
+        fileRemotePath,
+      });
+    } else {
+      await s3Object.moveObject({
         ACL,
+        copyTags: true,
+        destinationBucket: target.Bucket,
+        destinationKey: target.Key,
+        sourceBucket: source.Bucket,
+        sourceKey: source.Key,
       });
     }
     // verify integrity after sync/move
     if (checksumFunction) await checksumFunction(target.Bucket, target.Key);
   }
-  // 'skip' and 'replace' returns
+  // other values (including skip) return
   return [];
 }
 

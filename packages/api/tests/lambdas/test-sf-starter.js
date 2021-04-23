@@ -94,6 +94,8 @@ test.afterEach.always(
 test.after.always(() => manager.deleteTable());
 
 test('dispatch() sets the workflow_start_time', async (t) => {
+  const { queueUrl } = t.context;
+
   const cumulusMessage = {
     cumulus_meta: {
       state_machine: 'my-state-machine',
@@ -116,12 +118,43 @@ test('dispatch() sets the workflow_start_time', async (t) => {
         });
       },
     }),
-  })(() => sfStarter.__get__('dispatch')(sqsMessage));
+  })(() => sfStarter.__get__('dispatch')(queueUrl, sqsMessage));
 
   const executionInput = JSON.parse(startExecutionParams.input);
 
   t.true(isNumber(executionInput.cumulus_meta.workflow_start_time));
   t.true(executionInput.cumulus_meta.workflow_start_time <= Date.now());
+});
+
+test('dispatch() sets cumulus_meta.queueUrl', async (t) => {
+  const { queueUrl } = t.context;
+
+  const cumulusMessage = {
+    cumulus_meta: {
+      state_machine: 'my-state-machine',
+      execution_name: 'my-execution-name',
+    },
+  };
+
+  const sqsMessage = {
+    Body: JSON.stringify(cumulusMessage),
+  };
+
+  let startExecutionParams;
+
+  await sfStarter.__with__({
+    sfn: () => ({
+      startExecution: (params) => {
+        startExecutionParams = params;
+        return ({
+          promise: () => Promise.resolve({}),
+        });
+      },
+    }),
+  })(() => sfStarter.__get__('dispatch')(queueUrl, sqsMessage));
+
+  const executionInput = JSON.parse(startExecutionParams.input);
+  t.is(executionInput.cumulus_meta.queueUrl, queueUrl);
 });
 
 test(
@@ -158,8 +191,9 @@ test.serial('handleEvent returns the number of messages consumed', async (t) => 
 });
 
 test('incrementAndDispatch throws error for message without queue URL', async (t) => {
+  const { queueUrl } = t.context;
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage() })
+    () => incrementAndDispatch(queueUrl, { Body: createWorkflowMessage() })
   );
 });
 
@@ -167,7 +201,7 @@ test('incrementAndDispatch throws error for message with no maximum executions v
   const { queueUrl } = t.context;
 
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage(queueUrl) })
+    () => incrementAndDispatch(queueUrl, { Body: createWorkflowMessage(queueUrl) })
   );
 });
 
@@ -176,7 +210,7 @@ test('incrementAndDispatch increments priority semaphore', async (t) => {
 
   const message = createWorkflowMessage(queueUrl, 5);
 
-  await incrementAndDispatch({ Body: message });
+  await incrementAndDispatch(queueUrl, { Body: message });
 
   const response = await semaphore.get(queueUrl);
   t.is(response.semvalue, 1);
@@ -199,7 +233,7 @@ test.serial('incrementAndDispatch decrements priority semaphore if dispatch() th
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
 
   try {
-    await incrementAndDispatch({ Body: message });
+    await incrementAndDispatch(queueUrl, { Body: message });
   } catch (error) {
     const response = await semaphore.get(queueUrl);
     t.is(response.semvalue, 0);
@@ -222,7 +256,7 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
   }).promise();
 
   await t.throwsAsync(
-    () => incrementAndDispatch({ Body: createWorkflowMessage(queueUrl, maxExecutions) }),
+    () => incrementAndDispatch(queueUrl, { Body: createWorkflowMessage(queueUrl, maxExecutions) }),
     { instanceOf: ResourcesLockedError }
   );
 });
@@ -295,9 +329,11 @@ test('handleSourceMappingEvent calls dispatch on messages in an EventSource even
   const event = {
     Records: [
       {
+        eventSourceARN: 'queue-url',
         body: createWorkflowMessage('test'),
       },
       {
+        eventSourceARN: 'queue-url',
         body: createWorkflowMessage('test'),
       },
     ],

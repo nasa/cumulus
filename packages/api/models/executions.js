@@ -43,9 +43,10 @@ class Execution extends Manager {
    * Generate an execution record from a Cumulus message.
    *
    * @param {Object} cumulusMessage - A Cumulus message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    * @returns {Object} An execution record
    */
-  static generateRecord(cumulusMessage) {
+  static generateRecord(cumulusMessage, updatedAt = Date.now()) {
     const arn = getMessageExecutionArn(cumulusMessage);
     if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
 
@@ -72,7 +73,7 @@ class Execution extends Manager {
       status,
       createdAt: workflowStartTime,
       timestamp: now,
-      updatedAt: now,
+      updatedAt,
       originalPayload: getMessageExecutionOriginalPayload(cumulusMessage),
       finalPayload: getMessageExecutionFinalPayload(cumulusMessage),
       duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
@@ -141,7 +142,7 @@ class Execution extends Manager {
    */
   _getMutableFieldNames(record) {
     if (record.status === 'running') {
-      return ['createdAt', 'updatedAt', 'timestamp', 'originalPayload'];
+      return ['updatedAt', 'timestamp', 'originalPayload'];
     }
     return Object.keys(record);
   }
@@ -150,10 +151,11 @@ class Execution extends Manager {
    * Generate and store an execution record from a Cumulus message.
    *
    * @param {Object} cumulusMessage - Cumulus workflow message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    * @returns {Promise}
    */
-  async storeExecutionFromCumulusMessage(cumulusMessage) {
-    const executionItem = Execution.generateRecord(cumulusMessage);
+  async storeExecutionFromCumulusMessage(cumulusMessage, updatedAt) {
+    const executionItem = Execution.generateRecord(cumulusMessage, updatedAt);
 
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.

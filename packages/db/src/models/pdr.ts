@@ -4,6 +4,7 @@ import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
 import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
+import { translateDateToUTC } from '../lib/timestamp';
 
 export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrRecord> {
   constructor() {
@@ -16,6 +17,9 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
     knexOrTrx: Knex | Knex.Transaction,
     pdr: PostgresPdr
   ) {
+    if (!pdr.created_at) {
+      throw new Error(`To upsert pdr record must have 'created_at' set: ${JSON.stringify(pdr)}`);
+    }
     if (pdr.status === 'running') {
       return knexOrTrx(this.tableName)
         .insert(pdr)
@@ -23,14 +27,18 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
         .merge()
         // progress is not a required field, so trying to use `pdr.progress`
         // as where clause value throws a TS error
-        .where(knexOrTrx.raw('pdrs.execution_cumulus_id != EXCLUDED.execution_cumulus_id'))
-        .orWhere(knexOrTrx.raw('pdrs.progress < EXCLUDED.progress'))
+        .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
+        .andWhere((qb: Knex.QueryBuilder) => {
+          qb.where(knexOrTrx.raw(`${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`))
+            .orWhere(knexOrTrx.raw(`${this.tableName}.progress < EXCLUDED.progress`));
+        })
         .returning('cumulus_id');
     }
     return knexOrTrx(this.tableName)
       .insert(pdr)
       .onConflict('name')
       .merge()
+      .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
       .returning('cumulus_id');
   }
 }

@@ -12,10 +12,10 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
-  createTestDatabase,
-  deleteTestDatabase,
-  getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  AsyncOperationPgModel,
 } = require('@cumulus/db');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
@@ -38,18 +38,13 @@ const knexConfig = {
 };
 
 test.before(async (t) => {
-  t.context.knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
+  process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket }).promise();
-  await createTestDatabase(t.context.knexAdmin, testDbName, localStackConnectionEnv.PG_USER);
-  await t.context.knex.migrate.latest();
 
   // Set up the mock ECS client
   ecsClient = ecs();
@@ -73,14 +68,18 @@ test.before(async (t) => {
       },
     }),
   });
+
+  t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 });
 
 test.after.always(async (t) => {
   sinon.restore();
-  await t.context.knex.destroy();
   await recursivelyDeleteS3Bucket(systemBucket);
-  await deleteTestDatabase(t.context.knexAdmin, testDbName);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
@@ -229,12 +228,12 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
   };
 
   t.true(result);
-  t.deepEqual(omit(spyCall, ['id']), expected);
+  t.deepEqual(omit(spyCall, ['id', 'createdAt', 'updatedAt']), expected);
   t.truthy(spyCall.id);
 });
 
 test.serial('The startAsyncOperation writes records to the databases', async (t) => {
-  const createSpy = sinon.spy((obj) => ({ id: obj.id }));
+  const createSpy = sinon.spy((createObject) => createObject);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
   };
@@ -261,11 +260,11 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
     systemBucket,
   }, stubbedAsyncOperationsModel);
 
-  const spyCall = createSpy.getCall(0).args[0];
-  const dbResults = await t.context.knex.select('*')
-    .from('async_operations')
-    .where('id', id)
-    .first();
+  const asyncOpDynamoSpyRecord = createSpy.getCall(0).args[0];
+  const asyncOperationPgRecord = await t.context.asyncOperationPgModel.get(
+    t.context.testKnex,
+    { id }
+  );
   const expected = {
     description,
     id,
@@ -275,10 +274,47 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
   };
   const omitList = ['created_at', 'updated_at', 'cumulus_id', 'output'];
   t.deepEqual(
-    omit(dbResults, omitList),
+    omit(asyncOperationPgRecord, omitList),
     translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
   );
-  t.deepEqual(omit(spyCall, omitList), omit(expected, omitList));
+  t.deepEqual(omit(asyncOpDynamoSpyRecord, ['createdAt', 'updatedAt']), omit(expected, ['createdAt', 'updatedAt']));
+});
+
+test.serial('The startAsyncOperation writes records to the databases with correct timestamps', async (t) => {
+  const createSpy = sinon.spy((createObject) => createObject);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+  const description = randomString();
+  const stackName = randomString();
+  const operationType = 'ES Index';
+  const taskArn = randomString();
+
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn }],
+    failures: [],
+  };
+
+  const { id } = await startAsyncOperation({
+    asyncOperationTaskDefinition: randomString(),
+    cluster: randomString(),
+    lambdaName: randomString(),
+    description,
+    operationType,
+    payload: {},
+    stackName,
+    dynamoTableName: dynamoTableName,
+    knexConfig: knexConfig,
+    systemBucket,
+  }, stubbedAsyncOperationsModel);
+
+  const asyncOpDynamoSpyRecord = createSpy.getCall(0).args[0];
+  const asyncOperationPgRecord = await t.context.asyncOperationPgModel.get(
+    t.context.testKnex,
+    { id }
+  );
+  t.is(asyncOperationPgRecord.created_at.getTime(), asyncOpDynamoSpyRecord.createdAt);
+  t.is(asyncOperationPgRecord.updated_at.getTime(), asyncOpDynamoSpyRecord.updatedAt);
 });
 
 test.serial('The startAsyncOperation method returns the newly-generated record', async (t) => {

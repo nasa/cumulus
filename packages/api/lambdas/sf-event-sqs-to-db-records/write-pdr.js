@@ -25,6 +25,7 @@ const generatePdrRecord = ({
   providerCumulusId,
   executionCumulusId,
   now = Date.now(),
+  updatedAt = Date.now(),
 }) => {
   const stats = getMessagePdrStats(cumulusMessage);
   const progress = getPdrPercentCompletion(stats);
@@ -41,6 +42,7 @@ const generatePdrRecord = ({
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
     created_at: new Date(workflowStartTime),
+    updated_at: new Date(updatedAt),
     timestamp: new Date(timestamp),
     duration: getWorkflowDuration(workflowStartTime, timestamp),
   };
@@ -82,12 +84,14 @@ const writePdrViaTransaction = async ({
   providerCumulusId,
   executionCumulusId,
   pdrPgModel = new PdrPgModel(),
+  updatedAt,
 }) => {
   const pdrRecord = generatePdrRecord({
     cumulusMessage,
     collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
+    updatedAt,
   });
 
   const queryResult = await pdrPgModel.upsert(trx, pdrRecord);
@@ -111,6 +115,7 @@ const writePdr = async ({
   executionCumulusId,
   knex,
   pdrModel = new Pdr(),
+  updatedAt = Date.now(),
 }) => {
   // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
@@ -130,8 +135,9 @@ const writePdr = async ({
       providerCumulusId,
       trx,
       executionCumulusId,
+      updatedAt,
     });
-    await pdrModel.storePdrFromCumulusMessage(cumulusMessage);
+    await pdrModel.storePdrFromCumulusMessage(cumulusMessage, updatedAt);
     // eslint-disable-next-line camelcase
     return cumulus_id;
   });

@@ -375,6 +375,7 @@ class Granule extends Manager {
     workflowStatus,
     queryFields,
     processingTimeInfo = {},
+    updatedAt,
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
 
@@ -396,7 +397,6 @@ class Granule extends Manager {
     });
 
     const now = Date.now();
-    const timestamp = now;
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
 
     const record = {
@@ -409,12 +409,12 @@ class Granule extends Manager {
       cmrLink: cmrLink,
       files: granuleFiles,
       error,
-      createdAt: workflowStartTime,
       published,
-      timestamp,
-      updatedAt: now,
+      createdAt: workflowStartTime,
+      timestamp: now,
+      updatedAt: updatedAt || now,
       // Duration is also used as timeToXfer for the EMS report
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      duration: getWorkflowDuration(workflowStartTime, now),
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: getGranuleTimeToPreprocess(granule),
       timeToArchive: getGranuleTimeToArchive(granule),
@@ -590,20 +590,6 @@ class Granule extends Manager {
   }
 
   /**
-   * Unpublish and delete granule.
-   *
-   * @param {Object} granule - A granule record
-   * @returns {Promise}
-   */
-  async unpublishAndDeleteGranule(granule) {
-    await this._removeGranuleFromCmr(granule);
-    // Intentionally do not update the record to set `published: false`.
-    // So if _deleteRecord fails, the record is still in a state where this
-    // operation can be retried.
-    return this._deleteRecord(granule);
-  }
-
-  /**
    * Delete a granule
    *
    * @param {Object} granule record
@@ -634,7 +620,7 @@ class Granule extends Manager {
    */
   _getMutableFieldNames(record) {
     if (record.status === 'running') {
-      return ['updatedAt', 'timestamp', 'status', 'execution'];
+      return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
   }
@@ -653,13 +639,26 @@ class Granule extends Manager {
       mutableFieldNames,
     });
 
+    // createdAt comes from cumulus_meta.workflow_start_time
+    // records should *not* be updating from createdAt times that are *older* start
+    // times than the existing record, whatever the status
+    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+
     // Only allow "running" granule to replace completed/failed
     // granule if the execution has changed
     if (granuleRecord.status === 'running') {
-      updateParams.ConditionExpression = '#execution <> :execution';
+      updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
-    return this.dynamodbDocClient.update(updateParams).promise();
+    try {
+      return await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        log.info(`Did not process delayed event for granule: ${granuleRecord.granuleId} (execution: ${granuleRecord.execution})`);
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -705,6 +704,7 @@ class Granule extends Manager {
     pdrName,
     workflowStatus,
     queryFields,
+    updatedAt,
   }) {
     const granuleRecord = await this.generateGranuleRecord({
       s3: awsClients.s3(),
@@ -718,6 +718,7 @@ class Granule extends Manager {
       workflowStatus,
       processingTimeInfo,
       queryFields,
+      updatedAt,
     });
     return this._validateAndStoreGranuleRecord(granuleRecord);
   }

@@ -17,6 +17,23 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     this.tableName = tableName;
   }
 
+  async count(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: ([string, string, string] | [Partial<RecordType>])[]
+  ) {
+    const query = knexOrTransaction(this.tableName).where((builder) => {
+      params.forEach((param) => {
+        if (param.length === 3) {
+          builder.where(...param);
+        }
+        if (param.length === 1) {
+          builder.where(param[0]);
+        }
+      });
+    }).count();
+    return query;
+  }
+
   /**
    * Fetches a single item from Postgres
    *

@@ -6,16 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
-
-### MIGRATION NOTES
-
-- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform
-  from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your
-  deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
-
 ### BREAKING CHANGES
 
 - **CUMULUS-2185** - RDS Migration Epic
@@ -27,30 +17,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2187**
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
-- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
-
-### Added
-
-- **CUMULUS-2291**
-  - Add provider filter to Granule Inventory Report
-- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2309**
+    - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and `@cumulus/api/lib/granule-delete.deleteGranuleAndFiles`.
+  - **CUMULUS-2385**
+    - Updated `sf-event-sqs-to-db-records` to write a granule's files to PostgreSQL only after the workflow has exited the `Running` status.    Please note that any workflow that uses `sf_sqs_report_task` for mid-workflow updates will be impacted.
+    - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
+    - Updated granule/file write logic to mark a granule's status as "failed"
+    if writing any of the granule files fails.
+  - **CUMULUS-2130**
+    - Added postgres-migration-count-tool lambda/ECS task to allow for
+      evaluation of database state
+    - Added /migrationCounts api endpoint that allows running of the
+      postgres-migration-count-tool as an asyncOperation
+  - **CUMULUS-2394**
+    - Updated PDR and Granule writes to check the step function
+    workflow_start_time against the createdAt field for each record to
+    ensure old records do not overwrite newer ones for legacy Dynamo and
+    PostgreSQL writes
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
-    - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to RDS
+    - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to PostgreSQL
   - **CUMULUS-2191**
     - Added `@cumulus/async-operations` to core packages, exposing
-      `startAsyncOperation` which will handle starting an async operation and adding an entry to both RDS and DynamoDb
+      `startAsyncOperation` which will handle starting an async operation and adding an entry to both PostgreSQL and DynamoDb
   - **CUMULUS-2127**
     - Add schema migration for `collections` table
   - **CUMULUS-2129**
-    - Added logic to `data-migration1` Lambda for migrating collection records from Dynamo to RDS
+    - Added logic to `data-migration1` Lambda for migrating collection records from Dynamo to PostgreSQL
   - **CUMULUS-2157**
     - Add schema migration for `providers` table
-    - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to RDS
+    - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to PostgreSQL
   - **CUMULUS-2187**
-    - Added logic to `data-migration1` Lambda for migrating async operation records from Dynamo to RDS
+    - Added logic to `data-migration1` Lambda for migrating async operation records from Dynamo to PostgreSQL
   - **CUMULUS-2198**
-    - Added logic to `data-migration1` Lambda for migrating rule records from DynamoDB to RDS
+    - Added logic to `data-migration1` Lambda for migrating rule records from DynamoDB to PostgreSQL
   - **CUMULUS-2182**
     - Add schema migration for PDRs table
   - **CUMULUS-2230**
@@ -60,46 +60,42 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2184**
     - Add schema migration for `executions` table
   - **CUMULUS-2257**
-    - Updated RDS table and column names to snake_case
+    - Updated PostgreSQL table and column names to snake_case
     - Added `translateApiAsyncOperationToPostgresAsyncOperation` function to `@cumulus/db`
   - **CUMULUS-2186**
     - Added logic to `data-migration2` Lambda for migrating PDR records from
-      DynamoDB to RDS
+      DynamoDB to PostgreSQL
   - **CUMULUS-2235**
     - Added initial ingest load spec test/utility
   - **CUMULUS-2167**
-    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to RDS and parse Granule records to store File records in RDS.
+    - Added logic to `data-migration2` Lambda for migrating Granule records from DynamoDB to PostgreSQL and parse Granule records to store File records in RDS.
   - **CUMULUS-2367**
-    - Added `granules_executions` table to RDS schema to allow for a many-to-many relationship between granules and executions
+    - Added `granules_executions` table to PostgreSQL schema to allow for a many-to-many relationship between granules and executions
       - The table refers to granule and execution records using foreign keys defined with ON CASCADE DELETE, which means that any time a granule or execution record is deleted, all of the records in the `granules_executions` table referring to that record will also be deleted.
     - Added `upsertGranuleWithExecutionJoinRecord` helper to `@cumulus/db` to allow for upserting a granule record and its corresponding `granules_execution` record
-- **CUMULUS-2128**
-  - Added helper functions:
-    - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
-    - `@cumulus/db/translate/file/translateApiGranuletoPostgresGranule`
-    - `@cumulus/message/Providers/getMessageProvider`
-- **CUMULUS-2190**
-  - Added helper functions:
-    - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
-    - `@cumulus/message/Executions/getMessageExecutionFinalPayload`
-    - `@cumulus/message/workflows/getMessageWorkflowTasks`
-    - `@cumulus/message/workflows/getMessageWorkflowStartTime`
-    - `@cumulus/message/workflows/getMessageWorkflowStopTime`
-    - `@cumulus/message/workflows/getMessageWorkflowName`
-- **CUMULUS-2192**
-  - Added helper functions:
-    - `@cumulus/message/PDRs/getMessagePdrRunningExecutions`
-    - `@cumulus/message/PDRs/getMessagePdrCompletedExecutions`
-    - `@cumulus/message/PDRs/getMessagePdrFailedExecutions`
-    - `@cumulus/message/PDRs/getMessagePdrStats`
-    - `@cumulus/message/PDRs/getPdrPercentCompletion`
-    - `@cumulus/message/workflows/getWorkflowDuration`
-- **CUMULUS-2199**
-  - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API Rule to conform to Postgres Rule definition.
-
-### Changed
-
-- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2128**
+    - Added helper functions:
+      - `@cumulus/db/translate/file/translateApiFiletoPostgresFile`
+      - `@cumulus/db/translate/file/translateApiGranuletoPostgresGranule`
+      - `@cumulus/message/Providers/getMessageProvider`
+  - **CUMULUS-2190**
+    - Added helper functions:
+      - `@cumulus/message/Executions/getMessageExecutionOriginalPayload`
+      - `@cumulus/message/Executions/getMessageExecutionFinalPayload`
+      - `@cumulus/message/workflows/getMessageWorkflowTasks`
+      - `@cumulus/message/workflows/getMessageWorkflowStartTime`
+      - `@cumulus/message/workflows/getMessageWorkflowStopTime`
+      - `@cumulus/message/workflows/getMessageWorkflowName`
+  - **CUMULUS-2192**
+    - Added helper functions:
+      - `@cumulus/message/PDRs/getMessagePdrRunningExecutions`
+      - `@cumulus/message/PDRs/getMessagePdrCompletedExecutions`
+      - `@cumulus/message/PDRs/getMessagePdrFailedExecutions`
+      - `@cumulus/message/PDRs/getMessagePdrStats`
+      - `@cumulus/message/PDRs/getPdrPercentCompletion`
+      - `@cumulus/message/workflows/getWorkflowDuration`
+  - **CUMULUS-2199**
+    - Added `translateApiRuleToPostgresRule` to `@cumulus/db` to translate API Rule to conform to Postgres Rule definition.
   - **CUMUlUS-2128**
     - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for granule and file writes to the core PostgreSQL database
   - **CUMULUS-2199**
@@ -111,10 +107,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Update integration tests to utilize API calls instead of direct
       api/model/Provider calls
   - **CUMULUS-2191**
-    - Updated cumuluss/async-operation task to write async-operations to the RDS
-    database.
+    - Updated cumuluss/async-operation task to write async-operations to the PostgreSQL database.
   - **CUMULUS-2228**
-    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the Core PostgreSQL database in parallel with writes to DynamoDB
+    - Added logic to the `sfEventSqsToDbRecords` Lambda to write execution, PDR, and granule records to the core PostgreSQL database in parallel with writes to DynamoDB
   - **CUMUlUS-2190**
     - Added "upsert" logic to the `sfEventSqsToDbRecords` Lambda for PDR writes to the core PostgreSQL database
   - **CUMUlUS-2192**
@@ -123,23 +118,237 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - The `async-operations` endpoint will now omit `output` instead
       of returning `none` when the operation did not return output.
   - **CUMULUS-2167**
-    - Change Postgres Schema definition for Files to remove `filename` and `name` and only support `file_name`.
-    - Change Postgres Schema definition for Files to remove `size` to only support `file_size`.
+    - Change PostgreSQL schema definition for `files` to remove `filename` and `name` and only support `file_name`.
+    - Change PostgreSQL schema definition for `files` to remove `size` to only support `file_size`.
     - Change `PostgresFile` to remove duplicate fields `filename` and `name` and rename `size` to `file_size`.
+  - **CUMULUS-2266**
+    - Change `sf-event-sqs-to-db-records` behavior to discard and not throw an error on an out-of-order/delayed message so as not to have it be sent to the DLQ.
   - **CUMULUS-2305**
-    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from Postgres database.
+    - Changed `DELETE /pdrs/{pdrname}` API behavior to also delete record from PostgreSQL database.
   - **CUMULUS-2309**
-    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from Postgres database.
+    - Changed `DELETE /granules/{granuleName}` API behavior to also delete record from PostgreSQL database.
+    - Changed `Bulk operation BULK_GRANULE_DELETE` API behavior to also delete records from PostgreSQL database.
+  - **CUMULUS-2367**
+    - Updated `granule_cumulus_id` foreign key to granule in PostgreSQL `files` table to use a CASCADE delete, so records in the files table are automatically deleted by the database when the corresponding granule is deleted.
+  - **CUMULUS-2407**
+    - Updated data-migration1 and data-migration2 Lambdas to use UPSERT instead of UPDATE when migrating dynamoDB records to PostgreSQL.
+    - Changed data-migration1 and data-migration2 logic to only update already migrated records if the incoming record update has a newer timestamp
+  - **CUMULUS-2329**
+    - Add write-db-dlq-records-to-s3 lambda.
+    - Add terraform config to automatically write db records DLQ messages to an s3 archive on the system bucket.
+    - Add unit tests and a component spec test for the above.
+  - **CUMULUS-2406**
+    - Updated parallel write logic to ensure that updatedAt/updated_at timestamps are the same in Dynamo/PG on record write for the following data types:
+      - async operations
+      - granules
+      - executions
+      - PDRs
+  - **CUMULUS-2446**
+    - Remove schema validation check against DynamoDB table for collections when migrating records from DynamoDB to core PostgreSQL database.
+  - **CUMULUS-2447**
+    - Changed `translateApiAsyncOperationToPostgresAsyncOperation` to call `JSON.stringify` and then `JSON.parse` on output.
+  - **CUMULUS-2313**
+    - Added `postgres-migration-async-operation` lambda to start an ECS task to run a the `data-migration2` lambda.
+    - Updated `async_operations` table to include `Data Migration 2` as a new `operation_type`.
+    - Updated `cumulus-tf/variables.tf` to include `optional_dynamo_tables` that will be merged with `dynamo_tables`.
+  - **CUMULUS-2451**
+    - Added summary type file `packages/db/src/types/summary.ts` with `MigrationSummary` and `DataMigration1` and `DataMigration2` types.
+    - Updated `data-migration1` and `data-migration2` lambdas to return `MigrationSummary` objects.
+    - Added logging for every batch of 100 records processed for executions, granules and files, and PDRs.
+    - Remove `RecordAlreadyMigrated` logs in `data-migration1` and `data-migration2`
+  - **CUMULUS-2452**
+    - Added support for only migrating certain granules by specifying the `granuleSearchParams.granuleId` or `granuleSearchParams.collectionId` properties in the payload for the `<prefix>-postgres-migration-async-operation` Lambda
+    - Added support for only running certain migrations for data-migration2 by specifying the `migrationsList` property in the payload for the
+    `<prefix>-postgres-migration-async-operation` Lambda
 
-### Changed
+## [v7.1.0] 2021-03-12
 
-- **CUMULUS-2255**
-  - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+### Notable changes
+
+- `sync-granule` task will now properly handle syncing 0 byte files to S3
+
+### Added
+
+- `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can
+  be used to set to an arbitray  host for making CMR requests (e.g.
+  `https://custom-cmr-host.com`).
+- Added `buckets` variable to `tf-modules/archive`
+- **CUMULUS-2345**
+  - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2424**
+  - Added `childWorkflowMeta` to `queue-pdrs` config. An object passed to this config value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_and_queue_pdrs_with_child_workflow_meta_workflow.asl.json`.
+- **CUMULUS-2427**
+  - Added support for using a custom queue with SQS and Kinesis rules. Whatever queue URL is set on the `rule.queueUrl` property will be used to schedule workflows for that rule. This change allows SQS/Kinesis rules to use [any throttled queues defined for a deployment](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
 
 ### Fixed
 
+- **CUMULUS-2394**
+  - Updated PDR and Granule writes to check the step function `workflow_start_time` against
+      the `createdAt` field  for each record to ensure old records do not
+      overwrite newer ones
+
+- **CUMULUS-2346**
+  - Added orca API endpoint to `@cumulus/api` to get recovery status
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
+
+### Changed
+
+- `<prefix>-lambda-api-gateway` IAM role used by API Gateway Lambda now
+  supports accessing all buckets defined in your `buckets` variable except
+  "internal" buckets
+- Updated the default scroll duration used in ESScrollSearch and part of the
+  reconcilation report functions as a result of testing and seeing timeouts
+  at its current value of 2min.
+- **CUMULUS-2355**
+  - Added logic to disable `/s3Credentials` endpoint based upon value for
+    environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
+    endpoint will not dispense S3 credentials and instead return a message
+    indicating that the endpoint has been disabled.
+- **CUMULUS-2355**
+  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
+- **CUMULUS-2397**
+  - Updated `/elasticsearch` endpoint's `reindex` function to prevent
+    reindexing when source and destination indices are the same.
+- **CUMULUS-2420**
+  - Updated test function `waitForAsyncOperationStatus` to take a retryObject
+    and use exponential backoff.  Increased the total test duration for both
+    AsycOperation specs and the ReconciliationReports tests.
+- **CUMULUS-2427**
+  - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
+  - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
+
+### Fixed
+
+- Fixed issue in `@cumulus/ingest/S3ProviderClient.sync()` preventing 0 byte files from being synced to S3.
+
+### Removed
+
+- Removed variables from `tf-modules/archive`:
+  - `private_buckets`
+  - `protected_buckets`
+  - `public_buckets`
+
+## [v7.0.0] 2021-02-22
+
+### BREAKING CHANGES
+
+- **CUMULUS-2362** - Endpoints for the logs (/logs) will now throw an error unless Metrics is set up
+
+### Added
+
+- **CUMULUS-2345**
+  - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
+- **CUMULUS-2376**
+  - Added `cmrRevisionId` as an optional parameter to `post-to-cmr` that will be used when publishing metadata to CMR.
+- **CUMULUS-2412**
+  - Adds function `getCollectionsByShortNameAndVersion` to @cumulus/cmrjs that performs a compound query to CMR to retrieve collection information on a list of collections. This replaces a series of calls to the CMR for each collection with a single call on the `/collections` endpoint and should improve performance when CMR return times are increased.
+
+### Changed
+
+- **CUMULUS-2362**
+  - Logs endpoints only work with Metrics set up
+- **CUMULUS-2376**
+  - Updated `publishUMMGJSON2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishUMMGJSON2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publishECHO10XML2CMR` to take in an optional `revisionId` parameter.
+  - Updated `publishECHO10XML2CMR` to throw an error if optional `revisionId` does not match resulting revision ID.
+  - Updated `publish2CMR` to take in optional `cmrRevisionId`.
+  - Updated `getWriteHeaders` to take in an optional CMR Revision ID.
+  - Updated `ingestGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+  - Updated `ingestUMMGranule` to take in an optional CMR Revision ID to pass to `getWriteHeaders`.
+- **CUMULUS-2350**
+  - Updates the examples on the `/s3credentialsREADME`, to include Python and
+    JavaScript code demonstrating how to refrsh  the s3credential for
+    programatic access.
+- **CUMULUS-2383**
+  - PostToCMR task will return CMRInternalError when a `500` status is returned from CMR
+
+## [v6.0.0] 2021-02-16
+
+### MIGRATION NOTES
+
+- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform
+  from **0.12.12** to **0.13.6**. Please see the [instructions to upgrade your
+  deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-0.13.6.md).
+
+- **CUMULUS-2350**
+  - If the  `/s3credentialsREADME`, does not appear to be working after
+    deploymnt, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+    of the API-gateway stage may be necessary to finish the deployment.
+
+### BREAKING CHANGES
+
+- **CUMULUS-2255** - Cumulus has upgraded its supported version of Terraform from **0.12.12** to **0.13.6**.
+
+### Added
+
+- **CUMULUS-2291**
+  - Add provider filter to Granule Inventory Report
+- **CUMULUS-2300**
+  - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this
+    value will be merged into a child workflow messag's  `meta` object. For an
+    example of how this can be used, see
+    `example/cumulus-tf/discover_granules_workflow.asl.json`.
+- **CUMULUS-2350**
+  - Adds an unprotected endpoint, `/s3credentialsREADME`, to the
+    s3-credentials-endpoint that dispays  information on how to use the
+    `/s3credentials` endpoint
+- **CUMULUS-2368**
+  - Add QueueWorkflow task
+- **CUMULUS-2391**
+  - Add reportToEms to collections.files file schema
+- **CUMULUS-2395**
+  - Add Core module parameter `ecs_custom_sg_ids` to Cumulus module to allow for
+    custom security group mappings
+- **CUMULUS-2402**
+  - Officially expose `sftp()` for use in `@cumulus/sftp-client`
+
+### Changed
+
+- **CUMULUS-2323**
+  - The sync granules task when used with the s3 provider now uses the
+    `source_bucket` key in `granule.files` objects.  If incoming payloads using
+    this task have a `source_bucket` value for a file using the s3 provider, the
+    task will attempt to sync from the bucket defined in the file's
+    `source_bucket` key instead of the `provider`.
+    - Updated `S3ProviderClient.sync` to allow for an optional bucket parameter
+      in support of the changed behavior.
+  - Removed `addBucketToFile` and related code from sync-granules task
+
+- **CUMULUS-2255**
+  - Updated Terraform deployment code syntax for compatibility with version 0.13.6
+- **CUMULUS-2321**
+  - Updated API endpoint GET `/reconciliationReports/{name}` to return the
+    pre-signe s3 URL in addition to report data
+
+### Fixed
+
+- Updated `hyrax-metadata-updates` task so the opendap url has Type 'USE SERVICE API'
+
 - **CUMULUS-2310**
   - Use valid filename for reconciliation report
+- **CUMULUS-2351**
+  - Inventory report no longer includes the File/Granule relation object in the
+    okCountByGranules key of a report.  The information is only included when a
+    'Granule Not Found' report is run.
+
+### Removed
+
+- **CUMULUS-2364**
+  - Remove the internal Cumulus logging lambda (log2elasticsearch)
+
+## [v5.0.1] 2021-01-27
+
+### Changed
+
+- **CUMULUS-2344**
+  - Elasticsearch API now allows you to reindex to an index that already exists
+  - If using the Change Index operation and the new index doesn't exist, it will be created
+  - Regarding instructions for CUMULUS-2020, you can now do a change index
+    operation before a reindex operation. This will
+    ensure that new data will end up in the new index while Elasticsearch is reindexing.
 
 - **CUMULUS-2351**
   - Inventory report no longer includes the File/Granule relation object in the okCountByGranules key of a report. The information is only included when a 'Granule Not Found' report is run.
@@ -154,14 +363,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search and the API has been updated to reflect those changes. See Migration notes on how to update the Elasticsearch mappings.
+  - Elasticsearch data mappings have been updated to improve search and the API
+    has been update to reflect those changes. See Migration notes on how to
+    update the Elasticsearch mappings.
 
 ### Migration notes
 
 - **CUMULUS-2020**
-  - Elasticsearch data mappings have been updated to improve search. For example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will return the same granule results). To use the improved Elasticsearch queries, [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index with the correct types. Then perform a [change index](https://nasa.github.io/cumulus-api/#change-index) operation to use the new index.
+  - Elasticsearch data mappings have been updated to improve search. For
+    example, case insensitive searching will now work (e.g. 'MOD' and 'mod' will
+    return the same granule results). To use the improved Elasticsearch queries,
+    [reindex](https://nasa.github.io/cumulus-api/#reindex) to create a new index
+    with the correct types. Then perform a [change
+    index](https://nasa.github.io/cumulus-api/#change-index) operation to use
+    the new index.
 - **CUMULUS-2258**
-  - Because the `egress_lambda_log_group` and `egress_lambda_log_subscription_filter` resource were removed from the `cumulus` module, new definitions for these resources must be added to `cumulus-tf/main.tf`. For reference on how to define these resources, see [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
+  - Because the `egress_lambda_log_group` and
+    `egress_lambda_log_subscription_filter` resource were removed from the
+    `cumulus` module, new definitions for these resources must be added to
+    `cumulus-tf/main.tf`. For reference on how to define these resources, see
+    [`example/cumulus-tf/thin_egress_app.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/thin_egress_app.tf).
   - The `tea_stack_name` variable being passed into the `cumulus` module should be removed
 - **CUMULUS-2344**
   - Regarding instructions for CUMULUS-2020, you can now do a change index operation before a reindex operation. This will
@@ -3900,7 +4121,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v5.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v7.1.0...HEAD
+[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.0.0
+[v7.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
+[v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
+[v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
 [v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1

@@ -44,7 +44,7 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report'],
+      enum: ['Data Migration', 'Migration Count Report', 'ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report'],
     },
     output: {
       description: 'The result of the operation, stored as JSON',
@@ -180,6 +180,12 @@ module.exports.collection = {
                 type: 'boolean',
               },
             },
+          },
+          reportToEms: {
+            title: 'Report to EMS',
+            description: 'Indicates whether the granule with this file type will be reported to EMS when the collection level configuration is true.',
+            type: 'boolean',
+            default: true,
           },
         },
         required: [

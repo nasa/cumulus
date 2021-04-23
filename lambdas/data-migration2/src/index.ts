@@ -1,38 +1,53 @@
 import { getKnexClient } from '@cumulus/db';
+import Logger from '@cumulus/logger';
+import {
+  DataMigration2Summary,
+  DataMigration2HandlerEvent,
+  MigrationSummary,
+} from '@cumulus/types/migration';
 
 import { migrateExecutions } from './executions';
 import { migrateGranulesAndFiles } from './granulesAndFiles';
+import { migratePdrs } from './pdrs';
 
-export interface HandlerEvent {
-  env?: NodeJS.ProcessEnv
-}
+const logger = new Logger({ sender: '@cumulus/data-migration2' });
 
-export const handler = async (event: HandlerEvent): Promise<string> => {
+export const handler = async (
+  event: DataMigration2HandlerEvent
+): Promise<MigrationSummary> => {
   const env = event.env ?? process.env;
+  const migrationsToRun = event.migrationsList ?? ['executions', 'granules', 'pdrs'];
 
   const knex = await getKnexClient({ env });
 
   try {
-    const executionsMigrationSummary = await migrateExecutions(env, knex);
-    const granulesAndFilesMigrationSummary = await migrateGranulesAndFiles(env, knex);
+    const migrationSummary: DataMigration2Summary = {};
 
-    return `
-      Migration summary:
-        Executions:
-          Out of ${executionsMigrationSummary.dynamoRecords} DynamoDB records:
-            ${executionsMigrationSummary.success} records migrated
-            ${executionsMigrationSummary.skipped} records skipped
-            ${executionsMigrationSummary.failed} records failed
-        Granules:
-          Out of ${granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords} DynamoDB records:
-            ${granulesAndFilesMigrationSummary.granulesSummary.success} records migrated
-            ${granulesAndFilesMigrationSummary.granulesSummary.skipped} records skipped
-            ${granulesAndFilesMigrationSummary.granulesSummary.failed} records failed
-        Files:
-          Out of ${granulesAndFilesMigrationSummary.granulesSummary.dynamoRecords} DynamoDB records:
-            ${granulesAndFilesMigrationSummary.filesSummary.success} records migrated
-            ${granulesAndFilesMigrationSummary.filesSummary.failed} records failed
-    `;
+    if (migrationsToRun.includes('executions')) {
+      const executionsMigrationResult = await migrateExecutions(env, knex);
+      migrationSummary.executions = executionsMigrationResult;
+    }
+
+    if (migrationsToRun.includes('granules')) {
+      const { granulesResult, filesResult } = await migrateGranulesAndFiles(
+        env,
+        knex,
+        event.granuleSearchParams
+      );
+      migrationSummary.granules = granulesResult;
+      migrationSummary.files = filesResult;
+    }
+
+    if (migrationsToRun.includes('pdrs')) {
+      const pdrsMigrationResult = await migratePdrs(env, knex);
+      migrationSummary.pdrs = pdrsMigrationResult;
+    }
+
+    const summary: MigrationSummary = {
+      MigrationSummary: migrationSummary,
+    };
+    logger.info(JSON.stringify(summary));
+    return summary;
   } finally {
     await knex.destroy();
   }

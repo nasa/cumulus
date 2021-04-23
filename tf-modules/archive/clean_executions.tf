@@ -22,6 +22,7 @@ resource "aws_lambda_function" "clean_executions" {
   environment {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
+      CMR_HOST = var.cmr_custom_host
       ExecutionsTable = var.dynamo_tables.executions.name
       stackName       = var.prefix
 

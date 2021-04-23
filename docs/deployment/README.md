@@ -20,6 +20,7 @@ The process involves:
 - Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
 - Configuring a VPC, if necessary
 - Configuring an Earthdata application, if necessary
+- Creating/configuring a PostgreSQL 10.2 compatible database, and an AWS Secrets Manager secret to allow database access
 - Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
@@ -217,6 +218,39 @@ $ aws dynamodb create-table \
 
 ---
 
+## Configure the PostgreSQL database
+
+Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](PostgreSQL_database_deployment) utilizing Aurora Serverless. However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
+
+- Appropriate testing/evaluation is given to ensure the database capacity will scale and the database deployment will allow access to Cumulus's internal components.   Core provides for security-group oriented permissions management via the `rds_security_group` configuration parameter.
+- The database is configured such that its endpoint is accessible from the VPC and subnets configured for the Core deployment.
+- An AWS Secrets Manager secret exists that has the following format:
+
+```json
+{
+  "database": "databaseName",
+  "host": "xxx",
+  "password": "defaultPassword",
+  "port": 5432,
+  "username": "xxx"
+}
+```
+
+- `database` -- the PostgreSQL database used by the configured user
+- `host` -- the RDS service host for the database in the form (dbClusterIdentifier)-(AWS ID string).(region).rds.amazonaws.com
+- `password` -- the database password
+- `port` -- The database connection port, should always be 5432
+- `username` -- the database username
+
+This secret should provide access to a PostgreSQL database provisioned on the cluster.
+
+To configure Cumulus you will need:
+
+- The AWS Secrets Manager ARN for the *user* Core will write with (e.g. `arn:aws:secretsmanager:AWS-REGION:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA` ) for use in configuring `rds_user_access_secret_arn`.
+- (Optionally) The security group ID that provides access to the cluster to configure `rds_security_group`.
+
+---
+
 ## Deploy the Cumulus instance
 
 A typical Cumulus deployment is broken into two
@@ -248,6 +282,8 @@ In `terraform.tf`, configure the remote state settings by substituting the appro
 - `PREFIX` (whatever prefix you've chosen for your deployment)
 
 Fill in the appropriate values in `terraform.tfvars`. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
+
+Consider [the size of your Elasticsearch cluster](#elasticsearch) when configuring data-persistence.
 
 **Reminder:** _Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus dashboard will not work without Elasticsearch._
 
@@ -376,6 +412,11 @@ Notes on specific variables:
 - **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
 - **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
+- **`rds_security_group`**: The ID of the security group used to allow access to the PostgreSQL database
+- **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
+- **`rds_connection_heartbeat`**:  When using RDS/Aurora Serverless as a database backend, this should be set to `true`, this tells Core to always use a 'heartbeat' query when establishing a database connection to avoid spin-up timeout failures.
+
+Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
 
 #### Configure the Thin Egress App
 
@@ -502,6 +543,37 @@ From the S3 Console:
 
 You should be able to visit the dashboard website at `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or find the url
 `<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](deployment-readme#configure-and-deploy-the-cumulus-stack) step.
+
+---
+
+## Cumulus Instance Sizing
+
+The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and designed for testing and cost savings. The default settings are likely not suitable for production workloads. Sizing his highly individual and dependent on expected load and archive size.
+
+> Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
+
+### Elasticsearch
+
+The [mappings file](https://github.com/nasa/cumulus/blob/master/packages/api/models/mappings.json) contains all of the data types that will be indexed into Elasticsearch. Elasticsearch sizing is tied to your archive size, including your collections, granules, and workflow executions that will be stored.
+
+AWS provides [documentation](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/sizing-domains.html) on calculating and configuring for sizing.
+
+In addition to size you'll want to consider the [number of nodes](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains-dedicatedmasternodes.html) which determine how the system reacts in the event of a failure.
+
+Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf#L16) in `elasticsearch_config` and the [cumulus module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf#L541) in `es_index_shards`.
+
+> If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
+
+### EC2 instances and autoscaling groups
+
+EC2 instances are used for long-running operations (i.e. generating a reconciliation report) and long-running workflow tasks. Configuration for your ECS cluster is achieved via [Cumulus deployment variables](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
+
+When configuring your ECS cluster consider:
+
+- The [EC2 instance type](https://aws.amazon.com/ec2/instance-types/) and [EBS volume size](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_constraints.html) needed to accommodate your workloads. Configured as `ecs_cluster_instance_type` and `ecs_cluster_instance_docker_volume_size`.
+- The minimum and desired number of instances on hand to accommodate your workloads. Configured as `ecs_cluster_min_size` and `ecs_cluster_desired_size`.
+- The maximum number of instances you will need and are willing to pay for to accommodate your heaviest workloads. Configured as `ecs_cluster_max_size`.
+- Your autoscaling parameters: `ecs_cluster_scale_in_adjustment_percent`, `ecs_cluster_scale_out_adjustment_percent`, `ecs_cluster_scale_in_threshold_percent`, and `ecs_cluster_scale_out_threshold_percent`.
 
 ---
 

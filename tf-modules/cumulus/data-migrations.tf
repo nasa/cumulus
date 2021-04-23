@@ -23,7 +23,6 @@ module "data_migration2_ecs_service" {
   prefix = var.prefix
   name   = "DataMigration2Service"
 
-  log2elasticsearch_lambda_function_arn = module.archive.log2elasticsearch_lambda_function_arn
   cluster_arn                           = aws_ecs_cluster.default.arn
   desired_count                         = 1
   image                                 = "cumuluss/cumulus-ecs-task:1.7.0"

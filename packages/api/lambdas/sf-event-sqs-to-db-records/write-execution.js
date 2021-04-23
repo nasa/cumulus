@@ -48,6 +48,7 @@ const buildExecutionRecord = ({
   collectionCumulusId,
   parentExecutionCumulusId,
   now = new Date(),
+  updatedAt = Date.now(),
 }) => {
   const arn = getMessageExecutionArn(cumulusMessage);
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
@@ -62,7 +63,7 @@ const buildExecutionRecord = ({
     workflow_name: getMessageWorkflowName(cumulusMessage),
     created_at: workflowStartTime ? new Date(workflowStartTime) : undefined,
     timestamp: now,
-    updated_at: now,
+    updated_at: new Date(updatedAt),
     error: parseException(cumulusMessage.exception),
     original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
     final_payload: getMessageExecutionFinalPayload(cumulusMessage),
@@ -80,12 +81,14 @@ const writeExecutionViaTransaction = async ({
   parentExecutionCumulusId,
   trx,
   executionPgModel = new ExecutionPgModel(),
+  updatedAt,
 }) => {
   const executionRecord = buildExecutionRecord({
     cumulusMessage,
     collectionCumulusId,
     asyncOperationCumulusId,
     parentExecutionCumulusId,
+    updatedAt,
   });
   return executionPgModel.upsert(trx, executionRecord);
 };
@@ -97,6 +100,7 @@ const writeExecution = async ({
   asyncOperationCumulusId,
   parentExecutionCumulusId,
   executionModel = new Execution(),
+  updatedAt = Date.now(),
 }) =>
   knex.transaction(async (trx) => {
     const [executionCumulusId] = await writeExecutionViaTransaction({
@@ -105,8 +109,9 @@ const writeExecution = async ({
       asyncOperationCumulusId,
       parentExecutionCumulusId,
       trx,
+      updatedAt,
     });
-    await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
+    await executionModel.storeExecutionFromCumulusMessage(cumulusMessage, updatedAt);
     return executionCumulusId;
   });
 

@@ -1,5 +1,5 @@
 const defaultESScrollSize = 1000;
-const defaultESScrollDuration = '2m';
+const defaultESScrollDuration = '6m';
 
 module.exports = {
   defaultESScrollSize,

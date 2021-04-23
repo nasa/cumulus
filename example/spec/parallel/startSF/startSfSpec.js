@@ -26,7 +26,6 @@ async function sendStartSfMessages({
 }) {
   const message = {
     cumulus_meta: {
-      queueUrl,
       state_machine: workflowArn,
     },
     payload,

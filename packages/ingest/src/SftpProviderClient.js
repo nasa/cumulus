@@ -144,7 +144,10 @@ class SftpProviderClient {
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
-  async sync(remotePath, bucket, key) {
+  async sync(params) {
+    const remotePath = params.fileRemotePath;
+    const bucket = params.destinationBucket;
+    const key = params.destinationKey;
     return this.getSftpClient().syncToS3(remotePath, bucket, key);
   }
 }

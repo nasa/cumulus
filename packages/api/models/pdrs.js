@@ -67,10 +67,11 @@ class Pdr extends Manager {
    * Generate a PDR record.
    *
    * @param {Object} message - A workflow execution message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    * @returns {Object|undefined} - A PDR record, or null if `message.payload.pdr` is
    *   not set
    */
-  generatePdrRecord(message) {
+  generatePdrRecord(message, updatedAt = Date.now()) {
     const pdr = getMessagePdr(message);
 
     if (!pdr) { // We got a message with no PDR (OK)
@@ -92,7 +93,7 @@ class Pdr extends Manager {
 
     const stats = getMessagePdrStats(message);
     const progress = getPdrPercentCompletion(stats);
-    const timestamp = Date.now();
+    const now = Date.now();
     const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
@@ -105,9 +106,10 @@ class Pdr extends Manager {
       PANSent: getMessagePdrPANSent(message),
       PANmessage: getMessagePdrPANMessage(message),
       stats,
-      createdAt: workflowStartTime,
-      timestamp,
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      createdAt: getMessageWorkflowStartTime(message),
+      timestamp: now,
+      updatedAt,
+      duration: getWorkflowDuration(workflowStartTime, now),
     };
 
     this.constructor.recordIsValid(record, this.schema);
@@ -119,25 +121,30 @@ class Pdr extends Manager {
    * If the record already exists, only update if the execution is different (re-run case).
    *
    * @param {Object} cumulusMessage - cumulus message object
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    */
-  async storePdrFromCumulusMessage(cumulusMessage) {
-    const pdrRecord = this.generatePdrRecord(cumulusMessage);
+  async storePdrFromCumulusMessage(cumulusMessage, updatedAt) {
+    const pdrRecord = this.generatePdrRecord(cumulusMessage, updatedAt);
     if (!pdrRecord) return undefined;
     const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
+
+    // createdAt comes from cumulus_meta.workflow_start_time
+    // records should *not* be updating from createdAt times that are *older* start
+    // times than the existing record, whatever the status
+    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
     if (pdrRecord.status === 'running') {
-      updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
-      try {
-        return await this.dynamodbDocClient.update(updateParams).promise();
-      } catch (error) {
-        if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-          const executionArn = getMessageExecutionArn(cumulusMessage);
-          log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
-          return undefined;
-        }
-        throw error;
-      }
+      updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
     }
-    return this.dynamodbDocClient.update(updateParams).promise();
+    try {
+      return await this.dynamodbDocClient.update(updateParams).promise();
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        const executionArn = getMessageExecutionArn(cumulusMessage);
+        log.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   /**

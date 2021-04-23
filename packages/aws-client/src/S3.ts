@@ -917,6 +917,8 @@ const uploadPartCopy = async (
  * @param {string} params.sourceKey
  * @param {string} params.destinationBucket
  * @param {string} params.destinationKey
+ * @param {AWS.S3.HeadObjectOutput} [params.sourceObject]
+ *   Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
  * @returns {Promise.<{ etag: string }>} object containing the ETag of the
@@ -928,6 +930,7 @@ export const multipartCopyObject = async (
     sourceKey: string,
     destinationBucket: string,
     destinationKey: string,
+    sourceObject?: AWS.S3.HeadObjectOutput,
     ACL?: AWS.S3.ObjectCannedACL,
     copyTags?: boolean,
     copyMetadata?: boolean
@@ -942,7 +945,7 @@ export const multipartCopyObject = async (
     copyTags = false,
   } = params;
 
-  const sourceObject = await headObject(sourceBucket, sourceKey);
+  const sourceObject = params.sourceObject ?? await headObject(sourceBucket, sourceKey);
 
   // Create a multi-part upload (copy) and get its UploadId
   const uploadId = await createMultipartUpload({

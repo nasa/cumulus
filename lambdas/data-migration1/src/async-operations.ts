@@ -3,18 +3,14 @@ import Knex from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { envUtils } from '@cumulus/common';
 import {
-  doesRecordExist,
-  tableNames,
+  AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
 } from '@cumulus/db';
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
-
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/async-operations' });
 
@@ -22,10 +18,19 @@ export const migrateAsyncOperationRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  // Use API model schema to validate record before processing
-  Manager.recordIsValid(dynamoRecord, schemas.asyncOperation);
+  const asyncOperationPgModel = new AsyncOperationPgModel();
 
-  if (await doesRecordExist({ id: dynamoRecord.id }, knex, tableNames.asyncOperations)) {
+  let existingRecord;
+
+  try {
+    existingRecord = await asyncOperationPgModel.get(knex, { id: dynamoRecord.id });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.id} was already migrated, skipping`);
   }
 
@@ -33,7 +38,7 @@ export const migrateAsyncOperationRecord = async (
     <ApiAsyncOperation>dynamoRecord
   );
 
-  await knex('async_operations').insert(updatedRecord);
+  await asyncOperationPgModel.upsert(knex, updatedRecord);
 };
 
 export const migrateAsyncOperations = async (
@@ -64,7 +69,6 @@ export const migrateAsyncOperations = async (
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
         migrationSummary.skipped += 1;
-        logger.info(error);
       } else {
         migrationSummary.failed += 1;
         logger.error(

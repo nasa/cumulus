@@ -129,7 +129,6 @@ test('PUT replaces an existing collection', async (t) => {
     createdAt: Date.now(),
     duplicateHandling: 'error',
   };
-  const updatedPgCollection = translateApiCollectionToPostgresCollection(updatedCollection);
   delete updatedCollection.process;
 
   await request(app)
@@ -149,9 +148,6 @@ test('PUT replaces an existing collection', async (t) => {
     version: originalCollection.version,
   });
 
-  t.true(actualPgCollection.updated_at > updatedPgCollection.updated_at);
-  t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
-
   t.like(actualCollection, {
     ...originalCollection,
     duplicateHandling: 'error',
@@ -167,6 +163,52 @@ test('PUT replaces an existing collection', async (t) => {
     created_at: originalPgRecord.created_at,
     updated_at: actualPgCollection.updated_at,
   });
+});
+
+test('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
+  const knex = t.context.testKnex;
+  const originalCollection = fakeCollectionFactory({
+    duplicateHandling: 'replace',
+    process: randomString(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+
+  await collectionModel.create(originalCollection);
+
+  const updatedCollection = {
+    ...originalCollection,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+    duplicateHandling: 'error',
+  };
+
+  await request(app)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedCollection)
+    .expect(200);
+
+  const actualCollection = await collectionModel.get({
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  // Endpoint logic will set an updated timestamp and ignore the value from the request
+  // body, so value on actual records should be different (greater) than the value
+  // sent in the request body
+  t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
+  // createdAt timestamp from original record should have been preserved
+  t.is(actualCollection.createdAt, originalCollection.createdAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPgCollection.created_at.getTime(), actualCollection.createdAt);
+  t.is(actualPgCollection.updated_at.getTime(), actualCollection.updatedAt);
 });
 
 test('PUT creates a new record in RDS if one does not exist', async (t) => {

@@ -179,12 +179,14 @@ export class CMR {
    * @param {Object} params
    * @param {string} [params.token] - CMR request token
    * @param {string} [params.ummgVersion] - UMMG metadata version string or null if echo10 metadata
+   * @param {string} [params.cmrRevisionId] - CMR Revision ID
    * @returns {Object} CMR headers object
    */
   getWriteHeaders(
     params: {
       token?: string,
-      ummgVersion?: string
+      ummgVersion?: string,
+      cmrRevisionId?:string,
     } = {}
   ): Headers {
     const contentType = params.ummgVersion
@@ -198,6 +200,7 @@ export class CMR {
 
     if (params.token) headers['Echo-Token'] = params.token;
     if (params.ummgVersion) headers.Accept = 'application/json';
+    if (params.cmrRevisionId) headers['Cmr-Revision-Id'] = params.cmrRevisionId;
 
     return headers;
   }
@@ -234,10 +237,11 @@ export class CMR {
    * Adds a granule record to the CMR
    *
    * @param {string} xml - the granule XML document
+   * @param {string} cmrRevisionId - Optional CMR Revision ID
    * @returns {Promise.<Object>} the CMR response
    */
-  async ingestGranule(xml: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
+  async ingestGranule(xml: string, cmrRevisionId?: string): Promise<unknown> {
+    const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
     return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
@@ -245,12 +249,14 @@ export class CMR {
    * Adds/Updates UMMG json metadata in the CMR
    *
    * @param {Object} ummgMetadata - UMMG metadata object
+   * @param {string} cmrRevisionId - Optional CMR Revision ID
    * @returns {Promise<Object>} to the CMR response object.
    */
-  async ingestUMMGranule(ummgMetadata: UmmMetadata): Promise<unknown> {
+  async ingestUMMGranule(ummgMetadata: UmmMetadata, cmrRevisionId?: string): Promise<unknown> {
     const headers = this.getWriteHeaders({
       token: await this.getToken(),
       ummgVersion: ummVersion(ummgMetadata),
+      cmrRevisionId,
     });
 
     const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';

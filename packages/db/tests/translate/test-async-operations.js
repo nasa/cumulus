@@ -32,7 +32,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation parses output from stri
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
     operationType: 'ES Index',
-    output: JSON.stringify(operationOutput),
+    output: JSON.parse(JSON.stringify((operationOutput))),
   };
 
   const expected = {

@@ -3,8 +3,8 @@ import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
 import {
   getKnexClient,
-  tableNames,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  AsyncOperationPgModel,
 } from '@cumulus/db';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
@@ -172,6 +172,7 @@ export const startAsyncOperation = async (params: {
     systemBucket,
     tableName: dynamoTableName,
   });
+  const asyncOperationPgModel = new AsyncOperationPgModel();
 
   const knex = await getKnexClient({ env: knexConfig });
   return knex.transaction(async (trx) => {
@@ -181,11 +182,13 @@ export const startAsyncOperation = async (params: {
       taskArn: runTaskResponse?.tasks?.[0].taskArn,
       description,
       operationType,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     };
 
-    const knexCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
+    const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
 
-    await trx(tableNames.asyncOperations).insert(knexCreateObject);
+    await asyncOperationPgModel.create(trx, pgCreateObject);
     return asyncOperationModel.create(createObject);
   });
 };

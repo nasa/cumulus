@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const got = require('got');
 const isEqual = require('lodash/isEqual');
 const omit = require('lodash/omit');
 const request = require('supertest');
@@ -94,12 +95,20 @@ test.before(async () => {
     username,
   });
 
-  const reportNames = [randomId('report1'), randomId('report2'), randomId('report3')];
-  const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
+  const reportNameTypes = [
+    { name: randomId('report1'), type: 'Inventory' },
+    { name: randomId('report2'), type: 'Granule Inventory' },
+    { name: randomId('report3'), type: 'Internal' },
+  ];
 
-  fakeReportRecords = reportNames.map((reportName) => fakeReconciliationReportFactory({
-    name: reportName,
-    location: buildS3Uri(process.env.system_bucket, `${reportDirectory}/${reportName}.json`),
+  const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
+  const typeToExtension = (type) => ((type === 'Granule Inventory') ? '.csv' : '.json');
+
+  fakeReportRecords = reportNameTypes.map((nameType) => fakeReconciliationReportFactory({
+    name: nameType.name,
+    type: nameType.type,
+    location: buildS3Uri(process.env.system_bucket,
+      `${reportDirectory}/${nameType.name}${typeToExtension(nameType.type)}`),
   }));
 
   // add report records to database and report files go to s3
@@ -231,17 +240,49 @@ test.serial('default returns list of reports', async (t) => {
   });
 });
 
-test.serial('get a report', (t) =>
-  Promise.all(fakeReportRecords.slice(0, 2).map(async (record) => {
+test.serial('get a Inventory report with s3 signed url', async (t) => {
+  const record = fakeReportRecords[0];
+  const response = await request(app)
+    .get(`/reconciliationReports/${record.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const report = await got(response.body.presignedS3Url).json();
+  t.deepEqual(report, {
+    test_key: `${record.name} test data`,
+  });
+  t.deepEqual(response.body.data, report);
+});
+
+test.serial('get a Granule Inventory report with s3 signed url', async (t) => {
+  const record = fakeReportRecords[1];
+  const response = await request(app)
+    .get(`/reconciliationReports/${record.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const report = await got(response.body.presignedS3Url).text();
+  t.deepEqual(report, JSON.stringify({
+    test_key: `${record.name} test data`,
+  }));
+  t.deepEqual(response.body.data, report);
+});
+
+test.serial('get a report which exceeds maximum allowed payload size', (t) => {
+  process.env.maxResponsePayloadSize = 150;
+  return Promise.all(fakeReportRecords.slice(0, 2).map(async (record) => {
     const response = await request(app)
       .get(`/reconciliationReports/${record.name}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .expect(200);
-    t.deepEqual(response.body, {
+    const report = await got(response.body.presignedS3Url).text();
+    t.deepEqual(report, JSON.stringify({
       test_key: `${record.name} test data`,
-    });
-  })));
+    }));
+    t.true(response.body.data.includes('exceeded maximum allowed payload size'));
+  }));
+});
 
 test.serial('get 404 if the report record doesnt exist', async (t) => {
   const response = await request(app)

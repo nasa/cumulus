@@ -164,7 +164,7 @@ test.serial('_getMutableFieldNames() returns correct fields for running status',
 
   // Fields are included even if not present in the item.
   t.deepEqual(updateFields, [
-    'createdAt', 'updatedAt', 'timestamp', 'originalPayload',
+    'updatedAt', 'timestamp', 'originalPayload',
   ]);
 });
 

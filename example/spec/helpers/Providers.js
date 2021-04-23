@@ -5,14 +5,19 @@ const pWaitFor = require('p-wait-for');
 const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
-const fetchFakeS3ProviderBucket = async () => {
+const fetchFakeS3ProviderBuckets = async () => {
   if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
     throw new Error('The FAKE_PROVIDER_CONFIG_BUCKET environment variable must be set');
   }
 
-  return (await getTextObject(
+  const fakeS3ProviderBucket = (await getTextObject(
     process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-s3-provider-bucket'
   )).trim();
+
+  const altFakeS3ProviderBucket = (await getTextObject(
+    process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-s3-provider-bucket-alternate'
+  )).trim();
+  return { fakeS3ProviderBucket, altFakeS3ProviderBucket };
 };
 
 const fetchFakeProviderIp = async () => {
@@ -96,23 +101,6 @@ const createProvider = async (stackName, provider) => {
   throwIfApiReturnFail(createProviderResult);
 };
 
-const deleteProvidersByHost = async (stackName, host) => {
-  const resp = await providersApi.getProviders({
-    prefix: stackName,
-    queryStringParameters: {
-      fields: 'id',
-      host,
-    },
-  });
-  const ids = JSON.parse(resp.body).results.map((p) => p.id);
-  const deletes = ids.map((id) => providersApi.deleteProvider({
-    prefix: stackName,
-    providerId: id,
-  }));
-  await Promise.all(deletes).catch(console.error);
-  await Promise.all(ids.map((id) => exports.waitForProviderRecordInOrNotInList(stackName, id, false)));
-};
-
 const waitForProviderRecordInOrNotInList = async (
   stackName, id, recordIsIncluded = true, additionalQueryParams = {}
 ) => pWaitFor(
@@ -134,11 +122,28 @@ const waitForProviderRecordInOrNotInList = async (
   }
 );
 
+const deleteProvidersByHost = async (stackName, host) => {
+  const resp = await providersApi.getProviders({
+    prefix: stackName,
+    queryStringParameters: {
+      fields: 'id',
+      host,
+    },
+  });
+  const ids = JSON.parse(resp.body).results.map((p) => p.id);
+  const deletes = ids.map((id) => providersApi.deleteProvider({
+    prefix: stackName,
+    providerId: id,
+  }));
+  await Promise.all(deletes).catch(console.error);
+  await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(stackName, id, false)));
+};
+
 module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
   createProvider,
   deleteProvidersByHost,
-  fetchFakeS3ProviderBucket,
+  fetchFakeS3ProviderBuckets,
   waitForProviderRecordInOrNotInList,
 };

@@ -8,9 +8,13 @@ export const up = async (knex: Knex): Promise<void> =>
       .primary();
     table
       .integer('granule_cumulus_id')
+      .notNullable();
+    table.foreign('granule_cumulus_id')
       .references('cumulus_id')
       .inTable('granules')
-      .notNullable();
+      // Automatically delete records in this table whenever the
+      // referenced record in the granules table is deleted
+      .onDelete('CASCADE');
     table
       .timestamps(false, true);
     table
@@ -18,7 +22,8 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Size of file (bytes)');
     table
       .text('bucket')
-      .comment('AWS Bucket file is archived in');
+      .comment('AWS Bucket file is archived in')
+      .notNullable();
     table
       .text('checksum_type')
       .comment('Type of file checksum (e.g. md5');
@@ -30,7 +35,8 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Source file name');
     table
       .text('key')
-      .comment('AWS S3 key file is archived at');
+      .comment('AWS S3 key file is archived at')
+      .notNullable();
     table
       .text('path')
       .comment('Source file path');

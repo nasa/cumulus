@@ -32,9 +32,7 @@ module "archive" {
   es_request_concurrency = var.es_request_concurrency
 
   system_bucket     = var.system_bucket
-  public_buckets    = local.public_bucket_names
-  protected_buckets = local.protected_bucket_names
-  private_buckets   = local.private_bucket_names
+  buckets           = var.buckets
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
@@ -98,6 +96,8 @@ module "archive" {
   rds_security_group = var.rds_security_group
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_heartbeat = var.rds_connection_heartbeat
+  postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
+  postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
 
   ems_deploy = var.ems_deploy
 

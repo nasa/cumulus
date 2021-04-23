@@ -18,6 +18,7 @@
     "parsePdrWorkflow": { "type": "string" },
     "internalBucket": { "type": "string" },
     "stackName": { "type": "string" },
-    "executionNamePrefix": { "type": "string" }
+    "executionNamePrefix": { "type": "string" },
+    "childWorkflowMeta": { "type": "object" }
   }
 }

@@ -30,28 +30,32 @@ const _removeGranuleFromCmr = async (granule) => {
 };
 
 /**
- * Remove granule record from CMR and update PG + Dynamo granules
+ * Remove granule record from CMR and update Postgres + Dynamo granules
  *
  * @param {Knex | Knex.transaction} knexOrTransaction - DB client
  * @param {Object} granule - A granule record
- * @returns {Promise} - output of Granule Dynamo model's update()
+ * @returns {Object} - Updated granules
+ * @returns {Object.dynamoGranule} - Updated Dynamo Granule
+ * @returns {Object.pgGranule} - Updated Postgres Granule
  */
 const unpublishGranule = async (knexOrTransaction, granule) => {
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
 
+  let pgGranule;
+
   await _removeGranuleFromCmr(granule);
 
-  // If we cannot find a PG Collection for this granule,
-  // don't update the PG Granule, continue to update the Dynamo granule
+  // If we cannot find a Postgres Collection or Postgres Granule,
+  // don't update the Postgres Granule, continue to update the Dynamo granule
   try {
     const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
       knexOrTransaction,
       deconstructCollectionId(granule.collectionId)
     );
 
-    await granulePgModel.update(
+    [pgGranule] = await granulePgModel.update(
       knexOrTransaction,
       {
         granule_id: granule.granuleId,
@@ -60,7 +64,8 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
       {
         published: false,
         cmr_link: undefined,
-      }
+      },
+      ['cumulus_id', 'published']
     );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
@@ -68,7 +73,10 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
     }
   }
 
-  return granuleModelClient.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+  return {
+    dynamoGranule: await granuleModelClient.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']),
+    pgGranule: pgGranule,
+  };
 };
 
 module.exports = {

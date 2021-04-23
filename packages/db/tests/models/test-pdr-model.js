@@ -122,7 +122,7 @@ test('PdrPgModel.upsert() overwrites record with same execution if progress is g
   );
 });
 
-test('PdrPgModel.upsert() updates a "completed" record to "running" if execution is different', async (t) => {
+test('PdrPgModel.upsert() updates a "completed" record to "running" if execution is different and created_at is newer', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -130,7 +130,11 @@ test('PdrPgModel.upsert() updates a "completed" record to "running" if execution
     pdrRecord,
   } = t.context;
 
+  const testDate = Date.now();
+
   pdrRecord.status = 'completed';
+  pdrRecord.created_at = new Date(testDate);
+
   const [insertResult] = await knex(tableNames.pdrs)
     .insert(pdrRecord)
     .returning('*');
@@ -145,6 +149,121 @@ test('PdrPgModel.upsert() updates a "completed" record to "running" if execution
     ...pdrRecord,
     status: 'running',
     execution_cumulus_id: executionCumulusId,
+    created_at: new Date(testDate + 10000),
+  };
+
+  await pdrPgModel.upsert(knex, updatedRecord);
+
+  t.like(
+    await pdrPgModel.get(knex, { name: pdrRecord.name }),
+    updatedRecord
+  );
+});
+
+test('PdrPgModel.upsert() does not update a "completed" record to "running" if execution is different and created_at is older', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    pdrPgModel,
+    pdrRecord,
+  } = t.context;
+
+  const testDate = Date.now();
+
+  pdrRecord.status = 'completed';
+  pdrRecord.created_at = new Date(testDate);
+
+  const [insertResult] = await knex(tableNames.pdrs)
+    .insert(pdrRecord)
+    .returning('*');
+  t.is(insertResult.status, 'completed');
+
+  // Update PDR status and execution
+  const [executionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory()
+  );
+  const updatedRecord = {
+    ...pdrRecord,
+    status: 'running',
+    execution_cumulus_id: executionCumulusId,
+    created_at: new Date(testDate - 10000),
+  };
+
+  await pdrPgModel.upsert(knex, updatedRecord);
+
+  t.like(
+    await pdrPgModel.get(knex, { name: pdrRecord.name }),
+    pdrRecord
+  );
+});
+
+test('PdrPgModel.upsert() does not update a final (failed) record to a final state (completed) if execution is different but created_at is older', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    pdrPgModel,
+    pdrRecord,
+  } = t.context;
+
+  const testDate = Date.now();
+
+  pdrRecord.status = 'failed';
+  pdrRecord.created_at = new Date(testDate);
+
+  const [insertResult] = await knex(tableNames.pdrs)
+    .insert(pdrRecord)
+    .returning('*');
+  t.is(insertResult.status, 'failed');
+
+  // Update PDR status and execution
+  const [executionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory()
+  );
+  const updatedRecord = {
+    ...pdrRecord,
+    status: 'completed',
+    execution_cumulus_id: executionCumulusId,
+    created_at: new Date(testDate - 10000),
+  };
+
+  await pdrPgModel.upsert(knex, updatedRecord);
+
+  t.like(
+    await pdrPgModel.get(knex, { name: pdrRecord.name }),
+    pdrRecord
+  );
+});
+
+test('PdrPgModel.upsert() does update a final (failed) record to a final state (completed) if execution is different but created_at is newer', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    pdrPgModel,
+    pdrRecord,
+  } = t.context;
+
+  const testDate = Date.now();
+
+  pdrRecord.status = 'failed';
+  pdrRecord.created_at = new Date(testDate);
+
+  const [insertResult] = await knex(tableNames.pdrs)
+    .insert(pdrRecord)
+    .returning('*');
+  t.is(insertResult.status, 'failed');
+
+  // Update PDR status and execution
+  const [executionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory()
+  );
+  const updatedRecord = {
+    ...pdrRecord,
+    status: 'completed',
+    execution_cumulus_id: executionCumulusId,
+    created_at: new Date(testDate + 100000),
   };
 
   await pdrPgModel.upsert(knex, updatedRecord);

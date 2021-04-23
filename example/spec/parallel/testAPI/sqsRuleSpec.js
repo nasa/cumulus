@@ -5,11 +5,15 @@ const fs = require('fs-extra');
 const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
-const { deleteGranule } = require('@cumulus/api-client/granules');
-const { sqs } = require('@cumulus/aws-client/services');
-const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
-const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const { Granule } = require('@cumulus/api/models');
+const { deleteGranule } = require('@cumulus/api-client/granules');
+const {
+  deleteQueue,
+  receiveSQSMessages,
+  sendSQSMessage,
+  getQueueUrlByName,
+} = require('@cumulus/aws-client/SQS');
+const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const {
   addCollections,
   addRules,
@@ -19,6 +23,7 @@ const {
   readJsonFilesFromDir,
   deleteRules,
   setProcessEnvironment,
+  getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 
 const { randomId } = require('@cumulus/common/test-utils');
@@ -76,17 +81,17 @@ async function cleanUp() {
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-    sqs().deleteQueue({ QueueUrl: queues.queueUrl }).promise(),
-    sqs().deleteQueue({ QueueUrl: queues.deadLetterQueueUrl }).promise(),
+    deleteQueue(queues.sourceQueueUrl),
+    deleteQueue(queues.deadLetterQueueUrl),
   ]);
 }
 
-async function ingestGranule(queue) {
+async function sendIngestGranuleMessage(queueUrl) {
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
   const inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
   const granuleId = inputPayload.granules[0].granuleId;
-  await sqs().sendMessage({ QueueUrl: queue, MessageBody: JSON.stringify(inputPayload) }).promise();
+  await sendSQSMessage(queueUrl, inputPayload);
   return granuleId;
 }
 
@@ -121,6 +126,8 @@ describe('The SQS rule', () => {
 
     executionNamePrefix = randomId('prefix');
 
+    const scheduleQueueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
+
     ruleOverride = {
       name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
       collection: {
@@ -133,13 +140,20 @@ describe('The SQS rule', () => {
         retries: 1,
       },
       executionNamePrefix,
+      // use custom queue for scheduling workflows
+      queueUrl: scheduleQueueUrl,
     };
 
     await setupCollectionAndTestData();
 
     // create SQS queues and add rule
-    queues = await createSqsQueues(testId);
-    config.queueUrl = queues.queueUrl;
+    const { queueUrl, deadLetterQueueUrl } = await createSqsQueues(testId);
+    queues = {
+      sourceQueueUrl: queueUrl,
+      deadLetterQueueUrl,
+      scheduleQueueUrl,
+    };
+    config.queueUrl = queues.sourceQueueUrl;
 
     ruleList = await addRules(config, ruleDirectory, ruleOverride);
   });
@@ -150,7 +164,7 @@ describe('The SQS rule', () => {
 
   it('SQS rules are added', async () => {
     expect(ruleList.length).toBe(1);
-    expect(ruleList[0].rule.value).toBe(queues.queueUrl);
+    expect(ruleList[0].rule.value).toBe(queues.sourceQueueUrl);
     expect(ruleList[0].meta.visibilityTimeout).toBe(300);
     expect(ruleList[0].meta.retries).toBe(1);
   });
@@ -161,10 +175,10 @@ describe('The SQS rule', () => {
 
     beforeAll(async () => {
       // post a valid message for ingesting a granule
-      granuleId = await ingestGranule(queues.queueUrl);
+      granuleId = await sendIngestGranuleMessage(queues.sourceQueueUrl);
 
       // post a non-processable message
-      await sqs().sendMessage({ QueueUrl: queues.queueUrl, MessageBody: invalidMessage }).promise();
+      await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
     });
 
     afterAll(async () => {
@@ -184,15 +198,20 @@ describe('The SQS rule', () => {
         );
       });
 
-      it('workflow is kicked off, and the granule from the message is successfully ingested', () => {
+      it('workflow is kicked off, and the granule from the message is successfully ingested', async () => {
         expect(record.granuleId).toBe(granuleId);
         expect(record.execution).toContain(workflowName);
       });
 
       it('the execution name starts with the expected prefix', () => {
         const executionName = record.execution.split(':').reverse()[0];
-
         expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
+      });
+
+      it('references the correct queue URL in the execution message', async () => {
+        const executionArn = record.execution.split('/').reverse()[0];
+        const executionInput = await getExecutionInputObject(executionArn);
+        expect(executionInput.cumulus_meta.queueUrl).toBe(queues.scheduleQueueUrl);
       });
     });
 
@@ -217,7 +236,7 @@ describe('The SQS rule', () => {
     });
 
     it('messages are picked up and removed from source queue', async () => {
-      await expectAsync(waitForQueueMessageCount(queues.queueUrl, 0)).toBeResolved();
+      await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
     });
   });
 });

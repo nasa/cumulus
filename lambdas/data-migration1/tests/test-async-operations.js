@@ -9,7 +9,11 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
+const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  AsyncOperationPgModel,
+} = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
 const {
@@ -21,13 +25,12 @@ const {
 const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
-const testDbUser = 'postgres';
 
 const generateFakeAsyncOperation = (params) => ({
   id: uuid(),
   description: 'unittest async operation',
+  output: '\"Index from database complete\"',
   operationType: 'ES Index',
-  output: '{ "output": "test" }',
   status: 'SUCCEEDED',
   taskArn: 'arn:aws:ecs:task:1234',
   createdAt: (Date.now() - 1000),
@@ -50,25 +53,11 @@ test.before(async (t) => {
   });
   await asyncOperationsModel.createTable();
 
-  t.context.knexAdmin = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      migrationDir,
-    },
-  });
+  t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  await t.context.knexAdmin.raw(`create database "${testDbName}";`);
-  await t.context.knexAdmin.raw(`grant all privileges on database "${testDbName}" to "${testDbUser}"`);
-
-  t.context.knex = await getKnexClient({
-    env: {
-      ...localStackConnectionEnv,
-      PG_DATABASE: testDbName,
-      migrationDir,
-    },
-  });
-
-  await t.context.knex.migrate.latest();
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
 test.afterEach.always(async (t) => {
@@ -78,13 +67,41 @@ test.afterEach.always(async (t) => {
 test.after.always(async (t) => {
   await asyncOperationsModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await t.context.knex.destroy();
-  await t.context.knexAdmin.raw(`drop database if exists "${testDbName}"`);
-  await t.context.knexAdmin.destroy();
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation record', async (t) => {
+  const { knex, asyncOperationPgModel } = t.context;
+
   const fakeAsyncOp = generateFakeAsyncOperation();
+  await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const createdRecord = await asyncOperationPgModel.get(
+    knex,
+    { id: fakeAsyncOp.id }
+  );
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit({
+      ...fakeAsyncOp,
+      operation_type: fakeAsyncOp.operationType,
+      task_arn: fakeAsyncOp.taskArn,
+      output: JSON.parse(fakeAsyncOp.output),
+      created_at: new Date(fakeAsyncOp.createdAt),
+      updated_at: new Date(fakeAsyncOp.updatedAt),
+    },
+    ['createdAt', 'updatedAt', 'operationType', 'taskArn'])
+  );
+});
+
+test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation record where record.output is an array', async (t) => {
+  const output = { output: '[\"string\",\"test-string"]' };
+  const fakeAsyncOp = generateFakeAsyncOperation(output);
   await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
 
   const createdRecord = await t.context.knex.queryBuilder()
@@ -108,16 +125,17 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
 });
 
 test.serial('migrateAsyncOperationRecord migrates asyncOperation record with undefined nullables', async (t) => {
+  const { knex, asyncOperationPgModel } = t.context;
+
   const fakeAsyncOp = generateFakeAsyncOperation();
   delete fakeAsyncOp.output;
   delete fakeAsyncOp.taskArn;
   await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
 
-  const createdRecord = await t.context.knex.queryBuilder()
-    .select()
-    .table('async_operations')
-    .where({ id: fakeAsyncOp.id })
-    .first();
+  const createdRecord = await asyncOperationPgModel.get(
+    knex,
+    { id: fakeAsyncOp.id }
+  );
 
   t.deepEqual(
     omit(createdRecord, ['cumulus_id']),
@@ -133,17 +151,49 @@ test.serial('migrateAsyncOperationRecord migrates asyncOperation record with und
   );
 });
 
-test.serial('migrateAsyncOperationRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
-  const fakeAsyncOp = generateFakeAsyncOperation();
+test.serial('migrateAsyncOperationRecord throws RecordAlreadyMigrated error if already migrated record is newer', async (t) => {
+  const fakeAsyncOp = generateFakeAsyncOperation({
+    updatedAt: Date.now(),
+  });
 
   await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const olderFakeAsyncOp = {
+    ...fakeAsyncOp,
+    updatedAt: Date.now() - 1000, // older than fakeAsyncOp
+  };
+
   await t.throwsAsync(
-    migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex),
+    migrateAsyncOperationRecord(olderFakeAsyncOp, t.context.knex),
     { instanceOf: RecordAlreadyMigrated }
   );
 });
 
+test.serial('migrateAsyncOperationRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const { knex, asyncOperationPgModel } = t.context;
+
+  const fakeAsyncOp = generateFakeAsyncOperation({
+    updatedAt: Date.now() - 1000,
+  });
+  await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const newerFakeAsyncOp = generateFakeAsyncOperation({
+    ...fakeAsyncOp,
+    updatedAt: Date.now(),
+  });
+  await migrateAsyncOperationRecord(newerFakeAsyncOp, t.context.knex);
+
+  const createdRecord = await asyncOperationPgModel.get(
+    knex,
+    { id: fakeAsyncOp.id }
+  );
+
+  t.deepEqual(createdRecord.updated_at, new Date(newerFakeAsyncOp.updatedAt));
+});
+
 test.serial('migrateAsyncOperations processes multiple async operations', async (t) => {
+  const { knex, asyncOperationPgModel } = t.context;
+
   const fakeAsyncOp1 = generateFakeAsyncOperation();
   const fakeAsyncOp2 = generateFakeAsyncOperation();
 
@@ -163,11 +213,17 @@ test.serial('migrateAsyncOperations processes multiple async operations', async 
     failed: 0,
     success: 2,
   });
-  const records = await t.context.knex.queryBuilder().select().table('async_operations');
+
+  const records = await asyncOperationPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 2);
 });
 
 test.serial('migrateAsyncOperations processes all non-failing records', async (t) => {
+  const { knex, asyncOperationPgModel } = t.context;
+
   const fakeAsyncOp1 = generateFakeAsyncOperation();
   const fakeAsyncOp2 = generateFakeAsyncOperation();
 
@@ -195,6 +251,9 @@ test.serial('migrateAsyncOperations processes all non-failing records', async (t
     failed: 1,
     success: 1,
   });
-  const records = await t.context.knex.queryBuilder().select().table('async_operations');
+  const records = await asyncOperationPgModel.search(
+    knex,
+    {}
+  );
   t.is(records.length, 1);
 });

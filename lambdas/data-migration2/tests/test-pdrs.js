@@ -1,9 +1,11 @@
-const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const test = require('ava');
+const sinon = require('sinon');
 
 const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Pdr = require('@cumulus/api/models/pdrs');
+const Logger = require('@cumulus/logger');
 
 const {
   CollectionPgModel,
@@ -22,19 +24,18 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
-const { RecordAlreadyMigrated } = require('@cumulus/errors');
+const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
 const { migratePdrRecord, migratePdrs } = require('../dist/lambda/pdrs');
 
-const generateTestPdr = (collection, provider, executionArn) => ({
+const buildCollectionId = (name, version) => `${name}___${version}`;
+
+const generateTestPdr = (params) => ({
   pdrName: cryptoRandomString({ length: 5 }),
-  collectionId: `${collection.name}___${collection.version}`,
-  provider: provider,
   status: 'running',
   progress: 10,
-  execution: executionArn,
   PANSent: false,
   PANmessage: 'message',
   stats: { total: 1, completed: 0, failed: 0, processing: 1 },
@@ -44,6 +45,7 @@ const generateTestPdr = (collection, provider, executionArn) => ({
   duration: 10,
   createdAt: Date.now(),
   updatedAt: Date.now(),
+  ...params,
 });
 
 let collectionsModel;
@@ -138,7 +140,11 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   );
   const executionCumulusId = executionResponse[0];
 
-  const testPdr = generateTestPdr(testCollection, testProvider.name, execution.arn);
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+    execution: execution.arn,
+  });
   await migratePdrRecord(testPdr, knex);
 
   const record = await pdrPgModel.get(knex, { name: testPdr.pdrName });
@@ -165,19 +171,6 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   );
 });
 
-test.serial('migratePdrRecord throws SchemaValidationError on invalid source data from DynamoDB', async (t) => {
-  const { knex, testCollection, testProvider } = t.context;
-
-  const testPdr = generateTestPdr(testCollection, testProvider.name);
-
-  delete testPdr.status;
-
-  await t.throwsAsync(
-    migratePdrRecord(testPdr, knex),
-    { name: 'SchemaValidationError' }
-  );
-});
-
 test.serial('migratePdrRecord handles nullable fields on source PDR data', async (t) => {
   const {
     collectionCumulusId,
@@ -188,7 +181,10 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
     testProvider,
   } = t.context;
 
-  const testPdr = generateTestPdr(testCollection, testProvider.name);
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
 
   delete testPdr.execution;
   delete testPdr.PANSent;
@@ -225,16 +221,86 @@ test.serial('migratePdrRecord handles nullable fields on source PDR data', async
   );
 });
 
-test.serial('migratePdrRecord throws RecordAlreadyMigrated error for already migrated record', async (t) => {
+test.serial('migratePdrRecord throws RecordAlreadyMigrated error if previously migrated record is newer', async (t) => {
   const { knex, testCollection, testProvider } = t.context;
 
-  const testPdr = generateTestPdr(testCollection, testProvider.name);
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
   await migratePdrRecord(testPdr, knex);
 
+  const olderTestPdr = {
+    ...testPdr,
+    updatedAt: Date.now() - 1000,
+  };
+
   await t.throwsAsync(
-    migratePdrRecord(testPdr, knex),
+    migratePdrRecord(olderTestPdr, knex),
     { instanceOf: RecordAlreadyMigrated }
   );
+});
+
+test.serial('migratePdrRecord throws error if upsert does not return any rows', async (t) => {
+  const { knex, testCollection, testProvider } = t.context;
+
+  // Create a PDR in the "running" status.
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+    status: 'running',
+  });
+
+  await migratePdrRecord(testPdr, knex);
+
+  // An upsert of a PDR in the "running" state may return 0 rows if the upsert
+  // conditions are not met. In this case the migration of this record will fail.
+  const newerTestPdr = {
+    ...testPdr,
+    updatedAt: Date.now(),
+  };
+
+  await t.throwsAsync(
+    migratePdrRecord(newerTestPdr, knex),
+    { instanceOf: PostgresUpdateFailed }
+  );
+});
+
+test.serial('migratePdrRecord updates an already migrated record if the updated date is newer', async (t) => {
+  const {
+    knex,
+    testCollection,
+    testProvider,
+    pdrPgModel,
+  } = t.context;
+
+  const executionPgModel = new ExecutionPgModel();
+  const execution = fakeExecutionRecordFactory();
+
+  await executionPgModel.create(
+    knex,
+    execution
+  );
+
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+    execution: execution.arn,
+    status: 'completed',
+    updatedAt: Date.now() - 1000,
+  });
+  await migratePdrRecord(testPdr, knex);
+
+  const newerTestPdr = {
+    ...testPdr,
+    updatedAt: Date.now(),
+  };
+
+  await migratePdrRecord(newerTestPdr, knex);
+
+  const createdRecord = await pdrPgModel.get(knex, { name: testPdr.pdrName });
+
+  t.deepEqual(createdRecord.updated_at, new Date(newerTestPdr.updatedAt));
 });
 
 test.serial('migratePdrs skips already migrated record', async (t) => {
@@ -243,7 +309,10 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
     testCollection,
     testProvider,
   } = t.context;
-  const testPdr = generateTestPdr(testCollection, testProvider.name);
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
 
   await migratePdrRecord(testPdr, knex);
   await pdrsModel.create(testPdr);
@@ -251,10 +320,10 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary,
     {
-      dynamoRecords: 1,
+      total_dynamo_db_records: 1,
       skipped: 1,
       failed: 0,
-      success: 0,
+      migrated: 0,
     });
 
   const records = await knex(tableNames.pdrs).where({ name: testPdr.pdrName });
@@ -269,8 +338,14 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
     testProvider,
   } = t.context;
 
-  const testPdr = generateTestPdr(testCollection, testProvider.name);
-  const anotherPdr = generateTestPdr(testCollection, testProvider.name);
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
+  const anotherPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
 
   await Promise.all([
     pdrsModel.create(testPdr),
@@ -282,10 +357,10 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    success: 2,
+    migrated: 2,
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 2);
@@ -298,8 +373,14 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
     testProvider,
   } = t.context;
 
-  const testPdr = generateTestPdr(testCollection, testProvider.name);
-  const anotherPdr = generateTestPdr(testCollection, testProvider.name);
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
+  const anotherPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
   delete testPdr.status;
 
   await Promise.all([
@@ -317,11 +398,36 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
   ]));
   const migrationSummary = await migratePdrs(process.env, knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 1,
-    success: 1,
+    migrated: 1,
   });
   const records = await knex(tableNames.pdrs);
   t.is(records.length, 1);
+});
+
+test.serial('migratePdrs logs summary of migration every for a specified interval', async (t) => {
+  const logSpy = sinon.spy(Logger.prototype, 'info');
+  const {
+    knex,
+    testCollection,
+    testProvider,
+  } = t.context;
+  process.env.loggingInterval = 1;
+
+  const testPdr = generateTestPdr({
+    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    provider: testProvider.name,
+  });
+
+  await pdrsModel.create(testPdr);
+
+  t.teardown(async () => {
+    logSpy.restore();
+    await pdrsModel.delete({ pdrName: testPdr.pdrName });
+  });
+
+  await migratePdrs(process.env, knex);
+  t.true(logSpy.calledWith('Batch of 1 PDR records processed, 1 total'));
 });

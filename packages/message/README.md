@@ -35,6 +35,14 @@ from a Cumulus message</p>
 </dd>
 </dl>
 
+### Functions
+
+<dl>
+<dt><a href="#exp_module_workflows--exports.getMessageWorkflowStartTime">exports.getMessageWorkflowStartTime(message)</a> ⇒ <code>number</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow start time, if any.</p>
+</dd>
+</dl>
+
 <a name="module_Build"></a>
 
 ### Build
@@ -256,7 +264,7 @@ Get the queue URL from a workflow message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | A workflow message object |
+| message | <code>MessageWithQueueInfo</code> | A workflow message object |
 
 <a name="exp_module_Queue--exports.getMaximumExecutions"></a>
 
@@ -285,7 +293,7 @@ Determine if there is a queue and queue execution limit in the message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | A workflow message object |
+| message | <code>MessageWithQueueInfo</code> | A workflow message object |
 
 <a name="module_StepFunctions"></a>
 

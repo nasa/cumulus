@@ -1,8 +1,9 @@
 'use strict';
 
-const awsClients = require('@cumulus/aws-client/services');
 const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
+
+const awsClients = require('@cumulus/aws-client/services');
 
 const FileUtils = require('./FileUtils');
 

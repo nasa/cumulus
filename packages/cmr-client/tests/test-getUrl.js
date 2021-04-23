@@ -2,7 +2,34 @@
 
 const test = require('ava');
 
-const { getSearchUrl } = require('../getUrl');
+const { getCmrHost, getSearchUrl } = require('../getUrl');
+
+test('getCmrHost uses provided logical CMR environment', (t) => {
+  t.is(getCmrHost({ cmrEnvironment: 'OPS' }), 'cmr.earthdata.nasa.gov');
+  t.is(getCmrHost({ cmrEnvironment: 'UAT' }), 'cmr.uat.earthdata.nasa.gov');
+  t.is(getCmrHost({ cmrEnvironment: 'SIT' }), 'cmr.sit.earthdata.nasa.gov');
+});
+
+test('getCmrHost uses custom CMR host', (t) => {
+  t.is(getCmrHost({ cmrHost: 'custom-host' }), 'custom-host');
+});
+
+test('getCmrHost throws error if provided environment is incorrect', (t) => {
+  t.throws(() => getCmrHost({ cmrEnvironment: 'foo' }));
+  t.throws(() => getCmrHost());
+});
+
+test.serial('getCmrHost uses process.env.CMR_ENVIRONMENT logical name, if provided', (t) => {
+  process.env.CMR_ENVIRONMENT = 'OPS';
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
+  t.is(getCmrHost(), 'cmr.earthdata.nasa.gov');
+});
+
+test.serial('getCmrHost uses process.env.CMR_HOST custom host, if provided', (t) => {
+  process.env.CMR_HOST = 'cmr-host';
+  t.teardown(() => delete process.env.CMR_HOST);
+  t.is(getCmrHost(), 'cmr-host');
+});
 
 test.serial('getSearchUrl returns value according to cmrEnvironment param', (t) => {
   t.is(getSearchUrl({ cmrEnv: 'OPS' }), 'https://cmr.earthdata.nasa.gov/search/');
@@ -19,9 +46,12 @@ test.serial('getSearchUrl pulls cmrEnvironment from environment variables', (t) 
 
   process.env.CMR_ENVIRONMENT = 'OPS';
   t.is(getSearchUrl(), 'https://cmr.earthdata.nasa.gov/search/');
+
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
 });
 
 test.serial('getSearchUrl uses cmrEnv from parameter over env variable', (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
   t.is(getSearchUrl({ cmrEnv: 'OPS' }), 'https://cmr.earthdata.nasa.gov/search/');
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
 });

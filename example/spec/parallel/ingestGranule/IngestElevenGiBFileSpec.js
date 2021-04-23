@@ -19,7 +19,7 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 
 const { loadConfig } = require('../../helpers/testUtils');
-const { fetchFakeS3ProviderBucket } = require('../../helpers/Providers');
+const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
 describe('The IngestGranule workflow ingesting an 11G file', () => {
   let beforeAllFailed = false;
@@ -29,13 +29,12 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
   let ingestGranuleExecution;
   let prefix;
   let provider;
-  let sourceBucket;
 
   beforeAll(async () => {
     try {
       const config = await loadConfig();
       prefix = config.stackName;
-      sourceBucket = await fetchFakeS3ProviderBucket();
+      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
 
       // Create the collection
       collection = await createCollection(
@@ -47,7 +46,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       );
 
       // Create the S3 provider
-      provider = await createProvider(prefix, { host: sourceBucket });
+      provider = await createProvider(prefix, { host: fakeS3ProviderBucket });
 
       granuleId = randomId('granule-id-');
 

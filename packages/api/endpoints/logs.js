@@ -1,36 +1,11 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { convertLogLevel } = require('../es/logUtils');
 const { Search } = require('../es/search');
 
 const metrics = () => ('log_destination_arn' in process.env);
 
-function convertLogLevelForQuery(query) {
-  if (!query.level || metrics()) {
-    return query;
-  }
-
-  return { ...query, level: convertLogLevel(query.level) };
-}
-
-function metricsConfig() {
-  return {
-    type: '_doc',
-    index: `${process.env.stackName}-*`,
-    metrics: true,
-  };
-}
-
-function cumulusDefaultConfig() {
-  return {
-    type: 'logs',
-    index: process.env.ES_INDEX,
-    metrics: false,
-  };
-}
-
-const esConfig = () => (metrics() ? metricsConfig() : cumulusDefaultConfig());
+const esMetricsParams = ['_doc', `${process.env.stackName}-*`, true];
 
 /**
  * list all the logs
@@ -40,13 +15,13 @@ const esConfig = () => (metrics() ? metricsConfig() : cumulusDefaultConfig());
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const config = esConfig();
+  if (!metrics()) {
+    return res.boom.badRequest('Metrics not configured');
+  }
 
   const search = new Search(
-    { queryStringParameters: convertLogLevelForQuery(req.query) },
-    config.type,
-    config.index,
-    config.metrics
+    { queryStringParameters: req.query },
+    ...esMetricsParams
   );
 
   const result = await search.query();
@@ -61,8 +36,11 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
+  if (!metrics()) {
+    return res.boom.badRequest('Metrics not configured');
+  }
+
   const executionName = req.params.executionName;
-  const config = esConfig();
 
   const search = new Search(
     {
@@ -71,9 +49,7 @@ async function get(req, res) {
         'executions.keyword': executionName,
       },
     },
-    config.type,
-    config.index,
-    config.metrics
+    ...esMetricsParams
   );
   const result = await search.query();
   return res.send(result);

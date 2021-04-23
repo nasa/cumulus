@@ -16,6 +16,12 @@ variable "cmr_environment" {
   type = string
 }
 
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = ""
+}
+
 variable "cmr_limit" {
   type    = number
   default = 100

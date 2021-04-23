@@ -1,4 +1,5 @@
 import isNil from 'lodash/isNil';
+import { CumulusMessageError } from '@cumulus/errors';
 import { Message } from '@cumulus/types';
 
 type MessageWithOptionalWorkflowInfo = Message.CumulusMessage & {
@@ -46,7 +47,12 @@ export const getMessageWorkflowTasks = (
  */
 export const getMessageWorkflowStartTime = (
   message: MessageWithOptionalWorkflowInfo
-): number | undefined => message.cumulus_meta?.workflow_start_time;
+): number => {
+  if (!message.cumulus_meta.workflow_start_time) {
+    throw new CumulusMessageError('getMessageWorkflowStartTime on a message without a workflow_start_time');
+  }
+  return message.cumulus_meta.workflow_start_time;
+};
 
 /**
  * Get the workflow stop time, if any.

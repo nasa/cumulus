@@ -1,5 +1,6 @@
 import AWS from 'aws-sdk';
 import Knex from 'knex';
+
 import { envUtils } from '@cumulus/common';
 
 export const localStackConnectionEnv = {

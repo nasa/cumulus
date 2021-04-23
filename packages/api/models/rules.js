@@ -2,8 +2,8 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
-const merge = require('lodash/merge');
 const set = require('lodash/set');
+const merge = require('lodash/merge');
 
 const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
@@ -20,6 +20,12 @@ const { rule: ruleSchema } = require('./schemas');
 class Rule extends Manager {
   constructor() {
     super({
+      tableName: process.env.RulesTable,
+      tableHash: { name: 'name', type: 'S' },
+      schema: ruleSchema,
+    });
+
+    this.dynamoDbClient = new Manager({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
       schema: ruleSchema,
@@ -78,6 +84,15 @@ class Rule extends Manager {
       break;
     }
     return super.delete({ name: item.name });
+  }
+
+  async getAllRules() {
+    return this.dynamoDbClient.scan({
+      names: {
+        '#name': 'name',
+      },
+    },
+    '#name').then((result) => result.Items);
   }
 
   /**
@@ -145,8 +160,7 @@ class Rule extends Manager {
 
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
-    return super.update({ name: original.name }, updatedRuleItem,
-      fieldsToDelete);
+    return super.update({ name: original.name }, updatedRuleItem, fieldsToDelete);
   }
 
   async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
@@ -227,7 +241,7 @@ class Rule extends Manager {
     await invoke(process.env.invoke, payload);
   }
 
-  async create(item, createdAt) {
+  async create(item) {
     // make sure the name only has word characters
     const re = /\W/;
     if (re.test(item.name)) {
@@ -242,8 +256,8 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
-    newRuleItem.createdAt = createdAt || Date.now();
-    newRuleItem.updatedAt = Date.now();
+    newRuleItem.createdAt = item.createdAt || Date.now();
+    newRuleItem.updatedAt = item.updatedAt || Date.now();
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);

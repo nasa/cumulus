@@ -4,6 +4,7 @@ const pWaitFor = require('p-wait-for');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   buildAndExecuteWorkflow,
+  getExecutionInputObject,
   loadCollection,
   loadProvider,
   waitForCompletedExecution,
@@ -161,6 +162,12 @@ describe('The DiscoverGranules workflow', () => {
     it('has queued the granule', () => {
       if (!beforeAllCompleted) fail('beforeAll() failed');
       else expect(queueGranulesOutput.payload.running.length).toEqual(1);
+    });
+
+    it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
+      const executionInput = await getExecutionInputObject(queueGranulesOutput.payload.running[0]);
+      expect(executionInput.meta.staticValue).toEqual('aStaticValue');
+      expect(executionInput.meta.interpolatedValueStackName).toEqual(queueGranulesOutput.meta.stack);
     });
   });
 });

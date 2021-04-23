@@ -32,6 +32,21 @@ class AsyncOperation extends Manager {
 
     this.systemBucket = params.systemBucket;
     this.stackName = params.stackName;
+
+    this.dynamoDbClient = new Manager({
+      tableName: params.tableName || process.env.AsyncOperationsTable,
+      tableHash: { name: 'id', type: 'S' },
+      schema: asyncOperationSchema,
+    });
+  }
+
+  async getAllAsyncOperations() {
+    return this.dynamoDbClient.scan({
+      names: {
+        '#id': 'id',
+      },
+    },
+    '#id').then((result) => result.Items);
   }
 }
 module.exports = AsyncOperation;

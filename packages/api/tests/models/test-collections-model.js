@@ -180,8 +180,27 @@ test.serial('Collection.create() throws InvalidRegexError for file.checksumFor m
 test.serial('Collection.exists() returns true when a record exists', async (t) => {
   const name = randomString();
   const version = randomString();
+  const files = [
+    {
+      bucket: 'protectedbucket',
+      regex: '^.*\\.hdf$',
+      sampleFileName: 'samplefile.hdf',
+      reportToEms: true,
+    },
+    {
+      bucket: 'protectedbucket',
+      regex: '^.*\\.cmr\\.xml$',
+      sampleFileName: 'samplefile.cmr.xml',
+    },
+    {
+      bucket: 'publicbucket',
+      regex: '^.*\\.jpg$',
+      sampleFileName: 'samplefile.jpg',
+      reportToEms: false,
+    },
+  ];
 
-  await collectionsModel.create(fakeCollectionFactory({ name, version }));
+  await collectionsModel.create(fakeCollectionFactory({ name, version, reportToEms: true, files }));
 
   t.true(await collectionsModel.exists(name, version));
 });

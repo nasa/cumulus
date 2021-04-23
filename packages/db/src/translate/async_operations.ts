@@ -10,7 +10,7 @@ export const translateApiAsyncOperationToPostgresAsyncOperation = (
   if (record.output === 'none') {
     delete translatedRecord.output;
   } else if (record.output !== undefined) {
-    translatedRecord.output = JSON.parse(record.output);
+    translatedRecord.output = JSON.parse(JSON.stringify(record.output));
   }
   if (record.createdAt !== undefined) {
     translatedRecord.created_at = new Date(record.createdAt);

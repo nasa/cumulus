@@ -354,7 +354,7 @@ class Manager {
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
     const actualUpdates = {
       ...updates,
-      updatedAt: Date.now(),
+      updatedAt: updates.updatedAt || Date.now(),
     };
 
     // Make sure that we don't update the key fields

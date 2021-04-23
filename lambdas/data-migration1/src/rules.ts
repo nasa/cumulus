@@ -2,22 +2,17 @@ import Knex from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import {
-  PostgresCollectionRecord,
-  PostgresProviderRecord,
-  PostgresRuleRecord,
-  PostgresRule,
-  getRecordCumulusId,
-  tableNames,
+  RulePgModel,
+  translateApiRuleToPostgresRule,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
-import { RecordAlreadyMigrated } from '@cumulus/errors';
+import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
+import { RuleRecord } from '@cumulus/types/api/rules';
 
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
-const Manager = require('@cumulus/api/models/base');
-const schemas = require('@cumulus/api/models/schemas');
 
 /**
  * Migrate rules record from Dynamo to RDS.
@@ -32,54 +27,29 @@ export const migrateRuleRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  // Validate record before processing using API model schema
-  Manager.recordIsValid(dynamoRecord, schemas.rule);
+  const rulePgModel = new RulePgModel();
 
-  const existingRecord = await knex<PostgresRuleRecord>('rules')
-    .where({ name: dynamoRecord.name })
-    .first();
+  let existingRecord;
+
+  try {
+    existingRecord = await rulePgModel.get(knex, {
+      name: dynamoRecord.name,
+    });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   // Throw error if it was already migrated.
-  if (existingRecord) {
+  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
-  const collectionCumulusId = dynamoRecord.collection
-    ? await getRecordCumulusId<PostgresCollectionRecord>(
-      { name: dynamoRecord.collection.name, version: dynamoRecord.collection.version },
-      tableNames.collections,
-      knex
-    )
-    : undefined;
-  const providerCumulusId = dynamoRecord.provider
-    ? await getRecordCumulusId<PostgresProviderRecord>(
-      { name: dynamoRecord.provider },
-      tableNames.providers,
-      knex
-    )
-    : undefined;
-
   // Map old record to new schema.
-  const updatedRecord: PostgresRule = {
-    name: dynamoRecord.name,
-    workflow: dynamoRecord.workflow,
-    provider_cumulus_id: (providerCumulusId === undefined) ? undefined : providerCumulusId,
-    collection_cumulus_id: (collectionCumulusId === undefined) ? undefined : collectionCumulusId,
-    enabled: dynamoRecord.state === 'ENABLED',
-    type: dynamoRecord.rule.type,
-    value: dynamoRecord.rule.value,
-    arn: dynamoRecord.rule.arn,
-    log_event_arn: dynamoRecord.rule.logEventArn,
-    execution_name_prefix: dynamoRecord.executionNamePrefix,
-    payload: dynamoRecord.payload,
-    meta: dynamoRecord.meta,
-    tags: dynamoRecord.tags ? JSON.stringify(dynamoRecord.tags) : undefined,
-    queue_url: dynamoRecord.queueUrl,
-    created_at: new Date(dynamoRecord.createdAt),
-    updated_at: new Date(dynamoRecord.updatedAt),
-  };
+  const updatedRecord = await translateApiRuleToPostgresRule(<RuleRecord>dynamoRecord, knex);
 
-  await knex('rules').insert(updatedRecord);
+  await rulePgModel.upsert(knex, updatedRecord);
 };
 
 export const migrateRules = async (
@@ -110,7 +80,6 @@ export const migrateRules = async (
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
         migrationSummary.skipped += 1;
-        logger.info(error);
       } else {
         migrationSummary.failed += 1;
         logger.error(

@@ -104,36 +104,3 @@ test('granule.delete() with the old file format succeeds', async (t) => {
 
   t.false(await granuleModel.exists({ granuleId: newGranule.granuleId }));
 });
-
-test('granule.unpublishAndDeleteGranule() deletes published granule', async (t) => {
-  const granule = fakeGranuleFactoryV2({
-    published: true,
-  });
-
-  await granuleModel.create(granule);
-
-  t.true(await granuleModel.exists({ granuleId: granule.granuleId }));
-  await t.notThrowsAsync(
-    granuleModel.unpublishAndDeleteGranule(granule)
-  );
-  t.true(removeGranuleFromCmrStub.called);
-  t.false(await granuleModel.exists({ granuleId: granule.granuleId }));
-});
-
-test.serial('granule.unpublishAndDeleteGranule() leaves granule.published = true if delete fails', async (t) => {
-  const deleteStub = sinon.stub(models.Granule.prototype, '_deleteRecord').throws();
-  t.teardown(() => deleteStub.restore());
-
-  const granule = fakeGranuleFactoryV2({
-    published: true,
-  });
-
-  await granuleModel.create(granule);
-
-  await t.throwsAsync(
-    granuleModel.unpublishAndDeleteGranule(granule)
-  );
-  const record = await granuleModel.get({ granuleId: granule.granuleId });
-  t.true(record.published);
-  t.truthy(record.cmrLink);
-});

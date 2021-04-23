@@ -1,6 +1,7 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
+const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
@@ -130,7 +131,7 @@ const generateGranuleRecord = async ({
  *   Cumulus ID of the granule for this file
  * @returns {Object} - a file record
  */
-const generateFileRecord = ({ file, granuleCumulusId }) => ({
+const generateFilePgRecord = ({ file, granuleCumulusId }) => ({
   ...translateApiFiletoPostgresFile(file),
   granule_cumulus_id: granuleCumulusId,
 });
@@ -144,19 +145,29 @@ const generateFileRecord = ({ file, granuleCumulusId }) => ({
  *   Cumulus ID of the granule for this file
  * @returns {Array<Object>} - file records
  */
-const generateFileRecords = async ({
+const _generateFilePgRecords = ({
   files,
   granuleCumulusId,
-}) => files.map((file) => generateFileRecord({ file, granuleCumulusId }));
+}) => files.map((file) => generateFilePgRecord({ file, granuleCumulusId }));
 
-const writeFilesViaTransaction = async ({
+/**
+ * Write an array of file records to the database
+ *
+ * @param {Object} params
+ * @param {Object} params.fileRecords - File objects
+ * @param {Knex} params.knex - Client to interact with Postgres database
+ * @param {Object} params.filePgModel - Optional File model override
+ * @returns {Promise} - Promise resolved once all file upserts resolve
+ */
+const _writeFiles = async ({
   fileRecords,
-  trx,
+  knex,
   filePgModel = new FilePgModel(),
-}) =>
-  Promise.all(fileRecords.map(
-    (fileRecord) => filePgModel.upsert(trx, fileRecord)
-  ));
+}) => pMap(
+  fileRecords,
+  async (fileRecord) => filePgModel.upsert(knex, fileRecord),
+  { stopOnError: false }
+);
 
 /**
  * Get the cumulus ID from a query result or look it up in the database.
@@ -188,11 +199,36 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
   return granuleCumulusId;
 };
 
-const writeGranuleAndFilesViaTransaction = async ({
+/**
+ * Write a granule to DynamoDB and Postgres
+ *
+ * @param {Object} params
+ * @param {Object} params.granule - An API granule object
+ * @param {Object} params.processingTimeInfo
+ *   Processing time information for the granule, if any
+ * @param {Object} params.error - Workflow error, if any
+ * @param {string} params.workflowStartTime - Workflow start time
+ * @param {string} params.workflowStatus - Workflow status
+ * @param {Object} params.queryFields - Arbitrary query fields for the granule
+ * @param {string} params.collectionCumulusId
+ *   Cumulus ID for collection referenced in workflow message, if any
+ * @param {string} params.providerCumulusId
+ *   Cumulus ID for provider referenced in workflow message, if any
+ * @param {string} params.executionCumulusId
+ *   Cumulus ID for execution referenced in workflow message, if any
+ * @param {string} params.pdrCumulusId
+ *   Cumulus ID for PDR referenced in workflow message, if any
+ * @param {Knex.transaction} params.trx - Transaction to interact with Postgres database
+ * @param {string} params.updatedAt - Update timestamp
+ * @param {Array} params.files - List of files to add to Dynamo Granule
+ *
+ * @returns {Promise<number>} - Cumulus ID from Postgres
+ * @throws
+ */
+const _writeGranuleViaTransaction = async ({
   granule,
   processingTimeInfo,
   error,
-  provider,
   workflowStartTime,
   workflowStatus,
   queryFields,
@@ -200,24 +236,14 @@ const writeGranuleAndFilesViaTransaction = async ({
   providerCumulusId,
   executionCumulusId,
   pdrCumulusId,
-  fileUtils = FileUtils,
   trx,
+  updatedAt,
+  files,
 }) => {
-  const { files = [] } = granule;
-  // This is necessary to set properties like
-  // `key`, which is required for the Postgres schema. And
-  // `size` which is used to calculate the granule product
-  // volume
-  const updatedFiles = await fileUtils.buildDatabaseFiles({
-    s3: s3(),
-    providerURL: buildURL(provider),
-    files,
-  });
-
   const granuleRecord = await generateGranuleRecord({
     error,
     granule,
-    files: updatedFiles,
+    files,
     workflowStartTime,
     workflowStatus,
     queryFields,
@@ -225,6 +251,7 @@ const writeGranuleAndFilesViaTransaction = async ({
     providerCumulusId,
     pdrCumulusId,
     processingTimeInfo,
+    updatedAt,
   });
 
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
@@ -234,19 +261,88 @@ const writeGranuleAndFilesViaTransaction = async ({
   );
   // Ensure that we get a granule ID for the files even if the
   // upsert query returned an empty result
-  const granuleCumulusId = await getGranuleCumulusIdFromQueryResultOrLookup({
+  return getGranuleCumulusIdFromQueryResultOrLookup({
     trx,
     queryResult: upsertQueryResult,
     granuleRecord,
   });
+};
 
-  const fileRecords = await generateFileRecords({
-    files: updatedFiles,
-    granuleCumulusId,
-  });
-  return writeFilesViaTransaction({
-    fileRecords,
-    trx,
+/**
+ * Generate file records based on workflow status, write files to
+ * the database, and update granule status if file writes fail
+ *
+ * @param {Object} params
+ * @param {Object} params.files - File objects
+ * @param {number} params.granuleCumulusId
+ *   Cumulus ID of the granule for this file
+ * @param {string} params.workflowStatus - Workflow status
+ * @param {Knex} params.knex - Client to interact with Postgres database
+ * @param {Object} params.granulePgModel - Optional Granule model override
+ * @returns {undefined}
+ */
+const _writeGranuleFiles = async ({
+  files,
+  granuleCumulusId,
+  workflowStatus,
+  knex,
+  granulePgModel = new GranulePgModel(),
+}) => {
+  let fileRecords = [];
+
+  if (workflowStatus !== 'running') {
+    fileRecords = _generateFilePgRecords({
+      files: files,
+      granuleCumulusId,
+    });
+  }
+
+  try {
+    await _writeFiles({
+      fileRecords,
+      knex,
+    });
+  } catch (error) {
+    log.error('Failed writing some files to Postgres', error);
+
+    const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+    await granulePgModel.upsert(
+      knex,
+      {
+        ...granule,
+        status: 'failed',
+        error: {
+          Error: 'Failed writing files to Postgres.',
+          Cause: error,
+        },
+      }
+    );
+  }
+};
+
+/**
+ * Transform granule files to latest file API structure
+ *
+ * @param {Object} params
+ * @param {Object} params.granule - An API granule object
+ * @param {Object} params.provider - An API provider object
+ *
+* @returns {Promise<Array>} - A list of file objects once resolved
+ */
+const _generateFilesFromGranule = async ({
+  granule,
+  provider,
+}) => {
+  const { files = [] } = granule;
+  // This is necessary to set properties like
+  // `key`, which is required for the Postgres schema. And
+  // `size` which is used to calculate the granule product
+  // volume
+  return FileUtils.buildDatabaseFiles({
+    s3: s3(),
+    providerURL: buildURL(provider),
+    files,
   });
 };
 
@@ -278,7 +374,7 @@ const writeGranuleAndFilesViaTransaction = async ({
  * @returns {Promise}
  * @throws
  */
-const writeGranule = async ({
+const _writeGranule = async ({
   collectionId,
   granule,
   pdrName,
@@ -295,9 +391,14 @@ const writeGranule = async ({
   providerCumulusId,
   pdrCumulusId,
   granuleModel,
-}) =>
-  knex.transaction(async (trx) => {
-    await writeGranuleAndFilesViaTransaction({
+  updatedAt = Date.now(),
+}) => {
+  const files = await _generateFilesFromGranule({ granule, provider });
+
+  let granuleCumulusId;
+
+  await knex.transaction(async (trx) => {
+    granuleCumulusId = await _writeGranuleViaTransaction({
       granule,
       processingTimeInfo,
       error,
@@ -310,7 +411,10 @@ const writeGranule = async ({
       executionCumulusId,
       pdrCumulusId,
       trx,
+      updatedAt,
+      files,
     });
+
     return granuleModel.storeGranuleFromCumulusMessage({
       granule,
       executionUrl,
@@ -322,8 +426,20 @@ const writeGranule = async ({
       workflowStatus,
       processingTimeInfo,
       queryFields,
+      updatedAt,
     });
   });
+
+  return knex.transaction(async (trx) => {
+    await _writeGranuleFiles({
+      trx,
+      knex,
+      granuleCumulusId,
+      files,
+      workflowStatus,
+    });
+  });
+};
 
 /**
  * Write granules to DynamoDB and Postgres
@@ -376,7 +492,7 @@ const writeGranules = async ({
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
-    (granule) => writeGranule({
+    (granule) => _writeGranule({
       collectionId,
       granule,
       processingTimeInfo,
@@ -406,11 +522,8 @@ const writeGranules = async ({
 };
 
 module.exports = {
-  generateFileRecord,
-  generateFileRecords,
+  generateFilePgRecord,
   generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
-  writeFilesViaTransaction,
-  writeGranuleAndFilesViaTransaction,
   writeGranules,
 };

@@ -23,7 +23,7 @@ This documentation includes both guidelines, examples, and source code docs. It 
 * Cumulus Developer Documentation - [here](https://github.com/nasa/cumulus) - READMEs throughout the main repository.
 * Data Cookbooks - [here](data-cookbooks/about-cookbooks)
 
-### Auxillary Guides
+### Auxiliary Guides
 
 * Integrator Guide - [here](integrator-guide/about-int-guide)
 * Operator Docs - [here](operator-docs/about-operator-docs)
