@@ -1,7 +1,6 @@
 import { WriteStream } from 'node:fs';
 
 const fs = require('fs');
-const moment = require('moment');
 const { finished } = require('stream');
 const { promisify } = require('util');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -13,7 +12,7 @@ const { s3 } = require('@cumulus/aws-client/services');
  * @returns {Object}                     - Object containing error write stream and file path string
  */
 export const createErrorFileWriteStream = (migrationName: string, timestamp?: string) => {
-  const dateString = timestamp || moment.utc().format('YYYY-MM-DD_HH:MM:SS.SSSS');
+  const dateString = timestamp || new Date().toISOString();
   const filepath = `${migrationName}ErrorLog-${dateString}.json`;
   const errorFileWriteStream = fs.createWriteStream(filepath);
   errorFileWriteStream.write('{ "errors": [\n');
@@ -52,7 +51,7 @@ export const storeErrors = async (params: {
 }) => {
   const { bucket, filepath, migrationName, stackName, timestamp } = params;
   const fileKey = `data-migration2-${migrationName}-errors`;
-  const dateString = timestamp || moment.utc().format('YYYY-MM-DD_HH:MM:SS');
+  const dateString = timestamp || new Date().toISOString();
   const key = `${stackName}/${fileKey}-${dateString}.json`;
   await s3().putObject({
     Bucket: bucket,
