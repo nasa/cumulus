@@ -119,132 +119,138 @@ describe('The S3 Ingest Granules workflow', () => {
   let granuleCompletedMessageKey;
   let granuleRunningMessageKey;
   let opendapFilePath;
+  let beforeAllFailed = false;
 
   beforeAll(async () => {
-    config = await loadConfig();
+    try {
+      config = await loadConfig();
 
-    const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
-    const testSuffix = createTestSuffix(testId);
-    testDataFolder = createTestDataPath(testId);
+      const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
+      const testSuffix = createTestSuffix(testId);
+      testDataFolder = createTestDataPath(testId);
 
-    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-    const newCollectionId = constructCollectionId(collection.name, collection.version);
-    provider = { id: `s3_provider${testSuffix}` };
+      collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+      const newCollectionId = constructCollectionId(collection.name, collection.version);
+      provider = { id: `s3_provider${testSuffix}` };
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
-    process.env.system_bucket = config.bucket;
-    process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-    process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-    pdrModel = new Pdr();
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      granuleModel = new Granule();
+      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+      executionModel = new Execution();
+      process.env.system_bucket = config.bucket;
+      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
+      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+      pdrModel = new Pdr();
 
-    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
-    const providerData = {
-      ...providerJson,
-      id: provider.id,
-      host: config.bucket,
-    };
+      const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
+      const providerData = {
+        ...providerJson,
+        id: provider.id,
+        host: config.bucket,
+      };
 
-    // populate collections, providers and test data
-    await Promise.all([
-      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId, collectionDupeHandling),
-      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData }),
-    ]);
+      // populate collections, providers and test data
+      await Promise.all([
+        uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId, collectionDupeHandling),
+        apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData }),
+      ]);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    // update test data filepaths
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
-    const granuleId = inputPayload.granules[0].granuleId;
-    expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
-    await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+      const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+      // update test data filepaths
+      inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      const granuleId = inputPayload.granules[0].granuleId;
+      expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
+      await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
+        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
-    const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
+      const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
 
-    const templatedSyncGranuleFilename = templateFile({
-      inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
-      config: {
-        granules: [
-          {
-            files: [
-              {
-                bucket: config.buckets.internal.name,
-                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
-                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
-              },
-              {
-                bucket: config.buckets.internal.name,
-                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
-                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
-              },
-              {
-                bucket: config.buckets.internal.name,
-                filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg`,
-                fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
-              },
-            ],
-          },
-        ],
-      },
-    });
+      const templatedSyncGranuleFilename = templateFile({
+        inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
+        config: {
+          granules: [
+            {
+              files: [
+                {
+                  bucket: config.buckets.internal.name,
+                  filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                  fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
+                },
+                {
+                  bucket: config.buckets.internal.name,
+                  filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                  fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
+                },
+                {
+                  bucket: config.buckets.internal.name,
+                  filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg`,
+                  fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
+                },
+              ],
+            },
+          ],
+        },
+      });
 
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
+      expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
 
-    expectedSyncGranulePayload.granules[0].dataType += testSuffix;
-    expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
+      expectedSyncGranulePayload.granules[0].dataType += testSuffix;
+      expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
 
-    const templatedOutputPayloadFilename = templateFile({
-      inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
-      config: {
-        granules: [
-          {
-            files: [
-              {
-                bucket: config.buckets.protected.name,
-                filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf`,
-              },
-              {
-                bucket: config.buckets.private.name,
-                filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`,
-              },
-              {
-                bucket: config.buckets.public.name,
-                filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`,
-              },
-              {
-                bucket: config.buckets['protected-2'].name,
-                filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml`,
-              },
-            ],
-          },
-        ],
-      },
-    });
+      const templatedOutputPayloadFilename = templateFile({
+        inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
+        config: {
+          granules: [
+            {
+              files: [
+                {
+                  bucket: config.buckets.protected.name,
+                  filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf`,
+                },
+                {
+                  bucket: config.buckets.private.name,
+                  filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`,
+                },
+                {
+                  bucket: config.buckets.public.name,
+                  filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`,
+                },
+                {
+                  bucket: config.buckets['protected-2'].name,
+                  filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml`,
+                },
+              ],
+            },
+          ],
+        },
+      });
 
-    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
-    expectedPayload.granules[0].dataType += testSuffix;
-    expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
-    expectedPayload.granules[0].files = addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlString);
-    // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
-    setDistributionApiEnvVars();
+      expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
+      expectedPayload.granules[0].dataType += testSuffix;
+      expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
+      expectedPayload.granules[0].files = addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlString);
+      // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
+      setDistributionApiEnvVars();
 
-    console.log('Start SuccessExecution');
-    workflowExecutionArn = await buildAndStartWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      collection,
-      provider,
-      inputPayload,
-      {
-        distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
-      }
-    );
+      console.log('Start SuccessExecution');
+      workflowExecutionArn = await buildAndStartWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        inputPayload,
+        {
+          distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
+        }
+      );
 
-    opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
+      opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
+    } catch (error) {
+      beforeAllFailed = true;
+      throw error;
+    }
   });
 
   afterAll(async () => {
@@ -271,6 +277,10 @@ describe('The S3 Ingest Granules workflow', () => {
       deleteS3Object(config.bucket, granuleCompletedMessageKey),
       deleteS3Object(config.bucket, granuleRunningMessageKey),
     ]);
+  });
+
+  it('prepares the test suite successfully', async () => {
+    if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
   });
 
   it('triggers a running execution record being added to DynamoDB', async () => {
