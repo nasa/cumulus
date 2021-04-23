@@ -16,8 +16,6 @@ export {
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export {
-  doesRecordExist,
-  getRecordCumulusId,
   isRecordDefined,
 } from './database';
 export { tableNames } from './tables';
