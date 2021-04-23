@@ -34,7 +34,6 @@
     "@cumulus/types": "7.1.0",
     "knex": "0.21.13",
     "lodash": "^4.17.20",
-    "moment": "^2.29.1",
     "pg": "^8.3.0"
   },
   "devDependencies": {
