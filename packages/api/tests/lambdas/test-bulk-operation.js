@@ -2,7 +2,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
-const cryptoRandomString = require('crypto-random-string');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require('@cumulus/db');
