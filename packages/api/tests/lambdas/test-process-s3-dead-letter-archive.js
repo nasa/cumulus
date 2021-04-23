@@ -63,7 +63,8 @@ test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus m
 });
 
 test('processDeadLetterArchive is able to handle processing multiple batches of dead letter records', async (t) => {
-  const { bucket, path } = t.context;
+  const { bucket } = t.context;
+  const path = `${randomString()}/new-dead-letter-archive/`;
   const writeRecordsFunctionSpy = sinon.spy();
 
   const numberOfDeadLetters = 40;
@@ -71,7 +72,7 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
     // eslint-disable-next-line no-await-in-loop
     await S3.putJsonS3Object(
       bucket,
-      `${t.context.path}${uuidv4()}.json`,
+      `${path}${uuidv4()}.json`,
       {}
     );
   }
@@ -82,12 +83,25 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
     writeRecordsFunction: writeRecordsFunctionSpy,
     batchSize: 15,
   });
-  t.is(writeRecordsFunctionSpy.callCount, (numberOfDeadLetters + 2));
+  t.is(writeRecordsFunctionSpy.callCount, numberOfDeadLetters);
   const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
-  t.is(
-    remainingDeadLetters.length,
-    0
-  );
+  t.is(remainingDeadLetters.length, 0);
+});
+
+test('processDeadLetterArchive does not delete dead letters that fail to process', async (t) => {
+  const { bucket, path } = t.context;
+  const writeRecordsErrorThrower = () => {
+    throw new Error('write failure');
+  };
+
+  await processDeadLetterArchive({
+    bucket,
+    path,
+    writeRecordsFunction: writeRecordsErrorThrower,
+  });
+
+  const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
+  t.is(remainingDeadLetters.length, 2);
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {

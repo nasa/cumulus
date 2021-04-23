@@ -5,7 +5,6 @@ const log = require('@cumulus/common/log');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
-const { getMessageExecutionName } = require('@cumulus/message/Executions');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
 
@@ -35,8 +34,7 @@ async function processDeadLetterArchive({
           await writeRecordsFunction({ cumulusMessage, knex });
           return deadLetterObject.Key;
         } catch (error) {
-          const executionName = getMessageExecutionName(cumulusMessage);
-          log.error(`Failed to write records from cumulusMessage for execution ${executionName}, reason: `, error);
+          log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
           throw error;
         }
       }
@@ -44,12 +42,14 @@ async function processDeadLetterArchive({
     const keysToDelete = promises.filter(
       (prom) => prom.status === 'fulfilled'
     ).map((prom) => ({ Key: prom.value }));
-    await s3().deleteObjects({
-      Bucket: bucket,
-      Delete: {
-        Objects: keysToDelete,
-      },
-    }).promise();
+    if (keysToDelete.length > 0) {
+      await s3().deleteObjects({
+        Bucket: bucket,
+        Delete: {
+          Objects: keysToDelete,
+        },
+      }).promise();
+    }
   } while (listObjectsResponse.IsTruncated);
   /* eslint-enable no-await-in-loop */
 }
