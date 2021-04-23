@@ -36,7 +36,7 @@ export interface GranulesAndFilesMigrationResult {
 }
 
 /**
- * Migrate granules record from Dynamo to RDS.
+ * Migrate granules record from Dynamo to Postgres.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
  *   - Record from DynamoDB
