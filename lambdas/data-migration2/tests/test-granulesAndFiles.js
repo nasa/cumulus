@@ -248,7 +248,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   );
 });
 
-test.serial('migrateFileRecord correctly migrates file record with null bucket and key', async (t) => {
+test.serial('migrateFileRecord correctly migrates file record with filename instead of bucket and key', async (t) => {
   const {
     filePgModel,
     granulePgModel,
@@ -259,6 +259,7 @@ test.serial('migrateFileRecord correctly migrates file record with null bucket a
   const testFile = fakeFileFactory({
     bucket: undefined,
     key: undefined,
+    filename: 's3://cumulus-test-sandbox-private/someKey',
   });
   testGranule.files = [testFile];
 
@@ -266,7 +267,10 @@ test.serial('migrateFileRecord correctly migrates file record with null bucket a
   const [granuleCumulusId] = await granulePgModel.create(knex, granule);
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
-  const record = await filePgModel.get(knex, { bucket: null, key: null });
+  const record = await filePgModel.get(
+    knex,
+    { bucket: 'cumulus-test-sandbox-private', key: 'someKey' }
+  );
 
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
@@ -275,10 +279,10 @@ test.serial('migrateFileRecord correctly migrates file record with null bucket a
   t.deepEqual(
     omit(record, fileOmitList),
     {
-      bucket: null,
+      bucket: 'cumulus-test-sandbox-private',
       checksum_value: null,
       checksum_type: null,
-      key: null,
+      key: 'someKey',
       path: null,
       file_size: null,
       file_name: testFile.fileName,
@@ -468,11 +472,9 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
 
   const testFile = testGranule.files[0];
 
-  delete testFile.bucket;
   delete testFile.checksum;
   delete testFile.checksumType;
   delete testFile.fileName;
-  delete testFile.key;
   delete testFile.path;
   delete testFile.size;
   delete testFile.source;
@@ -484,17 +486,18 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   });
 
   await migrateFileRecord(testFile, granuleCumulusId, knex);
-  const record = await filePgModel.get(knex, { bucket: null, key: null });
+
+  const record = await filePgModel.get(knex, { bucket: testFile.bucket, key: testFile.key });
 
   t.deepEqual(
     omit(record, fileOmitList),
     {
-      bucket: null,
+      bucket: testFile.bucket,
+      key: testFile.key,
       checksum_value: null,
       checksum_type: null,
       file_size: null,
       file_name: null,
-      key: null,
       source: null,
       path: null,
     }
