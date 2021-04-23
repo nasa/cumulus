@@ -1,9 +1,13 @@
+
+import Logger from '@cumulus/logger';
 import { WriteStream } from 'node:fs';
 
 const fs = require('fs');
 const { finished } = require('stream');
 const { promisify } = require('util');
 const { s3 } = require('@cumulus/aws-client/services');
+
+const logger = new Logger({ sender: '@cumulus/data-migration/storeErrors' });
 
 /**
  * Helper to create error file write stream
@@ -53,10 +57,13 @@ export const storeErrors = async (params: {
   const fileKey = `data-migration2-${migrationName}-errors`;
   const dateString = timestamp || new Date().toISOString();
   const key = `${stackName}/${fileKey}-${dateString}.json`;
+
   await s3().putObject({
     Bucket: bucket,
     Key: key,
     Body: fs.createReadStream(filepath),
   }).promise();
+
+  logger.info(`Stored error log file with key ${key} to bucket ${bucket}.`);
   fs.unlinkSync(filepath);
 };
