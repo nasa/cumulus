@@ -3,7 +3,7 @@
 const log = require('@cumulus/common/log');
 
 const { s3 } = require('@cumulus/aws-client/services');
-const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
 
@@ -14,21 +14,26 @@ async function processDeadLetterArchive({
   bucket = process.env.system_bucket,
   path = `${process.env.stackName}/dead-letter-archive/sqs/`,
   writeRecordsFunction = writeRecords,
+  batchSize = 1000,
 }) {
   let listObjectsResponse;
+  let continuationToken;
   /* eslint-disable no-await-in-loop */
   do {
     listObjectsResponse = await s3().listObjectsV2({
       Bucket: bucket,
       Prefix: path,
+      ContinuationToken: continuationToken,
+      MaxKeys: batchSize,
     }).promise();
+    continuationToken = listObjectsResponse.NextContinuationToken;
     const deadLetterObjects = listObjectsResponse.Contents;
-    await Promise.allSettled(deadLetterObjects.map(
+    const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
         const cumulusMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
         try {
           await writeRecordsFunction({ cumulusMessage, knex });
-          return deleteS3Object(bucket, deadLetterObject.Key);
+          return deadLetterObject.Key;
         } catch (error) {
           const executionName = getMessageExecutionName(cumulusMessage);
           log.error(`Failed to write records from cumulusMessage for execution ${executionName}, reason: `, error);
@@ -36,7 +41,16 @@ async function processDeadLetterArchive({
         }
       }
     ));
-  } while (listObjectsResponse.isTruncated);
+    const keysToDelete = promises.filter(
+      (prom) => prom.status === 'fulfilled'
+    ).map((prom) => ({ Key: prom.value }));
+    await s3().deleteObjects({
+      Bucket: bucket,
+      Delete: {
+        Objects: keysToDelete,
+      },
+    }).promise();
+  } while (listObjectsResponse.IsTruncated);
   /* eslint-enable no-await-in-loop */
 }
 

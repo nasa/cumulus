@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const uuidv4 = require('uuid/v4');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
@@ -59,6 +60,34 @@ test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus m
     (argMsg) =>
       getMessageExecutionName(argMsg) === getMessageExecutionName(t.context.cumulusMessages[1])
   ).length, 1);
+});
+
+test('processDeadLetterArchive is able to handle processing multiple batches of dead letter records', async (t) => {
+  const { bucket, path } = t.context;
+  const writeRecordsFunctionSpy = sinon.spy();
+
+  const numberOfDeadLetters = 40;
+  for (let i = 0; i < numberOfDeadLetters; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    await S3.putJsonS3Object(
+      bucket,
+      `${t.context.path}${uuidv4()}.json`,
+      {}
+    );
+  }
+
+  await processDeadLetterArchive({
+    bucket,
+    path,
+    writeRecordsFunction: writeRecordsFunctionSpy,
+    batchSize: 15,
+  });
+  t.is(writeRecordsFunctionSpy.callCount, (numberOfDeadLetters + 2));
+  const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
+  t.is(
+    remainingDeadLetters.length,
+    0
+  );
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {
