@@ -8,7 +8,7 @@ const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/d
 
 const { deconstructCollectionId } = require('../lib/utils');
 const GranuleModel = require('../models/granules');
-const { deleteGranuleAndFiles } = require('../lib/granule-delete');
+const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 
 const SCROLL_SIZE = 500; // default size in Kibana

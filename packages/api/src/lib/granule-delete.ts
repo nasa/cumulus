@@ -74,19 +74,9 @@ const deleteGranuleAndFiles = async ({
     );
 
     await knex.transaction(async (trx) => {
-      await pMap(
-        files,
-        (file) => {
-          filePgModel.delete(trx, { cumulus_id: file.cumulus_id });
-        }
-      );
-
-      // TODO: relying on the cumulus_id from the lookup is icky, but we need to
-      // truly identify the unique record.
       await granulePgModel.delete(trx, {
         granule_id: pgGranule.granule_id,
         collection_cumulus_id: pgGranule.collection_cumulus_id,
-        // cumulus_id: pgGranule.cumulus_id,
       });
       await granuleModelClient.delete(dynamoGranule);
     });
