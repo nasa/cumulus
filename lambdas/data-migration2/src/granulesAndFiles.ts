@@ -39,11 +39,14 @@ export interface GranulesAndFilesMigrationResult {
  * Migrate granules record from Dynamo to RDS.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
- *   Record from DynamoDB
- * @param {Knex.Transaction} knex - Knex transaction
+ *   - Record from DynamoDB
+ * @param {Knex.Transaction} knex
+ *   - Knex transaction
  * @returns {Promise<any>}
- * @throws {RecordAlreadyMigrated} if record was already migrated
- * @throws {PostgresUpdateFailed} if the granule upsert effected 0 rows
+ * @throws {RecordAlreadyMigrated}
+ *   - If record was already migrated
+ * @throws {PostgresUpdateFailed}
+ *   - If the granule upsert effected 0 rows
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
@@ -107,9 +110,9 @@ export const migrateGranuleRecord = async (
 /**
  * Migrate File record from a Granules record from DynamoDB  to RDS.
  *
- * @param {ApiFile} file - Granule file
+ * @param {ApiFile} file            - Granule file
  * @param {number} granuleCumulusId - ID of granule
- * @param {Knex.Transaction} trx - Knex transaction
+ * @param {Knex.Transaction} trx    - Knex transaction
  * @returns {Promise<void>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
@@ -200,19 +203,22 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
 /**
  * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
  *
- * @param {NodeJS.ProcessEnv} env - Environment variables which may contain configuration
+ * @param {NodeJS.ProcessEnv} env
+ *   - Environment variables which may contain configuration
  * @param {number} env.loggingInterval
- *   Sets the interval number of records when a log message will be written on migration progress
- * @param {Knex} knex - Instance of a database client
+ *   - Sets the interval number of records when a log message will be written on migration progress
+ * @param {Knex} knex
+ *   - Instance of a database client
  * @param {GranuleDynamoDbSearchParams} granuleSearchParams
- *   Parameters to control data selected for migration
+ *   - Parameters to control data selected for migration
  * @param {string} granuleSearchParams.granuleId
- *   Granule ID to use for querying granules to migrate
+ *   - Granule ID to use for querying granules to migrate
  * @param {string} granuleSearchParams.collectionId
- *   Collection name/version to use for querying granules to migrate
- * @param {string | undefined} testTimestamp - used for unit testing
+ *   - Collection name/version to use for querying granules to migrate
+ * @param {string | undefined} testTimestamp
+ *   - Timestamp to use for unit testing
  * @returns {Promise<GranulesAndFilesMigrationResult>}
- *   Result object summarizing the granule/files migration
+ *   - Result object summarizing the granule/files migration
  */
 export const migrateGranulesAndFiles = async (
   env: NodeJS.ProcessEnv,

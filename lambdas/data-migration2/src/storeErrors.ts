@@ -7,10 +7,10 @@ const { promisify } = require('util');
 const { s3 } = require('@cumulus/aws-client/services');
 
 /**
- *  Create error file write stream helper
- * @param {string} migrationName - Name of migration
+ * Helper to create error file write stream
+ * @param {string} migrationName         - Name of migration
  * @param {string | undefined} timestamp - Timestamp for unit testing
- * @returns {Object} - Object containing error write stream and file path string
+ * @returns {Object}                     - Object containing error write stream and file path string
  */
 export const createErrorFileWriteStream = (migrationName: string, timestamp?: string) => {
   const dateString = timestamp || moment.utc().format('YYYY-MM-DD_HH:MM:SS.SSSS');
@@ -22,7 +22,7 @@ export const createErrorFileWriteStream = (migrationName: string, timestamp?: st
 };
 
 /**
- *  Close error file write stream helper
+ * Helper to close error file write stream
  * @param {WriteStream} errorFileWriteStream - Error file write stream to close
  * @returns {Promise<void>}
  */
@@ -36,10 +36,10 @@ export const closeErrorFileWriteStream = async (errorFileWriteStream: WriteStrea
  * Store migration errors JSON file on S3.
  *
  * @param {Object} params
- * @param {string} params.bucket - Name of S3 bucket where file will be uploaded
- * @param {string} params.filepath - Write Stream file path
- * @param {string} params.migrationName - Name of migration
- * @param {string} params.stackName - User stack name/prefix
+ * @param {string} params.bucket                - Name of S3 bucket where file will be uploaded
+ * @param {string} params.filepath              - Write Stream file path
+ * @param {string} params.migrationName         - Name of migration
+ * @param {string} params.stackName             - User stack name/prefix
  * @param {string | undefined} params.timestamp - Timestamp for unit testing
  * @returns {Promise<void>}
  */

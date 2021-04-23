@@ -17,10 +17,13 @@ const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
  * Migrate execution record from Dynamo to RDS.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- *   Source record from DynamoDB
- * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
+ *   - Source record from DynamoDB
+ * @param {Knex} knex
+ *   - Knex client for writing to RDS database
+ * @returns {Promise<number>}
+ *   - Cumulus ID for record
  * @throws {RecordAlreadyMigrated}
+ *   - If record was already migrated
  */
 export const migrateExecutionRecord = async (
   dynamoRecord: ExecutionRecord,
@@ -67,7 +70,7 @@ export const migrateExecutionRecord = async (
  * Migrate executions
  * @param {NodeJS.ProcessEnv} env
  * @param {Knex} knex
- * @param {string | undefined} testTimestamp - used for unit testing
+ * @param {string | undefined} testTimestamp - Timestamp to use for unit testing
  */
 export const migrateExecutions = async (
   env: NodeJS.ProcessEnv,
