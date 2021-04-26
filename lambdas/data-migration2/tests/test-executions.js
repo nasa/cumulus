@@ -443,9 +443,6 @@ test.serial('migrateExecutions processes multiple executions', async (t) => {
     executionsModel.create(newExecution2),
   ]);
 
-  console.log('newExecution.arn', newExecution.arn);
-  console.log('newExecution2.arn', newExecution2.arn);
-
   t.teardown(() => Promise.all([
     executionsModel.delete({ arn: newExecution.arn }),
     executionsModel.delete({ arn: newExecution2.arn }),
