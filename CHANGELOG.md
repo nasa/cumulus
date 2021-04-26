@@ -10,10 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2455**
-    - API move granule endpoint now moves granule files on a per-file basis, and
-      on failure to update either the postgres record or move the file will
-      result in retention of the granule/file record in it's original
-      location, instead of aborting the move.
+    - API `move granule` endpoint now moves granule files on a per-file basis
+    - API `move granule` endpoint on granule file move failure will retain the
+      file at it's original location, but continue to move any other granule files.
   - **CUMULUS-2191**
     - Removed the following from the `@cumulus/api/models.asyncOperation` class in
       favor of the added `@cumulus/async-operations` module:
