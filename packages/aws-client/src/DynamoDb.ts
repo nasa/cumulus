@@ -149,7 +149,9 @@ export const scan = improveStackTrace(
  *
  * @param {number} totalSegments
  *   Total number of segments to divide table into for parallel scanning
- * @param {DocumentClient.ScanInput} scanParams - Params for the DynamoDB client scan operation
+ * @param {DocumentClient.ScanInput} scanParams
+ *   Params for the DynamoDB client scan operation
+ *   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
  * @param {function} processItemsFunc - Function used to process returned items by scan
  * @returns {Promise}
  */
