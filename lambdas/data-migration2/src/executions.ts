@@ -125,20 +125,20 @@ export const migrateExecutions = async (
 
   logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
-  await parallelScan(
+  await parallelScan({
     totalSegments,
-    {
+    scanParams: {
       TableName: executionsTable,
       Limit: executionMigrationParams.parallelScanLimit,
     },
-    (items) => processExecutionItems(
+    processItemsFunc: (items) => processExecutionItems(
       items,
       migrationResult,
       knex,
       loggingInterval,
       executionMigrationParams.writeConcurrency
-    )
-  );
+    ),
+  });
 
   logger.info(`Finished parallel scan of executions with ${totalSegments} parallel segments.`);
   logger.info(`successfully migrated ${migrationResult.migrated} out of ${migrationResult.total_dynamo_db_records} execution records`);

@@ -295,20 +295,20 @@ export const migrateGranulesAndFiles = async (
 
     logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
 
-    await parallelScan(
+    await parallelScan({
       totalSegments,
-      {
+      scanParams: {
         TableName: granulesTable,
         Limit: granuleMigrationParams.parallelScanLimit,
       },
-      (items) => processGranuleItems(
+      processItemsFunc: (items) => processGranuleItems(
         items,
         migrationResult,
         knex,
         loggingInterval,
         writeConcurrency
-      )
-    );
+      ),
+    });
 
     logger.info(`Finished parallel scan of granules with ${totalSegments} parallel segments.`);
   } else {
