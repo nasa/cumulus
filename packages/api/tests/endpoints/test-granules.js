@@ -952,7 +952,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   );
 });
 
-test.serial('a granule that fails to move a file correctly reports the granule status', async (t) => {
+test.serial('when a granule fails to move a file correctly records the expected granule files in postgres and dynamo', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
