@@ -18,6 +18,7 @@
   "dependencies": {
     "@cumulus/api": "8.0.0",
     "@cumulus/aws-client": "8.0.0",
+    "@cumulus/cmrjs": "8.0.0",
     "@cumulus/earthdata-login-client": "8.0.0",
     "@cumulus/errors": "8.0.0",
     "@cumulus/logger": "8.0.0",

@@ -24,6 +24,7 @@ const urljoin = require('url-join');
 const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
+const { getUserAccessableBuckets } = require('@cumulus/cmrjs');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -103,16 +104,88 @@ function ensureEndpointEnabled(res) {
   return undefined;
 }
 
+function configuredForACLCredentials() {
+  if (process.env.CMR_ACL_BASED_CREDENTIALS && process.env.CMR_ACL_BASED_CREDENTIALS.toLowerCase() === 'true') {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Parses a bucket/key/path to return an array of [bucket, keypath] where
+ * keypath is "/" if not specified.
+ *
+ * @param {string} bucketKeyPath
+ * @returns {Array<string>} Array [bucket, keypath]
+ */
+function parseBucketKey(bucketKeyPath) {
+  try {
+    const parts = bucketKeyPath.split('/');
+    const bucket = parts.shift();
+    const keypath = parts.join('/');
+    return [bucket, `/${keypath}`];
+  } catch (error) {
+    return [undefined, undefined];
+  }
+}
+
+/**
+ * Request and format the list of s3 bucket/keys allowed for the input user
+ * into a object ready to pass to the ngap session policy helper lambda.
+ * The payload is an object with 3 keys, accessmode, bucketlist and pathlist.
+ * bucketlist and pathlist are arrays of matching bucket/paths.
+ * example:
+ * if the users rawAllowedBucketKeyList is:
+ * [ 'bucket1/somepath', 'bucket2']
+ * the payload would be the strigified object:
+ *
+ *  {
+ *   accessmode: 'Allow',
+ *   bucketlist: ['bucket1','bucket2'],
+ *   pathlist: ['/somepath', '/']
+ *  }
+ *
+ * @param {string} edlUser - earthdata login user name
+ * @param {string} cmrProvider - CMR provider
+ * @returns {string} - stringified payload for policy helper function.
+ */
+async function allowedBucketKeys(edlUser, cmrProvider) {
+  const rawAllowedBucketKeyList = await getUserAccessableBuckets(edlUser, cmrProvider);
+  const bucketKeyPairList = rawAllowedBucketKeyList.map(parseBucketKey);
+  const bucketlist = [];
+  const pathlist = [];
+
+  bucketKeyPairList.forEach((bucketKeyPair) => {
+    bucketlist.push(bucketKeyPair[0]);
+    pathlist.push(bucketKeyPair[1]);
+  });
+
+  return JSON.stringify({
+    accessmode: 'Allow',
+    bucketlist,
+    pathlist,
+  });
+}
+
 /**
  *  Retrieve the sts session policy for a user when s3 credentials endpoint is
  *  configured to use CMR ACLs. If the endpoint is not configured for CMR ACLs,
  *  return undefined.
  *
- * @param {string} userName - earthdatalogin username
+ * @param {string} edlUser - earthdatalogin username
  * @returns {Object} session policy generated from user's CMR ACLs or undefined.
  */
-async function fetchPolicyForUser(userName) {
-  return undefined;
+async function fetchPolicyForUser(edlUser, cmrProvider, lambda) {
+  if (!configuredForACLCredentials()) return undefined;
+
+  // fetch allowed bucket keys from CMR
+  const Payload = await allowedBucketKeys(edlUser, cmrProvider);
+
+  return lambda.invoke({
+    FunctionName: process.env.STS_POLICY_HELPER_LAMBDA,
+    Payload,
+  }).promise()
+    .then((lambdaReturn) => JSON.parse(lambdaReturn.Payload));
 }
 
 /**
@@ -131,8 +204,13 @@ async function s3credentials(req, res) {
     req.authorizedMetadata.clientName
   );
 
-  const policy = await fetchPolicyForUser(req.authorizedMetadata.userName);
+  const policy = await fetchPolicyForUser(
+    req.authorizedMetadata.userName,
+    process.env.cmr_provider,
+    req.lambda
+  );
 
+  log.info(`generating credentials with policy: ${policy}`);
   const credentials = await requestTemporaryCredentialsFromNgap({
     lambda: req.lambda,
     lambdaFunctionName: process.env.STS_CREDENTIALS_LAMBDA,
