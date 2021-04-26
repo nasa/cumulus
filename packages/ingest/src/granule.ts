@@ -448,9 +448,10 @@ export async function moveGranuleFile(
         bucket: moveFileParam.source.Bucket,
         key: moveFileParam.source.Key,
       });
-      await filesPgModel.upsertById(trx, {
+      await filesPgModel.update(trx, {
         cumulus_id,
-        granule_cumulus_id: postgresCumulusGranuleId,
+      },
+      {
         bucket: moveFileParam.target.Bucket,
         key: moveFileParam.target.Key,
         file_name: getNameOfFile(file),
