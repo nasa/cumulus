@@ -101,7 +101,7 @@ test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumul
   };
 
   const granulePgModel = {
-    getRecordCumulusId: () => {
+    getRecordCumulusId: async () => {
       const thrownError = new Error('Test error');
       thrownError.name = 'TestError';
       throw thrownError;
@@ -109,7 +109,7 @@ test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumul
   };
 
   const collectionPgModel = {
-    getRecordCumulusId: () => 1,
+    getRecordCumulusId: async () => 1,
   };
 
   const apiGranule = { granuleId: 'fakeGranule', collectionId: 'fakeCollection___001' };
