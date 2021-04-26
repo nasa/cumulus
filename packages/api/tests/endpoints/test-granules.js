@@ -1099,7 +1099,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
   );
 });
 
-test('move an unmigrated granule', async (t) => {
+test('When a move granules request attempts to move an unmigrated granule, it correctly updates only dynamoDb', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
