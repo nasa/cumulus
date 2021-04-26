@@ -89,7 +89,6 @@ describe('A dead letter record archive processing operation', () => {
           payload: { testId },
         }
       );
-      console.log('createOneTimeRule:', testRule);
 
       const executionArn = await findExecutionArn(
         stackName,
