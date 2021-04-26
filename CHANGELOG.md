@@ -9,10 +9,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2185** - RDS Migration Epic
-  - **CUMULUS-2455**
-    - API `move granule` endpoint now moves granule files on a per-file basis
-    - API `move granule` endpoint on granule file move failure will retain the
-      file at it's original location, but continue to move any other granule files.
   - **CUMULUS-2191**
     - Removed the following from the `@cumulus/api/models.asyncOperation` class in
       favor of the added `@cumulus/async-operations` module:
@@ -33,14 +29,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed PostgreSQL `file` schema and TypeScript type definition to require
       `bucket` and `key` fields.
     - Updated granule/file write logic to mark a granule's status as "failed"
+  - **CUMULUS-2455**
+    - API `move granule` endpoint now moves granule files on a per-file basis
+    - API `move granule` endpoint on granule file move failure will retain the
+      file at it's original location, but continue to move any other granule
+      files.
+    - Removed the `move` method from the `@cumulus/api/models.granule` class.
+      logic is now handled in `@cumulus/api/endpoints/granules` and is
+      accessible via the Core API.
 
 ### Added
 
 - **CUMULUS-2185** - RDS Migration Epic
-  - **CUMULUS-2455**
-    - Move granules API endpoint records move updates for migrated granule files
-
-    if writing any of the granule files fails.
   - **CUMULUS-2130**
     - Added postgres-migration-count-tool lambda/ECS task to allow for
       evaluation of database state
@@ -225,6 +225,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added support for only running certain migrations for data-migration2 by
       specifying the `migrationsList` property in the payload for the
       `<prefix>-postgres-migration-async-operation` Lambda
+  - **CUMULUS-2455**
+    - Move granules API endpoint records move updates for migrated granule files
+      if writing any of the granule files fails.
+
+### Deprecated
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2455**
+    - `@cumulus/ingest/moveGranuleFiles`
 
 ## [v7.1.0] 2021-03-12
 
