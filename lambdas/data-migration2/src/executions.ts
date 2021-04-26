@@ -64,7 +64,7 @@ export const migrateExecutionRecord = async (
   return cumulusId;
 };
 
-const processExecutionItems = async (
+const migrateExecutionDynamoRecords = async (
   items: AWS.DynamoDB.DocumentClient.AttributeMap[],
   migrationResult: MigrationResult,
   knex: Knex,
@@ -131,7 +131,7 @@ export const migrateExecutions = async (
       TableName: executionsTable,
       Limit: executionMigrationParams.parallelScanLimit,
     },
-    processItemsFunc: (items) => processExecutionItems(
+    processItemsFunc: (items) => migrateExecutionDynamoRecords(
       items,
       migrationResult,
       knex,

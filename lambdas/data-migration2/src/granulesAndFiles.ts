@@ -196,7 +196,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
   return { granulesResult, filesResult };
 };
 
-const processGranuleItems = async (
+const migrateGranuleDynamoRecords = async (
   items: AWS.DynamoDB.DocumentClient.AttributeMap[],
   migrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
@@ -301,7 +301,7 @@ export const migrateGranulesAndFiles = async (
         TableName: granulesTable,
         Limit: granuleMigrationParams.parallelScanLimit,
       },
-      processItemsFunc: (items) => processGranuleItems(
+      processItemsFunc: (items) => migrateGranuleDynamoRecords(
         items,
         migrationResult,
         knex,

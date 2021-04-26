@@ -102,7 +102,7 @@ export const migratePdrRecord = async (
   }
 };
 
-export const processPdrDynamoRecords = async (
+export const migratePdrDynamoRecords = async (
   items: AWS.DynamoDB.DocumentClient.AttributeMap[],
   migrationResult: MigrationResult,
   knex: Knex,
@@ -164,7 +164,7 @@ export const migratePdrs = async (
       TableName: pdrsTable,
       Limit: pdrMigrationParams.parallelScanLimit,
     },
-    processItemsFunc: (items) => processPdrDynamoRecords(
+    processItemsFunc: (items) => migratePdrDynamoRecords(
       items,
       migrationResult,
       knex,
