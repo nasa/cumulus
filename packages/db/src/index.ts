@@ -15,9 +15,6 @@ export {
 
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
-export {
-  isRecordDefined,
-} from './database';
 export { tableNames } from './tables';
 
 export {
