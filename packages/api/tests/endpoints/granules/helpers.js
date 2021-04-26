@@ -14,6 +14,7 @@ const {
 } = require('@cumulus/common/stack');
 
 const {
+  fakeFileFactory,
   fakeGranuleFactoryV2,
 } = require('../../../lib/testUtils');
 
@@ -40,29 +41,28 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     createPostgresEntries = true,
   } = params;
   const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
-  // TODO: File factory?
   newGranule.files = [
-    {
+    fakeFileFactory({
       bucket,
       fileName: `${granuleFileName}.txt`,
       key: `${process.env.stackName}/original_filepath/${granuleFileName}.txt`,
       source: 'fakeSource',
       size: 9,
-    },
-    {
+    }),
+    fakeFileFactory({
       bucket,
       fileName: `${granuleFileName}.md`,
       key: `${process.env.stackName}/original_filepath/${granuleFileName}.md`,
       source: 'fakeSource',
       size: 9,
-    },
-    {
+    }),
+    fakeFileFactory({
       bucket: secondBucket,
       fileName: `${granuleFileName}.jpg`,
       key: `${process.env.stackName}/original_filepath/${granuleFileName}.jpg`,
       source: 'fakeSource',
       size: 9,
-    },
+    }),
   ];
 
   await granuleModel.create(newGranule);
