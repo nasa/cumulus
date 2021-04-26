@@ -480,12 +480,6 @@ test.serial('migrateExecutions processes all non-failing records', async (t) => 
   });
 
   await Promise.all([
-    // Have to use Dynamo client directly because creating
-    // via model won't allow creation of an invalid record
-    // dynamodbDocClient().put({
-    //   TableName: process.env.ExecutionsTable,
-    //   Item: newExecution,
-    // }).promise(),
     executionsModel.create(newExecution),
     executionsModel.create(newExecution2),
   ]);
