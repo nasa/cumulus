@@ -291,7 +291,7 @@ export const migrateGranulesAndFiles = async (
   }
 
   if (dynamoSearchType === 'scan') {
-    const totalSegments = granuleMigrationParams.parallelScanSegments ?? 5;
+    const totalSegments = granuleMigrationParams.parallelScanSegments ?? 20;
 
     logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
 

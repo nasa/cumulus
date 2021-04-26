@@ -121,7 +121,7 @@ export const migrateExecutions = async (
     skipped: 0,
   };
 
-  const totalSegments = executionMigrationParams.parallelScanSegments ?? 5;
+  const totalSegments = executionMigrationParams.parallelScanSegments ?? 20;
 
   logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
