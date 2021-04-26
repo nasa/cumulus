@@ -442,14 +442,13 @@ export async function moveGranuleFile(
       if (!postgresCumulusGranuleId) {
         throw new Error('postgresCumulusGranuleId must be defined to move granule file if writeToPostgres is true');
       }
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      const { cumulus_id } = await filesPgModel.get(trx, {
+      const cumulusId = await filesPgModel.getRecordCumulusId(trx, {
         granule_cumulus_id: postgresCumulusGranuleId,
         bucket: moveFileParam.source.Bucket,
         key: moveFileParam.source.Key,
       });
       await filesPgModel.update(trx, {
-        cumulus_id,
+        cumulus_id: cumulusId,
       },
       {
         bucket: moveFileParam.target.Bucket,

@@ -621,8 +621,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   const filePgModel = new FilePgModel();
   const granuleId = cryptoRandomString({ length: 6 });
 
-  // eslint-disable-next-line camelcase
-  const [cumulus_id] = await granulePgModel.create(
+  const [granuleCumulusId] = await granulePgModel.create(
     t.context.knex,
     fakeGranuleRecordFactory(
       {
@@ -651,7 +650,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   const params = { Bucket: bucket, Key: key, Body: randomString() };
   await S3.s3PutObject(params);
   await filePgModel.create(t.context.knex, {
-    granule_cumulus_id: cumulus_id,
+    granule_cumulus_id: granuleCumulusId,
     bucket,
     key,
   });
@@ -660,7 +659,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
     moveFileParam,
     filePgModel,
     t.context.knex,
-    cumulus_id,
+    granuleCumulusId,
     true
   );
 
@@ -678,7 +677,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   t.is(listObjectsResponse.Contents[0].Key, key);
 
   const pgFile = await filePgModel.search(t.context.knex, {
-    granule_cumulus_id: cumulus_id,
+    granule_cumulus_id: granuleCumulusId,
     file_name: key,
   });
 
