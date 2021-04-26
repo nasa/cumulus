@@ -1,4 +1,3 @@
-
 import Logger from '@cumulus/logger';
 import { WriteStream } from 'node:fs';
 
