@@ -52,5 +52,6 @@ export interface DataMigration2HandlerEvent {
   env?: NodeJS.ProcessEnv
   executionMigrationParams?: ParallelScanMigrationParams
   granuleMigrationParams?: GranuleMigrationParams
+  pdrMigrationParams?: ParallelScanMigrationParams
   migrationsList?: DataMigration2AllowedMigrations[]
 }

@@ -43,7 +43,11 @@ export const handler = async (
     }
 
     if (migrationsToRun.includes('pdrs')) {
-      const pdrsMigrationResult = await migratePdrs(env, knex);
+      const pdrsMigrationResult = await migratePdrs(
+        env,
+        knex,
+        event.pdrMigrationParams
+      );
       migrationSummary.pdrs = pdrsMigrationResult;
     }
 
