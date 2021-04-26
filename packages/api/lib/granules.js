@@ -154,7 +154,8 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       // Add updated file to postgresDatabase
     } catch (error) {
       updatedFiles.push(file);
-      log.error(`Failed to move file ${JSON.stringify(file)} -- ${JSON.stringify(error.message)}`);
+      log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
+      error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
     }
   });
@@ -166,7 +167,9 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       files: updatedFiles,
     }
   );
-  const moveGranuleErrors = moveResults.filter((r) => r.reason);
+  const filteredResults = moveResults.filter((r) => r.status === 'rejected');
+  const moveGranuleErrors = filteredResults.map((error) => error.reason);
+
   return { updatedFiles, moveGranuleErrors };
 }
 
@@ -217,7 +220,12 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
   if (moveGranuleErrors.length > 0) {
     log.error(`Granule ${JSON.stringify(apiGranule)} failed to move.`);
     log.error(JSON.stringify(moveGranuleErrors));
-    throw new Error(`Failed to move granule: ${JSON.stringify(apiGranule)}. Errors: ${JSON.stringify(moveGranuleErrors)}.  Granule Files final state: ${JSON.stringify(updatedFiles)}`);
+    throw new Error(JSON.stringify({
+      reason: 'Failed to move granule',
+      granule: apiGranule,
+      errors: moveGranuleErrors,
+      granuleFilesRecords: updatedFiles,
+    }));
   }
 }
 

@@ -996,7 +996,7 @@ test.serial('a granule that fails to move a file correctly reports the granule s
         },
       ];
 
-      await request(app)
+      const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -1006,8 +1006,29 @@ test.serial('a granule that fails to move a file correctly reports the granule s
         })
         .expect(400);
 
-      //const body = response.body;
-      // TODO - test error message matches
+      const message = JSON.parse(response.body.message);
+
+      t.is(message.reason, 'Failed to move granule');
+      t.deepEqual(message.granule, newGranule);
+      t.is(message.errors.length, 1);
+      t.is(message.errors[0].code, 'NoSuchBucket');
+
+      const actualGranuleFileRecord = message.granuleFilesRecords.sort((a, b) => (a.key < b.key));
+
+      const expectedGranuleFileRecord = [
+        {
+          bucket,
+          key: `${destinationFilepath}/${granuleFileName}.txt`,
+          fileName: `${granuleFileName}.txt`,
+        },
+        {
+          bucket: thirdBucket,
+          key: `${destinationFilepath}/${granuleFileName}.md`,
+          fileName: `${granuleFileName}.md`,
+        },
+        newGranule.files[2],
+      ];
+      t.deepEqual(expectedGranuleFileRecord, actualGranuleFileRecord);
 
       // Validate S3 Objects are where they should be
       const bucketObjects = await s3().listObjects({
