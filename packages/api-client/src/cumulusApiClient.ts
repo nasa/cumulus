@@ -30,17 +30,11 @@ export function invokeApi(
         FunctionName: `${prefix}-PrivateApiLambda`,
       }).promise();
 
-      console.log('in invokeApi. apiOutput:::::::::');
-      console.log(apiOutput);
-
       if (!apiOutput.Payload) {
         throw new Error('No payload received from lambda invocation');
       }
 
       const parsedPayload = JSON.parse(apiOutput.Payload.toString());
-
-      console.log('in invokeApi. parsedPayload:::::::::');
-      console.log(parsedPayload);
 
       if (parsedPayload?.errorMessage?.includes('Task timed out')) {
         throw new CumulusApiClientError(
