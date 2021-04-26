@@ -28,7 +28,7 @@ export const getExecution = async (params: {
       path: `/executions/${arn}`,
     },
   });
-
+  console.log('in getExecution', params, response);
   return JSON.parse(response.body);
 };
 
