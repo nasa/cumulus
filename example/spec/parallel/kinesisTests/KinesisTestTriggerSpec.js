@@ -441,16 +441,26 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     describe('the CnmResponse Lambda', () => {
+      let beforeAllFailed = false;
       let lambdaOutput;
       let granule;
 
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse');
-        granule = await getGranuleWithStatus({
-          prefix: testConfig.stackName,
-          granuleId,
-          status: 'failed',
-        });
+        try {
+          lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse');
+          granule = await getGranuleWithStatus({
+            prefix: testConfig.stackName,
+            granuleId,
+            status: 'failed',
+          });
+        } catch (error) {
+          beforeAllFailed = true;
+          throw error;
+        }
+      });
+
+      it('prepares the test suite successfully', async () => {
+        if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
       });
 
       it('sends the error to the CnmResponse task', async () => {
