@@ -40,6 +40,15 @@ export interface GranulesAndFilesMigrationResult {
   filesResult: MigrationResult,
 }
 
+const initializeGranulesAndFilesMigrationResult = (): GranulesAndFilesMigrationResult => {
+  const granuleMigrationResult: GranulesMigrationResult = cloneDeep(initialMigrationResult);
+  const fileMigrationResult: MigrationResult = cloneDeep(initialMigrationResult);
+  return {
+    granulesResult: granuleMigrationResult,
+    filesResult: fileMigrationResult,
+  };
+};
+
 /**
  * Migrate granules record from Dynamo to RDS.
  *
@@ -158,17 +167,21 @@ export const migrateFileRecord = async (
  * @param {number} loggingInterval
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
-export const migrateGranuleAndFilesViaTransaction = async (
+export const migrateGranuleAndFilesViaTransaction = async ({
+  dynamoRecord,
+  granuleAndFilesMigrationResult,
+  knex,
+  loggingInterval,
+}: {
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  granuleAndFileMigrationResult: GranulesAndFilesMigrationResult,
+  granuleAndFilesMigrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number
-): Promise<GranulesAndFilesMigrationResult> => {
+}): Promise<GranulesAndFilesMigrationResult> => {
   const files = dynamoRecord.files ?? [];
-  const granulesResult = granuleAndFileMigrationResult.granulesResult
-    ?? cloneDeep(initialMigrationResult);
-  const filesResult = granuleAndFileMigrationResult.filesResult
-    ?? cloneDeep(initialMigrationResult);
+  const migrationResult = granuleAndFilesMigrationResult
+    ?? initializeGranulesAndFilesMigrationResult();
+  const { granulesResult, filesResult } = migrationResult;
 
   granulesResult.total_dynamo_db_records += 1;
   filesResult.total_dynamo_db_records += files.length;
@@ -213,13 +226,13 @@ const migrateGranuleDynamoRecords = async (
   const updatedResult = migrationResult;
   await pMap(
     items,
-    async (record) => {
-      const result = await migrateGranuleAndFilesViaTransaction(
-        record,
-        migrationResult,
+    async (dynamoRecord) => {
+      const result = await migrateGranuleAndFilesViaTransaction({
+        dynamoRecord,
+        granuleAndFilesMigrationResult: migrationResult,
         knex,
-        loggingInterval
-      );
+        loggingInterval,
+      });
       updatedResult.granulesResult = result.granulesResult;
       updatedResult.filesResult = result.filesResult;
     },
@@ -227,6 +240,75 @@ const migrateGranuleDynamoRecords = async (
       concurrency: writeConcurrency,
     }
   );
+};
+
+export const queryAndMigrateGranuleDynamoRecords = async ({
+  granulesTable,
+  granuleMigrationParams,
+  granulesAndFilesMigrationResult,
+  knex,
+  loggingInterval,
+}: {
+  granulesTable: string,
+  granuleMigrationParams: GranuleMigrationParams,
+  granulesAndFilesMigrationResult?: GranulesAndFilesMigrationResult,
+  knex: Knex,
+  loggingInterval: number
+}) => {
+  const migrationResult = granulesAndFilesMigrationResult
+    ?? initializeGranulesAndFilesMigrationResult();
+
+  let extraQueryParams = {};
+  if (granuleMigrationParams.granuleId) {
+    migrationResult.granulesResult.filters = {
+      granuleId: granuleMigrationParams.granuleId,
+    };
+    extraQueryParams = {
+      KeyConditionExpression: 'granuleId = :granuleId',
+      ExpressionAttributeValues: {
+        ':granuleId': granuleMigrationParams.granuleId,
+      },
+    };
+  } else if (granuleMigrationParams.collectionId) {
+    migrationResult.granulesResult.filters = {
+      collectionId: granuleMigrationParams.collectionId,
+    };
+    extraQueryParams = {
+      IndexName: 'collectionId-granuleId-index',
+      KeyConditionExpression: 'collectionId = :collectionId',
+      ExpressionAttributeValues: {
+        ':collectionId': granuleMigrationParams.collectionId,
+      },
+    };
+  }
+
+  const searchQueue = new DynamoDbSearchQueue(
+    {
+      TableName: granulesTable,
+      ...extraQueryParams,
+    },
+    'query'
+  );
+
+  let dynamoRecord = await searchQueue.peek();
+
+  /* eslint-disable no-await-in-loop */
+  while (dynamoRecord) {
+    const result = await migrateGranuleAndFilesViaTransaction({
+      dynamoRecord,
+      granuleAndFilesMigrationResult: migrationResult,
+      knex,
+      loggingInterval,
+    });
+    migrationResult.granulesResult = result.granulesResult;
+    migrationResult.filesResult = result.filesResult;
+
+    await searchQueue.shift();
+    dynamoRecord = await searchQueue.peek();
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return migrationResult;
 };
 
 /**
@@ -253,43 +335,20 @@ export const migrateGranulesAndFiles = async (
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
   const loggingInterval = granuleMigrationParams.loggingInterval ?? 100;
   const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 2;
+  const granulesAndFilesMigrationResult = initializeGranulesAndFilesMigrationResult();
 
-  const granuleMigrationResult: GranulesMigrationResult = {
-    filters: granuleMigrationParams,
-    ...cloneDeep(initialMigrationResult),
-  };
+  const doDynamoQuery = granuleMigrationParams.granuleId !== undefined
+    || granuleMigrationParams.collectionId !== undefined;
 
-  const fileMigrationResult: MigrationResult = cloneDeep(initialMigrationResult);
-
-  const migrationResult = {
-    granulesResult: granuleMigrationResult,
-    filesResult: fileMigrationResult,
-  };
-
-  let extraQueryParams = {};
-  type searchType = 'scan' | 'query';
-  let dynamoSearchType: searchType = 'scan';
-
-  if (granuleMigrationParams.granuleId) {
-    dynamoSearchType = 'query';
-    extraQueryParams = {
-      KeyConditionExpression: 'granuleId = :granuleId',
-      ExpressionAttributeValues: {
-        ':granuleId': granuleMigrationParams.granuleId,
-      },
-    };
-  } else if (granuleMigrationParams.collectionId) {
-    dynamoSearchType = 'query';
-    extraQueryParams = {
-      IndexName: 'collectionId-granuleId-index',
-      KeyConditionExpression: 'collectionId = :collectionId',
-      ExpressionAttributeValues: {
-        ':collectionId': granuleMigrationParams.collectionId,
-      },
-    };
-  }
-
-  if (dynamoSearchType === 'scan') {
+  if (doDynamoQuery) {
+    await queryAndMigrateGranuleDynamoRecords({
+      granulesTable,
+      granuleMigrationParams,
+      granulesAndFilesMigrationResult,
+      knex,
+      loggingInterval,
+    });
+  } else {
     const totalSegments = granuleMigrationParams.parallelScanSegments ?? 20;
 
     logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
@@ -302,7 +361,7 @@ export const migrateGranulesAndFiles = async (
       },
       processItemsFunc: (items) => migrateGranuleDynamoRecords(
         items,
-        migrationResult,
+        granulesAndFilesMigrationResult,
         knex,
         loggingInterval,
         writeConcurrency
@@ -310,34 +369,9 @@ export const migrateGranulesAndFiles = async (
     });
 
     logger.info(`Finished parallel scan of granules with ${totalSegments} parallel segments.`);
-  } else {
-    const searchQueue = new DynamoDbSearchQueue(
-      {
-        TableName: granulesTable,
-        ...extraQueryParams,
-      },
-      dynamoSearchType
-    );
-
-    let record = await searchQueue.peek();
-
-    /* eslint-disable no-await-in-loop */
-    while (record) {
-      const result = await migrateGranuleAndFilesViaTransaction(
-        record,
-        migrationResult,
-        knex,
-        loggingInterval
-      );
-      migrationResult.granulesResult = result.granulesResult;
-      migrationResult.filesResult = result.filesResult;
-
-      await searchQueue.shift();
-      record = await searchQueue.peek();
-    }
-    /* eslint-enable no-await-in-loop */
   }
-  logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
-  logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);
-  return migrationResult;
+
+  logger.info(`Successfully migrated ${granulesAndFilesMigrationResult.granulesResult.migrated} granule records.`);
+  logger.info(`Successfully migrated ${granulesAndFilesMigrationResult.filesResult.migrated} file records.`);
+  return granulesAndFilesMigrationResult;
 };
