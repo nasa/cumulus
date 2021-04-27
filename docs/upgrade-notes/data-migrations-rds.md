@@ -8,7 +8,11 @@ hide_title: false
 
 This release of Cumulus (x.x.x) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
+<<<<<<< HEAD
 While eventually Cumulus will only support using RDS as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
+=======
+While eventually Cumulus will only support using RDS as its data archive, for now the system will do **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
+>>>>>>> 483a54841... initial stub of data migration & upgrade docs
 
 However, in order to copy all of your previously written data from DynamoDB to PostgreSQL, you will need to run data migration scripts that we have provided and which this document will explain how to use.
 
@@ -31,6 +35,7 @@ terraform apply
 ```
 
 ### Deploy and run data-migration1
+<<<<<<< HEAD
 From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
 
 ```shell
@@ -89,3 +94,11 @@ The `cumulus` module will create resources including the following relevant reso
 Instructions on how to run your `data-migration2` lambda can be found in the `data-migration2` [README](../../lambdas/data-migration2/README.md).
 
 ### Run reconciliation tool
+=======
+
+### Deploy cumulus module
+
+### Run data-migration2
+
+### Run reconciliation tool?
+>>>>>>> 483a54841... initial stub of data migration & upgrade docs
