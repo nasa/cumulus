@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import pMap from 'p-map';
+import cloneDeep from 'lodash/cloneDeep';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import Logger from '@cumulus/logger';
@@ -18,6 +19,8 @@ import {
 } from '@cumulus/errors';
 
 import { MigrationResult, ParallelScanMigrationParams } from '@cumulus/types/migration';
+
+import { initialMigrationResult } from './common';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
@@ -149,12 +152,7 @@ export const migratePdrs = async (
   const loggingInterval = pdrMigrationParams.loggingInterval ?? 100;
   const totalSegments = pdrMigrationParams.parallelScanSegments ?? 20;
 
-  const migrationResult = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
+  const migrationResult = cloneDeep(initialMigrationResult);
 
   logger.info(`Starting parallel scan of PDRs with ${totalSegments} parallel segments`);
 

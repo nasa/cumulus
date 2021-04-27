@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import pMap from 'p-map';
+import cloneDeep from 'lodash/cloneDeep';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import { envUtils } from '@cumulus/common';
@@ -8,6 +9,8 @@ import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { ParallelScanMigrationParams, MigrationResult } from '@cumulus/types/migration';
+
+import { initialMigrationResult } from './common';
 
 const Execution = require('@cumulus/api/models/executions');
 
@@ -114,12 +117,7 @@ export const migrateExecutions = async (
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
   const loggingInterval = executionMigrationParams.loggingInterval ?? 100;
 
-  const migrationResult = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
+  const migrationResult = cloneDeep(initialMigrationResult);
 
   const totalSegments = executionMigrationParams.parallelScanSegments ?? 20;
 

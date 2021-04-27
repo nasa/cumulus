@@ -29,16 +29,11 @@ import {
   GranulesMigrationResult,
 } from '@cumulus/types/migration';
 
+import { initialMigrationResult } from './common';
+
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
-
-const initialMigrationResult = {
-  total_dynamo_db_records: 0,
-  migrated: 0,
-  failed: 0,
-  skipped: 0,
-};
 
 export interface GranulesAndFilesMigrationResult {
   granulesResult: GranulesMigrationResult,
@@ -261,10 +256,10 @@ export const migrateGranulesAndFiles = async (
 
   const granuleMigrationResult: GranulesMigrationResult = {
     filters: granuleMigrationParams,
-    ...initialMigrationResult,
+    ...cloneDeep(initialMigrationResult),
   };
 
-  const fileMigrationResult: MigrationResult = initialMigrationResult;
+  const fileMigrationResult: MigrationResult = cloneDeep(initialMigrationResult);
 
   const migrationResult = {
     granulesResult: granuleMigrationResult,
