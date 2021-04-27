@@ -57,3 +57,16 @@ test.serial('S3ObjectStore.signGetObject calls s3.getObject in order to call pre
     getObjectStub.restore();
   });
 });
+
+test.serial('S3ObjectStore.signGetObject returns result of calling presign', async (t) => {
+  const store = new S3ObjectStore();
+  const headObjectResponse = { Metadata: { foo: 'bar' }, ContentType: 'image/png' };
+  const headObjectStub = sinon.stub(S3, 'headObject').returns({ promise: () => headObjectResponse });
+  const getObjectStub = sinon.stub(store.s3, 'getObject').returns({ presign: () => 'http://example.com/signed' });
+  const result = await store.signGetObject('s3://example-bucket/example/path.txt', { 'A-userid': 'joe' });
+  t.is(result, 'http://example.com/signed');
+  t.teardown(() => {
+    headObjectStub.restore();
+    getObjectStub.restore();
+  });
+});
