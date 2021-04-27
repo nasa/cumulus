@@ -549,3 +549,47 @@ test.serial('migrateExecutions writes errors to S3 object', async (t) => {
   t.true(expectedResult.test(errors[0]));
   t.true(expectedResult.test(errors[1]));
 });
+
+test.serial('migrateExecutions correctly delimits errors written to S3 object', async (t) => {
+  const key = `${process.env.stackName}/data-migration2-executions-errors-123.json`;
+
+  const execution1 = fakeExecutionFactoryV2({
+    parentArn: undefined,
+  });
+  const execution2 = fakeExecutionFactoryV2({
+    asyncOperationId: undefined,
+  });
+  const execution3 = fakeExecutionFactoryV2({
+    asyncOperationId: undefined,
+  });
+
+  await Promise.all([
+    executionsModel.create(execution1),
+    executionsModel.create(execution2),
+    executionsModel.create(execution3),
+  ]);
+
+  // Prematurely migrate execution, will be skipped and excluded from error file
+  await migrateExecutionRecord(execution1, t.context.knex);
+
+  t.teardown(() => Promise.all([
+    executionsModel.delete({ arn: execution1.arn }),
+    executionsModel.delete({ arn: execution2.arn }),
+    executionsModel.delete({ arn: execution3.arn }),
+  ]));
+
+  await migrateExecutions(process.env, t.context.knex, '123');
+
+  // Check that error file exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  console.log(item.Body.toString());
+  const errors = JSON.parse(item.Body.toString()).errors;
+  const expectedResult = /RecordDoesNotExist/;
+
+  t.is(errors.length, 2);
+  t.true(expectedResult.test(errors[0]));
+  t.true(expectedResult.test(errors[1]));
+});

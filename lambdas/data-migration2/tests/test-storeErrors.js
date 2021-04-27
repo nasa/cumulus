@@ -1,5 +1,6 @@
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
+const JSONStream = require('JSONStream');
 const test = require('ava');
 const { finished } = require('stream');
 const { promisify } = require('util');
@@ -51,17 +52,20 @@ test.serial('storeErrors stores file on s3', async (t) => {
   t.deepEqual(item.Body.toString(), message);
 });
 
-test.serial('createErrorFileWriteStream returns a write stream and string', (t) => {
+test.serial('createErrorFileWriteStream returns write streams and string', (t) => {
   const migrationName = 'test-migration-name';
   const timestamp = new Date().toISOString();
   const expectedFilePath = `${migrationName}ErrorLog-${timestamp}.json`;
 
   const {
     errorFileWriteStream,
+    jsonWriteStream,
     filepath,
   } = createErrorFileWriteStream(migrationName, timestamp);
   t.is(filepath, expectedFilePath);
   t.true(errorFileWriteStream instanceof fs.WriteStream);
+  t.truthy(jsonWriteStream);
+
   t.teardown(async () => {
     errorFileWriteStream.end('');
     const asyncFinished = promisify(finished);

@@ -94,7 +94,11 @@ export const migrateExecutions = async (
   };
 
   const migrationName = 'executions';
-  const { errorFileWriteStream, filepath } = createErrorFileWriteStream(migrationName);
+  const {
+    errorFileWriteStream,
+    jsonWriteStream,
+    filepath,
+  } = createErrorFileWriteStream(migrationName);
 
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
@@ -114,17 +118,13 @@ export const migrateExecutions = async (
       } else {
         migrationResult.failed += 1;
         const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
-        errorFileWriteStream.write(JSON.stringify(`${errorMessage}, Cause: ${error}`));
+        jsonWriteStream.write(`${errorMessage}, Cause: ${error}\n`);
         logger.error(errorMessage, error);
       }
     }
 
     await searchQueue.shift();
     record = await searchQueue.peek();
-
-    if (record) {
-      errorFileWriteStream.write(',\n');
-    }
   }
   await closeErrorFileWriteStream(errorFileWriteStream);
   await storeErrors({

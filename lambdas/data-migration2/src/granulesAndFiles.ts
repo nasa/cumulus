@@ -252,7 +252,11 @@ export const migrateGranulesAndFiles = async (
   };
 
   const migrationName = 'granulesAndFiles';
-  const { errorFileWriteStream, filepath } = createErrorFileWriteStream(migrationName);
+  const {
+    errorFileWriteStream,
+    jsonWriteStream,
+    filepath,
+  } = createErrorFileWriteStream(migrationName);
 
   let extraSearchParams = {};
   type searchType = 'scan' | 'query';
@@ -294,17 +298,13 @@ export const migrateGranulesAndFiles = async (
       granuleAndFileMigrationResult: migrationResult,
       knex,
       loggingInterval,
-      stream: errorFileWriteStream,
+      stream: jsonWriteStream,
     });
     migrationResult.granulesResult = result.granulesResult;
     migrationResult.filesResult = result.filesResult;
 
     await searchQueue.shift();
     record = await searchQueue.peek();
-
-    if (record) {
-      errorFileWriteStream.write(',\n');
-    }
   }
   await closeErrorFileWriteStream(errorFileWriteStream);
   await storeErrors({ bucket, filepath, migrationName, stackName, timestamp: testTimestamp });

@@ -831,6 +831,48 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
   t.true(expectedResult.test(errors[1]));
 });
 
+test.serial('migrateGranulesAndFiles correctly delimits errors written to S3 object', async (t) => {
+  const {
+    knex,
+    testExecution,
+    testGranule,
+  } = t.context;
+  const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors-123.json`;
+
+  const testCollection2 = fakeCollectionRecordFactory();
+  const testGranule2 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection2.name, testCollection2.version),
+    execution: testExecution.url,
+  });
+
+  await Promise.all([
+    granulesModel.create(testGranule),
+    granulesModel.create(testGranule2),
+  ]);
+
+  // Prematurely migrate granule, will be skipped and exluded from error file
+  await migrateGranuleRecord(testGranule, knex);
+
+  t.teardown(async () => {
+    granulesModel.delete({ granuleId: testGranule.granuleId });
+    granulesModel.delete({ granuleId: testGranule2.granuleId });
+  });
+
+  await migrateGranulesAndFiles(process.env, knex, {}, '123');
+  // Check that error file exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  console.log(item.Body.toString());
+
+  const errors = JSON.parse(item.Body.toString()).errors;
+  const expectedResult = /RecordDoesNotExist/;
+
+  t.is(errors.length, 1);
+  t.true(expectedResult.test(errors[0]));
+});
+
 test.serial('migrateGranulesAndFiles logs summary of migration for a specified loggingInterval', async (t) => {
   const logSpy = sinon.spy(Logger.prototype, 'info');
   const {
