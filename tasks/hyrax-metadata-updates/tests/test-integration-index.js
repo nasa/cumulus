@@ -35,7 +35,7 @@ const HyraxMetadataUpdate = rewire('../index');
 
 const generateHyraxUrl = HyraxMetadataUpdate.__get__('generateHyraxUrl');
 const generatePath = HyraxMetadataUpdate.__get__('generatePath');
-const getEntryTitle = HyraxMetadataUpdate.__get__('getEntryTitle');
+const getCollectionEntry = HyraxMetadataUpdate.__get__('getCollectionEntry');
 
 const preconditionFailedSelector = {
   code: 'PreconditionFailed',
@@ -52,8 +52,8 @@ const { hyraxMetadataUpdate } = proxyquire(
           async () => {
             const result = await getObject(s3Client, params);
 
-            // LocalStack does not handle pre-condition checks, so we have to
-            // manually check, and throw, if necessary.
+            // LocalStack does not handle pre-condition checks, so we have to manually check,
+            // and throw, if necessary.
             if (params.IfMatch && result.ETag !== params.IfMatch) {
               throw Object.assign(new Error(), preconditionFailedSelector);
             }
@@ -77,7 +77,7 @@ test.before(async () => {
 });
 
 test.beforeEach(() => {
-  // Mock out retrieval of entryTitle from CMR
+  // Mock out retrieval of collection entry from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
     .query({
@@ -204,7 +204,7 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
     });
     const expected = fs.readFileSync('tests/data/echo10out.xml', 'utf8');
 
-    t.is(actual.Body.toString(), expected);
+    t.is(actual.Body.toString(), expected.trim('\n'));
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
@@ -247,7 +247,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata f
     };
     const expectedPartial = {
       etag: outputEtag,
-      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8'),
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8').trim('\n'),
     };
 
     t.not(outputEtag, inputEtag);
@@ -280,8 +280,8 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     });
     metadataFile.etag = inputEtag;
 
-    // Upload dummy file to force retries in hyraxMetadataUpdate because ETag is
-    // not initially matched.
+    // Upload dummy file to force retries in hyraxMetadataUpdate
+    // because ETag is not initially matched.
     await promiseS3Upload({
       Bucket: bucket,
       Key: metadataFile.name,
@@ -309,7 +309,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     };
     const expectedPartial = {
       etag: outputEtag,
-      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8'),
+      body: fs.readFileSync('tests/data/echo10out.xml', 'utf8').trim('\n'),
     };
 
     t.not(outputEtag, inputEtag);
@@ -498,49 +498,67 @@ test.serial('Test record does not exist error when granule object has no recogni
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
 });
 
-test.serial('Test retrieving entry title from CMR using UMM-G', async (t) => {
+test.serial('Test retrieving optional entry collection from CMR using UMM-G', async (t) => {
+  const optionalEvent = {
+    config: {
+      cmr: {
+        oauthProvider: 'earthdata',
+        provider: 'GES_DISC',
+        clientId: 'xxxxxx',
+        username: 'xxxxxx',
+        passwordSecretName: cmrPasswordSecret,
+      },
+      addShortnameAndVersionIdToConceptId: true,
+    },
+    input: {},
+  };
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
-  const actual = await getEntryTitle(event.config, metadataObject, true);
-  t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
+  const actual = await getCollectionEntry(optionalEvent.config, metadataObject, true);
+  t.is(actual, 'C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0');
 });
 
-test.serial('Test retrieving entry title from CMR using ECHO10', async (t) => {
+test.serial('Test retrieving default entry collection from CMR using UMM-G', async (t) => {
+  const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
+  const metadataObject = JSON.parse(data);
+
+  const actual = await getCollectionEntry(event.config, metadataObject, true);
+  t.is(actual, 'C1453188197-GES_DISC');
+});
+
+test.serial('Test retrieving entry collection from CMR using ECHO10', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
-  const actual = await getEntryTitle(event.config, metadata, false);
-  t.is(actual, 'Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters');
+  const actual = await getCollectionEntry(event.config, metadata, false);
+  t.is(actual, 'C1453188197-GES_DISC');
 });
 
 test('Test generate path from UMM-G', async (t) => {
   const metadata = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(metadata);
   const actual = await generatePath(event.config, metadataObject, true);
-
-  t.is(actual, 'providers/GES_DISC/collections/Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generate path from ECHO-10', async (t) => {
   const metadata = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadataObject = await (promisify(xml2js.parseString))(metadata, xmlParseOptions);
-
   const actual = await generatePath(event.config, metadataObject, false);
-
-  t.is(actual, 'providers/GES_DISC/collections/Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generating OPeNDAP URL from ECHO10 file', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const actual = await generateHyraxUrl(event.config, metadata, false);
-  t.is(actual, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generating OPeNDAP URL from UMM-G file', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
   const actual = await generateHyraxUrl(event.config, metadataObject, true);
-  t.is(actual, 'https://opendap.earthdata.nasa.gov/providers/GES_DISC/collections/Sentinel-6A%20MF%2FJason-CS%20L2%20Advanced%20Microwave%20Radiometer%20(AMR-C)%20NRT%20Geophysical%20Parameters/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
+  t.is(actual, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
 });
 
 test('Test generate path from ECHO-10 throws exception with broken config', async (t) => {
