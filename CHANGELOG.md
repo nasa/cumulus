@@ -169,6 +169,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `executionMigrationParams.parallelScanLimit`: The maximum number of execution records to evaluate for each parallel scanning segment of the DynamoDB table
       - `executionMigrationParams.writeConcurrency`: The maximum number of concurrent execution writes to perform to the PostgreSQL database across all DynamoDB segments
 
+### Added
+
+- **CUMULUS-2468** - Added `@cumulus/aws-client/DynamoDb.parallelScan` helper to perform [parallel scanning on DynamoDb tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes
