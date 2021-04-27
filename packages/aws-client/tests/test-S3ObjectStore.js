@@ -1,7 +1,23 @@
 const test = require('ava');
-const sinon = require('sinon');
+const { randomString } = require('@cumulus/common/test-utils');
 const { defaultObjectStore, objectStoreForProtocol, S3ObjectStore } = require('../S3ObjectStore');
-const S3 = require('../S3');
+const { createBucket, recursivelyDeleteS3Bucket } = require('../S3');
+const { s3 } = require('../services');
+
+const stageTestObjectToLocalStack = (bucket, body, key = randomString()) =>
+  s3().putObject({ Bucket: bucket, Key: key, Body: body })
+    .promise()
+    .then(({ ETag }) => ({ ETag, Key: key }));
+
+test.before(async (t) => {
+  t.context.Bucket = randomString();
+
+  await createBucket(t.context.Bucket);
+});
+
+test.after.always(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.Bucket);
+});
 
 test('objectStoreForProtocol returns null when no protocol is supplied', (t) => {
   t.is(objectStoreForProtocol(), undefined);
@@ -23,50 +39,36 @@ test('defaultObjectStore returns an S3 object store', (t) => {
   t.true(defaultObjectStore() instanceof S3ObjectStore);
 });
 
-test.serial('S3ObjectStore.signGetObject throws NotFound from S3.headObject when object does not exist', async (t) => {
+test('S3ObjectStore.signGetObject returns a signed url', async (t) => {
   const store = new S3ObjectStore();
-  const headObjectResponse = { Metadata: { foo: 'bar' }, ContentType: 'image/png' };
-  const headObjectStub = sinon.stub(S3, 'headObject').returns({ promise: () => headObjectResponse });
-  await store.signGetObject('s3://example-bucket/example/path.txt', { 'A-userid': 'joe' });
-  t.true(headObjectStub.calledOnce);
-  t.teardown(() => {
-    headObjectStub.restore();
-  });
+  const { Bucket } = t.context;
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const signedUrl = await store.signGetObject(`s3://${Bucket}/${Key}`);
+  t.regex(signedUrl, new RegExp(`${Bucket}/${Key}?.*AWSAccessKeyId.*Expires.*Signature.*`));
 });
 
-test.serial('S3ObjectStore.signGetObject calls s3.headObject to make sure the object exists', async (t) => {
+test('S3ObjectStore.signGetObject returns a signed url with params', async (t) => {
   const store = new S3ObjectStore();
-  const headObjectResponse = { Metadata: { foo: 'bar' }, ContentType: 'image/png' };
-  const headObjectStub = sinon.stub(S3, 'headObject').returns({ promise: () => headObjectResponse });
-  await store.signGetObject('s3://example-bucket/example/path.txt', { 'A-userid': 'joe' });
-  t.true(headObjectStub.calledOnce);
-  t.teardown(() => {
-    headObjectStub.restore();
-  });
+  const { Bucket } = t.context;
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const signedUrl = await store.signGetObject(`s3://${Bucket}/${Key}`, { 'A-userid': 'joe' });
+  t.regex(signedUrl, new RegExp(`${Bucket}/${Key}?.*A-userid=joe.*AWSAccessKeyId.*Expires.*Signature.*`));
 });
 
-test.serial('S3ObjectStore.signGetObject calls s3.getObject in order to call presign', async (t) => {
+test('S3ObjectStore.signGetObject throws TypeError when URL is not valid', async (t) => {
   const store = new S3ObjectStore();
-  const headObjectResponse = { Metadata: { foo: 'bar' }, ContentType: 'image/png' };
-  const headObjectStub = sinon.stub(S3, 'headObject').returns({ promise: () => headObjectResponse });
-  const getObjectStub = sinon.stub(store.s3, 'getObject').returns({ presign: () => 'http://example.com/signed' });
-  await store.signGetObject('s3://example-bucket/example/path.txt', { 'A-userid': 'joe' });
-  t.true(getObjectStub.calledOnce);
-  t.teardown(() => {
-    headObjectStub.restore();
-    getObjectStub.restore();
-  });
+  await t.throwsAsync(
+    store.signGetObject('http://example.com'),
+    { instanceOf: TypeError }
+  );
 });
 
-test.serial('S3ObjectStore.signGetObject returns result of calling presign', async (t) => {
+test('S3ObjectStore.signGetObject throws NotFound when object is not found', async (t) => {
   const store = new S3ObjectStore();
-  const headObjectResponse = { Metadata: { foo: 'bar' }, ContentType: 'image/png' };
-  const headObjectStub = sinon.stub(S3, 'headObject').returns({ promise: () => headObjectResponse });
-  const getObjectStub = sinon.stub(store.s3, 'getObject').returns({ presign: () => 'http://example.com/signed' });
-  const result = await store.signGetObject('s3://example-bucket/example/path.txt', { 'A-userid': 'joe' });
-  t.is(result, 'http://example.com/signed');
-  t.teardown(() => {
-    headObjectStub.restore();
-    getObjectStub.restore();
-  });
+  const { Bucket } = t.context;
+  const Key = randomString();
+  await t.throwsAsync(
+    store.signGetObject(`s3://${Bucket}/${Key}`),
+    { code: 'NotFound' }
+  );
 });

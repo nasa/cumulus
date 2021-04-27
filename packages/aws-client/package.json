@@ -44,6 +44,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/checksum": "8.0.0",
+    "@cumulus/common": "^8.0.0",
     "@cumulus/errors": "8.0.0",
     "@cumulus/logger": "8.0.0",
     "aws-sdk": "^2.814.0",
