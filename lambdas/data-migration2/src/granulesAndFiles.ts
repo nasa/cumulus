@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import pMap from 'p-map';
+import cloneDeep from 'lodash/cloneDeep';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
@@ -31,6 +32,13 @@ import {
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
+
+const initialMigrationResult = {
+  total_dynamo_db_records: 0,
+  migrated: 0,
+  failed: 0,
+  skipped: 0,
+};
 
 export interface GranulesAndFilesMigrationResult {
   granulesResult: GranulesMigrationResult,
@@ -162,7 +170,10 @@ export const migrateGranuleAndFilesViaTransaction = async (
   loggingInterval: number
 ): Promise<GranulesAndFilesMigrationResult> => {
   const files = dynamoRecord.files ?? [];
-  const { granulesResult, filesResult } = granuleAndFileMigrationResult;
+  const granulesResult = granuleAndFileMigrationResult.granulesResult
+    ?? cloneDeep(initialMigrationResult);
+  const filesResult = granuleAndFileMigrationResult.filesResult
+    ?? cloneDeep(initialMigrationResult);
 
   granulesResult.total_dynamo_db_records += 1;
   filesResult.total_dynamo_db_records += files.length;
@@ -250,18 +261,10 @@ export const migrateGranulesAndFiles = async (
 
   const granuleMigrationResult: GranulesMigrationResult = {
     filters: granuleMigrationParams,
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
+    ...initialMigrationResult,
   };
 
-  const fileMigrationResult: MigrationResult = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
+  const fileMigrationResult: MigrationResult = initialMigrationResult;
 
   const migrationResult = {
     granulesResult: granuleMigrationResult,

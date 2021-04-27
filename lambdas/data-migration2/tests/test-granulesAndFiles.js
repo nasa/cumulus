@@ -25,7 +25,12 @@ const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
-const { migrateGranuleRecord, migrateFileRecord, migrateGranulesAndFiles } = require('../dist/lambda/granulesAndFiles');
+const {
+  migrateGranuleRecord,
+  migrateFileRecord,
+  migrateGranuleAndFilesViaTransaction,
+  migrateGranulesAndFiles,
+} = require('../dist/lambda/granulesAndFiles');
 
 const buildCollectionId = (name, version) => `${name}___${version}`;
 
@@ -504,29 +509,37 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   );
 });
 
-test.serial('migrateGranulesAndFiles skips already migrated granule record', async (t) => {
+test.serial('migrateGranuleAndFilesViaTransaction skips already migrated granule record', async (t) => {
   const {
     knex,
     testGranule,
   } = t.context;
 
-  await migrateGranuleRecord(testGranule, knex);
-  await granulesModel.create(testGranule);
+  await migrateGranuleAndFilesViaTransaction(
+    testGranule,
+    {},
+    knex,
+    1
+  );
 
   t.teardown(() => {
     granulesModel.delete(testGranule);
   });
 
-  const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
-  t.deepEqual(migrationSummary, {
+  const result = await migrateGranuleAndFilesViaTransaction(
+    testGranule,
+    {},
+    knex,
+    1
+  );
+  t.deepEqual(result, {
     filesResult: {
       total_dynamo_db_records: 1,
       failed: 0,
-      skipped: 0,
+      skipped: 1,
       migrated: 0,
     },
     granulesResult: {
-      filters: {},
       total_dynamo_db_records: 1,
       failed: 0,
       skipped: 1,
@@ -542,7 +555,7 @@ test.serial('migrateGranulesAndFiles skips already migrated granule record', asy
   });
 });
 
-test.serial('migrateGranulesAndFiles processes granule with no files', async (t) => {
+test.serial('migrateGranuleAndFilesViaTransaction processes granule with no files', async (t) => {
   const {
     knex,
     testGranule,
@@ -550,15 +563,12 @@ test.serial('migrateGranulesAndFiles processes granule with no files', async (t)
 
   delete testGranule.files;
 
-  await Promise.all([
-    granulesModel.create(testGranule),
-  ]);
-
-  t.teardown(async () => {
-    await granulesModel.delete({ granuleId: testGranule.granuleId });
-  });
-
-  await migrateGranulesAndFiles(process.env, knex);
+  await migrateGranuleAndFilesViaTransaction(
+    testGranule,
+    {},
+    knex,
+    1
+  );
 
   const records = await t.context.granulePgModel.search(t.context.knex, {});
   const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
