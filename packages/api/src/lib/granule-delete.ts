@@ -3,8 +3,8 @@ import pMap from 'p-map';
 
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import {
-  GranulePgModel,
   FilePgModel,
+  GranulePgModel,
   PostgresGranuleRecord,
   PostgresFileRecord,
 } from '@cumulus/db';
@@ -18,7 +18,7 @@ const Granule = require('../../models/granules');
  * Delete a list of files from S3
  *
  * @param {Array} files - A list of S3 files
- * @returns {Promise}
+ * @returns {Promise<void>}
  */
 const _deleteS3Files = async (
   files: (ApiFile | PostgresFileRecord)[] = []
