@@ -1,6 +1,5 @@
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
-const JSONStream = require('JSONStream');
 const test = require('ava');
 const { finished } = require('stream');
 const { promisify } = require('util');
