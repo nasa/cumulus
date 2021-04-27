@@ -25,6 +25,7 @@ const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
+const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 
 /**
  * List all granules for a given collection.
@@ -34,13 +35,17 @@ const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
+  const { getRecoveryStatus, ...queryStringParameters } = req.query;
   const es = new Search(
-    { queryStringParameters: req.query },
+    { queryStringParameters },
     'granule',
     process.env.ES_INDEX
   );
 
-  const result = await es.query();
+  let result = await es.query();
+  if (getRecoveryStatus === 'true') {
+    result = await addOrcaRecoveryStatus(result);
+  }
 
   return res.send(result);
 }
@@ -231,9 +236,11 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
+  const { getRecoveryStatus } = req.query;
+  const granuleId = req.params.granuleName;
   let result;
   try {
-    result = await (new models.Granule()).get({ granuleId: req.params.granuleName });
+    result = await (new models.Granule()).get({ granuleId });
   } catch (error) {
     if (error.message.startsWith('No record found')) {
       return res.boom.notFound('Granule not found');
@@ -242,7 +249,10 @@ async function get(req, res) {
     throw error;
   }
 
-  return res.send(result);
+  const recoveryStatus = getRecoveryStatus === 'true'
+    ? await getOrcaRecoveryStatusByGranuleId(granuleId)
+    : undefined;
+  return res.send({ ...result, recoveryStatus });
 }
 
 function validateBulkGranulesRequest(req, res, next) {

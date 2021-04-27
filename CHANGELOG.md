@@ -48,26 +48,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       postgres-migration-count-tool as an asyncOperation
   - **CUMULUS-2394**
     - Updated PDR and Granule writes to check the step function
-    workflow_start_time against the createdAt field for each record to
-    ensure old records do not overwrite newer ones for legacy Dynamo and
-    PostgreSQL writes
+      workflow_start_time against the createdAt field for each record to ensure
+      old records do not overwrite newer ones for legacy Dynamo and PostgreSQL
+      writes
   - **CUMULUS-2188**
     - Added `data-migration2` Lambda to be run after `data-migration1`
-    - Added logic to `data-migration2` Lambda for migrating execution records from DynamoDB to PostgreSQL
+    - Added logic to `data-migration2` Lambda for migrating execution records
+      from DynamoDB to PostgreSQL
   - **CUMULUS-2191**
     - Added `@cumulus/async-operations` to core packages, exposing
-      `startAsyncOperation` which will handle starting an async operation and adding an entry to both PostgreSQL and DynamoDb
+      `startAsyncOperation` which will handle starting an async operation and
+      adding an entry to both PostgreSQL and DynamoDb
   - **CUMULUS-2127**
     - Add schema migration for `collections` table
   - **CUMULUS-2129**
-    - Added logic to `data-migration1` Lambda for migrating collection records from Dynamo to PostgreSQL
+    - Added logic to `data-migration1` Lambda for migrating collection records
+      from Dynamo to PostgreSQL
   - **CUMULUS-2157**
     - Add schema migration for `providers` table
-    - Added logic to `data-migration1` Lambda for migrating provider records from Dynamo to PostgreSQL
+    - Added logic to `data-migration1` Lambda for migrating provider records
+      from Dynamo to PostgreSQL
   - **CUMULUS-2187**
-    - Added logic to `data-migration1` Lambda for migrating async operation records from Dynamo to PostgreSQL
+    - Added logic to `data-migration1` Lambda for migrating async operation
+      records from Dynamo to PostgreSQL
   - **CUMULUS-2198**
-    - Added logic to `data-migration1` Lambda for migrating rule records from DynamoDB to PostgreSQL
+    - Added logic to `data-migration1` Lambda for migrating rule records from
+      DynamoDB to PostgreSQL
   - **CUMULUS-2182**
     - Add schema migration for PDRs table
   - **CUMULUS-2230**
@@ -235,11 +241,63 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2455**
     - `@cumulus/ingest/moveGranuleFiles`
 
+### Added
+
+- **CUMULUS-2348**
+  - The `@cumulus/api` `/granules` and `/granules/{granuleId}` endpoints now take `getRecoveryStatus` parameter
+  to include recoveryStatus in result granule(s)
+  - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
+  request additional granule information.
+  - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
+
+## [v8.0.0] 2021-04-08
+
+### BREAKING CHANGES
+
+- **CUMULUS-2428**
+  - Changed `/granules/bulk` to use `queueUrl` property instead of a `queueName` property for setting the queue to use for scheduling bulk granule workflows
+
+### Notable changes
+
+- Bulk granule operations endpoint now supports setting a custom queue for scheduling workflows via the `queueUrl` property in the request body. If provided, this value should be the full URL for an SQS queue.
+
+### Added
+- **CUMULUS-2374**
+  - Add cookbok entry for queueing PostToCmr step
+  - Add example workflow to go with cookbook
+- **CUMULUS-2421**
+  - Added **experimental** `ecs_include_docker_cleanup_cronjob` boolean variable to the Cumulus module to enable cron job to clean up docker root storage blocks in ECS cluster template for non-`device-mapper` storage drivers. Default value is `false`. This fulfills a specific user support request. This feature is otherwise untested and will remain so until we can iterate with a better, more general-purpose solution. Use of this feature is **NOT** recommended unless you are certain you need it.
+
+- **CUMULUS-1808**
+  - Add additional error messaging in `deleteSnsTrigger` to give users more context about where to look to resolve ResourceNotFound error when disabling or deleting a rule.
+
+### Fixed
+- **CUMULUS-2281**
+  - Changed discover-granules task to write discovered granules directly to
+    logger, instead of via environment variable. This fixes a problem where a
+    large number of found granules prevents this lambda from running as an
+    activity with an E2BIG error.
+
+## [v7.2.0] 2021-03-23
+
+### Added
+
+- **CUMULUS-2346**
+  - Added orca API endpoint to `@cumulus/api` to get recovery status
+  - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
+
+### Changed
+
+- **HYRAX-357**
+  - Format of NGAP OPeNDAP URL changed and by default now is referring to concept id and optionally can include short name and version of collection.
+  - `addShortnameAndVersionIdToConceptId` field has been added to the config inputs of the `hyrax-metadata-updates` task
+
 ## [v7.1.0] 2021-03-12
 
 ### Notable changes
 
 - `sync-granule` task will now properly handle syncing 0 byte files to S3
+- SQS/Kinesis rules now support scheduling workflows to a custom queue via the `rule.queueUrl` property. If provided, this value should be the full URL for an SQS queue.
 
 ### Added
 
@@ -261,10 +319,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated PDR and Granule writes to check the step function `workflow_start_time` against
       the `createdAt` field  for each record to ensure old records do not
       overwrite newer ones
-
-- **CUMULUS-2346**
-  - Added orca API endpoint to `@cumulus/api` to get recovery status
-  - Add `CopyToGlacier` step to [example IngestAndPublishGranuleWithOrca workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf)
 
 ### Changed
 
@@ -288,6 +342,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated test function `waitForAsyncOperationStatus` to take a retryObject
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
+  - Updated the default scroll duration used in ESScrollSearch and part of the
+    reconcilation report functions as a result of testing and seeing timeouts
+    at its current value of 2min.
 - **CUMULUS-2427**
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildCumulusMeta`
@@ -4195,8 +4252,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v7.1.0...HEAD
-[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.0.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v8.0.0...HEAD
+[v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
+[v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
+[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.0.0...v7.1.0
 [v7.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
 [v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
 [v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
