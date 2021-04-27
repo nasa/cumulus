@@ -135,7 +135,7 @@ variable "urs_url" {
 
 variable "cmr_acl_based_tokens" {
   type = bool
-  default = true
+  default = false
   description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
 }
 

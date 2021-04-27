@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
+- **CUMULUS-2354**
+  - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
+  - Configures the example deployment to enable this feature.
 
 ## [v8.0.0] 2021-04-08
 

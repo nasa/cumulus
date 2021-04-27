@@ -178,6 +178,7 @@ module "cumulus" {
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
   sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
+  cmr_acl_based_tokens = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 

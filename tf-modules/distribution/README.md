@@ -34,7 +34,7 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
   module
 - **urs_url** (string) - The URL of the Earthdata Login site, defaults to
   <https://urs.earthdata.nasa.gov>
-- **cmr_acl_based_tokens** (bool) - Option to enable/disable user specific CMR ACLs to derive permission for S3 access tokens, defaults to true
+- **cmr_acl_based_tokens** (bool) - Option to enable/disable user specific CMR ACLs to derive permission for S3 access tokens, defaults to false
 
 ## Output variables
 
@@ -62,7 +62,7 @@ module "distribution" {
 
   deploy_s3_credentials_endpoint = true
   cmr_provider                   = "CUMULUS"
-  cmr_acl_based_tokens      = true
+  cmr_acl_based_tokens           = true
 
   vpc_id     = "vpc-123"
   subnet_ids = ["subnet-123", "subnet-456"]

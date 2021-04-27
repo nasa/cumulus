@@ -112,7 +112,7 @@ function configuredForACLCredentials() {
 }
 
 /**
- * Parses a bucket/key/path to return an array of [bucket, keypath] where
+ * Parses a "bucket/key/path" to return an array of ["bucket", "key/path"] where
  * keypath is "/" if not specified.
  *
  * @param {string} bucketKeyPath
@@ -130,14 +130,15 @@ function parseBucketKey(bucketKeyPath) {
 }
 
 /**
- * Request and format the list of s3 bucket/keys allowed for the input user
- * into a object ready to pass to the ngap session policy helper lambda.
- * The payload is an object with 3 keys, accessmode, bucketlist and pathlist.
- * bucketlist and pathlist are arrays of matching bucket/paths.
- * example:
+ * For a given EDL user and provider, request and format the list of allowed
+ * s3bucket/keys into a object ready to pass to the NGAP session policy helper
+ * lambda.  The desired payload is an object with 3 keys, 'accessmode', 'bucketlist' and
+ * 'pathlist'. 'bucketlist' and 'pathlist' are arrays of matching bucket and paths.
+ *
+ * Example:
  * if the users rawAllowedBucketKeyList is:
  * [ 'bucket1/somepath', 'bucket2']
- * the payload would be the strigified object:
+ * then the desired output would be the strigified object:
  *
  *  {
  *   accessmode: 'Allow',
