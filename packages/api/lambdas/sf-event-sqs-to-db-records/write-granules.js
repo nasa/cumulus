@@ -286,6 +286,7 @@ const _writeGranuleFiles = async ({
   granuleCumulusId,
   workflowStatus,
   knex,
+  granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
 }) => {
   let fileRecords = [];
@@ -307,15 +308,23 @@ const _writeGranuleFiles = async ({
 
     const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
+    const errorObject = {
+      Error: 'Failed writing files to Postgres.',
+      Cause: error,
+    };
     await granulePgModel.upsert(
       knex,
       {
         ...granule,
         status: 'failed',
-        error: {
-          Error: 'Failed writing files to Postgres.',
-          Cause: error,
-        },
+        error: errorObject,
+      }
+    );
+    await granuleModel.update(
+      { granuleId: granule.granule_id },
+      {
+        status: 'failed',
+        error: errorObject,
       }
     );
   }
@@ -437,6 +446,7 @@ const _writeGranule = async ({
       granuleCumulusId,
       files,
       workflowStatus,
+      granuleModel,
     });
   });
 };
