@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration steps
+
+- **Before upgrading to this release of Cumulus**, which enables integration with RDS and a PostgreSQL database for archiving Cumulus data, you will need to run a data migration to copy some of your data from DynamoDB to RDS. See the [upgrade documentation on running data migrations for this release](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade_tf_version_0.13.6).
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2185** - RDS Migration Epic
