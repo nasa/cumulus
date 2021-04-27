@@ -319,14 +319,18 @@ const _writeGranuleFiles = async ({
         status: 'failed',
         error: errorObject,
       }
-    );
+    ).catch((updateError) => {
+      log.fatal('Failed to update PG status on file write failure!', updateError);
+    });
     await granuleModel.update(
       { granuleId: granule.granule_id },
       {
         status: 'failed',
         error: errorObject,
       }
-    );
+    ).catch((updateError) => {
+      log.fatal('Failed to update DDB status on file write failure!', updateError);
+    });
   }
 };
 
@@ -439,15 +443,12 @@ const _writeGranule = async ({
     });
   });
 
-  return knex.transaction(async (trx) => {
-    await _writeGranuleFiles({
-      trx,
-      knex,
-      granuleCumulusId,
-      files,
-      workflowStatus,
-      granuleModel,
-    });
+  await _writeGranuleFiles({
+    files,
+    granuleCumulusId,
+    workflowStatus,
+    knex,
+    granuleModel,
   });
 };
 
