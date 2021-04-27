@@ -173,6 +173,8 @@ async function allowedBucketKeys(edlUser, cmrProvider) {
  *  return undefined.
  *
  * @param {string} edlUser - earthdatalogin username
+ * @param {string} cmrProvider - Cumulus' CMR provider.
+ * @param {Object} lambda - aws lambda service.
  * @returns {Object} session policy generated from user's CMR ACLs or undefined.
  */
 async function fetchPolicyForUser(edlUser, cmrProvider, lambda) {
@@ -210,7 +212,6 @@ async function s3credentials(req, res) {
     req.lambda
   );
 
-  log.info(`generating credentials with policy: ${policy}`);
   const credentials = await requestTemporaryCredentialsFromNgap({
     lambda: req.lambda,
     lambdaFunctionName: process.env.STS_CREDENTIALS_LAMBDA,
