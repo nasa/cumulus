@@ -1,5 +1,6 @@
 'use strict';
 
+/* eslint-disable lodash/prefer-noop */
 const { Cookie } = require('tough-cookie');
 const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
@@ -9,14 +10,12 @@ const rewire = require('rewire');
 const moment = require('moment');
 
 const awsServices = require('@cumulus/aws-client/services');
-
 const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 const models = require('@cumulus/api/models');
 const { fakeAccessTokenFactory } = require('@cumulus/api/lib/testUtils');
 
 const randomString = () => cryptoRandomString({ length: 6 });
-
 const randomId = (prefix, separator = '-') =>
   [prefix, randomString()].filter((x) => x).join(separator);
 
@@ -28,7 +27,6 @@ process.env.AccessTokensTable = randomId('tokenTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 
 let accessTokenModel;
-
 const {
   buildRoleSessionName,
   distributionApp,
@@ -39,6 +37,9 @@ const {
 
 const index = rewire('../index.js');
 const displayS3CredentialInstructions = index.__get__('displayS3CredentialInstructions');
+const parseBucketKey = index.__get__('parseBucketKey');
+const formatAllowedBucketKeys = index.__get__('formatAllowedBucketKeys');
+const fetchPolicyForUser = index.__get__('fetchPolicyForUser');
 
 const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
@@ -287,7 +288,6 @@ test('s3credentials() with just a username sends the correct request to the Lamb
   };
 
   const res = {
-    // eslint-disable-next-line lodash/prefer-noop
     send() {},
   };
 
@@ -325,7 +325,6 @@ test('s3credentials() with a username and a client name sends the correct reques
   };
 
   const res = {
-    // eslint-disable-next-line lodash/prefer-noop
     send() {},
   };
 
@@ -361,3 +360,101 @@ test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true res
     delete process.env.DISABLE_S3_CREDENTIALS;
   });
 });
+
+test('parseBucketKey returns an array of bucket and keypath with standard input', (t) => {
+  const bucketKeyPath = 'abucket/and/apath/after/it';
+  const expected = ['abucket', '/and/apath/after/it'];
+  const actual = parseBucketKey(bucketKeyPath);
+  t.deepEqual(expected, actual);
+});
+
+test('parseBucketKey returns an array of bucket and default keypath input is bucket only', (t) => {
+  const bucketKeyPath = 'justabucket';
+  const expected = ['justabucket', '/'];
+  const actual = parseBucketKey(bucketKeyPath);
+  t.deepEqual(expected, actual);
+});
+
+test('parseBucketKey returns an array of undefined with bad input.', (t) => {
+  const bucketKeyPath = { expecting: 'a string', not: 'an object' };
+  const expected = [undefined, undefined];
+  const actual = parseBucketKey(bucketKeyPath);
+  t.deepEqual(expected, actual);
+});
+
+test('allowedBucketKeys formats a list of buckets and bucket/keypaths into expected object shape.', (t) => {
+  const bucketKeyList = [
+    'lonebucket',
+    'bucket/withonepath',
+    'bucket2/with/deep/path',
+    { object: 'that is not expected' },
+  ];
+
+  // shape of object expected by NGAP's policy helper lambda
+  const expected = JSON.stringify({
+    accessmode: 'Allow',
+    bucketlist: ['lonebucket', 'bucket', 'bucket2', undefined],
+    pathlist: ['/', '/withonepath', '/with/deep/path', undefined],
+  });
+
+  const actual = formatAllowedBucketKeys(bucketKeyList);
+  t.is(actual, expected);
+});
+
+test.serial('fetchPolicyForUser returned undefined if endpoint not configured for ACL Credentials', async (t) => {
+  const inputENV = process.env.CMR_ACL_BASED_CREDENTIALS;
+  process.env.CMR_ACL_BASED_CREDENTIALS = 'false';
+
+  const expected = undefined;
+  const actual = await fetchPolicyForUser('anyUser', 'anyProvider', 'anyLambda');
+  t.is(expected, actual);
+
+  process.env.CMR_ACL_BASED_CREDENTIALS = inputENV;
+});
+
+test.serial('fetchPolicyForUser calls NGAP\'s Policy Helper lambda with the correct payload when configured for ACL credentials', async (t) => {
+  const inputENV = process.env.CMR_ACL_BASED_CREDENTIALS;
+  const inputStsFunction = process.env.STS_POLICY_HELPER_LAMBDA;
+  const stsFunction = randomId('sts-helper-function');
+  process.env.STS_POLICY_HELPER_LAMBDA = stsFunction;
+  process.env.CMR_ACL_BASED_CREDENTIALS = 'true';
+
+  const spy = sinon.spy();
+  const fakeLambda = {
+    invoke: (payload) => ({
+      promise: () => {
+        spy(payload);
+        return { then: () => undefined };
+      },
+    }),
+  };
+
+  // set up cmr call
+  const bucket1 = randomId('bucket');
+  const path1 = randomId('path');
+  const bucket2 = randomId('bucket2');
+  const getUserAccessableBucketFake = sinon.fake.resolves([`${bucket1}/${path1}`, bucket2]);
+  const bucketRestore = index.__set__('getUserAccessableBuckets', getUserAccessableBucketFake);
+
+  const edlUser = randomId('cmruser');
+  const cmrProvider = randomId('cmrprovider');
+
+  const expectedPayload = {
+    FunctionName: stsFunction,
+    Payload: JSON.stringify({
+      accessmode: 'Allow',
+      bucketlist: [bucket1, bucket2],
+      pathlist: [`/${path1}`, '/'],
+    }),
+  };
+
+  await fetchPolicyForUser(edlUser, cmrProvider, fakeLambda);
+
+  t.true(getUserAccessableBucketFake.calledWith(edlUser, cmrProvider));
+  t.true(spy.calledWith(expectedPayload));
+
+  process.env.CMR_ACL_BASED_CREDENTIALS = inputENV;
+  process.env.STS_POLICY_HELPER_LAMBDA = inputStsFunction;
+  bucketRestore();
+});
+/* eslint-enable lodash/prefer-noop */

@@ -130,13 +130,13 @@ function parseBucketKey(bucketKeyPath) {
 }
 
 /**
- * For a given EDL user and provider, request and format the list of allowed
- * s3bucket/keys into a object ready to pass to the NGAP session policy helper
- * lambda.  The desired payload is an object with 3 keys, 'accessmode', 'bucketlist' and
- * 'pathlist'. 'bucketlist' and 'pathlist' are arrays of matching bucket and paths.
+ * Reformats a list of buckets and bucket/keyspaths into the shape needed for
+ * calling the sts policy helper function. The desired payload is an object
+ * with 3 keys, 'accessmode', 'bucketlist' and 'pathlist'. 'bucketlist' and
+ * 'pathlist' are arrays of matching bucket and paths.
  *
  * Example:
- * if the users rawAllowedBucketKeyList is:
+ * if the cmrAllowedBucketKeyList is:
  * [ 'bucket1/somepath', 'bucket2']
  * then the desired output would be the strigified object:
  *
@@ -146,13 +146,11 @@ function parseBucketKey(bucketKeyPath) {
  *   pathlist: ['/somepath', '/']
  *  }
  *
- * @param {string} edlUser - earthdata login user name
- * @param {string} cmrProvider - CMR provider
+ * @param {Array<string>} cmrAllowedBucketKeyList - earthdata login user name
  * @returns {string} - stringified payload for policy helper function.
  */
-async function allowedBucketKeys(edlUser, cmrProvider) {
-  const rawAllowedBucketKeyList = await getUserAccessableBuckets(edlUser, cmrProvider);
-  const bucketKeyPairList = rawAllowedBucketKeyList.map(parseBucketKey);
+function formatAllowedBucketKeys(cmrAllowedBucketKeyList) {
+  const bucketKeyPairList = cmrAllowedBucketKeyList.map(parseBucketKey);
   const bucketlist = [];
   const pathlist = [];
 
@@ -182,7 +180,8 @@ async function fetchPolicyForUser(edlUser, cmrProvider, lambda) {
   if (!configuredForACLCredentials()) return undefined;
 
   // fetch allowed bucket keys from CMR
-  const Payload = await allowedBucketKeys(edlUser, cmrProvider);
+  const cmrAllowedBucketKeyList = await getUserAccessableBuckets(edlUser, cmrProvider);
+  const Payload = formatAllowedBucketKeys(cmrAllowedBucketKeyList);
 
   return lambda.invoke({
     FunctionName: process.env.STS_POLICY_HELPER_LAMBDA,
