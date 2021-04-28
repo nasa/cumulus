@@ -10,10 +10,11 @@ const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
+
 const {
   CollectionPgModel,
-  GranulePgModel,
   getKnexClient,
+  GranulePgModel,
 } = require('@cumulus/db');
 
 const { deleteGranuleAndFiles } = require('../lib/granule-delete');
@@ -22,6 +23,7 @@ const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 
@@ -130,7 +132,12 @@ async function put(req, res) {
       return res.boom.conflict(message);
     }
 
-    await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
+    await moveGranule(
+      granule,
+      body.destinations,
+      process.env.DISTRIBUTION_ENDPOINT,
+      granuleModelClient
+    );
 
     return res.send({
       granuleId: granule.granuleId,

@@ -3,7 +3,6 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
-const partial = require('lodash/partial');
 const path = require('path');
 
 const awsClients = require('@cumulus/aws-client/services');
@@ -37,15 +36,10 @@ const {
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
-  getBucketsConfigKey,
-  getDistributionBucketMapKey,
-} = require('@cumulus/common/stack');
-const {
   DeletePublishedGranule,
 } = require('@cumulus/errors');
 const {
   generateMoveFileParams,
-  moveGranuleFiles,
 } = require('@cumulus/ingest/granule');
 
 const Manager = require('./base');
@@ -67,13 +61,6 @@ const {
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
-
-const renameProperty = (from, to, obj) => {
-  const newObj = { ...obj, [to]: obj[from] };
-  delete newObj[from];
-  return newObj;
-};
-
 class Granule extends Manager {
   constructor({
     fileUtils = FileUtils,
@@ -262,55 +249,6 @@ class Granule extends Manager {
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
     await Lambda.invoke(process.env.invoke, lambdaPayload);
-  }
-
-  /**
-   * Move a granule's files to destinations specified
-   *
-   * @param {Object} g - the granule record object
-   * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
-   *    - list of destinations specified
-   *    regex - regex for matching filepath of file to new destination
-   *    bucket - aws bucket of the destination
-   *    filepath - file path/directory on the bucket for the destination
-   * @param {string} distEndpoint - distribution endpoint URL
-   * @returns {Promise<undefined>} undefined
-   */
-  async move(g, destinations, distEndpoint) {
-    log.info(`granules.move ${g.granuleId}`);
-
-    const bucketsConfig = await s3Utils.getJsonS3Object(
-      process.env.system_bucket,
-      getBucketsConfigKey(process.env.stackName)
-    );
-
-    const bucketTypes = Object.values(bucketsConfig)
-      .reduce(
-        (acc, { name, type }) => ({ ...acc, [name]: type }),
-        {}
-      );
-
-    const distributionBucketMap = await s3Utils.getJsonS3Object(
-      process.env.system_bucket,
-      getDistributionBucketMapKey(process.env.stackName)
-    );
-    const updatedFiles = await moveGranuleFiles(g.files, destinations);
-
-    await this.cmrUtils.reconcileCMRMetadata({
-      granuleId: g.granuleId,
-      updatedFiles,
-      distEndpoint,
-      published: g.published,
-      distributionBucketMap,
-      bucketTypes,
-    });
-
-    return this.update(
-      { granuleId: g.granuleId },
-      {
-        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
-      }
-    );
   }
 
   /**
