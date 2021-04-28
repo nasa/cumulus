@@ -1,9 +1,9 @@
 import Logger from '@cumulus/logger';
+import { WriteStream, createReadStream, createWriteStream, unlinkSync } from 'fs';
 
-const fs = require('fs');
 const JSONStream = require('JSONStream');
-// const { finished } = require('stream');
-// const { promisify } = require('util');
+const { finished } = require('stream');
+const { promisify } = require('util');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/storeErrors' });
@@ -12,16 +12,35 @@ const logger = new Logger({ sender: '@cumulus/data-migration/storeErrors' });
  * Helper to create error file write stream
  * @param {string} migrationName         - Name of migration
  * @param {string | undefined} timestamp - Timestamp for unit testing
- * @returns {Object}                     - Object containing the error log write stream and file path
+ * @returns {Object}
+ *   Object containing write streams and file path
  */
 export const createErrorFileWriteStream = (migrationName: string, timestamp?: string) => {
   const dateString = timestamp || new Date().toISOString();
   const filepath = `${migrationName}ErrorLog-${dateString}.json`;
-  const errorFileWriteStream = fs.createWriteStream(filepath);
+  const errorFileWriteStream = createWriteStream(filepath);
   const jsonWriteStream = JSONStream.stringify('{"errors": [\n', '\n,', '\n]}\n');
   jsonWriteStream.pipe(errorFileWriteStream);
 
-  return { jsonWriteStream, filepath };
+  return { jsonWriteStream, errorFileWriteStream, filepath };
+};
+
+/**
+ * Helper to close error Error file and JSON write streams
+ * @param {Object} params
+ * @param {WriteStream} params.errorFileWriteStream - Error file write stream to close
+ * @param {WriteStream} params.jsonWriteStream      - JSON file write stream to close
+ * @returns {Promise<void>}
+ */
+export const closeErrorWriteStreams = async (params:{
+  errorFileWriteStream: WriteStream
+  jsonWriteStream: WriteStream,
+}) => {
+  const { jsonWriteStream, errorFileWriteStream } = params;
+  jsonWriteStream.end();
+  errorFileWriteStream.end();
+  const asyncFinished = promisify(finished);
+  await asyncFinished(errorFileWriteStream);
 };
 
 /**
@@ -50,9 +69,9 @@ export const storeErrors = async (params: {
   await s3().putObject({
     Bucket: bucket,
     Key: key,
-    Body: fs.createReadStream(filepath),
+    Body: createReadStream(filepath),
   }).promise();
 
-  logger.info(`Stored error log file with key ${key} to bucket ${bucket}.`);
-  fs.unlinkSync(filepath);
+  logger.info(`Stored error log file on S3 at s3://${bucket}/${key}`);
+  unlinkSync(filepath);
 };

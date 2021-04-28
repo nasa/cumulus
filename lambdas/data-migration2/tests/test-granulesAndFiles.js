@@ -823,6 +823,7 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
     Key: key,
   }).promise();
 
+  console.log(item.Body.toString());
   const errors = JSON.parse(item.Body.toString()).errors;
   const expectedResult = /RecordDoesNotExist/;
 

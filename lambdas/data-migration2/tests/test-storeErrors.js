@@ -1,5 +1,6 @@
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
+const JSONStream = require('JSONStream');
 const test = require('ava');
 const { finished } = require('stream');
 const { promisify } = require('util');
@@ -11,7 +12,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
-const { createErrorFileWriteStream, storeErrors } = require('../dist/lambda/storeErrors');
+const { closeErrorWriteStreams, createErrorFileWriteStream, storeErrors } = require('../dist/lambda/storeErrors');
 
 test.before(async () => {
   process.env = {
@@ -58,6 +59,7 @@ test.serial('createErrorFileWriteStream returns write streams and string', (t) =
   const expectedFilePath = `${migrationName}ErrorLog-${timestamp}.json`;
 
   const {
+    errorFileWriteStream,
     jsonWriteStream,
     filepath,
   } = createErrorFileWriteStream(migrationName, timestamp);
@@ -65,7 +67,20 @@ test.serial('createErrorFileWriteStream returns write streams and string', (t) =
   t.true(jsonWriteStream instanceof Stream);
 
   t.teardown(async () => {
-    jsonWriteStream.end('');
+    jsonWriteStream.end();
+    errorFileWriteStream.end();
+    const asyncFinished = promisify(finished);
+    await asyncFinished(errorFileWriteStream);
     fs.unlinkSync(expectedFilePath);
+  });
+});
+
+test.serial('closeErrorFileWriteStream closes write stream', async (t) => {
+  const filepath = 'test';
+  const errorFileWriteStream = fs.createWriteStream(filepath);
+  const jsonWriteStream = JSONStream.stringify();
+  await t.notThrowsAsync(closeErrorWriteStreams({ errorFileWriteStream, jsonWriteStream }));
+  t.teardown(async () => {
+    fs.unlinkSync(filepath);
   });
 });
