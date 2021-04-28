@@ -138,9 +138,11 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
   } = t.context;
 
   const now = new Date();
+  const updatedAt = Date.now();
   const record = buildExecutionRecord({
     cumulusMessage,
     now,
+    updatedAt,
     asyncOperationCumulusId: 1,
     collectionCumulusId: 2,
     parentExecutionCumulusId: 3,
@@ -164,7 +166,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       parent_cumulus_id: 3,
       created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
       timestamp: now,
-      updated_at: now,
+      updated_at: new Date(updatedAt),
     }
   );
 });
