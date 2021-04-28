@@ -18,7 +18,7 @@ type LoggerConstructorOptions = {
 class Logger {
   private readonly asyncOperationId: string | undefined;
   private readonly executions: string | undefined;
-  private readonly granules: string | undefined;
+  private readonly granules: string | string[] | undefined;
   private readonly parentArn: string | undefined;
   private readonly pretty: boolean;
   private readonly sender: string;

@@ -1,10 +1,12 @@
 const test = require('ava');
+const sinon = require('sinon');
 
 const {
   getExecutionProcessingTimeInfo,
   getGranuleProductVolume,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
+  moveGranuleFilesAndUpdateDatastore,
 } = require('../../lib/granules');
 
 test('getExecutionProcessingTimeInfo() returns empty object if startDate is not provided', (t) => {
@@ -90,4 +92,33 @@ test('getGranuleProductVolume() returns correct product volume', (t) => {
     }]),
     0
   );
+});
+
+test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumulusId throws unexpected error', async (t) => {
+  const updateStub = sinon.stub().returns(Promise.resolve());
+  const granulesModel = {
+    update: updateStub,
+  };
+
+  const granulePgModel = {
+    getRecordCumulusId: async () => {
+      const thrownError = new Error('Test error');
+      thrownError.name = 'TestError';
+      throw thrownError;
+    },
+  };
+
+  const collectionPgModel = {
+    getRecordCumulusId: async () => 1,
+  };
+
+  const apiGranule = { granuleId: 'fakeGranule', collectionId: 'fakeCollection___001' };
+  await t.throwsAsync(moveGranuleFilesAndUpdateDatastore({
+    apiGranule,
+    granulesModel,
+    destinations: undefined,
+    granulePgModel,
+    collectionPgModel,
+    dbClient: {},
+  }));
 });
