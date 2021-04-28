@@ -43,6 +43,10 @@ test.before(async (t) => {
   );
 });
 
+test.beforeEach((t) => {
+  t.context.asyncOperationStartStub.resetHistory();
+});
+
 test.after.always(async (t) => {
   t.context.asyncOperationStartStub.restore();
   await Promise.all([
@@ -50,7 +54,7 @@ test.after.always(async (t) => {
     accessTokenModel.deleteTable()]);
 });
 
-test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-operation with the correct payload', async (t) => {
+test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-operation with specified payload', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const archiveBucket = 'archiveBucket';
   const archivePath = 'archivePath';
@@ -81,5 +85,32 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
   t.deepEqual(payload, {
     bucket: archiveBucket,
     path: archivePath,
+  });
+});
+
+test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-operation with unspecified payload', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const response = await request(app)
+    .post('/deadLetterArchive/recoverCumulusMessages')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({})
+    .expect(202);
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload,
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.MigrationCountToolLambda);
+  t.is(cluster, process.env.EcsCluster);
+  t.is(description, 'Dead-Letter Processor ECS Run');
+  t.deepEqual(payload, {
+    bucket: undefined,
+    path: undefined,
   });
 });

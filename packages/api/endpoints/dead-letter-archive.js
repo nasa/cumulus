@@ -11,7 +11,7 @@ async function postRecoverCumulusMessages(req, res) {
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
 
-  const { bucket, path } = req.body;
+  const { bucket, path } = (req.body === undefined ? {} : req.body);
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     lambdaName: process.env.DeadLetterProcessingLambda,
