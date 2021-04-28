@@ -8,7 +8,7 @@ hide_title: false
 
 This release of Cumulus (x.x.x) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
-While eventually Cumulus will only support using RDS as its data archive, for now the system will do **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
+While eventually Cumulus will only support using RDS as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
 
 However, in order to copy all of your previously written data from DynamoDB to PostgreSQL, you will need to run data migration scripts that we have provided and which this document will explain how to use.
 
@@ -31,9 +31,59 @@ terraform apply
 ```
 
 ### Deploy and run data-migration1
+From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
+```shell
+cd example/data-migration1-tf/
+cp terraform.tf.example terraform.tf
+cp terraform.tfvars.example terraform.tfvars
+```
+
+In `terraform.tf`, configure your remote state settings by replacing the appropriate value for `PREFIX`.
+
+In `terraform.tfvars` replace the appropriate values for the following variables:
+
+- `PREFIX`
+- `permissions_boundary_arn`
+- `lambda_subnet_ids`
+- `vpc_id`
+- `provider_kms_key_id`
+
+After replacing those values, run `terraform init`.
+The output should look like the following:
+
+```shell
+Initializing modules...
+
+Initializing the backend...
+
+Initializing provider plugins...
+- Using previously-installed hashicorp/aws v3.34.0
+- terraform.io/builtin/terraform is built in to Terraform
+
+Terraform has been successfully initialized!
+```
+
+Run  `terraform apply` to deploy `data-migration1` and type `yes` when prompted to create those resources.
+On success, you will see output like:
+
+```shell
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+```
 
 ### Deploy cumulus module
+Navigate to the cumulus module and re-deploy:
+
+```shell
+cd cumulus-tf
+terraform apply
+```
+
+The `cumulus` module will create the following relevant resources for data migration:
+
+- `${PREFIX}-data-migration2` lambda
+- `${PREFIX}-postgres-migration-async-operation` lambda
 
 ### Run data-migration2
+See the docs on [how to run the data-migration2 lambda](../../lambdas/data-migration2/README.md)
 
 ### Run reconciliation tool?
