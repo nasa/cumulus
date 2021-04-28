@@ -11,7 +11,7 @@ const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
 const { postDeadLetters } = require('@cumulus/api-client/deadLetters');
-const { waitForGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const { createProvider, deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const {
@@ -137,6 +137,7 @@ describe('A dead letter record archive processing operation', () => {
 
   afterAll(async () => {
     const ruleName = get(testRule, 'name');
+    if (testGranule) await deleteGranule({ prefix: stackName, granuleId: testGranule.granuleId });
     if (ruleName) await deleteRule({ prefix: stackName, ruleName });
     if (testCollection) {
       await deleteCollection({
