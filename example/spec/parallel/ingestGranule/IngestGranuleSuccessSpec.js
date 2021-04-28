@@ -520,13 +520,17 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
       const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath, urlType: 's3' });
+      const browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath, urlType: 's3' });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
       console.log('parallel resourceURLs:', resourceURLs);
       console.log('s3CredsUrl:', s3CredsUrl);
 
       expect(resourceURLs).toContain(scienceFileUrl);
+      expect(resourceURLs).toContain(s3ScienceFileUrl);
+      expect(resourceURLs).toContain(browseImageUrl);
       expect(resourceURLs).toContain(s3BrowseImageUrl);
       expect(resourceURLs).toContain(s3CredsUrl);
       expect(resourceURLs).toContain(opendapFilePath);
@@ -534,22 +538,27 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('updates the CMR metadata "online resources" with the proper types and urls', () => {
       const resource = ummCmrResource;
-      const distributionUrl = getDistributionFileUrl({
-        bucket: files[0].bucket,
-        key: files[0].filepath,
-      });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
+      const s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath, urlType: 's3' });
+      const browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath, urlType: 's3' });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+
       const expectedTypes = [
         'GET DATA',
+        'GET DATA VIA DIRECT ACCESS',
         'VIEW RELATED INFORMATION',
+        'GET DATA VIA DIRECT ACCESS',
+        'GET RELATED VISUALIZATION',
+        'GET DATA VIA DIRECT ACCESS',
         'VIEW RELATED INFORMATION',
         'USE SERVICE API',
-        'GET RELATED VISUALIZATION',
       ];
       const cmrUrls = resource.map((r) => r.URL);
 
-      expect(cmrUrls).toContain(distributionUrl);
+      expect(cmrUrls).toContain(scienceFileUrl);
+      expect(cmrUrls).toContain(s3ScienceFileUrl);
+      expect(cmrUrls).toContain(browseImageUrl);
       expect(cmrUrls).toContain(s3BrowseImageUrl);
       expect(cmrUrls).toContain(s3CredsUrl);
       expect(cmrUrls).toContain(opendapFilePath);

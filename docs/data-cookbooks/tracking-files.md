@@ -40,7 +40,8 @@ For more information, see the [ancillary metadata](../features/ancillary_metadat
 
 When updating granule CMR metadata, the `UpdateGranulesCmrMetadataFileLinks` task will add the external facing URLs to the CMR metadata file based on the file type.
 The table below shows how the CNM data types map to CMR metadata updates. Non-CNM file types are handled as 'data' file types.
-The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, whereas the ECHO10 column shows how the CNM type affects the destination element.
+The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type for HTTPS URLs, the `Type` for S3 URIs are `GET DATA VIA DIRECT ACCESS`.
+The ECHO10 column shows how the CNM type affects the destination element.
 
 |CNM Type |UMM-G `RelatedUrl.Type` |ECHO10 Location |
 | ------  | ------ | ------ |
