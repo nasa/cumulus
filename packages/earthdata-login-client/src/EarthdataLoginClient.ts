@@ -1,7 +1,7 @@
 import got, { CancelableRequest, HTTPError, Response } from 'got';
-import { URL } from 'url';
 
 import { EarthdataLoginError } from './EarthdataLoginError';
+import AuthClient from './AuthClient';
 
 type AccessTokenResponse = Response<{
   access_token: string,
@@ -47,28 +47,12 @@ const validateUrl = (urlString: string) => {
 /**
  * A client for the Earthdata Login API
  */
-export class EarthdataLoginClient {
+export class EarthdataLoginClient extends AuthClient {
   readonly clientId: string;
   readonly clientPassword: string;
   readonly earthdataLoginUrl: string;
   readonly redirectUri: string;
 
-  /**
-   * @param {Object} params
-   * @param {string} params.clientId - see example
-   * @param {string} params.clientPassword - see example
-   * @param {string} params.earthdataLoginUrl - see example
-   * @param {string} params.redirectUri - see example
-   *
-   * @example
-   *
-   * const oAuth2Provider = new EarthdataLogin({
-   *   clientId: 'my-client-id',
-   *   clientPassword: 'my-client-password',
-   *   earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
-   *   redirectUri: 'http://my-api.com'
-   * });
-   */
   constructor(
     params: {
       clientId: string,
@@ -77,46 +61,25 @@ export class EarthdataLoginClient {
       redirectUri: string
     }
   ) {
-    const {
-      clientId,
-      clientPassword,
-      earthdataLoginUrl,
-      redirectUri,
-    } = params;
+    // TODO might not need these once methods are moved
+    if (!params.clientId) throw new TypeError('clientId is required');
+    if (!params.clientPassword) throw new TypeError('clientPassword is required');
+    if (!params.earthdataLoginUrl) throw new TypeError('earthdataLoginUrl is required');
+    if (!params.redirectUri) throw new TypeError('redirectUri is required');
 
-    if (!clientId) throw new TypeError('clientId is required');
-    this.clientId = clientId;
+    super({
+      clientId: params.clientId,
+      clientPassword: params.clientPassword,
+      loginUrl: params.earthdataLoginUrl,
+      redirectUri: params.redirectUri,
+    });
 
-    if (!clientPassword) throw new TypeError('clientPassword is required');
-    this.clientPassword = clientPassword;
-
-    if (!earthdataLoginUrl) throw new TypeError('earthdataLoginUrl is required');
-    validateUrl(earthdataLoginUrl);
-    this.earthdataLoginUrl = earthdataLoginUrl;
-
-    if (!redirectUri) throw new TypeError('redirectUri is required');
-    validateUrl(redirectUri);
-    this.redirectUri = redirectUri;
-  }
-
-  /**
-   * Get a URL of the Earthdata Login authorization endpoint
-   *
-   * @param {string} [state] - an optional state to pass to Earthdata Login
-   * @returns {string} the Earthdata Login authorization URL
-   */
-  getAuthorizationUrl(state?: string) {
-    const url = new URL('/oauth/authorize', this.earthdataLoginUrl);
-
-    url.searchParams.set('client_id', this.clientId);
-    url.searchParams.set('redirect_uri', this.redirectUri);
-    url.searchParams.set('response_type', 'code');
-
-    if (state) {
-      url.searchParams.set('state', state);
-    }
-
-    return url.toString();
+    this.clientId = params.clientId;
+    this.clientPassword = params.clientPassword;
+    validateUrl(params.earthdataLoginUrl);
+    this.earthdataLoginUrl = params.earthdataLoginUrl;
+    validateUrl(params.redirectUri);
+    this.redirectUri = params.redirectUri;
   }
 
   private requestAccessToken(authorizationCode: string) {

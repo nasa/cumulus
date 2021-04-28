@@ -1,4 +1,4 @@
-import { AuthClient } from './AuthClient';
+import AuthClient from './AuthClient';
 
 /**
  * A client for the Cognito API
