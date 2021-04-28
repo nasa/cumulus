@@ -61,7 +61,6 @@ export class EarthdataLoginClient extends AuthClient {
       redirectUri: string
     }
   ) {
-    // TODO might not need these once methods are moved
     if (!params.clientId) throw new TypeError('clientId is required');
     if (!params.clientPassword) throw new TypeError('clientPassword is required');
     if (!params.earthdataLoginUrl) throw new TypeError('earthdataLoginUrl is required');
