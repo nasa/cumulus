@@ -16,6 +16,9 @@ const isBadRequestError = (error) =>
   || error instanceof ValidationError
   || isPostgresValidationError(error);
 
+const isResourceNotFoundException = (error) =>
+  error.code === 'ResourceNotFoundException';
+
 const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 const IndexExistsError = createErrorType('IndexExistsError');
 
@@ -38,10 +41,26 @@ class EarthdataLoginError extends Error {
   }
 }
 
+const resourceNotFoundInfo = 'One solution may be to check if topic subscription and/or lambda trigger have been manually deleted from AWS. If so, rule may need to be manually disabled/deleted.';
+
+class ResourceNotFoundError extends Error {
+  constructor(error) {
+    super(`${error.message} ${resourceNotFoundInfo}`);
+
+    this.name = 'ResourceNotFoundError';
+    this.code = error.code;
+
+    Error.captureStackTrace(this, ResourceNotFoundError);
+  }
+}
+
 module.exports = {
   AssociatedRulesError,
   IndexExistsError,
   TokenUnauthorizedUserError,
   EarthdataLoginError,
   isBadRequestError,
+  isResourceNotFoundException,
+  ResourceNotFoundError,
+  resourceNotFoundInfo,
 };

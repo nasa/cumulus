@@ -171,6 +171,10 @@ function getFilesMetadata(files) {
   return Promise.all(files.map(getFileMetadata));
 }
 
+function isValidAsyncOperationId(asyncOperationId) {
+  return /[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/.test(asyncOperationId);
+}
+
 module.exports = {
   createTestDataPath,
   createTestSuffix,
@@ -183,4 +187,5 @@ module.exports = {
   timestampedName,
   updateAndUploadTestDataToBucket,
   uploadTestDataToBucket,
+  isValidAsyncOperationId,
 };
