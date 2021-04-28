@@ -68,10 +68,6 @@ variable "elasticsearch_security_group_id" {
   default = ""
 }
 
-variable "ems_host" {
-  type = string
-}
-
 variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }
@@ -165,46 +161,6 @@ variable "cmr_oauth_provider" {
 variable "cmr_page_size" {
   type    = number
   default = 50
-}
-
-variable "ems_datasource" {
-  type    = string
-  default = "UAT"
-}
-
-variable "ems_path" {
-  type    = string
-  default = "/"
-}
-
-variable "ems_port" {
-  type    = number
-  default = 22
-}
-
-variable "ems_private_key" {
-  type    = string
-  default = "ems-private.pem"
-}
-
-variable "ems_provider" {
-  type    = string
-  default = "CUMULUS"
-}
-
-variable "ems_retention_in_days" {
-  type    = number
-  default = 30
-}
-
-variable "ems_submit_report" {
-  type    = bool
-  default = false
-}
-
-variable "ems_username" {
-  type    = string
-  default = "cumulus"
 }
 
 variable "es_request_concurrency" {
@@ -348,10 +304,4 @@ variable "es_index_shards" {
   description = "The number of shards for the Elasticsearch index"
   type        = number
   default     = 2
-}
-
-variable "ems_deploy" {
-  description = "If true, deploys the EMS reporting module"
-  type        = bool
-  default     = false
 }
