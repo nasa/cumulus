@@ -490,7 +490,7 @@ function onlineAccessURLsToRemove(files, bucketTypes) {
 }
 
 /**
- * Returns a list of posible metadata file objects based on file.name extension.
+ * Returns a list of possible metadata file objects based on file.name extension.
  *
  * @param {Array<Object>} files - list of file objects that might be metadata files.
  * @param {string} files.name - file name
@@ -700,7 +700,7 @@ async function uploadEcho10CMRFile(xml, cmrFile) {
 }
 /**
  * Method takes an array of URL objects to update, an 'origin' array of original URLs
- * and a list of URLs to remove and returns an array of merged URL objectgs
+ * and a list of URLs to remove and returns an array of merged URL objects
  *
  * @param  {Array<Object>} URLlist - array of URL objects
  * @param  {Array<Object>} originalURLlist - array of URL objects

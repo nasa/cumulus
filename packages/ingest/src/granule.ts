@@ -3,7 +3,9 @@ import moment from 'moment';
 import { s3 } from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
+import { deprecate } from '@cumulus/common/util';
 import { DuplicateHandling } from '@cumulus/types';
+import { FilePgModel, Knex } from '@cumulus/db';
 
 export interface EventWithDuplicateHandling {
   config: {
@@ -281,7 +283,7 @@ export async function handleDuplicateFile(params: {
   return [];
 }
 
-const getNameOfFile = (file: File): string | undefined =>
+export const getNameOfFile = (file: File): string | undefined =>
   file.fileName ?? file.name;
 
 /**
@@ -365,8 +367,11 @@ export async function moveGranuleFiles(
     filepath: string
   }[]
 ): Promise<MovedGranuleFile[]> {
+  deprecate(
+    '@cumulus/ingest/moveGranuleFiles',
+    '9.0.0'
+  );
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
-
   const movedGranuleFiles: MovedGranuleFile[] = [];
   const moveFileRequests = moveFileParams.map(
     async (moveFileParam) => {
@@ -410,10 +415,80 @@ export async function moveGranuleFiles(
       }
     }
   );
-
   await Promise.all(moveFileRequests);
-
   return movedGranuleFiles;
+}
+/**
+* Moves a granule file and updates the postgres database accordingly
+* @summary Moves a granule file record according to MoveFileParams and updates database accordingly
+* @param {MoveFileParams} moveFileParam - Parameter object describing the move operation
+* @param {FilePgModel} filesPgModel - FilePgModel instance
+* @param {Knex.Transaction | Knex} trx - Knex transaction or (optionally) Knex object
+* @param {number | undefined } postgresCumulusGranuleId - postgres internal granule id
+* @param {boolean} writeToPostgres - explicit flag to enable/disable postgres database updates
+* @returns {ReturnValueDataTypeHere} Brief description of the returning value here.
+*/
+export async function moveGranuleFile(
+  moveFileParam: MoveFileParams,
+  filesPgModel: FilePgModel,
+  trx: Knex.Transaction | Knex,
+  postgresCumulusGranuleId: number | undefined,
+  writeToPostgres: boolean = true
+): Promise<MovedGranuleFile> {
+  const { source, target, file } = moveFileParam;
+  if (moveFileParam.source && moveFileParam.target) {
+    log.debug('moveGranuleS3Object', source, target);
+    if (writeToPostgres) {
+      if (!postgresCumulusGranuleId) {
+        throw new Error('postgresCumulusGranuleId must be defined to move granule file if writeToPostgres is true');
+      }
+      const cumulusId = await filesPgModel.getRecordCumulusId(trx, {
+        granule_cumulus_id: postgresCumulusGranuleId,
+        bucket: moveFileParam.source.Bucket,
+        key: moveFileParam.source.Key,
+      });
+      await filesPgModel.update(trx, {
+        cumulus_id: cumulusId,
+      },
+      {
+        bucket: moveFileParam.target.Bucket,
+        key: moveFileParam.target.Key,
+        file_name: getNameOfFile(file),
+      });
+    }
+    await S3.moveObject({
+      sourceBucket: moveFileParam.source.Bucket,
+      sourceKey: moveFileParam.source.Key,
+      destinationBucket: moveFileParam.target.Bucket,
+      destinationKey: moveFileParam.target.Key,
+      copyTags: true,
+    });
+
+    return {
+      bucket: moveFileParam.target.Bucket,
+      key: moveFileParam.target.Key,
+      name: getNameOfFile(file),
+    };
+  }
+  let fileBucket;
+  let fileKey;
+  if (file.bucket && file.key) {
+    fileBucket = file.bucket;
+    fileKey = file.key;
+  } else if (file.filename) {
+    const parsed = S3.parseS3Uri(file.filename);
+    fileBucket = parsed.Bucket;
+    fileKey = parsed.Key;
+  } else {
+    throw new Error(
+      `Unable to determine location of file: ${JSON.stringify(file)}`
+    );
+  }
+  return {
+    bucket: fileBucket,
+    key: fileKey,
+    name: getNameOfFile(file),
+  };
 }
 
 /**

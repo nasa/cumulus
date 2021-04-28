@@ -18,8 +18,8 @@ const Granule = require('../models/granules');
 const _deleteS3Files = async (files) =>
   pMap(
     files,
-    (file) => {
-      deleteS3Object(
+    async (file) => {
+      await deleteS3Object(
         FileUtils.getBucket(file),
         FileUtils.getKey(file)
       );
