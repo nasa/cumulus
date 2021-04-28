@@ -414,7 +414,6 @@ test.serial('migratePdrs logs summary of migration every for a specified interva
     testCollection,
     testProvider,
   } = t.context;
-  process.env.loggingInterval = 1;
 
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
@@ -428,6 +427,12 @@ test.serial('migratePdrs logs summary of migration every for a specified interva
     await pdrsModel.delete({ pdrName: testPdr.pdrName });
   });
 
-  await migratePdrs(process.env, knex);
+  await migratePdrs(
+    process.env,
+    knex,
+    {
+      loggingInterval: 1,
+    }
+  );
   t.true(logSpy.calledWith('Batch of 1 PDR records processed, 1 total'));
 });

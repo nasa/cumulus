@@ -24,7 +24,11 @@ export const handler = async (
     const migrationSummary: DataMigration2Summary = {};
 
     if (migrationsToRun.includes('executions')) {
-      const executionsMigrationResult = await migrateExecutions(env, knex);
+      const executionsMigrationResult = await migrateExecutions(
+        env,
+        knex,
+        event.executionMigrationParams
+      );
       migrationSummary.executions = executionsMigrationResult;
     }
 
@@ -32,21 +36,25 @@ export const handler = async (
       const { granulesResult, filesResult } = await migrateGranulesAndFiles(
         env,
         knex,
-        event.granuleSearchParams
+        event.granuleMigrationParams
       );
       migrationSummary.granules = granulesResult;
       migrationSummary.files = filesResult;
     }
 
     if (migrationsToRun.includes('pdrs')) {
-      const pdrsMigrationResult = await migratePdrs(env, knex);
+      const pdrsMigrationResult = await migratePdrs(
+        env,
+        knex,
+        event.pdrMigrationParams
+      );
       migrationSummary.pdrs = pdrsMigrationResult;
     }
 
     const summary: MigrationSummary = {
       MigrationSummary: migrationSummary,
     };
-    logger.info(JSON.stringify(summary));
+    logger.info(summary);
     return summary;
   } finally {
     await knex.destroy();
