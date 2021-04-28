@@ -45,9 +45,9 @@ output "move_granules_task" {
 }
 
 output "distribution_api_uri" {
-  value = module.distribution.api_uri
+  value = module.cumulus_distribution.api_uri
 }
 
 output "distribution_api_redirect_uri" {
-  value = module.distribution.api_redirect_uri
+  value = module.cumulus_distribution.api_redirect_uri
 }

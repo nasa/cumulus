@@ -2,8 +2,8 @@ locals {
   distribution_api_gateway_stage = "dev"
 }
 
-module "distribution" {
-  source                   = "../../tf-modules/distribution"
+module "cumulus_distribution" {
+  source                   = "../../tf-modules/cumulus_distribution"
   deploy_to_ngap           = true
   prefix                   = var.prefix
   api_gateway_stage        = local.distribution_api_gateway_stage
