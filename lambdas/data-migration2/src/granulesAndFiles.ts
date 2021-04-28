@@ -1,5 +1,8 @@
 import Knex from 'knex';
+import pMap from 'p-map';
+import cloneDeep from 'lodash/cloneDeep';
 
+import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
@@ -21,10 +24,12 @@ import {
 } from '@cumulus/errors';
 
 import {
-  GranuleDynamoDbSearchParams,
+  GranuleMigrationParams,
   MigrationResult,
   GranulesMigrationResult,
 } from '@cumulus/types/migration';
+
+import { initialMigrationResult } from './common';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
@@ -35,19 +40,28 @@ export interface GranulesAndFilesMigrationResult {
   filesResult: MigrationResult,
 }
 
+const initializeGranulesAndFilesMigrationResult = (): GranulesAndFilesMigrationResult => {
+  const granuleMigrationResult: GranulesMigrationResult = cloneDeep(initialMigrationResult);
+  const fileMigrationResult: MigrationResult = cloneDeep(initialMigrationResult);
+  return {
+    granulesResult: granuleMigrationResult,
+    filesResult: fileMigrationResult,
+  };
+};
+
 /**
  * Migrate granules record from Dynamo to RDS.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
  *   Record from DynamoDB
- * @param {Knex.Transaction} knex - Knex transaction
+ * @param {Knex.Transaction} trx - Knex transaction
  * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  * @throws {PostgresUpdateFailed} if the granule upsert effected 0 rows
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knex: Knex.Transaction
+  trx: Knex.Transaction
 ): Promise<number> => {
   const { name, version } = deconstructCollectionId(record.collectionId);
   const collectionPgModel = new CollectionPgModel();
@@ -55,24 +69,31 @@ export const migrateGranuleRecord = async (
   const granulePgModel = new GranulePgModel();
 
   const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-    knex,
+    trx,
     { name, version }
   );
 
-  // It's possible that very old records could have this field be undefined
-  const executionCumulusId = record.execution
-    ? await executionPgModel.getRecordCumulusId(
-      knex,
+  // It's possible that executions may not exist in PG because they
+  // don't exist in DynamoDB, so were never migrated to PG. We DO NOT
+  // fail granule migration if execution cannot be found.
+  let executionCumulusId: number | undefined;
+  try {
+    executionCumulusId = await executionPgModel.getRecordCumulusId(
+      trx,
       {
         url: record.execution,
       }
-    )
-    : undefined;
+    );
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   let existingRecord;
 
   try {
-    existingRecord = await granulePgModel.get(knex, {
+    existingRecord = await granulePgModel.get(trx, {
       granule_id: record.granuleId,
       collection_cumulus_id: collectionCumulusId,
     });
@@ -89,13 +110,13 @@ export const migrateGranuleRecord = async (
     throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
   }
 
-  const granule = await translateApiGranuleToPostgresGranule(record, knex);
+  const granule = await translateApiGranuleToPostgresGranule(record, trx);
 
-  const [cumulusId] = await knex.transaction((trx) => upsertGranuleWithExecutionJoinRecord(
+  const [cumulusId] = await upsertGranuleWithExecutionJoinRecord(
     trx,
     granule,
     executionCumulusId
-  ));
+  );
 
   if (!cumulusId) {
     throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);
@@ -146,14 +167,21 @@ export const migrateFileRecord = async (
  * @param {number} loggingInterval
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
-export const migrateGranuleAndFilesViaTransaction = async (
+export const migrateGranuleAndFilesViaTransaction = async ({
+  dynamoRecord,
+  granuleAndFilesMigrationResult,
+  knex,
+  loggingInterval,
+}: {
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  granuleAndFileMigrationResult: GranulesAndFilesMigrationResult,
+  granuleAndFilesMigrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number
-): Promise<GranulesAndFilesMigrationResult> => {
+}): Promise<GranulesAndFilesMigrationResult> => {
   const files = dynamoRecord.files ?? [];
-  const { granulesResult, filesResult } = granuleAndFileMigrationResult;
+  const migrationResult = granuleAndFilesMigrationResult
+    ?? initializeGranulesAndFilesMigrationResult();
+  const { granulesResult, filesResult } = migrationResult;
 
   granulesResult.total_dynamo_db_records += 1;
   filesResult.total_dynamo_db_records += files.length;
@@ -174,6 +202,7 @@ export const migrateGranuleAndFilesViaTransaction = async (
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
       granulesResult.skipped += 1;
+      filesResult.skipped += files.length;
     } else {
       granulesResult.failed += 1;
       filesResult.failed += files.length;
@@ -187,69 +216,91 @@ export const migrateGranuleAndFilesViaTransaction = async (
   return { granulesResult, filesResult };
 };
 
+const migrateGranuleDynamoRecords = async (
+  items: AWS.DynamoDB.DocumentClient.AttributeMap[],
+  migrationResult: GranulesAndFilesMigrationResult,
+  knex: Knex,
+  loggingInterval: number,
+  writeConcurrency: number
+) => {
+  const updatedResult = migrationResult;
+  await pMap(
+    items,
+    async (dynamoRecord) => {
+      const result = await migrateGranuleAndFilesViaTransaction({
+        dynamoRecord,
+        granuleAndFilesMigrationResult: migrationResult,
+        knex,
+        loggingInterval,
+      });
+      updatedResult.granulesResult = result.granulesResult;
+      updatedResult.filesResult = result.filesResult;
+    },
+    {
+      concurrency: writeConcurrency,
+    }
+  );
+};
+
 /**
- * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
+ * Query DynamoDB for granule records and migrate them to granule/file records in PostgreSQL.
  *
- * @param {NodeJS.ProcessEnv} env - Environment variables which may contain configuration
- * @param {number} env.loggingInterval
- *   Sets the interval number of records when a log message will be written on migration progress
- * @param {Knex} knex - Instance of a database client
- * @param {GranuleDynamoDbSearchParams} granuleSearchParams
+ * Performs a DynamoDb query() operation instead of a scan(), which will select only a subset
+ * of records from the table based on the supplied filters and is more efficient than scanning
+ * the whole table.
+ *
+ * @param {Object} params
+ * @param {string} params.granulesTable - Name of DynamoDB table for granules
+ * @param {GranuleMigrationParams} params.granuleMigrationParams
  *   Parameters to control data selected for migration
- * @param {string} granuleSearchParams.granuleId
+ * @param {string} params.granuleMigrationParams.granuleId
  *   Granule ID to use for querying granules to migrate
- * @param {string} granuleSearchParams.collectionId
+ * @param {string} params.granuleMigrationParams.collectionId
  *   Collection name/version to use for querying granules to migrate
+ * @param {GranulesAndFilesMigrationResult} params.granulesAndFilesMigrationResult
+ *   Result summary of the migration to be updated
+ * @param {Knex} params.knex - Instance of a database client
+ * @param {number} params.loggingInterval
+ *   Sets the interval number of records when a log message will be written on migration progress
  * @returns {Promise<GranulesAndFilesMigrationResult>}
  *   Result object summarizing the granule/files migration
  */
-export const migrateGranulesAndFiles = async (
-  env: NodeJS.ProcessEnv,
+export const queryAndMigrateGranuleDynamoRecords = async ({
+  granulesTable,
+  granuleMigrationParams,
+  granulesAndFilesMigrationResult,
+  knex,
+  loggingInterval,
+}: {
+  granulesTable: string,
+  granuleMigrationParams: GranuleMigrationParams,
+  granulesAndFilesMigrationResult?: GranulesAndFilesMigrationResult,
   knex: Knex,
-  granuleSearchParams: GranuleDynamoDbSearchParams = {}
-): Promise<GranulesAndFilesMigrationResult> => {
-  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
-  const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
+  loggingInterval: number
+}) => {
+  const migrationResult = granulesAndFilesMigrationResult
+    ?? initializeGranulesAndFilesMigrationResult();
 
-  const granuleMigrationResult: GranulesMigrationResult = {
-    filters: granuleSearchParams,
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  const fileMigrationResult: MigrationResult = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  const migrationResult = {
-    granulesResult: granuleMigrationResult,
-    filesResult: fileMigrationResult,
-  };
-
-  let extraSearchParams = {};
-  type searchType = 'scan' | 'query';
-  let dynamoSearchType: searchType = 'scan';
-
-  if (granuleSearchParams.granuleId) {
-    dynamoSearchType = 'query';
-    extraSearchParams = {
+  let extraQueryParams = {};
+  if (granuleMigrationParams.granuleId) {
+    migrationResult.granulesResult.filters = {
+      granuleId: granuleMigrationParams.granuleId,
+    };
+    extraQueryParams = {
       KeyConditionExpression: 'granuleId = :granuleId',
       ExpressionAttributeValues: {
-        ':granuleId': granuleSearchParams.granuleId,
+        ':granuleId': granuleMigrationParams.granuleId,
       },
     };
-  } else if (granuleSearchParams.collectionId) {
-    dynamoSearchType = 'query';
-    extraSearchParams = {
+  } else if (granuleMigrationParams.collectionId) {
+    migrationResult.granulesResult.filters = {
+      collectionId: granuleMigrationParams.collectionId,
+    };
+    extraQueryParams = {
       IndexName: 'collectionId-granuleId-index',
       KeyConditionExpression: 'collectionId = :collectionId',
       ExpressionAttributeValues: {
-        ':collectionId': granuleSearchParams.collectionId,
+        ':collectionId': granuleMigrationParams.collectionId,
       },
     };
   }
@@ -257,25 +308,93 @@ export const migrateGranulesAndFiles = async (
   const searchQueue = new DynamoDbSearchQueue(
     {
       TableName: granulesTable,
-      ...extraSearchParams,
+      ...extraQueryParams,
     },
-    dynamoSearchType
+    'query'
   );
 
-  let record = await searchQueue.peek();
+  let dynamoRecord = await searchQueue.peek();
 
   /* eslint-disable no-await-in-loop */
-  while (record) {
-    // eslint-disable-next-line max-len
-    const result = await migrateGranuleAndFilesViaTransaction(record, migrationResult, knex, loggingInterval);
+  while (dynamoRecord) {
+    const result = await migrateGranuleAndFilesViaTransaction({
+      dynamoRecord,
+      granuleAndFilesMigrationResult: migrationResult,
+      knex,
+      loggingInterval,
+    });
     migrationResult.granulesResult = result.granulesResult;
     migrationResult.filesResult = result.filesResult;
 
     await searchQueue.shift();
-    record = await searchQueue.peek();
+    dynamoRecord = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
-  logger.info(`Successfully migrated ${migrationResult.filesResult.migrated} file records.`);
+
   return migrationResult;
+};
+
+/**
+ * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
+ *
+ * @param {NodeJS.ProcessEnv} env - Environment variables which may contain configuration
+ * @param {number} env.loggingInterval
+ *   Sets the interval number of records when a log message will be written on migration progress
+ * @param {Knex} knex - Instance of a database client
+ * @param {GranuleMigrationParams} granuleMigrationParams
+ *   Parameters to control data selected for migration
+ * @param {string} granuleMigrationParams.granuleId
+ *   Granule ID to use for querying granules to migrate
+ * @param {string} granuleMigrationParams.collectionId
+ *   Collection name/version to use for querying granules to migrate
+ * @returns {Promise<GranulesAndFilesMigrationResult>}
+ *   Result object summarizing the granule/files migration
+ */
+export const migrateGranulesAndFiles = async (
+  env: NodeJS.ProcessEnv,
+  knex: Knex,
+  granuleMigrationParams: GranuleMigrationParams = {}
+): Promise<GranulesAndFilesMigrationResult> => {
+  const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
+  const loggingInterval = granuleMigrationParams.loggingInterval ?? 100;
+  const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 2;
+  const granulesAndFilesMigrationResult = initializeGranulesAndFilesMigrationResult();
+
+  const doDynamoQuery = granuleMigrationParams.granuleId !== undefined
+    || granuleMigrationParams.collectionId !== undefined;
+
+  if (doDynamoQuery) {
+    await queryAndMigrateGranuleDynamoRecords({
+      granulesTable,
+      granuleMigrationParams,
+      granulesAndFilesMigrationResult,
+      knex,
+      loggingInterval,
+    });
+  } else {
+    const totalSegments = granuleMigrationParams.parallelScanSegments ?? 20;
+
+    logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
+
+    await parallelScan({
+      totalSegments,
+      scanParams: {
+        TableName: granulesTable,
+        Limit: granuleMigrationParams.parallelScanLimit,
+      },
+      processItemsFunc: (items) => migrateGranuleDynamoRecords(
+        items,
+        granulesAndFilesMigrationResult,
+        knex,
+        loggingInterval,
+        writeConcurrency
+      ),
+    });
+
+    logger.info(`Finished parallel scan of granules with ${totalSegments} parallel segments.`);
+  }
+
+  logger.info(`Successfully migrated ${granulesAndFilesMigrationResult.granulesResult.migrated} granule records.`);
+  logger.info(`Successfully migrated ${granulesAndFilesMigrationResult.filesResult.migrated} file records.`);
+  return granulesAndFilesMigrationResult;
 };

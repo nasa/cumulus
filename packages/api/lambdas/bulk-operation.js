@@ -85,18 +85,17 @@ function applyWorkflowToGranules({
   granuleIds,
   workflowName,
   meta,
-  queueName,
+  queueUrl,
+  granuleModel = new GranuleModel(),
 }) {
-  const granuleModelClient = new GranuleModel();
-
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
     try {
-      const granule = await granuleModelClient.get({ granuleId });
-      await granuleModelClient.applyWorkflow(
+      const granule = await granuleModel.get({ granuleId });
+      await granuleModel.applyWorkflow(
         granule,
         workflowName,
         meta,
-        queueName,
+        queueUrl,
         process.env.asyncOperationId
       );
       return granuleId;
@@ -217,7 +216,7 @@ async function bulkGranuleDelete(
  * @param {Object} payload
  * @param {string} payload.workflowName - name of the workflow that will be applied to each granule.
  * @param {Object} [payload.meta] - Optional meta to add to workflow input
- * @param {string} [payload.queueName] - Optional name of queue that will be used to start workflows
+ * @param {string} [payload.queueUrl] - Optional name of queue that will be used to start workflows
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
@@ -225,9 +224,9 @@ async function bulkGranuleDelete(
  * @returns {Promise}
  */
 async function bulkGranule(payload) {
-  const { queueName, workflowName, meta } = payload;
+  const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return applyWorkflowToGranules({ granuleIds, workflowName, meta, queueName });
+  return applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
 }
 
 async function bulkGranuleReingest(payload) {
@@ -278,6 +277,7 @@ async function handler(event) {
 }
 
 module.exports = {
+  applyWorkflowToGranules,
   bulkGranuleDelete,
   getGranuleIdsForPayload,
   handler,

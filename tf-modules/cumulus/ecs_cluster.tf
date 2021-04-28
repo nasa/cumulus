@@ -113,7 +113,8 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
-      "dynamodb:Scan"
+      "dynamodb:Scan",
+      "dynamodb:Query"
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
   }
@@ -229,6 +230,7 @@ locals {
     efs_dns_name              = var.ecs_efs_config == null ? null : data.aws_efs_mount_target.ecs_cluster_instance[0].dns_name,
     efs_mount_point           = var.ecs_efs_config == null ? null : var.ecs_efs_config.mount_point,
     image_id                  = var.ecs_cluster_instance_image_id,
+    include_docker_cleanup_cronjob = var.ecs_include_docker_cleanup_cronjob,
     instance_profile          = aws_iam_instance_profile.ecs_cluster_instance.arn,
     instance_type             = var.ecs_cluster_instance_type,
     key_name                  = var.key_name,
