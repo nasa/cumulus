@@ -36,7 +36,7 @@ describe('When a bad record is sent on the DLQ', () => {
     const failingMessage = {
       cumulus_meta: {
         workflow_start_time: 122,
-        cumulus_version: '7.1.0',
+        cumulus_version: '8.0.0',
         state_machine: 'arn:aws:states:us-east-1:1234:execution:state-machine-name:execution-name',
         execution_name: executionName,
       },
