@@ -321,6 +321,7 @@ const _writeGranuleFiles = async ({
       }
     ).catch((updateError) => {
       log.fatal('Failed to update PG status on file write failure!', updateError);
+      throw updateError;
     });
     await granuleModel.update(
       { granuleId: granule.granule_id },
@@ -330,6 +331,7 @@ const _writeGranuleFiles = async ({
       }
     ).catch((updateError) => {
       log.fatal('Failed to update DDB status on file write failure!', updateError);
+      throw updateError;
     });
   }
 };
