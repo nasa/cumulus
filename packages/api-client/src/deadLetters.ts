@@ -3,7 +3,7 @@ import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
- * POST a request to start a migrationCounts run
+ * POST a request to start a dead letter processing run
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack

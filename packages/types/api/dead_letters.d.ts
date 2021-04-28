@@ -1,4 +1,4 @@
 export interface DeadLetterArchivePayload {
-  bucket: string,
-  path: string,
+  bucket?: string,
+  path?: string,
 }
