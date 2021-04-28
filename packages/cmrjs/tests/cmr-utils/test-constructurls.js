@@ -35,16 +35,21 @@ test.beforeEach((t) => {
   };
 });
 
-test('mapCNMTypeToCMRType returns a mapping', (t) => {
-  const expected = 'GET RELATED VISUALIZATION';
-  const actual = mapCNMTypeToCMRType('browse');
-  t.is(expected, actual);
+test('mapCNMTypeToCMRType returns a mapping for non science data type', (t) => {
+  t.is(mapCNMTypeToCMRType('browse'), 'GET RELATED VISUALIZATION');
+  t.is(mapCNMTypeToCMRType('browse', 's3'), 'GET RELATED VISUALIZATION');
 });
 
-test('mapCNMTypeToCMRType returns a default', (t) => {
-  const expected = 'GET DATA';
-  const actual = mapCNMTypeToCMRType(undefined);
-  t.is(expected, actual);
+test('mapCNMTypeToCMRType returns a mapping for science data type', (t) => {
+  t.is(mapCNMTypeToCMRType('data'), 'GET DATA');
+  t.is(mapCNMTypeToCMRType('data', 's3'), 'GET DATA VIA DIRECT ACCESS');
+});
+
+test('mapCNMTypeToCMRType returns a default mapping if non CNM mapping specified', (t) => {
+  t.is(mapCNMTypeToCMRType('NOTAREALVALUE'), 'GET DATA');
+  t.is(mapCNMTypeToCMRType('NOTAREALVALUE', 's3'), 'GET DATA VIA DIRECT ACCESS');
+  t.is(mapCNMTypeToCMRType(undefined), 'GET DATA');
+  t.is(mapCNMTypeToCMRType(undefined, 's3'), 'GET DATA VIA DIRECT ACCESS');
 });
 
 test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set', async (t) => {
@@ -65,7 +70,7 @@ test('constructOnlineAccessUrls returns both distribution and s3 urls for protec
       URL: `s3://${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
       Description: 'This link provides direct download access via S3 to the granule',
       URLDescription: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA',
+      Type: 'GET DATA VIA DIRECT ACCESS',
     },
   ];
 
@@ -161,7 +166,7 @@ test('constructOnlineAccessUrls returns expected array when called with file lis
       URL: `s3://${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
       Description: 'This link provides direct download access via S3 to the granule',
       URLDescription: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA',
+      Type: 'GET DATA VIA DIRECT ACCESS',
     },
     {
       URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
@@ -316,16 +321,6 @@ test('constructRelatedUrls returns expected array when called with file list and
       Description: 'Download publicfile.jpg',
       Type: 'GET DATA',
     },
-    {
-      URL: `s3://${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
-      Description: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA VIA DIRECT ACCESS',
-    },
-    {
-      URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
-      Description: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA VIA DIRECT ACCESS',
-    },
     omit(s3CredentialsEndpointObject, 'URLDescription'),
   ];
 
@@ -333,6 +328,7 @@ test('constructRelatedUrls returns expected array when called with file list and
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
+    cmrGranuleUrlType: 'distribution',
     distributionBucketMap: t.context.distributionBucketMap,
   });
 
@@ -367,7 +363,7 @@ test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async 
     {
       URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
       Description: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA VIA DIRECT ACCESS',
+      Type: 'GET RELATED VISUALIZATION',
     },
     omit(s3CredentialsEndpointObject, 'URLDescription'),
   ];

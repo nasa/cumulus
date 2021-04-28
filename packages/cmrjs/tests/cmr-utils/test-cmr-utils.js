@@ -183,16 +183,6 @@ test('constructCmrConceptLink returns umm_json link', (t) => {
   );
 });
 
-test('mapACNMTypeToCMRType returns a mapping', (t) => {
-  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
-  t.is('EXTENDED METADATA', mapCNMTypeToCMRType('qa'));
-});
-
-test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specified', (t) => {
-  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
-  t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
-});
-
 test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
   const cmrFile = {
     bucket: 'Echo10FileBucket',
@@ -399,12 +389,12 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
     {
       URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
       Description: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA VIA DIRECT ACCESS',
+      Type: 'GET RELATED VISUALIZATION',
     },
     {
       URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
       Description: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA VIA DIRECT ACCESS',
+      Type: 'EXTENDED METADATA',
     },
   ];
 

@@ -316,9 +316,10 @@ function getS3CredentialsObject(s3CredsUrl) {
  * Returns UMM/ECHO10 resource type mapping for CNM file type
  *
  * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
+ * @param {string} urlType - url type, distribution or s3
  * @returns {( string | undefined )} type - UMM/ECHO10 resource type
  */
-function mapCNMTypeToCMRType(type) {
+function mapCNMTypeToCMRType(type, urlType = 'distribution') {
   const mapping = {
     ancillary: 'VIEW RELATED INFORMATION',
     data: 'GET DATA',
@@ -327,11 +328,14 @@ function mapCNMTypeToCMRType(type) {
     metadata: 'EXTENDED METADATA',
     qa: 'EXTENDED METADATA',
   };
+  const mappedType = mapping[type] || 'GET DATA';
   if (!mapping[type]) {
     log.warn(`CNM Type ${type} invalid for mapping to UMM/ECHO10 type value, using GET DATA instead`);
-    return 'GET DATA';
   }
-  return mapping[type];
+  if (urlType === 's3' && mappedType === 'GET DATA') {
+    return 'GET DATA VIA DIRECT ACCESS';
+  }
+  return mappedType;
 }
 
 function generateFileUrl({
@@ -392,7 +396,7 @@ async function constructOnlineAccessUrl({
         URL: fileUrl,
         URLDescription: fileDescription, // used by ECHO10
         Description: fileDescription, // used by UMMG
-        Type: mapCNMTypeToCMRType(file.type), // used by ECHO10/UMMG
+        Type: mapCNMTypeToCMRType(file.type, cmrGranuleUrlType), // used by ECHO10/UMMG
       };
     }
   }
@@ -475,7 +479,7 @@ async function constructRelatedUrls({
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
-  const accessUrls = await constructOnlineAccessUrls({
+  const cmrUrlObjects = await constructOnlineAccessUrls({
     files,
     distEndpoint,
     bucketTypes,
@@ -483,11 +487,6 @@ async function constructRelatedUrls({
     distributionBucketMap,
   });
 
-  // mapping Echo10 type to UMMG type for s3 link
-  const cmrUrlObjects = accessUrls.map((urlObj) => ({
-    ...urlObj,
-    Type: urlObj.URL.startsWith('s3://') ? 'GET DATA VIA DIRECT ACCESS' : urlObj.Type,
-  }));
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
   return relatedUrls.map((urlObj) => omit(urlObj, 'URLDescription'));
 }
@@ -783,7 +782,7 @@ async function updateEcho10XMLMetadata({
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
   const mergedOnlineAccessURLs = buildMergedEchoURLObject(newURLs, originalOnlineAccessURLs,
-    removedURLs, ['GET DATA'], ['Type', 'Description']);
+    removedURLs, ['GET DATA', 'GET DATA VIA DIRECT ACCESS'], ['Type', 'Description']);
   const mergedAssociatedBrowse = buildMergedEchoURLObject(newURLs, originalAssociatedBrowseURLs,
     removedURLs, ['GET RELATED VISUALIZATION'], ['URLDescription', 'Type']);
 

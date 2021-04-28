@@ -478,6 +478,12 @@ describe('The S3 Ingest Granules workflow', () => {
     let beforeAllError;
     let teaRequestHeaders;
 
+    let scienceFileUrl;
+    let s3ScienceFileUrl;
+    let browseImageUrl;
+    let s3BrowseImageUrl;
+    let s3CredsUrl;
+
     beforeAll(async () => {
       process.env.CMR_ENVIRONMENT = 'UAT';
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr');
@@ -502,6 +508,12 @@ describe('The S3 Ingest Granules workflow', () => {
         ummCmrResource = result[1];
         resourceURLs = cmrResource.map((resource) => resource.href);
         teaRequestHeaders = result[2];
+
+        scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
+        s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath, urlType: 's3' });
+        browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+        s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath, urlType: 's3' });
+        s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       } catch (error) {
         beforeAllError = error;
       }
@@ -519,12 +531,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
-      const s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath, urlType: 's3' });
-      const browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath, urlType: 's3' });
-      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
-
       console.log('parallel resourceURLs:', resourceURLs);
       console.log('s3CredsUrl:', s3CredsUrl);
 
@@ -538,19 +544,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('updates the CMR metadata "online resources" with the proper types and urls', () => {
       const resource = ummCmrResource;
-      const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
-      const s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath, urlType: 's3' });
-      const browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath, urlType: 's3' });
-      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
-
       const expectedTypes = [
         'GET DATA',
         'GET DATA VIA DIRECT ACCESS',
         'VIEW RELATED INFORMATION',
-        'GET DATA VIA DIRECT ACCESS',
+        'VIEW RELATED INFORMATION',
         'GET RELATED VISUALIZATION',
-        'GET DATA VIA DIRECT ACCESS',
+        'GET RELATED VISUALIZATION',
         'VIEW RELATED INFORMATION',
         'USE SERVICE API',
       ];
