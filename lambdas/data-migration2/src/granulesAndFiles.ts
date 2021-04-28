@@ -242,6 +242,29 @@ const migrateGranuleDynamoRecords = async (
   );
 };
 
+/**
+ * Query DynamoDB for granule records and migrate them to granule/file records in PostgreSQL.
+ *
+ * Performs a DynamoDb query() operation instead of a scan(), which will select only a subset
+ * of records from the table based on the supplied filters and is more efficient than scanning
+ * the whole table.
+ *
+ * @param {Object} params
+ * @param {string} params.granulesTable - Name of DynamoDB table for granules
+ * @param {GranuleMigrationParams} params.granuleMigrationParams
+ *   Parameters to control data selected for migration
+ * @param {string} params.granuleMigrationParams.granuleId
+ *   Granule ID to use for querying granules to migrate
+ * @param {string} params.granuleMigrationParams.collectionId
+ *   Collection name/version to use for querying granules to migrate
+ * @param {GranulesAndFilesMigrationResult} params.granulesAndFilesMigrationResult
+ *   Result summary of the migration to be updated
+ * @param {Knex} params.knex - Instance of a database client
+ * @param {number} params.loggingInterval
+ *   Sets the interval number of records when a log message will be written on migration progress
+ * @returns {Promise<GranulesAndFilesMigrationResult>}
+ *   Result object summarizing the granule/files migration
+ */
 export const queryAndMigrateGranuleDynamoRecords = async ({
   granulesTable,
   granuleMigrationParams,
