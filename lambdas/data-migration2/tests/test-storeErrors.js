@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
-const { closeErrorFileWriteStream, createErrorFileWriteStream, storeErrors } = require('../dist/lambda/storeErrors');
+const { createErrorFileWriteStream, storeErrors } = require('../dist/lambda/storeErrors');
 
 test.before(async () => {
   process.env = {
@@ -70,14 +70,5 @@ test.serial('createErrorFileWriteStream returns write streams and string', (t) =
     const asyncFinished = promisify(finished);
     await asyncFinished(errorFileWriteStream);
     fs.unlinkSync(expectedFilePath);
-  });
-});
-
-test.serial('closeErrorFileWriteStream closes write stream', async (t) => {
-  const filepath = 'test';
-  const writeStream = fs.createWriteStream(filepath);
-  await t.notThrowsAsync(closeErrorFileWriteStream(writeStream));
-  t.teardown(async () => {
-    fs.unlinkSync(filepath);
   });
 });

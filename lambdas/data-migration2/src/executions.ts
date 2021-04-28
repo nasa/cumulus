@@ -7,7 +7,7 @@ import { ExecutionRecord } from '@cumulus/types/api/executions';
 import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cumulus/db';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { MigrationResult } from '@cumulus/types/migration';
-import { closeErrorFileWriteStream, createErrorFileWriteStream, storeErrors } from './storeErrors';
+import { createErrorFileWriteStream, storeErrors } from './storeErrors';
 
 const Execution = require('@cumulus/api/models/executions');
 
@@ -95,7 +95,6 @@ export const migrateExecutions = async (
 
   const migrationName = 'executions';
   const {
-    errorFileWriteStream,
     jsonWriteStream,
     filepath,
   } = createErrorFileWriteStream(migrationName);
@@ -126,7 +125,7 @@ export const migrateExecutions = async (
     await searchQueue.shift();
     record = await searchQueue.peek();
   }
-  await closeErrorFileWriteStream(errorFileWriteStream);
+  jsonWriteStream.end();
   await storeErrors({
     bucket,
     filepath,

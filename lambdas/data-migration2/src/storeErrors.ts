@@ -1,10 +1,9 @@
 import Logger from '@cumulus/logger';
-import { WriteStream } from 'node:fs';
 
 const fs = require('fs');
 const JSONStream = require('JSONStream');
-const { finished } = require('stream');
-const { promisify } = require('util');
+// const { finished } = require('stream');
+// const { promisify } = require('util');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: '@cumulus/data-migration/storeErrors' });
@@ -19,22 +18,10 @@ export const createErrorFileWriteStream = (migrationName: string, timestamp?: st
   const dateString = timestamp || new Date().toISOString();
   const filepath = `${migrationName}ErrorLog-${dateString}.json`;
   const errorFileWriteStream = fs.createWriteStream(filepath);
-  const jsonWriteStream = JSONStream.stringify();
+  const jsonWriteStream = JSONStream.stringify('{"errors": [\n', '\n,', '\n]}\n');
   jsonWriteStream.pipe(errorFileWriteStream);
-  errorFileWriteStream.write('{ "errors": \n');
 
   return { jsonWriteStream, errorFileWriteStream, filepath };
-};
-
-/**
- * Helper to close error JSON write stream
- * @param {WriteStream} errorFileWriteStream - Error file write stream to close
- * @returns {Promise<void>}
- */
-export const closeErrorFileWriteStream = async (errorFileWriteStream: WriteStream) => {
-  errorFileWriteStream.end('\n]}');
-  const asyncFinished = promisify(finished);
-  await asyncFinished(errorFileWriteStream);
 };
 
 /**

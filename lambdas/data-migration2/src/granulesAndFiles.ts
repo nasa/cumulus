@@ -24,7 +24,7 @@ import {
   GranulesMigrationResult,
   MigrationResult,
 } from '@cumulus/types/migration';
-import { closeErrorFileWriteStream, createErrorFileWriteStream, storeErrors } from './storeErrors';
+import { createErrorFileWriteStream, storeErrors } from './storeErrors';
 
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
@@ -253,7 +253,6 @@ export const migrateGranulesAndFiles = async (
 
   const migrationName = 'granulesAndFiles';
   const {
-    errorFileWriteStream,
     jsonWriteStream,
     filepath,
   } = createErrorFileWriteStream(migrationName);
@@ -306,7 +305,7 @@ export const migrateGranulesAndFiles = async (
     await searchQueue.shift();
     record = await searchQueue.peek();
   }
-  await closeErrorFileWriteStream(errorFileWriteStream);
+  jsonWriteStream.end();
   await storeErrors({ bucket, filepath, migrationName, stackName, timestamp: testTimestamp });
   /* eslint-enable no-await-in-loop */
   logger.info(`Successfully migrated ${migrationResult.granulesResult.migrated} granule records.`);
