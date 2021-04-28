@@ -778,7 +778,7 @@ test.serial('migrateGranulesAndFiles processes multiple granules when a filter i
 
   const testGranule1 = testGranule;
   const testGranule2 = generateTestGranule({
-    collectionId: `${cryptoRandomString({ length: 3 })}___1`,
+    collectionId,
     execution: testExecution.url,
   });
 
@@ -803,28 +803,29 @@ test.serial('migrateGranulesAndFiles processes multiple granules when a filter i
   );
   t.deepEqual(migrationSummary, {
     filesResult: {
-      total_dynamo_db_records: 1,
+      total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
-      migrated: 1,
+      migrated: 2,
     },
     granulesResult: {
       filters: {
         collectionId,
       },
-      total_dynamo_db_records: 1,
+      total_dynamo_db_records: 2,
       failed: 0,
       skipped: 0,
-      migrated: 1,
+      migrated: 2,
     },
   });
   const records = await t.context.granulePgModel.search(t.context.knex, {});
   const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
-  t.is(records.length, 1);
-  t.is(fileRecords.length, 1);
+  t.is(records.length, 2);
+  t.is(fileRecords.length, 2);
 
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[1].cumulus_id });
   });
 });
 
