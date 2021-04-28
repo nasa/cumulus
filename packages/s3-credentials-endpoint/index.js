@@ -95,6 +95,13 @@ async function displayS3CredentialInstructions(_req, res) {
   res.send(compiled(process.env));
 }
 
+/**
+ * If DISABLE_S3_CREDENTIALS is not "true", returns undefined, otherwise, send a
+ * boom.ServerUnavailable to the caller, Exiting the request.
+ *
+ * @param {Object} res - express request object
+ * @returns {undefined} - when DISABLE_S3_CREDENTIALS is not 'true'
+ */
 function ensureEndpointEnabled(res) {
   const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
 
@@ -104,6 +111,10 @@ function ensureEndpointEnabled(res) {
   return undefined;
 }
 
+/**
+ * @returns {bool} whether or not the endpoint is configured to send ACL based
+ * credentials.
+ */
 function configuredForACLCredentials() {
   if (process.env.CMR_ACL_BASED_CREDENTIALS && process.env.CMR_ACL_BASED_CREDENTIALS.toLowerCase() === 'true') {
     return true;
