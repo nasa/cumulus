@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
 
+### Changed
+- **CUMULUS-2434**
+  - Updated `@cumulus/cmrjs` `updateCMRMetadata` functions to add both HTTPS URLS and S3 URIs to CMR metadata.
+  - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS URLs and S3 URIs by to the OnlineAccessURLs field of CMR metadata.
+
 ## [v8.0.0] 2021-04-08
 
 ### BREAKING CHANGES
