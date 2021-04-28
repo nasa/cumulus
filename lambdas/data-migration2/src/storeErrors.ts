@@ -12,7 +12,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/storeErrors' });
  * Helper to create error file write stream
  * @param {string} migrationName         - Name of migration
  * @param {string | undefined} timestamp - Timestamp for unit testing
- * @returns {Object}                     - Object containing error write streams and file path
+ * @returns {Object}                     - Object containing the error log write stream and file path
  */
 export const createErrorFileWriteStream = (migrationName: string, timestamp?: string) => {
   const dateString = timestamp || new Date().toISOString();
@@ -21,7 +21,7 @@ export const createErrorFileWriteStream = (migrationName: string, timestamp?: st
   const jsonWriteStream = JSONStream.stringify('{"errors": [\n', '\n,', '\n]}\n');
   jsonWriteStream.pipe(errorFileWriteStream);
 
-  return { jsonWriteStream, errorFileWriteStream, filepath };
+  return { jsonWriteStream, filepath };
 };
 
 /**

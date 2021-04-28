@@ -1,4 +1,5 @@
 import Knex from 'knex';
+import { Writable } from 'stream';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { ApiFile } from '@cumulus/types/api/files';
@@ -148,7 +149,7 @@ export const migrateFileRecord = async (
  * @param {GranulesAndFilesMigrationSummary} params.granuleAndFileMigrationSummary
  * @param {Knex} params.knex
  * @param {number} params.loggingInterval
- * @param {any} params.stream
+ * @param {Writable} params.errorLogWriteStream
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (params: {
@@ -156,14 +157,14 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
   granuleAndFileMigrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number,
-  stream: any,
+  errorLogWriteStream: Writable,
 }): Promise<GranulesAndFilesMigrationResult> => {
   const {
     dynamoRecord,
     granuleAndFileMigrationResult,
     knex,
     loggingInterval,
-    stream,
+    errorLogWriteStream,
   } = params;
   const { granulesResult, filesResult } = granuleAndFileMigrationResult;
   const files = dynamoRecord.files ?? [];
@@ -192,7 +193,7 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
       granulesResult.failed += 1;
       filesResult.failed += files.length;
 
-      stream.write(JSON.stringify(`${errorMessage}, Cause: ${error}`));
+      errorLogWriteStream.write(`${errorMessage}, Cause: ${error}`);
       logger.error(errorMessage, error);
     }
   }
@@ -297,7 +298,7 @@ export const migrateGranulesAndFiles = async (
       granuleAndFileMigrationResult: migrationResult,
       knex,
       loggingInterval,
-      stream: jsonWriteStream,
+      errorLogWriteStream: jsonWriteStream,
     });
     migrationResult.granulesResult = result.granulesResult;
     migrationResult.filesResult = result.filesResult;

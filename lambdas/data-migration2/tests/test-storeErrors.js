@@ -3,6 +3,7 @@ const fs = require('fs');
 const test = require('ava');
 const { finished } = require('stream');
 const { promisify } = require('util');
+const { Stream } = require('stream');
 
 const {
   createBucket,
@@ -57,18 +58,14 @@ test.serial('createErrorFileWriteStream returns write streams and string', (t) =
   const expectedFilePath = `${migrationName}ErrorLog-${timestamp}.json`;
 
   const {
-    errorFileWriteStream,
     jsonWriteStream,
     filepath,
   } = createErrorFileWriteStream(migrationName, timestamp);
   t.is(filepath, expectedFilePath);
-  t.true(errorFileWriteStream instanceof fs.WriteStream);
-  t.truthy(jsonWriteStream);
+  t.true(jsonWriteStream instanceof Stream);
 
   t.teardown(async () => {
-    errorFileWriteStream.end('');
-    const asyncFinished = promisify(finished);
-    await asyncFinished(errorFileWriteStream);
+    jsonWriteStream.end('');
     fs.unlinkSync(expectedFilePath);
   });
 });
