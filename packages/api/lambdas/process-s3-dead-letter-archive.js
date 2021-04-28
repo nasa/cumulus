@@ -8,6 +8,18 @@ const { getKnexClient } = require('@cumulus/db');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
 
+/**
+ * Process dead letters in the bucket dead letter archive
+ * and attempt to write records to the Cumulus DB
+ *
+ * @param {Object}   params - Parameters object
+ * @param {Knex}     params.knex - Client to interact with Postgres database
+ * @param {string}   [params.bucket] - optional bucket override
+ * @param {string}   [params.path] - optional dead letter archive path override
+ * @param {Function} [params.writeRecordsFunction] - optional function override for testing
+ * @param {number}   [params.batchSize] - optional S3 results batch size override for testing
+ * @returns {Promise<void>}
+ */
 async function processDeadLetterArchive({
   knex,
   bucket = process.env.system_bucket,
@@ -60,7 +72,7 @@ async function processDeadLetterArchive({
  * @param {Object} event - Input payload object
  * @param {string} [event.bucket] - Bucket containing dead letter archive (default to system bucket)
  * @param {string} [event.key] - Dead letter archive path key
- * @returns {Promise<undefined>}
+ * @returns {Promise<void>}
  */
 async function handler(event) {
   const knex = await getKnexClient({

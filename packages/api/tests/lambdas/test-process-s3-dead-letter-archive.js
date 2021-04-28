@@ -88,9 +88,11 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
   t.is(remainingDeadLetters.length, 0);
 });
 
-test('processDeadLetterArchive does not delete dead letters that fail to process', async (t) => {
+test('processDeadLetterArchive only deletes dead letters that process successfully', async (t) => {
   const { bucket, path } = t.context;
-  const writeRecordsErrorThrower = () => {
+  const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
+  const writeRecordsErrorThrower = ({ cumulusMessage }) => {
+    if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
     throw new Error('write failure');
   };
 
@@ -101,7 +103,7 @@ test('processDeadLetterArchive does not delete dead letters that fail to process
   });
 
   const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
-  t.is(remainingDeadLetters.length, 2);
+  t.is(remainingDeadLetters.length, 1);
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {
