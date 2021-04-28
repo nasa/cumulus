@@ -2,9 +2,8 @@
 
 The data-migration2 lambda is the second of two Lambdas to be run in order to migrate existing DynamoDB data to PostgreSQL.
 
-## Running the API
-
-The data-migration2 lambda can be run in several ways:
+### Running the API
+This second Lambda in the data migration process can be run in several ways:
 
 1. In an ECS container using the Cumulus ECS Service
 2. Directly from the AWS console / command line
