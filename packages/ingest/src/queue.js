@@ -156,6 +156,9 @@ exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
  * @param {Object} params.workflow - the workflow to be enqueued
  * @param {Object} params.workflowInput - the input that should be passed to the queued workflow
  * @param {string} [params.queueUrl] - an optional SQS queue to add the message to
+ * @param {Object} params.provider - the provider config to be attached to the message
+ * @param {Object} params.collection - the collection config to be attached to the
+ *   message
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
  * @param {string} [params.executionNamePrefix] - the prefix to apply to the
  *   name of the enqueued execution
@@ -165,34 +168,41 @@ async function enqueueWorkflowMessage({
   parentExecutionArn,
   stack,
   systemBucket,
+  collection,
+  provider,
   queueUrl,
-  parentWorkflow,
   workflow,
   workflowInput,
   executionNamePrefix,
+  additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
-  const { arn: parentWorkflowArn } = await getJsonS3Object(
+  const { arn: queuedWorkflowArn } = await getJsonS3Object(
     systemBucket,
-    getWorkflowFileKey(stack, parentWorkflow)
+    getWorkflowFileKey(stack, workflow)
   );
 
   const payload = {
-    workflowInput,
-    workflow,
+    ...workflowInput,
   };
 
-  const parentWorkflowDefinition = {
-    name: parentWorkflow,
-    arn: parentWorkflowArn,
+  const queuedWorkflowDefinition = {
+    name: workflow,
+    arn: queuedWorkflowArn,
   };
 
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     parentExecutionArn,
     payload,
-    workflow: parentWorkflowDefinition,
+    queueUrl,
+    workflow: queuedWorkflowDefinition,
     executionNamePrefix,
+    customMeta: {
+      ...additionalCustomMeta,
+      collection,
+      provider,
+    },
   });
 
   const arn = buildExecutionArn(

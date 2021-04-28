@@ -1,6 +1,8 @@
 import Knex from 'knex';
+import pMap from 'p-map';
+import cloneDeep from 'lodash/cloneDeep';
 
-import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
+import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import Logger from '@cumulus/logger';
 import {
   CollectionPgModel,
@@ -16,7 +18,9 @@ import {
   PostgresUpdateFailed,
 } from '@cumulus/errors';
 
-import { MigrationResult } from '@cumulus/types/migration';
+import { MigrationResult, ParallelScanMigrationParams } from '@cumulus/types/migration';
+
+import { initialMigrationResult } from './common';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
@@ -101,51 +105,73 @@ export const migratePdrRecord = async (
   }
 };
 
+export const migratePdrDynamoRecords = async (
+  items: AWS.DynamoDB.DocumentClient.AttributeMap[],
+  migrationResult: MigrationResult,
+  knex: Knex,
+  loggingInterval: number,
+  writeConcurrency?: number
+) => {
+  const updatedResult = migrationResult;
+  await pMap(
+    items,
+    async (dynamoRecord) => {
+      updatedResult.total_dynamo_db_records += 1;
+
+      if (updatedResult.total_dynamo_db_records % loggingInterval === 0) {
+        logger.info(`Batch of ${loggingInterval} PDR records processed, ${updatedResult.total_dynamo_db_records} total`);
+      }
+      try {
+        await migratePdrRecord(dynamoRecord, knex);
+        updatedResult.migrated += 1;
+      } catch (error) {
+        if (error instanceof RecordAlreadyMigrated) {
+          updatedResult.skipped += 1;
+        } else {
+          updatedResult.failed += 1;
+          logger.error(
+            `Could not create PDR record in RDS for Dynamo PDR name: ${dynamoRecord.pdrName}`,
+            error
+          );
+        }
+      }
+    },
+    {
+      stopOnError: false,
+      concurrency: writeConcurrency,
+    }
+  );
+};
+
 export const migratePdrs = async (
   env: NodeJS.ProcessEnv,
-  knex: Knex
+  knex: Knex,
+  pdrMigrationParams: ParallelScanMigrationParams = {}
 ): Promise<MigrationResult> => {
   const pdrsTable = envUtils.getRequiredEnvVar('PdrsTable', env);
-  const loggingInterval = env.loggingInterval ? Number.parseInt(env.loggingInterval, 10) : 100;
+  const loggingInterval = pdrMigrationParams.loggingInterval ?? 100;
+  const totalSegments = pdrMigrationParams.parallelScanSegments ?? 20;
 
-  const searchQueue = new DynamoDbSearchQueue({
-    TableName: pdrsTable,
+  const migrationResult = cloneDeep(initialMigrationResult);
+
+  logger.info(`Starting parallel scan of PDRs with ${totalSegments} parallel segments`);
+
+  await parallelScan({
+    totalSegments,
+    scanParams: {
+      TableName: pdrsTable,
+      Limit: pdrMigrationParams.parallelScanLimit,
+    },
+    processItemsFunc: (items) => migratePdrDynamoRecords(
+      items,
+      migrationResult,
+      knex,
+      loggingInterval,
+      pdrMigrationParams.writeConcurrency
+    ),
   });
 
-  const migrationResult = {
-    total_dynamo_db_records: 0,
-    migrated: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  let record = await searchQueue.peek();
-  /* eslint-disable no-await-in-loop */
-  while (record) {
-    migrationResult.total_dynamo_db_records += 1;
-
-    if (migrationResult.total_dynamo_db_records % loggingInterval === 0) {
-      logger.info(`Batch of ${loggingInterval} PDR records processed, ${migrationResult.total_dynamo_db_records} total`);
-    }
-    try {
-      await migratePdrRecord(record, knex);
-      migrationResult.migrated += 1;
-    } catch (error) {
-      if (error instanceof RecordAlreadyMigrated) {
-        migrationResult.skipped += 1;
-      } else {
-        migrationResult.failed += 1;
-        logger.error(
-          `Could not create PDR record in RDS for Dynamo PDR name: ${record.pdrName}`,
-          error
-        );
-      }
-    }
-
-    await searchQueue.shift();
-    record = await searchQueue.peek();
-  }
-  /* eslint-enable no-await-in-loop */
-  logger.info(`Successfully migrated ${migrationResult.migrated} PDR records.`);
+  logger.info(`Finished parallel scan of PDRs with ${totalSegments} parallel segments.`);
+  logger.info(`successfully migrated ${migrationResult.migrated} out of ${migrationResult.total_dynamo_db_records} PDR records`);
   return migrationResult;
 };

@@ -12,6 +12,7 @@ const logger = new Logger({ sender: '@api-client/granules' });
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
  * @param {string} params.granuleId   - a granule ID
+ * @param {Object} [params.query]     - query to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
  *                                      that takes a prefix / user payload.  Defaults
  *                                      to cumulusApiClient.invokeApifunction to invoke the
@@ -21,9 +22,10 @@ const logger = new Logger({ sender: '@api-client/granules' });
 export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
+  const { prefix, granuleId, query, callback = invokeApi } = params;
 
   return callback({
     prefix: prefix,
@@ -31,6 +33,7 @@ export const getGranule = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
+      ...(query && { queryStringParameters: query }),
     },
   });
 };
@@ -305,7 +308,7 @@ export const removePublishedGranule = async (params: {
  * Query  granules stored in cumulus
  * GET /granules
  * @param {Object} params             - params
- * @param {string} [params.query]       - query to pass the API lambda
+ * @param {Object} [params.query]       - query to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
  *                                      that takes a prefix / user payload.  Defaults
  *                                      to cumulusApiClient.invokeApifunction to invoke the
@@ -329,6 +332,38 @@ export const listGranules = async (params: {
       resource: '/{proxy+}',
       path: '/granules',
       queryStringParameters: query,
+    },
+  });
+};
+
+/**
+ * Bulk operations on granules stored in cumulus
+ * POST /granules/bulk
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const bulkGranules = async (params: {
+  prefix: string,
+  body: object,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulk',
+      body: JSON.stringify(body),
     },
   });
 };

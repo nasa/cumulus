@@ -245,8 +245,7 @@ describe('The S3 Ingest Granules workflow', () => {
           distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
         }
       );
-
-      opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/providers/CUMULUS/collections/MODIS%2FTerra%20Surface%20Reflectance%20Daily%20L2G%20Global%20250m%20SIN%20Grid%20V006/granules/${granuleId}`;
+      opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/collections/C1218668453-CUMULUS/granules/${granuleId}`;
     } catch (error) {
       beforeAllFailed = true;
       throw error;

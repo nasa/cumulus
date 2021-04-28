@@ -54,6 +54,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Execution timestamp');
     table
       .timestamps(false, true);
+    table.unique(['url']);
     table.unique(['arn']);
   });
 

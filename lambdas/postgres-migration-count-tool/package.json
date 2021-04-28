@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/postgres-reconcile",
-  "version": "7.1.0",
+  "version": "8.0.0",
   "description": "A Lambda function used for generating counts between Dynamo/ES and Postgres",
   "license": "Apache-2.0",
   "engines": {
@@ -21,12 +21,12 @@
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "dependencies": {
-    "@cumulus/api": "7.1.0",
-    "@cumulus/api-client": "7.1.0",
-    "@cumulus/common": "7.1.0",
-    "@cumulus/db": "7.1.0-alpha.1",
-    "@cumulus/message": "7.1.0",
-    "@cumulus/types": "7.1.0",
+    "@cumulus/api": "8.0.0",
+    "@cumulus/api-client": "8.0.0",
+    "@cumulus/common": "8.0.0",
+    "@cumulus/db": "8.0.0-alpha.1",
+    "@cumulus/message": "8.0.0",
+    "@cumulus/types": "8.0.0",
     "knex": "0.21.13",
     "p-map": "^4.0.0",
     "pg": "^8.3.0"
