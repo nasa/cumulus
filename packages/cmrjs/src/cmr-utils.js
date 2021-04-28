@@ -938,7 +938,7 @@ async function getCollectionsByShortNameAndVersion(results) {
  * @param {string} cmrProvider - cumulus CMR provider name
  * @returns {Object} list of bucket/paths that a user has access to
  */
-async function getUserAccessableBuckets(edlUser, cmrProvider = process.env.cmr_provider) {
+async function getUserAccessibleBuckets(edlUser, cmrProvider = process.env.cmr_provider) {
   const searchParams = { user_id: edlUser, 'provider[]': cmrProvider };
   const cmrResult = await got.get(getBucketAccessUrl({}), { searchParams });
   return JSON.parse(cmrResult.body);
@@ -994,7 +994,7 @@ module.exports = {
   getFilename,
   getGranuleTemporalInfo,
   getCollectionsByShortNameAndVersion,
-  getUserAccessableBuckets,
+  getUserAccessibleBuckets,
   granulesToCmrFileObjects,
   isCMRFile,
   isCMRFilename,

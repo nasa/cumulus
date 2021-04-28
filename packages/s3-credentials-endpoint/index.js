@@ -24,7 +24,7 @@ const urljoin = require('url-join');
 const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
-const { getUserAccessableBuckets } = require('@cumulus/cmrjs');
+const { getUserAccessibleBuckets } = require('@cumulus/cmrjs');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -191,7 +191,7 @@ async function fetchPolicyForUser(edlUser, cmrProvider, lambda) {
   if (!configuredForACLCredentials()) return undefined;
 
   // fetch allowed bucket keys from CMR
-  const cmrAllowedBucketKeyList = await getUserAccessableBuckets(edlUser, cmrProvider);
+  const cmrAllowedBucketKeyList = await getUserAccessibleBuckets(edlUser, cmrProvider);
   const Payload = formatAllowedBucketKeys(cmrAllowedBucketKeyList);
 
   return lambda.invoke({

@@ -433,8 +433,8 @@ test.serial('fetchPolicyForUser calls NGAP\'s Policy Helper lambda with the corr
   const bucket1 = randomId('bucket');
   const path1 = randomId('path');
   const bucket2 = randomId('bucket2');
-  const getUserAccessableBucketFake = sinon.fake.resolves([`${bucket1}/${path1}`, bucket2]);
-  const bucketRestore = index.__set__('getUserAccessableBuckets', getUserAccessableBucketFake);
+  const getUserAccessibleBucketFake = sinon.fake.resolves([`${bucket1}/${path1}`, bucket2]);
+  const bucketRestore = index.__set__('getUserAccessibleBuckets', getUserAccessibleBucketFake);
 
   const edlUser = randomId('cmruser');
   const cmrProvider = randomId('cmrprovider');
@@ -450,7 +450,7 @@ test.serial('fetchPolicyForUser calls NGAP\'s Policy Helper lambda with the corr
 
   await fetchPolicyForUser(edlUser, cmrProvider, fakeLambda);
 
-  t.true(getUserAccessableBucketFake.calledWith(edlUser, cmrProvider));
+  t.true(getUserAccessibleBucketFake.calledWith(edlUser, cmrProvider));
   t.true(spy.calledWith(expectedPayload));
 
   process.env.CMR_ACL_BASED_CREDENTIALS = inputENV;
