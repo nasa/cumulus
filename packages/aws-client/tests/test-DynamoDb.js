@@ -205,5 +205,5 @@ test.serial('DynamoDb.parallelScan() retries on DynamoDB scan failure', async (t
     },
   });
 
-  t.is(results.length, totalSegments * 1);
+  t.is(results.length, totalSegments);
 });
