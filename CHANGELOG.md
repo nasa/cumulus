@@ -15,8 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `start`
       - `startAsyncOperations`
   - **CUMULUS-2187**
-    - The `async-operations` endpoint will now omit `output` instead
-      of returning `none` when the operation did not return output.
+    - The `async-operations` endpoint will now omit `output` instead of
+      returning `none` when the operation did not return output.
   - **CUMULUS-2309**
     - Removed `@cumulus/api/models/granule.unpublishAndDeleteGranule` in favor
       of `@cumulus/api/lib/granule-remove-from-cmr.unpublishGranule` and
@@ -26,14 +26,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       PostgreSQL only after the workflow has exited the `Running` status.
       Please note that any workflow that uses `sf_sqs_report_task` for
       mid-workflow updates will be impacted.
+    - Changed PostgreSQL `file` schema and TypeScript type definition to require
+      `bucket` and `key` fields.
+    - Updated granule/file write logic to mark a granule's status as "failed"
+  - **CUMULUS-2455**
+    - API `move granule` endpoint now moves granule files on a per-file basis
+    - API `move granule` endpoint on granule file move failure will retain the
+      file at it's original location, but continue to move any other granule
+      files.
+    - Removed the `move` method from the `@cumulus/api/models.granule` class.
+      logic is now handled in `@cumulus/api/endpoints/granules` and is
+      accessible via the Core API.
 
 ### Added
 
 - **CUMULUS-2185** - RDS Migration Epic
-    - Updated `sf-event-sqs-to-db-records` to write a granule's files to PostgreSQL only after the workflow has exited the `Running` status.    Please note that any workflow that uses `sf_sqs_report_task` for mid-workflow updates will be impacted.
-    - Changed PostgreSQL `file` schema and TypeScript type definition to require `bucket` and `key` fields.
-    - Updated granule/file write logic to mark a granule's status as "failed"
-    if writing any of the granule files fails.
   - **CUMULUS-2130**
     - Added postgres-migration-count-tool lambda/ECS task to allow for
       evaluation of database state
@@ -228,6 +235,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
      - Created `storeErrors` function which stores errors in system bucket.
      - Updated `executions` and `granulesAndFiles` data migrations to call `storeErrors` to store migration errors.
      - Added `system_bucket` variable to `data-migration2`.
+  - **CUMULUS-2455**
+    - Move granules API endpoint records move updates for migrated granule files
+      if writing any of the granule files fails.
+
+### Deprecated
+
+- **CUMULUS-2185** - RDS Migration Epic
+  - **CUMULUS-2455**
+    - `@cumulus/ingest/moveGranuleFiles`
 
 ### Added
 
@@ -407,12 +423,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add provider filter to Granule Inventory Report
 - **CUMULUS-2300**
   - Added `childWorkflowMeta` to `queue-granules` config. Object passed to this
-    value will be merged into a child workflow messag's  `meta` object. For an
+    value will be merged into a child workflow message's  `meta` object. For an
     example of how this can be used, see
     `example/cumulus-tf/discover_granules_workflow.asl.json`.
 - **CUMULUS-2350**
   - Adds an unprotected endpoint, `/s3credentialsREADME`, to the
-    s3-credentials-endpoint that dispays  information on how to use the
+    s3-credentials-endpoint that displays  information on how to use the
     `/s3credentials` endpoint
 - **CUMULUS-2368**
   - Add QueueWorkflow task
