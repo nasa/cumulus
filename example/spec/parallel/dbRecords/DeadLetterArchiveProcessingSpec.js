@@ -10,7 +10,7 @@ const {
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
-const { postDeadLetters } = require('@cumulus/api-client/deadLetters');
+const { postRecoverCumulusMessages } = require('@cumulus/api-client/deadLetterArchive');
 const { deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const { createProvider, deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -119,7 +119,7 @@ describe('A dead letter record archive processing operation', () => {
       messageKey = `${archivePath}/${cumulusMessage.cumulus_meta.execution_name}`;
       await putJsonS3Object(systemBucket, messageKey, cumulusMessage);
 
-      response = await postDeadLetters({
+      response = await postRecoverCumulusMessages({
         prefix: stackName,
         payload: {
           bucket: systemBucket,
@@ -127,7 +127,7 @@ describe('A dead letter record archive processing operation', () => {
         },
       });
       if (response.statusCode !== 202) {
-        throw new Error(`postDeadLetters failed: ${JSON.stringify(response)}`);
+        throw new Error(`postRecoverCumulusMessages failed: ${JSON.stringify(response)}`);
       }
     } catch (error) {
       beforeAllFailed = true;

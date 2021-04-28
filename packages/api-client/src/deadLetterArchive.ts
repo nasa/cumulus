@@ -14,7 +14,7 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-export const postDeadLetters = async (params: {
+export const postRecoverCumulusMessages = async (params: {
   prefix: string,
   payload: DeadLetterArchivePayload,
   callback?: InvokeApiFunction,
@@ -29,7 +29,7 @@ export const postDeadLetters = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/deadLetters',
+      path: '/deadLetterArchive/recoverCumulusMessages',
       body: JSON.stringify(payload),
     },
   });

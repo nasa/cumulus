@@ -6,7 +6,7 @@ const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const models = require('../models');
 
-async function post(req, res) {
+async function postRecoverCumulusMessages(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
@@ -31,6 +31,6 @@ async function post(req, res) {
   return res.status(202).send(asyncOperation);
 }
 
-router.post('/', post, asyncOperationEndpointErrorHandler);
+router.post('/recoverCumulusMessages', postRecoverCumulusMessages, asyncOperationEndpointErrorHandler);
 
 module.exports = router;

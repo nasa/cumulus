@@ -2,18 +2,18 @@
 
 const test = require('ava');
 
-const deadLettersApi = require('../deadLetters');
+const deadLetterArchiveApi = require('../deadLetterArchive');
 
-test('postDeadLetters call the callback with the expected object when no payload is supplied', async (t) => {
+test('postRecoverCumulusMessages call the callback with the expected object when no payload is supplied', async (t) => {
   const expected = {
-    prefix: 'deadLettersTest',
+    prefix: 'deadLetterArchiveTest',
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/deadLetters',
+      path: '/deadLetterArchive/recoverCumulusMessages',
       body: undefined,
     },
   };
@@ -21,26 +21,26 @@ test('postDeadLetters call the callback with the expected object when no payload
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-  await t.notThrowsAsync(deadLettersApi.postDeadLetters({
+  await t.notThrowsAsync(deadLetterArchiveApi.postRecoverCumulusMessages({
     prefix: expected.prefix,
     callback,
   }));
 });
 
-test('postDeadLetters calls the callback with the expected object', async (t) => {
+test('postRecoverCumulusMessages calls the callback with the expected object', async (t) => {
   const payload = {
-    bucket: 'deadLettersTestBucket',
-    path: 'deadLettersTestPath',
+    bucket: 'deadLetterArchiveTestBucket',
+    path: 'deadLetterArchiveTestPath',
   };
   const expected = {
-    prefix: 'deadLettersTest',
+    prefix: 'deadLetterArchiveTest',
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/deadLetters',
+      path: '/deadLetterArchive/recoverCumulusMessages',
       body: JSON.stringify(payload),
     },
   };
@@ -48,7 +48,7 @@ test('postDeadLetters calls the callback with the expected object', async (t) =>
   const callback = async (configObject) => {
     t.deepEqual(expected, configObject);
   };
-  await t.notThrowsAsync(deadLettersApi.postDeadLetters({
+  await t.notThrowsAsync(deadLetterArchiveApi.postRecoverCumulusMessages({
     prefix: expected.prefix,
     payload,
     callback,

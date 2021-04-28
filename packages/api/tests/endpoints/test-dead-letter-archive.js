@@ -50,7 +50,7 @@ test.after.always(async (t) => {
     accessTokenModel.deleteTable()]);
 });
 
-test.serial('POST /deadLetters starts an async-operation with the correct payload', async (t) => {
+test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-operation with the correct payload', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const archiveBucket = 'archiveBucket';
   const archivePath = 'archivePath';
@@ -61,7 +61,7 @@ test.serial('POST /deadLetters starts an async-operation with the correct payloa
   };
 
   const response = await request(app)
-    .post('/deadLetters')
+    .post('/deadLetterArchive/recoverCumulusMessages')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)

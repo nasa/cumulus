@@ -139,7 +139,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add unit tests and a component spec test for the above.
   - **CUMULUS-2380**
     - Add `process-dead-letter-archive` lambda to pick up and process dead letters in the S3 system bucket dead letter archive.
-    - Add `/deadLetters` endpoint to trigger an async operation to leverage this capability on demand.
+    - Add `/deadLetterArchive/recoverCumulusMessages` endpoint to trigger an async operation to leverage this capability on demand.
     - Add unit tests and integration test for all of the above.
   - **CUMULUS-2406**
     - Updated parallel write logic to ensure that updatedAt/updated_at timestamps are the same in Dynamo/PG on record write for the following data types:
