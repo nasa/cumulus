@@ -1013,18 +1013,19 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       t.is(message.errors.length, 1);
       t.is(message.errors[0].code, 'NoSuchBucket');
 
-      const actualGranuleFileRecord = message.granuleFilesRecords.sort((a, b) => (a.key < b.key));
-
+      const actualGranuleFileRecord = message.granuleFilesRecords.sort(
+        (a, b) => (a.key < b.key ? -1 : 1)
+      );
       const expectedGranuleFileRecord = [
-        {
-          bucket,
-          key: `${destinationFilepath}/${granuleFileName}.txt`,
-          fileName: `${granuleFileName}.txt`,
-        },
         {
           bucket: thirdBucket,
           key: `${destinationFilepath}/${granuleFileName}.md`,
           fileName: `${granuleFileName}.md`,
+        },
+        {
+          bucket,
+          key: `${destinationFilepath}/${granuleFileName}.txt`,
+          fileName: `${granuleFileName}.txt`,
         },
         newGranule.files[2],
       ];

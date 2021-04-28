@@ -228,16 +228,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Remove `RecordAlreadyMigrated` logs in `data-migration1` and
       `data-migration2`
   - **CUMULUS-2452**
-    - Added support for only migrating certain granules by specifying the
-      `granuleSearchParams.granuleId` or `granuleSearchParams.collectionId`
-      properties in the payload for the
-      `<prefix>-postgres-migration-async-operation` Lambda
-    - Added support for only running certain migrations for data-migration2 by
-      specifying the `migrationsList` property in the payload for the
-      `<prefix>-postgres-migration-async-operation` Lambda
+    - Added support for only migrating certain granules by specifying the `granuleMigrationParams.granuleId` or `granuleMigrationParams.collectionId` properties in the payload for the `<prefix>-postgres-migration-async-operation` Lambda
+    - Added support for only running certain migrations for data-migration2 by specifying the `migrationsList` property in the payload for the
+    `<prefix>-postgres-migration-async-operation` Lambda, which can be an array containing any of these values: `granules`, `executions`, and `pdrs`
   - **CUMULUS-2455**
     - Move granules API endpoint records move updates for migrated granule files
       if writing any of the granule files fails.
+  - **CUMULUS-2468**
+    - Added support for doing [DynamoDB parallel scanning](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan) for `executions` and `granules` migrations to improve performance. The behavior of the parallel scanning and writes can be controlled via the following properties on the event input to the `<prefix>-postgres-migration-async-operation` Lambda:
+      - `granuleMigrationParams.parallelScanSegments`: How many segments to divide your granules DynamoDB table into for parallel scanning
+      - `granuleMigrationParams.parallelScanLimit`: The maximum number of granule records to evaluate for each parallel scanning segment of the DynamoDB table
+      - `granuleMigrationParams.writeConcurrency`: The maximum number of concurrent granule/file writes to perform to the PostgreSQL database across all DynamoDB segments
+      - `executionMigrationParams.parallelScanSegments`: How many segments to divide your executions DynamoDB table into for parallel scanning
+      - `executionMigrationParams.parallelScanLimit`: The maximum number of execution records to evaluate for each parallel scanning segment of the DynamoDB table
+      - `executionMigrationParams.writeConcurrency`: The maximum number of concurrent execution writes to perform to the PostgreSQL database across all DynamoDB segments
 
 ### Deprecated
 
@@ -253,6 +257,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
+- **CUMULUS-2468** - Added `@cumulus/aws-client/DynamoDb.parallelScan` helper to perform [parallel scanning on DynamoDb tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
 
 ## [v8.0.0] 2021-04-08
 
@@ -266,6 +271,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Bulk granule operations endpoint now supports setting a custom queue for scheduling workflows via the `queueUrl` property in the request body. If provided, this value should be the full URL for an SQS queue.
 
 ### Added
+
 - **CUMULUS-2374**
   - Add cookbok entry for queueing PostToCmr step
   - Add example workflow to go with cookbook
@@ -276,6 +282,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add additional error messaging in `deleteSnsTrigger` to give users more context about where to look to resolve ResourceNotFound error when disabling or deleting a rule.
 
 ### Fixed
+
 - **CUMULUS-2281**
   - Changed discover-granules task to write discovered granules directly to
     logger, instead of via environment variable. This fixes a problem where a
@@ -295,6 +302,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **HYRAX-357**
   - Format of NGAP OPeNDAP URL changed and by default now is referring to concept id and optionally can include short name and version of collection.
   - `addShortnameAndVersionIdToConceptId` field has been added to the config inputs of the `hyrax-metadata-updates` task
+>>>>>>> feature-rds
 
 ## [v7.1.0] 2021-03-12
 
