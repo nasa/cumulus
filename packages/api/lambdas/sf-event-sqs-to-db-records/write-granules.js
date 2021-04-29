@@ -323,7 +323,7 @@ const _writeGranuleFiles = async ({
           error: errorObject,
         }
       ).catch((updateError) => {
-        log.fatal('Failed to update PG status on file write failure!', updateError);
+        log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
         throw updateError;
       });
 
@@ -334,7 +334,7 @@ const _writeGranuleFiles = async ({
           error: errorObject,
         }
       ).catch((updateError) => {
-        log.fatal('Failed to update DDB status on file write failure!', updateError);
+        log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
         throw updateError;
       });
     });
