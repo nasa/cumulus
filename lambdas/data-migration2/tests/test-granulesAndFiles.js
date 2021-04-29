@@ -1103,7 +1103,8 @@ test.serial('migrateGranulesAndFiles logs summary of migration for a specified l
       collectionId,
       loggingInterval: 1,
       parallelScanLimit: 1,
-    }
+    },
+    '123'
   );
   t.true(logSpy.calledWith('Batch of 1 granule records processed, 1 total'));
   t.true(logSpy.calledWith('Batch of 1 granule records processed, 2 total'));

@@ -549,7 +549,7 @@ test.serial('migrateExecutions writes errors to S3 object', async (t) => {
     executionsModel.delete({ arn: execution2.arn }),
   ]));
 
-  await migrateExecutions(process.env, t.context.knex, '123');
+  await migrateExecutions(process.env, t.context.knex, {}, '123');
 
   // Check that error file exists in S3
   const item = await s3().getObject({
@@ -592,7 +592,7 @@ test.serial('migrateExecutions correctly delimits errors written to S3 object', 
     executionsModel.delete({ arn: execution3.arn }),
   ]));
 
-  await migrateExecutions(process.env, t.context.knex, '123');
+  await migrateExecutions(process.env, t.context.knex, {}, '123');
 
   // Check that error file exists in S3
   const item = await s3().getObject({

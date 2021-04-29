@@ -230,7 +230,7 @@ const migrateGranuleDynamoRecords = async (
   knex: Knex,
   loggingInterval: number,
   writeConcurrency: number,
-  errorLogWriteStream: Writable,
+  errorLogWriteStream: Writable
 ) => {
   const updatedResult = migrationResult;
   await pMap(
@@ -385,7 +385,7 @@ export const migrateGranulesAndFiles = async (
     errorFileWriteStream,
     jsonWriteStream,
     filepath,
-  } = createErrorFileWriteStream(migrationName);
+  } = createErrorFileWriteStream(migrationName, testTimestamp);
 
   const doDynamoQuery = granuleMigrationParams.granuleId !== undefined
     || granuleMigrationParams.collectionId !== undefined;
@@ -419,10 +419,16 @@ export const migrateGranulesAndFiles = async (
         jsonWriteStream
       ),
     });
-    await closeErrorWriteStreams({ errorFileWriteStream, jsonWriteStream });
-    await storeErrors({ bucket, filepath, migrationName, stackName, timestamp: testTimestamp });
     logger.info(`Finished parallel scan of granules with ${totalSegments} parallel segments.`);
   }
+  await closeErrorWriteStreams({ errorFileWriteStream, jsonWriteStream });
+  await storeErrors({
+    bucket,
+    filepath,
+    migrationName,
+    stackName,
+    timestamp: testTimestamp,
+  });
 
   logger.info(`Successfully migrated ${granulesAndFilesMigrationResult.granulesResult.migrated} granule records.`);
   logger.info(`Successfully migrated ${granulesAndFilesMigrationResult.filesResult.migrated} file records.`);

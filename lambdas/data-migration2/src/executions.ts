@@ -137,7 +137,7 @@ export const migrateExecutions = async (
     errorFileWriteStream,
     jsonWriteStream,
     filepath,
-  } = createErrorFileWriteStream(migrationName);
+  } = createErrorFileWriteStream(migrationName, testTimestamp);
 
   logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
