@@ -35,7 +35,7 @@ const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
-const { deleteGranuleAndFiles } = require('../../lib/granule-delete');
+const { deleteGranuleAndFiles } = require('../../src/lib/granule-delete');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
