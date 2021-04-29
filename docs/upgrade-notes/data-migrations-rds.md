@@ -114,6 +114,7 @@ aws lambda invoke --function-name ${PREFIX}-postgres-migration-async-operation
 ```
 
 where you will need to replace `${PREFIX}` with your Cumulus deployment prefix.
+
 ### 6. Run validation tool
 
 We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](./../lambdas/postgres-migration-count-tool/README.md)
@@ -124,6 +125,7 @@ This tool can be run in the following two ways:
 - Through API invocation
 
 #### Direct lambda invocation
+
 Invoking the lambda on the command line looks like:
 
 ```bash
@@ -131,6 +133,7 @@ aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool --payloa
 ```
 
 where
+
 - `PAYLOAD` is a base64 encoded JSON object. For example,
 
 ```bash
@@ -143,6 +146,7 @@ where
 > **NOTE**: This will invoke the lambda synchronously. Depending on your data holdings, the execution time of this lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation.**
 
 #### API invocation
+
 Invoking the API on the command line looks like the following:
 
 ```bash
@@ -156,6 +160,7 @@ In this instance, the API will trigger an Async Operation and return an `id` suc
 ```
 
 which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request.
+
 #### Payload parameters
 
 The following optional parameters are used by this tool:
