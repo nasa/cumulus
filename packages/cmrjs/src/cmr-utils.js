@@ -332,6 +332,9 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution') {
   if (!mapping[type]) {
     log.warn(`CNM Type ${type} invalid for mapping to UMM/ECHO10 type value, using GET DATA instead`);
   }
+
+  // The CMR Type for the s3 link of science file is "GET DATA VIA DIRECT ACCESS".
+  // For non-science file, the Type for the s3 link is the same as its Type for the HTTPS URL.
   if (urlType === 's3' && mappedType === 'GET DATA') {
     return 'GET DATA VIA DIRECT ACCESS';
   }
