@@ -133,7 +133,7 @@ variable "urs_url" {
   description = "The URL of the Earthdata Login site"
 }
 
-variable "cmr_acl_based_tokens" {
+variable "cmr_acl_based_credentials" {
   type = bool
   default = false
   description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"

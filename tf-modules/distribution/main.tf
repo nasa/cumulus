@@ -146,7 +146,7 @@ resource "aws_lambda_function" "s3_credentials" {
   environment {
     variables = {
       AccessTokensTable              = aws_dynamodb_table.access_tokens[0].id
-      CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_tokens
+      CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_credentials
       CMR_ENVIRONMENT                = var.cmr_environment
       DISTRIBUTION_ENDPOINT          = var.tea_external_api_endpoint
       DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_external_api_endpoint}redirect"

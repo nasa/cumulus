@@ -23,7 +23,7 @@ module "distribution" {
   urs_client_id                                  = var.urs_client_id
   urs_client_password                            = var.urs_client_password
   urs_url                                        = var.urs_url
-  cmr_acl_based_tokens                           = var.cmr_acl_based_tokens
+  cmr_acl_based_credentials                      = var.cmr_acl_based_credentials
   vpc_id                                         = var.vpc_id
   deploy_to_ngap                                 = var.deploy_to_ngap
 

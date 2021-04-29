@@ -506,7 +506,7 @@ variable "urs_url" {
   default     = "https://uat.urs.earthdata.nasa.gov"
 }
 
-variable "cmr_acl_based_tokens" {
+variable "cmr_acl_based_credentials" {
   type = bool
   default = false
   description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
