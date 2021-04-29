@@ -50,7 +50,6 @@ test.before(() => {
 test('The EarthdataLogin constructor throws a TypeError if clientId is not specified', (t) => {
   t.throws(
     () => {
-      // @ts-expect-error
       new EarthdataLoginClient({
         clientPassword: 'client-password',
         earthdataLoginUrl: 'http://www.example.com',
@@ -67,7 +66,6 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
 test('The EarthdataLogin constructor throws a TypeError if clientPassword is not specified', (t) => {
   t.throws(
     () => {
-      // @ts-expect-error
       new EarthdataLoginClient({
         clientId: 'client-id',
         earthdataLoginUrl: 'http://www.example.com',
@@ -84,7 +82,6 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not specified', (t) => {
   t.throws(
     () => {
-      // @ts-expect-error
       new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
@@ -115,7 +112,6 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not specified', (t) => {
   t.throws(
     () => {
-      // @ts-expect-error
       new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
@@ -175,7 +171,6 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   await t.throwsAsync(
-    // @ts-expect-error
     () => earthdataLoginClient.getAccessToken(),
     {
       instanceOf: TypeError,
@@ -291,7 +286,6 @@ test('EarthdataLogin.refreshAccessToken() throws a TypeError if refreshToken is 
   const earthdataLoginClient = buildEarthdataLoginClient();
 
   await t.throwsAsync(
-    // @ts-expect-error
     () => earthdataLoginClient.refreshAccessToken(),
     {
       instanceOf: TypeError,

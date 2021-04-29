@@ -43,7 +43,7 @@
     }
   },
   "dependencies": {
-    "got": "^11.7.0",
-    "@cumulus/auth-client": "8.0.0"
+    "@cumulus/auth-client": "8.0.0",
+    "got": "^11.7.0"
   }
 }

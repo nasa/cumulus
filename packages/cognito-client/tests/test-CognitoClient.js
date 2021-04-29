@@ -60,7 +60,6 @@ test.before(() => {
 test('The CognitoClient constructor throws a TypeError if clientId is not specified', (t) => {
   t.throws(
     () => {
-      // @ts-expect-error
       new CognitoClient({
         clientPassword: 'client-password',
         cognitoLoginUrl: 'http://www.example.com',
@@ -77,7 +76,6 @@ test('The CognitoClient constructor throws a TypeError if clientId is not specif
 test('The CognitoClient constructor throws a TypeError if clientPassword is not specified', (t) => {
   t.throws(
     () => {
-    // @ts-expect-error
       new CognitoClient({
         clientId: 'client-id',
         cognitoLoginUrl: 'http://www.example.com',
@@ -94,7 +92,6 @@ test('The CognitoClient constructor throws a TypeError if clientPassword is not 
 test('The CognitoClient constructor throws a TypeError if cognitoLoginUrl is not specified', (t) => {
   t.throws(
     () => {
-    // @ts-expect-error
       new CognitoClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
@@ -125,7 +122,6 @@ test('The CognitoClient constructor throws a TypeError if cognitoLoginUrl is not
 test('The CognitoClient constructor throws a TypeError if redirectUri is not specified', (t) => {
   t.throws(
     () => {
-    // @ts-expect-error
       new CognitoClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
