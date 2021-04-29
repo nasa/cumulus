@@ -8,7 +8,7 @@ const validateUrl = (urlString: string) => {
 /**
  * A generic authorization client
  */
-export default class AuthClient {
+export class AuthClient {
   readonly clientId: string;
   readonly clientPassword: string;
   readonly loginUrl: string;

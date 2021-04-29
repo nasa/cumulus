@@ -1,6 +1,6 @@
 import { URL } from 'url';
 
-import AuthClient from './AuthClient';
+import { AuthClient } from '@cumulus/auth-client';
 
 const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new

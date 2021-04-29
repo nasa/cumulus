@@ -1,16 +1,14 @@
-import cryptoRandomString from 'crypto-random-string';
-import nock from 'nock';
-import test from 'ava';
-import { URL, URLSearchParams } from 'url';
+const cryptoRandomString = require('crypto-random-string');
+const nock = require('nock');
+const test = require('ava');
+const { URL, URLSearchParams } = require('url');
 
-import {
-  EarthdataLoginClient,
-  EarthdataLoginError,
-} from '../src';
+const { EarthdataLoginClient } = require('../src/EarthdataLoginClient');
+const { EarthdataLoginError } = require('../src/EarthdataLoginError');
 
 const randomString = () => cryptoRandomString({ length: 6 });
 
-const randomId = (prefix: string, separator = '-') =>
+const randomId = (prefix, separator = '-') =>
   [prefix, randomString()].filter((x) => x).join(separator);
 
 const randomUrl = () => `http://${randomString()}.local`;
@@ -23,16 +21,7 @@ const buildEarthdataLoginClient = () =>
     redirectUri: randomUrl(),
   });
 
-const nockEarthdataLoginCall = (
-  params: {
-    earthdataLoginClient: EarthdataLoginClient,
-    path: string,
-    requestBody?: nock.RequestBodyMatcher,
-    requestHeaders?: Record<string, nock.RequestHeaderMatcher>,
-    responseStatus: number,
-    responseBody?: nock.Body
-  }
-) => {
+const nockEarthdataLoginCall = (params) => {
   const {
     earthdataLoginClient,
     path,
