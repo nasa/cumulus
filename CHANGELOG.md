@@ -189,10 +189,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Changed data-migration1 and data-migration2 logic to only update already
       migrated records if the incoming record update has a newer timestamp
   - **CUMULUS-2329**
-    - Add write-db-dlq-records-to-s3 lambda.
+    - Add `write-db-dlq-records-to-s3` lambda.
     - Add terraform config to automatically write db records DLQ messages to an
       s3 archive on the system bucket.
     - Add unit tests and a component spec test for the above.
+  - **CUMULUS-2380**
+    - Add `process-dead-letter-archive` lambda to pick up and process dead letters in the S3 system bucket dead letter archive.
+    - Add `/deadLetterArchive/recoverCumulusMessages` endpoint to trigger an async operation to leverage this capability on demand.
+    - Add unit tests and integration test for all of the above.
   - **CUMULUS-2406**
     - Updated parallel write logic to ensure that updatedAt/updated_at
       timestamps are the same in Dynamo/PG on record write for the following

@@ -20,6 +20,7 @@ export const up = async (knex: Knex): Promise<void> =>
           'Bulk Granules',
           'Bulk Granule Reingest',
           'Bulk Granule Delete',
+          'Dead-Letter Processing',
           'Kinesis Replay',
           'Reconciliation Report',
           'Migration Count Report',
