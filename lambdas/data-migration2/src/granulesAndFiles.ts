@@ -275,7 +275,7 @@ const migrateGranuleDynamoRecords = async (
  * @param {number} params.jsonWriteStream
  *   JSON Write stream for error logs
  * @returns {Promise<GranulesAndFilesMigrationResult>}
- *   - Result object summarizing the granule/files migration
+ *   Result object summarizing the granule/files migration
  */
 export const queryAndMigrateGranuleDynamoRecords = async ({
   granulesTable,
@@ -363,7 +363,7 @@ export const queryAndMigrateGranuleDynamoRecords = async ({
  * @param {string} granuleMigrationParams.collectionId
  *   Collection name/version to use for querying granules to migrate
  * @param {string | undefined} testTimestamp
- *   - Timestamp to use for unit testing
+ *   Timestamp to use for unit testing
  * @returns {Promise<GranulesAndFilesMigrationResult>}
  *   Result object summarizing the granule/files migration
  */
@@ -373,9 +373,10 @@ export const migrateGranulesAndFiles = async (
   granuleMigrationParams: GranuleMigrationParams = {},
   testTimestamp?: string
 ): Promise<GranulesAndFilesMigrationResult> => {
-  const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
   const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
+  const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
   const stackName = envUtils.getRequiredEnvVar('stackName', env);
+
   const loggingInterval = granuleMigrationParams.loggingInterval ?? 100;
   const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 2;
   const granulesAndFilesMigrationResult = initializeGranulesAndFilesMigrationResult();
