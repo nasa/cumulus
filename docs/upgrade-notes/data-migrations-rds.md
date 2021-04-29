@@ -4,7 +4,7 @@ title: Running data migrations for RDS
 hide_title: false
 ---
 
-# Background
+## Background
 
 This release of Cumulus (x.x.x) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
@@ -12,20 +12,21 @@ While eventually Cumulus will only support using a PostgreSQL-compatible databas
 
 However, in order to copy all of your previously written data from DynamoDB to PostgreSQL, you will need to run data migration scripts that we have provided and which this document will explain how to use.
 
-# Upgrade steps
+## Upgrade steps
 
 Follow the steps outlined below in precisely this order to upgrade your deployment and run the data migrations.
 
-## 1. Deploy a new RDS cluster
+### 1. Deploy a new RDS cluster
 Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided in addition to the existing DynamoDB/ElasticSearch backend with the eventual goal of utilizing the PostgreSQL database as the primary data store for Cumulus.
 
 > **NOTE**: Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
 
 Refer to the docs on [how to deploy a new RDS cluster](./../deployment/postgres-database-deployment.md).
 
-## 2. Deploy your data-persistence module
+### 2. Deploy your data-persistence module
 
 The following new variables have been added:
+
 - `permissions_boundary_arn`
 - `rds_user_access_secret_arn`
 - `rds_security_group_id`
@@ -39,7 +40,7 @@ Then you can re-deploy your data-persistence module as usual:
 terraform apply
 ```
 
-## 3. Deploy and run data-migration1
+### 3. Deploy and run data-migration1
 
 Navigate to the directory `data-migration1-tf` and copy the following `.example` files:
 
@@ -82,7 +83,7 @@ On success, you will see output like:
 Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
 
-## 4. Deploy Cumulus module
+### 4. Deploy Cumulus module
 
 The following variables were added to the Cumulus module
 
@@ -100,7 +101,7 @@ The `cumulus` module will create resources including the following relevant reso
 - `${PREFIX}-data-migration2` lambda
 - `${PREFIX}-postgres-migration-async-operation` lambda
 
-## 5. Run data-migration2
+### 5. Run data-migration2
 
 This second Lambda in the data migration process can be run by invoking an async operation using the provided `${PREFIX}-postgres-migration-async-operation` lambda included in the cumulus module deployment.
 
@@ -113,20 +114,22 @@ aws lambda invoke --function-name ${PREFIX}-postgres-migration-async-operation
 ```
 
 where you will need to replace `${PREFIX}` with your Cumulus deployment prefix.
-## 6. Run validation tool
+### 6. Run validation tool
 
-We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the `[Postgres Migration Count Tool README](../../lambdas/postgres-migration-count-tool/README.md)
+We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](./../lambdas/postgres-migration-count-tool/README.md)
 
 This tool can be run in the following two ways:
+
 - Through direct lambda invocation
 - Through API invocation
 
-### Direct lambda invocation
+#### Direct lambda invocation
 Invoking the lambda on the command line looks like:
 
 ```bash
 aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool --payload $PAYLOAD $OUTFILE
 ```
+
 where
 - `PAYLOAD` is a base64 encoded JSON object. For example,
 
@@ -139,7 +142,7 @@ where
 
 > **NOTE**: This will invoke the lambda synchronously. Depending on your data holdings, the execution time of this lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation.**
 
-### API invocation
+#### API invocation
 Invoking the API on the command line looks like the following:
 
 ```bash
@@ -153,7 +156,7 @@ In this instance, the API will trigger an Async Operation and return an `id` suc
 ```
 
 which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request.
-### Payload parameters
+#### Payload parameters
 
 The following optional parameters are used by this tool:
 | Variable      | Type   | Description                                                                                                                                                                                       | Default |

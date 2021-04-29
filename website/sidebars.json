@@ -85,7 +85,8 @@
     ],
     "Upgrade Notes": [
       "upgrade-notes/migrate_tea_standalone",
-      "upgrade-notes/upgrade_tf_version_0.13.6"
+      "upgrade-notes/upgrade_tf_version_0.13.6",
+      "upgrade-notes/data_migrations_rds"
     ],
     "External Contributions": [
       "external-contributions/external-contributions"
