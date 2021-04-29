@@ -1,21 +1,28 @@
-const { deleteS3Object } = require('@cumulus/aws-client/S3');
-const {
-  GranulePgModel,
-  FilePgModel,
-} = require('@cumulus/db');
-const { DeletePublishedGranule } = require('@cumulus/errors');
-const pMap = require('p-map');
+import Knex from 'knex';
+import pMap from 'p-map';
 
-const FileUtils = require('./FileUtils');
-const Granule = require('../models/granules');
+import { deleteS3Object } from '@cumulus/aws-client/S3';
+import {
+  FilePgModel,
+  GranulePgModel,
+  PostgresGranuleRecord,
+  PostgresFileRecord,
+} from '@cumulus/db';
+import { DeletePublishedGranule } from '@cumulus/errors';
+import { ApiFile, ApiGranule } from '@cumulus/types';
+
+const FileUtils = require('../../lib/FileUtils');
+const Granule = require('../../models/granules');
 
 /**
  * Delete a list of files from S3
  *
  * @param {Array} files - A list of S3 files
- * @returns {Promise}
+ * @returns {Promise<void>}
  */
-const _deleteS3Files = async (files) =>
+const _deleteS3Files = async (
+  files: (ApiFile | PostgresFileRecord)[] = []
+) =>
   pMap(
     files,
     async (file) => {
@@ -45,13 +52,17 @@ const deleteGranuleAndFiles = async ({
   filePgModel = new FilePgModel(),
   granulePgModel = new GranulePgModel(),
   granuleModelClient = new Granule(),
+}: {
+  knex: Knex,
+  dynamoGranule: ApiGranule,
+  pgGranule: PostgresGranuleRecord,
+  filePgModel: FilePgModel,
+  granulePgModel: GranulePgModel,
+  granuleModelClient: typeof Granule
 }) => {
   if (pgGranule === undefined) {
-    if (dynamoGranule.files && dynamoGranule.files.length > 1) {
-      // Delete only the Dynamo Granule and S3 Files
-      await _deleteS3Files(dynamoGranule.files);
-    }
-
+    // Delete only the Dynamo Granule and S3 Files
+    await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
   } else if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
@@ -63,9 +74,9 @@ const deleteGranuleAndFiles = async ({
     );
 
     await knex.transaction(async (trx) => {
-      // TODO: relying on the cumulus_id from the lookup is icky, but we need to
-      // truly identify the unique record.
-      await granulePgModel.delete(trx, { cumulus_id: pgGranule.cumulus_id });
+      await granulePgModel.delete(trx, {
+        cumulus_id: pgGranule.cumulus_id,
+      });
       await granuleModelClient.delete(dynamoGranule);
     });
 

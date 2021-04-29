@@ -1,7 +1,10 @@
-export interface PostgresGranule {
+export interface PostgresGranuleUniqueColumns {
   granule_id: string,
-  status: string,
   collection_cumulus_id: number,
+}
+
+export interface PostgresGranule extends PostgresGranuleUniqueColumns {
+  status: string,
   cmr_link?: string,
   error?: object,
   published?: boolean,
