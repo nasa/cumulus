@@ -75,8 +75,7 @@ const deleteGranuleAndFiles = async ({
 
     await knex.transaction(async (trx) => {
       await granulePgModel.delete(trx, {
-        granule_id: pgGranule.granule_id,
-        collection_cumulus_id: pgGranule.collection_cumulus_id,
+        cumulus_id: pgGranule.cumulus_id,
       });
       await granuleModelClient.delete(dynamoGranule);
     });

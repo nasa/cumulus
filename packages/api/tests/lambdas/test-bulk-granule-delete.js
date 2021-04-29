@@ -41,7 +41,7 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
 });
 
-test.only('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
+test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
 
