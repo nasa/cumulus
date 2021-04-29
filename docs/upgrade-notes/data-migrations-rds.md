@@ -32,7 +32,10 @@ terraform apply
 
 ### Deploy and run data-migration1
 From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 88fef1c6d239ee4b60566b714ff1dd7508709d20
 ```shell
 cd example/data-migration1-tf/
 cp terraform.tf.example terraform.tf
@@ -50,7 +53,11 @@ In `terraform.tfvars` replace the appropriate values for the following variables
 - `provider_kms_key_id`
 
 After replacing those values, run `terraform init`.
+<<<<<<< HEAD
 The output should resemble the following:
+=======
+The output should look like the following:
+>>>>>>> 88fef1c6d239ee4b60566b714ff1dd7508709d20
 
 ```shell
 Initializing modules...
