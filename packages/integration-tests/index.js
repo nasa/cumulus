@@ -36,7 +36,6 @@ const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
 const rulesApi = require('./api/rules');
-const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const api = require('./api/api');
@@ -902,7 +901,6 @@ module.exports = {
   deleteRules,
   distributionApi,
   EarthdataLogin,
-  emsApi,
   executeWorkflow,
   executionsApi,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
