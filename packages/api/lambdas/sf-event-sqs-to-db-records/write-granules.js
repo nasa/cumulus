@@ -276,6 +276,7 @@ const _writeGranuleViaTransaction = async ({
  * @param {Object} params.files - File objects
  * @param {number} params.granuleCumulusId
  *   Cumulus ID of the granule for this file
+ * @param {string} params.granuleId - CumulusMessage-derived granule ID
  * @param {string} params.workflowStatus - Workflow status
  * @param {Knex} params.knex - Client to interact with Postgres database
  * @param {Object} params.granulePgModel - Optional Granule model override
@@ -284,6 +285,7 @@ const _writeGranuleViaTransaction = async ({
 const _writeGranuleFiles = async ({
   files,
   granuleCumulusId,
+  granuleId,
   workflowStatus,
   knex,
   granuleModel = new Granule(),
@@ -306,32 +308,35 @@ const _writeGranuleFiles = async ({
   } catch (error) {
     log.error('Failed writing some files to Postgres', error);
 
-    const granule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
-
     const errorObject = {
       Error: 'Failed writing files to Postgres.',
       Cause: error,
     };
-    await granulePgModel.upsert(
-      knex,
-      {
-        ...granule,
-        status: 'failed',
-        error: errorObject,
-      }
-    ).catch((updateError) => {
-      log.fatal('Failed to update PG status on file write failure!', updateError);
-      throw updateError;
-    });
-    await granuleModel.update(
-      { granuleId: granule.granule_id },
-      {
-        status: 'failed',
-        error: errorObject,
-      }
-    ).catch((updateError) => {
-      log.fatal('Failed to update DDB status on file write failure!', updateError);
-      throw updateError;
+    await knex.transaction(async (trx) => {
+      await granulePgModel.update(
+        trx,
+        {
+          cumulus_id: granuleCumulusId,
+        },
+        {
+          status: 'failed',
+          error: errorObject,
+        }
+      ).catch((updateError) => {
+        log.fatal('Failed to update PG status on file write failure!', updateError);
+        throw updateError;
+      });
+
+      await granuleModel.update(
+        { granuleId },
+        {
+          status: 'failed',
+          error: errorObject,
+        }
+      ).catch((updateError) => {
+        log.fatal('Failed to update DDB status on file write failure!', updateError);
+        throw updateError;
+      });
     });
   }
 };
@@ -448,6 +453,7 @@ const _writeGranule = async ({
   await _writeGranuleFiles({
     files,
     granuleCumulusId,
+    granuleId: granule.granuleId,
     workflowStatus,
     knex,
     granuleModel,
