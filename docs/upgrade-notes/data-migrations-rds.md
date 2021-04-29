@@ -89,3 +89,5 @@ The `cumulus` module will create resources including the following relevant reso
 Instructions on how to run your `data-migration2` lambda can be found in the `data-migration2` [README](../../lambdas/data-migration2/README.md).
 
 ### Run reconciliation tool
+
+We have provided a reconciliation tool which provides a report regarding your data migration. For more information and instructions on how to run the reconciliation tool, refer to the `[Postgres Migration Count Tool README](../../lambdas/postgres-migration-count-tool/README.md)

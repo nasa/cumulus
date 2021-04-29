@@ -1,8 +1,8 @@
 # Postgres Migration Count Tool Lambda
 
-This lambda runs a script that does the following
+This lambda runs a script that does the following:
 
-1) Scans DynamoDB AsyncOperations, Rules, Executions and Collections and compares their record count with the configured postgres database.
+1) Scans DynamoDB AsyncOperations, Rules, Executions and Collections and compares their record count with the configured Postgres database.
 2) Builds a mapping of collections in the DynamoDb `collections` databases to `collections` in the Postgres database, notes any that are missing from Postgres and then compares the counts of `granules`, `executions` and `pdrs` for each available collection between the Elasticsearch database replication and the Postgres database.
 3) Returns a report in the format:
 
@@ -49,6 +49,7 @@ This tool can be invoked one of two ways:
 ```bash
 aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool --payload $PAYLOAD $OUTFILE
 ```
+
 This will invoke the lambda synchronously.  Please note that depending on your data holdings, this may exceed the 15 minute AWS Lambda limit, if this occurs, you will need to invoke the tool via the API as an asynchronous operation.
 
 Where:
@@ -63,7 +64,7 @@ Where:
 
 * PREFIX - Your Cumulus deployment prefix
 
-### Api invocation
+### API Invocation
 
 ```bash
 curl -X POST https://$API_URL/dev/migrationCounts -d 'reportBucket=someBucket&reportPath=someReportPath&cutoffSeconds=60&dbConcurrency=20&dbMaxPool=20' --header 'Authorization: Bearer $TOKEN'
