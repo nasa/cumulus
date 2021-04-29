@@ -90,7 +90,38 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   return next();
 }
 
+// TODO implement each method with CSDAP authentication
+const root = (req, res) => res.status(501).send('Welcome');
+
+const locate = (req, res) => res.status(501).end();
+
+const login = (req, res) => res.status(501).end();
+
+const logout = (req, res) => res.status(501).end();
+
+const profile = (req, res) => res.send('Profile not available.');
+
+const pubkey = (req, res) => res.status(501).end();
+
+const s3Credentials = (req, res) => res.status(501).end();
+
+const s3CredentialsREADME = (req, res) => res.status(501).end();
+
+const version = (req, res) => res.status(501).end();
+
+router.get('/', root);
+router.get('/locate', locate);
+router.get('/login', login);
+router.get('/logout', logout);
+router.get('/profile', profile);
+router.get('/pubkey', pubkey);
 router.get('/redirect', handleRedirectRequest);
+router.get('/s3Credentials', s3Credentials);
+router.get('/s3CredentialsREADME', s3CredentialsREADME);
+router.get('/version', version);
+
+// HEAD /*
+// GET /* <- Actual presigned URL
 router.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
 
 module.exports = router;

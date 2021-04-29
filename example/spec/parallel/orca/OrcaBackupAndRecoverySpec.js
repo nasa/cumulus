@@ -26,7 +26,10 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const {
+  setupTestGranuleForIngest,
+  waitForGranuleRecordsInList,
+} = require('../../helpers/granuleUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -222,6 +225,7 @@ describe('The S3 Ingest Granules workflow', () => {
         { granuleId },
         'completed'
       );
+      await waitForGranuleRecordsInList(config.stackName, [granuleId]);
     });
 
     it('retrieves recovery request status through the Cumulus API', async () => {
