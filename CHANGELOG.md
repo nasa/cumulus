@@ -225,12 +225,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `MigrationSummary` objects.
     - Added logging for every batch of 100 records processed for executions,
       granules and files, and PDRs.
-    - Remove `RecordAlreadyMigrated` logs in `data-migration1` and
+    - Removed `RecordAlreadyMigrated` logs in `data-migration1` and
       `data-migration2`
   - **CUMULUS-2452**
-    - Added support for only migrating certain granules by specifying the `granuleMigrationParams.granuleId` or `granuleMigrationParams.collectionId` properties in the payload for the `<prefix>-postgres-migration-async-operation` Lambda
-    - Added support for only running certain migrations for data-migration2 by specifying the `migrationsList` property in the payload for the
-    `<prefix>-postgres-migration-async-operation` Lambda, which can be an array containing any of these values: `granules`, `executions`, and `pdrs`
+    - Added support for only migrating certain granules by specifying the
+      `granuleSearchParams.granuleId` or `granuleSearchParams.collectionId`
+      properties in the payload for the
+      `<prefix>-postgres-migration-async-operation` Lambda
+    - Added support for only running certain migrations for data-migration2 by
+      specifying the `migrationsList` property in the payload for the
+      `<prefix>-postgres-migration-async-operation` Lambda
+  - **CUMULUS-2453**
+    - Created `storeErrors` function which stores errors in system bucket.
+    - Updated `executions` and `granulesAndFiles` data migrations to call `storeErrors` to store migration errors.
+    - Added `system_bucket` variable to `data-migration2`.
   - **CUMULUS-2455**
     - Move granules API endpoint records move updates for migrated granule files
       if writing any of the granule files fails.
@@ -302,7 +310,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **HYRAX-357**
   - Format of NGAP OPeNDAP URL changed and by default now is referring to concept id and optionally can include short name and version of collection.
   - `addShortnameAndVersionIdToConceptId` field has been added to the config inputs of the `hyrax-metadata-updates` task
->>>>>>> feature-rds
 
 ## [v7.1.0] 2021-03-12
 

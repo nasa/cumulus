@@ -22,6 +22,7 @@ const {
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
+const { s3 } = require('@cumulus/aws-client/services');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -109,6 +110,7 @@ test.beforeEach(async (t) => {
     t.context.knex,
     testCollection
   );
+  t.context.collectionPgModel = collectionPgModel;
   t.context.testCollection = testCollection;
   t.context.collectionCumulusId = collectionResponse[0];
 
@@ -945,6 +947,96 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records w
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
   });
+});
+
+test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
+  const {
+    collectionPgModel,
+    knex,
+    testCollection,
+    testExecution,
+    testGranule,
+  } = t.context;
+  const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors-123.json`;
+
+  const testCollection2 = fakeCollectionRecordFactory();
+  const testGranule2 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection2.name, testCollection2.version),
+    execution: testExecution.url,
+  });
+
+  // remove collection record references so migration will fail
+  await collectionPgModel.delete(
+    t.context.knex,
+    testCollection
+  );
+
+  await Promise.all([
+    granulesModel.create(testGranule),
+    granulesModel.create(testGranule2),
+  ]);
+
+  t.teardown(async () => {
+    granulesModel.delete({ granuleId: testGranule.granuleId });
+    granulesModel.delete({ granuleId: testGranule2.granuleId });
+  });
+
+  await migrateGranulesAndFiles(process.env, knex, {}, '123');
+  // Check that error file exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+
+  console.log(item.Body.toString());
+  const errors = JSON.parse(item.Body.toString()).errors;
+  const expectedResult = /RecordDoesNotExist/;
+
+  t.is(errors.length, 2);
+  t.true(expectedResult.test(errors[0]));
+  t.true(expectedResult.test(errors[1]));
+});
+
+test.serial('migrateGranulesAndFiles correctly delimits errors written to S3 object', async (t) => {
+  const {
+    knex,
+    testExecution,
+    testGranule,
+  } = t.context;
+  const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors-123.json`;
+
+  const testCollection2 = fakeCollectionRecordFactory();
+  const testGranule2 = generateTestGranule({
+    collectionId: buildCollectionId(testCollection2.name, testCollection2.version),
+    execution: testExecution.url,
+  });
+
+  await Promise.all([
+    granulesModel.create(testGranule),
+    granulesModel.create(testGranule2),
+  ]);
+
+  // Prematurely migrate granule, will be skipped and exluded from error file
+  await migrateGranuleRecord(testGranule, knex);
+
+  t.teardown(async () => {
+    granulesModel.delete({ granuleId: testGranule.granuleId });
+    granulesModel.delete({ granuleId: testGranule2.granuleId });
+  });
+
+  await migrateGranulesAndFiles(process.env, knex, {}, '123');
+  // Check that error file exists in S3
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  console.log(item.Body.toString());
+
+  const errors = JSON.parse(item.Body.toString()).errors;
+  const expectedResult = /RecordDoesNotExist/;
+
+  t.is(errors.length, 1);
+  t.true(expectedResult.test(errors[0]));
 });
 
 test.serial('migrateGranulesAndFiles logs summary of migration for a specified loggingInterval', async (t) => {
