@@ -14,7 +14,7 @@ The general concept is that the last task of the ingest workflow will be `QueueW
 
 ## Ingest Workflow
 
-The last step should be the `QueuePublishWorkflow` step. It should be configured with a queueUrl and workflow. In this case, the `queueUrl` is a [throttled queue](../throttling-queued-executions). Any `queueUrl` can be specified here which is useful if you would like to use a lower priority queue. The workflow is the unprefixed workflow name that you would like to queue (e.g. `PublishWorkflow`).
+The last step should be the `QueuePublishWorkflow` step. It should be configured with a queueUrl and workflow. In this case, the `queueUrl` is a [throttled queue](./throttling-queued-executions). Any `queueUrl` can be specified here which is useful if you would like to use a lower priority queue. The workflow is the unprefixed workflow name that you would like to queue (e.g. `PublishWorkflow`).
 
 ```json
   "QueuePublishWorkflowStep": {
