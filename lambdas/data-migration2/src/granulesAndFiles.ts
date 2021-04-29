@@ -25,7 +25,6 @@ import {
 } from '@cumulus/errors';
 import {
   GranuleMigrationParams,
-  MigrationResult,
   GranulesMigrationResult,
   MigrationResult,
 } from '@cumulus/types/migration';

@@ -101,10 +101,10 @@ const migrateExecutionDynamoRecords = async (
           updatedResult.skipped += 1;
         } else {
           updatedResult.failed += 1;
-          const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${record.arn}:`;
-          jsonWriteStream.write(`${errorMessage}, Cause: ${error}\n`)
+          const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${dynamoRecord.arn}:`;
+          jsonWriteStream.write(`${errorMessage}, Cause: ${error}\n`);
           logger.error(
-            `Could not create execution record in RDS for DynamoDB execution arn: ${dynamoRecord.arn}}`,
+            errorMessage,
             error
           );
         }
