@@ -65,7 +65,6 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
 
 - **name**: random string starting with `collection-name-`
 - **version**: random string starting with `collection-version-`
-- **reportToEms**: `false`
 - **granuleId**: `'^[^.]+$'`
 - **granuleIdExtraction**: `'^([^.]+)\..+$'`
 - **sampleFileName**: `'asdf.jpg'`

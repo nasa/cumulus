@@ -110,12 +110,6 @@ module.exports.collection = {
         + 'will be used as the granule ID.',
       type: 'string',
     },
-    reportToEms: {
-      title: 'Report to EMS',
-      description: 'Indicates whether the collection will be reported to EMS',
-      type: 'boolean',
-      default: true,
-    },
     sampleFileName: {
       title: 'Sample Filename',
       description: 'Is used to validate to test granule ID '
@@ -180,12 +174,6 @@ module.exports.collection = {
                 type: 'boolean',
               },
             },
-          },
-          reportToEms: {
-            title: 'Report to EMS',
-            description: 'Indicates whether the granule with this file type will be reported to EMS when the collection level configuration is true.',
-            type: 'boolean',
-            default: true,
           },
         },
         required: [
