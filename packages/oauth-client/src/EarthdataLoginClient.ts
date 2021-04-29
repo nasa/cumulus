@@ -1,7 +1,6 @@
 import got, { CancelableRequest, HTTPError, Response } from 'got';
 
-import { AuthClient } from '@cumulus/auth-client';
-
+import { AuthClient } from './AuthClient';
 import { EarthdataLoginError } from './EarthdataLoginError';
 
 type AccessTokenResponse = Response<{

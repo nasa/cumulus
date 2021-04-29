@@ -13,7 +13,7 @@ const readFile = promisify(fs.readFile);
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
-} = require('@cumulus/earthdata-login-client');
+} = require('@cumulus/oauth-client');
 const express = require('express');
 const hsts = require('hsts');
 const { join: pathjoin } = require('path');

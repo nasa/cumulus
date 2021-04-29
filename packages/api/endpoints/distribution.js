@@ -7,7 +7,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
 const { URL } = require('url');
 
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
 

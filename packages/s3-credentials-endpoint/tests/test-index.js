@@ -10,7 +10,7 @@ const moment = require('moment');
 
 const awsServices = require('@cumulus/aws-client/services');
 
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 
 const models = require('@cumulus/api/models');
 const { fakeAccessTokenFactory } = require('@cumulus/api/lib/testUtils');

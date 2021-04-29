@@ -51,7 +51,7 @@
     "@cumulus/cmrjs": "8.0.0",
     "@cumulus/collection-config-store": "8.0.0",
     "@cumulus/common": "8.0.0",
-    "@cumulus/earthdata-login-client": "8.0.0",
+    "@cumulus/oauth-client": "8.0.0",
     "@cumulus/errors": "8.0.0",
     "@cumulus/ingest": "8.0.0",
     "@cumulus/launchpad-auth": "8.0.0",

@@ -3,7 +3,7 @@ const got = require('got');
 const { URL } = require('url');
 
 const { AccessToken } = require('@cumulus/api/models');
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 
 /**
  * Login to Earthdata and get access token.

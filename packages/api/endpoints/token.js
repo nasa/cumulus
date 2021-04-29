@@ -8,7 +8,7 @@ const {
   JsonWebTokenError,
   TokenExpiredError,
 } = require('jsonwebtoken');
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 const {
   TokenUnauthorizedUserError,
 } = require('../lib/errors');

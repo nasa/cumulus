@@ -33,7 +33,7 @@
     "@cumulus/cmr-client": "8.0.0",
     "@cumulus/cmrjs": "8.0.0",
     "@cumulus/common": "8.0.0",
-    "@cumulus/earthdata-login-client": "8.0.0",
+    "@cumulus/oauth-client": "8.0.0",
     "@cumulus/launchpad-auth": "8.0.0",
     "@cumulus/message": "8.0.0",
     "aws-sdk": "^2.585.0",

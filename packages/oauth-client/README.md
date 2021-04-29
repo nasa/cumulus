@@ -41,7 +41,7 @@ const client = new EarthdataLogin({
 ## EarthdataLoginClient
 A client for the Earthdata Login API
 
-**Kind**: global class  
+**Kind**: global class
 
 * [EarthdataLoginClient](#EarthdataLoginClient)
     * [new EarthdataLoginClient(params)](#new_EarthdataLoginClient_new)
@@ -62,7 +62,7 @@ A client for the Earthdata Login API
 | params.earthdataLoginUrl | <code>string</code> | see example |
 | params.redirectUri | <code>string</code> | see example |
 
-**Example**  
+**Example**
 ```js
 const oAuth2Provider = new EarthdataLogin({
   clientId: 'my-client-id',
@@ -76,8 +76,8 @@ const oAuth2Provider = new EarthdataLogin({
 ### earthdataLoginClient.getAuthorizationUrl([state]) ⇒ <code>string</code>
 Get a URL of the Earthdata Login authorization endpoint
 
-**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
-**Returns**: <code>string</code> - the Earthdata Login authorization URL  
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+**Returns**: <code>string</code> - the Earthdata Login authorization URL
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -96,8 +96,8 @@ Returns an object with the following properties:
 - username
 - expirationTime (in seconds)
 
-**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information  
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -116,8 +116,8 @@ Returns an object with the following properties:
 - username
 - expirationTime (in seconds)
 
-**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information  
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -128,8 +128,8 @@ Returns an object with the following properties:
 ### earthdataLoginClient.getTokenUsername(params) ⇒ <code>Promise.&lt;string&gt;</code>
 Query the Earthdata Login API for the UID associated with a token
 
-**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the UID associated with the token  
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+**Returns**: <code>Promise.&lt;string&gt;</code> - the UID associated with the token
 
 | Param | Type | Description |
 | --- | --- | --- |

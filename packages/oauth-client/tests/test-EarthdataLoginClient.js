@@ -3,8 +3,7 @@ const nock = require('nock');
 const test = require('ava');
 const { URL, URLSearchParams } = require('url');
 
-const { EarthdataLoginClient } = require('../src/EarthdataLoginClient');
-const { EarthdataLoginError } = require('../src/EarthdataLoginError');
+const { EarthdataLoginClient, EarthdataLoginError } = require('../dist/src');
 
 const randomString = () => cryptoRandomString({ length: 6 });
 
@@ -137,34 +136,6 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a 
     },
     { instanceOf: TypeError }
   );
-});
-
-test('EarthdataLogin.getAuthorizationUrl() returns the correct URL when no state is specified', (t) => {
-  const earthdataLoginClient = buildEarthdataLoginClient();
-
-  const authorizationUrl = earthdataLoginClient.getAuthorizationUrl();
-  const parsedAuthorizationUrl = new URL(authorizationUrl);
-
-  t.is(parsedAuthorizationUrl.origin, earthdataLoginClient.earthdataLoginUrl);
-  t.is(parsedAuthorizationUrl.pathname, '/oauth/authorize');
-  t.is(parsedAuthorizationUrl.searchParams.get('response_type'), 'code');
-  t.is(parsedAuthorizationUrl.searchParams.get('client_id'), earthdataLoginClient.clientId);
-  t.is(parsedAuthorizationUrl.searchParams.get('redirect_uri'), earthdataLoginClient.redirectUri);
-  t.false(parsedAuthorizationUrl.searchParams.has('state'));
-});
-
-test('EarthdataLogin.getAuthorizationUrl() returns the correct URL when a state is specified', (t) => {
-  const earthdataLoginClient = buildEarthdataLoginClient();
-
-  const authorizationUrl = earthdataLoginClient.getAuthorizationUrl('the-state');
-  const parsedAuthorizationUrl = new URL(authorizationUrl);
-
-  t.is(parsedAuthorizationUrl.origin, earthdataLoginClient.earthdataLoginUrl);
-  t.is(parsedAuthorizationUrl.pathname, '/oauth/authorize');
-  t.is(parsedAuthorizationUrl.searchParams.get('response_type'), 'code');
-  t.is(parsedAuthorizationUrl.searchParams.get('client_id'), earthdataLoginClient.clientId);
-  t.is(parsedAuthorizationUrl.searchParams.get('redirect_uri'), earthdataLoginClient.redirectUri);
-  t.is(parsedAuthorizationUrl.searchParams.get('state'), 'the-state');
 });
 
 test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is not set', async (t) => {

@@ -1,1 +1,0 @@
-export { CognitoClient } from './CognitoClient';
