@@ -27,3 +27,4 @@ website/**
 /packages/message/*.d.ts
 /packages/message/*.js
 /tf-modules/cumulus-rds-tf/db-provision-user-database*
+/packages/api/src/**/*.js
