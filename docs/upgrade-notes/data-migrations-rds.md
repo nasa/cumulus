@@ -8,7 +8,7 @@ hide_title: false
 
 This release of Cumulus (x.x.x) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
-While eventually Cumulus will only support using RDS as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
+While eventually Cumulus will only support using a PostgreSQL-compatible database as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
 
 However, in order to copy all of your previously written data from DynamoDB to PostgreSQL, you will need to run data migration scripts that we have provided and which this document will explain how to use.
 
@@ -31,11 +31,9 @@ terraform apply
 ```
 
 ### Deploy and run data-migration1
-From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
-<<<<<<< HEAD
 
-=======
->>>>>>> 88fef1c6d239ee4b60566b714ff1dd7508709d20
+From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
+
 ```shell
 cd example/data-migration1-tf/
 cp terraform.tf.example terraform.tf
@@ -53,11 +51,7 @@ In `terraform.tfvars` replace the appropriate values for the following variables
 - `provider_kms_key_id`
 
 After replacing those values, run `terraform init`.
-<<<<<<< HEAD
 The output should resemble the following:
-=======
-The output should look like the following:
->>>>>>> 88fef1c6d239ee4b60566b714ff1dd7508709d20
 
 ```shell
 Initializing modules...
@@ -96,3 +90,5 @@ The `cumulus` module will create resources including the following relevant reso
 Instructions on how to run your `data-migration2` lambda can be found in the `data-migration2` [README](../../lambdas/data-migration2/README.md).
 
 ### Run reconciliation tool
+
+We have provided a reconciliation tool which provides a report regarding your data migration. For more information and instructions on how to run the reconciliation tool, refer to the `[Postgres Migration Count Tool README](../../lambdas/postgres-migration-count-tool/README.md)
