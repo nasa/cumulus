@@ -8,15 +8,7 @@ hide_title: false
 
 This release of Cumulus (x.x.x) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 While eventually Cumulus will only support using RDS as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
-=======
-While eventually Cumulus will only support using RDS as its data archive, for now the system will do **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
->>>>>>> 483a54841... initial stub of data migration & upgrade docs
-=======
-While eventually Cumulus will only support using RDS as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
->>>>>>> 4d5db2578... Add more instructions to data migrations doc
 
 However, in order to copy all of your previously written data from DynamoDB to PostgreSQL, you will need to run data migration scripts that we have provided and which this document will explain how to use.
 
@@ -39,13 +31,8 @@ terraform apply
 ```
 
 ### Deploy and run data-migration1
-<<<<<<< HEAD
-<<<<<<< HEAD
 From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
 
-=======
-From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
->>>>>>> 4d5db2578... Add more instructions to data migrations doc
 ```shell
 cd example/data-migration1-tf/
 cp terraform.tf.example terraform.tf
@@ -63,11 +50,7 @@ In `terraform.tfvars` replace the appropriate values for the following variables
 - `provider_kms_key_id`
 
 After replacing those values, run `terraform init`.
-<<<<<<< HEAD
 The output should resemble the following:
-=======
-The output should look like the following:
->>>>>>> 4d5db2578... Add more instructions to data migrations doc
 
 ```shell
 Initializing modules...
@@ -87,7 +70,6 @@ On success, you will see output like:
 ```shell
 Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
-<<<<<<< HEAD
 
 ### Deploy cumulus module
 Navigate to the cumulus module and re-deploy:
@@ -107,25 +89,3 @@ The `cumulus` module will create resources including the following relevant reso
 Instructions on how to run your `data-migration2` lambda can be found in the `data-migration2` [README](../../lambdas/data-migration2/README.md).
 
 ### Run reconciliation tool
-=======
-=======
->>>>>>> 4d5db2578... Add more instructions to data migrations doc
-
-### Deploy cumulus module
-Navigate to the cumulus module and re-deploy:
-
-```shell
-cd cumulus-tf
-terraform apply
-```
-
-The `cumulus` module will create the following relevant resources for data migration:
-
-- `${PREFIX}-data-migration2` lambda
-- `${PREFIX}-postgres-migration-async-operation` lambda
-
-### Run data-migration2
-See the docs on [how to run the data-migration2 lambda](../../lambdas/data-migration2/README.md)
-
-### Run reconciliation tool?
->>>>>>> 483a54841... initial stub of data migration & upgrade docs
