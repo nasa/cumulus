@@ -1,7 +1,6 @@
 import aws from 'aws-sdk';
 import * as querystring from 'querystring';
 import { URL } from 'url';
-import { inTestMode } from '@cumulus/common/test-utils';
 import { s3 } from './services';
 import { headObject, parseS3Uri } from './S3';
 
@@ -12,31 +11,8 @@ import { headObject, parseS3Uri } from './S3';
 export class S3ObjectStore {
   s3: aws.S3;
 
-  /**
-   * Builds and returns an S3 object store configured according to environment variables
-   * Will use localstack if USE_LOCALSTACK is true (default false) and AWS_DEFAULT_REGION
-   * (default "us-west-2")
-   *
-   * @param {Object} overrides - values to set when constructing the underlying S3 store
-   */
-  constructor(overrides?: object) {
-    this.s3 = this._getS3(overrides);
-  }
-
-  _getS3(overrides?: object | undefined): aws.S3 {
-    const endpointSettings: aws.S3.ClientConfiguration = {};
-    if (inTestMode()) {
-      aws.config.update({
-        region: process.env.AWS_REGION,
-        credentials: { accessKeyId: 'localstack', secretAccessKey: 'localstack' },
-      });
-      endpointSettings.endpoint = `http://${process.env.LOCALSTACK_HOST}:4572`;
-      endpointSettings.s3ForcePathStyle = true;
-    }
-
-    return s3({
-      ...overrides,
-    });
+  constructor() {
+    this.s3 = s3();
   }
 
   /**
