@@ -149,7 +149,7 @@ function parseBucketKey(bucketKeyPath) {
  * Example:
  * if the cmrAllowedBucketKeyList is:
  * [ 'bucket1/somepath', 'bucket2']
- * then the desired output would be the strigified object:
+ * then the desired output would be the stringified object:
  *
  *  {
  *   accessmode: 'Allow',
