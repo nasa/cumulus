@@ -32,18 +32,18 @@ const _removeGranuleFromCmr = async (granule) => {
 /**
  * Remove granule record from CMR and update Postgres + Dynamo granules
  *
- * @param {Knex | Knex.transaction} knexOrTransaction - DB client
+ * @param {Knex} knex - DB client
  * @param {Object} granule - A granule record
  * @returns {Object} - Updated granules
  * @returns {Object.dynamoGranule} - Updated Dynamo Granule
  * @returns {Object.pgGranule} - Updated Postgres Granule
  */
-const unpublishGranule = async (knexOrTransaction, granule) => {
+const unpublishGranule = async (knex, granule) => {
   const granuleModelClient = new models.Granule();
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
 
-  let pgGranule;
+  let pgGranuleCumulusId;
 
   await _removeGranuleFromCmr(granule);
 
@@ -51,24 +51,16 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
   // don't update the Postgres Granule, continue to update the Dynamo granule
   try {
     const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-      knexOrTransaction,
+      knex,
       deconstructCollectionId(granule.collectionId)
     );
 
-    [pgGranule] = await granulePgModel.update(
-      knexOrTransaction,
+    pgGranuleCumulusId = await granulePgModel.getRecordCumulusId(
+      knex,
       {
         granule_id: granule.granuleId,
         collection_cumulus_id: collectionCumulusId,
-      },
-      {
-        published: false,
-        // using `undefined` would result in Knex ignoring this binding
-        // for the update. also, `undefined` is not a valid SQL value, it
-        // should be `null` instead
-        cmr_link: knexOrTransaction.raw('DEFAULT'),
-      },
-      ['*']
+      }
     );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
@@ -76,14 +68,31 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
     }
   }
 
-  return {
-    dynamoGranule: await granuleModelClient.update(
+  return knex.transaction(async (trx) => {
+    let pgGranule;
+    if (pgGranuleCumulusId) {
+      [pgGranule] = await granulePgModel.update(
+        trx,
+        {
+          cumulus_id: pgGranuleCumulusId,
+        },
+        {
+          published: false,
+          // using `undefined` would result in Knex ignoring this binding
+          // for the update. also, `undefined` is not a valid SQL value, it
+          // should be `null` instead
+          cmr_link: trx.raw('DEFAULT'),
+        },
+        ['*']
+      );
+    }
+    const dynamoGranule = await granuleModelClient.update(
       { granuleId: granule.granuleId },
       { published: false },
       ['cmrLink']
-    ),
-    pgGranule,
-  };
+    );
+    return { dynamoGranule, pgGranule };
+  });
 };
 
 module.exports = {
