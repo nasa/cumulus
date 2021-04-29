@@ -250,6 +250,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `executionMigrationParams.parallelScanSegments`: How many segments to divide your executions DynamoDB table into for parallel scanning
       - `executionMigrationParams.parallelScanLimit`: The maximum number of execution records to evaluate for each parallel scanning segment of the DynamoDB table
       - `executionMigrationParams.writeConcurrency`: The maximum number of concurrent execution writes to perform to the PostgreSQL database across all DynamoDB segments
+  - **CUMULUS-2507**
+    - Updated granule record write logic to set granule status to `failed` in both Postgres and DynamoDB if any/all of its files fail to write to the database.
 
 ### Deprecated
 
