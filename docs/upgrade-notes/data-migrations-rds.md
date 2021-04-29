@@ -32,6 +32,7 @@ terraform apply
 
 ### Deploy and run data-migration1
 From the top-level, navigate to the directory `data-migration1-tf` and copy the following `.example` files:
+
 ```shell
 cd example/data-migration1-tf/
 cp terraform.tf.example terraform.tf
@@ -49,7 +50,7 @@ In `terraform.tfvars` replace the appropriate values for the following variables
 - `provider_kms_key_id`
 
 After replacing those values, run `terraform init`.
-The output should look like the following:
+The output should resemble the following:
 
 ```shell
 Initializing modules...
@@ -78,12 +79,13 @@ cd cumulus-tf
 terraform apply
 ```
 
-The `cumulus` module will create the following relevant resources for data migration:
+The `cumulus` module will create resources including the following relevant resources for the data migration:
 
 - `${PREFIX}-data-migration2` lambda
 - `${PREFIX}-postgres-migration-async-operation` lambda
 
 ### Run data-migration2
-See the docs on [how to run the data-migration2 lambda](../../lambdas/data-migration2/README.md)
 
-### Run reconciliation tool?
+Instructions on how to run your `data-migration2` lambda can be found in the `data-migration2` [README](../../lambdas/data-migration2/README.md).
+
+### Run reconciliation tool
