@@ -34,13 +34,18 @@ const _removeGranuleFromCmr = async (granule) => {
  *
  * @param {Knex} knex - DB client
  * @param {Object} granule - A granule record
+ * @param {Object} granulePgModel - Instance of granules model for PostgreSQL
+ * @param {Object} granuleDynamoModel - Instance of granules model for DynamoDB
  * @returns {Object} - Updated granules
  * @returns {Object.dynamoGranule} - Updated Dynamo Granule
  * @returns {Object.pgGranule} - Updated Postgres Granule
  */
-const unpublishGranule = async (knex, granule) => {
-  const granuleModelClient = new models.Granule();
-  const granulePgModel = new GranulePgModel();
+const unpublishGranule = async (
+  knex,
+  granule,
+  granulePgModel = new GranulePgModel(),
+  granuleDynamoModel = new models.Granule()
+) => {
   const collectionPgModel = new CollectionPgModel();
 
   let pgGranuleCumulusId;
@@ -86,7 +91,7 @@ const unpublishGranule = async (knex, granule) => {
         ['*']
       );
     }
-    const dynamoGranule = await granuleModelClient.update(
+    const dynamoGranule = await granuleDynamoModel.update(
       { granuleId: granule.granuleId },
       { published: false },
       ['cmrLink']
