@@ -75,7 +75,7 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
 
   return {
     dynamoGranule: await granuleModelClient.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']),
-    pgGranule: pgGranule,
+    pgGranule,
   };
 };
 

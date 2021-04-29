@@ -112,7 +112,8 @@ function applyWorkflowToGranules({
  * @param {Knex } knex - DB client
  * @param {string} granuleId - Granule ID
  * @param {string} collectionId - Collection ID in "name___version" format
- * @returns {Promise<PostgresGranuleRecord>} - The fetched Postgres Granule
+ * @returns {Promise<PostgresGranuleRecord|undefined>}
+ *   The fetched Postgres Granule, if any exists
  * @private
  */
 async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
@@ -127,11 +128,13 @@ async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
       deconstructCollectionId(collectionId)
     );
 
-    pgGranule = granulePgModel.get(knex,
+    pgGranule = granulePgModel.get(
+      knex,
       {
         granule_id: granuleId,
         collection_cumulus_id: collectionCumulusId,
-      });
+      }
+    );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;

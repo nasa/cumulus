@@ -17,8 +17,7 @@ const getGranuleCumulusId = (dynamoGranule, granules) => {
   const matchingGranule = granules.find(
     (granule) => granule.newDynamoGranule.granuleId === dynamoGranule.granuleId
   );
-
-  return matchingGranule.newPgGranule.cumulus_id;
+  return matchingGranule.newPgGranule;
 };
 
 test.before(async (t) => {
@@ -42,7 +41,7 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
 });
 
-test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
+test.only('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
 
@@ -54,17 +53,22 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
   const dynamoGranuleId1 = granules[0].newDynamoGranule.granuleId;
   const dynamoGranuleId2 = granules[1].newDynamoGranule.granuleId;
 
-  const { deletedGranules } = await bulkGranuleDelete({
-    ids: [
-      dynamoGranuleId1,
-      dynamoGranuleId2,
-    ],
-    forceRemoveFromCmr: true,
-  },
-  (knex, dynamoGranule) => ({
-    dynamoGranule: { granuleId: dynamoGranule.granuleId, published: false },
-    pgGranule: { cumulus_id: getGranuleCumulusId(dynamoGranule, granules), published: false },
-  }));
+  const { deletedGranules } = await bulkGranuleDelete(
+    {
+      ids: [
+        dynamoGranuleId1,
+        dynamoGranuleId2,
+      ],
+      forceRemoveFromCmr: true,
+    },
+    (_, dynamoGranule) => ({
+      dynamoGranule: { granuleId: dynamoGranule.granuleId, published: false },
+      pgGranule: {
+        ...getGranuleCumulusId(dynamoGranule, granules),
+        published: false,
+      },
+    })
+  );
 
   t.deepEqual(
     deletedGranules.sort(),
