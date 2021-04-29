@@ -385,6 +385,8 @@ test('parseBucketKey returns an array of undefined with bad input.', (t) => {
 test('allowedBucketKeys formats a list of buckets and bucket/keypaths into expected object shape.', (t) => {
   const bucketKeyList = [
     'lonebucket',
+    'bucketstarpath/*',
+    'bucket/deep/star/path/*',
     'bucket/withonepath',
     'bucket2/with/deep/path',
     { object: 'that is not expected' },
@@ -393,8 +395,8 @@ test('allowedBucketKeys formats a list of buckets and bucket/keypaths into expec
   // shape of object expected by NGAP's policy helper lambda
   const expected = JSON.stringify({
     accessmode: 'Allow',
-    bucketlist: ['lonebucket', 'bucket', 'bucket2', undefined],
-    pathlist: ['/', '/withonepath', '/with/deep/path', undefined],
+    bucketlist: ['lonebucket', 'bucketstarpath', 'bucket', 'bucket', 'bucket2', undefined],
+    pathlist: ['/', '/*', '/deep/star/path/*', '/withonepath', '/with/deep/path', undefined],
   });
 
   const actual = formatAllowedBucketKeys(bucketKeyList);
