@@ -14,5 +14,7 @@ module "data_migration2" {
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_heartbeat = var.rds_connection_heartbeat
 
+  system_bucket = var.system_bucket
+
   tags = var.tags
 }
