@@ -17,6 +17,7 @@ However, in order to copy all of your previously written data from DynamoDB to P
 Follow the steps outlined below in precisely this order to upgrade your deployment and run the data migrations.
 
 ### 1. Deploy a new RDS cluster
+
 Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided in addition to the existing DynamoDB/ElasticSearch backend with the eventual goal of utilizing the PostgreSQL database as the primary data store for Cumulus.
 
 > **NOTE**: Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
