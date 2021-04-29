@@ -306,7 +306,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **HYRAX-357**
   - Format of NGAP OPeNDAP URL changed and by default now is referring to concept id and optionally can include short name and version of collection.
   - `addShortnameAndVersionIdToConceptId` field has been added to the config inputs of the `hyrax-metadata-updates` task
->>>>>>> feature-rds -- Current Change
 
 ## [v7.1.0] 2021-03-12
 
