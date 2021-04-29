@@ -63,9 +63,12 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
       },
       {
         published: false,
-        cmr_link: undefined,
+        // using `undefined` would result in Knex ignoring this binding
+        // for the update. also, `undefined` is not a valid SQL value, it
+        // should be `null` instead
+        cmr_link: knexOrTransaction.raw('DEFAULT'),
       },
-      ['cumulus_id', 'published']
+      ['*']
     );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
@@ -74,7 +77,11 @@ const unpublishGranule = async (knexOrTransaction, granule) => {
   }
 
   return {
-    dynamoGranule: await granuleModelClient.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']),
+    dynamoGranule: await granuleModelClient.update(
+      { granuleId: granule.granuleId },
+      { published: false },
+      ['cmrLink']
+    ),
     pgGranule,
   };
 };

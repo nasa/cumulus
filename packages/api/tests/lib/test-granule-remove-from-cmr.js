@@ -2,16 +2,23 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 
 const awsServices = require('@cumulus/aws-client/services');
 const launchpad = require('@cumulus/launchpad-auth');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const {
   generateLocalTestDb,
+  destroyLocalTestDb,
   localStackConnectionEnv,
+  CollectionPgModel,
+  GranulePgModel,
+  translateApiGranuleToPostgresGranule,
+  fakeCollectionRecordFactory,
 } = require('@cumulus/db');
 
 const Granule = require('../../models/granules');
@@ -19,7 +26,7 @@ const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
-const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `granule_remove_cmr_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
   process.env = {
@@ -29,7 +36,11 @@ test.before(async (t) => {
   };
 
   process.env.GranulesTable = randomString();
-  await new Granule().createTable();
+  t.context.granulesModel = new Granule();
+  await t.context.granulesModel.createTable();
+
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
 
   // Store the CMR password
   process.env.cmr_password_secret_name = randomString();
@@ -45,11 +56,12 @@ test.before(async (t) => {
     SecretString: randomString(),
   }).promise();
 
-  const { knex } = await generateLocalTestDb(testDbName, migrationDir);
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
@@ -58,22 +70,122 @@ test.after.always(async () => {
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
   }).promise();
-  await new Granule().deleteTable();
+  await t.context.granulesModel.deleteTable();
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test('unpublishGranule() removing a granule from CMR fails if the granule is not in CMR', async (t) => {
   const granule = fakeGranuleFactoryV2({ published: false });
 
-  await awsServices.dynamodbDocClient().put({
-    TableName: process.env.GranulesTable,
-    Item: granule,
-  }).promise();
+  await t.context.granulesModel.create(granule);
 
   try {
     await unpublishGranule(t.context.knex, granule);
   } catch (error) {
     t.is(error.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
   }
+});
+
+test.serial('unpublishGranule() succeeds with Dynamo granule only', async (t) => {
+  const granule = fakeGranuleFactoryV2({ published: true });
+
+  await t.context.granulesModel.create(granule);
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
+    foo: 'bar',
+  });
+  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').resolves();
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+    cmrDeleteStub.restore();
+  });
+
+  const { dynamoGranule, pgGranule } = await unpublishGranule(t.context.knex, granule);
+
+  const expectedDynamoGranule = {
+    ...granule,
+    published: false,
+    updatedAt: dynamoGranule.updatedAt,
+  };
+  delete expectedDynamoGranule.cmrLink;
+
+  t.deepEqual(
+    dynamoGranule,
+    expectedDynamoGranule
+  );
+  t.falsy(pgGranule);
+});
+
+test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) => {
+  const fakeCollection = fakeCollectionRecordFactory();
+
+  const granule = fakeGranuleFactoryV2({
+    published: true,
+    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
+  });
+  await t.context.granulesModel.create(granule);
+
+  t.like(
+    await t.context.granulesModel.get({ granuleId: granule.granuleId }),
+    {
+      published: true,
+      cmrLink: granule.cmrLink,
+    }
+  );
+
+  await t.context.collectionPgModel.create(t.context.knex, fakeCollection);
+  const originalPgGranule = await translateApiGranuleToPostgresGranule(
+    granule,
+    t.context.knex
+  );
+  const [pgGranuleCumulusId] = await t.context.granulePgModel.create(
+    t.context.knex,
+    originalPgGranule
+  );
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
+    foo: 'bar',
+  });
+  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').resolves();
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+    cmrDeleteStub.restore();
+  });
+
+  const { dynamoGranule, pgGranule } = await unpublishGranule(t.context.knex, granule);
+
+  t.deepEqual(
+    dynamoGranule,
+    omit(
+      {
+        ...granule,
+        published: false,
+        updatedAt: dynamoGranule.updatedAt,
+      },
+      'cmrLink'
+    )
+  );
+  t.deepEqual(
+    pgGranule,
+    {
+      ...pgGranule,
+      published: false,
+      cmr_link: null,
+    }
+  );
 });
 
 test.serial('removing a granule from CMR passes the granule UR to the cmr delete function', async (t) => {
@@ -95,10 +207,7 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
   try {
     const granule = fakeGranuleFactoryV2();
 
-    await awsServices.dynamodbDocClient().put({
-      TableName: process.env.GranulesTable,
-      Item: granule,
-    }).promise();
+    await t.context.granulesModel.create(granule);
 
     await unpublishGranule(t.context.knex, granule);
   } finally {
@@ -130,10 +239,7 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
   try {
     const granule = fakeGranuleFactoryV2();
 
-    await awsServices.dynamodbDocClient().put({
-      TableName: process.env.GranulesTable,
-      Item: granule,
-    }).promise();
+    await t.context.granulesModel.create(granule);
 
     await unpublishGranule(t.context.knex, granule);
 
