@@ -1,6 +1,7 @@
 import Knex from 'knex';
 import pMap from 'p-map';
 import cloneDeep from 'lodash/cloneDeep';
+import { Writable } from 'stream';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import { envUtils } from '@cumulus/common';
@@ -10,6 +11,7 @@ import { ExecutionPgModel, translateApiExecutionToPostgresExecution } from '@cum
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 import { ParallelScanMigrationParams, MigrationResult } from '@cumulus/types/migration';
 
+import { closeErrorWriteStreams, createErrorFileWriteStream, storeErrors } from './storeErrors';
 import { initialMigrationResult } from './common';
 
 const Execution = require('@cumulus/api/models/executions');
@@ -20,10 +22,13 @@ const logger = new Logger({ sender: '@cumulus/data-migration/executions' });
  * Migrate execution record from Dynamo to RDS.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
- *   Source record from DynamoDB
- * @param {Knex} knex - Knex client for writing to RDS database
- * @returns {Promise<number>} - Cumulus ID for record
+ *   - Source record from DynamoDB
+ * @param {Knex} knex
+ *   - Knex client for writing to RDS database
+ * @returns {Promise<number>}
+ *   - Cumulus ID for record
  * @throws {RecordAlreadyMigrated}
+ *   - If record was already migrated
  */
 export const migrateExecutionRecord = async (
   dynamoRecord: ExecutionRecord,
@@ -72,6 +77,7 @@ const migrateExecutionDynamoRecords = async (
   migrationResult: MigrationResult,
   knex: Knex,
   loggingInterval: number,
+  jsonWriteStream: Writable,
   writeConcurrency?: number
 ) => {
   const updatedResult = migrationResult;
@@ -95,8 +101,10 @@ const migrateExecutionDynamoRecords = async (
           updatedResult.skipped += 1;
         } else {
           updatedResult.failed += 1;
+          const errorMessage = `Could not create execution record in RDS for Dynamo execution arn ${dynamoRecord.arn}:`;
+          jsonWriteStream.write(`${errorMessage}, Cause: ${error}\n`);
           logger.error(
-            `Could not create execution record in RDS for DynamoDB execution arn: ${dynamoRecord.arn}}`,
+            errorMessage,
             error
           );
         }
@@ -112,14 +120,24 @@ const migrateExecutionDynamoRecords = async (
 export const migrateExecutions = async (
   env: NodeJS.ProcessEnv,
   knex: Knex,
-  executionMigrationParams: ParallelScanMigrationParams = {}
+  executionMigrationParams: ParallelScanMigrationParams = {},
+  testTimestamp?: string
 ): Promise<MigrationResult> => {
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
+  const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
+  const stackName = envUtils.getRequiredEnvVar('stackName', env);
   const loggingInterval = executionMigrationParams.loggingInterval ?? 100;
 
   const migrationResult = cloneDeep(initialMigrationResult);
 
   const totalSegments = executionMigrationParams.parallelScanSegments ?? 20;
+
+  const migrationName = 'executions';
+  const {
+    errorFileWriteStream,
+    jsonWriteStream,
+    filepath,
+  } = createErrorFileWriteStream(migrationName, testTimestamp);
 
   logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
@@ -134,8 +152,17 @@ export const migrateExecutions = async (
       migrationResult,
       knex,
       loggingInterval,
+      jsonWriteStream,
       executionMigrationParams.writeConcurrency
     ),
+  });
+  await closeErrorWriteStreams({ errorFileWriteStream, jsonWriteStream });
+  await storeErrors({
+    bucket,
+    filepath,
+    migrationName,
+    stackName,
+    timestamp: testTimestamp,
   });
 
   logger.info(`Finished parallel scan of executions with ${totalSegments} parallel segments.`);
