@@ -6,7 +6,7 @@ hide_title: false
 
 ## Background
 
-This release of Cumulus (x.x.x) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
+This release of Cumulus (9.0.0) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
 While eventually Cumulus will only support using a PostgreSQL-compatible database as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
 
@@ -26,7 +26,7 @@ Refer to the docs on [how to deploy a new RDS cluster](./../deployment/postgres-
 
 ### 2. Deploy your data-persistence module
 
-The following new variables have been added:
+The following new variables have been added to the data-persistence module:
 
 - `vpc_id`
 - `permissions_boundary_arn`
@@ -95,8 +95,8 @@ aws lambda invoke --function-name $PREFIX-data-migration1 $OUTFILE
 
 where
 
-- `OUTFILE` is the filepath to store the output from the Lambda.
 - `PREFIX` is the `prefix` value used to deploy data-migration1-tf
+- `OUTFILE` (**optional**) is the filepath where the Lambda output (data-migration1 summary) will be saved.
 
 ### 4. Deploy Cumulus module
 
@@ -125,7 +125,7 @@ This Lambda starts an asynchronous operation which runs as an ECS task to run th
 To invoke the Lambda and start the data migration, you can use the AWS Console or CLI:
 
 ```bash
-aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool \
+aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
   --payload $PAYLOAD $OUTFILE
 ```
 
@@ -138,8 +138,8 @@ where
     "writeConcurrency": 50 }}' | base64)
     ```
 
-- `OUTFILE` is the filepath to store the output from the Lambda.
 - `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output (data-migration2 summary) will be saved.
 
 The Lambda will trigger an Async Operation and return an `id` such as:
 
