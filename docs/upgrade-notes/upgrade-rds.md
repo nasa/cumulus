@@ -131,7 +131,7 @@ aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
 
 where
 
-- `PAYLOAD` is a base64 encoded JSON object. For example:
+- `PAYLOAD` (**optional**) is a base64 encoded JSON object. No payload is required to run this data migration, but configuring some of the payload options for parallelism can significantly decrease the duration of the data migration. For reference, in our testing using a value of `50` for `executionMigrationParams.parallelScanSegments` and `executionMigrationParams.writeConcurrency` migrated ~900,000 execution records in 45 minutes and did not spike Aurora PostgreSQL database capacity above 2 ACUs. See the [full description of payload parameters below](#postgres-migration-async-operation-payload-parameters) for how to configure the parallelism of the migration. An example payload configuration might look like:
 
     ```bash
     --payload $(echo '{"executionMigrationParams": { "parallelScanSegments": 50,
@@ -151,13 +151,9 @@ The Lambda will trigger an Async Operation and return an `id` such as:
 
 which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
-Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
+> **Please note:** Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
 
-See the description of payload parameters below for how to configure the parallelism of the migration.
-
-For reference, using a value of `50` for `executionMigrationParams.parallelScanSegments` and `50` for `executionMigrationParams.writeConcurrency` migrated ~900,000 execution records in 45 minutes and did not spike Aurora PostgreSQL database capacity above 2 ACUs. Similar speed and database capacity usage was observed when using `50` for both the `granuleMigrationParams.parallelScanSegments` and `granuleMigrationParams.writeConcurrency` in testing for the granules migration.
-
-#### Payload parameters
+#### postgres-migration-async-operation payload parameters
 
 | Variable | Type | Description | Default |
 |-|-|-|-|
