@@ -103,7 +103,7 @@ The `cumulus` module will create resources including the following relevant reso
 
 ### 5. Run data-migration2
 
-This second Lambda in the data migration process can be run by invoking an async operation using the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the cumulus module deployment.
+This second Lambda in the data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda and invoking from the AWS console or command line.
 
 This lambda invokes an asynchronous operation which starts an ECS task to run the `data-migration2` lambda.
 
