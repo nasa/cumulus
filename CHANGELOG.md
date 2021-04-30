@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration steps
 
-- **Before upgrading to this release of Cumulus**, which enables integration with a PostgreSQL database for archiving Cumulus data, you will need to run a data migration to copy some of your data from DynamoDB to PostgreSQL. See the [upgrade documentation on running data migrations for this release](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade_tf_version_0.13.6).
+- This release of Cumulus enables integration with a PostgreSQL database for archiving Cumulus data. There are several upgrade steps involved, **some of which need to be done before redeploying Cumulus**. See the [documentation on upgrading to the RDS release](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds).
 
 ### BREAKING CHANGES
 

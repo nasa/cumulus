@@ -1,6 +1,6 @@
 ---
-id: data_migrations_rds
-title: Running data migrations for RDS
+id: upgrade_rds
+title: Upgrade to RDS release
 hide_title: false
 ---
 
