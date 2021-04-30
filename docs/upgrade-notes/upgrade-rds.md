@@ -1,5 +1,5 @@
 ---
-id: upgrade_rds
+id: upgrade-rds
 title: Upgrade to RDS release
 hide_title: false
 ---
