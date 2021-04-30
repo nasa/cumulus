@@ -28,10 +28,10 @@ Refer to the docs on [how to deploy a new RDS cluster](./../deployment/postgres-
 
 The following new variables have been added:
 
+- `vpc_id`
 - `permissions_boundary_arn`
 - `rds_user_access_secret_arn`
 - `rds_security_group_id`
-- `rds_connection_heartbeat`
 
 You will need to update your data-persistence module to include these new variables related to RDS. See the configuration in our template-deploy repo for reference: <https://github.com/nasa/cumulus-template-deploy/tree/master/data-persistence-tf>
 
@@ -88,6 +88,8 @@ Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 
 The following variables were added to the Cumulus module
 
+- `rds_security_group`
+- `rds_user_access_secret_arn`
 - `rds_connection_heartbeat`
 
 Navigate to the cumulus module and re-deploy:
