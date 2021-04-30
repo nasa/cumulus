@@ -98,22 +98,71 @@ Instructions on deploying the Cumulus module can be found [here](./../deployment
 
 The `cumulus` module will create resources including the following relevant resources for the data migration:
 
-- `${PREFIX}-data-migration2` lambda
-- `${PREFIX}-postgres-migration-async-operation` lambda
+- `${PREFIX}-data-migration2` Lambda
+- `${PREFIX}-postgres-migration-async-operation` Lambda
 
-### 5. Run data-migration2
+### 5. Run the second data migration
 
-This second Lambda in the data migration process can be run by invoking an async operation using the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the cumulus module deployment.
+Now that Cumulus module is deployed, we can use some newly created resources to migrate granule, execution, and PDR data from DynamoDB to our PostgreSQL database.
 
-This lambda invokes an asynchronous operation which starts an ECS task to run the `data-migration2` lambda.
+This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
+This Lambda invokes an asynchronous operation which starts an ECS task to run the `${PREFIX}-data-migration2` Lambda.
 
-To invoke the lambda, you can use the AWS Console or CLI:
+To invoke the Lambda and start the data migration, you can use the AWS Console or CLI:
 
-```shell
-aws lambda invoke --function-name ${PREFIX}-postgres-migration-async-operation
+```bash
+aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool \
+  --payload $PAYLOAD $OUTFILE
 ```
 
-where you will need to replace `${PREFIX}` with your Cumulus deployment prefix.
+where
+
+- `PAYLOAD` is a base64 encoded JSON object. For example:
+
+    ```bash
+    --payload $(echo '{"executionMigrationParams": { "parallelScanSegments": 50,
+    "writeConcurrency": 50 }}' | base64)
+    ```
+
+- `OUTFILE` is the filepath to store the output from the Lambda.
+- `PREFIX` is your Cumulus deployment prefix.
+
+The Lambda will trigger an Async Operation and return an `id` such as:
+
+```json
+{"id":"7ccaed31-756b-40bb-855d-e5e6d00dc4b3","status":"RUNNING",
+"taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789",
+"description":"Data Migration 2 Lambda ECS Run","operationType":"Data Migration"}
+```
+
+which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request. Also, if you want to directly observe the progress of the migration as it runs, you can view the Cloudwatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+
+Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use.
+
+See the description of payload parameters below for how to configure the parallelism of the migration.
+
+#### Payload parameters
+
+| Variable | Type | Description | Default |
+|-|-|-|-|
+| migrationsList | string[] | An array containing the names of the data types that you want to migrate. For the first run of this migration, you need to run at least the `executions` migration, since the other data types may need to refer to execution records existing in PostgreSQL. | ['executions', 'granules', 'pdrs']
+| executionMigrationParams | Object | Options for the executions data migration | `{}`
+| executionMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for executions data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
+| executionMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
+| executionMigrationParams.writeConcurrency | number | The maximum number of execution records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 2
+| executionMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
+| granuleMigrationParams | Object | Options for the granules data migration | `{}`
+| granuleMigrationParams.collectionId | string | A collection ID (e.g. `collection___1`) from granule DynamoDB records. If a `collectionId` is provided, then only granules for that collection will be migrated | none
+| granuleMigrationParams.granuleId | string | A specific granule ID from a DynamoDB record to select for migration. If a `granuleId` and `collectionId` are provided, the `collectionId` will be ignored. | none
+| granuleMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for granules data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
+| granuleMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
+| granuleMigrationParams.writeConcurrency | number | The maximum number of granule records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 2
+| granuleMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
+| pdrMigrationParams | Object | Options for the PDRs data migration | `{}`
+| pdrMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for PDRs data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
+| pdrMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
+| pdrMigrationParams.writeConcurrency | number | The maximum number of PDR records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 2
+| pdrMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
 
 ### 6. Run validation tool
 
@@ -121,15 +170,16 @@ We have provided a validation tool which provides a report regarding your data m
 
 This tool can be run in the following two ways:
 
-- Through direct lambda invocation
+- Through direct Lambda invocation
 - Through API invocation
 
-#### Direct lambda invocation
+#### Direct Lambda invocation
 
-Invoking the lambda on the command line looks like:
+Invoking the Lambda on the command line looks like:
 
 ```bash
-aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool --payload $PAYLOAD $OUTFILE
+aws lambda invoke --function-name $PREFIX-postgres-migration-count-tool \
+  --payload $PAYLOAD $OUTFILE
 ```
 
 where
@@ -137,26 +187,31 @@ where
 - `PAYLOAD` is a base64 encoded JSON object. For example,
 
 ```bash
---payload $(echo '{"reportBucket": "someBucket", "reportPath": "somePath", "cutoffSeconds": 60, "dbConcurrency": 20, "dbMaxPool": 20}' | base64)
+--payload $(echo '{"reportBucket": "someBucket", "reportPath": "somePath",
+"cutoffSeconds": 60, "dbConcurrency": 20, "dbMaxPool": 20}' | base64)
 ```
 
-- `OUTFILE` is the filepath to store the output from the lambda.
+- `OUTFILE` is the filepath to store the output from the Lambda.
 - `PREFIX` is your Cumulus deployment prefix.
 
-> **NOTE**: This will invoke the lambda synchronously. Depending on your data holdings, the execution time of this lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation.**
+> **NOTE**: This will invoke the Lambda synchronously. Depending on your data holdings, the execution time of this Lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation.**
 
 #### API invocation
 
 Invoking the API on the command line looks like the following:
 
 ```bash
-curl -X POST https://$API_URL/dev/migrationCounts -d 'reportBucket=someBucket&reportPath=someReportPath&cutoffSeconds=60&dbConcurrency=20&dbMaxPool=20' --header 'Authorization: Bearer $TOKEN'
+curl -X POST https://$API_URL/dev/migrationCounts -d 'reportBucket=someBucket&
+reportPath=someReportPath&cutoffSeconds=60&dbConcurrency=20&dbMaxPool=20' --header
+'Authorization: Bearer $TOKEN'
 ```
 
 In this instance, the API will trigger an Async Operation and return an `id` such as:
 
 ```json
-{"id":"7ccaed31-756b-40bb-855d-e5e6d00dc4b3","status":"RUNNING","taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789","description":"Migration Count Tool ECS Run","operationType":"Migration Count Report"}
+{"id":"7ccaed31-756b-40bb-855d-e5e6d00dc4b3","status":"RUNNING",
+"taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789",
+"description":"Migration Count Tool ECS Run","operationType":"Migration Count Report"}
 ```
 
 which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request.
@@ -167,7 +222,9 @@ The following optional parameters are used by this tool:
 | Variable      | Type   | Description                                                                                                                                                                                       | Default |
 |---------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
 | reportBucket  | string | Sets the bucket used for reporting. If this argument is used, a `reportPath` must be set to generate a report.                                                                                    |         |
-| reportPath    | string | Sets the path location for the tool to write a copy of the lambda payload to S3                                                                                                                   |         |
+| reportPath    | string | Sets the path location for the tool to write a copy of the Lambda payload to S3                                                                                                                   |         |
 | cutoffSeconds | number | Number of seconds prior to this execution to 'cutoff' reconciliation queries. This allows in-progress/other in-flight operations time to complete and propagate to Elasticsearch/Dynamo/postgres. | 3600    |
 | dbConcurrency | number | Sets max number of parallel collections reports the script will run at a time.                                                                                                                    | 20      |
 | dbMaxPool     | number | Sets the maximum number of connections the database pool has available. Modifying this may result in unexpected failures.                                                                         | 20      |
+
+[parallel scan]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan

@@ -2,11 +2,6 @@
 
 The data-migration2 lambda is the second of two Lambdas to be run in order to migrate existing DynamoDB data to PostgreSQL.
 
-### Running the API
-This second Lambda in the data migration process can be by invoking an async operation using the provided `${PREFIX}-postgres-migration-async-operation` lambda and invoking from the AWS console or command line.
-
-For more information, see [README](../../lambdas/postgres-migration-async-operation/README.md)
-
 The resources migrated in Data Migration 2 are:
 
 - Executions
