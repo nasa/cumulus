@@ -1,24 +1,11 @@
-import got, { CancelableRequest, HTTPError, Response } from 'got';
+import got, { HTTPError, Response } from 'got';
 
 import { AuthClient } from './AuthClient';
 import { EarthdataLoginError } from './EarthdataLoginError';
 
-type AccessTokenResponse = Response<{
-  access_token: string,
-  refresh_token: string,
-  endpoint: string,
-  expires_in: number
-}>;
-
 type VerifyTokenResponse = Response<{uid: string}>;
 
 type EarthdataLoginErrorResponse = Response<{error: string}>;
-
-const encodeCredentials = (username: string, password: string) =>
-  Buffer.from(`${username}:${password}`).toString('base64');
-
-const isHttpBadRequestError = (error: unknown) =>
-  error instanceof HTTPError && error.response.statusCode === 400;
 
 const isHttpForbiddenError = (error: unknown) =>
   error instanceof HTTPError && error.response.statusCode === 403;
@@ -81,98 +68,6 @@ export class EarthdataLoginClient extends AuthClient {
     this.redirectUri = params.redirectUri;
   }
 
-  private requestAccessToken(authorizationCode: string) {
-    return <CancelableRequest<AccessTokenResponse>>(this.sendRequest({
-      earthdataLoginPath: 'oauth/token',
-      form: {
-        grant_type: 'authorization_code',
-        code: authorizationCode,
-        redirect_uri: this.redirectUri,
-      },
-    }));
-  }
-
-  /**
-   * Given an authorization code, request an access token and associated
-   * information from the Earthdata Login service.
-   *
-   * Returns an object with the following properties:
-   *
-   * - accessToken
-   * - refreshToken
-   * - username
-   * - expirationTime (in seconds)
-   *
-   * @param {string} authorizationCode - an OAuth2 authorization code
-   * @returns {Promise<Object>} access token information
-   */
-  async getAccessToken(authorizationCode: string) {
-    if (!authorizationCode) throw new TypeError('authorizationCode is required');
-
-    try {
-      const response = await this.requestAccessToken(authorizationCode);
-
-      return {
-        accessToken: response.body.access_token,
-        refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
-        // expires_in value is in seconds
-        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
-      };
-    } catch (error) {
-      if (isHttpBadRequestError(error)) {
-        throw new EarthdataLoginError('BadRequest', error.message);
-      }
-
-      throw new EarthdataLoginError('Unknown', error.message);
-    }
-  }
-
-  private requestRefreshAccessToken(refreshToken: string) {
-    return <CancelableRequest<AccessTokenResponse>>(this.sendRequest({
-      earthdataLoginPath: 'oauth/token',
-      form: {
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-      },
-    }));
-  }
-
-  /**
-   * Given a refresh token, request an access token and associated information
-   * from the Earthdata Login service.
-   *
-   * Returns an object with the following properties:
-   *
-   * - accessToken
-   * - refreshToken
-   * - username
-   * - expirationTime (in seconds)
-   *
-   * @param {string} refreshToken - an OAuth2 refresh token
-   * @returns {Promise<Object>} access token information
-   */
-  async refreshAccessToken(refreshToken: string) {
-    if (!refreshToken) throw new TypeError('refreshToken is required');
-
-    try {
-      const response = await this.requestRefreshAccessToken(refreshToken);
-
-      return {
-        accessToken: response.body.access_token,
-        refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
-        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
-      };
-    } catch (error) {
-      if (isHttpBadRequestError(error)) {
-        throw new EarthdataLoginError('BadRequest', error.message);
-      }
-
-      throw new EarthdataLoginError('Unknown', error.message);
-    }
-  }
-
   /**
    * Query the Earthdata Login API for the UID associated with a token
    *
@@ -194,8 +89,8 @@ export class EarthdataLoginClient extends AuthClient {
     const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
 
     try {
-      const response = <VerifyTokenResponse>(await this.sendRequest({
-        earthdataLoginPath: 'oauth/tokens/user',
+      const response = <VerifyTokenResponse>(await super.sendRequest({
+        loginPath: 'oauth/tokens/user',
         headers,
         form: {
           client_id: this.clientId,
@@ -219,29 +114,5 @@ export class EarthdataLoginClient extends AuthClient {
 
       throw error;
     }
-  }
-
-  private sendRequest(
-    params: {
-      earthdataLoginPath: string,
-      form: {[key: string]: any},
-      headers?: Record<string, string|string[]|undefined>
-    }
-  ) {
-    // https://github.com/sindresorhus/got/issues/1169
-    const credentials = encodeCredentials(this.clientId, this.clientPassword);
-
-    return got.post(
-      params.earthdataLoginPath,
-      {
-        prefixUrl: this.earthdataLoginUrl,
-        headers: {
-          ...params.headers,
-          Authorization: `Basic ${credentials}`,
-        },
-        form: params.form,
-        responseType: 'json',
-      }
-    );
   }
 }
