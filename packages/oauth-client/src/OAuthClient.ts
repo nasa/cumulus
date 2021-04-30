@@ -24,7 +24,7 @@ const isHttpBadRequestError = (error: unknown) =>
 /**
  * A generic authorization client
  */
-export class AuthClient {
+export class OAuthClient {
   readonly clientId: string;
   readonly clientPassword: string;
   readonly loginUrl: string;
@@ -39,7 +39,7 @@ export class AuthClient {
    *
    * @example
    *
-   * const oAuth2Provider = new AuthClient({
+   * const oAuth2Provider = new OAuthClient({
    *   clientId: 'my-client-id',
    *   clientPassword: 'my-client-password',
    *   loginUrl: 'https://earthdata.login.nasa.gov',

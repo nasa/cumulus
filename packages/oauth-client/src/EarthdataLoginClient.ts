@@ -1,6 +1,6 @@
 import got, { HTTPError, Response } from 'got';
 
-import { AuthClient } from './AuthClient';
+import { OAuthClient } from './OAuthClient';
 import { EarthdataLoginError } from './EarthdataLoginError';
 
 type VerifyTokenResponse = Response<{uid: string}>;
@@ -34,7 +34,7 @@ const validateUrl = (urlString: string) => {
 /**
  * A client for the Earthdata Login API
  */
-export class EarthdataLoginClient extends AuthClient {
+export class EarthdataLoginClient extends OAuthClient {
   readonly clientId: string;
   readonly clientPassword: string;
   readonly earthdataLoginUrl: string;

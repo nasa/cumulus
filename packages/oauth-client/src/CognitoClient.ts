@@ -1,6 +1,6 @@
 import { URL } from 'url';
 
-import { AuthClient } from './AuthClient';
+import { OAuthClient } from './OAuthClient';
 
 const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new
@@ -10,7 +10,7 @@ const validateUrl = (urlString: string) => {
 /**
  * A client for the Cognito API
  */
-export class CognitoClient extends AuthClient {
+export class CognitoClient extends OAuthClient {
   readonly clientId: string;
   readonly clientPassword: string;
   readonly cognitoLoginUrl: string;

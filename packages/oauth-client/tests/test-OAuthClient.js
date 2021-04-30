@@ -3,7 +3,7 @@ const nock = require('nock');
 const test = require('ava');
 // import { URL, URLSearchParams } from 'url';
 
-const { AuthClient, OAuthLoginError } = require('../dist/src');
+const { OAuthClient, OAuthLoginError } = require('../dist/src');
 
 const randomString = () => cryptoRandomString({ length: 6 });
 
@@ -13,7 +13,7 @@ const randomId = (prefix, separator = '-') =>
 const randomUrl = () => `http://${randomString()}.local`;
 
 const buildAuthClient = () =>
-  new AuthClient({
+  new OAuthClient({
     clientId: randomId('client-id'),
     clientPassword: randomId('client-password'),
     loginUrl: randomUrl(),
@@ -46,10 +46,10 @@ test.before(() => {
   nock.disableNetConnect();
 });
 
-test('The AuthClient constructor throws a TypeError if clientId is not specified', (t) => {
+test('The OAuthClient constructor throws a TypeError if clientId is not specified', (t) => {
   t.throws(
     () => {
-      new AuthClient({
+      new OAuthClient({
         clientPassword: 'client-password',
         loginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb',
@@ -62,10 +62,10 @@ test('The AuthClient constructor throws a TypeError if clientId is not specified
   );
 });
 
-test('The AuthClient constructor throws a TypeError if clientPassword is not specified', (t) => {
+test('The OAuthClient constructor throws a TypeError if clientPassword is not specified', (t) => {
   t.throws(
     () => {
-      new AuthClient({
+      new OAuthClient({
         clientId: 'client-id',
         loginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb',
@@ -78,10 +78,10 @@ test('The AuthClient constructor throws a TypeError if clientPassword is not spe
   );
 });
 
-test('The AuthClient constructor throws a TypeError if loginUrl is not specified', (t) => {
+test('The OAuthClient constructor throws a TypeError if loginUrl is not specified', (t) => {
   t.throws(
     () => {
-      new AuthClient({
+      new OAuthClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         redirectUri: 'http://www.example.com/cb',
@@ -94,10 +94,10 @@ test('The AuthClient constructor throws a TypeError if loginUrl is not specified
   );
 });
 
-test('The AuthClient constructor throws a TypeError if AuthClientUrl is not a valid URL', (t) => {
+test('The OAuthClient constructor throws a TypeError if AuthClientUrl is not a valid URL', (t) => {
   t.throws(
     () => {
-      new AuthClient({
+      new OAuthClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         loginUrl: 'asdf',
@@ -108,10 +108,10 @@ test('The AuthClient constructor throws a TypeError if AuthClientUrl is not a va
   );
 });
 
-test('The AuthClient constructor throws a TypeError if redirectUri is not specified', (t) => {
+test('The OAuthClient constructor throws a TypeError if redirectUri is not specified', (t) => {
   t.throws(
     () => {
-      new AuthClient({
+      new OAuthClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         loginUrl: 'http://www.example.com',
@@ -124,10 +124,10 @@ test('The AuthClient constructor throws a TypeError if redirectUri is not specif
   );
 });
 
-test('The AuthClient constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
+test('The OAuthClient constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
   t.throws(
     () => {
-      new AuthClient({
+      new OAuthClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
         loginUrl: 'http://www.example.com',
@@ -138,7 +138,7 @@ test('The AuthClient constructor throws a TypeError if redirectUri is not a vali
   );
 });
 
-test('AuthClient.getAuthorizationUrl() returns the correct URL when no state is specified', (t) => {
+test('OAuthClient.getAuthorizationUrl() returns the correct URL when no state is specified', (t) => {
   const authClient = buildAuthClient();
 
   const authorizationUrl = authClient.getAuthorizationUrl();
@@ -152,7 +152,7 @@ test('AuthClient.getAuthorizationUrl() returns the correct URL when no state is 
   t.false(parsedAuthorizationUrl.searchParams.has('state'));
 });
 
-test('AuthClient.getAuthorizationUrl() returns the correct URL when a state is specified', (t) => {
+test('OAuthClient.getAuthorizationUrl() returns the correct URL when a state is specified', (t) => {
   const authClient = buildAuthClient();
 
   const authorizationUrl = authClient.getAuthorizationUrl('the-state');
@@ -166,7 +166,7 @@ test('AuthClient.getAuthorizationUrl() returns the correct URL when a state is s
   t.is(parsedAuthorizationUrl.searchParams.get('state'), 'the-state');
 });
 
-test('AuthClient.getAccessToken() throws a TypeError if authorizationCode is not set', async (t) => {
+test('OAuthClient.getAccessToken() throws a TypeError if authorizationCode is not set', async (t) => {
   const authClient = buildAuthClient();
 
   await t.throwsAsync(
@@ -178,7 +178,7 @@ test('AuthClient.getAccessToken() throws a TypeError if authorizationCode is not
   );
 });
 
-test('AuthClient.getAccessToken() sends a correct request to the token endpoint', async (t) => {
+test('OAuthClient.getAccessToken() sends a correct request to the token endpoint', async (t) => {
   const authClient = buildAuthClient();
 
   nock(
@@ -219,7 +219,7 @@ test('AuthClient.getAccessToken() sends a correct request to the token endpoint'
   t.pass();
 });
 
-test('AuthClient.getAccessToken() returns token information for a valid authorizationCode', async (t) => {
+test('OAuthClient.getAccessToken() returns token information for a valid authorizationCode', async (t) => {
   const authClient = buildAuthClient();
 
   nockAuthCall({
@@ -251,7 +251,7 @@ test('AuthClient.getAccessToken() returns token information for a valid authoriz
   t.is(username, 'sidney');
 });
 
-test('AuthClient.getAccessToken() throws an OAuthLoginError for an invalid authorizationCode', async (t) => {
+test('OAuthClient.getAccessToken() throws an OAuthLoginError for an invalid authorizationCode', async (t) => {
   const authClient = buildAuthClient();
 
   nockAuthCall({
@@ -266,7 +266,7 @@ test('AuthClient.getAccessToken() throws an OAuthLoginError for an invalid autho
   );
 });
 
-test('AuthClient.getAccessToken() throws an OAuthLoginError if there is a problem with the Login service', async (t) => {
+test('OAuthClient.getAccessToken() throws an OAuthLoginError if there is a problem with the Login service', async (t) => {
   const authClient = buildAuthClient();
 
   nockAuthCall({
@@ -281,7 +281,7 @@ test('AuthClient.getAccessToken() throws an OAuthLoginError if there is a proble
   );
 });
 
-test('AuthClient.refreshAccessToken() throws a TypeError if refreshToken is not set', async (t) => {
+test('OAuthClient.refreshAccessToken() throws a TypeError if refreshToken is not set', async (t) => {
   const authClient = buildAuthClient();
 
   await t.throwsAsync(
@@ -293,7 +293,7 @@ test('AuthClient.refreshAccessToken() throws a TypeError if refreshToken is not 
   );
 });
 
-test('AuthClient.refreshAccessToken() sends a correct request to the token endpoint', async (t) => {
+test('OAuthClient.refreshAccessToken() sends a correct request to the token endpoint', async (t) => {
   const authClient = buildAuthClient();
 
   nock(
@@ -333,7 +333,7 @@ test('AuthClient.refreshAccessToken() sends a correct request to the token endpo
   t.pass();
 });
 
-test('AuthClient.refreshAccessToken() returns token information for a valid refreshToken', async (t) => {
+test('OAuthClient.refreshAccessToken() returns token information for a valid refreshToken', async (t) => {
   const authClient = buildAuthClient();
 
   nockAuthCall({
@@ -365,7 +365,7 @@ test('AuthClient.refreshAccessToken() returns token information for a valid refr
   t.is(username, 'sidney');
 });
 
-test('AuthClient.refreshAccessToken() throws an OAuthLoginError error for an invalid refreshToken', async (t) => {
+test('OAuthClient.refreshAccessToken() throws an OAuthLoginError error for an invalid refreshToken', async (t) => {
   const authClient = buildAuthClient();
 
   nockAuthCall({
@@ -380,7 +380,7 @@ test('AuthClient.refreshAccessToken() throws an OAuthLoginError error for an inv
   );
 });
 
-test('AuthClient.refreshAccessToken() throws an OAuthLoginError error if there is a problem with the Earthdata Login service', async (t) => {
+test('OAuthClient.refreshAccessToken() throws an OAuthLoginError error if there is a problem with the Earthdata Login service', async (t) => {
   const authClient = buildAuthClient();
 
   nockAuthCall({

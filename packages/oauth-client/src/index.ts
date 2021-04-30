@@ -1,4 +1,4 @@
-export { AuthClient } from './AuthClient';
+export { OAuthClient } from './OAuthClient';
 export { CognitoClient } from './CognitoClient';
 export { EarthdataLoginClient } from './EarthdataLoginClient';
 
