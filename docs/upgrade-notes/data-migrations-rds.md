@@ -137,9 +137,11 @@ The Lambda will trigger an Async Operation and return an `id` such as:
 
 which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request. Also, if you want to directly observe the progress of the migration as it runs, you can view the Cloudwatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
-Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use.
+Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database, which can cause database outages** and result in data loss. Thus, the parallelism settings for the migration are intentionally set by default to conservative values.
 
 See the description of payload parameters below for how to configure the parallelism of the migration.
+
+For reference, using a value of `50` for `executionMigrationParams.parallelScanSegments` and `50` for `executionMigrationParams.writeConcurrency` migrated ~900,000 execution records in 45 minutes and did not spike Aurora PostgreSQL database capacity above 2 ACUs. Similar speed and database capacity usage was observed when using `50` for both the `parallelScanSegments` and `writeConcurrency` in testing for the granules migration.
 
 #### Payload parameters
 
@@ -149,19 +151,19 @@ See the description of payload parameters below for how to configure the paralle
 | executionMigrationParams | Object | Options for the executions data migration | `{}`
 | executionMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for executions data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
 | executionMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
-| executionMigrationParams.writeConcurrency | number | The maximum number of execution records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 2
+| executionMigrationParams.writeConcurrency | number | The maximum number of execution records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 10
 | executionMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
 | granuleMigrationParams | Object | Options for the granules data migration | `{}`
 | granuleMigrationParams.collectionId | string | A collection ID (e.g. `collection___1`) from granule DynamoDB records. If a `collectionId` is provided, then only granules for that collection will be migrated | none
 | granuleMigrationParams.granuleId | string | A specific granule ID from a DynamoDB record to select for migration. If a `granuleId` and `collectionId` are provided, the `collectionId` will be ignored. | none
 | granuleMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for granules data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
 | granuleMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
-| granuleMigrationParams.writeConcurrency | number | The maximum number of granule records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 2
+| granuleMigrationParams.writeConcurrency | number | The maximum number of granule records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 10
 | granuleMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
 | pdrMigrationParams | Object | Options for the PDRs data migration | `{}`
 | pdrMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for PDRs data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
 | pdrMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
-| pdrMigrationParams.writeConcurrency | number | The maximum number of PDR records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 2
+| pdrMigrationParams.writeConcurrency | number | The maximum number of PDR records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 10
 | pdrMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
 
 ### 6. Run validation tool

@@ -110,7 +110,7 @@ export const migratePdrDynamoRecords = async (
   migrationResult: MigrationResult,
   knex: Knex,
   loggingInterval: number,
-  writeConcurrency?: number
+  writeConcurrency: number
 ) => {
   const updatedResult = migrationResult;
   await pMap(
@@ -149,8 +149,10 @@ export const migratePdrs = async (
   pdrMigrationParams: ParallelScanMigrationParams = {}
 ): Promise<MigrationResult> => {
   const pdrsTable = envUtils.getRequiredEnvVar('PdrsTable', env);
+
   const loggingInterval = pdrMigrationParams.loggingInterval ?? 100;
   const totalSegments = pdrMigrationParams.parallelScanSegments ?? 20;
+  const writeConcurrency = pdrMigrationParams.writeConcurrency ?? 10;
 
   const migrationResult = cloneDeep(initialMigrationResult);
 
@@ -167,7 +169,7 @@ export const migratePdrs = async (
       migrationResult,
       knex,
       loggingInterval,
-      pdrMigrationParams.writeConcurrency
+      writeConcurrency
     ),
   });
 

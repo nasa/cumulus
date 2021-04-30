@@ -78,7 +78,7 @@ const migrateExecutionDynamoRecords = async (
   knex: Knex,
   loggingInterval: number,
   jsonWriteStream: Writable,
-  writeConcurrency?: number
+  writeConcurrency: number
 ) => {
   const updatedResult = migrationResult;
   await pMap(
@@ -126,11 +126,12 @@ export const migrateExecutions = async (
   const executionsTable = envUtils.getRequiredEnvVar('ExecutionsTable', env);
   const bucket = envUtils.getRequiredEnvVar('system_bucket', env);
   const stackName = envUtils.getRequiredEnvVar('stackName', env);
+
   const loggingInterval = executionMigrationParams.loggingInterval ?? 100;
+  const totalSegments = executionMigrationParams.parallelScanSegments ?? 20;
+  const writeConcurrency = executionMigrationParams.writeConcurrency ?? 10;
 
   const migrationResult = cloneDeep(initialMigrationResult);
-
-  const totalSegments = executionMigrationParams.parallelScanSegments ?? 20;
 
   const migrationName = 'executions';
   const {
@@ -153,7 +154,7 @@ export const migrateExecutions = async (
       knex,
       loggingInterval,
       jsonWriteStream,
-      executionMigrationParams.writeConcurrency
+      writeConcurrency
     ),
   });
   await closeErrorWriteStreams({ errorFileWriteStream, jsonWriteStream });
