@@ -155,7 +155,7 @@ Since this data migration is copying **all of your execution, granule, and PDR d
 
 See the description of payload parameters below for how to configure the parallelism of the migration.
 
-For reference, using a value of `50` for `executionMigrationParams.parallelScanSegments` and `50` for `executionMigrationParams.writeConcurrency` migrated ~900,000 execution records in 45 minutes and did not spike Aurora PostgreSQL database capacity above 2 ACUs. Similar speed and database capacity usage was observed when using `50` for both the `parallelScanSegments` and `writeConcurrency` in testing for the granules migration.
+For reference, using a value of `50` for `executionMigrationParams.parallelScanSegments` and `50` for `executionMigrationParams.writeConcurrency` migrated ~900,000 execution records in 45 minutes and did not spike Aurora PostgreSQL database capacity above 2 ACUs. Similar speed and database capacity usage was observed when using `50` for both the `granuleMigrationParams.parallelScanSegments` and `granuleMigrationParams.writeConcurrency` in testing for the granules migration.
 
 #### Payload parameters
 
