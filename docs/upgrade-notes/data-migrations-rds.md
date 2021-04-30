@@ -43,6 +43,8 @@ terraform apply
 
 ### 3. Deploy and run data-migration1
 
+You will need to create a `data-migration1-tf` directory. See the configuration in our template-deploy repo for reference: <https://github.com/nasa/cumulus-template-deploy/tree/master/data-migration1-tf>
+
 Navigate to the directory `data-migration1-tf` and copy the following `.example` files:
 
 ```shell
@@ -54,7 +56,7 @@ In `terraform.tf`, configure your remote state settings by replacing the appropr
 
 In `terraform.tfvars` replace the appropriate values for the following variables:
 
-- `PREFIX`
+- `prefix`
 - `permissions_boundary_arn`
 - `lambda_subnet_ids`
 - `vpc_id`
@@ -101,7 +103,7 @@ The `cumulus` module will create resources including the following relevant reso
 
 ### 5. Run data-migration2
 
-This second Lambda in the data migration process can be run by invoking an async operation using the provided `${PREFIX}-postgres-migration-async-operation` lambda included in the cumulus module deployment.
+This second Lambda in the data migration process can be run by invoking an async operation using the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the cumulus module deployment.
 
 This lambda invokes an asynchronous operation which starts an ECS task to run the `data-migration2` lambda.
 
