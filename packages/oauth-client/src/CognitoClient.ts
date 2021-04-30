@@ -43,4 +43,10 @@ export class CognitoClient extends OAuthClient {
     validateUrl(params.redirectUri);
     this.redirectUri = params.redirectUri;
   }
+
+  // TODO:
+  // GET /oauth/userInfo
+  // POST /authclient/updatePassword
+  // POST /authclient/updateRedirectUri
+  // DELETE /authclient/updateRedirectUri=
 }

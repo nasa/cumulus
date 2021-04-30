@@ -79,7 +79,7 @@ export class OAuthClient {
   /**
    * Get a URL of the Login authorization endpoint
    *
-   * @param {string} [state] - an optional state to pass to Login Client
+   * @param {string} [state] - an optional state to pass to login Client
    * @returns {string} the Login authorization URL
    */
   getAuthorizationUrl(state?: string) {
@@ -109,7 +109,7 @@ export class OAuthClient {
 
   /**
    * Given an authorization code, request an access token and associated
-   * information from the Earthdata Login service.
+   * information from the login service.
    *
    * Returns an object with the following properties:
    *
@@ -143,7 +143,6 @@ export class OAuthClient {
     }
   }
 
-  // TODO make private?
   sendRequest(
     params: {
       loginPath: string,
@@ -180,7 +179,7 @@ export class OAuthClient {
 
   /**
    * Given a refresh token, request an access token and associated information
-   * from the Earthdata Login service.
+   * from the login service.
    *
    * Returns an object with the following properties:
    *
