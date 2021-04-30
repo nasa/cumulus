@@ -20,7 +20,7 @@
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "dependencies": {
-    "@cumulus/db": "8.0.0-alpha.1",
+    "@cumulus/db": "8.1.0-alpha.1",
     "knex": "0.21.13",
     "pg": "^8.3.0"
   }

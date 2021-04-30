@@ -84,8 +84,8 @@ describe('When a bad record is sent on the DLQ', () => {
             Prefix: prefix,
           });
           failedMessageS3Key = listResults[0].Key;
-        } catch (err) {
-          fail(`Did not find expected S3 Object: ${err}`);
+        } catch (error) {
+          fail(`Did not find expected S3 Object: ${error}`);
         }
       }
     });

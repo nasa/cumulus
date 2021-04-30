@@ -17,7 +17,7 @@ const {
   GranulePgModel,
 } = require('@cumulus/db');
 
-const { deleteGranuleAndFiles } = require('../lib/granule-delete');
+const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
