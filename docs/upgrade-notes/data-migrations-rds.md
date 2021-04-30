@@ -57,6 +57,7 @@ In `terraform.tf`, configure your remote state settings by replacing the appropr
 In `terraform.tfvars` replace the appropriate values for the following variables:
 
 - `prefix`
+- `data_persistence_remote_state_config`
 - `permissions_boundary_arn`
 - `lambda_subnet_ids`
 - `vpc_id`
@@ -86,6 +87,17 @@ On success, you will see output like:
 Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
 
+Once the deployment is complete, you can use the AWS Console or CLI to invoke the Lambda and start the data migration:
+
+```bash
+aws lambda invoke --function-name $PREFIX-data-migration1 $OUTFILE
+```
+
+where
+
+- `OUTFILE` is the filepath to store the output from the Lambda.
+- `PREFIX` is the `prefix` value used to deploy data-migration1-tf
+
 ### 4. Deploy Cumulus module
 
 The following variables were added to the Cumulus module
@@ -93,6 +105,8 @@ The following variables were added to the Cumulus module
 - `rds_security_group`
 - `rds_user_access_secret_arn`
 - `rds_connection_heartbeat`
+
+For reference on how to set these values, see our template-deploy repo: <https://github.com/nasa/cumulus-template-deploy/tree/master/cumulus-tf>
 
 Instructions on deploying the Cumulus module can be found [here](./../deployment/README.md).
 
@@ -106,7 +120,7 @@ The `cumulus` module will create resources including the following relevant reso
 Now that Cumulus module is deployed, we can use some newly created resources to migrate granule, execution, and PDR data from DynamoDB to our PostgreSQL database.
 
 This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
-This Lambda invokes an asynchronous operation which starts an ECS task to run the `${PREFIX}-data-migration2` Lambda.
+This Lambda starts an asynchronous operation which runs as an ECS task to run the migration.
 
 To invoke the Lambda and start the data migration, you can use the AWS Console or CLI:
 
@@ -137,7 +151,7 @@ The Lambda will trigger an Async Operation and return an `id` such as:
 
 which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request. Also, if you want to directly observe the progress of the migration as it runs, you can view the Cloudwatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
-Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database, which can cause database outages** and result in data loss. Thus, the parallelism settings for the migration are intentionally set by default to conservative values.
+Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
 
 See the description of payload parameters below for how to configure the parallelism of the migration.
 
