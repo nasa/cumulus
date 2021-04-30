@@ -378,7 +378,7 @@ export const migrateGranulesAndFiles = async (
   const stackName = envUtils.getRequiredEnvVar('stackName', env);
 
   const loggingInterval = granuleMigrationParams.loggingInterval ?? 100;
-  const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 2;
+  const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 10;
   const granulesAndFilesMigrationResult = initializeGranulesAndFilesMigrationResult();
 
   const migrationName = 'granulesAndFiles';
