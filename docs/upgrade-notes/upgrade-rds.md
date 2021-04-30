@@ -117,6 +117,8 @@ The `cumulus` module will create resources including the following relevant reso
 
 ### 5. Run the second data migration
 
+> **Note**: Please read this entire section thoroughly before proceeding to run the second data migration. In particular, pay close attention to the notes about parallelism options in order to achieve desired data migration performance while avoiding database outages and data loss.
+
 Now that Cumulus module is deployed, we can use some newly created resources to migrate granule, execution, and PDR data from DynamoDB to our PostgreSQL database.
 
 This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
