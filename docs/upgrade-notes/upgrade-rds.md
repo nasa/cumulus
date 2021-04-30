@@ -210,7 +210,7 @@ where
 - `OUTFILE` is the filepath to store the output from the Lambda.
 - `PREFIX` is your Cumulus deployment prefix.
 
-> **NOTE**: This will invoke the Lambda synchronously. Depending on your data holdings, the execution time of this Lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation.**
+> **NOTE**: This will invoke the Lambda synchronously. Depending on your data holdings, the execution time of this Lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation as described below.**
 
 #### API invocation
 
