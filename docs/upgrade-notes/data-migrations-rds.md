@@ -92,12 +92,7 @@ The following variables were added to the Cumulus module
 - `rds_user_access_secret_arn`
 - `rds_connection_heartbeat`
 
-Navigate to the cumulus module and re-deploy:
-
-```shell
-cd cumulus-tf
-terraform apply
-```
+Instructions on deploying the Cumulus module can be found [here](./../deployment/README.md).
 
 The `cumulus` module will create resources including the following relevant resources for the data migration:
 
