@@ -174,7 +174,7 @@ test('BasePgModel.delete() correctly deletes records', async (t) => {
   t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId2 }));
 });
 
-test.only('BasePgModel.count() returns valid counts', async (t) => {
+test('BasePgModel.count() returns valid counts', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
 
   await knex(tableName)

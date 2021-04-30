@@ -1,7 +1,8 @@
 ---
-id: queue-post-to-cmr
+id: version-v8.1.0-queue-post-to-cmr
 title: Queue PostToCmr
 hide_title: false
+original_id: queue-post-to-cmr
 ---
 
 In this document, we walktrough handling CMR errors in workflows by queueing PostToCmr. We assume that the user already has an ingest workflow setup.

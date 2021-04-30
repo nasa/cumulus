@@ -250,6 +250,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `executionMigrationParams.parallelScanSegments`: How many segments to divide your executions DynamoDB table into for parallel scanning
       - `executionMigrationParams.parallelScanLimit`: The maximum number of execution records to evaluate for each parallel scanning segment of the DynamoDB table
       - `executionMigrationParams.writeConcurrency`: The maximum number of concurrent execution writes to perform to the PostgreSQL database across all DynamoDB segments
+  - **CUMULUS-2468** - Added `@cumulus/aws-client/DynamoDb.parallelScan` helper to perform [parallel scanning on DynamoDb tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
   - **CUMULUS-2507**
     - Updated granule record write logic to set granule status to `failed` in both Postgres and DynamoDB if any/all of its files fail to write to the database.
 
@@ -259,6 +260,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2455**
     - `@cumulus/ingest/moveGranuleFiles`
 
+## [v8.1.0] 2021-04-29
+
 ### Added
 
 - **CUMULUS-2348**
@@ -267,7 +270,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `@cumulus/api-client.granules.getGranule` function takes a `query` parameter which can be used to
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
-- **CUMULUS-2468** - Added `@cumulus/aws-client/DynamoDb.parallelScan` helper to perform [parallel scanning on DynamoDb tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
+- **CUMULUS-2469**
+  - Added `tf-modules/cumulus_distribution` module to standup a skeleton distribution api
 
 ## [v8.0.0] 2021-04-08
 
@@ -4273,7 +4277,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v8.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v8.1.0...HEAD
+[v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
 [v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
 [v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
 [v7.1.0]: https://github.com/nasa/cumulus/compare/v7.0.0...v7.1.0
