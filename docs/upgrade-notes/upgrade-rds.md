@@ -151,6 +151,11 @@ The Lambda will trigger an Async Operation and return an `id` such as:
 
 which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
+Also, each run of these data migration will write a timestamped log of any errors to the following keys in the configured `system_bucket` for your deployment:
+
+- `<prefix>-data-migration2-execution-errors-${timestamp}.json`
+- `<prefix>-data-migration2-granulesAndFiles-errors-${timestamp}.json`
+
 > **Please note:** Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
 
 #### postgres-migration-async-operation payload parameters
@@ -184,6 +189,8 @@ This tool can be run in the following two ways:
 
 - Through direct Lambda invocation
 - Through API invocation
+
+> **Note:** If the migration validation tool reveals discrepancies between your DynamoDB and PostgreSQL data, you can [re-run the second data migration as described in step 5](#5-run-the-second-data-migration) to correct/
 
 #### Direct Lambda invocation
 
