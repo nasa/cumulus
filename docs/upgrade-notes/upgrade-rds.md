@@ -149,7 +149,7 @@ The Lambda will trigger an Async Operation and return an `id` such as:
 "description":"Data Migration 2 Lambda ECS Run","operationType":"Data Migration"}
 ```
 
-which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request. Also, if you want to directly observe the progress of the migration as it runs, you can view the Cloudwatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
 
