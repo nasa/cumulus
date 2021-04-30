@@ -31,7 +31,7 @@ test('getAsyncOperation calls the callback with the expected object and returns 
   t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
 });
 
-test.only('listAsyncOperations calls the callback with the expected object and returns the parsed response', async (t) => {
+test('listAsyncOperations calls the callback with the expected object and returns the parsed response', async (t) => {
   const prefix = 'unitTestStack';
   const query = { fake: 'query' };
 
