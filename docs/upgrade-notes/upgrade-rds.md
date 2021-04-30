@@ -192,7 +192,7 @@ This tool can be run in the following two ways:
 - Through direct Lambda invocation
 - Through API invocation
 
-> **Note:** If the migration validation tool reveals discrepancies between your DynamoDB and PostgreSQL data, you can [re-run the second data migration as described in step 5](#5-run-the-second-data-migration) to correct/
+> **Note:** If the migration validation tool reveals discrepancies between your DynamoDB and PostgreSQL data, you can [re-run the second data migration as described in step 5](#5-run-the-second-data-migration) to correct your data or to add missing data.
 
 #### Direct Lambda invocation
 
