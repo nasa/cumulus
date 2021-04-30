@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:27"
+  default = "cumuluss/async-operation:32"
 }
 
 variable "cmr_client_id" {
@@ -35,6 +35,16 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
   description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
   type        = string
   default     = null
+}
+variable "rds_security_group" {
+  description = "RDS Security Group used for access to RDS cluster"
+  type        = string
+  default     = null
+}
+
+variable "rds_user_access_secret_arn" {
+  description = "RDS User Database Login Credential Secret ARN"
+  type        = string
 }
 
 variable "deploy_to_ngap" {
@@ -434,6 +444,12 @@ variable "private_archive_api_gateway" {
   description = "Whether to deploy the archive API as a private API gateway"
   type        = bool
   default     = true
+}
+
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type        = bool
+  default     = false
 }
 
 variable "saml_entity_id" {

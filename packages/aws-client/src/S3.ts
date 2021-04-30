@@ -579,6 +579,16 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
   }
 );
 
+/**
+* Delete a list of buckets and all of their objects from S3
+*
+* @param {Array} buckets - list of bucket names
+* @returns {Promise} the promised result of `S3.deleteBucket`
+**/
+export const deleteS3Buckets = async (
+  buckets: Array<string>
+): Promise<any> => Promise.all(buckets.map(recursivelyDeleteS3Bucket));
+
 type FileInfo = {
   filename: string,
   key: string,
@@ -814,6 +824,16 @@ export const getFileBucketAndKey = (pathParams: string): [string, string] => {
  */
 export const createBucket = (Bucket: string) =>
   s3().createBucket({ Bucket }).promise();
+
+/**
+ * Create multiple S3 buckets
+ *
+ * @param {Array<string>} buckets - the names of the S3 buckets to create
+ * @returns {Promise}
+ */
+export const createS3Buckets = async (
+  buckets: Array<string>
+): Promise<any> => Promise.all(buckets.map(createBucket));
 
 const createMultipartUpload = async (
   params: {

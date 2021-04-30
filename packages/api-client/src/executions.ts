@@ -44,7 +44,10 @@ export const getExecution = async (params: {
  */
 export const getExecutions = async (params: {
   prefix: string,
-  query?: { [key: string]: string },
+  query?: {
+    fields?: string[] | string
+    [key: string]: string | string[] | undefined
+  },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;

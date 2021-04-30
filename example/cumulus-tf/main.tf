@@ -32,6 +32,8 @@ locals {
   elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
   elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
+  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
+  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 }
 
 data "aws_caller_identity" "current" {}
@@ -69,7 +71,12 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  async_operation_image           = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
+  rds_security_group         = local.rds_security_group
+  rds_user_access_secret_arn = local.rds_credentials_secret_arn
+  rds_connection_heartbeat   = var.rds_connection_heartbeat
+
+  async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
+
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? var.lambda_subnet_ids : var.ecs_cluster_instance_subnet_ids
   ecs_cluster_min_size            = 2
@@ -136,7 +143,7 @@ module "cumulus" {
   elasticsearch_security_group_id = local.elasticsearch_security_group_id
   es_index_shards                 = var.es_index_shards
 
-  dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
+  dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
 
   # Archive API settings
   token_secret = var.token_secret

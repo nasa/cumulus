@@ -1,4 +1,5 @@
 prefix = "jtran-int-tf"
+key_name = "jtran"
 
 cmr_oauth_provider = "launchpad"
 
