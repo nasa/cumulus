@@ -22,7 +22,7 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   sed -i "s/source = \"..\/..\/tf-modules\/cumulus/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus/g" *.tf
 
   ## [MHS, 04/29/2021] fix cumulus_distribution package not released separately.
-  sed "s/source[ ]*= \"..\/..\/tf-modules\/cumulus_distribution\"/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus_distribution\""/ test.tf
+  sed -i "s/source[ ]*= \"..\/..\/tf-modules\/cumulus_distribution\"/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus_distribution\"/g" *.tf
 
 
   ## Update data-persistence
