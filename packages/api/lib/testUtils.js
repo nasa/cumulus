@@ -3,6 +3,7 @@
 const fs = require('fs');
 const moment = require('moment');
 const path = require('path');
+const merge = require('lodash/merge');
 
 const { randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
@@ -104,6 +105,8 @@ function fakeRuleFactoryV2(params = {}) {
       type: 'onetime',
     },
     state: 'DISABLED',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 
   return { ...rule, ...params };
@@ -175,6 +178,7 @@ function fakeExecutionFactoryV2(params = {}) {
     originalPayload: { testInput: 'originalPayloadValue' },
     finalPayload: { testOutput: 'finalPayloadValue' },
     tasks: {},
+    cumulusVersion: '1.0.0',
   };
 
   return { ...execution, ...params };
@@ -246,6 +250,8 @@ function fakeProviderFactory(options = {}) {
     protocol: 'http',
     host: randomId('host'),
     port: 80,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     ...options,
   };
 }
@@ -276,6 +282,28 @@ function fakeAccessTokenFactory(params = {}) {
     expirationTime: moment().unix() + 60 * 60,
     ...params,
   };
+}
+
+function fakeCumulusMessageFactory(params = {}) {
+  return merge({
+    cumulus_meta: {
+      workflow_start_time: 122,
+      cumulus_version: '7.1.0',
+      state_machine: randomId('arn:aws:states:us-east-1:1234:stateMachine:'),
+      execution_name: randomId('cumulus-execution-name'),
+    },
+    meta: {
+      status: 'completed',
+      collection: {
+        name: randomId('MOD', 3),
+        version: '006',
+      },
+      provider: 'fake-provider',
+    },
+    payload: {
+      granules: [fakeGranuleFactoryV2()],
+    },
+  }, params);
 }
 
 const setAuthorizedOAuthUsers = (users) =>
@@ -373,6 +401,7 @@ module.exports = {
   fakePdrFactory,
   fakePdrFactoryV2,
   fakeCollectionFactory,
+  fakeCumulusMessageFactory,
   fakeExecutionFactory,
   fakeExecutionFactoryV2,
   fakeAsyncOperationFactory,

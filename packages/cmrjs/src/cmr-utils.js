@@ -80,18 +80,20 @@ function isCMRFile(fileobject) {
  *
  * @param {Object} granule - granule object containing CMR files within its
  *    `files` property
+ * @param {Array<Object>} granule.files - array of files for a granule
+ * @param {string} granule.granuleId - granule ID
  * @returns {Array<Object>} an array of CMR file objects, each with properties
  *    `granuleId`, `filename`, and possibly `etag` (if present on input)
  */
-function granuleToCmrFileObject(granule) {
-  return granule.files
+function granuleToCmrFileObject({ granuleId, files = [] }) {
+  return files
     .filter(isCMRFile)
     .map((file) => ({
       // Include etag only if file has one
       ...pick(file, 'etag'),
       // handle both new-style and old-style files model
       filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId: granule.granuleId,
+      granuleId,
     }));
 }
 
@@ -488,7 +490,7 @@ function onlineAccessURLsToRemove(files, bucketTypes) {
 }
 
 /**
- * Returns a list of posible metadata file objects based on file.name extension.
+ * Returns a list of possible metadata file objects based on file.name extension.
  *
  * @param {Array<Object>} files - list of file objects that might be metadata files.
  * @param {string} files.name - file name
@@ -698,7 +700,7 @@ async function uploadEcho10CMRFile(xml, cmrFile) {
 }
 /**
  * Method takes an array of URL objects to update, an 'origin' array of original URLs
- * and a list of URLs to remove and returns an array of merged URL objectgs
+ * and a list of URLs to remove and returns an array of merged URL objects
  *
  * @param  {Array<Object>} URLlist - array of URL objects
  * @param  {Array<Object>} originalURLlist - array of URL objects
@@ -976,6 +978,7 @@ module.exports = {
   constructOnlineAccessUrls,
   generateEcho10XMLString,
   generateFileUrl,
+  granuleToCmrFileObject,
   getCmrSettings,
   getFileDescription,
   getFilename,

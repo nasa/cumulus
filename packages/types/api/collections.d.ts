@@ -23,8 +23,11 @@ export interface PartialCollectionRecord {
   process?: string,
   sampleFileName?: string,
   tags?: string[],
+  meta?: Object,
   url_path?: string,
   version?: string,
+  createdAt?: number,
+  updatedAt?: number
 }
 
 export interface NewCollectionRecord extends PartialCollectionRecord {

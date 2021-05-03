@@ -1,29 +1,5 @@
 # Required
 
-variable "async_operation_image_version" {
-  description = "docker image version to use for Cumulus async operations tasks"
-  type = string
-  default = "27"
-}
-
-variable "cumulus_process_activity_version" {
-    description = "docker image version to use for python processing service"
-    type = string
-    default = "1"
-}
-
-variable "ecs_task_image_version" {
-  description = "docker image version to use for Cumulus hello world task"
-    type = string
-    default = "1.7.0"
-}
-
-variable "cumulus_test_ingest_image_version" {
-    description = "docker image version to use for python test ingest processing service"
-    type = string
-    default = "12"
-}
-
 variable "cmr_client_id" {
   type = string
 }
@@ -296,6 +272,35 @@ variable "pdr_node_name_provider_bucket" {
   default = "cumulus-sandbox-pdr-node-name-provider"
 }
 
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type        = bool
+  default     = false
+}
+
+variable "async_operation_image_version" {
+  description = "docker image version to use for Cumulus async operations tasks"
+  type = string
+  default = "32"
+}
+
+variable "cumulus_process_activity_version" {
+    description = "docker image version to use for python processing service"
+    type = string
+    default = "1"
+}
+
+variable "ecs_task_image_version" {
+  description = "docker image version to use for Cumulus hello world task"
+    type = string
+    default = "1.7.0"
+}
+
+variable "cumulus_test_ingest_image_version" {
+    description = "docker image version to use for python test ingest processing service"
+    type = string
+    default = "12"
+}
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
   type = list(string)
@@ -381,3 +386,8 @@ variable "default_tags" {
   }
 }
 
+variable "optional_dynamo_tables" {
+  type = map(object({ name = string, arn = string }))
+  default = {}
+  description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
+}

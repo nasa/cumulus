@@ -4,8 +4,13 @@ const pMap = require('p-map');
 
 const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
 
+const { deconstructCollectionId } = require('../lib/utils');
 const GranuleModel = require('../models/granules');
+const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
+const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
+
 const SCROLL_SIZE = 500; // default size in Kibana
 
 /**
@@ -102,6 +107,49 @@ function applyWorkflowToGranules({
 }
 
 /**
+ * Fetch a Postgres Granule by granule and collection IDs
+ *
+ * @param {Knex } knex - DB client
+ * @param {string} granuleId - Granule ID
+ * @param {string} collectionId - Collection ID in "name___version" format
+ * @returns {Promise<PostgresGranuleRecord|undefined>}
+ *   The fetched Postgres Granule, if any exists
+ * @private
+ */
+async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
+  const granulePgModel = new GranulePgModel();
+  const collectionPgModel = new CollectionPgModel();
+
+  let pgGranule;
+
+  try {
+    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+
+    pgGranule = granulePgModel.get(
+      knex,
+      {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    );
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  return pgGranule;
+}
+
+// FUTURE: the Dynamo Granule is currently the primary record driving the
+// "unpublish from CMR" logic.
+// This should be switched to pgGranule once the postgres
+// reads are implemented.
+
+/**
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
  * ES using the provided query and index.
  *
@@ -112,24 +160,28 @@ function applyWorkflowToGranules({
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @param {Function} [unpublishGranuleFunc] - Optional function to delete the
+ * granule from CMR. Useful for testing.
  * @returns {Promise}
  */
-async function bulkGranuleDelete(payload) {
+async function bulkGranuleDelete(
+  payload,
+  unpublishGranuleFunc = unpublishGranule
+) {
+  const deletedGranules = [];
+  const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
-  const deletedGranules = [];
+  const knex = await getKnexClient({ env: process.env });
+
   await pMap(
     granuleIds,
     async (granuleId) => {
+      let dynamoGranule;
+      let pgGranule;
+
       try {
-        const granule = await granuleModel.getRecord({ granuleId });
-        if (granule.published && forceRemoveFromCmr) {
-          await granuleModel.unpublishAndDeleteGranule(granule);
-        } else {
-          await granuleModel.delete(granule);
-        }
-        deletedGranules.push(granuleId);
+        dynamoGranule = await granuleModel.getRecord({ granuleId });
       } catch (error) {
         if (error instanceof RecordDoesNotExist) {
           log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
@@ -137,6 +189,20 @@ async function bulkGranuleDelete(payload) {
         }
         throw error;
       }
+
+      if (dynamoGranule && dynamoGranule.published && forceRemoveFromCmr) {
+        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc(knex, dynamoGranule));
+      }
+
+      await deleteGranuleAndFiles({
+        knex,
+        dynamoGranule,
+        pgGranule: pgGranule || await _getPgGranuleByCollection(
+          knex, granuleId, dynamoGranule.collectionId
+        ),
+      });
+
+      deletedGranules.push(granuleId);
     },
     {
       concurrency: 10, // is this necessary?
@@ -215,6 +281,7 @@ async function handler(event) {
 
 module.exports = {
   applyWorkflowToGranules,
+  bulkGranuleDelete,
   getGranuleIdsForPayload,
   handler,
 };
