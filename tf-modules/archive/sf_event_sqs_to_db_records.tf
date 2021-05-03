@@ -13,7 +13,11 @@ resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
 
 data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   statement {
-    actions = ["dynamodb:UpdateItem"]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem"
+    ]
     resources = [
       var.dynamo_tables.executions.arn,
       var.dynamo_tables.granules.arn,
