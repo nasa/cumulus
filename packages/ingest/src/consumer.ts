@@ -42,9 +42,7 @@ export class Consumer {
   ): Promise<0 | 1> {
     try {
       await fn(this.queueUrl, message);
-      if (this.deleteProcessedMessage) {
-        await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
-      }
+      if (this.deleteProcessedMessage) await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       return 1;
     } catch (error) {
       log.error(error);

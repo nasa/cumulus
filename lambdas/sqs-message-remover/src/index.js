@@ -24,7 +24,6 @@ const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
  */
 async function deleteArchivedMessage(messageId) {
   const bucket = process.env.system_bucket;
-  logger.info(`Attempting to delete archived message with ID ${messageId} from bucket ${bucket}.`);
   const key = messageId;
   if (bucket && key) {
     try {
