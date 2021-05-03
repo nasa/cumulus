@@ -257,6 +257,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2468** - Added `@cumulus/aws-client/DynamoDb.parallelScan` helper to perform [parallel scanning on DynamoDb tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
   - **CUMULUS-2507**
     - Updated granule record write logic to set granule status to `failed` in both Postgres and DynamoDB if any/all of its files fail to write to the database.
+- **CUMULUS-2371**
+  - Added `archiveMessage` to `sqs-message-consumer` which archives all incoming SQS messages to S3.
+  - Added `deleteArchivedMessage` to `sqs-message-remover` which deletes archived SQS message from S3 once it has been processed.
 
 ### Deprecated
 
