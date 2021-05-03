@@ -1,7 +1,6 @@
 const cryptoRandomString = require('crypto-random-string');
 const nock = require('nock');
 const test = require('ava');
-const { URL, URLSearchParams } = require('url');
 
 const { EarthdataLoginClient, EarthdataLoginError } = require('../dist/src');
 
