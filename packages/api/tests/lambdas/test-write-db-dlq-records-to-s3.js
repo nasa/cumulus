@@ -6,7 +6,7 @@ const test = require('ava');
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { handler } = require('../../lambdas/write-db-dlq-records-to-s3.js');
+const { determineExecutionName, handler } = require('../../lambdas/write-db-dlq-records-to-s3.js');
 
 test.before(async (t) => {
   t.context.bucket = randomString();
@@ -102,4 +102,18 @@ test.serial('write-db-dlq-records-to-s3 throws error if system bucket is not def
     handler({}),
     { message: 'System bucket env var is required.' }
   );
+});
+
+test('determineExecutionName returns execution name if it exists in cumulus_meta', (t) => {
+  const executionName = 'someExecutionName';
+  t.is(determineExecutionName({
+    cumulus_meta: {
+      execution_name: executionName,
+    },
+  }),
+  executionName);
+});
+
+test('determineExecutionName returns "unknown" if getExecutionName throws error', (t) => {
+  t.is(determineExecutionName({}), 'unknown');
 });

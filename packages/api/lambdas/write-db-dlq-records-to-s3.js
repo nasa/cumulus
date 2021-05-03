@@ -3,9 +3,19 @@
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 
+const log = require('@cumulus/common/log');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
+
+function determineExecutionName(cumulusMessageObject) {
+  try {
+    return getMessageExecutionName(cumulusMessageObject);
+  } catch (error) {
+    log.error('Could not find execution name in cumulus_meta:', cumulusMessageObject.cumulus_meta);
+    return 'unknown';
+  }
+}
 
 async function handler(event) {
   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
@@ -13,7 +23,7 @@ async function handler(event) {
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     const cumulusMessageObject = parseSQSMessageBody(sqsMessage);
-    const executionName = getMessageExecutionName(cumulusMessageObject);
+    const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
     await s3PutObject({
@@ -25,5 +35,6 @@ async function handler(event) {
 }
 
 module.exports = {
+  determineExecutionName,
   handler,
 };
