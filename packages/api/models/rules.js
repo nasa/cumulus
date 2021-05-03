@@ -2,16 +2,16 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
-const merge = require('lodash/merge');
 const set = require('lodash/set');
+const merge = require('lodash/merge');
 
-const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
-const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const s3Utils = require('@cumulus/aws-client/S3');
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
+const { invoke } = require('@cumulus/aws-client/Lambda');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
@@ -21,6 +21,12 @@ const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/e
 class Rule extends Manager {
   constructor() {
     super({
+      tableName: process.env.RulesTable,
+      tableHash: { name: 'name', type: 'S' },
+      schema: ruleSchema,
+    });
+
+    this.dynamoDbClient = new Manager({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
       schema: ruleSchema,
@@ -79,6 +85,15 @@ class Rule extends Manager {
       break;
     }
     return super.delete({ name: item.name });
+  }
+
+  async getAllRules() {
+    return this.dynamoDbClient.scan({
+      names: {
+        '#name': 'name',
+      },
+    },
+    '#name').then((result) => result.Items);
   }
 
   /**
@@ -146,8 +161,7 @@ class Rule extends Manager {
 
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
-    return super.update({ name: original.name }, updatedRuleItem,
-      fieldsToDelete);
+    return super.update({ name: original.name }, updatedRuleItem, fieldsToDelete);
   }
 
   async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
@@ -243,8 +257,8 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
-    newRuleItem.createdAt = Date.now();
-    newRuleItem.updatedAt = Date.now();
+    newRuleItem.createdAt = item.createdAt || Date.now();
+    newRuleItem.updatedAt = item.updatedAt || Date.now();
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
@@ -584,6 +598,15 @@ class Rule extends Manager {
       );
     }
     return rules;
+  }
+
+  /**
+   * Returns `true` if the rule with the specified name exists, false otherwise
+   * @param {string} name - rule name
+   * @returns {boolean} `true` if the rule with the specified name exists, false otherwise
+   */
+  async exists(name) {
+    return super.exists({ name });
   }
 }
 

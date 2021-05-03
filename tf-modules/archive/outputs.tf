@@ -6,6 +6,10 @@ output "api_redirect_uri" {
   value = local.api_redirect_uri
 }
 
+output "async_operation_task_definition_arn" {
+  value = aws_ecs_task_definition.async_operation.arn
+}
+
 output "sf_event_sqs_to_db_records_sqs_queue_url" {
   value = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.id
 }
@@ -16,6 +20,10 @@ output "sf_event_sqs_to_db_records_sqs_queue_arn" {
 
 output "provider_kms_key_arn" {
   value = aws_kms_key.provider_kms_key.arn
+}
+
+output "provider_kms_key_id" {
+  value = aws_kms_key.provider_kms_key.id
 }
 
 output "report_collections_sns_topic_arn" {

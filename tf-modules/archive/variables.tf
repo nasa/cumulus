@@ -32,6 +32,14 @@ variable "cmr_username" {
   type = string
 }
 
+variable "rds_security_group" {
+  type = string
+}
+
+variable "rds_user_access_secret_arn" {
+  type = string
+}
+
 variable "deploy_to_ngap" {
   description = "Whether or not this instance of Cumulus is deployed to an NGAP environment"
   type        = bool
@@ -93,6 +101,14 @@ variable "message_consumer_function_arn" {
 }
 
 variable "permissions_boundary_arn" {
+  type = string
+}
+
+variable "postgres_migration_count_tool_function_arn" {
+  type = string
+}
+
+variable "postgres_migration_async_operation_function_arn" {
   type = string
 }
 
@@ -261,6 +277,12 @@ variable "oauth_user_group" {
 variable "private_archive_api_gateway" {
   type = bool
   default = true
+}
+
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
+  type    = bool
+  default = false
 }
 
 variable "saml_entity_id" {

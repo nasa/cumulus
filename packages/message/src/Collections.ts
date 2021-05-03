@@ -1,6 +1,5 @@
 'use strict';
 
-import get from 'lodash/get';
 import { Message } from '@cumulus/types';
 
 /**
@@ -12,6 +11,11 @@ import { Message } from '@cumulus/types';
  * @example
  * const Collections = require('@cumulus/message/Collections');
  */
+
+type CollectionInfo = {
+  name: string
+  version: string
+};
 
 /**
  * Returns the collection ID.
@@ -26,6 +30,55 @@ export const constructCollectionId = (name: string, version: string) =>
   `${name}___${version}`;
 
 /**
+ * Get collection name from execution message.
+ *
+ * @param {Message.CumulusMessage} message - An execution message
+ * @returns {string | undefined} - Collection name or undefined
+ * @private
+ *
+ * @alias module:Collections
+ */
+const getCollectionNameFromMessage = (
+  message: Message.CumulusMessage
+): string | undefined => message.meta?.collection?.name;
+
+/**
+ * Get collection version from execution message.
+ *
+ * @param {Message.CumulusMessage} message - An execution message
+ * @returns {string | undefined} - Collection version or undefined
+ * @private
+ *
+ * @alias module:Collections
+ */
+const getCollectionVersionFromMessage = (
+  message: Message.CumulusMessage
+): string | undefined => message.meta?.collection?.version;
+
+/**
+ * Get collection name and version from execution message.
+ *
+ * @param {Message.CumulusMessage} message - An execution message
+ * @returns {CollectionInfo | undefined}
+ *   Object with collection name and version or undefined
+ *
+ * @alias module:Collections
+ */
+export const getCollectionNameAndVersionFromMessage = (
+  message: Message.CumulusMessage
+): CollectionInfo | undefined => {
+  const name = getCollectionNameFromMessage(message);
+  const version = getCollectionVersionFromMessage(message);
+  if (!name || !version) {
+    return undefined;
+  }
+  return {
+    name,
+    version,
+  };
+};
+
+/**
  * Get collection ID from execution message.
  *
  * @param {Message.CumulusMessage} message - An execution message
@@ -37,9 +90,9 @@ export const constructCollectionId = (name: string, version: string) =>
  */
 export const getCollectionIdFromMessage = (
   message: Message.CumulusMessage
-) => {
-  const collectionName = get(message, 'meta.collection.name');
-  const collectionVersion = get(message, 'meta.collection.version');
+): string | undefined => {
+  const collectionName = getCollectionNameFromMessage(message);
+  const collectionVersion = getCollectionVersionFromMessage(message);
   if (!collectionName || !collectionVersion) {
     return undefined;
   }

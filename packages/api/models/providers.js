@@ -43,6 +43,12 @@ class Provider extends Manager {
       schema: schemas.provider,
     });
 
+    this.dynamoDbClient = new Manager({
+      tableName: process.env.ProvidersTable,
+      tableHash: { name: 'id', type: 'S' },
+      schema: schemas.provider,
+    });
+
     this.removeAdditional = 'all';
   }
 
@@ -103,6 +109,15 @@ class Provider extends Manager {
     }
 
     await super.delete({ id });
+  }
+
+  async getAllProviders() {
+    return this.dynamoDbClient.scan({
+      names: {
+        '#id': 'id',
+      },
+    },
+    '#id').then((result) => result.Items);
   }
 
   async deleteProviders() {

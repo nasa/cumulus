@@ -101,11 +101,15 @@ export const getProvider = (params: {
  */
 export const getProviders = (params: {
   prefix: string,
-  queryStringParameters?: {[key: string]: string},
+  queryStringParameters?: {
+    fields?: string[],
+    [key: string]: string | string[] | undefined
+  }
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, queryStringParameters, callback = invokeApi } = params;
 
+  // TODO consider making this more consistent with other api-client methods
   return callback({
     prefix,
     payload: {
