@@ -1,10 +1,34 @@
+import { HTTPError, Response } from 'got';
+
 import { URL } from 'url';
 
 import { OAuthClient } from './OAuthClient';
+import { CognitoError } from './CognitoError';
+
+type CognitoErrorResponse = Response<{error: string}>;
 
 const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new
   new URL(urlString);
+};
+
+const isHttpForbiddenError = (error: unknown) =>
+  error instanceof HTTPError && error.response.statusCode === 403;
+
+const httpErrorToCognitoError = (httpError: HTTPError) => {
+  const response = <CognitoErrorResponse>httpError.response;
+
+  switch (response.body.error) {
+    case 'invalid_token':
+      return new CognitoError('InvalidToken', 'Invalid token');
+    case 'token_expired':
+      return new CognitoError('TokenExpired', 'The token has expired');
+    default:
+      return new CognitoError(
+        'UnexpectedResponse',
+        `Unexpected response: ${httpError.response.body}`
+      );
+  }
 };
 
 /**
@@ -44,8 +68,26 @@ export class CognitoClient extends OAuthClient {
     this.redirectUri = params.redirectUri;
   }
 
-  // TODO:
   // GET /oauth/userInfo
+  async getUserInfo(accessToken: string) {
+    if (!accessToken) throw new TypeError('accessToken is required');
+
+    try {
+      const response = await super.getRequest({
+        path: 'oauth/userInfo',
+        accessToken,
+      });
+
+      return response.body;
+    } catch (error) {
+      if (isHttpForbiddenError(error)) {
+        throw httpErrorToCognitoError(error);
+      }
+
+      throw error;
+    }
+  }
+
   // POST /authclient/updatePassword
   // POST /authclient/updateRedirectUri
   // DELETE /authclient/updateRedirectUri=

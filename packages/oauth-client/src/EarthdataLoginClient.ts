@@ -89,7 +89,7 @@ export class EarthdataLoginClient extends OAuthClient {
     const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
 
     try {
-      const response = <VerifyTokenResponse>(await super.sendRequest({
+      const response = <VerifyTokenResponse>(await super.postRequest({
         loginPath: 'oauth/tokens/user',
         headers,
         form: {

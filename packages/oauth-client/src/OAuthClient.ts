@@ -97,7 +97,7 @@ export class OAuthClient {
   }
 
   private requestAccessToken(authorizationCode: string) {
-    return <CancelableRequest<AccessTokenResponse>>(this.sendRequest({
+    return <CancelableRequest<AccessTokenResponse>>(this.postRequest({
       loginPath: 'oauth/token',
       form: {
         grant_type: 'authorization_code',
@@ -143,7 +143,7 @@ export class OAuthClient {
     }
   }
 
-  sendRequest(
+  postRequest(
     params: {
       loginPath: string,
       form: {[key: string]: any},
@@ -167,8 +167,27 @@ export class OAuthClient {
     );
   }
 
+  getRequest(
+    params: {
+      path: string,
+      accessToken: string,
+    }
+  ) {
+    return got.get(
+      params.path,
+      {
+        prefixUrl: this.loginUrl,
+        headers: {
+          Authorization: `Bearer ${params.accessToken}`,
+        },
+        responseType: 'json',
+      }
+
+    );
+  }
+
   private requestRefreshAccessToken(refreshToken: string) {
-    return <CancelableRequest<AccessTokenResponse>>(this.sendRequest({
+    return <CancelableRequest<AccessTokenResponse>>(this.postRequest({
       loginPath: 'oauth/token',
       form: {
         grant_type: 'refresh_token',
