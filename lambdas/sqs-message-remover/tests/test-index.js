@@ -185,29 +185,20 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
   assertInvalidSqsQueueUpdateEvent(t, output);
 });
 
-test.serial('sqsMessageRemover lambda removes message from queue and S3 when workflow succeeded', async (t) => {
+test('sqsMessageRemover lambda removes message from queue when workflow succeeded', async (t) => {
   process.env.system_bucket = randomString();
-  const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);
 
   const sqsQueues = await createSqsQueues(randomString());
-  const sqsMessage = await awsServices.sqs().sendMessage({
-    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify(message),
+  await awsServices.sqs().sendMessage({
+    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() }),
   }).promise();
-  t.truthy(item.ETag);
-
-  await s3PutObject({
-    Bucket: process.env.system_bucket,
-    Key: sqsMessage.MessageId,
-    Body: JSON.stringify(sqsMessage.Body),
-  });
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
   const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
   const { MessageId: messageId, ReceiptHandle: receiptHandle } = receiveMessageResponse[0];
 
   const eventSource = createEventSource({ messageId, receiptHandle, queueUrl: sqsQueues.queueUrl });
-
   await updateSqsQueue(
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
@@ -219,12 +210,8 @@ test.serial('sqsMessageRemover lambda removes message from queue and S3 when wor
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
-  t.teardown(async () => {
-    await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
-    await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  });
+  await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
 });
-
 test('sqsMessageRemover lambda updates message visibilityTimeout when workflow failed', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
@@ -289,4 +276,37 @@ test.serial('deleteArchivedMessages deletes archived message in S3', async (t) =
   t.teardown(async () => {
     await recursivelyDeleteS3Bucket(process.env.system_bucket);
   });
+});
+
+test.serial('sqsMessageRemover lambda removes message from S3 when workflow succeeded', async (t) => {
+  process.env.system_bucket = randomString();
+  await createBucket(process.env.system_bucket);
+
+  const sqsQueues = await createSqsQueues(randomString());
+  const msgBody = JSON.stringify({ testdata: randomString() });
+
+  await awsServices.sqs().sendMessage({
+    QueueUrl: sqsQueues.queueUrl, MessageBody: msgBody,
+  }).promise();
+  const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
+  const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
+  const { MessageId: messageId, ReceiptHandle: receiptHandle } = receiveMessageResponse[0];
+
+  const eventSource = createEventSource({ messageId, receiptHandle, queueUrl: sqsQueues.queueUrl });
+  const eventMessage = createCloudwatchEventMessage({
+    status: 'SUCCEEDED',
+    eventSource,
+  });
+
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: eventSource.messageId,
+    Body: msgBody,
+  });
+
+  await updateSqsQueue(eventMessage);
+  await t.throwsAsync(s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: eventSource.messageId,
+  }).promise(), { code: 'NoSuchKey' });
 });

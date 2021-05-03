@@ -231,7 +231,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   });
 });
 
-test.serial.only('archiveMessage archives all SQS messages', async (t) => {
+test.serial('archiveMessage archives all SQS messages', async (t) => {
   const { rules, queues } = await createRulesAndQueues();
   const body = { testdata: randomString() };
   const message = await SQS.sendSQSMessage(
