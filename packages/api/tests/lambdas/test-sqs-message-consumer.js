@@ -6,7 +6,7 @@ const test = require('ava');
 const range = require('lodash/range');
 
 const SQS = require('@cumulus/aws-client/SQS');
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, sqs } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   putJsonS3Object,
@@ -231,29 +231,6 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   });
 });
 
-test.serial('archiveMessage archives all SQS messages', async (t) => {
-  const { rules, queues } = await createRulesAndQueues();
-  const body = { testdata: randomString() };
-  const message = await SQS.sendSQSMessage(
-    queues[0].queueUrl,
-    body
-  );
-  const key = message.MessageId;
-
-  await handler(event);
-
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  }).promise();
-  const messageBody = JSON.parse(JSON.parse(item.Body.toString()));
-  t.deepEqual(messageBody, body);
-
-  t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
-  });
-});
-
 test.serial('messages are retried the correct number of times based on the rule configuration', async (t) => {
   const { queueMessageStub } = t.context;
   // set visibilityTimeout to 5s so the message is available 5s after retrieval
@@ -384,5 +361,61 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
 
   t.teardown(async () => {
     await cleanupRulesAndQueues(rules, [queue]);
+  });
+});
+
+test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
+  const { rules, queues } = await createRulesAndQueues();
+  const message = { testdata: randomString() };
+
+  const firstMessage = await SQS.sendSQSMessage(
+    queues[0].queueUrl,
+    message
+  );
+
+  const secondMessage = await SQS.sendSQSMessage(
+    queues[1].queueUrl,
+    { testdata: randomString() }
+  );
+
+  await handler(event);
+
+  const firstItem = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: firstMessage.MessageId,
+  }).promise();
+  const messageBody = JSON.parse(JSON.parse(firstItem.Body.toString()));
+  t.deepEqual(messageBody, message);
+
+  await t.throwsAsync(s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: secondMessage.MessageId,
+  }).promise(), { code: 'NoSuchKey' });
+
+  t.teardown(async () => {
+    await cleanupRulesAndQueues(rules, queues);
+  });
+});
+
+test.serial('archiveMessage archives all SQS messages', async (t) => {
+  const { rules, queues } = await createRulesAndQueues();
+  const body = { testdata: randomString() };
+  const message = await SQS.sendSQSMessage(
+    queues[0].queueUrl,
+    body
+  );
+  const key = message.MessageId;
+
+  await handler(event);
+
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
+  const messageBody = JSON.parse(JSON.parse(item.Body.toString()));
+  t.deepEqual(messageBody, body);
+
+  t.teardown(async () => {
+    await cleanupRulesAndQueues(rules, queues);
   });
 });
