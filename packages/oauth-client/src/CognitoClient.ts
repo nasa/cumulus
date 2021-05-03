@@ -19,16 +19,13 @@ const isHttpUnauthorizedError = (error: unknown) =>
 const httpErrorToCognitoError = (httpError: HTTPError) => {
   const response = <CognitoErrorResponse>httpError.response;
 
-  // TODO don't need switch if only one case
-  switch (response.body.error) {
-    case 'invalid_token':
-      return new CognitoError('InvalidToken', 'Invalid token');
-    default:
-      return new CognitoError(
-        'UnexpectedResponse',
-        `Unexpected response: ${httpError.response.body}`
-      );
+  if (response.body.error === 'invalid_token') {
+    return new CognitoError('InvalidToken', 'Invalid token');
   }
+  return new CognitoError(
+    'UnexpectedResponse',
+    `Unexpected response: ${httpError.response.body}`
+  );
 };
 
 /**
