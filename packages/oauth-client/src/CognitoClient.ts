@@ -68,7 +68,6 @@ export class CognitoClient extends OAuthClient {
     this.redirectUri = params.redirectUri;
   }
 
-  // GET /oauth/userInfo
   async getUserInfo(accessToken: string) {
     if (!accessToken) throw new TypeError('accessToken is required');
 
@@ -94,8 +93,4 @@ export class CognitoClient extends OAuthClient {
       throw error;
     }
   }
-
-  // POST /authclient/updatePassword
-  // POST /authclient/updateRedirectUri
-  // DELETE /authclient/updateRedirectUri=
 }
