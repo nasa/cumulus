@@ -1,5 +1,6 @@
 const test = require('ava');
 
+const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 const { getRequiredEnvVar } = require('../env');
 
 test('getRequiredEnvVar returns an environment value if defined', async (t) => {
@@ -8,5 +9,8 @@ test('getRequiredEnvVar returns an environment value if defined', async (t) => {
 });
 
 test('getRequiredEnvVar throws error if not defined', async (t) => {
-  t.throws(() => getRequiredEnvVar('testVar', {}));
+  t.throws(
+    () => getRequiredEnvVar('testVar', {}),
+    { instanceOf: MissingRequiredEnvVarError }
+  );
 });

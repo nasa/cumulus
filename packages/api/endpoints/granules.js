@@ -3,6 +3,7 @@
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
+const asyncOperations = require('@cumulus/async-operations');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
@@ -10,11 +11,20 @@ const {
   RecordDoesNotExist,
 } = require('@cumulus/errors');
 
+const {
+  CollectionPgModel,
+  getKnexClient,
+  GranulePgModel,
+} = require('@cumulus/db');
+
+const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const Search = require('../es/search').Search;
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const { moveGranule } = require('../lib/granules');
+const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 
 /**
@@ -98,7 +108,9 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    await granuleModelClient.removeGranuleFromCmrByGranule(granule);
+    const knex = await getKnexClient({ env: process.env });
+
+    await unpublishGranule(knex, granule);
 
     return res.send({
       granuleId: granule.granuleId,
@@ -120,7 +132,12 @@ async function put(req, res) {
       return res.boom.conflict(message);
     }
 
-    await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
+    await moveGranule(
+      granule,
+      body.destinations,
+      process.env.DISTRIBUTION_ENDPOINT,
+      granuleModelClient
+    );
 
     return res.send({
       granuleId: granule.granuleId,
@@ -144,10 +161,17 @@ async function del(req, res) {
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
+  const collectionPgModel = new CollectionPgModel();
+  const granulePgModel = new GranulePgModel();
 
-  let granule;
+  const knex = await getKnexClient({ env: process.env });
+
+  let dynamoGranule;
+  let pgGranule;
+
+  // If the granule does not exist in Dynamo, throw an error
   try {
-    granule = await granuleModelClient.getRecord({ granuleId });
+    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(error);
@@ -155,18 +179,39 @@ async function del(req, res) {
     throw error;
   }
 
-  if (granule.detail) {
-    return res.boom.badRequest(granule);
+  // If the granule does not exist in PG, just log that information. The logic that
+  // actually handles Dynamo/PG granule deletion will skip the PG deletion if the record
+  // does not exist. see deleteGranuleAndFiles().
+  try {
+    if (dynamoGranule.collectionId) {
+      const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
+      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+        knex,
+        { name, version }
+      );
+      // Need granule_id + collection_cumulus_id to get truly unique record.
+      pgGranule = await granulePgModel.get(knex, {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      });
+    }
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+    } else {
+      throw error;
+    }
   }
 
-  try {
-    await granuleModelClient.delete(granule);
-  } catch (error) {
-    if (error instanceof DeletePublishedGranule) {
-      return res.boom.badRequest(error.message);
-    }
-    throw error;
+  if (dynamoGranule.published) {
+    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
+
+  await deleteGranuleAndFiles({
+    knex,
+    dynamoGranule,
+    pgGranule,
+  });
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
@@ -174,7 +219,7 @@ async function del(req, res) {
       esClient,
       id: granuleId,
       type: 'granule',
-      parent: granule.collectionId,
+      parent: dynamoGranule.collectionId,
       index: process.env.ES_INDEX,
       ignore: [404],
     });
@@ -246,15 +291,11 @@ async function bulkOperations(req, res) {
   if (!payload.workflowName) {
     return res.boom.badRequest('workflowName is required.');
   }
-
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
 
   let description;
-
   if (payload.query) {
     description = `Bulk run ${payload.workflowName} on ${payload.query.size} granules`;
   } else if (payload.ids) {
@@ -263,7 +304,7 @@ async function bulkOperations(req, res) {
     description = `Bulk run on ${payload.workflowName}`;
   }
 
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
@@ -283,7 +324,11 @@ async function bulkOperations(req, res) {
       },
     },
     esHost: process.env.ES_HOST,
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
@@ -302,13 +347,11 @@ async function bulkDelete(req, res) {
     return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
   }
 
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
 
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
@@ -335,25 +378,26 @@ async function bulkDelete(req, res) {
         system_bucket: process.env.system_bucket,
       },
     },
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
 
 async function bulkReingest(req, res) {
   const payload = req.body;
-
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
 
   const numOfGranules = (payload.query && payload.query.size)
     || (payload.ids && payload.ids.length);
   const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;
 
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.BulkOperationLambda,
@@ -373,7 +417,11 @@ async function bulkReingest(req, res) {
       },
     },
     esHost: process.env.ES_HOST,
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }

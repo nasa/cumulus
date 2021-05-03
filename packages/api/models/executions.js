@@ -1,16 +1,31 @@
 'use strict';
 
-const get = require('lodash/get');
 const pLimit = require('p-limit');
+
+const {
+  getMessageAsyncOperationId,
+} = require('@cumulus/message/AsyncOperations');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getMessageExecutionName,
+  getMessageExecutionParentArn,
+  getMessageCumulusVersion,
+  getExecutionUrlFromArn,
+  getMessageExecutionOriginalPayload,
+  getMessageExecutionFinalPayload,
 } = require('@cumulus/message/Executions');
+const {
+  getMetaStatus,
+  getMessageWorkflowTasks,
+  getMessageWorkflowStartTime,
+  getMessageWorkflowStopTime,
+  getMessageWorkflowName,
+  getWorkflowDuration,
+} = require('@cumulus/message/workflows');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
 
-const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
@@ -28,38 +43,40 @@ class Execution extends Manager {
    * Generate an execution record from a Cumulus message.
    *
    * @param {Object} cumulusMessage - A Cumulus message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    * @returns {Object} An execution record
    */
-  static generateRecord(cumulusMessage) {
+  static generateRecord(cumulusMessage, updatedAt = Date.now()) {
     const arn = getMessageExecutionArn(cumulusMessage);
     if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
 
-    const status = get(cumulusMessage, 'meta.status');
+    const status = getMetaStatus(cumulusMessage);
     if (!status) throw new Error('Unable to determine status from Cumulus message');
 
     const now = Date.now();
-    const workflowStartTime = get(cumulusMessage, 'cumulus_meta.workflow_start_time');
-    const workflowStopTime = get(cumulusMessage, 'cumulus_meta.workflow_stop_time');
+    const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+    const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
     const collectionId = getCollectionIdFromMessage(cumulusMessage);
 
     const record = {
       name: getMessageExecutionName(cumulusMessage),
+      cumulusVersion: getMessageCumulusVersion(cumulusMessage),
       arn,
-      asyncOperationId: get(cumulusMessage, 'cumulus_meta.asyncOperationId'),
-      parentArn: get(cumulusMessage, 'cumulus_meta.parentExecutionArn'),
-      execution: StepFunctionUtils.getExecutionUrl(arn),
-      tasks: get(cumulusMessage, 'meta.workflow_tasks'),
+      asyncOperationId: getMessageAsyncOperationId(cumulusMessage),
+      parentArn: getMessageExecutionParentArn(cumulusMessage),
+      execution: getExecutionUrlFromArn(arn),
+      tasks: getMessageWorkflowTasks(cumulusMessage),
       error: parseException(cumulusMessage.exception),
-      type: get(cumulusMessage, 'meta.workflow_name'),
+      type: getMessageWorkflowName(cumulusMessage),
       collectionId,
       status,
       createdAt: workflowStartTime,
       timestamp: now,
-      updatedAt: now,
-      originalPayload: status === 'running' ? cumulusMessage.payload : undefined,
-      finalPayload: status === 'running' ? undefined : cumulusMessage.payload,
-      duration: isNil(workflowStopTime) ? 0 : (workflowStopTime - workflowStartTime) / 1000,
+      updatedAt,
+      originalPayload: getMessageExecutionOriginalPayload(cumulusMessage),
+      finalPayload: getMessageExecutionFinalPayload(cumulusMessage),
+      duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
     };
 
     return removeNilProperties(record);
@@ -125,7 +142,7 @@ class Execution extends Manager {
    */
   _getMutableFieldNames(record) {
     if (record.status === 'running') {
-      return ['createdAt', 'updatedAt', 'timestamp', 'originalPayload'];
+      return ['updatedAt', 'timestamp', 'originalPayload'];
     }
     return Object.keys(record);
   }
@@ -134,10 +151,11 @@ class Execution extends Manager {
    * Generate and store an execution record from a Cumulus message.
    *
    * @param {Object} cumulusMessage - Cumulus workflow message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    * @returns {Promise}
    */
-  async storeExecutionFromCumulusMessage(cumulusMessage) {
-    const executionItem = Execution.generateRecord(cumulusMessage);
+  async storeExecutionFromCumulusMessage(cumulusMessage, updatedAt) {
+    const executionItem = Execution.generateRecord(cumulusMessage, updatedAt);
 
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.

@@ -27,6 +27,7 @@ function determineIntegrationTestStackName(cb) {
     Menno: 'mvd',
     'Menno Van Diermen': 'mvd',
     'Jennifer Tran': 'jtran-int',
+    'Nate Pauzenga': 'np-ci',
     'Danielle Peters': 'dop-ci',
   };
 

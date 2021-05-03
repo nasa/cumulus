@@ -16,6 +16,10 @@ output "s3_credentials_redirect_uri" {
   value = module.distribution.s3_credentials_redirect_uri
 }
 
+output "provider_kms_key_id" {
+  value = module.archive.provider_kms_key_id
+}
+
 # Reporting queue and topics
 
 output "stepfunction_event_reporter_queue_url" {
