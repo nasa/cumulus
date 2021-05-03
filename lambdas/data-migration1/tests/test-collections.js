@@ -35,7 +35,6 @@ const generateFakeCollection = (params) => ({
   sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
   files: [{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }],
   meta: { foo: 'bar', key: { value: 'test' } },
-  reportToEms: false,
   ignoreFilesConfigForDiscovery: false,
   process: 'modis',
   url_path: 'path',
@@ -47,7 +46,7 @@ const generateFakeCollection = (params) => ({
 
 let collectionsModel;
 let rulesModel;
-const collectionOmitList = ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt'];
+const collectionOmitList = ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'createdAt', 'updatedAt'];
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -105,7 +104,6 @@ test.serial('migrateCollectionRecord correctly migrates collection record', asyn
         granule_id_validation_regex: fakeCollection.granuleId,
         granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
         duplicate_handling: fakeCollection.duplicateHandling,
-        report_to_ems: fakeCollection.reportToEms,
         ignore_files_config_for_discovery: fakeCollection.ignoreFilesConfigForDiscovery,
         created_at: new Date(fakeCollection.createdAt),
         updated_at: new Date(fakeCollection.updatedAt),
@@ -132,7 +130,6 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
   delete fakeCollection.url_path;
   delete fakeCollection.duplicateHandling;
   delete fakeCollection.process;
-  delete fakeCollection.reportToEms;
   delete fakeCollection.ignoreFilesConfigForDiscovery;
   delete fakeCollection.meta;
   delete fakeCollection.tags;
@@ -161,7 +158,6 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
         created_at: new Date(fakeCollection.createdAt),
         updated_at: new Date(fakeCollection.updatedAt),
         duplicate_handling: null,
-        report_to_ems: null,
       },
       collectionOmitList
     )
