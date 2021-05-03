@@ -1,4 +1,4 @@
-import { HTTPError, Response } from 'got';
+import got, { HTTPError, Response } from 'got';
 
 import { URL } from 'url';
 
@@ -12,17 +12,17 @@ const validateUrl = (urlString: string) => {
   new URL(urlString);
 };
 
-const isHttpForbiddenError = (error: unknown) =>
-  error instanceof HTTPError && error.response.statusCode === 403;
+// TODO test this. Do we get errors other than 401?
+const isHttpUnauthorizedError = (error: unknown) =>
+  error instanceof HTTPError && error.response.statusCode === 401;
 
 const httpErrorToCognitoError = (httpError: HTTPError) => {
   const response = <CognitoErrorResponse>httpError.response;
 
+  // TODO don't need switch if only one case
   switch (response.body.error) {
     case 'invalid_token':
       return new CognitoError('InvalidToken', 'Invalid token');
-    case 'token_expired':
-      return new CognitoError('TokenExpired', 'The token has expired');
     default:
       return new CognitoError(
         'UnexpectedResponse',
@@ -80,7 +80,14 @@ export class CognitoClient extends OAuthClient {
 
       return response.body;
     } catch (error) {
-      if (isHttpForbiddenError(error)) {
+      if (error instanceof got.ParseError) {
+        throw new CognitoError(
+          'InvalidResponse',
+          'Response from Cognito was not valid JSON'
+        );
+      }
+
+      if (isHttpUnauthorizedError(error)) {
         throw httpErrorToCognitoError(error);
       }
 
