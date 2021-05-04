@@ -244,6 +244,7 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
 
 test.serial('deleteArchivedMessages deletes archived message in S3', async (t) => {
   process.env.system_bucket = randomString();
+  process.env.stackName = randomString();
   const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);
 
@@ -252,17 +253,18 @@ test.serial('deleteArchivedMessages deletes archived message in S3', async (t) =
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify(message),
   }).promise();
   const messageId = sqsMessage.MessageId;
+  const key = `${process.env.stackName}/archived-incoming-messages/${messageId}`;
 
   await s3PutObject({
     Bucket: process.env.system_bucket,
-    Key: messageId,
+    Key: key,
     Body: JSON.stringify(sqsMessage.Body),
   });
 
   // Check that item exists in S3
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
-    Key: messageId,
+    Key: key,
   }).promise();
   t.truthy(item.ETag);
 
@@ -270,7 +272,7 @@ test.serial('deleteArchivedMessages deletes archived message in S3', async (t) =
   // Check that item does not exist in S3 and therefore throws an error
   await t.throwsAsync(s3().getObject({
     Bucket: process.env.system_bucket,
-    Key: messageId,
+    Key: key,
   }).promise(), { code: 'NoSuchKey' });
 
   t.teardown(async () => {
@@ -280,6 +282,7 @@ test.serial('deleteArchivedMessages deletes archived message in S3', async (t) =
 
 test.serial('sqsMessageRemover lambda removes message from S3 when workflow succeeded', async (t) => {
   process.env.system_bucket = randomString();
+  process.env.stackName = randomString();
   await createBucket(process.env.system_bucket);
 
   const sqsQueues = await createSqsQueues(randomString());
@@ -297,16 +300,17 @@ test.serial('sqsMessageRemover lambda removes message from S3 when workflow succ
     status: 'SUCCEEDED',
     eventSource,
   });
+  const key = `${process.env.stackName}/archived-incoming-messages/${eventSource.messageId}`;
 
   await s3PutObject({
     Bucket: process.env.system_bucket,
-    Key: eventSource.messageId,
+    Key: key,
     Body: msgBody,
   });
 
   await updateSqsQueue(eventMessage);
   await t.throwsAsync(s3().getObject({
     Bucket: process.env.system_bucket,
-    Key: eventSource.messageId,
+    Key: key,
   }).promise(), { code: 'NoSuchKey' });
 });

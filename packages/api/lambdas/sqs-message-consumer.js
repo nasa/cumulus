@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const log = require('@cumulus/common/log');
+const { envUtils, log } = require('@cumulus/common');
 const { Consumer } = require('@cumulus/ingest/consumer');
 const { sqs } = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
@@ -17,13 +17,14 @@ const Rule = require('../models/rules');
  * @returns {void}
  */
 async function archiveMessage(message) {
-  const bucket = process.env.system_bucket;
-  log.debug(`Archiving message with ID ${message.MessageId} to bucket ${bucket}.`);
+  const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
+  const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
+  const key = `${stackName}/archived-incoming-messages/${message.MessageId}`;
   const body = JSON.stringify(message.Body);
   try {
     await s3PutObject({
       Bucket: bucket,
-      Key: message.MessageId,
+      Key: key,
       Body: body,
     });
     log.debug(`Archived ${message.MessageId} from queue`);

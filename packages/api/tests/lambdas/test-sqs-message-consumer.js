@@ -377,19 +377,21 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
     queues[1].queueUrl,
     { testdata: randomString() }
   );
+  const keyOne = `${process.env.stackName}/archived-incoming-messages/${firstMessage.MessageId}`;
+  const keyTwo = `${process.env.stackName}/archived-incoming-messages/${secondMessage.MessageId}`;
 
   await handler(event);
 
   const firstItem = await s3().getObject({
     Bucket: process.env.system_bucket,
-    Key: firstMessage.MessageId,
+    Key: keyOne,
   }).promise();
   const messageBody = JSON.parse(JSON.parse(firstItem.Body.toString()));
   t.deepEqual(messageBody, message);
 
   await t.throwsAsync(s3().getObject({
     Bucket: process.env.system_bucket,
-    Key: secondMessage.MessageId,
+    Key: keyTwo,
   }).promise(), { code: 'NoSuchKey' });
 
   t.teardown(async () => {
@@ -404,7 +406,7 @@ test.serial('archiveMessage archives all SQS messages', async (t) => {
     queues[0].queueUrl,
     body
   );
-  const key = message.MessageId;
+  const key = `${process.env.stackName}/archived-incoming-messages/${message.MessageId}`;
 
   await handler(event);
 

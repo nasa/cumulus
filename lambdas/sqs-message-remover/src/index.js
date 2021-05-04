@@ -12,6 +12,7 @@ const {
   isSfExecutionEvent,
   isTerminalSfStatus,
 } = require('@cumulus/common/cloudwatch-event');
+const { envUtils } = require('@cumulus/common');
 const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
@@ -23,8 +24,9 @@ const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
  * @returns {void}
  */
 async function deleteArchivedMessage(messageId) {
-  const bucket = process.env.system_bucket;
-  const key = messageId;
+  const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
+  const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
+  const key = `${stackName}/archived-incoming-messages/${messageId}`;
   if (bucket && key) {
     try {
       await deleteS3Object(bucket, key);
