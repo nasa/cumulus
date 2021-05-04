@@ -127,6 +127,8 @@ export const FileNotFound = createErrorType('FileNotFound');
 
 export const FTPError = createErrorType('FTPError');
 
+export const ApiCollisionError = createErrorType('ApiCollisionError');
+
 export const HostNotFound = createErrorType('HostNotFound');
 
 export const InvalidArgument = createErrorType('InvalidArgument');
@@ -136,6 +138,8 @@ export const InvalidChecksum = createErrorType('InvalidChecksum');
 export const InvalidRegexError = createErrorType('InvalidRegexError');
 
 export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
+
+export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
 
 export const PDRParsingError = createErrorType('PDRParsingError');
 
@@ -148,3 +152,20 @@ export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 export const UnparsableFileLocationError = createErrorType('UnparsableFileLocationError');
 
 export const ValidationError = createErrorType('ValidationError');
+
+export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');
+
+export const RecordAlreadyMigrated = createErrorType('RecordAlreadyMigrated');
+
+export const GranuleNotPublished = createErrorType('GranuleNotPublished');
+
+export class PostgresValidationError extends ValidationError {
+  detail: string | undefined;
+  constructor(message: string) {
+    super(message);
+    this.name = 'PostgresValidationError';
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export const PostgresUpdateFailed = createErrorType('PostgresUpdateFailed');

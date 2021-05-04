@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "description": "An API Gateway Lambda to return AWS credentials for fetching objects from S3",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=12.18.0"
   },
   "scripts": {
-    "build": "../../node_modules/.bin/webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js instructions)",
+    "build": "../../node_modules/.bin/webpack && cp -Rf instructions dist/instructions && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js instructions)",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test"
@@ -16,11 +16,11 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "8.0.0",
-    "@cumulus/aws-client": "8.0.0",
-    "@cumulus/earthdata-login-client": "8.0.0",
-    "@cumulus/errors": "8.0.0",
-    "@cumulus/logger": "8.0.0",
+    "@cumulus/api": "8.1.0",
+    "@cumulus/aws-client": "8.1.0",
+    "@cumulus/earthdata-login-client": "8.1.0",
+    "@cumulus/errors": "8.1.0",
+    "@cumulus/logger": "8.1.0",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",

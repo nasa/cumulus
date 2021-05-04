@@ -2,6 +2,7 @@ const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
+const asyncOperations = require('@cumulus/async-operations');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -50,11 +51,10 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
-test.beforeEach((t) => {
+test.beforeEach((t) => { // TODO - fix this mock
   const asyncOperationId = randomString();
-  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation')
+    .resolves({ id: asyncOperationId });
 });
 
 test.afterEach.always((t) => {
@@ -306,7 +306,7 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
 
 test.serial('POST /granules/bulk returns 500 if starting ECS task throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
@@ -323,7 +323,7 @@ test.serial('POST /granules/bulk returns 500 if starting ECS task throws unexpec
 
 test.serial('POST /granules/bulk returns 503 if starting ECS task throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 

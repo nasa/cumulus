@@ -11,6 +11,9 @@ const morgan = require('morgan');
 const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 
+const { services } = require('@cumulus/aws-client');
+const { MissingRequiredEnvVar } = require('@cumulus/errors');
+
 const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
 
@@ -58,14 +61,36 @@ app.use((err, _req, res, _next) => {
 
 const server = awsServerlessExpress.createServer(app);
 
-const handler = (event, context) => {
+const handler = async (event, context) => {
+  const { dynamoTableNamesParameterName } = process.env;
+  if (!dynamoTableNamesParameterName) {
+    throw new MissingRequiredEnvVar('dynamoTableNamesParameterName environment variable is required for API Lambda');
+  }
+
+  const ssmClient = context.ssmClient || services.systemsManager();
+  const dynamoTableNamesParameter = await ssmClient.getParameter({
+    Name: dynamoTableNamesParameterName,
+  }).promise();
+  const dynamoTableNames = JSON.parse(dynamoTableNamesParameter.Parameter.Value);
+  // Set Dynamo table names as environment variables for Lambda
+  Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
+    process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
+  });
+
   // workaround to support multiValueQueryStringParameters
   // untill this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
   const modifiedEvent = {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
-  awsServerlessExpress.proxy(server, modifiedEvent, context);
+  // see https://github.com/vendia/serverless-express/issues/297
+  return new Promise((resolve, reject) => {
+    awsServerlessExpress.proxy(
+      server,
+      modifiedEvent,
+      { ...context, succeed: resolve, fail: reject }
+    );
+  });
 };
 
 module.exports = {
