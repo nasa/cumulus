@@ -57,7 +57,7 @@
     "@cumulus/collection-config-store": "8.1.0",
     "@cumulus/common": "8.1.0",
     "@cumulus/db": "8.1.0-alpha.1",
-    "@cumulus/oauth-client": "8.1.0",
+    "@cumulus/oauth-client": "9.0.0-alpha1",
     "@cumulus/errors": "8.1.0",
     "@cumulus/ingest": "8.1.0",
     "@cumulus/launchpad-auth": "8.1.0",

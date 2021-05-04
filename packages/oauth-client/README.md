@@ -1,7 +1,7 @@
-# @cumulus/earthdata-login-client
+# @cumulus/oauth-client
 
 Utilities for OAuth authentication using
-[NASA Earthdata Login](https://urs.earthdata.nasa.gov/).
+[NASA Earthdata Login](https://urs.earthdata.nasa.gov/) and [AWS Cognito](https://aws.amazon.com/cognito/).
 
 ## Versioning
 
@@ -18,18 +18,29 @@ to automatically update to new patch versions.
 ## Installation
 
 ```bash
-$ npm install @cumulus/earthdata-login-client
+$ npm install @cumulus/oauth-client
 ```
 
 ## Usage
 
 ```js
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 
 const client = new EarthdataLogin({
   clientId: 'my-client-id',
   clientPassword: 'my-client-password',
   earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+  redirectUri: 'http://my-api.com'
+});
+```
+or
+```js
+const { CognitoClient } = require('@cumulus/oauth-client');
+
+const client = new CognitoClient({
+  clientId: 'my-client-id',
+  clientPassword: 'my-client-password',
+  cognitoLoginUrl: 'https://earthdata.login.nasa.gov',
   redirectUri: 'http://my-api.com'
 });
 ```

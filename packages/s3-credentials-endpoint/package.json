@@ -18,7 +18,7 @@
   "dependencies": {
     "@cumulus/api": "8.1.0",
     "@cumulus/aws-client": "8.1.0",
-    "@cumulus/oauth-client": "8.1.0",
+    "@cumulus/oauth-client": "9.0.0-alpha1",
     "@cumulus/errors": "8.1.0",
     "@cumulus/logger": "8.1.0",
     "aws-serverless-express": "^3.3.6",
