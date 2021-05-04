@@ -17,6 +17,10 @@ resource "aws_ecs_task_definition" "async_operation" {
       {
         "name": "AWS_REGION",
         "value": "${data.aws_region.current.name}"
+      },
+      {
+        "name": "databaseCredentialSecretArn",
+        "value": "${var.rds_user_access_secret_arn}"
       }
     ],
     "image": "${var.async_operation_image}",

@@ -46,48 +46,57 @@ describe('The Ingest Granule failure workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+  let beforeAllFailed = false;
 
   beforeAll(async () => {
-    config = await loadConfig();
-    const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');
-    testSuffix = createTestSuffix(testId);
-    testDataFolder = createTestDataPath(testId);
+    try {
+      config = await loadConfig();
+      const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');
+      testSuffix = createTestSuffix(testId);
+      testDataFolder = createTestDataPath(testId);
 
-    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-    const provider = { id: `s3_provider${testSuffix}` };
+      const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+      const provider = { id: `s3_provider${testSuffix}` };
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      granuleModel = new Granule();
 
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
+      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+      executionModel = new Execution();
 
-    // populate collections, providers and test data
-    await Promise.all([
-      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
-    ]);
+      // populate collections, providers and test data
+      await Promise.all([
+        uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
+        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
+      ]);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    // update test data filepaths
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+      // update test data filepaths
+      inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
 
-    // add a non-existent file to input payload to cause lambda error
-    const nonexistentFile = { path: 'non-existent-path', name: 'non-existent-file' };
-    inputPayload.granules[0].files.push(nonexistentFile);
+      // add a non-existent file to input payload to cause lambda error
+      const nonexistentFile = {
+        path: 'non-existent-path',
+        name: 'non-existent-file',
+      };
+      inputPayload.granules[0].files.push(nonexistentFile);
 
-    // delete the granule record from DynamoDB if exists
-    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+      // delete the granule record from DynamoDB if exists
+      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
-    workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      collection,
-      provider,
-      inputPayload
-    );
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        inputPayload
+      );
+    } catch (error) {
+      beforeAllFailed = true;
+      throw error;
+    }
   });
 
   afterAll(async () => {
@@ -105,7 +114,10 @@ describe('The Ingest Granule failure workflow', () => {
   });
 
   it('completes execution with failure status', () => {
-    expect(workflowExecution.status).toEqual('FAILED');
+    if (beforeAllFailed) fail('beforeAll() failed');
+    else {
+      expect(workflowExecution.status).toEqual('FAILED');
+    }
   });
 
   describe('When a workflow task is configured to catch a specific error and branch and the error is thrown by a Cumulus task', () => {

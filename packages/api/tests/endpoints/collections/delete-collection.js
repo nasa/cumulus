@@ -7,6 +7,14 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  CollectionPgModel,
+} = require('@cumulus/db');
+
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -18,6 +26,7 @@ const {
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+const { dynamoRecordToDbRecord } = require('../../../endpoints/collections');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -36,8 +45,20 @@ let accessTokenModel;
 let collectionModel;
 let ruleModel;
 
-test.before(async () => {
-  process.env = { ...process.env };
+const testDbName = randomString(12);
+
+test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
+  t.context.collectionPgModel = new CollectionPgModel();
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -74,12 +95,17 @@ test.beforeEach(async (t) => {
   await collectionModel.create(t.context.testCollection);
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test('Attempting to delete a collection without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -111,6 +137,33 @@ test('Attempting to delete a collection with an invalid access token returns an 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
 test('Deleting a collection removes it', async (t) => {
+  const collection = fakeCollectionFactory();
+  const createdCollectionRecord = await collectionModel.create(collection);
+
+  const dbRecord = dynamoRecordToDbRecord(createdCollectionRecord);
+  await t.context.collectionPgModel.create(t.context.testKnex, dbRecord);
+
+  await request(app)
+    .delete(`/collections/${collection.name}/${collection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const response = await request(app)
+    .get(`/collections/${collection.name}/${collection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  t.is(response.status, 404);
+
+  t.false(await t.context.collectionPgModel.exists(t.context.testKnex, {
+    name: collection.name,
+    version: collection.version,
+  }));
+});
+
+test('Deleting a collection without a record in RDS succeeds', async (t) => {
   const collection = fakeCollectionFactory();
   await collectionModel.create(collection);
 

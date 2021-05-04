@@ -10,6 +10,12 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
+const {
+  CollectionPgModel,
+  getKnexClient,
+  tableNames,
+  translateApiCollectionToPostgresCollection,
+} = require('@cumulus/db');
 const { Search } = require('../es/search');
 const { addToLocalES, indexCollection } = require('../es/indexer');
 const models = require('../models');
@@ -18,6 +24,10 @@ const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
+
+const dynamoRecordToDbRecord = (
+  dynamoRecord
+) => translateApiCollectionToPostgresCollection(dynamoRecord);
 
 /**
  * List all collections.
@@ -97,6 +107,7 @@ async function get(req, res) {
 async function post(req, res) {
   const {
     collectionsModel = new models.Collection(),
+    dbClient = await getKnexClient(),
   } = req.testContext || {};
 
   const collection = req.body || {};
@@ -110,10 +121,23 @@ async function post(req, res) {
     return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
   }
 
+  collection.updatedAt = Date.now();
+  collection.createdAt = Date.now();
+
   try {
-    await collectionsModel.create(
+    const dynamoRecord = await collectionsModel.create(
       omit(collection, 'dataType')
     );
+
+    const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
+
+    try {
+      await dbClient('collections').insert(dbRecord, 'cumulus_id');
+    } catch (error) {
+      await collectionsModel.delete({ name, version });
+
+      throw error;
+    }
 
     if (inTestMode()) {
       await addToLocalES(collection, indexCollection);
@@ -146,22 +170,36 @@ async function post(req, res) {
 async function put(req, res) {
   const { name, version } = req.params;
   const collection = req.body;
+  let dynamoRecord;
+  let oldCollection;
 
   if (name !== collection.name || version !== collection.version) {
     return res.boom.badRequest('Expected collection name and version to be'
       + ` '${name}' and '${version}', respectively, but found '${collection.name}'`
       + ` and '${collection.version}' in payload`);
   }
-
   const collectionsModel = new models.Collection();
+  const collectionPgModel = new CollectionPgModel();
 
-  if (!(await collectionsModel.exists(name, version))) {
-    return res.boom.notFound(
-      `Collection '${name}' version '${version}' not found`
-    );
+  try {
+    oldCollection = await collectionsModel.get({ name, version });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
+    return res.boom.notFound(`Collection '${name}' version '${version}' not found`);
   }
 
-  const dynamoRecord = await collectionsModel.create(collection);
+  collection.updatedAt = Date.now();
+  collection.createdAt = oldCollection.createdAt;
+
+  const postgresCollection = dynamoRecordToDbRecord(collection);
+
+  const dbClient = await getKnexClient();
+  await dbClient.transaction(async (trx) => {
+    await collectionPgModel.upsert(trx, postgresCollection);
+    dynamoRecord = await collectionsModel.create(collection);
+  });
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);
@@ -179,22 +217,23 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const { name, version } = req.params;
-
   const collectionsModel = new models.Collection();
 
+  const knex = await getKnexClient({ env: process.env });
   try {
-    await collectionsModel.delete({ name, version });
-
-    if (inTestMode()) {
-      const collectionId = constructCollectionId(name, version);
-      const esClient = await Search.es(process.env.ES_HOST);
-      await esClient.delete({
-        id: collectionId,
-        index: process.env.ES_INDEX,
-        type: 'collection',
-      }, { ignore: [404] });
-    }
-
+    await knex.transaction(async (trx) => {
+      await trx(tableNames.collections).where({ name, version }).del();
+      await collectionsModel.delete({ name, version });
+      if (inTestMode()) {
+        const collectionId = constructCollectionId(name, version);
+        const esClient = await Search.es(process.env.ES_HOST);
+        await esClient.delete({
+          id: collectionId,
+          index: process.env.ES_INDEX,
+          type: 'collection',
+        }, { ignore: [404] });
+      }
+    });
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError) {
@@ -215,6 +254,7 @@ router.get('/active', activeList);
 
 module.exports = {
   del,
+  dynamoRecordToDbRecord,
   post,
   put,
   router,

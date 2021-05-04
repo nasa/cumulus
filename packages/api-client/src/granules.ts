@@ -317,7 +317,10 @@ export const removePublishedGranule = async (params: {
  */
 export const listGranules = async (params: {
   prefix: string,
-  query?: { [key: string]: string },
+  query?: {
+    fields?: string[],
+    [key: string]: string | string[] | undefined
+  },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
