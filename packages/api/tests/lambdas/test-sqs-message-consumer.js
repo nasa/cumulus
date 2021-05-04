@@ -6,7 +6,7 @@ const test = require('ava');
 const range = require('lodash/range');
 
 const SQS = require('@cumulus/aws-client/SQS');
-const { s3, sqs } = require('@cumulus/aws-client/services');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   putJsonS3Object,
