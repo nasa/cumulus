@@ -16,20 +16,25 @@ const { getMessageExecutionName } = require('@cumulus/message/Executions');
  * @returns {Object} the cumulus message or nearest available object
  */
 function unwrapDeadLetterCumulusMessage(messageBody) {
-  if (messageBody.cumulus_meta !== undefined) return messageBody;
-  if (messageBody.body !== undefined || messageBody.Body !== undefined) {
-    // SQS message case
-    const unwrappedMessageBody = parseSQSMessageBody(messageBody);
-    return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
+  try {
+    if (messageBody.cumulus_meta !== undefined) return messageBody;
+    if (messageBody.body !== undefined || messageBody.Body !== undefined) {
+      // SQS message case
+      const unwrappedMessageBody = parseSQSMessageBody(messageBody);
+      return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
+    }
+    if (messageBody.detail !== undefined) {
+      // AWS States event case
+      const { input, output } = messageBody.detail;
+      const unwrappedMessageBody = JSON.parse(output || input);
+      return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
+    }
+    // indeterminate, possibly malformed case
+    return messageBody;
+  } catch (error) {
+    log.error('Falling back to storing wrapped message after encountering unwrap error', error);
+    return messageBody;
   }
-  if (messageBody.detail !== undefined) {
-    // AWS States event case
-    const { input, output } = messageBody.detail;
-    const unwrappedMessageBody = JSON.parse(output || input);
-    return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
-  }
-  // indeterminate, possibly malformed case
-  return messageBody;
 }
 
 function determineExecutionName(cumulusMessageObject) {

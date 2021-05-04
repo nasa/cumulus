@@ -184,6 +184,14 @@ test('unwrapDeadLetterCumulusMessage unwraps an AWS states message within an SQS
   t.deepEqual(unwrapDeadLetterCumulusMessage(testSqsMessage), cumulusMessage);
 });
 
+test('unwrapDeadLetterCumulusMessage returns wrapped message on error', (t) => {
+  const invalidMessage = {
+    eventSource: 'aws:sqs',
+    detail: {},
+  };
+  t.deepEqual(unwrapDeadLetterCumulusMessage(invalidMessage), invalidMessage);
+});
+
 test('unwrapDeadLetterCumulusMessage returns an non-unwrappable message', (t) => {
   const testMessage = {
     eventSource: 'aws:something-strange',
