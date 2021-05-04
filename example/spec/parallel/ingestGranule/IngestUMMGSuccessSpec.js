@@ -190,6 +190,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
     setDistributionApiEnvVars();
 
+    // s3 link type 'GET DATA VIA DIRECT ACCESS' isn't valid until UMM-G version 1.6.2
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -198,9 +199,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       provider,
       inputPayload,
       {
-        cmrMetadataFormat: 'umm_json_v1_5',
+        cmrMetadataFormat: 'umm_json_v1_6_2',
         additionalUrls: [cumulusDocUrl],
         distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
+        cmrGranuleUrlType: 's3',
       }
     );
   });
@@ -337,15 +339,22 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const scienceFile = files.find((f) => f.filepath.endsWith('hdf'));
       const browseFile = files.find((f) => f.filepath.endsWith('jpg'));
 
-      const distributionUrl = getDistributionFileUrl({
+      const scienceFileUrl = getDistributionFileUrl({
         bucket: scienceFile.bucket, key: scienceFile.filepath,
       });
-
-      const s3BrowseImageUrl = getDistributionFileUrl({
+      const s3ScienceFileUrl = getDistributionFileUrl({
+        bucket: scienceFile.bucket, key: scienceFile.filepath, urlType: 's3',
+      });
+      const browseImageUrl = getDistributionFileUrl({
         bucket: browseFile.bucket, key: browseFile.filepath,
       });
+      const s3BrowseImageUrl = getDistributionFileUrl({
+        bucket: browseFile.bucket, key: browseFile.filepath, urlType: 's3',
+      });
 
-      expect(resourceURLs).toContain(distributionUrl);
+      expect(resourceURLs).toContain(scienceFileUrl);
+      expect(resourceURLs).toContain(s3ScienceFileUrl);
+      expect(resourceURLs).toContain(browseImageUrl);
       expect(resourceURLs).toContain(s3BrowseImageUrl);
     });
 
@@ -358,10 +367,19 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
-      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION', 'USE SERVICE API',
-        'EXTENDED METADATA', 'VIEW RELATED INFORMATION'].sort();
+      const expectedTypes = [
+        'GET DATA',
+        'GET DATA',
+        'GET DATA VIA DIRECT ACCESS',
+        'GET RELATED VISUALIZATION',
+        'GET RELATED VISUALIZATION',
+        'USE SERVICE API',
+        'EXTENDED METADATA',
+        'EXTENDED METADATA',
+        'VIEW RELATED INFORMATION',
+      ];
       expect(viewRelatedInfoResource.map(get('URL'))).toContain(s3CredsUrl);
-      expect(onlineResources.map(get('Type')).sort()).toEqual(ExpectedResources);
+      expect(onlineResources.map(get('Type')).sort()).toEqual(expectedTypes.sort());
     });
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
@@ -455,8 +473,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         .map((urlObject) => urlObject.URL);
 
       // Only the file that was moved was updated
-      expect(changedUrls.length).toEqual(1);
-      expect(changedUrls[0]).toContain(destinationKey);
+      expect(changedUrls.length).toEqual(2);
+      changedUrls.forEach((changedUrl) => expect(changedUrl).toContain(destinationKey));
 
       const unchangedOriginalUrls = originalUmmUrls.filter((original) => !original.endsWith('.hdf'));
       expect(unchangedOriginalUrls.length).toEqual(unchangedUrls.length);
@@ -466,8 +484,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       // setup tests uses a fake endpoint, but it's possible that the api has
       // the actual endpoint.
       unchangedOriginalUrls.forEach((original) => {
-        const base = original.replace(process.env.DISTRIBUTION_ENDPOINT, '');
-        expect(unchangedUrls.filter((expected) => expected.match(base)).length).toBe(1);
+        if (original.startsWith('s3://')) {
+          expect(unchangedUrls.filter((actual) => actual === original).length).toBe(1);
+        } else {
+          const base = original.replace(process.env.DISTRIBUTION_ENDPOINT, '');
+          expect(
+            unchangedUrls.filter((actual) => !actual.startsWith('s3://') && actual.match(base)).length
+          ).toBe(1);
+        }
       });
     });
   });

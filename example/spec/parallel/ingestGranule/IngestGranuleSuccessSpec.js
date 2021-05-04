@@ -497,7 +497,7 @@ describe('The S3 Ingest Granules workflow', () => {
         granule = postToCmrOutput.payload.granules[0];
         files = granule.files;
 
-        const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v5' };
+        const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v1_6_2' };
         const result = await Promise.all([
           getOnlineResources(granule),
           getOnlineResources(ummGranule),
@@ -562,7 +562,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(cmrUrls).toContain(s3BrowseImageUrl);
       expect(cmrUrls).toContain(s3CredsUrl);
       expect(cmrUrls).toContain(opendapFilePath);
-      expect(expectedTypes.sort()).toEqual(resource.map((r) => r.Type).sort());
+      expect(resource.map((r) => r.Type).sort()).toEqual(expectedTypes.sort());
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
