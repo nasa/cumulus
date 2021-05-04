@@ -5,7 +5,10 @@ import { URL } from 'url';
 import { OAuthClient } from './OAuthClient';
 import { CognitoError } from './CognitoError';
 
-type CognitoErrorResponse = Response<{error: string}>;
+type CognitoErrorResponse = Response<{
+  error: string,
+  error_description: string,
+}>;
 
 const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new
@@ -19,9 +22,13 @@ const isHttpUnauthorizedError = (error: unknown) =>
 const httpErrorToCognitoError = (httpError: HTTPError) => {
   const response = <CognitoErrorResponse>httpError.response;
 
-  if (response.body.error === 'invalid_token') {
-    return new CognitoError('InvalidToken', 'Invalid token');
+  if (response.body && response.body.error) {
+    return new CognitoError(
+      response.body.error,
+      response.body.error_description
+    );
   }
+
   return new CognitoError(
     'UnexpectedResponse',
     `Unexpected response: ${httpError.response.body}`
@@ -88,6 +95,42 @@ export class CognitoClient extends OAuthClient {
       }
 
       throw error;
+    }
+  }
+
+  /**
+   * Given an authorization code, request an access token and associated
+   * information from the Cognito login service. This overrides the
+   * base class for better, Cognito-specific errors.
+   *
+   * See OAuthClient.getAccessToken(authorizationCode).
+   *
+   * @param {string} authorizationCode - an OAuth2 authorization code
+   * @returns {Promise<Object>} access token information
+   */
+  async getAccessToken(authorizationCode: string): Promise<Object> {
+    try {
+      return await super.getAccessToken(authorizationCode);
+    } catch (error) {
+      throw httpErrorToCognitoError(error);
+    }
+  }
+
+  /**
+   * Given a refresh token, request an access token and associated information
+   * from the login service. This overrides the base class for better,
+   * Cognito-specific errors.
+   *
+   * See OAuthClient.refreshAccessToken(authorizationCode).
+   *
+   * @param {string} refreshToken - an OAuth2 refresh token
+   * @returns {Promise<Object>} access token information
+   */
+  async refreshAccessToken(refreshToken: string): Promise<Object> {
+    try {
+      return await super.refreshAccessToken(refreshToken);
+    } catch (error) {
+      throw httpErrorToCognitoError(error);
     }
   }
 }

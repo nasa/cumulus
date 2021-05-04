@@ -1,7 +1,5 @@
-import got, { CancelableRequest, HTTPError, Response } from 'got';
+import got, { CancelableRequest, Response } from 'got';
 import { URL } from 'url';
-
-import { OAuthLoginError } from './OAuthLoginError';
 
 const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new
@@ -17,9 +15,6 @@ type AccessTokenResponse = Response<{
 
 const encodeCredentials = (username: string, password: string) =>
   Buffer.from(`${username}:${password}`).toString('base64');
-
-const isHttpBadRequestError = (error: unknown) =>
-  error instanceof HTTPError && error.response.statusCode === 400;
 
 /**
  * A generic authorization client
@@ -121,26 +116,17 @@ export class OAuthClient {
    * @param {string} authorizationCode - an OAuth2 authorization code
    * @returns {Promise<Object>} access token information
    */
-  async getAccessToken(authorizationCode: string) {
+  async getAccessToken(authorizationCode: string): Promise<Object> {
     if (!authorizationCode) throw new TypeError('authorizationCode is required');
+    const response = await this.requestAccessToken(authorizationCode);
 
-    try {
-      const response = await this.requestAccessToken(authorizationCode);
-
-      return {
-        accessToken: response.body.access_token,
-        refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
-        // expires_in value is in seconds
-        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
-      };
-    } catch (error) {
-      if (isHttpBadRequestError(error)) {
-        throw new OAuthLoginError('BadRequest', error.message);
-      }
-
-      throw new OAuthLoginError('Unknown', error.message);
-    }
+    return {
+      accessToken: response.body.access_token,
+      refreshToken: response.body.refresh_token,
+      username: response.body.endpoint.split('/').pop(),
+      // expires_in value is in seconds
+      expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
+    };
   }
 
   postRequest(
@@ -210,24 +196,16 @@ export class OAuthClient {
    * @param {string} refreshToken - an OAuth2 refresh token
    * @returns {Promise<Object>} access token information
    */
-  async refreshAccessToken(refreshToken: string) {
+  async refreshAccessToken(refreshToken: string): Promise<Object> {
     if (!refreshToken) throw new TypeError('refreshToken is required');
 
-    try {
-      const response = await this.requestRefreshAccessToken(refreshToken);
+    const response = await this.requestRefreshAccessToken(refreshToken);
 
-      return {
-        accessToken: response.body.access_token,
-        refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
-        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
-      };
-    } catch (error) {
-      if (isHttpBadRequestError(error)) {
-        throw new OAuthLoginError('BadRequest', error.message);
-      }
-
-      throw new OAuthLoginError('Unknown', error.message);
-    }
+    return {
+      accessToken: response.body.access_token,
+      refreshToken: response.body.refresh_token,
+      username: response.body.endpoint.split('/').pop(),
+      expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
+    };
   }
 }

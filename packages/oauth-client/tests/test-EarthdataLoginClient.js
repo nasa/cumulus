@@ -348,3 +348,99 @@ test('EarthdataLogin.getTokenUsername() forwards the X-Request-Id if present', a
 
   t.true(nockScope.isDone());
 });
+
+test('EarthdataLogin.getAccessToken() throws an EarthdataLoginError for a 400 response', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const accessToken = randomString();
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 400,
+    responseBody: {
+      error: 'UnauthorizedException',
+      error_description: 'Invalid client credentials',
+    },
+  });
+
+  await t.throwsAsync(
+    earthdataLoginClient.getAccessToken(accessToken),
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'BadRequest',
+    }
+  );
+});
+
+test('EarthdataLogin.getAccessToken() throws an EarthdataLoginError for a 401 response', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const accessToken = randomString();
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 401,
+    responseBody: {
+      error: 'UnauthorizedException',
+      error_description: 'Invalid client credentials',
+    },
+  });
+
+  await t.throwsAsync(
+    earthdataLoginClient.getAccessToken(accessToken),
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'Unknown',
+    }
+  );
+});
+
+test('EarthdataLogin.refreshAccessToken() throws an EarthdataLoginError for a 400 response', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const accessToken = randomString();
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 400,
+    responseBody: {
+      error: 'UnauthorizedException',
+      error_description: 'Invalid client credentials',
+    },
+  });
+
+  await t.throwsAsync(
+    earthdataLoginClient.refreshAccessToken(accessToken),
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'BadRequest',
+    }
+  );
+});
+
+test('EarthdataLogin.refreshAccessToken() throws an EarthdataLoginError for a 401 response', async (t) => {
+  const earthdataLoginClient = buildEarthdataLoginClient();
+
+  const accessToken = randomString();
+
+  nockEarthdataLoginCall({
+    earthdataLoginClient,
+    path: '/oauth/token',
+    responseStatus: 401,
+    responseBody: {
+      error: 'UnauthorizedException',
+      error_description: 'Invalid client credentials',
+    },
+  });
+
+  await t.throwsAsync(
+    earthdataLoginClient.refreshAccessToken(accessToken),
+    {
+      instanceOf: EarthdataLoginError,
+      code: 'Unknown',
+    }
+  );
+});

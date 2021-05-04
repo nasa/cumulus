@@ -251,36 +251,6 @@ test('OAuthClient.getAccessToken() returns token information for a valid authori
   t.is(username, 'sidney');
 });
 
-test('OAuthClient.getAccessToken() throws an OAuthLoginError for an invalid authorizationCode', async (t) => {
-  const authClient = buildAuthClient();
-
-  nockAuthCall({
-    authClient,
-    path: '/oauth/token',
-    responseStatus: 400,
-  });
-
-  await t.throwsAsync(
-    () => authClient.getAccessToken('authorization-code'),
-    { instanceOf: OAuthLoginError }
-  );
-});
-
-test('OAuthClient.getAccessToken() throws an OAuthLoginError if there is a problem with the Login service', async (t) => {
-  const authClient = buildAuthClient();
-
-  nockAuthCall({
-    authClient,
-    path: '/oauth/token',
-    responseStatus: 500,
-  });
-
-  await t.throwsAsync(
-    () => authClient.getAccessToken('authorization-code'),
-    { instanceOf: OAuthLoginError }
-  );
-});
-
 test('OAuthClient.refreshAccessToken() throws a TypeError if refreshToken is not set', async (t) => {
   const authClient = buildAuthClient();
 
@@ -363,34 +333,4 @@ test('OAuthClient.refreshAccessToken() returns token information for a valid ref
   t.true(expirationTime >= requestStartTime + 100);
   t.true(expirationTime <= requestEndTime + 100);
   t.is(username, 'sidney');
-});
-
-test('OAuthClient.refreshAccessToken() throws an OAuthLoginError error for an invalid refreshToken', async (t) => {
-  const authClient = buildAuthClient();
-
-  nockAuthCall({
-    authClient,
-    path: '/oauth/token',
-    responseStatus: 400,
-  });
-
-  await t.throwsAsync(
-    () => authClient.refreshAccessToken('invalid-refresh-token'),
-    { instanceOf: OAuthLoginError }
-  );
-});
-
-test('OAuthClient.refreshAccessToken() throws an OAuthLoginError error if there is a problem with the Earthdata Login service', async (t) => {
-  const authClient = buildAuthClient();
-
-  nockAuthCall({
-    authClient,
-    path: '/oauth/token',
-    responseStatus: 500,
-  });
-
-  await t.throwsAsync(
-    () => authClient.refreshAccessToken('refresh-token'),
-    { instanceOf: OAuthLoginError }
-  );
 });

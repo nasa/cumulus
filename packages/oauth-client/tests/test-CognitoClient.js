@@ -19,7 +19,7 @@ const buildCognitoClient = () =>
     redirectUri: randomUrl(),
   });
 
-const nockCognitoCall = (params) => {
+const nockCognitoGet = (params) => {
   const {
     cognitoClient,
     path,
@@ -33,6 +33,28 @@ const nockCognitoCall = (params) => {
     { reqheaders: requestHeaders }
   )
     .get(path)
+    .reply(responseStatus, responseBody);
+};
+
+const nockAuthPost = (params) => {
+  const {
+    cognitoClient,
+    path,
+    requestBody,
+    requestHeaders = {},
+    responseStatus,
+    responseBody,
+  } = params;
+
+  return nock(
+    cognitoClient.cognitoLoginUrl,
+    { reqheaders: requestHeaders }
+  )
+    .post(path, requestBody)
+    .basicAuth({
+      user: cognitoClient.clientId,
+      pass: cognitoClient.clientPassword,
+    })
     .reply(responseStatus, responseBody);
 };
 
@@ -152,7 +174,7 @@ test('CognitoClient.getUserInfo() returns the user info associated with a valid 
     email,
   };
 
-  nockCognitoCall({
+  nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
     requestHeaders: { Authorization: `Bearer ${accessToken}` },
@@ -182,13 +204,13 @@ test('CognitoClient.getUserInfo() throws an exception for an invalid token', asy
 
   const accessToken = randomString();
 
-  nockCognitoCall({
+  nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
     requestHeaders: { Authorization: `Bearer ${accessToken}` },
     responseStatus: 401,
     responseBody: {
-      error: 'invalid_token',
+      error: 'InvalidToken',
       error_description: 'Access token is not in correct format',
     },
   });
@@ -198,6 +220,7 @@ test('CognitoClient.getUserInfo() throws an exception for an invalid token', asy
     {
       instanceOf: CognitoError,
       code: 'InvalidToken',
+      message: 'Access token is not in correct format',
     }
   );
 });
@@ -207,13 +230,13 @@ test('CognitoClient.getUserInfo() throws an exception for an expired token', asy
 
   const accessToken = randomString();
 
-  nockCognitoCall({
+  nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
     requestHeaders: { Authorization: `Bearer ${accessToken}` },
     responseStatus: 401,
     responseBody: {
-      error: 'invalid_token',
+      error: 'InvalidToken',
       error_description: 'Access token is expired or user has globally signed out, disabled or been deleted.',
     },
   });
@@ -223,6 +246,7 @@ test('CognitoClient.getUserInfo() throws an exception for an expired token', asy
     {
       instanceOf: CognitoError,
       code: 'InvalidToken',
+      message: 'Access token is expired or user has globally signed out, disabled or been deleted.',
     }
   );
 });
@@ -232,7 +256,7 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns 200 wit
 
   const accessToken = randomString();
 
-  nockCognitoCall({
+  nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
     requestHeaders: { Authorization: `Bearer ${accessToken}` },
@@ -254,7 +278,7 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns 401 wit
 
   const accessToken = randomString();
 
-  nockCognitoCall({
+  nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
     requestHeaders: { Authorization: `Bearer ${accessToken}` },
@@ -267,6 +291,7 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns 401 wit
     {
       instanceOf: CognitoError,
       code: 'UnexpectedResponse',
+      message: 'Unexpected response: asdf',
     }
   );
 });
@@ -276,13 +301,13 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns an unex
 
   const accessToken = randomString();
 
-  nockCognitoCall({
+  nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
     requestHeaders: { Authorization: `Bearer ${accessToken}` },
     responseStatus: 401,
     responseBody: {
-      error: 'something_unexpected',
+      error: 'SomethingUnexpected',
       error_description: 'Something unexpected',
     },
   });
@@ -291,7 +316,58 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns an unex
     cognitoClient.getUserInfo(accessToken),
     {
       instanceOf: CognitoError,
-      code: 'UnexpectedResponse',
+      code: 'SomethingUnexpected',
+      message: 'Something unexpected',
+    }
+  );
+});
+
+test('CognitoClient.getAccessToken() throws a CognitoError with the correct code and message', async (t) => {
+  const cognitoClient = buildCognitoClient();
+
+  const accessToken = randomString();
+
+  nockAuthPost({
+    cognitoClient,
+    path: '/oauth/token',
+    responseStatus: 401,
+    responseBody: {
+      error: 'UnauthorizedException',
+      error_description: 'Invalid client credentials',
+    },
+  });
+
+  await t.throwsAsync(
+    cognitoClient.getAccessToken(accessToken),
+    {
+      instanceOf: CognitoError,
+      code: 'UnauthorizedException',
+      message: 'Invalid client credentials',
+    }
+  );
+});
+
+test('CognitoClient.refreshAccessToken() throws a CognitoError with the correct code and message', async (t) => {
+  const cognitoClient = buildCognitoClient();
+
+  const refreshToken = randomString();
+
+  nockAuthPost({
+    cognitoClient,
+    path: '/oauth/token',
+    responseStatus: 401,
+    responseBody: {
+      error: 'UnauthorizedException',
+      error_description: 'Invalid client credentials',
+    },
+  });
+
+  await t.throwsAsync(
+    cognitoClient.refreshAccessToken(refreshToken),
+    {
+      instanceOf: CognitoError,
+      code: 'UnauthorizedException',
+      message: 'Invalid client credentials',
     }
   );
 });

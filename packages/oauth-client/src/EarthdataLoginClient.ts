@@ -10,6 +10,9 @@ type EarthdataLoginErrorResponse = Response<{error: string}>;
 const isHttpForbiddenError = (error: unknown) =>
   error instanceof HTTPError && error.response.statusCode === 403;
 
+const isHttpBadRequestError = (error: unknown) =>
+  error instanceof HTTPError && error.response.statusCode === 400;
+
 const httpErrorToEarthdataLoginError = (httpError: HTTPError) => {
   const response = <EarthdataLoginErrorResponse>httpError.response;
 
@@ -113,6 +116,48 @@ export class EarthdataLoginClient extends OAuthClient {
       }
 
       throw error;
+    }
+  }
+
+  /**
+   * Given an authorization code, request an access token and associated
+   * information from the EarthdataLogin service. This overrides the
+   * base class for better, EarthdataLogin-specific errors.
+   *
+   * See OAuthClient.getAccessToken(authorizationCode).
+   *
+   * @param {string} authorizationCode - an OAuth2 authorization code
+   * @returns {Promise<Object>} access token information
+   */
+  async getAccessToken(authorizationCode: string): Promise<Object> {
+    try {
+      return await super.getAccessToken(authorizationCode);
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
+        throw new EarthdataLoginError('BadRequest', error.message);
+      }
+      throw new EarthdataLoginError('Unknown', error.message);
+    }
+  }
+
+  /**
+   * Given a refresh token, request an access token and associated information
+   * from the login service. This overrides the base class for better,
+   * EarthdataLogin-specific errors.
+   *
+   * See OAuthClient.refreshAccessToken(authorizationCode).
+   *
+   * @param {string} refreshToken - an OAuth2 refresh token
+   * @returns {Promise<Object>} access token information
+   */
+  async refreshAccessToken(refreshToken: string): Promise<Object> {
+    try {
+      return await super.refreshAccessToken(refreshToken);
+    } catch (error) {
+      if (isHttpBadRequestError(error)) {
+        throw new EarthdataLoginError('BadRequest', error.message);
+      }
+      throw new EarthdataLoginError('Unknown', error.message);
     }
   }
 }
