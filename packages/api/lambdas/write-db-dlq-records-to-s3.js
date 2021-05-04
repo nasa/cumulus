@@ -25,7 +25,7 @@ function unwrapDeadLetterCumulusMessage(messageBody) {
   if (messageBody.detail !== undefined) {
     // AWS States event case
     const { input, output } = messageBody.detail;
-    const unwrappedMessageBody = JSON.parse((output !== undefined ? output : input));
+    const unwrappedMessageBody = JSON.parse((output ? output : input));
     return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
   }
   // indeterminate, possibly malformed case
