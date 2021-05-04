@@ -1,6 +1,7 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
+const isEmpty = require('lodash/isEmpty');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -274,18 +275,20 @@ const _writeGranuleViaTransaction = async ({
  *
  * @param {Object} params
  * @param {Object} params.files - File objects
- * @param {number} params.granuleCumulusId
- *   Cumulus ID of the granule for this file
- * @param {string} params.granuleId - CumulusMessage-derived granule ID
+ * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
+ * @param {string} params.granule - Granule from the payload
+ * @param {Object} params.workflowError - Error from the workflow
  * @param {string} params.workflowStatus - Workflow status
  * @param {Knex} params.knex - Client to interact with Postgres database
- * @param {Object} params.granulePgModel - Optional Granule model override
+ * @param {Object} [params.granuleModel] - Optional Granule DDB model override
+ * @param {Object} [params.granulePgModel] - Optional Granule PG model override
  * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
   files,
   granuleCumulusId,
-  granuleId,
+  granule,
+  workflowError,
   workflowStatus,
   knex,
   granuleModel = new Granule(),
@@ -306,18 +309,18 @@ const _writeGranuleFiles = async ({
       knex,
     });
   } catch (error) {
-    log.error('Failed writing some files to Postgres', error);
-
+    if (!isEmpty(workflowError)) {
+      log.error(`Logging existing error encountered by granule ${granule.granuleId} before overwrite`, workflowError);
+    }
+    log.error('Failed writing files to Postgres, updating granule with error', error);
     const errorObject = {
       Error: 'Failed writing files to Postgres.',
-      Cause: error,
+      Cause: error.toString(),
     };
     await knex.transaction(async (trx) => {
       await granulePgModel.update(
         trx,
-        {
-          cumulus_id: granuleCumulusId,
-        },
+        { cumulus_id: granuleCumulusId },
         {
           status: 'failed',
           error: errorObject,
@@ -328,7 +331,7 @@ const _writeGranuleFiles = async ({
       });
 
       await granuleModel.update(
-        { granuleId },
+        { granuleId: granule.granuleId },
         {
           status: 'failed',
           error: errorObject,
@@ -453,7 +456,8 @@ const _writeGranule = async ({
   await _writeGranuleFiles({
     files,
     granuleCumulusId,
-    granuleId: granule.granuleId,
+    granule,
+    workflowError: error,
     workflowStatus,
     knex,
     granuleModel,
