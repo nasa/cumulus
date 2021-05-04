@@ -215,7 +215,7 @@ describe('The Ingest Granule failure workflow', () => {
 
       expect(granule.status).toBe('failed');
       expect(granule.error.Error).toBe(syncGranFailedDetail.error);
-      expect(JSON.parse(granule.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
+      expect(granule.error.Cause).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });
   });
 });

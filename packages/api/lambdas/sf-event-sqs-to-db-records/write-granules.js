@@ -285,7 +285,8 @@ const _writeGranuleViaTransaction = async ({
 const _writeGranuleFiles = async ({
   files,
   granuleCumulusId,
-  granuleId,
+  granule,
+  workflowError,
   workflowStatus,
   knex,
   granuleModel = new Granule(),
@@ -307,37 +308,36 @@ const _writeGranuleFiles = async ({
     });
   } catch (error) {
     log.error('Failed writing some files to Postgres', error);
+    if (workflowError === undefined || granule.status !== 'failed') {
+      const errorObject = {
+        Error: 'Failed writing files to Postgres.',
+        Cause: error.toString(),
+      };
+      await knex.transaction(async (trx) => {
+        await granulePgModel.update(
+          trx,
+          { cumulus_id: granuleCumulusId },
+          {
+            status: 'failed',
+            error: errorObject,
+          }
+        ).catch((updateError) => {
+          log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
+          throw updateError;
+        });
 
-    const errorObject = {
-      Error: 'Failed writing files to Postgres.',
-      Cause: error,
-    };
-    await knex.transaction(async (trx) => {
-      await granulePgModel.update(
-        trx,
-        {
-          cumulus_id: granuleCumulusId,
-        },
-        {
-          status: 'failed',
-          error: errorObject,
-        }
-      ).catch((updateError) => {
-        log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
-        throw updateError;
+        await granuleModel.update(
+          { granuleId: granule.granuleId },
+          {
+            status: 'failed',
+            error: errorObject,
+          }
+        ).catch((updateError) => {
+          log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
+          throw updateError;
+        });
       });
-
-      await granuleModel.update(
-        { granuleId },
-        {
-          status: 'failed',
-          error: errorObject,
-        }
-      ).catch((updateError) => {
-        log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
-        throw updateError;
-      });
-    });
+    }
   }
 };
 
@@ -453,7 +453,8 @@ const _writeGranule = async ({
   await _writeGranuleFiles({
     files,
     granuleCumulusId,
-    granuleId: granule.granuleId,
+    granule,
+    workflowError: error,
     workflowStatus,
     knex,
     granuleModel,
