@@ -202,7 +202,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         cmrMetadataFormat: 'umm_json_v1_6_2',
         additionalUrls: [cumulusDocUrl],
         distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
-        cmrGranuleUrlType: 's3',
       }
     );
   });

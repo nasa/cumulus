@@ -319,7 +319,7 @@ async function reconciliationReportForGranuleFiles(params) {
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           bucketTypes,
-          cmrGranuleUrlType: 'distribution',
+          urlType: 'distribution',
           distributionBucketMap,
         });
 
@@ -327,7 +327,7 @@ async function reconciliationReportForGranuleFiles(params) {
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           bucketTypes,
-          cmrGranuleUrlType: 's3',
+          urlType: 's3',
           distributionBucketMap,
         });
 

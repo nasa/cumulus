@@ -329,9 +329,6 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution') {
     qa: 'EXTENDED METADATA',
   };
   const mappedType = mapping[type] || 'GET DATA';
-  if (!mapping[type]) {
-    log.warn(`CNM Type ${type} invalid for mapping to UMM/ECHO10 type value, using GET DATA instead`);
-  }
 
   // The CMR Type for the s3 link of science file is "GET DATA VIA DIRECT ACCESS".
   // For non-science file, the Type for the s3 link is the same as its Type for the HTTPS URL.
@@ -341,13 +338,24 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution') {
   return mappedType;
 }
 
+/**
+ * generate a url for a given file and a url type.
+ *
+ * @param {Object} params - input parameters
+ * @param {Object} params.file - file object
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {Object} params.urlType - url type, distribution or s3
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
+ * @returns {(Object | undefined)} online access url object, undefined if no URL exists
+ */
 function generateFileUrl({
   file,
   distEndpoint,
-  cmrGranuleUrlType = 'distribution',
+  urlType = 'distribution',
   distributionBucketMap,
 }) {
-  if (cmrGranuleUrlType === 'distribution') {
+  if (urlType === 'distribution') {
     const bucketPath = distributionBucketMap[file.bucket];
     if (!bucketPath) {
       throw new errors.MissingBucketMap(`No distribution bucket mapping exists for ${file.bucket}`);
@@ -357,7 +365,7 @@ function generateFileUrl({
     return urljoin(distEndpoint, urlPath);
   }
 
-  if (cmrGranuleUrlType === 's3') {
+  if (urlType === 's3') {
     /* The check for file.filename is here
        for legacy compliance reasons due to model simplification in
        CUMULUS-1139 where filename was remapped to bucket and key*/
@@ -377,7 +385,7 @@ function generateFileUrl({
  * @param {Object} params.file - file object
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket name to bucket type
- * @param {Object} params.cmrGranuleUrlType - url type, distribution or s3
+ * @param {Object} params.urlType - url type, distribution or s3
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
  * @returns {(Object | undefined)} online access url object, undefined if no URL exists
@@ -386,20 +394,20 @@ async function constructOnlineAccessUrl({
   file,
   distEndpoint,
   bucketTypes,
-  cmrGranuleUrlType = 'distribution',
+  urlType = 'distribution',
   distributionBucketMap,
 }) {
   const bucketType = bucketTypes[file.bucket];
   const distributionApiBuckets = ['protected', 'public'];
   if (distributionApiBuckets.includes(bucketType)) {
-    const fileUrl = generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
+    const fileUrl = generateFileUrl({ file, distEndpoint, urlType, distributionBucketMap });
     if (fileUrl) {
-      const fileDescription = getFileDescription(file, cmrGranuleUrlType);
+      const fileDescription = getFileDescription(file, urlType);
       return {
         URL: fileUrl,
         URLDescription: fileDescription, // used by ECHO10
         Description: fileDescription, // used by UMMG
-        Type: mapCNMTypeToCMRType(file.type, cmrGranuleUrlType), // used by ECHO10/UMMG
+        Type: mapCNMTypeToCMRType(file.type, urlType), // used by ECHO10/UMMG
       };
     }
   }
@@ -437,7 +445,7 @@ async function constructOnlineAccessUrls({
         file,
         distEndpoint,
         bucketTypes,
-        cmrGranuleUrlType: 'distribution',
+        urlType: 'distribution',
         distributionBucketMap,
       });
       urls.push(url);
@@ -447,7 +455,7 @@ async function constructOnlineAccessUrls({
         file,
         distEndpoint,
         bucketTypes,
-        cmrGranuleUrlType: 's3',
+        urlType: 's3',
         distributionBucketMap,
       });
       urls.push(url);

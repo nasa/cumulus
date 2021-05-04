@@ -480,7 +480,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
   const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -500,7 +500,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', as
   const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 's3',
+    urlType: 's3',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -519,7 +519,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
   const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 's3',
+    urlType: 's3',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -539,7 +539,7 @@ test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', asyn
   const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 'none',
+    urlType: 'none',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -560,7 +560,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     file,
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -581,7 +581,7 @@ test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution wit
     file,
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   }), { instanceOf: errors.MissingBucketMap });
 });
