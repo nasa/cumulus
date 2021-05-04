@@ -11,7 +11,6 @@ const {
 const mime = require('mime-types');
 
 const Execution = require('@cumulus/api/models/executions');
-const Provider = require('@cumulus/api/models/providers');
 const {
   getS3Object,
   s3ObjectExists,
@@ -29,6 +28,7 @@ const {
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const providersApi = require('@cumulus/api-client/providers');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -115,7 +115,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let testDataFolder;
   let collection;
   let provider;
-  let providerModel;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -132,8 +131,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
     executionModel = new Execution();
     process.env.system_bucket = config.bucket;
-    process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-    providerModel = new Provider();
 
     const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
@@ -214,7 +211,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      providerModel.delete(provider),
+      providersApi.deleteProvider({
+        prefix: config.stackName,
+        provider: { id: provider.id },
+      }),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,

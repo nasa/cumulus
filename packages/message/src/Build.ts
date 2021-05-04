@@ -33,7 +33,6 @@ const createExecutionName = (prefix?: string): string =>
  * Build base message.cumulus_meta for a queued execution.
  *
  * @param {Object} params
- * @param {string} [params.queueUrl] - An SQS queue URL
  * @param {string} params.stateMachine - State machine name
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {string} [params.parentExecutionArn] - Parent execution ARN
@@ -76,7 +75,6 @@ export const buildCumulusMeta = ({
  * @param {Object} params.messageTemplate - Message template for the workflow
  * @param {Object} params.payload - Payload for the workflow
  * @param {Object} params.workflow - workflow name & arn object
- * @param {string} [params.queueUrl] - SQS queue URL
  * @param {string} [params.asyncOperationId] - Async operation ID
  * @param {Object} [params.customCumulusMeta] - Custom data for message.cumulus_meta
  * @param {Object} [params.customMeta] - Custom data for message.meta
