@@ -248,7 +248,7 @@ describe('The SQS rule', () => {
         Bucket: config.bucket,
         Key: keyOne,
       }).promise();
-      expect(message).toBeDefined();
+      expect(JSON.parse(message.Body.toString())).toBe(invalidMessage);
     });
   });
 });
