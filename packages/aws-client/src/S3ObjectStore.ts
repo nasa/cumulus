@@ -7,7 +7,7 @@ import { headObject, parseS3Uri } from './S3';
  * Class to use when interacting with S3
  *
  */
-export class S3ObjectStore {
+class S3ObjectStore {
   s3: AWS.S3;
 
   constructor() {
@@ -46,3 +46,5 @@ export class S3ObjectStore {
     return result;
   }
 }
+
+export = S3ObjectStore;
