@@ -1,9 +1,11 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { defaultObjectStore, objectStoreForProtocol, S3ObjectStore } = require('../S3ObjectStore');
-const { createBucket, recursivelyDeleteS3Bucket } = require('../S3');
-const { s3 } = require('../services');
+const { services, S3 } = require('@cumulus/aws-client');
+const { S3ObjectStore } = require('../src/S3ObjectStore');
+const { defaultObjectStore, objectStoreForProtocol } = require('../src/lib/util');
 
+const { s3 } = services;
+const { createBucket, recursivelyDeleteS3Bucket } = S3;
 const randomString = () => cryptoRandomString({ length: 10 });
 
 const stageTestObjectToLocalStack = (bucket, body, key = randomString()) =>
