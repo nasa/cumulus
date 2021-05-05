@@ -368,11 +368,13 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
   const { rules, queues } = await createRulesAndQueues();
   const message = { testdata: randomString() };
 
+  // Send message to ENABLED queue
   const firstMessage = await SQS.sendSQSMessage(
     queues[0].queueUrl,
     message
   );
 
+  // Send message to DISABLED queue
   const secondMessage = await SQS.sendSQSMessage(
     queues[1].queueUrl,
     { testdata: randomString() }

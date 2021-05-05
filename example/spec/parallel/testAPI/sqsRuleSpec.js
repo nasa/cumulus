@@ -181,7 +181,6 @@ describe('The SQS rule', () => {
 
       // post a non-processable message
       const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
-      console.log(message);
       messageId = message.MessageId;
     });
 
@@ -245,12 +244,10 @@ describe('The SQS rule', () => {
 
     it('stores incoming messages on S3', async () => {
       const keyOne = `${config.stackName}/archived-incoming-messages/${messageId}`;
-      console.log(config);
       const message = await s3().getObject({
         Bucket: config.bucket,
         Key: keyOne,
       }).promise();
-      console.log(message);
       expect(message).toBeDefined();
     });
   });

@@ -212,6 +212,7 @@ test('sqsMessageRemover lambda removes message from queue when workflow succeede
 
   await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
 });
+
 test('sqsMessageRemover lambda updates message visibilityTimeout when workflow failed', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
@@ -266,7 +267,7 @@ test.serial('deleteArchivedMessages deletes archived message in S3', async (t) =
     Bucket: process.env.system_bucket,
     Key: key,
   }).promise();
-  t.truthy(item.ETag);
+  t.truthy(item);
 
   await deleteArchivedMessage(messageId);
   // Check that item does not exist in S3 and therefore throws an error
