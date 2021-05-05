@@ -1,9 +1,8 @@
 const cryptoRandomString = require('crypto-random-string');
 const nock = require('nock');
 const test = require('ava');
-// import { URL, URLSearchParams } from 'url';
 
-const { OAuthClient, OAuthLoginError } = require('../dist/src');
+const { OAuthClient } = require('../dist/src');
 
 const randomString = () => cryptoRandomString({ length: 6 });
 

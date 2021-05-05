@@ -15,10 +15,6 @@ const validateUrl = (urlString: string) => {
   new URL(urlString);
 };
 
-// TODO test this. Do we get errors other than 401?
-const isHttpUnauthorizedError = (error: unknown) =>
-  error instanceof HTTPError && error.response.statusCode === 401;
-
 const httpErrorToCognitoError = (httpError: HTTPError) => {
   const response = <CognitoErrorResponse>httpError.response;
 
@@ -107,11 +103,7 @@ export class CognitoClient extends OAuthClient {
         );
       }
 
-      if (isHttpUnauthorizedError(error)) {
-        throw httpErrorToCognitoError(error);
-      }
-
-      throw error;
+      throw httpErrorToCognitoError(error);
     }
   }
 
