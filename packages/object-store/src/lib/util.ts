@@ -24,7 +24,7 @@ export function objectStoreForProtocol(protocol?: string): S3ObjectStore|undefin
  * Returns the default object store. Allows requesting an object store without first
  * knowing a protocol.
  *
- * @returns {S3ObjectStore} the default object store for Harmony.
+ * @returns {S3ObjectStore} the default object store
  */
 export function defaultObjectStore(): S3ObjectStore {
   return new S3ObjectStore();
