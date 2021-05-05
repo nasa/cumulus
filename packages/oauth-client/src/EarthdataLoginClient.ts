@@ -43,6 +43,23 @@ export class EarthdataLoginClient extends OAuthClient {
   readonly earthdataLoginUrl: string;
   readonly redirectUri: string;
 
+  /**
+   * @param {Object} params
+   * @param {string} params.clientId - see example
+   * @param {string} params.clientPassword - see example
+   * @param {string} params.earthdataLoginUrl - see example
+   * @param {string} params.redirectUri - see example
+   *
+   * @example
+   *
+   * const oAuth2Provider = new EarthdataLoginClient({
+   *   clientId: 'my-client-id',
+   *   clientPassword: 'my-client-password',
+   *   earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+   *   redirectUri: 'http://my-api.com'
+   * });
+   */
+
   constructor(
     params: {
       clientId: string,

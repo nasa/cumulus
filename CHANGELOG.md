@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-2472**
+  - Renamed `@cumulus/earthdata-login-client` to more generic `@cumulus/oauth-client`
+  - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service
+  - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient`
+
 ### Migration steps
 
 - This release of Cumulus enables integration with a PostgreSQL database for archiving Cumulus data. There are several upgrade steps involved, **some of which need to be done before redeploying Cumulus**. See the [documentation on upgrading to the RDS release](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds).

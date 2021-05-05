@@ -21,7 +21,7 @@ to automatically update to new patch versions.
 $ npm install @cumulus/oauth-client
 ```
 
-## Usage
+## Earthdata Login Usage Example
 
 ```js
 const { EarthdataLoginClient } = require('@cumulus/oauth-client');
@@ -33,7 +33,8 @@ const client = new EarthdataLogin({
   redirectUri: 'http://my-api.com'
 });
 ```
-or
+## Cognito Usage Example
+
 ```js
 const { CognitoClient } = require('@cumulus/oauth-client');
 
@@ -47,19 +48,33 @@ const client = new CognitoClient({
 
 ## API
 
+**Kind**: global class
+
+- [@cumulus/oauth-client](#cumulusoauth-client)
+  - [Versioning](#versioning)
+  - [Installation](#installation)
+  - [Earthdata Login Usage Example](#earthdata-login-usage-example)
+  - [Cognito Usage Example](#cognito-usage-example)
+  - [API](#api)
+  - [EarthdataLoginClient](#earthdataloginclient)
+    - [new EarthdataLoginClient(params)](#new-earthdataloginclientparams)
+    - [earthdataLoginClient.getAuthorizationUrl([state]) ⇒ <code>string</code>](#earthdataloginclientgetauthorizationurlstate--string)
+    - [earthdataLoginClient.getAccessToken(authorizationCode) ⇒ <code>Promise.&lt;Object&gt;</code>](#earthdataloginclientgetaccesstokenauthorizationcode--promiseobject)
+    - [earthdataLoginClient.refreshAccessToken(refreshToken) ⇒ <code>Promise.&lt;Object&gt;</code>](#earthdataloginclientrefreshaccesstokenrefreshtoken--promiseobject)
+    - [earthdataLoginClient.getTokenUsername(params) ⇒ <code>Promise.&lt;string&gt;</code>](#earthdataloginclientgettokenusernameparams--promisestring)
+  - [CognitoClient](#cognitoclient)
+    - [new CognitoClient(params)](#new-cognitoclientparams)
+    - [CognitoClient.getAuthorizationUrl([state]) ⇒ <code>string</code>](#cognitoclientgetauthorizationurlstate--string)
+    - [CognitoClient.getAccessToken(authorizationCode) ⇒ <code>Promise.&lt;Object&gt;</code>](#cognitoclientgetaccesstokenauthorizationcode--promiseobject)
+    - [CognitoClient.refreshAccessToken(refreshToken) ⇒ <code>Promise.&lt;Object&gt;</code>](#cognitoclientrefreshaccesstokenrefreshtoken--promiseobject)
+  - [About Cumulus](#about-cumulus)
+  - [Contributing](#contributing)
+
+
 <a name="EarthdataLoginClient"></a>
 
 ## EarthdataLoginClient
 A client for the Earthdata Login API
-
-**Kind**: global class
-
-* [EarthdataLoginClient](#EarthdataLoginClient)
-    * [new EarthdataLoginClient(params)](#new_EarthdataLoginClient_new)
-    * [.getAuthorizationUrl([state])](#EarthdataLoginClient+getAuthorizationUrl) ⇒ <code>string</code>
-    * [.getAccessToken(authorizationCode)](#EarthdataLoginClient+getAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.refreshAccessToken(refreshToken)](#EarthdataLoginClient+refreshAccessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.getTokenUsername(params)](#EarthdataLoginClient+getTokenUsername) ⇒ <code>Promise.&lt;string&gt;</code>
 
 <a name="new_EarthdataLoginClient_new"></a>
 
@@ -149,6 +164,84 @@ Query the Earthdata Login API for the UID associated with a token
 | params.token | <code>string</code> | the Earthdata Login token |
 | [params.xRequestId] | <code>string</code> | a string to help identify the request   in the Earthdata Login logs |
 
+
+<a name="CognitoClient"></a>
+
+## CognitoClient
+A client for the AWS Cognito API
+
+<a name="new_CognitoClient_new"></a>
+
+### new CognitoClient(params)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.clientId | <code>string</code> | see example |
+| params.clientPassword | <code>string</code> | see example |
+| params.cognitoLoginUrl | <code>string</code> | see example |
+| params.redirectUri | <code>string</code> | see example |
+
+**Example**
+```js
+const oAuth2Provider = new CognitoClient({
+  clientId: 'my-client-id',
+  clientPassword: 'my-client-password',
+  cognitoLoginUrl: 'https://cognito.login.nasa.gov',
+  redirectUri: 'http://my-api.com'
+});
+```
+<a name="CognitoClient+getAuthorizationUrl"></a>
+
+### CognitoClient.getAuthorizationUrl([state]) ⇒ <code>string</code>
+Get a URL of the Cognito Login authorization endpoint
+
+**Kind**: instance method of [<code>CognitoClient</code>](#CognitoClient)
+**Returns**: <code>string</code> - the Cognito Login authorization URL
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [state] | <code>string</code> | an optional state to pass to Cognito |
+
+<a name="CognitoClient+getAccessToken"></a>
+
+### CognitoClient.getAccessToken(authorizationCode) ⇒ <code>Promise.&lt;Object&gt;</code>
+Given an authorization code, request an access token and associated
+information from the Cognito service.
+
+Returns an object with the following properties:
+
+- accessToken
+- refreshToken
+- username
+- expirationTime (in seconds)
+
+**Kind**: instance method of [<code>CognitoClient</code>](#CognitoClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information
+
+| Param | Type | Description |
+| --- | --- | --- |
+| authorizationCode | <code>string</code> | an OAuth2 authorization code |
+
+<a name="CognitoClient+refreshAccessToken"></a>
+
+### CognitoClient.refreshAccessToken(refreshToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+Given a refresh token, request an access token and associated information
+from the Cognito service.
+
+Returns an object with the following properties:
+
+- accessToken
+- refreshToken
+- username
+- expirationTime (in seconds)
+
+**Kind**: instance method of [<code>CognitoClient</code>](#CognitoClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information
+
+| Param | Type | Description |
+| --- | --- | --- |
+| refreshToken | <code>string</code> | an OAuth2 refresh token |
 
 ## About Cumulus
 

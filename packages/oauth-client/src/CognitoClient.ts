@@ -44,6 +44,23 @@ export class CognitoClient extends OAuthClient {
   readonly cognitoLoginUrl: string;
   readonly redirectUri: string;
 
+  /**
+   * @param {Object} params
+   * @param {string} params.clientId - see example
+   * @param {string} params.clientPassword - see example
+   * @param {string} params.cognitoLoginUrl - see example
+   * @param {string} params.redirectUri - see example
+   *
+   * @example
+   *
+   * const oAuth2Provider = new CognitoClient({
+   *   clientId: 'my-client-id',
+   *   clientPassword: 'my-client-password',
+   *   cognitoLoginUrl: 'https://earthdata.login.nasa.gov',
+   *   redirectUri: 'http://my-api.com'
+   * });
+   */
+
   constructor(
     params: {
       clientId: string,

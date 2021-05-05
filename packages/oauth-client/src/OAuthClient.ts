@@ -77,7 +77,7 @@ export class OAuthClient {
    * @param {string} [state] - an optional state to pass to login Client
    * @returns {string} the Login authorization URL
    */
-  getAuthorizationUrl(state?: string) {
+  getAuthorizationUrl(state?: string): string {
     const url = new URL('/oauth/authorize', this.loginUrl);
 
     url.searchParams.set('client_id', this.clientId);
@@ -129,6 +129,15 @@ export class OAuthClient {
     };
   }
 
+  /**
+   * Make an HTTP POST request to the login service
+   *
+   * @param {Object} params
+   * @param {string} params.loginPath - the URL for the request
+   * @param {Object} params.form - the body of the POST request
+   * @param {Array} [params.headers] - Optional request headers
+   * @returns {CancelableRequest<Response<unknown>>} The return of the POST call
+   */
   postRequest(
     params: {
       loginPath: string,
@@ -153,6 +162,14 @@ export class OAuthClient {
     );
   }
 
+  /**
+   * Make an HTTP GET request to the login service
+   *
+   * @param {Object} params
+   * @param {string} params.path - the URL for the request
+   * @param {string} params.accessToken - Auth bearer token for request
+   * @returns {CancelableRequest<Response<unknown>>} The return of the GET call
+   */
   getRequest(
     params: {
       path: string,
