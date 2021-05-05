@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v9.0.0] 2021-05-03
+
 ### Migration steps
 
 - This release of Cumulus enables integration with a PostgreSQL database for archiving Cumulus data. There are several upgrade steps involved, **some of which need to be done before redeploying Cumulus**. See the [documentation on upgrading to the RDS release](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds).
@@ -4281,7 +4283,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v8.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.0.0...HEAD
+[v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
 [v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
 [v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
 [v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0

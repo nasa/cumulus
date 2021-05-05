@@ -1,14 +1,14 @@
 {
   "lerna": "3.20.2",
-  "version": "8.1.0",
+  "version": "9.0.0",
   "packages": [
     "example",
     "example/lambdas/*",
     "lambdas/*",
     "packages/*",
+    "packages/api/ecs/async-operation",
     "tasks/*",
-    "tf-modules/*",
-    "packages/api/ecs/async-operation"
+    "tf-modules/*"
   ],
   "command": {
     "bootstrap": {
