@@ -1,0 +1,6 @@
+node_modules
+/*.js
+!/nyc.config.js
+/*.d.ts
+/lib/*.js
+/lib/*.d.ts

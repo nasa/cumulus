@@ -38,5 +38,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "8.1.0"
-  }
+  },
+  "devDependencies": {
+    "@types/aws-sdk": "2.7.0"
+  },
+  "private": true
 }

@@ -1,4 +1,4 @@
-import { S3ObjectStore } from '../S3ObjectStore';
+import { S3ObjectStore } from '@cumulus/aws-client/S3ObjectStore';
 
 /**
  * Returns a class to interact with the object store appropriate for

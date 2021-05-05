@@ -1,11 +1,9 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { services, S3 } = require('@cumulus/aws-client');
-const { S3ObjectStore } = require('../src/S3ObjectStore');
-const { defaultObjectStore, objectStoreForProtocol } = require('../src/lib/util');
+const { s3 } = require('../services');
+const { createBucket, recursivelyDeleteS3Bucket } = require('../S3');
+const { S3ObjectStore } = require('../S3ObjectStore');
 
-const { s3 } = services;
-const { createBucket, recursivelyDeleteS3Bucket } = S3;
 const randomString = () => cryptoRandomString({ length: 10 });
 
 const stageTestObjectToLocalStack = (bucket, body, key = randomString()) =>
@@ -21,26 +19,6 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.Bucket);
-});
-
-test('objectStoreForProtocol returns null when no protocol is supplied', (t) => {
-  t.is(objectStoreForProtocol(), undefined);
-});
-
-test('objectStoreForProtocol returns null when an unrecognized protocol is supplied', (t) => {
-  t.is(objectStoreForProtocol('azure'), undefined);
-});
-
-test('objectStoreForProtocol returns an S3ObjectStore when "s3" is supplied as the protocol', (t) => {
-  t.true(objectStoreForProtocol('s3') instanceof S3ObjectStore);
-});
-
-test('objectStoreForProtocol ignores trailing colons on the protocol', (t) => {
-  t.true(objectStoreForProtocol('s3:') instanceof S3ObjectStore);
-});
-
-test('defaultObjectStore returns an S3 object store', (t) => {
-  t.true(defaultObjectStore() instanceof S3ObjectStore);
 });
 
 test('S3ObjectStore.signGetObject returns a signed url', async (t) => {

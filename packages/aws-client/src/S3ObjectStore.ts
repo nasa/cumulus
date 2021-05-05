@@ -1,9 +1,7 @@
 import * as querystring from 'querystring';
 import { URL } from 'url';
-import { services, S3 } from '@cumulus/aws-client';
-
-const { s3 } = services;
-const { headObject, parseS3Uri } = S3;
+import { s3 } from './services';
+import { headObject, parseS3Uri } from './S3';
 
 /**
  * Class to use when interacting with S3
@@ -35,11 +33,14 @@ export class S3ObjectStore {
 
     // Verifies that the object exists, or throws NotFound
     await headObject(Bucket, Key);
+
+
     const req = this.s3.getObject({ Bucket, Key });
 
     if (params && req.on) {
       (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(params)}`; }));
     }
+
     // TypeScript doesn't recognize that req has a presign method.  It does.
     const result = await (req as any).presign();
     return result;
