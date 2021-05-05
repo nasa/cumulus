@@ -28,6 +28,12 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Update data-persistence
   cd ../data-persistence-tf
   sed -i "s/source = \"..\/..\/tf-modules\/data-persistence/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/data-persistence/g" *.tf
+  # Update db-provision-user-database source
+  sed -i "s/source[ ]*= \"..\/..\/lambdas\/db-provision-user-database/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/lambdas\/db-provision-user-database/g" *.tf
+
+  ## Update data-migration1
+  cd ../data-migration1-tf
+  sed -i "s/source = \"..\/..\/lambdas\/data-migration1/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-data-migrations1.zip\/\//g" *.tf
 
 
   ## Prepare repo lambdas
