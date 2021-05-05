@@ -8,7 +8,7 @@ import { headObject, parseS3Uri } from './S3';
  *
  */
 class S3ObjectStore {
-  s3: AWS.S3;
+  private readonly s3: AWS.S3;
 
   constructor() {
     this.s3 = s3();
@@ -33,7 +33,6 @@ class S3ObjectStore {
 
     // Verifies that the object exists, or throws NotFound
     await headObject(Bucket, Key);
-
 
     const req = this.s3.getObject({ Bucket, Key });
 

@@ -2,7 +2,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const { s3 } = require('../services');
 const { createBucket, recursivelyDeleteS3Bucket } = require('../S3');
-const { S3ObjectStore } = require('../S3ObjectStore');
+const S3ObjectStore = require('../S3ObjectStore');
 
 const randomString = () => cryptoRandomString({ length: 10 });
 
