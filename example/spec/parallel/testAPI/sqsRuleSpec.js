@@ -13,6 +13,7 @@ const {
   sendSQSMessage,
   getQueueUrlByName,
 } = require('@cumulus/aws-client/SQS');
+const { s3 } = require('@cumulus/aws-client/services');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const {
   addCollections,
@@ -171,6 +172,7 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
+    let messageId;
     const invalidMessage = JSON.stringify({ foo: 'bar' });
 
     beforeAll(async () => {
@@ -178,7 +180,9 @@ describe('The SQS rule', () => {
       granuleId = await sendIngestGranuleMessage(queues.sourceQueueUrl);
 
       // post a non-processable message
-      await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
+      const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
+      console.log(message);
+      messageId = message.MessageId;
     });
 
     afterAll(async () => {
@@ -237,6 +241,17 @@ describe('The SQS rule', () => {
 
     it('messages are picked up and removed from source queue', async () => {
       await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
+    });
+
+    it('stores incoming messages on S3', async () => {
+      const keyOne = `${config.stackName}/archived-incoming-messages/${messageId}`;
+      console.log(config);
+      const message = await s3().getObject({
+        Bucket: config.bucket,
+        Key: keyOne,
+      }).promise();
+      console.log(message);
+      expect(message).toBeDefined();
     });
   });
 });
