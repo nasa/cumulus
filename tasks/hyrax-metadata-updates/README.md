@@ -19,7 +19,7 @@ This url will be added to the Urls portion of the granule metadata as follows,
     ...
     {
         "URL": "opendap.uat.earthdata.nasa.gov/collections/C1233603862-GES_DISC/GLDAS_CLSM025_DA1_D.2.2/granules/GLDAS_CLSM025_DA1_D.2.2:GLDAS_CLSM025_DA1_D.A20030204.022.nc4",
-        "Type": "GET DATA",
+        "Type": "USE SERVICE API",
         "Subtype": "OPENDAP DATA",
         "Description": "OPeNDAP request URL"
     }
