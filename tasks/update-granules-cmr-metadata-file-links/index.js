@@ -86,7 +86,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
   const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
     .map(({ name, type }) => [name, type]));
 
-  const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'distribution');
+  const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
 
   const granules = event.input.granules;
   const cmrFiles = granulesToCmrFileObjects(granules);
