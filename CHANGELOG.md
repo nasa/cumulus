@@ -61,7 +61,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       accessible via the Core API.
 
 ### Added
-
+- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
     - Added postgres-migration-count-tool lambda/ECS task to allow for
