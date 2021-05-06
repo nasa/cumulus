@@ -15,11 +15,11 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Update cumulus-tf
   cd example/cumulus-tf
   # Update to use workflow module
-  sed -i "s/source = \"..\/..\/tf-modules\/workflow/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-workflow.zip\/\//g" *.tf
+  sed -i "s/source[ ]*= \"..\/..\/tf-modules\/workflow/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-workflow.zip\/\//g" *.tf
   # Update to use ecs service module
-  sed -i "s/source = \"..\/..\/tf-modules\/cumulus_ecs_service/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-ecs-service.zip\/\//g" *.tf
+  sed -i "s/source[ ]*= \"..\/..\/tf-modules\/cumulus_ecs_service/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-ecs-service.zip\/\//g" *.tf
   # Update to use cumulus core module
-  sed -i "s/source = \"..\/..\/tf-modules\/cumulus/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus/g" *.tf
+  sed -i "s/source[ ]*= \"..\/..\/tf-modules\/cumulus/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus/g" *.tf
 
   ## [MHS, 04/29/2021] fix cumulus_distribution package not released separately.
   sed -i "s/source[ ]*= \"..\/..\/tf-modules\/cumulus_distribution\"/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/cumulus_distribution\"/g" *.tf
@@ -27,13 +27,13 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
 
   ## Update data-persistence
   cd ../data-persistence-tf
-  sed -i "s/source = \"..\/..\/tf-modules\/data-persistence/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/data-persistence/g" *.tf
+  sed -i "s/source[ ]*= \"..\/..\/tf-modules\/data-persistence/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/tf-modules\/data-persistence/g" *.tf
   # Update db-provision-user-database source
   sed -i "s/source[ ]*= \"..\/..\/lambdas\/db-provision-user-database/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus.zip\/\/lambdas\/db-provision-user-database/g" *.tf
 
   ## Update data-migration1
   cd ../data-migration1-tf
-  sed -i "s/source = \"..\/..\/lambdas\/data-migration1/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-data-migrations1.zip\/\//g" *.tf
+  sed -i "s/source[ ]*= \"..\/..\/lambdas\/data-migration1/source = \"https:\/\/github.com\/nasa\/cumulus\/releases\/download\/$VERSION_FLAG\/terraform-aws-cumulus-data-migrations1.zip\/\//g" *.tf
 
 
   ## Prepare repo lambdas
