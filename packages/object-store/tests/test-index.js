@@ -1,6 +1,6 @@
 const test = require('ava');
 const { S3ObjectStore } = require('@cumulus/aws-client');
-const { defaultObjectStore, objectStoreForProtocol } = require('..');
+const { defaultObjectStore, objectStoreForProtocol } = require('../dist');
 
 test('objectStoreForProtocol returns null when no protocol is supplied', (t) => {
   t.is(objectStoreForProtocol(), undefined);
