@@ -296,7 +296,7 @@ async function reconciliationReportForGranuleFiles(params) {
   const granuleFiles = keyBy(granuleInDb.files, 'fileName');
 
   // URL types for downloading granule files
-  const cmrGetDataTypes = ['GET DATA', 'GET RELATED VISUALIZATION', 'EXTENDED METADATA'];
+  const cmrGetDataTypes = ['GET DATA', 'GET DATA VIA DIRECT ACCESS', 'GET RELATED VISUALIZATION', 'EXTENDED METADATA'];
   const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
 
   const bucketTypes = Object.values(bucketsConfig.buckets)
@@ -319,7 +319,7 @@ async function reconciliationReportForGranuleFiles(params) {
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           bucketTypes,
-          cmrGranuleUrlType: 'distribution',
+          urlType: 'distribution',
           distributionBucketMap,
         });
 
@@ -327,7 +327,7 @@ async function reconciliationReportForGranuleFiles(params) {
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
           bucketTypes,
-          cmrGranuleUrlType: 's3',
+          urlType: 's3',
           distributionBucketMap,
         });
 
