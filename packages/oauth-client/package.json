@@ -16,6 +16,9 @@
   "engines": {
     "node": ">=12.18.0"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "files": [
@@ -47,9 +50,6 @@
   },
   "bugs": {
     "url": "https://github.com/nasa/cumulus/issues"
-  },
-  "directories": {
-    "test": "tests"
   },
   "devDependencies": {}
 }
