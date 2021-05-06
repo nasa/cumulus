@@ -19,9 +19,6 @@ Utilities for returning an object store regardless of cloud provider.
 </dd>
 </dl>
 
-
-
-
 ## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
