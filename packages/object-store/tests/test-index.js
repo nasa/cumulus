@@ -1,6 +1,5 @@
 const test = require('ava');
 const { S3ObjectStore } = require('@cumulus/aws-client');
-// eslint-disable-next-line node/no-unpublished-require
 const { defaultObjectStore, objectStoreForProtocol } = require('..');
 
 test('objectStoreForProtocol returns null when no protocol is supplied', (t) => {
