@@ -3,6 +3,8 @@ import { URL } from 'url';
 import { s3 } from './services';
 import { headObject, parseS3Uri } from './S3';
 
+// Code modified from https://github.com/nasa/harmony/blob/main/app/util/object-store.ts
+
 /**
  * Class to use when interacting with S3
  *

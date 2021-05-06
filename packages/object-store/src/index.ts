@@ -1,5 +1,7 @@
 import { S3ObjectStore } from '@cumulus/aws-client';
 
+// Code modified from https://github.com/nasa/harmony/blob/main/app/util/object-store.ts
+
 /**
  * Returns a class to interact with the object store appropriate for
  * the provided protocol, or null if no such store exists.
