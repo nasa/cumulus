@@ -21,6 +21,7 @@ export interface PartialCollectionRecord {
   ignoreFilesConfigForDiscovery?: boolean,
   name?: string,
   process?: string,
+  reportToEms?: boolean,
   sampleFileName?: string,
   tags?: string[],
   meta?: Object,

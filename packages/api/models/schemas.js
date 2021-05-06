@@ -110,6 +110,11 @@ module.exports.collection = {
         + 'will be used as the granule ID.',
       type: 'string',
     },
+    reportToEms: {
+      title: 'Report to EMS',
+      description: 'This field is deprecated',
+      type: 'boolean',
+    },
     sampleFileName: {
       title: 'Sample Filename',
       description: 'Is used to validate to test granule ID '
