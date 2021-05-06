@@ -9,6 +9,7 @@ const {
   handleFileRequest,
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
+const { handleCredentialRequest } = require('../endpoints/s3credentials');
 
 /**
  * Helper function to pull bucket out of a path string.
@@ -103,7 +104,8 @@ const profile = (req, res) => res.send('Profile not available.');
 
 const pubkey = (req, res) => res.status(501).end();
 
-const s3Credentials = (req, res) => res.status(501).end();
+// TODO Remove this completely ? 
+// const s3Credentials = (req, res) => res.status(501).end();
 
 const s3CredentialsREADME = (req, res) => res.status(501).end();
 
@@ -116,7 +118,8 @@ router.get('/logout', logout);
 router.get('/profile', profile);
 router.get('/pubkey', pubkey);
 router.get('/redirect', handleRedirectRequest);
-router.get('/s3Credentials', s3Credentials);
+router.get('/s3Credentials', handleCredentialRequest);
+// TODO Add ensureAuthorized for Cognito before the handleCredentialRequest ?
 router.get('/s3CredentialsREADME', s3CredentialsREADME);
 router.get('/version', version);
 
