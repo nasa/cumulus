@@ -2,7 +2,7 @@ const nock = require('nock');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { CognitoClient, CognitoError } = require('../dist/src');
+const { CognitoClient, CognitoError } = require('../dist');
 
 const randomString = () => cryptoRandomString({ length: 6 });
 

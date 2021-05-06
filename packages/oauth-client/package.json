@@ -19,11 +19,11 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "dist/src/index.js",
-    "dist/src/index.d.ts"
+    "dist/index.js",
+    "dist/index.d.ts"
   ],
   "scripts": {
     "clean": "rm -rf dist",

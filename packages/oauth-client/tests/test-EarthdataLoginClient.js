@@ -2,7 +2,7 @@ const cryptoRandomString = require('crypto-random-string');
 const nock = require('nock');
 const test = require('ava');
 
-const { EarthdataLoginClient, EarthdataLoginError } = require('../dist/src');
+const { EarthdataLoginClient, EarthdataLoginError } = require('../dist');
 
 const randomString = () => cryptoRandomString({ length: 6 });
 
