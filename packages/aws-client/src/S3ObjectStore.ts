@@ -24,7 +24,7 @@ class S3ObjectStore {
    * @throws TypeError - if the URL is not a recognized protocol or cannot be parsed
    */
   async signGetObject(
-    objectUrl: string, 
+    objectUrl: string,
     params: { [key: string]: string }
   ): Promise<string> {
     const url = new URL(objectUrl);
