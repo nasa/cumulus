@@ -107,14 +107,14 @@ function indexAsyncOperation(esClient, payload, index = defaultIndexAlias, type 
  * Indexes the collection on ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
- * @param  {Object} meta     - the collection record
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: collection)
+ * @param  {Object} collection - the collection record
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: collection)
  * @returns {Promise} Elasticsearch response
  */
-function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
-  const collectionId = constructCollectionId(meta.name, meta.version);
-  return genericRecordUpdate(esClient, collectionId, meta, index, type);
+function indexCollection(esClient, collection, index = defaultIndexAlias, type = 'collection') {
+  const collectionId = constructCollectionId(collection.name, collection.version);
+  return genericRecordUpdate(esClient, collectionId, collection, index, type);
 }
 
 /**

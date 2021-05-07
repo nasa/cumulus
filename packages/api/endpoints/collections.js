@@ -107,7 +107,8 @@ async function get(req, res) {
 async function post(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = await getKnexClient(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
   } = req.testContext || {};
 
   const collection = req.body || {};
@@ -125,19 +126,14 @@ async function post(req, res) {
   collection.createdAt = Date.now();
 
   try {
-    const dynamoRecord = await collectionsModel.create(
-      omit(collection, 'dataType')
-    );
+    const dbRecord = dynamoRecordToDbRecord(collection);
 
-    const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
-
-    try {
-      await dbClient('collections').insert(dbRecord, 'cumulus_id');
-    } catch (error) {
-      await collectionsModel.delete({ name, version });
-
-      throw error;
-    }
+    await knex.transaction(async (trx) => {
+      await collectionPgModel.create(trx, dbRecord);
+      await collectionsModel.create(
+        omit(collection, 'dataType')
+      );
+    });
 
     if (inTestMode()) {
       await addToLocalES(collection, indexCollection);

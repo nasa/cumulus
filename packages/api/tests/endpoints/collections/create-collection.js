@@ -372,7 +372,7 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
 });
 
-test('post() does not write to the database if writing to Dynamo fails', async (t) => {
+test('post() does not write to PostgreSQL if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
 
   const collection = fakeCollectionFactory();
@@ -387,7 +387,7 @@ test('post() does not write to the database if writing to Dynamo fails', async (
   const expressRequest = {
     body: collection,
     testContext: {
-      dbClient: testKnex,
+      knex: testKnex,
       collectionsModel: fakeCollectionsModel,
     },
   };
@@ -398,25 +398,26 @@ test('post() does not write to the database if writing to Dynamo fails', async (
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
-  const dbRecords = await t.context.collectionPgModel
-    .search(t.context.testKnex, {
+  t.false(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
       name: collection.name,
       version: collection.version,
-    });
-
-  t.is(dbRecords.length, 0);
+    })
+  );
 });
 
-test('post() does not write to Dynamo if writing to the database fails', async (t) => {
+test('post() does not write to Dynamo if writing to PostgreSQL fails', async (t) => {
   const collection = fakeCollectionFactory();
 
-  const fakeDbClient = () => ({
-    insert: () => Promise.reject(new Error('something bad')),
-  });
+  const fakeCollectionPgModel = {
+    create: () => Promise.reject(new Error('something bad')),
+  };
 
   const expressRequest = {
     body: collection,
-    testContext: { dbClient: fakeDbClient },
+    testContext: {
+      collectionPgModel: fakeCollectionPgModel,
+    },
   };
 
   const response = buildFakeExpressResponse();
